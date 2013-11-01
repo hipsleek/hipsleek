@@ -594,31 +594,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
     | Globals.Named typ_name -> (
         if (need_init) then (
-          let rec generate_init_params (data_type_name : string): Iast.exp list = (
-            let ddecl = (
-              try Hashtbl.find tbl_data_decl (Globals.Named data_type_name)
-              with Not_found -> 
-                report_error pos ("translate_var_decl: Unknown typ " ^ (Globals.string_of_typ new_ty))
-            ) in
-            let init_params = List.fold_left (fun params field ->
-              let ((ftyp, _), _, inline, _) = field in
-              let init_exps = (
-                match ftyp with
-                | Globals.Int -> [(Iast.mkIntLit 0 pos)]
-                | Globals.Bool -> [(Iast.mkBoolLit true pos)]
-                | Globals.Float -> [(Iast.mkFloatLit 0. pos)]
-                | Globals.Named typ_name ->
-                    if (inline) then generate_init_params typ_name      (* expand the inline field *)
-                    else [(Iast.mkNull pos)]
-                | _ -> report_error pos ("translate_var_decl: Unexpected typ 1 - " ^ (Globals.string_of_typ ftyp))
-              ) in
-              params @ init_exps
-            ) [] ddecl.Iast.data_fields in
-            init_params
-          ) in
-          (* create and temporarily initiate a new object *)
-          let init_params = generate_init_params typ_name in
-          let init_data = Iast.mkNew typ_name init_params pos in
+          let init_data = Iast.mkNew typ_name [] pos in
           Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
         )
         else Iast.mkVarDecl new_ty [(name, None, pos)] pos

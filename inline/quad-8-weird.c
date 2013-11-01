@@ -19,7 +19,7 @@ int foo(struct quad* q)
 {
   int r = (*q).p1.x+3;
   r =0;
-  //return 0;
+  return 0;
   // why did foo return (*q).p1.x+3?
 }
 
@@ -32,10 +32,12 @@ int main()
   struct quad p;
   p.p1.x = 3;
   int rr=foo(&p);
+  /*
   printf("p.p1.x = %i\n",p.p1.x); // 3
   printf("rr = %i\n",rr); //6 (random)
   printf("p.p1.y = %i\n",p.p1.y); //0 (random)
   printf("p.p2 = %i\n",p.p2); //4195264 (random)
+  */
   return rr;
   //p.p1.x = 3
   //rr = 6
