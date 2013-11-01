@@ -16,6 +16,10 @@ HeapPred G( node a).
 
 
 int main(struct node* l)
+/*@
+ requires l::ll<>
+  ensures true;
+*/
 {
 
   int i=0;

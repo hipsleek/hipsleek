@@ -17,15 +17,16 @@ int main(node l)
 
   int i=0;
 
-  while (l !=null)
+  while (true)
       requires l::ll<>
-      ensures l'=null;
+      ensures l'=null ; //& flow __break_;
     /*
     infer [H,G]
       requires H(l)
       ensures G(l');//'
     */
     {
+      if (l==null) break;
       l = l.next;
       i++;
   }
