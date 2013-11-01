@@ -3621,12 +3621,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             else
             (*=========processing locklevel===============*)
             if ((!Globals.perm != Globals.Bperm && (nargs!=nfields))
-                || (!Globals.perm == Globals.Bperm && nargs!=nfields+1))
+                || (!Globals.perm == Globals.Bperm && nargs!=nfields+1)) && (nargs!=0)
               && (not (c=lock_name)) then
-              Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match in New " ^ c;}
+                begin
+                  let _ = Debug.info_hprint (add_str "nargs" (string_of_int)) nargs no_pos in
+                  let _ = Debug.info_hprint (add_str "nfields" (string_of_int)) nfields no_pos in
+                  let _ = Debug.info_hprint (add_str "args" (pr_list Iprinter.string_of_exp)) args no_pos in
+                  let _ = Debug.info_hprint (add_str "args" (pr_list string_of_typ)) field_types no_pos in
+                  Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match in New?? " ^ c;}
+                end
             else
-              (let tmp = List.map (helper) args in
-              let (cargs, cts) = List.split tmp in
+              begin
               let field_types = if (!Globals.perm == Globals.Bperm) then
                     (*LDK: in case of bounded permission, the first field
                       in the args list is the bound (permission total).
@@ -3635,11 +3640,18 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     Int::field_types
                   else field_types
               in
+              (* let _ = Debug.info_hprint (add_str "field_types" (pr_list string_of_typ)) field_types no_pos in *)
+              let nargs = List.length field_types in
+              let tmp = 
+                if args==[] then List.map (fun t -> (None,t)) field_types
+                else List.map (fun x -> (let (e,t)=helper x in (Some e,t))) args 
+              in
+              let (cargs, cts) = List.split tmp in
               let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 4";}
               else ( let positions = Gen.repeat pos nargs in
-              let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+              let (local_vars, init_seq, arg_vars) = trans_args_gen (Gen.combine3 cargs cts positions) in
               let new_e = C.New {
                   C.exp_new_class_name = c;
                   C.exp_new_parent_name = data_def.I.data_parent_name;
@@ -3651,7 +3663,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_block_type = new_t;
                   C.exp_block_body = seq_e;
                   C.exp_block_local_vars = local_vars;
-                  C.exp_block_pos = pos; }),new_t)))
+                  C.exp_block_pos = pos; }),new_t))
+                end
             (***********<< processing New ********)
       | I.Null pos -> ((C.Null pos), (Named ""))
       | I.Return {I.exp_return_val = oe;
@@ -4466,17 +4479,24 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
            else (seq2, bind_type))
     | [] -> trans_exp prog proc base
 
-and trans_args (args : (C.exp * typ * loc) list) :
+and trans_args args =
+  let pr1 = pr_list (fun (e,t,_) -> pr_pair (Cprinter.string_of_exp) string_of_typ (e,t)) in
+  let pr2 = pr_triple (pr_list pr_none) Cprinter.string_of_exp (pr_list pr_id) in
+  Debug.no_1 "trans_args" pr1 pr2 trans_args_x args
+
+and trans_args_x args = trans_args_gen (List.map (fun (a,b,c) -> (Some a,b,c)) args)
+
+and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
       ((C.typed_ident list) * C.exp * (ident list)) =
   match args with
     | arg :: rest ->
-          let (rest_local_vars, rest_e, rest_names) = trans_args rest
+          let (rest_local_vars, rest_e, rest_names) = trans_args_gen rest
           in
           (match arg with
-            | (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _
-              },
+            | (Some (C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _
+              }),
               _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
-            | (arg_e, at, pos) ->
+            | (Some(arg_e), at, pos) ->
                   let fn = fresh_ty_var_name (at) pos.start_pos.Lexing.pos_lnum in
                   let fn_decl =
                     C.VarDecl
@@ -4494,6 +4514,26 @@ and trans_args (args : (C.exp * typ * loc) list) :
                         } in
                   let seq1 = C.mkSeq C.void_type fn_init rest_e pos in
                   let seq2 = C.mkSeq C.void_type fn_decl seq1 pos in
+                  let local_var = (at, fn)
+                  in ((local_var :: rest_local_vars), seq2, (fn :: rest_names))
+            | (None, at, pos) ->
+                  let fn = fresh_ty_var_name (at) pos.start_pos.Lexing.pos_lnum in
+                  let fn_decl =
+                    C.VarDecl
+                        {
+                            C.exp_var_decl_type = at;
+                            C.exp_var_decl_name = fn;
+                            C.exp_var_decl_pos = pos;
+                        } in
+                  (* let fn_init = *)
+                  (*   C.Assign *)
+                  (*       { *)
+                  (*           C.exp_assign_lhs = fn; *)
+                  (*           C.exp_assign_rhs = arg_e; *)
+                  (*           C.exp_assign_pos = pos; *)
+                  (*       } in *)
+                  (* let seq1 = C.mkSeq C.void_type fn_init rest_e pos in *)
+                  let seq2 = C.mkSeq C.void_type fn_decl rest_e pos in
                   let local_var = (at, fn)
                   in ((local_var :: rest_local_vars), seq2, (fn :: rest_names)))
     | [] -> ([], (C.Unit no_pos), [])

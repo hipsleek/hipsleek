@@ -30,7 +30,7 @@ int main()
   ensures res=6;
 {
   quad p = new quad(0,0,null); //stack alloc
-  pair pp = new pair(0,0);
+  pair pp = new pair();
   pp.x=4;
   p.p2 = pp;
   p.p1.x = 3;
