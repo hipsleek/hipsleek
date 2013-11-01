@@ -11,6 +11,8 @@ inv q!=null.
 // (9) Fail
 checkentail x::l6<_> * x::l6<_> |- false.
 
+//checkentail x::l6<_> * y::l6<_> & x=y |- false.
+
 // hg bisect
 // 9875 - valid (bad)
 // 9814 - valid (bad)
