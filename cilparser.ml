@@ -795,7 +795,12 @@ and translate_exp (e: Cil.exp) : Iast.exp =
         if (l != Cil.locUnknown) then translate_location l
         else translate_location (loc_of_cil_exp exp)
       ) in
-      let input_typ = translate_typ (typ_of_cil_exp exp) pos in
+      let input_typ = (
+        let ity = typ_of_cil_exp exp in
+        match ity with
+        | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
+        | _ -> translate_typ ity pos
+      ) in
       let output_typ = (match ty with
         | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
         | _ -> translate_typ ty pos
