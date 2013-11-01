@@ -1165,7 +1165,13 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
   let static_specs = fundec.Cil.hipfuncspec in
   let return_typ = ( 
     match fheader.Cil.vtype with
-    | Cil.TFun (t, params, _, _) -> translate_typ t pos
+    | Cil.TFun (ty, params, _, _) -> (*translate_typ ty pos*)
+          (match ty with
+            | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
+            | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+                (translate_typ ty1 no_pos)
+            | _ -> (translate_typ ty no_pos)
+          )
     | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
   ) in
   let funargs = (
