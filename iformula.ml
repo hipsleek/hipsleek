@@ -2421,15 +2421,18 @@ let add_post_for_flow fl_names f =
 				let l = List.map (fun c-> Exists {b with formula_exists_flow = c}) fl_names in
 				List.fold_left (fun a c-> mkOr a c b.formula_exists_pos) c l 
 			else c in	
-	let rec helper f =  match f with
-		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 
-		| EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation}
-		| EInfer b-> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
-		| EList b -> EList (Gen.map_l_snd helper b)
+	let rec helper is_post f =  match f with
+		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper is_post c2) c.formula_case_branches} 
+		| EBase b -> 
+			let new_base = if is_post then fct b.formula_struc_base else b.formula_struc_base in
+			let new_cont = Gen.map_opt (helper is_post) b.formula_struc_continuation in
+			EBase {b with formula_struc_continuation = new_cont; formula_struc_base = new_base}
+		| EInfer b-> EInfer {b with formula_inf_continuation = helper is_post b.formula_inf_continuation;}
+		| EList b -> EList (Gen.map_l_snd (helper is_post) b)
 		| EAssume b -> EAssume {b with 
 			formula_assume_simpl = fct b.formula_assume_simpl; 
-			formula_assume_struc = helper b.formula_assume_struc;} in
-	helper f
+			formula_assume_struc = helper true b.formula_assume_struc;} in
+	helper false f
 	
 
 let rec flatten_post_struc f pos = match f with

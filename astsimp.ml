@@ -857,7 +857,7 @@ let rec while_labelling (e:I.exp):I.exp =
         | I.While b -> 
                 let pos = b.I.exp_while_pos in
                 let nl,b_rez = match b.I.exp_while_jump_label with
-                        | I.NoJumpLabel -> ((fresh_label pos),false)
+                        | I.NoJumpLabel -> ("default"(*(fresh_label pos)*),false)
                         | I.JumpLabel l -> (l,true) in
                 let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
                 if (need_break_continue nl b.I.exp_while_body b_rez) then               
@@ -3999,9 +3999,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
             let _ = Debug.info_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
-            let prepost = match wrap with 
-              | None -> prepost
-              | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
@@ -4016,16 +4013,26 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     I.exp_seq_pos = pos; };
                 I.exp_block_local_vars = [];
                 I.exp_block_pos = pos;} in
-            let w_body = I.Block {
-                I.exp_block_jump_label = I.NoJumpLabel; 
-                I.exp_block_body = I.Cond {
+			let w_body_wo_brk = I.Cond {
                     I.exp_cond_condition = cond;
                     I.exp_cond_then_arm = w_body_2;
                     I.exp_cond_else_arm = I.Empty pos;
                     I.exp_cond_pos = pos;
-                    I.exp_cond_path_id = pi;};
+                    I.exp_cond_path_id = pi;} in
+			let w_body_w_brk = match wrap with
+              | None -> w_body_wo_brk
+              | Some (e,_) -> (*let e,et = helper e in*)
+                    match e with
+                      | I.Try b -> I.Try{b with I.exp_try_block  = w_body_wo_brk}
+                      | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
+            let w_body = I.Block {
+                I.exp_block_jump_label = I.NoJumpLabel; 
+                I.exp_block_body = w_body_w_brk ;
                 I.exp_block_local_vars = [];
                 I.exp_block_pos = pos;} in
+			let prepost = match wrap with 
+              | None -> prepost
+              | Some _ -> IF.add_post_for_flow (I.get_breaks w_body) prepost in
             let w_formal_args = List.map (fun tv ->{
                 I.param_type = fst tv;
                 I.param_name = snd tv;
@@ -4056,12 +4063,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_call_nrecv_arguments = w_args;
                 I.exp_call_nrecv_pos = pos;
                 I.exp_call_nrecv_path_id = pi; } in
-            let w_call = match wrap with
+            let w_call = temp_call (*match wrap with
               | None -> temp_call
               | Some (e,_) -> (*let e,et = helper e in*)
                     match e with
                       | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
-                      | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
+                      | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";}*) in
             let w_proc = case_normalize_proc prog w_proc in
             let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
             (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
