@@ -7963,7 +7963,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                       ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                       (* TODO : change to meaningful msg *)
                       (* what if must failure on the ante -> conseq *)
-                                          if (CF.overlap_flow_ff fl2 fl1) then (
+                        if (CF.overlap_flow_ff fl2 fl1) then (
                         let err_msg =
                           if (CF.subsume_flow_f !error_flow_int fl1) then
                             ("1.2: " ^ (exlist # get_closest fl1.CF.formula_flow_interval))

@@ -3675,7 +3675,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
           match oe with
             | None -> 
-                if CP.are_same_types cret_type C.void_type then
+                  if CP.are_same_types cret_type C.void_type then
                   (C.Sharp ({ C.exp_sharp_type = C.void_type;
                   C.exp_sharp_flow_type = C.Sharp_ct 
                           {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
@@ -3688,7 +3688,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   Err.error_text = "return statement for procedures with non-void return type need a value" }
             | Some e ->
                   let e_pos = Iast.get_exp_pos e in
-                   (* let  _ = Debug.info_zprint (lazy (((string_of_loc pos) ^ ":e_pos" ))) pos in *)
+                  (* let  _ = Debug.info_zprint (lazy (((string_of_loc e_pos) ^ ":e_pos" ))) pos in *)
                   let ce, ct = helper e in
                   (*
                     139::return v_null_21_541
@@ -3717,7 +3717,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             C.exp_sharp_pos = pos}) in
                         shar
                       else
-                        let e_pos = if not (is_valid_loc e_pos) then no_pos else e_pos in
                         let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
                   let vd = C.VarDecl { 
                       C.exp_var_decl_type = ct;
