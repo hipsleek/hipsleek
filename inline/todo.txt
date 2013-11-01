@@ -185,8 +185,15 @@ Last Proving Location: 1 File "ret1.c",Line:6,Col:0
 ERROR: at ret1.c_6:0_13:1
 Message: return type doesn't match
 
+=======================
+GOT:
+node_star main(node l)
+     ^^^^
+......
 
-===> expect: OK
+
+===> EXPECT: node main(node l)
+.........
 
 *******************************************************
 #loop/w3a.c
