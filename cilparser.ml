@@ -964,71 +964,194 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
       newexp
   | Cil.HipStmt (iast_exp, l) -> 
       (* TODO: temporarily skip translate stmt *)
-      (* let p = translate_location l in *)
-      (* translate_hip_stmt iast_exp p   *)
+      let p = translate_location l in
+      (*translate_hip_exp iast_exp p*)
       iast_exp
-
-(* and translate_hip_stmt (stmt: Iast.exp) pos : Iast.exp =                                    *)
-(*   let rec helper_formula (f: IF.formula): IF.formula = (                                    *)
-(*     match f with                                                                            *)
-(*     | IF.Base fb ->                                                                         *)
-(*         IF.Base { fb with                                                                   *)
-(*           IF.formula_base_heap = helper_h_formula fb.IF.formula_base_heap;                  *)
-(*           IF.formula_base_pure = helper_pure_formula fb.IF.formula_base_pure;               *)
-(*           IF.formula_base_and = List.map helper_one_formula fb.IF.formula_base_and;         *)
-(*         }                                                                                   *)
-(*     | IF.Exists fe ->                                                                       *)
-(*         IF.Exists { fe with                                                                 *)
-(*           IF.formula_exists_heap = helper_h_formula fe.formula_exists_heap;                 *)
-(*           IF.formula_exists_pure = helper_pure_formula fe.IF.formula_exists_pure;           *)
-(*           IF.formula_exists_and = List.map helper_one_formula fe.IF.formula_exists_and;     *)
-(*         }                                                                                   *)
-(*     | IF.Or fo ->                                                                           *)
-(*         IF.Or { fo with                                                                     *)
-(*           IF.formula_heap = helper_h_formula fe.formula_heap;                               *)
-(*           IF.formula_pure = helper_pure_formula fe.IF.formula_pure;                         *)
-(*           IF.formula_delayed = helper_formula fe.IF.formula_delayed;                        *)
-(*         }                                                                                   *)
-(*   ) in                                                                                      *)
-(*   and helper_h_formula (h: IF.h_formula) : IF.h_formula = (                                 *)
-(*     match h with                                                                            *)
-(*     | IF.Phase hfp ->                                                                       *)
-(*         IF.Phase { hfp with                                                                 *)
-(*           IF.h_formula_phase_rd = helper_h_formula hfp.IF.h_formula_phase_rd;               *)
-(*           IF.h_formula_phase_rw = helper_h_formula hfp.IF.h_formula_phase_rw;               *)
-(*         }                                                                                   *)
-(*     | IF.Conj hfc ->                                                                        *)
-(*         IF.Conj { hfc with                                                                  *)
-(*           IF.h_formula_conj_h1 = helper_h_formula hfp.IF.h_formula_conj_h1;                 *)
-(*           IF.h_formula_conj_h2 = helper_h_formula hfp.IF.h_formula_conj_h2;                 *)
-(*         }                                                                                   *)
-(*     | IF.ConjStar hfcs ->                                                                   *)
-(*         IF.ConjStar { hfcs with                                                             *)
-(*           IF.h_formula_conjstar_h1 = helper_h_formula hfp.IF.h_formula_conjstar_h1;         *)
-(*           IF.h_formula_conjstar_h2 = helper_h_formula hfp.IF.h_formula_conjstar_h2;         *)
-(*         }                                                                                   *)
-(*     | IF.ConjConj hfcc ->                                                                   *)
-(*         IF.ConjConj { hfcc with                                                             *)
-(*           IF.h_formula_conjconj_h1 = helper_h_formula hfp.IF.h_formula_conjconj_h1;         *)
-(*           IF.h_formula_conjconj_h2 = helper_h_formula hfp.IF.h_formula_conjconj_h2;         *)
-(*         }                                                                                   *)
-(*     | IF.Star hfs ->                                                                        *)
-(*         IF.Star { hfs with                                                                  *)
-(*           IF.h_formula_star_h1 = helper_h_formula hfp.IF.h_formula_star_h1;                 *)
-(*           IF.h_formula_star_h2 = helper_h_formula hfp.IF.h_formula_star_h2;                 *)
-(*         }                                                                                   *)
-(*     | IF.StarMinus hfsm ->                                                                  *)
-(*         IF.StarMinus { hfc with                                                             *)
-(*           IF.h_formula_starminus_h1 = helper_h_formula hfp.IF.h_formula_starminus_h1;       *)
-(*           IF.h_formula_starminus_h2 = helper_h_formula hfp.IF.h_formula_starminus_h2;       *)
-(*         }                                                                                   *)
-(*     | IF.HeapNode hfh ->                                                                    *)
-(*         IF.HeapNode { hfh with                                                              *)
-(*           IF.h_formula_heap_name = H                                                        *)
-(*         }                                                                                   *)
-(*     | IF.HeapNode2 of h_formula_heap2                                                       *)
-(*     | HRel _ | HTrue | HFalse -> h                                                          *)
-(*   ) in                                                                                      *)
+(*
+and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
+  let rec helper_formula (f: IF.formula): IF.formula = (
+    match f with
+    | IF.Base fb ->
+        IF.Base { fb with
+          IF.formula_base_heap = helper_h_formula fb.IF.formula_base_heap;
+          IF.formula_base_pure = helper_pure_formula fb.IF.formula_base_pure;
+          IF.formula_base_and = List.map helper_one_formula fb.IF.formula_base_and;
+        }
+    | IF.Exists fe ->
+        IF.Exists { fe with
+          IF.formula_exists_heap = helper_h_formula fe.formula_exists_heap;
+          IF.formula_exists_pure = helper_pure_formula fe.IF.formula_exists_pure;
+          IF.formula_exists_and = List.map helper_one_formula fe.IF.formula_exists_and;
+        }
+    | IF.Or fo ->
+        IF.Or { fo with
+          IF.formula_heap = helper_h_formula fe.formula_heap;
+          IF.formula_pure = helper_pure_formula fe.IF.formula_pure;
+          IF.formula_delayed = helper_formula fe.IF.formula_delayed;
+        }
+  ) in
+  and helper_h_formula (h: IF.h_formula) : IF.h_formula = (
+    match h with
+    | IF.Phase hfp ->
+        IF.Phase { hfp with
+          IF.h_formula_phase_rd = helper_h_formula hfp.IF.h_formula_phase_rd;
+          IF.h_formula_phase_rw = helper_h_formula hfp.IF.h_formula_phase_rw;
+        }
+    | IF.Conj hfc ->
+        IF.Conj { hfc with
+          IF.h_formula_conj_h1 = helper_h_formula hfp.IF.h_formula_conj_h1;
+          IF.h_formula_conj_h2 = helper_h_formula hfp.IF.h_formula_conj_h2;
+        }
+    | IF.ConjStar hfcs ->
+        IF.ConjStar { hfcs with
+          IF.h_formula_conjstar_h1 = helper_h_formula hfp.IF.h_formula_conjstar_h1;
+          IF.h_formula_conjstar_h2 = helper_h_formula hfp.IF.h_formula_conjstar_h2;
+        }
+    | IF.ConjConj hfcc ->
+        IF.ConjConj { hfcc with
+          IF.h_formula_conjconj_h1 = helper_h_formula hfp.IF.h_formula_conjconj_h1;
+          IF.h_formula_conjconj_h2 = helper_h_formula hfp.IF.h_formula_conjconj_h2;
+        }
+    | IF.Star hfs ->
+        IF.Star { hfs with
+          IF.h_formula_star_h1 = helper_h_formula hfp.IF.h_formula_star_h1;
+          IF.h_formula_star_h2 = helper_h_formula hfp.IF.h_formula_star_h2;
+        }
+    | IF.StarMinus hfsm ->
+        IF.StarMinus { hfc with
+          IF.h_formula_starminus_h1 = helper_h_formula hfp.IF.h_formula_starminus_h1;
+          IF.h_formula_starminus_h2 = helper_h_formula hfp.IF.h_formula_starminus_h2;
+        }
+    | IF.HeapNode hfh ->
+        IF.HeapNode { hfh with
+          IF.h_formula_heap_name = H
+        }
+    | IF.HeapNode2 of h_formula_heap2
+    | HRel _ | HTrue | HFalse -> h
+  ) in
+  and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
+    match p with
+    | Ipure.BForm (bf, fl) ->
+        Ipure.BForm (helper_b_formula bf, fl)
+    | Ipure.And (f1, f2, pos) ->
+        Ipure.And (helper_pure_formula f1, helper_pure_formula f2, pos)
+    | Ipure.AndList l ->
+        Ipure.And (List.map fun (t, f) -> (t, helper_pure_formula f)) l
+    | Ipure.Or (f1, f2, fl, pos) ->
+        Ipure.Or (helper_pure_formula f1, helper_pure_formula f2, fl, pos)
+    | Ipure.Not (f, fl, pos) ->
+        Ipure.Not (helper_pure_formula f, fl, pos)
+    | Ipure.Forall (idp, f, fl, pos) ->
+        Ipure.Forall (idp, helper_pure_formula f, fl, pos)
+    | Ipure.Exists (idp, f, fl, pos) ->
+        Ipure.Exists (idp, helper_pure_formula f, fl, pos)
+  ) in
+  and helper_b_formula (b : Ipure.b_formula) : Ipure.b_formula = (
+    match b with
+    | (pf, biel) ->
+        Ipure.b_formula (helper_p_formula pf, biel)
+  in
+  and helper_p_formula (p : Ipure.p_formula) : Ipure.p_formula = (
+    match p with
+    | Ipure.Xpure xv ->
+        Ipure.Xpure xv
+    | Ipure.Bconst (b, pos) ->
+        Ipure.Bconst (b, pos)
+    | Ipure.BVar ((id, p), pos) -> (* TODO *)
+    | Ipure.SubAnn (e1, e2, pos) ->
+        Ipure.SubAnn (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Lt (e1, e2, pos) ->
+        Ipure.Lt (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Lte (e1, e2, pos) ->
+        Ipure.Lte (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Gt (e1, e2, pos) ->
+        Iprue.Gt (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Gte (e1, e2, pos) ->
+        Ipure.Gte (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Eq (e1, e2, pos) ->
+        Ipure.Eq (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Neq (e1, e2, pos) ->
+        Ipure.Neq (helper_exp e1, helper_exp e2, pos)
+    | Ipure.EqMax (e1, e2, e3, pos) ->
+        Ipure.EqMax (helper_exp e1, helper_exp e2, helper_exp e3, pos)
+    | Ipure.EqMin (e1, e2, e3, pos) ->
+        Ipure.EqMin (helper_exp e1, helper_exp e2, helper_exp e3, pos)
+    | Ipure.LexVar (ta, el1, el2, pos) ->
+        Ipure.LexVar (ta, List.map (fun (e : Ipure.exp) -> helper_exp e) el1, List.map (fun (e : Ipure.exp) -> helper_exp e) el2, pos)
+    | Ipure.BagIn ((id, p), e, pos) -> (* TODO *)
+    | Ipure.BagNotInt ((id, p), e, pos) -> (* TODO *)
+    | Ipure.BagSub (e1, e2, pos) ->
+        Ipure.BagSub (helper_exp e1, helper_exp e2, pos)
+    | Ipure.BagMin ((id1, p1), (id2, p2), pos) -> (* TODO *)
+    | Ipure.BagMax ((id1, p1), (id2, p2), pos) -> (* TODO *)
+    | Ipure.VarPerm (va, ipl, pos) -> (* TODO *)
+    | Ipure.ListIn (e1, e2, pos) ->
+        Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
+    | Ipure.ListNotIn (e1, e2, pos) ->
+        Ipure.ListNotIn (helper_exp e1, helper_exp e2, pos)
+    | Ipure.ListAllN (e1, e2, pos) ->
+        Ipure.ListAll (helper_exp e1, helper_exp e2, pos)
+    | Ipure.ListPerm (e1, e2, pos) ->
+        Ipure.ListPerm (helper_exp e1, helper_exp e2, pos)
+    | Ipure.RelForm (id, el, pos) -> (* TODO *)
+  ) in
+  and helper_exp (e : Ipure.exp) : Ipure.exp = (
+    match e with
+    | Ipure.Ann_Exp (e, t, pos) ->
+        Ipure.Ann_Exp (e, t, pos)
+    | Ipure.Null pos ->
+        Ipure.Null pos
+    | Ipure.Level ((id, p), pos) -> (* TODO *)
+    | Ipure.Var ((id, p), pos) -> (* TODO *)
+    | Ipure.IConst (i, pos) ->
+        Ipure.IConst (i, pos)
+    | Ipure.FConst (f, pos) ->
+        Ipure.FConst (f, pos)
+    | Ipure.AConst (ha, pos) ->
+        Ipure.AConst (ha, pos)
+    | Ipure.InfConst (id, pos) -> (* TODO *)
+    | Ipure.Tsconst (t, pos) ->
+        Ipure.Tsconst (t, pos)
+    | Ipure.Bptriple ((e1, e2, e3), pos) ->
+        Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
+    | Ipure.Add (e1, e2, pos) ->
+        Ipure.Add (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Subtract (e1, e2, pos) ->
+        Ipure.Subtract (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Mult (e1, e2, pos) ->
+        Ipure.Mult (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Div (e1, e2, pos) ->
+        Ipure.Div (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Max (e1, e2, pos) ->
+        Ipure.Max (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Min (e1, e2, pos) ->
+        Ipure.Min (helper_exp e1, helper_exp e2, pos)
+    | Ipure.TypeCast (t, e, pos) ->
+        Ipure.TypeCast (t, e, pos)
+    | Ipure.Bag (el, pos) ->
+        Ipure.Bag (List.map (fun e -> helper_exp e) el, pos)
+    | Ipure.BagUnion (el, pos) ->
+        Ipure.BagUnion (List.map (fun e -> helper_exp e) el, pos)
+    | Ipure.BagIntersect (el, pos) ->
+        Ipure.BagIntersect (List.map (fun e -> helper_exp e) el, pos)
+    | Ipure.BagDiff (e1, e2, pos) ->
+        Ipure.BagDiff (helper_exp e1, helper_exp e2, pos)
+    | Ipure.List (el, pos) ->
+        Ipure.List (List.map (fun e -> helper_exp) el, pos)
+    | Ipure.ListCons (e1, e2, pos) ->
+        Ipure.ListCons (helper_exp e1, helper_exp e2, pos)
+    | Ipure.ListHead (e, pos) ->
+        Ipure.ListHead (helper_exp e, pos)
+    | Ipure.ListTail (e, pos) ->
+        Ipure.ListTail (helper_exp e, pos)
+    | Ipure.ListLength (e, pos) ->
+        Ipure.ListLength (helper_exp e, pos)
+    | Ipure.ListAppend (el, pos) ->
+        Ipure.ListAppend (List.map (fun e -> helper_exp e) el, pos)
+    | Ipure.ListReverse (e, pos) ->
+        Ipure.ListReverse (helper_exp e, pos)
+    | Ipure.ArrayAt ((id, p), el, pos) -> (* TODO *)
+    | Ipure.Func (id, el, pos) -> (* TODO *)*)
 (* and h_formula_heap = { h_formula_heap_node : (ident * primed);                              *)
 (*                        h_formula_heap_name : ident;                                         *)
 (*                        h_formula_heap_deref : int;                                          *)
