@@ -965,8 +965,8 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
   | Cil.HipStmt (iast_exp, l) -> 
       (* TODO: temporarily skip translate stmt *)
       let p = translate_location l in
-      translate_hip_exp iast_exp p
-      (*iast_exp*)
+      (*translate_hip_exp iast_exp p*)
+      iast_exp
 
 and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
   let rec helper_formula (f: IF.formula): IF.formula = (
