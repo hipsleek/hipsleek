@@ -2417,8 +2417,79 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 (*       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2 *)
 
 (*for post-preds*)
+ let remove_pure_or_redundant_x fs=
+   let drop_redundant conjs neg_of_disj =
+     match neg_of_disj with
+       | CP.Not (p, b,pos) ->
+             let ps = CP.list_of_conjs p in
+             let ps1 = List.filter (fun p1 -> not (List.exists (CP.equalFormula p1) conjs)) ps in
+             if ps1 = [] then
+               (false, CP.mkFalse pos)
+             else (true, CP.Not (CP.conj_of_list ps1 pos, b,pos))
+       | _ -> (true, neg_of_disj)
+   in
+   let drop_redundant_neg conjs neg_of_disj =
+     match neg_of_disj with
+       | CP.Not (p, b,pos) -> begin
+             let ps = CP.list_of_conjs p in
+             let ps1 = List.filter (fun p1 ->
+                 let neg_p1 = CP.neg_eq_neq p1 in
+                 let _ = DD.ninfo_hprint (add_str "neg_p1: " (!CP.print_formula)) neg_p1 no_pos in
+                 not (List.exists (CP.equalFormula neg_p1) conjs)
+             ) ps in
+              CP.disj_of_list (List.map CP.neg_eq_neq ps1) pos
+         end
+       | _ -> neg_of_disj
+   in
+   let rec helper f=
+     match f with
+       | CF.Base fb ->
+             let ps = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
+             let neg_of_disjs, conjs = List.partition ( CP.is_neg_of_consj) ps in
+             let b,neg_of_disjs1 = List.fold_left (fun (rb,rps) orp ->
+                 let b,norp = drop_redundant conjs orp in
+                 (rb&&b, rps@[norp])
+             ) (true,[]) neg_of_disjs in
+             if not b then
+               (false, CF.mkFalse_nf no_pos)
+             else
+               let neg_of_disjs2 = List.map (drop_redundant_neg conjs) neg_of_disjs1 in
+               (* let _ = DD.info_hprint (add_str "conjs: " (pr_list_ln !CP.print_formula)) conjs no_pos in *)
+               (* let _ = DD.info_hprint (add_str "neg_of_disjs2: " (pr_list_ln !CP.print_formula)) neg_of_disjs2 no_pos in *)
+               (* let _ = DD.info_hprint (add_str "neg_of_disjs: " (pr_list_ln !CP.print_formula)) neg_of_disjs no_pos in *)
+               let np = CP.conj_of_list (conjs@neg_of_disjs2) fb.CF.formula_base_pos in
+               (true, CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure np})
+       | CF.Exists _ ->
+             let qvars, base1 = CF.split_quantifiers f in
+             let b,nf = helper base1 in
+             if not b then (b,nf) else
+               (true, CF.add_quantifiers qvars nf)
+       | CF.Or orf -> begin
+             let b1, nf1 = helper orf.CF.formula_or_f1 in
+             let b2, nf2 = helper orf.CF.formula_or_f2 in
+             match b1,b2 with
+               | false, false -> false, nf1
+               | false, true ->  b2, nf2
+               | true, false -> b1,nf1
+               | _ -> (true,
+                     CF.Or {orf with
+                         CF.formula_or_f1 = nf1;
+                         CF.formula_or_f2 = nf2;
+                     })
+         end
+   in
+   List.fold_left (fun r f -> let b,nf= helper f in
+     if b then r@[nf] else r
+   ) [] fs
+
+let remove_pure_or_redundant fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_1 "remove_pure_or_redundant" pr1 pr1
+      (fun _ -> remove_pure_or_redundant_x fs) fs
+
 let equiv_unify_x args fs=
-  Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula args f1 f2) fs
+  let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula args f1 f2) fs in
+  fs1
 
 let equiv_unify args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in

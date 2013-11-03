@@ -27,6 +27,7 @@ void foo( node x)
    }
  }
 
+
 /*
 expected:
 HP_RELDEFN HP_539:  HP_539(x')::  H(x')

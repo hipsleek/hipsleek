@@ -2855,7 +2855,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
           DD.tinfo_hprint (add_str  "  lhs " Cprinter.string_of_formula_base) lhs_b0 pos;
           (* DD.tinfo_hprint (add_str  "  rhs " Cprinter.prtt_string_of_h_formula) rhs0 pos; *)
           DD.tinfo_hprint (add_str  "  rhs_rest " Cprinter.prtt_string_of_h_formula) rhs_rest pos;
-          DD.info_hprint (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs0b pos;
+          DD.tinfo_hprint (add_str  "  unmatch " Cprinter.string_of_h_formula) rhs0b pos;
           DD.tinfo_hprint (add_str  "  classic " string_of_bool) !Globals.do_classic_frame_rule pos
         in
         let post_hps,prog_vars =

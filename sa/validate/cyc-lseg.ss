@@ -9,7 +9,7 @@ ll<> == self=null
   or self::node<q>*q::ll<>
  or self::node<q>*q::ll<>;
 
-void trav(ref node x)
+void trav(node@R x)
   infer [H,G]
   requires H(x)
   ensures G(x,x');//' 

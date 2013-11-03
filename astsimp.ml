@@ -1165,16 +1165,25 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 (*     (\*Cast.proc_dynamic_specs = add_pre cprog c.Cast.proc_dynamic_specs;*\)} *)
     ) cprog.C.old_proc_decls;}  
 *)
-
-and add_pre_to_cprog cprog = 
-  { cprog with C.new_proc_decls = C.proc_decls_map (fun c -> 
-      let ns = add_pre cprog c.C.proc_static_specs in
-      (*to handle @C. should handle copy on prim types?*)
+and add_pre_to_cprog_one cprog c =
+  let ns = add_pre cprog c.C.proc_static_specs in
+  (*to handle @C. should handle copy on prim types?*)
       let ns_caller = if c.C.proc_by_copy_params = [] then ns else
         trans_copy_spec_4caller c.C.proc_by_copy_params ns
       in
       let _ = c.C.proc_stk_of_static_specs # push ns_caller in
       c
+
+and add_pre_to_cprog cprog = 
+  { cprog with C.new_proc_decls = C.proc_decls_map (fun c -> 
+      (* let ns = add_pre cprog c.C.proc_static_specs in *)
+      (* (\*to handle @C. should handle copy on prim types?*\) *)
+      (* let ns_caller = if c.C.proc_by_copy_params = [] then ns else *)
+      (*   trans_copy_spec_4caller c.C.proc_by_copy_params ns *)
+      (* in *)
+      (* let _ = c.C.proc_stk_of_static_specs # push ns_caller in *)
+      (* c *)
+      add_pre_to_cprog_one cprog c
   ) cprog.C.new_proc_decls; }   
 
 and sat_warnings cprog = 
@@ -8376,7 +8385,7 @@ let process_pred_def_4_iast iprog check_exists pdef=
       (fun _ -> process_pred_def_4_iast_x iprog check_exists pdef) pdef
 
 (*L2: todo: merge with SLEEKEN.convert_data_and_pred_to_cast*)
-let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
+let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
   let rec look_up_view ls_pair_view_name_tis vn0=
     match ls_pair_view_name_tis with
       | [] -> None
@@ -8417,18 +8426,18 @@ let convert_pred_to_cast_x ls_pr_new_view_tis iprog cprog =
   let cprog2 = sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))
     then pred_prune_inference cprog2 else cprog2 in
-  let cprog4 = (add_pre_to_cprog cprog3) in
+  let cprog4 = if is_add_pre then (add_pre_to_cprog cprog3) else cprog3 in
   let _ = cprog.C.prog_view_decls <- cprog4.C.prog_view_decls in
   List.filter (fun vdcl ->
       List.exists (fun vn1 ->
           String.compare vdcl.C.view_name vn1 = 0) new_views
   ) cprog.C.prog_view_decls
 
-let convert_pred_to_cast new_views iprog cprog =
+let convert_pred_to_cast new_views is_add_pre iprog cprog =
   let pr1 = pr_list (pr_pair pr_id string_of_tlist) in
   let pr2 = pr_list_ln ( Cprinter.string_of_view_decl) in
   Debug.no_1 "convert_pred_to_cast" pr1 pr2
-      ( fun _ -> convert_pred_to_cast_x new_views iprog cprog) new_views
+      ( fun _ -> convert_pred_to_cast_x new_views is_add_pre iprog cprog) new_views
 
 (*LOC: this transformation is not quite correct. please improve*)
 let plugin_inferred_iviews views iprog cprog=

@@ -2559,7 +2559,8 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
       scc_inferred_hps
     *)
     let _ = Saout.plug_shape_into_specs prog iprog
-      (List.map (fun proc -> proc.proc_name) scc_procs) scc_inferred_hps in
+     (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
+     scc_inferred_hps in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
@@ -3180,6 +3181,7 @@ let check_prog iprog (prog : prog_decl) =
       ) in
       let _ = Infer.scc_rel_ass_stk # reverse in
       let _ = proc_mutual_scc_shape_infer iprog prog scc in
+      let _ = Infer.rel_ass_stk # reset in
       let _ = Infer.scc_rel_ass_stk # reset in
       prog
   ) prog proc_scc 

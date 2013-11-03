@@ -2240,6 +2240,15 @@ and is_member_pure (f:formula) (p:formula):bool =
   List.exists (fun c-> equalFormula f c) y
       
 
+and is_neg_of_consj f : bool =
+  match f with
+    | Not (p1,_,_) -> begin
+        match p1 with
+          | And (_,_,_) -> true
+          | _ -> false
+      end
+    | _ -> false
+
 and is_disjunct f : bool =
   match f with
     | Or(_,_,_,_) -> true

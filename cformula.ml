@@ -4644,13 +4644,21 @@ let rec formula_trans_heap_node fct f =
     | Exists b-> Exists{b with  formula_exists_heap = heap_trans_heap_node fct b.formula_exists_heap}
     | Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
 
-let rec struc_formula_drop_infer f =
- let recf = struc_formula_drop_infer in
+let rec struc_formula_drop_infer unk_hps f =
+ let recf = struc_formula_drop_infer unk_hps in
+ let drop_unk hn =
+   match hn with
+     | HRel (hp,_, _)->
+           if CP.mem_svl hp unk_hps then HEmp else hn
+     | _ -> hn
+ in
  match f with
    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
-   | EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
-   | EAssume _ -> f
-   | EInfer b-> b.formula_inf_continuation
+   | EBase b -> EBase {b with
+         formula_struc_base = formula_trans_heap_node drop_unk b.formula_struc_base;
+         formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
+   | EAssume b -> EAssume {b with formula_assume_simpl = formula_trans_heap_node drop_unk b.formula_assume_simpl}
+   | EInfer b-> recf b.formula_inf_continuation
    | EList l-> EList (Gen.map_l_snd recf l)
 
 let rec struc_formula_trans_heap_node formula_fct f =

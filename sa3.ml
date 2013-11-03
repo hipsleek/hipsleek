@@ -31,7 +31,11 @@ let collect_ho_ass cprog is_pre def_hps (acc_constrs, post_no_def) cs=
   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
   (* if infer_hps = [] then (acc_constrs, post_no_def) else *)
     let log_str = if is_pre then PK_Pre_Oblg else PK_Post_Oblg in
-    let  _ = DD.info_zprint (lazy (((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
+    let  _ =
+      if !Globals.sap then
+        DD.info_zprint (lazy (((string_of_proving_kind log_str) ^ ":\n" ^ (Cprinter.string_of_hprel_short cs)))) no_pos
+      else ()
+    in
     let tmp = !Globals.do_classic_frame_rule in
     let _ = Globals.do_classic_frame_rule := true in
     let f = wrap_proving_kind log_str (SAC.do_entail_check infer_hps cprog) in
@@ -771,7 +775,8 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             in
             (*remove duplicate*)
             let defs3 = if is_pre then SAU.equiv_unify args0 defs2 else defs2 in
-            let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
+            let defs4a = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
+            let defs4 = SAU.remove_pure_or_redundant defs4a in
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
             let defs5 =  if is_pre then defs5a else
@@ -807,9 +812,11 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
               ([(hp, def)],[])
         in
         (********PRINTING***********)
-        let _ = List.iter (fun (_, def) ->
+        let _ = if !Globals.sap then
+          List.iter (fun (_, def) ->
             Debug.info_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos)
           hpdefs
+        else ()
         in
         (********END PRINTING***********)
         (hpdefs, subst_useless)
@@ -1311,7 +1318,7 @@ let generalize_hps_cs_new prog callee_hps hpdefs unk_hps link_hps cs=
       cs callee_hps hpdefs unk_hps
 
 let generalize_hps_x prog is_pre callee_hps unk_hps link_hps sel_post_hps pre_defs predef_hps cs par_defs=
-  DD.binfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
+  (* DD.binfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos; *)
 (*general par_defs*)
   let non_ptr_unk_hps = List.concat (List.map (fun (hp,args) ->
       if List.exists (fun a ->
@@ -1777,7 +1784,7 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else
     (***************  PRINTING*********************)
-    let _ =
+    let _ =  if !Globals.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline "";
@@ -1786,9 +1793,9 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is
       print_endline "****************************************************";
       print_endline (pr ho_constrs0);
       print_endline "*************************************"
-    end
+    end;
     in
-    let _ =
+    let _ = if !Globals.sap then
     begin
       let pr = pr_list_ln Cprinter.string_of_hprel_short in
       print_endline "";
@@ -1797,7 +1804,7 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is
       print_endline "****************************************************";
       print_endline (pr pre_constrs);
       print_endline "*************************************"
-    end
+    end;
     in
     (***************  END PRINTING*********************)
     let is1 = infer_init iprog cprog proc_name is.CF.is_cond_path ho_constrs callee_hps (sel_lhps@sel_rhps)
@@ -2292,7 +2299,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  let _ = DD.ninfo_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos in
+  let _ = DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos in
   let _ = DD.ninfo_hprint (add_str "  sel post_hps"  !CP.print_svl) post_hps no_pos in
   let all_post_hps = CP.remove_dups_svl (post_hps@(SAU.collect_post_preds prog constrs0)) in
   let _ = DD.ninfo_hprint (add_str "  all post_hps" !CP.print_svl) all_post_hps no_pos in

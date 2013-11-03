@@ -252,7 +252,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let _ = List.iter (AS.process_pred_def_4_iast iprog false) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview. new_views: view with annotated types*)
-  let cviews = (AS.convert_pred_to_cast new_views iprog cprog) in
+  let cviews = (AS.convert_pred_to_cast new_views false iprog cprog) in
   let _ = cprog.C.prog_hp_decls <- crem_hprels in
   (*put back*)
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
@@ -366,29 +366,35 @@ let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs f=
 let collect_hp_defs cprog= Hashtbl.fold (fun i p acc->
     (p.C.proc_hpdefs@acc)) cprog.C.new_proc_decls []
 
-let trans_specs_hprel_2_cview iprog cprog proc_name hpdefs chprels_decl =
+let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl =
   let plug_views_proc proc =
     if proc.C.proc_hpdefs = [] then proc else
       let name = C.unmingle_name proc.C.proc_name in
-      let _ = print_endline ("proc_name: "^name) in
+      (* let _ = print_endline ("proc_name: "^name) in *)
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs in
-      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer proc.C.proc_static_specs) in
+      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
       let _ =  Debug.ninfo_pprint ("trans static spec: " ^ (Cprinter.string_of_struc_formula n_static_spec)) no_pos; in
-      let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer proc.C.proc_dynamic_specs) in
-      let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in
-      let n_proc_stk_of_static_specs = List.map (fun s ->
-          CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer s)
-      ) proc_stk_of_static_specs # get_stk in
-      let _ = proc_stk_of_static_specs # reset in
-      let _ = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in
-      { proc with C.proc_static_specs= n_static_spec;
+      let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
+      (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
+      (* let n_proc_stk_of_static_specs = List.map (fun s -> *)
+      (*     CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps s) *)
+      (* ) proc_stk_of_static_specs # get_stk in *)
+      (* let _ = proc_stk_of_static_specs # reset in *)
+      (* let _ = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in *)
+      let proc1 = { proc with C.proc_static_specs= n_static_spec;
           C.proc_dynamic_specs= n_dynamic_spec;
-          C.proc_stk_of_static_specs = proc_stk_of_static_specs;
+          (* C.proc_stk_of_static_specs = proc_stk_of_static_specs; *)
       }
+      in
+      AS.add_pre_to_cprog_one cprog proc1
   in
+  (* let _ = print_endline ("unk_hps: "^ (!CP.print_svl unk_hps)) in *)
   let old_procs = cprog.C.new_proc_decls in
   let proc_decls = Hashtbl.fold (fun i p acc ->
-      let np = plug_views_proc p in
+      let np = if String.compare p.C.proc_name proc_name == 0 then
+      plug_views_proc p
+      else p
+      in
       acc@[(i,np)]
   ) old_procs [] in
   let _ = Hashtbl.reset old_procs in
@@ -421,10 +427,10 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
           | _ -> (r_hp_defs, r_unk_hps)
     ) ([],[]) hp_defs in
   let plug_proc need_trans_hprels1 chprels_decl cprog proc_name=
-    let cprog = trans_specs_hprel_2_cview iprog cprog proc_name need_trans_hprels1 chprels_decl in
-  cprog
+    let cprog = trans_specs_hprel_2_cview iprog cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
+    cprog
   in
-  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
+  let need_trans_hprels1 =(*  List.map (fun (a,b,c,f) -> *)
   (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
   (*     (a,b,c,new_f) *)
   (* ) *) need_trans_hprels0 in
@@ -434,6 +440,7 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
 
 let plug_shape_into_specs cprog iprog proc_names hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "plug_shape_into_specs" pr1 pr_none
-      (fun _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
-      hp_defs
+  let pr2 =String.concat ";" in
+  Debug.no_2 "plug_shape_into_specs" pr1 pr2 pr_none
+      (fun _ _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
+      hp_defs proc_names
