@@ -1039,6 +1039,12 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
 	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
 | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
 
+let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+: CF.h_formula * CF.h_formula * CP.formula =
+  let pr = string_of_h_formula in
+  let pr2 = string_of_pure_formula in
+  Debug.no_3 "compact_data_nodes" pr pr (pr_list (pr_list string_of_spec_var)) (pr_triple pr pr pr2) (fun _ _ _ -> compact_data_nodes h1 h2 aset func) h1 h2 aset
+
 let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
 : CF.h_formula * CF.h_formula * CP.formula =
 (match h1 with
@@ -1071,6 +1077,12 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
          else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
 	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
 | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+
+let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+: CF.h_formula * CF.h_formula * CP.formula =
+  let pr = string_of_h_formula in
+  let pr2 = string_of_pure_formula in
+  Debug.no_3 "compact_view_nodes" pr pr (pr_list (pr_list string_of_spec_var)) (pr_triple pr pr pr2) (fun _ _ _ -> compact_view_nodes h1 h2 aset func) h1 h2 aset
 
 let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
