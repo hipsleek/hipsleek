@@ -5,24 +5,24 @@ struct pair {
   int y;
 };
 
-int goo(pair* q)
+int goo(struct pair* q)
 // pass by value
 /*@
-  requires q::pair*<r> * r::pair<a,b>
-  ensures q::pair*<r> * r::pair<a,b> & res=a;
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
 */
 {
   return q->x;
 }
 
-int goo(pair *q)
+int goo2(struct pair *q)
 // pass by ptr
 /*@
-  requires *q::pair<a,b>
-  ensures *q::pair<a,b> & res=a;
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
 */
 {
-  return *q.x;
+  return (*q).x;
 }
 
 /*
@@ -40,4 +40,12 @@ int goo_ptr(pair ptr_q)
 
 */
 
+void main ()
+/*@
+  requires true
+  ensures true;
+*/
+{
+  return;
+}
 

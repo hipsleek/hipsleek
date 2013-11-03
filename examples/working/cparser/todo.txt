@@ -58,3 +58,57 @@ generate inferred specs for empty specs
 ==================================================================
 
 
+Convert old pred to new pred:
+1.c: ???
+append.c: DONE
+append-tail.c: DONE
+avl-bind.c: ???
+avl.c: ???
+global1.c: DONE
+global2.c: DONE
+global3.c: DONE
+global4.c: DONE
+global5.c: DONE
+global6.c: DONE
+global-ll.c: DONE
+global-ll2.c: DONE
+global-mutual-rec.c: DONE
+heaps.c: ???
+heaps2.c: ???
+heaps3-1.c: ???
+heaps3-2.c: ???
+pair.c: ???
+pair2.c: ???
+struct_global.c: ???
+struct_plain.c: DONE
+t1.c: ???
+t2.c: ???
+
+slayer/address_of2.c: ???
+slayer/address_of.c: ???
+slayer/address_of_global.c: ???
+slayer/address_of_malloced_struct.c: ???
+slayer/address_of_struct.c: DONE
+slayer/bool_to_int.c: DONE
+slayer/call_arg.c: ???
+slayer/call_arg_unique.c: DONE
+slayer/call.c: DONE
+slayer/control_guard.c: DONE
+slayer/dead_code.c: DONE
+slayer/deref_funs.c: ???
+slayer/deref_NULL2.c: DONE
+slayer/deref_via_call.c: ???
+slayer/deref_via_call2.c: ???
+slayer/empty.c: DONE
+slayer/free_local1.c: ???
+slayer/free_local.c: ???
+slayer/fun_arg_order.c: DONE
+slayer/global_var.c: DONE
+slayer/if.c: DONE
+slayer/ifguard.c: DONE
+slayer/if_pointer.c: ???
+slayer/inline_criteria.c: ???
+slayer/update_global_var.c: ???
+slayer/while2loads.c: ???
+slayer/writer_reader.c: ???
+

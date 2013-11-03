@@ -7,7 +7,7 @@ struct pair {
 
 int foo(struct pair *q)
 /*@
-  requires *q::pair<a,b>@L
+  requires q::pair<a,b>@L
   ensures res=b;
 */
 {

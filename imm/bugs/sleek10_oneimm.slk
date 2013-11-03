@@ -1,0 +1,9 @@
+data node { int val ; node next }.
+
+
+pred ll<n,a1> == self = null & n = 0
+         or self::node<_@a1,r> * r::ll<n - 1,a1>
+         inv n >= 0.
+
+checkentail x::ll<n,@M> & x!=null |- x::ll<m,@A> & m>0.
+print residue.

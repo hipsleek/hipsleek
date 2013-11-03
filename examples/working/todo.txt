@@ -277,6 +277,9 @@ Unexpected result with : lseg.slk (failed check(s): )
 Checking lseg_case.slk (runs with extra options:  --elp )
 Unexpected result with : lseg_case.slk (failed check(s): ) 
 ====================================================================
+Total number of errors: 2 in files:
+  baga-test-eps.slk({E12#Fail},{E9#Fail}) baga-test.slk({E12#Fail},{E9#Fail}).
+Total verification time: 0.00 second
 ====================================================================
 ====================================================================
 ====================================================================

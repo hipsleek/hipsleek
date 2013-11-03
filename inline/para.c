@@ -3,7 +3,7 @@
 int foo(int q)
 /*@
   requires true
-  ensures q::int*<a+1> & res=a+1;
+  ensures res=a+1;
 */
 {
   int* r = &q;
@@ -14,14 +14,14 @@ int foo(int q)
 int main()
 /*@
   requires true
-  ensures res=3;
+  ensures res=2;
 */
 {
   int x;
   x=2;
   int t=foo(x);
-  printf("foo(x) ==> %i\n",t);
-  printf("x ==> %i\n",x);
+  //printf("foo(x) ==> %i\n",t);
+  //printf("x ==> %i\n",x);
   return x;
 }
 

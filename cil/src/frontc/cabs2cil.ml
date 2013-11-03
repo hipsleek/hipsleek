@@ -6150,23 +6150,24 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
             and blockCanBreak b = 
               List.exists stmtCanBreak b.bstmts
             in
-            if blockFallsThrough !currentFunctionFDEC.sbody then begin
-              let retval = 
-                match unrollType !currentReturnType with
-                  TVoid _ -> None
-                | (TInt _ | TEnum _ | TFloat _ | TPtr _) as rt -> 
-                    (* ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname); *)
-                    Some (makeCastT (zero lu) intType rt)
-                | _ ->
-                    (* ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname); *)
-                    None
-              in
-              if not (hasAttribute "noreturn" 
-                        !currentFunctionFDEC.svar.vattr) then 
-                !currentFunctionFDEC.sbody.bstmts <- 
-                  !currentFunctionFDEC.sbody.bstmts 
-                  @ [mkStmt (Return(retval, funloc))] (* TRUNG TODO: the current location of RETURN maybe isn't correct *)
-            end;
+            (* TRUNG: avoid automatically adding return statement when source code doesn't have *)
+            (* if blockFallsThrough !currentFunctionFDEC.sbody then begin                                                                                   *)
+            (*   let retval =                                                                                                                               *)
+            (*     match unrollType !currentReturnType with                                                                                                 *)
+            (*       TVoid _ -> None                                                                                                                        *)
+            (*     | (TInt _ | TEnum _ | TFloat _ | TPtr _) as rt ->                                                                                        *)
+            (*         (* ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname); *)                 *)
+            (*         Some (makeCastT (zero lu) intType rt)                                                                                                *)
+            (*     | _ ->                                                                                                                                   *)
+            (*         (* ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname); *) *)
+            (*         None                                                                                                                                 *)
+            (*   in                                                                                                                                         *)
+            (*   if not (hasAttribute "noreturn"                                                                                                            *)
+            (*             !currentFunctionFDEC.svar.vattr) then                                                                                            *)
+            (*     !currentFunctionFDEC.sbody.bstmts <-                                                                                                     *)
+            (*       !currentFunctionFDEC.sbody.bstmts                                                                                                      *)
+            (*       @ [mkStmt (Return(retval, funloc))] (* TRUNG TODO: the current location of RETURN maybe isn't correct *)                               *)
+            (* end;                                                                                                                                         *)
             
             (* ignore (E.log "The env after finishing the body of %s:\n%t\n"
                         n docEnv); *)
@@ -6780,10 +6781,11 @@ and doStatement (s : A.statement) : chunk =
                                        Iast.exp_assert_assumed_formula = new_assume_f; } in
               Iast.Assert new_exp
           | Iast.Dprint _ -> hspec
+          | Iast.Bind _ -> hspec
           | _ -> 
-            let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
-            raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
-                                  ^ (Iprinter.string_of_exp hspec)))
+              let error_loc = ("line " ^ string_of_int (loc.Cabs.start_pos.lineno)) in
+              raise (HipSpecsError ("Unsupported Hip statement, " ^ error_loc ^ ": " 
+                                    ^ (Iprinter.string_of_exp hspec)))
         ) in
         (* return *)
         s2c (mkStmt (HipStmt (new_hspec, loc'))) loc'

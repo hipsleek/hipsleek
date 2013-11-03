@@ -1,0 +1,78 @@
+data node {
+	int val; 
+}.
+
+
+// Implicit
+
+// 1.
+checkentail x::node<_@v>|-  x::node<_@M>.
+print residue.
+
+// 2.
+checkentail x::node<_@v>|-  x::node<_@w> & w=@M.
+print residue.
+
+// 3.
+checkentail x::node<_@v>|-  x::node<_@w> & w<:@M.
+print residue.
+
+
+
+/*
+// 4. Fail
+checkentail x::node<_@A>|-  x::node<_@I>.
+print residue.
+
+// 5. Fail
+checkentail x::node<_@A>|-  x::node<_@w> & w=@I.
+print residue.
+
+// 6. Fail
+checkentail x::node<_@A>|-  x::node<_@w> & w<:@I.
+print residue.
+
+//7. Fail 
+checkentail x::node<_@A>|-  x::node<_@L>.
+print residue.
+
+//8. Fail
+checkentail x::node<_@A>|-  x::node<_@w> & w=@L.
+print residue.
+
+//9. Fail
+checkentail x::node<_@A>|-  x::node<_@w> & w<:@L.
+print residue.
+
+//10. Valid
+checkentail x::node<_@A>|-  x::node<_@A>.
+print residue.
+
+//11. Valid
+checkentail x::node<_@A>|-  x::node<_@w> & w=@A.
+print residue.
+
+//12. Valid
+checkentail x::node<_@A>|-  x::node<_@w> & w<:@A.
+print residue.
+
+//13 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w=@M).
+//14 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w<:@M).
+
+//15 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w=@I).
+//16 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w<:@I).
+
+//17 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w=@L).
+//18 Fail
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w<:@L).
+
+//19 Valid
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w=@A).
+//20 Valid
+checkentail x::node<_@A>|-  (exists w: x::node<_@w> & w<:@A).
+*/

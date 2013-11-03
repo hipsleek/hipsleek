@@ -8,9 +8,7 @@ struct pair {
  
 int foo(struct pair* q)
 /*@
-  requires q::pair^<a,b>@L
-  ensures res=b;
-  requires q::pair*<r>*pair<a,b>@L
+  requires q::pair<a,b>@L
   ensures res=b;
 */
 {
@@ -19,7 +17,7 @@ int foo(struct pair* q)
 
 int star_foo(struct pair *q)
 /*@
-  requires *q::pair<a,b>@L
+  requires q::pair<a,b>@L
   ensures res=b;
 */
 {

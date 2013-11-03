@@ -1,18 +1,11 @@
-// pass-by-value
+#include "../examples/working/cparser/stdhip.h"
 
 struct pair {
   int x;
   int y;
 };
 
-/*
- data pair {
-  int x;
-  int y;
- }
-*/
-
-int foo(pair q)
+int foo(struct pair q)
 // pass by copy
 /*@
   requires q::pair<a,_>
@@ -22,7 +15,7 @@ int foo(pair q)
   return q.x;
 }
 
-int foo2(pair q)
+int foo2(struct pair q)
 // pass by ptr
 /*@
   requires q::pair<a,_>@L
@@ -33,25 +26,28 @@ int foo2(pair q)
 }
 
 
-int goo(pair* q)
+int goo(struct pair* q)
 // pass by copy
 /*@
-  requires q::pair*<r> * r::pair<a,b>
-  ensures q::pair*<r> * r::pair<a,b> & res=a;
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
 */
 {
   return q->x;
 }
 
-int hoo() 
+int hoo()
+/* 
   requires true
   ensures res=5;
+*/
 {
-  pair p;
+  struct pair p;
   p.x = 2; 
   int t=foo(p);
-  pair* pp;
-  pp = malloc(..);
+  struct pair* pp;
+  pp = malloc(sizeof (struct pair));
+  int* iiii = malloc(1);
   pp->x =3;
   t=t+goo(pp);
   return t;

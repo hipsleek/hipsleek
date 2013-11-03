@@ -16,7 +16,7 @@
 
 */
 void f() {
-  int x;
+  int x = 0;
   int *p;
 
   p = &x;

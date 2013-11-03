@@ -35,7 +35,7 @@ type flags =
 	  Flag_str of string
 	| Flag_int of int
 	| Flag_float of float
-	
+
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
@@ -86,7 +86,9 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+(* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
+let imm_top = Accs
+let imm_bot = Mutable
 
 type hp_arg_kind=
   | I
@@ -128,6 +130,8 @@ type typ =
   | Bptyp
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
+
+let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -271,6 +275,10 @@ let string_of_loc (p : loc) =
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
+
+let is_valid_loc p=
+  (p.start_pos.Lexing.pos_lnum>=0 &&
+   p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
 
 let string_of_pos (p : Lexing.position) = 
     Printf.sprintf "(Line:%d,Col:%d)"
@@ -1151,6 +1159,7 @@ let fresh_int () =
   !seq_number
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
+  let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
@@ -1226,6 +1235,9 @@ let fst3 (x,_,_) = x
 let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
+
+let concat_pair_of_lists l1 l2 =
+  (((fst l1)@(fst l2)), ((snd l1)@(snd l2)))
 
 let path_trace_eq p1 p2 =
   let rec eq pt1 pt2 = match pt1,pt2 with

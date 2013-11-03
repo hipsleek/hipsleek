@@ -1,6 +1,8 @@
 // see examples/working/hip/global-ll.c
 
+
 #include <stddef.h>
+#include "stdhip.h"
 
 struct node {
   int val;
@@ -9,17 +11,9 @@ struct node {
 
 /*@
 ll<n> == self = null & n = 0 
-  or self::node^<_,p> * p::ll<n1> & n = n1 + 1
+  or self::node<_,p> * p::ll<n1> & n = n1 + 1
   inv n >= 0;
 */
-
-void* malloc(int size) __attribute__ ((noreturn))
-/*@
-  case {
-    size <= 0 -> requires true ensures res = null;
-    size >  0 -> requires true ensures res != null;
-  }
-*/;
 
 /* global vars */
 int n;

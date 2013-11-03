@@ -93,7 +93,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
   (* position-based arguments. If a parameter does not appear in args,     *)
   (* then it is instantiated to a fresh name.                              *)
-  let rec match_args (params : ident list) args_ann :  (IP.exp * IF.ann option) list =
+  let rec match_args (params : ident list) args_ann :  (IP.exp * IP.ann option) list =
     match params with
       | p :: rest ->
             let tmp1 = match_args rest args_ann in
@@ -212,22 +212,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (
-          let re = Str.regexp "__star$" in
-          try
-            let _ = Str.search_forward re n2 0 in
-            (tl, Some (Named n2))
-          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
-            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
-        )
-      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (
-          let re = Str.regexp "__star$" in
-          try
-            let _ = Str.search_forward re n1 0 in
-            (tl, Some (Named n1))
-          with Not_found -> report_error no_pos ("UNIFICATION ERROR : at location "
-            ^" types " ^ n1 ^" and "^ n2 ^" are inconsistent")
-        )
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (tl, Some (Named n2))
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (tl, Some (Named n1))
       | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
@@ -933,7 +919,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let base_ddecl = (
         let dname = (
           match c with
-          | "int" | "float" | "void" | "bool" -> c ^ "__star"
+          | "int" | "float" | "void" | "bool" -> c ^ "_star"
           | _ -> c
         ) in
         I.look_up_data_def_raw prog.I.prog_data_decls dname
@@ -941,7 +927,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let holder_name = (
         let deref_str = ref "" in
         for i = 1 to deref do
-          deref_str := !deref_str ^ "__star";
+          deref_str := !deref_str ^ "_star";
         done;
         c ^ !deref_str
       ) in
@@ -977,7 +963,7 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
       let expect_dname = (
           let s = ref "" in
           for i = 1 to deref do
-            s := !s ^ "__star";
+            s := !s ^ "_star";
           done;
           dname ^ !s
       ) in
@@ -1139,8 +1125,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let ft = cperm_typ () in
       let gather_type_info_ann c tlist = (
         match c with
-        | IF.ConstAnn _ -> tlist
-        | IF.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
+        | IP.ConstAnn _ -> tlist
+        | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
       ) in
       let rec gather_type_info_param_ann lst tl = (
         match lst with
@@ -1158,7 +1144,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       ) in
       let n_tl = gather_type_info_perm perm tlist in
       let n_tl = gather_type_info_ann ann n_tl in
-      let n_tl = if (!Globals.allow_field_ann) then gather_type_info_param_ann ann_param n_tl else n_tl in
+      let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
       (*Deal with the generic pointer! *)
       if (c = Parser.generic_pointer_type_name) then 
         (* Assumptions:

@@ -530,15 +530,57 @@ let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var
 (*   | ConstAnn(Accs) -> true *)
 (*   | _ -> false *)
 
+let rec string_of_imm_helper imm = 
+  match imm with
+    | CP.ConstAnn(Accs) -> "@A"
+    | CP.ConstAnn(Imm) -> "@I"
+    | CP.ConstAnn(Lend) -> "@L"
+    | CP.ConstAnn(Mutable) -> "@M"
+    | CP.TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
+    | CP.TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
+    | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
+
 let rec string_of_imm imm = 
   if not !print_ann then ""
-  else match imm with
-  | ConstAnn(Accs) -> "@A"
-  | ConstAnn(Imm) -> "@I"
-  | ConstAnn(Lend) -> "@L"
-  | ConstAnn(Mutable) -> "@M"
-  | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
-  | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
+  else string_of_imm_helper imm
+
+let rec string_of_imm_ann imm = 
+  match imm with
+    | CP.PolyAnn(v) -> string_of_spec_var v
+    | _             -> string_of_imm_helper imm
+
+let rec string_of_typed_imm_ann imm = 
+  match imm with
+    | CP.PolyAnn(v) -> string_of_typed_spec_var v
+    | _             -> string_of_imm_helper imm
+
+let string_of_annot_arg ann = 
+  match ann with
+    | CP.ImmAnn imm -> string_of_imm_ann imm
+
+let string_of_annot_arg_list ann_list = 
+  pr_list string_of_annot_arg ann_list
+
+let string_of_typed_annot_arg ann = 
+  match ann with
+    | CP.ImmAnn imm -> string_of_typed_imm_ann imm
+
+let string_of_view_arg arg = 
+  match arg with
+    | CP.SVArg sv     -> string_of_spec_var sv
+    | CP.AnnotArg ann -> string_of_annot_arg ann
+
+let string_of_view_arg_list arg_list = 
+  pr_list string_of_view_arg arg_list
+
+let string_of_typed_annot_arg ann = 
+  match ann with
+    | CP.ImmAnn imm -> string_of_typed_imm_ann imm
+
+let string_of_typed_view_arg arg = 
+  match arg with
+    | CP.SVArg sv     -> string_of_typed_spec_var sv
+    | CP.AnnotArg ann -> string_of_typed_annot_arg ann
 
 let string_of_derv dr = 
   if not !print_ann then ""
@@ -556,6 +598,10 @@ let smart_string_of_spec_var x =
 
 let pr_spec_var x = fmt_string (smart_string_of_spec_var x)
 
+let pr_view_arg x = fmt_string (string_of_view_arg x)
+
+let pr_annot_arg x = fmt_string (string_of_annot_arg x)
+
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
 let pr_typed_spec_var_lbl (l,x) = 
@@ -564,7 +610,17 @@ let pr_typed_spec_var_lbl (l,x) =
     else (LO.string_of l)^":"
   in fmt_string (s^(string_of_typed_spec_var x))
 
+let pr_typed_view_arg_lbl (l,x) = 
+  let s = 
+    if LO.is_common l then ""
+    else (LO.string_of l)^":"
+  in fmt_string (s^(string_of_typed_view_arg x))
+
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
+
+let pr_list_of_view_arg xs = pr_list_none pr_view_arg xs
+
+let pr_list_of_annot_arg xs = pr_list_none pr_annot_arg xs
   
 let pr_imm x = fmt_string (string_of_imm x)
 
@@ -1138,7 +1194,9 @@ let rec pr_h_formula h =
 	  h_formula_view_derv = dr;
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
-      h_formula_view_arguments = svs; 
+      h_formula_view_arguments = svs;
+      h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1148,10 +1206,12 @@ let rec pr_h_formula h =
 	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
           let perm_str = string_of_cperm perm in
+          let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 	  if (!Globals.texify) then
 	    begin
-	      fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}";
+	      (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
+	      fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
 	    end
 	  else
 	    begin
@@ -1159,7 +1219,7 @@ let rec pr_h_formula h =
               (* pr_formula_label_opt pid;  *)
               pr_spec_var sv; 
               fmt_string "::"; (* to distinguish pred from data *)
-              pr_angle (c^perm_str) pr_spec_var svs;
+              pr_angle (c^perm_str) pr_view_arg params;
 	      pr_imm imm;
 	      pr_derv dr;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1292,6 +1352,8 @@ let rec prtt_pr_h_formula h =
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
+      h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1300,19 +1362,21 @@ let rec prtt_pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
+        let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
          (* (if pid==None then fmt_string "N
 N " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)
 		  if (!Globals.texify) then 
 			  begin
-			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}";
+			  (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
 			  end
 		  else
           begin
 			  pr_spec_var sv; 
 			  fmt_string "::"; 
-			  pr_angle (c^perm_str) pr_spec_var svs;
+			  pr_angle (c^perm_str) pr_view_arg params;
 			  pr_imm imm;
 			  pr_derv dr;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1415,6 +1479,8 @@ let rec prtt_pr_h_formula_inst prog h =
 	  h_formula_view_imm = imm;
       h_formula_view_perm = perm; (*LDK*)
       h_formula_view_arguments = svs; 
+      h_formula_view_args_orig = svs_orig;  
+      h_formula_view_annot_arg = anns;  
       h_formula_view_origins = origs;
       h_formula_view_original = original;
       h_formula_view_lhs_case = lhs_case;
@@ -1423,10 +1489,12 @@ let rec prtt_pr_h_formula_inst prog h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
+        let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
           fmt_open_hbox ();
 		    if (!Globals.texify) then 
 			  begin
-			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_spec_var svs;fmt_string "}";
+			  (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_spec_var svs;fmt_string "}"; *)
+			  fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{");pr_list_of_view_arg params;fmt_string "}";
 			  end
 		  else
           begin
@@ -1435,7 +1503,7 @@ let rec prtt_pr_h_formula_inst prog h =
 				  (* pr_formula_label_opt pid;  *)
 				  pr_spec_var sv; 
 				  fmt_string "::"; 
-				  pr_angle (c^perm_str) pr_spec_var svs;
+				  pr_angle (c^perm_str) pr_view_arg params;
 				  pr_imm imm;
 				  pr_derv dr;
 				  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1535,6 +1603,8 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_imm = imm;
     h_formula_view_perm = perm; (*LDK*)
     h_formula_view_arguments = svs; 
+    h_formula_view_args_orig = svs_orig;  
+    h_formula_view_annot_arg = anns;  
     h_formula_view_origins = origs;
     h_formula_view_original = original;
     h_formula_view_lhs_case = lhs_case;
@@ -1543,12 +1613,14 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_pruning_conditions = pcond;
     h_formula_view_pos =pos}) ->
     let perm_str = string_of_cperm perm in
+    let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
     fmt_open_hbox ();
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
     fmt_string "::"; 
-    if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
+    (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
+    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
 (*    pr_imm imm;*)
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -2954,9 +3026,13 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
-      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
+  (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
+  (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 
+      (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  pr_vwrap  "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params);
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
@@ -3000,8 +3076,10 @@ let pr_view_decl_short v =
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl 
-      (List.combine v.view_labels v.view_vars); fmt_string "= ") ();
+  (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *)
+  (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_view_arg_lbl 
+      (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -3365,11 +3443,13 @@ let rec string_of_coerc_list l = match l with
 let string_of_proc_decl p = 
   let locstr = (string_of_full_loc p.proc_loc)  
   in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
+      ^ (if Gen.is_empty p.proc_by_name_params then "" 
+	  else ("\n@ref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
+      ^ (if Gen.is_empty p.proc_by_copy_params then "" 
+	  else ("\n@copy " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_copy_params)) ^ "\n"))
       ^ (if p.proc_is_recursive then " rec" else "") ^ "\n"
       ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
       ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
-      ^ (if Gen.is_empty p.proc_by_name_params then "" 
-	  else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
 	    | None -> "") ^ locstr^"\n"
@@ -3612,7 +3692,13 @@ let html_of_spec_var sv = match sv with
 		| Primed -> html_prime 
 		| Unprimed -> "")
 
+let html_of_view_arg sv = match sv with
+  |P.SVArg sv   -> html_of_spec_var sv 
+  |P.AnnotArg a -> string_of_annot_arg a
+
 let html_of_spec_var_list svl = String.concat ", " (List.map html_of_spec_var svl)
+
+let html_of_view_arg_list svl = String.concat ", " (List.map html_of_view_arg svl)
 
 let rec html_of_formula_exp e =
 	 match e with
@@ -3782,14 +3868,18 @@ let rec html_of_h_formula h = match h with
 				h_formula_view_derv = dr;
 				h_formula_view_imm = imm;
 				h_formula_view_arguments = svs; 
+                                h_formula_view_args_orig = svs_orig;  
 				h_formula_view_origins = origs;
+                                h_formula_view_annot_arg = anns;  
 				h_formula_view_original = original;
 				h_formula_view_lhs_case = lhs_case;
 				h_formula_view_label = pid;
 				h_formula_view_remaining_branches = ann;
 				h_formula_view_pruning_conditions = pcond;
 				h_formula_view_pos =pos}) ->
-			(html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket
+	      (* (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_spec_var_list svs) ^ html_right_angle_bracket *)
+              let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
+	      (html_of_spec_var sv) ^ html_mapsto ^ c ^ html_left_angle_bracket ^ (html_of_view_arg_list params) ^ html_right_angle_bracket
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
@@ -3893,6 +3983,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
+Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_formula_base := string_of_formula_base;;

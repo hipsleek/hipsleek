@@ -12,6 +12,7 @@ int foo(struct pair q)
 */
 {
   struct pair* p = &q;
+  struct pair* p1 = &q;
   p->x = q.x+1;
   p->x = q.x+q.y;
   return p->x;
@@ -20,7 +21,7 @@ int foo(struct pair q)
 int main()
 /*@
   requires true
-  ensures res=2;
+  ensures res=1;
 */
 {
   struct pair p;

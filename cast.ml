@@ -86,6 +86,10 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
+    (* below to detect @L in post-condition *)
+    mutable view_contains_L_ann : bool;
+    view_ann_params : (P.annot_arg * int) list;
+    view_params_orig: (P.view_arg * int) list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
@@ -255,8 +259,8 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : Cformula.ann;
-    exp_bind_param_imm : Cformula.ann list;
+    exp_bind_imm : P.ann;
+    exp_bind_param_imm : P.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
@@ -1075,7 +1079,6 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
     Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
-
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
       let proc = Hashtbl.find procs name in

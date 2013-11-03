@@ -262,7 +262,7 @@ let bf_to_var p = match p with
 type pure_double =
   | Pure_f of P.formula
   | Pure_c of P.exp
-  | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) 
+  | Pure_t of(P.exp * (P.ann option)) (* for data ann: var * ann, where var represents a data field *) 
 
 let mk_purec_absent e = Pure_t(e,Some F.mk_absent_ann)
 
@@ -689,7 +689,7 @@ let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
   for i = 1 to ref_level do
-    s := !s ^ "__star";
+    s := !s ^ "_star";
   done;
   if (deref_level == 0) then
     (cid, !s, 0)
@@ -746,21 +746,21 @@ let set_slicing_utils_pure_double f il =
                           f
   else f
 
-let rec get_heap_ann annl : F.ann = 
+let rec get_heap_ann annl : P.ann = 
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  F.ConstAnn(Mutable)
+    | [] ->  P.ConstAnn(Mutable)
 
-and get_heap_ann_opt annl : F.ann option = 
+and get_heap_ann_opt annl : P.ann option = 
   match annl with
     | a :: r -> a
     | [] ->  None
 
-and get_heap_ann_list annl : F.ann list  = 
+and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  F.ConstAnn(Mutable) :: get_heap_ann_list r
+    |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
     | [] -> []
 				   
 let sprog = SHGram.Entry.mk "sprog" 
@@ -1034,11 +1034,11 @@ ann_label:
 
 ann_heap: 
   [[
-    `MUT -> Some (F.ConstAnn(Mutable))
-   | `IMM  -> Some (F.ConstAnn(Imm))
-   | `LEND -> Some (F.ConstAnn(Lend))
-   | `ACCS -> Some (F.ConstAnn(Accs))
-   | `AT; t=cid  -> Some (F.PolyAnn(t, get_pos_camlp4 _loc 1))
+    `MUT -> Some (P.ConstAnn(Mutable))
+   | `IMM  -> Some (P.ConstAnn(Imm))
+   | `LEND -> Some (P.ConstAnn(Lend))
+   | `ACCS -> Some (P.ConstAnn(Accs))
+   | `AT; t=cid  -> Some (P.PolyAnn(t, get_pos_camlp4 _loc 1))
    | `DERV -> None
    ]];
 
@@ -1082,6 +1082,7 @@ view_header:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_imm_map = [];
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
@@ -1114,6 +1115,7 @@ view_header_ext:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_imm_map = [];
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
@@ -1432,8 +1434,8 @@ simple_heap_constr:
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        match hal with
-       | ([],t) -> F.mkHeapNode2 c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | t = ho_fct_header -> (
        let frac = (
@@ -1442,7 +1444,7 @@ simple_heap_constr:
          else 
            empty_iperm ()
        ) in
-       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
+       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
@@ -1454,8 +1456,8 @@ simple_heap_constr:
      )
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        match hal with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
          (* if hp_names # mem id then *)
@@ -2492,7 +2494,6 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
-
 flag_arg : [[
 	`IDENTIFIER t -> Flag_str t
 	| `INT_LITER (i,_)-> Flag_int i

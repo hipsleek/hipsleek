@@ -11,7 +11,7 @@ struct node {
 /* view for avl trees */
 /*@
 avl<m, n> == self = null & m = 0 & n = 0 
-  or self::node^<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & -1 <= n1-n2 <=1 & n = max(n1, n2) + 1 
+  or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & -1 <= n1-n2 <=1 & n = max(n1, n2) + 1 
   inv m >= 0 & n >= 0;
 */
 
@@ -196,7 +196,7 @@ struct node* build_avl1(struct node* x, struct node* y)
 
 void build_avl2(struct node* x, struct node* y, struct node* z)
 /*@
-  requires y::avl<my, ny> * z::avl<mz, ny> * x::node^<_, _, _, _> & y != null
+  requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null
   ensures  x::avl<1 + my + mz, 1 + ny>;
 */
 {
@@ -221,7 +221,7 @@ struct node* insert(struct node* x, int a)
   ensures res::avl<m+1, _>;
 */
 {
-  if (x == null) {
+  if (x == NULL) {
     struct node* tmp = malloc(sizeof(struct node));
     tmp->val = a;
     tmp->height = 1;

@@ -1,0 +1,12 @@
+data node {
+  node next;
+}.
+
+checkentail x::node<_>*x::node<_> |- false.
+
+checkentail _::node<_>*_::node<_> |- false.
+
+checkentail x::node<_>*y::node<_> |- false.
+
+checkentail x::node<_>*y::node<_> & x=y |- false.
+

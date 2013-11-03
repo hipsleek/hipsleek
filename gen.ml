@@ -115,6 +115,7 @@ struct
 	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
+ let map_snd_only f x = List.map (fun (l,c)-> f c) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
  let fold_l_snd_f fj f st x = List.fold_left (fun a (_,c)-> fj a (f c)) st  x
  let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
@@ -1113,6 +1114,9 @@ struct
   (* a singleton bag *)
   let singleton_baga (e:ptr) : baga = [e]
 
+  let string_of (b:baga) : string =
+    Basic.pr_list (Elt.string_of) b
+
   let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
@@ -1124,10 +1128,21 @@ struct
   let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
 
   (* false result denotes contradiction *)
-  let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)
+  let is_sat_baga_eq eq (xs:baga) : bool = 
+    let r= not(is_dupl_baga_eq eq xs) in
+    begin
+      print_endline ("is_sat_baga_eq("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
 
   (* false result denotes contradiction *)
-  let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
+  let is_sat_baga (xs:baga) : bool = 
+    let r = not(is_dupl_baga xs) in
+    begin
+      print_endline ("is_sat_baga("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
+
 
   (*
 \    [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
@@ -1169,6 +1184,8 @@ struct
   open BL_EQ
 
   (* let is_dupl_baga _ = true *)
+
+  let string_of xs = Basic.pr_list (Basic.pr_list Elt.string_of) xs
 
   (* an empty difference set *)
   let mkEmpty : dpart = []
@@ -1253,7 +1270,11 @@ struct
 
   (* false result denotes contradiction *)
   let is_sat_dset (xs:dpart) : bool = 
-    not(is_dupl_dset xs)
+    let r = not(is_dupl_dset xs) in
+    begin
+      print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r));
+      r
+    end
 
   let apply_subs subs x =
     try
@@ -1869,3 +1890,9 @@ let try_finally e f a g =
     (g flag; r)
   with _ as e -> 
     (g flag; raise e)
+
+let range a b =
+  let rec aux a b =
+    if a > b then [] else a :: aux (a+1) b  in
+  (* if a > b then List.rev (aux b a) else aux a b;; *)
+  if a > b then [] else aux a b;;

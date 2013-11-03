@@ -1,0 +1,45 @@
+#include<stdio.h>
+struct pair {
+	int x;
+	int y;
+};
+
+int main() 
+/*@
+  requires true
+  ensures res=2;
+*/
+{
+  struct pair p;
+  p.x = 1;
+  struct pair* pp;
+  pp = &p;
+  struct pair** ppp;
+  ppp = &pp;
+  (*ppp)->x = (*ppp)->x +1;
+  //printf("*ppp->x = %i",(*ppp)->x);
+  //printf("*pp->x = %i",pp->x);
+  //printf("p.x = %i",p.x);
+  return pp->x;
+
+}
+
+/* 
+
+#pair-2.c
+
+{local: pair p,pair pp,pair_star ppp,pair_star addr_pp
+pair p = new pair(0, 0);
+pair pp = new pair(0, 0);
+^^^^^^^^^^^^^^^^^^^^^^^^^ redundant since addr_pp already present
+pair_star ppp = new pair_star(null);
+pair_star addr_pp = new pair_star(null);
+{member access p~~>x = 1;
+member access addr_pp~~>deref = p;
+ppp = addr_pp;
+member access member access ppp~~>deref~~>x = (int)member access member access ppp~~>deref~~>x + 1;
+(82, ):return member access member access addr_pp~~>deref~~>x}}
+}
+*/
+
+

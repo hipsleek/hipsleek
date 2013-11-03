@@ -7,8 +7,8 @@ struct pair {
 
 int foo(struct pair* q)
 /*@
-  requires q^::pair<a,b>
-  ensures q^::pair<a+1+b,b> & res=a+1+b;
+  requires q::pair<a,b>
+  ensures q::pair<a+1+b,b> & res=a+1+b;
 */
 {
   struct pair** p = &q;
@@ -27,8 +27,8 @@ int main()
   p.x = 1;
   p.y = 2;
   int t=foo(&p);
-  printf("foo(p) ==> %i\n",t); //4
-  printf("p.x ==> %i\n",p.x); //4
+  //printf("foo(p) ==> %i\n",t); //4
+  //printf("p.x ==> %i\n",p.x); //4
   return p.x;
 }
 

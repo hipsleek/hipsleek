@@ -1,0 +1,134 @@
+Given:
+ int foo(int** q)
+  requires q::int^^<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+If we have translated:
+ int foo(int** q)
+  requires q::int_star_star<r2>*r2::int_star<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+It would still be incorrect since the r2::int_star<a> 
+memory node would be lost, so we cannot really mix
+the two notation.
+
+Thus when given:
+ int foo(int** q)
+  requires q::int^^<a>
+  ensures q::int^^<a> & res=0;
+
+We should try out best to translate it to:
+  requires q::int_star_star<r>*r::int_star<a>
+  ensures q::int_star_star<r>*r::int_star<a> & res=0;
+
+so as to preserve the link of r::int_star<a>.
+If we had translated it to:
+
+  requires q::int_star_star<r>*r::int_star<a>
+  ensures q::int_star_star<r1>*r1::int_star<a> & res=0;
+
+The link to r::int_star<a> node will still be lost.
+
+
+
+
+
+
+
+
+
+
+short.c --esl
+=======
+
+id: 12; caller: []; line: 19; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail r_35'::int_star<v_int_17_965@M>@M * addr_37'::int_star_star<r@M>@M * 
+r::int_star<a@M>@M&v_int_17_965=0 & v_int_17_966=0 & v_null_18_967=null & 
+deref_17_968=v_null_18_967 & addr_36'=r & a=v_int_17_966 & addr_36'!=null & 
+addr_37'!=null&{FLOW,(24,25)=__norm}[]
+ |-  addr_36'::int_star<deref_19_915'@L>@M&{FLOW,(1,27)=__flow}[]. 
+res:  [
+  r::int_star<a@[@M]>@M * r_35'::int_star<v_int_17_965@M>@M * addr_37'::int_star_star<r@M>@M&v_int_17_965=0 & v_int_17_966=0 & v_null_18_967=null & deref_17_968=v_null_18_967 & addr_36'=r & a=v_int_17_966 & addr_36'!=null & addr_37'!=null & a=deref_19_915'&{FLOW,(24,25)=__norm}[]
+  ]
+
+=============================================================
+short2.c --esl
+=======
+
+id: 12; caller: []; line: 20; classic: false; kind: BIND; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail r_33'::int_star<v_int_18_962@M>@M * addr_35'::int_star_star<r_979@M>@M * 
+r_979::int_star<a@M>@M&v_int_18_962=0 & v_int_18_963=0 & 
+v_null_19_964=null & deref_18_965=v_null_19_964 & a=v_int_18_963 & 
+addr_34'!=null & addr_35'!=null&{FLOW,(24,25)=__norm}[]
+ |-  addr_34'::int_star<deref_20_910'@L>@M&{FLOW,(1,27)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: infer_heap_node
+                   fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+
+
+======================================
+
+I did a quick test and both versions (short2.c; short.ss) are verifying.
+The only difference (which you can see in --pcp) is that the former uses
+existential
+
+ static  :EBase exists (Expl)[](Impl)[a](ex)[](exists deref_f_r_901:
+                                                      ^^^^^^^^^^^^^
+while the latter uses implicit:
+
+static  :EBase exists (Expl)[](Impl)[r; a](ex)[]q::int__star__star<r>@M *
+                                    ^^
+        r::int__star<a>@M&@value[q]&{FLOW,(24,25)=__norm}[]
+
+
+Checking procedure main$... 
+( []) :short2.c:20: 8: bind: node  addr_34'::int_star<deref_20_910'@L>@L cannot be derived from context
+
+
+==================================================
+
+int foo(int** q)
+/*@
+ requires q::int^^<a>
+ //ensures q::int^^<a> & res=0;
+ ensures q::int__star__star<r>*r::int__star<a> & res=0;
+*/
+{
+ return 0;
+};
+
+int foo$int__star__star(  int__star__star q)
+static  :EBase exists (Expl)[](Impl)[a](ex)[](exists deref_f_r_901: 
+                                                     ^^^^^^^
+      q::int__star__star<deref_f_r_901>@M * 
+      deref_f_r_901::int__star<a>@M&@value[q]&{FLOW,(24,25)=__norm})[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists a_30,r: q::int__star__star<r>@M * 
+                    r::int__star<a_30>@M&res=0 & a=a_30&
+                    {FLOW,(24,25)=__norm})[]
+
+========================================
+
+int foo(int** q)
+/*@
+ requires q::int__star__star<r>*r::int__star<a>
+ ensures q::int__star__star<r>*r::int__star<a> & res=0;
+*/
+{
+ return 0;
+};
+
+
+int foo$int__star__star(  int__star__star q)
+static  :EBase exists (Expl)[](Impl)[r; a](ex)[]q::int__star__star<r>@M * 
+        r::int__star<a>@M&@value[q]&{FLOW,(24,25)=__norm}[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists r_30,a_31: q::int__star__star<r_30>@M * 
+                    r::int__star<a_31>@M&res=0 & r=r_30 & a=a_31&
+                    {FLOW,(24,25)=__norm})[]
+

@@ -1,23 +1,24 @@
-// pass-by-value
-#include <stdlib.h>
+#include "../examples/working/cparser/stdhip.h"
 
 struct pair {
   int x;
   int y;
 };
 
-//void* malloc(int size) __attribute__ ((noreturn))
-
 void hoo(struct pair *q)
 /*@
- requires *q::pair<a,b>
- ensures *q::pair<a,b>;
+ requires q::pair<a,b>
+ ensures true;//q::pair<a,b>;
 */
 {
   q = malloc(sizeof(struct pair));
 }
 
-int main() 
+int main()
+/*
+ requires true
+ ensures true;
+*/
 {
   return 1;
 }

@@ -305,7 +305,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
                   let args = CP.diff_svl (get_all_sv  rhs_node) [hp] in
                   let root, _  = Sautility.find_root prog [hp] args  [] in
                   let _ = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
-                  (ConstAnn(Mutable), [], root)
+                  (CP.ConstAnn(Mutable), [], root)
             | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
           in
           let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
@@ -374,7 +374,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
    bool ->
    Cformula.h_formula *)
 
-and view_mater_match prog c vs1 aset imm f =
+and view_mater_match prog c vs1 aset imm f anns =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
   let pro1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
@@ -382,9 +382,9 @@ and view_mater_match prog c vs1 aset imm f =
   let pro3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pro4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
-  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f) c vs1 aset
+  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) c vs1 aset
 
-and view_mater_match_x prog c vs1 aset imm f =
+and view_mater_match_x prog c vs1 aset imm f anns =
   let vdef = look_up_view_def_raw 11 prog.prog_view_decls c in
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
@@ -489,28 +489,79 @@ and spatial_ctx_extract p f a i pi rn rr lhs_p =
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr lhs_p) f i a rn 
 
-and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+and update_field_imm (f : h_formula) (pimm1 : CP.ann list): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+  let pr_out = Cprinter.string_of_h_formula in
+  Debug.no_2 "update_field_ann" (Cprinter.string_of_h_formula) pr  pr_out (fun _ _-> update_field_imm_x f pimm1 ) f pimm1
 
-and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
+and update_field_imm_x (f : h_formula) (new_fann: CP.ann list) : h_formula  = 
+  (* let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann pimm1 pimm impl_vars evars in *)
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_field_ann_lnode) then HEmp else
-  let updated_f = match f with 
-    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
-    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
-  in
-  updated_f
+  if (isAccsList new_fann) then HEmp else
+    let updated_f = match f with 
+      | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_fann} )
+      | ViewNode v -> ViewNode ( {v with h_formula_view_annot_arg =  CP.update_positions_for_imm_view_params  new_fann v.h_formula_view_annot_arg} )
+      | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+    in
+    updated_f
 
+and update_imm (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann) es(* : h_formula *) = 
+  let pr = Cprinter.string_of_imm in
+  let pr_out = pr_triple (Cprinter.string_of_h_formula) pr_none pr_none in
+    Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  pr_out  (fun _ _ _-> update_imm_x f imm1 imm2  es) f imm1 imm2
 
-and imm_split_lhs_node estate l_node r_node = match l_node, r_node with
-	| DataNode dl, DataNode dr ->
-		if (!Globals.allow_field_ann) then 
-		 let n_f = update_ann l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm in
-		 {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos}
-        else estate
-	| _ -> estate 
+and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es = 
+  (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
+  let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann [imm1] [imm2]  es in
+  (* asankhs: If node has all field annotations as @A make it HEmp *)
+  if (isAccsList res_ann) then (HEmp, [], (([],[],[]),[]) )else
+    let updated_f = match f with 
+      | DataNode d -> DataNode ( {d with h_formula_data_imm = List.hd res_ann} )
+      | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+    in
+    (updated_f,niv, constr)
+
+and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
+  | DataNode dl, DataNode dr ->
+	if (!Globals.allow_field_ann) then 
+          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann (dl.h_formula_data_param_imm) (dr.h_formula_data_param_imm) estate in
+          let n_f = update_field_imm l_node res_ann in
+          let n_ch = update_field_imm l_node cons_ann in
+	  (* let n_f, niv, constr = update_field_imm l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm estate.es_gen_impl_vars  estate.es_evars in *)
+	  let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+              es_heap = mkStarH  n_ch  estate.es_heap no_pos;
+              (* es_gen_impl_vars =estate.es_gen_impl_vars@niv *) } in
+          (n_es, constr)
+        else if(!Globals.allow_imm) then
+          if not(produces_hole  dr.h_formula_data_imm) then
+            let n_f, niv, constr = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm estate in
+            let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+                (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
+            (n_es, constr)
+          else 
+            (estate,(([],[],[]),[]))
+        else
+          (estate,(([],[],[]),[]))
+  | ViewNode vl, ViewNode vr ->
+        if (!Globals.allow_field_ann) then
+          let l_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args l_node) in
+          let r_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args r_node) in
+          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann l_ann r_ann estate in
+          let n_f = update_field_imm l_node res_ann in
+          let n_ch = update_field_imm l_node cons_ann in
+          let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
+              es_heap = mkStarH  n_ch  estate.es_heap no_pos;
+              (* es_gen_impl_vars =estate.es_gen_impl_vars@niv *) } in
+          (n_es, constr)
+        else
+          (estate,(([],[],[]),[]))
+  | _ -> (estate,(([],[],[]),[]))
+
+and imm_split_lhs_node estate l_node r_node =
+  let pr_node = Cprinter.string_of_h_formula in
+  let pr_es = Cprinter.string_of_entail_state in
+  let pr_out = pr_pair pr_es pr_none in
+  Debug.no_3 "imm_split_lhs_node" pr_es pr_node pr_node pr_out imm_split_lhs_node_x estate l_node r_node
   
 (*  *)
 and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
@@ -634,7 +685,7 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformu
   cmml@cmmr
 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest emap: match_res list  =
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
   let rec helper f = match f with
     | HTrue -> []
     | HFalse -> []
@@ -650,9 +701,9 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  (* imm1 = imm annotation on the LHS
 	     imm = imm annotation on the RHS *) 
 	  (* let subtyp = subtype_ann imm1 imm in *)
-        if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	(* let field_ann = false in *)
-	      
+          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+	    (* let field_ann = false in *)
+	    
                       if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
 	          let hole_no = Globals.fresh_int() in 
 	          [((Hole hole_no), f, [(f, hole_no)], Root)]
@@ -668,7 +719,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_view_imm = imm1;
       h_formula_view_perm = perm1;
       h_formula_view_arguments = vs1;
-      h_formula_view_name = c}) ->
+      h_formula_view_name = c}) as v ->
+          let anns = get_node_annot_args f in
           begin
             match rhs_node with
               | HRel (hp,_,_) ->  
@@ -680,7 +732,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                     (* if (subtype_ann imm1 imm) then *)
                     if (CP.mem p1 aset) then
                       (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-                      if produces_hole imm (*&& not(!Globals.allow_field_ann)*) then
+                      if produces_hole imm && not(!Globals.allow_field_ann) then
 	                (* let _ = print_string("imm = Lend " ^ "\n") in *)
                         let hole_no = Globals.fresh_int() in
                         (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
@@ -688,20 +740,13 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
                       else
                         [(HEmp, f, [], Root)]
                     else
-                      let vmm = view_mater_match prog c (p1::vs1) aset imm f in
+                      let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
                       let cmm = coerc_mater_match_gen c vs1 aset f in 
                       (*LDK: currently, assume that frac perm does not effect 
                         the choice of lemmas (coercions)*)
                       vmm@cmm
           end
               (* else [] *)
-    (* | HRel (sv, vs1_lst, _)  -> *)
-    (*         let vmm = view_mater_match prog c (p1::vs1) aset ConstAnn(Mutable) f in *)
-    (*         let cmm = coerc_mater_match prog c vs1 aset ConstAnn(Mutable) f in  *)
-    (*         (\*LDK: currently, assume that frac perm does not effect  *)
-    (*           the choice of lemmas (coercions)*\) *)
-    (*         vmm@cmm *)
-    (*       ) *)
     | HRel (hp,e,_) -> 
           (* let e =  *)
           spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap
@@ -712,7 +757,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
-	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
           res1 @ res2
     | StarMinus ({h_formula_starminus_h1 = f1;
       h_formula_starminus_h2 = f2;
@@ -722,24 +766,20 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)) l2 in
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
-	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
-          res1 @ res2          
+          res1 @ res2
     | Conj({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2;
       h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 
         let l1 = helper f1 in
         let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
             if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
-           let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
+              let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
               (mkConjH lhs1 ramify_f2 pos , node1, hole1, match1)
             else (mkConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
-           let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
+              let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
               (mkConjH ramify_f1 lhs2 pos , node2, hole2, match2)
             else
               (mkConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
@@ -1138,11 +1178,16 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                     | None -> false
                   in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let sub_ann  = if (!Globals.allow_field_ann) then 
+                    let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
+                    let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
+                    r && not(isAccs)
+                  else true in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in *)
                   let a1 = 
                     if is_r_lock then [] else
-                      if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
+                      if ((new_orig || vr_self_pts==[]) && sub_ann) then [(1,M_fold c)] else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   let r_lem = 
                     if (Lem_store.all_lemma # any_coercion) then [(1,M_rd_lemma c)]
@@ -1170,9 +1215,14 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
                   let _ = DD.tinfo_hprint (add_str "left_ls" (pr_list pr_none)) left_ls no_pos in
+                  let sub_ann  = if (!Globals.allow_field_ann) then 
+                    let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
+                    r
+                  else true in
                   let a1 = 
                     if is_l_lock then [] else
-                      if (new_orig || vl_self_pts==[]) then 
+                      if ((new_orig || vl_self_pts==[]) && sub_ann) then 
+                      (*then [(1,M_unfold (c,uf_i))] else [] in*)
                         if vl_vdef.view_is_prim then []
                         else [(1,M_unfold (c,uf_i))] 
                       else [] in
