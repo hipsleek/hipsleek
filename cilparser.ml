@@ -965,9 +965,9 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
   | Cil.HipStmt (iast_exp, l) -> 
       (* TODO: temporarily skip translate stmt *)
       let p = translate_location l in
-      (*translate_hip_exp iast_exp p*)
-      iast_exp
-(*
+      translate_hip_exp iast_exp p
+      (*iast_exp*)
+
 and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
   let rec helper_formula (f: IF.formula): IF.formula = (
     match f with
@@ -979,17 +979,25 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
         }
     | IF.Exists fe ->
         IF.Exists { fe with
-          IF.formula_exists_heap = helper_h_formula fe.formula_exists_heap;
+          IF.formula_exists_heap = helper_h_formula fe.IF.formula_exists_heap;
           IF.formula_exists_pure = helper_pure_formula fe.IF.formula_exists_pure;
           IF.formula_exists_and = List.map helper_one_formula fe.IF.formula_exists_and;
         }
     | IF.Or fo ->
         IF.Or { fo with
-          IF.formula_heap = helper_h_formula fe.formula_heap;
-          IF.formula_pure = helper_pure_formula fe.IF.formula_pure;
-          IF.formula_delayed = helper_formula fe.IF.formula_delayed;
+          IF.formula_or_f1 = helper_formula fo.IF.formula_or_f1;
+          IF.formula_or_f2 = helper_formula fo.IF.formula_or_f2;
         }
-  ) in
+  ) 
+  and helper_one_formula (o: IF.one_formula): IF.one_formula = (
+    match o with
+    | ofo ->
+        { ofo with
+          IF.formula_heap = helper_h_formula ofo.IF.formula_heap;
+          IF.formula_pure = helper_pure_formula ofo.IF.formula_pure;
+          IF.formula_delayed = helper_pure_formula ofo.IF.formula_delayed;
+        }
+  )
   and helper_h_formula (h: IF.h_formula) : IF.h_formula = (
     match h with
     | IF.Phase hfp ->
@@ -999,36 +1007,40 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
         }
     | IF.Conj hfc ->
         IF.Conj { hfc with
-          IF.h_formula_conj_h1 = helper_h_formula hfp.IF.h_formula_conj_h1;
-          IF.h_formula_conj_h2 = helper_h_formula hfp.IF.h_formula_conj_h2;
+          IF.h_formula_conj_h1 = helper_h_formula hfc.IF.h_formula_conj_h1;
+          IF.h_formula_conj_h2 = helper_h_formula hfc.IF.h_formula_conj_h2;
         }
     | IF.ConjStar hfcs ->
         IF.ConjStar { hfcs with
-          IF.h_formula_conjstar_h1 = helper_h_formula hfp.IF.h_formula_conjstar_h1;
-          IF.h_formula_conjstar_h2 = helper_h_formula hfp.IF.h_formula_conjstar_h2;
+          IF.h_formula_conjstar_h1 = helper_h_formula hfcs.IF.h_formula_conjstar_h1;
+          IF.h_formula_conjstar_h2 = helper_h_formula hfcs.IF.h_formula_conjstar_h2;
         }
     | IF.ConjConj hfcc ->
         IF.ConjConj { hfcc with
-          IF.h_formula_conjconj_h1 = helper_h_formula hfp.IF.h_formula_conjconj_h1;
-          IF.h_formula_conjconj_h2 = helper_h_formula hfp.IF.h_formula_conjconj_h2;
+          IF.h_formula_conjconj_h1 = helper_h_formula hfcc.IF.h_formula_conjconj_h1;
+          IF.h_formula_conjconj_h2 = helper_h_formula hfcc.IF.h_formula_conjconj_h2;
         }
     | IF.Star hfs ->
         IF.Star { hfs with
-          IF.h_formula_star_h1 = helper_h_formula hfp.IF.h_formula_star_h1;
-          IF.h_formula_star_h2 = helper_h_formula hfp.IF.h_formula_star_h2;
-        }
+          IF.h_formula_star_h1 = helper_h_formula hfs.IF.h_formula_star_h1;
+          IF.h_formula_star_h2 = helper_h_formula hfs.IF.h_formula_star_h2;
+         }
     | IF.StarMinus hfsm ->
-        IF.StarMinus { hfc with
-          IF.h_formula_starminus_h1 = helper_h_formula hfp.IF.h_formula_starminus_h1;
-          IF.h_formula_starminus_h2 = helper_h_formula hfp.IF.h_formula_starminus_h2;
+        IF.StarMinus { hfsm with
+          IF.h_formula_starminus_h1 = helper_h_formula hfsm.IF.h_formula_starminus_h1;
+          IF.h_formula_starminus_h2 = helper_h_formula hfsm.IF.h_formula_starminus_h2;
         }
-    | IF.HeapNode hfh ->
+    (*| IF.HeapNode hfh ->
         IF.HeapNode { hfh with
           IF.h_formula_heap_name = H
         }
-    | IF.HeapNode2 of h_formula_heap2
-    | HRel _ | HTrue | HFalse -> h
-  ) in
+    | IF.HeapNode2 hfh ->
+        IF.HeapNode2 { hfh with
+          IF.h_formula_heap2_name = H
+        }*)
+    | IF.HeapNode _ | IF.HeapNode2 _
+    | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
+  ) 
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
     match p with
     | Ipure.BForm (bf, fl) ->
@@ -1036,7 +1048,7 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
     | Ipure.And (f1, f2, pos) ->
         Ipure.And (helper_pure_formula f1, helper_pure_formula f2, pos)
     | Ipure.AndList l ->
-        Ipure.And (List.map fun (t, f) -> (t, helper_pure_formula f)) l
+        Ipure.AndList (List.map (fun (t, f) -> (t, helper_pure_formula f)) l)
     | Ipure.Or (f1, f2, fl, pos) ->
         Ipure.Or (helper_pure_formula f1, helper_pure_formula f2, fl, pos)
     | Ipure.Not (f, fl, pos) ->
@@ -1045,19 +1057,20 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
         Ipure.Forall (idp, helper_pure_formula f, fl, pos)
     | Ipure.Exists (idp, f, fl, pos) ->
         Ipure.Exists (idp, helper_pure_formula f, fl, pos)
-  ) in
+  )
   and helper_b_formula (b : Ipure.b_formula) : Ipure.b_formula = (
     match b with
     | (pf, biel) ->
-        Ipure.b_formula (helper_p_formula pf, biel)
-  in
+        (helper_p_formula pf, biel)
+  )
   and helper_p_formula (p : Ipure.p_formula) : Ipure.p_formula = (
     match p with
-    | Ipure.Xpure xv ->
-        Ipure.Xpure xv
-    | Ipure.Bconst (b, pos) ->
-        Ipure.Bconst (b, pos)
-    | Ipure.BVar ((id, p), pos) -> (* TODO *)
+    | Ipure.XPure xv ->
+        Ipure.XPure xv
+    | Ipure.BConst (b, pos) ->
+        Ipure.BConst (b, pos)
+    | Ipure.BVar ((id, pr), pos) -> 
+        p (* TODO *)
     | Ipure.SubAnn (e1, e2, pos) ->
         Ipure.SubAnn (helper_exp e1, helper_exp e2, pos)
     | Ipure.Lt (e1, e2, pos) ->
@@ -1065,7 +1078,7 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
     | Ipure.Lte (e1, e2, pos) ->
         Ipure.Lte (helper_exp e1, helper_exp e2, pos)
     | Ipure.Gt (e1, e2, pos) ->
-        Iprue.Gt (helper_exp e1, helper_exp e2, pos)
+        Ipure.Gt (helper_exp e1, helper_exp e2, pos)
     | Ipure.Gte (e1, e2, pos) ->
         Ipure.Gte (helper_exp e1, helper_exp e2, pos)
     | Ipure.Eq (e1, e2, pos) ->
@@ -1078,38 +1091,47 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
         Ipure.EqMin (helper_exp e1, helper_exp e2, helper_exp e3, pos)
     | Ipure.LexVar (ta, el1, el2, pos) ->
         Ipure.LexVar (ta, List.map (fun (e : Ipure.exp) -> helper_exp e) el1, List.map (fun (e : Ipure.exp) -> helper_exp e) el2, pos)
-    | Ipure.BagIn ((id, p), e, pos) -> (* TODO *)
-    | Ipure.BagNotInt ((id, p), e, pos) -> (* TODO *)
+    | Ipure.BagIn (ip, e, pos) -> 
+        Ipure.BagIn (ip, helper_exp e, pos) (* TODO *)
+    | Ipure.BagNotIn (ip, e, pos) -> 
+        Ipure.BagNotIn (ip, helper_exp e, pos) (* TODO *)
     | Ipure.BagSub (e1, e2, pos) ->
         Ipure.BagSub (helper_exp e1, helper_exp e2, pos)
-    | Ipure.BagMin ((id1, p1), (id2, p2), pos) -> (* TODO *)
-    | Ipure.BagMax ((id1, p1), (id2, p2), pos) -> (* TODO *)
-    | Ipure.VarPerm (va, ipl, pos) -> (* TODO *)
+    | Ipure.BagMin _ -> 
+        p (* TODO *)
+    | Ipure.BagMax _ -> 
+        p (* TODO *)
+    | Ipure.VarPerm (va, ipl, pos) ->
+        p (* TODO *)
     | Ipure.ListIn (e1, e2, pos) ->
         Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListNotIn (e1, e2, pos) ->
         Ipure.ListNotIn (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListAllN (e1, e2, pos) ->
-        Ipure.ListAll (helper_exp e1, helper_exp e2, pos)
+        Ipure.ListAllN (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListPerm (e1, e2, pos) ->
         Ipure.ListPerm (helper_exp e1, helper_exp e2, pos)
-    | Ipure.RelForm (id, el, pos) -> (* TODO *)
-  ) in
+    | Ipure.RelForm (id, el, pos) ->
+        Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
+  )
   and helper_exp (e : Ipure.exp) : Ipure.exp = (
     match e with
     | Ipure.Ann_Exp (e, t, pos) ->
-        Ipure.Ann_Exp (e, t, pos)
+        Ipure.Ann_Exp (helper_exp e, t, pos)
     | Ipure.Null pos ->
         Ipure.Null pos
-    | Ipure.Level ((id, p), pos) -> (* TODO *)
-    | Ipure.Var ((id, p), pos) -> (* TODO *)
+    | Ipure.Level ((id, pr), pos) -> 
+        e (* TODO *)
+    | Ipure.Var ((id, pr), pos) -> 
+        e (* TODO *)
     | Ipure.IConst (i, pos) ->
         Ipure.IConst (i, pos)
     | Ipure.FConst (f, pos) ->
         Ipure.FConst (f, pos)
     | Ipure.AConst (ha, pos) ->
         Ipure.AConst (ha, pos)
-    | Ipure.InfConst (id, pos) -> (* TODO *)
+    | Ipure.InfConst (id, pos) -> 
+        e (* TODO *)
     | Ipure.Tsconst (t, pos) ->
         Ipure.Tsconst (t, pos)
     | Ipure.Bptriple ((e1, e2, e3), pos) ->
@@ -1137,7 +1159,7 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
     | Ipure.BagDiff (e1, e2, pos) ->
         Ipure.BagDiff (helper_exp e1, helper_exp e2, pos)
     | Ipure.List (el, pos) ->
-        Ipure.List (List.map (fun e -> helper_exp) el, pos)
+        Ipure.List (List.map (fun e -> helper_exp e) el, pos)
     | Ipure.ListCons (e1, e2, pos) ->
         Ipure.ListCons (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListHead (e, pos) ->
@@ -1150,8 +1172,22 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
         Ipure.ListAppend (List.map (fun e -> helper_exp e) el, pos)
     | Ipure.ListReverse (e, pos) ->
         Ipure.ListReverse (helper_exp e, pos)
-    | Ipure.ArrayAt ((id, p), el, pos) -> (* TODO *)
-    | Ipure.Func (id, el, pos) -> (* TODO *)*)
+    | Ipure.ArrayAt ((id, pr), el, pos) -> 
+        e (* TODO *)
+    | Ipure.Func (id, el, pos) -> 
+        e (* TODO *)
+  ) in
+  match exp with
+    | Iast.Assert a -> (
+        match a.Iast.exp_assert_assumed_formula with
+        | Some f ->
+             Iast.Assert { a with
+               Iast.exp_assert_assumed_formula = Some (helper_formula f);              
+        }
+        | None -> exp
+      )
+    | _ -> exp
+
 (* and h_formula_heap = { h_formula_heap_node : (ident * primed);                              *)
 (*                        h_formula_heap_name : ident;                                         *)
 (*                        h_formula_heap_deref : int;                                          *)
