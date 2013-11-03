@@ -1761,7 +1761,7 @@ sub grep_failures {
     my ($res,$exp,$prefix) = @_;
     @results = split (/\./, $res);
     @expected = split (/\./, $exp);
-    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my %mark_failures = map {if ($results[$_] ne $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#expected; #results
     my @failures = grep {  $_ > 0 } keys  %mark_failures;
     my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
     @failures_e = sort  @failures_e;
@@ -1805,7 +1805,7 @@ sub sleek_process_file  {
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
           print LOGFILE "\n======================================\n";
           print LOGFILE "$output";
-          #print "$output";
+          #print "\n!!!output: $output";
           my $lemmas_results = "";
           my $entail_results = "";
           my $barrier_results = "";
@@ -1836,13 +1836,15 @@ sub sleek_process_file  {
                   }
               }
           }
+          #print "\n!!!!!Ent Res: $entail_results \nEnd Ent Res: $test->[3]\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+          if  (($lem == 1)  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
-          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+          if ((($barr==0) && ($entail_results ne $test->[3])) || 
               # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
               ($barr==1 && ($barrier_results ne $test->[2]))){
+              #print "\n !!!!!!!!!!! bef grep for failures: \n";
               @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
           }
           if ($#failures >= 0 ){
