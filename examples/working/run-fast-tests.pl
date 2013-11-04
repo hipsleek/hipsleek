@@ -1497,14 +1497,15 @@ $output_file = "log";
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", "--en-inf --elp ", "Valid.Valid.", "Fail.Valid."],
-        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
-        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["inflem.slk", "--en-inf --elp ", "Valid.", "Fail.Valid."],
+#        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
+        ["lemmas/lseg.slk", " --elp ", "Valid.Valid.", ""],
+        ["lemmas/lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
         ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
-        ["lemmas/ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
-        ["sll_tailL.slk", "", "Valid.Valid", ""]
+        ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
+        ["lemmas/sll_tailL.slk", " --elp ", "Valid.Valid", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -1773,7 +1774,7 @@ sub grep_failures {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
 	  my $barr = 0;
       if ("$param" =~ "musterr") {
@@ -1781,7 +1782,8 @@ sub sleek_process_file  {
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
-      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+      $lem = index($script_arguments, "--elp");
+      if (("$param" =~ "lemmas") ) {  $lem = 1; }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
@@ -1796,6 +1798,7 @@ sub sleek_process_file  {
       foreach $test (@{$t_list})
       {
           my $extra_options = $test->[1];
+          my $leme = index($extra_options, "--elp") + $lem;
           if ("$extra_options" eq "") {
               print "Checking $test->[0]\n";
           } else {
@@ -1836,9 +1839,10 @@ sub sleek_process_file  {
                   }
               }
           }
-          #print "\n!!!!!Ent Res: $entail_results \nEnd Ent Res: $test->[3]\n";
+          #print "\n!!!!!Ent Res: $entail_results \n";
+          #print "\n!!!!!Exp Res: $test->[3] $leme\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results ne /^$test->[2]$/)){
+          if  (($leme >= 0 )  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
           if ((($barr==0) && ($entail_results ne $test->[3])) || 

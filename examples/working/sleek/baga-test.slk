@@ -86,3 +86,4 @@ checkentail x::l7<q> * x::l7<q> & x!=null |- false.
 // approx by non-eps cause failure
 // (15) Fail
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+print residue.
