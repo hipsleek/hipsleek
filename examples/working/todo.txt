@@ -280,6 +280,30 @@ Unexpected result with : lseg_case.slk (failed check(s): )
 Total number of errors: 2 in files:
   baga-test-eps.slk({E12#Fail},{E9#Fail}) baga-test.slk({E12#Fail},{E9#Fail}).
 Total verification time: 0.00 second
+# bugs/baga-test-fail.slk
+
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * x::l6<_> |- false.
+
+//checkentail x::l6<_> * y::l6<_> & x=y |- false.
+
+checkentail x::l6<q> * y::l6<q>  |- false.
+
+checkentail x::l6<_> * y::l6<_> |- x::l6<a>.
+
+checkentail x::l6<_> * y::l6<_> |- y::l6<a>.
+
+checkentail x::l6<_> * x::l6<_> |- x::l6<a>.
 ====================================================================
 ====================================================================
 ====================================================================

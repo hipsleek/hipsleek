@@ -19,9 +19,9 @@ pred ll_tail<n, t> ==
 
 
 
-lemma_safe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
+lemma_unsafe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
 
-lemma_safe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
+lemma_unsafe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
 
 
 // "lseg <-" + "tail2lseg ->"

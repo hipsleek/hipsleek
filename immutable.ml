@@ -1814,7 +1814,8 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   (* TODO: normalize the unused ann consts  *)
   (* retrieve imm_map from I.view_decl *)
   (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
-  let view_arg_lbl = (List.combine view_args (fst vdef.I.view_labels)) in
+  let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
+  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels" in
   let ann_map_pos = vdef.I.view_imm_map in
   let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
@@ -1826,16 +1827,17 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let svp = CP.view_arg_to_sv_list vp in 
   let annot_arg_pos = List.map (fun ((a, _), pos) -> (a, pos)) annot_arg in (* get rid of lbl *)
   let annot_arg,pos = List.split annot_arg_pos in
-  let annot_arg = CP.view_arg_to_imm_ann_list annot_arg in 
-  let annot_arg_pos = List.combine annot_arg pos in
+  let imm_arg = CP.view_arg_to_imm_ann_list annot_arg in 
+  let imm_arg_pos = try List.combine imm_arg pos 
+  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining imm_arg with pos" in
   (* create an imm list following the imm_map, updated with proper values from the list of params *)
   let anns_pos = List.map (fun (a, pos) -> 
-      try
-        List.find (fun (_, vpos) -> vpos == pos) annot_arg_pos
+      try  List.find (fun (_, vpos) -> vpos == pos) imm_arg_pos
       with Not_found -> (iformula_ann_to_cformula_ann a, pos) )  ann_map_pos in
   let anns, pos = List.split anns_pos in
   let annot_arg = CP.imm_ann_to_annot_arg_list anns in
-  let annot_args_pos = List.combine annot_arg pos in
+  let annot_args_pos = try List.combine annot_arg pos 
+  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining annot_arg with pos" in
   svp, lbl, annot_args_pos, view_args_pos
 
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
