@@ -1039,8 +1039,14 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
 	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
 | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
 
-let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
 : CF.h_formula * CF.h_formula * CP.formula =
+  let pr = string_of_h_formula in
+  let pr2 = string_of_pure_formula in
+  Debug.no_3 "compact_data_nodes" pr pr (pr_list (pr_list string_of_spec_var)) (pr_triple pr pr pr2) (fun _ _ _ -> compact_data_nodes h1 h2 aset func) h1 h2 aset
+
+let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+      : CF.h_formula * CF.h_formula * CP.formula =
   (match h1 with
     | CF.ViewNode 
 	    {CF.h_formula_view_name = name1;
@@ -1056,7 +1062,7 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                   let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
                   (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
                      h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
- 	          if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
+ 		  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
  		    let compatible, new_param_imm, _ = func param_ann1 param_ann2 [] []  in
 	            (* compact to keep the updated node*)
 		    if (compatible == true) then 
@@ -1067,10 +1073,20 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
                               CF.HEmp, (CP.mkTrue no_pos))
                         | _ -> (h1, h2,(CP.mkTrue no_pos))
                       )
-		    else (CF.HFalse, h2, (CP.mkTrue no_pos))
-                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
+		    else
+                      (* to detect if contradiction exists thru heap map *)
+                      (* let _ = Debug.info_pprint "false here" no_pos in *)
+                      (* (CF.HFalse, h2, (CP.mkTrue no_pos)) *)
+                      (h1, h2, (CP.mkTrue no_pos))
+                 else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
 	    | _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
     | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+
+let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+: CF.h_formula * CF.h_formula * CP.formula =
+  let pr = string_of_h_formula in
+  let pr2 = string_of_pure_formula in
+  Debug.no_3 "compact_view_nodes" pr pr (pr_list (pr_list string_of_spec_var)) (pr_triple pr pr pr2) (fun _ _ _ -> compact_view_nodes h1 h2 aset func) h1 h2 aset
 
 let rec compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)

@@ -4,9 +4,9 @@ void f() {
 
   p = &x;
   p = &x; // Just another mention of &x.
-  *p = 0;
+  *p = 1;
   int t = x;
-  //@ assert (x = 0);
+  //@ assert (x = 1);
 
   return;
 }
