@@ -13,6 +13,15 @@ checkentail x::l6<_> * x::l6<_> |- false.
 
 //checkentail x::l6<_> * y::l6<_> & x=y |- false.
 
+checkentail x::l6<q> * y::l6<q>  |- false.
+
+checkentail x::l6<_> * y::l6<_> |- x::l6<a>.
+
+checkentail x::l6<_> * y::l6<_> |- y::l6<a>.
+
+checkentail x::l6<_> * x::l6<_> |- x::l6<a>.
+// currently fails; what should this answer be?
+
 // hg bisect
 // 9875 - valid (bad)
 // 9814 - valid (bad)

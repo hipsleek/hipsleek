@@ -1072,7 +1072,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  let tmp_views = order_views prog.I.prog_view_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
-          let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
+          Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
+      let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
           Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
