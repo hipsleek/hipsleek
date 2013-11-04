@@ -1,29 +1,32 @@
 
-data node {
+struct node {
  int val;
- node next;
-}
-
-HeapPred H(node x, int v). // non-ptrs are @NI by default
+ struct node* next;
+};
+/*@
+HeapPred H( node x, int v). // non-ptrs are @NI by default
 PostPred G(node x, int v). // non-ptrs are @NI by default
-
+*/
+/*@
 sortll<n> == self=null
  or self::node<v,q>*q::sortll<v> & n<=v
  inv true; 
-
-bool check_sorted(node x, int v)
-  /* infer [H,G] */
-  /* requires H(x,v) */
-  /* ensures G(x,v) & res; */
-requires x::sortll<v>@L ensures  res;
+*/
+int check_sorted(struct node* x, int v)
+/*@
+  infer [H,G]
+  requires H(x,v)
+  ensures G(x,v) & res=1;
+//requires x::sortll<v>@L ensures  res=1;
+*/
 { 
-  if (x==null) return true;
+  if (!x) return 1;
   else {
-   int t = x.val;
-   if (v<=t) return check_sorted(x.next,t);
+   int t = x->val;
+   if (v<=t) return check_sorted(x->next,t);
    else {
       //dprint;
-       return false;
+       return 0;
    }
  }
 } 

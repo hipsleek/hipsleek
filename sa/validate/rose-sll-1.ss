@@ -13,35 +13,39 @@ HeapPred H1(tree a).
 PostPred G1(tree a).
 HeapPred H2(node a,tree@NI b).
 PostPred G2(node a,tree b).
-/*
+
 treep<> == 
   self::tree<_,c>* c::sll<self> ;
 
 sll<parent> == 
   self=null or 
   self::node<c,n,parent>*c::treep<>* n::sll<parent>;
-*/
+
 bool check_tree (tree t)
-/*
+
 requires t::treep<> //& t!=null 
   ensures res;
- */
+ 
+/*
   infer [H1,H2,G1,G2]
   requires H1(t) //t::treep<>@L //& t!=null 
   ensures G1(t) & res;
+*/
 {
    if (t.children==null) return true;
    else return check_child(t.children,t); 
 }
 
 bool check_child (node l, tree par)
-/*
- requires l::dll<par, prev> 
+
+ requires l::sll<par> 
   ensures  res;
- */
+
+/*
   infer [H1,H2,G2,G2]
   requires H2(l,par) //l::sll<par>@L 
   ensures  G2(l,par) & res;
+*/
 {
 	if (l==null) return true;
 	else if (l.parent==par) return check_child(l.next, par)&& check_tree(l.child);
