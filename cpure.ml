@@ -11859,16 +11859,22 @@ let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * i
 
 let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * int) list) =
   let pr1 = pr_list string_of_ann in
-  let pr2 = pr_list (pr_pair pr_none string_of_int) in
+  let pr2 = pr_list (pr_pair string_of_annot_arg string_of_int) in
   Debug.no_2 "update_positions_for_imm_view_params" pr1 pr2
-      pr_none update_positions_for_imm_view_params aa old_lst
+      pr2 update_positions_for_imm_view_params aa old_lst
 
 let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
   (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
   try 
     let lst = List.combine aa old_lst in 
-    let new_annot_args = List.map (fun (a, (aa,p)) -> (a, p)) lst in new_annot_args
-  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params"))
+    let new_annot_args = List.map (fun (a, (_,p)) -> (a, p)) lst in new_annot_args
+  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_annot_view_params"))
 
+
+let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
+  let pr1 = pr_list string_of_annot_arg in
+  let pr2 = pr_list (pr_pair string_of_annot_arg string_of_int) in
+  Debug.no_2 "update_positions_for_annot_view_params" pr1 pr2
+      pr2 update_positions_for_annot_view_params aa old_lst
 
 (* end utilities for allowing annotations as view arguments *)

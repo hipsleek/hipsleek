@@ -715,8 +715,8 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_
 and propagate_imm_h_formula (f : h_formula) (imm : CP.ann)  (map: (CP.annot_arg * CP.annot_arg) list) emap: h_formula = 
   Debug.no_3 "propagate_imm_h_formula" 
       (Cprinter.string_of_h_formula) 
-      (Cprinter.string_of_imm) 
-      (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg )) 
+      (add_str "imm" (Cprinter.string_of_imm)) 
+      (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
       (Cprinter.string_of_h_formula) 
       (fun _ _ _ -> propagate_imm_h_formula_x f imm map emap) f imm map
 
