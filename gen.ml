@@ -1272,7 +1272,7 @@ struct
   let is_sat_dset (xs:dpart) : bool = 
     let r = not(is_dupl_dset xs) in
     begin
-      print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r));
+      (* print_endline ("is_sat_dset("^(string_of xs)^")="^(string_of_bool r)); *)
       r
     end
 

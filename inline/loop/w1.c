@@ -23,7 +23,7 @@ int main(struct node* l)
    requires H1(l)
    ensures G1(l);
 */
-/*@
+/*
  requires l::ll<>
   ensures l=null;
 */

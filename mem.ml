@@ -1041,38 +1041,38 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
 
 let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
 : CF.h_formula * CF.h_formula * CP.formula =
-(match h1 with
-| CF.ViewNode 
-	{CF.h_formula_view_name = name1;
-         CF.h_formula_view_node = v1;
-         CF.h_formula_view_annot_arg = annot_arg1;
-         } ->
-    let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
-    let aset_sv = Context.get_aset aset v1 in
-         (match h2 with
- 	 | CF.ViewNode { CF.h_formula_view_name = name2;
- 	                 CF.h_formula_view_node = v2;
- 	                 CF.h_formula_view_annot_arg = annot_arg2;} ->
-         let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
-         (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-            h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
- 		 if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
- 		         let compatible, new_param_imm, _ = func param_ann1 param_ann2 [] []  in
-	                (* compact to keep the updated node*)
-			     if (compatible == true) then 
-                   (match h1 with 
-                     | CF.ViewNode h ->
-			   	         (CF.ViewNode {h with 
-                           CF.h_formula_view_annot_arg = CP.update_positions_for_imm_view_params new_param_imm h.CF.h_formula_view_annot_arg;},
-                          CF.HEmp, (CP.mkTrue no_pos))
-                     | _ -> (h1, h2,(CP.mkTrue no_pos))
-                   )
-			  	 else (CF.HFalse, h2, (CP.mkTrue no_pos))
-         else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
-	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
-| _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+  (match h1 with
+    | CF.ViewNode 
+	    {CF.h_formula_view_name = name1;
+            CF.h_formula_view_node = v1;
+            CF.h_formula_view_annot_arg = annot_arg1;
+            } ->
+          let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
+          let aset_sv = Context.get_aset aset v1 in
+          (match h2 with
+ 	    | CF.ViewNode { CF.h_formula_view_name = name2;
+ 	      CF.h_formula_view_node = v2;
+ 	      CF.h_formula_view_annot_arg = annot_arg2;} ->
+                  let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
+                  (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
+                     h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
+ 	          if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
+ 		    let compatible, new_param_imm, _ = func param_ann1 param_ann2 [] []  in
+	            (* compact to keep the updated node*)
+		    if (compatible == true) then 
+                      (match h1 with 
+                        | CF.ViewNode h ->
+			      (CF.ViewNode {h with 
+                                  CF.h_formula_view_annot_arg = CP.update_positions_for_imm_view_params new_param_imm h.CF.h_formula_view_annot_arg;},
+                              CF.HEmp, (CP.mkTrue no_pos))
+                        | _ -> (h1, h2,(CP.mkTrue no_pos))
+                      )
+		    else (CF.HFalse, h2, (CP.mkTrue no_pos))
+                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
+	    | _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
+    | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
 
-let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
+let rec compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
   if not (!Globals.allow_field_ann) then f,(CP.mkTrue no_pos) else
     match f with
@@ -1118,7 +1118,14 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
       		CF.Phase {h with CF.h_formula_phase_rd = h1_h;
  	      CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
       | _ -> f,(CP.mkTrue no_pos)
-   
+
+
+and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula =
+  let pr1 = Cprinter.prtt_string_of_h_formula in
+  let pr2 = !CP.print_formula in
+  Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr1 (pr_list !CP.print_svl) (pr_pair pr1 pr2)
+      (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
+
 and compact_nodes_op (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func 
 : CF.h_formula * CF.h_formula * CP.formula =  
 (match h1 with
@@ -1249,7 +1256,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 
 let compact_nodes_with_same_name_in_h_formula_top (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
   let pr = pr_pair string_of_h_formula string_of_pure_formula in 
-  Debug.no_1 "compact_nodes_with_same_name_in_h_formula" string_of_h_formula pr (fun c -> compact_nodes_with_same_name_in_h_formula c aset) f
+  Debug.no_1 "compact_nodes_with_same_name_in_h_formula_top" string_of_h_formula pr (fun c -> compact_nodes_with_same_name_in_h_formula c aset) f
 
 let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
@@ -1285,6 +1292,11 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     	CF.formula_exists_qvars = qevars;
         CF.formula_exists_heap = new_h;
         CF.formula_exists_pure = new_mcp;}
+
+let compact_nodes_with_same_name_in_formula (f: CF.formula) : CF.formula  =
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_1 "compact_nodes_with_same_name_in_formula" pr1 pr1
+      (fun _ -> compact_nodes_with_same_name_in_formula f) f
 
 let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = (* f *)
   if not (!Globals.allow_field_ann ) then f
