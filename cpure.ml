@@ -29,6 +29,7 @@ type annot_arg = ImmAnn of ann
 (* initial arg map: view arg or annot arg *)
 type view_arg = SVArg of spec_var | AnnotArg of annot_arg
 
+
 let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
   else -1
@@ -397,8 +398,47 @@ let is_int_str_aux (n:int) (s:string) : bool =
 let string_of_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
  
-let string_of_spec_var_type (sv: spec_var) = match sv with
+let string_of_typed_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")^":"^(string_of_typ t)
+
+(* let string_of_typed_spec_var x =  string_of_spec_var_type x *)
+
+let string_of_ann a = match a with
+  | ConstAnn h -> string_of_heap_ann h
+  | PolyAnn v -> "PolyAnn"
+  | TempAnn v -> "TempAnn"
+  | TempRes _ -> "TempRes"
+
+let rec string_of_imm_helper imm = 
+  match imm with
+    | ConstAnn(Accs) -> "@A"
+    | ConstAnn(Imm) -> "@I"
+    | ConstAnn(Lend) -> "@L"
+    | ConstAnn(Mutable) -> "@M"
+    | TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
+    | TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
+    | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
+
+let rec string_of_imm imm = 
+  if not !print_ann then ""
+  else string_of_imm_helper imm
+
+let rec string_of_imm_ann imm = 
+  match imm with
+    | PolyAnn(v) -> string_of_spec_var v
+    | _             -> string_of_imm_helper imm
+
+let rec string_of_typed_imm_ann imm = 
+  match imm with
+    | PolyAnn(v) -> string_of_typed_spec_var v
+    | _             -> string_of_imm_helper imm
+
+let string_of_annot_arg ann = 
+  match ann with
+    | ImmAnn imm -> string_of_imm_ann imm
+
+let string_of_annot_arg_list ann_list = 
+  pr_list string_of_annot_arg ann_list
 
 
 (* pretty printing for a spec_var list *)
@@ -11816,6 +11856,12 @@ let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * i
     let lst = List.combine aa old_lst in 
     let new_annot_args = List.map (fun (a, (aa,p)) -> (imm_ann_to_annot_arg a, p)) lst in new_annot_args
   with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params"))
+
+let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * int) list) =
+  let pr1 = pr_list string_of_ann in
+  let pr2 = pr_list (pr_pair pr_none string_of_int) in
+  Debug.no_2 "update_positions_for_imm_view_params" pr1 pr2
+      pr_none update_positions_for_imm_view_params aa old_lst
 
 let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
   (* let aa_pos = List.map (fun a -> (a,0)) aa in *)

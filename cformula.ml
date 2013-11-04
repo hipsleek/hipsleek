@@ -36,11 +36,12 @@ let string_of_cond_path c = pr_list_round string_of_int c
 (*   string_of_cond_path lst *)
 
 
-let string_of_ann a = match a with
-  | CP.ConstAnn h -> string_of_heap_ann h
-  | CP.PolyAnn v -> "PolyAnn"
-  | CP.TempAnn v -> "TempAnn"
-  | CP.TempRes _ -> "TempRes"
+let string_of_ann a = CP.string_of_ann a
+(* match a with *)
+(*   | CP.ConstAnn h -> string_of_heap_ann h *)
+(*   | CP.PolyAnn v -> "PolyAnn" *)
+(*   | CP.TempAnn v -> "TempAnn" *)
+(*   | CP.TempRes _ -> "TempRes" *)
 
 let string_of_ann_list xs = pr_list string_of_ann xs
 

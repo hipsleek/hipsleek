@@ -4625,7 +4625,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
                 in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
-  Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_spec_var_type)  
+  Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)  
       Cprinter.string_of_struc_formula string_of_bool
       case_coverage_x instant f
 
