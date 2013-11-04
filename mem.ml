@@ -1046,37 +1046,41 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
   Debug.no_3 "compact_data_nodes" pr pr (pr_list (pr_list string_of_spec_var)) (pr_triple pr pr pr2) (fun _ _ _ -> compact_data_nodes h1 h2 aset func) h1 h2 aset
 
 let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
-: CF.h_formula * CF.h_formula * CP.formula =
-(match h1 with
-| CF.ViewNode 
-	{CF.h_formula_view_name = name1;
-         CF.h_formula_view_node = v1;
-         CF.h_formula_view_annot_arg = annot_arg1;
-         } ->
-    let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
-    let aset_sv = Context.get_aset aset v1 in
-         (match h2 with
- 	 | CF.ViewNode { CF.h_formula_view_name = name2;
- 	                 CF.h_formula_view_node = v2;
- 	                 CF.h_formula_view_annot_arg = annot_arg2;} ->
-         let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
-         (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-            h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
- 		 if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
- 		         let compatible, new_param_imm, _ = func param_ann1 param_ann2 [] []  in
-	                (* compact to keep the updated node*)
-			     if (compatible == true) then 
-                   (match h1 with 
-                     | CF.ViewNode h ->
-			   	         (CF.ViewNode {h with 
-                           CF.h_formula_view_annot_arg = CP.update_positions_for_imm_view_params new_param_imm h.CF.h_formula_view_annot_arg;},
-                          CF.HEmp, (CP.mkTrue no_pos))
-                     | _ -> (h1, h2,(CP.mkTrue no_pos))
-                   )
-			  	 else (CF.HFalse, h2, (CP.mkTrue no_pos))
-         else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
-	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
-| _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+      : CF.h_formula * CF.h_formula * CP.formula =
+  (match h1 with
+    | CF.ViewNode 
+	    {CF.h_formula_view_name = name1;
+            CF.h_formula_view_node = v1;
+            CF.h_formula_view_annot_arg = annot_arg1;
+            } ->
+          let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
+          let aset_sv = Context.get_aset aset v1 in
+          (match h2 with
+ 	    | CF.ViewNode { CF.h_formula_view_name = name2;
+ 	      CF.h_formula_view_node = v2;
+ 	      CF.h_formula_view_annot_arg = annot_arg2;} ->
+                  let param_ann2 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg2 ) in
+                  (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
+                     h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
+ 		  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
+ 		    let compatible, new_param_imm, _ = func param_ann1 param_ann2 [] []  in
+	            (* compact to keep the updated node*)
+		    if (compatible == true) then 
+                      (match h1 with 
+                        | CF.ViewNode h ->
+			      (CF.ViewNode {h with 
+                                  CF.h_formula_view_annot_arg = CP.update_positions_for_imm_view_params new_param_imm h.CF.h_formula_view_annot_arg;},
+                              CF.HEmp, (CP.mkTrue no_pos))
+                        | _ -> (h1, h2,(CP.mkTrue no_pos))
+                      )
+		    else
+                      (* to detect if contradiction exists thru heap map *)
+                      (* let _ = Debug.info_pprint "false here" no_pos in *)
+                      (* (CF.HFalse, h2, (CP.mkTrue no_pos)) *)
+                      (h1, h2, (CP.mkTrue no_pos))
+                 else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
+	    | _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
+    | _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
 
 let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
 : CF.h_formula * CF.h_formula * CP.formula =
