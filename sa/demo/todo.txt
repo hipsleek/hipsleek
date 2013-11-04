@@ -6194,7 +6194,7 @@ Message: self of H2_rem_link cannot have its type determined
 [omega.ml]Timeout when checking sat for 
 10. Restarting Omega after ... 192 invocations Stop Omega... 192 invocations Starting Omega...oc
 =====================================================================
-#validate/rose.ss, check-mcf.ss:
+#validate/rose-sll-1.ss, check-mcf.ss: (temp FIX for mutual-rec view & field ann)
 
 Exception Invalid_argument("List.combineCpure.update_positions_for_imm_view_params") Occurred!
 

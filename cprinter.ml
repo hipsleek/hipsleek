@@ -602,6 +602,8 @@ let pr_view_arg x = fmt_string (string_of_view_arg x)
 
 let pr_annot_arg x = fmt_string (string_of_annot_arg x)
 
+let pr_annot_arg_posn x = fmt_string ((pr_pair string_of_annot_arg string_of_int) x)
+
 let pr_typed_spec_var x = fmt_string (* (string_of_spec_var x) *) (string_of_typed_spec_var x)
 
 let pr_typed_spec_var_lbl (l,x) = 
@@ -621,6 +623,8 @@ let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
 let pr_list_of_view_arg xs = pr_list_none pr_view_arg xs
 
 let pr_list_of_annot_arg xs = pr_list_none pr_annot_arg xs
+
+let pr_list_of_annot_arg_posn xs = pr_list_none pr_annot_arg_posn xs
   
 let pr_imm x = fmt_string (string_of_imm x)
 
@@ -3032,7 +3036,8 @@ let pr_view_decl v =
       (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "view vars: "  pr_list_of_spec_var v.view_vars;
-  pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params);
+  (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
+  pr_vwrap  "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;

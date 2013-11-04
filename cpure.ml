@@ -11855,7 +11855,13 @@ let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * i
   try 
     let lst = List.combine aa old_lst in 
     let new_annot_args = List.map (fun (a, (aa,p)) -> (imm_ann_to_annot_arg a, p)) lst in new_annot_args
-  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params"))
+  with Invalid_argument s -> 
+      begin
+        let def_aa_pos = List.map (fun a -> (imm_ann_to_annot_arg a,0)) aa in
+        Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_imm_params" no_pos;
+        def_aa_pos
+      end
+  (* with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params")) *)
 
 let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * int) list) =
   let pr1 = pr_list string_of_ann in
@@ -11864,11 +11870,16 @@ let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * i
       pr2 update_positions_for_imm_view_params aa old_lst
 
 let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
-  (* let aa_pos = List.map (fun a -> (a,0)) aa in *)
   try 
     let lst = List.combine aa old_lst in 
     let new_annot_args = List.map (fun (a, (_,p)) -> (a, p)) lst in new_annot_args
-  with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_annot_view_params"))
+  with Invalid_argument s -> 
+      begin
+        let def_aa_pos = List.map (fun a -> (a,0)) aa in
+        Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_view_params" no_pos;
+        def_aa_pos
+      end
+      (* raise (Invalid_argument (s ^ "Cpure.update_positions_for_annot_view_params")) *)
 
 
 let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot_arg * int) list) = 
