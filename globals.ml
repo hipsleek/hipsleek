@@ -765,7 +765,7 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
-let allow_field_ann = ref false
+let allow_field_ann = ref true
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
