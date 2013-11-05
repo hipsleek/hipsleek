@@ -8,6 +8,9 @@ module IF = Iformula
 (* Global variables      *)
 (* --------------------- *)
 
+let str_addr = "addr_"
+let str_deref = "deref"
+
 let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
@@ -460,7 +463,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
               with Not_found -> (
                 (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                 let ftyp = deref_ty in
-                let fname = "deref" in
+                let fname = str_deref in
                 let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
                 let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                 let dtyp = Globals.Named dname in
@@ -471,7 +474,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
               )
             ) in
             (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-            let addr_vname = "addr_" ^ lv_str in
+            let addr_vname = str_addr ^ lv_str in
             let addr_vdecl = (
               (* create and temporarily initiate a new object *)
               let init_params = [(translate_lval lv)] in
@@ -538,7 +541,7 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
           with Not_found -> (
             (* create new Globals.typ and Iast.data_decl update to hash tables *)
             let ftyp = translate_typ actual_ty pos in
-            let fname = "deref" in
+            let fname = str_deref in
             let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
             let dname = (Globals.string_of_typ ftyp) ^ "_star" in
             let dtype = Globals.Named dname in
@@ -684,7 +687,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   try 
     let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
-    Iast.mkMember addr_var ["deref"] None pos
+    Iast.mkMember addr_var [str_deref] None pos
   with Not_found -> (
     let (lhost, offset, loc) = lv in
     let pos = translate_location loc in
@@ -725,7 +728,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
             create_complex_exp base offset [] pos
         | _ -> (
             let data_base = translate_exp e  in
-            let data_fields = ["deref"] in
+            let data_fields = [str_deref] in
             let base = Iast.mkMember data_base data_fields None pos in
             create_complex_exp base offset [] pos
           )
