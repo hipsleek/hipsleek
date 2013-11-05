@@ -1637,10 +1637,13 @@ and get_node_args (h : h_formula) = match h with
   | DataNode ({h_formula_data_arguments = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument")
 
-and get_node_annot_args (h : h_formula) = match h with
+and get_node_annot_args_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> List.map fst c
   | DataNode _ -> []
   | _ -> failwith ("get_node_args: invalid argument")
+
+and get_node_annot_args (h : h_formula) = 
+  Debug.no_1 "get_node_annot_args" !print_h_formula CP.string_of_annot_arg_list get_node_annot_args_x h 
 
 and get_node_annot_args_w_pos (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> c

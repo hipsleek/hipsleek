@@ -615,31 +615,41 @@ and insert_rd_phase (f : IF.h_formula) (wr_phase : IF.h_formula) : IF.h_formula 
 (*   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in *)
 (*   transform_struc_formula f e *)
 
-and propagate_imm_struc_formula sf (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
+and propagate_imm_struc_formula sf view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) =
   match sf with
     | EBase f   -> EBase {f with 
-          formula_struc_base = propagate_imm_formula f.formula_struc_base imm imm_p }
-    | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c imm imm_p) l)
-    | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c imm imm_p) f.formula_case_branches;}
+          formula_struc_base = propagate_imm_formula f.formula_struc_base view_name imm imm_p }
+    | EList l   -> EList  (map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) l)
+    | ECase f   -> ECase {f with formula_case_branches = map_l_snd (fun c->  propagate_imm_struc_formula c view_name imm imm_p) f.formula_case_branches;}
     | EAssume f -> EAssume {f with
-	  formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl imm imm_p;
-	  formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc imm imm_p;}
-    | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation imm imm_p} 
+	  formula_assume_simpl = propagate_imm_formula f.formula_assume_simpl view_name imm imm_p;
+	  formula_assume_struc = propagate_imm_struc_formula  f.formula_assume_struc view_name imm imm_p;}
+    | EInfer f  -> EInfer {f with formula_inf_continuation = propagate_imm_struc_formula f.formula_inf_continuation view_name imm imm_p} 
 
-and propagate_imm_formula (f : formula) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
+and propagate_imm_formula_x (f : formula) (view_name: ident) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	let rf1 = propagate_imm_formula f1 imm imm_p in
-	let rf2 = propagate_imm_formula f2 imm imm_p in
+	let rf1 = propagate_imm_formula_x f1 view_name imm imm_p in
+	let rf2 = propagate_imm_formula_x f2 view_name imm imm_p in
 	let resform = mkOr rf1 rf2 pos in
 	resform
   | Base f1 ->
         let emap = build_eset_of_conj_formula (MCP.pure_of_mix  f1.CF.formula_base_pure) in
-        let f1_heap = propagate_imm_h_formula f1.formula_base_heap imm imm_p emap in
+        let f1_heap = propagate_imm_h_formula f1.formula_base_heap view_name imm imm_p emap in
         Base({f1 with formula_base_heap = f1_heap})
   | Exists f1 ->
         let emap = build_eset_of_conj_formula (MCP.pure_of_mix  f1.CF.formula_exists_pure) in
-        let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm imm_p emap in
+        let f1_heap = propagate_imm_h_formula f1.formula_exists_heap view_name imm imm_p emap in
         Exists({f1 with formula_exists_heap = f1_heap})
+
+(* !!currently works just for view_name and self data nodes!! *)
+and propagate_imm_formula (f : formula) (view_name: ident) (imm : CP.ann) (imm_p: (CP.annot_arg * CP.annot_arg) list): formula =
+   Debug.no_4 "propagate_imm_formula" 
+      (add_str "formula" (Cprinter.string_of_formula)) 
+      (add_str "view_name" pr_id) 
+      (add_str "imm" (Cprinter.string_of_imm)) 
+      (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
+      (Cprinter.string_of_formula) 
+       propagate_imm_formula_x f view_name imm imm_p
 
 (* andreeac TODOIMM: to replace below so that it uses emap *)
 and replace_imm imm map emap=
@@ -656,13 +666,15 @@ and replace_imm imm map emap=
     | _ -> imm                          (* replace temp as well *)
 
 
-and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) emap : h_formula = 
+and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) emap : h_formula = 
   match f with
     | ViewNode f1 -> 
-          let new_node_imm = imm in
-          let new_args_imm = List.fold_left (fun acc (fr,t) -> 
-              if (Gen.BList.mem_eq CP.eq_annot_arg fr (CF.get_node_annot_args f)) then acc@[t] else acc) []  imm_p in
-          (* andreeac: why was below needed? *)
+          if not (f1.CF.h_formula_view_name = view_name) then f
+          else
+            let new_node_imm = imm in
+            let new_args_imm = List.fold_left (fun acc (fr,t) -> 
+                if (Gen.BList.mem_eq CP.eq_annot_arg fr (CF.get_node_annot_args f)) then acc@[t] else acc) []  imm_p in
+            (* andreeac: why was below needed? *)
           (* match f1.Cformula.h_formula_view_imm with *)
 	  (*   | CP.ConstAnn _ -> imm *)
 	  (*   | _ ->  *)
@@ -675,9 +687,11 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_
               h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
           })
     | DataNode f1 -> 
-          let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
-          DataNode({f1 with h_formula_data_imm = imm;
-              h_formula_data_param_imm = new_param_imm;})
+          (* if not(CP.is_self_spec_var f1.CF.h_formula_data_node) then f *)
+          (* else *)
+            let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
+            DataNode({f1 with h_formula_data_imm = imm;
+                h_formula_data_param_imm = new_param_imm;})
 
           (* andreeac: why was below needed? *)
           (* DataNode({f1 with h_formula_data_imm = *)
@@ -691,34 +705,35 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : CP.ann)  (imm_p: (CP.annot_
 	      (*     h_formula_data_param_imm =  *)
 	      (*     List.map (fun c -> if (subtype_ann 1 imm c) then c else imm) f1.Cformula.h_formula_data_param_imm}) *)
     | Star f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm imm_p emap in
-	  let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm imm_p emap in
+	  let h1 = propagate_imm_h_formula f1.h_formula_star_h1 view_name imm imm_p emap in
+	  let h2 = propagate_imm_h_formula f1.h_formula_star_h2 view_name imm imm_p emap in
 	  mkStarH h1 h2 f1.h_formula_star_pos 
     | Conj f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm imm_p emap in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm imm_p emap in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 view_name imm imm_p emap in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 view_name imm imm_p emap in
 	  mkConjH h1 h2 f1.h_formula_conj_pos
     | ConjStar f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conjstar_h1 imm imm_p emap in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conjstar_h2 imm imm_p emap in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conjstar_h1 view_name imm imm_p emap in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conjstar_h2 view_name imm imm_p emap in
 	  mkConjStarH h1 h2 f1.h_formula_conjstar_pos
     | ConjConj f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_conjconj_h1 imm imm_p emap in
-	  let h2 = propagate_imm_h_formula f1.h_formula_conjconj_h2 imm imm_p emap in
+	  let h1 = propagate_imm_h_formula f1.h_formula_conjconj_h1 view_name imm imm_p emap in
+	  let h2 = propagate_imm_h_formula f1.h_formula_conjconj_h2 view_name imm imm_p emap in
 	  mkConjConjH h1 h2 f1.h_formula_conjconj_pos	      	      
     | Phase f1 ->
-	  let h1 = propagate_imm_h_formula f1.h_formula_phase_rd imm imm_p emap in
-	  let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm imm_p emap in
+	  let h1 = propagate_imm_h_formula f1.h_formula_phase_rd view_name imm imm_p emap in
+	  let h2 = propagate_imm_h_formula f1.h_formula_phase_rw view_name imm imm_p emap in
 	  mkPhaseH h1 h2 f1.h_formula_phase_pos
     | _ -> f
 
-and propagate_imm_h_formula (f : h_formula) (imm : CP.ann)  (map: (CP.annot_arg * CP.annot_arg) list) emap: h_formula = 
-  Debug.no_3 "propagate_imm_h_formula" 
+and propagate_imm_h_formula (f : h_formula) view_name (imm : CP.ann)  (map: (CP.annot_arg * CP.annot_arg) list) emap: h_formula = 
+  Debug.no_4 "propagate_imm_h_formula" 
       (Cprinter.string_of_h_formula) 
+      (add_str "view_name" pr_id) 
       (add_str "imm" (Cprinter.string_of_imm)) 
       (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
       (Cprinter.string_of_h_formula) 
-      (fun _ _ _ -> propagate_imm_h_formula_x f imm map emap) f imm map
+      (fun _ _ _ _ -> propagate_imm_h_formula_x f view_name imm map emap) f view_name imm map
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
@@ -890,11 +905,11 @@ and replace_list_ann_x (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
   ) (([],[]), [], (([],[],[]),[])) (List.combine ann_lst_l ann_lst_r ) in
   n_ann_lst, niv, constr 
 
-and replace_list_ann (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
+and replace_list_ann i (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) es =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
   let pr_p =  pr_pair pr pr in 
   let pr_out = pr_triple pr_p pr_none pr_none in
-  Debug.no_2 "replace_list_ann" pr pr pr_out (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r es) ann_lst_l ann_lst_r
+  Debug.no_2_num i "replace_list_ann" pr pr pr_out (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r es) ann_lst_l ann_lst_r
 
 and replace_list_ann_mem (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) impl_vars expl_vars evars =
   let n_ann_lst, niv, constr = List.fold_left (fun ((res_ann_acc,cons_ann_acc), n_iv, (to_lhsl, to_rhsl, to_rhs_exl)) (ann_l,ann_r) -> 

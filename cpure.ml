@@ -11692,6 +11692,9 @@ let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
 let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
   List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
 
+let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
+  Debug.no_1 "annot_arg_to_imm_ann_list" (pr_list string_of_annot_arg) (pr_list string_of_ann) annot_arg_to_imm_ann_list arg
+
 let annot_arg_to_imm_ann_list_no_pos (arg: (annot_arg * int) list): ann list =
   List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] (List.map (fun (x,_) -> x ) arg)
 
@@ -11877,7 +11880,7 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
       begin
         let def_aa_pos = List.map (fun a -> (a,0)) aa in
         Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_view_params" no_pos;
-        def_aa_pos
+        old_lst
       end
       (* raise (Invalid_argument (s ^ "Cpure.update_positions_for_annot_view_params")) *)
 

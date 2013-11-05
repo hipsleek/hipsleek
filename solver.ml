@@ -3204,7 +3204,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           let anns = List.map fst anns in
           let to_ann = anns in
           let mpa = List.combine fr_ann to_ann in
-          let forms = Immutable.propagate_imm_struc_formula renamed_view_formula imm mpa in
+          let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in
           let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
 	  let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
@@ -3342,7 +3342,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       let anns = List.map fst anns in
                       let to_ann = anns in 
                       let mpa = List.combine from_ann to_ann in
-                      let forms = propagate_imm_formula forms imm mpa in
+                      let forms = propagate_imm_formula forms lhs_name imm mpa in
                       let renamed_view_formula = rename_bound_vars forms in
                       (* let _ = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
                       let renamed_view_formula = add_unfold_num renamed_view_formula uf in
@@ -3778,7 +3778,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                 | None -> view_form 
                 | Some f -> push_case_f f view_form in
               let mpa = List.combine fr_ann to_ann in
-              let view_form =  Immutable.propagate_imm_struc_formula view_form imm mpa in
+              let view_form =  Immutable.propagate_imm_struc_formula view_form c imm mpa in
               Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
               Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
               Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
@@ -12157,7 +12157,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                   let from_ann = (CF.get_node_annot_args lhs_heap) in
                   let to_ann = (CF.get_node_annot_args node) in
                   let mpa = List.combine from_ann to_ann in
-                  let coer_rhs_new = propagate_imm_formula coer_rhs_new imm1 mpa in
+                  let coer_rhs_new = propagate_imm_formula coer_rhs_new c1 imm1 mpa in
 
                   (* Currently, I am trying to change in advance at the trans_one_coer *)
                   (* Add origins to the body of the coercion which consists of *)
