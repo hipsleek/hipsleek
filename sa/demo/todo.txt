@@ -6199,7 +6199,14 @@ Message: self of H2_rem_link cannot have its type determined
 Exception Invalid_argument("List.combineCpure.update_positions_for_imm_view_params") Occurred!
 
 =====================================================================
+#skip2-list, cll.c, check-cll:
 
+
+ something wrong with conditional stmts
+
+if (h==c) ==> should not use cast when transform from c to ss
+
+=====================================================================
 # dryad:
 - glib/glist.ss
 - https://git.gnome.org/browse/glib/tree/glib/gslist.c
