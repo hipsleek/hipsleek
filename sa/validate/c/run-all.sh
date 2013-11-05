@@ -9,9 +9,7 @@ echo "zip_paper_eq"
 echo "sll+head"
 ../../hip check-sll-head.c -validate ../o/check-sll-head.cp | grep Validate
 echo "check-sll-head"
-../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
-echo "skip0"
-../../hip skip0.ss -validate o/skip0.cp | grep Validate
+../../hip check-sll-head.c -validate ../o/check-sll-head.cp | grep Validate
 echo "skip2-list"
 ../../hip skip2-list.c -validate ../o/skip2-list.cp | grep Validate
 echo "skip3-list"
@@ -29,15 +27,15 @@ echo " 0/1 SLLs"
 echo "sll2dll"
 ../../hip sll-dll.c -validate ../o/sll-dll.cp | grep Validate
 echo "check-dll"
-../../hip check-dll.ss -validate o/check-dll.cp | grep Validate
-echo "bt-search-2.ss"
+../../hip check-dll.c -validate ../o/check-dll.cp | grep Validate
+echo "bt-search-2."
 ../../hip bt-search-2.c -validate  ../o/bt-search-2.cp | grep Validate
 echo "tll"
 ../../hip tll.c --sa-dnc --pred-en-eup -validate ../o/tll.cp | grep Validate
 echo "rose-tree"
 ../../hip rose-tree-1.c -validate ../o/rose-tree-1.cp | grep Validate
-echo "check mcf: to fix exception (to fix bugs of validation)"
-../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
+echo "check mcf"
+../../hip check-mcf.c -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
 #../../hip check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
 echo "ll-back.ss"

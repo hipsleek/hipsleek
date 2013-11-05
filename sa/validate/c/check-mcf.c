@@ -37,8 +37,8 @@ PostPred G2(node a,node@NI c,tree@NI b).
 
 int check_tree (struct tree* t)
 /*@
-  requires t::treep<>@L ensures res>0;
-  //infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res>0;
+ // requires t::treep<>@L ensures res>0;
+  infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res>0;
 */
 {
    struct node* n = NULL;
@@ -48,8 +48,8 @@ int check_tree (struct tree* t)
 }
 int check_child (struct node* l, struct node* prv, struct tree* par)
 /*@
-  requires l::dll<par, prv>@L ensures  res>0;
-  //infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res>0;
+  //requires l::dll<par, prv>@L ensures  res>0;
+  infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res>0;
 */
 {
 	if (!l) return 1;

@@ -11106,6 +11106,11 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
   let h_inf_args, h_arg_map = get_heap_inf_args_hp_rel estate infer_vars_hp_rel in
   let rcontr,rel =  solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg in
   let eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
+  let helper args ps=
+    List.exists (fun p ->
+        CP.is_eq_exp p
+    ) ps
+  in
   let r_contr_lst = match rcontr with
     | Some (es,f) -> 
 	  let fv = CP.fv f in
@@ -11116,14 +11121,20 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
                   else (sv1,sv2)
               ) eqs0 in
               let f = CP.subst eqs1 f in
-              let diff = CP.diff_svl fv  h_inf_args0 in
-              let p = CP.mkForall diff f None pos in 
-              (* let _ = DD.info_hprint (add_str "p: " !CP.print_formula) p pos in  *)
-              if TP.is_sat_raw (MCP.mix_of_pure p) then
-                (* let np = (Omega.simplify (CP.arith_simplify_new p)) in *)
+              let f = 
+                let ps = CP.list_of_disjs f in
+                if List.length ps <=1 || not (helper h_inf_args0 ps) then f
+                else
+                  let ps1=List.filter (fun p->not(CP.is_neq_null_exp p)) ps in
+                  CP.disj_of_list ps1 pos
+              in
+              let diff = CP.diff_svl fv h_inf_args0 in
+              let p = CP.mkForall diff f None pos in
+              (* let _ = DD.info_hprint (add_str "p: " (!CP.print_formula)) p pos in *)
+              if  TP.is_sat_raw (MCP.mix_of_pure p) then
                 let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
-                let _ = DD.tinfo_hprint (add_str "p" !CP.print_formula) p no_pos in
-                let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in
+                (* let _ = DD.info_hprint (add_str "np" !CP.print_formula) np no_pos in *)
+                (* let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in *)
                 x@[(es,np)]
               else x
           ) [] infer_vars_hp_rel in

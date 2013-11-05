@@ -31,7 +31,7 @@ echo "sll2dll"
 echo "check-dll"
 ../../hip check-dll.ss -validate o/check-dll.cp | grep Validate
 echo "bt-search-2.ss"
-../../hip bt-search-2.ss -validate --pred-unify-post  o/bt-search-2.cp | grep Validate
+../../hip bt-search-2.ss --pred-unify-post -validate  o/bt-search-2.cp | grep Validate
 echo "tll"
 ../../hip tll.ss --sa-dnc --pred-en-eup -validate o/tll.cp | grep Validate
 echo "rose-tree"
