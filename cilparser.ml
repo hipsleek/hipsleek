@@ -922,10 +922,19 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
         match new_ty with
         | Globals.Bool -> translate_exp exp
         | _ -> (
-            let e = translate_exp exp in
-            let bool_of_proc = create_bool_casting_proc new_ty in
-            let proc_name = bool_of_proc.Iast.proc_name in
-            Iast.mkCallNRecv proc_name None [e] None pos
+            match exp with
+            (* simplify conditional expression in if-statement *)
+            | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) 
+              when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->
+                let e1 = translate_exp exp1 in
+                let e2 = translate_exp exp2 in
+                let o = translate_binary_operator op pos in
+                Iast.mkBinary o e1 e2 None pos
+            | _ ->
+                let e = translate_exp exp in
+                let bool_of_proc = create_bool_casting_proc new_ty in
+                let proc_name = bool_of_proc.Iast.proc_name in
+                Iast.mkCallNRecv proc_name None [e] None pos
           )
       ) in
       let e1 = translate_block blk1 in
