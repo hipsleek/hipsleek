@@ -209,8 +209,33 @@ Message: return type doesn't match
 
 conditional stmt has not been transformed properly.
 
+the second dprint
 
+GOT:
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:rest::node<_@M,_@M>@M&h=rest & h=h' & rest=rest' & rest'!=null & v_int_13_951!=0 & rest'!=null & h'!=null &
+                                                                                          ^^^^^^^^^^^^^^^^^^^^^^
+ v_int_13_952!=0 & h'!=null & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_885'=0 & v_int_13_885'=0 & !(v_bool_13_891') & v_int_13_885'=0 & !(v_bool_13_891')&{FLOW,(24,25)=__norm}[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
 
+ ]
+
+EXPECTED
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:rest::node<_@M,_@M>@M&h=rest & h=h' & rest=rest' & rest'!=null & v_int_13_951!=0 & rest'!= h' &
+                                                                                          ^^^^^^^^^^^^^^^^^^^^^^
+ v_int_13_952!=0 & h'!=null & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_885'=0 & v_int_13_885'=0 & !(v_bool_13_891') & v_int_13_885'=0 & !(v_bool_13_891')&{FLOW,(24,25)=__norm}[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
+
+ ]
 *******************************************************
 *******************************************************
 *******************************************************
