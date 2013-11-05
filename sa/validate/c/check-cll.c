@@ -14,8 +14,8 @@ HeapPred G1(node a, node b).
 
 int check_csll (struct node* l, struct node* p)
 /*@
- requires l::cll<p>@L ensures  res!=0;
-//  infer [H1,G1] requires H1(l,p) ensures G1(l,p) & res;
+// requires l::cll<p>@L ensures  res!=0;
+  infer [H1,G1] requires H1(l,p) ensures G1(l,p) & res!=0;
 */
 {
   if (l == p)

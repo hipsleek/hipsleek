@@ -11105,14 +11105,20 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
 
   let h_inf_args, h_arg_map = get_heap_inf_args_hp_rel estate infer_vars_hp_rel in
   let rcontr,rel =  solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg in
-
+  let eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
   let r_contr_lst = match rcontr with
     | Some (es,f) -> 
 	  let fv = CP.fv f in
           let rcontr_lst = List.fold_left (fun x hp_rel0 -> 
               let h_inf_args0, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
+              let eqs1 = List.map (fun (sv1, sv2) ->
+                  if CP.mem_svl sv1 h_inf_args0 then (sv2,sv1)
+                  else (sv1,sv2)
+              ) eqs0 in
+              let f = CP.subst eqs1 f in
               let diff = CP.diff_svl fv  h_inf_args0 in
               let p = CP.mkForall diff f None pos in 
+              (* let _ = DD.info_hprint (add_str "p: " !CP.print_formula) p pos in  *)
               if TP.is_sat_raw (MCP.mix_of_pure p) then
                 (* let np = (Omega.simplify (CP.arith_simplify_new p)) in *)
                 let np = (TP.simplify_raw (CP.arith_simplify_new p)) in

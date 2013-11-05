@@ -11,7 +11,9 @@ ll<> == self=null
 
 /*@
 HeapPred H( node a).
-HeapPred H1( node a).
+HeapPred H1( node a,node b).
+HeapPred H2( node a).
+HeapPred G2( node a).
 */
 
 //requires x::ll<>
@@ -19,13 +21,19 @@ HeapPred H1( node a).
 
 void foo(struct node* x)
 /*@
-  infer [H1,H]
-  requires H(x)
- ensures  H1(x);
+  infer [H2,G2]
+  requires H2(x)
+ ensures  G2(x);
 */
  {
-   if (x != NULL) {
-     foo(x->next);
+   while (x)
+     /*@
+       infer [H1,H]
+       requires H(x)
+       ensures  H1(x,x');
+     */
+     {
+     x= x->next;
    }
    return;
  }

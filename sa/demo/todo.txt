@@ -6210,7 +6210,7 @@ if (h==c) ==> should not use cast when transform from c to ss
 # dryad:
 - glib/glist.ss
 - https://git.gnome.org/browse/glib/tree/glib/gslist.c
-- https://git.gnome.org/browse/glib/tree/glib/gslist.c
+- https://git.gnome.org/browse/glib/tree/glib/glist.c
 - https://git.gnome.org/browse/glib/tree/glib/gqsort.c
 - https://git.gnome.org/browse/glib/tree/glib/gqueue.c
 - https://git.gnome.org/browse/glib/tree/glib/gqsort.c

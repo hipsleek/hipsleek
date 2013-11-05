@@ -601,17 +601,18 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       (* let a_fml = CP.conj_of_list (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) pos in *)
       (* let f = CP.mkExists exists_vars a_fml None pos in *)
       let _ = DD.tinfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
-      let _ = DD.ninfo_hprint (add_str "f: " !print_formula) f pos in 
+      let _ = DD.tinfo_hprint (add_str "f: " !print_formula) f pos in 
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
-        let ps2 = CP.list_of_conjs f in
+        let ps2 = List.filter (fun p -> CP.intersect_svl ivars (CP.fv p) <> []) (CP.list_of_conjs f) in
         let neg_f = 
-          if List.for_all (fun p -> CP.is_eq_neq_exp p &&
-              CP.intersect_svl ivars (CP.fv p) <> []
+          if List.for_all (fun p -> CP.is_eq_neq_exp p (* && *)
+              (* CP.intersect_svl ivars (CP.fv p) <> [] *)
           ) ps2 
           then
             let ps3 = List.map CP.neg_eq_neq ps2 in
+            (* let _ = DD.info_hprint (add_str "ps3: " (pr_list !print_formula)) ps3 pos in  *)
             let ps4 = if List.length (CP.remove_dups_svl ivars) > 1 then
               List.filter (fun p -> not (CP.is_neq_null_exp p) ) ps3
             else ps3
@@ -622,7 +623,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
             let _ = DD.ninfo_hprint (add_str "f2: " !print_formula) f pos in 
             Redlog.negate_formula f
         in
-        let _ = DD.ninfo_hprint (add_str "neg_f: " !print_formula) neg_f pos in 
+        (* let _ = DD.info_hprint (add_str "neg_f: " !print_formula) neg_f pos in  *)
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
           if CP.isConstTrue pre_thus then neg_f

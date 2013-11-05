@@ -45,7 +45,7 @@ echo "ll-back.ss"
 #sa-dangling
 echo "dll-app"
 ../../hip dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate
-echo "tll"
+echo "tll sa-dangling"
 ../../hip tll.ss --sa-dnc --pred-en-dangling --pred-en-eup -validate o/tll_dang.cp | grep Validate
 #pred-disj-unify
 echo "ll-trav-1.ss --pred-disj-unify"

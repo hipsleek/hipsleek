@@ -1,27 +1,26 @@
-#skip2-list, cll.c, check-cll: something wrong with conditional stmts
 echo "ll-trav.ss"
 ../../../hip ll-trav.c -validate ../o/ll-trav.cp | grep Validate
 echo "ll-trav-1.ss: ll with at least one node"
 ../../../hip ll-trav-1.c -validate ../o/ll-trav-1.cp | grep Validate
 echo "sll-reverse"
-../../hip sll-reverse.ss -validate o/sll-reverse.cp | grep Validate
+../../hip sll-reverse.c -validate ../o/sll-reverse.cp | grep Validate
 echo "zip_paper_eq"
 ../../hip zip_paper_eq.c -validate ../o/zip_paper_eq.cp | grep Validate
 echo "sll+head"
-../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
+../../hip check-sll-head.c -validate ../o/check-sll-head.cp | grep Validate
 echo "check-sll-head"
 ../../hip check-sll-head.ss -validate o/check-sll-head.cp | grep Validate
 echo "skip0"
 ../../hip skip0.ss -validate o/skip0.cp | grep Validate
-echo "skip2-list: to fix the inference, rose-tree-1.ss"
-../../hip skip2-list.ss -validate ../o/skip2-list.cp | grep Validate
+echo "skip2-list"
+../../hip skip2-list.c -validate ../o/skip2-list.cp | grep Validate
 echo "skip3-list"
-#../../hip skip3-list.ss -validate o/skip3-list.cp | grep Validate
+#../../hip skip3-list.c -validate ../o/skip3-list.cp | grep Validate
 echo "check-sorted"
 ../../hip check-sorted.c --sa-en-pure-field -validate ../o/check-sorted.cp | grep Validate
 echo "sll-insertsort: to check result of G"
 #../../hip sll-insertsort.c -validate ../o/sll-insertsort.cp | grep Validate
-echo "CSll: can not verify"
+echo "CSll"
 ../../hip cll.c -validate ../o/cll.cp | grep Validate
 echo "check-CSll: can not verify"
 ../../hip check-cll.c -validate ../o/check-cll.cp | grep Validate
@@ -35,8 +34,8 @@ echo "bt-search-2.ss"
 ../../hip bt-search-2.c -validate  ../o/bt-search-2.cp | grep Validate
 echo "tll"
 ../../hip tll.c --sa-dnc --pred-en-eup -validate ../o/tll.cp | grep Validate
-echo "rose-tree to fix exception"
-../../hip rose-tree-1.ss -validate o/rose-tree-1.cp | grep Validate
+echo "rose-tree"
+../../hip rose-tree-1.c -validate ../o/rose-tree-1.cp | grep Validate
 echo "check mcf: to fix exception (to fix bugs of validation)"
 ../../hip check-mcf.ss -validate o/check-mcf.cp | grep Validate
 echo "check-tll: to check"
