@@ -2,10 +2,10 @@
 //#include<stdio.h>
 //#include<stdlib.h>
 
-//typedef struct node node;
+typedef struct node node;
 struct node {
    int val;
-    struct node* next;
+   node* next;
 };
 
 /*@ 
@@ -23,22 +23,21 @@ HeapPred H(node a, node b).
 PostPred G(node a, node b, node c).
 */
 
-struct node* zip (struct node* x, struct node* y)
-// infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
-//@ requires x::ltwo<y>  ensures x::lthree<y,res>;
+node* zip ( node* x, node* y)
+//@ infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
+// requires x::ltwo<y>  ensures x::lthree<y,res>;
 {
    if (x==NULL) 
 	{
-          if (y!=NULL) {
-            //@ assume false;
-            return x;
-          } else 
+		if (y==NULL) return x;
+		else 
 		{
+                  //@ assume false;
 		  return x;
 		}
 	}
    else {
-     struct node* tmp = malloc(sizeof(struct node));
+     node* tmp = malloc(sizeof(node));
      tmp->val=x->val+y->val;
      tmp->next=zip(x->next,y->next);
      return tmp;

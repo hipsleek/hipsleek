@@ -24,8 +24,8 @@ PostPred G(node a, node b, node c).
 */
 
 struct node* zip (struct node* x, struct node* y)
-// infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
-//@ requires x::ltwo<y>  ensures x::lthree<y,res>;
+//@ infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
+// requires x::ltwo<y>  ensures x::ltwo<y> & x=res;
 {
    if (x==NULL) 
 	{
@@ -38,10 +38,10 @@ struct node* zip (struct node* x, struct node* y)
 		}
 	}
    else {
-     struct node* tmp = malloc(sizeof(struct node));
-     tmp->val=x->val+y->val;
-     tmp->next=zip(x->next,y->next);
-     return tmp;
+     //struct node* tmp = malloc(sizeof(struct node));
+     x->val=x->val+y->val;
+     x->next=zip(x->next,y->next);
+     return x;
    }
 }
 
