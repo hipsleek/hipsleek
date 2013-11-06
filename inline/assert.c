@@ -5,10 +5,10 @@ void f() {
 
   //p = &x;
   //p = &x; // Just another mention of &x.
-  *p = 0;
+  *p = 1;
   int t = x;
   //@ dprint;
-  //@ assert (x' = 0);
+  //@ assert (y' = 0);
   //@ dprint;
 
   return;

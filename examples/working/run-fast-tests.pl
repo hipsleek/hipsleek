@@ -1497,13 +1497,13 @@ $output_file = "log";
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", " --elp ", "Valid.Valid.", "Valid.Valid."],
-        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+        ["inflem.slk", "--en-inf --elp ", "Valid.Valid.", "Fail.Valid."],
         ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lseg.slk", " --elp ", "Valid.Fail.", ""],
         ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
-        ["ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
+        ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+        ["lemmas/ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
         ["sll_tailL.slk", "", "Valid.Valid", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
@@ -1761,7 +1761,7 @@ sub grep_failures {
     my ($res,$exp,$prefix) = @_;
     @results = split (/\./, $res);
     @expected = split (/\./, $exp);
-    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my %mark_failures = map {if ($results[$_] ne $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#expected; #results
     my @failures = grep {  $_ > 0 } keys  %mark_failures;
     my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
     @failures_e = sort  @failures_e;
@@ -1805,7 +1805,7 @@ sub sleek_process_file  {
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
           print LOGFILE "\n======================================\n";
           print LOGFILE "$output";
-          #print "$output";
+          #print "\n!!!output: $output";
           my $lemmas_results = "";
           my $entail_results = "";
           my $barrier_results = "";
@@ -1836,13 +1836,15 @@ sub sleek_process_file  {
                   }
               }
           }
+          #print "\n!!!!!Ent Res: $entail_results \nEnd Ent Res: $test->[3]\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+          if  (($lem == 1)  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
-          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+          if ((($barr==0) && ($entail_results ne $test->[3])) || 
               # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
               ($barr==1 && ($barrier_results ne $test->[2]))){
+              #print "\n !!!!!!!!!!! bef grep for failures: \n";
               @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
           }
           if ($#failures >= 0 ){
