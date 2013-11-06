@@ -1029,7 +1029,11 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   find_typ !aux_local_vardecls id) addr_fvs in
               let nfvs = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_fvs in
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
-              let nhf = List.fold_left (fun hf (((id1, pr1), (id2, pr2)), t) -> IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos) fb.IF.formula_base_heap (List.combine (List.combine addr_fvs nfvs) tl) in
+              let nhf = List.fold_left 
+                (fun hf (((id1, pr1), (id2, pr2)), t) -> 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) fb.IF.formula_base_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Base { fb with
                   IF.formula_base_heap = nhf;
                   IF.formula_base_pure = npf1;
@@ -1043,7 +1047,11 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   find_typ !aux_local_vardecls id) addr_fvs in
               let nfvs = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_fvs in
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
-              let nhf = List.fold_left (fun hf (((id1, pr1), (id2, pr2)), t) -> IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos) fe.IF.formula_exists_heap (List.combine (List.combine addr_fvs nfvs) tl) in
+              let nhf = List.fold_left 
+                (fun hf (((id1, pr1), (id2, pr2)), t) -> 
+                  IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 0 false 
+                      (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) fe.IF.formula_exists_heap (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Exists { fe with
                   IF.formula_exists_heap = nhf;
                   IF.formula_exists_pure = npf1;
