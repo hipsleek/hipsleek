@@ -11701,7 +11701,8 @@ let annot_arg_to_imm_ann_list_no_pos (arg: (annot_arg * int) list): ann list =
 let imm_ann_to_annot_arg (a: ann): annot_arg =  mkImmAnn a
 
 let imm_ann_to_annot_arg_list (anns: ann list): annot_arg list =
-  List.fold_left  (fun acc a -> acc@[imm_ann_to_annot_arg a] ) [] anns
+  List.map imm_ann_to_annot_arg anns
+  (* List.fold_left  (fun acc a -> acc@[imm_ann_to_annot_arg a] ) [] anns *)
 
 let imm_to_view_arg (ann: heap_ann): view_arg = 
   mkAnnotArg (imm_ann_to_annot_arg (ConstAnn(ann)))
