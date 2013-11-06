@@ -20,6 +20,7 @@ type spec_var =
 (* immutability annotations *)
 type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
         TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
+           | NoAnn
 
 (* type view_arg = SVArg of spec_var | AnnArg of ann *)
 
@@ -408,6 +409,7 @@ let string_of_ann a = match a with
   | PolyAnn v -> "PolyAnn"
   | TempAnn v -> "TempAnn"
   | TempRes _ -> "TempRes"
+  | NoAnn -> "@[]"
 
 let rec string_of_imm_helper imm = 
   match imm with
@@ -418,6 +420,7 @@ let rec string_of_imm_helper imm =
     | TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
     | TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
     | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
+    | NoAnn -> "@[]"
 
 let rec string_of_imm imm = 
   if not !print_ann then ""
@@ -11578,7 +11581,7 @@ and isPoly(a : ann) : bool =
 
 
 let rec fv_ann (a: ann) = match a with
-  | ConstAnn _ -> []
+  | ConstAnn _ | NoAnn -> []
   | TempAnn v  -> fv_ann v
   | TempRes(v,w) -> (fv_ann w)@(fv_ann v)
   | PolyAnn v  -> [v]
@@ -11598,7 +11601,7 @@ let mkPolyAnn v = PolyAnn v
 
 let mkExpAnn ann pos = 
   match ann with
-    | TempAnn _ -> IConst(int_of_heap_ann Accs, pos)
+    | TempAnn _ | NoAnn -> IConst(int_of_heap_ann Accs, pos)
     | TempRes (v,w) -> IConst(int_of_heap_ann Accs, pos)
     | ConstAnn a -> IConst(int_of_heap_ann a, pos)
     | PolyAnn v  -> Var(v, pos)
@@ -11609,6 +11612,7 @@ let mkExpAnnSymb ann pos =
     | TempRes _ -> AConst(Accs, pos)
     | ConstAnn a -> AConst(a, pos)
     | PolyAnn v  -> Var(v, pos)  
+    | NoAnn  -> AConst(Accs, pos)
 
 (* dedicated name for imm sv ecoding the constant ann a *)
 let name_for_imm_sv a = (string_of_heap_ann a) ^ ann_var_sufix
@@ -11684,19 +11688,22 @@ let eq_annot_arg a1 a2 =
   match a1,a2 with
     | ImmAnn a1, ImmAnn a2 -> eq_ann a1 a2
 
-let annot_arg_to_imm_ann (arg: annot_arg ): ann list =
+let annot_arg_to_imm_ann (arg: annot_arg ): ann  =
   match arg with
-    | ImmAnn a -> [a]
+    | ImmAnn a -> a
           (* continue from here with other type of ann *)
 
 let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
-  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg
+  List.map  annot_arg_to_imm_ann arg
+  (* List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] arg *)
 
 let annot_arg_to_imm_ann_list (arg: annot_arg list): ann list =
   Debug.no_1 "annot_arg_to_imm_ann_list" (pr_list string_of_annot_arg) (pr_list string_of_ann) annot_arg_to_imm_ann_list arg
 
 let annot_arg_to_imm_ann_list_no_pos (arg: (annot_arg * int) list): ann list =
-  List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] (List.map (fun (x,_) -> x ) arg)
+  (* List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) [] (List.map (fun (x,_) -> x ) arg) *)
+  (* List.fold_left  (fun acc a -> acc@(annot_arg_to_imm_ann a) ) []  *)
+      List.map (fun (x,_) -> annot_arg_to_imm_ann x ) arg
 
 let imm_ann_to_annot_arg (a: ann): annot_arg =  mkImmAnn a
 
@@ -11713,13 +11720,14 @@ let imm_ann_to_view_arg (ann: ann): view_arg =
 let imm_ann_to_view_arg_list (ann: ann list): view_arg list = 
   List.map (fun a -> mkAnnotArg (mkImmAnn a)) ann
 
-let view_arg_to_imm_ann (arg: view_arg): ann list=
+let view_arg_to_imm_ann (arg: view_arg): ann =
   match arg with
-    | SVArg _     -> []
+    | SVArg _     -> NoAnn
     | AnnotArg a  -> annot_arg_to_imm_ann a
 
 let view_arg_to_imm_ann_list (args: view_arg list): ann list=
-  List.fold_left (fun acc arg -> acc@(view_arg_to_imm_ann arg)) []  args
+  (* List.fold_left (fun acc arg -> acc@(view_arg_to_imm_ann arg)) []  args *)
+  List.map view_arg_to_imm_ann args
 
 let annot_arg_to_sv (arg: annot_arg): spec_var list =
   match arg with

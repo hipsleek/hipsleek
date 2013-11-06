@@ -532,6 +532,7 @@ let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var
 
 let rec string_of_imm_helper imm = 
   match imm with
+    | CP.NoAnn -> "@[]"
     | CP.ConstAnn(Accs) -> "@A"
     | CP.ConstAnn(Imm) -> "@I"
     | CP.ConstAnn(Lend) -> "@L"

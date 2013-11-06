@@ -2850,13 +2850,13 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | [] -> f
 
 and apply_one_imm (fr,t) a = match a with
-  | CP.ConstAnn _ -> a
+  | CP.ConstAnn _ | CP.NoAnn -> a
   | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm (fr,t) t1)
   | CP.TempRes (tl,tr) ->  CP.TempRes(apply_one_imm (fr,t) tl, apply_one_imm (fr,t) tr)
   | CP.PolyAnn sv ->  CP.PolyAnn (if CP.eq_spec_var sv fr then t else sv)
 
 and subs_imm_par sst a = match a with
-  | CP.ConstAnn _ -> a
+  | CP.ConstAnn _ | CP.NoAnn -> a
   | CP.TempAnn t1 -> CP.TempAnn(subs_imm_par sst t1)
   | CP.TempRes (tl,tr) -> CP.TempRes(subs_imm_par sst tl,subs_imm_par sst tr)
   | CP.PolyAnn sv ->  CP.PolyAnn (CP.subst_var_par sst sv)

@@ -658,7 +658,9 @@ and replace_imm imm map emap=
     | CP.PolyAnn sv -> 
           begin
             let new_imm = List.fold_left (fun acc (fr,t) ->
-                if ( Gen.BList.mem_eq CP.eq_ann imm (CP.annot_arg_to_imm_ann fr)) then (CP.annot_arg_to_imm_ann t) else acc) [] map in
+                if ( Gen.BList.mem_eq CP.eq_ann imm [CP.annot_arg_to_imm_ann fr]) 
+                then [CP.annot_arg_to_imm_ann t] 
+                else acc) [] map in
             match new_imm with
               | []   -> imm
               | h::_ -> h
@@ -756,17 +758,17 @@ and subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.ex
             | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | CP.ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | CP.TempAnn t2 -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           )
     | CP.ConstAnn k1 ->
           (match imm2 with
             | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | CP.TempAnn t2 -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
             | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
           ) 
-    | CP.TempAnn t1 -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
+    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
     | CP.TempRes (l,ar) -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
           
 and subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
@@ -878,7 +880,7 @@ and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm
     | CP.ConstAnn(Mutable)
     | CP.ConstAnn(Imm)     -> ((CP.ConstAnn(Accs), ann_r), [],(([],[],[]),[]))
     | CP.ConstAnn(Lend)    -> ((CP.TempAnn(ann_l), CP.ConstAnn(Accs)), [],(([],[],[]),[]))
-    | CP.TempAnn _
+    | CP.TempAnn _ | CP.NoAnn
     | CP.TempRes _  
     | CP.ConstAnn(Accs)    -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
     | CP.PolyAnn(_)        ->
@@ -921,7 +923,7 @@ and replace_list_ann_mem (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list) impl_
 and consumed_ann (ann_l: CP.ann) (ann_r: CP.ann): CP.ann = 
   match ann_r with
     | CP.ConstAnn(Accs)    
-    | CP.TempAnn _
+    | CP.TempAnn _ | CP.NoAnn
     | CP.TempRes _
     | CP.ConstAnn(Lend)    -> (CP.ConstAnn(Accs)) 
     | CP.PolyAnn(_)        (* -> *)
@@ -1523,8 +1525,9 @@ let update_read_write_ann (ann_from: CP.ann) (ann_to: CP.ann): CP.ann  =
     | CP.ConstAnn(Imm)
     | CP.ConstAnn(Lend)
     | CP.TempAnn _
-    | CP.PolyAnn(_)        -> if subtype_ann 5 ann_from ann_to then ann_from else ann_to
-    | CP.TempRes _         -> ann_to
+    | CP.PolyAnn(_)        -> 
+          if subtype_ann 5 ann_from ann_to then ann_from else ann_to
+    | CP.TempRes _ | CP.NoAnn     -> ann_to
 
 let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CP.ann) list) =
   let rec helper ex field_ann_lst  =
