@@ -1887,6 +1887,47 @@ let unify_shape_equiv prog unk_hps link_hps hpdefs equivs0=
 
 let unify_pred = unify_shape_equiv
 
+let check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
+  (*partition: matched with lib already*)
+  let lib_hps, lib_hpdefs, rem_hpdefs = List.fold_left (fun (r1,r2,r3) hpdef->
+      match hpdef.CF.hprel_def_body_lib with
+        | None -> begin
+            match hpdef.CF.hprel_def_kind with
+              | CP.HPRelDefn (hp,_,_) ->
+                    if CP.mem_svl hp sel_hps then
+                      (r1, r2, r3@[hpdef])
+                    else (r1@[hp], r2@[hpdef], r3)
+              | _ -> (r1, r2@[hpdef], r3)
+          end
+        | Some _ ->begin
+            match hpdef.CF.hprel_def_kind with
+              | CP.HPRelDefn (hp,_,_) ->
+                    (r1@[hp], r2@[hpdef], r3)
+              | _ -> (r1, r2@[hpdef], r3)
+          end
+  ) ([],[],[]) hpdefs in
+  let lib_hp_defs, post_hp_defs, hp_defs1 = List.fold_left (fun (r1,r2,r3) ((k,_,_,_) as hp_def)->
+      match k with
+        | CP.HPRelDefn (hp,_,_) -> if CP.mem_svl hp lib_hps then
+            (r1@[hp_def], r2,r3)
+          else (*move post-preds to the beginning*)
+            if CP.mem_svl hp post_hps then
+            (r1, r2@[hp_def],r3)
+          else (r1, r2,r3@[hp_def])
+        | _ -> (r1@[hp_def], r2,r3)
+  ) ([],[],[]) hp_defs in
+  let hp_defs1a = post_hp_defs@hp_defs1 in
+  let hp_defs2, eqmap2=unify_pred prog [] unk_hps hp_defs1a eqmap1 in
+  let rem_hpdefs1 = SAU.pred_split_update_hpdefs (List.map fst eqmap2) rem_hpdefs hp_defs2 in
+  (rem_hpdefs1@lib_hpdefs, hp_defs2@lib_hp_defs)
+
+let check_equiv_wo_libs iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_def in
+  Debug.no_3 "check_equiv_wo_libs" !CP.print_svl pr2 pr1 (pr_pair pr2 pr1)
+      (fun _ _ _ -> check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1)
+      sel_hps hpdefs hp_defs
+
 
 (*do_conj_unify: pre only*)
 let do_unify_x prog do_conj_unify unk_hps link_hps post_hps defs0=

@@ -6778,7 +6778,6 @@ let reuse_equiv_hpdefs prog hpdefs hp_defs=
       (fun _ _ -> reuse_equiv_hpdefs_x prog hpdefs hp_defs)
       hpdefs hp_defs
 
-
 let pred_split_update_hpdefs split_hps hpdefs hp_defs=
   let update_one hpdefs hp=
     try
@@ -6787,7 +6786,8 @@ let pred_split_update_hpdefs split_hps hpdefs hp_defs=
       (rem_hpdefs@[{hpdef with CF.hprel_def_body = [([], Some f)]}])
     with _ -> hpdefs
   in
-  List.fold_left update_one hpdefs split_hps
+  if split_hps = [] then hpdefs else
+    List.fold_left update_one hpdefs split_hps
 
 
 let filter_non_sel_x sel_hps0 hp_defs0 hpdefs0=
