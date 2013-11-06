@@ -1843,7 +1843,12 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let annot_arg_pos = List.map (fun ((a, _), pos) -> (a, pos)) annot_arg in (* get rid of lbl *)
   let annot_arg,pos = List.split annot_arg_pos in
   let imm_arg = CP.view_arg_to_imm_ann_list annot_arg in 
-  let imm_arg_pos = try List.combine imm_arg pos 
+  let imm_arg_pos = try
+    let imm_arg = 
+      if imm_arg = [] then List.map (fun _ -> CP.ConstAnn Mutable) pos
+      else imm_arg
+    in
+    List.combine imm_arg pos 
   with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining imm_arg with pos" in
   (* create an imm list following the imm_map, updated with proper values from the list of params *)
   let anns_pos = List.map (fun (a, pos) -> 
