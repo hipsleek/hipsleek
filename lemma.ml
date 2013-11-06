@@ -352,6 +352,9 @@ let sa_infer_lemmas iprog cprog lemmas  =
     | None ->
           Some nctx
 
+let sa_infer_lemmas iprog cprog lemmas  =
+  let pr1 = pr_list pr_none in
+  Debug.no_1 "sa_infer_lemmas" pr1 pr_none (fun _ -> sa_infer_lemmas iprog cprog lemmas) lemmas
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 

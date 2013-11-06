@@ -2697,7 +2697,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
     (*construct lemma_infer*)
     let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
       (List.map (fun (hp, _) -> CP.name_of_spec_var hp) comps) (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
-    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+    let _ = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
     match lc_opt with
       | Some lcs ->
