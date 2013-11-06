@@ -1015,7 +1015,11 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
             let idl = List.map (fun (id, _, _) -> id) vd.Iast.exp_var_decl_decls in
             if List.mem id idl then vd.Iast.exp_var_decl_type else find_typ tl id
       | _ -> Globals.Void
-  and helper_formula (f: IF.formula): IF.formula = (
+  and helper_formula (h: IF.formula) : IF.formula =
+    (* let _ = print_endline "hello" in *)
+    let pr = Iprinter.string_of_formula in
+    Debug.no_1 "helper_formula" pr pr helper_formula_x h
+  and helper_formula_x (f: IF.formula): IF.formula = (
       match f with
         | IF.Base fb ->
               let npf = helper_pure_formula fb.IF.formula_base_pure in
@@ -1047,8 +1051,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               }
         | IF.Or fo ->
               IF.Or { fo with
-                  IF.formula_or_f1 = helper_formula fo.IF.formula_or_f1;
-                  IF.formula_or_f2 = helper_formula fo.IF.formula_or_f2;
+                  IF.formula_or_f1 = helper_formula_x fo.IF.formula_or_f1;
+                  IF.formula_or_f2 = helper_formula_x fo.IF.formula_or_f2;
               }
   ) 
   and helper_one_formula (o: IF.one_formula): IF.one_formula = (
@@ -1060,37 +1064,41 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   IF.formula_delayed = helper_pure_formula ofo.IF.formula_delayed;
               }
   )
-  and helper_h_formula (h: IF.h_formula) : IF.h_formula = (
+  and helper_h_formula (h: IF.h_formula) : IF.h_formula =
+    (* let _ = print_endline "hello" in *)
+    let pr = Iprinter.string_of_h_formula in
+    Debug.no_1 "helper_h_formula" pr pr helper_h_formula_x h
+  and helper_h_formula_x (h: IF.h_formula) : IF.h_formula = (
       match h with
         | IF.Phase hfp ->
               IF.Phase { hfp with
-                  IF.h_formula_phase_rd = helper_h_formula hfp.IF.h_formula_phase_rd;
-                  IF.h_formula_phase_rw = helper_h_formula hfp.IF.h_formula_phase_rw;
+                  IF.h_formula_phase_rd = helper_h_formula_x hfp.IF.h_formula_phase_rd;
+                  IF.h_formula_phase_rw = helper_h_formula_x hfp.IF.h_formula_phase_rw;
               }
         | IF.Conj hfc ->
               IF.Conj { hfc with
-                  IF.h_formula_conj_h1 = helper_h_formula hfc.IF.h_formula_conj_h1;
-                  IF.h_formula_conj_h2 = helper_h_formula hfc.IF.h_formula_conj_h2;
+                  IF.h_formula_conj_h1 = helper_h_formula_x hfc.IF.h_formula_conj_h1;
+                  IF.h_formula_conj_h2 = helper_h_formula_x hfc.IF.h_formula_conj_h2;
               }
         | IF.ConjStar hfcs ->
               IF.ConjStar { hfcs with
-                  IF.h_formula_conjstar_h1 = helper_h_formula hfcs.IF.h_formula_conjstar_h1;
-                  IF.h_formula_conjstar_h2 = helper_h_formula hfcs.IF.h_formula_conjstar_h2;
+                  IF.h_formula_conjstar_h1 = helper_h_formula_x hfcs.IF.h_formula_conjstar_h1;
+                  IF.h_formula_conjstar_h2 = helper_h_formula_x hfcs.IF.h_formula_conjstar_h2;
               }
         | IF.ConjConj hfcc ->
               IF.ConjConj { hfcc with
-                  IF.h_formula_conjconj_h1 = helper_h_formula hfcc.IF.h_formula_conjconj_h1;
-                  IF.h_formula_conjconj_h2 = helper_h_formula hfcc.IF.h_formula_conjconj_h2;
+                  IF.h_formula_conjconj_h1 = helper_h_formula_x hfcc.IF.h_formula_conjconj_h1;
+                  IF.h_formula_conjconj_h2 = helper_h_formula_x hfcc.IF.h_formula_conjconj_h2;
               }
         | IF.Star hfs ->
               IF.Star { hfs with
-                  IF.h_formula_star_h1 = helper_h_formula hfs.IF.h_formula_star_h1;
-                  IF.h_formula_star_h2 = helper_h_formula hfs.IF.h_formula_star_h2;
+                  IF.h_formula_star_h1 = helper_h_formula_x hfs.IF.h_formula_star_h1;
+                  IF.h_formula_star_h2 = helper_h_formula_x hfs.IF.h_formula_star_h2;
               }
         | IF.StarMinus hfsm ->
               IF.StarMinus { hfsm with
-                  IF.h_formula_starminus_h1 = helper_h_formula hfsm.IF.h_formula_starminus_h1;
-                  IF.h_formula_starminus_h2 = helper_h_formula hfsm.IF.h_formula_starminus_h2;
+                  IF.h_formula_starminus_h1 = helper_h_formula_x hfsm.IF.h_formula_starminus_h1;
+                  IF.h_formula_starminus_h2 = helper_h_formula_x hfsm.IF.h_formula_starminus_h2;
               }
                   (*| IF.HeapNode hfh ->
                     IF.HeapNode { hfh with
