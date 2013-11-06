@@ -1,4 +1,4 @@
-../../../hip check-sorted.c --sa-en-pure-field --pred-en-equiv
+../../../hip check-sorted.c --sa-en-pure-field --pred-en-equiv: FIXED
 
 How come --pred-en-equiv does not work here?
 It also triggered below:

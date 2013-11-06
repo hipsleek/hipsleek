@@ -570,7 +570,7 @@ class counter x_init =
      method inc = ctr <- ctr + 1
      method inc_and_get = ctr <- ctr + 1; ctr
      method add (i:int) = ctr <- ctr + i
-     method reset = ctr <- 0
+     method reset = ctr <- 0x0
      method string_of : string= (string_of_int ctr)
    end;;
 

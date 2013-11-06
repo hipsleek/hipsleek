@@ -713,7 +713,7 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_unify_post = ref false
 

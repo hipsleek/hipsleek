@@ -689,15 +689,15 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
         (fun _ _ -> combine_helper2_x pdef1 pdef2)
         pdef1 pdef2
   in
-  let rec combine_helper_list rem res=
-    match rem with
-      | [] -> res
-      | pdef::rest ->
-            let n = List.fold_left (fun res_pdefs pdef1 ->
-                res_pdefs@(combine_helper2 pdef pdef1)
-            ) [] rest in
-             combine_helper_list rest (res@n)
-  in
+  (* let rec combine_helper_list rem res= *)
+  (*   match rem with *)
+  (*     | [] -> res *)
+  (*     | pdef::rest -> *)
+  (*           let n = List.fold_left (fun res_pdefs pdef1 -> *)
+  (*               res_pdefs@(combine_helper2 pdef pdef1) *)
+  (*           ) [] rest in *)
+  (*            combine_helper_list rest (res@n) *)
+  (* in *)
   let filter_trivial_pardef (res_pr, res_depen_cs) ((hp,args,unk_svl, cond, olhs,og, orhs), cs) =
      match orhs with
        | Some rhs -> let b = CP.isConstTrue cond && SAU.is_empty_f rhs in
@@ -1545,16 +1545,16 @@ let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_dec
                      END LIB MATCHING
 ****************************************************************)
 let partition_constrs_x constrs post_hps0=
-  let get_post_hp post_hps cs=
-    let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
-        match ohp with
-          | Some hp -> if (CP.mem_svl hp post_hps) then post_hps else
-              let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-              if CP.mem_svl hp lhps then
-                ( post_hps@[hp])
-              else post_hps
-          | None -> post_hps
-  in
+  (* let get_post_hp post_hps cs= *)
+  (*   let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in *)
+  (*       match ohp with *)
+  (*         | Some hp -> if (CP.mem_svl hp post_hps) then post_hps else *)
+  (*             let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in *)
+  (*             if CP.mem_svl hp lhps then *)
+  (*               ( post_hps@[hp]) *)
+  (*             else post_hps *)
+  (*         | None -> post_hps *)
+  (* in *)
   let classify new_post_hps (pre_cs,post_cs,pre_oblg,tupled_hps, post_oblg) cs =
     let is_post =
       try
@@ -2124,7 +2124,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
+  (* let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in *)
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
@@ -2159,7 +2159,7 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hprel_def_short in
-  let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
+  (* let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in *)
   (* let pr4 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
   let pr4 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in

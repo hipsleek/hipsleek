@@ -15,8 +15,10 @@ echo "skip2-list"
 $HIP skip2-list.c -validate ../o/skip2-list.cp | grep Validate
 echo "skip3-list"
 #$HIP skip3-list.c -validate ../o/skip3-list.cp | grep Validate
-echo "check-sorted"
+echo "check-sorted recursion"
 $HIP check-sorted.c --sa-en-pure-field -validate ../o/check-sorted.cp | grep Validate
+echo "check-sorted with while"
+$HIP check-sorted-while.c --sa-en-pure-field -validate ../o/check-sorted.cp | grep Validate
 echo "sll-insertsort: to check result of G"
 #$HIP sll-insertsort.c -validate ../o/sll-insertsort.cp | grep Validate
 echo "CSll"

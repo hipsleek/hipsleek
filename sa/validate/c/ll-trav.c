@@ -4,7 +4,7 @@ struct node {
   struct node* next;
 };
 
-/*@
+/*
 ll<> == self=null
   or self::node<_,p>*p::ll<>;
 */

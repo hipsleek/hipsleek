@@ -3777,8 +3777,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let view_form = match use_case with 
                 | None -> view_form 
                 | Some f -> push_case_f f view_form in
-              let mpa = List.combine fr_ann to_ann in
-              let view_form =  Immutable.propagate_imm_struc_formula view_form c imm mpa in
+              let view_form =
+                try
+                  let mpa = List.combine fr_ann to_ann in
+                  Immutable.propagate_imm_struc_formula view_form c imm mpa
+                with _ ->
+                    view_form
+              in
               Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
               Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
               Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
@@ -8665,7 +8670,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     | Some rank ->
           begin
             match (heap_infer_decreasing_wf prog estate rank is_folding lhs pos) with
-              | None ->     
+              | None -> (try
                     let t_ann, ml, il = Term.find_lexvar_es estate in
                     let term_pos, t_ann_trans, orig_ante, _ = Term.term_res_stk # top in
                     let term_measures, term_res, term_err_msg =
@@ -8685,6 +8690,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         CF.es_var_stack = term_stack; 
                         CF.es_term_err = term_err_msg;
                     }
+                with _ -> estate)
               | Some es -> es
           end
   in
@@ -12173,8 +12179,13 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                   (* propagate the immutability annotation inside the definition *)
                   let from_ann = (CF.get_node_annot_args lhs_heap) in
                   let to_ann = (CF.get_node_annot_args node) in
-                  let mpa = List.combine from_ann to_ann in
-                  let coer_rhs_new = propagate_imm_formula coer_rhs_new c1 imm1 mpa in
+                  let coer_rhs_new =
+                    try
+                      let mpa = List.combine from_ann to_ann in
+                      propagate_imm_formula coer_rhs_new c1 imm1 mpa
+                    with _ ->
+                        coer_rhs_new
+                  in
 
                   (* Currently, I am trying to change in advance at the trans_one_coer *)
                   (* Add origins to the body of the coercion which consists of *)

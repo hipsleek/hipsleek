@@ -33,6 +33,7 @@ type proving_kind =
 	| PK_PRE
 	| PK_PRE_REC
 	| PK_POST
+        | PK_SA_EQUIV
 	| PK_Unknown
 
 
@@ -58,6 +59,7 @@ let string_of_proving_kind pk =
     | PK_PRE -> "PRE"
     | PK_PRE_REC -> "PRE_REC"
     | PK_POST -> "POST"
+    | PK_SA_EQUIV -> "PK_SA_EQUIV"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
     | PK_Pred_Split -> "PK_Pred_Split"

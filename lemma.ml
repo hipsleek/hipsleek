@@ -565,11 +565,14 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if12 if22 in
     let _ = manage_unsafe_lemmas [l_coer] iprog0 cprog0 in
-    let r1,_,_ = SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f13 (CF.struc_formula_of_formula f23 no_pos) in
+    let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f1 (CF.struc_formula_of_formula f2 no_pos)) in
+    (* let r1,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
+    let r1,_,_ = fnc f13 f23 in
     if not r1 then false else
-      let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Right [] if12 if22 in
+      let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if22 if12 in
       let _ = manage_unsafe_lemmas [r_coer] iprog0 cprog0 in
-      let r2,_,_ = SC.sleek_entail_check [] cprog0 [(* (f22,f12) *)] f23 (CF.struc_formula_of_formula f13 no_pos) in
+      (* let r2,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
+      let r2,_,_ = fnc f23 f13 in
       r2
   in
   let _ = reset_progs bc in

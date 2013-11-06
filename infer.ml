@@ -3033,7 +3033,13 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
   let _ = Debug.ninfo_hprint (add_str  "es_infer_vars " !CP.print_svl) es0.es_infer_vars no_pos in
   let _ = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel " !CP.print_svl) es0.es_infer_vars_sel_hp_rel no_pos in
   (*end for debugging*)
-  let pk = try proving_kind#top with _ -> PK_Unknown in
+  let pk =  try
+    let ls = proving_kind# get_stk in
+    match ls with
+      | [] -> PK_Unknown
+      | x::_ -> x
+  with _ ->
+      PK_Unknown in
   if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf ||  pk != PK_POST then
     (false, es0,[])
   else

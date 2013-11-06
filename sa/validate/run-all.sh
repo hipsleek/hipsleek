@@ -65,4 +65,4 @@ $HIP cyc-tree-1.ss --pred-unify-post -validate o/cyc-tree-1.cp | grep Validate
 
 #--pred-en-equiv
 echo "cyc-lseg"
-#$HIP ll-trav.ss --pred-en-equiv -validate o/ll-trav-equiv.cp --pred-en-split | grep Validate
+$HIP ll-trav-eq.ss --pred-en-equiv -validate o/ll-trav-equiv.cp --pred-en-split | grep Validate
