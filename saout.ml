@@ -104,11 +104,13 @@ List.fold_left (fun acc (rel_cat, hf,_,f_body)->
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
               let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
+              let imm_map = Immutable.icollect_imm struc_body vars data_name iprog.I.prog_data_decls in
               let n_iview = {  I.view_name = vname;
               I.view_pos = no_pos;
 	      I.view_data_name = data_name;
 	      I.view_vars = vars;
-              I.view_imm_map = fst (List.fold_left (fun (r,n) _ -> (r@[(IP.ConstAnn Mutable, n)], n+1)) ([],0) vars);
+              (* I.view_imm_map = fst (List.fold_left (fun (r,n) _ -> (r@[(IP.ConstAnn Mutable, n)], n+1)) ([],0) vars); this serves as a bridge between the data field imm and the view param *)
+              I.view_imm_map = imm_map;
 	      I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
 	      I.view_modes = List.map (fun _ -> ModeOut) vars ;
 	      I.view_typed_vars =  tvars;

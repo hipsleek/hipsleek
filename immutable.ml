@@ -1875,3 +1875,6 @@ let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * 
 let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =
   let pr = pr_quad  Cprinter.string_of_spec_var_list pr_none (pr_list (pr_pair Cprinter.string_of_annot_arg string_of_int)) (pr_list (pr_pair Cprinter.string_of_view_arg string_of_int)) in 
   Debug.no_1 "split_sv" Cprinter.string_of_spec_var_list pr (fun _ -> split_sv sv vdef) sv
+
+let initialize_imm_args args =
+  List.map (fun _ -> Some (Ipure.ConstAnn(Mutable))) args
