@@ -5810,7 +5810,7 @@ let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
     (* let _ = DD.info_zprint (lazy (("       f:" ^ (Cprinter.prtt_string_of_formula f)))) no_pos in *)
     (* let _ = DD.info_zprint (lazy (("       f1:" ^ (Cprinter.prtt_string_of_formula f1)))) no_pos in *)
     let r =
-      if is_empty_f f1 then []
+      if is_empty_f f1 || is_unsat f then []
       else [f1]
     in
     r

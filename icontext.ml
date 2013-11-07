@@ -194,10 +194,11 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
     partition_equal ([],[],[],[]) pr_pre_preds
   in
   let pr2 (a,_,_) = !CP.print_sv a in
-  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
-  let _ = Debug.ninfo_zprint  (lazy  ("    tupled_hps: " ^ (!CP.print_svl tupled_hps))) no_pos in
+  let _ = Debug.info_zprint  (lazy  ("    pre_preds_cand_equal0: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
+  let _ = Debug.info_zprint  (lazy  ("    tupled_hps: " ^ (!CP.print_svl tupled_hps))) no_pos in
   (*filter the tupled_hps *)
   let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
+  let _ = Debug.info_zprint  (lazy  ("    pre_preds_cand_equal1: " ^ ((pr_list pr2) pre_preds_cand_equal1))) no_pos in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
@@ -210,9 +211,12 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
   ) [] pre_preds_cand_equal1 in
   (*mut rec dep*)
   let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal1 <> [] then *)
-    if  pre_preds_4_equal  <> [] then
-    ranking_frozen_mutrec_preds pre_preds_cand_equal1
-    else []
+    if  complex_nonrec_guard_grps = [] && pre_preds_4_equal <> [] then
+      ranking_frozen_mutrec_preds pre_preds_cand_equal1
+    else
+      if complex_nonrec_guard_grps != [] then
+        complex_nonrec_guard_grps
+      else []
   in
   (*process_complex, nonrec, non depend on others
     testcases: check-dll.ss; check-sorted
