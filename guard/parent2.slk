@@ -1,0 +1,11 @@
+data node{
+	node parent;
+	node next;
+}.
+
+HeapPred P(node a).
+HeapPred Q(node a, node@NI p).
+
+
+infer [P,Q]  x::node<p,q>*P(q) |- Q(q,x).
+print residue.

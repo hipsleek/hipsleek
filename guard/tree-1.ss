@@ -25,7 +25,7 @@ requires x::tree<>  ensures x::tree<>;
   if (x.right!=null) 
   	{
           
-//	  assert xl'=null;
+          // assert xl'=null;
           trav(x.right);
           //assert xl'!=null assume xl'!=null; //
           trav(x.left);

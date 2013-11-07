@@ -1,0 +1,16 @@
+data node{
+	node left;
+	node right;
+}.
+
+pred tree<> == self::node<_,null>
+        or self::node<l,r> * l::tree<> * r::tree<>
+	inv self!=null.
+
+pred tree<> == self::node<_,null>
+        or self::node<l,r> * l::tree<> * r::h8<>
+	inv self!=null.
+
+pred h8<> == emp |#| _::node<self,r> & r=null
+        or self::tree<> |#| _::node<self,r> & r!=null
+	inv self!=null.
