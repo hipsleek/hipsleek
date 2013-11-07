@@ -1464,10 +1464,17 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
   match h with
     | CF.DataNode dn -> 
           let ann_node = dn.CF.h_formula_data_imm in
-          let new_ann_param, constr, new_vars = List.fold_left (fun (params, constr, vars) p_ann ->
-              let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
-              (params@[new_p_ann], nc@constr, nv@vars)
-          ) ([],[],[]) dn.CF.h_formula_data_param_imm in  
+          let new_ann_param, constr, new_vars =
+            if (List.length  dn.CF.h_formula_data_param_imm == List.length  dn.CF.h_formula_data_arguments) then
+              List.fold_left (fun (params, constr, vars) p_ann ->
+                  let new_p_ann,nc,nv = merge_imm_ann ann_node p_ann in
+                  (params@[new_p_ann], nc@constr, nv@vars)
+              ) ([],[],[]) dn.CF.h_formula_data_param_imm
+            else
+              let _ = report_warning no_pos ("data field imm not set. Setting it now to be the same as node lvl imm. ") in
+              let new_ann_param = List.map (fun _ -> ann_node) dn.CF.h_formula_data_arguments in
+              (new_ann_param, [], [])
+          in 
           let new_ann_node =  if (List.length  dn.CF.h_formula_data_param_imm > 0) then CP.ConstAnn(Mutable) else ann_node in
           let n_dn = CF.DataNode{dn with  CF.h_formula_data_imm = new_ann_node;
  	      CF.h_formula_data_param_imm = new_ann_param;} in
