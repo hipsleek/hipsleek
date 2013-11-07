@@ -104,6 +104,8 @@ and h_formula = (* heap formula *)
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj
   | Star of h_formula_star
+  (* guard as magic wand? *)
+  (* | Wand of h_formula * h_formula *)
   | StarMinus of h_formula_starminus
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2

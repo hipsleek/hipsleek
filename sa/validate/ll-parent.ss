@@ -31,6 +31,74 @@ void trav (node p, node x)
 /*
 # tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
 
+[ // BIND
+(0)H(p@NI,x) --> x::node<parent_22_923,right_22_924>@M * 
+   HP_925(parent_22_923,p@NI) * 
+   HP_926(right_22_924,p@NI),
+
+ H(p@NI,x) --> x::node<p,q>@M * HP_926(q,p@NI),
+
+ // PRE_REC
+ HP_926(q,p@NI)&q!=null |#| xx::node<p,q>@M --> H(xx@NI,q),
+
+ // POST
+(1;0)HP_925(parent_22_923,p@NI) * x::node<p,right_22_924>@M * 
+G(x@NI,right_22_924)&right_22_924!=null & 
+p=parent_22_923 --> G(p@NI,x),
+
+ HP_925(parent_22_923,p@NI) & p=parent_22_923  --> true
+ x::node<p,right_22_924>@M * G(x@NI,right_22_924)&right_22_924!=null 
+     --> G(p@NI,x),
+
+// POST
+(2;0)HP_925(parent_22_923,p@NI) * HP_926(right_22_924,p@NI) * 
+x::node<p,right_22_924>@M&right_22_924=null & 
+p=parent_22_923 --> G(p@NI,x)]
+
+ HP_925(parent_22_923,p@NI) & p=parent_22_923 --> true
+
+ HP_926(r,p@NI) & r=null --> true
+
+ x::node<p,right_22_924>@M&right_22_924=null  --> G(p@NI,x)]
+
+=====
+
+ HP_926(right_22_924,p@NI) & right_22_924=null --> true
+
+ HP_926(right_22_924,p@NI)&right_22_924!=null
+      |#| xx::node<p,right_22_924>@M --> H(xx@NI,right_22_924),
+
+ HP_926(r,p@NI)&r!=null |#| xx::node<p,r>@M --> H(xx@NI,r),
+
+ HP_926(r,p@NI)&r!=null |#| xx::node<p,r>@M --> 
+                r::node<?,q>@M * HP_926(q,?@NI),
+
+HP_926(r,p@NI)&r!=null |#| xx::node<p,r>@M --> 
+                r::node<p,q>@M * HP_926(q,r@NI),
+
+ HP_926(r,p@NI)&r!=null  --> 
+      r::node<p,q>@M * HP_926(q,r),
+
+ HP_926(r,p@NI)&r!=null --> r::node<p,q>*q::HP_926(q,r)
+
+
+=============================================
+ H(p@NI,x) --> x::node<p,q>@M * HP_926(q,p@NI),
+ HP_926(right_22_924,p@NI) & right_22_924=null --> true,
+ HP_926(q,p@NI)&r!=null |#| xx::node<p,q>@M --> H(xx@NI,q),
+
+====================================
+1. Freeze HP_926
+
+2. Transform H by unfolding HP_926
+ (i) H(p@NI,x) --> x::node<p,null>@M ,
+ (ii) H(p@NI,x) --> x::node<p,q>@M * HP_926(q,p@NI) & q!=null,
+
+   H(p@NI,x) --> x::node<p,q>@M * (H(xx@NI,q) |#|  xx::node<p,q>) & q!=null
+
+   H(p@NI,x) --> x::node<p,q>@M * H(x@NI,q) & q!=null
+
+-------------------------------
 
 [ // BIND
 (0)H(p@NI,x) --> x::node<parent_22_923,right_22_924>@M * 

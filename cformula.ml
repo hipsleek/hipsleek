@@ -186,6 +186,8 @@ and flow_treatment =
 		  
 and h_formula = (* heap formula *)
   | Star of h_formula_star
+  (* guard as magic wand? *)
+  (* | Wand of h_formula * h_formula *)
   | StarMinus of h_formula_starminus
   | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
