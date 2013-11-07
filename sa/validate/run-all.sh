@@ -43,6 +43,7 @@ echo "check-tll: to check"
 #$HIP check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
 echo "ll-back.ss"
 #$HIP ll-back.ss
+echo "ll-parent.ss"
 #sa-dangling
 echo "dll-app"
 $HIP dll-append_paper.ss --classic --pred-en-dangling -validate o/dll-append_paper.cp | grep Validate

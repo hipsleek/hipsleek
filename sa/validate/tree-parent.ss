@@ -2,13 +2,12 @@
 
 data node{
 	node parent;
-	node left;
 	node right;
+        node left;
 }
 
-
 tree<p> == self::node<p,null,null>
-        or self::node<p,l,r> * l::tree<self> * r::tree<self>
+  or self::node<p,r,l> * r::tree<self>* l::tree<self>
 	inv self!=null;
 
 
@@ -17,51 +16,21 @@ tree<p> == self::node<p,null,null>
 HeapPred H(node@NI p, node a).
 HeapPred G(node@NI p, node a).
 
-void trav (node p, node x)
+bool trav (node p, node x)
  infer [H,G] requires H(p,x) ensures G(p,x);
                              //requires x::tree<p>  ensures x::tree<p>;
 {
-  node tmp = x.parent;
-  assume tmp'=p;//'
-  if (x.right!=null) 
-  	{
-//		assert xl'=null;
-          trav(x,x.right);
-  	}
+  bool b1 = x.right==null;
+  bool b2 = x.left==null;
+  if (b1) {
+      if ( b2) {
+        //		assert xl'=null;
+        return x.parent==p;
+      }
   if (x.left!=null) {
-          trav(x,x.left);
+    } else{
+    if (b2) return false;
+    else
+      return trav(x,x.right) && trav(x,x.left);
   }
 }
-
-/*
-# tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
-
-
-[ G(p_1027,x_1028) ::= 
- x_1028::node<p_1027,left_24_944,right_24_945>@M * G(x_1028,right_24_945) * 
- G(x_1028,left_24_944)&right_24_945!=null & left_24_944!=null
- or x_1028::node<p_1027,left_24_944,right_24_945>@M * G(x_1028,right_24_945)&
-    right_24_945!=null & left_24_944=null
- or x_1028::node<p_1027,left_24_944,right_24_945>@M * G(x_1028,left_24_944)&
-    left_24_944!=null & right_24_945=null
- or x_1028::node<p_1027,left_24_944,right_24_945>@M&right_24_945=null & 
-    left_24_944=null
- ,
- H(p_1023,x_1024) ::= 
- x_1024::node<parent_24_943,left_24_944,right_24_945>@M * 
- H(x_1024,right_24_945)&right_24_945!=null & left_24_944=null & 
- p_1023=parent_24_943
- or x_1024::node<parent_24_943,left_24_944,right_24_945>@M * 
-    H(x_1024,left_24_944)&right_24_945=null & left_24_944!=null & 
-    p_1023=parent_24_943
- or x_1024::node<parent_24_943,left_24_944,right_24_945>@M * 
-    H(x_1024,left_24_944)&right_24_945!=null & left_24_944!=null & 
-    p_1023=parent_24_943
- // where is another H(...)?
- or x_1024::node<parent_24_943,left_24_944,right_24_945>@M&
-    right_24_945=null & left_24_944=null & p_1023=parent_24_943
- ]
-
-
-
-*/

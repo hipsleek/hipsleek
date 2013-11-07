@@ -6,6 +6,7 @@ data node{
 HeapPred H(node@NI p, node a).
 HeapPred H6(node a, node@NI p).
 
+//Declare_Dangling [H].
 
 //relAssume H(p,x) --> x::node<p,q>@M * H6(q,p).
 

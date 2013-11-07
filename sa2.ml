@@ -910,7 +910,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             in
             (*remove duplicate*)
             let defs3 = SAU.equiv_unify args0 defs2 in
-            let defs4 = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
+            let defs4 = SAU.remove_equiv_wo_unkhps hp args0 skip_hps defs3 in
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
             let defs5 =  if is_pre then defs5a else

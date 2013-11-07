@@ -2496,7 +2496,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         if CP.mem_svl hp unk_hps then
           (SAU.mk_unk_hprel_def hp args0 defs3 no_pos,[])
         else
-          let defs4 = SAU.remove_equiv_wo_unkhps hp unk_hps defs3 in
+          let defs4 = SAU.remove_equiv_wo_unkhps hp args unk_hps defs3 in
    (*remove duplicate with self-recursive*)
         (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)

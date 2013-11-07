@@ -55,7 +55,7 @@ ss: subst from ldns -> ldns
 equal_hps: are preds that are going to be generalized. DO NOT subst them
 *)
 
-let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
+let rec find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
   let rec check_constr_duplicate (lhs,rhs) constrs=
     match constrs with
       | [] -> false
@@ -160,10 +160,10 @@ let rec find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex
   let is_changed1,constrs1,unfrozen_hps1 = subst_w_frozen frozen_constrs constrs0 is_changed0 unfrozen_hps0 in
   (is_changed1,constrs1,unfrozen_hps1)
 
-(* and find_imply_subst prog unk_hps link_hps frozen_hps complex_hps constrs= *)
-(*   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
-(*   Debug.no_1 "find_imply_subst" pr1 (pr_triple string_of_bool pr1 !CP.print_svl) *)
-(*       (fun _ -> find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs) constrs *)
+and find_imply_subst prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_2 "find_imply_subst" pr1 pr1 (pr_triple string_of_bool pr1 !CP.print_svl)
+      (fun _ _ -> find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs) constrs frozen_constrs
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
@@ -212,9 +212,9 @@ let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_h
   res
 let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
-  Debug.no_2 "subst_cs" pr1 pr1 (pr_triple string_of_bool  pr1 !CP.print_svl)
-      (fun _ _ -> subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
-      constrs frozen_constrs
+  Debug.no_3 "subst_cs" pr1 pr1 !CP.print_svl (pr_triple string_of_bool  pr1 !CP.print_svl)
+      (fun _ _ _ -> subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
+      constrs frozen_constrs complex_hps
 
 
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
@@ -310,11 +310,14 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
                 let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
                 let new_lhs2 = CF.elim_unused_pure new_lhs1 new_cs.CF.hprel_rhs in
                 let new_cs = {new_cs with CF.hprel_lhs = new_lhs2;} in
-                let _ = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+                let _ = Debug.info_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                 (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
                 let _ = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
                 let defined_hprels = List.map (SAU.generate_hp_ass 2 unk_svl1 cond_path) defined_preds0 in
-                new_cs::defined_hprels
+                if SAU.is_empty_f new_cs.CF.hprel_lhs && SAU.is_empty_f new_cs.CF.hprel_rhs then
+                  defined_hprels
+                else
+                  new_cs::defined_hprels
         in
         (new_constrs, unk_map1, link_hps)
     else
@@ -775,7 +778,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             in
             (*remove duplicate*)
             let defs3 = if is_pre then SAU.equiv_unify args0 defs2 else defs2 in
-            let defs4a = SAU.remove_equiv_wo_unkhps hp skip_hps defs3 in
+            let defs4a = SAU.remove_equiv_wo_unkhps hp args0 skip_hps defs3 in
             let defs4 = SAU.remove_pure_or_redundant defs4a in
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
@@ -1066,7 +1069,7 @@ let pardef_subst_fix prog unk_hps groups=
       - depend on non-recursive groups: susbst
       - depend on recusive groups: wait
 *)
-let def_subst_fix prog unk_hps hpdefs=
+let def_subst_fix_x prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef (a1,_,_,f)=
@@ -1116,7 +1119,9 @@ let def_subst_fix prog unk_hps hpdefs=
       in
       (* let fs2 = SAU.remove_subset new_fs1 in *)
       (*may be wrong: should reevauate root*)
-      (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel, g,CF.disj_of_list fs1 no_pos ))
+      if b then
+        (b , (CP.HPRelDefn (hp, List.hd args, List.tl args ),hprel, g,CF.disj_of_list fs1 no_pos ))
+      else (false, hpdef)
     else
       (*return*)
       (false,hpdef)
@@ -1166,7 +1171,14 @@ let def_subst_fix prog unk_hps hpdefs=
       helper_fix new_cur new_rec_indps new_nrec_indps
     else (new_cur@new_rec_indps@new_nrec_indps)
   in
-  helper_fix hpdefs [] []
+  if List.length hpdefs <=1 then hpdefs else
+    helper_fix hpdefs [] []
+
+let def_subst_fix prog unk_hps hpdefs=
+  let pr1 = (pr_list_ln SAU.string_of_hp_rel_def) in
+  Debug.no_1 "def_subst_fix" pr1 pr1
+      (fun _ -> def_subst_fix_x prog unk_hps hpdefs) hpdefs
+
 
 let is_valid_pardef (_,args,_,_,f,_)=
   let ls_succ_args = snd (List.split (CF.get_HRels_f f)) in

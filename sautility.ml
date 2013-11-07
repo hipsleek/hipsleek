@@ -1863,6 +1863,11 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
       {f2 with CF.formula_base_pure = MCP.mix_of_pure
               (CP.remove_redundant (MCP.pure_of_mix f2.CF.formula_base_pure))}
     in
+    let p = MCP.pure_of_mix f3.CF.formula_base_pure in
+    if CF.is_only_neqNull_pure p args ||
+      List.for_all (CP.is_neq_exp) (CP.list_of_conjs p)
+    then (fb, [],[(hp,args)], [])
+    else
     (fb, [(hp,args,f3, rhs)],[], new_hps)
   in
   (*check hp is recursive or post_hp?*)
@@ -3233,7 +3238,7 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
   in
   helper fs []
 
-let remove_equiv_wo_unkhps_x hp unk_hps fs=
+let remove_equiv_wo_unkhps_x hp args0 unk_hps fs=
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
     match cur with
       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems
@@ -3256,7 +3261,7 @@ let remove_equiv_wo_unkhps_x hp unk_hps fs=
         | [] -> r
         | f::fss ->
             (*check duplicate or not ll-append5*)
-            if List.exists (fun f1 -> check_relaxeq_formula [] f f1) elim_unkhp_fs then
+            if List.exists (fun f1 -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then
               helper1 fss r
             else helper1 fss (r@[f])
     in
@@ -3266,10 +3271,10 @@ let remove_equiv_wo_unkhps_x hp unk_hps fs=
   let rems1 = check_dups elim_unkhp_fs rems in
   (unkhp_fs@rems1)
 
-let remove_equiv_wo_unkhps hp unk_hps fs=
+let remove_equiv_wo_unkhps hp args0 unk_hps fs=
   let pr = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr
-      (fun _ _ -> remove_equiv_wo_unkhps_x hp unk_hps fs) unk_hps fs
+      (fun _ _ -> remove_equiv_wo_unkhps_x hp args0 unk_hps fs) unk_hps fs
 
 (************************************)
 (*check hf2 is subset of hf1*)
