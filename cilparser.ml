@@ -1022,8 +1022,19 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
   and helper_formula_x (f: IF.formula): IF.formula = (
       match f with
         | IF.Base fb ->
+              let r = Str.regexp str_addr in
+              let new_heap_formula0 = helper_h_formula fb.IF.formula_base_heap in
+              let addr_heap_free_var = List.filter (fun (id, pr) -> Str.string_match r id 0) (IF.h_fv new_heap_formula0) in
+              let typ_heap_free_var = List.map (fun (id, pr) ->
+                  find_typ !aux_local_vardecls id) addr_heap_free_var in
+              let new_heap_free_var = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_heap_free_var in
+              let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
+              let new_heap_formula2 = List.fold_left
+                (fun hf (((id1, pr1), (id2, pr2)), t) ->
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
               let npf = helper_pure_formula fb.IF.formula_base_pure in
-              let r = Str.regexp "addr_" in
               let addr_fvs = List.filter (fun (id, pr) -> Str.string_match r id 0) (Ipure.fv npf) in
               let tl = List.map (fun (id, pr) -> 
                   find_typ !aux_local_vardecls id) addr_fvs in
@@ -1033,15 +1044,26 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
                   IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
                       [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
-                ) fb.IF.formula_base_heap (List.combine (List.combine addr_fvs nfvs) tl) in
+                ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Base { fb with
                   IF.formula_base_heap = nhf;
                   IF.formula_base_pure = npf1;
                   IF.formula_base_and = List.map helper_one_formula fb.IF.formula_base_and;
               }
         | IF.Exists fe ->
+              let r = Str.regexp str_addr in
+              let new_heap_formula0 = helper_h_formula fe.IF.formula_exists_heap in
+              let addr_heap_free_var = List.filter (fun (id, pr) -> Str.string_match r id 0) (IF.h_fv new_heap_formula0) in
+              let typ_heap_free_var = List.map (fun (id, pr) ->
+                  find_typ !aux_local_vardecls id) addr_heap_free_var in
+              let new_heap_free_var = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_heap_free_var in
+              let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
+              let new_heap_formula2 = List.fold_left
+                (fun hf (((id1, pr1), (id2, pr2)), t) ->
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
               let npf = helper_pure_formula fe.IF.formula_exists_pure in
-              let r = Str.regexp "addr_" in
               let addr_fvs = List.filter (fun (id, pr) -> Str.string_match r id 0) (Ipure.fv npf) in
               let tl = List.map (fun (id, pr) -> 
                   find_typ !aux_local_vardecls id) addr_fvs in
@@ -1049,9 +1071,9 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
               let nhf = List.fold_left 
                 (fun hf (((id1, pr1), (id2, pr2)), t) -> 
-                  IF.mkStar hf (IF.mkHeapNode (id1, Primed) (string_of_typ t) 0 false 
-                      (Ipure.ConstAnn Mutable) false false false None [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
-                ) fe.IF.formula_exists_heap (List.combine (List.combine addr_fvs nfvs) tl) in
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
               IF.Exists { fe with
                   IF.formula_exists_heap = nhf;
                   IF.formula_exists_pure = npf1;
@@ -1108,15 +1130,26 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   IF.h_formula_starminus_h1 = helper_h_formula_x hfsm.IF.h_formula_starminus_h1;
                   IF.h_formula_starminus_h2 = helper_h_formula_x hfsm.IF.h_formula_starminus_h2;
               }
-                  (*| IF.HeapNode hfh ->
-                    IF.HeapNode { hfh with
-                    IF.h_formula_heap_name = H
-                    }
-                    | IF.HeapNode2 hfh ->
-                    IF.HeapNode2 { hfh with
-                    IF.h_formula_heap2_name = H
-                    }*)
-        | IF.HeapNode _ | IF.HeapNode2 _
+        | IF.HeapNode hn ->
+              begin
+                let (id, pr) = hn.IF.h_formula_heap_node in
+                try
+                  let addr_vname = Hashtbl.find tbl_addrof_info id in
+                  IF.HeapNode { hn with
+                     IF.h_formula_heap_node = (addr_vname, pr)
+                  }
+                with _ -> h
+              end
+        | IF.HeapNode2 hn2 ->
+              begin
+                let (id, pr) = hn2.IF.h_formula_heap2_node in
+                try
+                  let addr_vname = Hashtbl.find tbl_addrof_info id in
+                  IF.HeapNode2 { hn2 with
+                     IF.h_formula_heap2_node = (addr_vname, pr)
+                  }
+                with _ -> h
+              end
         | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (

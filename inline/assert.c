@@ -15,7 +15,7 @@ void f() {
   //@ assert p'!=null;
   // need to be fixed
   //@ assert p'::int_star<5>; 
-  //@ assert addr_p'::int_star_star<q> * q::int_star<5>;
+  // assert addr_p'::int_star_star<q> * q::int_star<5>;
   // ==>  assert addr_p'::int_star_star<q> * q::int_star<5>;
   // dprint;
   return;
@@ -25,4 +25,4 @@ void main()
 {
   f();
 }
-x
+
