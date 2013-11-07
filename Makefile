@@ -34,7 +34,8 @@ LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib,libcamli
 
 INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
-PROPERERRS = -warn-error,+4+8+9+11+12+25+28
+# PROPERERRS = -warn-error,+4+8+9+11+12+25+28
+PROPERERRS = -warn-error,+4+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
