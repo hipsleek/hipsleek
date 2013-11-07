@@ -381,7 +381,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
             let ( _,mix_f,_,_,_) = CF.split_components f in
             let reqs2 = (MCP.ptr_equations_without_null mix_f) in
             let cl_svl = CP.remove_dups_svl (CF.find_close [sv] (reqs2)) in
-            let _ = Debug.ninfo_hprint (add_str "   cl_svl: " !CP.print_svl) cl_svl no_pos in
+            (* let _ = Debug.info_hprint (add_str "   cl_svl: " !CP.print_svl) cl_svl no_pos in *)
             if (* List.length cl_svl >1 && *)
               CP.diff_svl cl_svl args = [] then
                 args
@@ -389,7 +389,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | _ -> svl2
   in
   (*handle equality*)
-  (* let _ = Debug.ninfo_zprint (lazy (("   svl2: " ^ (!CP.print_svl svl2)))) no_pos in *)
+  (* let _ = Debug.info_zprint (lazy (("   svl2: " ^ (!CP.print_svl svl2)))) no_pos in *)
   if svl2 <> [] then svl2 else
     match lhpargs with
       | [(_,args)] ->
@@ -406,7 +406,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
 
 (*analysis unknown information*)
 let rec analize_unk_one prog unk_hps constr =
-  (* let _ = Debug.ninfo_zprint (lazy (("   hrel: " ^ (Cprinter.string_of_hprel_short constr)))) no_pos in *)
+  (* let _ = Debug.info_zprint (lazy (("   hrel: " ^ (Cprinter.string_of_hprel_short constr)))) no_pos in *)
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
   let lhs1,lhrels = SAU.drop_get_hrel constr.CF.hprel_lhs in
@@ -417,9 +417,13 @@ let rec analize_unk_one prog unk_hps constr =
   (* let rsvl = SAU.get_raw_defined_w_pure prog rhs1 in *)
   let svl = SAU.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
   (*handle equality*)
+  let svl1a = SAU.get_defined_eqs constr.CF.hprel_lhs in
   let svl1 = check_equality_constr lhrels lhs1 constr.CF.hprel_rhs svl in
   (*return*)
-  let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl1) unk_hps CP.mem_svl) (lhrels@rhrels)) in
+  let unk_hp_locs,unk_hp_args_locs = List.split (List.map
+      (build_hp_unk_locs (CP.remove_dups_svl (svl1@svl1a)) unk_hps CP.mem_svl)
+      (lhrels@rhrels))
+  in
   (List.concat unk_hp_locs, List.concat unk_hp_args_locs)
 
 and find_closure_post_hps_x post_hps ls_unk_hps_args =
@@ -785,10 +789,10 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   let unk_hp_args01,_ = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
   (*for debugging*)
-  let _ = Debug.ninfo_pprint ("  unks 1: " ^
-      (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-                                             in pr unk_hp_args01)) no_pos
-  in
+  (* let _ = Debug.ninfo_pprint ("  unks 1: " ^ *)
+  (*     (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)) *)
+  (*                                            in pr unk_hp_args01)) no_pos *)
+  (* in *)
   (*END for debugging*)
   (*double check across one cs*)
   let rec loop_helper closure_post_hps unk_hp_locs0=
@@ -803,10 +807,10 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
         SAU.check_hp_locs_eq (hp1,locs1) (hp2,locs2))
       unk_hp_args02
     in
-    let _ = Debug.ninfo_pprint ("  ls_unk_cands1: " ^
-        (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-                                             in pr ls_unk_cands1)) no_pos
-    in
+    (* let _ = Debug.ninfo_pprint ("  ls_unk_cands1: " ^ *)
+    (*     (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)) *)
+    (*                                          in pr ls_unk_cands1)) no_pos *)
+    (* in *)
     if ls_unk_cands1 = [] then ([],[],n_closure_post_hps) else
       let diff = Gen.BList.difference_eq (fun (hp1,_,locs1) (hp2,_,locs2) ->
         SAU.check_hp_locs_eq (hp1,locs1) (hp2,locs2)) unk_hp_locs0 ls_unk_cands1
@@ -818,11 +822,9 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   (*********END double check ****************)
   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
   (*for debugging*)
-  let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-  in pr unk_hp_args02)) no_pos
+  let _ = Debug.ninfo_hprint (add_str "  unks 2: " (pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)))) unk_hp_args02 no_pos
   in
-  let _ = Debug.ninfo_pprint ("  full_unk_hp_args2_locs: " ^ (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int))
-  in pr full_unk_hp_args2_locs)) no_pos
+  let _ = Debug.ninfo_hprint (add_str "  full_unk_hp_args2_locs: " (pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)))) full_unk_hp_args2_locs no_pos
   in
   (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
   (*                            (pr_list (pr_pair !CP.print_sv !CP.print_svl))) in *)
@@ -838,9 +840,9 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
    let full_hps = List.map (fun (hp, _, _) -> hp) full_unk_hp_args2_locs in
    (*find full unk_hps: I parameters + unk_svl*)
    let full_unk_hp_locs0, link_hpargs2 = find_full_unk_hps prog closure_post_hps full_hps unk_hp_args1 in
-   let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
-                                              in pr full_unk_hp_locs0)) no_pos
-   in
+   (* let _ = Debug.ninfo_pprint ("  full_unk_hp_locs: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int)) *)
+   (*                                            in pr full_unk_hp_locs0)) no_pos *)
+   (* in *)
    let full_unk_hp_locs, link_hpargs2a =
      if !Globals.pred_elim_dangling then
        (full_unk_hp_locs0, [])
@@ -888,7 +890,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
        (let pr = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
        pr new_map)) no_pos in
    (*printing such that it is easy to construct a sleek test cases*)
-   let _ = if !Globals.print_heap_pred_decl then
+   let _ = if !Globals.print_heap_pred_decl && !Globals.sap then
      let unk_hps = List.map fst tot_unk_hpargs in
      let _ = if unk_hps <> [] then
        let hp_names = List.map (CP.name_of_spec_var) unk_hps in

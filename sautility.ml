@@ -980,6 +980,33 @@ and find_defined_pointers prog f predef_ptrs=
   Debug.no_2 "find_defined_pointers" Cprinter.prtt_string_of_formula pr1 pr4
       (fun _ _ -> find_defined_pointers_x prog f predef_ptrs) f predef_ptrs
 
+let get_defined_eqs_x f=
+  (*******INTERNAL******)
+   let rec look_up eqs args=
+    match eqs with
+      | [] -> []
+      | (sv1,sv2)::rest -> if CP.diff_svl [sv1;sv2] args = [] then [sv1;sv2]
+        else look_up rest args
+  in
+  (*smart_subst always gives explicit eqs for args*)
+  let extract_defined_eq r (_,args) eqs=
+    if List.length args = 2 then
+      r@(look_up eqs args)
+    else r
+  in
+  (****END*********)
+  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let eqs = (MCP.ptr_equations_without_null mix_f) in
+  let hpargs = CF.get_HRels_f f in
+  let def_eqs = List.fold_left (fun r hp_args -> extract_defined_eq r hp_args eqs) [] hpargs in
+  def_eqs
+
+let get_defined_eqs f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "get_defined_eqs" pr1 pr2
+      (fun _ -> get_defined_eqs_x f) f
+
 let get_raw_defined_w_pure_x prog predef lhs rhs=
   let rec helper f eqs=
     match f with
@@ -999,7 +1026,7 @@ let get_raw_defined_w_pure_x prog predef lhs rhs=
   let eqs = (leqs@reqs) in
   let svl = lsvl@rsvl@predef in
   let svl1 = if eqs = [] then svl else
-                (List.fold_left close_def svl eqs)
+    (List.fold_left close_def svl eqs)
   in
   let svl2 = (CP.remove_dups_svl svl1) in
   svl2
