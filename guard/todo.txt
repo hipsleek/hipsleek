@@ -6,11 +6,11 @@ need rel assumption of the form below.
   H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
 
 This seems critical to obtain a sound solution for
-guard/tree-1.ss. We thought also putting guards into
-formula, but could not really find a use for it in
+guard/tree-1.ss. We thought also about putting guards
+into formula, but could not really find a use for it in
 verification. It seems we mainly need it in shape
-analysis.
-
+analysis. Hence, I think we will leave the guard 
+feature for just sa-core for now.
 
 # tree-1.slk
 

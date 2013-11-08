@@ -139,7 +139,7 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs compl
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-            let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+             let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
             if SAC.cs_rhs_is_only_neqNull cs1 then
               (helper_new_only rest non_frozen is_changed unfrozen_hps)
             else
@@ -153,9 +153,10 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps frozen_constrs compl
               in
               subst_w_frozen rest n_non_frozen is_changed1 n_unfrozen_hps1
   in
-  let is_changed0,constrs0,unfrozen_hps0 =
-    if List.length constrs < 2 then (false, constrs, []) else
-    helper_new_only [] constrs false []
+  (*we should subst frozen constrs into remaining constrs. it may longer in conv, it presever the ordering*)
+  let is_changed0,constrs0,unfrozen_hps0 = (false, constrs, [])
+    (* if List.length constrs < 2 then (false, constrs, []) else *)
+    (* helper_new_only [] constrs false [] *)
   in
   let is_changed1,constrs1,unfrozen_hps1 = subst_w_frozen frozen_constrs constrs0 is_changed0 unfrozen_hps0 in
   (is_changed1,constrs1,unfrozen_hps1)
