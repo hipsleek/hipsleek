@@ -65,7 +65,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.info_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
+    let _ = Debug.ninfo_zprint (lazy (("    rhs: " ^ (Cprinter.string_of_hprel_short cs2)))) no_pos in
     (*if this assumption is going to be equal generalized. do not subst*)
     let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
     if List.length lhps<2 && CP.diff_svl lhps frozen_hps = [] then ([],[]) else
@@ -102,7 +102,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                               CF.hprel_rhs = r;
                           }
                           in
-                          let _ = Debug.info_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+                          let _ = Debug.ninfo_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                           let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
                           ([new_cs1],[])
                         end
@@ -116,7 +116,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
    match rest with
      | [] -> is_changed,don,unfrozen_hps
      | cs1::rest ->
-           let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+           let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
            let b2 = let hp_opt = CF.extract_hrel_head cs1.CF.hprel_lhs in
              match hp_opt with
                | None -> false
