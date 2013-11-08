@@ -1758,7 +1758,7 @@ let match_def hvars defs def (hp_map,spairs) =
     (fun _ _ -> match_def_x hvars defs def (hp_map,spairs)) defs def
 
 
-let checkeq_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
+let checkeq_defs_x hvars svars (defs: CF.hp_rel_def list) ( infile_defs: (CF.formula * CF.formula) list) =
   let spairs = List.map (fun c -> (c,None)) svars in
   let no_change hp_mt1 hp_mt2 =
     let size_of_mt hp_mt = List.fold_left (fun piv (hps,hp) -> piv + List.length hps) 0 hp_mt in

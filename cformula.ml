@@ -3894,6 +3894,11 @@ and disj_count (f0 : formula) = match f0 with
 (*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
 (*    used in the context fields: es_infer_hp_rel and returned by various methods in particular*)
 (*	check_specs_infer*)*)
+
+                            (* guard *)
+type formula_guard = formula * (formula option)
+type formula_guard_list = formula_guard list
+
 type hprel= {
     hprel_kind: CP.rel_cat;
     unk_svl: CP.spec_var list; (* unknown and dangling *)
@@ -3918,7 +3923,8 @@ and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula; (* LHS *)
     hprel_def_guard:  formula option;
-    hprel_def_body: (cond_path_type * formula option) list; (* RHS *)
+    hprel_def_body: (cond_path_type * (formula option)) list; (* RHS *)
+    (* hprel_def_body: (cond_path_type * (formula_guard list)) list; (\* RHS *\) *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
 }
@@ -3926,6 +3932,16 @@ and hprel_def= {
 (*temporal: name * hrel * guard option * definition body*)
 (*actually used to store the constraints on heap predicates inference*)
 and hp_rel_def = CP.rel_cat * h_formula * (formula option) * formula
+
+(* and hp_rel_def = CP.rel_cat * h_formula * (formula option) * (formula_guard list) *)
+
+and hp_rel_def = {
+    def_cat : CP.rel_cat;
+    def_lhs : h_formula;
+    def_rhs : formula_guard list;
+}
+
+(* to convert to using hp_rel_def_new *)
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
@@ -3940,6 +3956,19 @@ and infer_state = {
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
+
+let to_new_hp_rel_def (r,hf,g,f) = 
+  { def_cat = r;
+  def_lhs = hf;
+  def_rhs = [(f,g)]
+  }
+
+let from_new_hp_rel_def d : hp_rel_def =
+  match d with
+   { def_cat = r;
+   def_lhs = hf;
+   def_rhs = rhs
+   } -> (r,hf,None,fst (List.hd rhs))
 
 let rec look_up_hpdef hpdefs hp0=
   match hpdefs with

@@ -1895,6 +1895,9 @@ let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let string_of_hrel_formula hrel: string = poly_string_of_pr pr_hrel_formula hrel
 
+let prtt_string_of_formula_guard ((e,g):formula_guard) : string 
+      =  poly_string_of_pr  prtt_pr_formula e
+
 let prtt_string_of_formula (e:formula) : string =  poly_string_of_pr  prtt_pr_formula e
 
 let prtt_string_of_formula_inst prog (e:formula) : string =  poly_string_of_pr (prtt_pr_formula_inst prog) e
