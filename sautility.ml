@@ -5428,17 +5428,6 @@ let succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
     (* let pr1 = pr_list_ln pr in *)
     let res = List.concat (List.map (fun f1 ->
         List.map (fun f2 ->
-            (* let _ = DD.info_zprint (lazy (("       f1:" ^ (pr f1)))) no_pos in *)
-            (* let _ = DD.info_zprint (lazy (("       f2:" ^ (pr f2)))) no_pos in *)
-            (* let ptrs = get_data_view_hrel_vars_formula f1 in *)
-            (* let new_f2 = CF.drop_hnodes_f f2 ptrs in *)
-            (* let ls_hpargs1 = CF.get_HRels_f f1 in *)
-            (* let ls_hpargs2 = CF.get_HRels_f new_f2 in *)
-            (* let ls_inter = Gen.BList.intersect_eq check_hp_arg_eq ls_hpargs2 ls_hpargs1 in *)
-            (* let dups_hps = List.map fst ls_inter in *)
-            (* let new_f21,_ = CF.drop_hrel_f new_f2 dups_hps in *)
-         (* let _ = DD.info_zprint (lazy (("       new_f21:" ^ (pr new_f21)))) no_pos in *)
-         (* CF.mkStar f1 new_f21 CF.Flow_combine pos *)
             compose_subs f1 f2 pos
     ) ls2) ls1)
     in
@@ -5794,17 +5783,6 @@ let rec look_up_subst_hpdef hp args (nrec_hpdefs: CF.hp_rel_def list)=
           look_up_subst_hpdef hp args gs
     end
 
-(* let compose_subs_x f1 f2 pos= *)
-(*   let ptrs1 = get_data_view_hrel_vars_formula f1 in *)
-(*   let ptrs2 = get_data_view_hrel_vars_formula f2 in *)
-(*   let svl1 = CF.fv f1 in *)
-(*   let irre_svl = CP.diff_svl ptrs2 svl1 in *)
-(*   let new_f2 = CF.drop_hnodes_f f2 (ptrs1@irre_svl) in *)
-(*   let new_f21,_ = CF.drop_hrel_f new_f2 ptrs1 in *)
-(*   let _ = DD.info_zprint (lazy (("       new_f21:" ^ (Cprinter.prtt_string_of_formula new_f21)))) no_pos in *)
-(*   CF.mkStar f1 new_f21 CF.Flow_combine pos *)
-
-
 let succ_subst_hpdef_x prog (nrec_hpdefs: CF.hp_rel_def list) all_succ_hp (hp,args,g,f)=
   DD.ninfo_zprint (lazy (("       succ_subst_def hp: " ^ (!CP.print_sv hp)))) no_pos;
   DD.ninfo_zprint (lazy (("       all_succ_hp: " ^ (!CP.print_svl all_succ_hp)))) no_pos;
@@ -5850,8 +5828,8 @@ let succ_subst_hpdef_x prog (nrec_hpdefs: CF.hp_rel_def list) all_succ_hp (hp,ar
           let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
         (*combine fs_list*)
           let lsf_cmb = List.fold_left helper [nf] fs_list in
-          DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula)
-                                                          in pr lsf_cmb)) no_pos;
+          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                 in pr lsf_cmb)) no_pos; *)
           (*remove trivial def*)
           let lsf_cmb1 = List.filter (fun f -> not (is_trivial f (hp,args))) lsf_cmb in
           (*simpl pure*)
