@@ -1898,7 +1898,7 @@ let pr_formula_guard ((e,g):formula_guard)=
     | Some f -> s1 ; fmt_string "|#|" ; (prtt_pr_formula f)
 
 let pr_formula_guard_list (es: formula_guard list)=
-  pr_seq "[]" pr_formula_guard es
+  pr_seq "" pr_formula_guard es
 
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 

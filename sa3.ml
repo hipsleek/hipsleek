@@ -102,7 +102,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                               CF.hprel_rhs = r;
                           }
                           in
-                          let _ = Debug.ninfo_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+                          let _ = Debug.info_zprint (lazy (("    new rhs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                           let new_cs1 = SAU.simp_match_hp_w_unknown prog unk_hps link_hps new_cs in
                           ([new_cs1],[])
                         end
@@ -117,7 +117,12 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
      | [] -> is_changed,don,unfrozen_hps
      | cs1::rest ->
            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-           if SAC.cs_rhs_is_only_neqNull cs1 then
+           let b2 = let hp_opt = CF.extract_hrel_head cs1.CF.hprel_lhs in
+             match hp_opt with
+               | None -> false
+               | Some hp -> CP.mem_svl hp sel_hps
+           in
+           if SAC.cs_rhs_is_only_neqNull cs1 || b2 then
              (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
            else
              let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
