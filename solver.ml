@@ -6453,10 +6453,12 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
       (res, flag)
     in
     let process_entail_state (es : entail_state) =
-      Debug.no_1 " process_entail_state"  Cprinter.string_of_entail_state
+      let pr = Cprinter.string_of_formula in
+      let pr2 = Cprinter.string_of_entail_state in
+      Debug.no_2 " process_entail_state"  pr pr
           (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
           (* (fun (_,b) -> string_of_bool b)  *)
-          process_entail_state es
+          (fun _ _ -> process_entail_state es) es.es_formula conseq
     in (* End of process_entail_state *)
     (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
     (* Now moving to typechecker for an earlier lexvar strip *)
@@ -13410,11 +13412,11 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
   let res,prf = heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2")) in
   (CF.list_failesc_context_simplify res,prf)
 
-let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
+let heap_entail_struc_list_failesc_context_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
   let slk_entail cl conseq = heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid
   in
-  Debug.no_2 "heap_entail_struc_list_failesc_context_init"
+  Debug.no_2_num i "heap_entail_struc_list_failesc_context_init"
 	Cprinter.string_of_list_failesc_context
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)

@@ -364,7 +364,7 @@ let proof_log_stk : proof_log  Gen.stack_filter
 (* wrong order number indicates recursive invocations *)
 let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
-  (* let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in *)
+  let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in
   if !Globals.sleek_logging_txt then
     (* let _ = Debug.info_pprint "logging .." no_pos in *)
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
@@ -405,6 +405,15 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
     ; ()
   else 
     ()
+
+let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos=
+  let pr = Cprinter.string_of_formula in
+  Debug.no_4 " add_sleek_logging" 
+      string_of_bool string_of_int
+      pr pr pr_none
+      (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos) avoid slk_no ante conseq
 
 let find_bool_proof_res pno =
 	try 
@@ -638,6 +647,7 @@ let sleek_log_to_text_file slfn (src_files) =
     close_out oc
 
 let sleek_log_to_text_file2 (src_files) =
+  (* let _ = print_endline "sleek_log_2" in *)
   let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
   let pr = pr_list pr_id in
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
