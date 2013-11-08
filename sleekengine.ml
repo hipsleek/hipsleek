@@ -892,7 +892,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
   let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
-  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
+  let new_rel_ass = CF.mkHprel_1 knd lhs (CF.convert_guard guard) rhs cond_path in
   (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
   (*     unk_svl = [];(\*inferred from norm*\) *)
   (*     unk_hps = []; *)

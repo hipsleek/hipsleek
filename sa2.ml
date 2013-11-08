@@ -80,7 +80,7 @@ let rec find_imply_subst_x prog unk_hps link_hps frozen_hps complex_hps constrs 
                           let n_cs_hprel_guard =
                             match cs2.CF.hprel_guard with
                               | None -> None
-                              | Some hf -> Some (CF.h_subst lhs_ss hf)
+                              | Some hf -> Some (CF.subst lhs_ss hf)
                           in
                           let new_cs = {cs2 with
                               CF.predef_svl = CP.remove_dups_svl
@@ -680,11 +680,11 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | None -> "None"
       | Some f -> Cprinter.prtt_string_of_formula f
     in
-    let pr3a oform= match oform with
-      | None -> "None"
-      | Some hf -> Cprinter.prtt_string_of_h_formula hf
-    in
-    let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3a pr3 in
+    (* let pr3a oform= match oform with *)
+    (*   | None -> "None" *)
+    (*   | Some hf -> Cprinter.prtt_string_of_h_formula hf *)
+    (* in *)
+    let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3 pr3 in
     Debug.no_2 " combine_helper2" pr4 pr4 (pr_list_ln pr4)
         (fun _ _ -> combine_helper2_x pdef1 pdef2)
         pdef1 pdef2
@@ -727,7 +727,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     in
     let nog = match og with
       | None -> None
-      | Some f -> Some (CF.h_subst subst f)
+      | Some f -> Some (CF.subst subst f)
     in
     ((hp,args0,CP.subst_var_list subst unk_svl, cond1, nolhs,nog, norhs), (*TODO: subst*)cs)
   in
@@ -738,11 +738,11 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | None -> "None"
       | Some f -> Cprinter.prtt_string_of_formula f
     in
-    let pr3a oform= match oform with
-      | None -> "None"
-      | Some f -> Cprinter.prtt_string_of_h_formula f
-    in
-    let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3a pr3 in
+    (* let pr3a oform= match oform with *)
+    (*   | None -> "None" *)
+    (*   | Some f -> Cprinter.prtt_string_of_h_formula f *)
+    (* in *)
+    let pr4 = pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3 pr3 in
     let pr5 (a,_) = pr4 a in
     Debug.no_2 "obtain_and_norm_def" pr1 pr4 pr5
         (fun _ _ -> obtain_and_norm_def_x args0 ((hp,args,unk_svl, cond, olhs,og, orhs), cs))
@@ -879,7 +879,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
     in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
-    (f3,SAU.h_subst_opt subst og, unk_args1)
+    (f3,CF.subst_opt subst og, unk_args1)
   in
   DD.tinfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then ([],[]) else
@@ -996,7 +996,7 @@ let get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,og,orf)=
   let pr1 = SAU.string_of_par_def_w_name in
   let pr1a og = match og with
     | None -> ""
-    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+    | Some f -> Cprinter.prtt_string_of_formula f
   in
   let pr2 = pr_list (pr_penta !CP.print_sv !CP.print_svl pr1a Cprinter.prtt_string_of_formula !CP.print_svl) in
   Debug.no_1 "get_pdef_body" pr1 pr2
@@ -1213,7 +1213,7 @@ let rec partition_pdefs_by_hp_name pdefs parts=
 let generalize_hps_par_def_x prog is_pre non_ptr_unk_hps unk_hpargs link_hps post_hps
       pre_def_grps predef_hps par_defs=
   (*partition the set by hp_name*)
-  let pr1 = pr_list_ln (pr_list_ln (pr_penta !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_h_formula_opt Cprinter.prtt_string_of_formula !CP.print_svl)) in
+  let pr1 = pr_list_ln (pr_list_ln (pr_penta !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula_opt Cprinter.prtt_string_of_formula !CP.print_svl)) in
   let unk_hps = (List.map fst unk_hpargs) in
   let par_defs1 = List.concat (List.map (get_pdef_body unk_hps post_hps) par_defs) in
   let par_defs2 = (* List.filter is_valid_pardef *) par_defs1 in

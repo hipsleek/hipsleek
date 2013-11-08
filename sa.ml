@@ -2469,7 +2469,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
     (*   else (List.hd args0) *)
     (* in *)
     (* let f2 = SAU.mk_expl_root r f1 in *)
-    (f2,SAU.h_subst_opt subst og, unk_args1)
+    (f2,CF.subst_opt subst og, unk_args1)
   in
   (* let have_roots args f= *)
   (*   let svl = CF.fv f in *)

@@ -1406,11 +1406,11 @@ let check_imply prog lhs_b rhs_b=
             (* let _ = Debug.info_zprint (lazy (("    rmf: " ^ (!CP.print_formula rmf)))) no_pos in *)
             let b,_,_ = TP.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
             if b then
-              let r_res = {n_rhs_b with
-                  CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      n_rhs_b.CF.formula_base_heap SAU.select_dnode
-                      SAU.select_vnode SAU.select_hrel all_matched_svl2  all_matched_svl2 matched_hps}
-              in
+              (* let r_res = {n_rhs_b with *)
+              (*     CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf *)
+              (*         n_rhs_b.CF.formula_base_heap SAU.select_dnode *)
+              (*         SAU.select_vnode SAU.select_hrel all_matched_svl2  all_matched_svl2 matched_hps} *)
+              (* in *)
               (*drop hps and matched svl in n_rhs2*)
               let l_res = {lhs_b with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
@@ -1529,19 +1529,19 @@ let do_strengthen prog constrs new_cs check_apply_fnc=
           helper_new_only (new_don@[cs1]) new_rest n_res1
   in
   (*new_cs x constr*)
-  let rec helper_old_new rest res=
-    match rest with
-      | [] -> res
-      | cs1::ss ->
-          let r = List.fold_left ( fun ls cs2 ->
-              let  on_cs2 = check_apply_fnc prog cs1 cs2 in
-              match on_cs2 with
-                | None -> ls@[cs2]
-                | Some n_cs2 ->
-                      ls@[n_cs2]
-          ) res constrs in
-           helper_old_new ss r
-  in
+  (* let rec helper_old_new rest res= *)
+  (*   match rest with *)
+  (*     | [] -> res *)
+  (*     | cs1::ss -> *)
+  (*         let r = List.fold_left ( fun ls cs2 -> *)
+  (*             let  on_cs2 = check_apply_fnc prog cs1 cs2 in *)
+  (*             match on_cs2 with *)
+  (*               | None -> ls@[cs2] *)
+  (*               | Some n_cs2 -> *)
+  (*                     ls@[n_cs2] *)
+  (*         ) res constrs in *)
+  (*          helper_old_new ss r *)
+  (* in *)
   let new_cs1 = if List.length new_cs < 1 then [] else helper_new_only [] new_cs [] in
   (* let new_cs2 = helper_old_new new_cs [] in *)
   (new_cs1)
@@ -1657,7 +1657,7 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
               match orhs1,orhs2 with
                 | Some f1, Some f2 -> begin
                       (* let ss = List.combine args1 args2 in *)
-                      let nf1 = (* CF.subst ss *) f1 in
+                      (* let nf1 = (\* CF.subst ss *\) f1 in *)
                       (* let nf2= SAU.mkConjH_and_norm prog args2 unk_hps [] nf1 f2 no_pos in *)
                       let ores = SAU.norm_formula prog args2 unk_hps [] f1 f2 equivs in
                       match ores with
@@ -1689,11 +1689,11 @@ let unify_consj_pre prog unk_hps link_hps equivs pdefs=
     | None -> "None"
     | Some f -> Cprinter.prtt_string_of_formula f
   in
-  let pr3a oform= match oform with
-    | None -> "None"
-    | Some f -> Cprinter.prtt_string_of_h_formula f
-  in
-  let pr4 (a,_) = (pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3a pr3) a in
+  (* let pr3a oform= match oform with *)
+  (*   | None -> "None" *)
+  (*   | Some f -> Cprinter.prtt_string_of_h_formula f *)
+  (* in *)
+  let pr4 (a,_) = (pr_hepta !CP.print_sv pr1 pr1 pr2 pr3 pr3 pr3) a in
   let pr5 = pr_list_ln pr4 in
   let pr6 = pr_pair pr5 (pr_list (pr_pair !CP.print_sv !CP.print_sv) ) in
   Debug.no_1 "unify_consj_pre" pr5 pr6
@@ -2458,7 +2458,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
   (*group hp_defs*)
   let grp_hp_defs0, non_post_fix_defs = partition_helper hp_defs [] [] in
   let grp_hp_defs,hpdefs1 = List.fold_left (unify_disjuncts) ([],hpdefs) grp_hp_defs0 in
-  let pr1 = pr_list_ln (pr_list_ln Cprinter.string_of_hp_rel_def) in
+  (* let pr1 = pr_list_ln (pr_list_ln Cprinter.string_of_hp_rel_def) in *)
   (* let _ =  DD.info_pprint ("   grp_hp_defs0: " ^(pr1 grp_hp_defs0)) no_pos in *)
   (* let _ =  DD.info_pprint ("   grp_hp_defs: " ^(pr1 grp_hp_defs)) no_pos in *)
   let n_hp_defs, n_hpdefs = List.fold_left (fun (r_hp_defs, r_hpdefs) hp_defs ->

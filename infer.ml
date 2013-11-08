@@ -2640,7 +2640,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
       let grd = check_guard ass_guard new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
-      let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+      let hp_rel = CF.mkHprel knd [] [] matched_svl lhs (CF.convert_guard grd) rhs es_cond_path in
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"

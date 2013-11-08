@@ -3900,7 +3900,7 @@ type hprel= {
     unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
     predef_svl: CP.spec_var list; (* not needed *)
     hprel_lhs: formula;
-    hprel_guard: h_formula option;
+    hprel_guard: formula option;
     (*capture the ctx when we want to capture relations
       of more than one field. ususally it is heap nodes
       guard is used in unfolding pre-preds
@@ -3917,7 +3917,7 @@ type hprel= {
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula; (* LHS *)
-    hprel_def_guard:  h_formula option;
+    hprel_def_guard:  formula option;
     hprel_def_body: (cond_path_type * formula option) list; (* RHS *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
@@ -3925,7 +3925,7 @@ and hprel_def= {
 
 (*temporal: name * hrel * guard option * definition body*)
 (*actually used to store the constraints on heap predicates inference*)
-and hp_rel_def = CP.rel_cat * h_formula * (h_formula option) * formula
+and hp_rel_def = CP.rel_cat * h_formula * (formula option) * formula
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
@@ -4004,7 +4004,7 @@ let h_subst_opt ss hf_opt=
     | Some hf -> Some (h_subst ss hf)
 
 let subst_hpdef ss hpdef=
-  let n_guard = h_subst_opt ss hpdef.hprel_def_guard in
+  let n_guard = subst_opt ss hpdef.hprel_def_guard in
   let n_body = List.map (fun (p, f_opt) -> (p, subst_opt ss f_opt)) hpdef.hprel_def_body in
   { hpdef with
       hprel_def_guard = n_guard;
@@ -4020,11 +4020,11 @@ let hpdef_cmp d1 d2 =
     with _ -> 1
   with _ -> -1
 
-let mk_hp_rel_def hp (args, r, paras) g f pos=
+let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
   (CP.HPRelDefn (hp, r, paras), hf, g, f)
 
-let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
+let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
  {  hprel_kind = knd;
     unk_svl = u_svl;
     unk_hps = u_hps ;
@@ -4039,7 +4039,7 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l hprel_g hprel_r hprel_p=
 let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
   mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
- let mk_hprel_def kind hprel guard_opt path_opf opflib= {
+ let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib= {
      hprel_def_kind = kind;
      hprel_def_hrel = hprel;
      hprel_def_guard = guard_opt;
@@ -13736,7 +13736,7 @@ let add_pure_and_infer_from_asserted p new_ctx ts = ts
 let combine_guard ogs0=
   let rec helper ogs res=
     match ogs with
-      | [] -> join_star_conjunctions_opt res
+      | [] -> join_conjunct_opt res
       | og::rest -> begin
         match og with
           | None -> helper rest res
@@ -13744,6 +13744,11 @@ let combine_guard ogs0=
         end
   in
   helper ogs0 []
+
+let convert_guard oh_guard=
+  match oh_guard with
+    | None -> None
+    | Some hf -> Some (formula_of_heap hf no_pos)
 
 let add_proof_traces_ctx ctx0 proof_traces=
   let rec helper ctx=

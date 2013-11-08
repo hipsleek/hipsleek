@@ -1758,7 +1758,7 @@ let match_def hvars defs def (hp_map,spairs) =
     (fun _ _ -> match_def_x hvars defs def (hp_map,spairs)) defs def
 
 
-let checkeq_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
+let checkeq_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
   let spairs = List.map (fun c -> (c,None)) svars in
   let no_change hp_mt1 hp_mt2 =
     let size_of_mt hp_mt = List.fold_left (fun piv (hps,hp) -> piv + List.length hps) 0 hp_mt in
@@ -1780,7 +1780,7 @@ let checkeq_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula 
   in
   (map,refine_spairs new_spairs)
   
-let checkeq_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
+let checkeq_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr5 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
@@ -1789,7 +1789,7 @@ let checkeq_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula op
   Debug.no_2 "check_defs" pr2 pr1 (pr3)
     (fun _ _ -> checkeq_defs_x hvars svars defs infile_defs) defs infile_defs
 
-let checkeq_defs_bool hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars=
+let checkeq_defs_bool hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars=
   let  (mtb,_)  = checkeq_defs hvars svars defs infile_defs in
   (* let (mtb,smap) = process_svars full_tb svars inf_vars in *)
   let helper v mtb =
@@ -1850,7 +1850,7 @@ let check_equiv_def_with_diff hvars svars (def1: (CF.formula * CF.formula)) (def
     )
   else (m,mtl,[])
 
-let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list)
+let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list)
       ( infile_defs: (CF.formula * CF.formula) list) inf_vars :  (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list))=
   let  (mtb,spairs)  = checkeq_defs hvars svars defs infile_defs in
   (* let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in *)
@@ -1949,7 +1949,7 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
   (*TODO: here, b can used to decide if it's actually false or just false with HP diff_name (check again here)*)   
   )
 
-let checkeq_defs_with_diff hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
+let checkeq_defs_with_diff hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 b = if(b) then "VALID" else "INVALID" in
@@ -1964,7 +1964,7 @@ let check_subsume hvars def1 def2 =
  let _ = print_string ("Check subsume, \nf1: "^ pr1 def1 ^ "\nf2: " ^ pr1 def2 ^ "\n") in
  ()
 
-let check_subsume_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list)
+let check_subsume_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list)
       ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
   let (res, diffs) = checkeq_defs_with_diff hvars svars defs infile_defs inf_vars in
   if(res) then (res,diffs,[])
@@ -2043,7 +2043,7 @@ let check_subsume_defs_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_fo
     (res,diffs,r)
   )
 
-let check_subsume_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
+let check_subsume_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr4 b = if(b) then ">=" else "<=" in
@@ -2052,7 +2052,7 @@ let check_subsume_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_form
   Debug.no_2 "check_subsume_defs" pr2 pr1 (pr5)
     (fun _ _ -> check_subsume_defs_x hvars svars defs infile_defs inf_vars) defs infile_defs
 
-let check_subsume_defs_tmp hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.h_formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
+let check_subsume_defs_tmp hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula option * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
   let (r,rl,sl) = check_subsume_defs hvars svars defs infile_defs inf_vars in
   let check_subsume r sl =
     let (f1,f2,_) = r in

@@ -11263,7 +11263,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     in process_one_match
                   *)
                   (* if (flag || exact_flag) then None else *)
-                  let tmp = Gen.BList.intersect_eq (CP.eq_spec_var) vars (estate.es_gen_expl_vars(* @estate.es_ivars *)@estate.es_gen_impl_vars) in
+                  (* let tmp = Gen.BList.intersect_eq (CP.eq_spec_var) vars (estate.es_gen_expl_vars(\* @estate.es_ivars *\)@estate.es_gen_impl_vars) in *)
                   let exists_vars = Gen.BList.difference_eq (CP.eq_spec_var) exists_vars vars in
                   let rhs_frac = if (vars=[]) then MCP.mkMTrue no_pos
                       else MCP.find_rel_constraints (rhs_b.formula_base_pure) vars in
@@ -11446,7 +11446,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let lhs_h_list = split_star_conjunctions lhs_h in
                 let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
                 let init_pure = CP.conj_of_list init_pures pos in
-                let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in
+                (* let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
                 {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
             in
             let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in

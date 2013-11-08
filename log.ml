@@ -263,7 +263,7 @@ object (self)
     in ()
   method start_sleek src =
     begin
-      let (parent,_) = sleek_stk # top_no_exc in
+      (* let (parent,_) = sleek_stk # top_no_exc in *)
       sleek_no <- sleek_no+1;
       Globals.sleek_proof_no := sleek_no;
       sleek_stk # push (sleek_no,src);
@@ -467,7 +467,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_res = res; } in
       let _ = last_cmd # set plog in
       proof_log_stk # push plog;
-      let pno_str = string_of_int pno in
+      (* let pno_str = string_of_int pno in *)
       (* let _ = add_proof_tbl pno_str plog in *)
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       (* let _ = try *)

@@ -18,7 +18,7 @@ module SY_CEQ = Syn_checkeq
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
 (*hp_name * args * unk_args * condition * lhs * guard* rhs *)
-type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CP.formula * (CF.formula option) * (CF.h_formula option) *
+type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CP.formula * (CF.formula option) * (CF.formula option) *
       (CF.formula option)
 
 let check_stricteq_h_fomula = SY_CEQ.check_stricteq_h_fomula
@@ -60,7 +60,7 @@ let string_of_par_def_w_name pd=
     | None -> "None"
     | Some f -> pr2 f
   in
-  let pr = pr_hepta pr1 pr4 pr4 pr5 pr3 Cprinter.prtt_string_of_h_formula_opt pr3 in
+  let pr = pr_hepta pr1 pr4 pr4 pr5 pr3 Cprinter.prtt_string_of_formula_opt pr3 in
   pr pd
 
 
@@ -70,15 +70,10 @@ let string_of_par_def_w_name_short pd=
   let pr3 = Cprinter.prtt_string_of_formula in
   let pr4 og = match og with
     | None -> ""
-    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+    | Some hf -> Cprinter.prtt_string_of_formula hf
   in
   let pr = pr_penta pr1 pr2 pr4 pr3 pr2 in
   pr pd
-
-let h_subst_opt ss og=
-  match og with
-    | None -> None
-    | Some hf -> Some (CF.h_subst ss hf)
 
 (**=================================**)
 
@@ -2802,7 +2797,11 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
   (************END INTERNAL ***********)
   match guard with
     | None -> (false, rhs1)
-    | Some hf -> begin
+    | Some f -> begin
+        let hf = match (CF.heap_of f) with
+          | [a] -> a
+          | _ -> report_error no_pos "SAU.pattern_matching_with_guard 3"
+        in
         match hf with
           | CF.DataNode hd ->
                 let inter_rhs1, hd_locs, hd_name = find_pattern hd rhs1 in
@@ -2813,11 +2812,11 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl=
           | _ -> (false,rhs1)
       end
 
-let pattern_matching_with_guard rhs1 rhs2 guard match_svl1=
+let pattern_matching_with_guard rhs1 rhs2 (guard: CF.formula option) match_svl1=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 ohf= match ohf with
     | None -> "None"
-    | Some hf -> Cprinter.prtt_string_of_h_formula hf
+    | Some hf -> Cprinter.prtt_string_of_formula hf
   in
   let pr3 = !CP.print_svl in
   Debug.no_4 "pattern_matching_with_guard" pr1 pr1 pr2 pr3 (pr_pair string_of_bool pr1)
@@ -2832,7 +2831,7 @@ step 1: apply transitive implication
 
 Note: subst if the lhs is equal (frozen) and not complex
 *)
-let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 lguard1 equal_hps complex_hps=
+let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formula option) equal_hps complex_hps=
   let sort_hps_x hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
       (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
   in
@@ -4423,7 +4422,8 @@ let mk_hprel_def prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps u
           DD.ninfo_zprint (lazy ((" =: " ^ (Cprinter.prtt_string_of_formula def) ))) pos;
           let _ = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
           let n_id = C.get_root_typ_hprel prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
-          let def = (hp, (CP.HPRelDefn (hp, r, paras), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)), CF.combine_guard ogs,
+          let def = (hp, (CP.HPRelDefn (hp, r, paras), (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos)),
+          (CF.combine_guard ogs),
           CF.subst [(r,CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] def)) in
           [def]
       end
@@ -5476,7 +5476,7 @@ let succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
 
 let succ_subst prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-   let pr2 = pr_penta !CP.print_sv !CP.print_svl pr_none Cprinter.prtt_string_of_formula !CP.print_svl in
+   let pr2 = pr_penta !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula_opt Cprinter.prtt_string_of_formula !CP.print_svl in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
    Debug.no_4 "succ_subst" pr1 string_of_bool !CP.print_svl pr2 pr3
        (fun _ _ _  _ -> succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl))
@@ -5855,11 +5855,7 @@ let succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
 let succ_subst_hpdef prog nrec_hpdefs all_succ_hp (hp,args,g,f)=
   let pr1 = pr_list_ln (string_of_hp_rel_def) in
   let pr2 = !CP.print_svl in
-  let pr3a hf_opt = match hf_opt with
-    | None -> "None"
-    | Some hf -> Cprinter.prtt_string_of_h_formula hf
-  in
-  let pr3 = pr_quad !CP.print_sv !CP.print_svl pr3a Cprinter.prtt_string_of_formula in
+  let pr3 = pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula_opt Cprinter.prtt_string_of_formula in
   let pr4 = pr_pair string_of_bool (pr_list_ln Cprinter.prtt_string_of_formula) in
   Debug.no_3 " succ_subst_hpdef" pr1 pr2 pr3 pr4
       (fun _ _ _ -> succ_subst_hpdef_x prog nrec_hpdefs all_succ_hp (hp,args,g,f))
@@ -6798,7 +6794,7 @@ let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
     (*update hpdefs: remove + subst*)
     let r_hpdefs = List.fold_left (update_hpdef drop_hps equivs) [] hpdefs in
     (*subst hp_defs*)
-    let r_hp_defs1 = List.map (fun (k, hrel, g, f) -> (k, hrel, CF.h_subst_opt equivs g, CF.subst equivs f)) r_hp_defs in
+    let r_hp_defs1 = List.map (fun (k, hrel, g, f) -> (k, hrel, CF.subst_opt equivs g, CF.subst equivs f)) r_hp_defs in
     (*subst cviews*)
     (* let n_cviews = List.map (fun v -> {v with }) prog.Cast.prog_view_decls in *)
     (r_hpdefs, r_hp_defs1)

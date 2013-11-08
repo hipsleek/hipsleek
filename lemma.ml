@@ -92,7 +92,7 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
     in
     let null_exp = CP.Null pos in
     let ss = [(cont, null_exp)] in
-    let n = IP.Null no_pos in
+    (* let n = IP.Null no_pos in *)
     let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
     let cp = CP.mkNull cont pos in
     (subst_helper ss f, IF.mkBase ihf ip IF.n_flow [] pos,
