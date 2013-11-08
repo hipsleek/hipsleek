@@ -801,8 +801,8 @@ let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
   let view_rank_id = TI.view_rank_sv vdef.C.view_name in
   let view_form = add_rank_constraint_struc_formula vdef.C.view_formula (VIEW view_rank_id) in
   { vdef with
-    C.view_vars = vdef.C.view_vars;
-    C.view_formula = view_form; }
+    C.view_formula = view_form; 
+    C.view_un_struc_formula = CF.get_view_branches view_form; }
 
 and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
   match f with
@@ -828,19 +828,21 @@ and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): C
 
 and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
   let add_rank_constraint_pure hf pf rtyp =
-    let hf, rankrel_vars, rankrel_ivars = CF.collect_rankrel_vars_h_formula hf in
+    let nhf, rankrel_vars, rankrel_ivars = CF.collect_rankrel_vars_h_formula hf in
     match rtyp with
     | VIEW rankrel_id ->
-        let rankrel_args = if rankrel_vars == [] then 
-          [TI.view_base_sv (CP.name_of_spec_var rankrel_id)] else rankrel_vars in
-        hf,
+        let rankrel_args, rankrel_base_vars = if rankrel_vars == [] then 
+          let base_var = TI.view_base_sv (CP.name_of_spec_var rankrel_id) in
+          [base_var], [base_var] else rankrel_vars, [] in
+        nhf,
         MCP.memoise_add_pure_N pf (Terminf.mkRankConstraint rankrel_id rankrel_args),
-        rankrel_ivars
+        rankrel_ivars @ rankrel_base_vars
     | PRE proc_args -> 
         (* Add Term[r] for PRE based on the args of proc *)
-        let pf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar Term [] [] no_pos )) in
-        hf, pf, rankrel_ivars
-    | POST -> hf, pf, rankrel_ivars
+        let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
+          TermC [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
+        nhf, npf, rankrel_ivars
+    | POST -> nhf, pf, rankrel_ivars 
   in match f with
   | CF.Base b -> 
     begin
@@ -1732,9 +1734,10 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
-      (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       (* TermInf: Adding ghost variable for ranking function of view *)
-      if !en_term_inf then add_rank_constraint_view cvdef else cvdef)
+      let cvdef = if !en_term_inf then add_rank_constraint_view cvdef else cvdef in
+      (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
+      cvdef)
   )
   )
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
@@ -2447,7 +2450,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       else static_specs_list in
       (* TermInf: Add RankRel into Specs *)
       let final_static_specs_list = 
-        if !en_term_inf then
+        if !en_term_inf && not is_primitive then
           add_rank_constraint_struc_formula final_static_specs_list (PRE args)
         else final_static_specs_list
       in

@@ -1616,6 +1616,12 @@ and get_node_original (h : h_formula) = match h with
   | DataNode ({h_formula_data_original = c}) -> c
   | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode")
 
+and get_node_rank_var (h: h_formula) =
+  match h with
+  | ViewNode v -> v.h_formula_view_rank;
+  | DataNode _ -> None
+  | _ -> failwith ("get_node_rank_var: invalid argument. Expected ViewNode/DataNode")
+
 and set_node_perm (h : h_formula) p= match h with
   | ViewNode b -> ViewNode {b with h_formula_view_perm = p}
   | DataNode b -> DataNode {b with h_formula_data_perm = p}

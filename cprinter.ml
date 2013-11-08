@@ -808,7 +808,8 @@ let rec pr_b_formula (e:P.b_formula) =
   match pf with
     | P.LexVar t_info -> 
       fmt_string (string_of_term_ann t_info.CP.lex_ann);
-      pr_s "" pr_formula_exp t_info.CP.lex_exp
+      pr_s "" pr_formula_exp t_info.CP.lex_exp;
+      if !en_term_inf then pr_s "" pr_formula_exp t_info.CP.lex_tmp
       (* ;if ls2!=[] then *)
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)

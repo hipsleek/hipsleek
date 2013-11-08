@@ -553,6 +553,8 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  let _ = !print_mix_formula rhs_p in
+  let _ = !print_entail_state estate in
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
@@ -563,12 +565,16 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
+      (* TODO: THIS MAY CAUSE THE LOST --eps information*)
       let rhs_p = MCP.mix_of_pure rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
+      | (TermC, _) 
+      | (Term, TermC) ->
+          (* TermInf: Collect constraints for ranking function inference *)
+          (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
@@ -593,9 +599,6 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_term_err = Some (string_of_term_res term_res);
           } in
           (n_estate, lhs_p, rhs_p, None)
-        (* TermInf: Collect constraints for ranking function inference *)
-      | (TermC, TermC)
-      | (TermC, _) -> failwith "TermC has not yet been supported."
       | (Loop, Loop) ->
           let term_measures = Some (MayLoop, [], []) in 
           let n_estate = {estate with es_var_measures = term_measures} in
@@ -626,14 +629,14 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   (estate, lhs_p, rhs_p, None)                                      *)
   if !Globals.dis_term_chk or estate.es_term_err != None then
     (* Remove LexVar in RHS *)
-    (*TODO: THIS MAY CAUSE THE LOST --eps information*)
+    (* TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
     let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
   else
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
-(*TODO: consider --eps *)
+(* TODO: consider --eps *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in

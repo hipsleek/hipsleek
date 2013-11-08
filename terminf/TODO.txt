@@ -1,0 +1,13 @@
+IMPLEMENTATION
+==============
+1. Adding RankRel into view declarations and specifications
+	- Renaming: TO CHECK
+	- Unfolding: DONE
+
+2. Collecting termination constraints
+	- TermC with potential ranking functions 
+	(associated with the input data structures)
+
+3. Solving termination constraints
+
+4. Post-condition inference

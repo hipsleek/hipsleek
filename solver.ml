@@ -2466,6 +2466,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                h_formula_view_label = v_lbl;
                h_formula_view_remaining_branches = brs;
                h_formula_view_perm = perm;
+               h_formula_view_rank = vr;
                h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
       let uf = old_uf+uf in
       if CP.mem p aset then (
@@ -2494,10 +2495,13 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
               else renamed_view_formula
             in
             (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
-            let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
-              :: (* fr_rem *) vdef.view_vars in
+            let fr_vars = ((CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
+              :: (* fr_rem *) vdef.view_vars)
+              @ (if !en_term_inf then [Terminf.view_rank_sv lhs_name] else []) in
             let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
-            let to_vars = v :: (* to_rem *) vs in
+            let to_vars = (v :: (* to_rem *) vs)
+              @ (if !en_term_inf then match vr with None -> [] | Some r -> [r] else [])
+            in
             let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
             (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
             (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
@@ -8157,6 +8161,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 	    (Cprinter.string_of_h_formula lhs_node))) pos);
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+    let lhs_rank_var = get_node_rank_var lhs_node in
     let _ = Gen.Profiling.push_time "empty_predicate_testing" in
     let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
@@ -8203,8 +8208,10 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
             CF.mk_failure_must "9999" Globals.sl_error)), UnsatConseq)
       | Some (bc1,base1) -> 
 	        begin
-              let fr_vars = (CP.SpecVar (Named lhs_vd.Cast.view_data_name, self, Unprimed)) :: lhs_vd.view_vars in			
-              let to_vars = lhs_var :: lhs_arg in
+              let lhs_rank_var = (if !en_term_inf then match lhs_rank_var with None -> [] | Some r -> [r] else []) in
+              let fr_vars = ((CP.SpecVar (Named lhs_vd.Cast.view_data_name, self, Unprimed)) :: lhs_vd.view_vars)
+                @ (if !en_term_inf then [Terminf.view_rank_sv lhs_vd.view_name] else []) in			
+              let to_vars = (lhs_var :: lhs_arg) @ lhs_rank_var in
               let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
               let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
               let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !enable_syn_base_case in
