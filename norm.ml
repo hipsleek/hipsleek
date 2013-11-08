@@ -385,8 +385,10 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
     hp self_var vdecl.C.view_vars args fs2 [] in
   match defs with
     | [a] -> [vdecl]
-    | [(hp1,(_,hrel1,_,f1));(hp2,(a,hrel2,_,f2))] ->
-        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in 
+    | [(hp1,(* (_,hrel1,_,f1) *) def1);(hp2,(* (a,hrel2,_,f2) *) def2)] ->
+        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in
+        let f1 = CF.disj_of_list (List.map fst def1.CF.def_rhs) no_pos in
+        let f2 = CF.disj_of_list (List.map fst def2.CF.def_rhs) no_pos in
         let n_f1 =
           if !Globals.pred_elim_useless then
             CF.subst_hrel_f f1 elim_ss
@@ -396,11 +398,11 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
         (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
-        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews (a,hrel2,None,f2) in
+        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews def2 in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
              let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
-            let _,args2 = CF.extract_HRel hrel2 in
+            let _,args2 = CF.extract_HRel def2.CF.def_lhs in
             let vname2 = (CP.name_of_spec_var hp2) in
             let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
             let ss = [(List.hd args2, self_var2)] in

@@ -1891,6 +1891,15 @@ let rec pr_formula_for_spec e =
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
+let pr_formula_guard ((e,g):formula_guard)=
+  let s1 = (prtt_pr_formula e) in
+  match g with
+    | None -> s1
+    | Some f -> s1 ; fmt_string "|#|" ; (prtt_pr_formula f)
+
+let pr_formula_guard_list (es: formula_guard list)=
+  pr_seq "[]" pr_formula_guard es
+
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let string_of_hrel_formula hrel: string = poly_string_of_pr pr_hrel_formula hrel
@@ -1899,6 +1908,15 @@ let prtt_string_of_formula_guard ((e,g):formula_guard) : string
       =  poly_string_of_pr  prtt_pr_formula e
 
 let prtt_string_of_formula (e:formula) : string =  poly_string_of_pr  prtt_pr_formula e
+
+let prtt_string_of_formula_guard ((e,g):formula_guard) : string =
+  let s1 = (poly_string_of_pr  prtt_pr_formula e) in
+  match g with
+    | None -> s1
+    | Some f -> s1 ^ "|#|" ^ (poly_string_of_pr  prtt_pr_formula f)
+
+let prtt_string_of_formula_guard_list ( es:formula_guard list) : string =
+  poly_string_of_pr pr_formula_guard_list es
 
 let prtt_string_of_formula_inst prog (e:formula) : string =  poly_string_of_pr (prtt_pr_formula_inst prog) e
 
@@ -1960,29 +1978,29 @@ let pr_hp_rel hp_rel =
   fmt_string (pr3 hp_rel)
 
 let string_of_hp_rel_def hp_rel =
-  let print_g guard=
-    (match guard with
-      | None -> ""
-            (* fmt_string " NONE " *)
-      | Some hf -> 
-            begin
-              " |#| " ^ (prtt_string_of_formula hf)
-            end
-     )
-  in
- let str_of_hp_rel (r,f1, g, f2) =
-   ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ (print_g g) ^ " ::= "  ^(prtt_string_of_formula f2)) in
+  (* let print_g guard= *)
+  (*   (match guard with *)
+  (*     | None -> "" *)
+  (*           (\* fmt_string " NONE " *\) *)
+  (*     | Some hf ->  *)
+  (*           begin *)
+  (*             " |#| " ^ (prtt_string_of_formula hf) *)
+  (*           end *)
+  (*    ) *)
+  (* in *)
+ let str_of_hp_rel (* (r,f1, g, f2) *) def =
+   ( (CP.print_rel_cat def.def_cat)^ ": " ^(string_of_h_formula def.def_lhs) ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
- let str_of_hp_rel (_,f1, guard, f2) = ((string_of_h_formula f1)
-     ^ (match guard with
-       | None -> ""
-       | Some hf -> begin
-           " |#| " ^ (prtt_string_of_formula hf)
-         end
-     )
- ^ " ::= "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel def = ((string_of_h_formula def.def_lhs)
+     (* ^ (match guard with *)
+     (*   | None -> "" *)
+     (*   | Some hf -> begin *)
+     (*       " |#| " ^ (prtt_string_of_formula hf) *)
+     (*     end *)
+     (* ) *)
+ ^ " ::= "  ^(prtt_string_of_formula_guard_list def.def_rhs)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_decl hpdecl =

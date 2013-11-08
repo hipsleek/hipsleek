@@ -523,8 +523,8 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
     match rem_hpdefs with
       | [] -> (r_unk_hps@[hp], r_hpdefs)
-      | ((k, _,_,_) as hpdef)::rest -> begin
-          match k with
+      | ((* (k, _,_,_) as *) hpdef)::rest -> begin
+          match hpdef.CF.def_cat with
             | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
                 (r_unk_hps, r_hpdefs@[hpdef])
               else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp

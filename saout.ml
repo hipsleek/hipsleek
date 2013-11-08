@@ -65,13 +65,14 @@ let norm_free_svl f0 args=
   in
   helper f0
 in
-List.fold_left (fun acc (rel_cat, hf,_,f_body)->
-      match rel_cat with
+List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
+    let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
+    match def.CF.def_cat with
 	| CP.HPRelDefn (v,r,paras)->
               let _ = Debug.ninfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
               let _ = Debug.ninfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
 	      let vname = sv_name v in
-	      let slf, vars, tvars = match hf with
+	      let slf, vars, tvars = match def.CF.def_lhs with
 		| CF.HRel (v1,el,_)->
 		      if ((String.compare (sv_name v1) vname)!=0) then failwith "hrel name inconsistency\n"
 		      else  (
@@ -215,8 +216,8 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
       C.view_decl list * C.hp_decl list =
   (*TODO: topo sort hp_rels*)
   let hpdefs1 = hpdefs in
-  let def_hps, hpdefs2, views = List.fold_left (fun (ls1,ls2, ls3) ((hp_kind, _,_,_) as def) ->
-      match hp_kind with
+  let def_hps, hpdefs2, views = List.fold_left (fun (ls1,ls2, ls3) def ->
+      match def.CF.def_cat with
         | CP.HPRelDefn (hp,_,_) -> begin
               let hp_name = CP.name_of_spec_var hp in
               try
@@ -304,11 +305,11 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   let rec look_up_root hpdefs hp act_args=
     match hpdefs with
       | [] -> None
-      | (k,hrel,_,_)::rest -> begin
-          match k with
+      | def::rest -> begin
+          match def.CF.def_cat with
             | CP.HPRelDefn (hp1, r, tl) ->
                   if CP.eq_spec_var hp hp1 then
-                    let _,args = CF.extract_HRel hrel in
+                    let _,args = CF.extract_HRel def.CF.def_lhs in
                     let p = get_pos args 0 r in
                     Some (partition_args_from_loc act_args 0 p [])
                   else
@@ -413,9 +414,10 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
 
 let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
   let need_trans_hprels0, unk_hps =
-    List.fold_left (fun (r_hp_defs, r_unk_hps) ((hp_kind, _,_,f) as hp_def) ->
-        match hp_kind with
+    List.fold_left (fun (r_hp_defs, r_unk_hps) hp_def ->
+        match hp_def.CF.def_cat with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
+               let f = CF.disj_of_list (List.map fst hp_def.CF.def_rhs) no_pos in
                try
                  let _ = Cast.look_up_view_def_raw 33 cprog.Cast.prog_view_decls
                    (Cpure.name_of_spec_var hp)

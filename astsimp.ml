@@ -8324,11 +8324,12 @@ let rec rev_trans_formula f = match f with
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)
 
-  List.fold_left (fun acc (proc_id,(rel_cat, hf,_,f_body))->
-	match rel_cat with
+  List.fold_left (fun acc (proc_id,(* (rel_cat, hf,_,f_body) *) def)->
+      let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
+	match def.CF.def_cat with
 	  | CP.HPRelDefn (v,r,paras)->
 		let vname = sv_n v in
-		let slf, vars, tvars = match hf with
+		let slf, vars, tvars = match def.CF.def_lhs with
 		  | CF.HRel (v1,el,_)->
 			if ((String.compare (sv_n v1) vname)!=0) then failwith "hrel name inconsistency\n"
 			else  (

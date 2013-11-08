@@ -3931,11 +3931,11 @@ and hprel_def= {
 
 (*temporal: name * hrel * guard option * definition body*)
 (*actually used to store the constraints on heap predicates inference*)
-and hp_rel_def = CP.rel_cat * h_formula * (formula option) * formula
+and hp_rel_def_old = CP.rel_cat * h_formula * (formula option) * formula
 
 (* and hp_rel_def = CP.rel_cat * h_formula * (formula option) * (formula_guard list) *)
 
-and hp_rel_def_new = {
+and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
     def_rhs : formula_guard list;
@@ -3963,12 +3963,15 @@ let to_new_hp_rel_def (r,hf,g,f) =
   def_rhs = [(f,g)]
   }
 
-let from_new_hp_rel_def d : hp_rel_def =
+let from_new_hp_rel_def d : hp_rel_def_old =
   match d with
    { def_cat = r;
    def_lhs = hf;
    def_rhs = rhs
    } -> (r,hf,None,fst (List.hd rhs))
+
+let flatten_hp_rel_def_wo_guard def=
+  (def.def_cat, def.def_lhs, formula_of_disjuncts (List.map fst def.def_rhs))
 
 let rec look_up_hpdef hpdefs hp0=
   match hpdefs with
@@ -3993,8 +3996,8 @@ let rec look_up_hpdef_with_remain hpdefs hp0 done_hpdefs=
 let rec look_up_hp_def hp_defs hp0=
   match hp_defs with
     | [] -> raise Not_found
-    | ((k, _,_,_) as hp_def)::rest -> begin
-        match k with
+    | (hp_def)::rest -> begin
+        match hp_def.def_cat with
           | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then hp_def
             else look_up_hp_def rest hp0
           | _ -> look_up_hp_def rest hp0
@@ -4051,7 +4054,16 @@ let hpdef_cmp d1 d2 =
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
-  (CP.HPRelDefn (hp, r, paras), hf, g, f)
+  { def_cat= (CP.HPRelDefn (hp, r, paras));
+  def_lhs =hf;
+  def_rhs = [(f,g)]
+  }
+
+let mk_hp_rel_def1 c lhs rhs=
+  { def_cat= c;
+  def_lhs = lhs;
+  def_rhs = rhs
+  }
 
 let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
  {  hprel_kind = knd;
@@ -13772,12 +13784,23 @@ let combine_guard ogs0=
           | Some hf -> helper rest (res@[hf])
         end
   in
-  helper ogs0 []
+  match ogs0 with
+    | [] -> None
+    | [z] -> z
+    | _ -> helper ogs0 []
 
 let convert_guard oh_guard=
   match oh_guard with
     | None -> None
     | Some hf -> Some (formula_of_heap hf no_pos)
+
+let flatten_hp_rel_def hpdef=
+  let a1 = hpdef.def_cat in
+  let hprel = hpdef.def_lhs in
+  let fs,ogs = List.split hpdef.def_rhs in
+  let f = disj_of_list fs no_pos in
+  let og = combine_guard ogs in
+  (a1,hprel,og,f)
 
 let add_proof_traces_ctx ctx0 proof_traces=
   let rec helper ctx=

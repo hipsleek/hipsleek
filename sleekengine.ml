@@ -925,7 +925,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let pr_new_rel_defn =  (cond_path, (CP.HPRelDefn (hp, List.hd args, List.tl args), hf, None, rhs))
+  let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
   in
   (*hp_defn*)
   (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
@@ -1137,7 +1137,7 @@ let process_shape_conquer sel_ids cond_paths=
   let link_hpargs = !sleek_hprel_unknown in
   let defs =
     (* if not (!Globals.pred_syn_modular) then *)
-      let orig_vars = List.fold_left (fun ls (_,(_,hf,_,_))-> ls@(CF.h_fv hf)) [] ls_pr_defs in
+      let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
       let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
       let sel_hps  = List.filter (fun sv ->
           let t = CP.type_of_spec_var sv in
