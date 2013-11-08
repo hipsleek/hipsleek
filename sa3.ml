@@ -212,9 +212,9 @@ let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_h
   res
 let subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
-  Debug.no_3 "subst_cs" pr1 pr1 !CP.print_svl (pr_triple string_of_bool  pr1 !CP.print_svl)
-      (fun _ _ _ -> subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
-      constrs frozen_constrs complex_hps
+  Debug.no_4 "subst_cs" pr1 !CP.print_svl pr1 !CP.print_svl (pr_triple string_of_bool  pr1 !CP.print_svl)
+      (fun _ _ _ _ -> subst_cs prog post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs)
+      constrs  frozen_hps frozen_constrs complex_hps
 
 
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
@@ -1923,6 +1923,8 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
       need_preprocess detect_dang =
   let _ = DD.info_ihprint (add_str ">>>>>>PRE" pr_id) " derive predicates for pre-predicates<<<<<<" no_pos in
   DD.info_ihprint (add_str ">>>>>> Sorting and Syn-Norm-Conseq <<<<<<" pr_id) "" no_pos;
+  (*************INTERNAL**************)
+  (***************END*******************)
   let post_hps = is.CF.is_post_hps in
   let dang_hps = List.map fst is.CF.is_dang_hpargs in
   let link_hps = List.map fst is.CF.is_link_hpargs in

@@ -18,8 +18,8 @@ HeapPred G(node a).
 
 
 void trav (node x)
-//infer [H,G] requires H(x) ensures G(x);
-requires x::tree<>  ensures x::tree<>;
+infer [H,G] requires H(x) ensures G(x);
+//requires x::tree<>  ensures x::tree<>;
 {
   node xl = x.left;
   if (x.right!=null) 
