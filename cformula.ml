@@ -3935,7 +3935,7 @@ and hp_rel_def = CP.rel_cat * h_formula * (formula option) * formula
 
 (* and hp_rel_def = CP.rel_cat * h_formula * (formula option) * (formula_guard list) *)
 
-and hp_rel_def = {
+and hp_rel_def_new = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
     def_rhs : formula_guard list;
