@@ -364,7 +364,7 @@ let proof_log_stk : proof_log  Gen.stack_filter
 (* wrong order number indicates recursive invocations *)
 let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result) pos=
-  let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in
+  (* let _ = Debug.info_zprint  (lazy  ("avoid: "^(string_of_bool avoid))) no_pos in *)
   if !Globals.sleek_logging_txt then
     (* let _ = Debug.info_pprint "logging .." no_pos in *)
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
