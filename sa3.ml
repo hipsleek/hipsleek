@@ -2206,7 +2206,36 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
 
 let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (***********INTERNAL***************)
-  let process_path_defs_setting is=
+  (*globals_ubk_hps are dangling preds in all paths.
+    if a pred is partial dangling, we should rename/remove it. it atributes to more precise subst/inlining
+    in non-dangling branches.
+  *)
+  let process_path_defs_setting globals_unk_hps is =
+    let local_unk_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp globals_unk_hps))
+      (if !Globals.pred_elim_dangling then is.CF.is_dang_hpargs else
+        is.CF.is_link_hpargs)
+    in
+    let is = if !Globals.sa_dnc then
+      (*for the local_unk_hps, we fresh them and subst/remove them in local branch*)
+      let new_unk_hpargs,ss = List.fold_left (fun (r1,r2) (hp,args) ->
+          let is_pre = not (CP.mem_svl hp is.CF.is_post_hps) in
+          let nhp = SAU.fresh_raw_hp_rel prog is_pre hp no_pos in
+          (r1@[(nhp,args)], r2@[(hp,nhp)])
+      ) ([],[]) local_unk_hpargs in
+      let n_hp_defs = List.map (fun hp_def ->
+          {hp_def with CF.def_rhs = List.map (fun (f,og) -> (CF.subst ss f,og)) hp_def.CF.def_rhs}
+      ) is.CF.is_hp_defs in
+      let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
+        (is.CF.is_dang_hpargs@new_unk_hpargs, is.CF.is_link_hpargs)
+      else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@new_unk_hpargs)
+      in
+      let is1 = {is with CF.is_hp_defs = n_hp_defs;
+          CF.is_dang_hpargs = n_dang_hpargs;
+          CF.is_link_hpargs = n_link_hpargs;
+      } in
+      is1
+    else is
+    in
     let hp_defs1,tupled_defs = SAU.partition_tupled is.CF.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then
@@ -2253,18 +2282,20 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   (***********END INTERNAL***************)
+  let post_hps, dang_hps, link_hps = List.fold_left (fun (ls1,ls2,ls3) is ->
+      (ls1@ is.CF.is_post_hps , CP.intersect_svl ls2  (List.map fst is.CF.is_dang_hpargs),
+       CP.intersect_svl ls3  (List.map fst is.CF.is_link_hpargs)))
+    ([],[],[])ls_is
+  in
+  let unk_hps = if !Globals.pred_elim_dangling then dang_hps else link_hps in
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
-      let r1,r2,r3, r4 = process_path_defs_setting path_setting in
+      let r1,r2,r3, r4 = process_path_defs_setting unk_hps path_setting in
       let _ = DD.ninfo_hprint (add_str "   r2:" (pr_list_ln Cprinter.string_of_hprel_def)) r2 no_pos in
       (ls1@r1, ls2@[r2], ls3@r3, ls4@r4)
   ) ([],[],[], []) ls_is
   in
   let cl_sel_hps1 = CP.remove_dups_svl cl_sel_hps in
   let cmb_defs = SAU.combine_path_defs cl_sel_hps1 path_defs in
-  let post_hps, dang_hps = List.fold_left (fun (ls1,ls2) is ->
-      (ls1@ is.CF.is_post_hps , CP.intersect_svl ls2  (List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs))))
-    ([],[])ls_is
-  in
   let all_hpdefs, cmb_defs = SAU.filter_non_sel sel_hps all_hpdefs cmb_defs in
   let n_all_hpdefs0a, n_cmb_defs0 = if !Globals.sa_dnc then
     SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)

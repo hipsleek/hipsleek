@@ -284,6 +284,13 @@ let add_raw_hp_rel prog is_pre unknown_args pos=
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog is_pre unknown_args pos) unknown_args
 
+let fresh_raw_hp_rel prog is_pre hp pos =
+  try
+    let hp_decl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+    let args_w_i = hp_decl.Cast.hp_vars_inst in
+    let nhf, nhp = add_raw_hp_rel prog is_pre args_w_i pos in
+    nhp
+  with _ -> report_error pos "SAU.fresh_raw_hp_rel: where r u?"
 
 let find_close_hpargs_x hpargs eqs0=
   let rec assoc_l ls hp=
