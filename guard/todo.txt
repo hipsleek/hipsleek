@@ -98,10 +98,41 @@ GOT
 EXPECT:
  HP_964(left_31_961,t@NI) | x::node<left_31_961,r,_>@M & r=null  
      --> H(left_31_961,l_47'@NI)]
-
-
 ==========================================================
+# parent-2.slk (see also parent.ss)
+
+Two issues
+ (i) do we still use _pure_of_H3(..)
+ (ii) can we narrow to single predicate?
+
+infer [H0,H3] H0(parent_32_966,p) * H3(next_32_969,p) * 
+x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & 
+parent_32_966=pp_47'
+ |-  emp&p=pp_47'. 
+print residue.
+
+ <1>H0(parent_32_966,p) * H3(next_32_969,p) * x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & parent_32_966=pp_47' & p=parent_32_966&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [_pure_of_H0,_pure_of_H3]: ( _pure_of_H0(parent_32_966,p) & _pure_of_H3(next_32_969,p)) -->  p=parent_32_966]
+[[empty]]
+
+Expecting:
+  H0(pp,p) --> p=pp
 ==========================================================
+# parent.ss (see parent-2.slk)
+
+How come rel ass from ASSERT not present here?
+
+[ // BIND
+(0)H(x,p@NI) --> x::node<parent_20_900,next_20_901>@M * 
+HP_902(parent_20_900,p@NI) * 
+HP_903(next_20_901,p@NI),
+ // POST
+(0)HP_902(parent_20_900,p@NI) * HP_903(next_20_901,p@NI) * 
+x::node<p,next_20_901>@M&
+p=parent_20_900 --> G(x,p@NI)]
+
+*/
 ==========================================================
 ==========================================================
 ==========================================================

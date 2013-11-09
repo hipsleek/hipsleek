@@ -1,0 +1,26 @@
+data node{
+	node parent;
+	node next;
+}.
+
+HeapPred H0(node a, node@NI p).
+HeapPred H3(node a, node@NI p).
+
+infer [H0,H3] H0(parent_32_966,p) * H3(next_32_969,p) * 
+x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & 
+parent_32_966=pp_47'
+ |-  emp&p=pp_47'. 
+print residue.
+
+/*
+ <1>H0(parent_32_966,p) * H3(next_32_969,p) * x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & parent_32_966=pp_47' & p=parent_32_966&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [_pure_of_H0,_pure_of_H3]: ( _pure_of_H0(parent_32_966,p) & _pure_of_H3(next_32_969,p)) -->  p=parent_32_966]
+[[empty]]
+
+Expecting:
+  H0(pp,p) --> p=pp
+
+However, this rel_ass is not in the collection of parent.ss
+
+*/
