@@ -1,0 +1,20 @@
+// simpler tll working example
+data node{
+  node parent;
+  node left;
+  node right;
+}.
+
+HeapPred H(node@NI p,node a).
+HeapPred G(node@NI p,node a).
+HeapPred HP_954(node p,node@NI a).
+HeapPred HP_955(node p,node@NI a).
+
+infer [H,HP_954,HP_955] HP_954(parent_27_951,p) * HP_955(left_27_952,p) * 
+x::node<parent_27_951,left_27_952,right_27_953>@M * G(x',right_27_953)&
+x=x' & p=p' & parent_27_951=xp_40' & p=parent_27_951 & p=xp_40' & 
+right_27_953!=null & v_bool_29_932' & right_27_953!=null & v_bool_29_932' & 
+left_27_952=v_node_34_931'
+ |-  H(x',v_node_34_931'). 
+
+print residue.

@@ -20,9 +20,9 @@ HeapPred G(node@NI p,node a).
 
 
 void trav (node p, node x)
-//infer [H,G] requires H(p,x) ensures G(p,x);
+infer [H,G] requires H(p,x) ensures G(p,x);
 //requires x::tree<p>  ensures x::tree<p>;
-requires x::gtree<p>  ensures x::gtree<p>;
+//requires x::gtree<p>  ensures x::gtree<p>;
 {
   node xp=x.parent;
   assert p=xp' assume p=xp';
