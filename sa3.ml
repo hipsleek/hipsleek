@@ -172,7 +172,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
 and find_imply_subst prog sel_hps unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_2 "find_imply_subst" pr1 pr1 (pr_triple string_of_bool pr1 !CP.print_svl)
-      (fun _ _ -> find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs) constrs frozen_constrs
+      (fun _ _ -> find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_constrs complex_hps constrs) frozen_constrs constrs
 
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
@@ -192,9 +192,9 @@ and subst_cs_w_other_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps fro
 (*=========END============*)
 
 let rec subst_cs_w_other_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs=
-  let pr1 = pr_list_ln Cprinter.string_of_hprel in
-   Debug.no_1 "subst_cs_w_other_cs" pr1 (pr_triple string_of_bool pr1 !CP.print_svl)
-       (fun _ -> subst_cs_w_other_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs) constrs
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
+   Debug.no_2 "subst_cs_w_other_cs" pr1 pr1 (pr_triple string_of_bool pr1 !CP.print_svl)
+       (fun _ _ -> subst_cs_w_other_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs) frozen_constrs constrs
 
 let subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   (*subst by constrs*)
@@ -322,7 +322,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
                 let _ = Debug.info_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                 (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
                 let _ = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
-                let defined_hprels = List.map (SAU.generate_hp_ass 2 unk_svl1 cond_path) defined_preds0 in
+                let defined_hprels = List.map (SAU.generate_hp_ass 2 unk_svl1 new_cs.CF.hprel_path) defined_preds0 in
                 if SAU.is_empty_f new_cs.CF.hprel_lhs && SAU.is_empty_f new_cs.CF.hprel_rhs then
                   defined_hprels
                 else
@@ -1137,7 +1137,22 @@ let def_subst_fix_x prog unk_hps hpdefs=
       (*return*)
       (false,hpdef)
   in
-  let subst_first_dep_hpdef deps rec_hps nrec_hpdefs=
+  let is_pure_guard hp_def =
+    let fs, ogs = List.split hp_def.CF.def_rhs in
+    if List.exists (fun og ->
+        match og with
+          | None -> false
+          | Some f -> not (CP.isConstTrue (CF.get_pure f))
+    ) ogs then
+      let hps = List.fold_left (fun r f -> r@(CF.get_hp_rel_name_formula f)) [] fs in
+      let hp0 = CF.get_hpdef_name hp_def.CF.def_cat in
+      CP.diff_svl hps [hp0] <> []
+    else false
+  in
+  let subst_first_dep_hpdef deps rec_hps nrec_hpdefs0=
+    (*move guard with pure to the end*)
+    let pure_guard_nrec_hpdefs, rem = List.partition is_pure_guard nrec_hpdefs0 in
+    let nrec_hpdefs = rem@pure_guard_nrec_hpdefs in
     let rec local_helper deps res r=
       match deps with
         | [] -> (r,res)
@@ -1147,7 +1162,7 @@ let def_subst_fix_x prog unk_hps hpdefs=
                        local_helper gs (res@[hpdef1]) (r1||r)
     in
     (* if nrec_grps = [] then (false, deps) else *)
-      local_helper deps [] false
+    local_helper deps [] false
   in
   let helper_x hpdefs rec_inds nrec_inds=
     let indeps,deps = List.partition is_independ_hpdef hpdefs in

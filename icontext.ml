@@ -188,6 +188,18 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
            in
            partition_equal n_res rest1
   in
+  (* let is_pure_guard (hp0, grp) = *)
+  (*   let fs, ogs = List.fold_left (fun (r1,r2) cs -> (cs.CF.hprel_rhs::r1, cs.CF.hprel_guard::r2)) ([],[]) grp in *)
+  (*   if List.exists (fun og -> *)
+  (*       match og with *)
+  (*         | None -> false *)
+  (*         | Some f -> not (CP.isConstTrue (CF.get_pure f)) *)
+  (*   ) ogs then *)
+  (*     let hps = List.fold_left (fun r f -> r@(CF.get_hp_rel_name_formula f)) [] fs in *)
+  (*     CP.diff_svl hps [hp0] <> [] *)
+  (*   else false *)
+  (* in *)
+  (************END************)
   (*tupled_hps: will be processed as pre-oblg *)
   let pr_pre_preds, _, tupled_hps = List.fold_left partition_pre_preds ([],[],[]) constrs in
   let pre_preds_cand_equal0, complex_nrec_ndep, complex_nonrec_guard_grps, complex_hps =
@@ -203,7 +215,7 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
   (*remove one that depends on the guard, the guard should go first*)
-  let _ = Debug.ninfo_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
+  let _ = Debug.info_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
   let pre_preds_4_equal = List.fold_left (fun ls_cand (hp,cs,deps) ->
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]
@@ -215,6 +227,9 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
       ranking_frozen_mutrec_preds pre_preds_cand_equal1
     else
       if complex_nonrec_guard_grps != [] then
+        (*move guard with pure to the end*)
+        (* let complex_nonrec_pguard_grps, rem = List.partition is_pure_guard complex_nonrec_guard_grps in *)
+        (* (rem@complex_nonrec_pguard_grps) *)
         complex_nonrec_guard_grps
       else []
   in

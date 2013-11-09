@@ -5773,22 +5773,32 @@ let succ_subst_with_rec_indp prog rec_indp_grps unk_hps depend_grps=
     (****************SUBST HP DEF*****************)
 (************************************************************)
 
+let look_up_subst_hpdef_x hp args (nrec_hpdefs: CF.hp_rel_def list)=
+  let rec helper grp=
+    match grp with
+      | [] -> ([],None,args)(* report_error no_pos "sau.look_up_groups" *)
+      | d1::gs -> begin
+          let (a1,hprel1,g1,f1) = CF.flatten_hp_rel_def d1 in
+          let hp1 = CF.get_hpdef_name a1 in
+          (* DD.info_zprint (lazy (("       hp: " ^ (!CP.print_sv hp)))) no_pos; *)
+          (* DD.info_zprint (lazy (("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)))) no_pos; *)
+          if CP.eq_spec_var hp hp1 then
+            let args1 = get_ptrs hprel1 in
+            let ss = List.combine args1 args in
+            let nf1 = CF.subst ss f1 in
+            ((CF.list_of_disjs nf1), g1,args)
+          else
+            helper gs
+        end
+  in
+  helper nrec_hpdefs
+
 let rec look_up_subst_hpdef hp args (nrec_hpdefs: CF.hp_rel_def list)=
-  match nrec_hpdefs with
-    | [] -> ([],None,args)(* report_error no_pos "sau.look_up_groups" *)
-    | d1::gs -> begin
-        let (a1,hprel1,g1,f1) = CF.flatten_hp_rel_def d1 in
-        let hp1 = CF.get_hpdef_name a1 in
-        (* DD.info_zprint (lazy (("       hp: " ^ (!CP.print_sv hp)))) no_pos; *)
-        (* DD.info_zprint (lazy (("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)))) no_pos; *)
-        if CP.eq_spec_var hp hp1 then
-           let args1 = get_ptrs hprel1 in
-           let ss = List.combine args1 args in
-           let nf1 = CF.subst ss f1 in
-           ((CF.list_of_disjs nf1), g1,args)
-        else
-          look_up_subst_hpdef hp args gs
-    end
+  let pr1 = !CP.print_sv in
+  let pr2 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr3 = Cprinter.prtt_string_of_formula_opt in
+  Debug.no_1 "look_up_subst_hpdef" pr1 (pr_triple pr2 pr3 !CP.print_svl)
+      (fun _ -> look_up_subst_hpdef_x hp args nrec_hpdefs) hp
 
 let succ_subst_hpdef_x prog (nrec_hpdefs: CF.hp_rel_def list) all_succ_hp (hp,args,g,f)=
   DD.ninfo_zprint (lazy (("       succ_subst_def hp: " ^ (!CP.print_sv hp)))) no_pos;
