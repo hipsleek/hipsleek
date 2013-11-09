@@ -27,8 +27,8 @@ bool trav (node p, node x)
         //		assert xl'=null;
         return x.parent==p;
       }
-  if (x.left!=null) {
-    } else{
+      else return false;
+  }else {
     if (b2) return false;
     else
       return trav(x,x.right) && trav(x,x.left);

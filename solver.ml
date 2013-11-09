@@ -11129,19 +11129,22 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
                   else (sv1,sv2)
               ) eqs0 in
               let f = CP.subst eqs1 f in
+              let h_inf_args1 = (CF.find_close h_inf_args0 eqs0) in
               let f = 
                 let ps = CP.list_of_disjs f in
                 if List.length ps <=1 || not (helper h_inf_args0 ps) then f
                 else
-                  let ps1=List.filter (fun p->not(CP.is_neq_null_exp p)) ps in
+                  let ps1=List.filter (fun p->not(CP.is_neq_null_exp p) &&
+                      (CP.intersect_svl (CP.fv p) h_inf_args1 <> [])
+                  ) ps in
                   CP.disj_of_list ps1 pos
               in
-              let diff = CP.diff_svl fv h_inf_args0 in
+              let diff = CP.diff_svl fv h_inf_args1 in
               let p = CP.mkForall diff f None pos in
-              (* let _ = DD.info_hprint (add_str "p: " (!CP.print_formula)) p pos in *)
+              let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
               if  TP.is_sat_raw (MCP.mix_of_pure p) then
                 let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
-                (* let _ = DD.info_hprint (add_str "np" !CP.print_formula) np no_pos in *)
+                let _ = DD.ninfo_hprint (add_str "np" !CP.print_formula) np no_pos in
                 (* let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in *)
                 x@[(es,np)]
               else x
