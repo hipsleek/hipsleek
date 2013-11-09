@@ -1957,7 +1957,7 @@ let find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args=
   let l_args1 = CF.find_close l_args leqs in
   let diff = CP.diff_svl rhs_args l_args1 in
   if diff = [] then None else
-    (*Now we just keep heap nodes as pattern (env)*)
+    (*Now we keep heap + pure as pattern (env)*)
     let guard_hds = List.filter (fun hd ->
         let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
         CP.intersect_svl svl l_args1 <> []
@@ -2542,7 +2542,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
             end
   in
   (*if guard exists in the lhs, remove it*)
-  let check_guard guard_opt lhs_b rhs_b=
+  let check_guard guard_opt lhs_b_orig lhs_b rhs_b=
     let process_guard guard=
       let g_hds = SAU.get_hdnodes_hf guard in
       let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
@@ -2570,7 +2570,22 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
           let guard1 = CF.drop_hnodes_hf guard inter_svl in
           if guard1 = CF.HEmp then None else (Some guard1)
         in
-        new_guard
+        match new_guard with
+          | None -> None
+          | Some hf -> let g_svl = CF.h_fv hf in
+            let _ = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
+            let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+            let _ = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in
+            let g_pure = CP.filter_var p g_svl in
+            let _ = DD.ninfo_hprint (add_str  "  g_pure" !CP.print_formula) g_pure pos in
+            let p_orig = (MCP.pure_of_mix lhs_b_orig.CF.formula_base_pure) in
+            let _ = DD.ninfo_hprint (add_str  "  p_orig" !CP.print_formula) p_orig pos in
+            let g_pure_orig = CP.filter_var p_orig g_svl in
+            let _ = DD.ninfo_hprint (add_str  "  g_pure_orig" !CP.print_formula) g_pure_orig pos in
+            let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig)
+              (CP.split_conjunctions g_pure) in
+            Some (CF.Base {lhs_b with CF.formula_base_heap= hf;
+                CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} )
     in
     match guard_opt with
       | None -> None
@@ -2638,9 +2653,9 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
         (CF.Base new_lhs_b, CF.Base new_rhs_b)
       in
       let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
-      let grd = check_guard ass_guard new_lhs_b new_rhs_b in
+      let grd = check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
-      let hp_rel = CF.mkHprel knd [] [] matched_svl lhs (CF.convert_guard grd) rhs es_cond_path in
+      let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"
