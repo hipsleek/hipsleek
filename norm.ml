@@ -480,7 +480,7 @@ let cont_para_analysis_view cprog vdef other_vds=
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
   let cont_paras = List.fold_left (fun cur_cont_paras (f,_) ->
-      let br_cont_paras = process_branch vname args f in
+      let br_cont_paras = (process_branch vname args f) in
           CP.intersect_svl cur_cont_paras br_cont_paras
       ) args vdef.Cast.view_un_struc_formula
   in

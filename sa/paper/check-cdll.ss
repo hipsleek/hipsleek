@@ -6,8 +6,8 @@ data node{
 cdll<prev, p> ==  self= p
   or self::node<prev,n>* n::cdll<self, p>;
 
-HeapPred H1(node a, node b, node c).
-  HeapPred G1(node a, node b, node c).
+HeapPred H1(node a, node@NI b, node@NI c).
+  HeapPred G1(node a, node@NI b, node@NI c).
 
 bool check_cdll (node l, node prv, node p)
 //  requires l::cdll<prv,p>@L ensures  res;

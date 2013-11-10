@@ -3341,8 +3341,12 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       let from_ann = List.map fst vdef.view_ann_params in
                       let anns = List.map fst anns in
                       let to_ann = anns in 
-                      let mpa = List.combine from_ann to_ann in
-                      let forms = propagate_imm_formula forms lhs_name imm mpa in
+                      let forms =
+                        try
+                          let mpa = List.combine from_ann to_ann in
+                          propagate_imm_formula forms lhs_name imm mpa
+                        with _ -> forms
+                      in
                       let renamed_view_formula = rename_bound_vars forms in
                       (* let _ = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
                       let renamed_view_formula = add_unfold_num renamed_view_formula uf in
