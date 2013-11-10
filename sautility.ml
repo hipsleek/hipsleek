@@ -1369,8 +1369,8 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       (*explicit equalities*)
       let expl_eqs, link_svl = List.fold_left (fun (r, keep_svl) ls ->
           let ls1 = List.sort cmp_fn ls in
-          let inter = CP.intersect_svl roots ls1 in
-          let keep_sv = if inter <> [] then List.hd inter else List.hd ls1 in
+          (* let inter = CP.intersect_svl roots ls1 in *)
+          let keep_sv = (* if inter <> [] then List.hd inter else *) List.hd ls1 in
           (r@(List.map (fun sv -> (sv, keep_sv)) (List.tl ls1)), keep_svl@[keep_sv])
       ) ([],[]) ls_eq_args2
       in
@@ -1382,9 +1382,15 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       in
       (*subst for others*)
       let keep_sv =
-        let inters1 = CP.intersect_svl (prog_vars@roots) link_svl in
-        if inters1 <> [] then List.hd inters1 else
-          let inters = CP.intersect_svl all_vars link_svl in
+        let _ = Debug.info_hprint (add_str  "link_svl" !CP.print_svl) link_svl no_pos in
+        let inters1 = CP.intersect_svl (prog_vars) link_svl in
+        let _ = Debug.info_hprint (add_str  "inters1" !CP.print_svl) inters1 no_pos in
+        if inters1 != [] then List.hd inters1 else
+          (* let inters0 = CP.intersect_svl roots link_svl in *)
+          (* let _ = Debug.info_hprint (add_str  "inters0" !CP.print_svl) inters0 no_pos in *)
+          (* if inters0 != [] then List.hd (inters0) else *)
+            let inters = CP.intersect_svl all_vars link_svl in
+            let _ = Debug.info_hprint (add_str  "inters" !CP.print_svl) inters no_pos in
           if inters = [] then List.hd (List.sort cmp_fn link_svl)
           else List.hd inters
       in
@@ -1652,7 +1658,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
       fst (CF.drop_hrel_f f drop_unk_hps)
     in
     {cs with CF.hprel_lhs = elim_irr_unk_helper cs.CF.hprel_lhs lhp_args ;
-        CF.hprel_rhs =  (* elim_irr_unk_helper  *)cs.CF.hprel_rhs (* rhp_args *);
+        CF.hprel_rhs =  (* elim_irr_unk_helper *) cs.CF.hprel_rhs (* rhp_args *) ;
     }
   else
     let tot_unk_hps = unk_hps@link_hps in

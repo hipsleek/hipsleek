@@ -21,7 +21,7 @@ tree<p> == self::node<p,D1,null,_>
 // initializes the linked list fields
 
   HeapPred H(node a, node@NI p, node@NI b).
-  HeapPred G(node a, node@NI p, node@NI b, node c).
+  HeapPred G(node a, node@NI p, node@NI b, node@NI c).
 
 node set_right (node p, node x, node t)
   infer [H,G] 
