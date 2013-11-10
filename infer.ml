@@ -1184,15 +1184,20 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                 let rel_ass1,heap_ass,i_hps = List.fold_left ( fun (ls1, ls2, r_hps) (a, p1, p2) ->
                                     (* let _ = DD.info_hprint (add_str "p1 : " !CP.print_formula) p1 pos in *)
                                     let _ = DD.ninfo_hprint (add_str "p2 : " !CP.print_formula) p2 pos in
-                                    let ohf = Predicate.trans_rels p1 in
-                                    match ohf with
-                                      | Some (hp, hf) ->
+                                    let hfs = Predicate.trans_rels p1 in
+                                    match hfs with
+                                      | [] -> (ls1@[(a, p1, p2)], ls2,r_hps)
+                                      | _ -> let hp_rels, hps = List.fold_left (fun (r1,r2) (hp,hf)->
                                             let knd = CP.RelAssume [hp] in
                                             let lhs = CF.formula_of_heap hf pos in
-                                            let rhs = CF.formula_of_pure_P p2 pos in
-                                            let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
-                                            (ls1, ls2@[hp_rel],r_hps@[hp])
-                                      | None -> (ls1@[(a, p1, p2)], ls2,r_hps)
+                                            let h_svl = (CF.h_fv hf) in
+                                            let p21 =  CP.filter_var p2 h_svl  in
+                                            if CP.isConstTrue p21 || (CP.diff_svl (CP.fv p21) h_svl <> []) then (r1,r2) else
+                                              let rhs = CF.formula_of_pure_P p21 pos in
+                                              let hp_rel = CF.mkHprel_1 knd lhs None rhs es_cond_path in
+                                              (r1@[hp_rel],r2@[hp])
+                                        ) ([],[]) hfs in
+                                        (ls1, ls2@hp_rels,r_hps@hps)
                                 ) ([], [], []) rel_ass
                                 in
                                 let _ = Log.current_hprel_ass_stk # push_list heap_ass in

@@ -231,7 +231,7 @@ let trans_rels_gen pf0 =
   in
   helper pf0
 
-let trans_rels pf0 =
+let trans_rels_x pf0 =
   let rec helper pf=
     match pf with
       | CP.BForm (bf,a) -> begin
@@ -247,7 +247,18 @@ let trans_rels pf0 =
         end
       | _ -> None
   in
-  helper pf0
+  let ps = CP.list_of_conjs pf0 in
+  let pr_hp_rhs = List.map helper ps in
+  List.fold_left (fun r (r_opt) -> match r_opt with
+    | None -> r
+    | Some a -> r@[a]
+  ) [] pr_hp_rhs
+
+let trans_rels pf0 =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv Cprinter.prtt_string_of_h_formula) in
+  Debug.no_1 "trans_rels" pr1 ( pr2)
+      (fun _ -> trans_rels_x pf0) pf0
 
 let heap_pred_of_pure_x p0=
   let _,hfs = trans_rels_gen p0 in
