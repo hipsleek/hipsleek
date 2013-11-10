@@ -1382,15 +1382,15 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       in
       (*subst for others*)
       let keep_sv =
-        let _ = Debug.info_hprint (add_str  "link_svl" !CP.print_svl) link_svl no_pos in
+        let _ = Debug.ninfo_hprint (add_str  "link_svl" !CP.print_svl) link_svl no_pos in
         let inters1 = CP.intersect_svl (prog_vars) link_svl in
-        let _ = Debug.info_hprint (add_str  "inters1" !CP.print_svl) inters1 no_pos in
+        let _ = Debug.ninfo_hprint (add_str  "inters1" !CP.print_svl) inters1 no_pos in
         if inters1 != [] then List.hd inters1 else
           (* let inters0 = CP.intersect_svl roots link_svl in *)
           (* let _ = Debug.info_hprint (add_str  "inters0" !CP.print_svl) inters0 no_pos in *)
           (* if inters0 != [] then List.hd (inters0) else *)
             let inters = CP.intersect_svl all_vars link_svl in
-            let _ = Debug.info_hprint (add_str  "inters" !CP.print_svl) inters no_pos in
+            let _ = Debug.ninfo_hprint (add_str  "inters" !CP.print_svl) inters no_pos in
           if inters = [] then List.hd (List.sort cmp_fn link_svl)
           else List.hd inters
       in
@@ -1464,7 +1464,7 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
     else
       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
       let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
-      let vars_grps = (CF.get_ptrs_group_hf lhs_b.CF.formula_base_heap)@(CF.get_ptrs_group_hf rhs_b.CF.formula_base_heap)@
+      let vars_grps = (CF.get_data_node_ptrs_group_hf lhs_b.CF.formula_base_heap)@(CF.get_data_node_ptrs_group_hf rhs_b.CF.formula_base_heap)@
         (List.map snd hpargs)
       in
       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
