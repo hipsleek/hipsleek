@@ -143,8 +143,19 @@ p=parent_20_900 --> G(x,p@NI)]
  G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
  or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
     H(left_34_994,x_1088,l_1089)&res_1092=x_1090 & right_34_995=null
+                                 ^^^^^^^^^^^^^^^
  ,
 
+New version: (missing res=x)
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&right_34_995=null
+ 
 How come HP_1000 is missing in pre-predicate?
 We cannot form dangling in this scenario.
 
@@ -156,6 +167,19 @@ We cannot form dangling in this scenario.
     x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M&
     right_34_1073=null & p_1085=parent_34_1074
  ,
+
+OK
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1071,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+ HP_1000(next_34_1073,p_1085,t_1086) * H(right_34_1072,x_1084,t_1086)&
+ right_34_1072!=null & p_1085=parent_34_1074
+ or H(left_34_1071,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+    HP_1000(next_34_1073,p_1085,t_1086)&right_34_1072=null & 
+    p_1085=parent_34_1074
+
 ==========================================================
 ==========================================================
 ==========================================================
