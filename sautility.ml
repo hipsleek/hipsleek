@@ -1350,6 +1350,11 @@ for each ls_eqs, if it contains at least two vars of the same group,
   rhs
 *)
 let expose_expl_eqs_x emap0 prog_vars vars_grps0=
+  (*move root to behind, donot loss it*)
+  let roots = List.fold_left (fun roots0 args -> match args with
+    | r::_ -> roots0@[r]
+    | _ -> roots0
+  ) [] vars_grps0 in
   let all_vars = List.concat vars_grps0 in
   let process_one_ls_eq ls_eqs =
     let ls_eq_args = List.fold_left (fun r args ->
@@ -1364,7 +1369,8 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       (*explicit equalities*)
       let expl_eqs, link_svl = List.fold_left (fun (r, keep_svl) ls ->
           let ls1 = List.sort cmp_fn ls in
-          let keep_sv = List.hd ls1 in
+          let inter = CP.intersect_svl roots ls1 in
+          let keep_sv = if inter <> [] then List.hd inter else List.hd ls1 in
           (r@(List.map (fun sv -> (sv, keep_sv)) (List.tl ls1)), keep_svl@[keep_sv])
       ) ([],[]) ls_eq_args2
       in
@@ -1376,7 +1382,7 @@ let expose_expl_eqs_x emap0 prog_vars vars_grps0=
       in
       (*subst for others*)
       let keep_sv =
-        let inters1 = CP.intersect_svl prog_vars link_svl in
+        let inters1 = CP.intersect_svl (prog_vars@roots) link_svl in
         if inters1 <> [] then List.hd inters1 else
           let inters = CP.intersect_svl all_vars link_svl in
           if inters = [] then List.hd (List.sort cmp_fn link_svl)

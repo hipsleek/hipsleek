@@ -18,7 +18,7 @@ bool foo(node x, node h)
   requires H(x,h)
      ensures  G(x,h) & res;
  {
-   if (x==h) return true;
+   if (x==null) return true;
    else {
      bool b1 = foo(x.next, h);
      bool b2 = x.h == h;
