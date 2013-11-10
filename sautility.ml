@@ -1651,8 +1651,8 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
       in
       fst (CF.drop_hrel_f f drop_unk_hps)
     in
-    {cs with CF.hprel_lhs = elim_irr_unk_helper cs.CF.hprel_lhs lhp_args;
-        CF.hprel_rhs = elim_irr_unk_helper cs.CF.hprel_rhs rhp_args;
+    {cs with CF.hprel_lhs = elim_irr_unk_helper cs.CF.hprel_lhs lhp_args ;
+        CF.hprel_rhs =  (* elim_irr_unk_helper  *)cs.CF.hprel_rhs (* rhp_args *);
     }
   else
     let tot_unk_hps = unk_hps@link_hps in
