@@ -1215,6 +1215,8 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*   Gen.Profiling.do_1 "check_exp" (check_exp_d prog proc ctx e0) label *)
       
 and check_exp prog proc ctx (e0:exp) label =
+  (*let _ = print_endline (Cprinter.string_of_list_failesc_context ctx) in
+  let _ = print_endline (Cprinter.string_of_exp e0) in*)
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
       Gen.Profiling.push_time "check_exp_a"; 
@@ -1540,7 +1542,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
 	            (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
+	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context1:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
 	            let unfolded = if(!Globals.allow_field_ann) then
                       let idf = (fun c -> c) in
@@ -1624,8 +1626,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	            Debug.tinfo_pprint to_print pos;
 
-	            if (Gen.is_empty unfolded) then unfolded
+	            if (Gen.is_empty unfolded) then (*let _ = print_endline "is empty" in let _ = print_endline (!CF.print_list_failesc_context unfolded) in*) unfolded
 	            else
+                      (*let _ = print_endline "not empty" in
+                      let _ = print_endline (!CF.print_list_failesc_context unfolded) in*)
 		      let _ = consume_all := true in
               (* let _ = DD.info_zprint (lazy (("       sleek-logging (binding):" ^ (to_print)))) pos in *)
                       (* let _ = Log.update_sleek_proving_kind Log.BINDING in *)
@@ -1652,7 +1656,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else 
                         begin
                           stk_vars # push_list lsv;
-                          let tmp_res1 = check_exp prog proc rs body post_start_label in 
+                          let tmp_res1 = check_exp prog proc rs body post_start_label in
                           stk_vars # pop_list lsv;
                           let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                           (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
@@ -1670,13 +1674,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           Debug.tinfo_hprint (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
                           Debug.tinfo_hprint (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
-                          let tmp_res2 = 
+                          let tmp_res2 =
                             if(!Globals.allow_field_ann) then
-                              
+
                               let idf = (fun c -> c) in
 		              CF.transform_list_failesc_context (idf,idf,
-		              (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
-		                  tmp_res2 
+		              (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}))
+		                  tmp_res2
 		            else tmp_res2
 		          in
 		          let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
@@ -1691,7 +1695,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 end  (*end Bind*)
               in
               wrap_proving_kind PK_BIND bind_op ()
-	          
+
         | Block ({exp_block_type = t;
           exp_block_body = e;
           exp_block_local_vars = local_vars;

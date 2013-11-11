@@ -32,6 +32,7 @@ void trav (struct node* p, struct node* x)
 requires x::gtree<p> ensures x::gtree<p>;
 */
 {
+   __VERIFIER_plot("dll-concat-lists-0001");
   struct node* xp = x->parent;
   struct node* xl = x->left;
   struct node* xr = x->right;
@@ -47,6 +48,15 @@ requires x::gtree<p> ensures x::gtree<p>;
       trav(x,xr);
       trav(x,xl);
     }
+  __VERIFIER_plot("tree");
+}
+
+int main()
+{
+  struct node* p;
+  struct node* x;
+  trav (p, x);
+  return 1;
 }
 
 /*

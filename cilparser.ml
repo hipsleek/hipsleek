@@ -177,6 +177,7 @@ let typ_of_cil_exp (e: Cil.exp) : Cil.typ =
 let rec is_cil_struct_pointer (ty: Cil.typ) : bool = (
   match ty with
   | Cil.TPtr (Cil.TComp (comp, _), _) -> true
+  | Cil.TPtr (Cil.TNamed _, _) -> true
   | Cil.TPtr (ty, _) -> is_cil_struct_pointer ty
   | _ -> false
 )
@@ -585,6 +586,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
           (translate_typ ty1 pos, false)                 (* heap allocated data *)
     | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
+    | Cil.TNamed _ -> (translate_typ ty pos, true)
     | _ -> (translate_typ ty pos, false)
   ) in
   let name = vinfo.Cil.vname in
@@ -684,7 +686,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   let _, _, l = lv in
   let pos = translate_location l in
   let lv_str = string_of_cil_lval lv in
-  try 
+  try
     let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
     Iast.mkMember addr_var [str_deref] None pos
@@ -724,6 +726,9 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
               let base_typ = typ_of_cil_exp e in
               match base_typ with
                 | Cil.TPtr (Cil.TComp _, _) ->
+                      let base = translate_exp e  in
+                      create_complex_exp base offset [] pos
+                | Cil.TPtr (Cil.TNamed _, _) ->
                       let base = translate_exp e  in
                       create_complex_exp base offset [] pos
                 | _ -> (
@@ -817,6 +822,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               match output_typ, input_typ with
                 | Globals.Named otyp_name, Globals.Named ityp_name -> (
                       if (ityp_name = "void_star") then (
+                          let _ = print_endline "" in
                           let cast_proc = create_void_pointer_casting_proc otyp_name in
                           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
                       )
@@ -1414,6 +1420,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                   | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
                   | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
                         (translate_typ ty1 no_pos)
+                  | Cil.TNamed _ -> (translate_typ ty no_pos)
                   | _ -> (translate_typ ty no_pos)
                 )
           | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
