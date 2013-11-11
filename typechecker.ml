@@ -1215,8 +1215,6 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*   Gen.Profiling.do_1 "check_exp" (check_exp_d prog proc ctx e0) label *)
       
 and check_exp prog proc ctx (e0:exp) label =
-  (*let _ = print_endline (Cprinter.string_of_list_failesc_context ctx) in
-  let _ = print_endline (Cprinter.string_of_exp e0) in*)
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
       Gen.Profiling.push_time "check_exp_a"; 
@@ -1542,7 +1540,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
 	            (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context1:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
+	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
 	            let unfolded = if(!Globals.allow_field_ann) then
                       let idf = (fun c -> c) in
@@ -1626,11 +1624,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	            Debug.tinfo_pprint to_print pos;
 
-	            if (Gen.is_empty unfolded) then (*let _ = print_endline "is empty" in let _ = print_endline (!CF.print_list_failesc_context unfolded) in*) unfolded
+	            if (Gen.is_empty unfolded) then unfolded
 	            else
-                      (*let _ = print_endline "not empty" in
-                      let _ = print_endline (!CF.print_list_failesc_context unfolded) in*)
-		      let _ = consume_all := true in
+                      let _ = consume_all := true in
               (* let _ = DD.info_zprint (lazy (("       sleek-logging (binding):" ^ (to_print)))) pos in *)
                       (* let _ = Log.update_sleek_proving_kind Log.BINDING in *)
                       (* let _ = Debug.info_pprint ("Andreea : we need to normalise struc_vheap") no_pos in *)

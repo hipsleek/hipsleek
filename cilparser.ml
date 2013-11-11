@@ -822,7 +822,6 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               match output_typ, input_typ with
                 | Globals.Named otyp_name, Globals.Named ityp_name -> (
                       if (ityp_name = "void_star") then (
-                          let _ = print_endline "" in
                           let cast_proc = create_void_pointer_casting_proc otyp_name in
                           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
                       )
@@ -1420,7 +1419,6 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                   | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
                   | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
                         (translate_typ ty1 no_pos)
-                  | Cil.TNamed _ -> (translate_typ ty no_pos)
                   | _ -> (translate_typ ty no_pos)
                 )
           | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."

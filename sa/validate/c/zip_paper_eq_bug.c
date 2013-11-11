@@ -2,11 +2,11 @@
 //#include<stdio.h>
 //#include<stdlib.h>
 
-//typedef struct node node;
-typedef struct node {
+typedef struct node node;
+struct node {
    int val;
-   struct node* next;
-} node;
+   node* next;
+};
 
 /*@ 
 ll<> == self = null  
