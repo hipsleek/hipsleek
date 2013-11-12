@@ -1557,9 +1557,8 @@ let do_strengthen_conseq prog constrs new_cs=
   do_strengthen prog constrs new_cs check_apply_strengthen_conseq
 
 (*
-a1: lhs1 --> rhs1
-a2: lhs2 --> rhs2
-lhs2 |- lhs1 * R
+a1: lhs1 --> rhs1 (*HP <-> def*)
+a2: (lhs as lhs1 * R) --> rhs2 (* assumption*)
 ===============
 replace a2 by
 rhs1 * R --> rhs2
@@ -1751,7 +1750,8 @@ let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
       if CP.mem_svl hp unk_hps then
         hp_def,[]
       else
-        let fs, ogs = List.split hp_def.CF.def_rhs in
+        let fs0, ogs = List.split hp_def.CF.def_rhs in
+        let fs = List.fold_left (fun r f -> r@(CF.list_of_disjs f)) [] fs0 in
         let fs1,ss = check_eq hp (args) fs [] [] in
         let ss1 = List.map (fun (sv1, sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) ss in
         let fs2 =

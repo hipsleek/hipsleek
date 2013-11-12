@@ -4666,7 +4666,15 @@ let rec heap_trans_heap_node fct f0 =
       | HTrue | HFalse | HEmp | Hole _-> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
       | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
-      | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
+      | Star b -> begin let hf2 = recf b.h_formula_star_h2 in
+        let hf1 = recf b.h_formula_star_h1 in
+        match hf1,hf2 with
+          | HEmp,HEmp -> HEmp
+          | HEmp,_ -> hf2
+          | _ , HEmp -> hf1
+          | _ ->
+            Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+        end
       | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
   in
   helper f0
@@ -5240,6 +5248,138 @@ let do_unfold_view cprog pr_views (f0: formula) =
   Debug.no_1 "CF.do_unfold_view" pr1 pr1
       (fun _ -> do_unfold_view_x cprog pr_views f0) f0
 
+(*******UNFOLD HP DEF**************************)
+let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
+  let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
+      let in_r = List.map (fun (hf1, p1) ->
+          let nh = aux_fnc hf1 hf2 in
+          let np = MCP.merge_mems p1 p2 true in
+          (nh, np)
+      ) ls1 in
+      r@in_r
+  ) [] ls2 in
+  let rec look_up_hp_def ls_pr_hp_defs hp=
+    match ls_pr_hp_defs with
+      | [] -> raise Not_found
+      | (hp1, def, vars)::rest -> if CP.eq_spec_var hp hp1 then (hp, def, vars) else
+          look_up_hp_def rest hp
+  in
+  let fresh_var args f=
+    let qvars, base1 = split_quantifiers f in
+    let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+    let fr_qvars = CP.fresh_spec_vars qvars in
+    let ss = List.combine qvars fr_qvars in
+    let nf = subst ss base1 in
+    add_quantifiers fr_qvars ( nf)
+  in
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let star_fnc h1 h2 =
+              Star {h_formula_star_h1 = h1;
+              h_formula_star_h2 = h2;
+              h_formula_star_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 star_fnc
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;
+        h_formula_starminus_aliasing = al;
+        h_formula_starminus_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let starminus_fnc h1 h2 =
+              StarMinus {h_formula_starminus_h1 = h1;
+              h_formula_starminus_h2 = h2;
+               h_formula_starminus_aliasing = al;
+               h_formula_starminus_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 starminus_fnc
+      | ConjStar  { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos = pos} ->
+          let ls_hf_p1 = helper hf1 in
+          let ls_hf_p2 = helper hf2 in
+          let conjstar_fnc h1 h2 = ConjStar { h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;
+          h_formula_conjstar_pos = pos}
+          in
+          fold_fnc ls_hf_p1 ls_hf_p2 conjstar_fnc
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let conjconj_fnc h1 h2 = ConjConj { h_formula_conjconj_h1 = h1;
+            h_formula_conjconj_h2 = h2;
+            h_formula_conjconj_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 conjconj_fnc
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;
+        h_formula_phase_pos = pos} ->
+            let ls_hf_p1 = helper hf1 in
+            let ls_hf_p2 = helper hf2 in
+            let phase_fnc h1 h2 = Phase { h_formula_phase_rd = h1;
+              h_formula_phase_rw = h2;
+              h_formula_phase_pos = pos}
+            in
+            fold_fnc ls_hf_p1 ls_hf_p2 phase_fnc
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;
+        h_formula_conj_pos = pos} ->
+          let ls_hf_p1 = helper hf1 in
+          let ls_hf_p2 = helper hf2 in
+          let conj_fnc h1 h2 = Conj { h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;
+          h_formula_conj_pos = pos}
+          in
+          fold_fnc ls_hf_p1 ls_hf_p2 conj_fnc
+      | HRel (hp, eargs, pos) ->begin
+            try
+              let (hp,hp_def, f_args) = look_up_hp_def pr_hp_defs hp in
+              let fs = List.fold_left (fun r (f,_) -> r@(list_of_disjs f)) [] hp_def.def_rhs in
+              let a_args = List.fold_left List.append [] (List.map CP.afv eargs) in
+              let ss = List.combine f_args  a_args in
+              let fs1 = List.map (subst ss) fs in
+              List.map (fun f -> (List.hd (heap_of f), MCP.mix_of_pure (get_pure f))) fs1
+            with _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+        end
+      | DataNode _  | ViewNode _ | Hole _
+      | HTrue  | HFalse | HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+  in
+  helper hf0
+
+let do_unfold_hp_def_x cprog pr_hp_defs (f0: formula) =
+  let rec helper f=
+  match f with
+    | Base fb ->
+          let ls_hf_pure = do_unfold_hp_def_hf cprog pr_hp_defs fb.formula_base_heap in
+          let fs = List.map (fun (hf, p) -> Base {fb with formula_base_heap = hf;
+              formula_base_pure = MCP.merge_mems p fb.formula_base_pure true;
+          }) ls_hf_pure in
+          disj_of_list fs fb.formula_base_pos
+    | Exists _ ->
+          let qvars, base1 = split_quantifiers f in
+          let nf = helper base1 in
+          add_quantifiers qvars ( nf)
+    | Or orf  ->
+          Or { orf with formula_or_f1 = helper orf.formula_or_f1;
+              formula_or_f2 = helper orf.formula_or_f2 }
+  in
+  helper f0
+
+let do_unfold_hp_def cprog pr_hp_defs (f0: formula) =
+  let pr1 = !print_formula in
+  Debug.no_1 "CF.do_unfold_hp_def" pr1 pr1
+      (fun _ -> do_unfold_hp_def_x cprog pr_hp_defs f0) f0
+
+
+
+(*******************************)
 
 let rec get_hp_rel_vars_formula (f: formula) =
   match f with

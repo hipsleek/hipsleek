@@ -1610,6 +1610,59 @@ let simp_match_unknown unk_hps link_hps cs=
       (fun _ _ _ -> simp_match_unknown_x unk_hps link_hps cs)
       unk_hps link_hps cs
 
+(*****************)
+(* copied from sa
+x::node<a,b> .... ===> x::node<c,d> === ss={a/c;b/d} and
+subst into rhs
+*)
+let do_simpl_nodes_match_x lhs rhs =
+  let check_eq_data_node dn1 dn2=
+    CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node
+  in
+  let sort_data_node_by_name dn1 dn2=
+    String.compare (CP.name_of_spec_var dn1.CF.h_formula_data_node)
+        (CP.name_of_spec_var dn2.CF.h_formula_data_node)
+  in
+  let rec get_subst lhds rhds res=
+    match rhds,lhds with
+      | [],_ -> res
+      | _, [] -> res
+      | dn2::rest2,dn1::rest1 ->
+          let ss=
+            if CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node then
+              List.combine dn2.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments
+            else []
+          in
+          get_subst rest1 rest2 (res@ss)
+  in
+  let hn_drop_matched matched_svl hf=
+    match hf with
+      | CF.DataNode hn -> if CP.mem_svl hn.CF.h_formula_data_node matched_svl then CF.HEmp else hf
+      | _ -> hf
+  in
+  let l_hds, _, _ = CF.get_hp_rel_formula lhs in
+  let r_hds, _, _ = CF.get_hp_rel_formula rhs in
+  let matched_data_nodes = Gen.BList.intersect_eq check_eq_data_node l_hds r_hds in
+  let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
+  let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in
+  let sl_hds = List.sort sort_data_node_by_name l_hds in
+  let sr_hds = List.sort sort_data_node_by_name r_hds in
+  let ss = get_subst sl_hds sr_hds [] in
+  let matched_svl = (List.map (fun hn -> hn.CF.h_formula_data_node) matched_data_nodes) in
+  let n_lhs, n_rhs =
+    if matched_svl = [] then (lhs, rhs)
+    else
+      let rhs1 = CF.subst ss rhs in
+      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs, 
+
+      CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs1)
+  in
+  n_lhs, n_rhs
+
+let do_simpl_nodes_match lhs rhs =
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "do_simpl_nodes_match" pr1 pr1 (pr_pair pr1 pr1)
+      (fun _ _ -> do_simpl_nodes_match_x lhs rhs) lhs rhs
 (*
  - sa/demo/dll-pap-1.slk
 *)

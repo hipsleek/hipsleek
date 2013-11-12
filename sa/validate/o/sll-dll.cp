@@ -17,7 +17,10 @@ ass [H1,G1][]:{
 hpdefs [H1,G1][]:{
  G1(x_913,p_914) <-> emp&x_913=null
   or x_913::node<p_914,next_21_892>@M * G1(next_21_892,x_913);
+
  H1(x_911,p_912) <-> emp&x_911=null
-  or H1(next_21_908,x_911) * x_911::node<prev_21_907,next_21_908>@M
+  or H1(next_21_908,x_911) * x_911::node<prev_21_907,next_21_908>@M * HP_893(prev_21_907,p_912);
+
+  HP_893(prev_21_907,p_914) <-> htrue
  }
 ]
