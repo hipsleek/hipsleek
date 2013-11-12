@@ -1326,8 +1326,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                   else c
                               in
                               let c = prune_preds prog false c in (* specialise assumed formula *)
-                              (*we ignore the residue of Assert - new_ctx- use the orig ctx to combine with Assume*)
-                              let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false (* new_ctx *)ctx in
+                              let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                               let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
 			      else 
 				CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in

@@ -1200,6 +1200,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
                                         (ls1, ls2@hp_rels,r_hps@hps)
                                 ) ([], [], []) rel_ass
                                 in
+                                let i_hps = [] in
                                 let _ = Log.current_hprel_ass_stk # push_list heap_ass in
                                 let _ = rel_ass_stk # push_list heap_ass in
                                       (*drop inferred hpred*)
