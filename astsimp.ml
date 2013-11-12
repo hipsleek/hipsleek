@@ -3987,7 +3987,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-          let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
+          (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             (*ONLY NEED THOSE that are modified in the body and condition*)
@@ -4008,7 +4008,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.info_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
+            let _ = Debug.ninfo_zprint (lazy (("       exist_return_inside: " ^ (string_of_bool exist_return_inside)))) no_pos in
             let w_body_1 = body in
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 

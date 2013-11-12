@@ -215,7 +215,7 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
   (*remove one that depends on the guard, the guard should go first*)
-  let _ = Debug.info_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  ("    nonrec_complex_guard_hps: " ^ (!CP.print_svl nonrec_complex_guard_hps))) no_pos in
   let pre_preds_4_equal = List.fold_left (fun ls_cand (hp,cs,deps) ->
       if CP.intersect_svl deps nonrec_complex_guard_hps = [] then
         ls_cand@[(hp,cs)]

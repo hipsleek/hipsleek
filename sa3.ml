@@ -319,7 +319,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
                 let new_lhs1 = CF.add_quantifiers l_qvars new_lhs in
                 let new_lhs2 = CF.elim_unused_pure new_lhs1 new_cs.CF.hprel_rhs in
                 let new_cs = {new_cs with CF.hprel_lhs = new_lhs2;} in
-                let _ = Debug.info_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
+                let _ = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in
                 (* let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in *)
                 let _ = Debug.ninfo_pprint ("  generate pre-preds-based constraints: " ) no_pos in
                 let defined_hprels = List.map (SAU.generate_hp_ass 2 unk_svl1 new_cs.CF.hprel_path) defined_preds0 in
@@ -762,7 +762,9 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
   if par_defs = [] then ([],[]) else
     begin
         let hp, args, _, f0,_ = (List.hd par_defs) in
-        let _ = Debug.info_zprint (lazy (("    synthesize: " ^ (!CP.print_sv hp) ))) no_pos in
+        let _ = if !Globals.sap then Debug.info_zprint (lazy (("    synthesize: " ^ (!CP.print_sv hp) ))) no_pos
+        else ()
+        in
         let hpdefs,subst_useless=
           if CP.mem_svl hp skip_hps then
             let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
@@ -2381,7 +2383,10 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let callee_hps = [] in
-  let _ = DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos in
+  let _ = if !Globals.sap then
+    DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
+  else ()
+  in
   let _ = DD.ninfo_hprint (add_str "  sel post_hps"  !CP.print_svl) post_hps no_pos in
   let all_post_hps = CP.remove_dups_svl (post_hps@(SAU.collect_post_preds prog constrs0)) in
   let _ = DD.ninfo_hprint (add_str "  all post_hps" !CP.print_svl) all_post_hps no_pos in

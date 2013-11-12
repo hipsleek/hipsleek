@@ -32,6 +32,7 @@ node set_right (node p, node x, node t)
   //node xl = x.left;
   node pp = x.parent;
   assert pp'=p assume pp'=p;
+  dprint;
   if (x.right==null) 
   	{
 //		assert xl'=null;

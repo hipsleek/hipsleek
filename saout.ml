@@ -196,7 +196,10 @@ let hn_trans cprog vnames hn = match hn with
 
 let plugin_inferred_iviews views iprog cprog =
   let vnames = List.map (fun ((n,_),_)-> n) views in
-  let _ =  Debug.info_pprint (" views: " ^ ((pr_list pr_id) vnames)) no_pos in
+  let _ =  if !Globals.sap then
+    Debug.info_pprint (" views: " ^ ((pr_list pr_id) vnames)) no_pos
+  else ()
+  in
   let vdecls = List.map (fun (_,prd)-> { prd with
       I.view_name = prd.I.view_name;
       I.view_formula = IF.struc_formula_trans_heap_node (hn_trans cprog vnames) prd.I.view_formula}
@@ -262,7 +265,9 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
   (* let _ = cprog.C.prog_hp_decls <- cprog.C.prog_hp_decls@cdef_hprels in *)
   let _ = if def_hps = [] then () else
-    Debug.info_pprint (" transform: " ^ (!CP.print_svl def_hps) ^ "\n" )no_pos
+     if !Globals.sap then
+       Debug.info_pprint (" transform: " ^ (!CP.print_svl def_hps) ^ "\n" )no_pos
+     else ()
   in
   (cviews,c_hprels_decl)
 
