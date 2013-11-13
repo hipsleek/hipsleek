@@ -12,8 +12,8 @@ HeapPred H(node a).
 PostPred G(node a, node b).
 
 node last (node x)
-//requires x::ll<> & x!=null ensures res::lshd<x>;
-infer[H,G] requires H(x) ensures G(res,x);
+requires x::ll<> & x!=null ensures res::lshd<x>;
+//infer[H,G] requires H(x) ensures G(res,x);
 {
    if (x.next==null) return x;
    else 

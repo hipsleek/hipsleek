@@ -508,7 +508,7 @@ let extr_formula_base e = match e with
       formula_base_flow = fl;
 	  formula_base_and = a} -> (h,p,t,fl,a) 
 
-let is_eq_node_name a b = (a=b)
+let is_eq_node_name a b = String.compare a b==0
 
 let is_eq_data_name a b =
   match a,b with
@@ -516,7 +516,7 @@ let is_eq_data_name a b =
 
 let is_eq_view_name a b =
   match a,b with
-    | {h_formula_view_name = c1;}, {h_formula_view_name = c2;}-> c1=c2
+    | {h_formula_view_name = c1;}, {h_formula_view_name = c2;}-> String.compare c1 c2==0
 
 let is_eq_view_name a b =
   Debug.no_2 "is_eq_view_name" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_name a b) 
@@ -6612,7 +6612,8 @@ and filter_not_rele_eq p keep_svl=
     CP.remove_redundant p1
 
 (*todo: merge three following functions in a higher-order function*)
-and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
+and drop_data_view_hrel_nodes f0 fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
+  let rec helper f=
   match f with
     | Base fb ->
         let new_hf = drop_data_view_hrel_nodes_hf
@@ -6638,10 +6639,14 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
         Exists {fe with formula_exists_heap = new_hf;
             formula_exists_pure = MCP.mix_of_pure new_p1;
              }
-    | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
+    | Or orf ->Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2;
+          }
+  in
+  helper f0
 
-and drop_data_view_hpargs_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes hpargs=
-  match f with
+and drop_data_view_hpargs_nodes f0 fn_data_select fn_view_select fn_hrel_select dnodes vnodes hpargs=
+  let rec helper f=match f with
     | Base fb ->
         let new_hf = drop_data_view_hpargs_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
@@ -6666,7 +6671,12 @@ and drop_data_view_hpargs_nodes f fn_data_select fn_view_select fn_hrel_select d
         Exists {fe with formula_exists_heap = new_hf;
             formula_exists_pure = MCP.mix_of_pure new_p1;
              }
-    | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
+    | Or orf ->
+          Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2;
+          }
+  in
+  helper f0
 
 and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes
       matched_view_nodes matched_hpargs_nodes keep_pure_vars=

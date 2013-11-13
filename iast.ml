@@ -1508,7 +1508,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
-        else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+        else report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  =

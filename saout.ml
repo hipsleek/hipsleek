@@ -63,7 +63,18 @@ let norm_free_svl f0 args=
            CF.formula_or_f2 = nf2;
            }, tis1@tis2)
   in
-  helper f0
+  let f,tis = helper f0 in
+  let def = List.map fst tis in
+  let rem_svl = List.filter (fun sv ->
+      let n = CP.name_of_spec_var sv in
+      (List.for_all (fun n2 -> String.compare n n2 != 0) def)
+  ) args in
+  let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
+      let vk = TI.fresh_proc_var_kind ls t in
+              ls@[(sv,vk)]
+  ) [] (s::rem_svl) in
+  (f, tis@tis1)
 in
 List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
     let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in

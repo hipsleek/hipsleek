@@ -181,7 +181,7 @@ OK
     p_1085=parent_34_1074
 
 ==========================================================
-# split-1.slk
+# split-1.slk: FIXED
 
 relAssume 
    H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).

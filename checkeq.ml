@@ -453,7 +453,10 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   let args2 = n2.CF.h_formula_view_arguments in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_view_node) hvars) in
   let is_hard = is_hard_n1 || is_hard_n2 in
-  if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2))) 
+  if(List.length args1 != List.length args2 ||
+          (not (String.compare name1 name2==0)) ||
+          (is_hard && (not (CP.eq_spec_var var1 var2))) ||
+          (not (CF.is_eq_data_ann ann1 ann2))) 
   then
     (false, mt) 
   else  (

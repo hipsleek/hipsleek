@@ -2000,6 +2000,35 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
 
+let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
+  let keep_hds = List.filter (fun hd ->
+      let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+      CP.intersect_svl svl args <> []
+  ) lhds in
+  let keep_hvs = List.filter (fun hv ->
+      let svl = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
+      CP.intersect_svl svl args <> []
+  ) lhvs in
+  if keep_hds = [] && keep_hvs = [] then [] else
+    let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@
+      (List.map (fun hv -> CF.ViewNode hv) keep_hvs) in
+    let g_h = CF.join_star_conjunctions g_hfs in
+    let all_svl = (CF.h_fv g_h)@args in
+    let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
+    let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
+        CF.formula_base_pure = (MCP.mix_of_pure p)} in
+    let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
+    [(hp, lhs, g)]
+
+let split_guard_constrs prog lhds lhvs post_hps (hp,args) lhsb  pos=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = Cprinter.prtt_string_of_formula in
+  let pr4 = Cprinter.string_of_formula_base in
+  Debug.no_2 "split_guard_constrs" pr4 (pr_pair pr1 pr2) (pr_list (pr_triple pr1 pr3 pr3))
+      (fun _ _ -> split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb  pos)
+      lhsb (hp,args)
+
 let detect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
   let rec process_helper ls_hpargs=
     match ls_hpargs with

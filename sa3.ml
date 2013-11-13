@@ -344,10 +344,22 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         (* let defined_preds = List.concat ls_defined_hps in *)
         (* let _ = if defined_preds!=[] then step_change # i else () in *)
         let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
-        let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
-            let def_hps, _ = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
-            (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps))
-        ) (defined_preds) (rems_hpargs@ls_lhs_non_node_hpargs) in
+        let defined_preds0, rem_hpargs1 = List.fold_left (fun (defined_preds, r) hpargs ->
+            let def_hps, rem = (SAU.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
+            (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps), r@rem)
+        ) (defined_preds,[]) (rems_hpargs@ls_lhs_non_node_hpargs) in
+        let _ = Debug.ninfo_zprint (lazy (("   rem_hpargs1: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl))  rem_hpargs1)))) no_pos in
+        let  guarded_preds0 = List.fold_left (fun r (hp,args) ->
+            if CP.mem_svl hp r_hps then r else
+              let pr_lhs_g = SAU.split_guard_constrs prog lhds lhvs post_hps (hp,args) lfb2  no_pos in
+              r@pr_lhs_g
+        ) [] rem_hpargs1 in
+        let rhs_h = CF.mkHTrue_nf no_pos in
+        let new_g_constrs = List.map (fun (hp, lhs, g) ->
+            let knd = CP.RelAssume [hp] in
+            let new_cs =  CF.mkHprel knd unk_svl1 [] [] lhs (Some g) rhs_h cs.CF.hprel_path in
+            new_cs
+        ) guarded_preds0 in
         let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);
             CF.unk_svl = unk_svl1;
             CF.hprel_rhs = (CF.add_quantifiers r_qvars (CF.Base rhs_b1));
@@ -371,7 +383,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
                 else
                   new_cs::defined_hprels
         in
-        (new_constrs, unk_map1, link_hps)
+        (new_constrs@new_g_constrs, unk_map1, link_hps)
     else
       (*do subst: sa/demo/mcf-3a1.slk*)
       let leqs = (MCP.ptr_equations_without_null mix_lf) in

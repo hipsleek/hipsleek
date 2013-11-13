@@ -1301,7 +1301,8 @@ let process_shape_split pre_hps post_hps=
     | (_, a)::_ -> a
   in
    let cond_path = [] in
-  let new_constrs,_,_ = Sa2.split_constr !cprog cond_path constrs1 post_hp_rels infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
+  let new_constrs,_,_ = Sa3.split_base_constr !cprog cond_path constrs1 post_hp_rels sel_hp_rels 
+    infer_vars unk_map (List.map fst unk_hpargs) (List.map fst link_hpargs) in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   begin
     print_endline "\n*************************************";

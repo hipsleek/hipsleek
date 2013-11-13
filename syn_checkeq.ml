@@ -119,8 +119,9 @@ let check_stricteq_hrels hrels1 hrels2=
   else (false,[])
 
 let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
-  let hnodes1, _, hrels1 = CF.get_hp_rel_h_formula hf1 in
-  let hnodes2, _, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  let hnodes1, hv1s, hrels1 = CF.get_hp_rel_h_formula hf1 in
+  let hnodes2, hv2s, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  if hv1s <> [] || hv2s <> [] then (false,[]) else
   let r,ss = check_stricteq_hrels hrels1 hrels2 in
   let helper hn=
     let n_hn = CF.h_subst ss (CF.DataNode hn) in

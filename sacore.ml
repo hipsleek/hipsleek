@@ -2794,7 +2794,8 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       | None -> [cur_hpdef]
   in
   let prove_syn (* (k, rel, og, f) *) def =
-    let fs,ogs = List.split def.CF.def_rhs in
+    let fs0,ogs = List.split def.CF.def_rhs in
+    let fs = List.fold_left (fun r f-> r@(CF.list_of_disjs f)) [] fs0 in
     let split = List.fold_left subst_and_split [] fs in
     let split_hp_defs = combine_comp comps split no_pos [] in
     let n_hp_def = {def with CF.def_rhs = [( CF.formula_of_heap rhs_hf no_pos, CF.combine_guard ogs)]} in
