@@ -2013,7 +2013,8 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
     let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@
       (List.map (fun hv -> CF.ViewNode hv) keep_hvs) in
     let g_h = CF.join_star_conjunctions g_hfs in
-    let all_svl = (CF.h_fv g_h)@args in
+    let all_svl = (List.fold_left (fun r hd -> r@hd.CF.h_formula_data_arguments) [] keep_hds)@
+      (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs)@args in
     let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
     let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
         CF.formula_base_pure = (MCP.mix_of_pure p)} in
