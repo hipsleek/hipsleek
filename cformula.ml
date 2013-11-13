@@ -2721,7 +2721,8 @@ and h_subst sst (f : h_formula) =
 		h_formula_conjconj_pos = pos})				
   | ViewNode ({h_formula_view_node = x; 
 							h_formula_view_name = c; 
-							h_formula_view_imm = imm; 
+							h_formula_view_imm = imm;
+              h_formula_view_rank = rnk;
 							h_formula_view_perm = perm; (*LDK*)
 							h_formula_view_arguments = svs; 
 							h_formula_view_modes = modes;
@@ -2737,6 +2738,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_imm = subs_imm_par sst imm;  
 							h_formula_view_node = CP.subst_var_par sst x; 
 							h_formula_view_perm = map_opt (CP.subst_var_par sst) perm;
+              h_formula_view_rank = map_opt (CP.subst_var_par sst) rnk;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
@@ -2908,7 +2910,8 @@ and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = 
         formula_exists_label = lbl;
 		formula_exists_pos = pos})
 
-and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
+and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) =
+  let r = match f with
   | Star ({h_formula_star_h1 = f1; 
 	h_formula_star_h2 = f2; 
 	h_formula_star_pos = pos}) -> 
@@ -2950,6 +2953,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | ViewNode ({h_formula_view_node = x; 
 	h_formula_view_name = c; 
     h_formula_view_imm = imm; 
+    h_formula_view_rank = rnk;
 	h_formula_view_perm = perm; (*LDK*)
 	h_formula_view_arguments = svs; 
 	h_formula_view_modes = modes;
@@ -2960,10 +2964,12 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_view_label = lbl;
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
-	h_formula_view_pos = pos} as g) -> 
-        ViewNode {g with h_formula_view_node = subst_var s x; 
+	h_formula_view_pos = pos} as g) ->
+    ViewNode {g with h_formula_view_node = subst_var s x; 
         h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
-        h_formula_view_imm = apply_one_imm s imm;  
+        h_formula_view_imm = apply_one_imm s imm; 
+        (* TermInf: rename the rank variable of view *)
+        h_formula_view_rank = map_opt (subst_var s) rnk;
 		h_formula_view_arguments = List.map (subst_var s) svs;
         h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
         }
@@ -2999,7 +3005,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ -> f    
+  | Hole _ -> f   
+  in r
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)

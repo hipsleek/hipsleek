@@ -574,6 +574,9 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (TermC, _) 
       | (Term, TermC) ->
           (* TermInf: Collect constraints for ranking function inference *)
+          let pr = !print_mix_formula in
+          let pr2 = !print_entail_state in
+          let _ = print_endline (pr_triple pr2 pr pr (estate, lhs_p, rhs_p)) in 
           (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
