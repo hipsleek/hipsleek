@@ -19,16 +19,16 @@ tree<> == self::node<_,D1,null,_>
 
 // initializes the linked list fields
 
-  HeapPred H(node a, node@NI p, node@NI b).
-  HeapPred G(node a, node@NI p, node@NI b, node@NI c).
+  HeapPred H(node a, node@NI b).
+  HeapPred G(node a, node@NI b, node@NI c).
 
-node set_right (node p, node x, node t)
+node set_right (node x, node t)
   infer [H,G] 
-  requires H(x,p,t) 
-  ensures G(x,p,res,t) ;
+    requires H(x,t) 
+       ensures G(x,res,t) ;
   //requires x::tree<> ensures x::tll<p,res,t>;
 {
-  x.parent=p;
+  x.left.parent  = x;
   if (x.right==null) 
   	{
   	  	x.next = t;
@@ -36,8 +36,9 @@ node set_right (node p, node x, node t)
   	}
   else 
   	{
-          node l_most = set_right(x,x.right, t);
-          return set_right(x,x.left, l_most);  		
+           x.right.parent = x;
+          node l_most = set_right(x.right, t);
+          return set_right(x.left, l_most);  		
   	}
 }
 

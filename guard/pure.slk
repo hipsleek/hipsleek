@@ -1,0 +1,10 @@
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred H(node a,node b).
+
+infer [H] H(p1,p2) |- p1=p2.
+
+print residue.
