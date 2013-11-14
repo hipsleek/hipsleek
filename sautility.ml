@@ -6055,6 +6055,9 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
+let is_top_guard_hp_def unk_hps hp_def=
+  List.exists (fun (f,og) -> CF.is_top_guard f unk_hps og) hp_def.CF.def_rhs
+
 let get_pre_fwd_x post_hps post_pdefs=
   let process_one_pdef cur_fwd_hps (hp, _, _,_,off,_, _)=
     match off with

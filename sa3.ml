@@ -1882,9 +1882,15 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   let constrs1 = SAU.subst_equiv_hprel is.CF.is_hp_equivs constrs0 in
   let _ = DD.info_ihprint (add_str "   Syn-Group-Post" pr_id) "" no_pos in
   let par_defs = get_par_defs_post constrs1 in
-  (*subst pre-preds into if they are not recursive -do with care*)
-  let pre_hps_need_fwd= SAU.get_pre_fwd is.CF.is_post_hps par_defs in
-  let pre_defs, pre_hps = SAU.extract_fwd_pre_defs pre_hps_need_fwd is.CF.is_hp_defs in
+  (*subst pre-preds into if they are not recursive -do with care - not inlining the top guard*)
+  let top_guard_hp_defs, pre_defs = List.partition (SAU.is_top_guard_hp_def dang_hps) is.CF.is_hp_defs in
+  let top_guard_hps = List.fold_left (fun r def ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> r@[hp]
+        | _ -> r
+  ) [] top_guard_hp_defs in
+  let pre_hps_need_fwd= CP.diff_svl (SAU.get_pre_fwd is.CF.is_post_hps par_defs) top_guard_hps in
+  let pre_defs, pre_hps = SAU.extract_fwd_pre_defs pre_hps_need_fwd pre_defs in
   let _ = DD.info_ihprint (add_str "   Syn-Post-Def" pr_id) "" no_pos in
   let pair_names_defs = generalize_hps_par_def prog false [] is.CF.is_dang_hpargs (List.map fst is.CF.is_link_hpargs) is.CF.is_post_hps
     pre_defs pre_hps par_defs in
@@ -1906,9 +1912,11 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (*   let fs1 = Gen.BList.remove_dups_eq (SAU.check_relaxeq_formula args) fs in *)
   (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
   (* in *)
+  let post_defs2,tupled_defs = SAU.partition_tupled post_defs1 in
+  let post_defs3 = def_subst_fix prog dang_hps (post_defs2@top_guard_hp_defs) in
   {is with CF.is_constrs = [];
       CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
-      CF.is_hp_defs = post_defs1}
+      CF.is_hp_defs = post_defs3@tupled_defs}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in
@@ -2148,9 +2156,10 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
   let r_is,a,n_pre_oblg_constrs = helper_x is [] [] pre_oblg_constrs0 in
   let _ = DD.ninfo_hprint (add_str "   r_is:" Cprinter.string_of_infer_state_short) r_is no_pos in
   let _ = DD.ninfo_hprint (add_str "  n_pre_oblg_constrs:" (pr_list_ln Cprinter.string_of_hprel_short)) n_pre_oblg_constrs no_pos in
-  let hp_defs1,tupled_defs = SAU.partition_tupled r_is.CF.is_hp_defs in
-  let r_is1 = {r_is with CF.is_hp_defs = (def_subst_fix prog (dang_hps@link_hps) hp_defs1)@tupled_defs } in
-  (r_is1,a,n_pre_oblg_constrs)
+  (* let hp_defs1a,tupled_defs = SAU.partition_tupled r_is.CF.is_hp_defs in *)
+  (* let top_guard_hpdefs, hp_defs1 = List.partition (SAU.is_top_guard_hp_def (dang_hps@link_hps)) hp_defs1a in *)
+  (* let r_is1 = {r_is with CF.is_hp_defs = (def_subst_fix prog (dang_hps@link_hps) hp_defs1)@top_guard_hpdefs@tupled_defs } in *)
+  (r_is,a,n_pre_oblg_constrs)
 
 (* and infer_pre_trans_closure prog is= *)
 (*   let n_constrs,_ = infer_pre_preds prog is.CF.is_post_hps [] *)
