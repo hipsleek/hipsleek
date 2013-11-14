@@ -419,6 +419,34 @@ https://git.gnome.org/browse/glib/tree/glib/gqsort.c
  - slayer + refine
 
 ==================================================================
+# check-mcf
+
+   --sa-dnc causes
+!! rem_constr:
+[]
+ExceptionNot_foundOccurred!
+
+--pred-en-equiv 
+   (base case null lost?)
+   G2(..) := G2(...)
+
+[ G1(t_1186) ::=
+               t_1186::tree<val_42_1076,children_42_1077>@M&
+               children_42_1077=null
+               or t_1186::tree<val_42_1076,children_42_1077>@M * 
+                  children_42_1077::G2<n_1099,t_1186>@M&
+                  children_42_1077!=null
+               ,
+ G2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M,
+ H1(t_1161) ::= 
+ t_1161::tree<val_42_1076,children_42_1077>@M * 
+ H2(children_42_1077,n_38',t_1161)&children_42_1077!=null
+ or t_1161::tree<val_42_1076,children_42_1077>@M&children_42_1077=null
+
+
+--pred-disj-unify
+  same as without
+
 ==================================================================
 ==================================================================
 ==================================================================
