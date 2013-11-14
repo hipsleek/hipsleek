@@ -3679,12 +3679,13 @@ let norm_hnodes_x args fs=
     in
     sel_root args
   in
-  let base_f = List.hd fs in
-  let base_ldns = get_hdnodes base_f in
-  if base_ldns = [] then fs else
-    let base_ldns1 = move_root base_ldns in
-    let tl_fs = List.map (norm_one_f base_ldns1) (List.tl fs) in
-    (base_f::tl_fs)
+  if fs = [] then fs else
+    let base_f = List.hd fs in
+    let base_ldns = get_hdnodes base_f in
+    if base_ldns = [] then fs else
+      let base_ldns1 = move_root base_ldns in
+      let tl_fs = List.map (norm_one_f base_ldns1) (List.tl fs) in
+      (base_f::tl_fs)
 
 let norm_hnodes args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -6030,7 +6031,8 @@ let combine_hpdefs_x hpdefs=
       | [] -> report_error no_pos "sau.combine_one_hpdef"
       | [def] -> def
       | def::tl ->
-          let fs0, ogs = List.split def.CF.def_rhs in
+          let fs, ogs = List.split def.CF.def_rhs in
+          let fs0 = List.fold_left (fun r f -> r@(CF.list_of_disjs f)) [] fs in
           let _,args0 = CF.extract_HRel def.CF.def_lhs in
           let fs = fs0@(List.concat (List.map (extract_def args0) tl)) in
           let fs1 = (remove_longer_common_prefix fs) in

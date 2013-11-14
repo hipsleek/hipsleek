@@ -38,6 +38,7 @@ let norm_free_svl f0 args=
               if p = Unprimed then
                 (r_svl@[sv], r_ss)
               else
+                (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
                 let fr_sv = CP.fresh_spec_var sv in
                 (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
           ) ([],[]) fr_svl

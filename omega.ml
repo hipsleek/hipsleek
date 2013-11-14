@@ -434,7 +434,7 @@ let get_vars_formula (p : formula):(string list) =
 let mkSpecVarList i svl =
   let svl1 = Cpure.remove_dups_svl svl in
   let r,fr,_ = List.fold_left (fun (r,fr,n) (Cpure.SpecVar(typ, id, p) as sv) ->
-      if String.length id > varLength then
+      if String.length id > varLength (* || String.compare (String.sub id 0 1) "_" == 0 *) then
       (r@[sv], fr@[(Cpure.SpecVar(typ, ("v" ^ string_of_int(n)), p))], n+1)
       else (r,fr,n)
   ) ([],[], i) svl1 in

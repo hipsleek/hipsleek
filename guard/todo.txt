@@ -198,7 +198,11 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
-# ../hip tll-set-parent.ss --pred-en-dangling
+@ check-mcf
+
+- dangling pred has not been included
+ - back-pointer in pre-pred
+=================================================
 
 (time-out problem when --pred-en-dangling )
 
