@@ -39,10 +39,10 @@ dll<parent, prev> ==
 
 */
 
-
+ 
 bool check_tree (tree t)
-requires t::treep<>@L ensures res;
-//infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
+//requires t::treep<>@L ensures res;
+infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 {
    node n = null;
    if (t.children==null) return true;
@@ -50,9 +50,10 @@ requires t::treep<>@L ensures res;
     //check_child(t.children,t,t); // (node * tree * tree)
 }
 
+
 bool check_child (node l, node prv, tree par)
-requires l::dll<par, prv>@L ensures  res;
-// infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
+//requires l::dll<par, prv>@L ensures  res;
+ infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
 {
 	if (l==null) return true;
 	else if (l.parent==par && l.prev==prv) 
@@ -61,6 +62,49 @@ requires l::dll<par, prv>@L ensures  res;
 }
 
 /*
+
+# check_tree
+
+HeapPred H5(node n1, node@NI prv, tree@NI par).
+HeapPred H3(tree c9, node@NI prv, tree@NI par).
+HeapPred H4(node p0, node@NI prv, tree@NI par).
+HeapPred H6(tree par2, node@NI prv, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, node@NI c, tree@NI b).
+HeapPred HP_1078(node ch77).
+PostPred G2(node a, node@NI c, tree@NI b).
+PostPred G1(tree a).
+
+[ // BIND
+ H1(t) --> t::tree<val_48_1076,ch77>@M * HP_1078(ch77),
+ // PRE_REC
+ HP_1078(ch77)&n_38'=null & ch77!=null |#| 
+    t::tree<val_48_1076,ch77>@M --> H2(ch77,n_38'@NI,t@NI),
+ // POST
+(1;0)HP_1078(ch77) * t::tree<val_48_1076,ch77>@M&ch77=null --> G1(t),
+ // POST
+(2;0)t::tree<val_48_1076,ch77>@M * G2(ch77,n_1099@NI,t@NI)&n_1099=null 
+     & ch77!=null --> G1(t)]
+
+
+[ // BIND(2;0)
+ H2(l,prv@NI,par@NI)& l!=null --> l::node<c9,p0,n1,par2>@M
+  * H3(c9,prv@NI,par@NI) * H4(p0,prv@NI,par@NI) * H5(n1,prv@NI,par@NI) 
+  * H6(par2,prv@NI,par@NI),
+ // PRE_REC(1;2;0)
+  H5(n1,p0@NI,par@NI)&p0=prv & par=par2 |#| 
+     l::node<c9,p0,n1,par>@M --> H2(n1,l@NI,par@NI),
+ // PRE_REC (1;2;0)
+  H3(c9,p0@NI,par@NI)&p0=prv & par=par2 --> H1(c9),
+ // POST(1;0)
+  H2(l,prv@NI,par@NI)& l=null --> G2(l,prv@NI,par@NI),
+ // POST(1;2;0)
+  H4(p0,prv@NI,par@NI) * H6(par2,prv@NI,par@NI) 
+  * l::node<c9,p0,n1,par>@M * G2(n1,l@NI,par@NI) 
+  * G1(c9)&p0=prv & par=par2 --> G2(l,p0@NI,par@NI)]
+
+============== older version ===============
+
 # check-mcf.ss
 
   H2(l,prv,par)&

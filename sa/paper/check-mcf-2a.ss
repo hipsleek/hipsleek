@@ -17,6 +17,37 @@ dll<parent> ==
   self=null or 
   self::node<c,n,parent>*c::treep<>* n::dll<parent>;
 
+treep2<> == 
+  self::tree<c>* c::dll2<self> ;
+
+dll2<parent> == 
+  self=null or 
+  self::node<c,n,parent> * n::dll2<parent>
+  * c::tree<cc>* cc::dll2<c> 
+  ;
+
+treep3<> == 
+  self::tree<c> & c=null or
+  self::tree<c>* c::dll3<self> & c!=null ;
+
+dll3<parent> == 
+  self=null or 
+  self::node<c,n,parent> * n::dll3<parent>
+  * c::tree<cc>* cc::dll3<c> 
+  ;
+
+treep4<> == 
+  self::tree<c> & c=null or
+  self::tree<c>* c::dll4<self> & c!=null ;
+
+dll4<parent> == 
+  self=null 
+  or self::node<c,n,parent> * n::dll4<parent>
+  * c::tree<cc> & cc=null
+  or self::node<c,n,parent> * n::dll4<parent>
+  * c::tree<cc>* cc::dll4<c> & cc!=null
+  ;
+
   //self=null or
 
 HeapPred H1(tree a).
@@ -35,8 +66,12 @@ PostPred G2(node a,tree@NI b).
 
 
 bool check_tree (tree t)
-  //requires t::treep<>@L ensures res;
-  infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
+//requires t::treep4<> ensures t::treep4<> & res;
+ requires t::treep4<>@L ensures res;//fail
+//requires t::treep3<>@L ensures res;//fail
+//requires t::treep2<>@L ensures res; //fail
+//requires t::treep<>@L ensures res;
+//infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 {
    //node n = null;
    if (t.children==null) return true;
@@ -45,8 +80,12 @@ bool check_tree (tree t)
 }
 
 bool check_child (node l, tree par)
-  //requires l::dll<par>@L ensures  res;
-  infer [H1,G1,H2,G2] requires H2(l,par) ensures G2(l,par) & res;
+// requires l::dll4<par> ensures  l::dll4<par> & res; // cannot prove post
+ requires l::dll4<par>@L ensures  res;//pre fail
+// requires l::dll3<par>@L ensures  res;//fail
+//  requires l::dll2<par>@L ensures  res;//fail
+//requires t::treep<>@L ensures res;
+//infer [H1,G1,H2,G2] requires H2(l,par) ensures G2(l,par) & res;
 {
 	if (l==null) return true;
 	else if (l.parent==par) 
@@ -151,11 +190,11 @@ cc4!=null --> G1(t)]
          or t1::tree<cc4>@M * G2(cc4,t1)&cc4!=null
  ,
  G2(l2,par3) ::=  
-    l2::node<child89,next90,par3>@M * 
+     emp&l2=null
+    or l2::node<child89,next90,par3>@M * 
         G2(next90,par3) * child89::tree<cc4>@M& cc4=null
     or l2::node<child89,next90,par3>@M * G2(next90,par3) * 
         child89::tree<cc4>@M * G2(cc4,child89)&cc4!=null
-    or emp&l2=null
  ,
  H1(t_1078) ::= t_1078::tree<cc4>@M * H2(cc4,t_1078)&cc4!=null
      or t_1078::tree<cc4>@M&cc4=null
