@@ -198,6 +198,27 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
+# ../hip tll-set-parent.ss --pred-en-dangling
+
+(time-out problem when --pred-en-dangling )
+
+!!!  views: [G,H]Timeout when checking #simplify  Restarting Omega after ... 112 invocations Stop Omega... 112 invocations Starting Omega...oc
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 116 invocations Stop Omega... 116 invocations Starting Omega...oc
+
+!!!  transform: [H,G]
+Stop Omega... 117 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.1,334)
+!!! 
+ log(bigger)(>4s)(2):(20.,[(simplify:282<34:TIMEOUT:OM,10.);(SAT:294<34:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+ Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
+
 ==========================================================
 ==========================================================
 ==========================================================
