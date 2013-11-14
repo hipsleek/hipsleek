@@ -388,9 +388,20 @@ let isStrictConstTrue_x f = match f with
         (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
+
 let  isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
+let isStrictConstHTrue f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        ( h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
 
 let rec isConstDFalse f = 
   match f with
@@ -4302,6 +4313,13 @@ let extract_hrel_head (f0:formula) =
   in
   Debug.no_1 "extract_hrel_head" pr1 pr2
       (fun _ ->  extract_hrel_head_x f0) f0
+
+let is_top_guard rhs link_hps og=
+  let hp_opt = extract_hrel_head rhs in
+  match hp_opt with
+    | None -> false
+    | Some hp -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
+              && (og != None)
 
 let is_only_viewnode_x acc_pure (f0:formula) =
   let rec helper f=

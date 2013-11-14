@@ -2784,7 +2784,7 @@ let def_subst_fix prog unk_hps hpdefs=
     if (CP.diff_svl succ_hps1 rec_hps) <> [] then
       (*not depends on any recursive hps, susbt it*)
       let args = SAU.get_ptrs hprel in
-      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_subst_hpdef prog nrec_hpdefs succ_hps1 (hp,args,g,f1)) fs) in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_subst_hpdef prog [] nrec_hpdefs succ_hps1 (hp,args,g,f1)) fs) in
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
