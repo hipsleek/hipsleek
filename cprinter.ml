@@ -815,7 +815,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (* else () *)
     | P.RankRel rrel ->
         fmt_string (string_of_spec_var rrel.CP.rank_id); 
-        fmt_string " = RR("; 
+        fmt_string (" = RR_" ^ (string_of_int rrel.CP.rel_id) ^ "("); 
         fmt_string (string_of_spec_var_list rrel.CP.rank_args); 
         fmt_string ")"
     | P.BConst (b,l) -> fmt_bool b 

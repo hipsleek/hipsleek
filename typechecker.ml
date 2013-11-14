@@ -1948,9 +1948,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* org_spec -> stripped_spec *)
 	            (* free vars = linking vars that appear both in pre and are not formal arguments *)
                     (* Termination: The logical vars should not be renamed *)
+                    (* TermInf: The rank vars of view should not be renamed *)
                     let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var
                       (Gen.BList.difference_eq CP.eq_spec_var (CF.struc_fv stripped_spec(*org_spec*))
-                          (CF.struc_post_fv stripped_spec(*org_spec*))) (farg_spec_vars@prog.Cast.prog_logical_vars) in
+                        (CF.struc_post_fv stripped_spec(*org_spec*)))
+                      (farg_spec_vars@prog.Cast.prog_logical_vars) in
                     (* let pre_free_vars = Gen.BList.difference_eq CP.eq_spec_var *)
                     (*   pre_free_vars prog.Cast.prog_logical_vars in  *)
                     (* free vars get to be substituted by fresh vars *)

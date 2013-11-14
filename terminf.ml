@@ -19,8 +19,6 @@ let viewnode_rank_id view_id =
 let viewnode_rank_sv view_id =
   SpecVar (Int, viewnode_rank_id view_id, Unprimed)
 
-let mkRankConstraint view_rank_sv data_rank_args =
-  mkPure (mkRankRel view_rank_sv data_rank_args)
 
 
 

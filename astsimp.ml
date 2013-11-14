@@ -835,7 +835,7 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
           let base_var = TI.view_base_sv (CP.name_of_spec_var rankrel_id) in
           [base_var], [base_var] else rankrel_vars, [] in
         nhf,
-        MCP.memoise_add_pure_N pf (Terminf.mkRankConstraint rankrel_id rankrel_args),
+        MCP.memoise_add_pure_N pf (CP.mkRankConstraint rankrel_id rankrel_args),
         rankrel_ivars @ rankrel_base_vars
     | PRE proc_args -> 
         (* Add Term[r] for PRE based on the args of proc *)

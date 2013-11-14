@@ -140,6 +140,7 @@ and lex_info = {
 }
 
 and rankrel = {
+  rel_id: int;
   rank_id: spec_var;
   rank_args: spec_var list;
 }
@@ -1777,6 +1778,7 @@ and mkLexVar t_ann m i pos =
 
 and mkRankRel view_rank_id data_rank_args =
   RankRel {
+    rel_id = fresh_rrel_id (); 
     rank_id = view_rank_id;
     rank_args = data_rank_args; }
 
@@ -1786,6 +1788,9 @@ and mkLexVar_pure a l1 l2 =
   let bf = mkLexVar a l1 l2 no_pos in
   let p = mkPure bf in
   p
+
+and mkRankConstraint view_rank_sv data_rank_args =
+  mkPure (mkRankRel view_rank_sv data_rank_args)
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
@@ -2986,8 +2991,8 @@ and b_apply_subs_x sst bf =
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-    | RankRel rrel -> 
-        RankRel {
+    | RankRel (rrel as r) -> 
+        RankRel { r with
           rank_id = subs_one sst rrel.rank_id;
           rank_args = List.map (subs_one sst) rrel.rank_args; }
   in

@@ -553,8 +553,6 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  let _ = !print_mix_formula rhs_p in
-  let _ = !print_entail_state estate in
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
@@ -574,9 +572,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (TermC, _) 
       | (Term, TermC) ->
           (* TermInf: Collect constraints for ranking function inference *)
-          let pr = !print_mix_formula in
+          (* let pr = !print_mix_formula in
           let pr2 = !print_entail_state in
-          let _ = print_endline (pr_triple pr2 pr pr (estate, lhs_p, rhs_p)) in 
+          let _ = print_endline ("TERM CONSTRS: " ^ 
+            (pr_triple pr2 pr pr (estate, lhs_p, rhs_p))) in *)
           (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
@@ -644,7 +643,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
   let f = wrap_proving_kind PK_Term_Dec (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
-   Debug.no_3(* _loop *) "trans_lexvar_rhs" pr2 pr pr
+   Debug.no_3(* _loop *) "check_term_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
 

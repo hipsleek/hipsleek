@@ -13555,3 +13555,29 @@ let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var
       let rank_sv = Terminf.viewnode_rank_sv v.h_formula_view_name in
       (ViewNode { v with h_formula_view_rank = Some rank_sv; }, [rank_sv], [rank_sv])
   | _ -> (h, [], [])
+
+let collect_view_rank_h_formula (h: h_formula) : CP.spec_var list =
+  let f h = match h with
+    | ViewNode v -> map_opt (fun r -> [r]) v.h_formula_view_rank
+    | _ -> None
+  in fold_h_formula h f List.concat
+
+let collect_view_rank_formula (f: formula) : CP.spec_var list =
+  let h, _, _, _, _ = split_components f in
+  collect_view_rank_h_formula h
+
+let collect_view_rank_es (es: entail_state) : CP.spec_var list =
+  (collect_view_rank_formula es.es_formula) @
+  (collect_view_rank_h_formula es.es_heap)
+
+let rec collect_view_rank_context (ctx: context) : CP.spec_var list =
+  match ctx with
+  | Ctx es -> collect_view_rank_es es
+  | OCtx (c1, c2) -> (collect_view_rank_context c1) @ (collect_view_rank_context c2)
+
+let collect_view_rank_failesc_context (ctx: failesc_context) : CP.spec_var list =
+  let _, _, bctx_l = ctx in
+  List.concat (List.map (fun (_, ctx) -> collect_view_rank_context ctx) bctx_l)
+
+let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec_var list =
+  List.concat (List.map collect_view_rank_failesc_context ctx)

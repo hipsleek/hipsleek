@@ -6800,7 +6800,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 formula_base_flow = fl1;
                                 formula_base_label = None;
                                 formula_base_pos = pos } in
-                                (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
+                                (* at the end of an entailment due to the application of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
                                 (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
                                 let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
                                 let p2 = MCP.drop_varperm_mix_formula p2 in
@@ -8591,7 +8591,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | ViewNode {h_formula_view_name = l_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
-        h_formula_view_arguments = l_args} -> (l_args, l_node_name, perm, ann, [])
+        h_formula_view_rank = rnk;
+        h_formula_view_arguments = l_args} -> 
+          (* TermInf: rank view var is considered as view's arguments *)
+          (l_args@(fold_opt (fun r -> [r]) rnk), l_node_name, perm, ann, [])
       | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",  None, ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = match r_node with
@@ -8604,10 +8607,18 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | ViewNode {h_formula_view_name = r_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
+        h_formula_view_rank = rnk;
         h_formula_view_arguments = r_args;
-        h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, [])
+        h_formula_view_node = r_var} -> 
+          (* TermInf: rank view var is considered as view's arguments *)
+          (r_args@(fold_opt (fun r -> [r]) rnk), r_node_name, r_var, perm, ann, [])
       | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",rhp, None, ConstAnn Mutable,[])
-      | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
+      | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in  
+
+    let r_view_rank = match r_node with 
+    | ViewNode v -> v.h_formula_view_rank
+    | _ -> None
+    in
 
     (* An Hoa : found out that the current design of do_match 
        will eventually remove both nodes. Here, I detected that 
@@ -8766,7 +8777,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   else   (List.combine r_args l_args, label_list)
                   in*)
               let rho = try
-                List.combine rho_0 label_list
+                (* TermInf: Add a dummy label for the rank view var (if any) *)
+                List.combine rho_0 (label_list@(fold_opt (fun r -> [LO.unlabelled]) r_view_rank))
               with _ -> [] (*matching with cyclic proof is not the same predicate*)
               in (* with branch label *)
               let evars,ivars,impl_vars, expl_vars = do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars in

@@ -1178,6 +1178,13 @@ let fresh_formula_cache_no  () =
   formula_cache_no_series := !formula_cache_no_series +1;
   !formula_cache_no_series
 
+(* TermInf: Fresh ID for rank relation *)
+let rel_id = ref 0
+
+let fresh_rrel_id () =
+  rel_id := !rel_id + 1;
+  !rel_id
+
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 let string_of_loc (p : loc) = 
