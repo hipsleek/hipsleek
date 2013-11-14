@@ -81,7 +81,7 @@ and term_ann =
   | Loop    (* definitely loops *)
   | MayLoop (* don't know *)
   | Fail of term_fail    (* failed because of invalid trans *)
-  | TermC   (* TermInf: using to built constraints for termination inference *)
+  | TermR   (* TermInf: using to built constraints for termination inference *)
 
 and term_fail =
   | TermErr_May
@@ -258,7 +258,7 @@ let string_of_vp_ann a =
 let string_of_term_ann a =
   match a with
     | Term -> "Term"
-    | TermC -> "TermC"
+    | TermR -> "TermR"
     | Loop -> "Loop"
     | MayLoop -> "MayLoop"
     | Fail f -> match f with

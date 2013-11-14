@@ -840,7 +840,7 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
     | PRE proc_args -> 
         (* Add Term[r] for PRE based on the args of proc *)
         let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
-          TermC [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
+          TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
         nhf, npf, rankrel_ivars
     | POST -> nhf, pf, rankrel_ivars 
   in match f with
@@ -871,22 +871,6 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
     end
   | _ -> f, []
 
-
-(*
-(* TermInf: Add RankRel into pure part *)
-    let new_p, viewnode_rankrel_vars = if !en_term_inf 
-      then
-        let rankrel_vars, viewnode_rankrel_vars = CF.collect_rankrel_vars_h_formula new_h in
-        if rankrel_vars == [] then (new_p, [])
-        else 
-          (CP.mkAnd new_p (Terminf.mkRankConstraint (Terminf.view_rank_sv "r") rankrel_vars) pos),
-          viewnode_rankrel_vars
-      else (new_p, []) in
-    let rankrel_typ = List.map (fun v -> 
-      (CP.name_of_spec_var v), { sv_info_kind = Int; id = fresh_int () }) viewnode_rankrel_vars in
-    let rankrel_vars = List.map (fun v -> 
-      (CP.name_of_spec_var v), Unprimed) viewnode_rankrel_vars in
-*)
 
 (*transform labels into exceptions, remove the finally clause,
 should also check that 

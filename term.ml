@@ -3,6 +3,7 @@ module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
 module Inf = Infer
+module TI = Terminf
 
 open Gen.Basic
 open Globals
@@ -416,6 +417,25 @@ let strip_lexvar_mix_formula mf =
   let pr0 = !CP.print_formula in
   let pr = !MCP.print_mix_formula in
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
+
+(* TermInf: Construct rrel constraints for inference *)
+let construct_dec_rrel_constraint estate src dst =
+  let _, p, _, _, _ = split_components estate.es_formula in
+  (* TODO: Check lexicographic ordering *)
+  let ctr = List.fold_left (fun acc (s, d) -> 
+    MCP.memoise_add_pure acc (CP.mkPure (CP.mkGt s d no_pos))) 
+    (MCP.mkMTrue no_pos) (List.combine src dst) in 
+  let rrel = {
+    rrel_type = TI.RR_DEC;
+    rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
+    rrel_ctr = ctr;
+  } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
+
+let construct_dec_rrel_constraint estate src dst =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = pr_list Cprinter.string_of_formula_exp in
+  Debug.no_3 "construct_dec_rrel_constraint" pr1 pr2 pr2 pr1 
+    construct_dec_rrel_constraint estate src dst
   
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
@@ -558,7 +578,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
@@ -569,13 +589,12 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
-      | (TermC, _) 
-      | (Term, TermC) ->
+      | (TermR, TermR) ->
+          let new_es = construct_dec_rrel_constraint estate src_il dst_il in
+          (new_es, lhs_p, rhs_p, None)
+      | (TermR, _) 
+      | (Term, TermR) ->
           (* TermInf: Collect constraints for ranking function inference *)
-          (* let pr = !print_mix_formula in
-          let pr2 = !print_entail_state in
-          let _ = print_endline ("TERM CONSTRS: " ^ 
-            (pr_triple pr2 pr pr (estate, lhs_p, rhs_p))) in *)
           (estate, lhs_p, rhs_p, None)
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
@@ -592,8 +611,8 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
             | MayLoop 
             | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
-            | TermC
-            | Term -> failwith "unexpected Term/TermC in check_term_rhs"
+            | TermR
+            | Term -> failwith "unexpected Term/TermR in check_term_rhs"
           in 
           let n_estate = {estate with 
             es_var_measures = term_measures;

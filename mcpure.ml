@@ -2845,3 +2845,10 @@ let check_pointer_dis_sat mf = match mf with
 	| OnePF f -> 
 		let r,b = check_pointer_dis_sat f in
 		b, OnePF r
+
+let get_rel_ctr (mf: mix_formula) (vl: spec_var list) : mix_formula =
+  match mf with
+  | MemoF f -> 
+      MemoF (List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) f)
+  | OnePF f -> mf

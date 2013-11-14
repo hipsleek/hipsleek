@@ -3913,7 +3913,7 @@ and heap_entail_after_sat_struc prog is_folding  has_post
       (fun _ _ -> heap_entail_after_sat_struc_x prog is_folding has_post ctx conseq tid delayed_f join_id pos pid ss) ctx conseq
       
 and heap_entail_after_sat_struc_x prog is_folding has_post
-      ctx conseq tid delayed_f join_id pos pid (ss:steps) : (list_context * proof) =     
+      ctx conseq tid delayed_f join_id pos pid (ss:steps) : (list_context * proof) = 
   match ctx with
     | OCtx (c1, c2) ->
           Debug.devel_zprint (lazy ("heap_entail_after_sat_struc:" 
@@ -3929,7 +3929,6 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
     | Ctx es -> 
 	  let exec ()=
 	    begin	
-	      (* let _= print_endline ("bach: heap_entail_after_sat_struc_x") in *)
               Debug.dinfo_zprint (lazy ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
               ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
               ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)

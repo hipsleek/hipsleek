@@ -674,6 +674,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
 							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
+                    (* TermInf: Collecting ALL ranking constraints here *)
+                    let _ = print_endline ("RREL: " ^ (pr_list Cprinter.string_of_rrel (CF.collect_rrel_list_failesc_context res_ctx))) in
+                    let _ = print_endline ("R_CTX: " ^ (Cprinter.string_of_list_failesc_context res_ctx)) in
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
 	    	    let res_ctx = CF.list_failesc_to_partial res_ctx in

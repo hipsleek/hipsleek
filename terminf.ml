@@ -1,6 +1,11 @@
 open Globals
 open Cpure
 
+type rel_type =
+  | RR_DEC
+  | RR_BND
+
+(* Functions for creating ID *)
 let view_rank_id view_id =
   "r_" ^ view_id
 

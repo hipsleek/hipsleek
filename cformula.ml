@@ -15,6 +15,7 @@ open Label
 module Err = Error
 module CP = Cpure
 module MCP = Mcpure
+module TI = Terminf
 
 
 type cond_path_type = int list
@@ -3848,6 +3849,12 @@ and disj_count (f0 : formula) = match f0 with
 
   | _ -> 1
 
+(**** TERMINATION RANKING INFERENCE ****)
+type rrel = {
+  rrel_type: TI.rel_type;
+  rrel_ctx: MCP.mix_formula;
+  rrel_ctr: MCP.mix_formula;
+}
 
 (***************INFER******************)
 (*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
@@ -6665,6 +6672,10 @@ think it is used to instantiate when folding.
   (* from this context *)
   es_term_err: string option;
 
+  (* For Termination Inference *)
+  (* The list constrainsts of ranking relation *)
+  es_rrel : rrel list;
+
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
 (* to be used by matching strategy for imm *)
@@ -6943,6 +6954,8 @@ let empty_es flowt grp_lbl pos =
   es_var_zero_perm = [];
   es_group_lbl = grp_lbl;
   es_term_err = None;
+  (* TermInf: Initial list of ranking constraints *)
+  es_rrel = [];
   (*es_infer_invs = [];*)
 }
 
@@ -9972,6 +9985,21 @@ let trans_context (c: context) (arg: 'a)
   in
   trans_c c arg
 
+let trans_branch_ctx (c: branch_ctx) (arg: 'a) f_c f_c_arg f_comb : (branch_ctx * 'b) = 
+  let trace, ctx = c in
+  let n_ctx, acc = trans_context ctx arg f_c f_c_arg f_comb in
+  ((trace, n_ctx), acc)
+
+let trans_failesc_context (c: failesc_context) (arg: 'a) f_c f_c_arg f_comb : (failesc_context * 'b) =
+  let bf, es, bc = c in
+  let n_bc, acc = List.split (List.map (fun c -> trans_branch_ctx c arg f_c f_c_arg f_comb) bc) in 
+  ((bf, es, n_bc), f_comb acc)
+
+let trans_list_failesc_context (c: list_failesc_context)
+  (arg: 'a) f_c f_c_arg f_comb : (list_failesc_context * 'b) =
+  let n_c, acc = List.split (List.map (fun ctx -> trans_failesc_context ctx arg f_c f_c_arg f_comb) c) in
+  (n_c, f_comb acc)
+
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason _ -> c
@@ -10373,7 +10401,9 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
           es_var_stack = es.es_var_stack;
-      es_pure = es.es_pure;
+          (* TermInf: Ranking constraints need to be accumulated *)
+          es_rrel = es.es_rrel;
+          es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
@@ -13540,6 +13570,7 @@ let elim_e_var to_keep (f0 : formula) : formula =
 		push_exists qvars (helper2 b) in
 	helper f0
 
+(* Function for collecting information *)
 (* TermInf: Collect data variables of DataNode and 
  * rank variables of ViewNode to build RankRel *)
 let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
@@ -13552,7 +13583,7 @@ let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var
   | DataNode { h_formula_data_arguments = args } ->
       (h, List.filter (fun sv -> CP.is_int_var sv) args, [])
   | ViewNode v ->
-      let rank_sv = Terminf.viewnode_rank_sv v.h_formula_view_name in
+      let rank_sv = TI.viewnode_rank_sv v.h_formula_view_name in
       (ViewNode { v with h_formula_view_rank = Some rank_sv; }, [rank_sv], [rank_sv])
   | _ -> (h, [], [])
 
@@ -13570,6 +13601,7 @@ let collect_view_rank_es (es: entail_state) : CP.spec_var list =
   (collect_view_rank_formula es.es_formula) @
   (collect_view_rank_h_formula es.es_heap)
 
+(*
 let rec collect_view_rank_context (ctx: context) : CP.spec_var list =
   match ctx with
   | Ctx es -> collect_view_rank_es es
@@ -13581,3 +13613,20 @@ let collect_view_rank_failesc_context (ctx: failesc_context) : CP.spec_var list 
 
 let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec_var list =
   List.concat (List.map collect_view_rank_failesc_context ctx)
+*)
+
+let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec_var list =
+  let f_c arg ctx = match ctx with
+  | Ctx es -> Some (ctx, collect_view_rank_es es)
+  | _ -> None
+  in
+  let f_arg arg ctx = arg in
+  snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
+
+let collect_rrel_list_failesc_context (ctx: list_failesc_context) : rrel list =
+  let f_c arg ctx = match ctx with
+  | Ctx es -> Some (ctx, es.es_rrel)
+  | _ -> None
+  in
+  let f_arg arg ctx = arg in
+  snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
