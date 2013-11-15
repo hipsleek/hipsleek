@@ -8,14 +8,25 @@ data node {
     //node prev; 
     node next; 
     tree parent;
-    }
+}
 
+
+/*
 treep<> == 
   self::tree<c>* c::dll<self> ;
 
 dll<parent> == 
   self=null or 
   self::node<c,n,parent>*c::treep<>* n::dll<parent>;
+*/
+
+
+treep<> == 
+  self::tree<c>* c::dll<self> ;
+
+dll<parent> == 
+  self=null or 
+  self::node<c,n,parent>*c::tree<cc>* cc::dll<c>* n::dll<parent>;
 
 treep2<> == 
   self::tree<c>* c::dll2<self> ;
@@ -67,10 +78,11 @@ PostPred G2(node a,tree@NI b).
 
 bool check_tree (tree t)
 //requires t::treep4<> ensures t::treep4<> & res;
- requires t::treep4<>@L ensures res;//fail
+//requires t::treep4<>@L ensures res;//fail
 //requires t::treep3<>@L ensures res;//fail
 //requires t::treep2<>@L ensures res; //fail
 //requires t::treep<>@L ensures res;
+requires t::treep<> ensures t::treep<> & res;
 //infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 {
    //node n = null;
@@ -80,11 +92,12 @@ bool check_tree (tree t)
 }
 
 bool check_child (node l, tree par)
-// requires l::dll4<par> ensures  l::dll4<par> & res; // cannot prove post
- requires l::dll4<par>@L ensures  res;//pre fail
+//requires l::dll4<par> ensures  l::dll4<par> & res; // cannot prove post
+//requires l::dll4<par>@L ensures  res;//pre fail
 // requires l::dll3<par>@L ensures  res;//fail
 //  requires l::dll2<par>@L ensures  res;//fail
-//requires t::treep<>@L ensures res;
+//requires l::dll<par>@L ensures res;
+requires l::dll<par> ensures  l::dll<par> & res;
 //infer [H1,G1,H2,G2] requires H2(l,par) ensures G2(l,par) & res;
 {
 	if (l==null) return true;
