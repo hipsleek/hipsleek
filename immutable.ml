@@ -671,7 +671,17 @@ and replace_imm imm map emap=
 and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) emap : h_formula = 
   match f with
     | ViewNode f1 -> 
-          if not (f1.CF.h_formula_view_name = view_name) then f
+          if not (f1.CF.h_formula_view_name = view_name) then 
+			(*Cristian: this causes a bug in the folding, e.g. when trying to prove a @L view node the system ends up trying to prove @M
+			nodes, which obviously fail. I believe that all the unfolded nodes need to take the original annotation not only the root.
+			e.g. bellow must succeed: 
+					pred p1<> ==  self::node<c>* c::t1<> .
+					pred t1<> == self::node<_>.
+					checkentail c::node2<cc>@L* cc::t1<>@L  |-  c::p1<>@L.
+			It should behave similar to the datanode...
+			*)
+			(*f*)
+			ViewNode({f1 with h_formula_view_imm = imm;}) 
           else
             let new_node_imm = imm in
             let new_args_imm = List.fold_left (fun acc (fr,t) -> 
