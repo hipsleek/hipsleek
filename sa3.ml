@@ -1913,7 +1913,9 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
   (* in *)
   let post_defs2,tupled_defs = SAU.partition_tupled post_defs1 in
-  let post_defs3 = def_subst_fix prog dang_hps (post_defs2@top_guard_hp_defs) in
+  (*before inlining, we try do inter-unify*)
+  let post_defs2a = SAC.pred_unify_inter prog dang_hps post_defs2 in
+  let post_defs3 = def_subst_fix prog dang_hps (post_defs2a@top_guard_hp_defs) in
   {is with CF.is_constrs = [];
       CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
       CF.is_hp_defs = post_defs3@tupled_defs}

@@ -2028,6 +2028,113 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
        (*=============END UNIFY PREDS================*)
 (*=============**************************================*)
 
+
+(*************************************************)
+(**********       INTER-UNIFY       ***************)
+(*************************************************)
+(*work with two branches first. to improve*)
+let pred_unify_inter_x proc dang_hps hp_defs=
+  (**************** INTERNAL ****************)
+  let is_inter_hpdef d=
+    let hp = CF.get_hpdef_name d.CF.def_cat in
+    let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] d.CF.def_rhs in
+    if List.length fs != 2 then (*work with two branches first. to improve*) false else
+      let hps = List.fold_left (fun r f -> r@(CF.get_hp_rel_name_formula f)) [] fs in
+      let hps2 = CP.diff_svl hps (dang_hps@[hp]) in
+      if CP.mem_svl hp hps || hps2 == [] then false
+      else true
+        (* List.exists (fun f-> *)
+        (*     try *)
+        (*       let _ = CF.extract_HRel_f f in *)
+        (*     true *)
+        (*     with _ -> false *)
+        (* ) fs *)
+  in
+  let check_pure_exist_x p f=
+    let ps = CP.split_conjunctions p in
+    let p1 = CF.get_pure f in
+    let ps1 = CP.split_conjunctions p1 in
+    (Gen.BList.difference_eq CP.equalFormula) ps ps1 = []
+  in
+  let check_pure_exist p f=
+    let pr1 = !CP.print_formula in
+    let pr2 = Cprinter.prtt_string_of_formula in
+    Debug.no_2 "check_pure_exist" pr1 pr2 string_of_bool
+        (fun _ _ -> check_pure_exist_x p f) p f
+  in
+  (*to improve*)
+  let do_inter_unify hp_def other_hpdefs dep_hp (pf,p_og) (dep_f, dep_og)=
+    let _ = DD.ninfo_hprint (add_str "dep_hp" !CP.print_sv) dep_hp no_pos in
+    match hp_def.CF.def_cat with
+      | CP.HPRelDefn (hp ,r, other_args) -> begin
+          (*find pure constraint p on root of pf - to improve*)
+          let r_ps, other = List.partition (fun p -> CP.diff_svl (CP.fv p) [r] =[] )
+            (CP.split_conjunctions (CF.get_pure pf) ) in
+          let _ = DD.ninfo_hprint (add_str "other" (pr_list !CP.print_formula)) other no_pos in
+          if other != [] then (false,hp_def) else
+            (*check whether p contradict with counterpart in dep_p*)
+            let r_p = (CP.join_conjunctions r_ps) in
+            let dep_f_wpure = CF.mkAnd_pure dep_f (MCP.mix_of_pure r_p) no_pos in
+            if not (SAU.is_unsat dep_f_wpure) then (false,hp_def) else
+              begin
+                try
+                  (*check whether p is exsit in one branch of dep_hp*)
+                  let dep_hpdef = CF.look_up_hp_def other_hpdefs dep_hp in
+                  let dep_r = match dep_hpdef.CF.def_cat with
+                    | CP.HPRelDefn (_ ,dr, _) -> dr
+                    | _ -> raise Not_found
+                  in
+                  let ss = [(r, dep_r)] in
+                  let r_p_in_dep = CP.subst ss r_p in
+                  let dep_fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] dep_hpdef.CF.def_rhs in
+                  if List.exists (fun f -> check_pure_exist r_p_in_dep f) dep_fs then
+                    (*do union combine - drop the counterpart in pf, mkAnd*)
+                    let n_dep_f = CF.filter_var_pure r dep_f in
+                    (true, {hp_def with CF.def_rhs = [(n_dep_f, dep_og)]})
+                  else (false,hp_def)
+                with _ -> (false,hp_def)
+              end
+        end
+      | _ -> (false, hp_def)
+  in
+  let find_inter hp_def other_hpdefs=
+    let fs = List.fold_left (fun r (f,g) -> r@(List.map (fun f1 -> (f1,g)) (CF.list_of_disjs f))) [] hp_def.CF.def_rhs in
+    match fs with
+      | [(f1,og1);(f2,og2)] -> begin
+            let dep_hps1 = CF.get_hp_rel_name_formula f1 in
+            let dep_hps2 = CF.get_hp_rel_name_formula f2 in
+            match dep_hps1,dep_hps2 with
+              | [dep_hp],[] -> do_inter_unify hp_def other_hpdefs dep_hp (f2,og2) (f1,og1)
+              | [], [dep_hp] -> do_inter_unify hp_def other_hpdefs dep_hp (f1,og1) (f2, og2)
+              | _ ->  (false, hp_def)
+        end
+      | _ -> (false,hp_def)
+  in
+  let rec do_one_step_inter rest done_hpdefs non_inter_hpdefs=
+    match rest with
+      | [] -> done_hpdefs
+      | hp_def::rest1 ->
+            let b,n_hp_def = find_inter hp_def (done_hpdefs@non_inter_hpdefs) in
+            do_one_step_inter rest1 (done_hpdefs@[n_hp_def]) non_inter_hpdefs
+  in
+  let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+  (****************END INTERNAL ****************)
+  let inter_hp_defs, rem = List.partition is_inter_hpdef hp_defs in
+  let _ = DD.info_hprint (add_str "inter_hp_defs" pr) inter_hp_defs no_pos in
+  let inter_hp_defs1 = do_one_step_inter inter_hp_defs [] rem in
+  (inter_hp_defs1@rem)
+
+let pred_unify_inter proc dang_hps hp_defs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_2 "pred_unify_inter" pr1 pr2 pr2
+      (fun _ _ -> pred_unify_inter_x proc dang_hps hp_defs)
+      dang_hps hp_defs
+
+(*=============**************************================*)
+       (*=============INTER UNIFY PREDS================*)
+(*=============**************************================*)
+
 (*=============**************************================*)
        (*=============OBLIGATION================*)
 (*=============**************************================*)
@@ -2285,7 +2392,7 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
     (*       (fun _ -> rec_helper_x pdef_fix_i) pdef_fix_i *)
     (* in *)
     (*recusive call*)
-    if diff = [] then fix_i_plus1 else
+    if diff = [] || i>4 then fix_i_plus1 else
     rec_helper (i+1) fix_i_plus1
   in
   (*END INTERNAL*)

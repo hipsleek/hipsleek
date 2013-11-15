@@ -4584,6 +4584,23 @@ let elim_unused_pure (f0:formula) rhs =
   Debug.no_1 " elim_unused_pure" pr pr
       (fun _ -> elim_unused_pure_x f0 rhs) f0
 
+let filter_var_pure r (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b->
+            let keep_svl = CP.diff_svl (fv f) [r] in
+            Base {b with formula_base_pure = MCP.mix_of_pure
+                    (CP.filter_var (MCP.pure_of_mix b.formula_base_pure)
+                        keep_svl);
+            }
+      | Exists e -> let qvars, base_f = split_quantifiers f in
+        let nf = helper base_f in
+        (add_quantifiers qvars nf)
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
 let prune_irr_neq_formula_x must_kept_svl lhs_b rhs_b =
   let r_svl = fv (Base rhs_b) in
   let rec helper fb=
