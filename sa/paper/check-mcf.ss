@@ -55,10 +55,13 @@ bool check_child (node l, node prv, tree par)
 //requires l::dll<par, prv>@L ensures  res;
  infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
 {
-	if (l==null) return true;
-	else if (l.parent==par && l.prev==prv) 
-           return check_child(l.next,l, par)&& check_tree(l.child);
-	else return false;
+  if (l==null) return true;
+  else if (l.parent==par && l.prev==prv)
+    return check_child(l.next,l, par)&& check_tree(l.child);
+  else return false;
+  /* if (l==null) return true; */
+  /* else   */
+  /*   return (l.parent==par && l.prev==prv)  && check_child(l.next,l, par)&& check_tree(l.child); */
 }
 
 /*

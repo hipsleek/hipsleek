@@ -975,17 +975,18 @@ and find_defined_pointers prog f predef_ptrs=
 
 let get_defined_eqs_x f=
   (*******INTERNAL******)
-   let rec look_up eqs args=
+   let rec look_up eqs args r=
     match eqs with
-      | [] -> []
-      | (sv1,sv2)::rest -> if CP.diff_svl [sv1;sv2] args = [] then [sv1;sv2]
-        else look_up rest args
+      | [] -> (CP.remove_dups_svl  r)
+      | (sv1,sv2)::rest -> if CP.diff_svl [sv1;sv2] args = [] then
+          look_up rest args (r@[sv1;sv2])
+        else look_up rest args r
   in
   (*smart_subst always gives explicit eqs for args*)
   let extract_defined_eq r (_,args) eqs=
-    if List.length args = 2 then
-      r@(look_up eqs args)
-    else r
+    (* if List.length args = 2 then *)
+      r@(look_up eqs args [])
+    (* else r *)
   in
   (****END*********)
   let ( _,mix_f,_,_,_) = CF.split_components f in

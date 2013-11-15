@@ -1912,13 +1912,15 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (*   let fs1 = Gen.BList.remove_dups_eq (SAU.check_relaxeq_formula args) fs in *)
   (*   (a,hf,g, CF.disj_of_list fs1 (CF.pos_of_formula def))) n_hp_defs *)
   (* in *)
-  let post_defs2,tupled_defs = SAU.partition_tupled post_defs1 in
-  (*before inlining, we try do inter-unify*)
-  let post_defs2a = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps post_defs2 else  post_defs2 in
-  let post_defs3 = def_subst_fix prog dang_hps (post_defs2a@top_guard_hp_defs) in
+
+  (*move to infer_shape_proper for more general*)
+  (* let post_defs2,tupled_defs = SAU.partition_tupled post_defs1 in *)
+  (* (\*before inlining, we try do inter-unify*\) *)
+  (* let post_defs2a = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps post_defs2 else  post_defs2 in *)
+  (* let post_defs3 = def_subst_fix prog dang_hps (post_defs2a@top_guard_hp_defs) in *)
   {is with CF.is_constrs = [];
       CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
-      CF.is_hp_defs = post_defs3@tupled_defs}
+      CF.is_hp_defs = post_defs1@top_guard_hp_defs (* post_defs3@tupled_defs *)}
 
 let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_dang=
   let pr1 = Cprinter.string_of_infer_state_short in
@@ -2227,10 +2229,18 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     is_post
   in
   (*post-fix-synthesize*)
-  let is_post2 = if post_fix_constrs = [] then is_post1 else
+  let is_post2a = if post_fix_constrs = [] then is_post1 else
     let is_post_fix = {is_post1 with CF.is_constrs = post_fix_constrs} in
     let post_fix_act = IC.icompute_action_post_fix post_fix_hps in
     iprocess_action iprog prog proc_name callee_hps is_post_fix post_fix_act need_preprocess detect_dang
+  in
+  let is_post2 =
+    let dang_hps = unk_hps@link_hps in
+    let hp_defs1,tupled_defs = SAU.partition_tupled is_post2a.CF.is_hp_defs in
+    (*before inlining, we try do inter-unify*)
+    let hp_defs2 = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps hp_defs1 else hp_defs1 in
+    let hp_defs3 = def_subst_fix prog dang_hps (hp_defs2) in
+    {is_post2a with CF.is_hp_defs = hp_defs3@tupled_defs}
   in
   (*post-oblg*)
   let is_post_oblg1 = if post_oblg_constrs = [] then is_post2
