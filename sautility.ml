@@ -5185,12 +5185,12 @@ let partition_common_diff prog args unk_hps unk_svl f1 f2 pos=
    ) fs in
   let min,sh_ldns,sh_lvns,eqNulls,eqPures,hprels = get_min_common prog args unk_hps lldns_vns in
   if min = 0 (* && eqNulls = [] && eqPures= [] *) then
-    (false,CF.mkTrue (CF.mkTrueFlow()) pos ,fs)
+    (false,CF.mkTrue (CF.mkTrueFlow()) pos ,fs, [])
   else
     let sharing_f, n_args , sh_ldns2, sh_lvns2, next_roots = get_sharing prog unk_hps r non_r_args args sh_ldns sh_lvns eqNulls eqPures hprels unk_svl
     in
     let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 sh_lvns2 eqNulls eqPures hprels) lldns_vns in
-    (true, sharing_f,n_fs)
+    (true, sharing_f,n_fs, next_roots)
 
 let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
   (*****INTERNAL*****)

@@ -1914,7 +1914,7 @@ let infer_post_synthesize_x prog proc_name callee_hps is need_preprocess detect_
   (* in *)
   let post_defs2,tupled_defs = SAU.partition_tupled post_defs1 in
   (*before inlining, we try do inter-unify*)
-  let post_defs2a = SAC.pred_unify_inter prog dang_hps post_defs2 in
+  let post_defs2a = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps post_defs2 else  post_defs2 in
   let post_defs3 = def_subst_fix prog dang_hps (post_defs2a@top_guard_hp_defs) in
   {is with CF.is_constrs = [];
       CF.is_hp_equivs = is.CF.is_hp_equivs@unify_equiv_map2;
