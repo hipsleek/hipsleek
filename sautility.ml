@@ -1031,15 +1031,23 @@ let get_raw_defined_w_pure prog predef lhs rhs=
   Debug.no_3 "get_raw_defined_w_pure" pr2 pr1 pr1 pr2
       (fun _ _ _ -> get_raw_defined_w_pure_x prog predef lhs rhs) predef lhs rhs
 
-let filter_var prog svl f=
+let filter_var_x prog svl0 f=
   (* let (def_vs_wo_args, hd_nodes, hv_nodes, hrels, eqs) = find_defined_pointers_raw prog f in *)
   let hd_nodes,hv_nodes,hrels = CF.get_hp_rel_formula f in
   let ls_hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrels in
-  let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes svl in
-  let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in
+  let svl1 = List.fold_left (fun r (_,args) -> r@args) svl0 ls_hpargs in
+  let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes (svl0@svl1) in
+  let keep_ptrs1 = CP.remove_dups_svl (keep_ptrs@svl1) in
   let keep_hps = List.concat (List.map (get_intersect_hps keep_ptrs1) ls_hpargs) in
   CF.drop_data_view_hrel_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
       check_neq_hrelnode keep_ptrs1 keep_ptrs1 keep_hps
+
+let filter_var prog svl f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "CF.filter_var" pr2 pr1 pr1
+      (fun _ _ -> filter_var_x prog svl f)
+      svl f
 
 (*todo: merge three following functions in a higher-order function*)
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
@@ -3203,7 +3211,10 @@ let rec elim_irr_eq_exps prog args f=
     | CF.Base fb ->
           let hd_nodes,hv_nodes,hrels = CF.get_hp_rel_formula f in
           let keep_ptrs = look_up_closed_ptr_args prog hd_nodes hv_nodes args in
-          let keep_ptrs1 = CP.remove_dups_svl keep_ptrs in
+          let largs = List.fold_left (fun r (_,eargs,_) -> let svl= List.concat (List.map CP.afv eargs) in
+          if CP.intersect_svl svl keep_ptrs != [] then r@svl else r
+          ) [] hrels in
+          let keep_ptrs1 = CP.remove_dups_svl (keep_ptrs@largs) in
           let new_p,ss = remove_irr_eqs keep_ptrs1 (MCP.pure_of_mix fb.CF.formula_base_pure) in
           let _,new_p1 =  CP.prune_irr_neq new_p keep_ptrs1 in
           let new_h1 = CF.h_subst ss fb.CF.formula_base_heap in

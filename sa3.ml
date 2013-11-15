@@ -529,7 +529,13 @@ let get_par_defs_pre constrs0 =
     match op_res with
       | Some (hp, args,p) ->
           (* let _ = print_endline ("p: " ^ ( !CP.print_formula p)) in *)
-          ([(mk_pdef hp args cs.CF.unk_svl (CP.remove_redundant p) None cs.CF.hprel_guard (Some cs.CF.hprel_rhs), cs)], [])
+            let p1 = (CP.remove_redundant p) in
+            let ps1, ps2 = List.partition (fun p -> CP.intersect_svl (CP.fv p) args != []) (CP.split_conjunctions p1) in
+            let n_rhs = if ps1 = [] then cs.CF.hprel_rhs else
+              CF.mkAnd_pure cs.CF.hprel_rhs (MCP.mix_of_pure (CP.join_conjunctions ps2)) no_pos
+            in
+            ([(mk_pdef hp args cs.CF.unk_svl (CP.join_conjunctions ps1)
+                None cs.CF.hprel_guard (Some n_rhs), cs)], [])
       | None -> ([], [cs])
   in
   List.fold_left (fun (pdefs,rem_cs) cs ->
