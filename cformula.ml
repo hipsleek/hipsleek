@@ -13572,7 +13572,8 @@ let elim_e_var to_keep (f0 : formula) : formula =
 
 (* Function for collecting information *)
 (* TermInf: Collect data variables of DataNode and 
- * rank variables of ViewNode to build RankRel *)
+ * rank variables of ViewNode to build RankRel 
+ * OUTPUT: Vars and Impl Vars for RRel*)
 let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
   match h with 
   | Star s ->
@@ -13586,6 +13587,12 @@ let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var
       let rank_sv = TI.viewnode_rank_sv v.h_formula_view_name in
       (ViewNode { v with h_formula_view_rank = Some rank_sv; }, [rank_sv], [rank_sv])
   | _ -> (h, [], [])
+
+let collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
+  let pr1 = !print_h_formula in
+  let pr2 = !print_svl in
+  Debug.no_1 "collect_rankrel_vars_h_formula" pr1 (pr_triple pr1 pr2 pr2)
+  collect_rankrel_vars_h_formula h
 
 let collect_view_rank_h_formula (h: h_formula) : CP.spec_var list =
   let f h = match h with

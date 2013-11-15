@@ -827,13 +827,21 @@ and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): C
       CF.formula_inf_continuation = add_rank_constraint_struc_formula i.CF.formula_inf_continuation rtyp; }
 
 and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
+  let pr1 = !CF.print_formula in
+  let pr2 = !CF.print_svl in
+  Debug.no_1 "add_rank_constraint_formula" pr1 (pr_pair pr1 pr2)
+  (fun _ -> add_rank_constraint_formula_x f rtyp) f
+
+and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
   let add_rank_constraint_pure hf pf rtyp =
     let nhf, rankrel_vars, rankrel_ivars = CF.collect_rankrel_vars_h_formula hf in
     match rtyp with
     | VIEW rankrel_id ->
-        let rankrel_args, rankrel_base_vars = if rankrel_vars == [] then 
-          let base_var = TI.view_base_sv (CP.name_of_spec_var rankrel_id) in
-          [base_var], [base_var] else rankrel_vars, [] in
+        let rankrel_args, rankrel_base_vars = 
+          if rankrel_vars == [] (* Base case *) then 
+            let base_var = TI.view_base_sv (CP.name_of_spec_var rankrel_id) in
+            [base_var], [base_var] 
+          else rankrel_vars, [] in
         nhf,
         MCP.memoise_add_pure_N pf (CP.mkRankConstraint rankrel_id rankrel_args),
         rankrel_ivars @ rankrel_base_vars
@@ -869,7 +877,18 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
         CF.formula_base_heap = heap_base;
         CF.formula_base_pure = rankrel_pure_base; }, rankrel_ivars
     end
-  | _ -> f, []
+  | CF.Exists e -> 
+      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
+        e.CF.formula_exists_heap e.CF.formula_exists_pure rtyp in
+      CF.Exists { e with
+        CF.formula_exists_qvars = e.CF.formula_exists_qvars @ rankrel_ivars;
+        CF.formula_exists_heap = heap_base;
+        CF.formula_exists_pure = rankrel_pure_base;
+      }, []
+  | CF.Or o ->
+      let f1, i1 = add_rank_constraint_formula_x o.CF.formula_or_f1 rtyp in
+      let f2, i2 = add_rank_constraint_formula_x o.CF.formula_or_f2 rtyp in
+      CF.Or { o with CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; }, i1@i2
 
 
 (*transform labels into exceptions, remove the finally clause,
