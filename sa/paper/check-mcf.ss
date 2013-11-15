@@ -51,6 +51,7 @@ infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 }
 
 
+
 bool check_child (node l, node prv, tree par)
 //requires l::dll<par, prv>@L ensures  res;
  infer [H1,G1,H2,G2] requires H2(l,prv,par) ensures G2(l,prv,par) & res;
@@ -65,6 +66,41 @@ bool check_child (node l, node prv, tree par)
 }
 
 /*
+
+check-mcf.ss --pred-en-equiv
+
+Why are post-conditions printed before precondition?
+Where is the definition of G2? Why is it circular?
+Why aren't G1 & H1 made equal. 
+
+[ G1(t_1189) ::=children_48_1077::G2<n_1099,t_1189>@M * 
+  t_1189::tree<val_48_1076,children_48_1077>@M&n_1099=null,
+ G2(l_1186,prv_1187,par_1188) ::=l_1186::G2<prv_1187,par_1188>@M,
+ H1(t_1161) ::=t_1161::tree<val_48_1076,children_48_1077>@M * 
+  children_48_1077::G2<n_38',t_1161>@M&n_38'=null,
+ H2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M]
+
+check-mcf.ss --pred-unify-inter
+
+[ G1(t_1189) ::= G2(children_48_1077,n_1099,t_1189) * 
+t_1189::tree<val_48_1076,children_48_1077>@M,
+ G2(l_1186,prv_1187,par_1188) ::= 
+ l_1186::node<child_60_999,prv_1187,next_60_1001,par_1188>@M * 
+ G2(next_60_1001,l_1186,par_1188) * 
+ G2(children_48_1077,n_1099,child_60_999) * 
+ child_60_999::tree<val_48_1076,children_48_1077>@M
+ or emp&l_1186=null
+ ,
+ H1(t_1161) ::= t_1161::tree<val_48_1076,children_48_1077>@M * 
+H2(children_48_1077,n_38',t_1161),
+ H2(l_1183,prv_1184,par_1185) ::= 
+ emp&l_1183=null
+ or H2(next_60_1124,l_1183,par_1185) * 
+    l_1183::node<child_60_1122,prev_60_1123,next_60_1124,parent_60_1125>@M * 
+    child_60_1122::tree<val_48_1076,children_48_1077>@M * 
+    H2(children_48_1077,n_38',child_60_1122)&prev_60_1123=prv_1184 & 
+    par_1185=parent_60_1125
+ ]
 
 # check_tree
 

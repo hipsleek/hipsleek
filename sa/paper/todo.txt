@@ -453,6 +453,18 @@ ExceptionNot_foundOccurred!
   dll4 is similar to inferred result but it cannot be re-verified!
 
 ==================================================================
+check-mcf.ss --pred-en-equiv
+
+Why are post-conditions printed before precondition?
+Where is the definition of G2? Why is it circular?
+Why aren't G1 & H1 made equal. 
+
+[ G1(t_1189) ::=children_48_1077::G2<n_1099,t_1189>@M * 
+  t_1189::tree<val_48_1076,children_48_1077>@M&n_1099=null,
+ G2(l_1186,prv_1187,par_1188) ::=l_1186::G2<prv_1187,par_1188>@M,
+ H1(t_1161) ::=t_1161::tree<val_48_1076,children_48_1077>@M * 
+  children_48_1077::G2<n_38',t_1161>@M&n_38'=null,
+ H2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M]
 ==================================================================
 ==================================================================
 ==================================================================

@@ -553,6 +553,7 @@ let common_arguments = [
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");
   ("--pred-unify-inter", Arg.Set Globals.pred_unify_inter, "unify inter definition of predicates. before inlining");
+  ("--pred-dis-unify-inter", Arg.Clear Globals.pred_unify_inter, "disable unify inter definition of predicates. before inlining");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)

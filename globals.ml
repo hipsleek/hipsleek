@@ -718,7 +718,7 @@ let pred_equiv = ref false
 
 let pred_unify_post = ref false
 
-let pred_unify_inter = ref false
+let pred_unify_inter = ref true
 
 let sa_tree_simp = ref false
 
