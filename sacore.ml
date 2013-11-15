@@ -2033,7 +2033,7 @@ let reverify_cond prog (unk_hps: CP.spec_var list) link_hps hpdefs cond_equivs=
 (**********       INTER-UNIFY       ***************)
 (*************************************************)
 (*work with two branches first. to improve*)
-let pred_unify_inter_x proc dang_hps hp_defs=
+let pred_unify_inter_x prog dang_hps hp_defs=
   (**************** INTERNAL ****************)
   let is_inter_hpdef d=
     let hp = CF.get_hpdef_name d.CF.def_cat in
@@ -2063,10 +2063,10 @@ let pred_unify_inter_x proc dang_hps hp_defs=
         (fun _ _ -> check_pure_exist_x p f) p f
   in
   (*to improve*)
-  let do_inter_unify hp_def other_hpdefs dep_hp (pf,p_og) (dep_f, dep_og)=
+  let do_inter_unify hp_def other_hpdefs r dep_hp (pf,p_og) (dep_f, dep_og)=
     let _ = DD.ninfo_hprint (add_str "dep_hp" !CP.print_sv) dep_hp no_pos in
     match hp_def.CF.def_cat with
-      | CP.HPRelDefn (hp ,r, other_args) -> begin
+      | CP.HPRelDefn (hp ,_, other_args) -> begin
           (*find pure constraint p on root of pf - to improve*)
           let r_ps, other = List.partition (fun p -> CP.diff_svl (CP.fv p) [r] =[] )
             (CP.split_conjunctions (CF.get_pure pf) ) in
@@ -2098,17 +2098,35 @@ let pred_unify_inter_x proc dang_hps hp_defs=
       | _ -> (false, hp_def)
   in
   let find_inter hp_def other_hpdefs=
-    let fs = List.fold_left (fun r (f,g) -> r@(List.map (fun f1 -> (f1,g)) (CF.list_of_disjs f))) [] hp_def.CF.def_rhs in
-    match fs with
-      | [(f1,og1);(f2,og2)] -> begin
-            let dep_hps1 = CF.get_hp_rel_name_formula f1 in
-            let dep_hps2 = CF.get_hp_rel_name_formula f2 in
-            match dep_hps1,dep_hps2 with
-              | [dep_hp],[] -> do_inter_unify hp_def other_hpdefs dep_hp (f2,og2) (f1,og1)
-              | [], [dep_hp] -> do_inter_unify hp_def other_hpdefs dep_hp (f1,og1) (f2, og2)
-              | _ ->  (false, hp_def)
+    let fs0 = List.fold_left (fun r (f,g) -> r@(List.map (fun f1 -> (f1,g)) (CF.list_of_disjs f))) [] hp_def.CF.def_rhs in
+    match hp_def.CF.def_cat with
+      | CP.HPRelDefn (hp ,r, other_args) -> begin
+          match fs0 with
+            | [(f1,og1);(f2,og2)] -> begin
+                (*extract common*)
+                let is_common, sharing_f0, n_fs, new_roots = SAU.partition_common_diff prog (r::other_args) dang_hps [] f1 f2 no_pos in
+                let fs, n_r, sharing_f = if is_common && List.length new_roots = 1 then
+                  n_fs, List.hd new_roots, sharing_f0
+                else ([f1;f2], r, CF.mkTrue_nf no_pos)
+                in
+                let f1,f2 = match fs with
+                  | [f1;f2] -> f1,f2
+                  | _ -> report_error no_pos "SAC.ind_inter"
+                in
+                let dep_hps1 = CF.get_hp_rel_name_formula f1 in
+                let dep_hps2 = CF.get_hp_rel_name_formula f2 in
+                let b, n_hp_def = match dep_hps1,dep_hps2 with
+                  | [dep_hp],[] -> do_inter_unify hp_def other_hpdefs n_r dep_hp (f2,og2) (f1,og1)
+                  | [], [dep_hp] -> do_inter_unify hp_def other_hpdefs n_r dep_hp (f1,og1) (f2, og2)
+                  | _ ->  (false, hp_def)
+                in
+                if b then (b, {n_hp_def with CF.def_rhs =
+                        List.map (fun (f, og) -> (CF.mkStar f sharing_f CF.Flow_combine no_pos,og)) n_hp_def.CF.def_rhs})
+                else (false, hp_def)
+              end
+            | _ -> (false,hp_def)
         end
-      | _ -> (false,hp_def)
+      | _ -> (false, hp_def)
   in
   let rec do_one_step_inter rest done_hpdefs non_inter_hpdefs=
     match rest with
@@ -2124,11 +2142,11 @@ let pred_unify_inter_x proc dang_hps hp_defs=
   let inter_hp_defs1 = do_one_step_inter inter_hp_defs [] rem in
   (inter_hp_defs1@rem)
 
-let pred_unify_inter proc dang_hps hp_defs=
+let pred_unify_inter prog dang_hps hp_defs=
   let pr1 = !CP.print_svl in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_2 "pred_unify_inter" pr1 pr2 pr2
-      (fun _ _ -> pred_unify_inter_x proc dang_hps hp_defs)
+      (fun _ _ -> pred_unify_inter_x prog dang_hps hp_defs)
       dang_hps hp_defs
 
 (*=============**************************================*)

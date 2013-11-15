@@ -5224,7 +5224,7 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
      else (pure_f1, f2)
   in
   (*******END*********)
-  let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
+  let is_common, sharing_f, n_fs,_ = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
   if not is_common then
     let b1 = is_empty_heap_f f1 in
     let b2 = is_empty_heap_f f2 in
@@ -5300,7 +5300,7 @@ let simplify_disj prog args unk_hps unk_svl f1 f2 pos=
 
 let perform_conj_unify_post_x prog args unk_hps unk_svl fs pos=
   match fs with
-    | [f1;f2] -> let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
+    | [f1;f2] -> let is_common, sharing_f, n_fs, _ = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
       if not is_common then fs else
         if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
           let ps = List.map (fun f -> CF.get_pure f) n_fs in
@@ -5438,7 +5438,7 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
   else if CF.isStrictConstTrue f1 then Some (f2, equivs)
   else if CF.isStrictConstTrue f2 then Some (f1, equivs)
   else
-    let is_common, sharing_f, n_fs = partition_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+    let is_common, sharing_f, n_fs,_ = partition_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
     if not is_common then None else
       match n_fs with
         | [] -> None
