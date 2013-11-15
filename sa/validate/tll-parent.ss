@@ -27,19 +27,15 @@ node set_right (node p, node x, node t)
   infer [H,G] requires H(p,x,t) ensures G(p,x,res,t);
   //requires x::tree<p> ensures x::tll<p,res,t>;
 {
-  //node xr = x.right;
-  //node xl = x.left;
-  node tmp = x.parent;
-  assume tmp'!=p;//'
+x.parent=p;
+dprint;
   if (x.right==null) 
   	{
-//		assert xl'=null;
   	  	x.next = t;
   	  	return x;
   	}
   else 
   	{
-//		assert xr'!=null & xl'!=null;
                 node l_most = set_right(x,x.right, t);
                  return set_right(x,x.left, l_most);  		
   	}

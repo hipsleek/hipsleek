@@ -82,8 +82,8 @@ bool check_tree (tree t)
 //requires t::treep3<>@L ensures res;//fail
 //requires t::treep2<>@L ensures res; //fail
 //requires t::treep<>@L ensures res;
-requires t::treep<> ensures t::treep<> & res;
-//infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
+//requires t::treep<> ensures t::treep<> & res;
+infer [H1,G1,H2,G2] requires H1(t) ensures G1(t) & res;
 {
    //node n = null;
    if (t.children==null) return true;
@@ -97,8 +97,8 @@ bool check_child (node l, tree par)
 // requires l::dll3<par>@L ensures  res;//fail
 //  requires l::dll2<par>@L ensures  res;//fail
 //requires l::dll<par>@L ensures res;
-requires l::dll<par> ensures  l::dll<par> & res;
-//infer [H1,G1,H2,G2] requires H2(l,par) ensures G2(l,par) & res;
+//requires l::dll<par> ensures  l::dll<par> & res;
+infer [H1,G1,H2,G2] requires H2(l,par) ensures G2(l,par) & res;
 {
 	if (l==null) return true;
 	else if (l.parent==par) 
