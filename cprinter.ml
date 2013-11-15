@@ -798,6 +798,22 @@ let pr_xpure_view xp = match xp with
 
 let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
 
+(* TermInf: Printing ranking constraints *)
+let pr_rank_arg ra = 
+  pr_spec_var ra.CP.rank_arg_id;
+  fmt_string (match ra.CP.rank_arg_type with | CP.ConstRVar -> "@C" | _ -> "")
+;;
+
+let string_of_rank_arg = poly_string_of_pr pr_rank_arg ;;
+
+let rec string_of_rank_arg_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_rank_arg h 
+  | h::t -> (string_of_rank_arg h) ^ "," ^ (string_of_rank_arg_list_noparen t)
+;;
+
+let string_of_rank_arg_list l = "["^(string_of_rank_arg_list_noparen l)^"]" ;;
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -816,7 +832,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.RankRel rrel ->
         fmt_string (string_of_spec_var rrel.CP.rank_id); 
         fmt_string (" = RR_" ^ (string_of_int rrel.CP.rel_id) ^ "("); 
-        fmt_string (string_of_spec_var_list rrel.CP.rank_args); 
+        fmt_string (string_of_rank_arg_list rrel.CP.rank_args); 
         fmt_string ")"
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
@@ -2280,16 +2296,6 @@ let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
-(* TermInf: Printing ranking constraints *)
-let pr_rrel (rr: rrel) =
-  fmt_string "DEC ";
-  pr_mix_formula rr.rrel_ctx;
-  fmt_string " |- ";
-  pr_mix_formula rr.rrel_ctr
-;;
-
-let string_of_rrel = poly_string_of_pr pr_rrel ;; 
-
 let rec pr_struc_formula  (e:struc_formula) = match e with
     | ECase { formula_case_branches  =  case_list ; formula_case_pos = _} ->
 		  fmt_string "ECase ";
@@ -2447,7 +2453,15 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
+(* TermInf: Printing ranking constraints *)
+let pr_rrel (rr: rrel) =
+  fmt_string "DEC ";
+  pr_mix_formula rr.rrel_ctx;
+  fmt_string " |- ";
+  pr_mix_formula rr.rrel_ctr
+;;
 
+let string_of_rrel = poly_string_of_pr pr_rrel ;;
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
@@ -3930,6 +3944,7 @@ Cformula.print_failesc_context := string_of_failesc_context;;
 Cformula.print_path_trace := string_of_path_trace;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_list_int := string_of_list_int;;
+Cformula.print_rank_arg_list := string_of_rank_arg_list;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

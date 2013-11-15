@@ -290,6 +290,7 @@ let print_spec_var = print_sv
 let print_spec_var_list = print_svl
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+let print_rank_arg_list = ref (fun (rl: CP.rank_arg list) -> "printer has not been initialized")
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
 let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
@@ -13573,26 +13574,36 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (* Function for collecting information *)
 (* TermInf: Collect data variables of DataNode and 
  * rank variables of ViewNode to build RankRel 
- * OUTPUT: Vars and Impl Vars for RRel*)
-let rec collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
+ * OUTPUT: Vars and Impl Vars for RRel and is_rec_case of view *)
+let rec collect_rankrel_vars_h_formula (h: h_formula) (view_ids: string list) 
+  : (h_formula * CP.rank_arg list * CP.spec_var list * bool) =
   match h with 
   | Star s ->
-      let h1, r1, e1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 in 
-      let h2, r2, e2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 in
+      let h1, r1, e1, ir1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 view_ids in 
+      let h2, r2, e2, ir2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 view_ids in
       (Star { s with h_formula_star_h1 = h1; h_formula_star_h2 = h2; },
-      r1 @ r2, e1 @ e2)
+      r1 @ r2, e1 @ e2, ir1 || ir2)
   | DataNode { h_formula_data_arguments = args } ->
-      (h, List.filter (fun sv -> CP.is_int_var sv) args, [])
+      let iargs = List.filter (fun sv -> CP.is_int_var sv) args in
+      let ragrs = List.map CP.mkRArg_var iargs in
+      (h, ragrs, [], false)
   | ViewNode v ->
-      let rank_sv = TI.viewnode_rank_sv v.h_formula_view_name in
-      (ViewNode { v with h_formula_view_rank = Some rank_sv; }, [rank_sv], [rank_sv])
-  | _ -> (h, [], [])
+      let rarg = TI.view_var_ragr v.h_formula_view_name in
+      let rarg_id = rarg.CP.rank_arg_id in
+      (ViewNode { v with h_formula_view_rank = Some rarg_id; }, [rarg], [rarg_id],
+      Gen.BList.mem_eq (=) v.h_formula_view_name view_ids)
+  | _ -> (h, [], [], false)
 
-let collect_rankrel_vars_h_formula (h: h_formula) : (h_formula * CP.spec_var list * CP.spec_var list) = 
+let collect_rankrel_vars_h_formula (h: h_formula) (view_ids: string list)
+  : (h_formula * CP.rank_arg list * CP.spec_var list * bool) = 
   let pr1 = !print_h_formula in
   let pr2 = !print_svl in
-  Debug.no_1 "collect_rankrel_vars_h_formula" pr1 (pr_triple pr1 pr2 pr2)
-  collect_rankrel_vars_h_formula h
+  let pr3 = string_of_bool in
+  let pr4 = pr_list (fun s -> s) in
+  let pr5 = !print_rank_arg_list in
+  Debug.no_2 "collect_rankrel_vars_h_formula" pr1 pr4 
+  (fun (a, b, c, d) -> pr_pair (pr_triple pr1 pr5 pr2) pr3 ((a, b, c), d))
+  collect_rankrel_vars_h_formula h view_ids
 
 let collect_view_rank_h_formula (h: h_formula) : CP.spec_var list =
   let f h = match h with

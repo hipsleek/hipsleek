@@ -139,10 +139,19 @@ and lex_info = {
     lex_loc : loc; (* location of LexVar *)
 }
 
+and rank_var_type =
+  | ConstRVar
+  | RVar
+
+and rank_arg = {
+  rank_arg_id: spec_var;
+  rank_arg_type: rank_var_type; 
+}
+
 and rankrel = {
   rel_id: int;
   rank_id: spec_var;
-  rank_args: spec_var list;
+  rank_args: rank_arg list;
 }
 
 and p_formula =
@@ -997,6 +1006,12 @@ and remove_qvar qid qf =
   let qfv = fv_helper qf in
   Gen.BList.difference_eq eq_spec_var qfv [qid]
 
+(* TermInf: FV for rank args *)
+and rank_arg_fv ra = ra.rank_arg_id
+
+and rankrel_fv rr = 
+  rr.rank_id :: (List.map rank_arg_fv rr.rank_args)
+
 and bfv (bf : b_formula) =
   let (pf,_) = bf in
   match pf with
@@ -1056,7 +1071,7 @@ and bfv (bf : b_formula) =
     | VarPerm (t,ls,_) -> ls
     | LexVar l_info ->
           List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
-    | RankRel rrel -> rrel.rank_id :: rrel.rank_args 
+    | RankRel rrel -> rankrel_fv rrel 
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -1791,6 +1806,12 @@ and mkLexVar_pure a l1 l2 =
 
 and mkRankConstraint view_rank_sv data_rank_args =
   mkPure (mkRankRel view_rank_sv data_rank_args)
+
+and mkRArg_var id = 
+  { rank_arg_id = id; rank_arg_type = RVar; }
+
+and mkRArg_const id = 
+  { rank_arg_id = id; rank_arg_type = ConstRVar; }
 
 and mkBVar_pure v p pos = mkPure (mkBVar v p pos)
 
@@ -2994,7 +3015,8 @@ and b_apply_subs_x sst bf =
     | RankRel (rrel as r) -> 
         RankRel { r with
           rank_id = subs_one sst rrel.rank_id;
-          rank_args = List.map (subs_one sst) rrel.rank_args; }
+          rank_args = List.map (fun ra -> 
+            { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) rrel.rank_args; }
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
