@@ -224,6 +224,102 @@ Total verification time: 0.39 second(s)
  Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
 
 ==========================================================
+# tll.ss --sa-dp --reverify-all
+
+(1) You should at least print relational assumption and synthesized
+predicates.
+(2) Both examples below fail, and for different reasons.
+ Not sure why we have two kind of --reverify.
+ Is one done by Thai? Can't you use the same option?
+
+WN
+
+--reverify-all
+
+!!!Full processing file "tll.ss"
+Parsing file "tll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Procedure set_right$node~node SUCCESS.
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,t)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null]]
+!!! re-verify
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (must) cause: Cannot infer heap and pure 2
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+Procedure set_right$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop Omega... 128 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.21,375)
+Total verification time: 0.46 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.07 second(s)
+
+--reverify
+
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+( []) :tll.ss:31: 6: bind: node  x'::node<left_31_914',right_31_915',next_31_916'>@L cannot be derived from context
+
+
+(Cause of Bind Failure):tll.ss:31: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+ ]
+
+Procedure set_right$node~node result FAIL.(1)
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null]]Stop Omega... 114 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.14,335)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.06 second(s)
+
 ==========================================================
 ==========================================================
 ==========================================================
