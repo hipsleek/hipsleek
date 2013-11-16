@@ -466,6 +466,46 @@ Why aren't G1 & H1 made equal.
   children_48_1077::G2<n_38',t_1161>@M&n_38'=null,
  H2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M]
 ==================================================================
+# zip_paper_eq.ss --pred-en-split
+
+This split is unsound since it considered only -->,
+rather than <-->. In case of -->, you can only apply to
+pre-condition. We should also match with existing predicates.
+
+You should print pre-pred before post-pred.
+You should also re-use predicate by default.
+
+What are the 2 other kinds of split below:
+
+  ("--sa-en-sp-split", Arg.Set Globals.sa_sp_split_base, "enable special base case split at entailment");
+  ("--sa-dis-sp-split", Arg.Clear Globals.sa_sp_split_base, "disable special base case split at entailment");
+  ("--sa-en-split", Arg.Set Globals.sa_infer_split_base, "enable base case splitting of relational assumption at shape infer");
+  ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
+
+[ G(x_1035,y_1036,res_1037) ::= HP_1040(x_1035) * HP_1041(y_1036) * HP_1042(res_1037),
+ H(x_1033,y_1034) ::= HP_1038(x_1033) * HP_1039(y_1034),
+ HP_1038(x_1033) ::= 
+ emp&x_1033=null
+ or HP_1038(next_30_1020) * x_1033::node<val_30_1019,next_30_1020>@M
+ ,
+ HP_1039(y_1034) ::= 
+ emp&y_1034=null
+ or HP_1039(next_30_1018) * y_1034::node<val_30_1017,next_30_1018>@M
+ ,
+ HP_1040(x_1035) ::= 
+ emp&x_1035=null
+ or x_1035::node<val_30_959,next_30_960>@M * HP_1040(next_30_960)
+ ,
+ HP_1041(y_1036) ::= 
+ emp&y_1036=null
+ or y_1036::node<val_30_967,next_30_968>@M * HP_1041(next_30_968)
+ ,
+ HP_1042(res_1037) ::= 
+ emp&res_1037=null
+ or HP_1042(v_node_30_994) * res_1037::node<v_int_30_993,v_node_30_994>@M
+ ]
+
+
 ==================================================================
 ==================================================================
 ==================================================================
