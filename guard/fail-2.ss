@@ -10,8 +10,10 @@ ls<p,n> == self=p & n=0
   or self::node<q>*q::ls<p,n-1> & self!=p
   inv n>=0;
 
+/*
 lemma_safe self::ls<p,n> & a+b=n & a>=0 & b>=0 
   <-> self::ls<r,a>*r::ls<p,b>;
+*/
 
 void loop(node@R l1, node@R l2) 
   requires (l2::ls<null,n>@L & l1::ls<q,n-1>@L) & n>0   
