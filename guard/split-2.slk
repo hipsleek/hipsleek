@@ -1,0 +1,41 @@
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred G(node a).
+HeapPred H0(node a).
+HeapPred H1(node a).
+
+/*
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null & lf8=null --> G(x).
+
+shape_split_base [H0,H1][G].
+
+
+*/
+
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> 
+   //& lf8=null  
+   --> G(x).
+
+shape_split_base [H0,H1][G].
+
+/*
+# split-1.slk
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M * H0(lf8) & r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> htrue,
+  H1(r9)&r9=null --> emp]
+
+*/
