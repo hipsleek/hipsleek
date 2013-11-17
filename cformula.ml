@@ -13658,3 +13658,8 @@ let collect_rrel_list_failesc_context (ctx: list_failesc_context) : rrel list =
   in
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
+
+let subst_rankrel_sol_struc_formula subst (f: struc_formula) =
+  let f_p_f pf = Some (CP.subst_rankrel_sol_formula subst pf) in
+  transform_struc_formula 
+    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f

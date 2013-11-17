@@ -2851,4 +2851,10 @@ let get_rel_ctr (mf: mix_formula) (vl: spec_var list) : mix_formula =
   | MemoF f -> 
       MemoF (List.filter (fun m -> 
         Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) f)
-  | OnePF f -> mf
+  | OnePF f -> 
+      let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
+      let simp_mf = List.filter (fun m -> 
+        Gen.BList.overlap_eq eq_spec_var m.memo_group_fv vl) mf in
+      OnePF (pure_of_mix (MemoF simp_mf))
+
+

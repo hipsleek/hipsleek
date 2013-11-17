@@ -115,8 +115,8 @@ let rec smt_of_exp a =
   | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-  | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
   | CP.Bag ([], _) -> "0"
   | CP.Max _
@@ -139,7 +139,7 @@ let rec smt_of_exp a =
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
 
-let rec smt_of_b_formula ?solve_rrel:(s_rrel = false) b =
+let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
@@ -177,10 +177,7 @@ let rec smt_of_b_formula ?solve_rrel:(s_rrel = false) b =
   | CP.BagIn (v, e, l)    -> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
   | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
-  | CP.RankRel rr ->
-      let b_rr, const_vars, arg_vars, nneg_vars = CP.b_formula_of_rankrel rr in
-      if s_rrel then smt_of_b_formula b_rr
-      else "true"
+  | CP.RankRel rr -> "true"
   | CP.BagMax _ | CP.BagMin _ -> 
       illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
   | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
@@ -208,19 +205,19 @@ let rec smt_of_b_formula ?solve_rrel:(s_rrel = false) b =
         "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
   | CP.XPure _ -> Error.report_no_pattern ()
 
-let rec smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
+let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with
-        | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula ~solve_rrel:s_rrel bf)
+        | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
         | Some f -> let _ = Debug.devel_pprint ("SOME #") no_pos in helper f
       )
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula ~solve_rrel:s_rrel pr_s pr_w p) ^ ")"
+    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
     | CP.Forall (sv, p, _,_) ->
         "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
     | CP.Exists (sv, p, _,_) ->
@@ -228,14 +225,14 @@ let rec smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
   ) in
   helper f
 
-let smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
+let smt_of_formula pr_w pr_s f =
   let _ = set_prover_type () in
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
-    (fun _ -> smt_of_formula ~solve_rrel:s_rrel pr_w pr_s f) f
+    (fun _ -> smt_of_formula pr_w pr_s f) f
 
 
-let smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
-  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula ~solve_rrel:s_rrel pr_w pr_s f) f
+let smt_of_formula pr_w pr_s f =
+  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula pr_w pr_s f) f
 
 (***************************************************************
                        FORMULA INFORMATION                      
@@ -444,7 +441,7 @@ let rec collect_output chn accumulated_output : string list =
       | End_of_file -> accumulated_output in
   output
 
-let sat_type_from_string r input=
+let sat_type_from_string r input =
   if (r = "sat") then Sat
   else if (r = "unsat") then UnSat
   else
@@ -455,7 +452,7 @@ let sat_type_from_string r input=
     with
       | Not_found -> Unknown
 
-let iget_answer chn input=
+let iget_answer chn input =
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
@@ -1088,16 +1085,111 @@ let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 
 (* TermInf: Using Z3 to solve ranking relation constraints *)
+let rec process_output (channel: in_channel) : string option =
+  let first_line = input_line channel in
+  let _ = print_endline first_line in
+  if (first_line = "sat") then
+    Some (collect_model channel)
+  else None
+
+and collect_model (channel: in_channel) : string =
+  let helper acc = 
+    try
+      let line = input_line channel in
+      let _ = print_endline line in
+      acc ^ "\n" ^ line
+    with End_of_file -> acc
+  in helper ""
+
+
+let send_and_receive f timeout =
+  let tstartlog = Gen.Profiling.get_time () in 
+  if not !is_z3_running then start ()
+  else if (!z3_call_count = !z3_restart_interval) then (
+    restart("Regularly restart: 1 ");
+    z3_call_count := 0;
+  );
+  let fnc f = (
+    let _ = incr z3_call_count in
+    (*due to global stack - incremental, push current env into a stack before working and
+      removing it after that. may be improved *)
+    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let _ = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
+    output_string (!prover_process.outchannel) new_f;
+    flush (!prover_process.outchannel);
+    process_output (!prover_process.inchannel)
+  ) in
+  let fail_with_timeout () = (
+    restart ("[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+    None 
+  ) in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
+  let tstoplog = Gen.Profiling.get_time () in
+  let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
+  res
+
+let rrel_to_smt ante conseq const_c var_c nneg_c =
+  let p = no_pos in
+
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+    let tp = (CP.type_of_spec_var v)in
+    let t = smt_of_typ tp in
+    (* "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n" *)
+    "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ (t) ^ ")\n"
+  ) const_c in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  (* Assertion for non-negative constant variables *)
+  let smt_nneg_asserts = List.map (fun c -> "(assert " ^ 
+    (smt_of_b_formula (CP.mkGte (CP.mkVar c p) (CP.mkIConst 0 p) p, None)) ^ ")\n"
+  ) nneg_c in
+  let smt_nneg_asserts = String.concat "" smt_nneg_asserts in
+
+  let conseq = match nneg_c with
+  | [] -> conseq
+  | _ -> 
+      let p = no_pos in
+      let nneg_r = List.hd (List.tl (CP.fv conseq)) in
+      let nneg_c = CP.mkPure (CP.mkGte (CP.mkVar nneg_r p) (CP.mkIConst 0 p) p) in
+      CP.mkAnd conseq nneg_c p
+  in
+
+  (* Implication for ranking relation *)
+  let var_c = Gen.BList.difference_eq CP.eq_spec_var (CP.fv_preserved_order ante) const_c in
+  let smt_params = String.concat " " (List.map smt_of_typed_spec_var var_c) in
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let rrel_assert = 
+      "(assert " ^ 
+        (if var_c = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
+          "\t(implies " ^ " " ^ (smt_of_formula pr_w pr_s ante) ^ 
+          "\n\t" ^ (smt_of_formula pr_w pr_s conseq) ^ ")" ^ (* close the main part of assert *)
+        (if var_c = [] then "" else ")") (* close the forall if added *) ^ 
+      ")\n"  ^ (* close the assert *) 
+      "(check-sat)\n" ^ 
+      "(get-model)"
+  in
+  ";Variables Declarations\n" ^ smt_var_decls ^
+  ";Non-negative Assertion\n" ^ smt_nneg_asserts ^
+  ";Ranking Assertion\n" ^ rrel_assert
+
+
 let solve_rrel (rrel: CF.rrel) = 
   let ctx = MCP.pure_of_mix rrel.CF.rrel_ctx in
   let ctr = MCP.pure_of_mix rrel.CF.rrel_ctr in
-  let (pr_w,pr_s) = CP.drop_complex_ops in
-  let _ = print_endline ("CTX_R: " ^ (!CP.print_formula (CP.replace_rankrel_by_b_formula ctx))) in
-  let _ = print_endline ("CTR_R: " ^ (!CP.print_formula ctr)) in
+  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
+  let smt_of_rrel = rrel_to_smt nctx ctr const_c var_c nneg_c in
 
-  let _ = print_endline ("CTX: " ^ (smt_of_formula ~solve_rrel:true pr_w pr_s ctx)) in
-  let _ = print_endline ("CTR: " ^ (smt_of_formula ~solve_rrel:true pr_w pr_s ctr)) in
-  ()
+  let res = run "" "z3" smt_of_rrel 5.0 in
+
+  let res_txt = res.original_output_text in
+
+  if (List.hd res_txt) = "sat" then
+    let inp = String.concat "\n" (List.tl res_txt) in
+    let lexbuf = Lexing.from_string inp in
+    let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
+    sol
+  else []
 
 let rec solve_rrel_list rrel_list =
-  List.iter solve_rrel rrel_list
+  List.concat (List.map solve_rrel rrel_list)

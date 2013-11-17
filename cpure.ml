@@ -940,6 +940,11 @@ let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Gen.BList.remove_dups_eq eq_spec_var tmp in
   res
+
+and fv_preserved_order (f : formula) : spec_var list =
+  let tmp = fv_helper f in
+  let res = Gen.BList.remove_dups_eq_reserved_order eq_spec_var tmp in
+  res
       
 and check_dups_svl ls = 
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
@@ -11375,7 +11380,9 @@ let b_formula_of_rankrel (rr: rankrel) =
   let coe_prefix = "c_" ^ (string_of_int rr.rel_id) ^ "_" in
   let const_coes, nneg_const_coes = match rank_const_args with
   | [] -> [SpecVar (Int, coe_prefix ^ (string_of_int 0), Unprimed)], []
-  | [c] -> let cid = c.rank_arg_id in [cid], [cid]
+  | [c] -> 
+      let cid = c.rank_arg_id in 
+      [cid], if rank_var_args = [] then [cid] else []
   | _ -> List.map (fun ra -> ra.rank_arg_id) rank_const_args, [] in
   let const_exp = List.fold_left (fun a c -> mkAdd a (mkVar c p) p) 
     (mkVar (List.hd const_coes) p) (List.tl const_coes) in
@@ -11385,13 +11392,50 @@ let b_formula_of_rankrel (rr: rankrel) =
     (i+1, (mkAdd a (mkMult (mkVar c p) (mkVar v p) p) p, cs@[c])))
   (1, (const_exp, [])) rank_var_svs) in
   mkEq_b (mkVar rr.rank_id p) exp p, 
-  const_coes @ var_coes, rank_var_svs, nneg_const_coes
+  const_coes @ var_coes, rr.rank_id::rank_var_svs, nneg_const_coes
+
+let b_formula_of_rankrel_sol (rr: rankrel) subst =
+  let p = no_pos in
+  let rank_var_args, rank_const_args = List.partition (fun ra ->
+    match ra.rank_arg_type with | RVar -> true | _ -> false) rr.rank_args in
+  let coe_prefix = "c_" ^ (string_of_int rr.rel_id) ^ "_" in
+    
+  let find_val_of_c c subst = 
+    try List.assoc (name_of_spec_var c) subst
+    with _ -> 0
+  in
+  let const_coes = match rank_const_args with
+  | [] -> [SpecVar (Int, coe_prefix ^ (string_of_int 0), Unprimed)]
+  | _ -> List.map (fun ra -> ra.rank_arg_id) rank_const_args in
+  let const_exp = mkIConst
+    (List.fold_left (fun a c -> a + (find_val_of_c c subst)) 0 const_coes) p in
+
+  let rank_var_svs = List.map (fun ra -> ra.rank_arg_id) rank_var_args in
+  let exp = snd (List.fold_left (fun (i, a) v ->
+    let c = SpecVar (Int, coe_prefix ^ (string_of_int i), Unprimed) in
+    let c_val = find_val_of_c c subst in
+    if c_val == 0 then (i+1, a)
+    else (i+1, (mkAdd a (mkMult (mkIConst c_val p) (mkVar v p) p) p)))
+    (1, const_exp) rank_var_svs) in
+  mkEq_b (mkVar rr.rank_id p) exp p 
   
-let replace_rankrel_by_b_formula (f: formula) : formula =
-  let f_b_f b = 
+let replace_rankrel_by_b_formula (f: formula) =
+  let f_b_f arg b = 
     let (pf, _) = b in
     match pf with
     | RankRel rr -> 
-      let nb, _, _, _ = b_formula_of_rankrel rr in Some nb
+      let nb, const_coes, arg_coes, nneg_coes = b_formula_of_rankrel rr in 
+      Some (nb, (const_coes, arg_coes, nneg_coes))
+    | _ -> Some (b, ([], [], [])) in
+  let f_comb a bl = List.fold_left (fun (a1, a2, a3) (b1, b2, b3) -> 
+    (a1@b1, a2@b2, a3@b3)) ([], [], []) bl in
+  let f_arg = (voidf2, voidf2, voidf2) in
+  foldr_formula f () (nonef2, f_b_f, nonef2) f_arg (f_comb, f_comb, f_comb)
+
+let subst_rankrel_sol_formula subst (f: formula) =
+  let f_b_f b = 
+    let (pf, _) = b in
+    match pf with
+    | RankRel rr -> Some (b_formula_of_rankrel_sol rr subst) 
     | _ -> Some b
   in transform_formula (nonef, nonef, nonef, f_b_f, somef) f

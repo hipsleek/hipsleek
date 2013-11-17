@@ -315,6 +315,14 @@ struct
         [] -> []
       | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
 
+  let rec remove_dups_eq_reserved_order eq n = 
+    match n with
+        [] -> []
+      | q::qs -> 
+          if (mem_eq eq q qs) then 
+            q::(remove_dups_eq eq (List.filter (fun p -> not (eq p q)) qs))
+          else q::(remove_dups_eq eq qs)
+
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false
