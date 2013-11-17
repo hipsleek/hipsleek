@@ -315,7 +315,7 @@ let convert_anonym_to_exist_formula f0 args=
   Debug.no_1 "convert_anonym_to_exist_formula" pr1 pr1
       (fun _ -> convert_anonym_to_exist_formula_x f0 args) f0
 
-let recover_view_decl_x old_vdecl vname vvars ir f=
+let recover_view_decl_x old_vdecl vname vvars ir f =
   let pos = CF.pos_of_struc_formula old_vdecl.C.view_formula in
   let f1 = convert_anonym_to_exist_formula f vvars in
   let cf = CF.formula_to_struc_formula f1 in

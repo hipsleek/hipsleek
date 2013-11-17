@@ -2354,9 +2354,11 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
                 | None -> renamed_view_formula
                 | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f) 
             else renamed_view_formula in
-          let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
+          let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::vdef.view_vars in
+          (* TermInf: Adding ranking arguments for view *)
+          let fr_vars = fr_vars @ (TI.view_rank_sv_opt vdef.view_name) in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
-	  let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
+	        let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
           (* let _ = Debug.info_hprint (add_str "fr_vars"  (Cprinter.string_of_spec_var_list)) (fr_vars) pos in *)
           (* let _ = Debug.info_hprint (add_str "vs"  (Cprinter.string_of_spec_var_list)) (v::vs) pos in *)
           (* let _ = Debug.info_hprint (add_str "forms"  Cprinter.string_of_struc_formula) forms pos in *)
@@ -2498,7 +2500,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
             let fr_vars = ((CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
               :: (* fr_rem *) vdef.view_vars)
-              @ (if !en_term_inf then [Terminf.view_rank_sv lhs_name] else []) in
+              @ (TI.view_rank_sv_opt lhs_name) (* TermInf: Adding ranking arguments for view *) in
             let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
             let to_vars = (v :: (* to_rem *) vs)
               @ (if !en_term_inf then match vr with None -> [] | Some r -> [r] else [])
@@ -2885,6 +2887,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                 else renamed_view_formula
               in
               let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
+              (* TermInf: Adding ranking arguments for view *)
+              let fr_vars = fr_vars @ (TI.view_rank_sv_opt vdef.view_name) in
               let to_vars = p :: vs in
               let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
 
@@ -3004,12 +3008,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 	          (*([], Failure)*)
 
 and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
-  let pr1 = Cprinter.string_of_list_context_short in
+  let pr1 = Cprinter.string_of_list_context(*_short*) in
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
   Debug.no_3 "process_fold_result" pr1 pr2 pr3 pro (fun _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       fold_rs0 (p2::vs2) base2
+
 and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
@@ -5809,7 +5814,7 @@ and heap_n_pure_entail_x (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 and one_ctx_entail prog is_folding  c conseq func p pos : (list_context * proof) =
   Debug.no_3 "one_ctx_entail" (Cprinter.string_of_context_short) Cprinter.string_of_formula Cprinter.string_of_mix_formula
       (* (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  *)
-      (fun (lc,_) -> Cprinter.string_of_list_context_short lc)
+      (fun (lc,_) -> Cprinter.string_of_list_context(*_short*) lc)
       (fun ctx0 conseq p ->  one_ctx_entail_x prog is_folding ctx0 conseq func p pos) c conseq p
 
 and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proof) = 
@@ -5956,8 +5961,11 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
 
 
 and heap_entail_split_lhs_phases p is_folding  ctx0 conseq d pos : (list_context * proof) =
-  Debug.no_2 "heap_entail_split_lhs_phases" Cprinter.string_of_context (fun _ -> "RHS") (fun (c,_) -> Cprinter.string_of_list_context c)
-      (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
+  Debug.no_2 "heap_entail_split_lhs_phases" 
+    Cprinter.string_of_context 
+    !CF.print_formula
+    (fun (c,_) -> Cprinter.string_of_list_context c)
+    (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
 
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) (drop_read_phase : bool)
@@ -8210,7 +8218,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
 	        begin
               let lhs_rank_var = (if !en_term_inf then match lhs_rank_var with None -> [] | Some r -> [r] else []) in
               let fr_vars = ((CP.SpecVar (Named lhs_vd.Cast.view_data_name, self, Unprimed)) :: lhs_vd.view_vars)
-                @ (if !en_term_inf then [Terminf.view_rank_sv lhs_vd.view_name] else []) in			
+                @ (TI.view_rank_sv_opt lhs_vd.view_name) (* TermInf: Adding ranking arguments for view *) in			
               let to_vars = (lhs_var :: lhs_arg) @ lhs_rank_var in
               let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
               let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
@@ -8978,12 +8986,14 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
-  Debug.no_3(* _loop *) "heap_entail_non_empty_rhs_heap" 
+  Debug.no_4(* _loop *) "heap_entail_non_empty_rhs_heap" 
+      Cprinter.string_of_context
       Cprinter.string_of_formula_base 
       Cprinter.string_of_formula
       Cprinter.string_of_spec_var_list 
       (pr_pair Cprinter.string_of_list_context string_of_proof) 
-      (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set
+      (fun _ _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) 
+      ctx0 lhs_b conseq rhs_h_matched_set
 
 (* Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula *)
 (*     Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set *)
@@ -9020,7 +9030,9 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let asets = Context.alias_nth 9 ptr_eq in
   try
     let vdef = look_up_view_def_raw 10 prog.Cast.prog_view_decls c2 in
-    let subs_vars = List.combine vdef.view_vars v2 in
+    let subs_vars = List.combine
+      (* TermInf: Adding ranking arguments for view *)
+      (vdef.view_vars@(TI.view_rank_sv_opt vdef.view_name)) v2 in
     let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in
     let vars_of_int = List.fold_left (fun a (c1,c2)-> if (List.exists (comparator c1) vdef.view_case_vars) then  c2::a else a) [] subs_vars in
@@ -9099,7 +9111,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
   let pr2 x = match x with
     | None -> "None"
     | Some (iv,ivr,f) -> Cprinter.string_of_struc_formula f.view_formula in
-  let pr (x,_) = Cprinter.string_of_list_context_short x in
+  let pr (x,_) = Cprinter.string_of_list_context(*_short*) x in
   let pr1 (conseq, rhs_node, vd ,rhs_rest,rhs_b) =
     ("\n conseq = "^(Cprinter.string_of_formula conseq)
     ^ "\n rhs_node = "^(Cprinter.string_of_h_formula rhs_node)
@@ -9163,6 +9175,12 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
         h_formula_view_pruning_conditions = r_p_cond;
         h_formula_view_pos = pos2}) -> (p2,c2,perm,v2,pid,r_rem_brs,r_p_cond,pos2)
       | _ -> report_error no_pos ("do_fold_w_ctx: data/view expected but instead ln2 is "^(Cprinter.string_of_h_formula ln2) ) in
+  (* TermInf: Add rank var of view node into list of arguments *)
+  let vr = match ln2 with
+  | ViewNode { h_formula_view_rank = vr; } -> vr
+  | _ -> None
+  in
+  let v2 = v2@(fold_opt (fun r -> [r]) vr) in
   (* let _ = print_string("in do_fold\n") in *)
   let original2 = if (is_view ln2) then (get_view_original ln2) else true in
   let unfold_num = (get_view_unfold_num ln2) in
@@ -9178,7 +9196,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;
       h_formula_view_perm = perm; (*LDK*)
-      h_formula_view_arguments = List.tl new_v2;
+      h_formula_view_arguments = List.tl new_v2; (* TermInf: May include view rank at last *)
       h_formula_view_modes = get_view_modes ln2;
       h_formula_view_coercible = true;
       h_formula_view_lhs_case = false;
@@ -9291,7 +9309,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
 
 
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
-  let pr2 x = Cprinter.string_of_list_context_short (fst x) in
+  let pr2 x = Cprinter.string_of_list_context(*_short*) (fst x) in
   Debug.no_2 "do_base_fold" 
       Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun _ _ -> do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate conseq

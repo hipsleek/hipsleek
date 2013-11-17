@@ -799,9 +799,26 @@ type rank_type =
 
 let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
   let view_form = add_rank_constraint_struc_formula vdef.C.view_formula (VIEW vdef.C.view_name) in
-  { vdef with
+  let un_struc_f = CF.get_view_branches view_form in
+  let rbc = match vdef.C.view_raw_base_case with
+  | None -> None
+  | Some _ ->
+      let rec f_tr_base f = 
+        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
+        match f with
+        | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
+        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
+        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
+      List.fold_left (fun a (c, l) -> 
+        let fc = f_tr_base c in
+        if (CF.isAnyConstFalse fc) then a 
+        else match a with 
+        | Some f1  -> Some (CF.mkOr f1 fc no_pos)
+        | None -> Some fc) None un_struc_f
+  in { vdef with
     C.view_formula = view_form; 
-    C.view_un_struc_formula = CF.get_view_branches view_form; }
+    C.view_un_struc_formula = un_struc_f; 
+    C.view_raw_base_case = rbc; }
 
 and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
   match f with
@@ -1680,7 +1697,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
 	(fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
       let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
       let cf = CF.label_view cf in
-      let n_un_str =  CF.get_view_branches cf in   
+      let n_un_str =  CF.get_view_branches cf in 
       let rec f_tr_base f = 
         let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
         match f with

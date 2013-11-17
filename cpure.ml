@@ -1007,10 +1007,16 @@ and remove_qvar qid qf =
   Gen.BList.difference_eq eq_spec_var qfv [qid]
 
 (* TermInf: FV for rank args *)
-and rank_arg_fv ra = ra.rank_arg_id
+and rank_arg_fv ra = 
+  match ra.rank_arg_type with
+  | ConstRVar -> None
+  | _ -> Some ra.rank_arg_id
 
 and rankrel_fv rr = 
-  rr.rank_id :: (List.map rank_arg_fv rr.rank_args)
+  rr.rank_id :: (List.fold_left (fun a ra -> 
+    match ra.rank_arg_type with
+    | ConstRVar -> a 
+    | _ -> a @ [ra.rank_arg_id]) [] rr.rank_args)
 
 and bfv (bf : b_formula) =
   let (pf,_) = bf in
@@ -9027,6 +9033,14 @@ let is_lexvar (f:formula) : bool =
                 | _ -> false)
     | _ -> false
 
+let is_rankrel (f:formula) : bool =
+  match f with
+    | BForm ((b,_),_) -> 
+              (match b with
+                | RankRel _ -> true
+                | _ -> false)
+    | _ -> false
+
 let rec has_lexvar (f: formula) : bool =
   match f with
   | BForm _ -> is_lexvar f
@@ -9079,7 +9093,7 @@ let drop_complex_ops =
             else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
-        | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
+        | LexVar t_info -> (Some (mkFalse t_info.lex_loc))
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -9089,7 +9103,7 @@ let drop_complex_ops =
 
 let drop_lexvar_ops =
   let pr_weak b = match b with
-        | LexVar t_info -> ((*print_string "dropping strong2\n";*)Some (mkTrue t_info.lex_loc))
+        | LexVar t_info -> Some (mkTrue t_info.lex_loc)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
@@ -11352,3 +11366,32 @@ let simpl_equalities_x ante conseq =
 let simpl_equalities ante conseq  = 
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
+  
+(* TermInf: Transform RankRel*)
+let b_formula_of_rankrel (rr: rankrel) =
+  let p = no_pos in
+  let rank_var_args, rank_const_args = List.partition (fun ra ->
+    match ra.rank_arg_type with | RVar -> true | _ -> false) rr.rank_args in
+  let coe_prefix = "c_" ^ (string_of_int rr.rel_id) ^ "_" in
+  let const_coes, nneg_const_coes = match rank_const_args with
+  | [] -> [SpecVar (Int, coe_prefix ^ (string_of_int 0), Unprimed)], []
+  | [c] -> let cid = c.rank_arg_id in [cid], [cid]
+  | _ -> List.map (fun ra -> ra.rank_arg_id) rank_const_args, [] in
+  let const_exp = List.fold_left (fun a c -> mkAdd a (mkVar c p) p) 
+    (mkVar (List.hd const_coes) p) (List.tl const_coes) in
+  let rank_var_svs = List.map (fun ra -> ra.rank_arg_id) rank_var_args in
+  let exp, var_coes = snd (List.fold_left (fun (i, (a, cs)) v ->
+    let c = SpecVar (Int, coe_prefix ^ (string_of_int i), Unprimed) in
+    (i+1, (mkAdd a (mkMult (mkVar c p) (mkVar v p) p) p, cs@[c])))
+  (1, (const_exp, [])) rank_var_svs) in
+  mkEq_b (mkVar rr.rank_id p) exp p, 
+  const_coes @ var_coes, rank_var_svs, nneg_const_coes
+  
+let replace_rankrel_by_b_formula (f: formula) : formula =
+  let f_b_f b = 
+    let (pf, _) = b in
+    match pf with
+    | RankRel rr -> 
+      let nb, _, _, _ = b_formula_of_rankrel rr in Some nb
+    | _ -> Some b
+  in transform_formula (nonef, nonef, nonef, f_b_f, somef) f

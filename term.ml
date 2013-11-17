@@ -361,7 +361,7 @@ let norm_term_measures_by_length src dst =
 
 let strip_lexvar_pure_only f =
   let mf_ls = CP.split_conjunctions f in
-  let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
+  let (lexvar, other_p) = List.partition CP.is_lexvar mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
 let def_lbl l =

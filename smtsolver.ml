@@ -1,7 +1,10 @@
 open Globals
 open GlobProver
 open Gen.Basic
+
 module CP = Cpure
+module CF = Cformula
+module MCP = Mcpure
 
 module StringSet = Set.Make(String)
 
@@ -136,7 +139,7 @@ let rec smt_of_exp a =
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
 
-let rec smt_of_b_formula b =
+let rec smt_of_b_formula ?solve_rrel:(s_rrel = false) b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
@@ -174,6 +177,10 @@ let rec smt_of_b_formula b =
   | CP.BagIn (v, e, l)    -> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
   | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
+  | CP.RankRel rr ->
+      let b_rr, const_vars, arg_vars, nneg_vars = CP.b_formula_of_rankrel rr in
+      if s_rrel then smt_of_b_formula b_rr
+      else "true"
   | CP.BagMax _ | CP.BagMin _ -> 
       illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
   | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
@@ -181,8 +188,6 @@ let rec smt_of_b_formula b =
       illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.LexVar _ ->
       illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
-  | CP.RankRel _ ->
-      illegal_format ("z3.smt_of_b_formula: RankRel should not appear here.\n")
   | CP.RelForm (r, args, l) ->
       let smt_args = List.map smt_of_exp args in 
       (* special relation 'update_array' translate to smt primitive store in array theory *)
@@ -203,19 +208,19 @@ let rec smt_of_b_formula b =
         "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
   | CP.XPure _ -> Error.report_no_pattern ()
 
-let rec smt_of_formula pr_w pr_s f =
+let rec smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with
-        | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
+        | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula ~solve_rrel:s_rrel bf)
         | Some f -> let _ = Debug.devel_pprint ("SOME #") no_pos in helper f
       )
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+    | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula ~solve_rrel:s_rrel pr_s pr_w p) ^ ")"
     | CP.Forall (sv, p, _,_) ->
         "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
     | CP.Exists (sv, p, _,_) ->
@@ -223,14 +228,14 @@ let rec smt_of_formula pr_w pr_s f =
   ) in
   helper f
 
-let smt_of_formula pr_w pr_s f =
+let smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
   let _ = set_prover_type () in
   Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
-    (fun _ -> smt_of_formula pr_w pr_s f) f
+    (fun _ -> smt_of_formula ~solve_rrel:s_rrel pr_w pr_s f) f
 
 
-let smt_of_formula pr_w pr_s f =
-  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula pr_w pr_s f) f
+let smt_of_formula ?solve_rrel:(s_rrel = false) pr_w pr_s f =
+  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula ~solve_rrel:s_rrel pr_w pr_s f) f
 
 (***************************************************************
                        FORMULA INFORMATION                      
@@ -731,7 +736,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
  **************************************************************)
 
 type output_configuration = {
-  print_input                   : bool ref; (* print generated SMT input *)
+  print_input                  : bool ref; (* print generated SMT input *)
   print_original_solver_output : bool ref; (* print solver original output *)
   print_implication            : bool ref; (* print the implication problems sent to this smt_imply *)
   suppress_print_implication   : bool ref; (* temporary suppress all printing *)
@@ -1082,3 +1087,17 @@ let simplify (pe : CP.formula) : CP.formula =
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 
+(* TermInf: Using Z3 to solve ranking relation constraints *)
+let solve_rrel (rrel: CF.rrel) = 
+  let ctx = MCP.pure_of_mix rrel.CF.rrel_ctx in
+  let ctr = MCP.pure_of_mix rrel.CF.rrel_ctr in
+  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let _ = print_endline ("CTX_R: " ^ (!CP.print_formula (CP.replace_rankrel_by_b_formula ctx))) in
+  let _ = print_endline ("CTR_R: " ^ (!CP.print_formula ctr)) in
+
+  let _ = print_endline ("CTX: " ^ (smt_of_formula ~solve_rrel:true pr_w pr_s ctx)) in
+  let _ = print_endline ("CTR: " ^ (smt_of_formula ~solve_rrel:true pr_w pr_s ctr)) in
+  ()
+
+let rec solve_rrel_list rrel_list =
+  List.iter solve_rrel rrel_list

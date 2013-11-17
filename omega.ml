@@ -153,10 +153,10 @@ and omega_of_b_formula b =
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | RankRel _ -> "0=0"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar")
-  | RankRel _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RankRel") *)
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula_x pr_w pr_s f  =

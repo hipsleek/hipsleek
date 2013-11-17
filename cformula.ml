@@ -10762,8 +10762,12 @@ let get_view_branches (f0:struc_formula):(formula * formula_label) list=
     | Or b -> f in
   let res = get_view_branches f0 in
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
+
+let get_view_branches (f0:struc_formula):(formula * formula_label) list =
+  let pr1 = !print_struc_formula in
+  let pr2 = fun (a, b) -> !print_formula a in
+  Debug.no_1 "get_view_branches" pr1 (pr_list pr2) get_view_branches f0
  
-	
 let get_bar_branches (f0:struc_formula):(formula * formula_label) list= 
   let rec is_disj (f:formula) : bool = match f with
     | Base _
@@ -10867,6 +10871,12 @@ let add_to_aux_conseq_estate es to_aux_conseq pos =
     | None -> Some to_aux_conseq
     | Some f -> Some*) (CP.mkAnd  (*f*) es.es_aux_conseq to_aux_conseq pos)
   }
+
+let add_to_aux_conseq_estate es to_aux_conseq pos =
+  let pr1 = !print_entail_state in
+  let pr2 = !CP.print_formula in
+  Debug.no_2 "add_to_aux_conseq_estate" pr1 pr2 pr1
+  (fun _ _ -> add_to_aux_conseq_estate es to_aux_conseq pos) es to_aux_conseq
 
 let add_to_aux_conseq lctx to_aux_conseq pos =
   (match lctx with

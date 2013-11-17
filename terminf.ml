@@ -12,6 +12,9 @@ let view_rank_id view_id =
 let view_rank_sv view_id =
   SpecVar (Int, view_rank_id view_id, Unprimed)
 
+let view_rank_sv_opt view_id =
+  if !en_term_inf then [view_rank_sv view_id] else []
+
 let view_rarg_id view_id =
   "r_" ^ view_id ^ "_" ^ (string_of_int (fresh_int ()))
 

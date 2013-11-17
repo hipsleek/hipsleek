@@ -1046,12 +1046,12 @@ and mona_of_b_formula_x b f vs =
       | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
       | CP.BagMin (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => " ^ (mona_of_spec_var v1) ^ " <= x0)"
       | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )"
+      | CP.RankRel _ -> "(0 = 0)" 
       | CP.ListIn _
       | CP.ListNotIn _
       | CP.ListAllN _
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
-      | CP.RankRel _ -> failwith ("RankRel is not supported in Mona")
       | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
       | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
