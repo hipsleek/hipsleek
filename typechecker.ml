@@ -2541,14 +2541,18 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
     else Sa3.rel_def_stk
     in
-    if not(rel_defs# is_empty) && !Globals.sap then
+    if not(rel_defs# is_empty) (* && !Globals.sap *) then
       begin
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
-        let pre_preds,post_pred = List.partition ( fun d ->
+        let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d ->
             match d.CF.hprel_def_kind with
-              | CP.HPRelDefn (hp,_,_) -> not(CP.mem_svl hp scc_sel_post_hps)
-              | _ -> false ) defs0 in
-        let defs = pre_preds@post_pred in
+              | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp scc_sel_post_hps) then (r1,r2@[d],r3) else
+                  if (CP.mem_svl hp scc_sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
+              | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
+        let defs1 = pre_preds@post_pred@rem in
+        let _ = Debug.info_ihprint (add_str " LOng: sort defs" pr_id) "" no_pos in
+        let defs = List.map CF.rearrange_def defs1 in
+        let _ = Debug.info_ihprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
         print_endline "*************************************";
@@ -2685,16 +2689,16 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       let _ = proc.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
-                          if !Globals.sap then begin
+                          if (* !Globals.sap *) true then begin
                             print_endline "";
                             print_endline "*************************************";
                             print_endline "*******relational assumptions (4) ********";
-                            print_endline "*************************************"
+                            print_endline "*************************************";
                         end;
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
                           let _ = Infer.rel_ass_stk # reset in
-                          if !Globals.sap then begin
+                          if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in

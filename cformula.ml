@@ -4036,6 +4036,24 @@ let get_hpdef_name_w_tupled hpdef=
      | CP.HPRelLDefn hps -> hps
      | _ -> []
 
+let rearrange_formula f0=
+  (*Long: todo here*)
+  f0
+
+let rearrange_def def=
+  let new_body =
+    match def.hprel_def_body_lib with
+      | Some _ -> def.hprel_def_body
+      | None -> begin
+          List.map (fun ((p, f_opt) as o) ->
+              match f_opt with
+                | Some f -> (p, Some (rearrange_formula f))
+                | None -> o
+          ) def.hprel_def_body
+        end
+  in
+  {def with hprel_def_body = new_body}
+
 let subst_opt ss f_opt=
   match f_opt with
     | None -> None
