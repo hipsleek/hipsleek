@@ -2543,7 +2543,12 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     in
     if not(rel_defs# is_empty) && !Globals.sap then
       begin
-        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let pre_preds,post_pred = List.partition ( fun d ->
+            match d.CF.hprel_def_kind with
+              | CP.HPRelDefn (hp,_,_) -> not(CP.mem_svl hp scc_sel_post_hps)
+              | _ -> false ) defs0 in
+        let defs = pre_preds@post_pred in
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
         print_endline "*************************************";

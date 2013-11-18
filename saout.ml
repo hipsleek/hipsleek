@@ -458,9 +458,11 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
   (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
   (*     (a,b,c,new_f) *)
   (* ) *) need_trans_hprels0 in
+  try
   let n_cviews,chprels_decl = trans_hprel_2_cview iprog cprog "" need_trans_hprels1 in
   let cprog = List.fold_left (plug_proc need_trans_hprels1 chprels_decl) cprog proc_names in
   cprog
+  with _ -> cprog
 
 let plug_shape_into_specs cprog iprog proc_names hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

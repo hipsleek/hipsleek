@@ -4137,6 +4137,10 @@ and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =
 	  let m_set_f = List.fold_left (fun a (c1,c2)-> CP.mkAnd a (CP.mkPtrNeqEqn c1 c2 no_pos) no_pos) (CP.mkTrue no_pos)
 	    (generate_disj_pairs_from_memf m_set) in
 	  let n_pf = MCP.memoise_add_pure_N pf m_set_f in
+          (* let _ = DD.info_hprint (add_str "pf" !CP.print_formula) *)
+          (*   (MCP.pure_of_mix pf) no_pos in *)
+          (* let _ = DD.info_hprint (add_str "n_pf" !CP.print_formula) *)
+          (*   (MCP.pure_of_mix n_pf) no_pos in *)
 	  let is_ok = TP.is_sat_mix_sub_no n_pf sat_subno true true in  
 	  if is_ok then ([f],[]) else ([(mkFalseLbl (CF.mkTrueFlow ()) lbl no_pos)],[f])
     | Or ({formula_or_f1 = f1;

@@ -2523,6 +2523,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*   with _ -> [] *)
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
+  try 
   let callee_hps = [] in
   let _ = if !Globals.sap then
     DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
@@ -2551,6 +2552,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   else ([],[])
   in
   r
+  with _ -> ([],[])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
       (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)

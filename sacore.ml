@@ -2135,10 +2135,10 @@ let pred_unify_inter_x prog dang_hps hp_defs=
             let b,n_hp_def = find_inter hp_def (done_hpdefs@non_inter_hpdefs) in
             do_one_step_inter rest1 (done_hpdefs@[n_hp_def]) non_inter_hpdefs
   in
-  let pr = pr_list_ln Cprinter.string_of_hp_rel_def in
+  (* let pr = pr_list_ln Cprinter.string_of_hp_rel_def in *)
   (****************END INTERNAL ****************)
   let inter_hp_defs, rem = List.partition is_inter_hpdef hp_defs in
-  let _ = DD.info_hprint (add_str "inter_hp_defs" pr) inter_hp_defs no_pos in
+  (* let _ = DD.ninfo_hprint (add_str "inter_hp_defs" pr) inter_hp_defs no_pos in *)
   let inter_hp_defs1 = do_one_step_inter inter_hp_defs [] rem in
   (inter_hp_defs1@rem)
 
@@ -2214,9 +2214,10 @@ let do_entail_check_x vars cprog cs=
   let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
   let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
   let valid = ((not (CF.isFailCtx rs))) in
-  if not valid then
-    report_error no_pos ("Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
-  else
+  let _ = if not valid then
+    report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
+  else ()
+  in
     let hprels = Inf.collect_hp_rel_list_context rs in
     let (_,hp_rest) = List.partition (fun hp ->
         match hp.CF.hprel_kind with
@@ -2323,14 +2324,15 @@ let compute_gfp_x prog is_pre is pdefs=
           let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
-          if (* base_fs =[] && *) dep_fs = [] then
+          (* if (\* base_fs =[] && *\) dep_fs = [] then *)
             (*init*)
             let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r base_fs rec_fs in
             (*iterate*)
             let fixn = gfp_iter prog base_fs rec_fs fix0 in
             (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn (CF.pos_of_formula f0), n_unk_hpargs)
-          else
-            report_error no_pos "sac.compute gfp: not support yet"
+          (* else *)
+            (* report_error no_pos "sac.compute gfp: not support yet" *)
+            
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
   let _ = Debug.binfo_pprint ("    synthesize (gfp): " ^ (!CP.print_sv hp) ) no_pos in

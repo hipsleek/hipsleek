@@ -1293,7 +1293,8 @@ and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) :
         let d1 = List.length (dl1 @ vl1) in
         let d2 = List.length (dl2 @ vl2) in
         if d1>0 & d2>0 then
-          report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
+          let _ = report_warning pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed") in
+          ([],[])
         else (
           let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
           let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
