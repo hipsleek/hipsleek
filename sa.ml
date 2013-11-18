@@ -2483,7 +2483,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         let args0 = List.map (CP.fresh_spec_var) args in
     (* DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")"))) no_pos; *)
         let defs,ogs,ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0) par_defs) in
-        let r,non_r_args = SAU.find_root prog unk_hps args0 defs in
+        let r,non_r_args = SAU.find_root prog (hp::unk_hps) args0 defs in
         (*make explicit root*)
         let defs0 = List.map (SAU.mk_expl_root r) defs in
         let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in

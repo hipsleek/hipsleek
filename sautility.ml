@@ -4158,24 +4158,34 @@ let closer_ranking prog unk_hps fs root_cand args0=
     let eqs = (MCP.ptr_equations_without_null mix_lf) in
     let def_vs = eqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
-    let def_ptrs = CP.remove_dups_svl (CF.find_close def_vs (eqs)) in
-    (hds, hvs, def_ptrs)
+    let unk_svl = List.fold_left (fun r (hp,eargs,_) -> if CP.mem_svl hp unk_hps then r@(List.fold_left List.append [] (List.map CP.afv eargs)) else r
+    ) [] hrs in
+    let def_ptrs = CP.remove_dups_svl (CF.find_close (CP.remove_dups_svl (def_vs@unk_svl)) (eqs)) in
+    (hds, hvs, def_ptrs, eqNulls)
   in
-  let fs_config = List.map build_conf fs in
+  let fs_config4 = List.map build_conf fs in
+  let fs_config,ls_eqNulls = List.fold_left (fun (r1,r2) (a,b,c,d) -> (r1@[(a,b,c)],r2@[d])) ([],[]) fs_config4 in
   let exam_conf r (hds,hvs,def_ptrs)=
-    let closed_args = look_up_closed_ptr_args prog hds hvs [r] in
+    let closed_args = List.filter (CP.is_node_typ) (look_up_closed_ptr_args prog hds hvs [r]) in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     undef_args = []
   in
   (* let args = r::(List.filter (fun sv -> not (CP.eq_spec_var r sv)) args0) in *)
+  let eqNulls = if ls_eqNulls = [] then [] else
+    List.fold_left (fun r ls -> CP.intersect_svl r ls) (List.hd ls_eqNulls) (List.tl ls_eqNulls) in
   let new_cand = List.filter (fun r ->
      List.for_all (exam_conf r) fs_config) root_cand
   in
-  (* let _ = DD.info_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in *)
+  let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in
+  let _ = DD.ninfo_zprint (lazy (("  eqNulls: " ^ (!CP.print_svl eqNulls) ))) no_pos in
   let root=
     match new_cand with
       | [] -> List.hd root_cand
-      | r::_ -> r
+      | r::_ -> if eqNulls = [] then r
+        else
+          let eqNulls,rem =
+            List.partition (fun sv -> CP.mem_svl sv eqNulls) new_cand in
+          List.hd (rem@eqNulls)
   in
   (root, List.filter (fun sv -> not (CP.eq_spec_var root sv)) args0)
 
@@ -4195,7 +4205,7 @@ let find_root_x prog unk_hps args fs=
     | [a] -> (a,[])
     | _ -> begin
         let root_cands = List.filter (examine_one_arg fs) args in
-        (* let _ = DD.info_zprint (lazy (("  root_cands: " ^ (!CP.print_svl root_cands)))) no_pos in *)
+        let _ = DD.ninfo_zprint (lazy (("  root_cands: " ^ (!CP.print_svl root_cands)))) no_pos in
         match root_cands with
           | [] -> (List.hd args, List.tl args)
                 (*circle: demo/dll-app-bug3.slk*)
@@ -4212,8 +4222,8 @@ let find_root_x prog unk_hps args fs=
 let find_root  prog unk_hps args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = pr_pair !CP.print_sv !CP.print_svl in
-  Debug.no_2 "find_root" !CP.print_svl pr1 pr2
-      (fun _ _ -> find_root_x  prog unk_hps args fs) args fs
+  Debug.no_3 "find_root" !CP.print_svl !CP.print_svl pr1 pr2
+      (fun _ _ _ -> find_root_x prog unk_hps args fs) unk_hps  args fs
 
 (**********************)
 (*check root: is_dangling (root=), is_null,is_not_null*)
@@ -4294,7 +4304,7 @@ let refine_dang_x prog (hpdefs: (CP.spec_var *CF.hp_rel_def) list) unk_hps fs=
       | [] -> false
       | (hp1,_)::rest ->
           let fs,args1 = look_up_hpdefs hp1 hpdefs in
-          let root1,(* non_r_args *) _ = find_root prog unk_hps args1 fs in
+          let root1,(* non_r_args *) _ = find_root prog (hp1::unk_hps) args1 fs in
           let accept_dang = check_root_accept_dang_fs root1 fs in
           if accept_dang then true else
             is_acc_dangling rest
@@ -4448,7 +4458,7 @@ let remove_dups_recursive_x prog cdefs hp args unk_hps unk_svl defs=
   let indep_fs, dep_fs = List.partition is_independ_f rem_fs in
   (*base cases > 1*)
   if (List.length indep_fs > 1) then
-    let root,(* non_r_args *) _ = find_root prog unk_hps args defs in
+    let root,(* non_r_args *) _ = find_root prog (hp::unk_hps) args defs in
     (* let _ = DD.info_zprint (lazy ((" root: " ^ (!CP.print_sv root) ))) no_pos in *)
     (* let root = *)
     (*   if args = [] then report_error no_pos "sau.remove_dups_recursive: hp should have at least one argument" *)
@@ -5187,9 +5197,9 @@ let get_sharing prog unk_hps r other_args args sh_ldns sh_lvns eqNulls eqPures h
       (fun _ _ _ _ _ _ _ -> get_sharing_x prog unk_hps r other_args args sh_ldns sh_lvns eqNulls eqPures hprels unk_svl)
       unk_hps args sh_ldns sh_lvns eqNulls eqPures hprels
 
-let partition_common_diff prog args unk_hps unk_svl f1 f2 pos=
+let partition_common_diff_x prog hp args unk_hps unk_svl f1 f2 pos=
   let fs = [f1;f2] in
-  let r,non_r_args = find_root prog unk_hps args fs in
+  let r,non_r_args = find_root prog (hp::unk_hps) args fs in
   (* let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in *)
   let lldns_vns = List.map (fun f ->
        let hds,hvs,_ = CF.get_hp_rel_formula f in
@@ -5204,7 +5214,14 @@ let partition_common_diff prog args unk_hps unk_svl f1 f2 pos=
     let n_fs = List.map (norm_conjH_f prog args n_args next_roots sh_ldns2 sh_lvns2 eqNulls eqPures hprels) lldns_vns in
     (true, sharing_f,n_fs, next_roots)
 
-let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
+let partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_4 "partition_common_diff" pr2 pr2 pr1 pr1 (pr_quad string_of_bool pr1 (pr_list_ln pr1) pr2)
+      (fun _ _ _ _ -> partition_common_diff_x prog hp args unk_hps unk_svl f1 f2 pos)
+      args unk_hps f1 f2
+
+let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
   (*****INTERNAL*****)
   let get_view_info prog vn=
     let rec look_up_view vn0=
@@ -5236,7 +5253,7 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
      else (pure_f1, f2)
   in
   (*******END*********)
-  let is_common, sharing_f, n_fs,_ = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
+  let is_common, sharing_f, n_fs,_ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
   if not is_common then
     let b1 = is_empty_heap_f f1 in
     let b2 = is_empty_heap_f f2 in
@@ -5273,10 +5290,10 @@ let mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos=
         end
       | _ -> report_error no_pos "sau.norm_and_heap: should be no more than two formulas"
 
-let mkConjH_and_norm prog args unk_hps unk_svl f1 f2 pos=
+let mkConjH_and_norm prog hp args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
-      (fun _ _ -> mkConjH_and_norm_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+      (fun _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2
 
 let simplify_disj_x prog args unk_hps unk_svl f1 f2 pos=
   (*todo: revise partition_common_diff*)
@@ -5310,9 +5327,9 @@ let simplify_disj prog args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "simplify_disj" pr1 pr1 (pr_pair string_of_bool pr2)
       (fun _ _ -> simplify_disj_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
-let perform_conj_unify_post_x prog args unk_hps unk_svl fs pos=
+let perform_conj_unify_post_x prog hp args unk_hps unk_svl fs pos=
   match fs with
-    | [f1;f2] -> let is_common, sharing_f, n_fs, _ = partition_common_diff prog args unk_hps unk_svl f1 f2 pos in
+    | [f1;f2] -> let is_common, sharing_f, n_fs, _ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
       if not is_common then fs else
         if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
           let ps = List.map (fun f -> CF.get_pure f) n_fs in
@@ -5324,10 +5341,10 @@ let perform_conj_unify_post_x prog args unk_hps unk_svl fs pos=
         else fs
     | _ -> fs
 
-let perform_conj_unify_post prog args unk_hps unk_svl fs pos=
+let perform_conj_unify_post prog hp args unk_hps unk_svl fs pos=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_1 "perform_conj_unify_post" pr1 pr1
-      (fun _ -> perform_conj_unify_post_x prog args unk_hps unk_svl fs pos) fs
+      (fun _ -> perform_conj_unify_post_x prog hp args unk_hps unk_svl fs pos) fs
 
 (*match hprel: with the same args: TODO: enhance with data node + view node*)
 let norm_heap_consj_x h1 h2 equivs=
@@ -5437,7 +5454,7 @@ let norm_heap_consj_formula prog args unk_hps unk_svl f equivs=
   Debug.no_1 "norm_heap_consj_formula" pr1 pr3
       (fun _ -> norm_heap_consj_formula_x prog args unk_hps unk_svl f equivs) f
 
-let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
+let norm_formula_x prog hp args unk_hps unk_svl f1 f2 equivs=
   if is_empty_heap_f f1 && is_empty_heap_f f2 then
     let pos = CF.pos_of_formula f1 in
     let cmb_f = CF.mkStar f1 f2 CF.Flow_combine pos in
@@ -5450,7 +5467,7 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
   else if CF.isStrictConstTrue f1 then Some (f2, equivs)
   else if CF.isStrictConstTrue f2 then Some (f1, equivs)
   else
-    let is_common, sharing_f, n_fs,_ = partition_common_diff prog args unk_hps unk_svl f1 f2 no_pos in
+    let is_common, sharing_f, n_fs,_ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 no_pos in
     if not is_common then None else
       match n_fs with
         | [] -> None
@@ -5469,7 +5486,7 @@ let norm_formula_x prog args unk_hps unk_svl f1 f2 equivs=
           end
         | _ -> report_error no_pos "sau.norm_formula: should be no more than two formulas"
 
-let norm_formula prog args unk_hps unk_svl f1 f2 equivs=
+let norm_formula prog hp args unk_hps unk_svl f1 f2 equivs=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 ores= match ores with
@@ -5477,7 +5494,7 @@ let norm_formula prog args unk_hps unk_svl f1 f2 equivs=
     | Some (f, equivs) -> (pr_pair pr1 pr2)  (f, equivs)
   in
   Debug.no_2 "norm_formula" pr1 pr1 pr3
-      (fun _ _ -> norm_formula_x prog args unk_hps unk_svl f1 f2 equivs) f1 f2
+      (fun _ _ -> norm_formula_x prog hp args unk_hps unk_svl f1 f2 equivs) f1 f2
 
 (************************************************************)
       (******************END FORM HP DEF*********************)

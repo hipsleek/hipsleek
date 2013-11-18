@@ -27,7 +27,7 @@ HP_RELDEFN HP_571:  HP_571(x)::  emp&x=null,
 HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
 
  */
-void reverse(ref node x, ref node y)
+void reverse( node@R x,  node@R y)
   infer[HX,HY,G1]
   requires HX(x)*HY(y)
   ensures G1(x',y');

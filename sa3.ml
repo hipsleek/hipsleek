@@ -567,12 +567,12 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
             [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
-  let mkAnd_w_opt args (* ss *) of1 of2=
+  let mkAnd_w_opt hp args (* ss *) of1 of2=
     match of1,of2 with
       | Some f1, Some f2 ->
             let pos = CF.pos_of_formula f1 in
             let new_f2 = (*CF.subst ss*) f2 in
-            let f = SAU.mkConjH_and_norm prog args unk_hps [] f1 new_f2 pos in
+            let f = SAU.mkConjH_and_norm prog hp args unk_hps [] f1 new_f2 pos in
             (* let f = (CF.mkConj_combine f1 new_f2 CF.Flow_combine no_pos) in *)
         if CF.isAnyConstFalse f || SAU.is_unsat f then
           false, Some f
@@ -605,8 +605,8 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     (* let _ = DD.info_zprint (lazy (("      cond_disj3: " ^ (!CP.print_formula  cond_disj3) ))) no_pos in *)
     let pdef3 = if (TP.is_sat_raw (MCP.mix_of_pure cond_disj3)) then
       let n_cond = CP.remove_redundant (CP.mkAnd cond1 cond2 no_pos) in
-      let is_sat1, n_orhs = mkAnd_w_opt args1 orhs1 orhs2 in
-      let is_sat2, n_olhs = mkAnd_w_opt args1 olhs1 olhs2 in
+      let is_sat1, n_orhs = mkAnd_w_opt hp1 args1 orhs1 orhs2 in
+      let is_sat2, n_olhs = mkAnd_w_opt hp1 args1 olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
         do_combine (hp1,args1,unk_svl1, n_cond, n_olhs,og1, n_orhs)
       else [(hp1,args1,unk_svl1,  n_cond, olhs1, og1, Some (CF.mkFalse_nf no_pos))]
@@ -871,7 +871,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             let quan_null_svl,_ = get_null_quans f0 in
             let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
             let defs,ogs, ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
-            let r,non_r_args = SAU.find_root prog skip_hps args0 defs in
+            let r,non_r_args = SAU.find_root prog (hp::skip_hps) args0 defs in
             (*make explicit root*)
             let defs0 = List.map (SAU.mk_expl_root r) defs in
             let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
@@ -888,7 +888,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             let defs5a = SAU.find_closure_eq hp args0 defs4 in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
             let defs5 =  if is_pre then defs5a else
-              SAU.perform_conj_unify_post prog args0 (unk_hps@link_hps) unk_svl defs5a no_pos
+              SAU.perform_conj_unify_post prog hp args0 (unk_hps@link_hps) unk_svl defs5a no_pos
             in
             let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
             let _ = DD.ninfo_hprint (add_str "defs5a: " pr1) defs5a no_pos in

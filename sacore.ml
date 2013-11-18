@@ -1665,7 +1665,7 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
                       (* let ss = List.combine args1 args2 in *)
                       (* let nf1 = (\* CF.subst ss *\) f1 in *)
                       (* let nf2= SAU.mkConjH_and_norm prog args2 unk_hps [] nf1 f2 no_pos in *)
-                      let ores = SAU.norm_formula prog args2 unk_hps [] f1 f2 equivs in
+                      let ores = SAU.norm_formula prog hp args2 unk_hps [] f1 f2 equivs in
                       match ores with
                         | Some (new_f2, n_equivs) ->
                               (rest@done_pdefs,[((hp,args2,unk_svl2, cond2, olhs2, og2, Some new_f2), cs2)],n_equivs)
@@ -1719,7 +1719,7 @@ let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
       | [] -> done_fs,[f],[]
       | f1::tl ->
           (* let b,m = CEQ.checkeq_formulas args f f1 in *)
-          let ores = SAU.norm_formula prog args unk_hps [] f f1 [] in
+          let ores = SAU.norm_formula prog hp args unk_hps [] f f1 [] in
           match ores with
             | Some (new_f, n_equivs) ->
                   (tl@done_fs,[new_f],n_equivs)
@@ -2104,7 +2104,7 @@ let pred_unify_inter_x prog dang_hps hp_defs=
           match fs0 with
             | [(f1,og1);(f2,og2)] -> begin
                 (*extract common*)
-                let is_common, sharing_f0, n_fs, new_roots = SAU.partition_common_diff prog (r::other_args) dang_hps [] f1 f2 no_pos in
+                let is_common, sharing_f0, n_fs, new_roots = SAU.partition_common_diff prog hp (r::other_args) dang_hps [] f1 f2 no_pos in
                 let fs, n_r, sharing_f = if is_common && List.length new_roots = 1 then
                   n_fs, List.hd new_roots, sharing_f0
                 else ([f1;f2], r, CF.mkTrue_nf no_pos)
@@ -2321,7 +2321,7 @@ let compute_gfp_x prog is_pre is pdefs=
           (*normalize*)
           let norm_pdefs = (hp0,args0,f0)::(List.map (norm args0) rest) in
           let norm_fs = (List.map (fun (_,_,f) -> f) norm_pdefs) in
-          let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs in
+          let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
           (* if (\* base_fs =[] && *\) dep_fs = [] then *)
@@ -2466,14 +2466,14 @@ let compute_lfp_x prog dang_hps pdefs=
   let hp,def=
   match pdefs with
     | [(hp0,args0,f0)] ->
-          let r,non_r_args = SAU.find_root prog skip_hps args0 [f0] in
+          let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 [f0] in
           (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None f0 (CF.pos_of_formula f0))
     | (hp0,args0,f0)::rest ->
           let pos = CF.pos_of_formula f0 in
           (*normalize*)
           let norm_pdefs = (hp0,args0,f0)::(List.map (norm args0) rest) in
           let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
-          let r,non_r_args = SAU.find_root prog skip_hps args0 norm_fs0 in
+          let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs0 in
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
           (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           (**********PRINTING***********)
@@ -2843,7 +2843,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       | (hp, args)::rest1, fs::rest2 ->
             let _ = Debug.ninfo_hprint (add_str  "fs " (pr_list_ln Cprinter.prtt_string_of_formula)) fs no_pos in
             let fs1 = List.filter (fun f -> not (SAU.is_trivial f (hp,args))) fs in
-            let r,paras = SAU.find_root cprog unk_hps args fs1 in
+            let r,paras = SAU.find_root cprog (hp::unk_hps) args fs1 in
             let n_hp_defs = SAU.mk_hprel_def cprog false [] unk_hps [] hp (args, r, paras) fs1 [] pos in
             combine_comp rest1 rest2 pos (res@(List.map snd n_hp_defs))
       | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 2"

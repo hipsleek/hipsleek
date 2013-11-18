@@ -6199,7 +6199,7 @@ Message: self of H2_rem_link cannot have its type determined
 Exception Invalid_argument("List.combineCpure.update_positions_for_imm_view_params") Occurred!
 
 =====================================================================
-#skip2-list, cll.c, check-cll:
+#skip2-list, cll.c, check-cll: FIXED
 
 
  something wrong with conditional stmts
@@ -6221,29 +6221,6 @@ if (h==c) ==> should not use cast when transform from c to ss
     dll-findnback.ss
     dll-rev.ss
 =====================================================================
-
-
-cparser:  return list ? list->val : -1
-
-int
-g_slist_nth_data (struct GSList *list,
-                  int n)
-{
-  while (n-- > 0 && list)
-    /*@
-      infer [H_nthd, G_nthd]
-      requires H_nthd(list)
-      ensures G_nthd(list, list');
-    */
-    {
-      list = list->next;
-    }
-
-  // assume list'::GSList<_,_>;
-  //if (list!=NULL) return list->val;
-  //else return -1;
-    return list ? list->val : -1;
-}
 
 =====================================================================
 =====================================================================
