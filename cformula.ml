@@ -4036,20 +4036,43 @@ let get_hpdef_name_w_tupled hpdef=
      | CP.HPRelLDefn hps -> hps
      | _ -> []
 
-let rearrange_formula f0=
-  (*Long: todo here*)
-  f0
+ (*Long: todo here*)
+let rearrange_h_formula args0 hf0 =
+  hf0
+
+(*args0 is root + args of root*)
+let rearrange_formula args0 f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            Base {fb with formula_base_heap = rearrange_h_formula args0 fb.formula_base_heap; }
+      | Exists _ ->
+            let qvars, base1 = split_quantifiers f in
+            let nf = helper base1 in
+            add_quantifiers qvars ( nf)
+      | Or orf  ->
+            Or { orf with formula_or_f1 = helper orf.formula_or_f1;
+                formula_or_f2 = helper orf.formula_or_f2 }
+  in
+  helper f0
 
 let rearrange_def def=
   let new_body =
     match def.hprel_def_body_lib with
       | Some _ -> def.hprel_def_body
       | None -> begin
-          List.map (fun ((p, f_opt) as o) ->
-              match f_opt with
-                | Some f -> (p, Some (rearrange_formula f))
-                | None -> o
+          try
+            let args = match def.hprel_def_kind with
+              | CP.HPRelDefn (_,r,args) -> (r::args)
+              | _ -> raise Not_found
+            in
+            List.map (fun ((p, f_opt) as o) ->
+                match f_opt with
+                  | Some f ->
+                      (p, Some (rearrange_formula args f))
+                  | None -> o
           ) def.hprel_def_body
+          with _ -> def.hprel_def_body
         end
   in
   {def with hprel_def_body = new_body}
