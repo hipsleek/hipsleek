@@ -464,7 +464,7 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l= 
+and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
@@ -479,8 +479,8 @@ and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
              h_formula_heap_label = ofl;
              h_formula_heap_pos = l }
 
-and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l= 
-   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
+and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l=
+  Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
       (fun _ -> mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l ) c
 
 and mkHeapNode2 c id deref dr i f inv pd perm ohl hl_i ofl l = 
@@ -1163,28 +1163,28 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HeapNode ({h_formula_heap_node = x; 
                h_formula_heap_name = c; 
                h_formula_heap_deref = deref;
-               h_formula_heap_derv = dr; 
-               h_formula_heap_imm = imm; 
-               h_formula_heap_imm_param = imm_p; 
-               h_formula_heap_full = full; 
+               h_formula_heap_derv = dr;
+               h_formula_heap_imm = imm;
+               h_formula_heap_imm_param = imm_p;
+               h_formula_heap_full = full;
                h_formula_heap_with_inv = winv;
                h_formula_heap_perm = perm; (*LDK*)
                h_formula_heap_arguments = args;
                h_formula_heap_pseudo_data = ps_data;
                h_formula_heap_label = l;
-               h_formula_heap_pos = pos}) -> 
+               h_formula_heap_pos = pos}) ->
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = ( match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
       ) in
-      HeapNode ({h_formula_heap_node = subst_var s x; 
+      HeapNode ({h_formula_heap_node = subst_var s x;
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
-                 h_formula_heap_derv = dr; 
-                 h_formula_heap_imm = imm; 
-                 h_formula_heap_imm_param = imm_p; 
+                 h_formula_heap_derv = dr;
+                 h_formula_heap_imm = imm;
+                 h_formula_heap_imm_param = imm_p;
                  h_formula_heap_full = full;
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm1 ; (*LDK*)

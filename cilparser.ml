@@ -8,6 +8,9 @@ module IF = Iformula
 (* Global variables      *)
 (* --------------------- *)
 
+let str_addr = "addr_"
+let str_deref = "deref"
+
 let tbl_typedef : (string, Cil.typ) Hashtbl.t = Hashtbl.create 1
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
@@ -362,128 +365,128 @@ and gather_addrof_block (blk: Cil.block) : unit =
 
 and gather_addrof_stmt (stmt: Cil.stmt) : unit =
   match stmt.Cil.skind with
-  | Cil.Instr is -> List.iter gather_addrof_instr is
-  | Cil.Return (eopt, _) -> (
-      match eopt with
-      | None -> ()
-      | Some e -> gather_addrof_exp e
-    )
-  | Cil.Goto (sref, l) -> ()
-  | Cil.Break _ -> ()
-  | Cil.Continue _ -> ()
-  | Cil.If (e, b1, b2, _) ->
-      let _ = gather_addrof_exp e in
-      let _ = gather_addrof_block b1 in
-      let _ = gather_addrof_block b2 in
-      ()
-  | Cil.Switch (_, _, _, l) -> ()
-  | Cil.Loop (blk, _, _, stmt_opt1, stmt_opt2) -> (
-      let _ = gather_addrof_block blk in
-      let _ = (match stmt_opt1 with
-        | None -> ()
-        | Some s -> gather_addrof_stmt s
-      ) in
-      let _ = (match stmt_opt2 with
-        | None -> ()
-        | Some s -> gather_addrof_stmt s
-      ) in ()
-    )
-  | Cil.Block blk -> gather_addrof_block blk
-  | Cil.TryFinally (b1, b2, _) ->
-      let _ = gather_addrof_block b1 in
-      let _ = gather_addrof_block b2 in
-      ()
-  | Cil.TryExcept (b1, (is, e), b2, _) ->
-      let _ = gather_addrof_block b1 in
-      let _ = List.iter gather_addrof_instr is in
-      let _ = gather_addrof_exp e in
-      let _ = gather_addrof_block b2 in
-      ()
-  | Cil.HipStmt (iast_exp, l) -> ()
+    | Cil.Instr is -> List.iter gather_addrof_instr is
+    | Cil.Return (eopt, _) -> (
+          match eopt with
+            | None -> ()
+            | Some e -> gather_addrof_exp e
+      )
+    | Cil.Goto (sref, l) -> ()
+    | Cil.Break _ -> ()
+    | Cil.Continue _ -> ()
+    | Cil.If (e, b1, b2, _) ->
+          let _ = gather_addrof_exp e in
+          let _ = gather_addrof_block b1 in
+          let _ = gather_addrof_block b2 in
+          ()
+    | Cil.Switch (_, _, _, l) -> ()
+    | Cil.Loop (blk, _, _, stmt_opt1, stmt_opt2) -> (
+          let _ = gather_addrof_block blk in
+          let _ = (match stmt_opt1 with
+            | None -> ()
+            | Some s -> gather_addrof_stmt s
+          ) in
+          let _ = (match stmt_opt2 with
+            | None -> ()
+            | Some s -> gather_addrof_stmt s
+          ) in ()
+      )
+    | Cil.Block blk -> gather_addrof_block blk
+    | Cil.TryFinally (b1, b2, _) ->
+          let _ = gather_addrof_block b1 in
+          let _ = gather_addrof_block b2 in
+          ()
+    | Cil.TryExcept (b1, (is, e), b2, _) ->
+          let _ = gather_addrof_block b1 in
+          let _ = List.iter gather_addrof_instr is in
+          let _ = gather_addrof_exp e in
+          let _ = gather_addrof_block b2 in
+          ()
+    | Cil.HipStmt (iast_exp, l) -> ()
 
 and gather_addrof_instr (i: Cil.instr) : unit =
   match i with
-  | Cil.Set (_, e, _) -> gather_addrof_exp e
-  | Cil.Call (_, e, es, _) ->
-      let _ = gather_addrof_exp e in
-      let _ = List.iter gather_addrof_exp es in
-      ()
-  | Cil.Asm _ -> ()
+    | Cil.Set (_, e, _) -> gather_addrof_exp e
+    | Cil.Call (_, e, es, _) ->
+          let _ = gather_addrof_exp e in
+          let _ = List.iter gather_addrof_exp es in
+          ()
+    | Cil.Asm _ -> ()
 
 and gather_addrof_exp (e: Cil.exp) : unit =
   match e with
-  | Cil.Const _ -> ()
-  | Cil.Lval (lv, _) -> ()
-  | Cil.SizeOf _ -> ()
-  | Cil.SizeOfE _ -> ()
-  | Cil.SizeOfStr _ -> ()
-  | Cil.AlignOf _ -> ()
-  | Cil.AlignOfE _ -> ()
-  | Cil.UnOp (_, e1, _, _) -> gather_addrof_exp e1
-  | Cil.BinOp (_, e1, e2, _, _) -> (
-      let _ = gather_addrof_exp e1 in
-      let _ = gather_addrof_exp e2 in
-      ()
-    )
-  | Cil.Question (e1, e2, e3, _, _) -> (
-      let _ = gather_addrof_exp e1 in
-      let _ = gather_addrof_exp e2 in
-      let _ = gather_addrof_exp e3 in
-      ()
-    )
-  | Cil.CastE (_, e, _) -> gather_addrof_exp e
-  | Cil.AddrOf (lv, l) -> (
-      let pos = translate_location l in
-      let lv_str = string_of_cil_lval lv in
-      let lv_ty = typ_of_cil_lval lv in
-      match lv_ty with
-      | Cil.TComp _ -> ()
-      | _ -> (
-          try
-            let _ = Hashtbl.find tbl_addrof_info lv_str in ()
-          with Not_found -> (
-            let refined_ty = (match lv_ty with
-              | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
-              | _ -> lv_ty
-            ) in
-            let deref_ty = translate_typ refined_ty pos in
-            let (addr_dtyp, addr_dname, addr_ddecl) = (
-              try 
-                let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
-                let ddecl = Hashtbl.find tbl_data_decl dtyp in
-                let dname = (
-                  match dtyp with
-                  | Globals.Named s -> s
-                  | _ -> report_error pos "gather_addrof_exp: unexpected type!"
-                ) in
-                (dtyp, dname, ddecl)
-              with Not_found -> (
-                (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
-                let ftyp = deref_ty in
-                let fname = "deref" in
-                let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
-                let dname = (Globals.string_of_typ ftyp) ^ "_star" in
-                let dtyp = Globals.Named dname in
-                Hashtbl.add tbl_pointer_typ refined_ty dtyp;
-                let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-                Hashtbl.add tbl_data_decl dtyp ddecl;
-                (dtyp, dname, ddecl)
-              )
-            ) in
-            (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-            let addr_vname = "addr_" ^ lv_str in
-            let addr_vdecl = (
-              (* create and temporarily initiate a new object *)
-              let init_params = [(translate_lval lv)] in
-              let init_data = Iast.mkNew addr_dname init_params pos in
-              Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
-            ) in
-            aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-            Hashtbl.add tbl_addrof_info lv_str addr_vname;
-          )
+    | Cil.Const _ -> ()
+    | Cil.Lval (lv, _) -> ()
+    | Cil.SizeOf _ -> ()
+    | Cil.SizeOfE _ -> ()
+    | Cil.SizeOfStr _ -> ()
+    | Cil.AlignOf _ -> ()
+    | Cil.AlignOfE _ -> ()
+    | Cil.UnOp (_, e1, _, _) -> gather_addrof_exp e1
+    | Cil.BinOp (_, e1, e2, _, _) -> (
+          let _ = gather_addrof_exp e1 in
+          let _ = gather_addrof_exp e2 in
+          ()
       )
-    )
-  | Cil.StartOf (lv, _) -> ()
+    | Cil.Question (e1, e2, e3, _, _) -> (
+          let _ = gather_addrof_exp e1 in
+          let _ = gather_addrof_exp e2 in
+          let _ = gather_addrof_exp e3 in
+          ()
+      )
+    | Cil.CastE (_, e, _) -> gather_addrof_exp e
+    | Cil.AddrOf (lv, l) -> (
+          let pos = translate_location l in
+          let lv_str = string_of_cil_lval lv in
+          let lv_ty = typ_of_cil_lval lv in
+          match lv_ty with
+            | Cil.TComp _ -> ()
+            | _ -> (
+                  try
+                    let _ = Hashtbl.find tbl_addrof_info lv_str in ()
+                  with Not_found -> (
+                      let refined_ty = (match lv_ty with
+                        | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
+                        | _ -> lv_ty
+                      ) in
+                      let deref_ty = translate_typ refined_ty pos in
+                      let (addr_dtyp, addr_dname, addr_ddecl) = (
+                          try 
+                            let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
+                            let ddecl = Hashtbl.find tbl_data_decl dtyp in
+                            let dname = (
+                                match dtyp with
+                                  | Globals.Named s -> s
+                                  | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                            ) in
+                            (dtyp, dname, ddecl)
+                          with Not_found -> (
+                              (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
+                              let ftyp = deref_ty in
+                let fname = str_deref in
+                              let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                              let dname = (Globals.string_of_typ ftyp) ^ "_star" in
+                              let dtyp = Globals.Named dname in
+                              Hashtbl.add tbl_pointer_typ refined_ty dtyp;
+                              let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+                              Hashtbl.add tbl_data_decl dtyp ddecl;
+                              (dtyp, dname, ddecl)
+                          )
+                      ) in
+                      (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
+            let addr_vname = str_addr ^ lv_str in
+                      let addr_vdecl = (
+                          (* create and temporarily initiate a new object *)
+                          let init_params = [(translate_lval lv)] in
+                          let init_data = Iast.mkNew addr_dname init_params pos in
+                          Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
+                      ) in
+                      aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
+                      Hashtbl.add tbl_addrof_info lv_str addr_vname;
+                  )
+              )
+      )
+    | Cil.StartOf (lv, _) -> ()
 
 (************************************************************)
 (*************** main translation functions *****************)
@@ -493,75 +496,75 @@ and translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
   let cilep = loc.Cil.end_pos in
   let start_pos = {Lexing.pos_fname = cilsp.Cil.file;
-                   Lexing.pos_lnum = cilsp.Cil.line;
-                   Lexing.pos_bol = cilsp.Cil.line_begin;
-                   Lexing.pos_cnum = cilsp.Cil.byte - 1;} in
+  Lexing.pos_lnum = cilsp.Cil.line;
+  Lexing.pos_bol = cilsp.Cil.line_begin;
+  Lexing.pos_cnum = cilsp.Cil.byte - 1;} in
   let end_pos = {Lexing.pos_fname = cilep.Cil.file;
-                 Lexing.pos_lnum = cilep.Cil.line;
-                 Lexing.pos_bol = cilep.Cil.line_begin;
-                 Lexing.pos_cnum = cilep.Cil.byte - 1;} in
+  Lexing.pos_lnum = cilep.Cil.line;
+  Lexing.pos_bol = cilep.Cil.line_begin;
+  Lexing.pos_cnum = cilep.Cil.byte - 1;} in
   let newloc = {Globals.start_pos = start_pos;
-                Globals.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
-                Globals.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
+  Globals.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
+  Globals.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
   (* return *)
   newloc
 
 and get_actual_cil_typ (t: Cil.typ) : Cil.typ = (
-  let actual_typ = (
-    match t with
-    | Cil.TNamed (tinfo, _) -> get_actual_cil_typ tinfo.Cil.ttype
-    | Cil.TComp (cinfo, _) -> (
-	try
-          let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
-          get_actual_cil_typ ty
-        with _ -> t
-      )
-    | _ -> t
-  ) in
-  actual_typ
+    let actual_typ = (
+        match t with
+          | Cil.TNamed (tinfo, _) -> get_actual_cil_typ tinfo.Cil.ttype
+          | Cil.TComp (cinfo, _) -> (
+	        try
+                  let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
+                  get_actual_cil_typ ty
+                with _ -> t
+            )
+          | _ -> t
+    ) in
+    actual_typ
 )
 
 and translate_typ (t: Cil.typ) pos : Globals.typ =
   let newtype = 
     match t with
-    | Cil.TVoid _ -> Globals.Void
-    | Cil.TInt (Cil.IBool, _) -> Globals.Bool
-    | Cil.TInt _ -> Globals.Int
-    | Cil.TFloat _ -> Globals.Float
-    | Cil.TPtr (ty, _) -> (
-        let actual_ty = get_actual_cil_typ ty in
-        (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
-        let newt = (
-          (* find if this pointer was handled before or not *)
-          try 
-            Hashtbl.find tbl_pointer_typ actual_ty
-          with Not_found -> (
-            (* create new Globals.typ and Iast.data_decl update to hash tables *)
-            let ftyp = translate_typ actual_ty pos in
-            let fname = "deref" in
-            let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
-            let dname = (Globals.string_of_typ ftyp) ^ "_star" in
-            let dtype = Globals.Named dname in
-            Hashtbl.add tbl_pointer_typ actual_ty dtype;
-            let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-            Hashtbl.add tbl_data_decl dtype ddecl;
-            (* return new type*)
-            dtype
-          )
-        ) in
-        newt
-      )
-    | Cil.TArray (ty, _, _) ->
-        let arrayty = translate_typ ty pos in
-        Globals.Array (arrayty, 1)
-    | Cil.TFun _ ->
-        report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
-    | Cil.TNamed _ ->                                          (* typedef type *)
-       let ty = get_actual_cil_typ t in
-       translate_typ ty pos
-    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
-    | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
-    | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
+      | Cil.TVoid _ -> Globals.Void
+      | Cil.TInt (Cil.IBool, _) -> Globals.Bool
+      | Cil.TInt _ -> Globals.Int
+      | Cil.TFloat _ -> Globals.Float
+      | Cil.TPtr (ty, _) -> (
+            let actual_ty = get_actual_cil_typ ty in
+            (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
+            let newt = (
+                (* find if this pointer was handled before or not *)
+                try 
+                  Hashtbl.find tbl_pointer_typ actual_ty
+                with Not_found -> (
+                    (* create new Globals.typ and Iast.data_decl update to hash tables *)
+                    let ftyp = translate_typ actual_ty pos in
+                    let fname = str_deref in
+                    let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                    let dname = (Globals.string_of_typ ftyp) ^ "_star" in
+                    let dtype = Globals.Named dname in
+                    Hashtbl.add tbl_pointer_typ actual_ty dtype;
+                    let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+                    Hashtbl.add tbl_data_decl dtype ddecl;
+                    (* return new type*)
+                    dtype
+                )
+            ) in
+            newt
+        )
+      | Cil.TArray (ty, _, _) ->
+            let arrayty = translate_typ ty pos in
+            Globals.Array (arrayty, 1)
+      | Cil.TFun _ ->
+            report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
+      | Cil.TNamed _ ->                                          (* typedef type *)
+            let ty = get_actual_cil_typ t in
+            translate_typ ty pos
+      | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
+      | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
+      | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
 
@@ -580,26 +583,26 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let ty = vinfo.Cil.vtype in
   let (new_ty, need_init) = (match ty with
     | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-        (translate_typ ty1 pos, false)                 (* heap allocated data *)
+          (translate_typ ty1 pos, false)                 (* heap allocated data *)
     | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
     | _ -> (translate_typ ty pos, false)
   ) in
   let name = vinfo.Cil.vname in
   let newexp = (
-    match new_ty with
-    | Globals.Int
-    | Globals.Bool
-    | Globals.Float
-    | Globals.Array _
-    | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
-    | Globals.Named typ_name -> (
-        if (need_init) then (
-          let init_data = Iast.mkNew typ_name [] pos in
-          Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
-        )
-        else Iast.mkVarDecl new_ty [(name, None, pos)] pos
-      )
-    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
+      match new_ty with
+        | Globals.Int
+        | Globals.Bool
+        | Globals.Float
+        | Globals.Array _
+        | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
+        | Globals.Named typ_name -> (
+              if (need_init) then (
+                  let init_data = Iast.mkNew typ_name [] pos in
+                  Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
+              )
+              else Iast.mkVarDecl new_ty [(name, None, pos)] pos
+          )
+        | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
   ) in
   newexp
 
@@ -607,34 +610,34 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
 and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
-  | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
-  | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
-  | Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"
-  | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
-  | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
+    | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
+    | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
+    | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
+    | Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"
+    | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
+    | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
 
 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-                        : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
+      : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ftyp = field.Cil.ftype in
   match ftyp with
-  | Cil.TComp (comp, _) ->
-      let ty = Globals.Named comp.Cil.cname in
-      ((ty, name), pos, true, Iast.F_NO_ANN)                     (* struct ~~> inline data *)
-  | Cil.TPtr (ty, _) ->
-      let new_ty = (
-        if (is_cil_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
-        else translate_typ ftyp pos
-      ) in
-      ((new_ty, name), pos, false, Iast.F_NO_ANN)
-  | _ ->
-      let ty = translate_typ ftyp pos in
-      ((ty, name), pos, false, Iast.F_NO_ANN)
+    | Cil.TComp (comp, _) ->
+          let ty = Globals.Named comp.Cil.cname in
+          ((ty, name), pos, true, Iast.F_NO_ANN)                     (* struct ~~> inline data *)
+    | Cil.TPtr (ty, _) ->
+          let new_ty = (
+              if (is_cil_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
+              else translate_typ ftyp pos
+          ) in
+          ((new_ty, name), pos, false, Iast.F_NO_ANN)
+    | _ ->
+          let ty = translate_typ ftyp pos in
+          ((ty, name), pos, false, Iast.F_NO_ANN)
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
@@ -646,35 +649,35 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
 
 and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
   match op with
-  | Cil.Neg -> Iast.OpUMinus
-  | Cil.BNot -> report_error pos "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
-  | Cil.LNot -> Iast.OpNot
+    | Cil.Neg -> Iast.OpUMinus
+    | Cil.BNot -> report_error pos "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
+    | Cil.LNot -> Iast.OpNot
 
 
 and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
   match op with
-  | Cil.PlusA -> Iast.OpPlus
-  | Cil.PlusPI -> Iast.OpPlus
-  | Cil.IndexPI -> Iast.OpPlus
-  | Cil.MinusA -> Iast.OpMinus
-  | Cil.MinusPI -> Iast.OpMinus
-  | Cil.MinusPP -> Iast.OpMinus
-  | Cil.Mult -> Iast.OpMult
-  | Cil.Div -> Iast.OpDiv
-  | Cil.Mod -> Iast.OpMod
-  | Cil.Shiftlt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftlf operator!"
-  | Cil.Shiftrt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftrt operator!"
-  | Cil.Lt -> Iast.OpLt
-  | Cil.Gt -> Iast.OpGt
-  | Cil.Le -> Iast.OpLte
-  | Cil.Ge -> Iast.OpGte
-  | Cil.Eq -> Iast.OpEq
-  | Cil.Ne -> Iast.OpNeq
-  | Cil.BAnd -> report_error pos "Error!!! Iast doesn't support Cil.BAnd operator!"
-  | Cil.BXor -> report_error pos "Error!!! Iast doesn't support Cil.BXor operator!"
-  | Cil.BOr -> report_error pos "Error!!! Iast doesn't support Cil.BOr operator!"
-  | Cil.LAnd -> Iast.OpLogicalAnd
-  | Cil.LOr -> Iast.OpLogicalOr
+    | Cil.PlusA -> Iast.OpPlus
+    | Cil.PlusPI -> Iast.OpPlus
+    | Cil.IndexPI -> Iast.OpPlus
+    | Cil.MinusA -> Iast.OpMinus
+    | Cil.MinusPI -> Iast.OpMinus
+    | Cil.MinusPP -> Iast.OpMinus
+    | Cil.Mult -> Iast.OpMult
+    | Cil.Div -> Iast.OpDiv
+    | Cil.Mod -> Iast.OpMod
+    | Cil.Shiftlt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftlf operator!"
+    | Cil.Shiftrt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftrt operator!"
+    | Cil.Lt -> Iast.OpLt
+    | Cil.Gt -> Iast.OpGt
+    | Cil.Le -> Iast.OpLte
+    | Cil.Ge -> Iast.OpGte
+    | Cil.Eq -> Iast.OpEq
+    | Cil.Ne -> Iast.OpNeq
+    | Cil.BAnd -> report_error pos "Error!!! Iast doesn't support Cil.BAnd operator!"
+    | Cil.BXor -> report_error pos "Error!!! Iast doesn't support Cil.BXor operator!"
+    | Cil.BOr -> report_error pos "Error!!! Iast doesn't support Cil.BOr operator!"
+    | Cil.LAnd -> Iast.OpLogicalAnd
+    | Cil.LOr -> Iast.OpLogicalOr
 
 
 and translate_lval (lv: Cil.lval) : Iast.exp =
@@ -684,474 +687,625 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   try 
     let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
-    Iast.mkMember addr_var ["deref"] None pos
+    Iast.mkMember addr_var [str_deref] None pos
   with Not_found -> (
-    let (lhost, offset, loc) = lv in
-    let pos = translate_location loc in
-    let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
-                               (found_fields : string list) pos
-                               : Iast.exp = (
-      match offset with
-      | Cil.NoOffset -> (
-          match found_fields with 
-          | [] -> base
-          | _ -> Iast.mkMember base found_fields None pos
-        )
-      | Cil.Field ((field, l1), off, _) ->
-          let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
-          create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
-      | Cil.Index (e, off, _) ->
-          let l1 = loc_of_cil_exp e in
-          let new_base = (match found_fields with
-            | [] -> Iast.mkArrayAt base [(translate_exp e)] pos
-            | _ ->
-                let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
-                let b = Iast.mkMember base found_fields None p in
-                Iast.mkArrayAt b [(translate_exp e)] p
-          ) in
-          create_complex_exp new_base off [] pos
-    ) in
-    match lhost with
-    | Cil.Var (v, l) ->
-        let base = translate_var v (Some l) in
-        let newexp = create_complex_exp base offset [] pos in
-        newexp
-    | Cil.Mem e ->
-        (* access to data in pointer variable *)
-        let base_typ = typ_of_cil_exp e in
-        match base_typ with
-        | Cil.TPtr (Cil.TComp _, _) ->
-            let base = translate_exp e  in
-            create_complex_exp base offset [] pos
-        | _ -> (
-            let data_base = translate_exp e  in
-            let data_fields = ["deref"] in
-            let base = Iast.mkMember data_base data_fields None pos in
-            create_complex_exp base offset [] pos
-          )
+      let (lhost, offset, loc) = lv in
+      let pos = translate_location loc in
+      let rec create_complex_exp (base : Iast.exp) (offset : Cil.offset) 
+            (found_fields : string list) pos
+            : Iast.exp = (
+                match offset with
+                  | Cil.NoOffset -> (
+                        match found_fields with 
+                          | [] -> base
+                          | _ -> Iast.mkMember base found_fields None pos
+                    )
+                  | Cil.Field ((field, l1), off, _) ->
+                        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                        create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
+                  | Cil.Index (e, off, _) ->
+                        let l1 = loc_of_cil_exp e in
+                        let new_base = (match found_fields with
+                          | [] -> Iast.mkArrayAt base [(translate_exp e)] pos
+                          | _ ->
+                                let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                                let b = Iast.mkMember base found_fields None p in
+                                Iast.mkArrayAt b [(translate_exp e)] p
+                        ) in
+                        create_complex_exp new_base off [] pos
+            ) in
+      match lhost with
+        | Cil.Var (v, l) ->
+              let base = translate_var v (Some l) in
+              let newexp = create_complex_exp base offset [] pos in
+              newexp
+        | Cil.Mem e ->
+              (* access to data in pointer variable *)
+              let base_typ = typ_of_cil_exp e in
+              match base_typ with
+                | Cil.TPtr (Cil.TComp _, _) ->
+                      let base = translate_exp e  in
+                      create_complex_exp base offset [] pos
+                | _ -> (
+                      let data_base = translate_exp e  in
+                      let data_fields = [str_deref] in
+                      let base = Iast.mkMember data_base data_fields None pos in
+                      create_complex_exp base offset [] pos
+                  )
   )
 
 and translate_exp (e: Cil.exp) : Iast.exp =
   match e with
-  | Cil.Const (c, l) -> translate_constant c (Some l)
-  | Cil.Lval (lv, _) -> translate_lval lv 
-  | Cil.SizeOf (_, l) ->  (* currently assume SizeOf = 1, TRUNG TODO: compute exact value later *)
-      let pos = translate_location l in
-      Iast.mkIntLit 1 pos
-  | Cil.SizeOfE (_, l) -> (* currently assume SizeOfE = 1, TRUNG TODO: compute exact value later *)
-      let pos = translate_location l in
-      Iast.mkIntLit 1 pos
-  | Cil.SizeOfStr (s, l) ->
-      let pos = translate_location l in
-      Iast.mkIntLit (String.length s) pos
-  | Cil.AlignOf (_, l) ->
-      let pos = translate_location l in
-      report_error pos "TRUNG TODO: Handle Cil.AlignOf later!"
-  | Cil.AlignOfE (_, l) -> 
-      let pos = translate_location l in
-      report_error pos "TRUNG TODO: Handle Cil.AlignOfE later!"
-  | Cil.UnOp (op, exp, ty, l) -> (
-      let pos = translate_location l in
-      let o = translate_unary_operator op pos in
-      let e = translate_exp exp in
-      let unexp = (
-        let t = typ_of_cil_exp exp in
-        let new_t = (match t with
-          | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
-          | _ -> translate_typ t pos
-        ) in
-        match new_t with
-        | Globals.Bool -> Iast.mkUnary o e None pos
-        | _ -> (
-            let not_proc = create_logical_not_proc new_t in
-            let proc_name = not_proc.Iast.proc_name in
-            Iast.mkCallNRecv proc_name None [e] None pos
-          )
-      ) in
-      let target_typ = translate_typ ty pos in
-      let newexp = Iast.mkCast target_typ unexp pos in 
-      newexp
-    )
-  | Cil.BinOp (op, exp1, exp2, ty, l) ->
-      let pos = translate_location l in
-      let e1 = translate_exp exp1 in
-      let e2 = translate_exp exp2 in
-      let o = translate_binary_operator op pos in
-      let binexp = Iast.mkBinary o e1 e2 None pos in
-      let target_typ = translate_typ ty pos in
-      let newexp = Iast.mkCast target_typ binexp pos in 
-      newexp
-  | Cil.Question (exp1, exp2, exp3, ty, l) ->
-      let e1 = translate_exp exp1 in
-      let e2 = translate_exp exp2 in
-      let e3 = translate_exp exp3 in
-      let pos = translate_location l in
-      let qexp = Iast.mkCond e1 e2 e3 None pos in
-      let target_typ = translate_typ ty pos in
-      let newexp = Iast.mkCast target_typ qexp pos in 
-      newexp
-  | Cil.CastE (ty, exp, l) -> (
-      let pos = (
-        if (l != Cil.locUnknown) then translate_location l
-        else translate_location (loc_of_cil_exp exp)
-      ) in
-      let input_typ = (
-        let ity = typ_of_cil_exp exp in
-        match ity with
-        | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
-        | _ -> translate_typ ity pos
-      ) in
-      let output_typ = (match ty with
-        | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
-        | _ -> translate_typ ty pos
-      ) in
-      let input_exp = translate_exp exp in
-      if (input_typ = output_typ) then
-        (* no need casting *)
-        input_exp
-      else (
-        (* do casting *)
-        match output_typ, input_typ with
-        | Globals.Named otyp_name, Globals.Named ityp_name -> (
-            if (ityp_name = "void_star") then (
-              let cast_proc = create_void_pointer_casting_proc otyp_name in
-              Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
-            )
-            else 
-              report_error pos ("translate_exp: couldn't cast type 1: " ^ ityp_name ^ " to " ^ otyp_name)
-          )
-        | Globals.Named otyp_name, Globals.Int -> (
-            let cast_proc = create_int_to_pointer_casting_proc otyp_name in
-            Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
-          )
-        | Globals.Int, Globals.Named ityp_name -> (
-            let cast_proc = create_pointer_to_int_casting_proc ityp_name in
-            Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
-          )
-        | _ -> report_error pos ("translate_exp: couldn't cast type 2: " ^ (Globals.string_of_typ input_typ) 
-                                 ^ " to " ^ (Globals.string_of_typ output_typ))
+    | Cil.Const (c, l) -> translate_constant c (Some l)
+    | Cil.Lval (lv, _) -> translate_lval lv 
+    | Cil.SizeOf (_, l) ->  (* currently assume SizeOf = 1, TRUNG TODO: compute exact value later *)
+          let pos = translate_location l in
+          Iast.mkIntLit 1 pos
+    | Cil.SizeOfE (_, l) -> (* currently assume SizeOfE = 1, TRUNG TODO: compute exact value later *)
+          let pos = translate_location l in
+          Iast.mkIntLit 1 pos
+    | Cil.SizeOfStr (s, l) ->
+          let pos = translate_location l in
+          Iast.mkIntLit (String.length s) pos
+    | Cil.AlignOf (_, l) ->
+          let pos = translate_location l in
+          report_error pos "TRUNG TODO: Handle Cil.AlignOf later!"
+    | Cil.AlignOfE (_, l) -> 
+          let pos = translate_location l in
+          report_error pos "TRUNG TODO: Handle Cil.AlignOfE later!"
+    | Cil.UnOp (op, exp, ty, l) -> (
+          let pos = translate_location l in
+          let o = translate_unary_operator op pos in
+          let e = translate_exp exp in
+          let unexp = (
+              let t = typ_of_cil_exp exp in
+              let new_t = (match t with
+                | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
+                | _ -> translate_typ t pos
+              ) in
+              match new_t with
+                | Globals.Bool -> Iast.mkUnary o e None pos
+                | _ -> (
+                      let not_proc = create_logical_not_proc new_t in
+                      let proc_name = not_proc.Iast.proc_name in
+                      Iast.mkCallNRecv proc_name None [e] None pos
+                  )
+          ) in
+          let target_typ = translate_typ ty pos in
+          let newexp = Iast.mkCast target_typ unexp pos in 
+          newexp
       )
-    )
-  | Cil.AddrOf (lv, l) -> (
-      let pos = translate_location l in
-      let lv_ty = typ_of_cil_lval lv in
-      match lv_ty with
-      | Cil.TComp _ -> translate_lval lv
-      | _ -> (
-          let lv_str = string_of_cil_lval lv in
-          try 
-            let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
-            Iast.mkVar addr_vname pos
-          with Not_found ->
-            report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
-        )
-    )
-  | Cil.StartOf (lv, l) -> translate_lval lv
+    | Cil.BinOp (op, exp1, exp2, ty, l) ->
+          let pos = translate_location l in
+          let e1 = translate_exp exp1 in
+          let e2 = translate_exp exp2 in
+          let o = translate_binary_operator op pos in
+          let binexp = Iast.mkBinary o e1 e2 None pos in
+          let target_typ = translate_typ ty pos in
+          let newexp = Iast.mkCast target_typ binexp pos in 
+          newexp
+    | Cil.Question (exp1, exp2, exp3, ty, l) ->
+          let e1 = translate_exp exp1 in
+          let e2 = translate_exp exp2 in
+          let e3 = translate_exp exp3 in
+          let pos = translate_location l in
+          let qexp = Iast.mkCond e1 e2 e3 None pos in
+          let target_typ = translate_typ ty pos in
+          let newexp = Iast.mkCast target_typ qexp pos in 
+          newexp
+    | Cil.CastE (ty, exp, l) -> (
+          let pos = (
+              if (l != Cil.locUnknown) then translate_location l
+              else translate_location (loc_of_cil_exp exp)
+          ) in
+          let input_typ = (
+              let ity = typ_of_cil_exp exp in
+              match ity with
+                | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
+                | _ -> translate_typ ity pos
+          ) in
+          let output_typ = (match ty with
+            | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
+            | _ -> translate_typ ty pos
+          ) in
+          let input_exp = translate_exp exp in
+          if (input_typ = output_typ) then
+            (* no need casting *)
+            input_exp
+          else (
+              (* do casting *)
+              match output_typ, input_typ with
+                | Globals.Named otyp_name, Globals.Named ityp_name -> (
+                      if (ityp_name = "void_star") then (
+                          let cast_proc = create_void_pointer_casting_proc otyp_name in
+                          Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                      )
+                      else 
+                        report_error pos ("translate_exp: couldn't cast type 1: " ^ ityp_name ^ " to " ^ otyp_name)
+                  )
+                | Globals.Named otyp_name, Globals.Int -> (
+                      let cast_proc = create_int_to_pointer_casting_proc otyp_name in
+                      Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                  )
+                | Globals.Int, Globals.Named ityp_name -> (
+                      let cast_proc = create_pointer_to_int_casting_proc ityp_name in
+                      Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                  )
+                | _ -> report_error pos ("translate_exp: couldn't cast type 2: " ^ (Globals.string_of_typ input_typ) 
+                  ^ " to " ^ (Globals.string_of_typ output_typ))
+          )
+      )
+    | Cil.AddrOf (lv, l) -> (
+          let pos = translate_location l in
+          let lv_ty = typ_of_cil_lval lv in
+          match lv_ty with
+            | Cil.TComp _ -> translate_lval lv
+            | _ -> (
+                  let lv_str = string_of_cil_lval lv in
+                  try 
+                    let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
+                    Iast.mkVar addr_vname pos
+                  with Not_found ->
+                      report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
+              )
+      )
+    | Cil.StartOf (lv, l) -> translate_lval lv
 
 
 and translate_instr (instr: Cil.instr) : Iast.exp =
   (* detect address-of operator *)
   match instr with
-  | Cil.Set (lv, exp, l) -> (
-      let pos = translate_location l in
-      let le = translate_lval lv in
-      let re = translate_exp exp in
-      (Iast.mkAssign Iast.OpAssign le re None pos)
-    )
-  | Cil.Call (lv_opt, exp, exps, l) -> (
-      let pos = translate_location l in
-      let fname = match exp with
-        | Cil.Const (Cil.CStr s, _) -> s
-        | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
-        | _ -> report_error pos "translate_intstr: invalid callee's name!" in
-      let args = List.map (fun x -> translate_exp x) exps in
-      let func_call = Iast.mkCallNRecv fname None args None pos in (
-        match lv_opt with
-        | None -> func_call
-        | Some lv ->
-            let le = translate_lval lv in
-            Iast.mkAssign Iast.OpAssign le func_call None pos
+    | Cil.Set (lv, exp, l) -> (
+          let pos = translate_location l in
+          let le = translate_lval lv in
+          let re = translate_exp exp in
+          (Iast.mkAssign Iast.OpAssign le re None pos)
       )
-    )
-  | Cil.Asm (_, _, _, _, _, l) -> (
-      let pos = translate_location l in
-      (Iast.Empty pos)
-    )
+    | Cil.Call (lv_opt, exp, exps, l) -> (
+          let pos = translate_location l in
+          let fname = match exp with
+            | Cil.Const (Cil.CStr s, _) -> s
+            | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
+            | _ -> report_error pos "translate_intstr: invalid callee's name!" in
+          let args = List.map (fun x -> translate_exp x) exps in
+          let func_call = Iast.mkCallNRecv fname None args None pos in (
+              match lv_opt with
+                | None -> func_call
+                | Some lv ->
+                      let le = translate_lval lv in
+                      Iast.mkAssign Iast.OpAssign le func_call None pos
+          )
+      )
+    | Cil.Asm (_, _, _, _, _, l) -> (
+          let pos = translate_location l in
+          (Iast.Empty pos)
+      )
 
 
 and translate_stmt (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
   match skind with
-  | Cil.Instr instrs ->
-      let newexp = (match instrs with
-        | [] -> Iast.Empty no_pos
-        | [i] -> translate_instr i
-        | _ ->
-            let es = List.map translate_instr instrs in
-            merge_iast_exp es
-      ) in
-      newexp
-  | Cil.Return (eopt, l) ->
-      let pos = translate_location l in
-      let retval = (
-        match eopt with
-        | None -> None
-        | Some e -> Some (translate_exp e)
-      ) in
-      let newexp = Iast.mkReturn retval None pos in
-      newexp
-  | Cil.Goto (sref, l) ->
-      let pos = translate_location l in
-      report_error pos "translate_stmt: handle GOTO later!"
-  | Cil.Break l ->
-      let pos = translate_location l in
-      let newexp = Iast.mkBreak Iast.NoJumpLabel None pos in
-      newexp
-  | Cil.Continue l ->
-      let pos = translate_location l in
-      let newexp = Iast.mkContinue Iast.NoJumpLabel None pos in
-      newexp
-  | Cil.If (exp, blk1, blk2, l) ->
-      let pos = translate_location l in
-      let cond = (
-        let ty = typ_of_cil_exp exp in
-        let new_ty = (match ty with
-          | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
-          | _ -> translate_typ ty pos
-        ) in
-        match new_ty with
-        | Globals.Bool -> translate_exp exp
-        | _ -> (
-            let e = translate_exp exp in
-            let bool_of_proc = create_bool_casting_proc new_ty in
-            let proc_name = bool_of_proc.Iast.proc_name in
-            Iast.mkCallNRecv proc_name None [e] None pos
-          )
-      ) in
-      let e1 = translate_block blk1 in
-      let e2 = translate_block blk2 in
-      let ifexp = Iast.mkCond cond e1 e2 None pos in
-      ifexp
-  | Cil.Switch (_, _, _, l) ->
-      let pos = translate_location l in
-      report_error pos "TRUNG TODO: Handle Cil.Switch later!"
-  | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
-      let p = translate_location l in
-      let cond = Iast.mkBoolLit true p in
-      let body = translate_block blk in
-      let newexp = Iast.While {Iast.exp_while_condition = cond;
-                               Iast.exp_while_body = body;
-                               Iast.exp_while_addr_vars = [];
-                               Iast.exp_while_specs = hspecs;
-                               Iast.exp_while_jump_label = Iast.NoJumpLabel;
-                               Iast.exp_while_path_id = None ;
-                               Iast.exp_while_f_name = "";
-                               Iast.exp_while_wrappings = None;
-                               Iast.exp_while_pos = p} in
-      newexp
-  | Cil.Block blk -> translate_block blk
-  | Cil.TryFinally (blk1, blk2, l) ->
-      let p = translate_location l in
-      let e1 = translate_block blk1 in
-      let e2 = translate_block blk2 in
-      let newexp = Iast.mkTry e1 [] [e2] None p in
-      newexp
-  | Cil.TryExcept (blk1, (instrs, exp), blk2, l) ->
-      let p = translate_location l in
-      let e1 = translate_block blk1 in
-      let e2 = translate_block blk2 in
-      let newexp = Iast.mkTry e1 [] [e2] None p in
-      newexp
-  | Cil.HipStmt (iast_exp, l) -> 
-      (* TODO: temporarily skip translate stmt *)
-      let p = translate_location l in
-      (*translate_hip_exp iast_exp p*)
-      iast_exp
-(*
+    | Cil.Instr instrs ->
+          let newexp = (match instrs with
+            | [] -> Iast.Empty no_pos
+            | [i] -> translate_instr i
+            | _ ->
+                  let es = List.map translate_instr instrs in
+                  merge_iast_exp es
+          ) in
+          newexp
+    | Cil.Return (eopt, l) ->
+          let pos = translate_location l in
+          let retval = (
+              match eopt with
+                | None -> None
+                | Some e -> Some (translate_exp e)
+          ) in
+          let newexp = Iast.mkReturn retval None pos in
+          newexp
+    | Cil.Goto (sref, l) ->
+          let pos = translate_location l in
+          report_error pos "translate_stmt: handle GOTO later!"
+    | Cil.Break l ->
+          let pos = translate_location l in
+          let newexp = Iast.mkBreak Iast.NoJumpLabel None pos in
+          newexp
+    | Cil.Continue l ->
+          let pos = translate_location l in
+          let newexp = Iast.mkContinue Iast.NoJumpLabel None pos in
+          newexp
+    | Cil.If (exp, blk1, blk2, l) ->
+          let pos = translate_location l in
+          let cond = (
+              let ty = typ_of_cil_exp exp in
+              let new_ty = (match ty with
+                | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> translate_typ ty1 pos
+                | _ -> translate_typ ty pos
+              ) in
+              match new_ty with
+                | Globals.Bool -> translate_exp exp
+                | _ -> (
+            match exp with
+            (* simplify conditional expression in if-statement *)
+            | Cil.BinOp (op, Cil.CastE (t1, exp1, _), Cil.CastE (t2, exp2, _), ty, l) 
+              when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->
+                let e1 = translate_exp exp1 in
+                let e2 = translate_exp exp2 in
+                let o = translate_binary_operator op pos in
+                Iast.mkBinary o e1 e2 None pos
+            | _ ->
+                let e = translate_exp exp in
+                let bool_of_proc = create_bool_casting_proc new_ty in
+                let proc_name = bool_of_proc.Iast.proc_name in
+                Iast.mkCallNRecv proc_name None [e] None pos
+                  )
+          ) in
+          let e1 = translate_block blk1 in
+          let e2 = translate_block blk2 in
+          let ifexp = Iast.mkCond cond e1 e2 None pos in
+          ifexp
+    | Cil.Switch (_, _, _, l) ->
+          let pos = translate_location l in
+          report_error pos "TRUNG TODO: Handle Cil.Switch later!"
+    | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
+          let p = translate_location l in
+          let cond = Iast.mkBoolLit true p in
+          let body = translate_block blk in
+          let newexp = Iast.While {Iast.exp_while_condition = cond;
+          Iast.exp_while_body = body;
+          Iast.exp_while_addr_vars = [];
+          Iast.exp_while_specs = hspecs;
+          Iast.exp_while_jump_label = Iast.NoJumpLabel;
+          Iast.exp_while_path_id = None ;
+          Iast.exp_while_f_name = "";
+          Iast.exp_while_wrappings = None;
+          Iast.exp_while_pos = p} in
+          newexp
+    | Cil.Block blk -> translate_block blk
+    | Cil.TryFinally (blk1, blk2, l) ->
+          let p = translate_location l in
+          let e1 = translate_block blk1 in
+          let e2 = translate_block blk2 in
+          let newexp = Iast.mkTry e1 [] [e2] None p in
+          newexp
+    | Cil.TryExcept (blk1, (instrs, exp), blk2, l) ->
+          let p = translate_location l in
+          let e1 = translate_block blk1 in
+          let e2 = translate_block blk2 in
+          let newexp = Iast.mkTry e1 [] [e2] None p in
+          newexp
+    | Cil.HipStmt (iast_exp, l) -> 
+          (* TODO: temporarily skip translate stmt *)
+          let p = translate_location l in
+          translate_hip_exp iast_exp p
+              (*iast_exp*)
+
 and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
-  let rec helper_formula (f: IF.formula): IF.formula = (
-    match f with
-    | IF.Base fb ->
-        IF.Base { fb with
-          IF.formula_base_heap = helper_h_formula fb.IF.formula_base_heap;
-          IF.formula_base_pure = helper_pure_formula fb.IF.formula_base_pure;
-          IF.formula_base_and = List.map helper_one_formula fb.IF.formula_base_and;
-        }
-    | IF.Exists fe ->
-        IF.Exists { fe with
-          IF.formula_exists_heap = helper_h_formula fe.formula_exists_heap;
-          IF.formula_exists_pure = helper_pure_formula fe.IF.formula_exists_pure;
-          IF.formula_exists_and = List.map helper_one_formula fe.IF.formula_exists_and;
-        }
-    | IF.Or fo ->
-        IF.Or { fo with
-          IF.formula_heap = helper_h_formula fe.formula_heap;
-          IF.formula_pure = helper_pure_formula fe.IF.formula_pure;
-          IF.formula_delayed = helper_formula fe.IF.formula_delayed;
-        }
-  ) in
-  and helper_h_formula (h: IF.h_formula) : IF.h_formula = (
-    match h with
-    | IF.Phase hfp ->
-        IF.Phase { hfp with
-          IF.h_formula_phase_rd = helper_h_formula hfp.IF.h_formula_phase_rd;
-          IF.h_formula_phase_rw = helper_h_formula hfp.IF.h_formula_phase_rw;
-        }
-    | IF.Conj hfc ->
-        IF.Conj { hfc with
-          IF.h_formula_conj_h1 = helper_h_formula hfp.IF.h_formula_conj_h1;
-          IF.h_formula_conj_h2 = helper_h_formula hfp.IF.h_formula_conj_h2;
-        }
-    | IF.ConjStar hfcs ->
-        IF.ConjStar { hfcs with
-          IF.h_formula_conjstar_h1 = helper_h_formula hfp.IF.h_formula_conjstar_h1;
-          IF.h_formula_conjstar_h2 = helper_h_formula hfp.IF.h_formula_conjstar_h2;
-        }
-    | IF.ConjConj hfcc ->
-        IF.ConjConj { hfcc with
-          IF.h_formula_conjconj_h1 = helper_h_formula hfp.IF.h_formula_conjconj_h1;
-          IF.h_formula_conjconj_h2 = helper_h_formula hfp.IF.h_formula_conjconj_h2;
-        }
-    | IF.Star hfs ->
-        IF.Star { hfs with
-          IF.h_formula_star_h1 = helper_h_formula hfp.IF.h_formula_star_h1;
-          IF.h_formula_star_h2 = helper_h_formula hfp.IF.h_formula_star_h2;
-        }
-    | IF.StarMinus hfsm ->
-        IF.StarMinus { hfc with
-          IF.h_formula_starminus_h1 = helper_h_formula hfp.IF.h_formula_starminus_h1;
-          IF.h_formula_starminus_h2 = helper_h_formula hfp.IF.h_formula_starminus_h2;
-        }
-    | IF.HeapNode hfh ->
-        IF.HeapNode { hfh with
-          IF.h_formula_heap_name = H
-        }
-    | IF.HeapNode2 of h_formula_heap2
-    | HRel _ | HTrue | HFalse -> h
-  ) in
+  let pr = Iprinter.string_of_exp in
+  Debug.no_1 "translate_hip_exp" pr pr (fun _ -> translate_hip_exp_x exp pos) exp
+
+and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
+  let rec helper_struc_formula (f: IF.struc_formula): IF.struc_formula = (
+      match f with
+        | IF.ECase ec -> 
+              IF.ECase { ec with
+                  IF.formula_case_branches = List.map (fun (p, s) -> (helper_pure_formula p, helper_struc_formula s)) ec.IF.formula_case_branches;
+              }
+        | IF.EBase eb ->
+              IF.EBase { eb with
+                  IF.formula_struc_base = helper_formula eb.IF.formula_struc_base;
+                  IF.formula_struc_continuation = (match eb.IF.formula_struc_continuation with
+                    | None -> None
+                    | Some sf -> Some (helper_struc_formula sf));
+              }
+        | IF.EAssume ea ->
+              IF.EAssume { ea with
+                  IF.formula_assume_simpl = helper_formula ea.IF.formula_assume_simpl;
+                  IF.formula_assume_struc = helper_struc_formula ea.IF.formula_assume_struc;
+              }
+        | IF.EInfer ei -> 
+              IF.EInfer { ei with
+                  IF.formula_inf_continuation = helper_struc_formula ei.IF.formula_inf_continuation;
+              }
+        | IF.EList el -> IF.EList (List.map (fun (sl, sf) -> (sl, helper_struc_formula sf)) el)
+  )
+  and find_typ l id =
+    match l with
+      | Iast.VarDecl vd :: tl ->
+            let idl = List.map (fun (id, _, _) -> id) vd.Iast.exp_var_decl_decls in
+            if List.mem id idl then vd.Iast.exp_var_decl_type else find_typ tl id
+      | _ -> Globals.Void
+  and helper_formula (h: IF.formula) : IF.formula =
+    (* let _ = print_endline "hello" in *)
+    let pr = Iprinter.string_of_formula in
+    Debug.no_1 "helper_formula" pr pr helper_formula_x h
+  and helper_formula_x (f: IF.formula): IF.formula = (
+      match f with
+        | IF.Base fb ->
+              let r = Str.regexp str_addr in
+              let new_heap_formula0 = helper_h_formula fb.IF.formula_base_heap in
+              let addr_heap_free_var = List.filter (fun (id, pr) -> Str.string_match r id 0) (IF.h_fv new_heap_formula0) in
+              let typ_heap_free_var = List.map (fun (id, pr) ->
+                  find_typ !aux_local_vardecls id) addr_heap_free_var in
+              let new_heap_free_var = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_heap_free_var in
+              let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
+              let new_heap_formula2 = List.fold_left
+                (fun hf (((id1, pr1), (id2, pr2)), t) ->
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
+              let npf = helper_pure_formula fb.IF.formula_base_pure in
+              let addr_fvs = List.filter (fun (id, pr) -> Str.string_match r id 0) (Ipure.fv npf) in
+              let tl = List.map (fun (id, pr) -> 
+                  find_typ !aux_local_vardecls id) addr_fvs in
+              let nfvs = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_fvs in
+              let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
+              let nhf = List.fold_left 
+                (fun hf (((id1, pr1), (id2, pr2)), t) -> 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
+              IF.Base { fb with
+                  IF.formula_base_heap = nhf;
+                  IF.formula_base_pure = npf1;
+                  IF.formula_base_and = List.map helper_one_formula fb.IF.formula_base_and;
+              }
+        | IF.Exists fe ->
+              let r = Str.regexp str_addr in
+              let new_heap_formula0 = helper_h_formula fe.IF.formula_exists_heap in
+              let addr_heap_free_var = List.filter (fun (id, pr) -> Str.string_match r id 0) (IF.h_fv new_heap_formula0) in
+              let typ_heap_free_var = List.map (fun (id, pr) ->
+                  find_typ !aux_local_vardecls id) addr_heap_free_var in
+              let new_heap_free_var = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_heap_free_var in
+              let new_heap_formula1 = List.fold_left (fun hf ((id1, pr1), (id2, pr2)) -> IF.h_apply_one ((id1, pr1), (id2, pr2)) hf) new_heap_formula0 (List.combine addr_heap_free_var new_heap_free_var) in
+              let new_heap_formula2 = List.fold_left
+                (fun hf (((id1, pr1), (id2, pr2)), t) ->
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula1 (List.combine (List.combine addr_heap_free_var new_heap_free_var) typ_heap_free_var) in
+              let npf = helper_pure_formula fe.IF.formula_exists_pure in
+              let addr_fvs = List.filter (fun (id, pr) -> Str.string_match r id 0) (Ipure.fv npf) in
+              let tl = List.map (fun (id, pr) -> 
+                  find_typ !aux_local_vardecls id) addr_fvs in
+              let nfvs = List.map (fun (id, pr) -> Ipure.fresh_var (Str.replace_first r "" id, pr)) addr_fvs in
+              let npf1 = Ipure.subst (List.combine addr_fvs nfvs) npf in
+              let nhf = List.fold_left 
+                (fun hf (((id1, pr1), (id2, pr2)), t) -> 
+                  IF.mkStar hf (IF.mkHeapNode (id1, pr1) (string_of_typ t) 0 false (Ipure.ConstAnn Mutable) false false false None 
+                      [Ipure.Var ((id2, Unprimed), no_pos)] [None] None no_pos) no_pos
+                ) new_heap_formula2 (List.combine (List.combine addr_fvs nfvs) tl) in
+              IF.Exists { fe with
+                  IF.formula_exists_heap = nhf;
+                  IF.formula_exists_pure = npf1;
+                  IF.formula_exists_and = List.map helper_one_formula fe.IF.formula_exists_and;
+              }
+        | IF.Or fo ->
+              IF.Or { fo with
+                  IF.formula_or_f1 = helper_formula_x fo.IF.formula_or_f1;
+                  IF.formula_or_f2 = helper_formula_x fo.IF.formula_or_f2;
+              }
+  ) 
+  and helper_one_formula (o: IF.one_formula): IF.one_formula = (
+      match o with
+        | ofo ->
+              { ofo with
+                  IF.formula_heap = helper_h_formula ofo.IF.formula_heap;
+                  IF.formula_pure = helper_pure_formula ofo.IF.formula_pure;
+                  IF.formula_delayed = helper_pure_formula ofo.IF.formula_delayed;
+              }
+  )
+  and helper_h_formula (h: IF.h_formula) : IF.h_formula =
+    (* let _ = print_endline "hello" in *)
+    let pr = Iprinter.string_of_h_formula in
+    Debug.no_1 "helper_h_formula" pr pr helper_h_formula_x h
+  and helper_h_formula_x (h: IF.h_formula) : IF.h_formula = (
+      match h with
+        | IF.Phase hfp ->
+              IF.Phase { hfp with
+                  IF.h_formula_phase_rd = helper_h_formula_x hfp.IF.h_formula_phase_rd;
+                  IF.h_formula_phase_rw = helper_h_formula_x hfp.IF.h_formula_phase_rw;
+              }
+        | IF.Conj hfc ->
+              IF.Conj { hfc with
+                  IF.h_formula_conj_h1 = helper_h_formula_x hfc.IF.h_formula_conj_h1;
+                  IF.h_formula_conj_h2 = helper_h_formula_x hfc.IF.h_formula_conj_h2;
+              }
+        | IF.ConjStar hfcs ->
+              IF.ConjStar { hfcs with
+                  IF.h_formula_conjstar_h1 = helper_h_formula_x hfcs.IF.h_formula_conjstar_h1;
+                  IF.h_formula_conjstar_h2 = helper_h_formula_x hfcs.IF.h_formula_conjstar_h2;
+              }
+        | IF.ConjConj hfcc ->
+              IF.ConjConj { hfcc with
+                  IF.h_formula_conjconj_h1 = helper_h_formula_x hfcc.IF.h_formula_conjconj_h1;
+                  IF.h_formula_conjconj_h2 = helper_h_formula_x hfcc.IF.h_formula_conjconj_h2;
+              }
+        | IF.Star hfs ->
+              IF.Star { hfs with
+                  IF.h_formula_star_h1 = helper_h_formula_x hfs.IF.h_formula_star_h1;
+                  IF.h_formula_star_h2 = helper_h_formula_x hfs.IF.h_formula_star_h2;
+              }
+        | IF.StarMinus hfsm ->
+              IF.StarMinus { hfsm with
+                  IF.h_formula_starminus_h1 = helper_h_formula_x hfsm.IF.h_formula_starminus_h1;
+                  IF.h_formula_starminus_h2 = helper_h_formula_x hfsm.IF.h_formula_starminus_h2;
+              }
+        | IF.HeapNode hn ->
+              begin
+                let (id, pr) = hn.IF.h_formula_heap_node in
+                try
+                  let addr_vname = Hashtbl.find tbl_addrof_info id in
+                  IF.HeapNode { hn with
+                     IF.h_formula_heap_node = (addr_vname, pr)
+                  }
+                with _ -> h
+              end
+        | IF.HeapNode2 hn2 ->
+              begin
+                let (id, pr) = hn2.IF.h_formula_heap2_node in
+                try
+                  let addr_vname = Hashtbl.find tbl_addrof_info id in
+                  IF.HeapNode2 { hn2 with
+                     IF.h_formula_heap2_node = (addr_vname, pr)
+                  }
+                with _ -> h
+              end
+        | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
+  )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
-    match p with
-    | Ipure.BForm (bf, fl) ->
-        Ipure.BForm (helper_b_formula bf, fl)
-    | Ipure.And (f1, f2, pos) ->
-        Ipure.And (helper_pure_formula f1, helper_pure_formula f2, pos)
-    | Ipure.AndList l ->
-        Ipure.And (List.map fun (t, f) -> (t, helper_pure_formula f)) l
-    | Ipure.Or (f1, f2, fl, pos) ->
-        Ipure.Or (helper_pure_formula f1, helper_pure_formula f2, fl, pos)
-    | Ipure.Not (f, fl, pos) ->
-        Ipure.Not (helper_pure_formula f, fl, pos)
-    | Ipure.Forall (idp, f, fl, pos) ->
-        Ipure.Forall (idp, helper_pure_formula f, fl, pos)
-    | Ipure.Exists (idp, f, fl, pos) ->
-        Ipure.Exists (idp, helper_pure_formula f, fl, pos)
-  ) in
+      match p with
+        | Ipure.BForm (bf, fl) ->
+              Ipure.BForm (helper_b_formula bf, fl)
+        | Ipure.And (f1, f2, pos) ->
+              Ipure.And (helper_pure_formula f1, helper_pure_formula f2, pos)
+        | Ipure.AndList l ->
+              Ipure.AndList (List.map (fun (t, f) -> (t, helper_pure_formula f)) l)
+        | Ipure.Or (f1, f2, fl, pos) ->
+              Ipure.Or (helper_pure_formula f1, helper_pure_formula f2, fl, pos)
+        | Ipure.Not (f, fl, pos) ->
+              Ipure.Not (helper_pure_formula f, fl, pos)
+        | Ipure.Forall (idp, f, fl, pos) ->
+              Ipure.Forall (idp, helper_pure_formula f, fl, pos)
+        | Ipure.Exists (idp, f, fl, pos) ->
+              Ipure.Exists (idp, helper_pure_formula f, fl, pos)
+  )
   and helper_b_formula (b : Ipure.b_formula) : Ipure.b_formula = (
-    match b with
-    | (pf, biel) ->
-        Ipure.b_formula (helper_p_formula pf, biel)
-  in
+      match b with
+        | (pf, biel) ->
+              (helper_p_formula pf, biel)
+  )
   and helper_p_formula (p : Ipure.p_formula) : Ipure.p_formula = (
-    match p with
-    | Ipure.Xpure xv ->
-        Ipure.Xpure xv
-    | Ipure.Bconst (b, pos) ->
-        Ipure.Bconst (b, pos)
-    | Ipure.BVar ((id, p), pos) -> (* TODO *)
-    | Ipure.SubAnn (e1, e2, pos) ->
-        Ipure.SubAnn (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Lt (e1, e2, pos) ->
-        Ipure.Lt (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Lte (e1, e2, pos) ->
-        Ipure.Lte (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Gt (e1, e2, pos) ->
-        Iprue.Gt (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Gte (e1, e2, pos) ->
-        Ipure.Gte (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Eq (e1, e2, pos) ->
-        Ipure.Eq (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Neq (e1, e2, pos) ->
-        Ipure.Neq (helper_exp e1, helper_exp e2, pos)
-    | Ipure.EqMax (e1, e2, e3, pos) ->
-        Ipure.EqMax (helper_exp e1, helper_exp e2, helper_exp e3, pos)
-    | Ipure.EqMin (e1, e2, e3, pos) ->
-        Ipure.EqMin (helper_exp e1, helper_exp e2, helper_exp e3, pos)
-    | Ipure.LexVar (ta, el1, el2, pos) ->
-        Ipure.LexVar (ta, List.map (fun (e : Ipure.exp) -> helper_exp e) el1, List.map (fun (e : Ipure.exp) -> helper_exp e) el2, pos)
-    | Ipure.BagIn ((id, p), e, pos) -> (* TODO *)
-    | Ipure.BagNotInt ((id, p), e, pos) -> (* TODO *)
-    | Ipure.BagSub (e1, e2, pos) ->
-        Ipure.BagSub (helper_exp e1, helper_exp e2, pos)
-    | Ipure.BagMin ((id1, p1), (id2, p2), pos) -> (* TODO *)
-    | Ipure.BagMax ((id1, p1), (id2, p2), pos) -> (* TODO *)
-    | Ipure.VarPerm (va, ipl, pos) -> (* TODO *)
-    | Ipure.ListIn (e1, e2, pos) ->
-        Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
-    | Ipure.ListNotIn (e1, e2, pos) ->
-        Ipure.ListNotIn (helper_exp e1, helper_exp e2, pos)
-    | Ipure.ListAllN (e1, e2, pos) ->
-        Ipure.ListAll (helper_exp e1, helper_exp e2, pos)
-    | Ipure.ListPerm (e1, e2, pos) ->
-        Ipure.ListPerm (helper_exp e1, helper_exp e2, pos)
-    | Ipure.RelForm (id, el, pos) -> (* TODO *)
-  ) in
+      match p with
+        | Ipure.XPure xv ->
+              Ipure.XPure xv
+        | Ipure.BConst (b, pos) ->
+              Ipure.BConst (b, pos)
+        | Ipure.BVar ((id, pr), pos) -> 
+              p (* TODO *)
+        | Ipure.SubAnn (e1, e2, pos) ->
+              Ipure.SubAnn (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Lt (e1, e2, pos) ->
+              Ipure.Lt (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Lte (e1, e2, pos) ->
+              Ipure.Lte (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Gt (e1, e2, pos) ->
+              Ipure.Gt (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Gte (e1, e2, pos) ->
+              Ipure.Gte (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Eq (e1, e2, pos) ->
+              Ipure.Eq (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Neq (e1, e2, pos) ->
+              Ipure.Neq (helper_exp e1, helper_exp e2, pos)
+        | Ipure.EqMax (e1, e2, e3, pos) ->
+              Ipure.EqMax (helper_exp e1, helper_exp e2, helper_exp e3, pos)
+        | Ipure.EqMin (e1, e2, e3, pos) ->
+              Ipure.EqMin (helper_exp e1, helper_exp e2, helper_exp e3, pos)
+        | Ipure.LexVar (ta, el1, el2, pos) ->
+              Ipure.LexVar (ta, List.map (fun (e : Ipure.exp) -> helper_exp e) el1, List.map (fun (e : Ipure.exp) -> helper_exp e) el2, pos)
+        | Ipure.BagIn (ip, e, pos) -> 
+              Ipure.BagIn (ip, helper_exp e, pos) (* TODO *)
+        | Ipure.BagNotIn (ip, e, pos) -> 
+              Ipure.BagNotIn (ip, helper_exp e, pos) (* TODO *)
+        | Ipure.BagSub (e1, e2, pos) ->
+              Ipure.BagSub (helper_exp e1, helper_exp e2, pos)
+        | Ipure.BagMin _ -> 
+              p (* TODO *)
+        | Ipure.BagMax _ -> 
+              p (* TODO *)
+        | Ipure.VarPerm (va, ipl, pos) ->
+              p (* TODO *)
+        | Ipure.ListIn (e1, e2, pos) ->
+              Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
+        | Ipure.ListNotIn (e1, e2, pos) ->
+              Ipure.ListNotIn (helper_exp e1, helper_exp e2, pos)
+        | Ipure.ListAllN (e1, e2, pos) ->
+              Ipure.ListAllN (helper_exp e1, helper_exp e2, pos)
+        | Ipure.ListPerm (e1, e2, pos) ->
+              Ipure.ListPerm (helper_exp e1, helper_exp e2, pos)
+        | Ipure.RelForm (id, el, pos) ->
+              Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
+  )
   and helper_exp (e : Ipure.exp) : Ipure.exp = (
-    match e with
-    | Ipure.Ann_Exp (e, t, pos) ->
-        Ipure.Ann_Exp (e, t, pos)
-    | Ipure.Null pos ->
-        Ipure.Null pos
-    | Ipure.Level ((id, p), pos) -> (* TODO *)
-    | Ipure.Var ((id, p), pos) -> (* TODO *)
-    | Ipure.IConst (i, pos) ->
-        Ipure.IConst (i, pos)
-    | Ipure.FConst (f, pos) ->
-        Ipure.FConst (f, pos)
-    | Ipure.AConst (ha, pos) ->
-        Ipure.AConst (ha, pos)
-    | Ipure.InfConst (id, pos) -> (* TODO *)
-    | Ipure.Tsconst (t, pos) ->
-        Ipure.Tsconst (t, pos)
-    | Ipure.Bptriple ((e1, e2, e3), pos) ->
-        Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
-    | Ipure.Add (e1, e2, pos) ->
-        Ipure.Add (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Subtract (e1, e2, pos) ->
-        Ipure.Subtract (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Mult (e1, e2, pos) ->
-        Ipure.Mult (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Div (e1, e2, pos) ->
-        Ipure.Div (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Max (e1, e2, pos) ->
-        Ipure.Max (helper_exp e1, helper_exp e2, pos)
-    | Ipure.Min (e1, e2, pos) ->
-        Ipure.Min (helper_exp e1, helper_exp e2, pos)
-    | Ipure.TypeCast (t, e, pos) ->
-        Ipure.TypeCast (t, e, pos)
-    | Ipure.Bag (el, pos) ->
-        Ipure.Bag (List.map (fun e -> helper_exp e) el, pos)
-    | Ipure.BagUnion (el, pos) ->
-        Ipure.BagUnion (List.map (fun e -> helper_exp e) el, pos)
-    | Ipure.BagIntersect (el, pos) ->
-        Ipure.BagIntersect (List.map (fun e -> helper_exp e) el, pos)
-    | Ipure.BagDiff (e1, e2, pos) ->
-        Ipure.BagDiff (helper_exp e1, helper_exp e2, pos)
-    | Ipure.List (el, pos) ->
-        Ipure.List (List.map (fun e -> helper_exp) el, pos)
-    | Ipure.ListCons (e1, e2, pos) ->
-        Ipure.ListCons (helper_exp e1, helper_exp e2, pos)
-    | Ipure.ListHead (e, pos) ->
-        Ipure.ListHead (helper_exp e, pos)
-    | Ipure.ListTail (e, pos) ->
-        Ipure.ListTail (helper_exp e, pos)
-    | Ipure.ListLength (e, pos) ->
-        Ipure.ListLength (helper_exp e, pos)
-    | Ipure.ListAppend (el, pos) ->
-        Ipure.ListAppend (List.map (fun e -> helper_exp e) el, pos)
-    | Ipure.ListReverse (e, pos) ->
-        Ipure.ListReverse (helper_exp e, pos)
-    | Ipure.ArrayAt ((id, p), el, pos) -> (* TODO *)
-    | Ipure.Func (id, el, pos) -> (* TODO *)*)
+      match e with
+        | Ipure.Ann_Exp (e, t, pos) ->
+              Ipure.Ann_Exp (helper_exp e, t, pos)
+        | Ipure.Null pos ->
+              Ipure.Null pos
+        | Ipure.Level ((id, pr), pos) -> 
+              e (* TODO *)
+        | Ipure.Var ((id, pr), pos) ->
+              begin
+                try
+                  let addr_vname = Hashtbl.find tbl_addrof_info id in
+                  Ipure.Var ((addr_vname, pr), pos)
+                with _ -> e
+              end
+                  (*let addr_var = Iast.mkVar addr_vname pos in
+                    Iast.mkMember addr_var ["deref"] None pos*)
+        | Ipure.IConst (i, pos) ->
+              Ipure.IConst (i, pos)
+        | Ipure.FConst (f, pos) ->
+              Ipure.FConst (f, pos)
+        | Ipure.AConst (ha, pos) ->
+              Ipure.AConst (ha, pos)
+        | Ipure.InfConst (id, pos) -> 
+              e (* TODO *)
+        | Ipure.Tsconst (t, pos) ->
+              Ipure.Tsconst (t, pos)
+        | Ipure.Bptriple ((e1, e2, e3), pos) ->
+              Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
+        | Ipure.Add (e1, e2, pos) ->
+              Ipure.Add (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Subtract (e1, e2, pos) ->
+              Ipure.Subtract (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Mult (e1, e2, pos) ->
+              Ipure.Mult (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Div (e1, e2, pos) ->
+              Ipure.Div (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Max (e1, e2, pos) ->
+              Ipure.Max (helper_exp e1, helper_exp e2, pos)
+        | Ipure.Min (e1, e2, pos) ->
+              Ipure.Min (helper_exp e1, helper_exp e2, pos)
+        | Ipure.TypeCast (t, e, pos) ->
+              Ipure.TypeCast (t, e, pos)
+        | Ipure.Bag (el, pos) ->
+              Ipure.Bag (List.map (fun e -> helper_exp e) el, pos)
+        | Ipure.BagUnion (el, pos) ->
+              Ipure.BagUnion (List.map (fun e -> helper_exp e) el, pos)
+        | Ipure.BagIntersect (el, pos) ->
+              Ipure.BagIntersect (List.map (fun e -> helper_exp e) el, pos)
+        | Ipure.BagDiff (e1, e2, pos) ->
+              Ipure.BagDiff (helper_exp e1, helper_exp e2, pos)
+        | Ipure.List (el, pos) ->
+              Ipure.List (List.map (fun e -> helper_exp e) el, pos)
+        | Ipure.ListCons (e1, e2, pos) ->
+              Ipure.ListCons (helper_exp e1, helper_exp e2, pos)
+        | Ipure.ListHead (e, pos) ->
+              Ipure.ListHead (helper_exp e, pos)
+        | Ipure.ListTail (e, pos) ->
+              Ipure.ListTail (helper_exp e, pos)
+        | Ipure.ListLength (e, pos) ->
+              Ipure.ListLength (helper_exp e, pos)
+        | Ipure.ListAppend (el, pos) ->
+              Ipure.ListAppend (List.map (fun e -> helper_exp e) el, pos)
+        | Ipure.ListReverse (e, pos) ->
+              Ipure.ListReverse (helper_exp e, pos)
+        | Ipure.ArrayAt ((id, pr), el, pos) -> 
+              e (* TODO *)
+        | Ipure.Func (id, el, pos) -> 
+              e (* TODO *)
+  ) in
+  match exp with
+    | Iast.Assert a -> (
+          match a.Iast.exp_assert_asserted_formula with
+            | Some (f, b) ->
+                  Iast.Assert { a with
+                      Iast.exp_assert_asserted_formula = Some ((helper_struc_formula f), b);
+                  }
+            | None -> exp
+      )
+    | _ -> exp
+
 (* and h_formula_heap = { h_formula_heap_node : (ident * primed);                              *)
 (*                        h_formula_heap_name : ident;                                         *)
 (*                        h_formula_heap_deref : int;                                          *)
@@ -1190,14 +1344,14 @@ and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =
 and translate_block (blk: Cil.block): Iast.exp =
   let stmts = blk.Cil.bstmts in
   match stmts with
-  | [] -> Iast.Empty no_pos
-  | [s] -> translate_stmt s
-  | _ -> (
-      let exps = List.map translate_stmt stmts in
-      let body = merge_iast_exp exps in
-      let pos = translate_location (blk.Cil.bloc) in
-      Iast.mkBlock body Iast.NoJumpLabel [] pos
-    )
+    | [] -> Iast.Empty no_pos
+    | [s] -> translate_stmt s
+    | _ -> (
+          let exps = List.map translate_stmt stmts in
+          let body = merge_iast_exp exps in
+          let pos = translate_location (blk.Cil.bloc) in
+          Iast.mkBlock body Iast.NoJumpLabel [] pos
+      )
 
 
 and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
@@ -1205,182 +1359,182 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
     | None -> no_pos
     | Some l -> translate_location l in
   match init with
-  | Cil.SingleInit exp -> translate_exp exp
-  | Cil.CompoundInit (typ, offset_init_list) -> (
-      let newtyp = translate_typ typ pos in
-      match newtyp with
-      (* translate data structure *)
-      | Globals.Named newtyp_name ->
-          (* collect init fields and store in a hashtbl *)
-          let tbl_fields_init = Hashtbl.create 1 in
-          List.iter (fun x ->
-            let off, init2 = x in
-            let fname = match off with
-              | Cil.NoOffset -> report_error pos "translate_init: handle Cil.NoOffset later!"
-              | Cil.Field ((f, _), Cil.NoOffset, _) -> f.Cil.fname
-              | Cil.Field ((f, _), (Cil.Field _), _) -> report_error pos "translate_init: handle Cil.Field later!"
-              | Cil.Field ((f, _), (Cil.Index _), _) -> report_error pos "translate_init: handle Cil.Index later!"
-              | Cil.Index _ -> report_error pos "translate_init: handle Cil.Index later!" in
-            let fexp = translate_init init2 lopt in
-            Hashtbl.add tbl_fields_init fname fexp;
-          ) offset_init_list;
-          (* init all fields of *)
-          let data_decl = (
-            try Hashtbl.find tbl_data_decl newtyp
-            with Not_found -> report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
-          ) in
-          let init_params = List.fold_left (
-            fun params field ->
-              let ((ftyp, fid), _, _, _) = field in
-              let finit = (
-                try Hashtbl.find tbl_fields_init fid
-                with Not_found -> (
-                  match ftyp with
-                  | Globals.Int -> Iast.mkIntLit 0 pos
-                  | Globals.Bool -> Iast.mkBoolLit true pos
-                  | Globals.Float -> Iast.mkFloatLit 0. pos
-                  | Globals.Named _ -> Iast.mkNull pos
-                  | _ -> report_error pos ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
-                )
-              ) in
-              params @ [finit]
-          ) [] data_decl.Iast.data_fields in
-          let init_exp = Iast.mkNew newtyp_name init_params pos in
-          init_exp
-      | _ -> report_error pos ("translate_init: handle other type later - " 
-                                ^ (Globals.string_of_typ newtyp))
-    )
+    | Cil.SingleInit exp -> translate_exp exp
+    | Cil.CompoundInit (typ, offset_init_list) -> (
+          let newtyp = translate_typ typ pos in
+          match newtyp with
+              (* translate data structure *)
+            | Globals.Named newtyp_name ->
+                  (* collect init fields and store in a hashtbl *)
+                  let tbl_fields_init = Hashtbl.create 1 in
+                  List.iter (fun x ->
+                      let off, init2 = x in
+                      let fname = match off with
+                        | Cil.NoOffset -> report_error pos "translate_init: handle Cil.NoOffset later!"
+                        | Cil.Field ((f, _), Cil.NoOffset, _) -> f.Cil.fname
+                        | Cil.Field ((f, _), (Cil.Field _), _) -> report_error pos "translate_init: handle Cil.Field later!"
+                        | Cil.Field ((f, _), (Cil.Index _), _) -> report_error pos "translate_init: handle Cil.Index later!"
+                        | Cil.Index _ -> report_error pos "translate_init: handle Cil.Index later!" in
+                      let fexp = translate_init init2 lopt in
+                      Hashtbl.add tbl_fields_init fname fexp;
+                  ) offset_init_list;
+                  (* init all fields of *)
+                  let data_decl = (
+                      try Hashtbl.find tbl_data_decl newtyp
+                      with Not_found -> report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
+                  ) in
+                  let init_params = List.fold_left (
+                      fun params field ->
+                          let ((ftyp, fid), _, _, _) = field in
+                          let finit = (
+                              try Hashtbl.find tbl_fields_init fid
+                              with Not_found -> (
+                                  match ftyp with
+                                    | Globals.Int -> Iast.mkIntLit 0 pos
+                                    | Globals.Bool -> Iast.mkBoolLit true pos
+                                    | Globals.Float -> Iast.mkFloatLit 0. pos
+                                    | Globals.Named _ -> Iast.mkNull pos
+                                    | _ -> report_error pos ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
+                              )
+                          ) in
+                          params @ [finit]
+                  ) [] data_decl.Iast.data_fields in
+                  let init_exp = Iast.mkNew newtyp_name init_params pos in
+                  init_exp
+            | _ -> report_error pos ("translate_init: handle other type later - " 
+              ^ (Globals.string_of_typ newtyp))
+      )
 
 
 and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo)
-                         (lopt: Cil.location option)
-                         : Iast.exp_var_decl =
+      (lopt: Cil.location option)
+      : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = vinfo.Cil.vtype in
   let new_ty = (match ty with
     | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-        translate_typ ty1 pos                          (* heap allocated data *)
+          translate_typ ty1 pos                          (* heap allocated data *)
     | Cil.TComp _ -> translate_typ ty pos              (* stack allocated data *)
     | _ -> translate_typ ty pos
   ) in
   let name = vinfo.Cil.vname in
   let decl = (
-    match iinfo.Cil.init with
-    | None -> [(name, None, pos)]
-    | Some init ->
-        let init_exp = translate_init init lopt in
-        [(name, Some init_exp, pos)]
+      match iinfo.Cil.init with
+        | None -> [(name, None, pos)]
+        | Some init ->
+              let init_exp = translate_init init lopt in
+              [(name, Some init_exp, pos)]
   ) in
   let vardecl = {Iast.exp_var_decl_type = new_ty;
-                 Iast.exp_var_decl_decls = decl;
-                 Iast.exp_var_decl_pos = pos} in
+  Iast.exp_var_decl_decls = decl;
+  Iast.exp_var_decl_pos = pos} in
   vardecl
 
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.proc_decl =
   aux_local_vardecls := [];
-  let _ = gather_addrof_fundec fundec in
-  (* start translating function *)
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let fheader = fundec.Cil.svar in
-  let name = fheader.Cil.vname in
-  let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
-  let static_specs = fundec.Cil.hipfuncspec in
-  let return_typ = ( 
-    match fheader.Cil.vtype with
-    | Cil.TFun (ty, params, _, _) -> (*translate_typ ty pos*)
-          (match ty with
-            | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
-            | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-                (translate_typ ty1 no_pos)
-            | _ -> (translate_typ ty no_pos)
-          )
-    | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
-  ) in
-  let funargs = (
-    let ftyp = fheader.Cil.vtype in
-    let pos = translate_location fheader.Cil.vdecl in
-    match ftyp with
-    | Cil.TFun (_, p, _, _) -> (
-        let params = Cil.argsToList p in
-        let translate_one_param (p : string * Cil.typ * Cil.attributes) 
-                                : Iast.param = (
-          let (name, ty, _) = p in
-          let (param_ty, param_mod) = (match ty with
-            | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname, Iast.CopyMod)
-            | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-                (translate_typ ty1 no_pos, Iast.NoMod)
-            | _ -> (translate_typ ty no_pos, Iast.NoMod)
-          ) in
-          let newparam = {Iast.param_type = param_ty;
+    let _ = gather_addrof_fundec fundec in
+    (* start translating function *)
+    let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+    let fheader = fundec.Cil.svar in
+    let name = fheader.Cil.vname in
+    let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
+    let static_specs = fundec.Cil.hipfuncspec in
+    let return_typ = ( 
+        match fheader.Cil.vtype with
+          | Cil.TFun (ty, params, _, _) -> (*translate_typ ty pos*)
+                (match ty with
+                  | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname)
+                  | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+                        (translate_typ ty1 no_pos)
+                  | _ -> (translate_typ ty no_pos)
+                )
+          | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
+    ) in
+    let funargs = (
+        let ftyp = fheader.Cil.vtype in
+        let pos = translate_location fheader.Cil.vdecl in
+        match ftyp with
+          | Cil.TFun (_, p, _, _) -> (
+                let params = Cil.argsToList p in
+                let translate_one_param (p : string * Cil.typ * Cil.attributes) 
+                      : Iast.param = (
+                          let (name, ty, _) = p in
+                          let (param_ty, param_mod) = (match ty with
+                            | Cil.TComp (comp, _) -> (Globals.Named comp.Cil.cname, Iast.CopyMod)
+                            | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
+                                  (translate_typ ty1 no_pos, Iast.NoMod)
+                            | _ -> (translate_typ ty no_pos, Iast.NoMod)
+                          ) in
+                          let newparam = {Iast.param_type = param_ty;
                           Iast.param_name = name;
                           Iast.param_mod = param_mod;
                           Iast.param_loc = pos; } in
-          newparam
-        ) in
-        List.map translate_one_param params
-      )
-    | _ -> report_error pos "Invalid function header!"
-  ) in
-  let funbody = (
-    match fundec.Cil.sbody.Cil.bstmts with
-    | [] -> None
-    | _ ->
-        let slocals = List.map translate_var_decl fundec.Cil.slocals in
-        let sbody = translate_block fundec.Cil.sbody in
-        let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
-        let pos = translate_location fundec.Cil.sbody.Cil.bloc in
-        Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
-  ) in
-  let filename = pos.start_pos.Lexing.pos_fname in
-	let static_specs1, hp_decls = match static_specs with
-	  | Iformula.EList [] ->
-		let ss, hps = Iast.genESpec funargs return_typ pos in
-		(*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-		(ss, hps)
-	  | _ ->
-		static_specs, []
-	in
-  let newproc : Iast.proc_decl = {
-    Iast.proc_name = name;
-    Iast.proc_mingled_name = mingled_name;
-    Iast.proc_data_decl = None;
-    Iast.proc_flags = [] ;
-    Iast.proc_hp_decls = hp_decls;
-    Iast.proc_constructor = false;
-    Iast.proc_args = funargs;
-    Iast.proc_source = ""; (* WN : need to change *)
-    Iast.proc_return = return_typ;
-    Iast.proc_static_specs = static_specs1;
-    Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
-    Iast.proc_exceptions = [];
-    Iast.proc_body = funbody;
-    Iast.proc_is_main = true;
-    Iast.proc_file = filename;
-    Iast.proc_loc = pos;
-    Iast.proc_test_comps = None;
-  } in
-  newproc
+                          newparam
+                      ) in
+                List.map translate_one_param params
+            )
+          | _ -> report_error pos "Invalid function header!"
+    ) in
+    let funbody = (
+        match fundec.Cil.sbody.Cil.bstmts with
+          | [] -> None
+          | _ ->
+                let slocals = List.map translate_var_decl fundec.Cil.slocals in
+                let sbody = translate_block fundec.Cil.sbody in
+                let body = merge_iast_exp (slocals @ !aux_local_vardecls @ [sbody]) in
+                let pos = translate_location fundec.Cil.sbody.Cil.bloc in
+                Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
+    ) in
+    let filename = pos.start_pos.Lexing.pos_fname in
+    let static_specs1, hp_decls = match static_specs with
+      | Iformula.EList [] ->
+	    let ss, hps = Iast.genESpec funargs return_typ pos in
+	    (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+	    (ss, hps)
+      | _ ->
+	    static_specs, []
+    in
+    let newproc : Iast.proc_decl = {
+        Iast.proc_name = name;
+        Iast.proc_mingled_name = mingled_name;
+        Iast.proc_data_decl = None;
+        Iast.proc_flags = [] ;
+        Iast.proc_hp_decls = hp_decls;
+        Iast.proc_constructor = false;
+        Iast.proc_args = funargs;
+        Iast.proc_source = ""; (* WN : need to change *)
+        Iast.proc_return = return_typ;
+        Iast.proc_static_specs = static_specs1;
+        Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
+        Iast.proc_exceptions = [];
+        Iast.proc_body = funbody;
+        Iast.proc_is_main = true;
+        Iast.proc_file = filename;
+        Iast.proc_loc = pos;
+        Iast.proc_test_comps = None;
+    } in
+    newproc
 
 and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl) 
-                    : Iast.prog_decl =
+      : Iast.prog_decl =
   let newprog : Iast.prog_decl = {
-    Iast.prog_data_decls = main_prog.Iast.prog_data_decls @ aux_prog.Iast.prog_data_decls;
-    Iast.prog_include_decls = main_prog.Iast.prog_include_decls @ aux_prog.Iast.prog_include_decls;
-    Iast.prog_global_var_decls = main_prog.Iast.prog_global_var_decls @ aux_prog.Iast.prog_global_var_decls;
-    Iast.prog_logical_var_decls = main_prog.Iast.prog_logical_var_decls @ aux_prog.Iast.prog_logical_var_decls;
-    Iast.prog_enum_decls = main_prog.Iast.prog_enum_decls @ aux_prog.Iast.prog_enum_decls;
-    Iast.prog_view_decls = main_prog.Iast.prog_view_decls @ aux_prog.Iast.prog_view_decls;
-    Iast.prog_func_decls = main_prog.Iast.prog_func_decls @ aux_prog.Iast.prog_func_decls;
-    Iast.prog_rel_decls = main_prog.Iast.prog_rel_decls @ aux_prog.Iast.prog_rel_decls;
-    Iast.prog_rel_ids = main_prog.Iast.prog_rel_ids @ aux_prog.Iast.prog_rel_ids;
-    Iast.prog_axiom_decls = main_prog.Iast.prog_axiom_decls @ aux_prog.Iast.prog_axiom_decls;
-    Iast.prog_hopred_decls = main_prog.Iast.prog_hopred_decls @ aux_prog.Iast.prog_hopred_decls;
-    Iast.prog_proc_decls = main_prog.Iast.prog_proc_decls @ aux_prog.Iast.prog_proc_decls;
-    Iast.prog_barrier_decls = main_prog.Iast.prog_barrier_decls @ aux_prog.Iast.prog_barrier_decls;
-    Iast.prog_coercion_decls = main_prog.Iast.prog_coercion_decls @ aux_prog.Iast.prog_coercion_decls;
-    Iast.prog_hp_decls = main_prog.Iast.prog_hp_decls @ aux_prog.Iast.prog_hp_decls;
-    Iast.prog_hp_ids = main_prog.Iast.prog_hp_ids @ aux_prog.Iast.prog_hp_ids;
+      Iast.prog_data_decls = main_prog.Iast.prog_data_decls @ aux_prog.Iast.prog_data_decls;
+      Iast.prog_include_decls = main_prog.Iast.prog_include_decls @ aux_prog.Iast.prog_include_decls;
+      Iast.prog_global_var_decls = main_prog.Iast.prog_global_var_decls @ aux_prog.Iast.prog_global_var_decls;
+      Iast.prog_logical_var_decls = main_prog.Iast.prog_logical_var_decls @ aux_prog.Iast.prog_logical_var_decls;
+      Iast.prog_enum_decls = main_prog.Iast.prog_enum_decls @ aux_prog.Iast.prog_enum_decls;
+      Iast.prog_view_decls = main_prog.Iast.prog_view_decls @ aux_prog.Iast.prog_view_decls;
+      Iast.prog_func_decls = main_prog.Iast.prog_func_decls @ aux_prog.Iast.prog_func_decls;
+      Iast.prog_rel_decls = main_prog.Iast.prog_rel_decls @ aux_prog.Iast.prog_rel_decls;
+      Iast.prog_rel_ids = main_prog.Iast.prog_rel_ids @ aux_prog.Iast.prog_rel_ids;
+      Iast.prog_axiom_decls = main_prog.Iast.prog_axiom_decls @ aux_prog.Iast.prog_axiom_decls;
+      Iast.prog_hopred_decls = main_prog.Iast.prog_hopred_decls @ aux_prog.Iast.prog_hopred_decls;
+      Iast.prog_proc_decls = main_prog.Iast.prog_proc_decls @ aux_prog.Iast.prog_proc_decls;
+      Iast.prog_barrier_decls = main_prog.Iast.prog_barrier_decls @ aux_prog.Iast.prog_barrier_decls;
+      Iast.prog_coercion_decls = main_prog.Iast.prog_coercion_decls @ aux_prog.Iast.prog_coercion_decls;
+      Iast.prog_hp_decls = main_prog.Iast.prog_hp_decls @ aux_prog.Iast.prog_hp_decls;
+      Iast.prog_hp_ids = main_prog.Iast.prog_hp_ids @ aux_prog.Iast.prog_hp_ids;
   } in
   newprog
 
@@ -1411,83 +1565,83 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let globals = file.Cil.globals in
   (* collect premitive info first *)
   List.iter (fun gl ->
-    match gl with
-    | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
-        let actual_typ = get_actual_cil_typ tinfo.Cil.ttype in
-        Hashtbl.add tbl_typedef tinfo.Cil.tname actual_typ;
-    | _ -> ();
+      match gl with
+        | Cil.GType (tinfo, _) ->                                   (* collect typedef info *)
+              let actual_typ = get_actual_cil_typ tinfo.Cil.ttype in
+              Hashtbl.add tbl_typedef tinfo.Cil.tname actual_typ;
+        | _ -> ();
   ) globals;
   (* translate the rest *)
   List.iter (fun gl ->
-    match gl with
-    | Cil.GType (tinfo, _) -> ();
-    | Cil.GCompTag (comp, l) -> translate_compinfo comp (Some l)
-    | Cil.GCompTagDecl _ ->
-        (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GEnumTag _ ->
-        (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GEnumTagDecl _ ->
-        (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GVarDecl (v, l) ->
-        (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GVar (v, init, l) ->
-        let gvar = translate_global_var v init (Some l) in
-        global_var_decls := !global_var_decls @ [gvar];
-    | Cil.GFun (fd, l) ->
-        let proc = translate_fundec fd (Some l) in
-        proc_decls := !proc_decls @ [proc]
-    | Cil.GAsm _ ->
-        (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GPragma _ ->
-        (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GText _ ->
-        (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
-        ()
-    | Cil.GHipProgSpec (hipprog, _) ->
-        aux_progs := !aux_progs @ [hipprog]
+      match gl with
+        | Cil.GType (tinfo, _) -> ();
+        | Cil.GCompTag (comp, l) -> translate_compinfo comp (Some l)
+        | Cil.GCompTagDecl _ ->
+              (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GEnumTag _ ->
+              (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GEnumTagDecl _ ->
+              (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GVarDecl (v, l) ->
+              (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GVar (v, init, l) ->
+              let gvar = translate_global_var v init (Some l) in
+              global_var_decls := !global_var_decls @ [gvar];
+        | Cil.GFun (fd, l) ->
+              let proc = translate_fundec fd (Some l) in
+              proc_decls := !proc_decls @ [proc]
+        | Cil.GAsm _ ->
+              (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GPragma _ ->
+              (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GText _ ->
+              (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
+              ()
+        | Cil.GHipProgSpec (hipprog, _) ->
+              aux_progs := !aux_progs @ [hipprog]
   ) globals;
   let obj_def = {Iast.data_name = "Object";
-                 Iast.data_fields = [];
-                 Iast.data_pos = no_pos;
-                 Iast.data_parent_name = "";
-                 Iast.data_invs = [];
-                 Iast.data_is_template = false;
-                 Iast.data_methods = []} in
+  Iast.data_fields = [];
+  Iast.data_pos = no_pos;
+  Iast.data_parent_name = "";
+  Iast.data_invs = [];
+  Iast.data_is_template = false;
+  Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String";
-                    Iast.data_pos = no_pos;
-                    Iast.data_fields = [];
-                    Iast.data_parent_name = "Object";
-                    Iast.data_invs = [];
-                    Iast.data_is_template = false;
-                    Iast.data_methods = []} in
+  Iast.data_pos = no_pos;
+  Iast.data_fields = [];
+  Iast.data_parent_name = "Object";
+  Iast.data_invs = [];
+  Iast.data_is_template = false;
+  Iast.data_methods = []} in
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_data_decl;
   (* aux procs *)
   Hashtbl.iter (fun _ p -> proc_decls := !proc_decls @ [p]) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
-    Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
-    Iast.prog_include_decls = []; (*WN : need to fill *)
-    Iast.prog_global_var_decls = !global_var_decls;
-    Iast.prog_logical_var_decls = !logical_var_decls;
-    Iast.prog_enum_decls = !enum_decls;
-    Iast.prog_view_decls = !view_decls;
-    Iast.prog_func_decls = !func_decls;
-    Iast.prog_rel_decls = !rel_decls;
-    Iast.prog_rel_ids = !rel_ids;
-    Iast.prog_axiom_decls = !axiom_decls;
-    Iast.prog_hopred_decls = !hopred_decls;
-    Iast.prog_proc_decls = !proc_decls;
-    Iast.prog_barrier_decls = !barrier_decls;
-    Iast.prog_coercion_decls = !coercion_decls;
-    Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
-    Iast.prog_hp_ids = [];
+      Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
+      Iast.prog_include_decls = []; (*WN : need to fill *)
+      Iast.prog_global_var_decls = !global_var_decls;
+      Iast.prog_logical_var_decls = !logical_var_decls;
+      Iast.prog_enum_decls = !enum_decls;
+      Iast.prog_view_decls = !view_decls;
+      Iast.prog_func_decls = !func_decls;
+      Iast.prog_rel_decls = !rel_decls;
+      Iast.prog_rel_ids = !rel_ids;
+      Iast.prog_axiom_decls = !axiom_decls;
+      Iast.prog_hopred_decls = !hopred_decls;
+      Iast.prog_proc_decls = !proc_decls;
+      Iast.prog_barrier_decls = !barrier_decls;
+      Iast.prog_coercion_decls = !coercion_decls;
+      Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
+      Iast.prog_hp_ids = [];
   } in
   let newprog = List.fold_left (fun x y -> merge_iast_prog x y) newprog !aux_progs in
   newprog

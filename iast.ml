@@ -349,11 +349,11 @@ exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
 exp_catch_flow_type : constant_flow;
-exp_catch_alt_var_type : typ option; 
+exp_catch_alt_var_type : typ option;
 exp_catch_flow_var : ident option;
-exp_catch_body : exp;											   
+exp_catch_body : exp;
 exp_catch_pos : loc }
-    
+
 and exp_cast = { exp_cast_target_type : typ;
 exp_cast_body : exp;
 exp_cast_pos : loc }
@@ -710,7 +710,7 @@ let rec type_of_exp e = match e with
   | Try _ -> Some void_type
   | Unary {
       exp_unary_op = op;
-      exp_unary_exp = e1;
+      exp_unary_ = e1;
       exp_unary_pos = _
     } -> type_of_exp e1
   | Unfold _ -> None
@@ -818,7 +818,8 @@ let rec get_ni_name bd = match bd with
   | Unary e -> get_ni_name e.exp_unary_exp
   (*| Unfold of exp_unfold*)
   | Var e -> [e.exp_var_name] (* ??? *)
-  (*| VarDecl of exp_var_decl*)
+  (*| VarDecl of exp_var_de
+cl*)
   | While e -> (get_ni_name e.exp_while_condition) @ (get_ni_name e.exp_while_body)
   | _ -> []
 
