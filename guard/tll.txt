@@ -1,0 +1,51 @@
+[ G(x_998,res_999,t_1000) ::= 
+ HP_954(next_31_951,t_1000) * 
+ x_998::node<left_31_949,right_31_950,next_31_951>@M * 
+ G(right_31_950,l_983,t_1000) * G(left_31_949,res_999,l_983)&
+ right_31_950!=null
+ or x_998::node<left_31_949,right_31_950,t_1000>@M * 
+    left_31_949::node<left_31_949,right_31_950,next_31_951>@M * 
+    HP_953(right_31_950,l_39') * HP_954(next_31_951,l_39') * 
+    HP_984(left_31_949,t)&res_999=x_998 & right_31_950=null
+ ,
+ H(x_992,t_993) ::= x_992::node<left_31_949,right_31_950,next_31_951>@M * 
+HP_953(right_31_950,t_993) * HP_954(next_31_951,t_993) * 
+HP_984(left_31_949,t),
+ HP_953(right_31_996,t_997) ::= 
+ right_31_996::node<left_31_949,right_31_950,next_31_951>@M * 
+ HP_953(right_31_950,t_997) * HP_954(next_31_951,t_997) * 
+ HP_984(left_31_949,t)
+ or emp&right_31_996=null
+ ,
+ HP_954(next_31_951,t) ::= NONE,
+ HP_984(left_31_949,t) ::= NONE]
+
+
+========
+
+ll<> == self::node<_,q>*q::ll<>
+
+ll<> == q::ll<>*self::node<_,q>
+
+========
+
+[ G(x_998,res_999,t_1000) ::= 
+ x_998::node<left_31_949,right0,next_31_951>@M HP_954(next_31_951,t_1000) *  
+ G(right0,l_983,t_1000) * G(left_31_949,res_999,l_983)&
+ right0!=null
+ or x_998::node<left_31_949,right0,t_1000>@M * 
+    left_31_949::node<left_31_949,right0,next_31_951>@M * 
+    HP_953(right0,l_39') * HP_954(next_31_951,l_39') * 
+    HP_984(left_31_949,t)&res_999=x_998 & right0=null
+ ,
+ H(x_992,t_993) ::= x_992::node<left_31_949,right0,next_31_951>@M * 
+HP_953(right0,t_993) * HP_954(next_31_951,t_993) * 
+HP_984(left_31_949,t),
+ HP_953(right_31_996,t_997) ::= 
+ right_31_996::node<left_31_949,right0,next_31_951>@M * 
+ HP_953(right0,t_997) * HP_954(next_31_951,t_997) * 
+ HP_984(left_31_949,t)
+ or emp&right_31_996=null
+ ,
+ HP_954(next_31_951,t) ::= NONE,
+ HP_984(left_31_949,t) ::= NONE]
