@@ -909,6 +909,10 @@ let print_mvars = ref false
 
 let print_type = ref false
 
+let print_en_tidy = ref true
+
+
+
 (* let enable_sat_statistics = ref false *)
 
 let wrap_exists_implicit_explicit = ref false

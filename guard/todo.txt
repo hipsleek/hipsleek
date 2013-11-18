@@ -321,6 +321,361 @@ Total verification time: 0.4 second(s)
 	Time spent in child processes: 0.06 second(s)
 
 ==========================================================
+
+ tll
+After discussing with Cristian, it seems we
+need rel assumption of the form below.
+
+  H0(lf8) |#| x::node<lf8,q> & q!=null--> H(p)
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+
+This seems critical to obtain a sound solution for
+guard/tree-1.ss. We thought also about putting guards
+into formula, but could not really find a use for it in
+verification. It seems we mainly need it in shape
+analysis. Hence, I think we will leave the guard 
+feature for just sa-core for now.
+
+# tree-1.slk
+
+infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
+print residue.
+
+This inference is too weak.
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [P(p) --> Q(p)]
+
+Can we obtain instead:
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+
+   P(p) |#| x::node<p,q> & q!=null--> Q(p)
+
+This gives relational information that q!=null is required.
+
+==========================================================
+# tree-1b.slk
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+
+shape_split_base [H0,H1][G].
+
+/*
+# tree-1b.slk
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M&r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+# guard/tree-2.ss  (try tree-2.slk)
+
+GOT
+===
+ // PRE_REC
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M --> H(x@NI,left_27_952),
+
+EXPECT
+======
+
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M
+  & &right_27_953!=null  --> H(x@NI,left_27_952),
+==========================================================
+# tree-2.ss
+
+Got:
+
+ H(p_1004,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null & p_1004=p7
+    or H(x_1005,l8) * x_1005::node<p7,l8,r9>@M&
+        r9=null & p_1004=p7
+
+EXPECT:
+ H(p7,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null 
+    or x_1005::node<p7,l8,r9>@M & r9=null 
+
+==========================================================
+# tll-2.slk
+
+infer[H,G,HP_964,HP_965,HP_966]
+  HP_964(left_31_961,t) * HP_966(next_31_963,t) * 
+x::node<left_31_961,right_31_962,next_31_963>@M * G(right_31_962,l_47',t')&
+t=t' & x=x' & right_31_962!=null & !(v_bool_31_942') & right_31_962!=null & 
+!(v_bool_31_942') & left_31_961=v_node_41_940'
+ |-  H(v_node_41_940',l_47').
+print residue.
+
+GOT
+ inferred [HP_964(left_31_961,t@NI) --> H(left_31_961,l_47'@NI)]
+
+EXPECT:
+ HP_964(left_31_961,t@NI) | x::node<left_31_961,r,_>@M & r=null  
+     --> H(left_31_961,l_47'@NI)]
+==========================================================
+# parent-2.slk (see also parent.ss) FIXED
+
+Two issues
+ (i) do we still use _pure_of_H3(..)
+ (ii) can we narrow to single predicate?
+
+infer [H0,H3] H0(parent_32_966,p) * H3(next_32_969,p) * 
+x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & 
+parent_32_966=pp_47'
+ |-  emp&p=pp_47'. 
+print residue.
+
+ <1>H0(parent_32_966,p) * H3(next_32_969,p) * x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & parent_32_966=pp_47' & p=parent_32_966&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [_pure_of_H0,_pure_of_H3]: ( _pure_of_H0(parent_32_966,p) & _pure_of_H3(next_32_969,p)) -->  p=parent_32_966]
+[[empty]]
+
+Expecting:
+  H0(pp,p) --> p=pp
+==========================================================
+# parent.ss (see parent-2.slk) FIXED
+
+How come rel ass from ASSERT not present here?
+
+[ // BIND
+(0)H(x,p@NI) --> x::node<parent_20_900,next_20_901>@M * 
+HP_902(parent_20_900,p@NI) * 
+HP_903(next_20_901,p@NI),
+ // POST
+(0)HP_902(parent_20_900,p@NI) * HP_903(next_20_901,p@NI) * 
+x::node<p,next_20_901>@M&
+p=parent_20_900 --> G(x,p@NI)]
+
+*/
+==========================================================
+# tll-parent.ss 
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&res_1092=x_1090 & right_34_995=null
+                                 ^^^^^^^^^^^^^^^
+ ,
+
+New version: (missing res=x)
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&right_34_995=null
+ 
+How come HP_1000 is missing in pre-predicate?
+We cannot form dangling in this scenario.
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1072,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M * 
+ H(right_34_1073,x_1084,t_1086)&right_34_1073!=null & p_1085=parent_34_1074
+ or H(left_34_1072,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M&
+    right_34_1073=null & p_1085=parent_34_1074
+ ,
+
+OK
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1071,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+ HP_1000(next_34_1073,p_1085,t_1086) * H(right_34_1072,x_1084,t_1086)&
+ right_34_1072!=null & p_1085=parent_34_1074
+ or H(left_34_1071,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+    HP_1000(next_34_1073,p_1085,t_1086)&right_34_1072=null & 
+    p_1085=parent_34_1074
+
+==========================================================
+# split-1.slk: FIXED
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+shape_split_base [H0,H1][G].
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M * H0(lf8) & r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> htrue,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+@ check-mcf
+
+- dangling pred has not been included
+ - back-pointer in pre-pred
+=================================================
+
+(time-out problem when --pred-en-dangling )
+
+!!!  views: [G,H]Timeout when checking #simplify  Restarting Omega after ... 112 invocations Stop Omega... 112 invocations Starting Omega...oc
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 116 invocations Stop Omega... 116 invocations Starting Omega...oc
+
+!!!  transform: [H,G]
+Stop Omega... 117 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.1,334)
+!!! 
+ log(bigger)(>4s)(2):(20.,[(simplify:282<34:TIMEOUT:OM,10.);(SAT:294<34:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+ Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
+
+==========================================================
+# tll.ss --sa-dp --reverify-all
+
+(1) You should at least print relational assumption and synthesized
+predicates.
+(2) Both examples below fail, and for different reasons.
+ Not sure why we have two kind of --reverify.
+ Is one done by Thai? Can't you use the same option?
+
+WN
+
+--reverify-all
+
+!!!Full processing file "tll.ss"
+Parsing file "tll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Procedure set_right$node~node SUCCESS.
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,t)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null]]
+!!! re-verify
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (must) cause: Cannot infer heap and pure 2
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+Procedure set_right$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop Omega... 128 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.21,375)
+Total verification time: 0.46 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.07 second(s)
+
+--reverify
+
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+( []) :tll.ss:31: 6: bind: node  x'::node<left_31_914',right_31_915',next_31_916'>@L cannot be derived from context
+
+
+(Cause of Bind Failure):tll.ss:31: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+ ]
+
+Procedure set_right$node~node result FAIL.(1)
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null]]Stop Omega... 114 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.14,335)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+==========================================================
+# guard/parent.ss  (tidying up)
+
+  H(x_906,p_907) ::= x_906::node<parent_20_900,next_20_901>@M 
+       * HP_903(next_20_901,p_907)&p_907=parent_20_900,
+  G(x_912,p_913) ::= HP_903(next_20_901,p_913) 
+       * x_912::node<p_913,next_20_901>@M&
+       p_913=parent_20_900,
+ HP_903(next_20_901,p) ::= NONE]
+
+
+Tidying up names
+================
+  H(x,p) ::= x::node<parent,next>@M 
+       * HP_903(next,p)&p=parent,
+
+  G(x,p) ::= HP_903(next,p) 
+       * x::node<p,next>@M & p=parent,
+ HP_903(next,p) ::= NONE]
+
+Removing intermediates
+======================
+  H(x,p) ::= x::node<p,next>@M * HP_903(next,p),
+  G(x,p) ::= HP_903(next,p) * x::node<p,next>@M 
+  HP_903(next,p) ::= NONE]
+
+Re-ordering
+============
+  H(x,p) ::= x::node<p,next>@M * HP_903(next,p),
+  G(x,p) ::= x::node<p,next>@M * HP_903(next,p)
+  HP_903(next,p) ::= NONE]
+
 ==========================================================
 ==========================================================
 ==========================================================
