@@ -4037,15 +4037,15 @@ let get_hpdef_name_w_tupled hpdef=
      | _ -> []
 
  (*Long: todo here*)
-let rearrange_h_formula args0 hf0 =
+let rearrange_h_formula r args0 hf0 =
   hf0
 
 (*args0 is root + args of root*)
-let rearrange_formula args0 f0=
+let rearrange_formula_x r args0 f0=
   let rec helper f=
     match f with
       | Base fb ->
-            Base {fb with formula_base_heap = rearrange_h_formula args0 fb.formula_base_heap; }
+            Base {fb with formula_base_heap = rearrange_h_formula r args0 fb.formula_base_heap; }
       | Exists _ ->
             let qvars, base1 = split_quantifiers f in
             let nf = helper base1 in
@@ -4056,26 +4056,37 @@ let rearrange_formula args0 f0=
   in
   helper f0
 
+let rearrange_formula r args0 f0=
+  let pr1 = !CP.print_svl in
+  let pr2 = !print_formula in
+  Debug.no_3 "rearrange_formula" !CP.print_sv pr1 pr2 pr2
+      (fun _ _ _ -> rearrange_formula_x r args0 f0)
+      r args0 f0
+
 let rearrange_def def=
   let new_body =
     match def.hprel_def_body_lib with
       | Some _ -> def.hprel_def_body
       | None -> begin
           try
-            let args = match def.hprel_def_kind with
-              | CP.HPRelDefn (_,r,args) -> (r::args)
+            let r, args = match def.hprel_def_kind with
+              | CP.HPRelDefn (_,r,args) -> (r,args)
               | _ -> raise Not_found
             in
             List.map (fun ((p, f_opt) as o) ->
                 match f_opt with
                   | Some f ->
-                      (p, Some (rearrange_formula args f))
+                      (p, Some (rearrange_formula r args f))
                   | None -> o
           ) def.hprel_def_body
           with _ -> def.hprel_def_body
         end
   in
+  (*to shorten variable names here*)
   {def with hprel_def_body = new_body}
+
+(* let rearrange_def def= *)
+(*   let pr1 =  *)
 
 let subst_opt ss f_opt=
   match f_opt with

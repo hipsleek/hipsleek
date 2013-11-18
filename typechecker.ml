@@ -2550,9 +2550,9 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
                   if (CP.mem_svl hp scc_sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs1 = pre_preds@post_pred@rem in
-        let _ = Debug.info_ihprint (add_str " LOng: sort defs" pr_id) "" no_pos in
+        let _ = Debug.info_hprint (add_str " LOng: sort defs" pr_id) "" no_pos in
         let defs = List.map CF.rearrange_def defs1 in
-        let _ = Debug.info_ihprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in
+        let _ = Debug.info_hprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
         print_endline "*************************************";
