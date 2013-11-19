@@ -22,41 +22,41 @@ bool bubble(node xs)
 
   infer[H1,G1]
   requires H1(xs)
-  ensures G1(xs);
+  ensures G1(xs) ;
 {
-	int aux, tmp1;
-	bool tmp, flag; 
+  int aux, tmp1;
+  bool tmp, flag; 
 
-	if (xs.next == null) {
-		return false;
-	}
-	else {
-		tmp = bubble(xs.next);
+  if (xs.next == null) {
+    return false;
+  }
+  else {
+    tmp = bubble(xs.next);
     int xv = xs.val;
     int xnv = xs.next.val;
-		if (xv <= xnv) 
-			flag = false;
-		else {
-			xs.val = xnv;
-			xs.next.val = xv; //ERROR: lhs and rhs do not match
-			flag = true; 
-		}
-        //dprint;
-		return (flag || tmp);
-	}
+    if (xv <= xnv) 
+      flag = false;
+    else {
+      xs.val = xnv;
+      xs.next.val = xv; //ERROR: lhs and rhs do not match
+      flag = true; 
+    }
+    //dprint;
+    return (flag || tmp);
+  }
 }
 
-void bsort(node xs)
-  /* requires xs::node<_,p>*p::ll<> */
-  /* ensures xs::node<_,p1> * p1::ll<>; */
-  infer[H2,G2]
-  requires H2(xs)
-  ensures G2(xs);
-{
-	bool b;
+/* void bsort(node xs) */
+/*   /\* requires xs::node<_,p>*p::ll<> *\/ */
+/*   /\* ensures xs::node<_,p1> * p1::ll<>; *\/ */
+/*   infer[H2,G2] */
+/*   requires H2(xs) */
+/*   ensures G2(xs); */
+/* { */
+/*   bool b; */
 
-	b = bubble(xs);
-	if (b) {
-		bsort(xs);
-	}
-}
+/*   b = bubble(xs); */
+/*   if (b) { */
+/*     bsort(xs); */
+/*   } */
+/* } */

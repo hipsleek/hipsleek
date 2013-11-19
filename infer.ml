@@ -2549,7 +2549,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   in
   (*if guard exists in the lhs, remove it*)
   let check_guard guard_opt lhs_b_orig lhs_b rhs_b=
-    let process_guard guard=
+    let process_guard_old guard=
       let g_hds = SAU.get_hdnodes_hf guard in
       let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
       let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in
@@ -2593,27 +2593,46 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
             Some (CF.Base {lhs_b with CF.formula_base_heap= hf;
                 CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} )
     in
-    let process_guard_new hf=
-      let g_svl = CF.h_fv hf in
-      let _ = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
-      let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
-      let _ = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in
-      let g_pure = CP.filter_var p g_svl in
-      let _ = DD.ninfo_hprint (add_str  "  g_pure" !CP.print_formula) g_pure pos in
-      let p_orig = (MCP.pure_of_mix lhs_b_orig.CF.formula_base_pure) in
-      let _ = DD.ninfo_hprint (add_str  "  p_orig" !CP.print_formula) p_orig pos in
-      let g_pure_orig = CP.filter_var p_orig g_svl in
-      let _ = DD.ninfo_hprint (add_str  "  g_pure_orig" !CP.print_formula) g_pure_orig pos in
-      let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig)
-        (CP.split_conjunctions g_pure) in
-      Some (CF.Base {lhs_b with CF.formula_base_heap= hf;
-          CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} )
+    (* - rose tree need to remove guard that captured in LHS already
+       - tree-2: need handle pure of guard for path-sensitive
+    *)
+    let process_guard guard=
+      let g_hds = SAU.get_hdnodes_hf guard in
+      let l_hds,_, l_hrels = CF.get_hp_rel_bformula lhs_b in
+      let _,_, r_hrels = CF.get_hp_rel_bformula rhs_b in
+      let l_hd_svl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
+      let inter_svl = List.fold_left (fun res hd ->
+          if CP.mem_svl hd.CF.h_formula_data_node l_hd_svl then
+              (res@[hd.CF.h_formula_data_node])
+          else res
+      ) [] g_hds in
+      let new_guard = if inter_svl = [] then (Some guard) else
+        let guard1 = CF.drop_hnodes_hf guard inter_svl in
+        if guard1 = CF.HEmp then None (* rose-tree *)
+        else (Some guard1)
+      in
+      match new_guard with
+        | None -> None
+        | Some hf ->
+              let g_svl = CF.h_fv hf in
+              let _ = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
+              let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+              let _ = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in
+              let g_pure = CP.filter_var p g_svl in
+              let _ = DD.ninfo_hprint (add_str  "  g_pure" !CP.print_formula) g_pure pos in
+              let p_orig = (MCP.pure_of_mix lhs_b_orig.CF.formula_base_pure) in
+              let _ = DD.ninfo_hprint (add_str  "  p_orig" !CP.print_formula) p_orig pos in
+              let g_pure_orig = CP.filter_var p_orig g_svl in
+              let _ = DD.ninfo_hprint (add_str  "  g_pure_orig" !CP.print_formula) g_pure_orig pos in
+              let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig)
+                (CP.split_conjunctions g_pure) in
+              Some (CF.Base {lhs_b with CF.formula_base_heap= hf;
+                  CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} )
     in
     (***************END****************)
     match guard_opt with
       | None -> None
-      | Some hf -> (* process_guard hf *)
-            process_guard_new hf
+      | Some hf -> process_guard hf
   in
   (*change to @M for field-ann*)
   let hn_trans_field_mut hn =

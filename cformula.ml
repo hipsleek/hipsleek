@@ -5278,7 +5278,7 @@ let do_unfold_view_x cprog pr_views (f0: formula) =
           Or { orf with formula_or_f1 = helper orf.formula_or_f1;
               formula_or_f2 = helper orf.formula_or_f2 }
   in
-  helper f0
+  if pr_views = [] then f0 else helper f0
 
 let do_unfold_view cprog pr_views (f0: formula) =
   let pr1 = !print_formula in
@@ -5407,7 +5407,7 @@ let do_unfold_hp_def_x cprog pr_hp_defs (f0: formula) =
           Or { orf with formula_or_f1 = helper orf.formula_or_f1;
               formula_or_f2 = helper orf.formula_or_f2 }
   in
-  helper f0
+  if pr_hp_defs = [] then f0 else helper f0
 
 let do_unfold_hp_def cprog pr_hp_defs (f0: formula) =
   let pr1 = !print_formula in

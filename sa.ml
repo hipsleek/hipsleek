@@ -2788,13 +2788,14 @@ let def_subst_fix prog unk_hps hpdefs=
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
+      let new_fs = List.map fst (List.concat new_fs) in
       let ter = List.for_all (fun b -> not b) ters in
-      let fs1  = SAU.remove_longer_common_prefix_w_unk unk_hps (List.concat new_fs) in
+      let fs1  = SAU.remove_longer_common_prefix_w_unk unk_hps new_fs in
       (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
       (* let _ = DD.info_zprint (lazy (("       fs1: " ^ (pr1 fs1)))) no_pos in *)
       let b =
         if not ter then
-        not (SAU.checkeq_formula_list fs fs1)
+          not (SAU.checkeq_formula_list fs fs1)
         else false
       in
       (* let fs2 = SAU.remove_subset new_fs1 in *)

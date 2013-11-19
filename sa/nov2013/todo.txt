@@ -23,7 +23,7 @@ reverify:
  - check-cdll: OK
  - check-cdll5cslls
  - check-cdllcsllsx2: OK
- - bt-search (OK with pred-unify-post)
+ - bt-search (OK with pred-unify-post) verification fails
  - tree-par: OK
  - rose-tree
  - check-mcf: OK

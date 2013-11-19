@@ -3107,7 +3107,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               (* let _ = Debug.info_zprint (lazy (("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)))) no_pos in *)
               (* let _ = Debug.info_zprint (lazy (("    n_rhs1a: " ^ (Cprinter.string_of_formula n_rhs1a)))) no_pos in *)
               let _, n_rhs1 = pattern_matching_with_guard n_rhs1a r_res1 lguard1
-                m_args2 false in
+                m_args2 true in
               let _ = Debug.ninfo_zprint (lazy (("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)))) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
@@ -3354,6 +3354,22 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
             res then
             helper ss res
           else helper ss (res@[f])
+  in
+  helper fs []
+
+let remove_longer_common_prefix_w_unk_g unk_hps fs=
+  let rec helper cur res=
+    match cur with
+      | [] -> res
+      | (f,g)::ss ->
+          let f1,_ = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f unk_hps in
+          if List.exists
+            (fun (f2,g2) ->
+                let f21,_ = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f2 unk_hps in
+                check_com_pre_eq_formula f1 f21)
+            res then
+            helper ss res
+          else helper ss (res@[(f,g)])
   in
   helper fs []
 
@@ -5959,7 +5975,7 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
   let pos = no_pos in
   (*l1 x l2*)
   let helper ls1 (ls_f_og, args, top_guard)=
-    let n_ls1 = List.concat (List.map (fun f1 ->
+    let n_ls1 = List.concat (List.map (fun (f1,g1) ->
         let is_top, nf1 = List.fold_left (fun (cur_b,cur_f1) (f2, og) ->
             let b, _ = pattern_matching_with_guard f1 f og args true in
             if b then
@@ -5968,12 +5984,19 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
         ) (false, f1) top_guard in
         if is_top then
           (*do not inline*)
-          [nf1]
+          [(nf1, g1)]
         else
           List.map (fun (f2, og) ->
-              let nf1 = compose_subs f1 f2 pos in
-              let b, nf2 = pattern_matching_with_guard nf1 f og args false in
-              if b then nf2 else nf1
+              let is_consis_guard = match g1 with
+                | None -> true
+                | Some g_f1 ->
+                      not( is_inconsistent_heap (CF.mkAnd_pure f2 (MCP.mix_of_pure (CF.get_pure g_f1)) no_pos ))
+              in
+              if is_consis_guard then
+                let nf1 = compose_subs f1 f2 pos in
+                let b, nf2 = pattern_matching_with_guard nf1 f og args false in
+                if b then (nf2,g1) else (nf1,g1)
+              else (nf1,g1)
           ) ls_f_og) ls1)
     in
     (* List.map (fun f2 ->
@@ -5983,13 +6006,13 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
     *)
     n_ls1
   in
-  let simplify_and_empty_test args f=
+  let simplify_and_empty_test args (f,g)=
     let f1 = simplify_one_formula prog args f in
     (* let _ = DD.info_zprint (lazy (("       f:" ^ (Cprinter.prtt_string_of_formula f)))) no_pos in *)
     (* let _ = DD.info_zprint (lazy (("       f1:" ^ (Cprinter.prtt_string_of_formula f1)))) no_pos in *)
     let r =
       if is_empty_f f1 || is_unsat f then []
-      else [f1]
+      else [(f1,g)]
     in
     r
   in
@@ -6001,37 +6024,37 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
   (*                                           in pr succ_hp_args)) no_pos; *)
   match succ_hp_args with
     | [] ->
-        (false, simplify_and_empty_test args f)
+        (false, simplify_and_empty_test args (f,g))
     | _ -> begin
         let fs_list =  (List.map (fun (hp0,arg0) -> look_up_subst_hpdef link_hps hp0 arg0 nrec_hpdefs) succ_hp_args) in
         (* let r = (List.concat fs_list) in *)
         if fs_list = [] then
-          (false, simplify_and_empty_test args f)
+          (false, simplify_and_empty_test args (f,g))
         else
         (*create template from f*)
           let fs_list_w_top,fs_list_wo_top = List.partition (fun (_,_,ls) -> ls!= []) fs_list in
           let fs_list = fs_list_wo_top@fs_list_w_top in
           let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
         (*combine fs_list*)
-          let lsf_cmb = List.fold_left helper [(nf)] fs_list in
+          let lsf_cmb = List.fold_left helper [(nf,g)] fs_list in
           (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                 in pr lsf_cmb)) no_pos; *)
           (*remove trivial def*)
-          let lsf_cmb1 = List.filter (fun (f) -> not (is_trivial f (hp,args))) lsf_cmb in
+          let lsf_cmb1 = List.filter (fun (f,_) -> not (is_trivial f (hp,args))) lsf_cmb in
           (*simpl pure*)
           let lsf_cmb2 = List.concat
-            (List.map (fun (f) -> (simplify_and_empty_test args f)) lsf_cmb1)
+            (List.map (fun (f,g) -> (simplify_and_empty_test args (f, g))) lsf_cmb1)
           in
         (*remove f which has common prefix*)
-          let lsf_cmb3 = (remove_longer_common_prefix lsf_cmb2) in
-          ((lsf_cmb3 <> []),lsf_cmb3)
+          (* let lsf_cmb3 = (remove_longer_common_prefix lsf_cmb2) in *)
+          ((lsf_cmb2 <> []),lsf_cmb2)
     end
 
 let succ_subst_hpdef prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_hp (hp,args,g,f)=
   let pr1 = pr_list_ln (string_of_hp_rel_def) in
   let pr2 = !CP.print_svl in
   let pr3 = pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula_opt Cprinter.prtt_string_of_formula in
-  let pr4 = pr_pair string_of_bool (pr_list_ln Cprinter.prtt_string_of_formula) in
+  let pr4 = pr_pair string_of_bool (pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) ) in
   Debug.no_3 " succ_subst_hpdef" pr1 pr2 pr3 pr4
       (fun _ _ _ -> succ_subst_hpdef_x prog link_hps nrec_hpdefs all_succ_hp (hp,args,g,f))
       nrec_hpdefs all_succ_hp (hp,args,g,f)

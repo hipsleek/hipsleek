@@ -75,6 +75,7 @@ let icompute_action_init need_preprocess detect_dang=
 
 (*
 That means the following priorities:
+   0. H(...) & p -> emp
    1. H(..) --> H2(..)
    2. H(..) | G --> H2(..)
    3. H(..) * D --> H2(..)
@@ -84,29 +85,45 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
   let pre_preds_4_equal_w_prio = List.map (fun (hp,cs,deps) ->
       let is_lhs_emp = (CF.extract_hrel_head cs.CF.hprel_lhs <> None) in
       let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
-      let is_empty_both = is_lhs_emp && (deps=[]) in
+      let is_pure = try
+        let _ = CF.extract_HRel_f cs.CF.hprel_lhs in
+        SAU.is_empty_f cs.CF.hprel_rhs
+      with _ -> false
+      in
+      let is_empty_both = is_lhs_emp && is_rhs_emp (*&& (deps=[]) *) in
       let is_guard = (cs.CF.hprel_guard <> None) && is_rhs_emp in
-      (hp,cs, is_empty_both, is_guard, (not is_lhs_emp) && is_rhs_emp , CF.get_h_size_f cs.CF.hprel_rhs)
+      (hp,cs, is_pure, is_empty_both, is_guard, (not is_lhs_emp) && is_rhs_emp , CF.get_h_size_f cs.CF.hprel_rhs)
   )
     pr_hp_cs
   in
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = pr_list_ln (pr_hepta !CP.print_sv pr1 string_of_bool string_of_bool string_of_bool string_of_bool
+      string_of_int
+  ) in
+  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_4_equal_w_prio: " ^ ((pr2) pre_preds_4_equal_w_prio))) no_pos in
   (*first ranking*)
-  let fst_ls = List.filter (fun (_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
-  match fst_ls with
-    | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
-    | _ -> begin
-        let snd_ls = List.filter (fun (_,_, _, is_guard, _ , _) ->  is_guard) pre_preds_4_equal_w_prio in
-        match snd_ls with
-          | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
+  (* let pure_ls = List.filter (fun (_,_, is_pure,_, _, _ , _) ->  is_pure) pre_preds_4_equal_w_prio in *)
+  (* match pure_ls with *)
+  (*   | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])] *)
+  (*   | _ -> *) begin
+        let fst_ls = List.filter (fun (_,_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
+        let _ = Debug.ninfo_zprint  (lazy  ("    fst_ls: " ^ ((pr2) fst_ls))) no_pos in
+        match fst_ls with
+          | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
           | _ -> begin
-              let rd_ls = List.filter (fun (_,_, _, _, is_emp_r , _) ->  is_emp_r) pre_preds_4_equal_w_prio in
-              match rd_ls with
-                | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
+              let snd_ls = List.filter (fun (_,_,_, _, is_guard, _ , _) ->  is_guard) pre_preds_4_equal_w_prio in
+              match snd_ls with
+                | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
                 | _ -> begin
-                    let hp,cs,_,_,_,_ = List.fold_left (fun (hp0,cs0,a0,b0,c0, s0) (hp1,cs1,a1,b1,c1, s1) ->
-                        if s1<s0 then (hp1,cs1,a1,b1,c1, s1) else (hp0,cs0,a0, b0, c0, s0)
-                    ) (List.hd pre_preds_4_equal_w_prio) (List.tl pre_preds_4_equal_w_prio) in
-                    [(hp,[cs])]
+                    let rd_ls = List.filter (fun (_, _,_, _, _, is_emp_r , _) ->  is_emp_r) pre_preds_4_equal_w_prio in
+                    match rd_ls with
+                      | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
+                      | _ -> begin
+                          let hp,cs,_,_,_,_,_ = List.fold_left (fun (hp0,cs0,a, a0,b0,c0, s0) (hp1,cs1,b, a1,b1,c1, s1) ->
+                              if s1<s0 then (hp1,cs1,b, a1,b1,c1, s1) else (hp0,cs0,a,a0, b0, c0, s0)
+                          ) (List.hd pre_preds_4_equal_w_prio) (List.tl pre_preds_4_equal_w_prio) in
+                          [(hp,[cs])]
+                        end
                   end
             end
       end

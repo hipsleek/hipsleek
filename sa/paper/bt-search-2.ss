@@ -8,17 +8,24 @@ bst0<> == self = null
 	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
 	inv true;
 
+bst1<> == self = null
+	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
+        or self::node2<_, p, q> * p::bst0<> * q::bst1<>
+	inv true;
+
 HeapPred G1(node2 a).
 HeapPred H1(node2 a).
 
 //DFS
   bool search(node2 x, int a)
-  infer[H1,G1]
-  requires H1(x)
-  ensures G1(x);
+  /* infer[H1,G1] */
+  /* requires H1(x) */
+  /* ensures G1(x); */
 
   /* requires x::bst0<> */
   /* ensures x::bst0<> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1 */
+  requires x::bst0<>
+  ensures x::bst1<> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1
 {
   	int tmp;
 
