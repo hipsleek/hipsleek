@@ -1504,8 +1504,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
     (* Handle Infinity Constraints *)
-  let f = if !Globals.allow_inf then let f = Infinity.normalize_inf_formula_sat f in
-                                     let f = (*Infinity.fixed_point_pai_num*) f in f
+  let f = if !Globals.allow_inf then 
+      let _ = Coqinf.cpure_to_coqpure f in
+      let f = Infinity.normalize_inf_formula_sat f in
+      let f = (*Infinity.fixed_point_pai_num*) f in f
     else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
