@@ -4061,9 +4061,9 @@ let hpdef_cmp d1 d2 =
     let hp1 = get_hpdef_name d1.hprel_def_kind in
     try
       let hp2 = get_hpdef_name d2.hprel_def_kind in
-      -(String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2))
-    with _ -> -1
-  with _ -> 1
+      String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
+    with _ -> 1
+  with _ -> -1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
