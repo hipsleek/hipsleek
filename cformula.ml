@@ -14250,6 +14250,7 @@ let rearrange_def def=
         end
   in
   (*to shorten variable names here*)
+  let n_tbl = Hashtbl.create 1 in
   let args = match def.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> []
@@ -14268,7 +14269,21 @@ let rearrange_def def=
   let new_svl = List.map (fun sv ->
       match sv with
           CP.SpecVar(t,id,pr) ->
-              CP.SpecVar(t,(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number(),pr)
+              let cut_id = Str.global_replace reg "" id in
+              let new_id =
+                if Hashtbl.mem n_tbl cut_id
+                then
+                  begin
+                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
+                  end
+                else
+                  begin
+                    Hashtbl.add n_tbl cut_id 0;
+                    cut_id
+                  end
+              in
+              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
   ) svl_rp in
   let new_body2 =
     List.map (fun ((p, f_opt) as o) ->

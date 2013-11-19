@@ -1436,9 +1436,9 @@ let set_last_sleek_fail () =
 (*     Hashtbl.find debug_map x *)
 (*   with _ -> DO_None *)
 
-let inf_number = ref 0
+(* let inf_number = ref 0 *)
 
-let fresh_inf_number() = 
-  inf_number := !inf_number + 1;
-  string_of_int(!inf_number)
+(* let fresh_inf_number() =  *)
+(*   inf_number := !inf_number + 1; *)
+(*   string_of_int(!inf_number) *)
 
