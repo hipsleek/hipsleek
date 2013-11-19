@@ -14231,7 +14231,7 @@ let rearrange_formula r args0 f0=
       r args0 f0
 
 let rearrange_def def=
-  let new_body =
+  let new_body1 =
     match def.hprel_def_body_lib with
       | Some _ -> def.hprel_def_body
       | None -> begin
@@ -14250,7 +14250,34 @@ let rearrange_def def=
         end
   in
   (*to shorten variable names here*)
-  {def with hprel_def_body = new_body}
+  let args = match def.hprel_def_kind with
+    | CP.HPRelDefn (_,r,args) -> r::args
+    | _ -> []
+  in
+  let svll = List.map (fun (p, f_opt) ->
+               match f_opt with
+                 | Some f -> fv f
+                 | None -> []
+  ) new_body1 in
+  let svl = List.flatten svll in
+  let svl_rd = CP.remove_dups_svl svl in
+  (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
+  let svl_ra = CP.diff_svl svl_rd args in
+  let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_ra in
+  let reg = Str.regexp "_.*" in
+  let new_svl = List.map (fun sv ->
+      match sv with
+          CP.SpecVar(t,id,pr) ->
+              CP.SpecVar(t,(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number(),pr)
+  ) svl_rp in
+  let new_body2 =
+    List.map (fun ((p, f_opt) as o) ->
+        match f_opt with
+          | Some f -> (p, Some (subst_avoid_capture svl_rp new_svl f))
+          | None -> o
+  ) new_body1
+  in
+  {def with hprel_def_body = new_body2}
 
 (* let rearrange_def def= *)
 (*   let pr1 =  *)
