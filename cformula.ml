@@ -180,10 +180,10 @@ and one_formula = {
     formula_pos : loc
 }
 
-and flow_treatment = 
+and flow_treatment =
   | Flow_combine
   | Flow_replace
-		  
+
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   (* guard as magic wand? *)
@@ -191,7 +191,7 @@ and h_formula = (* heap formula *)
   | StarMinus of h_formula_starminus
   | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
-  | ConjConj of h_formula_conjconj    
+  | ConjConj of h_formula_conjconj
   | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
@@ -203,11 +203,11 @@ and h_formula = (* heap formula *)
   | HFalse
   | HEmp (* emp for classical logic *)
 
-          
+
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }
-                        
+
 and h_formula_starminus = {  h_formula_starminus_h1 : h_formula;
                         h_formula_starminus_h2 : h_formula;
                         h_formula_starminus_aliasing : aliasing_scenario;
@@ -867,6 +867,9 @@ and contains_spec_var (f : h_formula) p : bool = match f with
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;}) ->
         (contains_spec_var h1 p) or (contains_spec_var h2 p)
+  | HRel (_, expl, _) -> let svl = CP.afv_list expl in (*List.exists (fun e -> CP.eq_spec_var e p) svl*) 
+    (* let _ = print_endline (!print_sv (List.hd svl)) in *)
+        CP.eq_spec_var (List.hd svl) p
   | _ -> false
 
 
@@ -4023,7 +4026,6 @@ let rec is_unknown_f f=
                      is_unknown_f base1
     | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (is_unknown_f o11) && (is_unknown_f o12)
 
-
 let get_hpdef_name hpdef=
    match hpdef with
      | CP.HPRelDefn (hp,_,_) -> hp
@@ -4035,58 +4037,6 @@ let get_hpdef_name_w_tupled hpdef=
      | CP.HPRelDefn (hp,_,_) -> [hp]
      | CP.HPRelLDefn hps -> hps
      | _ -> []
-
- (*Long: todo here*)
-let rearrange_h_formula r args0 hf0 =
-  hf0
-
-(*args0 is root + args of root*)
-let rearrange_formula_x r args0 f0=
-  let rec helper f=
-    match f with
-      | Base fb ->
-            Base {fb with formula_base_heap = rearrange_h_formula r args0 fb.formula_base_heap; }
-      | Exists _ ->
-            let qvars, base1 = split_quantifiers f in
-            let nf = helper base1 in
-            add_quantifiers qvars ( nf)
-      | Or orf  ->
-            Or { orf with formula_or_f1 = helper orf.formula_or_f1;
-                formula_or_f2 = helper orf.formula_or_f2 }
-  in
-  helper f0
-
-let rearrange_formula r args0 f0=
-  let pr1 = !CP.print_svl in
-  let pr2 = !print_formula in
-  Debug.no_3 "rearrange_formula" !CP.print_sv pr1 pr2 pr2
-      (fun _ _ _ -> rearrange_formula_x r args0 f0)
-      r args0 f0
-
-let rearrange_def def=
-  let new_body =
-    match def.hprel_def_body_lib with
-      | Some _ -> def.hprel_def_body
-      | None -> begin
-          try
-            let r, args = match def.hprel_def_kind with
-              | CP.HPRelDefn (_,r,args) -> (r,args)
-              | _ -> raise Not_found
-            in
-            List.map (fun ((p, f_opt) as o) ->
-                match f_opt with
-                  | Some f ->
-                      (p, Some (rearrange_formula r args f))
-                  | None -> o
-          ) def.hprel_def_body
-          with _ -> def.hprel_def_body
-        end
-  in
-  (*to shorten variable names here*)
-  {def with hprel_def_body = new_body}
-
-(* let rearrange_def def= *)
-(*   let pr1 =  *)
 
 let subst_opt ss f_opt=
   match f_opt with
@@ -4111,9 +4061,9 @@ let hpdef_cmp d1 d2 =
     let hp1 = get_hpdef_name d1.hprel_def_kind in
     try
       let hp2 = get_hpdef_name d2.hprel_def_kind in
-      String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2)
-    with _ -> 1
-  with _ -> -1
+      -(String.compare (CP.name_of_spec_var hp1) (CP.name_of_spec_var hp2))
+    with _ -> -1
+  with _ -> 1
 
 let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
@@ -14228,3 +14178,79 @@ let elim_e_var to_keep (f0 : formula) : formula =
 		let qvars,b = split_quantifiers f0 in
 		push_exists qvars (helper2 b) in
 	helper f0
+
+
+(*Long: todo here*)
+let rearrange_h_formula_x r args0 hf0 =
+  let rec helper fv hfl =
+    match fv with
+      | [] -> hfl
+      | v :: fvt -> 
+            (List.filter (fun hf -> contains_spec_var hf v) hfl)@(helper fvt (List.filter (fun hf -> not (contains_spec_var hf v)) hfl))
+  in
+  match hf0 with
+    | Star hfs ->
+          let fl = split_star_conjunctions hf0 in
+          let rf = List.filter (fun hf -> contains_spec_var hf r) fl in
+          let fv = h_fv (List.hd rf) in
+          (* let _ = print_endline (pr_list !print_sv fv) in *)
+          let fl1 = helper fv fl in
+          (* let _ = print_endline (pr_list !print_h_formula fl1) in *)
+          let hf1 = List.fold_left (fun f1 f2 -> mkStarH f1 f2 no_pos) (List.hd fl1) (List.tl fl1) in hf1
+    | _ -> hf0
+
+let rearrange_h_formula r args0 hf0 =
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_h_formula in
+  Debug.no_3 "rearrange_h_formula" pr1 pr2 pr3 pr3
+       (fun _ _ _ -> rearrange_h_formula_x r args0 hf0)
+       r args0 hf0
+
+(*args0 is root + args of root*)
+let rearrange_formula_x r args0 f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            Base {fb with formula_base_heap = rearrange_h_formula r args0 fb.formula_base_heap; }
+      | Exists _ ->
+            let qvars, base1 = split_quantifiers f in
+            let nf = helper base1 in
+            add_quantifiers qvars ( nf)
+      | Or orf  ->
+            Or { orf with formula_or_f1 = helper orf.formula_or_f1;
+                formula_or_f2 = helper orf.formula_or_f2 }
+  in
+  helper f0
+
+let rearrange_formula r args0 f0=
+  let pr1 = !CP.print_svl in
+  let pr2 = !print_formula in
+  Debug.no_3 "rearrange_formula" !CP.print_sv pr1 pr2 pr2
+      (fun _ _ _ -> rearrange_formula_x r args0 f0)
+      r args0 f0
+
+let rearrange_def def=
+  let new_body =
+    match def.hprel_def_body_lib with
+      | Some _ -> def.hprel_def_body
+      | None -> begin
+          try
+            let r, args = match def.hprel_def_kind with
+              | CP.HPRelDefn (_,r,args) -> (r,args)
+              | _ -> raise Not_found
+            in
+            List.map (fun ((p, f_opt) as o) ->
+                match f_opt with
+                  | Some f ->
+                      (p, Some (rearrange_formula r args f))
+                  | None -> o
+          ) def.hprel_def_body
+          with _ -> def.hprel_def_body
+        end
+  in
+  (*to shorten variable names here*)
+  {def with hprel_def_body = new_body}
+
+(* let rearrange_def def= *)
+(*   let pr1 =  *)

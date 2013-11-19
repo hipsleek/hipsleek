@@ -307,7 +307,7 @@ let rec isConstTrue (p:formula) = match p with
   | Exists (_,p1,_,_) -> isConstTrue p1
   | Forall (_,p1,_,_) -> isConstTrue p1
   | _ -> false
-		
+
 and isConstFalse (p:formula) =
   match p with
     | BForm ((BConst (false, pos),_),_) -> true
@@ -332,7 +332,7 @@ struct
 end;;
 
 module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
-  
+
 let is_self_var = function
   | Var (x,_) -> is_self_spec_var x
   | _ -> false
@@ -585,7 +585,7 @@ let filter_vars lv =
 	List.fold_left (fun a c -> match c with 
 		| Var (v,_)-> v::a
 		| _ -> a) [] lv
-		
+
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true
@@ -608,7 +608,7 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | BagIntersect (el, _) -> List.fold_left (fun a b -> a || (exp_contains_spec_var b)) false el
   | ArrayAt _ -> true
   | _ -> false
-    
+
 
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
