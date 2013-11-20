@@ -77,28 +77,29 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                 lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 cs1.CF.hprel_guard frozen_hps complex_hps in
             begin
               match r with
-                | Some (l,r,lhs_ss, rhs_ss) ->
+                | Some (l,r,lhs_ss, rhs_ss, n_cs1_guard) ->
                       (*check duplicate*)
                       if check_constr_duplicate (l,r) (constrs) then ([],[])
                       else
                         begin
-                          (*to drop the matching guard*)
-                          let n_cs_hprel_guard =
+                          let n_cs_hprel_guard0 =
                             match cs2.CF.hprel_guard with
                               | None -> begin
-                                  match cs1.CF.hprel_guard with
-                                    | Some f -> (Some (CF.subst rhs_ss f))
+                                  match n_cs1_guard with
+                                    | Some f -> (Some ( CF.subst rhs_ss  f))
                                     | None -> None
                                 end
                               | Some f2 -> begin
                                   let nf2 = (CF.subst lhs_ss f2) in
-                                  match cs1.CF.hprel_guard with
+                                  match n_cs1_guard with
                                     | Some f1 ->
                                           let nf1= (CF.subst rhs_ss f1) in
                                           Some (CF.mkConj_combine nf2 nf1 CF.Flow_combine no_pos)
                                     | None -> Some nf2
                                 end
                           in
+                          (*to drop the matching guard*)
+                          let n_cs_hprel_guard= SAU.drop_dups_guard l r n_cs_hprel_guard0 in
                           let new_cs = {cs2 with
                               CF.predef_svl = CP.remove_dups_svl
                                   ((CP.subst_var_list lhs_ss cs1.CF.predef_svl)@
@@ -2433,9 +2434,11 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     in non-dangling branches.
   *)
   let process_path_defs_setting globals_unk_hps is =
+    let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in
+    let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_link_hpargs in
     let local_unk_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp globals_unk_hps))
-      (if !Globals.pred_elim_dangling then is.CF.is_dang_hpargs else
-        is.CF.is_link_hpargs)
+      (if !Globals.pred_elim_dangling then dang_hpargs else
+        link_hpargs)
     in
     let is = if !Globals.sa_dnc then
       (*for the local_unk_hps, we fresh them and subst/remove them in local branch*)
@@ -2448,8 +2451,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
           {hp_def with CF.def_rhs = List.map (fun (f,og) -> (CF.subst ss f,og)) hp_def.CF.def_rhs}
       ) is.CF.is_hp_defs in
       let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
-        (is.CF.is_dang_hpargs@new_unk_hpargs, is.CF.is_link_hpargs)
-      else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@new_unk_hpargs)
+        (dang_hpargs@new_unk_hpargs, link_hpargs)
+      else (dang_hpargs, link_hpargs@new_unk_hpargs)
       in
       let is1 = {is with CF.is_hp_defs = n_hp_defs;
           CF.is_dang_hpargs = n_dang_hpargs;
@@ -2458,14 +2461,16 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
       is1
     else is
     in
+    let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in
+    let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_link_hpargs in
     let hp_defs1,tupled_defs = SAU.partition_tupled is.CF.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then
-        let cl_sel_hps0 = CP.remove_dups_svl ((List.map fst is.CF.is_link_hpargs)@
+        let cl_sel_hps0 = CP.remove_dups_svl ((List.map fst link_hpargs)@
           (List.fold_left (fun ls d -> ls@(CF.get_hp_rel_name_h_formula d.CF.def_lhs)) [] hp_defs1))
         in
         let cl_sel_hps, hp_defs2 = SAU.find_closed_sel_hp_def hp_defs1 cl_sel_hps0
-        (List.map fst is.CF.is_link_hpargs) is.CF.is_hp_equivs in
+        (List.map fst link_hpargs) is.CF.is_hp_equivs in
         (cl_sel_hps, hp_defs2, [])
       else
         let tupled_defs1 = List.map (fun d ->
@@ -2479,7 +2484,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         }
         ) tupled_defs
         in
-        let cl_sel_hps = (List.map fst is.CF.is_link_hpargs)@
+        let cl_sel_hps = (List.map fst link_hpargs)@
           (List.fold_left (fun ls d -> ls@(CF.get_hp_rel_name_h_formula d.CF.def_lhs)) [] hp_defs1)
         in
         (cl_sel_hps, hp_defs1,tupled_defs1)
@@ -2487,8 +2492,9 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     let hpdefs = List.map (fun d ->
         let (k, hf, og, f) = CF.flatten_hp_rel_def d in
         CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
-    let _ = DD.ninfo_hprint (add_str "   is.CF.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in
-    let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs is.CF.is_link_hpargs in
+    let _ = DD.ninfo_hprint (add_str "   is.CF.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) link_hpargs no_pos in
+    let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs
+      (link_hpargs) in
     let link_hp_defs = List.map (fun hpdef ->
         let fs = List.fold_left (fun ls (_, f_opt) ->
             match f_opt with
@@ -2500,7 +2506,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         in
         CF.mk_hp_rel_def1 hpdef.CF.hprel_def_kind hpdef.CF.hprel_def_hrel [(f,hpdef.CF.hprel_def_guard)]) link_hpdefs
     in
-    (cl_sel_hps@(List.map fst is.CF.is_link_hpargs), hpdefs@link_hpdefs,
+    (cl_sel_hps@(List.map fst link_hpargs), hpdefs@link_hpdefs,
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   (***********END INTERNAL***************)
@@ -2517,7 +2523,10 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   ) ([],[],[], []) ls_is
   in
   let cl_sel_hps1 = CP.remove_dups_svl cl_sel_hps in
-  let cmb_defs = SAU.combine_path_defs cl_sel_hps1 path_defs in
+  let cmb_defs = match path_defs with
+    | [a] -> a
+    | _ -> SAU.combine_path_defs cl_sel_hps1 path_defs
+  in
   let all_hpdefs, cmb_defs = SAU.filter_non_sel sel_hps all_hpdefs cmb_defs in
   let n_all_hpdefs0a, n_cmb_defs0 = if !Globals.sa_dnc then
     SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)

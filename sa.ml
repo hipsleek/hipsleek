@@ -2286,7 +2286,7 @@ let rec find_imply_subst_x prog constrs=
           let r = SAU.find_imply prog (List.map fst cs1.CF.unk_hps) (List.map fst cs2.CF.unk_hps) lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 None [] [] in
           begin
               match r with
-                | Some (l,r,lhs_ss, rhs_ss) ->
+                | Some (l,r,lhs_ss, rhs_ss,_) ->
                     (*check duplicate*)
                     if check_constr_duplicate (l,r) constrs then []
                     else

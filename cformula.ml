@@ -4784,6 +4784,14 @@ let get_ptrs_group_hf hf0=
       | HEmp ->[]
   in helper hf0
 
+let get_ptrs_group f0=
+  let rec helper f=
+   match f with
+     | Base fb -> get_ptrs_group_hf fb.formula_base_heap
+     | Exists _ -> let _, base_f = split_quantifiers f in helper base_f
+     | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
+  in helper f0
+
 let get_data_node_ptrs_group_hf hf0=
   let rec helper hf=
     match hf with
@@ -7135,6 +7143,7 @@ let subst_hrel_hview_hf hf0 subst=
   in
   helper2 hf0
 
+
 let rec subst_hrel_hview_f_x f0 subst=
   let rec helper f=
     match f with
@@ -7170,6 +7179,52 @@ let ins ss f0=
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   Debug.no_2 "ins" pr2 pr1 pr1
       (fun _ _ -> ins_x ss f0) ss f0
+
+let drop_dups_x base f0=
+  let rec helper f=
+    match f with
+      | Base fb->
+            (*heap*)
+            let g_nodes = get_ptrs_group_hf fb.formula_base_heap in
+            let base_nodes =  get_ptrs_group base in
+            let inter, ss = List.fold_left (fun (r1,r2) args ->
+                let ls_args2 = List.fold_left (fun r args2 ->
+                    if CP.intersect args args2 <> [] then
+                      r@[args2]
+                    else r
+                    ) [] base_nodes
+                in
+                let nr1 = r1@[(List.hd args)] in
+                let tl = List.tl args in
+                let ss = List.fold_left (fun r args2 ->
+                    r@(List.combine tl (List.tl args2))
+                ) [] ls_args2 in
+                (nr1, r2@ss)
+                ) ([],[]) g_nodes in
+            let n_hf = drop_hnodes_hf fb.formula_base_heap inter in
+            (*pure*)
+            (* let g_svl = h_fv n_hf in *)
+            let _ = Debug.ninfo_zprint (lazy (("    ss: " ^ ((pr_list (pr_pair (!CP.print_sv) (!CP.print_sv))) ss)))) no_pos in
+            let p = (MCP.pure_of_mix fb.formula_base_pure) in
+            let g_pure = (* CP.filter_var *) (* CP.subst ss *) p in
+            let p_base = get_pure base in
+            let g_pure_base = (* CP.filter_var *) p_base (* g_svl *) in
+            let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure)
+              (CP.split_conjunctions g_pure_base) in
+            Base {fb with formula_base_heap= n_hf;
+                formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));}
+      | Exists fe ->
+            let qvars, base1 = split_quantifiers f in
+            add_quantifiers qvars (helper base1)
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+            Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+  in
+  helper f0
+
+let drop_dups base f0=
+  let pr1 = !print_formula in
+  Debug.no_2 "drop_dups" pr1 pr1 pr1
+      (fun _ _ -> drop_dups_x base f0) base f0
 
 (*end for sa*)
  (* context functions *)

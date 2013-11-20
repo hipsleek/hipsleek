@@ -2882,7 +2882,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
     let locs_pattern = get_all_locs hd_args inter in
     (inter, locs_pattern, hd.CF.h_formula_data_name)
   in
-  let apply_partter locs hd_name f=
+  let apply_parttern locs hd_name f=
     let hds = get_hdnodes f in
     let sel_pats = List.fold_left (fun ls hd ->
         if String.compare hd_name hd.CF.h_formula_data_name = 0 then
@@ -2914,7 +2914,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
   in
   (************END INTERNAL ***********)
   match guard with
-    | None -> (false, rhs1)
+    | None -> (false, rhs1, guard)
     | Some f -> begin
         let hf = match (CF.heap_of f) with
           | [a] -> a
@@ -2923,18 +2923,20 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         match hf with
           | CF.DataNode hd ->
                 let inter_rhs1, hd_locs, hd_name = find_pattern hd rhs1 in
-                let inter_rhs2 =  apply_partter hd_locs hd_name rhs2 in
-                if inter_rhs2 = [] then (false,rhs1) else
+                let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
+                if inter_rhs2 = [] then (false,rhs1, guard) else
                   let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
                   let nrhs1 = CF.subst ss rhs1 in
+                  let nf = CF.drop_hnodes_f (CF.subst ss f) [hd.CF.h_formula_data_node] in
+                  let n_lguard = CF.drop_dups nrhs1 nf in
                   if check_pure then
                     let np= CP.subst ss (CF.get_pure f) in
                     if is_unsat (CF.mkAnd_pure nrhs1 (MCP.mix_of_pure np) no_pos) then
-                      (false, rhs1)
-                    else (true, nrhs1)
+                      (false, rhs1, guard)
+                    else (true, nrhs1, (Some n_lguard))
                   else
-                    (true, nrhs1)
-          | _ -> (false,rhs1)
+                    (true, nrhs1, (Some n_lguard))
+          | _ -> (false,rhs1, guard)
       end
 
 let pattern_matching_with_guard rhs1 rhs2 (guard: CF.formula option)
@@ -2945,7 +2947,7 @@ let pattern_matching_with_guard rhs1 rhs2 (guard: CF.formula option)
     | Some hf -> Cprinter.prtt_string_of_formula hf
   in
   let pr3 = !CP.print_svl in
-  Debug.no_5 "pattern_matching_with_guard" pr1 pr1 pr2 pr3 string_of_bool (pr_pair string_of_bool pr1)
+  Debug.no_5 "pattern_matching_with_guard" pr1 pr1 pr2 pr3 string_of_bool (pr_triple string_of_bool pr1 pr2)
       (fun _ _ _ _ _ -> pattern_matching_with_guard_x rhs1 rhs2 guard
           match_svl1 check_pure)
       rhs1 rhs2 guard match_svl1 check_pure
@@ -3116,7 +3118,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               let r_res1 = (* CF.subst ss2 *) (CF.Base r_res) in
               (* let _ = Debug.info_zprint (lazy (("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)))) no_pos in *)
               (* let _ = Debug.info_zprint (lazy (("    n_rhs1a: " ^ (Cprinter.string_of_formula n_rhs1a)))) no_pos in *)
-              let _, n_rhs1 = pattern_matching_with_guard n_rhs1a r_res1 lguard1
+              let _, n_rhs1, n_lguard1 = pattern_matching_with_guard n_rhs1a r_res1 lguard1
                 m_args2 true in
               let _ = Debug.ninfo_zprint (lazy (("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)))) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
@@ -3128,7 +3130,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               let r = CF.mkStar n_rhs1 r_res2 CF.Flow_combine (CF.pos_of_formula n_rhs1) in
               (* let _ = Debug.info_zprint (lazy (("    l: " ^ (Cprinter.string_of_formula l)))) no_pos in *)
               (* let _ = Debug.info_zprint (lazy (("    r: " ^ (Cprinter.string_of_formula r)))) no_pos in *)
-              (Some (l, r,subst1, sst))
+              (Some (l, r,subst1, sst,n_lguard1))
             else None
       end
   in
@@ -3749,20 +3751,20 @@ let norm_hnodes_wg_x args fs_wg=
           let new_ss, n_matcheds2,n_rest2 = helper hn rest_dns2 matched2 [] in
              norm_hnodes_two_hns sh_ls n_matcheds2 n_rest2 (ss@new_ss)
   in
-  let norm_one_f base_ldns f=
+  let norm_one_f base_ldns (f,og)=
     let hnds = get_hdnodes f in
     let _,_, ss = norm_hnodes_two_hns base_ldns [] hnds [] in
     let cur_svl = CF.fv f in
     let to_subst = List.map snd ss in
     let inter= CP.intersect_svl (CP.remove_dups_svl cur_svl)
       (CP.remove_dups_svl to_subst) in
-    let f1=
-      if inter = [] then f else
+    let f1, og1=
+      if inter = [] then (f,og) else
         let fr_inter = CP.fresh_spec_vars inter in
         let ss1 = List.combine inter fr_inter in
-        CF.subst ss1 f
+        (CF.subst ss1 f, CF.subst_opt ss1 og)
     in
-    CF.subst ss f1
+    (CF.subst ss f1, CF.subst_opt ss og1)
   in
   let move_root ldns=
     let rec move_root_to_top arg lldns rest=
@@ -3788,7 +3790,7 @@ let norm_hnodes_wg_x args fs_wg=
     let base_ldns = get_hdnodes base_f in
     if base_ldns = [] then fs_wg else
       let base_ldns1 = move_root base_ldns in
-      let tl_fs_wg = List.map (fun (f,og) ->  (norm_one_f base_ldns1 f, og)) (List.tl fs_wg) in
+      let tl_fs_wg = List.map (fun (f,og) ->  norm_one_f base_ldns1 (f, og)) (List.tl fs_wg) in
       ((base_f,base_og)::tl_fs_wg)
 
 let norm_hnodes_wg args fs_wg=
@@ -4317,6 +4319,13 @@ let find_root  prog unk_hps args fs=
   let pr2 = pr_pair !CP.print_sv !CP.print_svl in
   Debug.no_3 "find_root" !CP.print_svl !CP.print_svl pr1 pr2
       (fun _ _ _ -> find_root_x prog unk_hps args fs) unk_hps  args fs
+
+
+let drop_dups_guard lhs rhs guard=
+  match guard with
+    | None -> None
+    | Some f -> let nf = CF.drop_dups rhs f in
+      if is_empty_f nf then None else (Some nf)
 
 (**********************)
 (*check root: is_dangling (root=), is_null,is_not_null*)
@@ -6063,18 +6072,18 @@ let look_up_subst_hpdef_x link_hps hp args (nrec_hpdefs: CF.hp_rel_def list)=
             let ss = List.combine args1 args in
             let ls_f_og = List.map (fun (f1, og1) ->(CF.subst ss f1, CF.subst_opt ss og1)) d1.CF.def_rhs in
             (*get top_guard*)
-            let guarded_tops, rem = List.fold_left (fun (r1,r2) (f, og) ->
-                match og with
-                  | None ->  (r1,r2@[f,og])
-                  | Some f1 -> (* if CF.isStrictConstHTrue f then *)
-                      if CF.is_top_guard f link_hps og then
-                      (r1@[(f,og)],r2)
-                    else (r1,r2@[f,og])
-            ) ([],[]) ls_f_og in
+            (* let guarded_tops, rem = List.fold_left (fun (r1,r2) (f, og) -> *)
+            (*     match og with *)
+            (*       | None ->  (r1,r2@[f,og]) *)
+            (*       | Some f1 -> (\* if CF.isStrictConstHTrue f then *\) *)
+            (*           if CF.is_top_guard f link_hps og then *)
+            (*           (r1@[(f,og)],r2) *)
+            (*         else (r1,r2@[f,og]) *)
+            (* ) ([],[]) ls_f_og in *)
             let rem1 = List.fold_left (fun r (f, og) -> let fs = CF.list_of_disjs f in
             r@(List.map (fun f-> (f,og)) fs)
-            ) [] rem in
-            (rem1, args, guarded_tops)
+            ) [] ls_f_og in
+            (rem1, args,[])
           else
             helper gs
         end
@@ -6094,30 +6103,51 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
   DD.ninfo_zprint (lazy (("       all_succ_hp: " ^ (!CP.print_svl all_succ_hp)))) no_pos;
   let pos = no_pos in
   (*l1 x l2*)
+  let is_guard_consistent f g=
+     match g with
+       | None -> true
+       | Some g_f1 ->
+             not( is_inconsistent_heap (CF.mkAnd_pure f (MCP.mix_of_pure (CF.get_pure g_f1)) no_pos ))
+  in
+  let drop_dups_guards f og=
+    let nog =
+      match og with
+        | None -> None
+        | Some fg -> let nf = CF.drop_dups f fg in
+          if is_empty_f nf then None else (Some nf)
+    in
+    nog
+  in
   let helper ls1 (ls_f_og, args, top_guard)=
-    let n_ls1 = List.concat (List.map (fun (f1,g1) ->
-        let is_top, nf1 = List.fold_left (fun (cur_b,cur_f1) (f2, og) ->
-            let b, _ = pattern_matching_with_guard f1 f og args true in
-            if b then
-              (true, CF.mkStar cur_f1 f2 CF.Flow_combine no_pos)
-            else (cur_b, cur_f1)
-        ) (false, f1) top_guard in
-        if is_top then
-          (*do not inline*)
-          [(nf1, g1)]
-        else
-          List.map (fun (f2, og) ->
-              let is_consis_guard = match g1 with
-                | None -> true
-                | Some g_f1 ->
-                      not( is_inconsistent_heap (CF.mkAnd_pure f2 (MCP.mix_of_pure (CF.get_pure g_f1)) no_pos ))
-              in
-              if is_consis_guard then
-                let nf1 = compose_subs f1 f2 pos in
-                let b, nf2 = pattern_matching_with_guard nf1 f og args false in
-                if b then (nf2,g1) else (nf1,g1)
-              else (nf1,g1)
-          ) ls_f_og) ls1)
+    let n_ls1 = List.fold_left (fun r1 (f1,og1) ->
+        (* let is_top, nf1 = List.fold_left (fun (cur_b,cur_f1) (f2, og) -> *)
+        (*     let b, _,_ = pattern_matching_with_guard f1 f og args true in *)
+        (*     if b then *)
+        (*       (true, CF.mkStar cur_f1 f2 CF.Flow_combine no_pos) *)
+        (*     else (cur_b, cur_f1) *)
+        (* ) (false, f1) top_guard in *)
+        (* if is_top then *)
+        (*   do not inline *)
+        (*   [(nf1, g1)] *)
+        (* else *)
+        let n_fs_wg = List.fold_left (fun r (f2, og2) ->
+            let is_consis_guard1 =  is_guard_consistent f1 og2  in
+            let is_consis_guard = if is_consis_guard1 then
+              is_guard_consistent f2 og1
+            else false in
+            if is_consis_guard then
+              let nf1 = compose_subs f1 f2 pos in
+              let b, nf2, nog2 = pattern_matching_with_guard nf1 f og2 args true in
+              if b then
+                let nog2 = drop_dups_guards nf2 og2 in
+                r@[(nf2, nog2)]
+              else
+                let nog1 = drop_dups_guards nf1 og1 in
+                r@[(nf1,nog1)]
+            else r
+        ) [] ls_f_og in
+        r1@n_fs_wg
+    ) [] ls1
     in
     (* List.map (fun f2 ->
         let b, nf2 = pattern_matching_with_guard f2 f g_opt args in
@@ -6157,8 +6187,9 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
           let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
         (*combine fs_list*)
           let lsf_cmb = List.fold_left helper [(nf,g)] fs_list in
-          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
-          (*                                                 in pr lsf_cmb)) no_pos; *)
+          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula *)
+          (*     (pr_option Cprinter.prtt_string_of_formula)) *)
+          (* in pr lsf_cmb)) no_pos; *)
           (*remove trivial def*)
           let lsf_cmb1 = List.filter (fun (f,_) -> not (is_trivial f (hp,args))) lsf_cmb in
           (*simpl pure*)
