@@ -90,7 +90,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                                     | None -> None
                                 end
                               | Some f2 -> begin
-                                  let nf2 = (CF.subst lhs_ss f2) in
+                                  let nf2 = (CF.subst rhs_ss f2) in
                                   match n_cs1_guard with
                                     | Some f1 ->
                                           let nf1= (CF.subst rhs_ss f1) in
@@ -162,7 +162,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-             let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+             let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
             if SAC.cs_rhs_is_only_neqNull cs1 then
               (subst_w_frozen_old rest non_frozen is_changed unfrozen_hps)
             else

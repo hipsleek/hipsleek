@@ -2871,14 +2871,14 @@ swl-i.ss: NO
 *)
 let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
   (************ INTERNAL ***********)
-  let find_pattern hd f=
+  let find_pattern hd pure_svl f=
     let hpargs = CF.get_HRels_f rhs1 in
     let sel_args = List.fold_left (fun ls (_,args) ->
         if CP.intersect_svl args match_svl = [] then ls
         else ls@args
     ) [] hpargs in
     let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
-    let inter = CP.intersect_svl hd_args sel_args in
+    let inter = CP.intersect_svl hd_args (sel_args@pure_svl) in
     let locs_pattern = get_all_locs hd_args inter in
     (inter, locs_pattern, hd.CF.h_formula_data_name)
   in
@@ -2922,7 +2922,8 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         in
         match hf with
           | CF.DataNode hd ->
-                let inter_rhs1, hd_locs, hd_name = find_pattern hd rhs1 in
+                let g_pure_svl = CP.fv (CF.get_pure f) in
+                let inter_rhs1, hd_locs, hd_name = find_pattern hd g_pure_svl rhs1 in
                 let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
                 if inter_rhs2 = [] then (false,rhs1, guard) else
                   let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
@@ -6194,9 +6195,9 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
           let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
         (*combine fs_list*)
           let lsf_cmb = List.fold_left helper [(nf,g)] fs_list in
-          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula *)
-          (*     (pr_option Cprinter.prtt_string_of_formula)) *)
-          (* in pr lsf_cmb)) no_pos; *)
+          DD.ninfo_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula
+              (pr_option Cprinter.prtt_string_of_formula))
+          in pr lsf_cmb)) no_pos;
           (*remove trivial def*)
           let lsf_cmb1 = List.filter (fun (f,_) -> not (is_trivial f (hp,args))) lsf_cmb in
           (*simpl pure*)
