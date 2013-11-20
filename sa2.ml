@@ -897,27 +897,34 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (* DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")"))) no_pos; *)
             let quan_null_svl,_ = get_null_quans f0 in
             let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
-            let defs,ogs, ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in
+            let defs,defs_wg, ogs, unk_svl = List.fold_left (fun (r1,r2,r3,r4) pdef->
+                let (f, og, unk_args) = obtain_and_norm_def hp args0 quan_null_svl0 pdef in
+                (r1@[f], r2@[(f,og)],r3@[og],r4@unk_args)
+            ) ([],[],[],[]) par_defs in
+            (* let defs,ogs, ls_unk_args = split3 (List.map (obtain_and_norm_def hp args0 quan_null_svl0) par_defs) in *)
             let r,non_r_args = SAU.find_root prog (hp::skip_hps) args0 defs in
             (*make explicit root*)
-            let defs0 = List.map (SAU.mk_expl_root r) defs in
-            let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
+            (* let defs0 = List.map (SAU.mk_expl_root r) defs in *)
+            let defs0_wg = List.map (fun (f,og) -> (SAU.mk_expl_root r f, og)) defs_wg in
+            (* let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in *)
             (*normalize linked ptrs*)
-            let defs1 = SAU.norm_hnodes args0 defs0 in
+            (* let defs1,_ = List.split (SAU.norm_hnodes_wg args0 (List.map (fun f -> (f, None)) defs0)) in *)
+            let defs1_wg = SAU.norm_hnodes_wg args0 defs0_wg in
+            (* let defs1 = SAU.norm_hnodes args0 defs0 in *)
             (*remove unkhp of non-node*)
-            let defs2 = if is_pre then (* List.map remove_non_ptr_unk_hp *) defs1
-            else SAU.elim_useless_rec_preds prog hp args0 defs1
+            let defs2_wg = if is_pre then (* List.map remove_non_ptr_unk_hp *) defs1_wg
+            else SAU.elim_useless_rec_preds prog hp args0 defs1_wg
             in
             (*remove duplicate*)
-            let defs3 = SAU.equiv_unify args0 defs2 in
-            let defs4 = SAU.remove_equiv_wo_unkhps hp args0 skip_hps defs3 in
-            let defs5a = SAU.find_closure_eq hp args0 defs4 in
+            let defs3_wg = SAU.equiv_unify_wg args0 defs2_wg in
+            let defs4_wg = SAU.remove_equiv_wo_unkhps_wg hp args0 skip_hps defs3_wg in
+            let defs5a_wg = SAU.find_closure_eq_wg hp args0 defs4_wg in
             (*Perform Conjunctive Unification (without loss) for post-preds. pre-preds are performed separately*)
-            let defs5 =  if is_pre then defs5a else
-              SAU.perform_conj_unify_post prog hp args0 (unk_hps@link_hps) unk_svl defs5a no_pos
+            let defs5_wg =  if is_pre then defs5a_wg else
+              SAU.perform_conj_unify_post_wg prog hp args0 (unk_hps@link_hps) unk_svl defs5a_wg no_pos
             in
-            let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-            let _ = DD.ninfo_zprint (lazy (("defs1: " ^ (pr1 defs1)))) no_pos in
+            let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
+            let _ = DD.ninfo_zprint (lazy (("defs1: " ^ (pr1 defs1_wg)))) no_pos in
             (*remove duplicate with self-recursive*)
             (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
             (*find longest hnodes common for more than 2 formulas*)
@@ -925,6 +932,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
             let old_disj = !Globals.pred_disj_unify in
             let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
+            let defs5,_ = List.split defs5_wg in
             let defs,elim_ss = if disj_opt then
               SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5 ogs
             else

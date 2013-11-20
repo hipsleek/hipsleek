@@ -2552,7 +2552,7 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 (*       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2 *)
 
 (*for post-preds*)
- let remove_pure_or_redundant_x fs=
+ let remove_pure_or_redundant_wg_x fs_wg=
    let drop_redundant conjs neg_of_disj =
      match neg_of_disj with
        | CP.Not (p, b,pos) ->
@@ -2613,14 +2613,15 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
                      })
          end
    in
-   List.fold_left (fun r f -> let b,nf= helper f in
-     if b then r@[nf] else r
-   ) [] fs
+   List.fold_left (fun r (f,og) -> let b,nf= helper f in
+     if b then r@[(nf,og)] else r
+   ) [] fs_wg
 
-let remove_pure_or_redundant fs=
-  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_1 "remove_pure_or_redundant" pr1 pr1
-      (fun _ -> remove_pure_or_redundant_x fs) fs
+let remove_pure_or_redundant_wg fs_wg=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  Debug.no_1 "remove_pure_or_redundant_wg" pr2 pr2
+      (fun _ -> remove_pure_or_redundant_wg_x fs_wg) fs_wg
 
 let equiv_unify_x args fs=
   let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula args f1 f2) fs in
@@ -2630,6 +2631,15 @@ let equiv_unify args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_2 "equiv_unify" !CP.print_svl pr1 pr1
       (fun _ _ -> equiv_unify_x args fs) args fs
+
+let equiv_unify_wg_x args fs_wg=
+  let fs1_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> check_relaxeq_formula args f1 f2) fs_wg in
+  fs1_wg
+
+let equiv_unify_wg args fs_wg=
+  let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
+  Debug.no_2 "equiv_unify" !CP.print_svl pr1 pr1
+      (fun _ _ -> equiv_unify_wg_x args fs_wg) args fs_wg
 
 let remove_subsumed_pure_formula_x args ps=
   (*check ps01 <<= ps02*)
@@ -3373,43 +3383,82 @@ let remove_longer_common_prefix_w_unk_g unk_hps fs=
   in
   helper fs []
 
-let remove_equiv_wo_unkhps_x hp args0 unk_hps fs=
+(* let remove_equiv_wo_unkhps_x hp args0 unk_hps fs= *)
+(*   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems= *)
+(*     match cur with *)
+(*       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems *)
+(*       | f::ss -> *)
+(*           let newf,b = CF.drop_unk_hrel f unk_hps in *)
+(*           if not b then *)
+(*             partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[f]) *)
+(*           else *)
+(*             begin *)
+(*                 let newf2,_ = CF.drop_hrel_f newf [hp] in *)
+(*                 if is_empty_f newf2 then *)
+(*                   partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems *)
+(*                 else *)
+(*                   partition_helper ss (res_unkhp_fs@[f]) (res_elim_unkhp_fs@[newf]) rems *)
+(*             end *)
+(*   in *)
+(*   let check_dups elim_unkhp_fs non_unkhp_fs= *)
+(*     let rec helper1 fs r= *)
+(*       match fs with *)
+(*         | [] -> r *)
+(*         | f::fss -> *)
+(*             (\*check duplicate or not ll-append5*\) *)
+(*             if List.exists (fun f1 -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then *)
+(*               helper1 fss r *)
+(*             else helper1 fss (r@[f]) *)
+(*     in *)
+(*     helper1 non_unkhp_fs [] *)
+(*   in *)
+(*   let unkhp_fs,elim_unkhp_fs,rems= partition_helper fs [] [] [] in *)
+(*   let rems1 = check_dups elim_unkhp_fs rems in *)
+(*   (unkhp_fs@rems1) *)
+
+(* let remove_equiv_wo_unkhps hp args0 unk_hps fs= *)
+(*   let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+(*   Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr *)
+(*       (fun _ _ -> remove_equiv_wo_unkhps_x hp args0 unk_hps fs) unk_hps fs *)
+
+let remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg=
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
     match cur with
       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems
-      | f::ss ->
+      | (f,og)::ss ->
           let newf,b = CF.drop_unk_hrel f unk_hps in
           if not b then
-            partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[f])
+            partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[(f,og)])
           else
             begin
                 let newf2,_ = CF.drop_hrel_f newf [hp] in
                 if is_empty_f newf2 then
                   partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems
                 else
-                  partition_helper ss (res_unkhp_fs@[f]) (res_elim_unkhp_fs@[newf]) rems
+                  partition_helper ss (res_unkhp_fs@[(f,og)]) (res_elim_unkhp_fs@[(newf,og)]) rems
             end
   in
   let check_dups elim_unkhp_fs non_unkhp_fs=
     let rec helper1 fs r=
       match fs with
         | [] -> r
-        | f::fss ->
+        | (f,og)::fss ->
             (*check duplicate or not ll-append5*)
-            if List.exists (fun f1 -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then
+            if List.exists (fun (f1,og1) -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then
               helper1 fss r
-            else helper1 fss (r@[f])
+            else helper1 fss (r@[(f,og)])
     in
     helper1 non_unkhp_fs []
   in
-  let unkhp_fs,elim_unkhp_fs,rems= partition_helper fs [] [] [] in
+  let unkhp_fs,elim_unkhp_fs,rems= partition_helper fs_wg [] [] [] in
   let rems1 = check_dups elim_unkhp_fs rems in
   (unkhp_fs@rems1)
 
-let remove_equiv_wo_unkhps hp args0 unk_hps fs=
-  let pr = pr_list_ln Cprinter.prtt_string_of_formula in
+let remove_equiv_wo_unkhps_wg hp args0 unk_hps fs_wg=
+  let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
   Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr
-      (fun _ _ -> remove_equiv_wo_unkhps_x hp args0 unk_hps fs) unk_hps fs
+      (fun _ _ -> remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg)
+      unk_hps fs_wg
 
 (************************************)
 (*check hf2 is subset of hf1*)
@@ -3603,11 +3652,12 @@ let simplify_one_formula prog args f=
   Debug.no_2 "simplify_one_formula" pr1 pr2 pr2
       (fun _ _ ->simplify_one_formula_x prog args f)
       args f
-let elim_useless_rec_preds_x prog hp args fs=
-  let process_one f=
+
+let elim_useless_rec_preds_x prog hp args fs_wg=
+  let process_one (f,og)=
     let hpargs = CF.get_HRels_f f in
     let rec_hpargs = List.filter (fun (hp0,_) -> CP.eq_spec_var hp hp0) hpargs in
-    if rec_hpargs = [] then [f] else
+    if rec_hpargs = [] then [(f,og)] else
       let hds, hvs,_ = CF.get_hp_rel_formula f in
       let args_i = get_hp_args_inst prog hp args in
       (* let cl_args = look_up_closed_ptr_args prog hds hvs args_i in *)
@@ -3617,23 +3667,23 @@ let elim_useless_rec_preds_x prog hp args fs=
       if args_i = [] || (hds = [] && hvs = []) then
         let nf,_ = CF.drop_hrel_f f [hp] in
         let nf1 = simplify_one_formula prog args nf in
-        if is_empty_f nf1 then [] else [nf1]
-      else [f]
+        if is_empty_f nf1 then [] else [(nf1,og)]
+      else [(f,og)]
   in
-  List.fold_left (fun r f -> r@(process_one f)) [] fs
+  List.fold_left (fun r (f,og) -> r@(process_one (f, og))) [] fs_wg
 
-let elim_useless_rec_preds prog hp args fs=
+let elim_useless_rec_preds prog hp args fs_wg=
   let pr1 = !CP.print_svl in
-  let pr2 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
   Debug.no_3 "elim_useless_rec_preds" !CP.print_sv pr1 pr2 pr2
-      (fun _ _ _ -> elim_useless_rec_preds_x prog hp args fs)
-      hp args fs
+      (fun _ _ _ -> elim_useless_rec_preds_x prog hp args fs_wg)
+      hp args fs_wg
 
 (************************************************************)
     (****************END SIMPL HP PARDEF/CF.formula************)
 (************************************************************)
 
-let norm_hnodes_x args fs=
+let norm_hnodes_wg_x args fs_wg=
   let rec get_subst_svl matcheds svl1 svl2 ss=
     match svl1,svl2 with
 	 | [],[] -> ss
@@ -3707,18 +3757,19 @@ let norm_hnodes_x args fs=
     in
     sel_root args
   in
-  if fs = [] then fs else
-    let base_f = List.hd fs in
+  if fs_wg = [] then fs_wg else
+    let base_f, base_og = List.hd fs_wg in
     let base_ldns = get_hdnodes base_f in
-    if base_ldns = [] then fs else
+    if base_ldns = [] then fs_wg else
       let base_ldns1 = move_root base_ldns in
-      let tl_fs = List.map (norm_one_f base_ldns1) (List.tl fs) in
-      (base_f::tl_fs)
+      let tl_fs_wg = List.map (fun (f,og) ->  (norm_one_f base_ldns1 f, og)) (List.tl fs_wg) in
+      ((base_f,base_og)::tl_fs_wg)
 
-let norm_hnodes args fs=
-  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_2 "norm_hnodes" !CP.print_svl pr1 pr1
-      (fun _ _ -> norm_hnodes_x args fs) args fs
+let norm_hnodes_wg args fs_wg=
+  let pr0 = Cprinter.prtt_string_of_formula in
+  let pr1 = pr_list_ln (pr_pair pr0 (pr_option pr0)) in
+  Debug.no_2 "norm_hnodes_wg" !CP.print_svl pr1 pr1
+      (fun _ _ -> norm_hnodes_wg_x args fs_wg) args fs_wg
 
 
 let generate_equiv_pdefs_x unk_hps pdef_grps=
@@ -4966,7 +5017,7 @@ let find_closure_eq_null hp args f=
       (fun _ _ _ -> find_closure_eq_null_x hp args f)
       hp args f
 
-let find_closure_eq_x hp args fs=
+let find_closure_eq_wg_x hp args fs_wg=
   let extract_eq_pos f=
     let (_ ,mf,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mf) in
@@ -4997,20 +5048,21 @@ let find_closure_eq_x hp args fs=
     in
     if new_comms = [] then raise Not_found else new_comms
   in
-  if List.length args < 2 || List.length fs < 2 then fs else
-    let fs1 = List.map (find_closure_eq_null hp args) fs in
+  if List.length args < 2 || List.length fs_wg < 2 then fs_wg else
+    let fs1_wg = List.map (fun (f, og) -> (find_closure_eq_null hp args f, og)) fs_wg in
     try
-      let ls_pos_eqs = List.map extract_eq_pos fs1 in
+      let ls_pos_eqs = List.map (fun (f, _) -> (extract_eq_pos f)) fs1_wg in
       let eq_comms = List.fold_left get_common_eqs (List.hd ls_pos_eqs) (List.tl ls_pos_eqs) in
-      let fs2 = List.map (insert_closure eq_comms) fs1 in
-      fs2
-    with Not_found -> fs1
+      let fs2_wg = List.map (fun (f, og) -> (insert_closure eq_comms f, og)) fs1_wg in
+      fs2_wg
+    with Not_found -> fs1_wg
 
-let find_closure_eq hp args fs=
-  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_3 "find_closure_eq_null" !CP.print_sv !CP.print_svl pr1 pr1
-      (fun _ _ _ -> find_closure_eq_x hp args fs)
-      hp args fs
+let find_closure_eq_wg hp args fs_wg=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  Debug.no_3 "find_closure_eq_null_wg" !CP.print_sv !CP.print_svl pr2 pr2
+      (fun _ _ _ -> find_closure_eq_wg_x hp args fs_wg)
+      hp args fs_wg
 
 let norm_conjH_f_x prog org_args args next_roots sh_ldns sh_lvns com_eqNulls com_eqPures com_hps (ldns, lvns, f)=
   (* let _ =  DD.info_zprint (lazy (("       new args: " ^ (!CP.print_svl args)))) no_pos in *)
@@ -5343,24 +5395,26 @@ let simplify_disj prog args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "simplify_disj" pr1 pr1 (pr_pair string_of_bool pr2)
       (fun _ _ -> simplify_disj_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
 
-let perform_conj_unify_post_x prog hp args unk_hps unk_svl fs pos=
-  match fs with
-    | [f1;f2] -> let is_common, sharing_f, n_fs, _ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
-      if not is_common then fs else
+let perform_conj_unify_post_wg_x prog hp args unk_hps unk_svl fs_wg pos=
+  match fs_wg with
+    | [(f1,og1);(f2,og2)] ->
+          let is_common, sharing_f, n_fs, _ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
+      if not is_common then fs_wg else
         if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
           let ps = List.map (fun f -> CF.get_pure f) n_fs in
           let p = CP.disj_of_list ps pos in
           let neg_p = CP.mkNot p None pos in
           if not(TP.is_sat_raw (MCP.mix_of_pure neg_p)) then
-            [sharing_f]
-          else fs
-        else fs
-    | _ -> fs
+            [(sharing_f, og1)]
+          else fs_wg
+        else fs_wg
+    | _ -> fs_wg
 
-let perform_conj_unify_post prog hp args unk_hps unk_svl fs pos=
-  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_1 "perform_conj_unify_post" pr1 pr1
-      (fun _ -> perform_conj_unify_post_x prog hp args unk_hps unk_svl fs pos) fs
+let perform_conj_unify_post_wg prog hp args unk_hps unk_svl fs_wg pos=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  Debug.no_1 "perform_conj_unify_post_wg" pr2 pr2
+      (fun _ -> perform_conj_unify_post_wg_x prog hp args unk_hps unk_svl fs_wg pos) fs_wg
 
 (*match hprel: with the same args: TODO: enhance with data node + view node*)
 let norm_heap_consj_x h1 h2 equivs=

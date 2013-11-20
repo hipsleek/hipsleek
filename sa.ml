@@ -2488,7 +2488,8 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         let defs0 = List.map (SAU.mk_expl_root r) defs in
         let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
   (*normalize linked ptrs*)
-        let defs1 = SAU.norm_hnodes args0 defs0 in
+        let defs1,_ = List.split (SAU.norm_hnodes_wg args0 (List.map (fun f -> (f, None)) defs0)) in
+        (* let defs1 = SAU.norm_hnodes args0 defs0 in *)
         (*remove unkhp of non-node*)
         let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
   (*remove duplicate*)
@@ -2496,7 +2497,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         if CP.mem_svl hp unk_hps then
           (SAU.mk_unk_hprel_def hp args0 defs3 no_pos,[])
         else
-          let defs4 = SAU.remove_equiv_wo_unkhps hp args unk_hps defs3 in
+          let defs4,_ = List.split (SAU.remove_equiv_wo_unkhps_wg hp args unk_hps (List.map (fun f -> (f, None)) defs3)) in
    (*remove duplicate with self-recursive*)
         (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)
