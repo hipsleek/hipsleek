@@ -7212,7 +7212,7 @@ let drop_dups_x base f0=
             let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure)
               (CP.split_conjunctions g_pure_base) in
             Base {fb with formula_base_heap= n_hf;
-                formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));}
+                formula_base_pure = (MCP.mix_of_pure (CP.join_conjunctions g_pure_rem));}
       | Exists fe ->
             let qvars, base1 = split_quantifiers f in
             add_quantifiers qvars (helper base1)

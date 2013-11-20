@@ -1297,7 +1297,7 @@ let def_subst_fix_x prog unk_hps hpdefs=
       (* let fs2 = SAU.remove_subset new_fs1 in *)
       (*may be wrong: should reevauate root*)
       if b then
-        (b , CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args )) hprel (* [(CF.disj_of_list fs1 no_pos, g)] *) fs1_wg)
+        (b , CF.mk_hp_rel_def1 hpdef.CF.def_cat(* (CP.HPRelDefn (hp, List.hd args, List.tl args )) *) hprel (* [(CF.disj_of_list fs1 no_pos, g)] *) fs1_wg)
       else (false, hpdef)
     else
       (*return*)

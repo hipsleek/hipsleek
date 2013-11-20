@@ -4271,11 +4271,18 @@ let closer_ranking prog unk_hps fs root_cand args0=
   let new_cand = List.filter (fun r ->
      List.for_all (exam_conf r) fs_config) root_cand
   in
-  let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in
+  let _ = DD.ninfo_zprint (lazy (("  new_cands0: " ^ (!CP.print_svl new_cand) ))) no_pos in
   let _ = DD.ninfo_zprint (lazy (("  eqNulls: " ^ (!CP.print_svl eqNulls) ))) no_pos in
   let root=
     match new_cand with
-      | [] -> List.hd root_cand
+      | [] -> (* List.hd root_cand *)
+            begin
+              match unk_hps with
+                | hp::_ -> let ins_args = get_hp_args_inst prog hp args0 in
+                  let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) args0 in
+                  List.hd (ins_cand@rem)
+                | _ -> List.hd root_cand
+            end
       | r::_ -> if eqNulls = [] then r
         else
           let eqNulls,rem =

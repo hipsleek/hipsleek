@@ -67,14 +67,14 @@ let norm_free_svl f0 args=
   let f,tis = helper f0 in
   let def = List.map fst tis in
   let rem_svl = List.filter (fun sv ->
-      let n = CP.name_of_spec_var sv in
+       let n = CP.name_of_spec_var sv in
       (List.for_all (fun n2 -> String.compare n n2 != 0) def)
   ) args in
-  let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in
+  (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
   let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
       let vk = TI.fresh_proc_var_kind ls t in
-              ls@[(sv,vk)]
-  ) [] (s::rem_svl) in
+        ls@[(sv,vk)]
+  ) [] (rem_svl) in
   (f, tis@tis1)
 in
 List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
@@ -102,7 +102,8 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
                 | Named id -> if String.compare id "" = 0  then
                     let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in
                     let _ = Debug.ninfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in
-                    (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r)))
+                    report_error no_pos "why null"
+                    (* (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))) *)
                   else
                     id,r
                 | _ -> report_error no_pos "should be a data name"
