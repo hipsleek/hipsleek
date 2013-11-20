@@ -677,7 +677,35 @@ Re-ordering
   HP_903(next,p) ::= NONE]
 
 ==========================================================
+tll.ss --reverify-all
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (may) cause: OrR[Cannot infer heap and pure 2,valid]
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+tll-2.ss by hand:
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (may) cause:  true |-  l_52'=ll_1055. LOCS:[0;67] (may-bug)
+
+
 ==========================================================
+# tll.ss --pred-en-useless-para
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ 
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ Stop Omega... 87 invocations 
+0 false contexts at: ()
 ==========================================================
 ==========================================================
 ==========================================================

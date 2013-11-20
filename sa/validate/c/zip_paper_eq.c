@@ -8,7 +8,7 @@ struct node {
     struct node* next;
 };
 
-/*@ 
+/*@
 ll<> == self = null  
     or self::node<_, q> * q::ll<>;
 
@@ -24,8 +24,8 @@ PostPred G(node a, node b, node c).
 */
 
 struct node* zip (struct node* x, struct node* y)
-// infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
-//@ requires x::ltwo<y>  ensures x::lthree<y,res>;
+//@ infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
+// requires x::ltwo<y>  ensures x::lthree<y,res>;
 {
    if (x==NULL) 
 	{
