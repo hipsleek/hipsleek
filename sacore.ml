@@ -2821,39 +2821,43 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
             else
               look_up rest (rem@[def])
   in
-  let rec comps_split comps f res=
+  let rec comps_split comps (f,og) res=
     match comps with
       | [] -> res
       | (hp,args)::rest ->
             let f_comp = CF.drop_data_view_hrel_nodes f SAU.check_nbelongsto_dnode
               SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode
-              args args [hp] in
+              args args [hp]
+            in
             let _ = Debug.ninfo_hprint (add_str  "f_comp " Cprinter.prtt_string_of_formula) f_comp no_pos in
-            comps_split rest f (res@[f_comp])
+            comps_split rest (f,og) (res@[(f_comp,og)])
   in
-  let rec insert_para comps fs res=
-    match comps,fs with
+  let rec insert_para comps fs_wg res=
+    match comps,fs_wg with
       | [],[] -> res
-      | fs::rest_comps, f::rest -> insert_para rest_comps rest (res@[(fs@[f])])
+      | fs::rest_comps, f_wg::rest -> insert_para rest_comps rest (res@[(fs@[f_wg])])
       | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 1"
   in
-  let rec combine_comp comps1 ls_defs1 pos res=
-    match comps1,ls_defs1 with
+  let rec combine_comp comps1 ls_fs_wg  pos res=
+    match comps1,ls_fs_wg  with
       | [],[] -> res
-      | (hp, args)::rest1, fs::rest2 ->
-            let _ = Debug.ninfo_hprint (add_str  "fs " (pr_list_ln Cprinter.prtt_string_of_formula)) fs no_pos in
-            let fs1 = List.filter (fun f -> not (SAU.is_trivial f (hp,args))) fs in
-            let r,paras = SAU.find_root cprog (hp::unk_hps) args fs1 in
-            let n_hp_defs = SAU.mk_hprel_def cprog false [] unk_hps [] hp (args, r, paras) fs1 [] pos in
+      | (hp, args)::rest1, fs_wg::rest2 ->
+            (* let _ = Debug.ninfo_hprint (add_str  "fs " (pr_list_ln Cprinter.prtt_string_of_formula)) fs no_pos in *)
+            let fs1_wg = List.filter (fun (f,_) -> not (SAU.is_trivial f (hp,args))) fs_wg in
+            let r,paras = SAU.find_root cprog (hp::unk_hps) args (List.map fst fs1_wg) in
+            let n_hp_defs = SAU.mk_hprel_def_wprocess cprog false [] unk_hps [] hp (args, r, paras) fs1_wg  pos in
             combine_comp rest1 rest2 pos (res@(List.map snd n_hp_defs))
       | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 2"
   in
   (*res: list of disj of resulting split*)
-  let subst_and_split res f=
+  let subst_and_split acc (f,og)=
     (*subst*)
     let f1 = CF.subst_hrel_f f ss_preds in
-    let fs = comps_split comps f1 [] in
-    let n_res = if res = [] then List.map (fun f -> [f]) fs else insert_para res fs [] in
+    let fs_wg = comps_split comps (f1,og) [] in
+    let n_res = if acc = [] then
+      List.map (fun x -> [x]) fs_wg
+    else insert_para acc fs_wg []
+    in
     n_res
   in
   (*shared*)
@@ -2921,11 +2925,11 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       | None -> [cur_hpdef]
   in
   let prove_syn (* (k, rel, og, f) *) def =
-    let fs0,ogs = List.split def.CF.def_rhs in
-    let fs = List.fold_left (fun r f-> r@(CF.list_of_disjs f)) [] fs0 in
-    let split = List.fold_left subst_and_split [] fs in
-    let split_hp_defs = combine_comp comps split no_pos [] in
-    let n_hp_def = {def with CF.def_rhs = [( CF.formula_of_heap rhs_hf no_pos, CF.combine_guard ogs)]} in
+    (* let fs0,ogs = List.split def.CF.def_rhs in *)
+    (* let fs = List.fold_left (fun r f-> r@(CF.list_of_disjs f)) [] fs0 in *)
+    let ls_fs_wg = List.fold_left subst_and_split [] def.CF.def_rhs in
+    let split_hp_defs = combine_comp comps ls_fs_wg  no_pos [] in
+    let n_hp_def = {def with CF.def_rhs = [( CF.formula_of_heap rhs_hf no_pos, None)]} in
     let _ = DD.info_pprint (" pred_split (syn):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
         (Cprinter.prtt_string_of_h_formula rhs_hf)) no_pos in
     (n_hp_def::split_hp_defs)

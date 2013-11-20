@@ -954,11 +954,10 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
             let old_disj = !Globals.pred_disj_unify in
             let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
-            let defs5,_ = List.split defs5_wg in
             let defs,elim_ss = if disj_opt then
-              SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5 ogs
+              SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5_wg
             else
-              let defs = SAU.mk_hprel_def prog is_pre hpdefs skip_hps unk_svl hp (args0,r,non_r_args) defs5 ogs no_pos in
+              let defs = SAU.mk_hprel_def_wprocess prog is_pre hpdefs skip_hps unk_svl hp (args0,r,non_r_args) defs5_wg no_pos in
               (defs,[])
             in
             let _ = Globals.pred_disj_unify := old_disj in
