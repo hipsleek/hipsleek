@@ -7189,7 +7189,8 @@ let drop_dups_x base f0=
             let base_nodes =  get_ptrs_group base in
             let inter, ss = List.fold_left (fun (r1,r2) args ->
                 let ls_args2 = List.fold_left (fun r args2 ->
-                    if CP.intersect args args2 <> [] then
+                    if List.length args = List.length args2 && 
+                      CP.intersect args args2 <> [] then
                       r@[args2]
                     else r
                     ) [] base_nodes

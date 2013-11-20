@@ -4269,10 +4269,17 @@ let closer_ranking prog unk_hps fs root_cand args0=
   (* let args = r::(List.filter (fun sv -> not (CP.eq_spec_var r sv)) args0) in *)
   let eqNulls = if ls_eqNulls = [] then [] else
     List.fold_left (fun r ls -> CP.intersect_svl r ls) (List.hd ls_eqNulls) (List.tl ls_eqNulls) in
-  let new_cand = List.filter (fun r ->
+  let new_cand0 = List.filter (fun r ->
      List.for_all (exam_conf r) fs_config) root_cand
   in
-  let _ = DD.ninfo_zprint (lazy (("  new_cands0: " ^ (!CP.print_svl new_cand) ))) no_pos in
+  let new_cand =
+    match unk_hps with
+      | hp::_ -> let ins_args = get_hp_args_inst prog hp args0 in
+        let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
+        (ins_cand@rem)
+      | _ -> new_cand0
+  in
+  let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in
   let _ = DD.ninfo_zprint (lazy (("  eqNulls: " ^ (!CP.print_svl eqNulls) ))) no_pos in
   let root=
     match new_cand with
@@ -4292,6 +4299,9 @@ let closer_ranking prog unk_hps fs root_cand args0=
   in
   (root, List.filter (fun sv -> not (CP.eq_spec_var root sv)) args0)
 
+(*
+if applicable, fst of unk_hps is the pred we are finding the root
+*)
 let find_root_x prog unk_hps args fs=
   let rec examine_one_arg fs a=
     match fs with

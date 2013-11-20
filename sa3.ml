@@ -1297,7 +1297,8 @@ let def_subst_fix_x prog unk_hps hpdefs=
       (* let fs2 = SAU.remove_subset new_fs1 in *)
       (*may be wrong: should reevauate root*)
       if b then
-        (b , CF.mk_hp_rel_def1 hpdef.CF.def_cat(* (CP.HPRelDefn (hp, List.hd args, List.tl args )) *) hprel (* [(CF.disj_of_list fs1 no_pos, g)] *) fs1_wg)
+        let r, others = SAU.find_root prog (hp::unk_hps) args (List.map fst fs1_wg) in
+        (b , CF.mk_hp_rel_def1 (* hpdef.CF.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(CF.disj_of_list fs1 no_pos, g)] *) fs1_wg)
       else (false, hpdef)
     else
       (*return*)
@@ -1361,7 +1362,8 @@ let def_subst_fix_x prog unk_hps hpdefs=
       (*rearrange cur for terminating*)
       (* let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in *)
       helper_fix new_cur new_rec_indps new_nrec_indps
-    else (new_cur@new_rec_indps@new_nrec_indps)
+    else
+      (new_cur@new_rec_indps@new_nrec_indps)
   in
   if List.length hpdefs <=1 then hpdefs else
     helper_fix hpdefs [] []
@@ -2107,7 +2109,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
       r
     in
     let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-    DD.binfo_pprint ("rem_constr:\n" ^ (pr1 rem_constr)) no_pos;
+    DD.info_ihprint (add_str "rem_constr:\n" pr1) rem_constr no_pos;
     if rem_constr = [] then
       (*return*)
       n_is
@@ -2523,10 +2525,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   ) ([],[],[], []) ls_is
   in
   let cl_sel_hps1 = CP.remove_dups_svl cl_sel_hps in
-  let cmb_defs = match path_defs with
-    | [a] -> a
-    | _ -> SAU.combine_path_defs cl_sel_hps1 path_defs
-  in
+  let cmb_defs = SAU.combine_path_defs cl_sel_hps1 path_defs in
   let all_hpdefs, cmb_defs = SAU.filter_non_sel sel_hps all_hpdefs cmb_defs in
   let n_all_hpdefs0a, n_cmb_defs0 = if !Globals.sa_dnc then
     SAC.compute_lfp_def prog (CP.remove_dups_svl post_hps)
