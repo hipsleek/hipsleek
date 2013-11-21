@@ -2700,13 +2700,14 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           let _ = Infer.rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
+                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                           let pr_len x = string_of_int (List.length x) in
                           (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
                           (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
                           (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
-                          print_endline (pr (ras));
+                          print_endline (pr (ras1));
                           (* print_endline (pr (hp_lst_assume)); *)
                           (* print_endline (Infer.rel_ass_stk # string_of_reverse); *)
                           if !Globals.testing_flag then print_endline "<rstop>*************************************"

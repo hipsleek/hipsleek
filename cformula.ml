@@ -14264,10 +14264,10 @@ let rearrange_h_formula_x args0 hf0 =
     | Star hfs ->
           let fl = split_star_conjunctions hf0 in
           let re = List.hd args0 in
-          let r = (match re with
-            | CP.Var(sv, pos) -> sv
-            | _ -> raise Not_found) in
-          let rf = List.filter (fun hf -> contains_spec_var hf r) fl in
+          (* let r = (match re with *)
+          (*   | CP.Var(sv, pos) -> sv *)
+          (*   | _ -> raise Not_found) in *)
+          let rf = List.filter (fun hf -> contains_spec_var hf re) fl in
           let fv = h_fv (List.hd rf) in
           (* let _ = print_endline (pr_list !print_sv fv) in *)
           let fl1 = helper fv fl in
@@ -14277,7 +14277,7 @@ let rearrange_h_formula_x args0 hf0 =
 
 let rearrange_h_formula args0 hf0 =
   (* let pr1 = !CP.print_sv in *)
-  let pr2 = pr_list !CP.print_exp in
+  let pr2 = pr_list !CP.print_sv in
   let pr3 = !print_h_formula in
   Debug.no_2 "rearrange_h_formula" pr2 pr3 pr3
        (fun _ _ -> rearrange_h_formula_x args0 hf0)
@@ -14300,7 +14300,7 @@ let rearrange_formula_x args0 f0=
   helper f0
 
 let rearrange_formula args0 f0=
-  let pr1 = pr_list !CP.print_exp in
+  let pr1 = pr_list !CP.print_sv in
   let pr2 = !print_formula in
   Debug.no_2 "rearrange_formula" pr1 pr2 pr2
       (fun _ _ -> rearrange_formula_x args0 f0)
@@ -14313,7 +14313,10 @@ let rearrange_def def=
       | None -> begin
           try
             let args = match def.hprel_def_hrel with
-              | HRel (sv, exp_list, pos) -> exp_list
+              | HRel (sv, exp_list, pos) ->
+                    List.map (fun exp -> match exp with
+                      | CP.Var(sv, pos) -> sv
+                      | _ -> raise Not_found) exp_list
               | _ -> raise Not_found
             in
             List.map (fun ((p, f_opt) as o) ->
@@ -14383,3 +14386,37 @@ let rearrange_def def=
 
 (* let rearrange_def def= *)
 (*   let pr1 =  *)
+
+let rearrange_rel (rel: hprel) =
+  let lfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_lhs)) in
+  let gfv = (match rel.hprel_guard with
+    | None -> []
+    | Some f -> List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv f))) in
+  let rfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_rhs)) in
+  let fv = CP.remove_dups_svl (lfv@gfv@rfv) in
+  let n_tbl = Hashtbl.create 1 in
+  let reg = Str.regexp "_.*" in
+  let new_svl = List.map (fun sv ->
+      match sv with
+          CP.SpecVar(t,id,pr) ->
+              let cut_id = Str.global_replace reg "" id in
+              let new_id =
+                if Hashtbl.mem n_tbl cut_id
+                then
+                  begin
+                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
+                  end
+                else
+                  begin
+                    Hashtbl.add n_tbl cut_id 0;
+                    cut_id
+                  end
+              in
+              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
+  ) fv in
+  {rel with hprel_lhs = subst_avoid_capture fv new_svl (rearrange_formula lfv rel.hprel_lhs);
+      hprel_guard = (match rel.hprel_guard with
+         | None -> None
+         | Some f -> Some (subst_avoid_capture fv new_svl (rearrange_formula gfv f)));
+      hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;}
