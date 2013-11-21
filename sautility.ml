@@ -4788,10 +4788,10 @@ let extract_common prog hp r other_args args sh_ldns com_hprels=
   in
   let next_roots,new_sh_dns,ss,rem_dns = get_last_ptrs_new sh_ldns [r] [r] [] [] in
   let dnss = (new_sh_dns@rem_dns) in
-  (* let _ = DD.info_zprint (lazy (("   next_roots:" ^ (Cprinter.string_of_spec_var_list  next_roots)))) no_pos in *)
+  let _ = DD.info_zprint (lazy (("   next_roots:" ^ (Cprinter.string_of_spec_var_list  next_roots)))) no_pos in
   let comp_args = List.fold_left (fun ls (_, eargs, _) -> ls@(List.fold_left List.append [] (List.map CP.afv eargs))) [] com_hprels in
   let next_roots1 = CP.diff_svl next_roots comp_args in
-  (* let _ = DD.info_zprint (lazy (("   next_roots1:" ^ (Cprinter.string_of_spec_var_list  next_roots1)))) no_pos in *)
+  let _ = DD.info_zprint (lazy (("   next_roots1:" ^ (Cprinter.string_of_spec_var_list  next_roots1)))) no_pos in
   (next_roots1, dnss)
 
 (*new_h_preds: generated sub preds *)
@@ -4819,7 +4819,7 @@ let get_sharing_multiple new_h_preds dnss eqNulls eqPures hprels =
 let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl quans=
   let next_roots, dnss = extract_common prog hp r other_args args sh_ldns hprels in
   match next_roots with
-    | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong 2"
+    | [] -> report_error no_pos "sau.mk_orig_hprel_def: sth wrong 2"
     | _ ->  let _ = DD.ninfo_zprint (lazy (("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)))) no_pos in
       (*generate new hp*)
       let other_args_inst = (List.map (fun sv -> (sv,NI)) other_args) in
@@ -4876,8 +4876,8 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
   in
   let svl = List.fold_left helper [] fs_wg in
   let new_args = CP.intersect_svl args svl in
-  let n_orig_fs_wg,new_fs_wg ,ss, link_defs, n_hp=
-    if List.length args = List.length new_args then (orig_fs_wg,fs_wg,[],[],hp)
+  let elimed, n_orig_fs_wg,new_fs_wg ,ss, link_defs, n_hp=
+    if List.length args = List.length new_args then (false, orig_fs_wg,fs_wg,[],[],hp)
     else
       let old_hrel = mkHRel hp args no_pos in
       let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
@@ -4890,10 +4890,10 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       (*end linking*)
       let subst = [(old_hrel,new_hrel)] in
       let new_fs_wg = List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) fs_wg in
-      (List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) orig_fs_wg, new_fs_wg,subst,[link_def],n_hp)
+      (true, List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) orig_fs_wg, new_fs_wg,subst,[link_def],n_hp)
   in
   let n_paras = (List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args) in
-  n_orig_fs_wg,(new_args, r, n_paras),new_fs_wg,ss,link_defs, n_hp
+  elimed, n_orig_fs_wg,(new_args, r, n_paras),new_fs_wg,ss,link_defs, n_hp
 
 (*
   args = {r} \union paras
@@ -4902,17 +4902,17 @@ let elim_not_in_used_args prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr2a = pr_triple !CP.print_svl !CP.print_sv !CP.print_svl in
-  let pr3 (_,b,_,_,link_defs,_)=
+  let pr3 (elimed,_,b,_,_,link_defs,_)=
     let pra = pr_list_ln (pr_pair pr1 Cprinter.string_of_hp_rel_def) in
-    (pr2a b) ^ "\n" ^ (pra link_defs) in
+    (string_of_bool elimed) ^ ": " ^(pr2a b) ^ "\n" ^ (pra link_defs) in
   Debug.no_3 "elim_not_in_used_args" pr1 pr2 pr2 pr3
       (fun _ _ _ -> elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras))
       hp args unk_hps
 
-let check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl orig_fs fs_wg (*ogs*) hp (args, r, paras)=
+let check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl fs_wg (*ogs*) hp (args, r, paras)=
   let n_hp, (n_args, r, n_paras), n_fs_wg ,elim_ss, link_defs =
     if !Globals.pred_elim_useless then
-      let _,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog unk_hps
+      let _,_,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog unk_hps
         [((CF.mkHTrue_nf no_pos), None)] fs_wg hp (args, r, paras) in
       (n_hp, n_args,n_fs,ss, link_defs)
     else (hp, (args, r, paras), fs_wg, [],[])
@@ -5018,7 +5018,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
                       (* let (a,b,g,orig_fs) = orig_hpdef in *)
                       let fs, gs = List.split orig_hpdef.CF.def_rhs in
                       let orig_fs = CF.disj_of_list fs no_pos in
-                      let n_orig_fs_wg,(n_args,r,n_paras), n_fs_wg,ss, link_defs, n_hp1=
+                      let _,n_orig_fs_wg,(n_args,r,n_paras), n_fs_wg,ss, link_defs, n_hp1=
                         elim_not_in_used_args prog unk_hps orig_hpdef.CF.def_rhs n_fs2_wg new_hp (n_args, n_r,paras)  in
                       ( {orig_hpdef with CF.def_rhs = n_orig_fs_wg }, [(n_hp1, (n_args,r,n_paras))], n_fs_wg ,ss, link_defs)
                 | _ -> (orig_hpdef, ls_n_hpargs, n_fs2_wg, [],[])
@@ -5053,7 +5053,7 @@ let get_longest_common_hnodes_list_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
-     check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl (CF.mkHTrue_nf no_pos) fs_wg (*ogs*) hp (args, r, non_r_args)
+     check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl fs_wg (*ogs*) hp (args, r, non_r_args)
    else
      try
        if (is_base_cases_only fs0_wg  && (List.for_all (fun (ls,_,_,_) ->
@@ -5071,7 +5071,7 @@ let get_longest_common_hnodes_list_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_
            (* let disj_p = CF.get_pure disj in *)
            let nfs_wg = List.map (fun (f, og) -> (CF.mkAnd_pure common_f (MCP.mix_of_pure ( CF.get_pure f)) no_pos, og)) n_fs_wg in
            check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl
-               (CF.mkHTrue_nf no_pos) nfs_wg (*ogs*) hp (args, r, non_r_args)
+                nfs_wg (*ogs*) hp (args, r, non_r_args)
          else
            (*currently, HIP has not supported formual STAR (OR heap)  *)
            raise Not_found

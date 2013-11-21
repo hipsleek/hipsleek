@@ -2152,6 +2152,45 @@ let pred_unify_inter prog dang_hps hp_defs=
 (*=============**************************================*)
        (*=============INTER UNIFY PREDS================*)
 (*=============**************************================*)
+(*
+  todo: bottom-up
+*)
+let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
+  let unk_svl = [] in
+  let check_and_elim is_pre cdefs (hp, r, non_r_args, def)=
+    let new_defs, elim_ss = SAU.check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl
+                def.CF.def_rhs hp (r::non_r_args, r, non_r_args) in
+    let new_defs1 = List.map (fun (hp,def) ->
+        (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs})
+    ) new_defs
+    in
+    (snd (List.split new_defs1), elim_ss)
+  in
+  let sel_pre_defs, sel_post_defs, rem = List.fold_left ( fun (r1,r2,r3) def ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp, r, others) ->
+              if CP.mem_svl hp post_hps then
+                (r1,r2@[(hp, r, others, def)],r3)
+              else (r1@[(hp, r, others, def)],r2,r3)
+        | _ -> (r1,r2,r3@[def])
+  ) ([],[],[]) hp_defs in
+  let n_pre_defs, ss1 = List.fold_left (fun (r1,r2) ((hp, r, non_r_args, def) as tuple_def) ->
+      let ndefs, ss = check_and_elim true [] tuple_def in
+      (r1@ndefs, r2@ss)
+  ) ([],[]) sel_pre_defs in
+  let n_post_defs, ss2 = List.fold_left (fun (r1,r2) ((hp, r, non_r_args, def) as tuple_def) ->
+      let ndefs, ss = check_and_elim false [] tuple_def in
+      (r1@ndefs, r2@ss)
+  ) ([],[]) sel_post_defs in
+  (*may need subst ss1@ss2 into n defs if apcl.*)
+  (n_pre_defs@n_post_defs@rem)
+
+let norm_elim_useless_paras prog unk_hps sel_hps post_hps hp_defs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_4 "norm_elim_useless_paras" pr1 pr1 pr1 pr2 pr2
+      (fun _ _ _ _ ->  norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs)
+      unk_hps sel_hps post_hps hp_defs
 
 (*=============**************************================*)
        (*=============OBLIGATION================*)

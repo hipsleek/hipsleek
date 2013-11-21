@@ -11152,7 +11152,9 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
               if  TP.is_sat_raw (MCP.mix_of_pure p) then
                 let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
-                let _ = DD.ninfo_hprint (add_str "np" !CP.print_formula) np no_pos in
+                let _ = DD.info_hprint (add_str "np" !CP.print_formula) np no_pos in
+                let ps1= List.filter (fun p->not(CP.is_neq_null_exp p)) (CP.split_conjunctions np) in
+                let np = CP.join_conjunctions ps1 in
                 (* let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in *)
                 x@[(es,np)]
               else x

@@ -117,8 +117,8 @@ node set_right (node x, node t)
                             //requires x::tree<> ensures x::tll<res,t>;
 //requires x::H3<t> ensures x::G3<res,t>;
 //requires x::H4<> ensures x::G4<res,t>;
-requires x::H4a<> ensures x::G4a<res,t>;
-//requires x::H5<> ensures x::G5<res,t>;
+//requires x::H4a<> ensures x::G4a<res,t>;
+requires x::H5<> ensures x::G5<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;
@@ -131,8 +131,9 @@ requires x::H4a<> ensures x::G4a<res,t>;
   else 
   	{
 //		assert xr'!=null & xl'!=null;
-  		node l_most = set_right(x.right, t);
-  		return set_right(x.left, l_most);  		
+                node l_most = set_right(x.right, t);
+                dprint;
+  		return set_right(x.left, l_most);
   	}
 }
 

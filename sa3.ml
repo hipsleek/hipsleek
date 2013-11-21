@@ -953,8 +953,9 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (*find longest hnodes common for more than 2 formulas*)
             (*each hds of hdss is def of a next_root*)
             (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
+            (*to do: move elim useless + post-unify after the synthesis*)
             let old_disj = !Globals.pred_disj_unify in
-            let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
+            let disj_opt = (* !Globals.pred_elim_useless || *) !Globals.pred_disj_unify in
             let defs,elim_ss = if disj_opt then
               SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5_wg
             else
@@ -2399,7 +2400,14 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs0
       link_hpargs need_preprocess detect_dang in
     let is = if !Globals.sa_syn then
-      infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang
+      let is1 = infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
+      let is2 = if !Globals.pred_elim_useless then
+        (*detect and elim useless paramters*)
+        {is1 with CF.is_hp_defs = SAC.norm_elim_useless_paras prog
+                (List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs)) is1.CF.is_sel_hps
+                is1.CF.is_post_hps is1.CF.is_hp_defs}
+      else is1
+      in is2
     else
       (* let _ =  print_endline (CF.string_of_cond_path is0.CF.is_cond_path) in *)
       is0
