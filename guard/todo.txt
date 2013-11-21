@@ -707,7 +707,32 @@ Message: sau.generalize_one_hp: sth wrong 2
  Stop Omega... 87 invocations 
 0 false contexts at: ()
 ==========================================================
-==========================================================
+# ../hip tll.ss --pred-en-dangling --pred-en-useless-para
+
+why error below?
+
+Procedure set_right$node~node SUCCESS.
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.add_raw_hp_rel: args should be not empty
+ Stop Omega... 92 invocations 
+0 false contexts at: ()
+
+For dangling, can we below:
+  instead of g__DP_HP_XXX, please use DP_HP_XXX
+
+
+[ H(x_1025,t_1026) ::= 
+ H(left_31_997,l_39') * 
+ x_1025::node<left_31_997,right_31_998,g__DP_HP_954>@M * 
+ H(right_31_998,t_1026)&right_31_998!=null
+ or x_1025::node<g__DP_HP_984,right_31_998,g__DP_HP_954>@M&right_31_998=null
+ ,
+ 
+!==========================================================
 ==========================================================
 ==========================================================
 ==========================================================
