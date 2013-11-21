@@ -1148,6 +1148,8 @@ and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
 and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs with
   | d :: rest -> if d.enum_name = name then d else look_up_enum_def pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no enum declaration named " ^ name ^ " is found"}

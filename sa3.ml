@@ -1703,7 +1703,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
         match ohp with
           | Some hp -> if (CP.mem_svl hp pre_fix_hps) then pre_fix_hps else
               let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-              if CP.mem_svl hp lhps then
+              if CP.mem_svl hp lhps && (CF.extract_hrel_head cs.CF.hprel_lhs = None) then
                 (pre_fix_hps@[hp])
               else pre_fix_hps
           | None -> pre_fix_hps
@@ -1713,7 +1713,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> CP.mem_svl hp hps
+          | Some hp -> (CP.mem_svl hp hps) && (CF.extract_hrel_head cs.CF.hprel_lhs = None)
           | None -> false
       with _ -> false
     in
@@ -1730,8 +1730,9 @@ let partition_constrs_x constrs post_hps0 dang_hps=
             (*identify pre-oblg*)
             let l_hds, l_hvs,lhrels =CF.get_hp_rel_formula cs.CF.hprel_lhs in
             let r_hds, r_hvs,rhrels =CF.get_hp_rel_formula cs.CF.hprel_rhs in
-            if (List.length l_hds > 0 || List.length l_hvs > 0) && List.length lhrels > 0 &&
-              (* (List.length r_hds > 0 || List.length r_hvs > 0) && *) List.length rhrels > 0
+            if (List.length l_hds > 0 || List.length l_hvs > 0 ) && List.length lhrels > 0 &&
+              (* (List.length r_hds > 0 || List.length r_hvs > 0) && *)
+              List.length (List.filter (fun (hp,_,_) -> not(CP.mem_svl hp dang_hps)) rhrels) > 0
             then
               (pre_cs,post_cs,pre_fix_cs,pre_oblg@[cs],
               (* tupled_hps@(CP.diff_svl (List.map (fun (a,_,_) -> a) rhrels) lhs_hps) *)
@@ -2051,6 +2052,28 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
         | CP.HPRelLDefn hps -> ls@hps
         | _ -> ls
   ) [] is.CF.is_hp_defs in
+  let back_up_state ()=
+    (* let cur_ass = ass_stk# get_stk in *)
+    (* let _ = ass_stk # reset in *)
+    let cur_hpdefs =  rel_def_stk # get_stk in
+    let _ = rel_def_stk # reset in
+    let cur_ihpdcl = iprog.Iast.prog_hp_decls in
+    let cur_chpdcl = prog.Cast.prog_hp_decls in
+    let cviews =  prog.Cast.prog_view_decls in
+    (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)
+  in
+  let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)=
+    (* let _ = ass_stk # reset in *)
+    (* let _ = ass_stk # push_list cur_ass in *)
+    let _ = rel_def_stk # reset in
+    let _ = rel_def_stk # push_list cur_hpdefs in
+    let idiff = Gen.BList.difference_eq Iast.cmp_hp_def cur_ihpdcl iprog.Iast.prog_hp_decls in
+    let _ = iprog.Iast.prog_hp_decls <- (iprog.Iast.prog_hp_decls@idiff) in
+    let cdiff = Gen.BList.difference_eq Cast.cmp_hp_def cur_chpdcl prog.Cast.prog_hp_decls in
+    let _ = prog.Cast.prog_hp_decls <- (prog.Cast.prog_hp_decls@cdiff) in
+    let _ = prog.Cast.prog_view_decls <- cviews in
+    ()
+  in
   let classify_hps (r_lhs, r_rhs, dep_def_hps, r_oblg_constrs,r_rem_constrs) cs=
     let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
     let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
@@ -2065,6 +2088,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
   let constrs0 = is.CF.is_constrs in
   (* let _ = DD.info_hprint (add_str "  obligation is.CF.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in *)
   if constrs0 = [] then is else
+    let settings = back_up_state () in
     let constrs1 = SAU.remove_dups_constr constrs0 in
     (*the remain contraints will be treated as tupled ones.*)
     let sel_lhs_hps, sel_rhs_hps, dep_def_hps, oblg_constrs, rem_constr = List.fold_left classify_hps ([],[],[],[],[]) constrs1 in
@@ -2088,6 +2112,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
         let _ = List.fold_left (collect_ho_ass prog is_pre def_hps) ([],[]) rem_constr2 in
         ()
       in
+      let _  = restore_state settings in
       is
     else
       (* let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in *)
@@ -2112,6 +2137,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     in
     let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
     DD.info_ihprint (add_str "rem_constr:\n" pr1) rem_constr no_pos;
+    let _  = restore_state settings in
     if rem_constr = [] then
       (*return*)
       n_is

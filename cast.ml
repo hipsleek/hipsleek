@@ -930,6 +930,8 @@ let look_up_hp_def_raw defs name=
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
 
+let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
   let _ = hpdclr.hp_root_pos <- r_pos in
