@@ -14253,7 +14253,7 @@ let elim_e_var to_keep (f0 : formula) : formula =
 
 
 (*Long: todo here*)
-let rearrange_h_formula_x r args0 hf0 =
+let rearrange_h_formula_x args0 hf0 =
   let rec helper fv hfl =
     match fv with
       | [] -> hfl
@@ -14263,6 +14263,10 @@ let rearrange_h_formula_x r args0 hf0 =
   match hf0 with
     | Star hfs ->
           let fl = split_star_conjunctions hf0 in
+          let re = List.hd args0 in
+          let r = (match re with
+            | CP.Var(sv, pos) -> sv
+            | _ -> raise Not_found) in
           let rf = List.filter (fun hf -> contains_spec_var hf r) fl in
           let fv = h_fv (List.hd rf) in
           (* let _ = print_endline (pr_list !print_sv fv) in *)
@@ -14271,20 +14275,20 @@ let rearrange_h_formula_x r args0 hf0 =
           let hf1 = List.fold_left (fun f1 f2 -> mkStarH f1 f2 no_pos) (List.hd fl1) (List.tl fl1) in hf1
     | _ -> hf0
 
-let rearrange_h_formula r args0 hf0 =
-  let pr1 = !CP.print_sv in
-  let pr2 = !CP.print_svl in
+let rearrange_h_formula args0 hf0 =
+  (* let pr1 = !CP.print_sv in *)
+  let pr2 = pr_list !CP.print_exp in
   let pr3 = !print_h_formula in
-  Debug.no_3 "rearrange_h_formula" pr1 pr2 pr3 pr3
-       (fun _ _ _ -> rearrange_h_formula_x r args0 hf0)
-       r args0 hf0
+  Debug.no_2 "rearrange_h_formula" pr2 pr3 pr3
+       (fun _ _ -> rearrange_h_formula_x args0 hf0)
+       args0 hf0
 
 (*args0 is root + args of root*)
-let rearrange_formula_x r args0 f0=
+let rearrange_formula_x args0 f0=
   let rec helper f=
     match f with
       | Base fb ->
-            Base {fb with formula_base_heap = rearrange_h_formula r args0 fb.formula_base_heap; }
+            Base {fb with formula_base_heap = rearrange_h_formula args0 fb.formula_base_heap; }
       | Exists _ ->
             let qvars, base1 = split_quantifiers f in
             let nf = helper base1 in
@@ -14295,12 +14299,12 @@ let rearrange_formula_x r args0 f0=
   in
   helper f0
 
-let rearrange_formula r args0 f0=
-  let pr1 = !CP.print_svl in
+let rearrange_formula args0 f0=
+  let pr1 = pr_list !CP.print_exp in
   let pr2 = !print_formula in
-  Debug.no_3 "rearrange_formula" !CP.print_sv pr1 pr2 pr2
-      (fun _ _ _ -> rearrange_formula_x r args0 f0)
-      r args0 f0
+  Debug.no_2 "rearrange_formula" pr1 pr2 pr2
+      (fun _ _ -> rearrange_formula_x args0 f0)
+      args0 f0
 
 let rearrange_def def=
   let new_body1 =
@@ -14308,14 +14312,14 @@ let rearrange_def def=
       | Some _ -> def.hprel_def_body
       | None -> begin
           try
-            let r, args = match def.hprel_def_kind with
-              | CP.HPRelDefn (_,r,args) -> (r,args)
+            let args = match def.hprel_def_hrel with
+              | HRel (sv, exp_list, pos) -> exp_list
               | _ -> raise Not_found
             in
             List.map (fun ((p, f_opt) as o) ->
                 match f_opt with
                   | Some f ->
-                      (p, Some (rearrange_formula r args f))
+                      (p, Some (rearrange_formula args f))
                   | None -> o
           ) def.hprel_def_body
           with _ -> def.hprel_def_body
@@ -14335,7 +14339,7 @@ let rearrange_def def=
   let svl = List.flatten svll in
   let svl_rd = CP.remove_dups_svl svl in
   (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
-  (* let svl_ra = svl_rd in CP.diff_svl svl_rd args in *)
+  (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
   let reg = Str.regexp "_.*" in
   let new_svl = List.map (fun sv ->
