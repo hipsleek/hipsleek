@@ -28,9 +28,9 @@ reverify:
  - rose-tree
  - check-mcf: OK
  - swl
- - tll
+ - tll: --pred-en-dangling --pred-en-useless-para
  - check-tll
- - tll-par
+ - tll-par: --pred-en-dangling --pred-en-useless-para
 
 =====================================================================
 reverify with reuse:

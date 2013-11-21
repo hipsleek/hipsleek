@@ -1299,6 +1299,7 @@ let def_subst_fix_x prog unk_hps hpdefs=
       (*may be wrong: should reevauate root*)
       if b then
         let r, others = SAU.find_root prog (hp::unk_hps) args (List.map fst fs1_wg) in
+        let _ = CA.set_proot_hp_def_raw (SAU.get_pos args 0 r) prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
         (b , CF.mk_hp_rel_def1 (* hpdef.CF.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(CF.disj_of_list fs1 no_pos, g)] *) fs1_wg)
       else (false, hpdef)
     else
