@@ -59,6 +59,9 @@ H4<> == self::node<left,right,next>@M * left::H4<>
   or self::node<left,right,next>@M & right=null
    inv self!=null;
 
+H3a<t:node> == self::H4<> 
+  inv self!=null;
+
 G4<res_1031,t_1032> == 
  self::node<left,right,t_1032> & right=null & res_1031=self
  or self::node<left,right,next>@M * right::G4<l,t_1032> 
@@ -115,10 +118,11 @@ HeapPred G(node a, node@NI b, node c).
 node set_right (node x, node t)
 //infer [H,G] requires H(x,t) ensures G(x,res,t);
                             //requires x::tree<> ensures x::tll<res,t>;
+requires x::H3a<t> ensures x::G3<res,t>;
 //requires x::H3<t> ensures x::G3<res,t>;
 //requires x::H4<> ensures x::G4<res,t>;
 //requires x::H4a<> ensures x::G4a<res,t>;
-requires x::H5<> ensures x::G5<res,t>;
+//requires x::H5<> ensures x::G5<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;
