@@ -14335,7 +14335,7 @@ let rearrange_def def=
   let svl = List.flatten svll in
   let svl_rd = CP.remove_dups_svl svl in
   (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
-  let svl_ra = CP.diff_svl svl_rd args in
+  let svl_ra = svl_rd in (* CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_ra in
   let reg = Str.regexp "_.*" in
   let new_svl = List.map (fun sv ->
@@ -14364,7 +14364,17 @@ let rearrange_def def=
           | None -> o
   ) new_body1
   in
-  {def with hprel_def_body = new_body2}
+  let new_hrel =
+    match def.hprel_def_hrel with
+      | HRel (CP.SpecVar(t, id, pr), exp_list, pos) ->
+            let new_exp_list = List.map (fun e -> match e with
+              | CP.Var (CP.SpecVar(t, id, pr), pos) -> CP.Var (CP.SpecVar (t, Str.global_replace reg "" id, pr), pos)
+              | _ -> e) exp_list
+            in HRel (CP.SpecVar(t, id, pr), new_exp_list, pos)
+      | _ -> def.hprel_def_hrel
+  in
+  {def with hprel_def_body = new_body2;
+      hprel_def_hrel = new_hrel;}
 
 (* let rearrange_def def= *)
 (*   let pr1 =  *)

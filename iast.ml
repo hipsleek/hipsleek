@@ -621,7 +621,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | IntLit e -> e.exp_int_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
-	| ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
+  | ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
   | New e -> e.exp_new_pos
   | Null p -> p
   | Return e -> e.exp_return_pos
@@ -635,8 +635,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
-	  
-	  
+
 let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting catch clause"}

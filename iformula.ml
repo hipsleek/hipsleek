@@ -92,8 +92,8 @@ and one_formula = {
     formula_pos : loc
 }
 
-and flow_formula = constant_flow				   
-    
+and flow_formula = constant_flow
+
 and formula_or = { formula_or_f1 : formula;
 		   formula_or_f2 : formula;
 		   formula_or_pos : loc }
@@ -120,7 +120,7 @@ and h_formula = (* heap formula *)
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }
-		       
+
 and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
 		       h_formula_starminus_h2 : h_formula;
 		       h_formula_starminus_pos : loc }
