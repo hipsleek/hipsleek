@@ -5,7 +5,7 @@ reverify:
  - sll-setTail
  - sll-last-2: OK
  - sll-check-sorted: OK
- - sll-bub
+ - sll-bub ( --pred-en-dangling) OK
  - sll-inssort: OK
  - zip-eq : OK
  - zip-leq: OK
@@ -19,18 +19,18 @@ reverify:
  - check-csllcslls: OK
  - slldll: OK
  - check-dll: OK
- - dll-app
+ - dll-app ( --pred-en-dangling) OK
  - check-cdll: OK
  - check-cdll5cslls
  - check-cdllcsllsx2: OK
  - bt-search (OK with pred-unify-post) verification fails
  - tree-par: OK
- - rose-tree
+ - rose-tree ( --pred-en-dangling) OK
  - check-mcf: OK
  - swl
- - tll: --pred-en-dangling --pred-en-useless-para
- - check-tll
- - tll-par: --pred-en-dangling --pred-en-useless-para
+ - tll: --pred-en-dangling (--pred-en-useless-para): OK
+ - check-tll:
+ - tll-par: --pred-en-dangling (--pred-en-useless-para) OK
 
 =====================================================================
 reverify with reuse:
