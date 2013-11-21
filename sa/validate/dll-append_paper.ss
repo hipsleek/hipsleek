@@ -11,8 +11,8 @@ HeapPred H1(node a).
 HeapPred H2(node a).
 
 void dll_append(node x, node y)
-//infer [H,G] requires H(x,y) ensures G(x,y);
-  infer [H1,H2,G] requires H1(x) * H2(y) ensures G(x,y);
+infer [H,G] requires H(x,y) ensures G(x,y);
+//   infer [H1,H2,G] requires H1(x) * H2(y) ensures G(x,y);
 //requires x::dll<p> * y::dll<_> & x!=null &y!=null ensures x::dll<p>;
 {
 	if (x.next!=null) {

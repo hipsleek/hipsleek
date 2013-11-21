@@ -14288,7 +14288,11 @@ let rearrange_formula_x args0 f0=
   let rec helper f=
     match f with
       | Base fb ->
-            Base {fb with formula_base_heap = rearrange_h_formula args0 fb.formula_base_heap; }
+            let nh =
+              try rearrange_h_formula args0 fb.formula_base_heap
+              with _ -> fb.formula_base_heap
+            in
+            Base {fb with formula_base_heap = nh; }
       | Exists _ ->
             let qvars, base1 = split_quantifiers f in
             let nf = helper base1 in

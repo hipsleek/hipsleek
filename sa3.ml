@@ -133,15 +133,26 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
      | [] -> is_changed,don,unfrozen_hps
      | cs1::rest ->
            let _ = Debug.ninfo_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-           let b2 = let hp_opt = CF.extract_hrel_head cs1.CF.hprel_lhs in
-             match hp_opt with
-               | None -> false
-               | Some hp -> CP.mem_svl hp sel_hps
-           in
-           if SAC.cs_rhs_is_only_neqNull cs1 || b2 then
+           (* let b2 = let hp_opt = CF.extract_hrel_head cs1.CF.hprel_lhs in *)
+           (*   match hp_opt with *)
+           (*     | None -> false *)
+           (*     | Some hp -> CP.mem_svl hp sel_hps *)
+           (* in *)
+           if SAC.cs_rhs_is_only_neqNull cs1 (* || b2 *) then
              (helper_new_only (don@[cs1]) rest is_changed unfrozen_hps)
            else
              let is_changed1, new_rest, n_unfrozen_hps1 = List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
+                 let is_sel_tupled =
+                   let hp_opt = CF.extract_hrel_head cs2.CF.hprel_rhs in
+                   match hp_opt with
+                     | None -> false
+                     | Some hp -> if (CP.mem_svl hp sel_hps) then
+                         let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
+                         List.length lhps > 1
+                       else false
+                 in
+                 if not is_sel_tupled then (b,res@[cs2], r_unfroz_hps)
+                 else
                  let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
                  if List.length new_constrs > 0 then
                    (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
@@ -213,20 +224,20 @@ and find_imply_subst prog sel_hps unk_hps link_hps frozen_hps frozen_constrs com
 and is_trivial cs= (SAU.is_empty_f cs.CF.hprel_rhs) ||
   (SAU.is_empty_f cs.CF.hprel_lhs || SAU.is_empty_f cs.CF.hprel_rhs)
 
-and get_top_guard link_hps cs =
-  if
-    CF.is_top_guard cs.CF.hprel_rhs link_hps cs.CF.hprel_guard
-    (* CF.isStrictConstHTrue cs.CF.hprel_rhs && (match cs.CF.hprel_guard with | None -> false | Some _ -> true) *)
-  then
-    match CF.extract_hrel_head cs.CF.hprel_lhs with
-      | Some hp -> [hp]
-      | None -> report_error no_pos "SA3.get_top_guard"
-  else []
+(* and get_top_guard link_hps cs = *)
+(*   if *)
+(*     CF.is_top_guard cs.CF.hprel_rhs link_hps cs.CF.hprel_guard *)
+(*     (\* CF.isStrictConstHTrue cs.CF.hprel_rhs && (match cs.CF.hprel_guard with | None -> false | Some _ -> true) *\) *)
+(*   then *)
+(*     match CF.extract_hrel_head cs.CF.hprel_lhs with *)
+(*       | Some hp -> [hp] *)
+(*       | None -> report_error no_pos "SA3.get_top_guard" *)
+(*   else [] *)
 
-and is_top_guard top_guard_hps cs=
-  match CF.extract_hrel_head cs.CF.hprel_lhs with
-      | Some hp -> CP.mem_svl hp top_guard_hps
-      | None -> false
+(* and is_top_guard top_guard_hps cs= *)
+(*   match CF.extract_hrel_head cs.CF.hprel_lhs with *)
+(*       | Some hp -> CP.mem_svl hp top_guard_hps *)
+(*       | None -> false *)
 
 and is_non_recursive_non_post_cs post_hps dang_hps constr=
   let lhrel_svl = CF.get_hp_rel_name_formula constr.CF.hprel_lhs in
@@ -239,10 +250,10 @@ and subst_cs_w_other_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps fro
   let ignore_hps = dang_hps@link_hps in
   let constrs1,rem = List.partition (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)
   ) constrs in
-  let top_guard_hps = List.fold_left (fun r cs -> r@(get_top_guard ignore_hps cs)) [] frozen_constrs0 in
+  (* let top_guard_hps = List.fold_left (fun r cs -> r@(get_top_guard ignore_hps cs)) [] frozen_constrs0 in *)
   let frozen_constrs1 = (* List.filter (fun cs -> not (is_top_guard top_guard_hps cs) ) *) frozen_constrs0 in
   let b,new_cs2, unfrozen_hps=
-    find_imply_subst prog sel_hps dang_hps link_hps (CP.diff_svl frozen_hps top_guard_hps) frozen_constrs1 complex_hps constrs1 in
+    find_imply_subst prog sel_hps dang_hps link_hps frozen_hps (* (CP.diff_svl frozen_hps top_guard_hps) *) frozen_constrs1 complex_hps constrs1 in
   (b, new_cs2@rem,unfrozen_hps)
 (*=========END============*)
 
