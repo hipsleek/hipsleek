@@ -60,7 +60,7 @@ H4<> == self::node<left,right,next>@M * left::H4<>
    inv self!=null;
 
 H3a<t:node> == self::H4<> 
-  inv self!=null;
+  inv true;//self!=null;
 
 G4<res_1031,t_1032> == 
  self::node<left,right,t_1032> & right=null & res_1031=self

@@ -1040,6 +1040,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     in
     helper f0
   in
+  (*not in used*)
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
     try
         let _,fr_args = List.find (fun (hp,_) -> CP.eq_spec_var hp used_hp) ls_unk_hpargs_fr in
@@ -1054,7 +1055,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     with
       | Not_found -> ([],[],[])
   in
-  let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
+  (*not in used*)
+  let subst_pure_hp_unk args0 ls_unk_hpargs_fr (f,g)=
     (* let _ = DD.info_zprint (lazy (("       f: " ^ (!CF.print_formula f)))) no_pos in *)
     let ls_used_hp_args = CF.get_HRels_f f in
     let ls_xpures =  CF.get_xpure_view f in
@@ -1082,33 +1084,35 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list (CP.remove_redundant_helper p_eqs []) pos in
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
-    (f3, unk_need_subst)
+    ((f3,g), unk_need_subst)
   in
   let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr def=
     let hp,args0 = CF.extract_HRel def.CF.def_lhs in
-    let fs,ogs = List.split def.CF.def_rhs in
-    let fs1 = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) fs in
-    let def1 = CF.disj_of_list (fst (List.split fs1)) no_pos in
-    (def.CF.def_cat, def.CF.def_lhs,CF.combine_guard ogs , def1, fs1)
+    (* let fs,ogs = List.split def.CF.def_rhs in *)
+    let fs1_wg_ss = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) def.CF.def_rhs in
+    let fs1_wg = (* CF.disj_of_list *) (fst (List.split fs1_wg_ss)) (* no_pos *) in
+    (def.CF.def_cat, def.CF.def_lhs, fs1_wg, fs1_wg_ss)
   in
-  let subst_and_combine new_hpdefs pr_fs=
-    let fs = List.map (fun (f, xp_args) ->
-        if xp_args = [] then f else
+  let subst_and_combine new_hpdefs fs_wg_ss=
+    let n_fs_wg = List.map (fun ((f,g), xp_args) ->
+        let nf = if xp_args = [] then f else
         subst_xpure new_hpdefs xp_args f
-    ) pr_fs
+        in
+        (nf, g)
+    ) fs_wg_ss
     in
-    CF.disj_of_list fs no_pos
+    n_fs_wg
+    (* CF.disj_of_list fs no_pos *)
   in
   let ls_unk_hpargs_fr = unk_hp_frargs in
   (* let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in *)
   let new_hpdefs = List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs in
-  let new_hpdefs1 = List.map (fun (a,b,g,f,_) -> (a,b,g, f)) new_hpdefs in
-  let new_hpdefs2 = List.map (fun (a,b,g,_,pr_f) -> (a,b,g, pr_f)) new_hpdefs in
+  let new_hpdefs1 = List.map (fun (a,b,fs_wg,_) -> (a,b, fs_wg)) new_hpdefs in
+  let new_hpdefs2 = List.map (fun (a,b,_, fs_wg_ss) -> (a,b, fs_wg_ss)) new_hpdefs in
   (*subst XPURE*)
-  List.map (fun (a,b,g,pr_f) ->
-      let new_rhs = subst_and_combine (*subst_xpure*) new_hpdefs1 pr_f in
-      { CF.def_cat = a; CF.def_lhs = b; CF.def_rhs = [(new_rhs, g)]
-      }
+  List.map (fun (a,b,fs_wg_ss) ->
+      let new_rhs = subst_and_combine (*subst_xpure*) new_hpdefs1 fs_wg_ss in
+      { CF.def_cat = a; CF.def_lhs = b; CF.def_rhs = new_rhs; }
   ) new_hpdefs2
 
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
@@ -2158,13 +2162,25 @@ let pred_unify_inter prog dang_hps hp_defs=
 let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
   let unk_svl = [] in
   let check_and_elim is_pre cdefs (hp, r, non_r_args, def)=
-    let new_defs, elim_ss = SAU.check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl
-                def.CF.def_rhs hp (r::non_r_args, r, non_r_args) in
-    let new_defs1 = List.map (fun (hp,def) ->
-        (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs})
-    ) new_defs
-    in
-    (snd (List.split new_defs1), elim_ss)
+    let _,args = CF.extract_HRel def.CF.def_lhs in
+    let elimed,_, (n_args, r, n_paras), n_fs_wg,elim_ss,link_defs,n_hp = SAU.elim_not_in_used_args prog unk_hps
+        [((CF.mkHTrue_nf no_pos), None)] def.CF.def_rhs hp (args, r, non_r_args) in
+    if elimed then
+      let hpdef = SAU.mk_hprel_def_wprocess prog is_pre cdefs unk_hps unk_svl n_hp (n_args, r, n_paras) n_fs_wg no_pos in
+      let new_defs1 = List.map (fun (hp,def) ->
+          (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs})
+      ) (link_defs@hpdef)
+      in
+      (snd (List.split new_defs1), elim_ss)
+    else ([def],[])
+    (*second way*)
+    (* let new_defs, elim_ss = SAU.check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl *)
+    (*             def.CF.def_rhs hp (args, r, non_r_args) in *)
+    (* let new_defs1 = List.map (fun (hp,def) -> *)
+    (*     (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs}) *)
+    (* ) new_defs *)
+    (* in *)
+    (* (snd (List.split new_defs1), elim_ss) *)
   in
   let sel_pre_defs, sel_post_defs, rem = List.fold_left ( fun (r1,r2,r3) def ->
       match def.CF.def_cat with

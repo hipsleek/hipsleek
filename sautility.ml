@@ -4877,7 +4877,7 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
   let svl = List.fold_left helper [] fs_wg in
   let new_args = CP.intersect_svl args svl in
   let elimed, n_orig_fs_wg,new_fs_wg ,ss, link_defs, n_hp=
-    if List.length args = List.length new_args then (false, orig_fs_wg,fs_wg,[],[],hp)
+    if List.length args = List.length new_args || new_args = [] then (false, orig_fs_wg,fs_wg,[],[],hp)
     else
       let old_hrel = mkHRel hp args no_pos in
       let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
@@ -4912,9 +4912,11 @@ let elim_not_in_used_args prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
 let check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl fs_wg (*ogs*) hp (args, r, paras)=
   let n_hp, (n_args, r, n_paras), n_fs_wg ,elim_ss, link_defs =
     if !Globals.pred_elim_useless then
-      let _,_,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog unk_hps
+      let elimed,_,n_args,n_fs,ss,link_defs,n_hp = elim_not_in_used_args prog unk_hps
         [((CF.mkHTrue_nf no_pos), None)] fs_wg hp (args, r, paras) in
-      (n_hp, n_args,n_fs,ss, link_defs)
+      if elimed then
+        (n_hp, n_args,n_fs,ss, link_defs)
+      else (hp, (args, r, paras), fs_wg, [],[])
     else (hp, (args, r, paras), fs_wg, [],[])
   in
   let hpdef = mk_hprel_def_wprocess prog is_pre cdefs unk_hps unk_svl n_hp (n_args, r, n_paras) n_fs_wg (*ogs*) no_pos in

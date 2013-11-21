@@ -2632,7 +2632,9 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   else ([],[])
   in
   r
-  with _ -> ([],[])
+  with _ ->
+      let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
+      ([],[])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
       (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
