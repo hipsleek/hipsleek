@@ -16,7 +16,7 @@ node malloc(int s)
   requires true
   ensures res::node<_> or res=null;
 
-int for_aux(ref node ptr)
+int for_aux( node@R ptr)
 
 // requires ptr::ll<>
 //  ensures ptr'::ll<>;//'
@@ -45,7 +45,7 @@ int for_aux(ref node ptr)
 HeapPred H2(node a).
 HeapPred G2(node b).
 
-int main(ref node ptr)
+int main(node@R ptr)
 
               /* requires true */
               /* ensures ptr'::ll<>;//' */

@@ -1761,6 +1761,14 @@ let partition_constrs_x constrs post_hps0 dang_hps=
           | None -> pre_fix_hps
   in
   let classify new_post_hps pre_fix_hps (pre_cs,post_cs, pre_fix_cs, pre_oblg,tupled_hps, post_oblg) cs =
+    let is_post_constr hps=
+      try
+        let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
+        match ohp with
+          | Some hp -> (CP.mem_svl hp hps)
+          | None -> false
+      with _ -> false
+    in
     let is_fold_form hps=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
@@ -1769,7 +1777,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
           | None -> false
       with _ -> false
     in
-    if is_fold_form new_post_hps then (pre_cs,post_cs@[cs],pre_fix_cs, pre_oblg,tupled_hps,post_oblg) else
+    if is_post_constr new_post_hps then (pre_cs,post_cs@[cs],pre_fix_cs, pre_oblg,tupled_hps,post_oblg) else
 
       if is_fold_form pre_fix_hps then
         (pre_cs,post_cs,pre_fix_cs@[cs], pre_oblg,tupled_hps,post_oblg)
@@ -1943,14 +1951,16 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
       let def, n_unk_hpargs = SAC.compute_gfp prog true is pdefs in
       (r_defs@[def], r_unk_hpargs@n_unk_hpargs)
   ) ([],[]) pdefs_grps0 in
+  let _, _, new_map = SAC.generate_xpure_view_hp (List.map SAC.build_args_locs n_unk_hpargs) is.CF.is_unk_map in
   let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
     (is.CF.is_dang_hpargs@n_unk_hpargs, is.CF.is_link_hpargs)
   else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@n_unk_hpargs)
   in
-  let _ = DD.info_hprint (add_str "  n_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in
+  let _ = DD.ninfo_hprint (add_str "  n_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in
   {is with CF.is_constrs = [];
       CF.is_dang_hpargs = n_dang_hpargs;
       CF.is_link_hpargs = n_link_hpargs;
+      CF.is_unk_map = new_map;
       CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
   }
 

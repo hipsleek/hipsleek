@@ -56,13 +56,13 @@ ensures prev'::ll<sent>  & cur'=sent ;
       //assume false;
       return;
   }
-  dprint;
+  // dprint;
   if (cur == null) {
       // change direction;
       cur = prev;
       prev = null;
   }
-  dprint;
+  // dprint;
   lscan(cur,prev,sent);
 
 }

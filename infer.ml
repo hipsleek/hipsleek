@@ -2415,7 +2415,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let partition_i_ni_svl (hp,args)=
     (* let _ = Debug.info_zprint (lazy  ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args))) no_pos in *)
     let i_args_w_inst, i_args_w_ni = SAU.partition_hp_args prog hp args in
-    (List.map fst i_args_w_inst,List.map fst i_args_w_ni)
+    (List.map fst i_args_w_inst, List.map fst i_args_w_ni)
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq SAU.check_hp_arg_eq (hp,args) selected_hpargs in
   let filter_non_selected_hp_rhs selected_hps (hp,_)= CP.mem_svl hp selected_hps in
@@ -2440,13 +2440,14 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
       (hps@[hp], r_args@(args_i), r_ni_svl@args_ni)
   ) ([],[], []) rhp_args in
   (*elim ptrs that violate NI rule in lhs*)
-  let rhs_keep_rootvars = CP.diff_svl rhs_keep_rootvars0 lvi_ni_svl in
+  let rhs_keep_rootvars = CP.diff_svl rhs_keep_rootvars0 (lvi_ni_svl) in
+  let _ = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
   (***************************)
   (*w history*)
   let svl0a = (CP.remove_dups_svl (lhs_keep_i_rootvars@rhs_keep_rootvars)) in
   let svl0 = (List.fold_left SAU.close_def svl0a (leqs@reqs)) in
   (*elim ptrs that violate NI rule in lhs*)
-  let svl = CP.diff_svl svl0 lvi_ni_svl in
+  let svl = CP.diff_svl svl0 (lvi_ni_svl) in
   (*get args which already captures by other hprel*)
   let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
   let lhs_b,history_hrel,keep_root_hrels,his_ss = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) lhp_args in
@@ -2464,7 +2465,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   let filter_his = elim_redun_his (List.concat (List.map get_h_formula_data_fr_hnode history)) [] in
   let _ = Debug.ninfo_hprint (add_str "    lhs_args_ni" !CP.print_svl) lhs_args_ni no_pos in
   let _ = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
-  let _ = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl svl) no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl) svl no_pos in
   let _ = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in
   let _ = Debug.ninfo_hprint (add_str  "    classic_nodes" !CP.print_svl) classic_nodes no_pos in
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
@@ -2701,6 +2702,8 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
         (CF.Base new_lhs_b, CF.Base new_rhs_b)
       in
       let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
+      let _ = DD.ninfo_hprint (add_str  "   lhs_b" Cprinter.prtt_string_of_formula) (CF.Base lhs_b) pos in
+      let _ = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in
       let grd = check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
