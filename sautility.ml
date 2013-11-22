@@ -644,7 +644,7 @@ let partition_hp_args_x prog hp args=
   let hprel = Cast.look_up_hp_def_raw prog.C.prog_hp_decls hp_name in
   let ss = List.combine args hprel.C.hp_vars_inst in
   let i_args, ni_args = List.fold_left (fun (ls1,ls2) (sv,(_,i)) ->
-      if i == I then (ls1@[(sv,I)],ls2) else (ls1,ls2@[(sv,NI)])
+      if i = I then (ls1@[(sv,I)],ls2) else (ls1,ls2@[(sv,NI)])
   ) ([],[]) ss
   in
   (i_args, ni_args)
