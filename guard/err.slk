@@ -1,0 +1,13 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a).
+HeapPred G(cell a).
+
+infer [H]  H(p) |- p::cell<_>.
+print residue.
+
+infer [H]  H(p) & p=null |- p::cell<_>.
+print residue.
+

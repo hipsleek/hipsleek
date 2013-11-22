@@ -733,7 +733,31 @@ For dangling, can we below:
  ,
  
 !==========================================================
+# err.ss
+
+Why is there an UNKNOWN?
+
+id: 4 src:2; caller: []; line: 14; classic: false; kind: UNKNOWN; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail H(p)&p=p' & p'=null & v_bool_13_876' & p'=null & v_bool_13_876'&
+{FLOW,(24,25)=__norm}[]
+ |-  p'::cell<val_14_872'>@L&{FLOW,(1,27)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(24,25)=__norm}[]
+  es_infer_pure: [true]
+  ]
+
 ==========================================================
+# err.slk
+
+infer [H]  H(p) & p=null |- p::cell<_>.
+print residue.
+
+ Why did we not have an infer false?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+
 ==========================================================
 ==========================================================
 ==========================================================
