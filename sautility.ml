@@ -2009,6 +2009,7 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
 
+
 let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
   let keep_hds = List.filter (fun hd ->
       let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
@@ -2025,8 +2026,9 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
     let all_svl = (List.fold_left (fun r hd -> r@hd.CF.h_formula_data_arguments) [] keep_hds)@
       (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs)@args in
     let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
+    let p1 = CP.prune_irr_eq p all_svl in
     let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
-        CF.formula_base_pure = (MCP.mix_of_pure p)} in
+        CF.formula_base_pure = (MCP.mix_of_pure p1)} in
     let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
     (*generate new hp decl for top guard of pre-preds*)
     let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
@@ -3172,12 +3174,6 @@ let mk_expl_root r f0=
   in
   helper f0
 
-let filter_fn h_svl p=
-  if CP.is_eq_exp p then
-    let p_svl = CP.fv p in
-    (CP.diff_svl p_svl h_svl) = []
-  else true
-
 (*fix subst*)
 let filter_unconnected_hf args hf=
   let hds =  get_hdnodes_hf hf in
@@ -3186,6 +3182,12 @@ let filter_unconnected_hf args hf=
       List.filter CP.is_node_typ hd.CF.h_formula_data_arguments) hds) in
   let unconnected_ptr = CP.diff_svl ptrs (tail_ptrs@args) in
   CF.drop_hnodes_hf hf unconnected_ptr
+
+let filter_fn h_svl p=
+  if CP.is_eq_exp p then
+    let p_svl = CP.fv p in
+    (CP.diff_svl p_svl h_svl) = []
+  else true
 
 let remove_irr_eqs_x keep_svl p=
   let rec rearrang_eq ls res=

@@ -187,6 +187,39 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
               in
               subst_w_frozen_old rest n_non_frozen is_changed1 n_unfrozen_hps1
   in
+  let neg_pure f0=
+    let rec helper f=
+      match f with
+        | CF.Base fb ->
+              let np = MCP.mix_of_pure (CP.neg_eq_neq (MCP.pure_of_mix fb.CF.formula_base_pure)) in
+              CF.Base {fb with CF.formula_base_pure = np}
+        | CF.Exists _ -> let qvars, base_f = CF.split_quantifiers f in
+          let n_base_f = helper base_f in
+          CF.add_quantifiers qvars n_base_f
+        | _ -> report_error no_pos "SA3.neg_pure"
+    in
+    helper f0
+  in
+  (*if cs is full paths and new_constrs is not, generate the missing*)
+  let check_full_path_sensitive cs new_constrs=
+    match new_constrs with
+      | [] -> (false,[])
+      | [n_cs] -> begin
+          match n_cs.CF.hprel_guard with
+            | None -> false,[]
+            | Some n_gf -> begin
+                match cs.CF.hprel_guard with
+                  | None ->
+                        (*generate the remain: the simplest scenario*)
+                        let p = CF.get_pure n_gf in
+                        if CP.isConstTrue p then (false, []) else
+                          let neg_g = neg_pure n_gf in
+                          (true, [{cs with CF.hprel_guard = Some neg_g;}])
+                  | Some _ -> (*to find the remain*) (false, [])
+              end
+          end
+      | _ -> (*to implement*) (false,[])
+  in
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     let frozen_constrs0 = List.filter (fun cs -> not (SAC.cs_rhs_is_only_neqNull cs)) frozen_constrs in
     if frozen_constrs = [] then is_changed,non_frozen,unfrozen_hps else
@@ -201,7 +234,11 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
             ) (false,[],[]) frozen_constrs0
             in
             if b then
-              (true,res2@res_constrs, r_unfroz_hps2@unfroz_hps)
+              let rem_path_constrs=
+                let b1, rem_path_constrs = check_full_path_sensitive cs2 res_constrs in
+                if b1 then rem_path_constrs else []
+              in
+              (true,res2@res_constrs@rem_path_constrs, r_unfroz_hps2@unfroz_hps)
             else (b2,res2@[cs2], r_unfroz_hps2)
         ) (is_changed, [], []) non_frozen
       in
@@ -759,6 +796,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       | _ -> begin
           (*each group, filter depended constraints*)
           let rem_pr_defs, depend_cs = List.fold_left filter_trivial_pardef ([],[]) pr_pdefs in
+          let _ = DD.ninfo_hprint (add_str "   depend_cs:" (pr_list_ln (Cprinter.string_of_hprel_short))) depend_cs no_pos in
           (* let rem_pr_defs = pr_pdefs in *)
           (* let depend_cs = [] in *)
           (*do norm args first, apply for cond only, other parts will be done later*)
@@ -771,7 +809,9 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
                     let pdefs0 = List.map (obtain_and_norm_def args0) rem_pr_defs in
                     (* let pdefs = pr_pdef0::new_rest in *)
                     let pdefs1 = Gen.BList.remove_dups_eq (fun (pdef1,_) (pdef2,_) -> cmp_pdef_grp pdef1 pdef2) pdefs0 in
+                    let _ = DD.ninfo_hprint (add_str "   pdefs1:" (pr_list_ln (pr_pair pr_none Cprinter.string_of_hprel_short))) pdefs1 no_pos in
                     let pdefs2,n_equivs = SAC.unify_consj_pre prog unk_hps link_hps equivs pdefs1 in
+                     let _ = DD.ninfo_hprint (add_str "   pdefs2:" (pr_list_ln (pr_pair pr_none Cprinter.string_of_hprel_short))) pdefs2 no_pos in
                     ([], pdefs2,n_equivs)
           in
           let pdefs,rem_constrs0 = begin
@@ -822,6 +862,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               && (cs.CF.hprel_guard != None)
   ) pr_pdefs in
   (*group*)
+  let _ = DD.ninfo_hprint (add_str "  guarded_top_pdefs:" (pr_list_ln (pr_pair pr_none Cprinter.string_of_hprel_short))) guarded_top_pdefs no_pos in
   let ls_pr_pdefs = partition_pdefs_by_hp_name pr_pdefs0 [] in
   (*combine rhs with condition for each group*)
   let pdefs, rem_constr,equivs = List.fold_left (fun (r_pdefs, r_constrs, equivs) grp ->
@@ -2230,7 +2271,7 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
         (* (constrs,[]) *)
         (n_is2,[],pre_oblg_constrs2)
       else
-        let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Conseq (UNFOLD IN RHS) <<<<<<" pr_id) "" no_pos else () in
+        let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Conseq (UNFOLD IN RHS- FROZEND) <<<<<<" pr_id) "" no_pos else () in
         (*pred-constrs*)
         let is_changed, constrs2,unfrozen_hps  = subst_cs prog sel_hps post_hps dang_hps link_hps (frozen_hps@equal_hps)
           (frozen_constrs1)

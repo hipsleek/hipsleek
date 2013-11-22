@@ -1962,10 +1962,10 @@ let find_guard_x prog lhds lhvs leqs l_selhpargs rhs_args=
   let l_args = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
   let l_args1 = CF.find_close l_args leqs in
   let diff = CP.diff_svl rhs_args l_args1 in
-  if diff = [] then None else
+  if diff = [] then None else (*check-tll-1*)
     (*Now we keep heap + pure as pattern (env)*)
     let guard_hds = List.filter (fun hd ->
-        let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+        let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
         CP.intersect_svl svl l_args1 <> []
     ) lhds
     in
@@ -2209,7 +2209,12 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (*since h_subst is not as expected we use closed set*)
         match match_unk_preds prog ls_lhp_args rhs_hp rhs_args with
           | Some hp ->
-                ([], [(hp,rhs_args)], None)
+                let ass_guard1 = if CP.mem_svl rhs_hp post_hps then
+                  None
+                else
+                  find_guard prog lhds lhvs leqs [(hp,rhs_args)] rhs_args
+                in
+                ([], [(hp,rhs_args)], ass_guard1)
           | None ->
                 let closed_rhs_hpargs = CF.find_close rhs_args leqs in
                 let _ = DD.ninfo_zprint (lazy  ("selected_hpargs: " ^ (pr_list (pr_pair !CP.print_sv !CP.print_svl)) selected_hpargs)) pos in
@@ -2614,7 +2619,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       match new_guard with
         | None -> None
         | Some hf ->
-              let g_svl = CF.h_fv hf in
+              let g_svl = CF.get_node_args hf in
               let _ = DD.ninfo_hprint (add_str  "  g_svl" !CP.print_svl) g_svl pos in
               let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
               let _ = DD.ninfo_hprint (add_str  "  p" !CP.print_formula) p pos in

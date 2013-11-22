@@ -4784,6 +4784,31 @@ let get_ptrs_group_hf hf0=
       | HEmp ->[]
   in helper hf0
 
+let get_node_args hf0=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;}
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;}
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;} ->
+         (helper hf1)@(helper hf2)
+      | DataNode hd -> hd.h_formula_data_arguments
+      | ViewNode hv -> hv.h_formula_view_arguments
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp ->[]
+  in helper hf0
+
 let get_ptrs_group f0=
   let rec helper f=
    match f with

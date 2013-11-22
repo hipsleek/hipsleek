@@ -1657,13 +1657,24 @@ This is mandatory
 --------------
   A<x> --->  x::node<l,r> * H1<l> * H2<r> /\ x::node<l,r> * H2<l> * H1<r>
 *)
+
+let cmp_formula_opt args of1 of2=
+  match of1,of2 with
+    | Some f1, Some f2 ->
+          let p1 = CF.get_pure f1 in
+          let p2 = CF.get_pure f2 in
+          CP.equalFormula p1 p2
+          (* SAU.check_relaxeq_formula args f1 f2 *)
+    | None, None -> true
+    | _ -> false
+
 let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
   let dang_hps = (unk_hps@link_hps) in
   let rec unify_one rem_pdefs ((hp,args1,unk_svl1, cond1, olhs1, og1, orhs1) as pdef1, cs1) done_pdefs equivs=
     match rem_pdefs with
       | [] -> (done_pdefs,[(pdef1,cs1)], equivs)
       |  ((hp,args2,unk_svl2, cond2,  olhs2, og2, orhs2) as pdef2,cs2)::rest ->
-            if CP.equalFormula cond1 cond2 then
+            if CP.equalFormula cond1 cond2 && cmp_formula_opt args1 og1 og2 then
               match orhs1,orhs2 with
                 | Some f1, Some f2 -> begin
                       (* let ss = List.combine args1 args2 in *)

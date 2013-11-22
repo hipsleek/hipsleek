@@ -11182,6 +11182,36 @@ let prune_irr_neq p0 svl=
   Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
       (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl
 
+let is_irr_eq_b_form b svl=
+  let (pf,c) = b in
+  match pf with
+    | Eq (a1, a2, pos) -> begin
+        match a1,a2 with
+          | Var (sv1,pos1), Var (sv2,pos2) ->
+                not (mem_svl sv1 svl && mem_svl sv2 svl)
+          | _ -> false
+      end
+    | _ -> false
+
+let is_irr_eq_x p0 svl=
+  let rec helper p=
+    match p with
+      | BForm (bf,a) -> is_irr_eq_b_form bf svl
+      | _ -> false
+  in
+  helper p0
+
+let is_irr_eq p0 svl=
+  let pr1= !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "is_irr_eq" pr1 pr2 string_of_bool
+      (fun _ _ -> is_irr_eq_x p0 svl ) p0 svl
+
+let prune_irr_eq p svl=
+  let ps = split_conjunctions p in
+  let ps1 = List.filter (fun p -> not (is_irr_eq p svl)) ps in
+  conj_of_list ps1 (pos_of_formula p)
+
 let get_null_ptrs_p pf=
   match pf with
     | Eq (e1, e2, _) -> if is_null e1 then (afv e2)
