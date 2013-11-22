@@ -6221,8 +6221,34 @@ if (h==c) ==> should not use cast when transform from c to ss
     dll-findnback.ss
     dll-rev.ss
 =====================================================================
+#swl-i.ss
+
+An omega timeout to check..
+
+!!! log(small):(1.54,586)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(SAT:350<35:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 18.83 second(s)
+	Time spent in main process: 1.01 second(s)
+	Time spent in child processes: 17.82 second(s)
 
 =====================================================================
+#swl-i-sa.ss
+
+!!! proving:
+[ HP_946(prev_1126,cur_1124,sent_1123)&
+  prev_1127=null --> HP_945(prev_1126,prev_1127,sent_1123)]
+!!! >>>>>> lfp computation for post-preds <<<<<
+!!!    Initial recurrence:  
+ HP_946(prev,prev',cur') * cur::node<val_49_943,prev>@M&cur=prev' & cur'=sent
+ or G(cur,cur',prev_977,prev',sent)&next_49_944=null & prev_977=null & 
+    cur!=null & next_49_944!=sent
+ or G(next_49_944,cur',cur,prev',sent)&cur!=null & next_49_944!=null & 
+    next_49_944!=sent
+ 
+!!!    fix: 0 hfalse&false
+!!!    fix: 1 HP_946(prev,prev',cur') * cur::node<val_49_943,prev>@M&cur=prev' & cur'=sent
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
 =====================================================================
 =====================================================================
 =====================================================================
