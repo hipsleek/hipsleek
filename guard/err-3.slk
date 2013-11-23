@@ -5,9 +5,10 @@ data cell {
 HeapPred H(cell a, cell b).
 HeapPred G(cell a).
 
+/* L2
 infer [H]  H(p,q) & p=null |- q::cell<_>.
 print residue.
-
+*/
 /*
 # err-3.slk
 
@@ -20,11 +21,12 @@ Inferred:
 Since p=null, should be:
  inferred hprel: [H(p,q)&p=null --> q::cell<_>@M ]
 
-
 */
 
+/*
 infer [G]  G(p) & p=null |- p::cell<_>.
 print residue.
+*/
 
 infer [G]  G(p) & p=null |- p!=null.
 print residue.
@@ -39,9 +41,10 @@ print residue.
  provide 
    G(p) ==> false
 */
-
+/*L2
 infer [G]  G(p) & p!=null |- p=null.
 print residue.
+*/
 /*
 
 shEntail (4) : Valid. 

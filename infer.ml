@@ -1990,7 +1990,7 @@ let find_guard prog lhds lhvs leqs l_selhpargs rhs_args=
 *)
 let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos
       total_unk_map post_hps prog_vars=
-  let get_rhs_unfold_fwd_svl h_node h_args def_svl lhs_hpargs=
+  let get_rhs_unfold_fwd_svl h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
         | [] -> (false, false, [],[])
@@ -2002,7 +2002,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
               if inter = [] then parition_helper node_name tl
               else
                 let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-                (true, is_pre, rem, (ni_args))
+                (true, is_pre, List.filter (fun (sv,_) -> not (CP.mem_svl sv leqNulls)) rem, (ni_args))
     in
     let res,is_pre, niu_svl_i, niu_svl_ni = parition_helper h_node lhs_hpargs in
     if res then
@@ -2242,7 +2242,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       let def_vs1 = if CF.is_view n_unmatched then CP.diff_svl (def_vs@hrel_args2) h_args
       else (def_vs@hrel_args2)
       in
-      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args def_vs1 ls_lhp_args in
+      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl h_node h_args (def_vs1) leqNulls ls_lhp_args in
       (mis_match_found, ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs, None)
   in
   let ls_undef =  (* List.map CP.remove_dups_svl *) (ls_fwd_svl) in

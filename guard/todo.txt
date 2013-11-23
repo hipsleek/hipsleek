@@ -677,7 +677,7 @@ Re-ordering
   HP_903(next,p) ::= NONE]
 
 ==========================================================
-tll.ss --reverify-all
+tll.ss --reverify-all: FIXED
 
 Checking procedure set_right$node~node... 
 Proving precondition in method set_right$node~node Failed.
@@ -694,7 +694,7 @@ Proving precondition in method set_right$node~node Failed.
 
 
 ==========================================================
-# tll.ss --pred-en-useless-para
+# tll.ss --pred-en-useless-para: FIXED
 
 ERROR: at _0:0_0:0 
 Message: sau.generalize_one_hp: sth wrong 2
@@ -707,7 +707,7 @@ Message: sau.generalize_one_hp: sth wrong 2
  Stop Omega... 87 invocations 
 0 false contexts at: ()
 ==========================================================
-# ../hip tll.ss --pred-en-dangling --pred-en-useless-para
+# ../hip tll.ss --pred-en-dangling --pred-en-useless-para: FIXED
 
 why error below?
 
@@ -788,7 +788,7 @@ print residue.
 
 /*
 
-Inferred:
+Inferred: FIXED
 
  <1>HP_21(p,q)&p=null & Anon_11=Anon_20&{FLOW,(21,22)=__norm}[]
 
