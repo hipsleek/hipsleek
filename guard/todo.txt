@@ -815,6 +815,8 @@ print residue.
  both contradiction should 
  provide 
    G(p) ==> false
+
+Now: G(p) & p=null ==> false
 */
 
 infer [G]  G(p) & p!=null |- p=null.

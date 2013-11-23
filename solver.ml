@@ -6230,7 +6230,16 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let temp_ctx = SuccCtx[false_ctx_with_orig_ante new_estate orig_ante pos] in
                 (* let _ = Debug.info_pprint ("*********1********") no_pos in *)
                 (* andreeac: to construct a new method in infer.ml--> add_infer_hp_contr_to_estate maybe? *)
-                let res_ctx_opt = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx in
+                let lhs_xpure,_,_ = xpure prog estate.CF.es_formula in
+                let lhs_p = MCP.pure_of_mix lhs_xpure in
+                let rhs_xpure,_,_ = xpure prog conseq in
+                let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+                let rele_svl = CP.fv pf in
+                let l_ps = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl <> []) (CP.split_conjunctions lhs_p) in
+                let pf = if TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions (l_ps@[pf]))) then pf else
+                  CP.join_conjunctions l_ps
+                in
+                let res_ctx_opt = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx p_rhs_xpure in
                 let _ = Debug.tinfo_hprint (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
 	        let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
                 let es = 
@@ -6323,7 +6332,9 @@ and early_pure_contra_detection_x hec_num prog estate conseq pos msg is_folding 
             let _ = Debug.tinfo_hprint (add_str "r1"  Cprinter.string_of_list_context) r1 pos in
             let _ = Debug.binfo_pprint ("*********2********") no_pos in
             let slk_no = Log.last_cmd # start_sleek 1 in
- 	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 in
+            let rhs_xpure,_,_ = xpure prog conseq in
+            let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+ 	    let r1 = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] r1 p_rhs_xpure in
 	    begin 
 	      (*r1 might be None if the inferred contradiction might span several predicates or if it includes non heap pred arguments*)
 	      match r1 with 
@@ -11150,11 +11161,16 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let diff = CP.diff_svl fv h_inf_args1 in
               let p = CP.mkForall diff f None pos in
               let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
-              if  TP.is_sat_raw (MCP.mix_of_pure p) then
+              if TP.is_sat_raw (MCP.mix_of_pure p) then
                 let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
+                let _ = DD.ninfo_hprint (add_str "lhs_xpure" !CP.print_formula) (MCP.pure_of_mix lhs_xpure) no_pos in
                 let _ = DD.ninfo_hprint (add_str "np" !CP.print_formula) np no_pos in
-                let ps1= List.filter (fun p->not(CP.is_neq_null_exp p)) (CP.split_conjunctions np) in
-                let np = CP.join_conjunctions ps1 in
+                let ps1, redun_neqNulls= List.partition (fun p->not(CP.is_neq_null_exp p)) (CP.split_conjunctions np) in
+                let detect_contra = CP.join_conjunctions (redun_neqNulls@[MCP.pure_of_mix lhs_xpure]) in
+                let np = if TP.is_sat_raw (MCP.mix_of_pure detect_contra) then
+                  CP.join_conjunctions ps1
+                else np
+                in
                 (* let _ = DD.tinfo_hprint (add_str "p(omega simpl)" !CP.print_formula) (TP.simplify_raw p) no_pos in *)
                 x@[(es,np)]
               else x

@@ -3522,7 +3522,7 @@ let get_spec_from_file prog =
 (* type: ((CP.spec_var * h_formula) * CP.spec_var list) list -> *)
 (*   CP.formula list -> list_context -> list_context option *)
 
-let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_context option=
+let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : list_context option=
   (*TODO: es_cond_path*)
   let es_cond_path = CF.get_list_ctx_cond_path l in
   (*******************INTERNAL******************************)
@@ -3590,6 +3590,17 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_con
             let rel_cands = List.fold_left ( fun r tuple ->
                 r@(process_one fv c pos tuple)) [] new_hd
             in
+            (* contra with rhs: H(...) --> false *)
+            let rhs_contras  = List.fold_left (fun r (_, (h,hf,h_args, _, n_p, pos)) ->
+                if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
+                  let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
+                    (CF.mkBase hf (MCP.mix_of_pure n_p) TypeTrue (mkNormalFlow ()) [] pos)
+                    None (CF.mkFalse_nf pos ) es_cond_path in
+                  r@[new_rel]
+                else r
+            ) [] rel_cands in
+            if rhs_contras <> [] then res_rels@rhs_contras
+              else
             let strong_cands, weak_cands = List.partition (fun (b,_) -> b) rel_cands in
             if strong_cands <> [] then
               (*return the first one*)
@@ -3612,9 +3623,9 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) : list_con
     Some (transform_list_context (scc_f, (fun a -> a)) l)
   with Not_found -> None
 
-let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) : list_context option =
+let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) conseq : list_context option =
   let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
   Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
-      add_infer_hp_contr_to_list_context h_arg_map cp l
+     (fun _ _ _ -> add_infer_hp_contr_to_list_context h_arg_map cp l conseq) h_arg_map cp l

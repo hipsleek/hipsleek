@@ -5,10 +5,10 @@ data cell {
 HeapPred H(cell a, cell b).
 HeapPred G(cell a).
 
-/* L2
+
 infer [H]  H(p,q) & p=null |- q::cell<_>.
 print residue.
-*/
+
 /*
 # err-3.slk
 
@@ -23,14 +23,19 @@ Since p=null, should be:
 
 */
 
-/*
+
 infer [G]  G(p) & p=null |- p::cell<_>.
 print residue.
-*/
 
 infer [G]  G(p) & p=null |- p!=null.
 print residue.
 
+
+/*
+infer [G]  G(p)  |- p=null.
+print residue.
+
+*/
 /* 
 
 <1>hfalse&false&{FLOW,(21,22)=__norm}[]
@@ -41,10 +46,10 @@ print residue.
  provide 
    G(p) ==> false
 */
-/*L2
+
 infer [G]  G(p) & p!=null |- p=null.
 print residue.
-*/
+
 /*
 
 shEntail (4) : Valid. 
