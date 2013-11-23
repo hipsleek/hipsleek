@@ -5,9 +5,20 @@ data cell {
 HeapPred H(cell a).
 HeapPred G(cell a).
 
+/*
 infer [H]  H(p) |- p::cell<_>.
 print residue.
+*/
 
 infer [H]  H(p) & p=null |- p::cell<_>.
 print residue.
 
+/*
+# err.slk
+
+ Why did we not have an infer false?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+*/

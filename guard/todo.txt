@@ -759,7 +759,79 @@ print residue.
 [[empty]]
 
 ==========================================================
+# err2.ss : The message here is not very good.
+  Should we perhaps infer a false here?
+
+Context of Verification Failure: 1 File "err2.ss",Line:11,Col:10
+Last Proving Location: 1 File "err2.ss",Line:14,Col:4
+
+Procedure foo$cell FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure foo$cell
+Stop Omega... 34 invocations 
+0 false contexts at: ()
 ==========================================================
+# err-3.slk
+
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a, cell b).
+HeapPred G(cell a).
+
+infer [H]  H(p,q) & p=null |- q::cell<_>.
+print residue.
+
+/*
+
+Inferred:
+
+ <1>HP_21(p,q)&p=null & Anon_11=Anon_20&{FLOW,(21,22)=__norm}[]
+
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M * HP_21(p,q@NI)]
+
+Since p=null, should be:
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M ]
+
+
+*/
+
+infer [G]  G(p) & p=null |- p::cell<_>.
+print residue.
+
+infer [G]  G(p) & p=null |- p!=null.
+print residue.
+
+/* 
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+
+ both contradiction should 
+ provide 
+   G(p) ==> false
+*/
+
+infer [G]  G(p) & p!=null |- p=null.
+print residue.
+/*
+
+shEntail (4) : Valid. 
+
+How come we get G(p) & p=null --> emo
+This is cleary wrong.
+It should be:
+     G(p) & p!=null ==> false
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [G(p)&p=null --> emp]
+[[empty]]
+*
 ==========================================================
 ==========================================================
 ==========================================================
