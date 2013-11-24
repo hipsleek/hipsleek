@@ -391,7 +391,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
     let l_hpargs = CF.get_HRels_f lhs in
     let r_hpargs = CF.get_HRels_f rhs in
     if (* (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) && *)
-      (List.length l_hpargs > 0) then
+      (List.length l_hpargs > 0 && r_hpargs != []) then
         let leqs = (MCP.ptr_equations_without_null mix_lf) in
         let lhs_b = match lhs with
           | CF.Base fb -> fb
