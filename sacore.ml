@@ -2929,8 +2929,9 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
   (*shared*)
   (*END share*)
   let prove_sem ((* (k, rel, og, f) *)  cur_hpdef) =
+    let _ = DD.ninfo_hprint (add_str " cur_hpdef (sem)"  Cprinter.string_of_hp_rel_def) cur_hpdef no_pos in
     let r,paras = match cur_hpdef.CF.def_cat with
-      | CP.HPRelDefn (hp,r, paras) -> (r,paras)
+      | CP.HPRelDefn (hp,r, paras) -> Cast.get_root_args_hprel cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) args (*(r,paras)*)
       | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
     in
     let proc_name = "split_pred" in
@@ -2958,7 +2959,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
     (*construct lemma_infer*)
     let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
       (List.map (fun (hp, _) -> CP.name_of_spec_var hp) comps) (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
-    let _ = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
     match lc_opt with
       | Some lcs ->
@@ -3011,10 +3012,11 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
 
 let prove_split_cand iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
   let pr1 = pr_list_num Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "prove_split_cand" pr1 pr1
-      (fun _ -> prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk
+  let pr2 = Cprinter.prtt_string_of_h_formula in
+  Debug.no_3 "prove_split_cand" pr1 pr2 pr2 pr1
+      (fun _ _ _ -> prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk
           unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf))
-      hp_defs
+      hp_defs lhs_hf rhs_hf
 
 let find_closure_tuplep_hps tupled_hps hp_defs=
   let get_tupled_dep_hps tuple_deps def=

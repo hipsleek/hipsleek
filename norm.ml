@@ -504,6 +504,12 @@ let cont_para_analysis cprog cviews=
   let pr3 = pr_list pr2 in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews
+
+
+let norm_split_args iprog cprog cview=
+  cview
+
+
 (*****************************************************************)
    (********END PARA CONTINUATION ANALYSIS **********)
 (*****************************************************************)

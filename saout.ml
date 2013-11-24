@@ -102,8 +102,8 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
                 | Named id -> if String.compare id "" = 0  then
                     let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in
                     let _ = Debug.ninfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in
-                    report_error no_pos "why null"
-                    (* (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))) *)
+                    let _ = report_warning no_pos "sao: why is self's type null?" in
+                    (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r)))
                   else
                     id,r
                 | _ -> report_error no_pos "should be a data name"

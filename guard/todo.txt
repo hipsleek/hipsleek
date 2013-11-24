@@ -134,7 +134,7 @@ p=parent_20_900 --> G(x,p@NI)]
 
 */
 ==========================================================
-# tll-parent.ss 
+# tll-parent.ss : FIXED
 
 [ G(x_1090,p_1091,res_1092,t_1093) ::= 
  HP_1000(next_34_996,p_1091,t_1093) * 
@@ -198,7 +198,7 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
-@ check-mcf
+@ check-mcf: FIXED
 
 - dangling pred has not been included
  - back-pointer in pre-pred
@@ -224,7 +224,7 @@ Total verification time: 0.39 second(s)
  Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
 
 ==========================================================
-# tll.ss --sa-dp --reverify-all
+# tll.ss --sa-dp --reverify-all:
 
 (1) You should at least print relational assumption and synthesized
 predicates.
@@ -321,8 +321,8 @@ Total verification time: 0.4 second(s)
 	Time spent in child processes: 0.06 second(s)
 
 ==========================================================
+ tll: INFO
 
- tll
 After discussing with Cristian, it seems we
 need rel assumption of the form below.
 
@@ -336,6 +336,7 @@ verification. It seems we mainly need it in shape
 analysis. Hence, I think we will leave the guard 
 feature for just sa-core for now.
 
+==========================================================
 # tree-1.slk
 
 infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
@@ -355,7 +356,7 @@ Can we obtain instead:
 This gives relational information that q!=null is required.
 
 ==========================================================
-# tree-1b.slk
+# tree-1b.slk: DONE
 
 relAssume 
    H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
@@ -458,7 +459,7 @@ p=parent_20_900 --> G(x,p@NI)]
 
 */
 ==========================================================
-# tll-parent.ss 
+# tll-parent.ss : OK
 
 [ G(x_1090,p_1091,res_1092,t_1093) ::= 
  HP_1000(next_34_996,p_1091,t_1093) * 
@@ -522,7 +523,7 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
-@ check-mcf
+@ check-mcf: FIXED
 
 - dangling pred has not been included
  - back-pointer in pre-pred
@@ -645,7 +646,7 @@ Total verification time: 0.4 second(s)
 	Time spent in child processes: 0.06 second(s)
 
 ==========================================================
-# guard/parent.ss  (tidying up)
+# guard/parent.ss  (tidying up): DONE by Long
 
   H(x_906,p_907) ::= x_906::node<parent_20_900,next_20_901>@M 
        * HP_903(next_20_901,p_907)&p_907=parent_20_900,
@@ -747,7 +748,7 @@ res:  [
   ]
 
 ==========================================================
-# err.slk
+# err.slk: FIXED
 
 infer [H]  H(p) & p=null |- p::cell<_>.
 print residue.

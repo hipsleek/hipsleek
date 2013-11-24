@@ -68,11 +68,6 @@ reverify with reuse:
  - tll-par
 
 =====================================================================
-rearrange and shortening the result:
-
-
-
-=====================================================================
 
 cparser:  return list ? list->val : -1
 
