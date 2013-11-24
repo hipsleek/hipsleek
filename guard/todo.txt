@@ -836,39 +836,35 @@ It should be:
 [[empty]]
 *
 ==========================================================
-# err3a.slk (please test err3.ss)
+# err3a.slk 
 
-GOT:
+Why isn't --print-en-tidy invoked for sleek.
+Can we do that to?
 
- H(p_28,q_29) ::= 
+[ H(p_28,q_29) ::= 
  p_28::cell<val>@M * HP_907(q_29,p_28)
- or emp&p_28=null
+ or q_29::cell<val>@M&p_28=null
  ]
-
-What happen to --print-en-tidy?
-Why are we not getting below.
-
- H(p_28,q_29) ::= 
- p_28::cell<val>@M * HP_907(q_29,p_28)
- or q_29::cell<_> & p_28=null
 
 ==========================================================
 # err3.slk
 
-[ G(p_40,q_41) ::= 
- HP_907(q_41,p_40) * p_40::cell<val>@M
- or q_41::cell<val>@M&p_40=null
+Why did  Declare_Dangling [HP_907].
+causes XPURE to be used; and what does the
+recursive equation below means?
+ HP_907(q,p) ::= emp& XPURE(HP_907(q,p))]
+
+==========================
+
+[ G(p_39,q_40) ::= 
+ q_40::cell<val>@M&p_39=null
+ or p_39::cell<val>@M& XPURE(HP_907(q_40,p_39))
  ,
- H(p_38,q_39) ::= 
- p_38::cell<val>@M * HP_907(q_39,p_38)
- or emp&p_38=null
- ]
-
-
-What happen to defn of HP_907? Isn't it
-classified as dangling?
- ==> in sleek, we have to declare dangling preds explicitly
- Declare_Dangling [HP_907].
+ H(p_37,q_38) ::= 
+ q_38::cell<val>@M&p_37=null
+ or p_37::cell<val>@M& XPURE(HP_907(q_38,p_37))
+ ,
+ HP_907(q,p) ::= emp& XPURE(HP_907(q,p))]
 
 ==========================================================
 # err3.slk --pred-en-danling
@@ -898,7 +894,6 @@ EXPECTED:
  HP_907(q,p) ::= htrue]
 
 
-
 What happen to defn of HP_907? Isn't it
 classified as dangling?
 ==========================================================
@@ -908,15 +903,15 @@ WHY HP_907 became HP_934???
 
 
 [ H(p,q) ::= 
- p::cell<val>@M * HP_934(q,p)
- or emp&p=null
+ q::cell<val>@M&p=null
+ or p::cell<val1>@M * HP_934(q,p)
  ,
  G(p,q) ::= 
  p::cell<val>@M * (htrue)
  or q::cell<val1>@M&p=null
  ,
- ,
  HP_934(q,p) ::= NONE]
+
 ==========================================================
 ==========================================================
 ==========================================================

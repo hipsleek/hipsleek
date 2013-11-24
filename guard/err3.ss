@@ -39,15 +39,13 @@ PostPred G(cell a,cell b).
 
 WHY HP_907 became HP_934???
 
-
 [ H(p,q) ::= 
- p::cell<val>@M * HP_934(q,p)
- or emp&p=null
+ q::cell<val>@M&p=null
+ or p::cell<val1>@M * HP_934(q,p)
  ,
  G(p,q) ::= 
  p::cell<val>@M * (htrue)
  or q::cell<val1>@M&p=null
- ,
  ,
  HP_934(q,p) ::= NONE]
 
