@@ -35,6 +35,10 @@ PostPred G(cell a,cell b).
 
 
 ======
+# err3.ss
+
+WHY HP_907 became HP_934???
+
 
 [ H(p,q) ::= 
  p::cell<val>@M * HP_934(q,p)
@@ -44,5 +48,7 @@ PostPred G(cell a,cell b).
  p::cell<val>@M * (htrue)
  or q::cell<val1>@M&p=null
  ,
+ ,
+ HP_934(q,p) ::= NONE]
 
 */

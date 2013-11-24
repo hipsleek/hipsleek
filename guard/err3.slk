@@ -26,7 +26,7 @@ shape_infer [H,HP_907][G].
 
 
 /*
-GOT:
+# err3.slk
 
 [ G(p_40,q_41) ::= 
  HP_907(q_41,p_40) * p_40::cell<val>@M
@@ -38,6 +38,7 @@ GOT:
  ]
 
 
-I think it 
+What happen to defn of HP_907? Isn't it
+classified as dangling?
 */
 
