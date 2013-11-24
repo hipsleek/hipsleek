@@ -6,6 +6,8 @@ HeapPred H(cell a,cell b).
 PostPred G(cell a,cell b).
 PostPred HP_907(cell a,cell@NI b).
 
+Declare_Dangling [HP_907].
+
 relAssume 
  // BIND
 H(p,q) & p=null --> q::cell<val>@M.
@@ -26,7 +28,7 @@ shape_infer [H,HP_907][G].
 
 
 /*
-GOT:
+# err3.slk
 
 [ G(p_40,q_41) ::= 
  HP_907(q_41,p_40) * p_40::cell<val>@M
@@ -38,6 +40,7 @@ GOT:
  ]
 
 
-I think it 
+What happen to defn of HP_907? Isn't it
+classified as dangling?
 */
 
