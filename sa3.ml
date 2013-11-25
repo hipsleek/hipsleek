@@ -460,17 +460,17 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
             (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps), r@rem)
         ) (defined_preds,[]) (rems_hpargs@ls_lhs_non_node_hpargs) in
         let _ = Debug.ninfo_zprint (lazy (("   rem_hpargs1: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl))  rem_hpargs1)))) no_pos in
-        let  guarded_preds0, link_hps2 = List.fold_left (fun (r1,r2) (hp,args) ->
-            if CP.mem_svl hp r_hps then (r1,r2) else
-              let pr_lhs_g = SAU.split_guard_constrs prog lhds lhvs post_hps (hp,args) lfb2  no_pos in
+        let lfb2, guarded_preds0, link_hps2 = List.fold_left (fun (lfb, r1,r2) (hp,args) ->
+            if CP.mem_svl hp r_hps then (lfb, r1,r2) else
+              let pr_lhs_g = SAU.split_guard_constrs prog lhds lhvs post_hps (hp,args) lfb no_pos in
               match pr_lhs_g with
-                | None -> r1,r2
-                | Some (g_cs,link_hp) -> r1@[g_cs],r2@[(link_hp, args)]
-        ) ([],[]) rem_hpargs1 in
+                | None -> (lfb, r1, r2)
+                | Some (lfb1, g_cs,link_hp) -> (lfb1, r1@[g_cs],r2@[(link_hp, args)])
+        ) (lfb2, [],[]) rem_hpargs1 in
         (* let rhs_h = CF.mkHTrue_nf no_pos in *)
-        let new_g_constrs = List.map (fun (hp, lhs, rhs, g) ->
+        let new_g_constrs = List.map (fun (hp, lhs, rhs, og) ->
             let knd = CP.RelAssume [hp] in
-            let new_cs =  CF.mkHprel knd unk_svl1 [] [] lhs (Some g) rhs cs.CF.hprel_path in
+            let new_cs =  CF.mkHprel knd unk_svl1 [] [] lhs (og) rhs cs.CF.hprel_path in
             new_cs
         ) guarded_preds0 in
         let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);

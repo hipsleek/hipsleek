@@ -2019,7 +2019,28 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
       let svl = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
       CP.intersect_svl svl args <> []
   ) lhvs in
-  if keep_hds = [] && keep_hvs = [] then None else
+  if keep_hds = [] && keep_hvs = [] then
+    (*err-1b-split: split for guard*)
+    let ps = List.filter (fun p -> CP.intersect_svl (CP.fv p) args != [])
+      (CP.split_conjunctions (MCP.pure_of_mix lhsb.CF.formula_base_pure)) in
+    if ps = [] then
+      None
+    else
+      (*drop the lhs*)
+      let n_orig_lhs_hf,_ = CF.drop_hrel_hf lhsb.CF.formula_base_heap [hp] in
+      (*add new unk preds*)
+      let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+      let new_hf, new_hp = add_raw_hp_rel prog true hpdcl.Cast.hp_vars_inst pos in
+      let _,args1 = CF.extract_HRel new_hf in
+      let ss = List.combine args1 args in
+      let n_constr_rhs_hf = (CF.h_subst ss new_hf) in
+      let n_constr_rhs = CF.formula_of_heap n_constr_rhs_hf pos in
+      let n_orig_lhs_hf2 = CF.mkStarH n_orig_lhs_hf n_constr_rhs_hf pos in
+      let n_orig_lhsb = {lhsb with CF.formula_base_heap = n_orig_lhs_hf2} in
+      let n_constr_lhf = CF.HRel (hp, List.map (fun sv -> CP.mkVar sv pos) args, pos) in
+      let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CF.TypeTrue (CF.mkTrueFlow()) [] pos in
+      (Some (n_orig_lhsb, (hp, n_constr_lhs,  n_constr_rhs, None), new_hp))
+  else
     let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@
       (List.map (fun hv -> CF.ViewNode hv) keep_hvs) in
     let g_h = CF.join_star_conjunctions g_hfs in
@@ -2036,14 +2057,14 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
     let _,args1 = CF.extract_HRel new_hf in
     let ss = List.combine args1 args in
     let rhs = CF.formula_of_heap (CF.h_subst ss new_hf) pos in
-    Some ((hp, lhs, rhs, g), new_hp)
+    Some (lhsb, (hp, lhs, rhs, Some g), new_hp)
 
 let split_guard_constrs prog lhds lhvs post_hps (hp,args) lhsb  pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = Cprinter.prtt_string_of_formula in
   let pr4 = Cprinter.string_of_formula_base in
-  Debug.no_2 "split_guard_constrs" pr4 (pr_pair pr1 pr2) (pr_opt (pr_pair (pr_quad pr1 pr3 pr3 pr3) pr1))
+  Debug.no_2 "split_guard_constrs" pr4 (pr_pair pr1 pr2) (pr_opt (pr_triple pr4 (pr_quad pr1 pr3 pr3 (pr_opt pr3)) pr1))
       (fun _ _ -> split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb  pos)
       lhsb (hp,args)
 

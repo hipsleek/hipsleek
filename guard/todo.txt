@@ -847,7 +847,7 @@ Can we do that to?
  ]
 
 ==========================================================
-# err3.slk
+# err3.slk: INFO (Delcare_Unknown)
 
 Why did  Declare_Dangling [HP_907].
 causes XPURE to be used; and what does the
@@ -867,7 +867,7 @@ recursive equation below means?
  HP_907(q,p) ::= emp& XPURE(HP_907(q,p))]
 
 ==========================================================
-# err3.slk --pred-en-danling
+# err3.slk --pred-en-danling: INFO
 
 GOT:
 [ G(p_39,q_40) ::=
@@ -941,7 +941,7 @@ After that, we can derive:
 where H_3(p) is a dangling reference
 
 ==========================================================
-# err-1b-split.slk
+# err-1b-split.slk: FIXED
 
 relAssume
  H(p)& p!=null --> G(p).
