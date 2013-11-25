@@ -3402,8 +3402,8 @@ let rec string_of_decl_list l c = match l with
 (* function to print a list of typed_ident *) 
 let rec string_of_data_decl_list l c = match l with 
   | [] -> ""
-  | h::[] -> "  " ^ string_of_data_decl h 
-  | h::t -> "  " ^ (string_of_data_decl h) ^ c ^ (string_of_data_decl_list t c)
+  | h::[] -> "  " ^ (string_of_data_decl h )
+  | h::t -> "  " ^ (string_of_data_decl h)  ^ c ^ (string_of_data_decl_list t c)
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -3414,7 +3414,7 @@ let rec string_of_decl_list l c = match l with
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields "\n") ^ "\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
 ;;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with

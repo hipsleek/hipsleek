@@ -7,13 +7,13 @@ data node{
 }
 
 /* predicate for a non-empty tree with chained leaf list */
- tll<ll,lr> == self::node<D1,null,lr> & self = ll
-	or self::node<l,r,D2> * l::tll<ll,z> * r::tll<z,lr>
+ tll<ll,lr> == self::node<null,null,lr> & self = ll
+	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
 	inv self!=null;
 
 /* predicate for a non-empty tree  */
- tree<> == self::node<D1,null,_>
-	or self::node<l,r,D2> * l::tree<> * r::tree<>
+ tree<> == self::node<null,null,_>
+	or self::node<l,r,null> * l::tree<> * r::tree<>
 	inv self!=null;
 
 
@@ -24,7 +24,7 @@ HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node t)
 infer [H,G] requires H(x,t) ensures G(x,res,t);
-                            //requires x::tree<> ensures x::tll<res,t>;
+//requires x::tree<> ensures x::tll<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;

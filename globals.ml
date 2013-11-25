@@ -654,6 +654,8 @@ let dis_show_diff = ref false
 
 let sap = ref false
 
+let sa_gen_slk = ref false
+
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
 let simpl_unfold2 = ref false

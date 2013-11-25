@@ -548,6 +548,13 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
   (new_constrs, new_map, link_hpargs)
 
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
+  let _ = if !Globals.sa_gen_slk then
+    try
+      SAU.gen_slk_file prog (List.hd !Globals.source_files)
+          (CP.diff_svl sel_hps post_hps) post_hps constrs link_hps
+    with _ -> ()
+  else ()
+  in
       let _ = step_change # reset in
       let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
       let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
