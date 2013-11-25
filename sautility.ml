@@ -2012,11 +2012,11 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
 
 let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
   let keep_hds = List.filter (fun hd ->
-      let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
+      let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
       CP.intersect_svl svl args <> []
   ) lhds in
   let keep_hvs = List.filter (fun hv ->
-      let svl = (* hv.CF.h_formula_view_node:: *)hv.CF.h_formula_view_arguments in
+      let svl = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
       CP.intersect_svl svl args <> []
   ) lhvs in
   if keep_hds = [] && keep_hvs = [] then None else
