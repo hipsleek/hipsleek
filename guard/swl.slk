@@ -1,0 +1,63 @@
+data node{
+   int val;
+   node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+HeapPred HP_945(node next_49_944, node@NI prev, node@NI sent).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+HeapPred DP_1048(node a, node@NI b, node@NI c).
+HeapPred DP_1049(node a, node@NI b, node@NI c).
+HeapPred DP_1050(node a, node@NI b, node@NI c).
+HeapPred DP_1051(node a, node@NI b, node@NI c).
+
+Declare_Unknown [DP_1048,DP_1049,DP_1050,DP_1051].
+
+relAssume  //(1) (0)
+H(cur,prev,sent) --> cur::node<val_49_943,next_49_944>@M *
+  HP_945(next_49_944,prev,sent) * HP_946(prev,cur,sent).
+
+relAssume //(2): (1;2;0)
+HP_946(prev,cur,sent) * cur::node<val_49_943,prev>@M&
+  prev'=null --> H(cur,prev',sent).
+
+relAssume //(3): (1;2;0)
+HP_946(prev,cur,sent) |#| cur::node<val_49_943,prev>@M&
+  prev'=null --> DP_1048(prev,cur,sent).
+
+relAssume //(4): (2;2;0)
+HP_945(cur',prev,sent) * HP_946(prev,cur,sent) *
+  cur::node<val_49_943,prev>@M&cur'!=null & cur'!=sent --> H(cur',cur,sent).
+
+relAssume //(5): (2;2;0)
+HP_945(cur',prev,sent) |#| cur::node<val_49_943,prev>@M&cur'!=null &
+  cur'!=sent --> DP_1049(cur',prev,sent).
+
+relAssume //(6): (2;2;0)
+HP_946(prev,cur,sent) |#| cur::node<val_49_943,prev>@M&cur'!=null &
+  cur'!=sent --> DP_1050(prev,cur,sent).
+
+relAssume //(7): (1;0)
+HP_946(prev,cur,cur') * cur::node<val_49_943,prev>@M&cur=prev' &
+  cur'=sent --> G(cur,cur',prev,prev',sent).
+
+relAssume //(8): (1;0)
+HP_945(cur',prev,sent)&cur'=sent --> emp.
+
+relAssume //(9): (1;0)
+HP_946(prev,cur,cur') |#| cur::node<val_49_943,prev>@M --> DP_1051(prev,cur,cur').
+
+relAssume //(10): (1;2;0)
+G(cur,cur',prev_977,prev',sent)&next_49_944=null & prev_977=null &
+  cur!=null & next_49_944!=sent --> G(cur,cur',prev,prev',sent).
+
+relAssume //(11): (1;2;0)
+HP_945(next_49_944,prev,sent)&next_49_944!=sent &
+  next_49_944=null --> emp.
+
+relAssume //(12): (2;2;0)
+G(next_49_944,cur',cur,prev',sent)&cur!=null & next_49_944!=null &
+  next_49_944!=sent --> G(cur,cur',prev,prev',sent).
+
+shape_infer [H,HP_945,HP_946][G].
