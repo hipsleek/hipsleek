@@ -10,7 +10,6 @@ tree<> == self::node<_,null>
         or self::node<l,r> * l::tree<> * r::tree<>
 	inv self!=null;
 
-
 // initializes the linked list fields
 
 HeapPred H(node a).
@@ -29,14 +28,66 @@ infer [H,G] requires H(x) ensures G(x);
       //assert xl'!=null assume xl'!=null; //
       trav(x.left);
     }
-    ;
   else {
+    ;
     //assert xl'=null assume xl'=null; //
   }
 }
 
 /*
-# tree-1.ss
+# tree-1.ss -gen-sa-sleek-file
+
+Why did we have /&\?
+
+[ H(x) ::= x::node<left,right>@M * (DP_961(left)/&\H(left))&right=null,
+
+ G(x) ::= x::node<left,right>@M * H(left)&right=null
+ or x::node<left,right>@M * DP_961(left)&right=null
+ or x::node<left,right>@M * G(left) * G(right)&right!=null
+ ,
+ DP_961(left) ::= NONE]
+
+sleek file has more stuff...
+
+[ DP_41(left) ::= NONE,
+
+ G(x) ::= x::node<left,right>@M * H(left)&right=null
+ or x::node<left,right>@M * DP_41(left)&right=null
+ or x::node<left,right>@M * G(left) * G(right)&right!=null,
+ H(x) ::= x::node<left,right>@M * (DP_41(left)/&\H(left))&right=null,
+ HP_914(left1) |#| x::node<left_24_42,right_24_913>@M&
+  right_24_913=null ::= DP_41(left) or H(left1),
+ HP_915(right) ::=  H(right)&right!=null or emp&right=null
+ ]
+
+relational assumptions..
+
+[ // BIND
+(0)H(x) --> x::node<left,right>@M * HP_914(left) * HP_915(right),
+ // PRE_REC
+(1;0)HP_915(right)&right!=null --> H(right),
+ // PRE_REC
+(1;0)HP_914(left) --> H(left),
+ // POST
+(1;0)x::node<left,right>@M * G(left) * G(right)&right!=null --> G(x),
+ // POST
+(2;0)x::node<left,right>@M * HP_914(left) * HP_915(right)&right=null --> G(x)]
+
+// sleek file
+relAssume 
+ (0)H(x) --> x::node<left_24_912,right_24_913>@M * HP_914(left_24_912) * 
+  HP_915(right_24_913).
+relAssume 
+ (1;0)HP_915(right_24_913)&right_24_913!=null --> H(right_24_913).
+relAssume 
+ (1;0)HP_914(left_24_912) --> H(left_24_912).
+relAssume 
+ (1;0)x::node<left_24_912,right_24_913>@M * G(right_24_913) * G(left_24_912)&
+  right_24_913!=null --> G(x).
+relAssume 
+ (2;0)HP_914(left_24_912) * HP_915(right_24_913) * 
+  x::node<left_24_912,right_24_913>@M&right_24_913=null --> G(x).
+
 
 GOT
 ===
