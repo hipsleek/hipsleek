@@ -1,0 +1,21 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a).
+HeapPred G(cell a).
+
+relAssume
+ H(p)& p=null --> G(p).
+
+shape_split_base [H][G].
+
+/*
+# err.slk
+
+ Why did we not have an infer false?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+*/
