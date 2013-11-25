@@ -3018,7 +3018,7 @@ let pr_view_decl_short v =
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
     ((List.combine v.view_labels v.view_vars)@
       (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
       fmt_string "= ") ();
