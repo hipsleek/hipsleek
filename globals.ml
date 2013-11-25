@@ -205,6 +205,7 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
 let hppost_default_prefix_name = "GP_"
+let unkhp_default_prefix_name = "DP_"
 let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
 (*

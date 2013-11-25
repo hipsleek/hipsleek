@@ -251,13 +251,14 @@ let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
-let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
+let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
-      { Cast.hp_name = (if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
+      { Cast.hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
+        if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
         ^ (string_of_int (Globals.fresh_int()));
       Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
-        Cast.hp_vars_inst =  unknown_ptrs;
+        Cast.hp_vars_inst = unknown_ptrs;
         Cast.hp_is_pre = is_pre;
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
@@ -277,18 +278,18 @@ let add_raw_hp_rel_x prog is_pre unknown_ptrs pos=
     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
-let add_raw_hp_rel prog is_pre unknown_args pos=
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
   let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in
   let pr2 = Cprinter.string_of_h_formula in
   let pr4 (hf,_) = pr2 hf in
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
-      (fun _ -> add_raw_hp_rel_x prog is_pre unknown_args pos) unknown_args
+      (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
 
-let fresh_raw_hp_rel prog is_pre hp pos =
+let fresh_raw_hp_rel prog is_pre is_unk hp pos =
   try
     let hp_decl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
     let args_w_i = hp_decl.Cast.hp_vars_inst in
-    let nhf, nhp = add_raw_hp_rel prog is_pre args_w_i pos in
+    let nhf, nhp = add_raw_hp_rel prog is_pre is_unk args_w_i pos in
     nhp
   with _ -> report_error pos "SAU.fresh_raw_hp_rel: where r u?"
 
@@ -1962,7 +1963,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
               if !Globals.sa_sp_split_base then
                 (*generate new hp decl for pre-preds*)
-                let new_hf, new_hp = add_raw_hp_rel_x prog true undef_args_inst pos in
+                let new_hf, new_hp = add_raw_hp_rel_x prog true true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
                 do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
               else
@@ -2030,7 +2031,7 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
       let n_orig_lhs_hf,_ = CF.drop_hrel_hf lhsb.CF.formula_base_heap [hp] in
       (*add new unk preds*)
       let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-      let new_hf, new_hp = add_raw_hp_rel prog true hpdcl.Cast.hp_vars_inst pos in
+      let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
       let _,args1 = CF.extract_HRel new_hf in
       let ss = List.combine args1 args in
       let n_constr_rhs_hf = (CF.h_subst ss new_hf) in
@@ -2053,7 +2054,7 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
     let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
     (*generate new hp decl for top guard of pre-preds*)
     let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-    let new_hf, new_hp = add_raw_hp_rel prog true hpdcl.Cast.hp_vars_inst pos in
+    let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
     let _,args1 = CF.extract_HRel new_hf in
     let ss = List.combine args1 args in
     let rhs = CF.formula_of_heap (CF.h_subst ss new_hf) pos in
@@ -4857,7 +4858,7 @@ let mk_orig_hprel_def prog is_pre cdefs unk_hps hp r other_args args sh_ldns eqN
       let n_hprels,ls_n_hpargs = List.fold_left
         ( fun (r_hprels,r_hpargs) (n_args_inst, r) ->
             let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-            let n_hprel,n_hp =  add_raw_hp_rel prog is_pre n_args_inst no_pos in
+            let n_hprel,n_hp =  add_raw_hp_rel prog is_pre false n_args_inst no_pos in
             (r_hprels@[n_hprel], r_hpargs@[(n_hp,(List.map fst n_args_inst, r, other_args))])
         ) ([],[]) ls_n_args_inst
       in
@@ -4907,7 +4908,7 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
     else
       let old_hrel = mkHRel hp args no_pos in
       let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-      let new_hrel,n_hp = add_raw_hp_rel prog is_pre (List.map (fun sv -> (sv,I)) new_args) no_pos in
+      let new_hrel,n_hp = add_raw_hp_rel prog is_pre false (List.map (fun sv -> (sv,I)) new_args) no_pos in
       (*let new_hrel = mkHRel hp new_args no_pos in *)
       (*linking defs*)
       let link_f = CF.formula_of_heap old_hrel no_pos in
@@ -6923,7 +6924,7 @@ let ann_unk_svl prog par_defs=
     let _ = Debug.ninfo_zprint (lazy (("     partial unk hp: " ^ (!CP.print_sv hp)))) no_pos in
     let unk_args0_w_inst = List.map (fun sv -> (sv, NI)) unk_args0 in
     let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-    let unk_hf, unk_hps = add_raw_hp_rel_x prog is_pre unk_args0_w_inst no_pos in
+    let unk_hf, unk_hps = add_raw_hp_rel_x prog is_pre true unk_args0_w_inst no_pos in
     let new_par_def0= (hp,args0,unk_args0,cond0,add_unk_hp_f unk_hf olhs0, add_unk_hp_f unk_hf orhs0) in
     let tl_par_defs = List.map (add_unk_hp_pdef unk_hf unk_args0) (List.tl par_defs) in
     ((unk_hps,unk_args0), new_par_def0::tl_par_defs)

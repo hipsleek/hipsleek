@@ -2341,7 +2341,7 @@ let gfp_gen_init prog is_pre r base_fs rec_fs=
     let pos = (CF.pos_of_formula f) in
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
-      let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre [(r, I)] pos in
+      let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre true [(r, I)] pos in
       let f = CF.formula_of_heap_w_normal_flow hf pos in
       (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
     else
@@ -2812,7 +2812,7 @@ let check_split_global_x prog cands =
   (*each partition, create new hp and its corresponding HRel formula*)
   let helper1 pos args =
     let args1 = List.map (fun sv -> (sv,I)) args in
-    let hf,new_hp_sv = SAU.add_raw_hp_rel prog true args1 pos in
+    let hf,new_hp_sv = SAU.add_raw_hp_rel prog true false args1 pos in
     ((new_hp_sv,args), hf)
   in
   (*for each grp*)

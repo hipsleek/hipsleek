@@ -2550,7 +2550,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
       (*for the local_unk_hps, we fresh them and subst/remove them in local branch*)
       let new_unk_hpargs,ss = List.fold_left (fun (r1,r2) (hp,args) ->
           let is_pre = not (CP.mem_svl hp is.CF.is_post_hps) in
-          let nhp = SAU.fresh_raw_hp_rel prog is_pre hp no_pos in
+          let nhp = SAU.fresh_raw_hp_rel prog is_pre true hp no_pos in
           (r1@[(nhp,args)], r2@[(hp,nhp)])
       ) ([],[]) local_unk_hpargs in
       let n_hp_defs = List.map (fun hp_def ->

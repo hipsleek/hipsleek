@@ -2543,7 +2543,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     match unknown_ptrs with
       | [] -> (fb,r_hprels,post_hps,hps,hfs)
       | _ ->
-            let (hf,vhp_rels) = SAU.add_raw_hp_rel prog is_pre unknown_ptrs pos in
+            let (hf,vhp_rels) = SAU.add_raw_hp_rel prog is_pre false unknown_ptrs pos in
             begin
               match hf with
                 | HRel hp ->
