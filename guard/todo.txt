@@ -836,7 +836,7 @@ It should be:
 [[empty]]
 *
 ==========================================================
-# err3a.slk 
+# err3a.slk FIXED by Long
 
 Why isn't --print-en-tidy invoked for sleek.
 Can we do that to?

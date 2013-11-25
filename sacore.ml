@@ -405,7 +405,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | _ -> svl2
 
 (*analysis unknown information*)
-let rec analize_unk_one prog unk_hps constr =
+let rec analize_unk_one_x prog unk_hps constr =
   (* let _ = Debug.info_zprint (lazy (("   hrel: " ^ (Cprinter.string_of_hprel_short constr)))) no_pos in *)
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
@@ -425,6 +425,14 @@ let rec analize_unk_one prog unk_hps constr =
       (lhrels@rhrels))
   in
   (List.concat unk_hp_locs, List.concat unk_hp_args_locs)
+
+and analize_unk_one prog unk_hps constr =
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list (pr_triple !CP.print_sv pr2 (pr_list string_of_int)) in
+  Debug.no_2 "analize_unk_one" pr2 pr1 (pr_pair pr3 pr3)
+      (fun _ _ -> analize_unk_one_x prog unk_hps constr)
+      unk_hps constr
 
 and find_closure_post_hps_x post_hps ls_unk_hps_args =
   let cs_post_args,cs_poss_post_hpargs = List.fold_left (fun (r1,r2) (hp,args) ->
@@ -789,9 +797,9 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   let unk_hp_args01,_ = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
   (*for debugging*)
-  (* let _ = Debug.ninfo_pprint ("  unks 1: " ^ *)
+  (* let _ = Debug.info_pprint ("  unks 1: " ^ *)
   (*     (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)) *)
-  (*                                            in pr unk_hp_args01)) no_pos *)
+  (*     in pr unk_hp_args01)) no_pos *)
   (* in *)
   (*END for debugging*)
   (*double check across one cs*)
@@ -807,9 +815,9 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
         SAU.check_hp_locs_eq (hp1,locs1) (hp2,locs2))
       unk_hp_args02
     in
-    (* let _ = Debug.ninfo_pprint ("  ls_unk_cands1: " ^ *)
+    (* let _ = Debug.info_pprint ("  ls_unk_cands1: " ^ *)
     (*     (let pr = pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)) *)
-    (*                                          in pr ls_unk_cands1)) no_pos *)
+    (*     in pr ls_unk_cands1)) no_pos *)
     (* in *)
     if ls_unk_cands1 = [] then ([],[],n_closure_post_hps) else
       let diff = Gen.BList.difference_eq (fun (hp1,_,locs1) (hp2,_,locs2) ->

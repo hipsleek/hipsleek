@@ -957,13 +957,13 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
         in
         let guarded_top_par_defs, par_defs = List.partition (fun (a1,args,og,f,unk_args) ->
             CF.is_top_guard f skip_hps og
-            (* CF.isStrictConstHTrue f && og != None *)
+                (* CF.isStrictConstHTrue f && og != None *)
         ) par_defs in
-        let hpdefs,subst_useless=
+        let is_put_top_guarded, hpdefs,subst_useless=
           if CP.mem_svl hp skip_hps then
             let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
             let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula args f1 f2) fs in
-            (SAU.mk_unk_hprel_def hp args fs1 no_pos,[])
+            (true, SAU.mk_unk_hprel_def hp args fs1 no_pos,[])
           else
             (*find the root: ins2,ins3: root is the second, not the first*)
             let args0 = List.map (CP.fresh_spec_var) args in
@@ -1016,20 +1016,27 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             in
             let _ = Globals.pred_disj_unify := old_disj in
             if defs <> [] then
-              (defs,elim_ss)
+              (false, defs,elim_ss)
             else
               (* report_error no_pos "shape analysis: FAIL" *)
-              let body = if is_pre then
-                CF.mkHTrue_nf no_pos
+              if guarded_top_par_defs = [] then
+                let body =
+                  if is_pre then
+                    CF.mkHTrue_nf no_pos
+                  else
+                    CF.mkFalse_nf no_pos
+                in
+                let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
+                  (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] in
+                (true, [(hp, def)],[])
               else
-                  CF.mkFalse_nf no_pos
-              in
-              let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
-                (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos)) [(body,None)] in
-              ([(hp, def)],[])
+                let def = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, non_r_args))
+                  (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args0, no_pos))
+                  (List.map (fun (a1,args,og,f,_) -> (f,og)) guarded_top_par_defs) in
+                (true, [(hp, def)],[])
         in
-        (*put guarded top*)
-        let hpdefs = List.map (fun (hp,def) ->
+        let hpdefs = if is_put_top_guarded then hpdefs else
+          List.map (fun (hp,def) ->
             let _, args0= CF.extract_HRel def.CF.def_lhs in
             let f_pdefs = List.fold_left (fun r (a1,args,og,f,_) ->
                 if CP.eq_spec_var a1 hp then
