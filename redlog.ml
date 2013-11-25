@@ -1555,7 +1555,8 @@ let rl_of_rrel ante conseq const_c var_c nneg_c =
 let solve_rrel ctx ctr = 
   let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
   let rl_of_rrel = rl_of_rrel nctx ctr const_c var_c nneg_c in
-  let res = send_and_receive ("rlqe " ^ rl_of_rrel) in
-  let _ = print_endline ("RES: " ^ res) in
-  []
+  let rl_res = send_and_receive ("rlqe " ^ rl_of_rrel) in
+  let lexbuf = Lexing.from_string rl_res in
+  let res = Rlparser.input Rllexer.tokenizer lexbuf in
+  Smtsolver.get_model (CP.fv res) (CP.split_conjunctions res) 
 

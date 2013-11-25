@@ -1147,3 +1147,37 @@ let solve_rrel ctx ctr =
     else []
   with _ -> []
 
+let get_model vars assertions =
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+    let typ = (CP.type_of_spec_var v)in
+    let t = smt_of_typ typ in
+    "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+  ) vars in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let smt_asserts = List.map (fun a ->
+    "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+  let smt_asserts = String.concat "" smt_asserts in
+  let smt_inp = 
+    ";Variables Declarations\n" ^ smt_var_decls ^
+    ";Assertion Declations\n" ^ smt_asserts ^
+    "(check-sat)\n" ^
+    "(get-model)" in
+  let model = (run "" "z3" smt_inp 5.0).original_output_text in
+
+  try
+    if (List.hd model) = "sat" then
+      let inp = String.concat "\n" (List.tl model) in
+      let lexbuf = Lexing.from_string inp in
+      let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
+      sol
+    else []
+  with _ -> []
+
+
+
+
+
+
