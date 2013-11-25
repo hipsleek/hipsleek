@@ -1,0 +1,74 @@
+
+!!!Full processing file "swl-i-sa.ss"
+Parsing file "swl-i-sa.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure lscan$node~node~node... 
+*************************************
+*******relational assumptions (4) ********
+*************************************
+[ // BIND
+  H(cur,prev,sent@NI) --> cur::node<val,next>@M * 
+     HP_945(next,prev@NI,sent@NI) * 
+     HP_946(prev,cur@NI,sent@NI),
+ // PRE_REC
+ HP_946(prev,cur@NI,sent@NI) * cur::node<val,prev>@M&
+     prev1'=null --> H(cur,prev1',sent@NI),
+ // PRE_REC
+  cur1::node<val,prev>@M * HP_946(prev,cur1@NI,sent@NI) * 
+    HP_945(cur',prev@NI,sent@NI)&cur'!=sent & 
+    cur'!=null --> H(cur',cur1,sent@NI),
+ // POST
+   HP_945(next,prev@NI,sent@NI) * HP_946(prev,cur@NI,cur1'@NI) 
+     * cur::node<val,prev>@M&next=sent & cur1'=sent & cur1'=next & 
+       cur=prev1' --> G(cur,cur1',prev,prev1',sent@NI),
+ // POST
+   HP_945(next,prev1@NI,sent@NI) * G(cur,cur1',prev,prev2',sent@NI)&
+       next!=sent & next=null & prev=null & 
+       cur!=null --> G(cur,cur1',prev1,prev2',sent@NI),
+ // POST
+   G(next,cur1',cur,prev1',sent@NI)&next!=sent & next!=null & 
+     cur!=null --> G(cur,cur1',prev,prev1',sent@NI)]
+
+Procedure lscan$node~node~node SUCCESS.
+
+!!! >>>>>> gfp computation for pre-preds <<<<<
+!!!     synthesize (gfp): HP_946
+!!!  HP_946(prev_1127,cur_1124,sent_1123) ::=  [
+  emp&prev_1127=null
+  or HP_946(prev_1130,prev_1127,sent_1123) * 
+     prev_1127::node<val_49_1129,prev_1130>@M&cur_1124!=sent_1123 & 
+     cur_1124!=null
+  or DP_1163(prev_1127)
+  ]
+!!! proving:
+[ HP_946(prev_1126,cur_1124,sent_1123)&
+  prev_1127=null --> HP_945(prev_1126,prev_1127,sent_1123)]
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ prev_1126::HP_946<cur_1124,sent_1123>@M&
+  prev_1127=null --> prev_1126::HP_945<prev_1127,sent_1123>@M
+
+!!! >>>>>> lfp computation for post-preds <<<<<
+!!!    Initial recurrence:  
+ HP_946(prev,prev',cur') * cur::node<val_49_943,prev>@M&cur=prev' & cur'=sent
+ or G(cur,cur',prev_977,prev',sent)&next_49_944=null & prev_977=null & 
+    cur!=null & next_49_944!=sent
+ or G(next_49_944,cur',cur,prev',sent)&cur!=null & next_49_944!=null & 
+    next_49_944!=sent
+ 
+!!!    fix: 0 hfalse&false
+!!!    fix: 1 HP_946(prev,prev',cur') * cur::node<val_49_943,prev>@M&cur=prev' & cur'=sent
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+Stop Omega... 185 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.17,476)
+Total verification time: 0.47 second(s)
+	Time spent in main process: 0.36 second(s)
+	Time spent in child processes: 0.11 second(s)
+
