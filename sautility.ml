@@ -2011,7 +2011,7 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
       lhsb (hp,args) def_ptrs prog_vars
 
 
-let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
+let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,args) lhsb pos=
   let keep_hds = List.filter (fun hd ->
       let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
       CP.intersect_svl svl args <> []
@@ -2022,25 +2022,32 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
   ) lhvs in
   if keep_hds = [] && keep_hvs = [] then
     (*err-1b-split: split for guard*)
-    let ps = List.filter (fun p -> CP.intersect_svl (CP.fv p) args != [])
-      (CP.split_conjunctions (MCP.pure_of_mix lhsb.CF.formula_base_pure)) in
-    if ps = [] then
-      None
-    else
-      (*drop the lhs*)
-      let n_orig_lhs_hf,_ = CF.drop_hrel_hf lhsb.CF.formula_base_heap [hp] in
-      (*add new unk preds*)
-      let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-      let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
-      let _,args1 = CF.extract_HRel new_hf in
-      let ss = List.combine args1 args in
-      let n_constr_rhs_hf = (CF.h_subst ss new_hf) in
-      let n_constr_rhs = CF.formula_of_heap n_constr_rhs_hf pos in
-      let n_orig_lhs_hf2 = CF.mkStarH n_orig_lhs_hf n_constr_rhs_hf pos in
-      let n_orig_lhsb = {lhsb with CF.formula_base_heap = n_orig_lhs_hf2} in
-      let n_constr_lhf = CF.HRel (hp, List.map (fun sv -> CP.mkVar sv pos) args, pos) in
-      let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CF.TypeTrue (CF.mkTrueFlow()) [] pos in
-      (Some (n_orig_lhsb, (hp, n_constr_lhs,  n_constr_rhs, None), new_hp))
+    if is_guarded then None else
+      let ps = List.filter (fun p -> CP.intersect_svl (CP.fv p) args != [])
+        (CP.split_conjunctions (MCP.pure_of_mix lhsb.CF.formula_base_pure)) in
+      if ps = [] then
+        None
+      else
+        let args_i =  get_hp_args_inst prog hp args in
+        if not (List.exists (fun (r_hp,r_args) ->
+            let r_args_i = get_hp_args_inst prog r_hp r_args in
+            (CP.intersect args_i r_args_i != [])
+        ) ls_rhp_args) then None
+        else
+          (*drop the lhs*)
+          let n_orig_lhs_hf,_ = CF.drop_hrel_hf lhsb.CF.formula_base_heap [hp] in
+          (*add new unk preds*)
+          let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+          let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
+          let _,args1 = CF.extract_HRel new_hf in
+          let ss = List.combine args1 args in
+          let n_constr_rhs_hf = (CF.h_subst ss new_hf) in
+          let n_constr_rhs = CF.formula_of_heap n_constr_rhs_hf pos in
+          let n_orig_lhs_hf2 = CF.mkStarH n_orig_lhs_hf n_constr_rhs_hf pos in
+          let n_orig_lhsb = {lhsb with CF.formula_base_heap = n_orig_lhs_hf2} in
+          let n_constr_lhf = CF.HRel (hp, List.map (fun sv -> CP.mkVar sv pos) args, pos) in
+          let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CF.TypeTrue (CF.mkTrueFlow()) [] pos in
+           (Some (n_orig_lhsb, (hp, n_constr_lhs,  n_constr_rhs, None), new_hp))
   else
     let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@
       (List.map (fun hv -> CF.ViewNode hv) keep_hvs) in
@@ -2060,13 +2067,13 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
     let rhs = CF.formula_of_heap (CF.h_subst ss new_hf) pos in
     Some (lhsb, (hp, lhs, rhs, Some g), new_hp)
 
-let split_guard_constrs prog lhds lhvs post_hps (hp,args) lhsb  pos=
+let split_guard_constrs prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,args) lhsb  pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = Cprinter.prtt_string_of_formula in
   let pr4 = Cprinter.string_of_formula_base in
   Debug.no_2 "split_guard_constrs" pr4 (pr_pair pr1 pr2) (pr_opt (pr_triple pr4 (pr_quad pr1 pr3 pr3 (pr_opt pr3)) pr1))
-      (fun _ _ -> split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb  pos)
+      (fun _ _ -> split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,args) lhsb  pos)
       lhsb (hp,args)
 
 let detect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=

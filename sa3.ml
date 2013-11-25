@@ -462,7 +462,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         let _ = Debug.ninfo_zprint (lazy (("   rem_hpargs1: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl))  rem_hpargs1)))) no_pos in
         let lfb2, guarded_preds0, link_hps2 = List.fold_left (fun (lfb, r1,r2) (hp,args) ->
             if CP.mem_svl hp r_hps then (lfb, r1,r2) else
-              let pr_lhs_g = SAU.split_guard_constrs prog lhds lhvs post_hps (hp,args) lfb no_pos in
+              let pr_lhs_g = SAU.split_guard_constrs prog (cs.CF.hprel_guard!=None) lhds lhvs post_hps ls_rhp_args (hp,args) lfb no_pos in
               match pr_lhs_g with
                 | None -> (lfb, r1, r2)
                 | Some (lfb1, g_cs,link_hp) -> (lfb1, r1@[g_cs],r2@[(link_hp, args)])

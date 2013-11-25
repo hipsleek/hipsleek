@@ -12,7 +12,7 @@ int foo(cell p)
 {
   if (p!=null) {
     int i = p.val;
-    dprint;
+    //dprint;
     goo(p);
     return i;
   } 
