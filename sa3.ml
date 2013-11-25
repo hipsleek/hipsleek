@@ -650,12 +650,12 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
               CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[((a1,a2,a3,a4,a5,a5g,a6),cs)]@part])
   in
-  let do_combine (hp,args,unk_svl, cond, lhs,og, orhs)=
+  let do_combine b_acc_unsat (hp,args,unk_svl, cond, lhs,og, orhs)=
     match orhs with
       | Some rhs ->
             let n_cond = CP.remove_redundant cond in
             let nf = (CF.mkAnd_pure rhs (MCP.mix_of_pure n_cond) (CF.pos_of_formula rhs)) in
-            if SAU.is_unsat nf then [] else
+            if not b_acc_unsat && SAU.is_unsat nf then [] else
             [(hp,args,unk_svl, n_cond, lhs, og, Some (CF.simplify_pure_f nf))]
       | None -> report_error no_pos "sa2.combine_pdefs_pre: should not None 1"
   in
@@ -684,7 +684,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       (* let _ = DD.info_zprint (lazy (("      cond_disj1: " ^ (!CP.print_formula  cond_disj1) ))) no_pos in *)
       let cond21 = CF.remove_neqNull_redundant_andNOT_opt orhs1 cond2 in
       let n_cond = CP.mkAnd cond1 (CP.mkNot cond21 None no_pos) no_pos in
-      let npdef1 = do_combine (hp1,args1,unk_svl1, CP.remove_redundant n_cond , olhs1,og1, orhs1) in
+      let npdef1 = do_combine false (hp1,args1,unk_svl1, CP.remove_redundant n_cond , olhs1,og1, orhs1) in
       npdef1
     else []
     in
@@ -693,7 +693,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       (* let _ = DD.info_zprint (lazy (("      cond_disj2: " ^ (!CP.print_formula  cond_disj2) ))) no_pos in *)
       let cond11 = CF.remove_neqNull_redundant_andNOT_opt orhs2 cond1 in
       let n_cond = (CP.mkAnd cond2 (CP.mkNot cond11 None no_pos) no_pos) in
-      let npdef2 = do_combine (hp2,args2,unk_svl2, CP.remove_redundant n_cond, olhs2,og2, orhs2) in
+      let npdef2 = do_combine false (hp2,args2,unk_svl2, CP.remove_redundant n_cond, olhs2,og2, orhs2) in
       npdef2
     else []
     in
@@ -704,7 +704,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       let is_sat1, n_orhs = mkAnd_w_opt hp1 args1 orhs1 orhs2 in
       let is_sat2, n_olhs = mkAnd_w_opt hp1 args1 olhs1 olhs2 in
       let npdef3 = if is_sat1 && is_sat2 then
-        do_combine (hp1,args1,unk_svl1, n_cond, n_olhs,og1, n_orhs)
+        do_combine false (hp1,args1,unk_svl1, n_cond, n_olhs,og1, n_orhs)
       else [(hp1,args1,unk_svl1,  n_cond, olhs1, og1, Some (CF.mkFalse_nf no_pos))]
       in
       npdef3
@@ -791,7 +791,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
     match pr_pdefs with
       | [] -> ([],[], equivs)
       | [(hp,args,unk_svl, cond, lhs, og, orhs), _] ->
-          let new_pdef = do_combine (hp,args,unk_svl, cond, lhs,og, orhs) in
+          let new_pdef = do_combine true (hp,args,unk_svl, cond, lhs,og, orhs) in
           (new_pdef,[], equivs)
       | _ -> begin
           (*each group, filter depended constraints*)
@@ -817,7 +817,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
           let pdefs,rem_constrs0 = begin
             match cs,rem_pr_defs1 with
               | [],[] -> [],[]
-              | [((hp,args,unk_svl, cond, lhs,og, orhs), _)],[] -> (do_combine (hp, args, unk_svl, cond, lhs,og, orhs)),[]
+              | [((hp,args,unk_svl, cond, lhs,og, orhs), _)],[] -> (do_combine true (hp, args, unk_svl, cond, lhs,og, orhs)),[]
               | [],[(pr1,_);(pr2,_)] -> let npdefs = combine_helper2 pr1 pr2 in
                 npdefs,[]
               | _ ->
