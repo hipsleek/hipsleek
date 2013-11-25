@@ -988,6 +988,33 @@ Procedure foo$cell result FAIL.(1)
 Stop Omega... 45 invocations 
 0
 ==========================================================
+# swl-i-sa.ss -sa-gen-sleek-file
+
+Why were 2 files generated?
+Can we put this in logs/.. and can
+we use a prefix e.g logs/gen1_swl-i-sa.slk
+rather than random number.
+
+ swl-i-sa_1048.slk  swl-i-sa_1149.slk
+
+The first one seems to produce some result:
+
+
+[ DP_195(prev) ::= NONE,
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M * HP_946(prev,prev1',next)&cur=prev1' & next=sent,
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+ emp&cur!=sent & cur=null
+ or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_195(prev1)
+ ]
+
+Why is this different from hip which failed?
 ==========================================================
 ==========================================================
 ==========================================================
