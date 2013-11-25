@@ -2454,11 +2454,11 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
   (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
 (* TermInf: Printing ranking constraints *)
-let pr_rrel (rr: rrel) =
+let pr_rrel (rr: TI.rrel) =
   fmt_string "DEC ";
-  pr_mix_formula rr.rrel_ctx;
+  pr_mix_formula rr.TI.rrel_ctx;
   fmt_string " |- ";
-  pr_mix_formula rr.rrel_ctr
+  pr_mix_formula rr.TI.rrel_ctr
 ;;
 
 let string_of_rrel = poly_string_of_pr pr_rrel ;;

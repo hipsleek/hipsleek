@@ -1,9 +1,19 @@
 open Globals
 open Cpure
 
+module MCP = Mcpure
+
 type rel_type =
   | RR_DEC
   | RR_BND
+
+(**** TERMINATION RANKING INFERENCE ****)
+type rrel = {
+  rrel_type: rel_type;
+  rrel_ctx: MCP.mix_formula;
+  rrel_ctr: MCP.mix_formula;
+}
+
 
 (* Functions for creating ID *)
 let view_rank_id view_id =
@@ -25,6 +35,15 @@ let view_base_ragr view_id =
 let view_var_ragr view_id =
   let rarg_id = SpecVar (Int, view_rarg_id view_id, Unprimed) in
   mkRArg_var rarg_id
+
+let solve_rrel rrel = 
+  let ctx = MCP.pure_of_mix rrel.rrel_ctx in
+  let ctr = MCP.pure_of_mix rrel.rrel_ctr in
+  Redlog.solve_rrel ctx ctr
+
+
+let rec solve_rrel_list rrel_list =
+  List.concat (List.map solve_rrel rrel_list)
 
 
 

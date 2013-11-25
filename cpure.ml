@@ -1972,7 +1972,7 @@ and and_list_to_and l = match l with
   with Not_found -> (branch, mkTrue pos )
   in
   Label_Pure.norm  (List.map map_fun branches)*)
-	
+
 and mkOr_x f1 f2 lbl pos= 
   if (isConstFalse f1) then f2
   else if (isConstTrue f1) then f1

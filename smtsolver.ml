@@ -3,7 +3,6 @@ open GlobProver
 open Gen.Basic
 
 module CP = Cpure
-module CF = Cformula
 module MCP = Mcpure
 
 module StringSet = Set.Make(String)
@@ -1085,50 +1084,7 @@ let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 
 (* TermInf: Using Z3 to solve ranking relation constraints *)
-let rec process_output (channel: in_channel) : string option =
-  let first_line = input_line channel in
-  let _ = print_endline first_line in
-  if (first_line = "sat") then
-    Some (collect_model channel)
-  else None
-
-and collect_model (channel: in_channel) : string =
-  let helper acc = 
-    try
-      let line = input_line channel in
-      let _ = print_endline line in
-      acc ^ "\n" ^ line
-    with End_of_file -> acc
-  in helper ""
-
-
-let send_and_receive f timeout =
-  let tstartlog = Gen.Profiling.get_time () in 
-  if not !is_z3_running then start ()
-  else if (!z3_call_count = !z3_restart_interval) then (
-    restart("Regularly restart: 1 ");
-    z3_call_count := 0;
-  );
-  let fnc f = (
-    let _ = incr z3_call_count in
-    (*due to global stack - incremental, push current env into a stack before working and
-      removing it after that. may be improved *)
-    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-    let _ = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
-    output_string (!prover_process.outchannel) new_f;
-    flush (!prover_process.outchannel);
-    process_output (!prover_process.inchannel)
-  ) in
-  let fail_with_timeout () = (
-    restart ("[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout));
-    None 
-  ) in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
-  let tstoplog = Gen.Profiling.get_time () in
-  let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
-  res
-
-let rrel_to_smt ante conseq const_c var_c nneg_c =
+let smt_of_rrel ante conseq const_c var_c nneg_c =
   let p = no_pos in
 
   (* Variable declarations *)
@@ -1174,22 +1130,20 @@ let rrel_to_smt ante conseq const_c var_c nneg_c =
   ";Ranking Assertion\n" ^ rrel_assert
 
 
-let solve_rrel (rrel: CF.rrel) = 
-  let ctx = MCP.pure_of_mix rrel.CF.rrel_ctx in
-  let ctr = MCP.pure_of_mix rrel.CF.rrel_ctr in
+let solve_rrel ctx ctr = 
   let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
-  let smt_of_rrel = rrel_to_smt nctx ctr const_c var_c nneg_c in
+  let smt_of_rrel = smt_of_rrel nctx ctr const_c var_c nneg_c in
 
   let res = run "" "z3" smt_of_rrel 5.0 in
 
   let res_txt = res.original_output_text in
 
-  if (List.hd res_txt) = "sat" then
-    let inp = String.concat "\n" (List.tl res_txt) in
-    let lexbuf = Lexing.from_string inp in
-    let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-    sol
-  else []
+  try
+    if (List.hd res_txt) = "sat" then
+      let inp = String.concat "\n" (List.tl res_txt) in
+      let lexbuf = Lexing.from_string inp in
+      let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
+      sol
+    else []
+  with _ -> []
 
-let rec solve_rrel_list rrel_list =
-  List.concat (List.map solve_rrel rrel_list)

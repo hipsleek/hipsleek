@@ -3850,13 +3850,6 @@ and disj_count (f0 : formula) = match f0 with
 
   | _ -> 1
 
-(**** TERMINATION RANKING INFERENCE ****)
-type rrel = {
-  rrel_type: TI.rel_type;
-  rrel_ctx: MCP.mix_formula;
-  rrel_ctr: MCP.mix_formula;
-}
-
 (***************INFER******************)
 (*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
 (*    used in the context fields: es_infer_hp_rel and returned by various methods in particular*)
@@ -6675,7 +6668,7 @@ think it is used to instantiate when folding.
 
   (* For Termination Inference *)
   (* The list constrainsts of ranking relation *)
-  es_rrel : rrel list;
+  es_rrel : TI.rrel list;
 
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
@@ -13651,7 +13644,7 @@ let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
 
-let collect_rrel_list_failesc_context (ctx: list_failesc_context) : rrel list =
+let collect_rrel_list_failesc_context (ctx: list_failesc_context) : TI.rrel list =
   let f_c arg ctx = match ctx with
   | Ctx es -> Some (ctx, es.es_rrel)
   | _ -> None

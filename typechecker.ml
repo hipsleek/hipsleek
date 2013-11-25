@@ -24,6 +24,7 @@ module CEQ = Checkeq
 module M = Lexer.Make(Token.Token)
 module H = Hashtbl
 module LO2 = Label_only.Lab2_List
+module TI = Terminf
 
 let store_label = new store LO2.unlabelled LO2.string_of
 let save_flags = ref (fun ()->()) ;;
@@ -676,7 +677,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let res_ctx = check_exp prog proc lfe e0 post_label in
                     (* TermInf: Collecting ALL ranking constraints here *)
                     let rrel = CF.collect_rrel_list_failesc_context res_ctx in
-                    let sol_for_rrel = Smtsolver.solve_rrel_list rrel in
+                    let sol_for_rrel = TI.solve_rrel_list rrel in
                     let n_vdefs = List.map (fun vdef -> {vdef with Cast.view_formula = 
                       CF.subst_rankrel_sol_struc_formula sol_for_rrel vdef.Cast.view_formula}) prog.Cast.prog_view_decls in
                     let _ = if !Globals.en_term_inf then

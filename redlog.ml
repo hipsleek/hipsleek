@@ -343,6 +343,7 @@ let rl_of_b_formula b =
       "((" ^ a1 ^ " = " ^ a2 ^ " and " ^ a2 ^ " <= " ^ a3 ^ ") or ("
       ^ a1 ^ " = " ^ a3 ^ " and " ^ a2 ^ " >= " ^ a3 ^ "))"
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
+  | CP.RankRel _ -> "true"
   | _ -> failwith "redlog: bags is not supported"
 
 let rec rl_of_formula pr_w pr_s f0 =
@@ -1540,3 +1541,21 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 
 (* Set the equation solver in Cpure *)
 Cpure.solve_equations := solve_eqns;;
+
+(* TermInf: Using Z3 to solve ranking relation constraints *)
+let rl_of_rrel ante conseq const_c var_c nneg_c =
+  let p = no_pos in 
+  let (pr_w, pr_s) = CP.drop_complex_ops in
+  let f = CP.mkOr (CP.mkNot_s ante) conseq None p in
+  let params = Gen.BList.difference_eq CP.eq_spec_var (CP.fv ante) const_c in
+  let qf = CP.mkForall params f None p in
+  rl_of_formula pr_w pr_s qf
+
+
+let solve_rrel ctx ctr = 
+  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
+  let rl_of_rrel = rl_of_rrel nctx ctr const_c var_c nneg_c in
+  let res = send_and_receive ("rlqe " ^ rl_of_rrel) in
+  let _ = print_endline ("RES: " ^ res) in
+  []
+
