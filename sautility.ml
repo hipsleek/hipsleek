@@ -2012,11 +2012,11 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
 
 let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
   let keep_hds = List.filter (fun hd ->
-      let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+      let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
       CP.intersect_svl svl args <> []
   ) lhds in
   let keep_hvs = List.filter (fun hv ->
-      let svl = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
+      let svl = (* hv.CF.h_formula_view_node:: *)hv.CF.h_formula_view_arguments in
       CP.intersect_svl svl args <> []
   ) lhvs in
   if keep_hds = [] && keep_hvs = [] then None else
@@ -2024,7 +2024,7 @@ let split_guard_constrs_x prog lhds lhvs post_hps (hp,args) lhsb pos=
       (List.map (fun hv -> CF.ViewNode hv) keep_hvs) in
     let g_h = CF.join_star_conjunctions g_hfs in
     let all_svl = (List.fold_left (fun r hd -> r@hd.CF.h_formula_data_arguments) [] keep_hds)@
-      (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs)@args in
+      (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs) @args  in
     let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
     let p1 = CP.prune_irr_eq p all_svl in
     let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
