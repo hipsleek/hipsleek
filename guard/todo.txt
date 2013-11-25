@@ -897,9 +897,11 @@ EXPECTED:
 What happen to defn of HP_907? Isn't it
 classified as dangling?
 ==========================================================
-# err3.ss
+# err3.ss: FIXED
 
 WHY HP_907 became HP_934???
+ ==> HP_907 is not classified as UNK because it is accessed in then branch.
+HP_934 is generated at split_step to show that HP_907 is not accessed in else branch.
 
 
 [ H(p,q) ::= 
