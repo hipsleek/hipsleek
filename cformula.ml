@@ -309,6 +309,7 @@ let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
 let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
+
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
 let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
@@ -6213,7 +6214,7 @@ let remove_neqNull_redundant_hnodes_f_x f0=
 
 let remove_neqNull_redundant_hnodes_f f0=
   let pr1 = !print_formula in
-  Debug.no_1 "remove_neqNull_redundant_hnodes_f" pr1 pr1
+  Debug.no_1 "CF.remove_neqNull_redundant_hnodes_f" pr1 pr1
       (fun _ -> remove_neqNull_redundant_hnodes_f_x f0) f0
 
 let remove_neqNull_redundant_hnodes_f_wg (f0,og)=
@@ -11992,7 +11993,7 @@ let rec simplify_post post_fml post_vars = match post_fml with
         formula_or_pos = pos}
   | _ -> 
     let h, p, fl, t, a = split_components post_fml in
-    let p = CP.mkExists_with_simpl Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
+    let p = CP.mkExists_with_simpl (* Omega.simplify *)!CP.simplify post_vars (MCP.pure_of_mix p) None no_pos in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl a no_pos in
     post_fml
 

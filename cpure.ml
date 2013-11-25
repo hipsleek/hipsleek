@@ -2168,6 +2168,8 @@ and mkTrue_b pos = (BConst (true, pos),None)
 
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
+and simplify = ref (fun (c:formula) -> mkTrue no_pos)
+
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
 and mkFalse_b pos = (BConst (false, pos), None) 

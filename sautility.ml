@@ -1918,7 +1918,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let hf1 = CF.drop_hnodes_hf f.CF.formula_base_heap args in
     let p = MCP.pure_of_mix f.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl TP.simplify_raw diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl TP.simplify diff_svl p None no_pos in
     let f1 = {f with CF.formula_base_pure = MCP.mix_of_pure p_w_quan;
         CF.formula_base_heap = hf1;} in
     let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in
@@ -2088,7 +2088,7 @@ let split_base_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb=
     let f1 = {f with CF.formula_base_heap = hf1;} in
     let p = MCP.pure_of_mix f1.CF.formula_base_pure in
     let diff_svl = CP.diff_svl (CP.fv p) args in
-    let p_w_quan = CP.mkExists_with_simpl Omega.simplify diff_svl p None no_pos in
+    let p_w_quan = CP.mkExists_with_simpl TP.simplify (*Omega.simplify*) diff_svl p None no_pos in
     let f3 = {f1 with CF.formula_base_pure = MCP.mix_of_pure p_w_quan} in
     (* let leqs = (MCP.ptr_equations_without_null f1.CF.formula_base_pure) in *)
     (* let f3 = if leqs =[] then f1 else *)
@@ -2640,7 +2640,7 @@ let equiv_unify_wg_x args fs_wg=
 
 let equiv_unify_wg args fs_wg=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
-  Debug.no_2 "equiv_unify" !CP.print_svl pr1 pr1
+  Debug.no_2 "equiv_unify_wg" !CP.print_svl pr1 pr1
       (fun _ _ -> equiv_unify_wg_x args fs_wg) args fs_wg
 
 let remove_subsumed_pure_formula_x args ps=
@@ -4685,7 +4685,7 @@ let simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs
 let simplify_set_of_formulas_wg prog is_pre cdefs hp args unk_hps unk_svl defs_wg=
    let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
    let pr2 = pr_pair string_of_bool pr1 in
-   Debug.no_3 "simplify_set_of_formulas" !CP.print_sv !CP.print_svl pr1 pr2
+   Debug.no_3 "simplify_set_of_formulas_wg" !CP.print_sv !CP.print_svl pr1 pr2
        (fun _ _ _ -> simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
 
 (**********************)
@@ -4709,8 +4709,11 @@ let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) 
           (*   (List.hd defs1) (List.tl defs1) in *)
           let _ = C.set_proot_hp_def_raw (get_pos new_args 0 r) prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
           let n_id = C.get_root_typ_hprel prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
-          let ss = [(r,CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] in
-          let defs_wg = List.map (fun (f, og) -> (CF.subst ss f ,og)) defs1 in
+          let _ = DD.ninfo_hprint (add_str "n_id: " pr_id) n_id no_pos in
+          let defs_wg = if String.compare n_id "" ==0 then defs1 else
+            let ss = [(r,CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] in
+            List.map (fun (f, og) -> (CF.subst ss f ,og)) defs1
+          in
           let _ = DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")"))) pos in
           DD.ninfo_zprint (lazy ((" =: " ^ ((pr_list_ln Cprinter.prtt_string_of_formula) (List.map fst defs_wg)) ))) pos;
           let def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras)) (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos))  defs_wg) in

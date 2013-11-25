@@ -3491,3 +3491,6 @@ let check_diff xp0 xp1 =
 let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
+
+
+let _ = CP.simplify := simplify

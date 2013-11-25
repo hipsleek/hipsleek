@@ -142,10 +142,11 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      ((vname,tis), n_iview)::acc
 	| _ -> acc) [] hp_rels
 
-(* let transform_hp_rels_to_iviews iprog cprog hp_rels = *)
-(*   let pr1 = pr_list (pr_pair pr_id Cprinter.string_of_hp_rel_def) in *)
-(*   let pr2 = pr_list (pr_pair pr_id (pr_pair Iprinter.string_of_view_decl TI.string_of_tlist)) in *)
-(*   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews iprog cprog hp_rels *)
+let transform_hp_rels_to_iviews iprog cprog hp_rels =
+  let pr1 = pr_list ( Cprinter.string_of_hp_rel_def) in
+  let pr2 = pr_list (pr_pair (pr_pair pr_id TI.string_of_tlist) Iprinter.string_of_view_decl) in
+  Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2
+      (fun _ -> transform_hp_rels_to_iviews iprog cprog hp_rels) hp_rels
 
 let syn_hprel_x crem_hprels irem_hprels=
   let rec process_one chps res=
@@ -463,7 +464,9 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
   let n_cviews,chprels_decl = trans_hprel_2_cview iprog cprog "" need_trans_hprels1 in
   let cprog = List.fold_left (plug_proc need_trans_hprels1 chprels_decl) cprog proc_names in
   cprog
-  with _ -> cprog
+  with _ ->
+      let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
+      cprog
 
 let plug_shape_into_specs cprog iprog proc_names hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

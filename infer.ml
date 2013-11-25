@@ -508,7 +508,7 @@ let simplify_helper f0 =
     match f with
       | BForm ((Neq _,_),_) -> f
       | Not _ -> f
-      | _ -> TP.simplify_raw f
+      | _ -> TP.simplify f
   in
   (* let pos = no_pos in *)
   (* let qvars0, bare_f = split_ex_quantifiers f0 in *)
@@ -524,7 +524,7 @@ let simplify_helper f0 =
   helper f0
 
 (* TODO : this simplify could be improved *)
-let simplify f vars = TP.simplify_raw (filter_var 1 (TP.simplify_raw f) vars)
+let simplify f vars = TP.simplify (filter_var 1 (TP.simplify f) vars)
 let simplify_contra f vars = filter_var 2 f vars
 
 let simplify f vars =
@@ -543,7 +543,7 @@ let helper fml lhs_rhs_p weaken_flag =
       let args = CP.fv new_fml in
       let iv = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos)
+      CP.mkExists_with_simpl TP.simplify quan_var new_fml None no_pos)
   else CP.mkFalse no_pos
 
 let rec simplify_disjs pf lhs_rhs weaken_flag =
@@ -949,7 +949,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
             let _ = DD.trace_hprint (add_str "new_p4: " !CP.print_formula) new_p pos in 
             let args = CP.fv new_p in 
             let quan_var_new = CP.diff_svl args iv in 
-            (TP.simplify_raw (CP.mkExists quan_var_new new_p None pos), mkFalse no_pos)
+            (TP.simplify (CP.mkExists quan_var_new new_p None pos), mkFalse no_pos)
           else
             let lhs_xpure = CP.drop_rel_formula lhs_xpure in
             let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
@@ -959,11 +959,11 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
             let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) (vrs) in 
             let lhs_xpure_ann = Cpure.add_ann_constraints imm_vrs lhs_xpure in
             let _ = DD.trace_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure_ann pos  in
-            let new_p = TP.simplify_raw (CP.mkForall quan_var_new 
+            let new_p = TP.simplify (CP.mkForall quan_var_new 
                 (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
             let new_p = if not(isConstFalse new_p) then new_p else
               (* Use quan_var instead *)
-              TP.simplify_raw (CP.mkForall quan_var 
+              TP.simplify (CP.mkForall quan_var 
                   (CP.mkOr (CP.mkNot_s lhs_xpure_ann) rhs_xpure None pos) None pos) in
             (*          let fml2 = TP.simplify_raw (CP.mkExists quan_var_new fml None no_pos) in*)
             let new_p_for_assume = new_p in
@@ -976,7 +976,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
             let _ = DD.trace_hprint (add_str "iv: " !CP.print_svl) iv pos in
             let _ = DD.trace_hprint (add_str "new_p1: " !CP.print_formula) new_p pos in
             (* TODO Thai : Should fml be lhs_pure only *)
-            let new_p = TP.simplify_raw (simplify_disjs new_p fml) in
+            let new_p = TP.simplify (simplify_disjs new_p fml) in
             let _ = DD.trace_hprint (add_str "new_p: " !CP.print_formula) new_p pos in
             (* TODO : simplify_raw seems to undo pairwisecheck *)
             let new_p = TP.pairwisecheck_raw new_p in
@@ -1795,7 +1795,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
               (* TODO: The better is to avoid generating redundant primed vars *)
               pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
             else
-              let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+              let new_lhs_drop_rel = TP.simplify (CP.drop_rel_formula new_lhs) in
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
               DD.ninfo_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos;
               let rel_lhs_new = List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in

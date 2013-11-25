@@ -11177,7 +11177,7 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let p = CP.mkForall diff f None pos in
               let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
               if TP.is_sat_raw (MCP.mix_of_pure p) then
-                let np = (TP.simplify_raw (CP.arith_simplify_new p)) in
+                let np = (TP.simplify (CP.arith_simplify_new p)) in
                 let _ = DD.ninfo_hprint (add_str "lhs_xpure" !CP.print_formula) (MCP.pure_of_mix lhs_xpure) no_pos in
                 let _ = DD.ninfo_hprint (add_str "np" !CP.print_formula) np no_pos in
                 let ps1, redun_neqNulls= List.partition (fun p->not(CP.is_neq_null_exp p)) (CP.split_conjunctions np) in
@@ -13723,7 +13723,7 @@ let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_var
 (*        CP.subst subst_lst p *)
 (*      else p in*)
       let bag_vars, post_vars = List.partition CP.is_bag_typ post_vars in
-      let p = TP.simplify_raw (CP.mkExists post_vars p None no_pos) in
+      let p = TP.simplify (CP.mkExists post_vars p None no_pos) in
       (p,[],bag_vars)
     | Some triples (*(rel, post, pre)*) ->
       if inf_post then
@@ -13921,12 +13921,12 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
     let fml = CP.mkForall quan_vars fml None no_pos in
     let _ = Debug.ninfo_hprint (add_str "pre_rec_raw" !CP.print_formula) fml no_pos in
-    let pre_rec = TP.simplify_raw fml in
+    let pre_rec = TP.simplify fml in
     let _ = Debug.ninfo_hprint (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     let list_pre = [pre;pre_rec;pure_oblg_to_check] in
     let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
-    let final_pre = TP.simplify_raw final_pre in
+    let final_pre = TP.simplify final_pre in
     let final_pre = filter_disj final_pre pre_fmls in
     let final_pre = TP.pairwisecheck_raw final_pre in
     let _ = Debug.devel_hprint (add_str "final_pre" !CP.print_formula) final_pre no_pos in
@@ -14005,7 +14005,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func
 
     let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
     if checkpoint1 then
-      let pre = TP.simplify_raw pre in
+      let pre = TP.simplify pre in
       let pre = filter_disj pre pre_fmls in
       let pre = TP.pairwisecheck_raw pre in
       let _ = Debug.devel_hprint (add_str "pre" !CP.print_formula) pre no_pos in
