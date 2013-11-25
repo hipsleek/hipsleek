@@ -2170,9 +2170,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (*       Err.error_text = Printf.sprintf *)
                           (*           "Proving precondition in method failed." *)
                           (*   } *)
+                          let pr = pr_list_ln Cprinter.string_of_hprel_short in
+                          let hprel_assumptions = Infer.collect_hp_rel_list_failesc_context res in
                           raise (Err.Ppf ({
                               Err.error_loc = pos;
-                              Err.error_text = (to_print ^s)
+                              Err.error_text = (to_print ^s ^ "\n" ^ (pr hprel_assumptions))
                           }, match fk with
                             | CF.Failure_Bot _ -> 0
                             | CF.Failure_Must _ -> 1
@@ -2489,17 +2491,22 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
       (* process each scc set of mutual-rec procedures *)
       (* to be used for inferring phase constraints *)
       (* replacing each spec with new spec with phase numbering *)
-and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl -> proc_decl -> unit) =
-  let rec helper lst = 
+and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl -> proc_decl -> bool) =
+  let rec helper b lst = 
     match lst with
-      | [] -> ()
+      | [] -> b (*()*)
       | p::ps ->
-            let _ = (fn prog p) in
-            helper ps
+            let nres =
+              try
+                let _ = (fn prog p) in
+                b
+              with _ -> false
+            in
+            helper nres ps
   in
   (*verify one scc - collect assumptions if applicable*)
-  let _ = helper proc_lst in
-  ()
+  let res = helper true proc_lst in
+  res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog scc_procs =
   if not(!Globals.pred_infer_flag) then ()
@@ -2692,7 +2699,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           if (* !Globals.sap *) true then begin
                             print_endline "";
                             print_endline "*************************************";
-                            print_endline "*******relational assumptions (4) ********";
+                            print_endline "*******relational assumptions ********";
                             print_endline "*************************************";
                         end;
                           let ras = Infer.rel_ass_stk # get_stk in
@@ -3163,7 +3170,7 @@ let check_prog iprog (prog : prog_decl) =
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 
-      let prog =
+      let is_all_verified, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
         if not(skip_pre_phase) && (stk_scc_with_phases # mem call_order) then 
@@ -3171,13 +3178,14 @@ let check_prog iprog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc iprog prog proc cout_option []));
+            let b= proc_mutual_scc prog scc (fun prog proc ->
+                 (check_proc iprog prog proc cout_option [])) in
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
-            Term.phase_num_infer_whole_scc prog scc 
+            b,Term.phase_num_infer_whole_scc prog scc 
           end
-        else prog
+        else false,prog
       in
       let mutual_grp = ref scc in
       Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
@@ -3188,13 +3196,17 @@ let check_prog iprog (prog : prog_decl) =
           Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
           let r = check_proc_wrapper iprog prog proc cout_option !mutual_grp in
           (* add rel_assumption of r to relass_grp *)
-          ()
+          r
         end
       ) in
-      let _ = Infer.scc_rel_ass_stk # reverse in
-      let _ = proc_mutual_scc_shape_infer iprog prog scc in
-      let _ = Infer.rel_ass_stk # reset in
-      let _ = Infer.scc_rel_ass_stk # reset in
+      let _ = if is_all_verified then
+        let _ = Infer.scc_rel_ass_stk # reverse in
+        let _ = proc_mutual_scc_shape_infer iprog prog scc in
+        let _ = Infer.rel_ass_stk # reset in
+        let _ = Infer.scc_rel_ass_stk # reset in
+        ()
+      else ()
+      in
       prog
   ) prog proc_scc 
   in 

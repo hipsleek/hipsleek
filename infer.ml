@@ -247,6 +247,26 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_rel c) cl))  ctx in
   List.concat r
 
+let collect_hp_rel_fail_type ft0=
+  let rec helper ft=
+    match ft with
+      | CF.Basic_Reason (fc,_)
+      | CF.ContinuationErr fc -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel
+      | CF.Or_Reason (ft1, ft2)
+      | CF.And_Reason (ft1, ft2)
+      | CF.Union_Reason (ft1, ft2)
+      | CF.Or_Continuation (ft1, ft2) -> (helper ft2)@(helper ft2)
+      | _ -> []
+  in
+  helper ft0
+
+let collect_hp_rel_branch_fail (_,ft) = collect_hp_rel_fail_type ft
+
+let collect_hp_rel_list_failesc_context (ctx:list_failesc_context) =
+  let r = List.map (fun (bfs,_,cl) -> (List.concat (List.map collect_hp_rel_branch_fail bfs))@
+      (List.concat (List.map (fun (_,c) -> collect_hp_rel c) cl)))  ctx in
+  List.concat r
+
 (* let collect_hp_rel_list_partial_context (ctx:list_partial_context) = *)
 (*   let pr1 = !CF.print_list_partial_context in *)
 (*   let pr2 =  Cprinter.string_of_hp_rels in *)
