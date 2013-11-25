@@ -941,7 +941,29 @@ After that, we can derive:
 where H_3(p) is a dangling reference
 
 ==========================================================
+# err-1b-split.slk
+
+relAssume
+ H(p)& p!=null --> G(p).
+shape_split_base [H][G].
+
+No splitting
+However, I think we need to
+still split, by using:
+
+ H(p) & p!=null --> DG_3(p)
+ DG_3(p) & p!=null --> G(p)
+
+*/
 ==========================================================
+# err2a.ss and err2b.ss 
+  gives two kinds of failures.
+
+  I think it should print relational
+  assumption without any shape analysis
+  since this would be incomplete.
+  unless we were to infer false pre-condition
+  where needed.
 ==========================================================
 ==========================================================
 ==========================================================

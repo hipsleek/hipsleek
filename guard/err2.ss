@@ -11,6 +11,7 @@ int foo(cell p)
   ensures G(p);
 {
     int i = p.val;
+    dprint;
     goo(p);
     return i;
 }
@@ -20,8 +21,10 @@ void goo(cell p)
   ensures true;
 
 /*
-# err2.ss : The message here is not very good.
+# err2.ss : 
+
   Should we perhaps infer a false here?
+  Inferring false may be too strong.
 
 Context of Verification Failure: 1 File "err2.ss",Line:11,Col:10
 Last Proving Location: 1 File "err2.ss",Line:14,Col:4
