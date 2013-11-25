@@ -3191,7 +3191,7 @@ let check_prog iprog (prog : prog_decl) =
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 
-      let is_all_verified, prog =
+      let is_all_verified0, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
         if not(skip_pre_phase) && (stk_scc_with_phases # mem call_order) then 
@@ -3210,7 +3210,7 @@ let check_prog iprog (prog : prog_decl) =
       in
       let mutual_grp = ref scc in
       Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-      let _ = proc_mutual_scc prog scc (fun prog proc ->
+      let is_all_verified = proc_mutual_scc prog scc (fun prog proc ->
         begin 
           mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
           Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
