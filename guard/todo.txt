@@ -52,7 +52,7 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
-# guard/tree-2.ss  (try tree-2.slk)
+# guard/tree-2.ss  (try tree-2.slk): FIXED
 
 GOT
 ===
@@ -67,7 +67,7 @@ EXPECT
 p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M
   & &right_27_953!=null  --> H(x@NI,left_27_952),
 ==========================================================
-# tree-2.ss
+# tree-2.ss FIXED
 
 Got:
 
@@ -224,7 +224,7 @@ Total verification time: 0.39 second(s)
  Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
 
 ==========================================================
-# tll.ss --sa-dp --reverify-all:
+# tll.ss --sa-dp --reverify-all: DONE
 
 (1) You should at least print relational assumption and synthesized
 predicates.
@@ -377,7 +377,7 @@ This split is not clean. Can we obtain instead:
   H1(r9)&r9=null --> emp]
 
 ==========================================================
-# guard/tree-2.ss  (try tree-2.slk)
+# guard/tree-2.ss  (try tree-2.slk): DONE
 
 GOT
 ===
@@ -392,7 +392,7 @@ EXPECT
 p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M
   & &right_27_953!=null  --> H(x@NI,left_27_952),
 ==========================================================
-# tree-2.ss
+# tree-2.ss: DONE
 
 Got:
 
@@ -407,7 +407,7 @@ EXPECT:
     or x_1005::node<p7,l8,r9>@M & r9=null 
 
 ==========================================================
-# tll-2.slk
+# tll-2.slk: FIXED
 
 infer[H,G,HP_964,HP_965,HP_966]
   HP_964(left_31_961,t) * HP_966(next_31_963,t) * 
@@ -549,7 +549,7 @@ Total verification time: 0.39 second(s)
  Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
 
 ==========================================================
-# tll.ss --sa-dp --reverify-all
+# tll.ss --sa-dp --reverify-all: DONE
 
 (1) You should at least print relational assumption and synthesized
 predicates.
@@ -734,7 +734,7 @@ For dangling, can we below:
  ,
  
 !==========================================================
-# err.ss
+# err.ss:
 
 Why is there an UNKNOWN?
 
@@ -775,7 +775,7 @@ Error(s) detected when checking procedure foo$cell
 Stop Omega... 34 invocations 
 0 false contexts at: ()
 ==========================================================
-# err-3.slk
+# err-3.slk: FIXED
 
 data cell {
   int val;
@@ -915,7 +915,7 @@ HP_934 is generated at split_step to show that HP_907 is not accessed in else br
  HP_934(q,p) ::= NONE]
 
 ==========================================================
-# err.ss
+# err.ss: FIXED
 
 Obtain:
 [ // BIND
