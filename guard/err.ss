@@ -23,7 +23,7 @@ Obtain:
 [ // BIND
  H(p)&p=null --> hfalse& false,
   // POST
- (2;0)H(p)& p!=null --> G(p)]
+ H(p)& p!=null --> G(p)]
 
 I think we still need to split to first obtain:
 (see err-1b-split.slk)
@@ -37,7 +37,7 @@ I think we still need to split to first obtain:
 After that, we can derive:
 
  H(p) ::= H_3(p) & p!=null
- G(p) ::= H_3(p) * p!=null
+ G(p) ::= H_3(p) & p!=null
  H_3(p) ::= htrue
 
 where H_3(p) is a dangling reference

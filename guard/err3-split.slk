@@ -11,35 +11,16 @@ relAssume
 
 shape_split_base [H,HP_907][G].
 
-
 /*
-# err2.ss : The message here is not very good.
-  Should we perhaps infer a false here?
+# err3-split.slk
 
+For above we did not obtain a splitting.
 
- // BIND
-(1;0)H(p,q) & p=null --> q::cell<val>@M,
- // BIND
-(2;0)H(p,q) & p!=null --> p::cell<val>@M * HP_907(q,p@NI),
- // POST
-(1;0)q::cell<val>@M & p=null --> G(p,q),
- // POST
-(2;0)HP_907(q,p@NI) * p::cell<val>@M --> G(p,q)]
+I think we should get one. Just that it should not
+have a heap guard.
 
+  HP_907(q,p) |#| p::cell<val>@M --> DG_3(q,p)
+  DG_3(q,p) := htrue
 
-======
-# err3.ss
-
-WHY HP_907 became HP_934???
-
-[ H(p,q) ::= 
- q::cell<val>@M&p=null
- or p::cell<val1>@M * HP_934(q,p)
- ,
- G(p,q) ::= 
- p::cell<val>@M * (htrue)
- or q::cell<val1>@M&p=null
- ,
- HP_934(q,p) ::= NONE]
 
 */

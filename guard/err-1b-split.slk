@@ -17,7 +17,7 @@ No splitting
 However, I think we need to
 still split, by using:
 
- H(p) & p!=null --> H_3(p)
- H_3(p) & p!=null --> G(p)
+ H(p) & p!=null --> DG_3(p)
+ DG_3(p) & p!=null --> G(p)
 
 */
