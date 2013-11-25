@@ -1013,13 +1013,14 @@ let process_shape_infer pre_hps post_hps=
       in
       if not(rel_defs# is_empty) then
         let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs else defs in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
       (* print_endline (rel_defs # string_of_reverse); *)
        let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-       print_endline (pr1 defs);
+       print_endline (pr1 defs1);
       print_endline "*************************************"
     end
   in
