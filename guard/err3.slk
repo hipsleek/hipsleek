@@ -6,7 +6,7 @@ HeapPred H(cell a,cell b).
 PostPred G(cell a,cell b).
 PostPred HP_907(cell a,cell@NI b).
 
-Declare_Dangling [HP_907].
+Declare_Unknown [HP_907].
 
 relAssume 
  // BIND
@@ -30,17 +30,28 @@ shape_infer [H,HP_907][G].
 /*
 # err3.slk
 
-[ G(p_40,q_41) ::= 
- HP_907(q_41,p_40) * p_40::cell<val>@M
- or q_41::cell<val>@M&p_40=null
+[ G(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M * HP_907(q,p)
  ,
- H(p_38,q_39) ::= 
- p_38::cell<val>@M * HP_907(q_39,p_38)
- or emp&p_38=null
+ H(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M * HP_907(q,p)
+ ,
+ HP_907(a,b) ::= NONE]
+
+--pred-en-dangling
+Is below the best way to handle conditional dangling?
+
+[ G(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M
+ ,
+ H(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M
  ]
 
 
-What happen to defn of HP_907? Isn't it
-classified as dangling?
 */
 

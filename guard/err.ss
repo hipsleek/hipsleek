@@ -15,3 +15,21 @@ int foo(cell p)
     return i;
   } else return -1;
 }
+
+/*
+# err.ss
+
+Obtain:
+[ // BIND
+H(p)&p!=null --> emp,
+ // POST
+(2;0)H(p)&p!=null --> G(p)]
+
+
+How come we are missing on the following
+relational assumption?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [H(p)&p=null --> hfalse&false]
+[
+*/
