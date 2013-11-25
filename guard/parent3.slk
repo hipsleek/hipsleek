@@ -10,10 +10,12 @@ HeapPred H0(node a).
 HeapPred H1(node a).
 
 
+
+/*
+
 infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
 print residue.
 
-/*
  <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
  inferred hprel: [P(p) --> Q(p)]
 
