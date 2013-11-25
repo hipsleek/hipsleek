@@ -2171,10 +2171,31 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (*           "Proving precondition in method failed." *)
                           (*   } *)
                           let pr = pr_list_ln Cprinter.string_of_hprel_short in
-                          let hprel_assumptions = Infer.collect_hp_rel_list_failesc_context res in
+                          (* let hprel_assumptions = Infer.collect_hp_rel_list_failesc_context res in *)
+                          if not(Infer.rel_ass_stk# is_empty) then
+                        begin
+                          if (* !Globals.sap *) true then begin
+                            print_endline "";
+                            print_endline "*************************************";
+                            print_endline "*******relational assumptions ********";
+                            print_endline "*************************************";
+                        end;
+                          let ras = Infer.rel_ass_stk # get_stk in
+                          let _ = Infer.scc_rel_ass_stk # push_list ras in
+                          let _ = Infer.rel_ass_stk # reset in
+                          if (* !Globals.sap *) true then begin
+                          let ras = List.rev(ras) in
+                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
+			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
+			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
+                          let pr_len x = string_of_int (List.length x) in
+                          print_endline (pr (ras1));
+                          if !Globals.testing_flag then print_endline "<rstop>*************************************"
+                          end
+                        end;
                           raise (Err.Ppf ({
                               Err.error_loc = pos;
-                              Err.error_text = (to_print ^s ^ "\n" ^ (pr hprel_assumptions))
+                              Err.error_text = (to_print ^s (* ^ "\n" ^ (pr hprel_assumptions) *))
                           }, match fk with
                             | CF.Failure_Bot _ -> 0
                             | CF.Failure_Must _ -> 1
