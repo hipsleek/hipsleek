@@ -3592,6 +3592,8 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
             in
             (* contra with rhs: H(...) --> false *)
             let rhs_contras  = List.fold_left (fun r (_, (h,hf,h_args, _, n_p, pos)) ->
+                let _ = Debug.ninfo_hprint (add_str "n_p : " ( (!CP.print_formula))) n_p pos in
+                let _ = Debug.ninfo_hprint (add_str "rhs_p : " ( (!CP.print_formula))) rhs_p pos in
                 if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
                   let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
                     (CF.mkBase hf (MCP.mix_of_pure n_p) TypeTrue (mkNormalFlow ()) [] pos)
@@ -3627,5 +3629,5 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) conseq : li
   let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
-  Debug.no_3 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 (pr_option pr3)
-     (fun _ _ _ -> add_infer_hp_contr_to_list_context h_arg_map cp l conseq) h_arg_map cp l
+  Debug.no_4 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 !CP.print_formula (pr_option pr3)
+     (fun _ _ _ _ -> add_infer_hp_contr_to_list_context h_arg_map cp l conseq) h_arg_map cp l conseq

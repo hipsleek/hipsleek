@@ -6234,12 +6234,27 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let lhs_p = MCP.pure_of_mix lhs_xpure in
                 let rhs_xpure,_,_ = xpure prog conseq in
                 let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-                let rele_svl = CP.fv pf in
-                let l_ps = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl <> []) (CP.split_conjunctions lhs_p) in
-                let pf = if TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions (l_ps@[pf]))) then pf else
-                  CP.join_conjunctions l_ps
+                (*check the contra is in LHS or between LHS and RHS*)
+                let _ = Debug.ninfo_hprint (add_str "pf : " ( (!CP.print_formula))) pf pos in
+                let pf,rele_p_rhs_xpure =
+                  if TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))) then (pf,p_rhs_xpure) else
+                    let rele_svl = CP.fv pf in
+                    let sst = (MCP.ptr_equations_without_null lhs_xpure) in
+                    let rele_sst = List.fold_left (fun r (sv1,sv2) ->
+                        let b1 = CP.mem_svl sv1 rele_svl in
+                        let b2 = CP.mem_svl sv2 rele_svl in
+                        match b1,b2 with
+                          | false, true -> r@[(sv1,sv2)]
+                          | true,false -> r@[(sv2, sv1)]
+                          | false, false -> r
+                          | true, true -> r@[(sv1,sv2)]
+                    ) [] sst in
+                    let l_ps = CP. remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
+                    let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
+                    let _ = Debug.ninfo_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+                    (CP.join_conjunctions l_ps1, CP.subst rele_sst p_rhs_xpure)
                 in
-                let res_ctx_opt = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx p_rhs_xpure in
+                let res_ctx_opt = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx rele_p_rhs_xpure in
                 let _ = Debug.tinfo_hprint (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
 	        let _ = Debug.tinfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
                 let es = 
