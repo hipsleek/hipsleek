@@ -871,6 +871,8 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
   let all_vs = fvs@(CF.fv rhs) in
   let fv_idents = (List.map CP.name_of_spec_var all_vs) in
+  let (stab,lhs) = meta_to_formula ilhs false fv_idents stab in
+  let lhs = CF.elim_exists lhs in
   let guard = match igurad_opt with
     | None -> None
     | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in

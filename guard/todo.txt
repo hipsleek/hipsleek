@@ -1125,7 +1125,7 @@ relAssume
   x::node<left_24_912,right_24_913>@M&right_24_913=null --> G(x).
 
 ==========================================================
-# swl-h2.ss 
+# swl-h2.ss : FIXED (infer type when parse assumption for sleek)
 
   - able to infer
   - however -sa-gen-sleek-file generates
