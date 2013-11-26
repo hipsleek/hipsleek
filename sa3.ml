@@ -173,7 +173,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-             let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
             if SAC.cs_rhs_is_only_neqNull cs1 then
               (subst_w_frozen_old rest non_frozen is_changed unfrozen_hps)
             else
@@ -200,25 +200,58 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
     in
     helper f0
   in
-  (*if cs is full paths and new_constrs is not, generate the missing*)
-  let check_full_path_sensitive cs new_constrs=
-    match new_constrs with
-      | [] -> (false,[])
-      | [n_cs] -> begin
-          match n_cs.CF.hprel_guard with
-            | None -> false,[]
-            | Some n_gf -> begin
-                match cs.CF.hprel_guard with
-                  | None ->
-                        (*generate the remain: the simplest scenario*)
-                        let p = CF.get_pure n_gf in
-                        if CP.isConstTrue p then (false, []) else
-                          let neg_g = neg_pure n_gf in
-                          (true, [{cs with CF.hprel_guard = Some neg_g;}])
-                  | Some _ -> (*to find the remain*) (false, [])
-              end
+  let add_path_sensitive_guard cs_poss_g cs2=
+    begin
+      match cs_poss_g.CF.hprel_guard with
+        | None -> false,[]
+        | Some n_gf -> begin
+            match cs2.CF.hprel_guard with
+              | None ->
+                    (*generate the remain: the simplest scenario*)
+                    let p = CF.get_pure n_gf in
+                    let _ = Debug.ninfo_zprint (lazy (("    p: " ^ (!CP.print_formula p)))) no_pos in
+                    if CP.isConstTrue p then (false, []) else
+                      let neg_g = neg_pure n_gf in
+                      (*do simple normalize*)
+                      let n_neg_g =
+                        try
+                          let hp0, args0 = CF.extract_HRel_f  cs_poss_g.CF.hprel_lhs in
+                          let hp1, args1 = CF.extract_HRel_f  cs2.CF.hprel_lhs in
+                          if CP.eq_spec_var hp0 hp1 then
+                            let ss = List.combine args1 args0 in
+                            let n_cs2_rhs = CF.subst ss cs2.CF.hprel_rhs in
+                            SAU.norm_guard args0 n_cs2_rhs cs_poss_g.CF.hprel_rhs neg_g
+                          else (neg_g)
+                        with _ ->  neg_g
+                      in
+                      (true, [{cs2 with CF.hprel_guard = Some n_neg_g;
+                          }])
+              | Some _ -> (*to find the remain*) (false, [])
           end
-      | _ -> (*to implement*) (false,[])
+    end
+  in
+  (*if cs is full paths and new_constrs is not, generate the missing*)
+  let check_full_path_sensitive_x cs new_constrs=
+    match new_constrs with
+      | [] -> (false,new_constrs)
+      | [n_cs] -> let b, ncs = add_path_sensitive_guard n_cs cs in
+        if b then (b, new_constrs@ncs)
+        else (b, new_constrs)
+      | [n_cs1;n_cs2] -> if n_cs1.CF.hprel_guard != None then
+          let b1, cs22 = add_path_sensitive_guard n_cs1 n_cs2 in
+          if b1 then
+            true,[n_cs1]@cs22
+          else (false,  new_constrs)
+        else
+          let b2,cs12 = add_path_sensitive_guard n_cs2 n_cs1 in
+          if b2 then (true, cs12@[n_cs2]) else (false,  new_constrs)
+      | _ -> (*to implement*) (false,new_constrs)
+  in
+  let check_full_path_sensitive cs new_constrs=
+    let pr1 = Cprinter.string_of_hprel_short in
+    Debug.no_2 "check_full_path_sensitive" pr1 (pr_list_ln pr1) (pr_pair string_of_bool (pr_list_ln pr1))
+        (fun _ _ -> check_full_path_sensitive_x cs new_constrs)
+        cs new_constrs
   in
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     let frozen_constrs0 = List.filter (fun cs -> not (SAC.cs_rhs_is_only_neqNull cs)) frozen_constrs in
@@ -236,9 +269,9 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
             if b then
               let rem_path_constrs=
                 let b1, rem_path_constrs = check_full_path_sensitive cs2 res_constrs in
-                if b1 then rem_path_constrs else []
+                if b1 then rem_path_constrs else res_constrs
               in
-              (true,res2@res_constrs@rem_path_constrs, r_unfroz_hps2@unfroz_hps)
+              (true,res2@rem_path_constrs, r_unfroz_hps2@unfroz_hps)
             else (b2,res2@[cs2], r_unfroz_hps2)
         ) (is_changed, [], []) non_frozen
       in
@@ -550,31 +583,38 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   let _ = if !Globals.sa_gen_slk then
     try
-      SAU.gen_slk_file prog (List.hd !Globals.source_files)
+      SAU.gen_slk_file false prog (List.hd !Globals.source_files)
           (CP.diff_svl sel_hps post_hps) post_hps constrs link_hps
     with _ -> ()
   else ()
   in
-      let _ = step_change # reset in
-      let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
-      let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
-      let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
-      if !Globals.sap then
-      if step_change # no_change then 
-        DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
-      else 
-        begin
-          (* let _ = DD.binfo_start "split_base" in *)
-          let _ = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
-          let _ = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
-          let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-          let _ = DD.binfo_pprint "=============>>>>" no_pos in
-          let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
-          let _ = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
-          let _ = DD.binfo_end "split_base" in
-          ()
-        end;
-      res
+  let _ = step_change # reset in
+  let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
+  let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
+  let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
+  if !Globals.sap then
+    if step_change # no_change then 
+      DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
+    else 
+      begin
+        (* let _ = DD.binfo_start "split_base" in *)
+        let _ = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
+        let _ = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
+        let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
+        let _ = DD.binfo_pprint "=============>>>>" no_pos in
+        let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+        let _ = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
+        let _ = DD.binfo_end "split_base" in
+        ()
+      end;
+  (* let _ = if !Globals.sa_gen_slk then *)
+  (*   try *)
+  (*     SAU.gen_slk_file true prog (List.hd !Globals.source_files) *)
+  (*         (CP.diff_svl sel_hps post_hps) post_hps constrs2 (List.map fst link_hpargs2) *)
+  (*   with _ -> () *)
+  (* else () *)
+  (* in *)
+  res
 
 
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
@@ -2706,6 +2746,15 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*   with _ -> [] *)
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
+  let print_generated_slk_file ()=
+    let _ = if !Globals.sa_gen_slk then
+      let reg = Str.regexp "\.ss" in
+      let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
+      let _ = print_endline ("\n generate: " ^ file_name1) in
+      ()
+    else ()
+    in ()
+  in
   try 
   let callee_hps = [] in
   let _ = if !Globals.sap then
@@ -2734,8 +2783,10 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
             infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
   else ([],[])
   in
+  let _ = print_generated_slk_file () in
   r
   with _ ->
+      let _ = print_generated_slk_file () in
       let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
       ([],[])
 
