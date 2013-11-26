@@ -1,0 +1,35 @@
+id: 28; caller: []; line: 41; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H1,H2,G1,HP_952]; c_heap: emp
+ checkentail H2(prev,sent) * HP_952(next_70_951,sent) * 
+cur_959::node<val_70_950,prev_958>@M&sent=sent' & prev=prev_958 & 
+cur=cur_959 & n_37'=next_70_951 & next_70_951=next_72_957 & cur_959=prev' & 
+cur'=n_37' & cur'=sent' & v_bool_76_930' & cur'=sent' & v_bool_76_930'&
+{FLOW,(24,25)=__norm}[]
+ |-  G1(cur',prev',sent)&{FLOW,(24,25)=__norm}[]. 
+res:  [
+  emp&sent=sent' & prev=prev_958 & cur=cur_959 & n_37'=next_70_951 & next_70_951=next_72_957 & cur_959=prev' & cur'=n_37' & cur'=sent' & v_bool_76_930' & cur'=sent' & v_bool_76_930'&{FLOW,(24,25)=__norm}[]
+  ]
+
+
+
+id: 31; caller: []; line: 41; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H1,H2,G1,HP_952]; c_heap: emp
+ checkentail G1(cur',prev',sent')&sent=sent' & prev=prev_958 & cur=cur_959 & 
+next_70_951=next_72_957 & cur_959=prev_972 & cur_971=next_70_951 & 
+cur_971!=sent' & !(v_bool_76_930') & cur_971!=sent' & !(v_bool_76_930') & 
+cur_971=null & v_bool_81_931' & cur_971=null & v_bool_81_931'&
+{FLOW,(24,25)=__norm}[]
+ |-  G1(cur',prev',sent)&{FLOW,(24,25)=__norm}[]. 
+hprel_ass: [ (1;2;0)G1(cur',prev',sent) --> G1(cur',prev',sent)]
+res:  [
+  emp&sent=sent' & prev=prev_958 & cur=cur_959 & next_70_951=next_72_957 & cur_959=prev_972 & cur_971=next_70_951 & cur_971!=sent' & !(v_bool_76_930') & cur_971!=sent' & !(v_bool_76_930') & cur_971=null & v_bool_81_931' & cur_971=null & v_bool_81_931'&{FLOW,(24,25)=__norm}[]
+  ]
+
+id: 34; caller: []; line: 41; classic: false; kind: POST; hec_num: 5; evars: []; infer_vars: [H1,H2,G1,HP_952]; c_heap: emp
+ checkentail G1(cur',prev',sent')&sent=sent' & prev=prev_958 & cur=cur_959 & 
+next_70_951=next_72_957 & next_70_951!=sent' & !(v_bool_76_930') & 
+next_70_951!=sent' & !(v_bool_76_930') & next_70_951!=null & 
+!(v_bool_81_931') & next_70_951!=null & !(v_bool_81_931') & cur_959!=null&
+{FLOW,(24,25)=__norm}[]
+ |-  G1(cur',prev',sent)&{FLOW,(24,25)=__norm}[]. 
+res:  [
+  emp&sent=sent' & prev=prev_958 & cur=cur_959 & next_70_951=next_72_957 & next_70_951!=sent' & !(v_bool_76_930') & next_70_951!=sent' & !(v_bool_76_930') & next_70_951!=null & !(v_bool_81_931') & next_70_951!=null & !(v_bool_81_931') & cur_959!=null&{FLOW,(24,25)=__norm}[]
+  ]

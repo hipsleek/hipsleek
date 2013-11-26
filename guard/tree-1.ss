@@ -28,6 +28,7 @@ infer [H,G] requires H(x) ensures G(x);
       //assert xl'!=null assume xl'!=null; //
       trav(x.left);
     }
+  else {
     ;
     //assert xl'=null assume xl'=null; //
   }

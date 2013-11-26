@@ -34,11 +34,39 @@ void lscan( node@R cur, node@R prev, node sent)
  requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
 // ensures prev'::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
   ensures  prev'::node<_,p> * p::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
-*/
 
   infer [H1,H2,G1]
   requires H1(cur,sent) * H2(prev,sent)
   ensures G1(cur',prev',sent);
+
+*/
+ requires cur::lx<a,b> * prev::lx<b,a> & cur!=a 
+  & (a=null & b=sent | a=sent & b=null)
+ ensures prev'::lx<null,sent>  & cur'=sent ;
+
+/*
+
+ requires cur::lx<a,b> * prev::lx<b,a> & cur!=a 
+  & (a=null & b=sent | a=sent & b=null)
+ ensures prev'::lx<null,sent>  & cur'=sent ;
+
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_952(next,sent),
+
+ HP_952(cur,sent) ::= emp&cur=sent
+    or cur::node<val,next>@M * HP_952(next,sent)&cur!=sent
+    or emp&cur=null & cur!=sent
+
+ H2(next,sent) ::= emp&next=null & next!=sent
+      or next::node<val,prev>@M * H2(prev,sent)
+      or DP_1059(next),
+
+ G1(cur',prev',sent) ::= 
+      prev'::node<val,prev1>@M * H2(prev1,cur') & cur'=sent,
+  
+ DP_1059(next) ::= NONE,
+
+
+*/
 
 {
 
@@ -49,8 +77,10 @@ void lscan( node@R cur, node@R prev, node sent)
   // move forward
   prev = cur;
   cur = n;
+  dprint;
   if (cur == sent) {
-      //assume false;
+     //assume false;
+    dprint;
       return;
   }
   //dprint;
@@ -61,7 +91,7 @@ void lscan( node@R cur, node@R prev, node sent)
       //prev = null;
       prev = tmp;
   }
-  //dprint;
+  dprint;
   lscan(cur,prev,sent);
 
 }
