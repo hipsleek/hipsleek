@@ -2029,10 +2029,11 @@ let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,arg
         None
       else
         let args_i =  get_hp_args_inst prog hp args in
+        let ls_rhp_args1 = List.filter (fun (hp,_) -> CP.mem_svl hp post_hps) ls_rhp_args in
         if not (List.exists (fun (r_hp,r_args) ->
             let r_args_i = get_hp_args_inst prog r_hp r_args in
             (CP.intersect args_i r_args_i != [])
-        ) ls_rhp_args) then None
+        ) ls_rhp_args1) then None
         else
           (*drop the lhs*)
           let n_orig_lhs_hf,_ = CF.drop_hrel_hf lhsb.CF.formula_base_heap [hp] in
@@ -3742,8 +3743,26 @@ let elim_useless_rec_preds prog hp args fs_wg=
 (************************************************************)
     (****************END SIMPL HP PARDEF/CF.formula************)
 (************************************************************)
+let move_root args ldns=
+  let rec move_root_to_top arg lldns rest=
+    match lldns with
+      | [] -> (false,rest)
+      | hd::hds ->
+            if CP.eq_spec_var arg hd.CF.h_formula_data_node then
+              (true,lldns@rest)
+            else move_root_to_top arg hds (rest@[hd])
+  in
+  let rec sel_root largs=
+    match largs with
+      | [] -> ldns
+      | a::ass ->
+            let b,res= move_root_to_top a ldns [] in
+            if b then res
+            else sel_root ass
+  in
+  sel_root args
 
-let norm_hnodes_wg_x args fs_wg=
+let norm_two_hnodes_wrapper args sh_dns0 matched0 rest_dns2 ss0 =
   let rec get_subst_svl matcheds svl1 svl2 ss=
     match svl1,svl2 with
 	 | [],[] -> ss
@@ -3782,10 +3801,52 @@ let norm_hnodes_wg_x args fs_wg=
       |  hn::sh_ls ->
           let new_ss, n_matcheds2,n_rest2 = helper hn rest_dns2 matched2 [] in
              norm_hnodes_two_hns sh_ls n_matcheds2 n_rest2 (ss@new_ss)
-  in
+  in 
+  norm_hnodes_two_hns sh_dns0 matched0 rest_dns2 ss0
+
+let norm_hnodes_wg_x args fs_wg=
+  (* let rec get_subst_svl matcheds svl1 svl2 ss= *)
+  (*   match svl1,svl2 with *)
+  (*        | [],[] -> ss *)
+  (*        | v1::sl1,v2::sl2 -> *)
+  (*        if CP.eq_spec_var v1 v2 || CP.mem_svl v2 matcheds || *)
+  (*          CP.mem_svl v2 args || CP.mem_svl v1 args *)
+  (*        then *)
+  (*       	   get_subst_svl matcheds sl1 sl2 ss *)
+  (*            else get_subst_svl matcheds sl1 sl2 (ss@[(v2,v1)]) *)
+  (*        | _ -> report_error no_pos "sau.norm_hnodes_x 1" *)
+  (* in *)
+  (* let rec look_up_one_hd hn1 lnds matched2 rest2= *)
+  (*   match lnds with *)
+  (*     | [] ->  ([],matched2, rest2) *)
+  (*     | hn2::ls -> *)
+  (*         if hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name && *)
+  (*           CP.eq_spec_var hn1.CF.h_formula_data_node hn2.CF.h_formula_data_node *)
+  (*         then *)
+  (*       	    (\*return last args and remain*\) *)
+  (*           (\* let _ = DD.info_zprint (lazy (("  svl1: " ^ (!CP.print_svl hn1.CF.h_formula_data_arguments)))) no_pos in *\) *)
+  (*           (\* let _ = DD.info_zprint (lazy (("  svl2: " ^ (!CP.print_svl hn.CF.h_formula_data_arguments)))) no_pos in *\) *)
+  (*           (get_subst_svl matched2 hn1.CF.h_formula_data_arguments *)
+  (*                hn2.CF.h_formula_data_arguments [], *)
+  (*            matched2@[hn2.CF.h_formula_data_node],rest2@ls) *)
+  (*       	  else look_up_one_hd hn1 ls matched2 (rest2@[hn2]) *)
+  (* in *)
+  (* let helper hn lnds matched2 rest2= *)
+  (*   let last_ss,matched,rest= look_up_one_hd hn lnds matched2 rest2 in *)
+  (*   let fresh_rest = List.map (fun hd -> CF.h_subst last_ss (CF.DataNode hd)) rest in *)
+  (*   let fresh_rest1 = List.concat (List.map get_hdnodes_hf fresh_rest) in *)
+  (*   (last_ss,matched,fresh_rest1) *)
+  (* in *)
+  (* let rec norm_hnodes_two_hns sh_dns matched2 rest_dns2 ss= *)
+  (*   match sh_dns with *)
+  (*     | [] -> (matched2, rest_dns2, ss) *)
+  (*     |  hn::sh_ls -> *)
+  (*         let new_ss, n_matcheds2,n_rest2 = helper hn rest_dns2 matched2 [] in *)
+  (*            norm_hnodes_two_hns sh_ls n_matcheds2 n_rest2 (ss@new_ss) *)
+  (* in *)
   let norm_one_f base_ldns (f,og)=
     let hnds = get_hdnodes f in
-    let _,_, ss = norm_hnodes_two_hns base_ldns [] hnds [] in
+    let _,_, ss = (* norm_hnodes_two_hns *) norm_two_hnodes_wrapper args base_ldns [] hnds [] in
     let cur_svl = CF.fv f in
     let to_subst = List.map snd ss in
     let inter= CP.intersect_svl (CP.remove_dups_svl cur_svl)
@@ -3798,30 +3859,11 @@ let norm_hnodes_wg_x args fs_wg=
     in
     (CF.subst ss f1, CF.subst_opt ss og1)
   in
-  let move_root ldns=
-    let rec move_root_to_top arg lldns rest=
-      match lldns with
-        | [] -> (false,rest)
-        | hd::hds ->
-            if CP.eq_spec_var arg hd.CF.h_formula_data_node then
-              (true,lldns@rest)
-            else move_root_to_top arg hds (rest@[hd])
-    in
-    let rec sel_root largs=
-      match largs with
-        | [] -> ldns
-        | a::ass ->
-            let b,res= move_root_to_top a ldns [] in
-            if b then res
-            else sel_root ass
-    in
-    sel_root args
-  in
   if fs_wg = [] then fs_wg else
     let base_f, base_og = List.hd fs_wg in
     let base_ldns = get_hdnodes base_f in
     if base_ldns = [] then fs_wg else
-      let base_ldns1 = move_root base_ldns in
+      let base_ldns1 = move_root args base_ldns in
       let tl_fs_wg = List.map (fun (f,og) ->  norm_one_f base_ldns1 (f, og)) (List.tl fs_wg) in
       ((base_f,base_og)::tl_fs_wg)
 
@@ -3831,6 +3873,27 @@ let norm_hnodes_wg args fs_wg=
   Debug.no_2 "norm_hnodes_wg" !CP.print_svl pr1 pr1
       (fun _ _ -> norm_hnodes_wg_x args fs_wg) args fs_wg
 
+(*norm trg_g ===> src_g*)
+let norm_guard_x args src_f trg_f trg_g=
+  (********INTERNAL*********)
+  let norm_one_f src_ldns trg_f=
+    let hnds = get_hdnodes trg_f in
+    let _,_, ss = (* norm_hnodes_two_hns *)norm_two_hnodes_wrapper args src_ldns [] hnds [] in
+    ss
+  in
+  (********END INTERNAL*********)
+  let src_ldns = get_hdnodes src_f in
+  if src_ldns = [] then trg_g else
+    let src_ldns1 = move_root args src_ldns in
+    let ss =  norm_one_f src_ldns1 trg_f in
+    let src_g = CF.subst ss trg_g in
+    src_g
+
+let norm_guard args src_f trg_f trg_g=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_4 "norm_guard" !CP.print_svl pr1 pr1 pr1 pr1
+      (fun _ _ _ _ -> norm_guard_x args src_f trg_f trg_g)
+      args src_f trg_f trg_g
 
 let generate_equiv_pdefs_x unk_hps pdef_grps=
   let get_succ_hps_pardef (_,_,f,_)=

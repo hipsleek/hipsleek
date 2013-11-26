@@ -173,7 +173,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
     match frozen_constrs with
       | [] -> is_changed,non_frozen,unfrozen_hps
       | cs1::rest ->
-             let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
+            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
             if SAC.cs_rhs_is_only_neqNull cs1 then
               (subst_w_frozen_old rest non_frozen is_changed unfrozen_hps)
             else
@@ -200,25 +200,73 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
     in
     helper f0
   in
-  (*if cs is full paths and new_constrs is not, generate the missing*)
-  let check_full_path_sensitive cs new_constrs=
-    match new_constrs with
-      | [] -> (false,[])
-      | [n_cs] -> begin
-          match n_cs.CF.hprel_guard with
-            | None -> false,[]
-            | Some n_gf -> begin
-                match cs.CF.hprel_guard with
-                  | None ->
-                        (*generate the remain: the simplest scenario*)
-                        let p = CF.get_pure n_gf in
-                        if CP.isConstTrue p then (false, []) else
-                          let neg_g = neg_pure n_gf in
-                          (true, [{cs with CF.hprel_guard = Some neg_g;}])
-                  | Some _ -> (*to find the remain*) (false, [])
-              end
+  let add_path_sensitive_guard cs_poss_g cs2=
+    begin
+      match cs_poss_g.CF.hprel_guard with
+        | None -> false,[]
+        | Some n_gf -> begin
+            match cs2.CF.hprel_guard with
+              | None ->
+                    (*generate the remain: the simplest scenario*)
+                    let p = CF.get_pure n_gf in
+                    let _ = Debug.ninfo_zprint (lazy (("    p: " ^ (!CP.print_formula p)))) no_pos in
+                    if CP.isConstTrue p then (false, []) else
+                      let neg_g = neg_pure n_gf in
+                      (*do simple normalize*)
+                      let n_neg_g =
+                        try
+                          let hp0, args0 = CF.extract_HRel_f  cs_poss_g.CF.hprel_lhs in
+                          let hp1, args1 = CF.extract_HRel_f  cs2.CF.hprel_lhs in
+                          if CP.eq_spec_var hp0 hp1 then
+                            let ss = List.combine args1 args0 in
+                            let n_cs2_rhs = CF.subst ss cs2.CF.hprel_rhs in
+                            SAU.norm_guard args0 n_cs2_rhs cs_poss_g.CF.hprel_rhs neg_g
+                          else (neg_g)
+                        with _ ->  neg_g
+                      in
+                      (true, [{cs2 with CF.hprel_guard = Some n_neg_g;
+                          }])
+              | Some _ -> (*to find the remain*) (false, [])
           end
-      | _ -> (*to implement*) (false,[])
+    end
+  in
+  (*if cs is full paths and new_constrs is not, generate the missing*)
+  let check_full_path_sensitive_x cs new_constrs=
+    match new_constrs with
+      | [] -> (false,new_constrs)
+      | [n_cs] -> let b, ncs = add_path_sensitive_guard n_cs cs in
+        if b then (b, new_constrs@ncs)
+        else (b, new_constrs)
+          (* begin *)
+        (*   match n_cs.CF.hprel_guard with *)
+        (*     | None -> false,[] *)
+        (*     | Some n_gf -> begin *)
+        (*         match cs.CF.hprel_guard with *)
+        (*           | None -> *)
+        (*                 (\*generate the remain: the simplest scenario*\) *)
+        (*                 let p = CF.get_pure n_gf in *)
+        (*                 let _ = Debug.info_zprint (lazy (("    p: " ^ (!CP.print_formula p)))) no_pos in *)
+        (*                 if CP.isConstTrue p then (false, []) else *)
+        (*                   let neg_g = neg_pure n_gf in *)
+        (*                   (true, new_constrs@[{cs with CF.hprel_guard = Some neg_g;}]) *)
+        (*           | Some _ -> (\*to find the remain*\) (false, []) *)
+        (*       end *)
+        (* end *)
+      | [n_cs1;n_cs2] -> if n_cs1.CF.hprel_guard != None then
+          let b1, cs22 = add_path_sensitive_guard n_cs1 n_cs2 in
+          if b1 then
+            true,[n_cs1]@cs22
+          else (false,  new_constrs)
+        else
+          let b2,cs12 = add_path_sensitive_guard n_cs2 n_cs1 in
+          if b2 then (true, cs12@[n_cs2]) else (false,  new_constrs)
+      | _ -> (*to implement*) (false,new_constrs)
+  in
+  let check_full_path_sensitive cs new_constrs=
+    let pr1 = Cprinter.string_of_hprel_short in
+    Debug.no_2 "check_full_path_sensitive" pr1 (pr_list_ln pr1) (pr_pair string_of_bool (pr_list_ln pr1))
+        (fun _ _ -> check_full_path_sensitive_x cs new_constrs)
+        cs new_constrs
   in
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     let frozen_constrs0 = List.filter (fun cs -> not (SAC.cs_rhs_is_only_neqNull cs)) frozen_constrs in
@@ -236,9 +284,9 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
             if b then
               let rem_path_constrs=
                 let b1, rem_path_constrs = check_full_path_sensitive cs2 res_constrs in
-                if b1 then rem_path_constrs else []
+                if b1 then rem_path_constrs else res_constrs
               in
-              (true,res2@res_constrs@rem_path_constrs, r_unfroz_hps2@unfroz_hps)
+              (true,res2@rem_path_constrs, r_unfroz_hps2@unfroz_hps)
             else (b2,res2@[cs2], r_unfroz_hps2)
         ) (is_changed, [], []) non_frozen
       in
