@@ -956,7 +956,7 @@ still split, by using:
 
 */
 ==========================================================
-# err2a.ss and err2b.ss 
+# err2a.ss and err2b.ss : FIXED
   gives two kinds of failures.
 
   I think it should print relational
@@ -965,7 +965,7 @@ still split, by using:
   unless we were to infer false pre-condition
   where needed.
 ==========================================================
-# err2b.ss 
+# err2b.ss : FIXED
 
 This example has a bind failure but it still proceeds
 to shape analysis. Perhaps, we should avoid this
