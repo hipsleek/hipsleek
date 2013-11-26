@@ -1125,6 +1125,29 @@ relAssume
   x::node<left_24_912,right_24_913>@M&right_24_913=null --> G(x).
 
 ==========================================================
+# swl-h2.ss 
+
+  - able to infer
+  - however -sa-gen-sleek-file generates
+    # gen_swl-h2.slk
+
+which fails with error below...
+
+!!! >>>>>> gfp computation for pre-preds <<<<<
+!!!     synthesize (gfp): H2
+!!!  H2(prev',sent) ::=  [
+  emp&prev'=null
+  or H2(prev,sent) * prev'::node<val_76_951,prev>@M
+  or DP_95(prev')
+  ]
+ERROR: at _0:0_0:0 
+Message: self has invalid type: null
+
+Also:
+ HeapPred HP_953(node next_76_952, node@NI sent).
+
+is missing below:
+ shape_infer [H1,H2][G1].
 ==========================================================
 ==========================================================
 ==========================================================
