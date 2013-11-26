@@ -1149,8 +1149,54 @@ Also:
 is missing below:
  shape_infer [H1,H2][G1].
 ==========================================================
+# mod_swl-h2.slk
+
+Derived:
+
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_953(next,sent),
+ H2(prev,sent) ::= prev::HP_953<sent>@M,
+ HP_953(cur,sent) ::= 
+  emp&cur=sent
+  or cur::node<val,next>@M * HP_953(next,sent)&cur!=sent
+  or emp&cur!=sent & cur=null,
+
+ G1(next,prev,sent) ::= prev::node<val,prev1>@M 
+   * prev1::HP_953<next>@M&next=sent
+
+ Why is HP_953 presented in 2-ways? as x::HP_953<s> and HP_953(x,s)?
+
+ This could be correct shape but seems not strong enough
+ for re-verification.
+
 ==========================================================
+# hip swl-i-sa.slk -sa-gen-sleek-file
+
+Above produced a sleek file which seems to be after
+base case splitting. Can we have the one prior to base-case
+splitting? This is because your base-case split seem to
+have lost post-pred. 
+
+Expected sleek file is in mod-swl-i-sa.slk
+
 ==========================================================
+# mod-swl-i-sa.slk
+
+  expected sleek file from swl-i-sa.slk
+
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) 
+  * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+  emp&cur!=sent & cur=null
+  or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+  or emp&cur=sent,
+
+ HP_946(prev1,cur,sent) ::= 
+  emp&prev1=null
+  or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+  or DP_233(prev1),
+
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
+  * HP_946(prev,prev1',next)&cur=prev1' & next=sent,DP_233(prev1) ::= NONE]
 ==========================================================
 ==========================================================
 ==========================================================

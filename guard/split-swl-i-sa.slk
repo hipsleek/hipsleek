@@ -1,0 +1,27 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+//HeapPred H(node a, node b, node@NI c).
+PostPred G(node ra, node rb, node a, node b, node@NI c).
+//HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+HeapPred HP_945(node next_50_944, node@NI prev, node@NI sent).
+
+
+relAssume
+ (1;2;0)HP_945(next,prev1,sent) * G(cur,cur1',prev,prev2',sent)&
+ next!=sent & next=null & prev=null & 
+ cur!=null --> G(cur,cur1',prev1,prev2',sent).
+
+
+shape_split_base[HP_945][G].
+
+/*
+
+[ (1;2;0)G(cur,cur1',prev,prev2',sent)&next=null & prev=null & cur!=null & 
+  next!=sent --> G(cur,cur1',prev1,prev2',sent),
+ (1;2;0)HP_945(next,prev1,sent)&next!=sent & next=null --> emp]
+
+*/
