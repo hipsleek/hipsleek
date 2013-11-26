@@ -793,18 +793,20 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
 
 (* TermInf: Add rank constraints into view and struc_formula *)
 type rank_type =
-  | VIEW of string (* view name *)
+  | VIEW of (string * CP.spec_var list)  (* view name * view's args *)
   | PRE of C.typed_ident list
   | POST
 
 let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
-  let view_form = add_rank_constraint_struc_formula vdef.C.view_formula (VIEW vdef.C.view_name) in
+  let incr_rrel_id = if vdef.C.view_vars = [] then () else incr_rrel_id () in
+  let view_form = add_rank_constraint_struc_formula vdef.C.view_formula 
+    (VIEW (vdef.C.view_name, vdef.C.view_vars)) in
   let un_struc_f = CF.get_view_branches view_form in
   let rbc = match vdef.C.view_raw_base_case with
   | None -> None
   | Some _ ->
       let rec f_tr_base f = 
-        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
+        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos) else f in
         match f with
         | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
         | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
@@ -851,27 +853,35 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
 and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
   let add_rank_constraint_pure hf pf rtyp =
     match rtyp with
-    | VIEW view_id ->
-        let nhf, rankrel_args, rankrel_ivars, ir =
-          CF.collect_rankrel_vars_h_formula hf [view_id] in
+    | VIEW (view_id, view_args) ->
+        let is_raw_view = view_args = [] in
         let rankrel_id = TI.view_rank_sv view_id in
-        let rankrel_args, rankrel_base_ivars = 
-          if not ir (* Base case *) then
-            (* Add constant rank arg for base case *)
-            let base_ragr = TI.view_base_ragr view_id in
-            rankrel_args @ [base_ragr], [base_ragr.CP.rank_arg_id] 
-          else rankrel_args, [] in
-        nhf,
-        MCP.memoise_add_pure_N pf (CP.mkRankConstraint rankrel_id rankrel_args),
-        rankrel_ivars @ rankrel_base_ivars
+        if is_raw_view then
+          let nhf, rankrel_args, rankrel_ivars, ir =
+            CF.collect_rankrel_vars_h_formula_raw hf [view_id] in
+          let rankrel_args, rankrel_base_ivars = 
+            if not ir (* Base case *) then
+              (* Add constant rank arg for base case *)
+              let base_ragr = TI.view_base_ragr view_id in
+              rankrel_args @ [base_ragr], [base_ragr.CP.rank_arg_id] 
+            else rankrel_args, [] in
+          nhf,
+          MCP.memoise_add_pure_N pf (CP.mkRankConstraint rankrel_id rankrel_args),
+          rankrel_ivars @ rankrel_base_ivars
+        else
+          let nhf, rrels, rrel_ivars = CF.collect_rankrel_vars_h_formula hf [view_id] in
+          let npf = MCP.memoise_add_pure_N pf (CP.mkRankConstraint_no_fresh rankrel_id 
+            (List.map CP.mkRArg_var view_args)) in
+          let npf = MCP.memoise_add_pure_N npf (CP.join_conjunctions rrels) in
+          nhf, npf, rrel_ivars
     | PRE proc_args ->
-        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula hf [] in
+        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula_raw hf [] in
         (* Add Term[r] for PRE based on the args of proc *)
         let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
           TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
         nhf, npf, rankrel_ivars
     | POST -> 
-        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula hf [] in
+        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula_raw hf [] in
         nhf, pf, rankrel_ivars 
   in match f with
   | CF.Base b -> 

@@ -152,6 +152,7 @@ and rankrel = {
   rel_id: int;
   rank_id: spec_var;
   rank_args: rank_arg list;
+  rrel_raw: rankrel option;
 }
 
 and p_formula =
@@ -1806,7 +1807,15 @@ and mkRankRel view_rank_id data_rank_args =
   RankRel {
     rel_id = fresh_rrel_id (); 
     rank_id = view_rank_id;
-    rank_args = data_rank_args; }
+    rank_args = data_rank_args;
+    rrel_raw = None; }
+
+and mkRankRel_no_fresh view_rank_id data_rank_args =
+  RankRel {
+    rel_id = current_rrel_id (); 
+    rank_id = view_rank_id;
+    rank_args = data_rank_args; 
+    rrel_raw = None; }
 
 and mkPure bf = BForm ((bf,None), None)
 
@@ -1817,6 +1826,9 @@ and mkLexVar_pure a l1 l2 =
 
 and mkRankConstraint view_rank_sv data_rank_args =
   mkPure (mkRankRel view_rank_sv data_rank_args)
+
+and mkRankConstraint_no_fresh view_rank_sv data_rank_args =
+  mkPure (mkRankRel_no_fresh view_rank_sv data_rank_args)
 
 and mkRArg_var id = 
   { rank_arg_id = id; rank_arg_type = RVar; }

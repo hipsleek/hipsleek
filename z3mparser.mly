@@ -26,7 +26,7 @@ sol:
 
 int_val:
 		INT_LIT { $1 }
-	|	MINUS INT_LIT { -$2 }
+	|	OPAREN MINUS INT_LIT CPAREN { -$3 }
 
 %%
 

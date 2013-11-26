@@ -1186,6 +1186,12 @@ let fresh_rrel_id () =
   rel_id := !rel_id + 1;
   !rel_id
 
+let current_rrel_id () = !rel_id
+
+let incr_rrel_id () =
+  rel_id := !rel_id + 1
+;;
+
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 let string_of_loc (p : loc) = 

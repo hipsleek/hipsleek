@@ -1542,7 +1542,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
 (* Set the equation solver in Cpure *)
 Cpure.solve_equations := solve_eqns;;
 
-(* TermInf: Using Z3 to solve ranking relation constraints *)
+(* TermInf: Using Redlog to solve ranking relation constraints *)
 let rl_of_rrel ante conseq const_c var_c nneg_c =
   let p = no_pos in 
   let (pr_w, pr_s) = CP.drop_complex_ops in
@@ -1551,11 +1551,14 @@ let rl_of_rrel ante conseq const_c var_c nneg_c =
   let qf = CP.mkForall params f None p in
   rl_of_formula pr_w pr_s qf
 
-
 let solve_rrel ctx ctr = 
   let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
   let rl_of_rrel = rl_of_rrel nctx ctr const_c var_c nneg_c in
   let rl_res = send_and_receive ("rlqe " ^ rl_of_rrel) in
+
+  (* let  _ = print_endline ("RREL: " ^ rl_of_rrel) in *)
+  (* let  _ = print_endline ("RL_RES: " ^ rl_res) in *)
+
   let lexbuf = Lexing.from_string rl_res in
   let res = Rlparser.input Rllexer.tokenizer lexbuf in
   Smtsolver.get_model (CP.fv res) (CP.split_conjunctions res) 

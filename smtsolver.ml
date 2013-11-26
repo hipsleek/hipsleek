@@ -1176,6 +1176,12 @@ let get_model vars assertions =
     else []
   with _ -> []
 
+let get_model vars assertions =
+  let pr1 = pr_list !CP.print_formula in
+  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
+  Debug.no_1 "[Z3]get_model" pr1 pr2 
+  (fun _ -> get_model vars assertions) assertions
+
 
 
 
