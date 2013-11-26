@@ -8549,7 +8549,9 @@ let mkOCtx ctx1 ctx2 pos =
   else if isAnyFalseCtx ctx2 then add_infer_pre ctx2 ctx1
   else OCtx (ctx1,ctx2) 
 
-let or_context c1 c2 = mkOCtx c1 c2 no_pos   
+let or_context c1 c2 = 
+  if c1==c2 then c1
+  else mkOCtx c1 c2 no_pos   
 
 let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context =  (l,a,remove_dupl_false cs)
   
