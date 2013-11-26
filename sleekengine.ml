@@ -1261,13 +1261,13 @@ let process_shape_infer_prop pre_hps post_hps=
   in
   let _ = if not (!Globals.pred_syn_modular) then
     begin
-      let rel_defs =  Sa2.rel_def_stk in
+      let rel_defs =  Sa3.rel_def_stk in
       if not(rel_defs# is_empty) then
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (Sa2.rel_def_stk # string_of_reverse);
+      print_endline (Sa3.rel_def_stk # string_of_reverse);
       print_endline "*************************************"
     end
   in

@@ -7285,15 +7285,21 @@ let filter_non_sel sel_hps hp_defs hpdefs=
       sel_hps hp_defs hpdefs
 
 
-let gen_slk_file prog file_name sel_pre_hps sel_post_hps rel_assumps unk_hps=
+let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps unk_hps=
   let to_str_one_constr cs=
     "\nrelAssume \n" ^ (Cprinter.string_of_hprel_short cs)
   in
   let all_hps0, all_data_used0, all_view_used0 = List.fold_left (fun (r1,r2,r3) cs ->
       let ldns, lvns, lhps = CF.get_hp_rel_formula cs.CF.hprel_lhs in
       let rdns, rvns, rhps = CF.get_hp_rel_formula cs.CF.hprel_rhs in
+      let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f cs.CF.hprel_rhs)) in
+      let ptrs_node_used = List.fold_left (fun r t ->
+          match t with
+            | Named ot -> if ((String.compare ot "") ==0) then r else r@[ot]
+            | _ -> r
+      ) [] (List.map CP.type_of_spec_var ptrs) in
       let nr1 = r1@(List.map (fun (hp,_,_) -> hp) (lhps@rhps)) in
-      let nr2 = r2@(List.map (fun dn -> dn.CF.h_formula_data_name) (ldns@rdns)) in
+      let nr2 = r2@(List.map (fun dn -> dn.CF.h_formula_data_name) (ldns@rdns))@ptrs_node_used in
       let nr3 = r3@(List.map (fun vn -> vn.CF.h_formula_view_name) (lvns@rvns)) in
       (nr1,nr2,nr3)
   ) ([],[],[]) rel_assumps in
@@ -7306,6 +7312,7 @@ let gen_slk_file prog file_name sel_pre_hps sel_post_hps rel_assumps unk_hps=
       with _ -> ls
   ) [] all_data_used
   in
+
   let str_data_decls = List.fold_left (fun s s1 -> s^ s1 ^ ".\n") "" (List.map Cprinter.string_of_data_decl all_data_decls) in
   (*view declare*)
   let all_view_used = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) all_view_used0 in
@@ -7328,18 +7335,20 @@ let gen_slk_file prog file_name sel_pre_hps sel_post_hps rel_assumps unk_hps=
   in
   let str_hprel_decl = String.concat "\n" (List.map Cprinter.string_of_hp_decl all_hp_decls) in
   (*unknown decl*)
-  let str_unk_decl = "Declare_Unknown " ^ (!CP.print_svl unk_hps) ^"." in
+  let str_unk_decl = if unk_hps =[] then "" else "Declare_Unknown " ^ (!CP.print_svl unk_hps) ^"." in
   (*relational assumptions decl*)
   let str_constrs = List.fold_left (fun s s1 -> s ^ s1 ^ ".\n") "" (List.map to_str_one_constr rel_assumps) in
 
   (*infer command*)
-  let str_infer_cmd = "shape_infer " ^ (!CP.print_svl (CP.diff_svl all_hps (sel_post_hps@unk_hps))) ^
+  let str_infer_cmd = (if is_proper then "shape_infer_proper " else  "shape_infer ") ^
+    (!CP.print_svl (* (CP.diff_svl all_hps (sel_post_hps@unk_hps)) *) sel_pre_hps) ^
     (!CP.print_svl sel_post_hps) ^"." in
   let out_chn =
     let reg = Str.regexp "\.ss" in
-    let file_name1 = fresh_any_name (Str.global_replace reg "" file_name) in
+    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" file_name) in
     (* let _ = print_endline (file_name1 ^ ".slk") in *)
-    open_out (file_name1 ^ ".slk")
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    open_out (file_name1)
   in
   let str_slk = str_data_decls ^ "\n" ^ str_view_decls ^ "\n" ^ str_hprel_decl ^
     "\n" ^ str_unk_decl ^ "\n\n" ^ str_constrs ^ "\n\n" ^ str_infer_cmd in

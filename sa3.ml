@@ -550,31 +550,38 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   let _ = if !Globals.sa_gen_slk then
     try
-      SAU.gen_slk_file prog (List.hd !Globals.source_files)
+      SAU.gen_slk_file false prog (List.hd !Globals.source_files)
           (CP.diff_svl sel_hps post_hps) post_hps constrs link_hps
     with _ -> ()
   else ()
   in
-      let _ = step_change # reset in
-      let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
-      let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
-      let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
-      if !Globals.sap then
-      if step_change # no_change then 
-        DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
-      else 
-        begin
-          (* let _ = DD.binfo_start "split_base" in *)
-          let _ = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
-          let _ = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
-          let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
-          let _ = DD.binfo_pprint "=============>>>>" no_pos in
-          let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
-          let _ = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
-          let _ = DD.binfo_end "split_base" in
-          ()
-        end;
-      res
+  let _ = step_change # reset in
+  let s1 = (pr_list_num Cprinter.string_of_hprel_short) constrs in
+  let (constrs2, unk_map2, link_hpargs2) as res = split_base_constr prog cond_path constrs post_hps sel_hps  prog_vars unk_map unk_hps link_hps in
+  let s2 = (pr_list_num Cprinter.string_of_hprel_short) constrs2 in
+  if !Globals.sap then
+    if step_change # no_change then 
+      DD.binfo_pprint "*** NO SPLITTING DONE ***" no_pos
+    else 
+      begin
+        (* let _ = DD.binfo_start "split_base" in *)
+        let _ = DD.ninfo_hprint (add_str "post_hps" Cprinter.string_of_spec_var_list) post_hps no_pos in
+        let _ = DD.ninfo_hprint (add_str "prog_vars" Cprinter.string_of_spec_var_list) prog_vars no_pos in
+        let _ = DD.binfo_hprint (add_str "BEFORE" pr_id) s1 no_pos in
+        let _ = DD.binfo_pprint "=============>>>>" no_pos in
+        let _ = DD.binfo_hprint (add_str "AFTER" pr_id) s2 no_pos in
+        let _ = DD.binfo_hprint (add_str "UNKNOWN added" (pr_list (fun (x,_) -> Cprinter.string_of_spec_var x)))  link_hpargs2 no_pos in
+        let _ = DD.binfo_end "split_base" in
+        ()
+      end;
+  (* let _ = if !Globals.sa_gen_slk then *)
+  (*   try *)
+  (*     SAU.gen_slk_file true prog (List.hd !Globals.source_files) *)
+  (*         (CP.diff_svl sel_hps post_hps) post_hps constrs2 (List.map fst link_hpargs2) *)
+  (*   with _ -> () *)
+  (* else () *)
+  (* in *)
+  res
 
 
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
@@ -2733,6 +2740,13 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
       | _ -> (*conquer HERE*)
             infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
   else ([],[])
+  in
+  let _ = if !Globals.sa_gen_slk then
+    let reg = Str.regexp "\.ss" in
+    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
+    let _ = print_endline ("\n generate: " ^ file_name1) in
+    ()
+  else ()
   in
   r
   with _ ->

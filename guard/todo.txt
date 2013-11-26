@@ -1016,7 +1016,7 @@ The first one seems to produce some result:
 
 Why is this different from hip which failed?
 ==========================================================
-# err.ss --sa-gen-sleek-file
+# err.ss --sa-gen-sleek-file: FIXED
 
 This produced err_911.slk. However, it seems that
 cell object of form below was not added:
