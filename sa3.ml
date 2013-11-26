@@ -237,21 +237,6 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
       | [n_cs] -> let b, ncs = add_path_sensitive_guard n_cs cs in
         if b then (b, new_constrs@ncs)
         else (b, new_constrs)
-          (* begin *)
-        (*   match n_cs.CF.hprel_guard with *)
-        (*     | None -> false,[] *)
-        (*     | Some n_gf -> begin *)
-        (*         match cs.CF.hprel_guard with *)
-        (*           | None -> *)
-        (*                 (\*generate the remain: the simplest scenario*\) *)
-        (*                 let p = CF.get_pure n_gf in *)
-        (*                 let _ = Debug.info_zprint (lazy (("    p: " ^ (!CP.print_formula p)))) no_pos in *)
-        (*                 if CP.isConstTrue p then (false, []) else *)
-        (*                   let neg_g = neg_pure n_gf in *)
-        (*                   (true, new_constrs@[{cs with CF.hprel_guard = Some neg_g;}]) *)
-        (*           | Some _ -> (\*to find the remain*\) (false, []) *)
-        (*       end *)
-        (* end *)
       | [n_cs1;n_cs2] -> if n_cs1.CF.hprel_guard != None then
           let b1, cs22 = add_path_sensitive_guard n_cs1 n_cs2 in
           if b1 then
@@ -2761,6 +2746,15 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*   with _ -> [] *)
   (* in *)
   (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
+  let print_generated_slk_file ()=
+    let _ = if !Globals.sa_gen_slk then
+      let reg = Str.regexp "\.ss" in
+      let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
+      let _ = print_endline ("\n generate: " ^ file_name1) in
+      ()
+    else ()
+    in ()
+  in
   try 
   let callee_hps = [] in
   let _ = if !Globals.sap then
@@ -2789,15 +2783,10 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
             infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
   else ([],[])
   in
-  let _ = if !Globals.sa_gen_slk then
-    let reg = Str.regexp "\.ss" in
-    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
-    let _ = print_endline ("\n generate: " ^ file_name1) in
-    ()
-  else ()
-  in
+  let _ = print_generated_slk_file () in
   r
   with _ ->
+      let _ = print_generated_slk_file () in
       let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
       ([],[])
 

@@ -880,8 +880,9 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
       let guard1 = CF.subst eq guard in
       (* if CP.isConstTrue p then *)
-        let hfs = CF.heap_of guard1 in
-        CF.join_star_conjunctions_opt hfs
+        (* let hfs = CF.heap_of guard1 in *)
+        (* CF.join_star_conjunctions_opt hfs *)
+      Some guard1
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in
   let orig_vars = CF.fv lhs @ CF.fv rhs in
@@ -892,7 +893,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
   let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
-  let new_rel_ass = CF.mkHprel_1 knd lhs (CF.convert_guard guard) rhs cond_path in
+  let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
   (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
   (*     unk_svl = [];(\*inferred from norm*\) *)
   (*     unk_hps = []; *)
@@ -1012,7 +1013,13 @@ let process_shape_infer pre_hps post_hps=
       else Sa3.rel_def_stk
       in
       if not(rel_defs# is_empty) then
-        let defs = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+        let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d ->
+            match d.CF.hprel_def_kind with
+              | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp sel_post_hps) then (r1,r2@[d],r3) else
+                  if (CP.mem_svl hp sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
+              | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
+        let defs = pre_preds@post_pred@rem in
         let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs else defs in
         print_endline "";
       print_endline "\n*************************************";
