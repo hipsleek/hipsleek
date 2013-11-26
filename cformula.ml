@@ -8796,6 +8796,12 @@ let pop_esc_level (e:esc_stack) lbl : (esc_stack * branch_ctx list) = match e wi
   | _ -> Error.report_error {Err.error_loc = no_pos;  
               Err.error_text = "error in popping exception contexts \n"}
        
+(*
+type: ((('a * 'b) * 'c) list * context) list ->
+  ((('a * 'b) * 'c) list * context) list ->
+  ((('a * 'b) * 'c) list * context) list
+*)
+
 let rec merge_success s1 s2 = match s1,s2 with
     | [],xs | xs,[] -> xs   
         (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
@@ -8814,6 +8820,12 @@ let pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context =
     let ne,el = pop_esc_level el lbl in 
     (fl,ne, merge_success el sl)) l
  
+let pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context =
+  let pr = pr_list !print_failesc_context in
+  Debug.no_1 "pop_esc_level_list" pr pr
+      (fun _ -> pop_esc_level_list l lbl) l
+
+
 let mk_list_partial_context_label (c:list_context) (lab:path_trace): (list_partial_context) =
   match c with
     | FailCtx fr ->  [( [(lab,fr)] ,[])]
@@ -9314,6 +9326,10 @@ let add_cond_label_list_failesc_context (c_pid: control_path_id) (c_opt: path_la
 match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_failesc_context pid c_opt) lpc
+
+let add_cond_label_strict_list_failesc_context (pid: control_path_id_strict) (c_opt: path_label) (lpc:list_failesc_context) =
+  List.map (add_cond_label_failesc_context pid c_opt) lpc
+
 
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
@@ -10667,6 +10683,10 @@ let transform_list_failesc_context
  (f:(fail_context -> fail_context) * (esc_stack -> esc_stack) * (entail_state -> context))
  (c:list_failesc_context): list_failesc_context = 
   List.map (transform_failesc_context f) c
+
+
+let push_esc_level_list (l:list_failesc_context) idf lbl : list_failesc_context =
+  transform_list_failesc_context (idf,(fun c-> push_esc_level c lbl),(fun x-> Ctx x)) l
 
   (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
 let list_failesc_to_partial (c:list_failesc_context): list_partial_context =

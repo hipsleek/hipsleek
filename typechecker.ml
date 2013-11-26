@@ -1763,6 +1763,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let cond_op () =
               begin
                 let _ = proving_loc#set pos in
+                (* let ctx = CF.push_esc_level_list ctx idf pid in *)
                 let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
                 (*let _ = print_string ("\nPure_Cond : "^(Cprinter.string_of_pure_formula pure_cond)) in*)
                 let then_cond_prim = MCP.mix_of_pure pure_cond in
@@ -1776,13 +1777,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
                   else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
                 Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
-                let then_ctx1 = CF.add_cond_label_list_failesc_context pid 1 then_ctx in
-                let else_ctx1 = CF.add_cond_label_list_failesc_context pid 2 else_ctx in
+                let then_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 1 then_ctx in
+                let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
                 let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
                 let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
                 let then_ctx2 = (check_exp prog proc then_ctx1 e1) post_start_label in
                 let else_ctx2 = (check_exp prog proc else_ctx1 e2) post_start_label in
                 let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+                (* let res = CF.pop_esc_level_list res pid in *)
                 res
               end in
             Gen.Profiling.push_time "[check_exp] Cond";
@@ -2313,11 +2315,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       	  exp_try_path_id = pid;
       	  exp_try_pos = pos })->
 	      let cc = get_catch_of_exp cc in
-              let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
+              (* let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in *)
+              let ctx = CF.push_esc_level_list ctx idf pid in
 	      let ctx1 = check_exp prog proc ctx body post_start_label in
               (* WN : ctx2,ctx3 appears to be redundant *)
               let ctx2 = CF.pop_esc_level_list ctx1 pid in
-              let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in
+              (* let ctx3 = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx2 in *)
+              let ctx3 = CF.push_esc_level_list ctx2 idf pid in
               (* let _ = print_endline ("WN:ESCAPE ctx3 :"^(Cprinter.string_of_list_failesc_context ctx3)) in *)
               (*Decide which to escape, and which to be caught.
               Caught exceptions become normal flows*)

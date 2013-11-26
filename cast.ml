@@ -281,7 +281,7 @@ and exp_cond = { exp_cond_type : typ;
 exp_cond_condition : ident;
 exp_cond_then_arm : exp;
 exp_cond_else_arm : exp;
-exp_cond_path_id : control_path_id;
+exp_cond_path_id : control_path_id_strict;
 exp_cond_pos : loc }
 
 and exp_debug = { 

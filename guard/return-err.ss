@@ -24,7 +24,7 @@ lx<g,s> == self=g & self!=s
 HeapPred H(node a, node b, node@NI c).
 PostPred G(node a, node ra, node b, node rb, node@NI c).
 
-void lscan(node@R cur, node@R prev, node sent)
+int lscan(node@R cur, node@R prev, node sent)
 /*
 requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
 ensures prev'::ll<sent>  & cur'=sent ;
@@ -48,18 +48,23 @@ ensures prev'::ll<sent>  & cur'=sent ;
   n = cur.next;
   if (cur == sent) {
       //assume false;
-      return;
+      return 1;
   }
   dprint;
   if (cur == null) {
       // change direction;
       cur = prev;
+      dprint;
+  }
+  else {
+    return 2;
   }
   dprint;
+  return 3;
 }
 
 /*
-# return-err.ss 
+# guard/return-err.ss 
 
 Duplicated exception flows!
 

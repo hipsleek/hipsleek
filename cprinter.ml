@@ -3307,7 +3307,7 @@ let rec string_of_exp = function
 	exp_cond_else_arm = e2;
 	exp_cond_path_id = pid;
 	exp_cond_pos = l}) -> 
-        string_of_control_path_id_opt pid ("if (" ^ id ^ ") [" ^(string_of_exp e1) ^ "]\nelse [" ^ (string_of_exp e2) ^ "]\n" )
+        string_of_control_path_id pid ("if (" ^ id ^ ") [" ^(string_of_exp e1) ^ "]\nelse [" ^ (string_of_exp e2) ^ "]\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _ -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 

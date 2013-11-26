@@ -3508,7 +3508,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                          C.exp_cond_then_arm = ce2;
                          C.exp_cond_else_arm = ce3;
                          C.exp_cond_pos = pos;
-                         C.exp_cond_path_id = pi; }), te2)
+                         C.exp_cond_path_id = mk_strict_branch_point pi ""; }), te2)
             | _ ->
                 let e_pos = Iast.get_exp_pos e1 in
                 let fn = (fresh_var_name "bool" e_pos.start_pos.Lexing.pos_lnum) in
@@ -3526,7 +3526,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_cond_then_arm = ce2;
                     C.exp_cond_else_arm = ce3;
                     C.exp_cond_pos = pos;
-                    C.exp_cond_path_id = pi; } in
+                    C.exp_cond_path_id = mk_strict_branch_point pi ""; } in
                 let tmp_e1 = C.Seq {
                     C.exp_seq_type = te2;
                     C.exp_seq_exp1 = init_e;

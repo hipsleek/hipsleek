@@ -1149,6 +1149,11 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
+  match id with 
+    | Some i -> i
+    | None -> fresh_formula_label s
+
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let fresh_int () =
