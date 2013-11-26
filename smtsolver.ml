@@ -1131,7 +1131,7 @@ let smt_of_rrel ante conseq const_c var_c nneg_c =
 
 
 let solve_rrel ctx ctr = 
-  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula ctx in
+  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula false ctx in
   let smt_of_rrel = smt_of_rrel nctx ctr const_c var_c nneg_c in
 
   let res = run "" "z3" smt_of_rrel 5.0 in

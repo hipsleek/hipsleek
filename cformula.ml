@@ -13609,25 +13609,24 @@ let collect_rankrel_vars_h_formula_raw (h: h_formula) (view_ids: string list)
   (fun (a, b, c, d) -> pr_pair (pr_triple pr1 pr5 pr2) pr3 ((a, b, c), d))
   collect_rankrel_vars_h_formula_raw h view_ids
 
-let rec collect_rankrel_vars_h_formula (h: h_formula) (view_ids: string list)
-  : (h_formula * CP.formula list * CP.spec_var list) =
+let rec collect_rankrel_vars_h_formula (h: h_formula) (rel_id: int) (view_ids: string list)
+  : CP.formula list =
   match h with 
   | Star s ->
-      let h1, rr1, e1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 view_ids in 
-      let h2, rr2, e2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 view_ids in
-      (Star { s with h_formula_star_h1 = h1; h_formula_star_h2 = h2; },
-      rr1 @ rr2, e1 @ e2)
+      let rr1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 rel_id view_ids in 
+      let rr2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 rel_id view_ids in
+      rr1 @ rr2
   | ViewNode v ->
       let ir = Gen.BList.mem_eq (=) v.h_formula_view_name view_ids in
-      let rarg = TI.view_var_ragr v.h_formula_view_name in
-      let rarg_id = rarg.CP.rank_arg_id in
-      let n_vn = ViewNode { v with h_formula_view_rank = Some rarg_id; } in
-      if not ir then (n_vn, [], [rarg_id])
+      if not ir then []
       else
-        let rrel = CP.mkRankConstraint_no_fresh rarg_id 
-          (List.map CP.mkRArg_var v.h_formula_view_arguments) in
-        (n_vn, [rrel], [rarg_id])
-  | _ -> (h, [], [])
+        let rank_id = match v.h_formula_view_rank with
+        | None -> CP.SpecVar (Int, TI.view_rarg_id v.h_formula_view_name, Unprimed) 
+        | Some v -> v in
+        let rrel = CP.mkRankConstraint rel_id rank_id
+          (List.map CP.mkRArg_var v.h_formula_view_arguments) None in
+        [rrel]
+  | _ -> []
 
 
 let collect_view_rank_h_formula (h: h_formula) : CP.spec_var list =

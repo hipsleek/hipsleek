@@ -14,7 +14,6 @@ type rrel = {
   rrel_ctr: MCP.mix_formula;
 }
 
-
 (* Functions for creating ID *)
 let view_rank_id view_id =
   "r_" ^ view_id
@@ -40,7 +39,6 @@ let solve_rrel rrel =
   let ctx = MCP.pure_of_mix rrel.rrel_ctx in
   let ctr = MCP.pure_of_mix rrel.rrel_ctr in
   Redlog.solve_rrel ctx ctr
-
 
 let rec solve_rrel_list rrel_list =
   List.concat (List.map solve_rrel rrel_list)

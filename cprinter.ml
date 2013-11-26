@@ -814,6 +814,16 @@ let rec string_of_rank_arg_list_noparen l = match l with
 
 let string_of_rank_arg_list l = "["^(string_of_rank_arg_list_noparen l)^"]" ;;
 
+let rec pr_rankrel rrel = 
+  fmt_string (string_of_spec_var rrel.CP.rank_id); 
+  fmt_string (" = RR_" ^ (string_of_int rrel.CP.rel_id) ^ "("); 
+  fmt_string (string_of_rank_arg_list_noparen rrel.CP.rank_args); 
+  fmt_string ")";
+  (match rrel.CP.rrel_raw with
+  | None -> ()
+  | Some rr -> fmt_string " or "; pr_rankrel rr) ;;
+
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -829,11 +839,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (* ;if ls2!=[] then *)
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
-    | P.RankRel rrel ->
-        fmt_string (string_of_spec_var rrel.CP.rank_id); 
-        fmt_string (" = RR_" ^ (string_of_int rrel.CP.rel_id) ^ "("); 
-        fmt_string (string_of_rank_arg_list_noparen rrel.CP.rank_args); 
-        fmt_string ")"
+    | P.RankRel rrel -> pr_rankrel rrel 
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)

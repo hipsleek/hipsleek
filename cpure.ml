@@ -1803,19 +1803,19 @@ and mkLexVar t_ann m i pos =
       lex_loc = pos;
   }
 
-and mkRankRel view_rank_id data_rank_args =
+and mkRankRel_raw view_rank_id data_rank_args =
   RankRel {
     rel_id = fresh_rrel_id (); 
     rank_id = view_rank_id;
     rank_args = data_rank_args;
     rrel_raw = None; }
 
-and mkRankRel_no_fresh view_rank_id data_rank_args =
+and mkRankRel rel_id view_rank_id data_rank_args rrel_r =
   RankRel {
-    rel_id = current_rrel_id (); 
+    rel_id = rel_id; 
     rank_id = view_rank_id;
     rank_args = data_rank_args; 
-    rrel_raw = None; }
+    rrel_raw = rrel_r; }
 
 and mkPure bf = BForm ((bf,None), None)
 
@@ -1824,11 +1824,11 @@ and mkLexVar_pure a l1 l2 =
   let p = mkPure bf in
   p
 
-and mkRankConstraint view_rank_sv data_rank_args =
-  mkPure (mkRankRel view_rank_sv data_rank_args)
+and mkRankConstraint_raw view_rank_sv data_rank_args =
+  mkPure (mkRankRel_raw view_rank_sv data_rank_args)
 
-and mkRankConstraint_no_fresh view_rank_sv data_rank_args =
-  mkPure (mkRankRel_no_fresh view_rank_sv data_rank_args)
+and mkRankConstraint rel_id view_rank_sv data_rank_args rrel_r =
+  mkPure (mkRankRel rel_id view_rank_sv data_rank_args rrel_r)
 
 and mkRArg_var id = 
   { rank_arg_id = id; rank_arg_type = RVar; }
@@ -3035,11 +3035,16 @@ and b_apply_subs_x sst bf =
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-    | RankRel (rrel as r) -> 
-        RankRel { r with
+    | RankRel rrel -> 
+        RankRel { rrel with
           rank_id = subs_one sst rrel.rank_id;
           rank_args = List.map (fun ra -> 
-            { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) rrel.rank_args; }
+            { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) rrel.rank_args;
+          rrel_raw = map_opt (fun r -> { r with
+            rank_id = subs_one sst r.rank_id;
+            rank_args = List.map (fun ra -> 
+              { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) r.rank_args;
+          }) rrel.rrel_raw; }
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
@@ -11431,13 +11436,17 @@ let b_formula_of_rankrel_sol (rr: rankrel) subst =
     (1, const_exp) rank_var_svs) in
   mkEq_b (mkVar rr.rank_id p) exp p 
   
-let replace_rankrel_by_b_formula (f: formula) =
+let replace_rankrel_by_b_formula (is_raw: bool) (f: formula) =
   let f_b_f arg b = 
     let (pf, _) = b in
     match pf with
     | RankRel rr -> 
-      let nb, const_coes, arg_coes, nneg_coes = b_formula_of_rankrel rr in 
-      Some (nb, (const_coes, arg_coes, nneg_coes))
+      let nb, const_coes, arg_coes, nneg_coes = 
+        if not is_raw then b_formula_of_rankrel rr
+        else match rr.rrel_raw with
+        | None -> mkTrue_b no_pos, [], [], [] 
+        | Some rr_raw -> b_formula_of_rankrel rr_raw
+      in Some (nb, (const_coes, arg_coes, nneg_coes))
     | _ -> Some (b, ([], [], [])) in
   let f_comb a bl = List.fold_left (fun (a1, a2, a3) (b1, b2, b3) -> 
     (a1@b1, a2@b2, a3@b3)) ([], [], []) bl in
