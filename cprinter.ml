@@ -3915,7 +3915,7 @@ let rec html_of_h_formula h = match h with
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
-  | HRel (r, args, l) -> "<b>HRel</b>" ^ (string_of_spec_var r) ^ "(" ^ (match args with
+  | HRel (r, args, l) -> (*"<b>HRel</b>" ^*) (string_of_spec_var r) ^ "(" ^ (match args with
       | [] -> ""
       | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"
   | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
