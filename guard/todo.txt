@@ -1272,7 +1272,59 @@ Successful States:
  ]
 
 ==========================================================
-==========================================================
+# swl-i-sa.ss -sa-gen-sleek-file
+
+generated mods_swl-i-sa.slk which when run produced.
+
+ H(cur,prev,sent) ::= cur::node<val,next>@M 
+    * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+
+ HP_945(cur,prev,sent) ::= 
+     emp&cur!=sent & cur=null
+  or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+  or emp&cur=sent,
+
+ HP_946(prev1,cur,sent) ::= 
+    emp&prev1=null
+    or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+    or DP_204(prev1),
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
+   * HP_946(prev,prev1',next)&cur=prev1' & next=sent,
+ DP_204(prev) ::= NONE]
+
+However, this is quite different from what is produced by HIP.
+It seems the post-pred is more complex from hip. I guess
+both sleek and hip should produce the same result.
+
+[ 
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ 
+ G(cur1,cur',prev,prev3',sent) ::= 
+  cur1::node<val,prev>@M * HP_946(prev,prev3',cur')&cur1=prev3' & cur'=sent
+ or cur1::node<val,prev1>@M * HP_946(prev1,prev3',cur')&cur'=sent & 
+    cur1=prev3' & cur1!=null & prev1=null
+ or HP_946(cur1,prev3',cur') * prev3'::node<val,cur1>@M&cur'=sent & 
+    prev3'!=sent & prev3'!=null & cur1!=null
+ or HP_946(prev2,prev3',cur') * prev3'::node<val,prev2>@M&prev3'!=sent & 
+    cur'=sent & prev3'!=null & prev2=null & cur1!=null
+ or HP_946(next,prev3',cur') * prev3'::node<val,next>@M&next!=sent & 
+    cur'=sent & prev3'!=sent & prev3'!=null & next!=null & cur1!=null,
+
+ DP_1140(prev) ::= NONE,
+
+ DP_1140(prev) ::= NONE,
+ HP_945(cur,prev,sent) ::= 
+ emp&cur!=sent & cur=null
+ or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_1140(prev1)
+ ]
+
+ ==========================================================
 ==========================================================
 ==========================================================
 ==========================================================
