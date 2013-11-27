@@ -1560,16 +1560,16 @@ let solve_constr_by_elim raw_rrel ctx ctr =
   let rrel_in_rl = rl_of_rrel nctx ctr const_c var_c nneg_c in
   let rl_res = send_and_receive ("rlqe " ^ rrel_in_rl) in
 
-  let _ = print_endline ("CTX: " ^ (!CP.print_formula ctx)) in
-  let _ = print_endline ("NCTX: " ^ (!CP.print_formula nctx)) in
-  let _ = print_endline ("CTR: " ^ (!CP.print_formula ctr)) in
+  (* let _ = print_endline ("CTX: " ^ (!CP.print_formula ctx)) in *)
+  (* let _ = print_endline ("NCTX: " ^ (!CP.print_formula nctx)) in *)
+  (* let _ = print_endline ("CTR: " ^ (!CP.print_formula ctr)) in *)
 
   (* let _ = print_endline ("RREL: " ^ rl_of_rrel) in *)
   (* let _ = print_endline ("RL_RES: " ^ rl_res) in *)
 
   let lexbuf = Lexing.from_string rl_res in
   let res = Rlparser.input Rllexer.tokenizer lexbuf in
-  let _ = print_endline ("RES: " ^ (!CP.print_formula res)) in
+  (* let _ = print_endline ("RES: " ^ (!CP.print_formula res)) in *)
   res
 
 let solve_rrel ctx ctr = 

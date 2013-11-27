@@ -678,7 +678,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* TermInf: Collecting ALL ranking constraints here *)
                     let rrel = CF.collect_rrel_list_failesc_context res_ctx in
                     let sol_for_rrel, raw_subst = TI.solve_rrel_list rrel in
-                    let _ = print_endline ("SOL: " ^ (pr_list (pr_pair (fun s -> s) string_of_int) sol_for_rrel)) in
                     let n_vdefs = List.map (fun vdef -> {vdef with Cast.view_formula = 
                       CF.subst_rankrel_sol_struc_formula raw_subst sol_for_rrel vdef.Cast.view_formula}) prog.Cast.prog_view_decls in
                     let _ = if !Globals.en_term_inf then
