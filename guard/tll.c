@@ -47,8 +47,23 @@ requires x::tree<> ensures x::tll<res,t>;
 }
 
 /*
-# tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
+# tll.c 
 
+verification using -tp z3 fail with tll.c but not
+with tll.ss. How come?
+
+Checking procedure set_right$node~node... 
+!!! WARNING logtime exception:0.
+Procedure set_right$node~node FAIL.(2)
+
+Exception Globals.Illegal_Prover_Format("z3.smt_of_exp: TypeCast should not appear here") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop z3... 47 invocations 
+0 false contexts at: ()
+
+# tll.c --sa-dnc --pred-en-dangling --pred-en-eup
 
 RELASSUME
 =========
