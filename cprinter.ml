@@ -1526,7 +1526,7 @@ let rec prtt_pr_h_formula_inst prog h =
           let ss = List.combine args hprel.Cast.hp_vars_inst in
           let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
 		  if (!Globals.texify) then
-		  begin 
+		  begin
 		  fmt_string ("\seppred{"^(string_of_spec_var r) ^ "}{");pr_formula_exp_w_ins_list args_inst;fmt_string "}";
 		  end
 		  else
@@ -3915,7 +3915,9 @@ let rec html_of_h_formula h = match h with
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
-  | HRel _ -> "<b>HRel</b>"
+  | HRel (r, args, l) -> "<b>HRel</b>" ^ (string_of_spec_var r) ^ "(" ^ (match args with
+      | [] -> ""
+      | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"
   | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
 
 let rec html_of_formula e = match e with
@@ -3994,6 +3996,63 @@ let html_of_partial_context (fs,ss) =
 
 let html_of_list_partial_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_partial_context lctx)
 ;;
+
+let pr_html_path_of (path, off)=
+   (* fmt_string "PATH format"; *)
+   pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
+  ; (match off with
+     | None -> fmt_string " NONE"
+     | Some f -> fmt_string (html_of_formula f))
+
+(* Long *)
+let pr_html_hprel_def_short hpd =
+  fmt_open_box 1;
+  (fmt_string (html_of_h_formula hpd.hprel_def_hrel));
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            fmt_string (html_of_formula hf)
+          end
+  in
+  fmt_string " ::=";
+  match hpd.hprel_def_body_lib with
+    | None -> (pr_list_op_none " \/ " pr_html_path_of) hpd.hprel_def_body;
+    | Some f -> fmt_string (html_of_formula f);
+  fmt_close()
+
+let pr_html_hprel_short_inst cprog hpa=
+  fmt_open_box 1;
+  if not(!Globals.is_sleek_running) then
+    begin
+      fmt_string ("// "^(Others.string_of_proving_kind hpa.hprel_proving_kind));
+      fmt_print_newline()
+    end;
+  pr_wrap_test_nocut "" Gen.is_empty (* skip_cond_path_trace *) 
+      (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
+  (* prtt_pr_formula_inst cprog hpa.hprel_lhs; *)
+  fmt_string (html_of_formula hpa.hprel_lhs);
+  let _ = match hpa.hprel_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            (* prtt_pr_formula_inst cprog hf *)
+            fmt_string (html_of_formula hf)
+          end
+  in
+  fmt_string " --> ";
+  (* prtt_pr_formula_inst cprog hpa.hprel_rhs; *)
+  fmt_string (html_of_formula hpa.hprel_rhs);
+  fmt_close()
+
+let string_of_html_hprel_short_inst prog hp =
+  poly_string_of_pr (pr_html_hprel_short_inst prog) hp
+
+let string_of_html_hprel_def_short hp =
+  poly_string_of_pr pr_html_hprel_def_short hp;;
 
 Slicing.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;

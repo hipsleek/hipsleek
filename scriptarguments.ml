@@ -291,6 +291,7 @@ let common_arguments = [
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
   ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
   ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
