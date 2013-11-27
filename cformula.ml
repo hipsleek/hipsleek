@@ -9869,7 +9869,6 @@ let rec transform_struc_formula f (e:struc_formula) :struc_formula =
 		| EInfer b -> EInfer {b with formula_inf_continuation = transform_struc_formula f b.formula_inf_continuation;}
 		| EList b -> EList (map_l_snd (transform_struc_formula f) b)
 		
-
 let rec transform_struc_formula_w_perm f (permvar:cperm_var) (e:struc_formula) :struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
 	let r = f_e_f e in 
@@ -13673,7 +13672,29 @@ let collect_rrel_list_failesc_context (ctx: list_failesc_context) : TI.rrel list
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
 
+let rec remove_redundant_implicit_inst (f: struc_formula) (vs: CP.spec_var list): struc_formula =
+  match f with
+  | EList l -> EList (List.map (fun (lbl, sf) ->
+      (lbl, remove_redundant_implicit_inst sf vs)) l)
+  | ECase c -> ECase { c with 
+      formula_case_branches = List.map (fun (cf, sf) -> 
+        (cf, remove_redundant_implicit_inst sf vs)) c.formula_case_branches; }
+  | EBase b -> 
+      let cont = match b.formula_struc_continuation with
+        | None -> None
+        | Some sf -> Some (remove_redundant_implicit_inst sf vs) in
+      EBase { b with
+        formula_struc_implicit_inst = Gen.BList.difference_eq CP.eq_spec_var
+          b.formula_struc_implicit_inst vs;
+        formula_struc_continuation = cont; }
+  | EAssume a -> EAssume { a with
+      formula_assume_struc = remove_redundant_implicit_inst a.formula_assume_struc vs; }
+  | EInfer i -> EInfer { i with
+      formula_inf_continuation = remove_redundant_implicit_inst i.formula_inf_continuation vs; }
+
 let subst_rankrel_sol_struc_formula raw_subst subst (f: struc_formula) =
   let f_p_f pf = Some (CP.subst_rankrel_sol_formula raw_subst subst pf) in
-  transform_struc_formula 
-    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f
+  let trans_f = transform_struc_formula 
+    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f in
+  let vs = List.map (fun id -> CP.SpecVar (Int, id, Unprimed)) (fst (List.split subst)) in
+  remove_redundant_implicit_inst trans_f vs
