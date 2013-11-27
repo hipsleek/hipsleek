@@ -1764,7 +1764,8 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* C
         (vdcl.CA.view_vars) no_pos in
       let f2 = CF.formula_of_heap vnode no_pos in
       if Lemma.checkeq_sem iprog prog f1 f2 [def] then
-        [vnode]
+        let self_ss = [(self_sv,r)] in
+        [CF.h_subst self_ss vnode]
       else []
     else []
   in

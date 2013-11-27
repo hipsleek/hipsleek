@@ -14433,7 +14433,12 @@ let rearrange_def def=
   (*           in HRel (CP.SpecVar(t, id, pr), new_exp_list, pos) *)
   (*     | _ -> def.hprel_def_hrel *)
   (* in *)
+  let n_lib = match def.hprel_def_body_lib with
+    | None -> None
+    | Some f -> Some (subst_avoid_capture svl_rp new_svl f)
+  in
   {def with hprel_def_body = new_body2;
+      hprel_def_body_lib = n_lib;
       hprel_def_hrel = new_hrel;}
 
 (* let rearrange_def def= *)
@@ -14471,4 +14476,5 @@ let rearrange_rel (rel: hprel) =
       hprel_guard = (match rel.hprel_guard with
          | None -> None
          | Some f -> Some (subst_avoid_capture fv new_svl (rearrange_formula gfv f)));
-      hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;}
+      hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
+  }
