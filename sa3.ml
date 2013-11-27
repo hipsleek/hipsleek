@@ -2163,6 +2163,7 @@ and infer_shapes_from_fresh_obligation iprog cprog proc_name callee_hps
       (fun _ -> infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is_pre is sel_lhps sel_rhps need_preprocess detect_dang def_hps) is
 
 and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang=
+  (*******************INTERNAL********************)
   let def_hps = List.fold_left (fun ls d ->
       match d.CF.def_cat with
         |  CP.HPRelDefn (hp,_,_) -> ls@[hp]
@@ -2202,6 +2203,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     else
       (r_lhs@rem_lhs, r_rhs@rem_rhs, dep_def_hps@dep_define_hps1@dep_define_hps2,r_oblg_constrs@[cs], r_rem_constrs)
   in
+  (****************END INTERNAL********************)
   let constrs0 = is.CF.is_constrs in
   (* let _ = DD.info_hprint (add_str "  obligation is.CF.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in *)
   if constrs0 = [] then is else
@@ -2230,6 +2232,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
         ()
       in
       let _  = restore_state settings in
+      (*do revert view --> defined hprel if applicable (in_hp_names) ??? *)
       is
     else
       (* let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in *)
@@ -2255,6 +2258,8 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
     DD.info_ihprint (add_str "rem_constr:\n" pr1) rem_constr no_pos;
     let _  = restore_state settings in
+    (*do revert view --> defined hprel if applicable (in_hp_names) *)
+    let n_is = {n_is with CF.is_hp_defs = Saout.trans_hp_def_view_2_hp iprog prog proc_name in_hp_names n_is.CF.is_hp_defs} in
     if rem_constr = [] then
       (*return*)
       n_is

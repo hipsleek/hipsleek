@@ -1149,7 +1149,7 @@ Also:
 is missing below:
  shape_infer [H1,H2][G1].
 ==========================================================
-# mod_swl-h2.slk
+# mod_swl-h2.slk: FIXED
 
 Derived:
 
@@ -1179,7 +1179,7 @@ have lost post-pred.
 Expected sleek file is in mod-swl-i-sa.slk
 
 ==========================================================
-# mod-swl-i-sa.slk
+# mod-swl-i-sa.slk:
 
   expected sleek file from swl-i-sa.slk
 
