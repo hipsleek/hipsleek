@@ -4375,11 +4375,13 @@ let closer_ranking prog unk_hps fs root_cand args0=
   in
   let new_cand =
     match unk_hps with
-      | hp::_ -> try
-               let ins_args = get_hp_args_inst prog hp args0 in
-               let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
-               (ins_cand@rem)
-           with _ -> new_cand0
+      | hp::_ -> (
+            try
+              let ins_args = get_hp_args_inst prog hp args0 in
+              let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
+              (ins_cand@rem)
+            with _ -> new_cand0
+        )
       | _ -> new_cand0
   in
   let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in

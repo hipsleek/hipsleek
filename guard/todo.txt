@@ -1253,6 +1253,24 @@ Stop z3... 47 invocations
 0 false contexts at: ()
 
 ==========================================================
+# zip_paper_eq.c
+
+
+why tmp_41'::node<_,_>@M * tmp_41'::memLoc<h,s>??
+
+=============================
+dprint: zip_paper_eq.c:43: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:(exists _,_: H(x,y) * tmp_41'::node<_,_>@M * tmp_41'::memLoc<h,s>@M&y=y' & x=x' & x'!=null & !(v_bool_32_981') & x'!=null & !(v_bool_32_981') & 0<1 & tmp___42'!=null & h_1050 & 0<1 & h=h_1050 & s=s_1051 & 0<s_1051 & h & tmp___42'!=null & 0<s&{FLOW,(24,25)=__norm})[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 0]
+
+ ]
+
 ==========================================================
 ==========================================================
 ==========================================================

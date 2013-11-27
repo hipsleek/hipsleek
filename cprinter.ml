@@ -410,7 +410,11 @@ let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
 let pr_tuple op f xs = pr_args None (Some "A") op "(" ")" "," f xs
 
 (** print an angle list with cut after separator*)  
-let pr_angle op f xs = pr_args None (Some "A") op "<" ">" "," f xs
+let pr_angle op f xs =
+  if !print_html then
+    pr_args None (Some "A") op  "&lt;" "&gt;" "," f xs
+  else
+    pr_args None (Some "A") op  "<" ">" "," f xs
 
 (** print a sequence with cut after separator*)  
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
