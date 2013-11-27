@@ -427,7 +427,7 @@ let trans_hp_def_view_2_hp_x iprog cprog proc_name in_hp_names hp_defs=
   let rev_hp_def r hpdef=
     match hpdef.CF.def_cat with
       | CP.HPRelDefn (hp,_,_) ->
-            let _ = Debug.info_hprint (add_str "hp" !CP.print_sv) hp no_pos in
+            let _ = Debug.ninfo_hprint (add_str "hp" !CP.print_sv) hp no_pos in
             let ndef = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) (CP.name_of_spec_var hp) in_hp_names then
               hpdef
             else

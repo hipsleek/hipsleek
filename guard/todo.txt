@@ -1233,7 +1233,7 @@ when compared to the output from hip. Can fix?
  HP_958(next,t) ::= NONE]
 
 ==========================================================
-# tll.c 
+# tll.c : FIXED
 
 verification using -tp z3 fail with tll.c but not
 with tll.ss. How come?
