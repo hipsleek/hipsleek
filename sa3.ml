@@ -580,7 +580,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
   in
   (new_constrs, new_map, link_hpargs)
 
-let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
+let split_base_constr_a prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   let _ = if !Globals.sa_gen_slk then
     try
       SAU.gen_slk_file false prog (List.hd !Globals.source_files)
@@ -623,7 +623,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_4 "split_base_constr" pr1 pr2 !CP.print_svl !CP.print_svl (pr_triple pr1 pr2 pr3)
-      (fun _ _ _ _ -> split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map
+      (fun _ _ _ _ -> split_base_constr_a prog cond_path constrs post_hps sel_hps prog_vars unk_map
           unk_hps link_hps) constrs unk_map unk_hps post_hps
 
 (***************************************************************
@@ -2178,9 +2178,11 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let cur_ihpdcl = iprog.Iast.prog_hp_decls in
     let cur_chpdcl = prog.Cast.prog_hp_decls in
     let cviews =  prog.Cast.prog_view_decls in
-    (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)
+    let gen_sleek_file = !Globals.sa_gen_slk in
+    let _ = Globals.sa_gen_slk := false in
+    (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, gen_sleek_file)
   in
-  let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)=
+  let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, gen_sleek_file)=
     (* let _ = ass_stk # reset in *)
     (* let _ = ass_stk # push_list cur_ass in *)
     let _ = rel_def_stk # reset in
@@ -2190,6 +2192,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let cdiff = Gen.BList.difference_eq Cast.cmp_hp_def cur_chpdcl prog.Cast.prog_hp_decls in
     let _ = prog.Cast.prog_hp_decls <- (prog.Cast.prog_hp_decls@cdiff) in
     let _ = prog.Cast.prog_view_decls <- cviews in
+    let _ = Globals.sa_gen_slk := gen_sleek_file in
     ()
   in
   let classify_hps (r_lhs, r_rhs, dep_def_hps, r_oblg_constrs,r_rem_constrs) cs=
@@ -2756,7 +2759,9 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     let _ = if !Globals.sa_gen_slk then
       let reg = Str.regexp "\.ss" in
       let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
+      let file_name2 = "logs/mod_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
       let _ = print_endline ("\n generate: " ^ file_name1) in
+      let _ = print_endline ("\n generate: " ^ file_name2) in
       ()
     else ()
     in ()

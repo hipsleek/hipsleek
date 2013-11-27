@@ -4375,9 +4375,11 @@ let closer_ranking prog unk_hps fs root_cand args0=
   in
   let new_cand =
     match unk_hps with
-      | hp::_ -> let ins_args = get_hp_args_inst prog hp args0 in
-        let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
-        (ins_cand@rem)
+      | hp::_ -> try
+               let ins_args = get_hp_args_inst prog hp args0 in
+               let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
+               (ins_cand@rem)
+           with _ -> new_cand0
       | _ -> new_cand0
   in
   let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in
@@ -4387,9 +4389,11 @@ let closer_ranking prog unk_hps fs root_cand args0=
       | [] -> (* List.hd root_cand *)
             begin
               match unk_hps with
-                | hp::_ -> let ins_args = get_hp_args_inst prog hp args0 in
-                  let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) args0 in
-                  List.hd (ins_cand@rem)
+                | hp::_ -> (try
+                   let ins_args = get_hp_args_inst prog hp args0 in
+                   let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) args0 in
+                   List.hd (ins_cand@rem)
+                 with _ -> List.hd root_cand)
                 | _ -> List.hd root_cand
             end
       | r::_ -> if eqNulls = [] then r
@@ -5562,11 +5566,11 @@ let mkConjH_and_norm prog hp args unk_hps unk_svl f1 f2 pos=
   Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
       (fun _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2
 
-let simplify_disj_x prog args unk_hps unk_svl f1 f2 pos=
+let simplify_disj_x prog hp args unk_hps unk_svl f1 f2 pos=
   (*todo: revise partition_common_diff*)
   let helper f1 f2=
     let fs = [f1;f2] in
-    let r,non_r_args = find_root prog unk_hps args fs in
+    let r,non_r_args = find_root prog (hp::unk_hps) args fs in
     (* let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in *)
     let lldns_vns = List.fold_left (fun r2 f ->
        let hds,hvs,_ = CF.get_hp_rel_formula f in
@@ -5588,11 +5592,11 @@ let simplify_disj_x prog args unk_hps unk_svl f1 f2 pos=
       else (false, [f1;f2])
     else (false, [f1;f2])
 
-let simplify_disj prog args unk_hps unk_svl f1 f2 pos=
+let simplify_disj prog hp args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln pr1 in
   Debug.no_2 "simplify_disj" pr1 pr1 (pr_pair string_of_bool pr2)
-      (fun _ _ -> simplify_disj_x prog args unk_hps unk_svl f1 f2 pos) f1 f2
+      (fun _ _ -> simplify_disj_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2
 
 let perform_conj_unify_post_wg_x prog hp args unk_hps unk_svl fs_wg pos=
   match fs_wg with
@@ -7356,6 +7360,8 @@ let filter_non_sel sel_hps hp_defs hpdefs=
 
 
 let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps unk_hps=
+  let sel_pre_hps = CP.remove_dups_svl sel_pre_hps in
+  let unk_hps = CP.remove_dups_svl unk_hps in
   let to_str_one_constr cs=
     "\nrelAssume \n" ^ (Cprinter.string_of_hprel_short cs)
   in
@@ -7411,11 +7417,11 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
 
   (*infer command*)
   let str_infer_cmd = (if is_proper then "shape_infer_proper " else  "shape_infer ") ^
-    (!CP.print_svl (* (CP.diff_svl all_hps (sel_post_hps@unk_hps)) *) sel_pre_hps) ^
+    (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl all_hps (sel_post_hps@unk_hps)) ) (* sel_pre_hps *)) ^
     (!CP.print_svl sel_post_hps) ^"." in
   let out_chn =
     let reg = Str.regexp "\.ss" in
-    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" file_name) in
+    let file_name1 = (if is_proper then "logs/gen_" else "logs/mod_") ^ (Str.global_replace reg ".slk" file_name) in
     (* let _ = print_endline (file_name1 ^ ".slk") in *)
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     open_out (file_name1)

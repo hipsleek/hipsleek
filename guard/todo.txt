@@ -1169,7 +1169,10 @@ Derived:
  for re-verification.
 
 ==========================================================
-# hip swl-i-sa.slk -sa-gen-sleek-file
+# hip swl-i-sa.slk -sa-gen-sleek-file: DONE
+  generate two files:
+    mod_...: before split_base
+    gen_...: after split_base
 
 Above produced a sleek file which seems to be after
 base case splitting. Can we have the one prior to base-case
@@ -1179,7 +1182,7 @@ have lost post-pred.
 Expected sleek file is in mod-swl-i-sa.slk
 
 ==========================================================
-# mod-swl-i-sa.slk:
+# mod-swl-i-sa.slk: FIXED
 
   expected sleek file from swl-i-sa.slk
 
@@ -1198,7 +1201,7 @@ Expected sleek file is in mod-swl-i-sa.slk
  G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
   * HP_946(prev,prev1',next)&cur=prev1' & next=sent,DP_233(prev1) ::= NONE]
 ==========================================================
-# tll.ss -sa-gen-sleek-file
+# tll.ss -sa-gen-sleek-file: FIXED
 
 generated 
  [ H(x,t) |#| emp&
