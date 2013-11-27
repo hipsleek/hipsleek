@@ -1198,7 +1198,57 @@ Expected sleek file is in mod-swl-i-sa.slk
  G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
   * HP_946(prev,prev1',next)&cur=prev1' & next=sent,DP_233(prev1) ::= NONE]
 ==========================================================
+# tll.ss -sa-gen-sleek-file
+
+generated 
+ [ H(x,t) |#| emp&
+  left_31_102=left_31_102 ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_89(left,t) * HP_958(next,t)&right=null
+ ,
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_89(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_89(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
+This seems slightly different with spurious  
+  |#| emp& left_31_102=left_31_102
+when compared to the output from hip. Can fix?
+
+[ H(x,t) ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_1044(left,t) * HP_958(next,t)&right=null
+ ,
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_1044(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_1044(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
 ==========================================================
+# tll.c 
+
+verification using -tp z3 fail with tll.c but not
+with tll.ss. How come?
+
+Checking procedure set_right$node~node... 
+!!! WARNING logtime exception:0.
+Procedure set_right$node~node FAIL.(2)
+
+Exception Globals.Illegal_Prover_Format("z3.smt_of_exp: TypeCast should not appear here") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop z3... 47 invocations 
+0 false contexts at: ()
+
 ==========================================================
 ==========================================================
 ==========================================================
