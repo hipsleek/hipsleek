@@ -4004,7 +4004,6 @@ let pr_html_path_of (path, off)=
      | None -> fmt_string " NONE"
      | Some f -> fmt_string (html_of_formula f))
 
-(* Long *)
 let pr_html_hprel_def_short hpd =
   fmt_open_box 1;
   (fmt_string (html_of_h_formula hpd.hprel_def_hrel));
