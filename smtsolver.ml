@@ -1147,7 +1147,7 @@ let solve_rrel ctx ctr =
     else []
   with _ -> []
 
-let get_model vars assertions =
+let get_model is_linear vars assertions =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
     let typ = (CP.type_of_spec_var v)in
@@ -1163,24 +1163,27 @@ let get_model vars assertions =
   let smt_inp = 
     ";Variables Declarations\n" ^ smt_var_decls ^
     ";Assertion Declations\n" ^ smt_asserts ^
-    "(check-sat)\n" ^
+    (if is_linear then "(check-sat)\n" else "(check-sat-using qfnra-nlsat)\n") ^
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  try
-    if (List.hd model) = "sat" then
-      let inp = String.concat "\n" (List.tl model) in
-      let lexbuf = Lexing.from_string inp in
-      let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-      sol
-    else []
-  with _ -> []
+  (* let _ = print_endline ("Z3: " ^ smt_inp) in *)
 
-let get_model vars assertions =
+  let m = try
+      if (List.hd model) = "sat" then
+        let inp = String.concat "\n" (List.tl model) in
+        let lexbuf = Lexing.from_string inp in
+        let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
+        sol
+      else []
+    with _ -> []
+  in m 
+
+let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
   let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
-  Debug.no_1 "[Z3]get_model" pr1 pr2 
-  (fun _ -> get_model vars assertions) assertions
+  Debug.no_1 "[Z3]get_model" pr1 pr2
+  (fun _ -> get_model is_linear vars assertions) assertions
 
 
 

@@ -3035,15 +3035,16 @@ and b_apply_subs_x sst bf =
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-    | RankRel rrel -> 
-        RankRel { rrel with
+    | RankRel rrel ->
+        let subst_rarg rarg = match rarg.rank_arg_type with
+          | ConstRVar -> rarg
+          | RVar -> { rarg with rank_arg_id = subs_one sst rarg.rank_arg_id } 
+        in RankRel { rrel with
           rank_id = subs_one sst rrel.rank_id;
-          rank_args = List.map (fun ra -> 
-            { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) rrel.rank_args;
+          rank_args = List.map subst_rarg rrel.rank_args;
           rrel_raw = map_opt (fun r -> { r with
             rank_id = subs_one sst r.rank_id;
-            rank_args = List.map (fun ra -> 
-              { ra with rank_arg_id = subs_one sst ra.rank_arg_id }) r.rank_args;
+            rank_args = List.map subst_rarg r.rank_args;
           }) rrel.rrel_raw; }
   in
   (* Slicing: Add the inferred linking variables into sl field *)
@@ -11389,7 +11390,7 @@ let simpl_equalities ante conseq  =
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
   
-(* TermInf: Transform RankRel*)
+(* TermInf: Transform RankRel *)
 let b_formula_of_rankrel (rr: rankrel) =
   let p = no_pos in
   let rank_var_args, rank_const_args = List.partition (fun ra ->
@@ -11401,6 +11402,7 @@ let b_formula_of_rankrel (rr: rankrel) =
       let cid = c.rank_arg_id in 
       [cid], if rank_var_args = [] then [cid] else []
   | _ -> List.map (fun ra -> ra.rank_arg_id) rank_const_args, [] in
+  (* Assumption: const_coes has at least 1 element *)
   let const_exp = List.fold_left (fun a c -> mkAdd a (mkVar c p) p) 
     (mkVar (List.hd const_coes) p) (List.tl const_coes) in
   let rank_var_svs = List.map (fun ra -> ra.rank_arg_id) rank_var_args in
@@ -11453,10 +11455,16 @@ let replace_rankrel_by_b_formula (is_raw: bool) (f: formula) =
   let f_arg = (voidf2, voidf2, voidf2) in
   foldr_formula f () (nonef2, f_b_f, nonef2) f_arg (f_comb, f_comb, f_comb)
 
-let subst_rankrel_sol_formula subst (f: formula) =
+let subst_rankrel_sol_formula raw_subst subst (f: formula) =
   let f_b_f b = 
     let (pf, _) = b in
     match pf with
-    | RankRel rr -> Some (b_formula_of_rankrel_sol rr subst) 
+    | RankRel rr -> 
+        if not raw_subst then Some (b_formula_of_rankrel_sol rr subst) 
+        else begin
+          match rr.rrel_raw with
+          | None -> Some (mkTrue_b no_pos) 
+          | Some rr_raw -> Some (b_formula_of_rankrel_sol rr_raw subst) 
+          end
     | _ -> Some b
   in transform_formula (nonef, nonef, nonef, f_b_f, somef) f

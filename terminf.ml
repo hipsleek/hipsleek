@@ -41,7 +41,8 @@ let solve_rrel rrel =
   Redlog.solve_rrel ctx ctr
 
 let rec solve_rrel_list rrel_list =
-  List.concat (List.map solve_rrel rrel_list)
+  let m, is_raw = List.split (List.map solve_rrel rrel_list) in
+  (List.concat m, List.exists (fun b -> b) is_raw)
 
 
 

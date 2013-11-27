@@ -1546,34 +1546,42 @@ Cpure.solve_equations := solve_eqns;;
 let rl_of_rrel ante conseq const_c var_c nneg_c =
   let p = no_pos in 
   let (pr_w, pr_s) = CP.drop_complex_ops in
+  
   let f = CP.mkOr (CP.mkNot_s ante) conseq None p in
-  let params = Gen.BList.difference_eq CP.eq_spec_var (CP.fv ante) const_c in
+  let f = List.fold_left (fun a v ->
+    let nneg_a = CP.mkPure (CP.mkGte (CP.mkVar v p) (CP.mkIConst 0 p) p)
+    in CP.mkAnd a nneg_a p) f nneg_c in
+  let params = Gen.BList.difference_eq CP.eq_spec_var (CP.fv f) const_c in
   let qf = CP.mkForall params f None p in
   rl_of_formula pr_w pr_s qf
 
-let solve_rrel ctx ctr = 
-  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula false ctx in
+let solve_constr_by_elim raw_rrel ctx ctr =
+  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula raw_rrel ctx in
   let rrel_in_rl = rl_of_rrel nctx ctr const_c var_c nneg_c in
   let rl_res = send_and_receive ("rlqe " ^ rrel_in_rl) in
 
-  (* let  _ = print_endline ("RREL: " ^ rl_of_rrel) in *)
+  let _ = print_endline ("CTX: " ^ (!CP.print_formula ctx)) in
+  let _ = print_endline ("NCTX: " ^ (!CP.print_formula nctx)) in
+  let _ = print_endline ("CTR: " ^ (!CP.print_formula ctr)) in
+
+  (* let _ = print_endline ("RREL: " ^ rl_of_rrel) in *)
   (* let _ = print_endline ("RL_RES: " ^ rl_res) in *)
 
   let lexbuf = Lexing.from_string rl_res in
   let res = Rlparser.input Rllexer.tokenizer lexbuf in
+  let _ = print_endline ("RES: " ^ (!CP.print_formula res)) in
+  res
+
+let solve_rrel ctx ctr = 
+  let res = solve_constr_by_elim false ctx ctr in
   if not (CP.is_False res) then
-    Smtsolver.get_model (CP.fv res) (CP.split_conjunctions res) 
+    let m = Smtsolver.get_model (is_linear_formula res) (CP.fv res) (CP.split_conjunctions res)  
+    in (m, false)
   else begin 
-    let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula true ctx in
-    let rrel_in_rl = rl_of_rrel nctx ctr const_c var_c nneg_c in
-    let rl_res = send_and_receive ("rlqe " ^ rrel_in_rl) in
-
-    let  _ = print_endline ("RREL: " ^ rrel_in_rl) in
-    let  _ = print_endline ("RL_RES: " ^ rl_res) in
-
-    let lexbuf = Lexing.from_string rl_res in
-    let res = Rlparser.input Rllexer.tokenizer lexbuf in
-    []
+    let res = solve_constr_by_elim true ctx ctr in
+    let m = Smtsolver.get_model (is_linear_formula res) (CP.fv res) (CP.split_conjunctions res) 
+    (* true means we have to substitute the model into raw rankrel *)
+    in (m, true)
   end
 
     

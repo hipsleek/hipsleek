@@ -3021,7 +3021,7 @@ let pr_view_decl_short v =
   let f bc =
     match bc with
 	  | None -> ()
-      | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
+    | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
@@ -3035,6 +3035,22 @@ let pr_view_decl_short v =
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
+  fmt_close_box ();
+  pr_mem:=true
+
+let pr_view_decl_clean v =
+  pr_mem:=false;
+  let f bc =
+    match bc with
+	  | None -> ()
+    | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
+  in
+  fmt_open_vbox 1;
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
+    ((List.combine v.view_labels v.view_vars)@
+      (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
+      fmt_string "= ") ();
+  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   fmt_close_box ();
   pr_mem:=true
 
@@ -3052,6 +3068,8 @@ let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
 let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
+
+let string_of_view_decl_clean (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_clean v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
@@ -3966,6 +3984,7 @@ Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_view_decl := string_of_view_decl;
 Cast.print_view_decl_short := string_of_view_decl_short;
+Cast.print_view_decl_clean := string_of_view_decl_clean;
 Cast.print_hp_decl := string_of_hp_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
