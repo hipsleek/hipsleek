@@ -2,6 +2,7 @@ open Globals
 open Cpure
 
 module MCP = Mcpure
+module CP = Cpure
 
 type rel_type =
   | RR_DEC
@@ -41,10 +42,10 @@ let solve_rrel rrel =
   Redlog.solve_rrel ctx ctr
 
 let rec solve_rrel_list rrel_list =
-  let m, is_raw = List.split (List.map solve_rrel rrel_list) in
-  (List.concat m, List.exists (fun b -> b) is_raw)
-
-
-
-
+  let c_constrs, is_raw = List.split (List.map solve_rrel rrel_list) in
+  let is_linear = List.for_all Redlog.is_linear_formula c_constrs in
+  let fv = Gen.BList.remove_dups_eq eq_spec_var 
+    (List.concat (List.map CP.fv c_constrs)) in
+  let model = Smtsolver.get_model is_linear fv c_constrs in
+  (model, List.exists (fun b -> b) is_raw)
 

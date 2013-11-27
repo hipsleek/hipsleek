@@ -1574,15 +1574,10 @@ let solve_constr_by_elim raw_rrel ctx ctr =
 
 let solve_rrel ctx ctr = 
   let res = solve_constr_by_elim false ctx ctr in
-  if not (CP.is_False res) then
-    let m = Smtsolver.get_model (is_linear_formula res) (CP.fv res) (CP.split_conjunctions res)  
-    in (m, false)
-  else begin 
+  if not (CP.is_False res) then (res, false)
+  else  
     let res = solve_constr_by_elim true ctx ctr in
-    let m = Smtsolver.get_model (is_linear_formula res) (CP.fv res) (CP.split_conjunctions res) 
     (* true means we have to substitute the model into raw rankrel *)
-    in (m, true)
-  end
-
+    (res, true)
     
 
