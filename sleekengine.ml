@@ -876,7 +876,8 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let guard = match igurad_opt with
     | None -> None
     | Some iguard -> let (_,guard0) = meta_to_formula iguard false fv_idents stab in
-      let _, guard = CF.split_quantifiers guard0 in
+      let guard1 = CF.elim_exists guard0 in
+      let _, guard = CF.split_quantifiers guard1 in
       (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
       let p = CF.get_pure guard in
       let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
