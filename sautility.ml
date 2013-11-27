@@ -7425,6 +7425,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
     let reg = Str.regexp "\.ss" in
     let file_name1 = (if is_proper then "logs/gen_" else "logs/mod_") ^ (Str.global_replace reg ".slk" file_name) in
     (* let _ = print_endline (file_name1 ^ ".slk") in *)
+    let _ = print_endline ("\n generating sleek file : " ^ file_name1) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     open_out (file_name1)
   in

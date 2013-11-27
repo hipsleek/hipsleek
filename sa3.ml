@@ -2748,54 +2748,55 @@ let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
 
 let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang: (CF.hprel list * CF.hp_rel_def list)
       (* (CF.hprel list * CF.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) *) =
-  (*move to outer func*)
-  (* let callee_hpdefs = *)
-  (*   try *)
-  (*       Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name *)
-  (*   with _ -> [] *)
-  (* in *)
-  (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
+      (*move to outer func*)
+      (* let callee_hpdefs = *)
+      (*   try *)
+      (*       Cast.look_up_callee_hpdefs_proc prog.Cast.new_proc_decls proc_name *)
+      (*   with _ -> [] *)
+      (* in *)
+      (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
   let print_generated_slk_file ()=
     let _ = if !Globals.sa_gen_slk then
       let reg = Str.regexp "\.ss" in
       let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
       let file_name2 = "logs/mod_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
-      let _ = print_endline ("\n generate: " ^ file_name1) in
-      let _ = print_endline ("\n generate: " ^ file_name2) in
+      (* WN : no file printing here, so misleading messages *)
+      (* let _ = print_endline ("\n generate: " ^ file_name1) in *)
+      (* let _ = print_endline ("\n generate: " ^ file_name2) in *)
       ()
     else ()
     in ()
   in
   try 
-  let callee_hps = [] in
-  let _ = if !Globals.sap then
-    DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
-  else ()
-  in
-  let _ = DD.ninfo_hprint (add_str "  sel post_hps"  !CP.print_svl) post_hps no_pos in
-  let all_post_hps = CP.remove_dups_svl (post_hps@(SAU.collect_post_preds prog constrs0)) in
-  let _ = DD.ninfo_hprint (add_str "  all post_hps" !CP.print_svl) all_post_hps no_pos in
-  let unk_hpargs0b = List.fold_left (fun ls ((hp,_),xpure) ->
-      let args = match xpure.CP.xpure_view_node with
-        | None -> xpure.CP.xpure_view_arguments
-        | Some r -> r::xpure.CP.xpure_view_arguments
-      in
-      ls@[(hp,args)]
-  ) [] hp_rel_unkmap
-  in
-  let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (unk_hpargs0a@unk_hpargs0b) in
-  let ls_path_is = infer_shapes_divide iprog prog proc_name constrs0
-    callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
-  in
-  let r = if !Globals.sa_syn then
-    match ls_path_is with
-      | [] -> ([],[])
-      | _ -> (*conquer HERE*)
-            infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
-  else ([],[])
-  in
-  let _ = print_generated_slk_file () in
-  r
+    let callee_hps = [] in
+    let _ = if !Globals.sap then
+      DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
+    else ()
+    in
+    let _ = DD.ninfo_hprint (add_str "  sel post_hps"  !CP.print_svl) post_hps no_pos in
+    let all_post_hps = CP.remove_dups_svl (post_hps@(SAU.collect_post_preds prog constrs0)) in
+    let _ = DD.ninfo_hprint (add_str "  all post_hps" !CP.print_svl) all_post_hps no_pos in
+    let unk_hpargs0b = List.fold_left (fun ls ((hp,_),xpure) ->
+        let args = match xpure.CP.xpure_view_node with
+          | None -> xpure.CP.xpure_view_arguments
+          | Some r -> r::xpure.CP.xpure_view_arguments
+        in
+        ls@[(hp,args)]
+    ) [] hp_rel_unkmap
+    in
+    let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (unk_hpargs0a@unk_hpargs0b) in
+    let ls_path_is = infer_shapes_divide iprog prog proc_name constrs0
+      callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
+    in
+    let r = if !Globals.sa_syn then
+      match ls_path_is with
+        | [] -> ([],[])
+        | _ -> (*conquer HERE*)
+              infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
+    else ([],[])
+    in
+    let _ = print_generated_slk_file () in
+    r
   with _ ->
       let _ = print_generated_slk_file () in
       let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
