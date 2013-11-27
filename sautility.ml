@@ -2010,7 +2010,13 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
           prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
       lhsb (hp,args) def_ptrs prog_vars
 
-
+(*
+  - case2: H(args) & p ==> G(args)
+       H(args) & p ==> U(args)
+       U(args) & p ==> G(args)
+  -case 2: H(args) * z::node<args> & p ==> G(....) if p != true
+   to capture path-sensitive unknown
+*)
 let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,args) lhsb pos=
   let keep_hds = List.filter (fun hd ->
       let svl = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
@@ -2057,16 +2063,17 @@ let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,arg
       (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs) @args  in
     let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
     let p1 = CP.prune_irr_eq p all_svl in
-    let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
-        CF.formula_base_pure = (MCP.mix_of_pure p1)} in
-    let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
-    (*generate new hp decl for top guard of pre-preds*)
-    let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-    let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
-    let _,args1 = CF.extract_HRel new_hf in
-    let ss = List.combine args1 args in
-    let rhs = CF.formula_of_heap (CF.h_subst ss new_hf) pos in
-    Some (lhsb, (hp, lhs, rhs, Some g), new_hp)
+    if CP.isConstTrue p1 then None else
+      let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
+          CF.formula_base_pure = (MCP.mix_of_pure p1)} in
+      let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
+      (*generate new hp decl for top guard of pre-preds*)
+      let hpdcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
+      let new_hf, new_hp = add_raw_hp_rel prog true true hpdcl.Cast.hp_vars_inst pos in
+      let _,args1 = CF.extract_HRel new_hf in
+      let ss = List.combine args1 args in
+      let rhs = CF.formula_of_heap (CF.h_subst ss new_hf) pos in
+      Some (lhsb, (hp, lhs, rhs, Some g), new_hp)
 
 let split_guard_constrs prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,args) lhsb  pos=
   let pr1 = !CP.print_sv in
