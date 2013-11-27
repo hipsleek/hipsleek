@@ -1323,8 +1323,22 @@ both sleek and hip should produce the same result.
  or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
  or DP_1140(prev1)
  ]
+==========================================================
+# logs/mod_swl-i-sa.slk
 
- ==========================================================
+For this version, we obtain below:
+
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_1140(prev1)
+
+Can see where below came from, as it does not
+makes much sense without a heap context.
+It would correspond to htrue which is too weak for 
+our derived predicates.
+
+ or DP_1140(prev1)
 ==========================================================
 ==========================================================
 ==========================================================
