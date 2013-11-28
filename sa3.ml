@@ -1984,7 +1984,7 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
     else
       pre_fix_pdefs_grps
   in
-  let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in
+  (* let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in *)
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -2027,7 +2027,7 @@ let infer_pre_fix iprog prog proc_name callee_hps is_pre is need_preprocess dete
 
 (*compute least fixpoint for each set of constraints*)
 let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
-  let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in
+  (* let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in *)
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
