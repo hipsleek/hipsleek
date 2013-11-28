@@ -23,4 +23,19 @@ relAssume
  G(cur,next,prev,prev1',sent) --> G(next2,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent.
 
 
+
+/*
+
+shape_rec [G]
+
+!!!    Initial recurrence: 
+recDefn
+ G([cur,next,prev,prev1',sent]) <-- 
+  EXISTS(prev_34: HP_946(prev,prev1',next) * cur::node<val,prev_34>@M&
+  cur=prev1' & next=sent & prev=prev_34)[]
+  or G(cur,next,prev,prev1',sent)&prev=null & cur!=null
+  or G(next2,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent
+
 shape_lfp [G].
+
+*/
