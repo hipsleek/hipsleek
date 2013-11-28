@@ -1,0 +1,73 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+
+HeapPred HP_945(node next_52_944, node@NI prev, node@NI sent).
+
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+
+relAssume 
+(0)H(cur,prev,sent) --> cur::node<val,next>@M * 
+HP_945(next,prev,sent) * 
+HP_946(prev,cur,sent).
+
+ // PRE_REC
+relAssume 
+(1;2;0)HP_946(prev,cur,sent) * cur::node<val,prev>@M&
+prev'=null --> H(cur,prev',sent).
+
+ // PRE_REC
+relAssume 
+(2;2;0)cur::node<val,prev>@M * HP_946(prev,cur,sent) * 
+HP_945(cur',prev,sent)&cur'!=sent & 
+cur'!=null --> H(cur',cur,sent).
+ // POST
+relAssume 
+(1;0)HP_945(next,prev,sent) * HP_946(prev,cur,cur') * 
+cur::node<val,prev>@M&next=sent & cur'=sent & cur'=next & 
+cur=prev' --> G(cur,cur',prev,prev',sent).
+ // POST(
+relAssume 
+(1;2;0)HP_945(next,prev1,sent) * G(cur,cur',prev,prev',sent)&
+next!=sent & next=null & prev=null & 
+cur!=null --> G(cur,cur',prev1,prev',sent).
+ // POST
+relAssume 
+(2;2;0)G(next,cur',cur,prev',sent)&next!=sent & next!=null & 
+cur!=null --> G(cur,cur',prev,prev',sent).
+
+/*
+ (0)H(cur,prev,sent) --> cur::node<val_52_943,next_52_944>@M * 
+  HP_945(next_52_944,prev,sent) * HP_946(prev,cur,sent).
+
+relAssume 
+ (1;2;0)HP_946(prev,cur,sent) * cur::node<val_52_943,prev>@M&
+  prev'=null --> H(cur,prev',sent).
+
+relAssume 
+ (2;2;0)HP_945(cur',prev,sent) * HP_946(prev,cur,sent) * 
+  cur::node<val_52_943,prev>@M&cur'!=sent & cur'!=null --> H(cur',cur,sent).
+
+relAssume 
+ (1;0)HP_945(next_52_944,prev,sent) * HP_946(prev,cur,cur') * 
+  cur::node<val_52_943,prev>@M&next_52_944=sent & cur'=sent & 
+  cur'=next_52_944 & cur=prev' --> G(cur,cur',prev,prev',sent).
+
+relAssume 
+ (1;2;0)HP_945(next_52_944,prev,sent) * G(cur,cur',prev_977,prev',sent)&
+  next_52_944!=sent & next_52_944=null & prev_977=null & 
+  cur!=null --> G(cur,cur',prev,prev',sent).
+
+relAssume 
+ (2;2;0)G(next_52_944,cur',cur,prev',sent)&next_52_944!=sent & 
+  next_52_944!=null & cur!=null --> G(cur,cur',prev,prev',sent).
+*/
+
+shape_infer [H,HP_946,HP_945][G].

@@ -1340,7 +1340,7 @@ our derived predicates.
 
  or DP_1140(prev1)
 ==========================================================
-#hip swl-i-sa.ss
+#hip swl-i-sa.ss (FIXED)
 
 In --print-en-tidy, we got below. However, since
 cur' and cur are already two distinct variables, think
@@ -1353,6 +1353,31 @@ be fixed?
   & cur'!=null --> H(cur',cur1,sent@NI),
 
 ==========================================================
+swl-i-sa.ss
+mod_swl-i-sa2.slk
+logs/mod_swl-i-sa.slk
+
+Gave different results. I think it has to do with
+variable renaming and existential quantification.
+
+(1) mod_swl-i-sa2.slk
+ HP_946(prev,prev',next) * cur::node<val,prev>@M&cur=prev' & next=sent
+ or G(cur,next,prev,prev',sent)&prev=null & cur!=null
+ or G(next,next,cur,prev',sent)&cur!=null & next!=null & next!=sent
+
+(2) logs/mod_swl-i-sa.slk
+ HP_946(prev,prev',next) * cur::node<val,prev>@M&cur=prev' & 
+ next=sent
+ or G(cur,next,prev,prev',sent)&prev=null & cur!=null
+ or G(next,next,cur,prev',sent)&cur!=null & 
+    next!=null & next!=sent
+
+(3)  HIP
+ HP_946(prev,prev',cur') * cur::node<val,prev>@M&cur=prev' 
+    & cur'=sent
+ or G(cur,cur',prev,prev',sent)&prev=null & cur!=null
+ or G(next,cur',cur,prev',sent)&cur!=null & next!=null & 
+    next!=sent
 ==========================================================
 ==========================================================
 ==========================================================
