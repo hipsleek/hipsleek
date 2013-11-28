@@ -18,6 +18,7 @@ void set_right (node p, node x)
   //requires x::tree<p> ensures x::tll<p,res,t>;
 {
   node pp = x.parent;
+  dprint;
   assert pp'=p assume pp'=p;
 }
 

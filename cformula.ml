@@ -14478,3 +14478,47 @@ let rearrange_rel (rel: hprel) =
          | Some f -> Some (subst_avoid_capture fv new_svl (rearrange_formula gfv f)));
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
+
+let get_new_svl fv =
+  let n_tbl = Hashtbl.create 1 in
+  let reg = Str.regexp "_.*" in 
+  List.map (fun sv ->
+      match sv with
+          CP.SpecVar(t,id,pr) ->
+              let cut_id = Str.global_replace reg "" id in
+              let new_id =
+                if Hashtbl.mem n_tbl cut_id
+                then
+                  begin
+                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
+                  end
+                else
+                  begin
+                    Hashtbl.add n_tbl cut_id 0;
+                    cut_id
+                  end
+              in
+              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
+  ) fv
+
+let rearrange_context bc =
+  let rec helper ctx =
+    match ctx with
+      | Ctx en -> Ctx {en with
+          es_formula =
+                let fv = CP.remove_dups_svl (fv en.es_formula) in
+                let new_svl = get_new_svl fv in
+                subst_avoid_capture fv new_svl en.es_formula
+        }
+      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
+  in
+  match bc with
+    | (pt, ctx) -> (pt, helper ctx)
+
+let rearrange_failesc_context fc =
+  match fc with
+    | (bfl, esc, bcl) -> (bfl, esc, List.map rearrange_context bcl)
+
+let rearrange_failesc_context_list fcl =
+  List.map rearrange_failesc_context fcl
