@@ -1040,14 +1040,32 @@ let process_shape_infer pre_hps post_hps=
   ()
 
 let process_shape_lfp sel_hps=
-   (**********INTERNAL**********)
-
+  (**********INTERNAL**********)
+  let transfrom_assumption hp0 ls_pdefs cs=
+    try
+      let hp,args = CF.extract_HRel_f cs.CF.hprel_lhs in
+      if CP.eq_spec_var hp0 hp then ls_pdefs@[(hp, args, cs.CF.hprel_rhs)]
+      else ls_pdefs
+    with _ -> ls_pdefs
+  in
   (*******END INTERNAL ********)
   let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_lfp\n" no_pos in
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, _, _, _, link_hpargs=
     shape_infer_pre_process hp_lst_assume sel_hps []
   in
+  let ls_pdefs = List.map (fun hp ->
+      List.fold_left (transfrom_assumption hp) [] constrs2
+  ) sel_hps in
+  let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
+  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps) ls_pdefs in
+  let _ = print_endline "" in
+  let _ = print_endline "\n*************************************" in
+  let _ = print_endline "*******lfp definition ********" in
+  let _ = print_endline "*************************************" in
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
+  let _ = print_endline (pr1 hp_defs) in
+  let _ = print_endline "*************************************" in
   ()
 
 let process_validate ils_es=
