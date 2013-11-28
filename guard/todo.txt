@@ -1379,6 +1379,23 @@ variable renaming and existential quantification.
  or G(next,cur',cur,prev',sent)&cur!=null & next!=null & 
     next!=sent
 ==========================================================
+#swl-lfp-3.slk
+
+has a clash when building the initial recurrence
+
+relAssume
+ G(cur,nn,prev,prev1',sent) --> G(next_52,nn,cur,prev1',sent)&cur!=null & next_52!=null & next_52!=sent.
+
+===>
+
+!!!    Initial recurrence: G([cur,next_52,prev,prev1',sent]) ==> 
+ EXISTS(prev_34: HP_946(prev,prev1',next_52) * cur::node<val,prev_34>@M&
+ cur=prev1' & next_52=sent & prev=prev_34)[]
+ or G(cur,next_52,prev,prev1',sent)&prev=null & cur!=null
+ or G(next_52,next_52,cur,prev1',sent)&cur!=null & next_52!=null & 
+    next_52!=sent
+ 
+
 ==========================================================
 ==========================================================
 ==========================================================

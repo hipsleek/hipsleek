@@ -1,0 +1,48 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+PostPred G(node ra, node rb,node a, node b, node@NI c).
+
+relDefn
+  HP_946 (prev1_160,cur_157,sent_156) <->
+  emp&prev1_160=null
+  or prev1_160::node<val_161,prev_163>@M *
+     HP_946(prev_163,prev1_160,sent_156)&cur_157!=sent_156 & cur_157!=null.
+
+relAssume
+ G(cur,next_52,prev,prev1',sent) --> HP_946(prev,prev1',next_52) * cur::node<val,prev>@M&cur=prev1' & next_52=sent.
+
+relAssume
+ G(cur,next_52,prev,prev1',sent) --> G(cur,next_52,prev,prev1',sent)&prev=null & cur!=null.
+
+relAssume
+ G(cur,nn,prev,prev1',sent) --> G(next_52,nn,cur,prev1',sent)&cur!=null & next_52!=null & next_52!=sent.
+
+/*
+
+!!!    Initial recurrence: G([cur,next_52,prev,prev1',sent]) ==> 
+ EXISTS(prev_34: HP_946(prev,prev1',next_52) * cur::node<val,prev_34>@M&
+ cur=prev1' & next_52=sent & prev=prev_34)[]
+ or G(cur,next_52,prev,prev1',sent)&prev=null & cur!=null
+ or G(next_52,next_52,cur,prev1',sent)&cur!=null & next_52!=null & 
+    next_52!=sent
+
+!!!    Initial recurrence: G([cur,cur',prev,prev',sent]) ==> 
+ HP_946(prev,prev',cur') * cur::node<val_52_943,prev>@M&cur=prev' & cur'=sent
+ or G(cur,cur',prev_977,prev',sent)&prev_977=null & cur!=null
+ or G(next_52_944,cur',cur,prev',sent)&cur!=null & next_52_944!=null & 
+    next_52_944!=sent
+
+G([cur,next_52_944,prev,prev',sent]) ==> 
+ HP_946(prev,prev',next_52_944) * cur::node<val_52_943,prev>@M&cur=prev' 
+ &  next_52_944=sent
+ or G(cur,next_52_944,prev_977,prev',sent)&prev_977=null & cur!=null
+ or G(next_52_944,next_52_944,cur,prev',sent)&cur!=null & 
+    next_52_944!=null & next_52_944!=sent
+*/
+
+shape_lfp [G].

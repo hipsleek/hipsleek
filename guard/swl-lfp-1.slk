@@ -20,7 +20,7 @@ relAssume
  G(cur,next,prev,prev1',sent) --> G(cur,next,prev,prev1',sent)&prev=null & cur!=null.
 
 relAssume
- G(cur,next,prev,prev1',sent) --> G(next,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent.
+ G(cur,next,prev,prev1',sent) --> G(next2,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent.
 
 
 shape_lfp [G].
