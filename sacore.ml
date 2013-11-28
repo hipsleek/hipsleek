@@ -2336,21 +2336,31 @@ let partition_constrs_4_paths link_hpargs0 constrs0 =
        (*=============FIXPOINT================*)
 (*=============**************************================*)
 let gfp_gen_init prog is_pre r base_fs rec_fs=
-  let find_greates_neg (r_fs, r_unk_hpargs)f=
+  let is_complete r fs=
+    let ps = List.map CF.xpure_for_hnodes_f fs in
+    let ps1 = List.map (fun p -> CP.filter_var p [r]) ps in
+    let neg_p = (CP.conj_of_list ps1 no_pos) in
+    let _ = Debug.ninfo_zprint (lazy (("neg_p: " ^ (!CP.print_formula neg_p)))) no_pos in
+    not (Tpdispatcher.is_sat_raw (MCP.mix_of_pure neg_p))
+  in
+  let find_greates_neg rcomplete (r_fs, r_unk_hpargs) f=
     let svl = CF.get_ptrs_f f in
     let pos = (CF.pos_of_formula f) in
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
-      (* let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre true [(r, I)] pos in *)
-      (* let f = CF.formula_of_heap_w_normal_flow hf pos in *)
-      (* (r_fs@[f], r_unk_hpargs@[(n_hp, [r])]) *)
-      (r_fs, r_unk_hpargs)
+      if not rcomplete then
+        let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre true [(r, I)] pos in
+      let f = CF.formula_of_heap_w_normal_flow hf pos in
+      (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
+      else
+        (r_fs, r_unk_hpargs)
     else
       let p = CP.filter_var (CF.get_pure f) [r] in
       let f = CF.formula_of_pure_N (CP.mkNot_s p) pos in
       (r_fs@[f], r_unk_hpargs)
   in
-  let n_fs, n_unk_hpargs = List.fold_left find_greates_neg ([],[]) rec_fs in
+  let rcomplete = is_complete r (base_fs@rec_fs) in
+  let n_fs, n_unk_hpargs = List.fold_left (find_greates_neg rcomplete) ([],[]) rec_fs in
   (CF.formula_of_disjuncts (base_fs@rec_fs@n_fs), n_unk_hpargs)
 
 (* let gfp_gen_init prog is_pre r base_fs rec_fs= *)
@@ -2552,10 +2562,13 @@ let compute_lfp_x prog dang_hps pdefs=
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
           (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           (**********PRINTING***********)
-          let _ = DD.binfo_pprint ("   Initial recurrence: "  ^ (
-              let pr1  = Cprinter.prtt_string_of_formula in
-              let f = (CF.formula_of_disjuncts norm_fs) in
-              pr1 f )
+          let _ = DD.binfo_pprint ("   Initial recurrence: "  ^
+              ((!CP.print_sv hp0) ^ "(" ^(!CP.print_svl args0) ^") ==>") ^
+              (
+                  let pr1  = Cprinter.prtt_string_of_formula in
+                  let f = (CF.formula_of_disjuncts norm_fs) in
+                  pr1 f
+              )
           ) no_pos
           in
           (*******END PRINTING*********)

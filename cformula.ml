@@ -6050,6 +6050,26 @@ let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
   new_mf
 
+let xpure_for_hnodes_f_x f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            let h_pure = xpure_for_hnodes fb.formula_base_heap in
+            CP.conj_of_list [(MCP.pure_of_mix h_pure);(MCP.pure_of_mix fb.formula_base_pure)] fb.formula_base_pos
+      | Exists _ ->
+            let qvars, base1 = split_quantifiers f in
+            (* let nbase1 = helper base1 in *)
+            helper base1
+            (* add_quantifiers qvars nbase1 *)
+      | Or orf -> CP.disj_of_list [(helper orf.formula_or_f1);(helper orf.formula_or_f2)] orf.formula_or_pos
+  in
+  helper f0
+
+let xpure_for_hnodes_f f0=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_formula in
+  Debug.no_1 "xpure_for_hnodes_f" pr1 pr2
+      (fun _ -> xpure_for_hnodes_f_x f0) f0
 
 (*check the form: hp(x,y) = x!=null & y !=null*)
 let is_only_neqNull_pure p args=
