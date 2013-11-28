@@ -2341,9 +2341,10 @@ let gfp_gen_init prog is_pre r base_fs rec_fs=
     let pos = (CF.pos_of_formula f) in
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
-      let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre true [(r, I)] pos in
-      let f = CF.formula_of_heap_w_normal_flow hf pos in
-      (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
+      (* let (hf, n_hp) = SAU.add_raw_hp_rel prog is_pre true [(r, I)] pos in *)
+      (* let f = CF.formula_of_heap_w_normal_flow hf pos in *)
+      (* (r_fs@[f], r_unk_hpargs@[(n_hp, [r])]) *)
+      (r_fs, r_unk_hpargs)
     else
       let p = CP.filter_var (CF.get_pure f) [r] in
       let f = CF.formula_of_pure_N (CP.mkNot_s p) pos in

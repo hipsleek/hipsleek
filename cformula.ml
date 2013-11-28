@@ -4570,22 +4570,22 @@ let elim_unused_pure_x (f0:formula) rhs =
     match f with
       | Base b->
             let lhs_ptrs= get_ptrs_w_args b.formula_base_heap in
-            Base {b with formula_base_pure = MCP.mix_of_pure
-                    (CP.filter_var (MCP.pure_of_mix b.formula_base_pure)
-                        (CP.remove_dups_svl (lhs_ptrs@rhs_ptrs))
-                    );}
+            let keep_svl = CP.remove_dups_svl (lhs_ptrs@rhs_ptrs) in
+            let _,np1 = CP.prune_irr_neq (MCP.pure_of_mix b.formula_base_pure) keep_svl in
+            let np2 = CP.filter_var np1 keep_svl in
+            Base {b with formula_base_pure = MCP.mix_of_pure np2;}
       | Exists e -> let qvars, base_f = split_quantifiers f in
         let nf = helper base_f in
         (add_quantifiers qvars nf)
       | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}
   in
-  helper f0
+  helper (elim_exists f0)
 
 let elim_unused_pure (f0:formula) rhs =
   let pr= !print_formula in
-  Debug.no_1 " elim_unused_pure" pr pr
-      (fun _ -> elim_unused_pure_x f0 rhs) f0
+  Debug.no_2 " elim_unused_pure" pr pr pr
+      (fun _ _ -> elim_unused_pure_x f0 rhs) f0 rhs
 
 let filter_var_pure r (f0:formula) =
   let rec helper f=
