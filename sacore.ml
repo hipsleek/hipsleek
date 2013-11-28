@@ -2458,6 +2458,30 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
   in
   helper2 pdefs []
 
+let simpl_widening_x prog hp args unk_hps pdefs pos=
+  let rec helper sharing rest=
+    match rest with
+      | [] -> [sharing]
+      | f::rest1 -> let is_common, sharing_f, _ ,_ = SAU.partition_common_diff prog hp args unk_hps [] sharing f pos in
+        if not is_common then [] else
+          helper sharing_f rest1
+  in
+  match pdefs with
+    | [] -> []
+    | [pdef] -> [pdef]
+    | (hp,args, c, f, d)::rest ->
+          let rest_fs = List.map (fun (_,_, _, f, _) -> f) rest in
+          let sharing_f = helper f rest_fs in
+          match sharing_f with
+            | [f1] -> [(hp,args, c, f1, d)]
+            | _ -> pdefs
+
+let simpl_widening prog hp args unk_hps fs pos=
+  let pr1 = pr_list (fun (_,_, _, f, _) -> Cprinter.prtt_string_of_formula f) in
+  Debug.no_3 "simpl_widening" !CP.print_sv !CP.print_svl pr1 pr1
+      (fun _ _ _ -> simpl_widening_x prog hp args unk_hps fs pos)
+      hp args fs
+
 let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let apply_fix fix_i r_fs pdef_f=
     let _, fs = if fix_i = [] then (false, []) else
@@ -2483,7 +2507,8 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
         let ss = List.combine args1 args2 in
         SAU.check_relaxeq_formula args2 (CF.subst ss f1) f2
     ) n_pdefs in
-    let fix_i_plus = pdef_nonrec_fs@n_pdefs1 in
+    let fix_i_plus0 = pdef_nonrec_fs@n_pdefs1 in
+    let fix_i_plus = simpl_widening prog hp args dang_hps fix_i_plus0 no_pos in
     (*check whether it reaches the fixpoint*)
     (* let fix_i_plus1 = Gen.BList.remove_dups_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) -> *)
     (*     SAU.check_relaxeq_formula args f1 f2) fix_i_plus in *)
@@ -2555,6 +2580,8 @@ let compute_lfp_x prog dang_hps defs pdefs=
         (fun _ _ -> mk_exp_root_x hp r f) r f
   in
   let skip_hps = dang_hps in
+  (* let poss_widening dep_f = *)
+  (* in *)
   (********END INTERNAL*******)
   let hp,def=
   match pdefs with
