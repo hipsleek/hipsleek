@@ -37,7 +37,7 @@ requires x::tree<> ensures x::tll<res,t>;
   else 
   	{
 //		assert xr'!=null & xl'!=null;
-  		node l_most = set_right(x.right, t);
+          node l_most = set_right(x.right, t);dprint;
                 return set_right(x.left, l_most);
   	}
 }
