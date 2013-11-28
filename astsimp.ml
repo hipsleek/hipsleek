@@ -856,7 +856,7 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
         let is_raw_view = view_args = [] in
         let rankrel_id = TI.view_rank_sv view_id in
         let nhf_r, rrel_args_r, rrel_ivars_r, ir =
-            CF.collect_rankrel_vars_h_formula_raw hf [view_id] in
+            TI.collect_rankrel_vars_h_formula_raw hf [view_id] in
         let rrel_args_r, rrel_base_ivars_r = 
           if not ir (* Base case *) then
             (* Add constant rank arg for base case *)
@@ -868,7 +868,7 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
           MCP.memoise_add_pure_N pf (CP.mkRankConstraint_raw rankrel_id rrel_args_r),
           rrel_ivars_r @ rrel_base_ivars_r
         else
-          let rrels = CF.collect_rankrel_vars_h_formula nhf_r rel_id [view_id] in
+          let rrels = TI.collect_rankrel_vars_h_formula nhf_r rel_id [view_id] in
           let rrel_raw = {
             CP.rel_id = fresh_rrel_id (); 
             CP.rank_id = rankrel_id;
@@ -880,13 +880,13 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
           let npf = MCP.memoise_add_pure_N npf (CP.join_conjunctions rrels) in
           nhf_r, npf, rrel_ivars_r @ rrel_base_ivars_r
     | PRE proc_args ->
-        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula_raw hf [] in
+        let nhf, rankrel_vars, rankrel_ivars, _ = TI.collect_rankrel_vars_h_formula_raw hf [] in
         (* Add Term[r] for PRE based on the args of proc *)
         let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
           TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
         nhf, npf, rankrel_ivars
     | POST -> 
-        let nhf, rankrel_vars, rankrel_ivars, _ = CF.collect_rankrel_vars_h_formula_raw hf [] in
+        let nhf, rankrel_vars, rankrel_ivars, _ = TI.collect_rankrel_vars_h_formula_raw hf [] in
         nhf, pf, rankrel_ivars 
   in match f with
   | CF.Base b -> 

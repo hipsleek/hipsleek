@@ -1555,9 +1555,8 @@ let rl_of_rrel ante conseq const_c var_c nneg_c =
   let qf = CP.mkForall params f None p in
   rl_of_formula pr_w pr_s qf
 
-let solve_constr_by_elim raw_rrel ctx ctr =
-  let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula raw_rrel ctx in
-  let rrel_in_rl = rl_of_rrel nctx ctr const_c var_c nneg_c in
+let solve_constr_by_elim ctx ctr const_c var_c nneg_c =
+  let rrel_in_rl = rl_of_rrel ctx ctr const_c var_c nneg_c in
   let rl_res = send_and_receive ("rlqe " ^ rrel_in_rl) in
 
   (* let _ = print_endline ("CTX: " ^ (!CP.print_formula ctx)) in *)
@@ -1572,12 +1571,5 @@ let solve_constr_by_elim raw_rrel ctx ctr =
   (* let _ = print_endline ("RES: " ^ (!CP.print_formula res)) in *)
   res
 
-let solve_rrel ctx ctr = 
-  let res = solve_constr_by_elim false ctx ctr in
-  if not (CP.is_False res) then (res, false)
-  else  
-    let res = solve_constr_by_elim true ctx ctr in
-    (* true means we have to substitute the model into raw rankrel *)
-    (res, true)
     
 

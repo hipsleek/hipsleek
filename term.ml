@@ -426,9 +426,9 @@ let construct_dec_rrel_constraint estate src dst =
     MCP.memoise_add_pure acc (CP.mkPure (CP.mkGt s d no_pos))) 
     (MCP.mkMTrue no_pos) (List.combine src dst) in 
   let rrel = {
-    TI.rrel_type = TI.RR_DEC;
-    TI.rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
-    TI.rrel_ctr = ctr;
+    rrel_type = RR_DEC;
+    rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
+    rrel_ctr = ctr;
   } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
 
 let construct_dec_rrel_constraint estate src dst =

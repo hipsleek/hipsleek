@@ -28,6 +28,7 @@ module PR = Cprinter
 module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
+module TI = Terminf
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne

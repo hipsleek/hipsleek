@@ -15,8 +15,6 @@ open Label
 module Err = Error
 module CP = Cpure
 module MCP = Mcpure
-module TI = Terminf
-
 
 type cond_path_type = int list
 
@@ -6606,6 +6604,19 @@ let ins ss f0=
       (fun _ _ -> ins_x ss f0) ss f0
 
 (*end for sa*)
+
+(* TermInf: Data structures for termination inference *)
+type rel_type =
+  | RR_DEC
+  | RR_BND
+
+type rrel = {
+  rrel_type: rel_type;
+  rrel_ctx: MCP.mix_formula;
+  rrel_ctr: MCP.mix_formula;
+}
+
+
  (* context functions *)
 
 (*type formula_cache_no = int
@@ -6668,7 +6679,7 @@ think it is used to instantiate when folding.
 
   (* For Termination Inference *)
   (* The list constrainsts of ranking relation *)
-  es_rrel : TI.rrel list;
+  es_rrel : rrel list;
 
   (* for IMMUTABILITY *)
 (* INPUT : this is an alias set for the RHS conseq *)
@@ -13573,128 +13584,4 @@ let elim_e_var to_keep (f0 : formula) : formula =
 		push_exists qvars (helper2 b) in
 	helper f0
 
-(* Function for collecting information *)
-(* TermInf: Collect data variables of DataNode and 
- * rank variables of ViewNode to build RankRel 
- * OUTPUT: Vars and Impl Vars for RRel and is_rec_case of view *)
-let rec collect_rankrel_vars_h_formula_raw (h: h_formula) (view_ids: string list)
-  : (h_formula * CP.rank_arg list * CP.spec_var list * bool) =
-  match h with 
-  | Star s ->
-      let h1, r1, e1, ir1 = collect_rankrel_vars_h_formula_raw s.h_formula_star_h1 view_ids in 
-      let h2, r2, e2, ir2 = collect_rankrel_vars_h_formula_raw s.h_formula_star_h2 view_ids in
-      (Star { s with h_formula_star_h1 = h1; h_formula_star_h2 = h2; },
-      r1 @ r2, e1 @ e2, ir1 || ir2)
-  | DataNode { h_formula_data_arguments = args } ->
-      let iargs = List.filter (fun sv -> CP.is_int_var sv) args in
-      let ragrs = List.map CP.mkRArg_var iargs in
-      (h, ragrs, [], false)
-  | ViewNode v ->
-      let ir = Gen.BList.mem_eq (=) v.h_formula_view_name view_ids in
-      let rarg = TI.view_var_ragr v.h_formula_view_name in
-      let rarg_id = rarg.CP.rank_arg_id in
-      let n_vn = ViewNode { v with h_formula_view_rank = Some rarg_id; } in
-      (n_vn, [rarg], [rarg_id], ir)
-  | _ -> (h, [], [], false)
 
-let collect_rankrel_vars_h_formula_raw (h: h_formula) (view_ids: string list) 
-  : (h_formula * CP.rank_arg list * CP.spec_var list * bool) = 
-  let pr1 = !print_h_formula in
-  let pr2 = !print_svl in
-  let pr3 = string_of_bool in
-  let pr4 = pr_list (fun s -> s) in
-  let pr5 = !print_rank_arg_list in
-  Debug.no_2 "collect_rankrel_vars_h_formula" pr1 pr4 
-  (fun (a, b, c, d) -> pr_pair (pr_triple pr1 pr5 pr2) pr3 ((a, b, c), d))
-  collect_rankrel_vars_h_formula_raw h view_ids
-
-let rec collect_rankrel_vars_h_formula (h: h_formula) (rel_id: int) (view_ids: string list)
-  : CP.formula list =
-  match h with 
-  | Star s ->
-      let rr1 = collect_rankrel_vars_h_formula s.h_formula_star_h1 rel_id view_ids in 
-      let rr2 = collect_rankrel_vars_h_formula s.h_formula_star_h2 rel_id view_ids in
-      rr1 @ rr2
-  | ViewNode v ->
-      let ir = Gen.BList.mem_eq (=) v.h_formula_view_name view_ids in
-      if not ir then []
-      else
-        let rank_id = match v.h_formula_view_rank with
-        | None -> CP.SpecVar (Int, TI.view_rarg_id v.h_formula_view_name, Unprimed) 
-        | Some v -> v in
-        let rrel = CP.mkRankConstraint rel_id rank_id
-          (List.map CP.mkRArg_var v.h_formula_view_arguments) None in
-        [rrel]
-  | _ -> []
-
-
-let collect_view_rank_h_formula (h: h_formula) : CP.spec_var list =
-  let f h = match h with
-    | ViewNode v -> map_opt (fun r -> [r]) v.h_formula_view_rank
-    | _ -> None
-  in fold_h_formula h f List.concat
-
-let collect_view_rank_formula (f: formula) : CP.spec_var list =
-  let h, _, _, _, _ = split_components f in
-  collect_view_rank_h_formula h
-
-let collect_view_rank_es (es: entail_state) : CP.spec_var list =
-  (collect_view_rank_formula es.es_formula) @
-  (collect_view_rank_h_formula es.es_heap)
-
-(*
-let rec collect_view_rank_context (ctx: context) : CP.spec_var list =
-  match ctx with
-  | Ctx es -> collect_view_rank_es es
-  | OCtx (c1, c2) -> (collect_view_rank_context c1) @ (collect_view_rank_context c2)
-
-let collect_view_rank_failesc_context (ctx: failesc_context) : CP.spec_var list =
-  let _, _, bctx_l = ctx in
-  List.concat (List.map (fun (_, ctx) -> collect_view_rank_context ctx) bctx_l)
-
-let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec_var list =
-  List.concat (List.map collect_view_rank_failesc_context ctx)
-*)
-
-let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec_var list =
-  let f_c arg ctx = match ctx with
-  | Ctx es -> Some (ctx, collect_view_rank_es es)
-  | _ -> None
-  in
-  let f_arg arg ctx = arg in
-  snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
-
-let collect_rrel_list_failesc_context (ctx: list_failesc_context) : TI.rrel list =
-  let f_c arg ctx = match ctx with
-  | Ctx es -> Some (ctx, es.es_rrel)
-  | _ -> None
-  in
-  let f_arg arg ctx = arg in
-  snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
-
-let rec remove_redundant_implicit_inst (f: struc_formula) (vs: CP.spec_var list): struc_formula =
-  match f with
-  | EList l -> EList (List.map (fun (lbl, sf) ->
-      (lbl, remove_redundant_implicit_inst sf vs)) l)
-  | ECase c -> ECase { c with 
-      formula_case_branches = List.map (fun (cf, sf) -> 
-        (cf, remove_redundant_implicit_inst sf vs)) c.formula_case_branches; }
-  | EBase b -> 
-      let cont = match b.formula_struc_continuation with
-        | None -> None
-        | Some sf -> Some (remove_redundant_implicit_inst sf vs) in
-      EBase { b with
-        formula_struc_implicit_inst = Gen.BList.difference_eq CP.eq_spec_var
-          b.formula_struc_implicit_inst vs;
-        formula_struc_continuation = cont; }
-  | EAssume a -> EAssume { a with
-      formula_assume_struc = remove_redundant_implicit_inst a.formula_assume_struc vs; }
-  | EInfer i -> EInfer { i with
-      formula_inf_continuation = remove_redundant_implicit_inst i.formula_inf_continuation vs; }
-
-let subst_rankrel_sol_struc_formula raw_subst subst (f: struc_formula) =
-  let f_p_f pf = Some (CP.subst_rankrel_sol_formula raw_subst subst pf) in
-  let trans_f = transform_struc_formula 
-    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f in
-  let vs = List.map (fun id -> CP.SpecVar (Int, id, Unprimed)) (fst (List.split subst)) in
-  remove_redundant_implicit_inst trans_f vs

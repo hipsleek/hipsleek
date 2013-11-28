@@ -1129,7 +1129,7 @@ let smt_of_rrel ante conseq const_c var_c nneg_c =
   ";Non-negative Assertion\n" ^ smt_nneg_asserts ^
   ";Ranking Assertion\n" ^ rrel_assert
 
-
+(*
 let solve_rrel ctx ctr = 
   let nctx, (const_c, var_c, nneg_c) = CP.replace_rankrel_by_b_formula false ctx in
   let smt_of_rrel = smt_of_rrel nctx ctr const_c var_c nneg_c in
@@ -1146,6 +1146,7 @@ let solve_rrel ctx ctr =
       sol
     else []
   with _ -> []
+*)
 
 let get_model is_linear vars assertions =
   (* Variable declarations *)

@@ -676,13 +676,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
                     (* TermInf: Collecting ALL ranking constraints here *)
-                    let rrel = CF.collect_rrel_list_failesc_context res_ctx in
+                    let rrel = TI.collect_rrel_list_failesc_context res_ctx in
                     let sol_for_rrel, raw_subst = TI.solve_rrel_list rrel in
-                    let n_vdefs = List.map (fun vdef -> {vdef with Cast.view_formula = 
-                      CF.subst_rankrel_sol_struc_formula raw_subst sol_for_rrel vdef.Cast.view_formula}) prog.Cast.prog_view_decls in
+                    let n_vdefs = List.map (fun vdef -> TI.plug_rank_into_view raw_subst sol_for_rrel vdef) prog.Cast.prog_view_decls in
                     let _ = if !Globals.en_term_inf then
                       (print_endline ("\nTERMINATION INFERENCE RESULT: ");
-                      print_endline (pr_list !Cast.print_view_decl_clean n_vdefs))
+                      print_endline (pr_list !Cast.print_view_decl(*_clean*) n_vdefs))
                     in
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in

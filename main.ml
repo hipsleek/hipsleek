@@ -363,6 +363,8 @@ let process_source_full source =
           let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
 	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
 	else ();
+
+  (* TermInf: Reverify with inferred predicates with ranking properties *)
 	
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
