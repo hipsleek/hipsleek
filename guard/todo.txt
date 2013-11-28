@@ -1340,6 +1340,18 @@ our derived predicates.
 
  or DP_1140(prev1)
 ==========================================================
+#hip swl-i-sa.ss
+
+In --print-en-tidy, we got below. However, since
+cur' and cur are already two distinct variables, think
+there is no necessity to change cur to cur1. Can this
+be fixed?
+
+ // PRE_REC
+(2;2;0)cur1::node<val,prev>@M * HP_946(prev,cur1@NI,sent@NI) 
+  * HP_945(cur',prev@NI,sent@NI)&cur'!=sent 
+  & cur'!=null --> H(cur',cur1,sent@NI),
+
 ==========================================================
 ==========================================================
 ==========================================================
