@@ -2216,7 +2216,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let sel_lhs_hps, sel_rhs_hps, dep_def_hps, oblg_constrs, rem_constr = List.fold_left classify_hps ([],[],[],[],[]) constrs1 in
     if oblg_constrs = [] then
       let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-      DD.binfo_pprint ("proving:\n" ^ (pr1 rem_constr)) no_pos;
+      DD.info_ihprint (add_str "proving:\n" pr1) rem_constr no_pos;
       let _ = if rem_constr = [] then () else
       (*prove rem_constr*)
         (*transform defs to cviews*)

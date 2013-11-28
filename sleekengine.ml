@@ -921,6 +921,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   let fvs = CF.fv lhs in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let rhs = CF.elim_exists rhs in
   let hfs = CF.heap_of lhs in
   let hf = match hfs with
     | [x] -> x

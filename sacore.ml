@@ -2420,8 +2420,8 @@ let compute_gfp_x prog is_pre is pdefs=
             
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
-  let _ = Debug.binfo_pprint ("    synthesize (gfp): " ^ (!CP.print_sv hp) ) no_pos in
-  let _ = Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos in
+  let _ = Debug.info_ihprint ( add_str "    synthesize (gfp) " !CP.print_sv) hp no_pos in
+  let _ = Debug.info_ihprint (add_str "" Cprinter.string_of_hp_rel_def_short) def no_pos in
   (def,n_unk_hpargs)
 
 let compute_gfp prog is_pre is pdefs=
@@ -2459,10 +2459,31 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
   helper2 pdefs []
 
 let simpl_widening_x prog hp args unk_hps pdefs pos=
+  let shape_widen f1 f2=
+    let is_common, sharing_f, n_fs ,next_roots = SAU.partition_common_diff prog hp args unk_hps [] f1 f2 pos in
+    if not is_common then (false, f1) else
+      match n_fs with
+        | [f21;f22] -> (*after reaarange + subst*)
+              let hpargs1 = CF.get_HRels_f f21 in
+              let hpargs2 = CF.get_HRels_f f22 in
+              let ( _,mix_lf2,_,_,_) = CF.split_components f22 in
+              let sst2 = MCP.ptr_equations_without_null mix_lf2 in
+              let hpargs22 = List.map (fun (hp, args) ->
+                  (hp, List.fold_left SAU.close_def args sst2)
+              ) hpargs2 in
+              let inter = Gen.BList.intersect_eq SAU.check_hp_args_imply hpargs1 hpargs22 in
+              let n_sharing =
+                if inter = [] then sharing_f else
+                  let hp_fs = List.map (fun (hp,args) -> SAU.mkHRel_f hp args pos) inter in
+                List.fold_left (fun f1 f2 -> CF.mkStar f1 f2 CF.Flow_combine pos) sharing_f hp_fs
+              in
+              (is_common, n_sharing)
+        | _ -> (is_common, sharing_f)
+  in
   let rec helper sharing rest=
     match rest with
       | [] -> [sharing]
-      | f::rest1 -> let is_common, sharing_f, _ ,_ = SAU.partition_common_diff prog hp args unk_hps [] sharing f pos in
+      | f::rest1 -> let is_common, sharing_f = shape_widen sharing f in
         if not is_common then [] else
           helper sharing_f rest1
   in
@@ -2493,12 +2514,12 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   (*INTERNAL*)
   let rec rec_helper i pdef_fix_i=
     (**********PRINTING***********)
-    let _ = DD.binfo_pprint ("   fix: " ^ (string_of_int i) ^ (
+    let _ = DD.info_ihprint (add_str ("   fix: " ^ (string_of_int i) ^ (
         let pr1  = Cprinter.prtt_string_of_formula in
         let fs = List.map (fun (_,_, _, f, _) -> f) pdef_fix_i in
         let f = if fs = [] then CF.mkFalse (CF.mkTrueFlow ())  no_pos else (CF.formula_of_disjuncts fs) in
         pr1 f )
-    ) no_pos
+    ) pr_id) "" no_pos
     in
     (*******END PRINTING*********)
     (*apply rec for cur fix*)
@@ -2597,14 +2618,13 @@ let compute_lfp_x prog dang_hps defs pdefs=
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
           (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           (**********PRINTING***********)
-          let _ = DD.binfo_pprint ("   Initial recurrence: "  ^
+          let _ = DD.info_ihprint (add_str ("   Initial recurrence: "  ^
               ((!CP.print_sv hp0) ^ "(" ^(!CP.print_svl args0) ^") ==>") ^
               (
                   let pr1  = Cprinter.prtt_string_of_formula in
                   let f = (CF.formula_of_disjuncts norm_fs) in
                   pr1 f
-              )
-          ) no_pos
+              )) pr_id ) "" no_pos
           in
           (*******END PRINTING*********)
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
@@ -2616,8 +2636,8 @@ let compute_lfp_x prog dang_hps defs pdefs=
           (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None def pos)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
-  let _ = Debug.binfo_pprint ("    synthesize (lfp): " ^ (!CP.print_sv hp) ) no_pos in
-  let _ = Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos in
+  let _ = Debug.info_ihprint ( add_str "    synthesize (lfp): " !CP.print_sv) hp no_pos in
+  let _ = Debug.info_ihprint (add_str "" Cprinter.string_of_hp_rel_def_short) def no_pos in
   def
 
 let compute_lfp prog dang_hps defs pdefs=

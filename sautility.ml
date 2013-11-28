@@ -891,28 +891,6 @@ let look_up_dups_node prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl=
       (fun _ _ -> look_up_dups_node_x prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl)
       lhs_args r_keep_svl
 
-(* let look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names= *)
-(*   let rec find_pt_new cur_hds svl res hd_rest= *)
-(*     match cur_hds with *)
-(*       | [] -> res,hd_rest *)
-(*       | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in *)
-(*                   if ( CP.intersect_svl ptr_args (svl@res) <> []) then *)
-(*                     find_pt_new tl svl (res@[hd.CF.h_formula_data_node]@ptr_args) hd_rest *)
-(*                   else find_pt_new tl svl res (hd_rest@[hd]) *)
-(*   in *)
-(*   let rec loop_helper hds svl r= *)
-(*     let r1,rest = find_pt_new hds svl r [] in *)
-(*     if CP.diff_svl r1 r = [] || rest = [] then (CP.remove_dups_svl r1) else *)
-(*       loop_helper rest svl r1 *)
-(*   in *)
-(*   loop_helper hd_nodes node_names [] *)
-
-(* let look_up_backward_closed_ptr_args prog hd_nodes hv_nodes node_names= *)
-(*   let pr1 = !CP.print_svl in *)
-(*   Debug.no_1 "look_up_backward_closed_ptr_args" pr1 pr1 *)
-(*       (fun _ -> look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names) *)
-(*       node_names *)
-
 let rec lookup_undef_args args undef_args def_ptrs=
   match args with
     | [] -> undef_args
