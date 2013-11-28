@@ -14309,15 +14309,15 @@ let shorten_svl fv =
           CP.SpecVar(t,id,pr) ->
               let cut_id = Str.global_replace reg "" id in
               let new_id =
-                if Hashtbl.mem n_tbl cut_id
+                if Hashtbl.mem n_tbl (cut_id,pr)
                 then
                   begin
-                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
+                    Hashtbl.add n_tbl (cut_id,pr) ((Hashtbl.find n_tbl (cut_id,pr)) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl (cut_id,pr))
                   end
                 else
                   begin
-                    Hashtbl.add n_tbl cut_id 0;
+                    Hashtbl.add n_tbl (cut_id,pr) 0;
                     cut_id
                   end
               in
@@ -14510,7 +14510,9 @@ let rearrange_context bc =
       | Ctx en -> Ctx {en with
           es_formula =
                 let fv = CP.remove_dups_svl (fv en.es_formula) in
+                (* let _ = print_endline ((pr_list !print_sv) fv) in *)
                 let new_svl = shorten_svl fv in
+                (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
                 subst_avoid_capture fv new_svl en.es_formula
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
@@ -14522,5 +14524,5 @@ let rearrange_failesc_context fc =
   match fc with
     | (bfl, esc, bcl) -> (bfl, esc, List.map rearrange_context bcl)
 
-let rearrange_failesc_context_list fcl = fcl
-  (* List.map rearrange_failesc_context fcl *)
+let rearrange_failesc_context_list fcl =
+  List.map rearrange_failesc_context fcl
