@@ -1282,7 +1282,7 @@ and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_form
       let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
       let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
       (dl, vl)
-  | P.EqMax _ | P.EqMin _ | P.LexVar _ -> ([], [])
+  | P.EqMax _ | P.EqMin _ | P.LexVar _ | P.RankRel _ -> ([], [])
   | P.BagIn _ | P.BagNotIn _ | P.BagSub _ | P.BagMin _ | P.BagMax _ -> ([], [])
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [])
   | P.VarPerm _ | P.RelForm _ -> ([], [])

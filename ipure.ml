@@ -220,6 +220,13 @@ and bfv (bf : b_formula) =
     | LexVar (_, args1, args2, _) ->
       let args_fv = List.concat (List.map afv (args1@args2)) in
       Gen.BList.remove_dups_eq (=) args_fv
+    | RankRel rrel -> rankrel_fv rrel
+
+ and rankrel_fv rr = 
+  rr.rank_id :: (List.fold_left (fun a ra -> 
+    match ra.rank_arg_type with
+    | ConstRVar -> a 
+    | _ -> a @ [ra.rank_arg_id]) [] rr.rank_args)
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -543,7 +550,9 @@ and pos_of_formula (f : formula) = match f with
 		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
 			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
+		  | RelForm (_,_,p)  
+      | LexVar (_,_,_,p) -> p
+      | RankRel rrel -> rrel.rel_pos;
 		  | VarPerm (_,_,p) -> p
           | XPure xp ->  xp.xpure_view_pos
 	end
@@ -685,6 +694,13 @@ and b_apply_one ((fr, t) as p) bf =
         let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
         let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
           LexVar (t_ann, args1,args2,pos)
+  | RankRel rrel -> 
+      let rec rrel_apply_one p rrel = { rrel with 
+        rank_id = v_apply_one p rrel.rank_id;
+        rank_args = List.map (fun r -> {r with 
+          rank_arg_id = v_apply_one p r.rank_arg_id}) rrel.rank_args; 
+        rrel_raw = map_opt (rrel_apply_one p) rrel.rrel_raw; }
+      in RankRel (rrel_apply_one p rrel)
   in (npf,il)
 
 and e_apply_one ((fr, t) as p) e = match e with
@@ -806,6 +822,8 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | LexVar (_,args1, args2, _) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
         vs
+  (* TermInf: There is no anon var in RankRel *)
+  | RankRel rrel -> [] 
   | RelForm (_,args,_) -> 
         let vs = List.concat (List.map look_for_anonymous_exp (args)) in
         vs
@@ -855,6 +873,7 @@ and find_lexp_b_formula (bf: b_formula) ls =
 	| ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
 	| LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
+  | RankRel _ -> []
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -1138,7 +1157,7 @@ and float_out_pure_min_max (p : formula) : formula =
 	let (pf,il) = b in
 	match pf with
 	  | BConst _ | BVar _ |XPure _ 
-	  | LexVar _ -> BForm (b,lbl)
+	  | LexVar _ | RankRel _ -> BForm (b,lbl)
 	  | Lt (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

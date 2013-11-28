@@ -255,6 +255,8 @@ module Make (Token : SleekTokenS)
 	 ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
+   (* TermInf: Sleek stuff for Termination Inference *)
+   ("RR", RANKREL);
 	 (flow, FLOW flow);]
 }
   
@@ -315,6 +317,7 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@C" { CONSTVAR } (* TermInf: To indicate constant var *)
   | "@A" { ACCS }  
   | '&' { AND }
   | "&*" { ANDSTAR }

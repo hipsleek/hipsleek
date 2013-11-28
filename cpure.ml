@@ -153,6 +153,7 @@ and rankrel = {
   rank_id: spec_var;
   rank_args: rank_arg list;
   rrel_raw: rankrel option;
+  (* rel_loc: loc; *)
 }
 
 and p_formula =
@@ -3036,16 +3037,14 @@ and b_apply_subs_x sst bf =
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
     | RankRel rrel ->
-        let subst_rarg rarg = match rarg.rank_arg_type with
+        let subst_rarg sst rarg = match rarg.rank_arg_type with
           | ConstRVar -> rarg
-          | RVar -> { rarg with rank_arg_id = subs_one sst rarg.rank_arg_id } 
-        in RankRel { rrel with
+          | RVar -> { rarg with rank_arg_id = subs_one sst rarg.rank_arg_id } in 
+        let rec subst_rrel sst rrel = { rrel with
           rank_id = subs_one sst rrel.rank_id;
-          rank_args = List.map subst_rarg rrel.rank_args;
-          rrel_raw = map_opt (fun r -> { r with
-            rank_id = subs_one sst r.rank_id;
-            rank_args = List.map subst_rarg r.rank_args;
-          }) rrel.rrel_raw; }
+          rank_args = List.map (subst_rarg sst) rrel.rank_args;
+          rrel_raw = map_opt (subst_rrel sst) rrel.rrel_raw; } in
+        RankRel (subst_rrel sst rrel)
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)

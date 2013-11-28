@@ -5455,6 +5455,17 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
               CP.lex_exp = cle;
               CP.lex_tmp = clt;
               CP.lex_loc = pos; }
+    | IP.RankRel rrel ->
+        let trans_spec_var (v, p) = CP.SpecVar (C.int_type, v, p) in
+        let rec trans_rrel rrel = {
+          CP.rel_id = rrel.IP.rel_id;
+          CP.rank_id = trans_spec_var rrel.IP.rank_id;
+          CP.rank_args = List.map (fun rarg -> {
+            CP.rank_arg_id = trans_spec_var rarg.IP.rank_arg_id;
+            CP.rank_arg_type = match rarg.IP.rank_arg_type with
+              | IP.ConstRVar -> CP.ConstRVar | _ -> CP.RVar; }) rrel.IP.rank_args;
+          CP.rrel_raw = map_opt trans_rrel rrel.IP.rrel_raw; } in
+        CP.RankRel (trans_rrel rrel)
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 tlist in
           let pe2 = trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos

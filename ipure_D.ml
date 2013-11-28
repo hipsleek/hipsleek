@@ -10,6 +10,7 @@ open Gen.Basic
 open Label
 module LO = Label_only.LOne
 
+type spec_var = ident * primed
 
 type xpure_view = {
     xpure_view_node : ident option;
@@ -49,6 +50,22 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
+and rank_var_type =
+  | ConstRVar
+  | RVar
+
+and rank_arg = {
+  rank_arg_id: spec_var;
+  rank_arg_type: rank_var_type; 
+}
+
+and rankrel = {
+  rel_id: int;
+  rank_id: spec_var;
+  rank_args: rank_arg list;
+  rrel_raw: rankrel option;
+  rel_pos: loc;
+}
 
 and p_formula = 
   | XPure of xpure_view
@@ -66,6 +83,8 @@ and p_formula =
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
 	  (* bags and bag formulae *)
   | LexVar of (term_ann * (exp list) * (exp list) * loc)
+  (* TermInf: Relation for ranking variables *)
+  | RankRel of rankrel
   | BagIn of ((ident * primed) * exp * loc)
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)

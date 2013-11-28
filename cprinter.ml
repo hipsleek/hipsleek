@@ -809,14 +809,14 @@ let string_of_rank_arg = poly_string_of_pr pr_rank_arg ;;
 let rec string_of_rank_arg_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_rank_arg h 
-  | h::t -> (string_of_rank_arg h) ^ "," ^ (string_of_rank_arg_list_noparen t)
+  | h::t -> (string_of_rank_arg h) ^ ", " ^ (string_of_rank_arg_list_noparen t)
 ;;
 
 let string_of_rank_arg_list l = "["^(string_of_rank_arg_list_noparen l)^"]" ;;
 
 let rec pr_rankrel rrel = 
   fmt_string (string_of_spec_var rrel.CP.rank_id); 
-  fmt_string (" = RR_" ^ (string_of_int rrel.CP.rel_id) ^ "("); 
+  fmt_string (" = RR[" ^ (string_of_int rrel.CP.rel_id) ^ "]("); 
   fmt_string (string_of_rank_arg_list_noparen rrel.CP.rank_args); 
   fmt_string ")";
   (match rrel.CP.rrel_raw with

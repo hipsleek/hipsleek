@@ -665,6 +665,12 @@ and gather_type_info_b_formula_x prog b0 tlist =
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp e tl (Int))) tlist ls1  in
       let n_tl = List.fold_left (fun tl e-> fst(gather_type_info_exp e tl (Int))) n_tl ls2 in
       n_tl
+  | IP.RankRel rrel ->
+      let pos = rrel.IP.rel_pos in
+      let (n_tl, n_ty) = gather_type_info_var (fst rrel.IP.rank_id) tlist (Int) pos in
+      let n_tl = List.fold_left (fun tl v -> 
+        fst (gather_type_info_var (fst v.IP.rank_arg_id) tl (Int) pos)) n_tl rrel.IP.rank_args 
+      in n_tl
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
       let (new_et,n_tl) = fresh_tvar tlist in
       let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (* tvar, Int, Float *)

@@ -272,6 +272,26 @@ let string_of_slicing_label sl =
 	| Some (il, lbl, el) -> "<" ^ (if il then "IL, " else ", ")
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
+(* TermInf: Pretty printing for termination inference constraints *)
+let string_of_rank_arg ra = 
+  (string_of_var ra.P.rank_arg_id) ^
+  (match ra.P.rank_arg_type with | P.ConstRVar -> "@C" | _ -> "")
+
+let rec string_of_rank_arg_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_rank_arg h 
+  | h::t -> (string_of_rank_arg h) ^ ", " ^ (string_of_rank_arg_list_noparen t)
+;;
+
+let rec string_of_rankrel rrel = 
+  (string_of_var rrel.P.rank_id) ^ 
+  (" = RR[" ^ (string_of_int rrel.P.rel_id) ^ "](") ^  
+  (string_of_rank_arg_list_noparen rrel.P.rank_args) ^
+  ")" ^
+  (match rrel.P.rrel_raw with
+  | None -> ""
+  | Some rr -> " or "; string_of_rankrel rr) 
+
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
   | P.BConst (b,l)              -> string_of_bool b 
@@ -286,6 +306,7 @@ let string_of_b_formula (pf,il) =
             "{"^(pr_list string_of_formula_exp ls2)^"}"
           in ann ^ " LexVar["^(pr_list string_of_formula_exp ls1)^"]"^opt
       | _ -> ann)
+  | P.RankRel rrel -> string_of_rankrel rrel
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
