@@ -104,6 +104,7 @@ let proc_gen_cmd cmd =
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapeLFP ids -> process_shape_lfp ids
+    | ShapeRec ids -> process_shape_rec ids
     | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
     | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
     | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
@@ -149,7 +150,8 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
+      | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | Time _ | EmptyCmd | _ -> () 
   in
@@ -167,7 +169,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef ldef -> process_list_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapePostObl _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _
       | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | CmpCmd _| Time _ | _ -> () in
@@ -186,6 +188,7 @@ let parse_file (parse) (source_file : string) =
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
       | ShapeLFP ids -> process_shape_lfp ids
+      | ShapeRec ids -> process_shape_rec ids
       | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
       | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
       | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps

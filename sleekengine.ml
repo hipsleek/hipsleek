@@ -869,6 +869,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let fvs = CF.fv lhs in
   let fv_idents = (List.map CP.name_of_spec_var fvs) in
   let (stab,rhs) = meta_to_formula irhs false fv_idents stab in
+  let rhs = CF.elim_exists rhs in
   let all_vs = fvs@(CF.fv rhs) in
   let fv_idents = (List.map CP.name_of_spec_var all_vs) in
   let (stab,lhs) = meta_to_formula ilhs false fv_idents stab in
@@ -1049,6 +1050,56 @@ let process_shape_lfp sel_hps=
     with _ -> ls_pdefs
   in
   (*******END INTERNAL ********)
+  let ls_pdefs, defs = List.fold_left (fun (r1,r2) (_,hp_def) ->
+      match hp_def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+          if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 =0) hp_name sel_hps then
+            let _,args = CF.extract_HRel hp_def.CF.def_lhs in
+            let pdefs = List.map (fun (f) -> (hp, args, f))
+              (List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] hp_def.CF.def_rhs) in
+            (r1@[pdefs], r2)
+          else (r1,r2@[hp_def])
+        | _ -> (r1,r2@[hp_def])
+  ) ([],[]) (!sleek_hprel_defns) in
+  let unk_hps = List.map (fun (_,(hp,_)) -> hp) (!sleek_hprel_unknown) in
+  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps defs) ls_pdefs in
+  let _ = print_endline "" in
+  let _ = print_endline "\n*************************************" in
+  let _ = print_endline "*******lfp definition ********" in
+  let _ = print_endline "*************************************" in
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
+  let _ = print_endline (pr1 hp_defs) in
+  let _ = print_endline "*************************************" in
+  ()
+
+let process_shape_rec sel_hps=
+  (**********INTERNAL**********)
+  let transfrom_assumption hp0 ls_pdefs cs=
+    try
+      let hp,args = CF.extract_HRel_f cs.CF.hprel_rhs in
+      if CP.eq_spec_var hp0 hp then ls_pdefs@[(hp, args, cs.CF.hprel_lhs)]
+      else ls_pdefs
+    with _ -> ls_pdefs
+  in
+  let transform_to_hpdef pdefs=
+    match pdefs with
+      | [] -> report_error no_pos "sleekengine. process_shape_rec"
+      | [(hp,args,f)] -> let def_cat = (CP.HPRelDefn (hp, List.hd args, List.tl args)) in
+        {CF.def_cat = def_cat;
+        CF.def_lhs = (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args, no_pos));
+        CF.def_rhs = List.map (fun f0 -> (f0,None)) (CF.list_of_disjs f)
+        }
+      | (hp,args0,f)::rest ->
+            let fs = List.map (fun (_,args1, f1) ->
+                let sst = List.combine args1 args0 in
+                CF.subst sst f1
+            ) rest in
+            {CF.def_cat= (CP.HPRelDefn (hp, List.hd args0, List.tl args0));
+             CF.def_lhs= (CF.HRel (hp, List.map (fun sv -> CP.mkVar sv no_pos) args0, no_pos));
+             CF.def_rhs = List.map (fun f0 -> (f0,None)) (f::fs)
+            }
+  in
+  (*******END INTERNAL ********)
   let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_lfp\n" no_pos in
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, _, _, _, link_hpargs=
@@ -1058,11 +1109,12 @@ let process_shape_lfp sel_hps=
       List.fold_left (transfrom_assumption hp) [] constrs2
   ) sel_hps in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
-  let defs = List.map snd !sleek_hprel_defns in
-  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps defs) ls_pdefs in
+  (* let defs = List.map snd !sleek_hprel_defns in *)
+  let hp_defs = List.map (transform_to_hpdef) ls_pdefs in
+  let _ = sleek_hprel_defns := !sleek_hprel_defns@(List.map (fun a -> ([],a)) hp_defs) in
   let _ = print_endline "" in
   let _ = print_endline "\n*************************************" in
-  let _ = print_endline "*******lfp definition ********" in
+  let _ = print_endline "*******recurrence ********" in
   let _ = print_endline "*************************************" in
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
   let _ = print_endline (pr1 hp_defs) in

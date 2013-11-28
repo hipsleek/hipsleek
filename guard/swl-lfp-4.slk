@@ -1,0 +1,17 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+PostPred G(node ra, node rb,node a, node b, node@NI c).
+
+
+relDefn
+ G(cur,next,prev,prev1',sent) <->
+  HP_946(prev,prev1',next) * cur::node<val,prev>@M&
+  cur=prev1' & next=sent
+  or G(cur,next,prev,prev1',sent)&prev=null & cur!=null
+  or G(next2,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent.
+
+shape_lfp [G].
