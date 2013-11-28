@@ -2532,9 +2532,17 @@ let mk_expl_root_fnc hp ss r hf=
           if CP.mem_svl r args then hf else
             let n_eargs = subst_root r ss eargs [] in
             CF.HRel (hp1, n_eargs, pos)
+    | CF.DataNode dn ->
+          if not (CP.eq_spec_var dn.CF.h_formula_data_node r) then
+            if List.exists (fun (sv1,sv2) -> (CP.eq_spec_var dn.CF.h_formula_data_node sv1 && 
+            CP.eq_spec_var sv2 r) || (CP.eq_spec_var dn.CF.h_formula_data_node sv2 && 
+            CP.eq_spec_var sv1 r)) ss then
+              CF.DataNode {dn with CF.h_formula_data_node = r}
+            else hf
+          else hf
     | _ -> hf
 
-let compute_lfp_x prog dang_hps pdefs=
+let compute_lfp_x prog dang_hps defs pdefs=
   (********INTERNAL*******)
   let mk_exp_root_x hp r f =
     let _, mf, _, _, _ = CF.split_components f in
@@ -2585,13 +2593,13 @@ let compute_lfp_x prog dang_hps pdefs=
   let _ = Debug.binfo_pprint ((Cprinter.string_of_hp_rel_def_short def)) no_pos in
   def
 
-let compute_lfp prog dang_hps pdefs=
+let compute_lfp prog dang_hps defs pdefs=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 pr2) in
   let pr4 = Cprinter.string_of_hp_rel_def in
   Debug.no_1 "compute_lfp" pr3 pr4
-      (fun _ -> compute_lfp_x prog dang_hps pdefs) pdefs
+      (fun _ -> compute_lfp_x prog dang_hps defs pdefs) pdefs
 
 
 (*for each hp_def in hp_defs check whether it needs a lfp,
@@ -2621,7 +2629,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
                     ) grp in
                     if List.length pdefs > 1 then
                       if List.exists (fun (hp, args, f) -> is_post_fix hp args f) pdefs then
-                        (true, [(compute_lfp prog dang_hps pdefs)])
+                        (true, [(compute_lfp prog dang_hps hp_defs pdefs)])
                       else (false, grp)
                     else (false, grp)
                   else (false, grp)

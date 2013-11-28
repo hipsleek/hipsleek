@@ -1058,7 +1058,8 @@ let process_shape_lfp sel_hps=
       List.fold_left (transfrom_assumption hp) [] constrs2
   ) sel_hps in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) link_hpargs in
-  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps) ls_pdefs in
+  let defs = List.map snd !sleek_hprel_defns in
+  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps defs) ls_pdefs in
   let _ = print_endline "" in
   let _ = print_endline "\n*************************************" in
   let _ = print_endline "*******lfp definition ********" in

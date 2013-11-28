@@ -5798,8 +5798,18 @@ let rec look_up_subst_group hp args nrec_grps=
           let ptrs = CF.get_ptrs_w_args_f f in
           let ss1 = refresh_ptrs args2 (CP.remove_dups_svl ptrs) [] in
           let ss = List.combine args2 args in
-          let nf1 = CF.subst (ss1) f in
-          let nf2 = CF.subst (ss) nf1 in
+          let nf1 = CF.subst (ss) f in
+          let nf2 = CF.subst (ss1) nf1 in
+          (* let svl = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (CF.fv f)) in *)
+          (* let fr_svl = CP.fresh_spec_vars svl in *)
+          (* let ss = List.combine svl fr_svl in *)
+          (* let nf1 = CF.subst (ss) f in *)
+          (* let args21 = CP.subst_var_list ss args2 in *)
+          (* let ss1 = List.combine args21 args in *)
+          (* let nf2 = CF.subst ss1 nf1 in *)
+          (* let _ = DD.info_zprint (lazy (("       f:" ^ (Cprinter.prtt_string_of_formula f)))) no_pos in *)
+          (* let _ = DD.info_zprint (lazy (("       nf1:" ^ (Cprinter.prtt_string_of_formula nf1)))) no_pos in *)
+          (* let _ = DD.info_zprint (lazy (("       nf2:" ^ (Cprinter.prtt_string_of_formula nf2)))) no_pos in *)
           susbt_group (fs@[nf2]) pss
   in
   match nrec_grps with

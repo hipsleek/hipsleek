@@ -2042,7 +2042,7 @@ let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess d
   let pdefs_grps = partition_grp pdefs [] in
   (*for each set of constraints, compure greatest fixpoint*)
   let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
-  let fix_defs = List.map (SAC.compute_lfp prog dang_hps) pdefs_grps in
+  let fix_defs = List.map (SAC.compute_lfp prog dang_hps is.CF.is_hp_defs) pdefs_grps in
   {is with CF.is_constrs = [];
       CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
   }

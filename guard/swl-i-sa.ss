@@ -22,6 +22,8 @@ lx<g,s> == self=g & self!=s
  inv self!=s ;
 
 HeapPred H(node a, node b, node@NI c).
+HeapPred H1(node a, node@NI c).
+HeapPred H2(node a, node@NI c).
 PostPred G(node a, node ra, node b, node rb, node@NI c).
 
 void lscan(node@R cur, node@R prev, node sent)
@@ -36,8 +38,9 @@ ensures prev'::ll<sent>  & cur'=sent ;
 
 */
 
- infer [H,G]
+  infer [H,G]
   requires H(cur,prev,sent)
+   /* requires H1(cur,sent)*H2(prev,sent) */
   ensures G(cur,cur',prev,prev',sent);
  
 /*
