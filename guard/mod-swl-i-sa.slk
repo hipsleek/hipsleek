@@ -24,6 +24,7 @@ relAssume
   * HP_945(cur',prev,sent)&cur'!=sent 
   & cur'!=null --> H(cur',cur1,sent).
 
+ // POST
 relAssume
   HP_945(next,prev,sent) * HP_946(prev,cur,cur1') * 
    cur::node<val,prev>@M&next=sent & cur1'=sent & cur1'=next & 

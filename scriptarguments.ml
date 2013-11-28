@@ -514,7 +514,8 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
-  ("-sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
+  ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
+  ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");

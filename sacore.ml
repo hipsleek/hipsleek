@@ -2435,7 +2435,7 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
       | [] -> res
       | [pdef] -> res@[pdef]
       | (hp1,args1, g1, f1, svl1)::((hp2,args2, g2, f2, svl2)::rest) -> begin
-          let b, nfs = SAU.simplify_disj prog args unk_hps unk_svl f1 f2 pos in
+          let b, nfs = SAU.simplify_disj prog hp1 args unk_hps unk_svl f1 f2 pos in
           if b then
             let npdefs=
               [(hp2,args2, g2, List.hd nfs, svl2)]

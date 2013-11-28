@@ -9,13 +9,13 @@ struct node{
 /*@
 
 // predicate for a non-empty tree with chained leaf list
- tll<ll,lr> == self::node<null,null,lr> & self = ll
-	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+ tll<ll,lr> == self::node<_,null,lr> & self = ll
+	or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr>
 	inv self!=null;
 
 // predicate for a non-empty tree
- tree<> == self::node<null,null,_>
-	or self::node<l,r,null> * l::tree<> * r::tree<>
+ tree<> == self::node<_,null,_>
+	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 */
 
@@ -26,8 +26,8 @@ HeapPred G(node a, node@NI b, node c).
 */
 struct node* set_right (struct node* x, struct node* t)
 /*@
-infer [H,G] requires H(x,t) ensures G(x,res,t);
-//requires x::tree<> ensures x::tll<res,t>;
+//infer [H,G] requires H(x,t) ensures G(x,res,t);
+requires x::tree<> ensures x::tll<res,t>;
 */
 {
   //node xr = x.right;
@@ -47,8 +47,23 @@ infer [H,G] requires H(x,t) ensures G(x,res,t);
 }
 
 /*
-# tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
+# tll.c 
 
+verification using -tp z3 fail with tll.c but not
+with tll.ss. How come?
+
+Checking procedure set_right$node~node... 
+!!! WARNING logtime exception:0.
+Procedure set_right$node~node FAIL.(2)
+
+Exception Globals.Illegal_Prover_Format("z3.smt_of_exp: TypeCast should not appear here") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop z3... 47 invocations 
+0 false contexts at: ()
+
+# tll.c --sa-dnc --pred-en-dangling --pred-en-eup
 
 RELASSUME
 =========

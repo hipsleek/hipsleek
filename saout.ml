@@ -385,6 +385,68 @@ let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs f=
           chprels_decl hpdefs f)
        f
 
+let trans_formula_view_2_hp_x iprog cprog proc_name view_names f=
+  let rev_args r0 args0 hp_name=
+    let rec do_put_root args n rp r res=
+      match args with
+        | [] -> res
+        | a::rest ->
+              if n==rp then (r::res)@args else
+                do_put_root rest (n+1) rp r (res@[a])
+    in
+    try
+      let rp = C.get_proot_hp_def_raw cprog.C.prog_hp_decls hp_name in
+      do_put_root args0 0 rp r0 []
+    with _ -> r0::args0
+  in
+  let hn_rev_trans hn = match hn with
+    | CF.ViewNode hv-> begin
+        if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) hv.CF.h_formula_view_name view_names then
+          let r = hv.CF.h_formula_view_node in
+          let all_args = rev_args r hv.CF.h_formula_view_arguments hv.CF.h_formula_view_name in
+          CF.HRel (CP.SpecVar (HpT, hv.CF.h_formula_view_name, Unprimed),
+          List.map (fun sv -> CP.mkVar sv hv.CF.h_formula_view_pos) all_args, hv.CF.h_formula_view_pos)
+        else hn
+      end
+    | _ -> hn
+  in
+  CF.formula_trans_heap_node hn_rev_trans f
+
+let trans_formula_view_2_hp iprog cprog proc_name view_names f=
+  let pr1= !CF.print_formula in
+  Debug.no_2 "trans_formula_view_2_hp" pr1 (pr_list pr_id) pr1
+      (fun _ _ -> trans_formula_view_2_hp_x iprog cprog proc_name view_names f)
+      f view_names
+
+let trans_hp_def_view_2_hp_x iprog cprog proc_name in_hp_names hp_defs=
+  let rev_formula_opt f_opt=
+    match f_opt with
+      | None -> None
+      | Some f -> Some (trans_formula_view_2_hp iprog cprog proc_name in_hp_names f)
+  in
+  let rev_hp_def r hpdef=
+    match hpdef.CF.def_cat with
+      | CP.HPRelDefn (hp,_,_) ->
+            let _ = Debug.ninfo_hprint (add_str "hp" !CP.print_sv) hp no_pos in
+            let ndef = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) (CP.name_of_spec_var hp) in_hp_names then
+              hpdef
+            else
+              let nrhs = List.map (fun (f,og) -> (trans_formula_view_2_hp iprog cprog proc_name in_hp_names f,
+              rev_formula_opt og) ) hpdef.CF.def_rhs in
+              {hpdef with CF.def_rhs = nrhs}
+            in
+            r@[ndef]
+      | _ -> r@[hpdef]
+  in
+  List.fold_left rev_hp_def [] hp_defs
+
+let trans_hp_def_view_2_hp iprog cprog proc_name in_hp_names hp_defs=
+  let pr1 =  pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list pr_id in
+  Debug.no_2 "trans_hp_def_view_2_hp" pr2 pr1 pr1
+      (fun _ _ -> trans_hp_def_view_2_hp_x iprog cprog proc_name in_hp_names hp_defs)
+      in_hp_names hp_defs
+
 (*******************************)
 (***********REVERIFY************)
 (*******************************)

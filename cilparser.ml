@@ -235,7 +235,8 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         "  case { \n" ^
         "    p =  null -> ensures res = null; \n" ^
         "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-        "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
+        (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+        "                 ensures res::" ^ data_name ^ param ^ " ; \n" ^
         "  }\n"
       ) in
       let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in

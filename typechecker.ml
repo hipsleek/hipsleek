@@ -2592,7 +2592,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         print_endline "*************************************";
         if !Globals.testing_flag then print_endline "<dstart>";
         let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
-        let pr1 = if !Globals.print_html then pr_list_ln Cprinter.string_of_html_hprel_def_short else pr1 in
+        (* let pr1 = if !Globals.print_html then pr_list_ln Cprinter.string_of_html_hprel_def_short else pr1 in *)
         (* print_endline (rel_defs # string_of_reverse); *)
         print_endline (pr1 defs);
         if !Globals.testing_flag then print_endline "<dstop>"; 
@@ -2738,7 +2738,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                           let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
-                          let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in
+                          (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)
                           let pr_len x = string_of_int (List.length x) in
                           (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
                           (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
