@@ -679,10 +679,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let rrel = TI.collect_rrel_list_failesc_context res_ctx in
                     let sol_for_rrel, raw_subst = TI.solve_rrel_list rrel in
                     let n_vdefs = List.map (fun vdef -> TI.plug_rank_into_view raw_subst sol_for_rrel vdef) prog.Cast.prog_view_decls in
-                    let _ = if !Globals.en_term_inf then
+                    let _ = List.iter (fun v -> Hashtbl.add prog.Cast.prog_inf_view_decls v.view_name v) n_vdefs in
+                    (* let _ = if !Globals.en_term_inf then
                       (print_endline ("\nTERMINATION INFERENCE RESULT: ");
                       print_endline (pr_list !Cast.print_view_decl(*_clean*) n_vdefs))
-                    in
+                    in *)
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
 	    	    let res_ctx = CF.list_failesc_to_partial res_ctx in
@@ -3126,7 +3127,14 @@ let check_prog iprog (prog : prog_decl) =
     | Some cout -> close_out cout
     | _ -> ()
   in 
-  Term.term_check_output ()
+  Term.term_check_output ();
+  if !Globals.en_term_inf then
+    (print_endline ("\nTERMINATION INFERENCE RESULT: ");
+    Globals.en_term_inf := false;
+    Hashtbl.iter (fun _ vdef -> 
+      print_endline (!Cast.print_view_decl_clean vdef)) prog.Cast.prog_inf_view_decls)
+  else ()
+
 	    
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog 

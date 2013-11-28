@@ -1167,7 +1167,7 @@ let rec pr_h_formula h =
               pr_spec_var sv; 
               fmt_string "::"; (* to distinguish pred from data *)
               pr_angle (c^perm_str) pr_spec_var 
-                (svs @ (match rvar with Some rv -> [rv] | _ -> []));
+                (svs @ (if !en_term_inf then fold_opt (fun v -> [v]) rvar else []));
 	      pr_imm imm;
 	      pr_derv dr;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -3050,7 +3050,8 @@ let pr_view_decl_clean v =
     ((List.combine v.view_labels v.view_vars)@
       (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
       fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+  pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   fmt_close_box ();
   pr_mem:=true
 

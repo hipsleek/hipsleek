@@ -28,6 +28,8 @@ and prog_decl = {
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
+    (* TermInf: store of inferred views *)
+    prog_inf_view_decls: (ident, view_decl) Hashtbl.t;
     (*mutable prog_left_coercions : coercion_decl list;*)
     (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list

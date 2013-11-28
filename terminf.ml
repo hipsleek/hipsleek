@@ -135,11 +135,151 @@ let collect_rrel_list_failesc_context (ctx: list_failesc_context) : CF.rrel list
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
 
+(****************************************)
+(* Function for adding rank constraints *)
+(****************************************)
+
+(* TermInf: Add rank constraints into view and struc_formula *)
+type rank_type =
+  | VIEW of (string * CP.spec_var list * int)  (* view name * view's args * rel_id *)
+  | PRE of C.typed_ident list
+  | POST
+
+let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
+  let view_form = add_rank_constraint_struc_formula vdef.C.view_formula 
+    (VIEW (vdef.C.view_name, vdef.C.view_vars, (fresh_rrel_id ()))) in
+  let un_struc_f = CF.get_view_branches view_form in
+  let rbc = match vdef.C.view_raw_base_case with
+  | None -> None
+  | Some _ ->
+      let rec f_tr_base f = 
+        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos) else f in
+        match f with
+        | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
+        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
+        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
+      List.fold_left (fun a (c, l) -> 
+        let fc = f_tr_base c in
+        if (CF.isAnyConstFalse fc) then a 
+        else match a with 
+        | Some f1  -> Some (CF.mkOr f1 fc no_pos)
+        | None -> Some fc) None un_struc_f
+  in { vdef with
+    C.view_formula = view_form; 
+    C.view_un_struc_formula = un_struc_f; 
+    C.view_raw_base_case = rbc; }
+
+and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
+  match f with
+  | CF.EList l -> CF.EList (List.map (fun (lbl, sf) ->
+      (lbl, add_rank_constraint_struc_formula sf rtyp)) l)
+  | CF.ECase c -> CF.ECase { c with 
+      CF.formula_case_branches = List.map (fun (cf, sf) -> 
+        (cf, add_rank_constraint_struc_formula sf rtyp)) c.CF.formula_case_branches; }
+  | CF.EBase b -> 
+      let cont = match b.CF.formula_struc_continuation with
+        | None -> None
+        | Some sf -> Some (add_rank_constraint_struc_formula sf rtyp) in
+      let base, ivars = add_rank_constraint_formula b.CF.formula_struc_base rtyp in
+      CF.EBase { b with
+        CF.formula_struc_implicit_inst = b.CF.formula_struc_implicit_inst @ ivars;
+        CF.formula_struc_base = base;
+        CF.formula_struc_continuation = cont; }
+  | CF.EAssume a -> CF.EAssume { a with
+      CF.formula_assume_simpl = fst (add_rank_constraint_formula a.CF.formula_assume_simpl POST);
+      CF.formula_assume_struc = add_rank_constraint_struc_formula a.CF.formula_assume_struc POST; }
+  | CF.EInfer i -> CF.EInfer { i with
+      CF.formula_inf_continuation = add_rank_constraint_struc_formula i.CF.formula_inf_continuation rtyp; }
+
+and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
+  let pr1 = !CF.print_formula in
+  let pr2 = !CF.print_svl in
+  Debug.no_1 "add_rank_constraint_formula" pr1 (pr_pair pr1 pr2)
+  (fun _ -> add_rank_constraint_formula_x f rtyp) f
+
+and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
+  let add_rank_constraint_pure hf pf rtyp =
+    match rtyp with
+    | VIEW (view_id, view_args, rel_id) ->
+        let is_raw_view = view_args = [] in
+        let rankrel_id = view_rank_sv view_id in
+        let nhf_r, rrel_args_r, rrel_ivars_r, ir =
+          collect_rankrel_vars_h_formula_raw hf [view_id] in
+        let rrel_args_r, rrel_base_ivars_r = 
+          if not ir (* Base case *) then
+            (* Add constant rank arg for base case *)
+            let base_ragr = view_base_ragr view_id in
+            rrel_args_r @ [base_ragr], [base_ragr.CP.rank_arg_id] 
+          else rrel_args_r, [] in
+        if is_raw_view then
+          nhf_r,
+          MCP.memoise_add_pure_N pf (CP.mkRankConstraint_raw rankrel_id rrel_args_r),
+          rrel_ivars_r @ rrel_base_ivars_r
+        else
+          let rrels = collect_rankrel_vars_h_formula nhf_r rel_id [view_id] in
+          let rrel_raw = {
+            CP.rel_id = fresh_rrel_id (); 
+            CP.rank_id = rankrel_id;
+            CP.rank_args = rrel_args_r;
+            CP.rrel_raw = None;   
+          } in
+          let npf = MCP.memoise_add_pure_N pf (CP.mkRankConstraint rel_id rankrel_id 
+            (List.map CP.mkRArg_var view_args) (Some rrel_raw)) in
+          let npf = MCP.memoise_add_pure_N npf (CP.join_conjunctions rrels) in
+          nhf_r, npf, rrel_ivars_r @ rrel_base_ivars_r
+    | PRE proc_args ->
+        let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
+        (* Add Term[r] for PRE based on the args of proc *)
+        let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
+          TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
+        nhf, npf, rankrel_ivars
+    | POST -> 
+        let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
+        nhf, pf, rankrel_ivars 
+  in match f with
+  | CF.Base b -> 
+    begin
+      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
+        b.CF.formula_base_heap b.CF.formula_base_pure rtyp in
+      match rtyp with 
+      | POST -> 
+        if rankrel_ivars == [] then 
+          CF.Base { b with 
+            CF.formula_base_heap = heap_base;
+            CF.formula_base_pure = rankrel_pure_base; }, []
+        else
+          CF.Exists {
+            CF.formula_exists_qvars = rankrel_ivars;
+            CF.formula_exists_heap = heap_base;
+            CF.formula_exists_pure = rankrel_pure_base;
+            CF.formula_exists_type = b.CF.formula_base_type;
+            CF.formula_exists_and = b.CF.formula_base_and;
+            CF.formula_exists_flow = b.CF.formula_base_flow;
+            CF.formula_exists_label = b.CF.formula_base_label;
+            CF.formula_exists_pos = b.CF.formula_base_pos; }, []
+
+      | _ -> CF.Base { b with 
+        CF.formula_base_heap = heap_base;
+        CF.formula_base_pure = rankrel_pure_base; }, rankrel_ivars
+    end
+  | CF.Exists e -> 
+      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
+        e.CF.formula_exists_heap e.CF.formula_exists_pure rtyp in
+      CF.Exists { e with
+        CF.formula_exists_qvars = e.CF.formula_exists_qvars;
+        CF.formula_exists_heap = heap_base;
+        CF.formula_exists_pure = rankrel_pure_base;
+      }, rankrel_ivars
+  | CF.Or o ->
+      let f1, i1 = add_rank_constraint_formula_x o.CF.formula_or_f1 rtyp in
+      let f2, i2 = add_rank_constraint_formula_x o.CF.formula_or_f2 rtyp in
+      CF.Or { o with CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; }, i1@i2
+
 (*****************************************)
 (* Function for solving rrel constraints *)
 (*****************************************)
 
-(* TermInf: Transform RankRel *)
+(* TermInf: Transform RankRel and LexVar (TermR) *)
 let b_formula_of_rankrel (rr: rankrel) =
   let p = no_pos in
   let rank_var_args, rank_const_args = List.partition (fun ra ->
@@ -162,6 +302,23 @@ let b_formula_of_rankrel (rr: rankrel) =
   mkEq_b (mkVar rr.rank_id p) exp p, 
   const_coes @ var_coes, rr.rank_id::rank_var_svs, nneg_const_coes
 
+let replace_rankrel_by_b_formula (is_raw: bool) (f: CP.formula) =
+  let f_b_f arg b = 
+    let (pf, _) = b in
+    match pf with
+    | RankRel rr -> 
+      let nb, const_coes, arg_coes, nneg_coes = 
+        if not is_raw then b_formula_of_rankrel rr
+        else match rr.rrel_raw with
+        | None -> mkTrue_b no_pos, [], [], [] 
+        | Some rr_raw -> b_formula_of_rankrel rr_raw
+      in Some (nb, (const_coes, arg_coes, nneg_coes))
+    | _ -> Some (b, ([], [], [])) in
+  let f_comb a bl = List.fold_left (fun (a1, a2, a3) (b1, b2, b3) -> 
+    (a1@b1, a2@b2, a3@b3)) ([], [], []) bl in
+  let f_arg = (voidf2, voidf2, voidf2) in
+  foldr_formula f () (nonef2, f_b_f, nonef2) f_arg (f_comb, f_comb, f_comb)
+
 let b_formula_of_rankrel_sol (rr: rankrel) subst =
   let p = no_pos in
   let rank_var_args, rank_const_args = List.partition (fun ra ->
@@ -182,31 +339,15 @@ let b_formula_of_rankrel_sol (rr: rankrel) subst =
   let exp = snd (List.fold_left (fun (i, a) v ->
     let c = SpecVar (Int, coe_prefix ^ (string_of_int i), Unprimed) in
     let c_val = find_val_of_c c subst in
-    if c_val == 0 then (i+1, a)
-    else (i+1, (mkAdd a (mkMult (mkIConst c_val p) (mkVar v p) p) p)))
-    (1, const_exp) rank_var_svs) in
+    let s = if c_val == 0 then a
+    else if c_val == 1 then mkAdd a (mkVar v p) p
+    else mkAdd a (mkMult (mkIConst c_val p) (mkVar v p) p) p in
+    (i+1, s)) (1, const_exp) rank_var_svs) in
   mkEq_b (mkVar rr.rank_id p) exp p 
-  
-let replace_rankrel_by_b_formula (is_raw: bool) (f: CP.formula) =
-  let f_b_f arg b = 
-    let (pf, _) = b in
-    match pf with
-    | RankRel rr -> 
-      let nb, const_coes, arg_coes, nneg_coes = 
-        if not is_raw then b_formula_of_rankrel rr
-        else match rr.rrel_raw with
-        | None -> mkTrue_b no_pos, [], [], [] 
-        | Some rr_raw -> b_formula_of_rankrel rr_raw
-      in Some (nb, (const_coes, arg_coes, nneg_coes))
-    | _ -> Some (b, ([], [], [])) in
-  let f_comb a bl = List.fold_left (fun (a1, a2, a3) (b1, b2, b3) -> 
-    (a1@b1, a2@b2, a3@b3)) ([], [], []) bl in
-  let f_arg = (voidf2, voidf2, voidf2) in
-  foldr_formula f () (nonef2, f_b_f, nonef2) f_arg (f_comb, f_comb, f_comb)
 
 let subst_rankrel_sol_p_formula raw_subst subst (f: CP.formula) =
   let f_b_f b = 
-    let (pf, _) = b in
+    let (pf, ann) = b in
     match pf with
     | RankRel rr -> 
         if not raw_subst then Some (b_formula_of_rankrel_sol rr subst) 
@@ -215,6 +356,11 @@ let subst_rankrel_sol_p_formula raw_subst subst (f: CP.formula) =
           | None -> Some (mkTrue_b no_pos) 
           | Some rr_raw -> Some (b_formula_of_rankrel_sol rr_raw subst) 
           end
+    | LexVar lv -> begin
+        match lv.lex_ann with
+        | TermR -> Some ((LexVar { lv with lex_ann = Term; lex_exp = lv.lex_tmp; }), ann)
+        | _ -> Some b
+      end
     | _ -> Some b
   in transform_formula (nonef, nonef, nonef, f_b_f, somef) f
 
@@ -242,17 +388,23 @@ let rec remove_redundant_implicit_inst (f: struc_formula) (vs: CP.spec_var list)
   | EInfer i -> EInfer { i with
       formula_inf_continuation = remove_redundant_implicit_inst i.formula_inf_continuation vs; }
 
+let f_p_f raw_subst subst pf = Some (subst_rankrel_sol_p_formula raw_subst subst pf)
+
+let f_h_f hf = match hf with
+  | ViewNode vn -> Some (ViewNode { vn with
+    CF.h_formula_view_rank = None;
+    CF.h_formula_view_arguments = vn.h_formula_view_arguments @ (fold_opt (fun r -> [r]) vn.h_formula_view_rank)})
+  | _ -> None
+
 let subst_rankrel_sol_struc_formula raw_subst subst (f: struc_formula) =
-  let f_p_f pf = Some (subst_rankrel_sol_p_formula raw_subst subst pf) in
   let trans_f = transform_struc_formula 
-    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f in
+    (nonef, nonef, f_h_f, (nonef, nonef, (f_p_f raw_subst subst), nonef, nonef)) f in
   let vs = List.map (fun id -> CP.SpecVar (Int, id, Unprimed)) (fst (List.split subst)) in
   remove_redundant_implicit_inst trans_f vs  
 
 let subst_rankrel_sol_formula raw_subst subst (f: CF.formula) =
-  let f_p_f pf = Some (subst_rankrel_sol_p_formula raw_subst subst pf) in
   CF.transform_formula 
-    (nonef, nonef, nonef, (nonef, nonef, f_p_f, nonef, nonef)) f
+    (nonef, nonef, f_h_f, (nonef, nonef, (f_p_f raw_subst subst), nonef, nonef)) f
 
 let solve_rrel rrel = 
   let solve raw_rrel ctx ctr = 
@@ -279,12 +431,29 @@ let rec solve_rrel_list rrel_list =
 (* Plug inferred result into views *)
 let plug_rank_into_view (raw_subst_flag: bool) sol_for_rrel (vdef: C.view_decl) : C.view_decl =
   let p = no_pos in
-  { vdef with 
+  let vrank = view_rank_sv vdef.C.view_name in
+  { vdef with
+    C.view_vars = vdef.C.view_vars @ [vrank];
+    C.view_labels = vdef.C.view_labels @ [Label_only.Lab_LAnn.unlabelled];
     C.view_formula = subst_rankrel_sol_struc_formula raw_subst_flag sol_for_rrel vdef.C.view_formula; 
     C.view_user_inv = MCP.memoise_add_pure_N vdef.C.view_user_inv 
-      (CP.mkPure (CP.mkGte (CP.mkVar (view_rank_sv vdef.C.view_name) p) (CP.mkIConst 0 p) p));
+      (CP.mkPure (CP.mkGte (CP.mkVar vrank p) (CP.mkIConst 0 p) p));
     C.view_un_struc_formula = List.map (fun (f, l) -> 
       (subst_rankrel_sol_formula raw_subst_flag sol_for_rrel f, l)) vdef.C.view_un_struc_formula; 
     C.view_raw_base_case = map_opt (fun f -> subst_rankrel_sol_formula raw_subst_flag sol_for_rrel f) vdef.C.view_raw_base_case;
     C.view_base_case = map_opt (fun (g, f) -> (g, subst_rankrel_sol_mix_formula raw_subst_flag sol_for_rrel f)) vdef.C.view_base_case; }
+
+let trans_proc_specs (proc: C.proc_decl) : C.proc_decl =
+  (* TermInf: transform TermR to Term *)
+  let n_spec = subst_rankrel_sol_struc_formula false [] proc.C.proc_static_specs in
+  proc.C.proc_stk_of_static_specs # push n_spec;
+  { proc with C.proc_static_specs = n_spec; }
+
+let plug_inf_info (prog: C.prog_decl) : C.prog_decl =
+  let _ = Hashtbl.iter (fun id proc ->
+    Hashtbl.remove prog.C.new_proc_decls id;
+    Hashtbl.add prog.C.new_proc_decls id (trans_proc_specs proc)) prog.C.new_proc_decls in
+  let inf_vdefs = Hashtbl.fold (fun _ v va -> va @ [v]) prog.C.prog_inf_view_decls [] in 
+  { prog with C.prog_view_decls = inf_vdefs; }
+
 

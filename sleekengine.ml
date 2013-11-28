@@ -83,6 +83,8 @@ let cprog = ref {
     C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
     (*C.old_proc_decls = [];*)
     C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
+    (* TermInf: create Hashtbl for storing inferred views *)
+    C.prog_inf_view_decls = Hashtbl.create 1;
     (*C.prog_left_coercions = [];
     C.prog_right_coercions = [];*)
     C. prog_barrier_decls = []}

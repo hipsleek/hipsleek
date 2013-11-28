@@ -791,143 +791,6 @@ let remove_disj_clauses (mf: mix_formula): mix_formula =
   let pr = !print_mix_formula in
   Debug.no_1 "remove_disj_clauses" pr pr remove_disj_clauses mf
 
-(* TermInf: Add rank constraints into view and struc_formula *)
-type rank_type =
-  | VIEW of (string * CP.spec_var list * int)  (* view name * view's args * rel_id *)
-  | PRE of C.typed_ident list
-  | POST
-
-let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
-  let view_form = add_rank_constraint_struc_formula vdef.C.view_formula 
-    (VIEW (vdef.C.view_name, vdef.C.view_vars, (fresh_rrel_id ()))) in
-  let un_struc_f = CF.get_view_branches view_form in
-  let rbc = match vdef.C.view_raw_base_case with
-  | None -> None
-  | Some _ ->
-      let rec f_tr_base f = 
-        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos) else f in
-        match f with
-        | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
-        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
-        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
-      List.fold_left (fun a (c, l) -> 
-        let fc = f_tr_base c in
-        if (CF.isAnyConstFalse fc) then a 
-        else match a with 
-        | Some f1  -> Some (CF.mkOr f1 fc no_pos)
-        | None -> Some fc) None un_struc_f
-  in { vdef with
-    C.view_formula = view_form; 
-    C.view_un_struc_formula = un_struc_f; 
-    C.view_raw_base_case = rbc; }
-
-and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
-  match f with
-  | CF.EList l -> CF.EList (List.map (fun (lbl, sf) ->
-      (lbl, add_rank_constraint_struc_formula sf rtyp)) l)
-  | CF.ECase c -> CF.ECase { c with 
-      CF.formula_case_branches = List.map (fun (cf, sf) -> 
-        (cf, add_rank_constraint_struc_formula sf rtyp)) c.CF.formula_case_branches; }
-  | CF.EBase b -> 
-      let cont = match b.CF.formula_struc_continuation with
-        | None -> None
-        | Some sf -> Some (add_rank_constraint_struc_formula sf rtyp) in
-      let base, ivars = add_rank_constraint_formula b.CF.formula_struc_base rtyp in
-      CF.EBase { b with
-        CF.formula_struc_implicit_inst = b.CF.formula_struc_implicit_inst @ ivars;
-        CF.formula_struc_base = base;
-        CF.formula_struc_continuation = cont; }
-  | CF.EAssume a -> CF.EAssume { a with
-      CF.formula_assume_simpl = fst (add_rank_constraint_formula a.CF.formula_assume_simpl POST);
-      CF.formula_assume_struc = add_rank_constraint_struc_formula a.CF.formula_assume_struc POST; }
-  | CF.EInfer i -> CF.EInfer { i with
-      CF.formula_inf_continuation = add_rank_constraint_struc_formula i.CF.formula_inf_continuation rtyp; }
-
-and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
-  let pr1 = !CF.print_formula in
-  let pr2 = !CF.print_svl in
-  Debug.no_1 "add_rank_constraint_formula" pr1 (pr_pair pr1 pr2)
-  (fun _ -> add_rank_constraint_formula_x f rtyp) f
-
-and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
-  let add_rank_constraint_pure hf pf rtyp =
-    match rtyp with
-    | VIEW (view_id, view_args, rel_id) ->
-        let is_raw_view = view_args = [] in
-        let rankrel_id = TI.view_rank_sv view_id in
-        let nhf_r, rrel_args_r, rrel_ivars_r, ir =
-            TI.collect_rankrel_vars_h_formula_raw hf [view_id] in
-        let rrel_args_r, rrel_base_ivars_r = 
-          if not ir (* Base case *) then
-            (* Add constant rank arg for base case *)
-            let base_ragr = TI.view_base_ragr view_id in
-            rrel_args_r @ [base_ragr], [base_ragr.CP.rank_arg_id] 
-          else rrel_args_r, [] in
-        if is_raw_view then
-          nhf_r,
-          MCP.memoise_add_pure_N pf (CP.mkRankConstraint_raw rankrel_id rrel_args_r),
-          rrel_ivars_r @ rrel_base_ivars_r
-        else
-          let rrels = TI.collect_rankrel_vars_h_formula nhf_r rel_id [view_id] in
-          let rrel_raw = {
-            CP.rel_id = fresh_rrel_id (); 
-            CP.rank_id = rankrel_id;
-            CP.rank_args = rrel_args_r;
-            CP.rrel_raw = None;   
-          } in
-          let npf = MCP.memoise_add_pure_N pf (CP.mkRankConstraint rel_id rankrel_id 
-            (List.map CP.mkRArg_var view_args) (Some rrel_raw)) in
-          let npf = MCP.memoise_add_pure_N npf (CP.join_conjunctions rrels) in
-          nhf_r, npf, rrel_ivars_r @ rrel_base_ivars_r
-    | PRE proc_args ->
-        let nhf, rankrel_vars, rankrel_ivars, _ = TI.collect_rankrel_vars_h_formula_raw hf [] in
-        (* Add Term[r] for PRE based on the args of proc *)
-        let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
-          TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
-        nhf, npf, rankrel_ivars
-    | POST -> 
-        let nhf, rankrel_vars, rankrel_ivars, _ = TI.collect_rankrel_vars_h_formula_raw hf [] in
-        nhf, pf, rankrel_ivars 
-  in match f with
-  | CF.Base b -> 
-    begin
-      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
-        b.CF.formula_base_heap b.CF.formula_base_pure rtyp in
-      match rtyp with 
-      | POST -> 
-        if rankrel_ivars == [] then 
-          CF.Base { b with 
-            CF.formula_base_heap = heap_base;
-            CF.formula_base_pure = rankrel_pure_base; }, []
-        else
-          CF.Exists {
-            CF.formula_exists_qvars = rankrel_ivars;
-            CF.formula_exists_heap = heap_base;
-            CF.formula_exists_pure = rankrel_pure_base;
-            CF.formula_exists_type = b.CF.formula_base_type;
-            CF.formula_exists_and = b.CF.formula_base_and;
-            CF.formula_exists_flow = b.CF.formula_base_flow;
-            CF.formula_exists_label = b.CF.formula_base_label;
-            CF.formula_exists_pos = b.CF.formula_base_pos; }, []
-
-      | _ -> CF.Base { b with 
-        CF.formula_base_heap = heap_base;
-        CF.formula_base_pure = rankrel_pure_base; }, rankrel_ivars
-    end
-  | CF.Exists e -> 
-      let heap_base, rankrel_pure_base, rankrel_ivars = add_rank_constraint_pure
-        e.CF.formula_exists_heap e.CF.formula_exists_pure rtyp in
-      CF.Exists { e with
-        CF.formula_exists_qvars = e.CF.formula_exists_qvars;
-        CF.formula_exists_heap = heap_base;
-        CF.formula_exists_pure = rankrel_pure_base;
-      }, rankrel_ivars
-  | CF.Or o ->
-      let f1, i1 = add_rank_constraint_formula_x o.CF.formula_or_f1 rtyp in
-      let f2, i2 = add_rank_constraint_formula_x o.CF.formula_or_f2 rtyp in
-      CF.Or { o with CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; }, i1@i2
-
-
 (*transform labels into exceptions, remove the finally clause,
 should also check that 
 *)
@@ -1251,6 +1114,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
+        (* TermInf: create Hashtbl for storing inferred views *)
+        C.prog_inf_view_decls = Hashtbl.create (List.length cviews2);
 	      (*C.prog_left_coercions = l2r_coers;*)
 	      (*C.prog_right_coercions = r2l_coers;*)} in
 	  let cprog1 = { cprog with			
@@ -1775,7 +1640,7 @@ SpecVar (_, n, _) -> vdef.I.view_vars <- vdef.I.view_vars @ [n];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
       (* TermInf: Adding ghost variable for ranking function of view *)
-      let cvdef = if !en_term_inf then add_rank_constraint_view cvdef else cvdef in
+      let cvdef = if !en_term_inf then TI.add_rank_constraint_view cvdef else cvdef in
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
@@ -2491,7 +2356,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* TermInf: Add RankRel into Specs *)
       let final_static_specs_list = 
         if !en_term_inf && not is_primitive then
-          add_rank_constraint_struc_formula final_static_specs_list (PRE args)
+          TI.add_rank_constraint_struc_formula final_static_specs_list (TI.PRE args)
         else final_static_specs_list
       in
       (** An Hoa : print out final_static_specs_list for inspection **)

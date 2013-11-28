@@ -365,6 +365,14 @@ let process_source_full source =
 	else ();
 
   (* TermInf: Reverify with inferred predicates with ranking properties *)
+  if (!Globals.ti_reverify_flag) then
+  begin
+    let n_cprog = Terminf.plug_inf_info cprog in
+    Globals.en_term_inf := false;
+    (* print_endline (Cprinter.string_of_program_separate_prelude n_cprog iprims); *)
+    ignore(Typechecker.check_prog intermediate_prog n_cprog)
+  end
+  else ();
 	
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();

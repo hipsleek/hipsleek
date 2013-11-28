@@ -992,8 +992,9 @@ let dis_post_chk = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
 
-(* Option for Termination Inference *)
+(* TermInf: Option for Termination Inference *)
 let en_term_inf = ref false
+let ti_reverify_flag = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false
