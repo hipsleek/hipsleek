@@ -1394,9 +1394,33 @@ relAssume
  or G(cur,next_52,prev,prev1',sent)&prev=null & cur!=null
  or G(next_52,next_52,cur,prev1',sent)&cur!=null & next_52!=null & 
     next_52!=sent
- 
-
 ==========================================================
+# swl-i-sa.ss (similarly for swl-lfp-4.ss)
+
+Obtained:
+!!!  G(cur,cur',prev,prev',sent) ::=  [prev'::node<val_55_947,prev>@M
+           &cur'=sent]
+
+EXPECT
+======
+ G(cur,next,prev,prev',sent) ::= prev'::node<val,prev>@M * HP_950(prev,prev',next)&next=sent & cur=prev']
+
+
+!! >>>>>> lfp computation for post-preds <<<<<
+!!!    Initial recurrence: G([cur,cur',prev,prev',sent]) ==> 
+ HP_950(prev,prev',cur') * prev'::node<val_55_947,prev>@M&cur=prev' & 
+ cur'=sent
+ or G(cur,cur',prev_981,prev',sent)&prev_981=null & cur!=null
+ or G(next_55_948,cur',cur,prev',sent)&cur!=null & next_55_948!=null & 
+    next_55_948!=sent
+ 
+!!!    fix: 0 hfalse&false
+!!!    fix: 1 HP_950(prev,prev',cur') * prev'::node<val_55_947,prev>@M&cur=prev' & 
+cur'=sent
+!!!    fix: 2 prev'::node<val_55_947,prev>@M&cur'=sent
+!!!     synthesize (lfp): G
+
+
 ==========================================================
 ==========================================================
 ==========================================================

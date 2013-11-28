@@ -12,6 +12,6 @@ relDefn
   HP_946(prev,prev1',next) * cur::node<val,prev>@M&
   cur=prev1' & next=sent
   or G(cur,next,prev,prev1',sent)&prev=null & cur!=null
-  or G(next2,next,cur,prev1',sent)&cur!=null & next!=null & next!=sent.
+  or G(next2,next,cur,prev1',sent)&cur!=null & next2!=null & next2!=sent.
 
 shape_lfp [G].
