@@ -14301,6 +14301,29 @@ let elim_e_var to_keep (f0 : formula) : formula =
 
 
 (*Long: todo here*)
+let shorten_svl fv =
+  let n_tbl = Hashtbl.create 1 in
+  let reg = Str.regexp "_.*" in 
+  List.map (fun sv ->
+      match sv with
+          CP.SpecVar(t,id,pr) ->
+              let cut_id = Str.global_replace reg "" id in
+              let new_id =
+                if Hashtbl.mem n_tbl cut_id
+                then
+                  begin
+                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
+                  end
+                else
+                  begin
+                    Hashtbl.add n_tbl cut_id 0;
+                    cut_id
+                  end
+              in
+              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
+  ) fv
+
 let rearrange_h_formula_x args0 hf0 =
   let rec helper fv hfl =
     match fv with
@@ -14381,7 +14404,6 @@ let rearrange_def def=
         end
   in
   (*to shorten variable names here*)
-  let n_tbl = Hashtbl.create 1 in
   let args = match def.hprel_def_kind with
     | CP.HPRelDefn (_,r,args) -> r::args
     | _ -> []
@@ -14396,26 +14418,28 @@ let rearrange_def def=
   (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
   (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
-  let reg = Str.regexp "_.*" in
-  let new_svl = List.map (fun sv ->
-      match sv with
-          CP.SpecVar(t,id,pr) ->
-              let cut_id = Str.global_replace reg "" id in
-              let new_id =
-                if Hashtbl.mem n_tbl cut_id
-                then
-                  begin
-                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
-                  end
-                else
-                  begin
-                    Hashtbl.add n_tbl cut_id 0;
-                    cut_id
-                  end
-              in
-              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
-  ) svl_rp in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  (* let reg = Str.regexp "_.*" in *)
+  let new_svl = shorten_svl svl_rp in 
+  (* List.map (fun sv -> *)
+  (*     match sv with *)
+  (*         CP.SpecVar(t,id,pr) -> *)
+  (*             let cut_id = Str.global_replace reg "" id in *)
+  (*             let new_id = *)
+  (*               if Hashtbl.mem n_tbl cut_id *)
+  (*               then *)
+  (*                 begin *)
+  (*                   Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1); *)
+  (*                   cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id) *)
+  (*                 end *)
+  (*               else *)
+  (*                 begin *)
+  (*                   Hashtbl.add n_tbl cut_id 0; *)
+  (*                   cut_id *)
+  (*                 end *)
+  (*             in *)
+  (*             CP.SpecVar(t,(\*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*\) new_id,pr) *)
+  (* ) svl_rp in *)
   let new_body2 =
     List.map (fun ((p, f_opt) as o) ->
         match f_opt with
@@ -14451,27 +14475,28 @@ let rearrange_rel (rel: hprel) =
     | Some f -> List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv f))) in
   let rfv = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (fv rel.hprel_rhs)) in
   let fv = CP.remove_dups_svl (lfv@gfv@rfv) in
-  let n_tbl = Hashtbl.create 1 in
-  let reg = Str.regexp "_.*" in
-  let new_svl = List.map (fun sv ->
-      match sv with
-          CP.SpecVar(t,id,pr) ->
-              let cut_id = Str.global_replace reg "" id in
-              let new_id =
-                if Hashtbl.mem n_tbl cut_id
-                then
-                  begin
-                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
-                  end
-                else
-                  begin
-                    Hashtbl.add n_tbl cut_id 0;
-                    cut_id
-                  end
-              in
-              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
-  ) fv in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  (* let reg = Str.regexp "_.*" in *)
+  let new_svl = shorten_svl fv in
+  (* List.map (fun sv -> *)
+  (*     match sv with *)
+  (*         CP.SpecVar(t,id,pr) -> *)
+  (*             let cut_id = Str.global_replace reg "" id in *)
+  (*             let new_id = *)
+  (*               if Hashtbl.mem n_tbl cut_id *)
+  (*               then *)
+  (*                 begin *)
+  (*                   Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1); *)
+  (*                   cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id) *)
+  (*                 end *)
+  (*               else *)
+  (*                 begin *)
+  (*                   Hashtbl.add n_tbl cut_id 0; *)
+  (*                   cut_id *)
+  (*                 end *)
+  (*             in *)
+  (*             CP.SpecVar(t,(\*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*\) new_id,pr) *)
+  (* ) fv in *)
   {rel with hprel_lhs = subst_avoid_capture fv new_svl (rearrange_formula lfv rel.hprel_lhs);
       hprel_guard = (match rel.hprel_guard with
          | None -> None
@@ -14479,36 +14504,13 @@ let rearrange_rel (rel: hprel) =
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
 
-let get_new_svl fv =
-  let n_tbl = Hashtbl.create 1 in
-  let reg = Str.regexp "_.*" in 
-  List.map (fun sv ->
-      match sv with
-          CP.SpecVar(t,id,pr) ->
-              let cut_id = Str.global_replace reg "" id in
-              let new_id =
-                if Hashtbl.mem n_tbl cut_id
-                then
-                  begin
-                    Hashtbl.add n_tbl cut_id ((Hashtbl.find n_tbl cut_id) + 1);
-                    cut_id ^ string_of_int(Hashtbl.find n_tbl cut_id)
-                  end
-                else
-                  begin
-                    Hashtbl.add n_tbl cut_id 0;
-                    cut_id
-                  end
-              in
-              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
-  ) fv
-
 let rearrange_context bc =
   let rec helper ctx =
     match ctx with
       | Ctx en -> Ctx {en with
           es_formula =
                 let fv = CP.remove_dups_svl (fv en.es_formula) in
-                let new_svl = get_new_svl fv in
+                let new_svl = shorten_svl fv in
                 subst_avoid_capture fv new_svl en.es_formula
         }
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
@@ -14520,5 +14522,5 @@ let rearrange_failesc_context fc =
   match fc with
     | (bfl, esc, bcl) -> (bfl, esc, List.map rearrange_context bcl)
 
-let rearrange_failesc_context_list fcl =
-  List.map rearrange_failesc_context fcl
+let rearrange_failesc_context_list fcl = fcl
+  (* List.map rearrange_failesc_context fcl *)
