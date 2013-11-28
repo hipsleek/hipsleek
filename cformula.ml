@@ -14504,25 +14504,32 @@ let rearrange_rel (rel: hprel) =
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
 
-let rearrange_context bc =
-  let rec helper ctx =
-    match ctx with
-      | Ctx en -> Ctx {en with
-          es_formula =
-                let fv = CP.remove_dups_svl (fv en.es_formula) in
-                (* let _ = print_endline ((pr_list !print_sv) fv) in *)
-                let new_svl = shorten_svl fv in
-                (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
-                subst_avoid_capture fv new_svl en.es_formula
-        }
-      | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
-  in
-  match bc with
-    | (pt, ctx) -> (pt, helper ctx)
+let shorten_formula f = 
+  let fv = CP.remove_dups_svl (fv f) in
+  (* let _ = print_endline ((pr_list !print_sv) fv) in *)
+  let new_svl = shorten_svl fv in
+  (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
+  subst_avoid_capture fv new_svl f
 
-let rearrange_failesc_context fc =
-  match fc with
-    | (bfl, esc, bcl) -> (bfl, esc, List.map rearrange_context bcl)
+(* let rearrange_context bc = *)
+(*   let rec helper ctx = *)
+(*     match ctx with *)
+(*       | Ctx en -> Ctx {en with *)
+(*           es_formula = *)
+(*                 let fv = CP.remove_dups_svl (fv en.es_formula) in *)
+(*                 (\* let _ = print_endline ((pr_list !print_sv) fv) in *\) *)
+(*                 let new_svl = shorten_svl fv in *)
+(*                 (\* let _ = print_endline ((pr_list !print_sv) new_svl) in *\) *)
+(*                 subst_avoid_capture fv new_svl en.es_formula *)
+(*         } *)
+(*       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2) *)
+(*   in *)
+(*   match bc with *)
+(*     | (pt, ctx) -> (pt, helper ctx) *)
 
-let rearrange_failesc_context_list fcl =
-  List.map rearrange_failesc_context fcl
+(* let rearrange_failesc_context fc = *)
+(*   match fc with *)
+(*     | (bfl, esc, bcl) -> (bfl, esc, List.map rearrange_context bcl) *)
+
+(* let rearrange_failesc_context_list fcl = *)
+(*   List.map rearrange_failesc_context fcl *)
