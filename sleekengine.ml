@@ -1039,6 +1039,17 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
+let process_shape_lfp sel_hps=
+   (**********INTERNAL**********)
+
+  (*******END INTERNAL ********)
+  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_lfp\n" no_pos in
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let constrs2, sel_hps, _, _, _, link_hpargs=
+    shape_infer_pre_process hp_lst_assume sel_hps []
+  in
+  ()
+
 let process_validate ils_es=
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
