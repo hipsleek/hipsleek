@@ -257,6 +257,7 @@ module Make (Token : SleekTokenS)
    ("XPURE",XPURE);
    (* TermInf: Sleek stuff for Termination Inference *)
    ("RR", RANKREL);
+   ("is", IS);
 	 (flow, FLOW flow);]
 }
   

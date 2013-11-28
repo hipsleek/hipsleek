@@ -1547,7 +1547,13 @@ cexp_w:
     | lc=SELF; `EQ;   cl=SELF  ->
         let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
         set_slicing_utils_pure_double f false
-    ]  
+    ] 
+  | "rankrel"
+    [ `IDENTIFIER rid; `EQ; `RANKREL; `OSQUARE; `INT_LITER (i,_); `CSQUARE; rargs = rank_arg_list -> 
+      cexp_list_to_pure (fun _ -> P.RankRel {
+        P.rel_id = i; P.rank_id = (rid, Unprimed); P.rank_args = rargs;
+        P.rrel_raw = None; P.rel_pos = (get_pos_camlp4 _loc 1); }) []
+    ] 
   | "bconstr" 
     [ lc=SELF; `LTE; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -1712,13 +1718,6 @@ cexp_w:
     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     ]
-  | "rankrel"
-    [ `IDENTIFIER rid; `RANKREL; `OSQUARE; `INT_LITER (i,_); `CSQUARE; 
-      `OPAREN; rargs = rank_arg_list; `CPAREN -> 
-      cexp_list_to_pure (fun _ -> P.RankRel {
-        P.rel_id = i; P.rank_id = (rid, Unprimed); P.rank_args = rargs;
-        P.rrel_raw = None; P.rel_pos = (get_pos_camlp4 _loc 1); }) []
-    ] 
   | "pure_base"
     [ `TRUE -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
     | `FALSE -> Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
@@ -1768,9 +1767,9 @@ measures_seq_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 (* TermInf: List of rank arguments *)
 const_var : [[ `CONSTVAR -> true ]];
 
-rank_arg : [[ `IDENTIFIER v; is_const = const_var -> 
+rank_arg : [[ `IDENTIFIER v; is_const = OPT const_var -> 
   { P.rank_arg_id = (v, Unprimed); 
-    P.rank_arg_type = if is_const then P.ConstRVar else P.RVar; } ]];
+    P.rank_arg_type = match is_const with | Some _ -> P.ConstRVar | None -> P.RVar; } ]];
 
 rank_arg_list : [[`OPAREN; t = LIST0 rank_arg SEP `COMMA; `CPAREN -> t]];
 
