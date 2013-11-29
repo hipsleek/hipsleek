@@ -14434,7 +14434,8 @@ let rearrange_def def=
                  | None -> []
   ) new_body1 in
   let svl = List.flatten svll in
-  let svl_rd = CP.remove_dups_svl (args@svl) in
+  (* let _ = print_endline ((pr_list !print_sv) (args@svl)) in *)
+  let svl_rd = List.rev(CP.remove_dups_svl (List.rev args@svl)) in
   (*let _ = print_endline ((pr_list !print_sv) svl_rd) in*)
   (* let svl_ra = (\* svl_rd in  *\)CP.diff_svl svl_rd args in *)
   let svl_rp = List.filter (fun sv -> not (CP.is_hprel_typ sv)) svl_rd in
