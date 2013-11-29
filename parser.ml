@@ -809,6 +809,7 @@ non_empty_command:
       | t=shapedivide_cmd     -> ShapeDivide t
       | t=shapeconquer_cmd     -> ShapeConquer t
       | t=shapelfp_cmd     -> ShapeLFP t
+      | t=shaperec_cmd     -> ShapeRec t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
@@ -1865,6 +1866,12 @@ shapeconquer_cmd:
 
 shapelfp_cmd:
    [[ `SHAPE_LFP; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   il1
+   ]];
+
+shaperec_cmd:
+   [[ `SHAPE_REC; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    il1
    ]];

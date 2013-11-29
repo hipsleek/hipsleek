@@ -137,6 +137,7 @@ module Make (Token : SleekTokenS)
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
    ("shape_lfp" , SHAPE_LFP);
+   ("shape_rec" , SHAPE_REC);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );

@@ -92,6 +92,9 @@ lemma_safe "ll_tail2lsegR" self::ll_tail<n, t, sm, lg>  & m=n-1 <- self::lseg<m,
 lemma_safe "lsegR" self::lseg<n, p, sm, lg> & n = a + b & a,b>=0 <-  self::lseg<a, r, sm, lg1> * r::lseg<b,p,sm1,lg> & lg1<=sm1.
 
 ====================================================================
+to check why examples/working/sleek/lemma/sll_tailL.slk and lseg_case 
+need --en-lem-rhs-unfold to pass lemma proving phase. 
+
 ====================================================================
 ====================================================================
 ====================================================================

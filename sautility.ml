@@ -891,28 +891,6 @@ let look_up_dups_node prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl=
       (fun _ _ -> look_up_dups_node_x prog hd_nodes hv_nodes lhs_args all_keep_svl r_keep_svl)
       lhs_args r_keep_svl
 
-(* let look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names= *)
-(*   let rec find_pt_new cur_hds svl res hd_rest= *)
-(*     match cur_hds with *)
-(*       | [] -> res,hd_rest *)
-(*       | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in *)
-(*                   if ( CP.intersect_svl ptr_args (svl@res) <> []) then *)
-(*                     find_pt_new tl svl (res@[hd.CF.h_formula_data_node]@ptr_args) hd_rest *)
-(*                   else find_pt_new tl svl res (hd_rest@[hd]) *)
-(*   in *)
-(*   let rec loop_helper hds svl r= *)
-(*     let r1,rest = find_pt_new hds svl r [] in *)
-(*     if CP.diff_svl r1 r = [] || rest = [] then (CP.remove_dups_svl r1) else *)
-(*       loop_helper rest svl r1 *)
-(*   in *)
-(*   loop_helper hd_nodes node_names [] *)
-
-(* let look_up_backward_closed_ptr_args prog hd_nodes hv_nodes node_names= *)
-(*   let pr1 = !CP.print_svl in *)
-(*   Debug.no_1 "look_up_backward_closed_ptr_args" pr1 pr1 *)
-(*       (fun _ -> look_up_backward_closed_ptr_args_x prog hd_nodes hv_nodes node_names) *)
-(*       node_names *)
-
 let rec lookup_undef_args args undef_args def_ptrs=
   match args with
     | [] -> undef_args
@@ -5798,8 +5776,18 @@ let rec look_up_subst_group hp args nrec_grps=
           let ptrs = CF.get_ptrs_w_args_f f in
           let ss1 = refresh_ptrs args2 (CP.remove_dups_svl ptrs) [] in
           let ss = List.combine args2 args in
-          let nf1 = CF.subst (ss1) f in
-          let nf2 = CF.subst (ss) nf1 in
+          let nf1 = CF.subst (ss) f in
+          let nf2 = CF.subst (ss1) nf1 in
+          (* let svl = List.filter (fun sv -> not (CP.is_hprel_typ sv)) (CP.remove_dups_svl (CF.fv f)) in *)
+          (* let fr_svl = CP.fresh_spec_vars svl in *)
+          (* let ss = List.combine svl fr_svl in *)
+          (* let nf1 = CF.subst (ss) f in *)
+          (* let args21 = CP.subst_var_list ss args2 in *)
+          (* let ss1 = List.combine args21 args in *)
+          (* let nf2 = CF.subst ss1 nf1 in *)
+          (* let _ = DD.info_zprint (lazy (("       f:" ^ (Cprinter.prtt_string_of_formula f)))) no_pos in *)
+          (* let _ = DD.info_zprint (lazy (("       nf1:" ^ (Cprinter.prtt_string_of_formula nf1)))) no_pos in *)
+          (* let _ = DD.info_zprint (lazy (("       nf2:" ^ (Cprinter.prtt_string_of_formula nf2)))) no_pos in *)
           susbt_group (fs@[nf2]) pss
   in
   match nrec_grps with

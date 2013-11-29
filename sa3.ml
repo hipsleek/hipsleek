@@ -1984,7 +1984,7 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
     else
       pre_fix_pdefs_grps
   in
-  let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in
+  (* let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in *)
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -2027,7 +2027,7 @@ let infer_pre_fix iprog prog proc_name callee_hps is_pre is need_preprocess dete
 
 (*compute least fixpoint for each set of constraints*)
 let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
-  let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in
+  (* let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in *)
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -2042,7 +2042,7 @@ let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess d
   let pdefs_grps = partition_grp pdefs [] in
   (*for each set of constraints, compure greatest fixpoint*)
   let dang_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
-  let fix_defs = List.map (SAC.compute_lfp prog dang_hps) pdefs_grps in
+  let fix_defs = List.map (SAC.compute_lfp prog dang_hps is.CF.is_hp_defs) pdefs_grps in
   {is with CF.is_constrs = [];
       CF.is_hp_defs = is.CF.is_hp_defs@fix_defs
   }
@@ -2216,7 +2216,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let sel_lhs_hps, sel_rhs_hps, dep_def_hps, oblg_constrs, rem_constr = List.fold_left classify_hps ([],[],[],[],[]) constrs1 in
     if oblg_constrs = [] then
       let pr1 = pr_list_ln  Cprinter.string_of_hprel_short in
-      DD.binfo_pprint ("proving:\n" ^ (pr1 rem_constr)) no_pos;
+      DD.info_ihprint (add_str "proving:\n" pr1) rem_constr no_pos;
       let _ = if rem_constr = [] then () else
       (*prove rem_constr*)
         (*transform defs to cviews*)
