@@ -1130,7 +1130,11 @@ let genESpec_x body_opt args ret pos=
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
-            let hp_arg = (arg.param_type, arg.param_name, Globals.I) in
+            let in_info =
+              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
+                  arg.param_name mut_vars then Globals.I else Globals.NI
+            in
+            let hp_arg = (arg.param_type, arg.param_name, in_info) in
             let ref_args = if arg.param_mod = RefMod then
               [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
             else [hp_arg]
@@ -1703,7 +1707,9 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
-        else report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+        else if String.length v.view_data_name = 0 then
+          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+        else ()
       else v.view_data_name <- List.hd a) vl
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  =

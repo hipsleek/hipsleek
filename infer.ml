@@ -2845,7 +2845,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     eqset
   in
   (**********END INTERNAL***********)
-  let pk = try proving_kind#top with _ -> PK_Unknown in
+  let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
   (* let es0,lhs_b0,rhs0,rhs_b0 = if pk = PK_POST && es0.CF.es_subst_ref <> [] then *)
   (*   let es1 = {es0 with CF.es_formula = CF.subst es0.CF.es_subst_ref es0.CF.es_formula} in *)
   (*   let lhs_b1 = CF.subst_b es0.CF.es_subst_ref lhs_b0 in *)
