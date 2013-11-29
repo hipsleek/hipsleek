@@ -533,9 +533,10 @@ let rec solve_rrel_list rrel_list =
 let plug_rank_into_view (raw_subst_flag: bool) sol_for_rrel (vdef: C.view_decl) : C.view_decl =
   let p = no_pos in
   let vrank = view_rank_sv vdef.C.view_name in
+  let add_rank = !Globals.en_term_inf in
   { vdef with
-    C.view_vars = vdef.C.view_vars @ [vrank];
-    C.view_labels = vdef.C.view_labels @ [Label_only.Lab_LAnn.unlabelled];
+    C.view_vars = vdef.C.view_vars @ (if add_rank then [vrank] else []);
+    C.view_labels = vdef.C.view_labels @ (if add_rank then [Label_only.Lab_LAnn.unlabelled] else []);
     C.view_formula = subst_rankrel_sol_struc_formula raw_subst_flag sol_for_rrel vdef.C.view_formula; 
     C.view_user_inv = MCP.memoise_add_pure_N vdef.C.view_user_inv 
       (CP.mkPure (CP.mkGte (CP.mkVar vrank p) (CP.mkIConst 0 p) p));

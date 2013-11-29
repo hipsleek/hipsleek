@@ -3038,7 +3038,7 @@ let pr_view_decl v =
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl 
       ((List.combine v.view_labels v.view_vars)@
       (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
-      fmt_string "= ") ();
+      fmt_string " = ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -3085,7 +3085,7 @@ let pr_view_decl_short v =
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
     ((List.combine v.view_labels v.view_vars)@
       (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
-      fmt_string "= ") ();
+      fmt_string " = ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -3117,9 +3117,9 @@ let pr_view_decl_clean v =
   in
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var_lbl
-    ((List.combine v.view_labels v.view_vars)@
-      (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
-      fmt_string "= ") ();
+    ((List.combine v.view_labels v.view_vars)
+      @ (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
+      fmt_string " = ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   fmt_close_box ();
