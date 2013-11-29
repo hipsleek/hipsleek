@@ -995,6 +995,7 @@ let log_filter = ref true
 (* TermInf: Option for Termination Inference *)
 let en_term_inf = ref false
 let ti_reverify_flag = ref false
+let ti_gen_slk = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false

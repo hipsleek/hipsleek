@@ -571,7 +571,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
       | (TermR, TermR) ->
-          let new_es = TI.construct_dec_rrel_constraint estate src_il dst_il in
+          let new_es = TI.construct_dec_rrel_constraint estate conseq src_il dst_il in
           (new_es, lhs_p, rhs_p, None)
       | (TermR, _) 
       | (Term, TermR) ->

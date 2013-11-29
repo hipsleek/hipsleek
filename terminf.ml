@@ -62,13 +62,13 @@ let print_enhanced_spec_proc_list (ph: (ident, C.proc_decl) Hashtbl.t): unit =
   print_endline ("***************************************");
   Hashtbl.iter (fun _ p -> print_enhanced_spec_proc p) ph
 
-let print_collected_rrel (rrels: CF.rrel list): unit =
+let print_collected_rrel (rrels: (CF.rrel * MCP.mix_formula) list): unit =
   print_endline "";
   print_endline ("******************************************");
   print_endline ("* ======== TERMINATION INFERENCE ======= *");
   print_endline ("* Generated constraints on Rank Relation *");
   print_endline ("******************************************");
-  print_endline (pr_list !CF.print_rrel rrels)
+  print_endline (pr_list !CF.print_rrel_full rrels)
 
 let print_result vdefs =
   print_endline "";
@@ -187,6 +187,25 @@ let collect_rrel_list_context (ctx: CF.list_context) : CF.rrel list =
   in
   let f_arg arg ctx = arg in
   snd (trans_list_context ctx () f_c f_arg List.concat)
+
+let collect_used_data_h_formula (h: CF.h_formula) : ident list =
+  let f h = match h with
+    | DataNode v -> Some ([v.h_formula_data_name])
+    | _ -> None
+  in fold_h_formula h f List.concat
+
+let collect_used_data_formula (f: CF.formula) : ident list =
+  let h, _, _, _, _ = split_components f in
+  collect_used_data_h_formula h
+
+let collect_used_data_struc_formula (sf: CF.struc_formula) : ident list = 
+  let f_f _ f = Some (f, collect_used_data_formula f) in
+  let f_m m _ = (m, []) in
+  let f_vs _ vs = (vs, []) in
+  let f = (nonef2, f_f, nonef2, (nonef2, nonef2, nonef2), (nonef2, f_m, f_vs, f_m, f_m)) in
+  let f_a arg _ = arg in
+  let f_arg = (f_a, f_a, f_a, (f_a, f_a, f_a), f_a) in
+  snd (trans_struc_formula sf () f f_arg List.concat)
 
 (****************************************)
 (* Functions for adding rank constraints *)
@@ -331,24 +350,31 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
       CF.Or { o with CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; }, i1@i2
 
 (* TermInf: Construct rrel constraints for inference (HIP) *)
-let construct_dec_rrel_constraint estate src dst =
+let construct_dec_rrel_constraint estate conseq src dst =
   let _, p, _, _, _ = split_components estate.es_formula in
   (* TODO: Check lexicographic ordering *)
   let ctr = List.fold_left (fun acc (s, d) -> 
     MCP.memoise_add_pure acc (CP.mkPure (CP.mkGt s d no_pos))) 
-    (MCP.mkMTrue no_pos) (List.combine src dst) in 
-  let rrel = {
+    (MCP.mkMTrue no_pos) (List.combine src dst) in
+  let orig_ante = 
+    match estate.es_var_measures with
+    | None -> estate.CF.es_formula
+    | Some (ann, m, i) -> CF.add_pure_formula_to_formula 
+      (CP.mkPure (CP.mkLexVar ann m i no_pos)) 
+      estate.CF.es_formula
+  in let rrel = {
     rrel_type = RR_DEC;
     rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
     rrel_ctr = ctr;
-    rrel_orig_ctx = estate.CF.es_formula;
+    rrel_orig_entail = (orig_ante, conseq);
   } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
 
-let construct_dec_rrel_constraint estate src dst =
+let construct_dec_rrel_constraint estate conseq src dst =
   let pr1 = !CF.print_entail_state in
   let pr2 = pr_list !CP.print_exp in
   Debug.no_3 "construct_dec_rrel_constraint" pr1 pr2 pr2 pr1 
-    construct_dec_rrel_constraint estate src dst
+    (fun _ _ _ -> construct_dec_rrel_constraint estate conseq src dst)
+    estate src dst
 
 (*****************************************)
 (* Functions for solving rrel constraints *)
@@ -531,12 +557,48 @@ let plug_inf_info (prog: C.prog_decl) : C.prog_decl =
   let inf_vdefs = Hashtbl.fold (fun _ v va -> va @ [v]) prog.C.prog_inf_view_decls [] in 
   { prog with C.prog_view_decls = inf_vdefs; }
 
+let gen_slk_file prog (rrels: CF.rrel list) =
+  let file_name_ss = List.hd !Globals.source_files in
+  let out_chn =
+    let reg = Str.regexp "\.ss" in
+    let file_name_slk = "logs/rank_" ^ (Str.global_replace reg ".slk" file_name_ss) in
+    let _ = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    open_out (file_name_slk)
+  in
+
+  let used_data_decls = List.concat (List.map (fun v -> 
+    collect_used_data_struc_formula v.C.view_formula) prog.C.prog_view_decls) in
+
+  let _ = print_endline ("DATA: " ^ (pr_list (fun i -> i) used_data_decls)) in
+
+  let slk_data_decls = String.concat "\n" (List.map (fun d -> (!C.slk_of_data_decl d) ^ ".") 
+    (List.filter (fun d -> Gen.BList.mem_eq (fun i1 i2 -> (String.compare i1 i2) == 0) 
+      d.C.data_name used_data_decls) prog.C.prog_data_decls)) in
+  let slk_view_decls = String.concat "\n" (List.map (fun v -> 
+    (!C.slk_of_view_decl v) ^ ".") prog.C.prog_view_decls) in
+  let rid = ref 0 in
+  let slk_rrels = String.concat "\n" (List.map (fun rr ->
+    rid := !rid + 1; (!CF.slk_of_orig_rrel !rid rr) ^ ".") rrels) in
+  let slk_solve_cmd = "solve_rank_constrs." in
+
+  let slk_output =
+    slk_data_decls ^ "\n\n" ^ 
+    slk_view_decls ^ "\n\n" ^ 
+    slk_rrels ^ "\n\n" ^ 
+    slk_solve_cmd in
+  let _ = output_string out_chn slk_output in
+  let _ = close_out out_chn in
+  ()
+  
 let collect_and_solve_rrel_hip prog (ctx: CF.list_failesc_context): unit =
   let rrels = collect_rrel_list_failesc_context ctx in
-  let _ = print_collected_rrel rrels in
   let sol_for_rrel, raw_subst = solve_rrel_list rrels in
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
+  let _ = print_collected_rrel (List.map (fun r -> 
+    (r, subst_rankrel_sol_mix_formula raw_subst sol_for_rrel r.rrel_ctx)) rrels) in
+  let _ = if !Globals.ti_gen_slk then gen_slk_file prog rrels else () in
   List.iter (fun v -> Hashtbl.add prog.C.prog_inf_view_decls v.C.view_name v) n_vdefs
 
 let collect_and_solve_rrel_slk ids rrel_store prog =

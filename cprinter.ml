@@ -821,8 +821,7 @@ let rec pr_rankrel rrel =
   fmt_string ")";
   (match rrel.CP.rrel_raw with
   | None -> ()
-  | Some rr -> fmt_string " or "; pr_rankrel rr) ;;
-
+  | Some rr -> () (* fmt_string " or "; pr_rankrel rr *)) ;;
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -1549,14 +1548,16 @@ let rec pr_h_formula_for_spec h =
     h_formula_view_label = pid;
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
+    h_formula_view_rank = rvar;
     h_formula_view_pos =pos}) ->
     let perm_str = string_of_cperm perm in
     fmt_open_hbox ();
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
-    fmt_string "::"; 
-    if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
+    fmt_string "::";
+    let svs = svs @ (if !en_term_inf then fold_opt (fun v -> [v]) rvar else [])
+    in if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
 (*    pr_imm imm;*)
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1827,6 +1828,8 @@ let rec pr_formula_for_spec e =
   in
   let disjs = Cformula.list_of_disjs e in
   pr_list_op_none " ||" (print_fun) disjs
+
+let pr_slk_formula = pr_formula_for_spec
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -2414,6 +2417,29 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
   in
   res
 
+let rec pr_slk_struc_formula_view (e:struc_formula) = 
+  let res = match e with
+  | ECase { formula_case_branches = case_list } ->
+    pr_args (Some ("V", 1)) (Some "A") "case " "{" "}" "" 
+    (fun (c1, c2) -> wrap_box ("B", 0) 
+      (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> [] ")
+      (fun () -> pr_slk_struc_formula_view c2; fmt_string ";")) case_list
+  | EBase { formula_struc_base = fb; formula_struc_continuation = cont } ->
+    pr_slk_formula fb;
+    (match cont with 
+      | None -> ()
+      | Some l -> pr_slk_struc_formula_view l; );
+  | EAssume _
+  | EInfer _ -> ()
+  | EList b -> if b == [] then fmt_string "" else 
+      pr_list_op_none " or\n" (fun (l, c) -> pr_slk_struc_formula_view c) b
+  (*| EOr b ->
+    let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
+    let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
+    let f_b e = pr_bracket struc_formula_wo_paren pr_struc_formula_for_spec e in
+    pr_list_vbox_wrap "eor " f_b (arg1@arg2) *)
+  in res
+
 (*let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e
 
 let printer_of_ext_formula (fmt: Format.formatter) (e:ext_formula) : unit =
@@ -2461,13 +2487,45 @@ let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 
 (* TermInf: Printing ranking constraints *)
 let pr_rrel (rr: rrel) =
-  fmt_string "DEC ";
+  (* fmt_string "DEC "; *)
   pr_mix_formula rr.rrel_ctx;
   fmt_string " |- ";
   pr_mix_formula rr.rrel_ctr
 ;;
 
 let string_of_rrel = poly_string_of_pr pr_rrel ;;
+
+let pr_orig_rrel (rr: rrel) =
+  let (ante, cons) = rr.rrel_orig_entail in
+  pr_formula ante;
+  fmt_string " |- ";
+  pr_pure_formula cons
+;;
+
+let string_of_orig_rrel = poly_string_of_pr pr_orig_rrel;;
+
+let pr_slk_orig_rrel (id: int) (rr: rrel) =
+  let (ante, cons) = rr.rrel_orig_entail in
+  fmt_string ("rank_constr[r" ^ (string_of_int id) ^ "] ");
+  pr_slk_formula ante;
+  fmt_string " |- ";
+  pr_pure_formula cons
+;;
+
+let slk_of_orig_rrel id = poly_string_of_pr (pr_slk_orig_rrel id);;
+
+let pr_rrel_full (rr, sol_ante) =
+  fmt_string "\nORIG: ";
+  pr_orig_rrel rr;
+  fmt_string "\n\nSIMPL: ";
+  pr_rrel rr;
+  fmt_string "\n\nSOL: ";
+  pr_mix_formula sol_ante;
+  fmt_string " |- ";
+  pr_mix_formula rr.rrel_ctr
+;;
+
+let string_of_rrel_full = poly_string_of_pr pr_rrel_full ;;
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
@@ -3038,6 +3096,18 @@ let pr_view_decl_short v =
   fmt_close_box ();
   pr_mem:=true
 
+let pr_slk_view_decl v =
+  pr_mem := false;
+  fmt_open_vbox 1;
+  wrap_box ("B", 0) (fun () -> pr_angle ("pred " ^ v.view_name) pr_typed_spec_var_lbl
+    ((List.combine v.view_labels v.view_vars)@
+      (if !en_term_inf then [(Label_only.Lab_LAnn.unlabelled, Terminf.view_rank_sv v.view_name)] else [])); 
+      fmt_string " == ") ();
+  fmt_cut (); wrap_box ("B", 0) pr_slk_struc_formula_view v.view_formula; 
+  pr_vwrap  "inv "  pr_mix_formula v.view_user_inv;
+  fmt_close_box ();
+  pr_mem:=true
+
 let pr_view_decl_clean v =
   pr_mem:=false;
   let f bc =
@@ -3071,6 +3141,8 @@ let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view
 let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
 
 let string_of_view_decl_clean (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_clean v
+
+let slk_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_slk_view_decl v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
@@ -3349,8 +3421,10 @@ let rec string_of_decl_list l c = match l with
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields "\n") ^ "\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
 ;;
+
+let slk_of_data_decl = string_of_data_decl
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Left -> "==>"
@@ -3982,6 +4056,9 @@ Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_list_int := string_of_list_int;;
 Cformula.print_rank_arg_list := string_of_rank_arg_list;;
 Cformula.print_rrel := string_of_rrel;;
+Cformula.print_orig_rrel := string_of_orig_rrel;;
+Cformula.slk_of_orig_rrel := slk_of_orig_rrel;;
+Cformula.print_rrel_full := string_of_rrel_full;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
@@ -4001,6 +4078,9 @@ Cast.print_hp_decl := string_of_hp_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
 Cast.print_proc_decl_no_body := string_of_proc_decl_no_body;;
+Cast.print_program := string_of_program;;
+Cast.slk_of_data_decl := slk_of_data_decl;;
+Cast.slk_of_view_decl := slk_of_view_decl;;
 print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;

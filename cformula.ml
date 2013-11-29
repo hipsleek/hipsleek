@@ -6614,7 +6614,7 @@ type rrel = {
   rrel_type: rel_type;
   rrel_ctx: MCP.mix_formula;
   rrel_ctr: MCP.mix_formula;
-  rrel_orig_ctx: formula;
+  rrel_orig_entail: (formula * CP.formula);
 }
 
  (* context functions *)
@@ -6841,6 +6841,10 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 let print_rrel = ref(fun (c:rrel) -> "printer not initialized")
+let print_orig_rrel = ref(fun (c:rrel) -> "printer not initialized")
+let print_rrel_full = ref(fun (c:rrel * MCP.mix_formula) -> "printer not initialized")
+
+let slk_of_orig_rrel = ref(fun (id: int) (c:rrel) -> "printer not initialized")
 
 let get_estate_from_context ctx =
   match ctx with

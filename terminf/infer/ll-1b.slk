@@ -1,0 +1,16 @@
+data node { int val; node next; }.
+
+pred ll<s, r> == 
+  self = null & s = 0 & r = RR[1](r0@C) or 
+  self::node<v, q> * q::ll<s1, r1> & s = s1 + v & v >= 0 
+		& r = RR[2](v,r1).
+
+rank_constr[r1] x'::node<v_905,q_906> & s=v_905+s1_907 & 0<=v_905 &
+  r_ll_865 = RR[2]( v_905,  r_ll_908) &
+  x=x' & x'!=null & !(v_bool_15_864') &
+  x'!=null & !(v_bool_15_864') & v_int_19_862'=1 & q_906=v_node_19_860' &
+  s1_907=s_911 & r_ll_908=r_ll_912 & 
+	TermR[][r_ll_865] |- TermR[][r_ll_912].
+
+solve_rank_constrs.
+

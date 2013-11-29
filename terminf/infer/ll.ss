@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}
+
+/*
+ll<s> == 
+  case {
+		self = null -> [] s = 0;
+		self != null -> [] self::node<v, q> * q::ll<s-1>;
+	}
+	inv s >= 0;
+*/
+
+ll<s> == 
+  self = null & s = 0 or
+	self::node<v, q> * q::ll<s-1>
+	inv s >= 0;
+
+int length (node x)
+  requires x::ll<n> 
+  ensures res >= 0;
+{
+  if (x == null) {
+		//dprint;
+    return 0;
+	} else {
+		//dprint;
+    return 1 + length(x.next);
+	}
+}

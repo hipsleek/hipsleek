@@ -1762,7 +1762,7 @@ opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
 
 opt_measures_seq :[[ il = OPT measures_seq -> un_option il [] ]];
 
-measures_seq :[[`OBRACE; t=LIST0 cexp SEP `COMMA; `CBRACE -> t]];
+measures_seq :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 opt_measures_seq_sqr :[[ il = OPT measures_seq_sqr -> un_option il [] ]];
 

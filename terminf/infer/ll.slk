@@ -1,0 +1,41 @@
+data node { int val; node next; }.
+
+/*
+pred ll<s, r> == 
+  self = null & s = 0 & r = RR[1](s) or 
+  self::node<v, q> * q::ll<s1, r1> & s = s1 + 1 
+		& r = RR[1](s) & r1 = RR[1](s1)
+	inv s >= 0.
+*/
+
+ pred ll<s:int,r_ll:int> == 
+  emp & self=null & s=0 & r_ll = RR[1]( s) or
+self::node<v,q>@M * 
+  q::ll<flted_17_15,r_ll_43> & s=flted_17_15+1 & r_ll = RR[1]( s) & 
+  r_ll_43 = RR[1]( flted_17_15)
+  inv 0<=s.
+
+/*
+rank_constr[r1] flted_9_907=n_913 & r_ll_910=r_ll_914 & n=flted_9_907+1 & 
+           r_ll_910 = RR[1]( flted_9_907) & 
+           r_ll_867 = RR[1]( n) & TermR[][r_ll_867] |- TermR[][r_ll_914].
+*/
+
+/*
+rank_constr[r1] x'::node<v_908,q_909> & n=flted_9_907+1 & 
+  r_ll_867 = RR[1]( n) & r_ll_910 = RR[1]( flted_9_907) & 
+	x=x' & x'!=null & !(v_bool_16_866') & x'!=null & 
+	!(v_bool_16_866') & v_int_21_864'=1 & q_909=v_node_21_862' & 
+  flted_9_907=n_913 & r_ll_910=r_ll_914 &
+	TermR[][r_ll_867] |- TermR[][r_ll_914].
+*/
+
+rank_constr[r1] x'::node<v_908,q_909>@M & TermR[][r_ll_867] & n=flted_17_907+
+1 & r_ll_867 = RR[1]( n) & r_ll_910 = RR[1]( flted_17_907) & x=x' & 
+x'!=null & !(v_bool_24_866') & x'!=null & !(v_bool_24_866') & 
+v_int_29_864'=1 & q_909=v_node_29_862' & flted_17_907=n_913 & 
+r_ll_910=r_ll_914 |- TermR[][r_ll_914].
+
+//solve_rank_constrs {r1}.
+solve_rank_constrs.
+

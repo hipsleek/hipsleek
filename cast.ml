@@ -462,6 +462,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 
+let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
 let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
@@ -470,6 +471,9 @@ let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initializ
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
