@@ -40,14 +40,14 @@ type sleek_token =
   | REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
-  | TEMPL | TERM | LOOP | MAYLOOP
+  | TEMPL | TERM | LOOP | MAYLOOP | TERMR
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
         (*operators*)  
   | CARET 
   (* TermInf: Token for Termination Inference *)
-  | CONSTVAR | RANKREL | IS
+  | CONSTVAR | RANKREL | RANKC | SOLVE_RANKC
   | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  | VAL | REC | NI
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
@@ -110,7 +110,7 @@ module Token = struct
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
           (*operators*)
     | NI ->"@NI" | ATATSQ -> "@@[" | CARET -> "^"
-    | CONSTVAR -> "@C" | RANKREL -> "RR" | IS -> "is"
+    | CONSTVAR -> "@C" | RANKREL -> "RR" | RANKC -> "rank_constr" | SOLVE_RANKC -> "solve_rank_constrs"
     | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" | VAL ->"@VAL" | REC ->"@REC"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
@@ -130,6 +130,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+    | TERMR -> "TermR"
     | XPURE -> "XPURE"
 
 

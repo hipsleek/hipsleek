@@ -238,6 +238,7 @@ module Make (Token : SleekTokenS)
     ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
+   ("TermR", TERMR);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -257,7 +258,8 @@ module Make (Token : SleekTokenS)
    ("XPURE",XPURE);
    (* TermInf: Sleek stuff for Termination Inference *)
    ("RR", RANKREL);
-   ("is", IS);
+   ("rank_constr", RANKC);
+   ("solve_rank_constrs", SOLVE_RANKC);
 	 (flow, FLOW flow);]
 }
   

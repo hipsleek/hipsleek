@@ -33,6 +33,7 @@ module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
 module LO2 = Label_only.Lab2_List
+module TInf = Terminf
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -1415,6 +1416,26 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
+
+(* TermInf: Process Rank Constraint SLEEK command *)
+let rrel_store : (ident, CF.rrel list) Hashtbl.t = Hashtbl.create 10 
+
+let process_rank_constraint (id: ident) (iante: meta_formula) (icons: meta_formula) = 
+  let r, rs, _ = run_entail_check iante icons None in 
+  let rrels = TInf.collect_rrel_list_context rs in
+  Hashtbl.add rrel_store id rrels
+
+let process_solve_rank_constraints ids = 
+  let rrels = match ids with
+  | [] -> Hashtbl.fold (fun _ rrels a -> a @ rrels) rrel_store []
+  | _ -> List.concat (List.map (fun id -> 
+      try Hashtbl.find rrel_store id with _ -> []) ids) in
+  let sol_for_rrel, raw_subst = TInf.solve_rrel_list rrels in
+  let n_vdefs = List.map (fun vdef -> 
+    TInf.plug_rank_into_view raw_subst sol_for_rrel vdef) !cprog.C.prog_view_decls in
+  silenced_print print_endline (
+    "\nTERMINATION INFERENCE RESULT: \n" ^
+    (pr_list !C.print_view_decl_clean n_vdefs) ^ "\n")
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)

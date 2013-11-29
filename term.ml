@@ -418,25 +418,6 @@ let strip_lexvar_mix_formula mf =
   let pr = !MCP.print_mix_formula in
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
 
-(* TermInf: Construct rrel constraints for inference *)
-let construct_dec_rrel_constraint estate src dst =
-  let _, p, _, _, _ = split_components estate.es_formula in
-  (* TODO: Check lexicographic ordering *)
-  let ctr = List.fold_left (fun acc (s, d) -> 
-    MCP.memoise_add_pure acc (CP.mkPure (CP.mkGt s d no_pos))) 
-    (MCP.mkMTrue no_pos) (List.combine src dst) in 
-  let rrel = {
-    rrel_type = RR_DEC;
-    rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
-    rrel_ctr = ctr;
-  } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
-
-let construct_dec_rrel_constraint estate src dst =
-  let pr1 = Cprinter.string_of_entail_state in
-  let pr2 = pr_list Cprinter.string_of_formula_exp in
-  Debug.no_3 "construct_dec_rrel_constraint" pr1 pr2 pr2 pr1 
-    construct_dec_rrel_constraint estate src dst
-  
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
@@ -590,7 +571,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       let term_pos = (p_pos, proving_loc # get) in
       match (t_ann_s, t_ann_d) with
       | (TermR, TermR) ->
-          let new_es = construct_dec_rrel_constraint estate src_il dst_il in
+          let new_es = TI.construct_dec_rrel_constraint estate src_il dst_il in
           (new_es, lhs_p, rhs_p, None)
       | (TermR, _) 
       | (Term, TermR) ->

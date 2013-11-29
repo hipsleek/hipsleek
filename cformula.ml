@@ -9989,6 +9989,13 @@ let trans_context (c: context) (arg: 'a)
   in
   trans_c c arg
 
+let trans_list_context (c: list_context) (arg: 'a) f_c f_c_arg f_comb: (list_context * 'b) =
+  match c with
+  | FailCtx fc -> (c, f_comb [])
+  | SuccCtx sc -> 
+      let n_sc, acc = List.split (List.map (fun c -> trans_context c arg f_c f_c_arg f_comb) sc) in
+      (SuccCtx sc, f_comb acc)
+
 let trans_branch_ctx (c: branch_ctx) (arg: 'a) f_c f_c_arg f_comb : (branch_ctx * 'b) = 
   let trace, ctx = c in
   let n_ctx, acc = trans_context ctx arg f_c f_c_arg f_comb in

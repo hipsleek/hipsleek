@@ -127,13 +127,21 @@ let collect_view_rank_list_failesc_context (ctx: list_failesc_context) : CP.spec
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
 
-let collect_rrel_list_failesc_context (ctx: list_failesc_context) : CF.rrel list =
+let collect_rrel_list_failesc_context (ctx: CF.list_failesc_context) : CF.rrel list =
   let f_c arg ctx = match ctx with
   | Ctx es -> Some (ctx, es.es_rrel)
   | _ -> None
   in
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
+
+let collect_rrel_list_context (ctx: CF.list_context) : CF.rrel list =
+  let f_c arg ctx = match ctx with
+  | Ctx es -> Some (ctx, es.es_rrel)
+  | _ -> None
+  in
+  let f_arg arg ctx = arg in
+  snd (trans_list_context ctx () f_c f_arg List.concat)
 
 (****************************************)
 (* Function for adding rank constraints *)
@@ -274,6 +282,25 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
       let f1, i1 = add_rank_constraint_formula_x o.CF.formula_or_f1 rtyp in
       let f2, i2 = add_rank_constraint_formula_x o.CF.formula_or_f2 rtyp in
       CF.Or { o with CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; }, i1@i2
+
+(* TermInf: Construct rrel constraints for inference (HIP) *)
+let construct_dec_rrel_constraint estate src dst =
+  let _, p, _, _, _ = split_components estate.es_formula in
+  (* TODO: Check lexicographic ordering *)
+  let ctr = List.fold_left (fun acc (s, d) -> 
+    MCP.memoise_add_pure acc (CP.mkPure (CP.mkGt s d no_pos))) 
+    (MCP.mkMTrue no_pos) (List.combine src dst) in 
+  let rrel = {
+    rrel_type = RR_DEC;
+    rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
+    rrel_ctr = ctr;
+  } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
+
+let construct_dec_rrel_constraint estate src dst =
+  let pr1 = !CF.print_entail_state in
+  let pr2 = pr_list !CP.print_exp in
+  Debug.no_3 "construct_dec_rrel_constraint" pr1 pr2 pr2 pr1 
+    construct_dec_rrel_constraint estate src dst
 
 (*****************************************)
 (* Function for solving rrel constraints *)

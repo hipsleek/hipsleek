@@ -67,6 +67,8 @@ type command =
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
+  | RankC of (ident * meta_formula * meta_formula)
+  | SolveRankC of ident list
   | EmptyCmd 
 
 and print_cmd =
@@ -128,6 +130,8 @@ let string_of_command c = match c with
   | PrintCmd _ -> "PrintCmd"  
   | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
+  | RankC _ -> "RankC"
+  | SolveRankC _ -> "SolveRankC" 
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

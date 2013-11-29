@@ -120,6 +120,8 @@ let proc_gen_cmd cmd =
     | CmpCmd pcmd -> process_cmp_command pcmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+    | RankC (id, iante, icons) -> process_rank_constraint id iante icons
+    | SolveRankC idl -> process_solve_rank_constraints idl
     | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =
@@ -147,6 +149,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
       | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
+      | RankC _ | SolveRankC _ 
       | Time _ | EmptyCmd | _ -> () 
   in
   let proc_one_def c =
@@ -196,7 +199,9 @@ let parse_file (parse) (source_file : string) =
             if b then Gen.Profiling.push_time s 
             else Gen.Profiling.pop_time s
       | LemmaDef ldef -> process_list_lemma ldef
-      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+      | RankC (id, iante, icons) -> process_rank_constraint id iante icons
+      | SolveRankC idl -> process_solve_rank_constraints idl
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *)
       | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;

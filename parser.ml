@@ -826,7 +826,10 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
-	  | t=macro				  -> EmptyCmd]];
+      (* TermInf: Command for Termination Inference *)
+      | t=rankc_cmd -> RankC t
+      | t=solve_rankc_cmd -> SolveRankC t
+	    | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -1501,9 +1504,10 @@ pure_constr:
 
 ann_term: 
     [[
-     `TERM -> Term
+        `TERM -> Term
       | `LOOP -> Loop
       | `MAYLOOP -> MayLoop
+      | `TERMR -> TermR
     ]];
 
 cexp:
@@ -1789,6 +1793,12 @@ checkentail_cmd:
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
+rankc_cmd:
+  [[ `RANKC; `OSQUARE; `IDENTIFIER id; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> (id, t, b) ]];
+
+solve_rankc_cmd:
+  [[ `SOLVE_RANKC; il = OPT id_list_w_brace -> un_option il [] ]];
+
 cond_path:
     [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []
     ]];
@@ -2037,6 +2047,8 @@ int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
 list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
+
+id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
 
 id:[[`IDENTIFIER id-> id]];
 
