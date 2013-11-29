@@ -20,22 +20,18 @@ HeapPred H1(node2 a).
   /* requires x::bst0<> */
   /* ensures x::bst0<> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1 */
 {
-  	int tmp;
+  int tmp;
 
-	if (x != null)
-	{
-      // bind x to (xval, xleft, xright) in
-      {
-        if (x.val == a)
-          return true;
-        else {
-            if (x.val < a)
-             return search(x.right, a);
-            else
-             return search(x.left, a);
-        }
+  if (x != null)
+    {
+      if (x.val == a)
+        return true;
+      else {
+        if (x.val < a)
+          return search(x.right, a);
+        else
+          return search(x.left, a);
       }
-      // return false;
-	}
-    else return false;
+    }
+  else return false;
 }

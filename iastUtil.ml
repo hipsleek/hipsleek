@@ -633,7 +633,7 @@ let rec check_exp_if_use_before_declare
 		if (String.contains v '.') then None else
       let pos = x.exp_var_pos in
       let gvs = IS.union global !stk in
-      if not (IS.mem v gvs) 
+      if not (IS.mem v gvs) (* && (String.compare v Globals.null_name != 0) *)
       then 
         if (IS.mem v local) 
         then

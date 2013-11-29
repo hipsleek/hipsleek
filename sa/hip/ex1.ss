@@ -39,7 +39,7 @@ void foo(node x)
    x = x.next;
    b = x!=null;
    if (b) {
-     dprint;
+     //   dprint;
      foo(x);
    }
  }

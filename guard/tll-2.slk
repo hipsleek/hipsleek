@@ -1,0 +1,31 @@
+// simpler tll working example
+data node{
+  node left;
+  node right;
+  node next;
+}.
+
+HeapPred H(node a,node@NI t).
+HeapPred G(node a,node@NI d,node@NI p).
+HeapPred HP_964(node p,node@NI a).
+HeapPred HP_965(node p,node@NI a).
+HeapPred HP_966(node p,node@NI a).
+
+infer[H,G,HP_964,HP_965,HP_966]
+  HP_964(left_31_961,t) * HP_966(next_31_963,t) * 
+x::node<left_31_961,right_31_962,next_31_963>@M * G(right_31_962,l_47',t')&
+t=t' & x=x' & right_31_962!=null & !(v_bool_31_942') & right_31_962!=null & 
+!(v_bool_31_942') & left_31_961=v_node_41_940'
+ |-  H(v_node_41_940',l_47').
+print residue.
+
+/*
+
+GOT
+ inferred [HP_964(left_31_961,t@NI) --> H(left_31_961,l_47'@NI)]
+
+EXPECT:
+ HP_964(left_31_961,t@NI) | x::node<left_31_961,r,_>@M & r=null  
+     --> H(left_31_961,l_47'@NI)]
+
+*/

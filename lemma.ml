@@ -92,7 +92,7 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
     in
     let null_exp = CP.Null pos in
     let ss = [(cont, null_exp)] in
-    let n = IP.Null no_pos in
+    (* let n = IP.Null no_pos in *)
     let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
     let cp = CP.mkNull cont pos in
     (subst_helper ss f, IF.mkBase ihf ip IF.n_flow [] pos,
@@ -352,6 +352,9 @@ let sa_infer_lemmas iprog cprog lemmas  =
     | None ->
           Some nctx
 
+let sa_infer_lemmas iprog cprog lemmas  =
+  let pr1 = pr_list pr_none in
+  Debug.no_1 "sa_infer_lemmas" pr1 pr_none (fun _ -> sa_infer_lemmas iprog cprog lemmas) lemmas
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
@@ -520,8 +523,8 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
     match rem_hpdefs with
       | [] -> (r_unk_hps@[hp], r_hpdefs)
-      | ((k, _,_,_) as hpdef)::rest -> begin
-          match k with
+      | ((* (k, _,_,_) as *) hpdef)::rest -> begin
+          match hpdef.CF.def_cat with
             | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
                 (r_unk_hps, r_hpdefs@[hpdef])
               else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
@@ -562,11 +565,14 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if12 if22 in
     let _ = manage_unsafe_lemmas [l_coer] iprog0 cprog0 in
-    let r1,_,_ = SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f13 (CF.struc_formula_of_formula f23 no_pos) in
+    let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f1 (CF.struc_formula_of_formula f2 no_pos)) in
+    (* let r1,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
+    let r1,_,_ = fnc f13 f23 in
     if not r1 then false else
-      let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Right [] if12 if22 in
+      let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if22 if12 in
       let _ = manage_unsafe_lemmas [r_coer] iprog0 cprog0 in
-      let r2,_,_ = SC.sleek_entail_check [] cprog0 [(* (f22,f12) *)] f23 (CF.struc_formula_of_formula f13 no_pos) in
+      (* let r2,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
+      let r2,_,_ = fnc f23 f13 in
       r2
   in
   let _ = reset_progs bc in

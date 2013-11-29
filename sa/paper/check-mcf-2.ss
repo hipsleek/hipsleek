@@ -105,5 +105,66 @@ bool check_child (node l, tree par)
   G2(children_84,n_1105,t)&children_84!=null & 
   n_1105=null --> G1(t).
 
+======================================
+HeapPred H65(node cc4).
+HeapPred H93(node next90, tree@NI par).
+HeapPred H92(tree child89, tree@NI par).
+HeapPred H1(tree a).
+HeapPred H2(node a, tree@NI b).
+PostPred G1(tree a).
+PostPred G2(node a, tree@NI b).
+HeapPred H94(tree parent91, tree@NI par).
 
+[ // BIND
+  H1(t) --> t::tree<cc4>@M * H65(cc4),
+ // PRE_REC
+  H65(cc4)&
+   cc4!=null |#| t::tree<cc4>@M --> H2(cc4,t@NI),
+ // POST
+  H65(cc4) * t::tree<cc4>@M
+     &cc4=null --> G1(t),
+ // POST
+  t::tree<cc4>@M * G2(cc4,t@NI)&
+cc4!=null --> G1(t)]
+
+=====
+
+  H2(l,par@NI)& l!=null --> 
+    l::node<child89,next90,parent91>@M * 
+    H92(child89,par@NI) * H93(next90,par@NI) * 
+    H94(parent91,par@NI),
+  // PRE_REC
+  H93(next90,par@NI)&par=parent91 
+    --> H2(next90,par@NI),
+  // PRE_REC
+  H92(child89,par@NI)&par=parent91 --> H1(child89),
+  // POST
+  H2(l,par@NI)&l=null --> G2(l,par@NI),
+  // POST
+  H94(parent91,par@NI) * l::node<child89,next90,par>@M 
+  * G2(next90,par@NI) * G1(child89)&
+   par=parent91 --> G2(l,par@NI),
+  // POST
+  H94(parent91,par@NI)&par=parent91 --> emp]
+
+[ G1(t1) ::=  t1::tree<cc4>@M&cc4=null
+         or t1::tree<cc4>@M * G2(cc4,t1)&cc4!=null
+ ,
+ G2(l2,par3) ::=  
+    l2::node<child89,next90,par3>@M * 
+        G2(next90,par3) * child89::tree<cc4>@M& cc4=null
+    or l2::node<child89,next90,par3>@M * G2(next90,par3) * 
+        child89::tree<cc4>@M * G2(cc4,child89)&cc4!=null
+    or emp&l2=null
+ ,
+ H1(t_1078) ::= t_1078::tree<cc4>@M * H2(cc4,t_1078)&cc4!=null
+     or t_1078::tree<cc4>@M&cc4=null
+ ,
+ H2(l_1109,par0) ::= 
+     H2(next_9,par0) * l_1109::node<child_0,next_9,par0>@M * 
+       child_0::tree<cc4>@M&cc4=null 
+     or H2(next_9,par0) * l_1109::node<child_0,next_9,par0>@M 
+      * child_0::tree<cc4>@M * H2(cc4,child_0) & cc4!=null 
+     or emp&l_1109=null
+ ]
 */

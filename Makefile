@@ -38,7 +38,8 @@ PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp 
-GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
+GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+#GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules

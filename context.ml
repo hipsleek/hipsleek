@@ -512,7 +512,7 @@ and update_imm (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann) es(* : h_formula 
 
 and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es = 
   (* let new_imm_lnode, niv, constr = Immutable.remaining_ann imm1 imm2 impl_vars evars in *)
-  let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann [imm1] [imm2]  es in
+  let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 1 [imm1] [imm2]  es in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
   if (isAccsList res_ann) then (HEmp, [], (([],[],[]),[]) )else
     let updated_f = match f with 
@@ -524,7 +524,7 @@ and update_imm_x (f : h_formula) (imm1 : CP.ann) (imm2 : CP.ann)  es =
 and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
   | DataNode dl, DataNode dr ->
 	if (!Globals.allow_field_ann) then 
-          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann (dl.h_formula_data_param_imm) (dr.h_formula_data_param_imm) estate in
+          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 2 (dl.h_formula_data_param_imm) (dr.h_formula_data_param_imm) estate in
           let n_f = update_field_imm l_node res_ann in
           let n_ch = update_field_imm l_node cons_ann in
 	  (* let n_f, niv, constr = update_field_imm l_node dl.h_formula_data_param_imm dr.h_formula_data_param_imm estate.es_gen_impl_vars  estate.es_evars in *)
@@ -542,11 +542,13 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
             (estate,(([],[],[]),[]))
         else
           (estate,(([],[],[]),[]))
-  | ViewNode vl, ViewNode vr ->
+  | (ViewNode vl), ViewNode vr ->
         if (!Globals.allow_field_ann) then
           let l_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args l_node) in
           let r_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args r_node) in
-          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann l_ann r_ann estate in
+          (* let _ = Debug.info_hprint (add_str "l_node" (Cprinter.string_of_h_formula)) l_node no_pos in *)
+          (* let _ = Debug.info_hprint (add_str "r_node" (Cprinter.string_of_h_formula)) r_node no_pos in *)
+          let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 3 l_ann r_ann estate in
           let n_f = update_field_imm l_node res_ann in
           let n_ch = update_field_imm l_node cons_ann in
           let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
@@ -667,12 +669,14 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
       h_formula_view_arguments = vs1;
       h_formula_view_name = c}) -> 
           let args = CP.diff_svl (get_all_sv lhs_node) [hp] in
-          let root, _  = Sautility.find_root prog [hp] args  [] in
-          let root_aset = CP.EMapSV.find_equiv_all root emap in
-          let root_aset = root::root_aset in
-          (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-          let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
-          cmm
+           (* let _ = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
+          if args = [] then [] else
+            let root, _  = Sautility.find_root prog [hp] args  [] in
+            let root_aset = CP.EMapSV.find_equiv_all root emap in
+            let root_aset = root::root_aset in
+            (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
+            let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
+            cmm
     | _ -> []
 
 and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) = 
@@ -1038,6 +1042,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in
                   let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in
                   let vl_is_rec = vl_vdef.view_is_rec in
+                  let vl_is_prim = vl_vdef.view_is_prim in
                   let vr_is_rec = vr_vdef.view_is_rec in
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -1077,7 +1082,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                       let a4 = 
                         (*Do not fold/unfold LOCKs*)
                         if (is_l_lock || is_r_lock) then None else 
-                          if not(vl_is_rec) then Some (2,M_unfold (c,0))
+                          if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (c,0))
                           else if not(vr_is_rec) then Some (2,M_fold c) 
                           else None in
                       let a5 = 
@@ -1218,7 +1223,11 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                   else true in
                   let a1 = 
                     if is_l_lock then [] else
-                      if ((new_orig || vl_self_pts==[]) && sub_ann) then [(1,M_unfold (c,uf_i))] else [] in
+                      if ((new_orig || vl_self_pts==[]) && sub_ann) then 
+                      (*then [(1,M_unfold (c,uf_i))] else [] in*)
+                        if vl_vdef.view_is_prim then []
+                        else [(1,M_unfold (c,uf_i))] 
+                      else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)
@@ -1343,6 +1352,7 @@ and process_infer_heap_match prog estate lhs_h is_normalizing(rhs_node,rhs_rest)
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let ptr_vs = estate.es_infer_vars in
           let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
+          (* let _ = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
           let rs = 
             if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
               (*to support lemma with unknown preds*)

@@ -1,0 +1,44 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a).
+HeapPred G(cell a).
+relation R(cell a).
+
+/*
+infer [H]  H(p) |- p::cell<_>.
+print residue.
+*/
+
+infer [H]  H(p) & p=null |- p::cell<_>.
+print residue.
+
+/*
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [H(p)&p=null --> hfalse&false]
+*/
+
+infer [H]  H(p) & p=null & p!=null |- p::cell<_>.
+print residue.
+
+infer [H]  H(q) & p=null |- p::cell<_>.
+print residue.
+
+infer [R]  R(q) & p=null |- p::cell<_>.
+print residue.
+
+infer [R]  R(p) & p=null |- p::cell<_>.
+print residue.
+
+
+
+/*
+# err.slk
+
+ Why did we not have an infer false?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+*/

@@ -1715,7 +1715,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let disj_proc = 
     { proc_name = dproc_name;
     proc_source = "source_file";
-	proc_flags = [];
+    proc_flags = [];
+    proc_hp_decls = [];
     proc_mingled_name = dproc_name;
     proc_data_decl = None; (* the class containing the method *)
     proc_constructor = false;
@@ -1836,7 +1837,8 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let check_proc = 
     { proc_name = "traverse";
     proc_source = "source_file";
-	proc_flags = [];
+    proc_flags = [];
+    proc_hp_decls = [];
     proc_mingled_name = "traverse";
     proc_data_decl = None;
     proc_constructor = false;

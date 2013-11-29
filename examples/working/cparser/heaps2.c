@@ -11,7 +11,7 @@ struct node {
 
 /*@
 pq<n, mx> == self = null & n = 0 & mx = 0 
-  or (exists m3: self::node^<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
+  or (exists m3: self::node<d, m1, m2, l, r> * l::pq<m1, mx1> * r::pq<m2, mx2>
   & n = 1 + m1 + m2 & d >= 0 &  d >= mx1 & d >= mx2 & mx >= d & m3 = m1-m2 & m3 >= 0 & m3 <= 1)
   inv n >= 0 & mx >= 0;
 */

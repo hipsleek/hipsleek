@@ -840,7 +840,9 @@ let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.c
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
  | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
- | RefMod         -> "ref " ^ (string_of_typ par.param_type) ^ " " ^ par.param_name
+ | RefMod         -> (* "ref " ^  *)(string_of_typ par.param_type) ^ "@R " ^ par.param_name
+ | CopyMod         -> (string_of_typ par.param_type) ^ "@C " ^ par.param_name
+
 ;;
 
 (* pretty printing for a list of parameters *)
@@ -971,7 +973,8 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  name
+  let args = String.concat ";" (List.map (fun (_,n,_) -> n) hpdecl.Iast.hp_typed_inst_vars) in
+  name^"("^args^")"
 
 
 (* An Hoa : print axioms *)
@@ -1020,11 +1023,12 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;                                                                                                                         
 
-
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
+Iast.print_param_list := string_of_param_list;;
+Iast.print_hp_decl := string_of_hp_decl;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;

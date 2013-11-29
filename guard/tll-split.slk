@@ -1,0 +1,33 @@
+// simpler tll working example
+data node{
+  node left;
+  node right;
+  node next;
+}.
+
+HeapPred H(node a,node@NI t).
+HeapPred G(node a,node@NI d,node@NI p).
+HeapPred HP_964(node p,node@NI a).
+HeapPred HP_965(node p,node@NI a).
+HeapPred HP_966(node p,node@NI a).
+
+relAssume
+(1;0)HP_964(left,t) * HP_965(right,t) * res::node<left,right,t>@M&
+right=null & 
+res=x --> G(x,res,t).
+
+shape_split_base [HP_965,HP_964][G].
+
+/*
+
+This split seems to work find with correct
+dangling pred intro.
+
+[ (1;0)HP_964(left,t) * res::node<left,right,t>@M&right=null & 
+  res=x --> G(x,res,t),
+ (1;0)HP_965(right,t)&right=null --> emp,
+ (1;0)HP_964(left,t) |#| res::node<left,right,t>@M&
+  right=null --> DP_31(left,t)]
+
+*/
+

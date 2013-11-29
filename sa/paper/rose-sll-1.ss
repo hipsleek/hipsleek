@@ -11,7 +11,7 @@ data node {
 
 HeapPred H1(tree a).
 PostPred G1(tree a).
-HeapPred H2(node a,tree b).
+HeapPred H2(node a,tree@NI b).
 PostPred G2(node a,tree b).
 /*
 treep<> == 

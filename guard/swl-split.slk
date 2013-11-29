@@ -1,0 +1,28 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_945(node a, node@NI b, node@NI c).
+HeapPred HP_946(node a, node@NI b, node@NI c).
+PostPred G(node a, node ra, node b, node rb, node@NI c).
+
+relAssume
+ HP_945(next,prev,sent) * HP_946(prev,cur,next) 
+   * cur::node<val,prev>@M&next=sent 
+//& cur1=sent & cur1=next 
+//& cur=prev1' 
+   --> G(cur,next,prev,cur,sent).
+
+shape_split_base [HP_945,HP_946][G].
+
+/*
+*************************************
+*******relational assumptions (1) ********
+*************************************
+[ HP_946(prev,cur,next) * cur::node<val,prev>@M&
+  next=sent --> G(cur,next,prev,cur,sent),
+ HP_945(next,prev,sent)&next=sent --> emp,
+ HP_946(prev,cur,next) |#| cur::node<val,prev>@M --> DP_37(prev,cur,next)]
+*/

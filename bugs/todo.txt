@@ -1076,6 +1076,20 @@ id: 11; caller: []; line: 0; classic: false; kind: Sleek_Entail(4); hec_num: 4; 
 */
 
 ===================================================================
+# baga-test-fail.slk
+
+Unsound as below succeeded, even though it is supposed
+to fail. The error was introduced when merging from default.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * x::l6<_> |- false.
+
 ===================================================================
 ===================================================================
 ===================================================================

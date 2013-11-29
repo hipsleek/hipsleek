@@ -1,0 +1,65 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a, cell b).
+HeapPred G(cell a).
+
+
+infer [H]  H(p,q) & p=null |- q::cell<_>.
+print residue.
+
+/*
+# err-3.slk
+
+Inferred:
+
+ <1>HP_21(p,q)&p=null & Anon_11=Anon_20&{FLOW,(21,22)=__norm}[]
+
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M * HP_21(p,q@NI)]
+
+Since p=null, should be:
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M ]
+
+*/
+
+
+infer [G]  G(p) & p=null |- p::cell<_>.
+print residue.
+
+infer [G]  G(p) & p=null |- p!=null.
+print residue.
+
+
+/*
+infer [G]  G(p)  |- p=null.
+print residue.
+
+*/
+/* 
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+
+ both contradiction should 
+ provide 
+   G(p) ==> false
+*/
+
+infer [G]  G(p) & p!=null |- p=null.
+print residue.
+
+/*
+
+shEntail (4) : Valid. 
+
+How come we get G(p) & p=null --> emo
+This is cleary wrong.
+It should be:
+     G(p) & p!=null ==> false
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [G(p)&p=null --> emp]
+[[empty]]
+*/
