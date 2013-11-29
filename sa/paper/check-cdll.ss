@@ -4,7 +4,8 @@ data node{
 }
 
 cdll<prev, p> ==  self= p
-  or self::node<prev,n>* n::cdll<self, p> & self!=p;
+  or self::node<prev,n>* n::cdll<self, p>  & self!=p
+  ;
 
 HeapPred H1(node a, node@NI b, node@NI c).
   HeapPred G1(node a, node@NI b, node@NI c).

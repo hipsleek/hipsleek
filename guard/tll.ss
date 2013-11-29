@@ -43,9 +43,27 @@ infer [H,G] requires H(x,t) ensures G(x,res,t);
 }
 
 /*
-# tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
+# tll.ss --gsf
+
+This spurious message came from below. They don't look
+correct, and should also be omitted.
+
+../sleek logs/mod_tll.slk
+
+ HP_956(left,t1) |#| 
+                     res::node<left_31_90,right_31_954,t_91>@M&
+                     right_31_954=null
+                     or x::node<left_31_90,right_31_954,next_31_955>@M&
+                        right_31_954!=null
+                      ::= 
+ DP_89(left1,t)
+ or H(left,l'),
+ HP_957(right,t) ::= 
+ H(right,t)&right!=null
+ or emp&right=null
 
 
+=============================
 RELASSUME
 =========
 [ H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 

@@ -537,9 +537,9 @@ l::node<child,next,par>@M * G2(next,par)
 or emp&l=null 
 ] 
 ==================================================================
-# sa/papers/check-cdll.ss --pred-en-eup
+# sa/papers/check-cdll.ss --pred-en-equiv (FIXED)
 
-Why isn't eup working?
+Why isn't en-equiv working?
 
 cdll<prev, p> ==  self= p
   or self::node<prev,n>* n::cdll<self, p> & self!=p;
