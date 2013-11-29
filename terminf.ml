@@ -570,8 +570,6 @@ let gen_slk_file prog (rrels: CF.rrel list) =
   let used_data_decls = List.concat (List.map (fun v -> 
     collect_used_data_struc_formula v.C.view_formula) prog.C.prog_view_decls) in
 
-  let _ = print_endline ("DATA: " ^ (pr_list (fun i -> i) used_data_decls)) in
-
   let slk_data_decls = String.concat "\n" (List.map (fun d -> (!C.slk_of_data_decl d) ^ ".") 
     (List.filter (fun d -> Gen.BList.mem_eq (fun i1 i2 -> (String.compare i1 i2) == 0) 
       d.C.data_name used_data_decls) prog.C.prog_data_decls)) in
