@@ -3,6 +3,11 @@ struct pair {
   int y;
 };
 
+/*@
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
+*/
+
 int first(struct pair p)
 /*@
   requires p::pair<a,b>
@@ -14,8 +19,8 @@ int first(struct pair p)
 
 int first2(struct pair* p)
 /*@
-  requires p::pair*<q> * q::pair<a,b>
-  ensures  p::pair*<q> * q::pair<a,b> & res = a;
+  requires p::pair<q> * q::pair<a,b>
+  ensures  p::pair<q> * q::pair<a,b> & res = a;
   //requires p::pair^<a,b>
   //ensures  p::pair^<a,b> & res = a;
 */
@@ -25,8 +30,8 @@ int first2(struct pair* p)
 
 int first3(struct pair** p)
 /*@
-  requires p::pair**<q> * q::pair*<r> * r::pair<a,b>
-  ensures  p::pair**<q> * q::pair*<r> * r::pair<a,b> & res = a;
+  requires p::pair*<q> * q::pair<r> * r::pair<a,b>
+  ensures  p::pair*<q> * q::pair<r> * r::pair<a,b> & res = a;
   //requires p::pair^^<a,b>
   //ensures  p::pair^^<a,b> & res = a;
 */
@@ -43,10 +48,10 @@ void* malloc(int size) __attribute__ ((noreturn))
 */;
 
 /*@
-pair__star cast_general_pointer_to_pair__star(void__star p)
+pair_star cast_general_pointer_to_pair_star(void_star p)
   case {
     p = null  -> ensures res = null;
-    p != null -> ensures res::pair__star<q> * q::pair<_,_>;
+    p != null -> ensures res::pair_star<q> * q::pair<_,_>;
   }
 */
 
@@ -69,13 +74,11 @@ int foo2()
 */
 {
   struct pair* p;
-  {
-    struct pair v;
-    v.x = 1;
-    v.y = 2;
-    p = &v;
-    int r = v.x;
-  }
+  struct pair v;
+  v.x = 1;
+  v.y = 2;
+  p = &v;
+  int r = v.x;
   //p->y
   return r;
 }

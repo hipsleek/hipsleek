@@ -12,7 +12,7 @@ hd<n> == self = null & n = 0
 	or self::node<_, r> * r::cll<self, n-1>  
 	inv n >= 0;
 
-HeapPred H(node a, node b).
+HeapPred H(node a, node@NI b).
 HeapPred G(node a, node b).
 
 /* functions to count the number of nodes in a circular list */
@@ -21,10 +21,11 @@ int count_rest(node rest, node h)
    infer [H,G] 
    requires H(rest,h)
    ensures G(rest,h);
-/*
-	requires rest::cll<p, n> & h = p 
-	ensures rest::cll<p, n> & res = n; 
-*/
+
+   /*
+  requires rest::cll<p, n> & h = p 
+  ensures rest::cll<p, n> & res = n; 
+   */
 
 {
 	int n;

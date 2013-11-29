@@ -14,7 +14,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-let process_cmd_line () = 
+let process_cmd_line () =
+        Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()
@@ -197,7 +198,8 @@ let reverify_with_hp_rel old_cprog iprog =
   (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
   (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
   let hp_defs = Saout.collect_hp_defs old_cprog in
-  let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) ((hp_kind, _,_,f) as hp_def) ->
+  let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
+      let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
         match hp_kind with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try
@@ -215,13 +217,13 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  let need_trans_hprels1 = List.map (fun (a,b,c,f) ->
-      let new_f,_ = Cformula.drop_hrel_f f unk_hps in
-      (a,b,c,new_f)
-  ) need_trans_hprels0 in
+  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
+  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
+  (*     (a,b,c,new_f) *)
+  (* ) *) need_trans_hprels0 in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 chprels_decl in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
 (***************end process compare file*****************)

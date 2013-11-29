@@ -109,13 +109,14 @@ struct node * balance(struct node *tree)
   return tree;
 }
 
-struct node * insert(struct node *tree, int value)
+//struct node * insert(struct node *tree, int value)
 //BUG: mona has exception when verifying this specs
 /*@
   requires tree::avl<size1, h1, S1>
   ensures  tree::avl<size2, h2, S2> & S2 = union(S1, {value})
            & h2 >= h1 & h2 <= h1 + 1;
 */
+/*
 {
   if (tree == NULL)
     return new_leaf(value);
@@ -127,6 +128,48 @@ struct node * insert(struct node *tree, int value)
 
   update_height(tree);
   tree = balance(tree);
+
+  return tree;
+}
+*/
+
+struct node * insert(struct node *tree, int value)
+//BUG: mona has exception when verifying this specs
+/*@
+  requires tree::avl<size1, h1, S1>
+  ensures  tree::avl<size2, h2, S2> & S2 = union(S1, {value})
+           & h2 >= h1 & h2 <= h1 + 1;
+*/
+{
+  if (tree == NULL) {
+    struct node *leaf = (struct node *) malloc(sizeof(struct node));
+    leaf->value = value;
+    leaf->height = 1;
+    leaf->left = NULL;
+    leaf->right = NULL;
+    return leaf;
+  }
+
+  if (value < tree->value)
+    tree->left = insert(tree->left, value);
+  else
+    tree->right = insert(tree->right, value);
+
+  update_height(tree);
+  //tree->height = MAX(height(tree->left), height(tree->right)) + 1;
+
+  //tree = balance(tree);
+  if (height(tree->left) - height(tree->right) > 1) {
+    if (height(tree->left->left) < height(tree->left->right))
+      tree->left = left_rotate(tree->left);
+    tree = right_rotate(tree);
+  }
+  else if (height(tree->left) - height(tree->right) < -1) {
+    if (height(tree->right->left) > height(tree->right->right))
+      tree->right = right_rotate(tree->right);
+    tree = left_rotate(tree);
+  }
+
 
   return tree;
 }

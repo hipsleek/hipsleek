@@ -1,0 +1,101 @@
+// linked-list
+data node {
+  int x;
+  node next;
+}
+
+data node_star {
+  node deref;
+}
+
+ll<n>== self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0;
+
+A problem with linked-list is that if we were
+to use pass-by-copy of node star; our translation
+for q->next would have to be &q.deref.next; since
+we have translated:
+   node* next
+to:
+   node next
+
+Hence, we would in general need to use:
+
+int foo(node_star@C q)
+  requires q::node_star<r>*r::ll<n>
+  ensures q::node_star<r>*r::ll<n> & res=n;
+{
+  if (q.deref==null) return 0;
+  else { 
+         return 1+foo(&q.deref.next);
+       }
+}
+
+This complicates matter, as we need to introduce the
+notion of &field which gives pointer to some field.
+
+To remove &, we would introduce:
+
+int foo(node_star@C q)
+  requires q::node_star<r>*r::ll<n>
+  ensures q::node_star<r>*r::ll<n> & res=n;
+{
+  if (q.deref==null) return 0;
+  else { 
+         node_star tmp = new node_star;
+         tmp.deref=q.deref.next;
+         int res=1+foo(tmp);
+         dispose(tmp)
+         return res;
+       }
+}
+
+But this would have added some extra codes.
+
+
+To help this in a more satisfactory way, we propose 
+to use pass-by-ptr semantics, where possible. Hence, we would
+be translating to:
+
+Here, we would have viewed our C-program as:
+
+int foo(node *q)
+  requires *q::ll<n>
+  ensures *q::ll<n>;
+{
+  if (*q==null) return 0;
+  else return 1+foo2(*q.next);
+}
+
+By a direct translation, we would then obtain:
+
+int foo(node q@P)
+  requires q@P::ll<n>
+  ensures q@P::ll<n>;
+{
+  if (q@P==null) return 0;
+  else return 1+foo2(q@P.next);
+}
+
+I suppose this would be a much simpler code.
+We merely need to apply the following translation:
+
+   node*   ==> node
+   *q      ==> q@P
+   q->next ==> q@P.next
+   foo2(q) ==> foo@P(*q)
+   int foo(node* q) ==> int foo(node q@P)
+
+and avoid the use of node_star
+
+================================
+say I have:
+  node p;
+  p = new node(0,0); // stack allocation
+can we use:
+  foo(&p)
+
+
+
+

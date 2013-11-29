@@ -156,6 +156,7 @@ and proc_decl = {
     (*set of heap predicate constraints derived from calls in this method*)
     (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
+    proc_by_copy_params: P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
     proc_logical_vars : P.spec_var list;
@@ -280,7 +281,7 @@ and exp_cond = { exp_cond_type : typ;
 exp_cond_condition : ident;
 exp_cond_then_arm : exp;
 exp_cond_else_arm : exp;
-exp_cond_path_id : control_path_id;
+exp_cond_path_id : control_path_id_strict;
 exp_cond_pos : loc }
 
 and exp_debug = { 
@@ -928,6 +929,8 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
@@ -1749,7 +1752,7 @@ let get_xpure_one vdef rm_br  =
     | Some l -> let n=(List.length l) in  
       if n<(List.length vdef.view_prune_branches) then None
       else (match vdef.view_complex_inv with 
-        | None -> None 
+        | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
     | None -> Some vdef.view_x_formula 
 

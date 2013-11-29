@@ -585,8 +585,8 @@ and pos_of_exp (e : exp) = match e with
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
 
 
-and fresh_old_name (s: string):string = 
-	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+and fresh_old_name (s: string):string =
+  	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
 	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
 	n
 	

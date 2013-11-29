@@ -1,0 +1,65 @@
+data node{
+	node parent;
+	node right;
+}.
+
+HeapPred H(node@NI p, node a).
+HeapPred H6(node a, node@NI p).
+
+//Declare_Dangling [H].
+
+//relAssume H(p,x) --> x::node<p,q>@M * H6(q,p).
+
+relAssume
+ H6(q,p)  --> H(xx,q).
+
+/*
+relAssume
+ H6(right_22_924,p) & right_22_924=null --> true.
+
+relAssume
+ H6(q,p) & q!=null |#| xx::node<p,q>@M --> H(xx,q).
+*/
+shape_infer [H,H6][].
+
+/*
+
+ H6(q,p) --> q=null 
+   or (H(xx,q) |#| xx::node<_,q>) & q!=null.
+
+
+ H6(q,p) |#| xx::node<_,q> --> q=null 
+            or  H(xx,q)  & q!=null.
+
+
+ H6(q,p) & q=null --> true.
+ H6(q,p) & q !=null --> H(xx,q) |#| xx::node<p,q>.
+
+ 
+
+ H(p,x) --> x::node<p,q>@M * (q=null 
+      or (H(xx,q) |#| xx::node<p,q>) & q!=nullH6(q,p)).
+
+ H(p,x) --> x::node<p,q>@M * q=null 
+      or x::node<p,q>@M * (H(xx,q) |#| xx::node<_,q>) & q!=null.
+
+ H(p,x) --> x::node<p,q>@M * q=null 
+         or x::node<p,q>@M * H(x,q) & q!=null.
+
+  H * (H --* G) ==> G
+ x::node<,t>*(x::node<,t>--*x::ll<>)==> x::ll<>
+
+
+   H | G --> P
+
+   H * G --> P * G
+
+  (H | G)  * G --> H * G
+
+  (G--*H) * G --> H
+ 
+
+*/ 
+
+
+

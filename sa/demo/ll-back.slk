@@ -1,0 +1,17 @@
+data node{
+  int val;
+  node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP(node a).
+HeapPred G(node a).
+
+pred llu<> == self::node<_, r> * r::llu<> or HP(self).
+
+infer [H,HP] H(x) & x=null |- x::llu<>.
+print residue.
+
+infer [H,HP] H(x) & x=null |- HP(x).
+print residue.

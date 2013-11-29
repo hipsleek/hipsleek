@@ -52,6 +52,8 @@ type command =
   | Validate of ( (ident list * meta_formula * (meta_formula * meta_formula) list) list)
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
+  | ShapeLFP of (ident list)
+  | ShapeRec of (ident list)
   | ShapePostObl of (ident list * ident list)
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
@@ -114,6 +116,8 @@ let string_of_command c = match c with
   | Validate _ -> "Validate"
   | ShapeDivide _ -> "ShapeDivide"
   | ShapeConquer _ -> "ShapeConquer"
+  | ShapeRec _ -> "Shape Rec"
+  | ShapeLFP _ -> "Shape Least Fix Point"
   | ShapePostObl _ -> "| ShapePostObl"
   | ShapeInferProp _ -> "ShapeInferProper"
   | ShapeSplitBase _ -> "ShapeSplitbase"

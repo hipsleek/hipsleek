@@ -1,6 +1,7 @@
 // see examples/working/hip/global-ll.c
 
 #include <stddef.h>
+#include "stdhip.h"
 
 struct node {
   int val;
@@ -9,26 +10,9 @@ struct node {
 
 /*@
 ll<n> == self = null & n = 0 
-  or self::node*<p> * p::node<_,q> * q::ll<n1> & n = n1 + 1
+  or self::node<_,q> * q::ll<n1> & n = n1 + 1
   inv n >= 0;
 */
-
-void* malloc(int size) __attribute__ ((noreturn))
-/*@
-  case {
-    size <= 0 -> requires true ensures res = null;
-    size >  0 -> requires true ensures res != null;
-  }
-*/;
-
-/*@
-node__star cast_general_pointer_to_node__star(void__star p)
-  case {
-    p = null  -> ensures res = null;
-    p != null -> ensures res::node__star<q> * q::node<_,_>;
-  }
-*/
-
 
 /* global vars */
 int n;

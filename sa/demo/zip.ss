@@ -18,7 +18,8 @@ ltwoB<p:node> == HL(p) & self = null  or
    self::node<_, q> * p::node<_,r> * q::ltwoB<r>;
 
 node zip (node x, node y)
-requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+//requires x::ltwoB<y>  ensures res::ltwoB<y> & res=x;
+     infer [H,G1]  requires H(x,y)  ensures  G1(x,y,res);
 {
    if (x==null) return x;
    else {

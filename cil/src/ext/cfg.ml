@@ -206,7 +206,7 @@ and cfgStmt (s: stmt) (next:stmt option) (break:stmt option) (cont:stmt option)
          any direct successor to stmt following the loop *)
   | TryExcept _ | TryFinally _ -> 
       E.s (E.unimp "try/except/finally")
-  | HipStmtSpec _ -> ()
+  | HipStmt _ -> ()
 
 (*------------------------------------------------------------*)
 
@@ -231,7 +231,7 @@ and fasStmt (todo) (s : stmt) =
       | Loop (b, _, _, _, _) -> fasBlock todo b
       | (Return _ | Break _ | Continue _ | Goto _ | Instr _) -> ()
       | TryExcept _ | TryFinally _ -> E.s (E.unimp "try/except/finally")
-      | HipStmtSpec _ -> ()
+      | HipStmt _ -> ()
   end
 ;;
 
@@ -256,7 +256,7 @@ let d_cfgnodelabel () (s : stmt) =
       | Return _ -> "return"
       | TryExcept _ -> "try-except"
       | TryFinally _ -> "try-finally"
-      | HipStmtSpec _ -> "hip-stmt"
+      | HipStmt _ -> "hip-stmt"
   end in
     dprintf "%d: %s" s.sid label
 

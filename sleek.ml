@@ -49,7 +49,9 @@ let print_version () =
   print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
-let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
+let process_cmd_line () = 
+  Perm.disable_para();
+  Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
 let inter = Scriptarguments.inter_hoa
 
@@ -101,6 +103,8 @@ let proc_gen_cmd cmd =
     | Validate ( lc) -> process_validate lc
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
+    | ShapeLFP ids -> process_shape_lfp ids
+    | ShapeRec ids -> process_shape_rec ids
     | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
     | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
     | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
@@ -146,7 +150,8 @@ let parse_file (parse) (source_file : string) =
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
       | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
+      | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | Time _ | EmptyCmd | _ -> () 
   in
@@ -164,7 +169,7 @@ let parse_file (parse) (source_file : string) =
       | LemmaDef ldef -> process_list_lemma ldef
       | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
       | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapePostObl _
+      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _
       | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
       | CmpCmd _| Time _ | _ -> () in
@@ -182,6 +187,8 @@ let parse_file (parse) (source_file : string) =
       | Validate ( lc) -> process_validate lc
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
+      | ShapeLFP ids -> process_shape_lfp ids
+      | ShapeRec ids -> process_shape_rec ids
       | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
       | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
       | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps

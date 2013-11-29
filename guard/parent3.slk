@@ -1,0 +1,43 @@
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred P(node a).
+HeapPred Q(node a).
+HeapPred G(node a).
+HeapPred H0(node a).
+HeapPred H1(node a).
+
+
+
+/*
+
+infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
+print residue.
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [P(p) --> Q(p)]
+
+   P(p) |#| x::node<p,q> & q!=null--> Q(p)
+
+
+  H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null --> G(x).
+
+
+  H1(r9)
+  H0(lf8) |#| x::node<lf8,r9> &r9=null --> emp
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null & lf8=null --> G(x).
+
+shape_split_base [H0,H1][G].
+
+
+*/
+
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+
+shape_split_base [H0,H1][G].

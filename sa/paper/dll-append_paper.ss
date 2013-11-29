@@ -10,7 +10,7 @@ HeapPred H(node a,node b).
 
 void dll_append(node x, node y)
 infer [H,G] requires H(x,y) ensures G(x,y);
-//requires x::dll<p> * y::dll<_> & x!=null &y!=null ensures x::dll<p>;
+                            //requires x::dll<p> * y::dll<_> & x!=null &y!=null ensures x::dll<p>;
 {
 	if (x.next!=null) {
             dll_append(x.next,y);
@@ -23,7 +23,21 @@ infer [H,G] requires H(x,y) ensures G(x,y);
 }
 
 /*
---pred-en-dangling
+--pred-en-dangling --pred-en-useless?
+
+
+[ G(x_971,y_972) ::= 
+      x_971::node<g_15,next4>@M * G(next4,y_972) & next4!=null
+   or x_971::node<g_15,y_972>@M * y_972::node<x_971,g_40>@M
+ ,
+
+ H(x_957,y_958) ::= y_958::node<g_39,g_40>@M 
+    * x_957::node<g_15,next49>@M * HP_916(next49,y_958),
+
+ HP_916(next9,y_970) ::= 
+ emp&next9=null
+ or next9::node<g_15,next49>@M * HP_916(next49,y_970)
+ ]
 
  H(x_833,y_834) ::=  
     x_833::node<__DP_H_9,next_15_798>@M * HP_800(next_15_798,y_834) * 

@@ -339,11 +339,11 @@ data int_ptr_ptr{
   int_ptr val;
 }
 
-void delete_ptr(ref int_ptr x)
+void delete_ptr(int_ptr@R x)
   requires x::int_ptr<v>
   ensures true;
 
-void delete_ptr(ref int_ptr_ptr x)
+void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
@@ -382,6 +382,9 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 int[] aalloc___(int dim) 
 	requires true 
 	ensures dom(res,0,dim-1);
+
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0;
 
                                   ///////////////
                                   /*

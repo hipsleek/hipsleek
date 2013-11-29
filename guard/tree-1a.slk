@@ -1,0 +1,28 @@
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred H0(node a).
+HeapPred H(node a).
+HeapPred H1(node a).
+
+
+infer [H1,H]  x::node<lf,ri>*H1(ri) & ri!=null |- H(ri).
+print residue.
+
+/*
+# tree-1a.slk
+
+This inference is OK, as we appear to capture
+sufficient information on LHS.
+
+Entail (1) : Valid. 
+
+ <1>x::node<lf,ri>@M&ri!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [H1(ri)&ri!=null --> H(ri)]
+
+
+*/
+
+

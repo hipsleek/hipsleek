@@ -264,6 +264,8 @@ type pure_double =
   | Pure_c of P.exp
   | Pure_t of(P.exp * (P.ann option)) (* for data ann: var * ann, where var represents a data field *) 
 
+let mk_purec_absent e = Pure_t(e,Some F.mk_absent_ann)
+
 let string_of_pure_double p =
   match p with
   | Pure_f f -> "Pure_f: " ^ (Iprinter.string_of_pure_formula f)
@@ -685,19 +687,15 @@ let peek_pointer_type =
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
-  if ((ref_level == 0) && (deref_level == 0)) then
-    (cid, base_heap_id, 0)
-  else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (
-    (* reference case, used to parse specs in C programs *)
-    let s = ref base_heap_id in
-    for i = 1 to ref_level do
-      s := !s ^ "__star";
-    done;
+  let s = ref base_heap_id in
+  for i = 1 to ref_level do
+    s := !s ^ "_star";
+  done;
+  if (deref_level == 0) then
     (cid, !s, 0)
-  )
-  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then
+  else if ((deref_level > 0) && (!is_cparser_mode)) then
     (* dereference case, used to parse specs in C programs *)
-    (cid, base_heap_id, deref_level)
+    (cid, !s, deref_level)
   else
     report_error (get_pos_camlp4 l 1) "unexpected heap_id"
 
@@ -810,6 +808,8 @@ non_empty_command:
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
       | t=shapeconquer_cmd     -> ShapeConquer t
+      | t=shapelfp_cmd     -> ShapeLFP t
+      | t=shaperec_cmd     -> ShapeRec t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
@@ -1377,7 +1377,10 @@ heap_id:
    | `IDENTIFIER id; `CARET -> (id, 0, 1, _loc)
    | hid = heap_id; `STAR -> 
        let (h, s, c, l) = hid in
-       (h, s+1, c, l)
+       if (c > 0) then
+         report_error (get_pos_camlp4 _loc 1) "invalid heap_id string"
+       else
+         (h, s+1, c, l)
    | hid = heap_id; `CARET ->
        let (h, s, c, l) = hid in
        (h, s, c+1, l)
@@ -1671,8 +1674,9 @@ cexp_w:
   | "una"
     [ `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
     | `HASH ->
-        let _ = hash_count := !hash_count + 1 in 
-        Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+        (* let _ = hash_count := !hash_count + 1 in  *)
+        (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
+        mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
@@ -1858,6 +1862,18 @@ shapeconquer_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il2, il1)
+   ]];
+
+shapelfp_cmd:
+   [[ `SHAPE_LFP; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   il1
+   ]];
+
+shaperec_cmd:
+   [[ `SHAPE_REC; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   il1
    ]];
 
 shapepost_obl_cmd:
@@ -2255,7 +2271,9 @@ hprogn:
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
-        | Proc pdef -> proc_defs := pdef :: !proc_defs 
+        | Proc pdef ->
+              let _ = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
+              proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
@@ -2533,14 +2551,16 @@ opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
 
 fixed_parameter:
-  [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
+  [[ t=typ; pm=OPT pass_t; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }]];
 
-ref_t: [[`REF -> RefMod]];
-  
+
+pass_t: [[`PASS_REF -> RefMod
+       | `PASS_COPY -> CopyMod]];
+
 proc_body: [[t=block-> t]];
 
 (*********** Statements ***************)

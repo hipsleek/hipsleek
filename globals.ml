@@ -205,7 +205,9 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
 let hppost_default_prefix_name = "GP_"
-let dang_hp_default_prefix_name = "__DP"
+let unkhp_default_prefix_name = "DP_"
+let dang_hp_default_prefix_name = "DP_DP"
+let ex_first = "v"
 (*
   Data types for code gen
 *)
@@ -275,6 +277,10 @@ let string_of_loc (p : loc) =
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
+
+let is_valid_loc p=
+  (p.start_pos.Lexing.pos_lnum>=0 &&
+   p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
 
 let string_of_pos (p : Lexing.position) = 
     Printf.sprintf "(Line:%d,Col:%d)"
@@ -550,6 +556,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 let null_name = "null"
+let inline_field_expand = "_"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -645,7 +652,9 @@ let enable_lemma_rhs_unfold = ref false
 
 let dis_show_diff = ref false
 
-let sa_print_inter = ref false
+let sap = ref false
+
+let sa_gen_slk = ref false
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
@@ -712,6 +721,8 @@ let pred_equiv = ref false
 
 let pred_unify_post = ref false
 
+let pred_unify_inter = ref true
+
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false
@@ -760,10 +771,11 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
+let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
-let allow_field_ann = ref false
+(* let allow_field_ann = ref false  *)
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
 
@@ -806,17 +818,17 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 
-let allow_lsmu_infer = ref true
+let allow_lsmu_infer = ref false
 
-let allow_norm = ref false
+let allow_norm = ref true
 
-let allow_ls = ref true (*enable lockset during verification*)
+let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
@@ -899,6 +911,10 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+
+let print_en_tidy = ref true
+
+let print_html = ref false
 
 (* let enable_sat_statistics = ref false *)
 
@@ -1133,6 +1149,11 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
+  match id with 
+    | Some i -> i
+    | None -> fresh_formula_label s
+
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let fresh_int () =
@@ -1153,6 +1174,7 @@ let fresh_int () =
   !seq_number
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
+  let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
@@ -1422,6 +1444,9 @@ let set_last_sleek_fail () =
 (*     Hashtbl.find debug_map x *)
 (*   with _ -> DO_None *)
 
+(* let inf_number = ref 0 *)
 
-
+(* let fresh_inf_number() =  *)
+(*   inf_number := !inf_number + 1; *)
+(*   string_of_int(!inf_number) *)
 

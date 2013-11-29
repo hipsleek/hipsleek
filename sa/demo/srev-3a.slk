@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred HP_917(node next_46_916, node@NI y).
+//HeapPred H(node a, node@NI b). //segmented
+HeapPred H(node a, node b). //accumulating
+HeapPred G1(node a, node b).
+
+infer[H,HP_917] HP_917(next_46_916,y) * x_924::node<val_46_915,y_923>@M&y=y_923 & x=x_924 & 
+x_924!=null & v_bool_45_892' & x_924!=null & v_bool_45_892' & 
+next_46_916=tmp_33' & next_46_916=next_47_922 & x_924=y' & tmp_33'=x'
+ |-  H(x',y').
+print residue.
+
+
+

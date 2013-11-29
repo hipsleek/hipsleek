@@ -92,8 +92,8 @@ and one_formula = {
     formula_pos : loc
 }
 
-and flow_formula = constant_flow				   
-    
+and flow_formula = constant_flow
+
 and formula_or = { formula_or_f1 : formula;
 		   formula_or_f2 : formula;
 		   formula_or_pos : loc }
@@ -104,6 +104,8 @@ and h_formula = (* heap formula *)
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj
   | Star of h_formula_star
+  (* guard as magic wand? *)
+  (* | Wand of h_formula * h_formula *)
   | StarMinus of h_formula_starminus
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2
@@ -118,7 +120,7 @@ and h_formula = (* heap formula *)
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }
-		       
+
 and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
 		       h_formula_starminus_h2 : h_formula;
 		       h_formula_starminus_pos : loc }
@@ -167,6 +169,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_absent_ann = Ipure_D.ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
 let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("", (false, None, None))
@@ -340,7 +343,8 @@ and mkEFalse flow pos = EBase {
 
 and mkEFalseF () = mkEFalse false_flow no_pos			
 and mkETrueF () = mkETrue n_flow no_pos			
-and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos			
+and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
+
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
 	if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
   else if isEConstFalse f1 then f2
@@ -462,7 +466,7 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l= 
+and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
@@ -477,8 +481,8 @@ and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
              h_formula_heap_label = ofl;
              h_formula_heap_pos = l }
 
-and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l= 
-   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
+and mkHeapNode  c id deref dr i f inv pd perm hl hl_i ofl l=
+  Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
       (fun _ -> mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l ) c
 
 and mkHeapNode2 c id deref dr i f inv pd perm ohl hl_i ofl l = 
@@ -1161,28 +1165,28 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | HeapNode ({h_formula_heap_node = x; 
                h_formula_heap_name = c; 
                h_formula_heap_deref = deref;
-               h_formula_heap_derv = dr; 
-               h_formula_heap_imm = imm; 
-               h_formula_heap_imm_param = imm_p; 
-               h_formula_heap_full = full; 
+               h_formula_heap_derv = dr;
+               h_formula_heap_imm = imm;
+               h_formula_heap_imm_param = imm_p;
+               h_formula_heap_full = full;
                h_formula_heap_with_inv = winv;
                h_formula_heap_perm = perm; (*LDK*)
                h_formula_heap_arguments = args;
                h_formula_heap_pseudo_data = ps_data;
                h_formula_heap_label = l;
-               h_formula_heap_pos = pos}) -> 
+               h_formula_heap_pos = pos}) ->
       let imm = apply_one_imm s imm in
       let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = ( match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
       ) in
-      HeapNode ({h_formula_heap_node = subst_var s x; 
+      HeapNode ({h_formula_heap_node = subst_var s x;
                  h_formula_heap_name = c;
                  h_formula_heap_deref = deref;
-                 h_formula_heap_derv = dr; 
-                 h_formula_heap_imm = imm; 
-                 h_formula_heap_imm_param = imm_p; 
+                 h_formula_heap_derv = dr;
+                 h_formula_heap_imm = imm;
+                 h_formula_heap_imm_param = imm_p;
                  h_formula_heap_full = full;
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm1 ; (*LDK*)
@@ -2419,15 +2423,18 @@ let add_post_for_flow fl_names f =
 				let l = List.map (fun c-> Exists {b with formula_exists_flow = c}) fl_names in
 				List.fold_left (fun a c-> mkOr a c b.formula_exists_pos) c l 
 			else c in	
-	let rec helper f =  match f with
-		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 
-		| EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation}
-		| EInfer b-> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
-		| EList b -> EList (Gen.map_l_snd helper b)
+	let rec helper is_post f =  match f with
+		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper is_post c2) c.formula_case_branches} 
+		| EBase b -> 
+			let new_base = if is_post then fct b.formula_struc_base else b.formula_struc_base in
+			let new_cont = Gen.map_opt (helper is_post) b.formula_struc_continuation in
+			EBase {b with formula_struc_continuation = new_cont; formula_struc_base = new_base}
+		| EInfer b-> EInfer {b with formula_inf_continuation = helper is_post b.formula_inf_continuation;}
+		| EList b -> EList (Gen.map_l_snd (helper is_post) b)
 		| EAssume b -> EAssume {b with 
 			formula_assume_simpl = fct b.formula_assume_simpl; 
-			formula_assume_struc = helper b.formula_assume_struc;} in
-	helper f
+			formula_assume_struc = helper true b.formula_assume_struc;} in
+	helper false f
 	
 
 let rec flatten_post_struc f pos = match f with

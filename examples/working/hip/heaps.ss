@@ -70,7 +70,7 @@ node insert(node t, int v)
 
 
 /* function to delete a leaf */
-int deleteoneel(ref node t)
+int deleteoneel(node@R t)
 
 	requires t::pq<n, mx> & n > 0
 	ensures t'::pq<n-1, mx2> & 0 <= res <= mx & mx2 <= mx;
@@ -100,7 +100,7 @@ int deleteoneel(ref node t)
 
 
 /* function to delete one element */
-int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
+int deleteone(int@R m1, int@R  m2, node@R l, node@R r)
 
 	requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
 	ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
@@ -120,7 +120,7 @@ int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 
 
 /* function to restore the heap property */
-void ripple(ref int d, int v, int m1, int m2, node l, node r)
+void ripple(int@R d, int v, int m1, int m2, node l, node r)
 
 	requires l::pq<m1, mx1> * r::pq<m2, mx2> & 0 <= m1 - m2 <= 1 & d >= mx1, mx2 & 0 <= v <= d
 	ensures l::pq<m1, mx3> * r::pq<m2, mx4> & mx3 <= mx1 & mx4 <= mx2 & 
@@ -178,7 +178,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 
 
 /* function to delete the root of a heap tree */
-int deletemax(ref node t)
+int deletemax(node@R t)
 	
 	requires t::pq<n, mx> & n > 0 
 	ensures t'::pq<n-1, mx2> & mx2 <= res <= mx;

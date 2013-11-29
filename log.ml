@@ -263,7 +263,7 @@ object (self)
     in ()
   method start_sleek src =
     begin
-      let (parent,_) = sleek_stk # top_no_exc in
+      (* let (parent,_) = sleek_stk # top_no_exc in *)
       sleek_no <- sleek_no+1;
       Globals.sleek_proof_no := sleek_no;
       sleek_stk # push (sleek_no,src);
@@ -406,6 +406,15 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
   else 
     ()
 
+let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos=
+  let pr = Cprinter.string_of_formula in
+  Debug.no_4 " add_sleek_logging" 
+      string_of_bool string_of_int
+      pr pr pr_none
+      (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos) avoid slk_no ante conseq
+
 let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
@@ -467,7 +476,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_res = res; } in
       let _ = last_cmd # set plog in
       proof_log_stk # push plog;
-      let pno_str = string_of_int pno in
+      (* let pno_str = string_of_int pno in *)
       (* let _ = add_proof_tbl pno_str plog in *)
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       (* let _ = try *)
@@ -638,6 +647,7 @@ let sleek_log_to_text_file slfn (src_files) =
     close_out oc
 
 let sleek_log_to_text_file2 (src_files) =
+  (* let _ = print_endline "sleek_log_2" in *)
   let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
   let pr = pr_list pr_id in
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
