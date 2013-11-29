@@ -675,15 +675,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
 							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
-                    (* TermInf: Collecting ALL ranking constraints here *)
-                    let rrel = TI.collect_rrel_list_failesc_context res_ctx in
-                    let sol_for_rrel, raw_subst = TI.solve_rrel_list rrel in
-                    let n_vdefs = List.map (fun vdef -> TI.plug_rank_into_view raw_subst sol_for_rrel vdef) prog.Cast.prog_view_decls in
-                    let _ = List.iter (fun v -> Hashtbl.add prog.Cast.prog_inf_view_decls v.view_name v) n_vdefs in
-                    (* let _ = if !Globals.en_term_inf then
-                      (print_endline ("\nTERMINATION INFERENCE RESULT: ");
-                      print_endline (pr_list !Cast.print_view_decl(*_clean*) n_vdefs))
-                    in *)
+                    (* TermInf: Collecting ALL ranking constraints and solving them here *)
+                    let _ = if !en_term_inf then TI.collect_and_solve_rrel_hip prog res_ctx else () in
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
 	    	    let res_ctx = CF.list_failesc_to_partial res_ctx in
@@ -3128,11 +3121,10 @@ let check_prog iprog (prog : prog_decl) =
     | _ -> ()
   in 
   Term.term_check_output ();
-  if !Globals.en_term_inf then
-    (print_endline ("\nTERMINATION INFERENCE RESULT: ");
-    Globals.en_term_inf := false;
-    Hashtbl.iter (fun _ vdef -> 
-      print_endline (!Cast.print_view_decl_clean vdef)) prog.Cast.prog_inf_view_decls)
+  (* TermInf: Printing output *)
+  if !Globals.en_term_inf then 
+    let n_vdefs = Hashtbl.fold (fun _ v a -> a @ [v]) prog.Cast.prog_inf_view_decls [] 
+    in TI.print_result n_vdefs
   else ()
 
 	    

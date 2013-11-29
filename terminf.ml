@@ -34,8 +34,53 @@ let view_var_ragr view_id =
   let rarg_id = SpecVar (Int, view_rarg_id view_id, Unprimed) in
   mkRArg_var rarg_id
 
+(*************************)
+(* Functions for printing *)
+(*************************)
+let print_enhanced_view (vdef: C.view_decl): unit =
+  print_endline ((!C.print_view_decl_clean vdef) ^ "\n")
+
+let print_enhanced_view_list (vl: C.view_decl list): unit =
+  print_endline "";
+  print_endline ("***************************************************");
+  print_endline ("* ============ TERMINATION INFERENCE ============ *");
+  print_endline ("* Enhanced View Declarations with Rank Properties *");
+  print_endline ("***************************************************");
+  List.iter print_enhanced_view vl
+
+let print_enhanced_spec_proc (proc: C.proc_decl): unit =
+  if proc.C.proc_is_main then
+    print_endline ((!C.print_proc_decl_no_body proc) ^ "\n")
+  else ()
+
+let print_enhanced_spec_proc_list (ph: (ident, C.proc_decl) Hashtbl.t): unit =
+  print_endline "";
+  print_endline ("***************************************");
+  print_endline ("* ====== TERMINATION INFERENCE ====== *");
+  print_endline ("* Enhanced Procedure's Specifications *");
+  print_endline ("*    with Termination Constraints     *");
+  print_endline ("***************************************");
+  Hashtbl.iter (fun _ p -> print_enhanced_spec_proc p) ph
+
+let print_collected_rrel (rrels: CF.rrel list): unit =
+  print_endline "";
+  print_endline ("******************************************");
+  print_endline ("* ======== TERMINATION INFERENCE ======= *");
+  print_endline ("* Generated constraints on Rank Relation *");
+  print_endline ("******************************************");
+  print_endline (pr_list !CF.print_rrel rrels)
+
+let print_result vdefs =
+  print_endline "";
+  print_endline ("********************************");
+  print_endline ("* TERMINATION INFERENCE RESULT *");
+  print_endline ("********************************");
+  Globals.en_term_inf := false;
+  List.iter (fun vdef -> 
+    print_endline (!C.print_view_decl_clean vdef)) vdefs
+
 (***************************************)
-(* Function for collecting information *)
+(* Functions for collecting information *)
 (***************************************)
 
 (* TermInf: Collect data variables of DataNode and 
@@ -144,7 +189,7 @@ let collect_rrel_list_context (ctx: CF.list_context) : CF.rrel list =
   snd (trans_list_context ctx () f_c f_arg List.concat)
 
 (****************************************)
-(* Function for adding rank constraints *)
+(* Functions for adding rank constraints *)
 (****************************************)
 
 (* TermInf: Add rank constraints into view and struc_formula *)
@@ -172,10 +217,12 @@ let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
         else match a with 
         | Some f1  -> Some (CF.mkOr f1 fc no_pos)
         | None -> Some fc) None un_struc_f
-  in { vdef with
+  in 
+  let n_vdef = { vdef with
     C.view_formula = view_form; 
     C.view_un_struc_formula = un_struc_f; 
     C.view_raw_base_case = rbc; }
+  in n_vdef
 
 and add_rank_constraint_struc_formula (f: CF.struc_formula) (rtyp: rank_type): CF.struc_formula =
   match f with
@@ -294,6 +341,7 @@ let construct_dec_rrel_constraint estate src dst =
     rrel_type = RR_DEC;
     rrel_ctx = MCP.get_rel_ctr p (MCP.mfv ctr);
     rrel_ctr = ctr;
+    rrel_orig_ctx = estate.CF.es_formula;
   } in { estate with es_rrel = estate.es_rrel @ [rrel]; }
 
 let construct_dec_rrel_constraint estate src dst =
@@ -303,7 +351,7 @@ let construct_dec_rrel_constraint estate src dst =
     construct_dec_rrel_constraint estate src dst
 
 (*****************************************)
-(* Function for solving rrel constraints *)
+(* Functions for solving rrel constraints *)
 (*****************************************)
 
 (* TermInf: Transform RankRel and LexVar (TermR) *)
@@ -483,4 +531,21 @@ let plug_inf_info (prog: C.prog_decl) : C.prog_decl =
   let inf_vdefs = Hashtbl.fold (fun _ v va -> va @ [v]) prog.C.prog_inf_view_decls [] in 
   { prog with C.prog_view_decls = inf_vdefs; }
 
+let collect_and_solve_rrel_hip prog (ctx: CF.list_failesc_context): unit =
+  let rrels = collect_rrel_list_failesc_context ctx in
+  let _ = print_collected_rrel rrels in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let n_vdefs = List.map (fun vdef -> 
+    plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
+  List.iter (fun v -> Hashtbl.add prog.C.prog_inf_view_decls v.C.view_name v) n_vdefs
+
+let collect_and_solve_rrel_slk ids rrel_store prog =
+  let rrels = match ids with
+  | [] -> Hashtbl.fold (fun _ rrels a -> a @ rrels) rrel_store []
+  | _ -> List.concat (List.map (fun id -> 
+      try Hashtbl.find rrel_store id with _ -> []) ids) in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let n_vdefs = List.map (fun vdef -> 
+    plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
+  print_result n_vdefs
 

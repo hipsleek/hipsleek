@@ -461,6 +461,8 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
+
+let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")

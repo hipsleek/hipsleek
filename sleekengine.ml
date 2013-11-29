@@ -1426,16 +1426,7 @@ let process_rank_constraint (id: ident) (iante: meta_formula) (icons: meta_formu
   Hashtbl.add rrel_store id rrels
 
 let process_solve_rank_constraints ids = 
-  let rrels = match ids with
-  | [] -> Hashtbl.fold (fun _ rrels a -> a @ rrels) rrel_store []
-  | _ -> List.concat (List.map (fun id -> 
-      try Hashtbl.find rrel_store id with _ -> []) ids) in
-  let sol_for_rrel, raw_subst = TInf.solve_rrel_list rrels in
-  let n_vdefs = List.map (fun vdef -> 
-    TInf.plug_rank_into_view raw_subst sol_for_rrel vdef) !cprog.C.prog_view_decls in
-  silenced_print print_endline (
-    "\nTERMINATION INFERENCE RESULT: \n" ^
-    (pr_list !C.print_view_decl_clean n_vdefs) ^ "\n")
+  TInf.collect_and_solve_rrel_slk ids rrel_store !cprog
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)

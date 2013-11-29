@@ -1148,6 +1148,11 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
+    (* TermInf: Print enhanced views and specs with rank *)
+    (if !Globals.en_term_inf then begin 
+      TI.print_enhanced_view_list c.C.prog_view_decls;
+      TI.print_enhanced_spec_proc_list c.C.new_proc_decls
+    end else ());
 	  c)))
     end)
   else failwith "Error detected at trans_prog"

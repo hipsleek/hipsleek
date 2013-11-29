@@ -3418,10 +3418,20 @@ let string_of_proc_decl p =
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
 	    | None -> "") ^ locstr^"\n"
-;; 
+;;
 
 let string_of_proc_decl i p =
   Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p
+
+let string_of_proc_decl_no_body p = 
+  let locstr = (string_of_full_loc p.proc_loc)  
+  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
+      ^ (if p.proc_is_recursive then " rec" else "") ^ "\n"
+      ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
+      ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
+      ^ (if Gen.is_empty p.proc_by_name_params then "" 
+	  else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
+;; 
 
 (* pretty printing for a list of data_decl *)
 let rec string_of_data_decl_list l = match l with 
@@ -3971,6 +3981,7 @@ Cformula.print_path_trace := string_of_path_trace;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_list_int := string_of_list_int;;
 Cformula.print_rank_arg_list := string_of_rank_arg_list;;
+Cformula.print_rrel := string_of_rrel;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
@@ -3989,6 +4000,7 @@ Cast.print_view_decl_clean := string_of_view_decl_clean;
 Cast.print_hp_decl := string_of_hp_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;
+Cast.print_proc_decl_no_body := string_of_proc_decl_no_body;;
 print_coerc_decl_list := string_of_coerc_decl_list;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
