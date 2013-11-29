@@ -2041,7 +2041,8 @@ let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,arg
       (List.fold_left (fun r hv -> r@hv.CF.h_formula_view_arguments) [] keep_hvs) @args  in
     let p = CP.filter_var (MCP.pure_of_mix lhsb.CF.formula_base_pure) all_svl in
     let p1 = CP.prune_irr_eq p all_svl in
-    if CP.isConstTrue p1 then None else
+    let svl_p1 = CP.fv p1 in
+    if CP.isConstTrue p1 || not (List.exists CP.is_node_typ svl_p1) then None else
       let g = CF.Base {lhsb with CF.formula_base_heap = g_h;
           CF.formula_base_pure = (MCP.mix_of_pure p1)} in
       let lhs = CF.formula_of_heap (CF.HRel (hp, List.map (fun sv -> CP.Var (sv, pos)) args, pos)) pos in
@@ -4348,7 +4349,7 @@ let closer_ranking prog unk_hps fs root_cand args0=
   (* let args = r::(List.filter (fun sv -> not (CP.eq_spec_var r sv)) args0) in *)
   let eqNulls = if ls_eqNulls = [] then [] else
     List.fold_left (fun r ls -> CP.intersect_svl r ls) (List.hd ls_eqNulls) (List.tl ls_eqNulls) in
-  let new_cand0 = List.filter (fun r ->
+  let new_cand0 = List.filter (fun r -> (CP.is_node_typ r) &&
      List.for_all (exam_conf r) fs_config) root_cand
   in
   let new_cand =
@@ -4357,10 +4358,12 @@ let closer_ranking prog unk_hps fs root_cand args0=
             try
               let ins_args = get_hp_args_inst prog hp args0 in
               let ins_cand, rem = List.partition (fun sv -> CP.mem_svl sv ins_args) new_cand0  in
-              (ins_cand@rem)
+              let node_svl,non_node_svl = List.partition (CP.is_node_typ) ins_cand in
+              (node_svl@non_node_svl@rem)
             with _ -> new_cand0
         )
-      | _ -> new_cand0
+      | _ -> let node_svl, non_node_svl = List.partition (CP.is_node_typ) new_cand0 in
+        (node_svl@non_node_svl)
   in
   let _ = DD.ninfo_zprint (lazy (("  new_cands: " ^ (!CP.print_svl new_cand) ))) no_pos in
   let _ = DD.ninfo_zprint (lazy (("  eqNulls: " ^ (!CP.print_svl eqNulls) ))) no_pos in

@@ -973,7 +973,9 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  let args = String.concat ";" (List.map (fun (_,n,_) -> n) hpdecl.Iast.hp_typed_inst_vars) in
+  let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
+      ^ " " ^ n
+  ) hpdecl.Iast.hp_typed_inst_vars) in
   name^"("^args^")"
 
 
@@ -1021,7 +1023,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
   (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
-;;                                                                                                                         
+;;
 
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;

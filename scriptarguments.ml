@@ -513,6 +513,7 @@ let common_arguments = [
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
   ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
   ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");

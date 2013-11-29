@@ -2521,7 +2521,9 @@ flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
-  [[ h=proc_header; flgs=opt_flag_list;b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+  [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
+      let n_h = genESpec_wNI h (Some b) h.proc_args h.proc_return h.proc_loc in
+      { n_h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header; _=opt_flag_list-> h]];
   
 proc_header:
