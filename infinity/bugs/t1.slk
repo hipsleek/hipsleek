@@ -1,3 +1,5 @@
+checkentail 1234567358121725289 > x |- 1234567358121725288 > x.
+/*
 checkentail -\inf+\inf+1<=0 |- false. // valid but should fail
 checkentail -\inf+\inf<=0 |- false. // fail
 checkentail L=-\inf & U=\inf & L+U+1<=0 |- false.  // valid but should fail
@@ -19,6 +21,6 @@ checkentail \inf+a=\inf & \inf+b=\inf |- a=b. //fail
 checkentail \inf+a=\inf+b & \inf=\inf |- a!=b. //fail
 checkentail \inf+a=\inf |- a!=0. //fail
 checkentail v>-\inf & v+1=w |- w>-\inf.//succeed
-
+*/
 
 

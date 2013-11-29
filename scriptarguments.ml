@@ -242,6 +242,12 @@ let common_arguments = [
 	Globals.simplify_imply := false;
 	Globals.filtering_flag := false;),
 	"enable support for quantifier elimination in PAinfinity ");
+  ("--en-inf-qe-coq", Arg.Unit( fun _ ->
+	Globals.allow_inf_qe_coq := true;
+	Globals.elim_exists_flag := false;
+	Globals.simplify_imply := false;
+	Globals.filtering_flag := false;),
+    "use the quantifier elimination procedure implemented in coq for PAinfinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,

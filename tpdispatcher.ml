@@ -1505,7 +1505,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
     (* Handle Infinity Constraints *)
   let f = if !Globals.allow_inf then 
-      let _ = Coqinf.cpure_to_coqpure f in
+   (* let _ = Coqinf.cpure_to_coqpure f in *)
       let f = Infinity.normalize_inf_formula_sat f in
       let f = (*Infinity.fixed_point_pai_num*) f in f
     else f in
@@ -1658,6 +1658,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     let forall_lst = Infinity.get_inst_forall f in 
     let forall_lst = f::forall_lst in 
     let f = List.exists (fun c -> exists_inf c) forall_lst in f
+  else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
+    tp_is_sat_no_cache (Coqinf.check_sat_inf_formula f) sat_no
   else flag 
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
@@ -2387,6 +2389,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     let forall_lst = Infinity.get_inst_forall ante in 
     let forall_lst = ante::forall_lst in
     let f = List.for_all (fun c -> exists_inf c) forall_lst in f
+  else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
+    tp_imply_no_cache (Coqinf.check_sat_inf_formula ante) (Coqinf.coqpure_to_cpure (Coqinf.cpure_to_coqpure conseq)) imp_no timeout process
   else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)

@@ -770,6 +770,10 @@ let pa = ref false
 let allow_inf = ref false (*enable support to use infinity (\inf and -\inf) in formulas *)
 let allow_inf_qe = ref false (*enable support to use quantifier elimination with infinity (\inf and -\inf) in formulas *)
 
+let allow_inf_qe_coq = ref false
+(* enable support to use quantifier elimination procedure
+implemented in coq and extracted as infsolver.ml *)
+
 let ann_derv = ref false
 
 let print_ann = ref true
