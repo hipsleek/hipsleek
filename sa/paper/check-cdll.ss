@@ -10,8 +10,8 @@ HeapPred H1(node a, node@NI b, node@NI c).
   HeapPred G1(node a, node@NI b, node@NI c).
 
 bool check_cdll (node l, node prv, node p)
-  requires l::cdll<prv,p>@L ensures  res;
-//infer [H1,G1] requires H1(l,prv,p) ensures G1(l,prv,p) & res;
+// requires l::cdll<prv,p>@L ensures  res;
+ infer [H1,G1] requires H1(l,prv,p) ensures G1(l,prv,p) & res;
 {
 	if (/* l== prv && */ l== p) return true;
 	else { bool r1 = check_cdll(l.next,l,p);
