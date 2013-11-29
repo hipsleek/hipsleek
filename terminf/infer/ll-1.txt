@@ -1,0 +1,96 @@
+
+!!!Full processing file "ll-1.ss"
+Parsing file "ll-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+***************************************************
+* ============ TERMINATION INFERENCE ============ *
+* Enhanced View Declarations with Rank Properties *
+***************************************************
+ view ll<s:int,r_ll:int> = 
+  :EBase exists (Expl)[](Impl)[r_ll_40](ex)[]Base {168}->emp&self=null & 
+         s=0 & r_ll = RR[1]( s)&{FLOW,(1,25)=__flow}[]
+               RR(r_ll,s)
+  || :EBase exists (Expl)[](Impl)[v; q; s1; 
+            r_ll_41](ex)[]Base {169}->self::node<v,q>@M * 
+            q::ll<s1,r_ll_41>@M&s=v+s1 & 0<v & r_ll = RR[1]( s) & 
+               RR(r_ll,s) & RR(r_ll_41,s1)
+            r_ll_41 = RR[1]( s1)&{FLOW,(1,25)=__flow}[]
+  inv: true
+  rank_prop : RR(r,s)
+
+
+***************************************
+* ====== TERMINATION INFERENCE ====== *
+* Enhanced Procedure's Specifications *
+*    with Termination Constraints     *
+***************************************
+int length$node(  node x) rec
+static  :EBase exists (Expl)[](Impl)[s; r_ll_865](ex)[]Base x::ll<s,r_ll_865>@M&
+        TermR[][r_ll_865]&{FLOW,(22,23)=__norm}[]
+          EAssume 
+            Base emp&0<=res&{FLOW,(22,23)=__norm}[]
+            
+dynamic  EBase Base hfalse&false&{FLOW,(22,23)=__norm}[]
+
+
+Checking lemmas... DONE.
+
+Checking procedure length$node... 
+******************************************
+* ======== TERMINATION INFERENCE ======= *
+* Generated constraints on Rank Relation *
+******************************************
+[ 
+ORIG: Base x'::node<v_905,q_906>@M&TermR[][r_ll_865] & s=v_905+s1_907 & 
+0<v_905 & r_ll_865 = RR[1]( s) & r_ll_908 = RR[1]( s1_907) & x=x' & 
+x'!=null & !(v_bool_15_864') & x'!=null & !(v_bool_15_864') & 
+v_int_19_862'=1 & q_906=v_node_19_860' & s1_907=s_911 & r_ll_908=r_ll_912&
+{FLOW,(22,23)=__norm}[] |- TermR[][r_ll_912]
+
+SIMPL: s1_907=s_911 & 
+r_ll_908=r_ll_912 & s=v_905+s1_907 & r_ll_908 = RR[1]( s1_907) & 0<v_905 & 
+r_ll_865 = RR[1]( s) |- r_ll_865>r_ll_912
+
+SOL: s1_907=s_911 & 
+r_ll_908=r_ll_912 & s=v_905+s1_907 & r_ll_908=0+s1_907 & 0<v_905 & 
+r_ll_865=0+s |- r_ll_865>r_ll_912]
+
+relation RR(a,b) == a=?*b+?.
+
+infer[RR] s1_907=s_911 
+  & r_ll_908=r_ll_912 & s=v_905+s1_907 
+  & 0<v_905 
+  & RR(r_ll_908,s1_907) 
+  & RR(r_ll_865,s) |- r_ll_865>r_ll_912.
+
+
+
+Solution:
+  RR(a,b) == a=1*b+0
+
+
+
+Procedure length$node SUCCESS.
+
+********************************
+* TERMINATION INFERENCE RESULT *
+********************************
+ view ll<s:int,r_ll:int> = 
+  :EBase exists (Expl)[](Impl)[r_ll_40](ex)[]Base {168}->emp&self=null & 
+         s=0 & r_ll=0+s&{FLOW,(1,25)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[v; q; s1; 
+            r_ll_41](ex)[]Base {169}->self::node<v,q>@M * 
+            q::ll<s1,r_ll_41>@M&s=v+s1 & 0<v & r_ll=0+s & r_ll_41=0+s1&
+            {FLOW,(1,25)=__flow}[]
+  inv: r_ll>=0
+Stop Omega... 58 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.029899,189)
+Total verification time: 0.27 second(s)
+	Time spent in main process: 0.23 second(s)
+	Time spent in child processes: 0.04 second(s)
+

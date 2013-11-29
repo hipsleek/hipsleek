@@ -1,0 +1,30 @@
+relation RR(int a, int b).
+infer [RR]  RR(a,b) |- a>b.
+print residue.
+
+/*
+# terminf/infer/ll-1-b.slk
+
+version from term_si:
+
+chinwn@loris-7:~/hg/sl_default$ ./sleek terminf/infer/ll-1-b.slk
+Starting Omega...oc
+File "terminf/infer/ll-1-b.slk", line 1, characters 0-8
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+Fatal error: exception Stream.Error("illegal begin of sprog")
+chinwn@loris-7:~/hg/sl_default$ 
+
+
+version form sa_logging:
+
+chinwn@loris-7:~/hg/sl_default$ ../sl_label/sleek terminf/infer/ll-1-b.slk
+Starting Omega...oc
+
+Entail (1) : Valid. 
+ <1>emp&RR(a,b) & b<a&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [RR]: ( RR(a,b)) -->  b<a]
+[[empty]]
+
+*/
