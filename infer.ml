@@ -543,6 +543,8 @@ let simplify_helper f0 =
   (* f2 *)
   helper f0
 
+(* simplify_raw seems critical for infer_pure *)
+(* not sure if it affects z3?? as claimed in 10038*)
 (* TODO : this simplify could be improved *)
 let simplify f vars = TP.simplify_raw (filter_var 1 (TP.simplify_raw f) vars)
 let simplify_contra f vars = filter_var 2 f vars
