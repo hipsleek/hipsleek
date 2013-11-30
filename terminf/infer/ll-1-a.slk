@@ -3,16 +3,21 @@ data node {
   node next;
 }.
 
-relation RR(int a, int b).
+relation RR0(int a, int b)
+// == a=?*b+?.
+.
+relation RR4(int a, int b,int c,int d).
+relation RR2(int a, int b).
 
-infer [RR] 
+infer [RR4,RR2,RR0] 
  x'::node<v_905,q_906>@M
  //&TermR[][r_ll_865] 
  &  s=v_905+s1_907 & 0<v_905 
  //& r_ll_865 = RR[1]( s) 
  //& r_ll_908 = RR[1]( s1_907) 
- & RR(r_ll_865,s) 
- & RR(r_ll_908,s1_907) 
+ //& RR0(r_ll_865,s)  & RR0(r_ll_908,s1_907) 
+ //& RR2(r_ll_865,r_ll_908) 
+ & RR4(r_ll_865,s,r_ll_908,s1_907) 
  & x=x' & x'!=null & !(v_bool_15_864') & x'!=null & !(v_bool_15_864') 
  & v_int_19_862'=1 & q_906=v_node_19_860' & s1_907=s_911 
  & r_ll_908=r_ll_912 
@@ -20,6 +25,15 @@ infer [RR]
  // TermR[][r_ll_912]
 
 print residue.
+
+
+infer [RR2] 
+ RR2(a,c) & b=c |- a>b.
+ print residue.
+
+infer [RR2] 
+ RR2(a,b) |- a>b.
+ print residue.
 
 
 /*
