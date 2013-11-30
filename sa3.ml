@@ -1585,7 +1585,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
     match diff1 with
       | [] -> ([],[],[]) (*drop constraint, no new definition*)
       | _ -> begin
-          let _ = DD.binfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
+          let _ = DD.info_ihprint (add_str ">>>>>> generalize_one_cs_hp: <<<<<<"pr_id) "" no_pos in
           if lhvs <> [] || lhds <> [] then
             ([constr],[],[])
           else
@@ -1984,7 +1984,8 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
     else
       pre_fix_pdefs_grps
   in
-  (* let _ = DD.binfo_pprint ">>>>>> gfp computation for pre-preds <<<<<" no_pos in *)
+  let _ = DD.info_ihprint(add_str ">>>>>> gfp computation for pre-preds <<<<<"
+      pr_id) "" no_pos in
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -2027,7 +2028,7 @@ let infer_pre_fix iprog prog proc_name callee_hps is_pre is need_preprocess dete
 
 (*compute least fixpoint for each set of constraints*)
 let infer_post_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang post_fix_hps=
-  (* let _ = DD.binfo_pprint ">>>>>> lfp computation for post-preds <<<<<" no_pos in *)
+  let _ = DD.info_ihprint (add_str ">>>>>> lfp computation for post-preds <<<<<"pr_id) "" no_pos in
   let rec partition_grp rem_pdefs grps=
     match rem_pdefs with
       | [] -> grps
@@ -2724,7 +2725,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   let n_cmb_defs1, n_all_hp_defs2 = (* SAU.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
-    let lib_matching = match_hps_views iprog prog cl_sel_hps1 n_all_hp_defs1 prog.CA.prog_view_decls in
+    let lib_matching = match_hps_views iprog prog cl_sel_hps1 n_all_hp_defs1
+      (List.filter (fun vdcl -> vdcl.CA.view_kind == CA.View_NORM) prog.CA.prog_view_decls) in
     (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
     (* let _ =  DD.info_pprint (" matching: " ^ *)
     (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)

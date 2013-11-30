@@ -2764,7 +2764,7 @@ let pr_context_short (ctx : context) =
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
-    pr_formula_wrap f;
+    let f1 = if !Globals.print_en_tidy then Cformula.shorten_formula f else f in pr_formula_wrap f1;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)

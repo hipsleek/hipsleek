@@ -1800,13 +1800,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
             let ctx2 = list_failesc_context_and_unsat_now prog ctx in
             let ctx = ctx2 in
-            let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in
+            (* let ctx1 = if !Globals.print_en_tidy then CF.rearrange_failesc_context_list ctx else ctx in *)
             (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
             if str = "" then begin
               let str1 =
-                (Cprinter.string_of_list_failesc_context ctx1)  in
+                (Cprinter.string_of_list_failesc_context ctx)  in
 	      (if (Gen.is_empty ctx) then
                 (print_string ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context")) 
@@ -2954,7 +2954,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                               (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
                               Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
                               let _ = if prepost_ctr # get > 0 then 
-                                Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
+                                Debug.info_ihprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                               let _ = prepost_ctr # reset in
                               Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                               Debug.ninfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;

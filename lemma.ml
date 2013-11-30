@@ -270,7 +270,7 @@ let manage_unsafe_lemmas repo iprog cprog =
       (l2r@left,r2l@right)
   ) ([],[]) repo in
   let _ = Lem_store.all_lemma # add_coercion left right in
-  print_endline ("\nUpdated store with unsafe repo.");
+  let _ = Debug.info_ihprint (add_str "\nUpdated store with unsafe repo." pr_id) "" no_pos in
   None
 
 let manage_lemmas repo iprog cprog =

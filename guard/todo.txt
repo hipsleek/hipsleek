@@ -1395,7 +1395,7 @@ relAssume
  or G(next_52,next_52,cur,prev1',sent)&cur!=null & next_52!=null & 
     next_52!=sent
 ==========================================================
-# swl-i-sa.ss (similarly for swl-lfp-4.ss)
+# swl-i-sa.ss (similarly for swl-lfp-4.ss)  FIXED
 
 Obtained:
 !!!  G(cur,cur',prev,prev',sent) ::=  [prev'::node<val_55_947,prev>@M
@@ -1477,7 +1477,70 @@ look odd (seems incorrect).
 ==========================================================
 ==========================================================
 ==========================================================
+# tll.ss --gsf
+
+This spurious message came from below. They don't look
+correct, and should also be omitted.
+
+../sleek logs/mod_tll.slk
+
+ HP_956(left,t1) |#| 
+                     res::node<left_31_90,right_31_954,t_91>@M&
+                     right_31_954=null
+                     or x::node<left_31_90,right_31_954,next_31_955>@M&
+                        right_31_954!=null
+                      ::= 
+ DP_89(left1,t)
+ or H(left,l'),
+ HP_957(right,t) ::= 
+ H(right,t)&right!=null
+ or emp&right=null
+
 ==========================================================
+## all your examples on web should provide predicates so that users
+   can test the re-use feature.
+
+Is it true we are still using syntactic equivalence?
+since we did not replace G by tll.
+
+# tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+
+
+ tll<res,tt> == self::node<_,null,tt> & self = res
+	or self::node<l,r,_> * l::tll<res,z> * r::tll<z,tt>
+	inv self!=null;
+
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+[ H(x,t) ::=x::tree<>@M,
+ G(x,res,t) ::= 
+ x::node<DP1,right,t>@M&right=null & res=x
+ or x::node<left,right,DP>@M * G(left,res,l) * G(right,l,t)&right!=null
+ ]
+
+# tll-lemma.ss -tp z3
+
+Entailing lemma lem_16: Valid.
+
+ tll<ll,lr> == self::node<_,null,lr> & self = ll
+  or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr> //& r!=null
+	inv self!=null;
+
+ GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
+   or self::node<left,right,DP> * left::GG<rr,l> 
+         * right::GG<l,t> & right!=null
+   inv true;
 ==========================================================
 ==========================================================
 ==========================================================
