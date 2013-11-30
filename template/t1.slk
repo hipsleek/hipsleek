@@ -1,0 +1,38 @@
+// sleek for interpreted relation
+// need tp -z3 
+
+relation R(int a, int b) == a=b.
+
+checkentail R(a,b) |- a>=b.
+infer [R] R(a,b) |- a>=b.
+
+print residue.
+
+// sleek for unknown relation
+relation R2(int a, int b).
+
+checkentail R2(a,b) |- a>=b.
+infer [R2] R2(a,b) |- a>=b.
+print residue.
+
+
+/*
+// sleek for template relation
+relation R3(int a, int b) == a=??*b+??.
+
+infer [R3] R3(a,b) & b<0 |- a>b.
+
+//expects R3(a,b) & b<0  --> a>b
+
+
+// inference for template relation
+relation R3(int a, int b) == a=??*b+??.
+
+relAssume R3(a,b) & b<0  --> a>b.
+
+template_infer[R3].
+// potential answers:
+//   R3(a,b) = a=(-1)*b+0
+//   R3(a,b) = a=1*b+1
+
+*/
