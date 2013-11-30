@@ -6,6 +6,7 @@ relation R(int a, int b).
 
 checkentail R(a,b) |- R(a,b).
 // FAIL but should succeed
+// SUCCESS with Z3
 
 infer [R] R(a,b) |- R(a,b).
 print residue.
