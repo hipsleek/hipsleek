@@ -273,11 +273,6 @@ let zcompare x y =
      | Zneg y' -> compOpp (pcompare x' y' Eq)
      | _ -> Lt)
 
-(** val bool_dec : bool -> bool -> bool **)
-
-let bool_dec b1 b2 =
-  if b1 then if b2 then true else false else if b2 then false else true
-
 (** val iter_pos : positive -> ('a1 -> 'a1) -> 'a1 -> 'a1 **)
 
 let rec iter_pos n f x =
@@ -300,17 +295,12 @@ let zpower x = function
 
 module type SV = 
  sig 
-  
+  val is_eq : char list -> char list -> bool
  end
 
 module InfSolver = 
  functor (Coq_sv:SV) ->
  struct 
-  (** val is_eq : char list -> char list -> bool **)
-  
-  let is_eq s1 s2 =
-    (=) s1 s2
-  
   (** val coq_Z_of_bool : bool -> z **)
   
   let coq_Z_of_bool = function
@@ -519,7 +509,7 @@ module InfSolver =
       (char list, coq_ZE) prod -> coq_ZE coq_ZExp -> coq_ZE coq_ZExp **)
   
   let rec subs_Exp p exp = match exp with
-  | ZExp_Var v -> if is_eq (fst p) v then ZExp_Const (snd p) else exp
+  | ZExp_Var v -> if Coq_sv.is_eq (fst p) v then ZExp_Const (snd p) else exp
   | ZExp_Const z0 -> exp
   | ZExp_Add (e1, e2) -> ZExp_Add ((subs_Exp p e1), (subs_Exp p e2))
   | ZExp_Sub (e1, e2) -> ZExp_Sub ((subs_Exp p e1), (subs_Exp p e2))
@@ -546,9 +536,9 @@ module InfSolver =
   | ZF_Or (f1, f2) -> ZF_Or ((subs_F p f1), (subs_F p f2))
   | ZF_Not g -> ZF_Not (subs_F p g)
   | ZF_Forall (v, g) ->
-    if is_eq (fst p) v then f else ZF_Forall (v, (subs_F p g))
+    if Coq_sv.is_eq (fst p) v then f else ZF_Forall (v, (subs_F p g))
   | ZF_Exists (v, g) ->
-    if is_eq (fst p) v then f else ZF_Exists (v, (subs_F p g))
+    if Coq_sv.is_eq (fst p) v then f else ZF_Exists (v, (subs_F p g))
   
   (** val convert_Exp : coq_ZE coq_ZExp -> z coq_ZExp **)
   

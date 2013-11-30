@@ -77,8 +77,6 @@ val zmult : z -> z -> z
 
 val zcompare : z -> z -> comparison
 
-val bool_dec : bool -> bool -> bool
-
 val iter_pos : positive -> ('a1 -> 'a1) -> 'a1 -> 'a1
 
 val zpower_pos : z -> positive -> z
@@ -87,14 +85,12 @@ val zpower : z -> z -> z
 
 module type SV = 
  sig 
-  
+  val is_eq : char list -> char list -> bool
  end
 
 module InfSolver : 
  functor (Coq_sv:SV) ->
  sig 
-  val is_eq : char list -> char list -> bool
-  
   val coq_Z_of_bool : bool -> z
   
   val coq_Z_of_ascii : char -> z

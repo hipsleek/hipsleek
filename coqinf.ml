@@ -11,15 +11,6 @@ module SV =
 struct
   let compare t1 t2 = String.compare
 end;;*)
-module StrSV =
-struct
-(*  let is_eq s1 s2 = match s1, s2 with
-    | Infsolver.string (String.compare s1 s2) == 0*)
-end
-
-module CoqInfSolver = Infsolver.InfSolver(StrSV)
-
-open CoqInfSolver
 
 let explode (s:string) : char list =
    let rec expl i l =
@@ -33,6 +24,15 @@ let implode (l:char list) : string =
      | [] -> result
      | c :: l -> result.[i] <- c; imp (i + 1) l in
    imp 0 l;;
+
+module StrSV =
+struct
+let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 
+end
+
+module CoqInfSolver = Infsolver.InfSolver(StrSV)
+
+open CoqInfSolver
 
 type coq_const = 
   | CFinConst of (int)
@@ -188,12 +188,17 @@ let cpure_to_coqpure (f:formula) :coq_formula =
 Debug.no_1 "cpure_to_coqpure" Cprinter.string_of_pure_formula (fun _ -> "") cpure_to_coqpure f
 
 let string_to_spec_var str_sv = 
-if ((String.get str_sv ((String.length str_sv)-1)) == '\'') then SpecVar(Int,str_sv,Primed)
-else SpecVar(Int,str_sv,Unprimed)
+(* found bug with primed variables and fixed during testing *) 
+  let len = (String.length str_sv) in
+  if ((String.get str_sv (len-1)) == '\'') 
+  then SpecVar(Int,(String.sub str_sv 0 (len-1)),Primed)
+  else SpecVar(Int,str_sv,Unprimed)
 
 let rec coqpure_to_cpure_exp (e:coq_exp) : exp =
   match e with 
-    | CVar s -> Var((string_to_spec_var s),no_pos)
+    | CVar s -> if s="ZInfinity" then mkInfConst no_pos (* another bug fix with strings *)
+      else if s="ZNegInfinity" then mkNegInfConst no_pos
+      else Var((string_to_spec_var s),no_pos)
     | Cconst c -> 
         (match c with
           | CInfConst -> mkInfConst no_pos
@@ -230,3 +235,7 @@ Debug.no_1 "coqpure_to_cpure" (fun _ -> "")  Cprinter.string_of_pure_formula coq
 
 let check_sat_inf_formula (f: formula) : formula = 
   coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string (coqpure_to_coq_infsolver_form (cpure_to_coqpure f))))
+
+let check_sat_inf_formula (f:formula) :formula =
+Debug.no_1 "check_sat_coq" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
+check_sat_inf_formula f
