@@ -1,0 +1,22 @@
+// sleek for interpreted relation
+// need tp -z3 
+
+relation R(int a, int b).
+relation R2(int a, int b).
+
+checkentail R(a,b) |- R(a,b).
+// FAIL but should succeed
+
+infer [R] R(a,b) |- R(a,b).
+
+infer [R] R(a,b) & R2(a,b) |- a>=b.
+print residue.
+// inferred rel: [RELASS [R]: ( R(a,b)) -->  b<=a]
+
+infer [R2] R(a,b) & R2(a,b) |- a>=b.
+print residue.
+// inferred rel: [RELASS [R2]: ( R2(a,b)) -->  b<=a]
+
+infer [R,R2] R(a,b) & R2(a,b) |- a>=b.
+print residue.
+// inferred rel: [RELASS [R,R2]: ( R(a,b) & R2(a,b)) -->  b<=a]
