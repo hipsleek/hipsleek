@@ -34,5 +34,19 @@ template_infer[R3].
 // potential answers:
 //   R3(a,b) = a=(-1)*b+0
 //   R3(a,b) = a=1*b+1
+//   R3(a,b) = a=0*b+0
 
 */
+
+relation R3a(int a, int b) == a=-b+0.
+infer [] R3a(a,b) & b<0 |- a>b.
+
+relation R3b(int a, int b) == a=b+1.
+infer [] R3b(a,b) & b<0 |- a>b.
+
+relation R3c(int a, int b) == a=0*b+0.
+infer [] R3c(a,b) & b<0 |- a>b.
+
+// wrong instantiation
+relation R3d(int a, int b) == a=b.
+infer [] R3d(a,b) & b<0 |- a>b.
