@@ -2121,7 +2121,7 @@ let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_da
 let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is_pre is sel_lhps sel_rhps need_preprocess detect_dang def_hps=
   (*if rhs is emp heap, should retain the constraint*)
   let pre_constrs, pre_oblg = List.partition (fun cs -> SAU.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
-  let ho_constrs0, nondef_post_hps = List.fold_left (collect_ho_ass cprog is_pre def_hps) ([],[]) pre_oblg in
+  let ho_constrs0, nondef_post_hps  = List.fold_left (collect_ho_ass cprog is_pre def_hps) ([],[]) pre_oblg in
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else
     (***************  PRINTING*********************)
@@ -2148,10 +2148,13 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is
     end;
     in
     (***************  END PRINTING*********************)
+    let new_sel_hps = (CP.diff_svl (is.CF.is_post_hps@sel_rhps) nondef_post_hps) in
     let is1 = infer_init iprog cprog proc_name is.CF.is_cond_path ho_constrs callee_hps (sel_lhps@sel_rhps)
       (*post-preds in lhs which dont have ad definition should be considered as pre-preds*)
-      (CP.diff_svl (is.CF.is_post_hps@sel_rhps) nondef_post_hps)
-      is.CF.is_unk_map is.CF.is_dang_hpargs is.CF.is_link_hpargs
+      new_sel_hps
+      is.CF.is_unk_map 
+      (List.filter (fun (hp,_) -> not (CP.mem_svl hp new_sel_hps)) is.CF.is_dang_hpargs)
+     (List.filter (fun (hp,_) -> not (CP.mem_svl hp new_sel_hps)) is.CF.is_link_hpargs )
       need_preprocess detect_dang
     in
     let is2 = infer_core iprog cprog proc_name callee_hps is1 need_preprocess detect_dang in

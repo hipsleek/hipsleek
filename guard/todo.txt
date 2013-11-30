@@ -1272,7 +1272,7 @@ Successful States:
  ]
 
 ==========================================================
-# swl-i-sa.ss -sa-gen-sleek-file
+# swl-i-sa.ss -sa-gen-sleek-file: FIXED
 
 generated mods_swl-i-sa.slk which when run produced.
 
@@ -1324,7 +1324,9 @@ both sleek and hip should produce the same result.
  or DP_1140(prev1)
  ]
 ==========================================================
-# logs/mod_swl-i-sa.slk
+# logs/mod_swl-i-sa.slk: FIXED
+ if complete in root pointers,
+do not introduce unk-pred. otherwise, do it (see ll-back.ss)
 
 For this version, we obtain below:
 
@@ -1353,7 +1355,7 @@ be fixed?
   & cur'!=null --> H(cur',cur1,sent@NI),
 
 ==========================================================
-swl-i-sa.ss
+swl-i-sa.ss: FIXED
 mod_swl-i-sa2.slk
 logs/mod_swl-i-sa.slk
 
@@ -1379,7 +1381,7 @@ variable renaming and existential quantification.
  or G(next,cur',cur,prev',sent)&cur!=null & next!=null & 
     next!=sent
 ==========================================================
-#swl-lfp-3.slk
+#swl-lfp-3.slk: Can not reproduce
 
 has a clash when building the initial recurrence
 
@@ -1422,7 +1424,7 @@ cur'=sent
 
 
 ==========================================================
-# tll.ss --gsf
+# tll.ss --gsf: FIXED
 
 This spurious message came from below. They don't look
 correct, and should also be omitted.

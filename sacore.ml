@@ -372,6 +372,7 @@ let build_hp_unk_locs known_svl unk_hps fn_cmp (hp_name, args)=
             else ([(hp_name,unk_args, res)],[])
       end
   in
+   let _ = Debug.ninfo_zprint (lazy (("   known_svl: " ^ (!CP.print_svl known_svl)))) no_pos in
   get_unk_ptr known_svl (hp_name, args)
 
 let check_equality_constr lhpargs lhs_f_rem rhs svl2=
@@ -802,6 +803,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   (*     in pr unk_hp_args01)) no_pos *)
   (* in *)
   (*END for debugging*)
+  (**********************INTERNAL*******************************)
   (*double check across one cs*)
   let rec loop_helper closure_post_hps unk_hp_locs0=
     let ls_unk_cands,ls_full_unk_cands_w_args, n_closure_post_hps =
@@ -823,10 +825,14 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
       let diff = Gen.BList.difference_eq (fun (hp1,_,locs1) (hp2,_,locs2) ->
         SAU.check_hp_locs_eq (hp1,locs1) (hp2,locs2)) unk_hp_locs0 ls_unk_cands1
       in
-      if diff =[] then (ls_unk_cands1, full_unk_hp_args2_locs,n_closure_post_hps) else
+      if diff =[] then
+        (ls_unk_cands1, full_unk_hp_args2_locs,n_closure_post_hps)
+      else
         loop_helper n_closure_post_hps ls_unk_cands1
   in
-  let unk_hp_args02,full_unk_hp_args2_locs, closure_post_hps = loop_helper post_hps unk_hp_args01 in
+  (**********************END INTERNAL*******************************)
+  let unk_hp_args02,full_unk_hp_args2_locs, closure_post_hps = if unk_hp_args01 = [] then ([], [], post_hps)
+  else loop_helper post_hps unk_hp_args01 in
   (*********END double check ****************)
   let full_unk_hp_args2_locs = SAU.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
   (*for debugging*)
@@ -924,9 +930,9 @@ let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_penta pr1 pr3 pr2 pr3 pr2a in
-  Debug.no_2 "analize_unk" pr1 pr2 pr4
-      (fun _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
-      constrs total_unk_map
+  Debug.no_5 "analize_unk" pr1 pr2 !CP.print_svl pr3 pr3 pr4
+      (fun _ _ _ _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
+      constrs total_unk_map post_hps unk_hpargs link_hpargs
 
 let generate_equiv_unkdef unk_hpargs (ls1,ls2) (hp1, hp2)=
   let args = List.assoc hp1 unk_hpargs in
