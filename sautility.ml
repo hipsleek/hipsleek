@@ -7410,7 +7410,8 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
 
   (*infer command*)
   let str_infer_cmd = (if is_proper then "shape_infer_proper " else  "shape_infer ") ^
-    (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl all_hps (sel_post_hps@unk_hps)) ) (* sel_pre_hps *)) ^
+    (* (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl all_hps (sel_post_hps@unk_hps)) ) (\* sel_pre_hps *\)) ^ *)
+    (!CP.print_svl (CP.remove_dups_svl (CP.diff_svl sel_pre_hps (unk_hps)) ) (* sel_pre_hps *)) ^
     (!CP.print_svl sel_post_hps) ^"." in
   let out_chn =
     let reg = Str.regexp "\.ss" in
