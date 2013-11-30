@@ -1759,14 +1759,16 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* C
       let f1 = CF.formula_of_heap def.CF.def_lhs no_pos in
       let self_sv = CP.SpecVar (CP.type_of_spec_var r ,self, Unprimed) in
       let sst = List.combine (r::paras) (self_sv::vdcl.CA.view_vars) in
-      let f1 = CF.subst sst f1 in
-      let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
-        (vdcl.CA.view_vars) no_pos in
-      let f2 = CF.formula_of_heap vnode no_pos in
-      if Lemma.checkeq_sem iprog prog f1 f2 [def] then
-        let self_ss = [(self_sv,r)] in
-        [CF.h_subst self_ss vnode]
-      else []
+      (*type comparitive*)
+      if List.exists (fun (sv1, sv2) -> (CP.name_of_spec_var sv1) != (CP.name_of_spec_var sv2)) sst then [] else
+        let f1 = CF.subst sst f1 in
+        let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
+          (vdcl.CA.view_vars) no_pos in
+        let f2 = CF.formula_of_heap vnode no_pos in
+        if Lemma.checkeq_sem iprog prog f1 f2 [def] then
+          let self_ss = [(self_sv,r)] in
+          [CF.h_subst self_ss vnode]
+        else []
     else []
   in
   match def.CF.def_cat with
