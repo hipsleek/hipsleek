@@ -2520,14 +2520,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
       (* to be used for inferring phase constraints *)
       (* replacing each spec with new spec with phase numbering *)
 and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl -> proc_decl -> bool) =
-  let rec helper b lst = 
+  let rec helper tot_r lst = 
     match lst with
-      | [] -> b (*()*)
+      | [] -> tot_r (*()*)
       | p::ps ->
             let nres =
               try
-                let _ = (fn prog p) in
-                b
+                let cur_r = (fn prog p) in
+                tot_r && cur_r
               with _ -> false
             in
             helper nres ps
@@ -3215,7 +3215,7 @@ let check_prog iprog (prog : prog_decl) =
             (* Term.term_check_output Term.term_res_stk; *)
             b,Term.phase_num_infer_whole_scc prog scc 
           end
-        else false,prog
+        else true,prog
       in
       (* let _ = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
       let mutual_grp = ref scc in
@@ -3231,7 +3231,7 @@ let check_prog iprog (prog : prog_decl) =
         end
       ) in
       (* let _ = Debug.info_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in *)
-      let _ = if is_all_verified1 && is_all_verified2 then
+      let _ = if (* is_all_verified1 && *) is_all_verified2 then
         let _ = Infer.scc_rel_ass_stk # reverse in
         let _ = proc_mutual_scc_shape_infer iprog prog scc in
         let _ = Infer.rel_ass_stk # reset in
