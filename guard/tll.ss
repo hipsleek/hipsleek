@@ -21,7 +21,7 @@ data node{
          * right::GG<l,t> & right!=null
    inv true;
 
-lemma self::tll<a,b> -> self::GG<a,b>;
+//lemma self::tll<a,b> -> self::GG<a,b>;
 
 // initializes the linked list fields
 
@@ -50,6 +50,20 @@ infer [H,G] requires H(x,t) ensures G(x,res,t);
 
 /*
 # tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+
+Why isn't predicate reuse working at all?
+
+[ H(x,t) ::= HP_1123(x),
+ G(x,res,t) ::= 
+ x::node&lt;DP1,right,t&gt;@M&right=null & res=x
+ or x::node&lt;left,right,DP&gt;@M * G(left,res,l) * G(right,l,t)&right!=null
+ ,
+ HP_1123(x) ::= 
+ x::node&lt;left,right,DP&gt;@M * HP_1123(left) * HP_1123(right)&right!=null
+ or x::node&lt;DP1,right,DP&gt;@M&right=null
+ ]
+
+
 # tll.ss 
 
 hip produced:

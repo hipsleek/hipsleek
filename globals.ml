@@ -785,6 +785,7 @@ let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
 
 let infer_mem = ref false
+let infer_raw_flag = ref true
 
 let pa = ref false
 

@@ -1902,24 +1902,26 @@ let simplify_tp (f:CP.formula):CP.formula =
   Debug.no_1 "TP.simplify" pr pr simplify f
 	  
 let rec simplify_raw (f: CP.formula) = 
-  let is_bag_cnt = is_bag_constraint f in
-  if is_bag_cnt then
-    let _,new_f = trans_dnf f in
-    let disjs = list_of_disjs new_f in
-    let disjs = List.map (fun disj -> 
-        let rels = CP.get_RelForm disj in
-        let disj = CP.drop_rel_formula disj in
-        let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
-        let others = simplify_raw (conj_of_list others no_pos) in
-        conj_of_list ([others]@bag_cnts@rels) no_pos
-      ) disjs in
-    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  if not(!Globals.infer_raw_flag) then simplify f
   else
-    let rels = CP.get_RelForm f in
-    let ids = List.concat (List.map get_rel_id_list rels) in
-    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-    let res_memo = simplify f_memo in
-    CP.restore_memo_formula subs bvars res_memo
+    let is_bag_cnt = is_bag_constraint f in
+    if is_bag_cnt then
+      let _,new_f = trans_dnf f in
+      let disjs = list_of_disjs new_f in
+      let disjs = List.map (fun disj -> 
+          let rels = CP.get_RelForm disj in
+          let disj = CP.drop_rel_formula disj in
+          let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+          let others = simplify_raw (conj_of_list others no_pos) in
+          conj_of_list ([others]@bag_cnts@rels) no_pos
+      ) disjs in
+      List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+    else
+      let rels = CP.get_RelForm f in
+      let ids = List.concat (List.map get_rel_id_list rels) in
+      let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+      let res_memo = simplify f_memo in
+      CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
