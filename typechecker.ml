@@ -2194,6 +2194,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           (* let pr = if !Globals.print_html then Cprinter.string_of_html_hprel_short *)
                           let pr_len x = string_of_int (List.length x) in
                           print_endline (pr (ras1));
+                          print_endline "*************************************";
                           if !Globals.testing_flag then print_endline "<rstop>*************************************"
                           end
                         end;
@@ -3199,7 +3200,7 @@ let check_prog iprog (prog : prog_decl) =
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 
-      let is_all_verified0, prog =
+      let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
         if not(skip_pre_phase) && (stk_scc_with_phases # mem call_order) then 
@@ -3216,9 +3217,10 @@ let check_prog iprog (prog : prog_decl) =
           end
         else false,prog
       in
+      (* let _ = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *)
       let mutual_grp = ref scc in
       Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-      let is_all_verified = proc_mutual_scc prog scc (fun prog proc ->
+      let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc ->
         begin 
           mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
           Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
@@ -3228,7 +3230,8 @@ let check_prog iprog (prog : prog_decl) =
           r
         end
       ) in
-      let _ = if is_all_verified then
+      (* let _ = Debug.info_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in *)
+      let _ = if is_all_verified1 && is_all_verified2 then
         let _ = Infer.scc_rel_ass_stk # reverse in
         let _ = proc_mutual_scc_shape_infer iprog prog scc in
         let _ = Infer.rel_ass_stk # reset in
