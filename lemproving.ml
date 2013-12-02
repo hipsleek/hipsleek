@@ -337,4 +337,9 @@ let sa_verify_lemma cprog (lem:C.coercion_decl) =
     | I.Right -> check_right_coercion lem cprog
     | I.Equiv -> failwith "Equiv not handled in sa_verify_lemma"
 
+let sa_verify_lemma cprog (lem: C.coercion_decl) =
+  let pr = Cprinter.string_of_coercion in
+  Debug.no_1 "sa_verify_lemma" pr pr_none 
+      (fun _ -> sa_verify_lemma cprog lem) lem
+
 

@@ -1591,7 +1591,6 @@ chinwn@loris-7:~/hg/sl_default/guard$ ../hip ll-append5.ss --pred-en-equiv --pre
  HP_995(n) ::= emp&n=null]
 ==========================================================
 ../hip tll.ss --pred-en-split
-
 rocedure set_right$node~node SUCCESS.
 
 Context of Verification Failure: 1 File "tll.ss",Line:32,Col:36
@@ -1600,6 +1599,21 @@ Last Proving Location: 1 File "",Line:0,Col:0
 ERROR: at _0:0_0:0 
 Message: should not have prime vars
 ==========================================================
+# tll.ss
+
+./hip tll.ss --pred-en-useless-para --pred-en-dangling --pred-en-equiv -dre "check.*coercion"
+
+Why isn't -dre "check_.*coercion" below called?
+
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]==> self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+check_right_coercion@3
+check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]<== self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
 ==========================================================
 ==========================================================
 ==========================================================
