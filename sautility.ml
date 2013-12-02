@@ -4336,14 +4336,19 @@ let closer_ranking prog unk_hps fs root_cand args0=
       @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
     let unk_svl = List.fold_left (fun r (hp,eargs,_) -> if CP.mem_svl hp unk_hps then r@(List.fold_left List.append [] (List.map CP.afv eargs)) else r
     ) [] hrs in
-    let def_ptrs = CP.remove_dups_svl (CF.find_close (CP.remove_dups_svl (def_vs@unk_svl)) (eqs)) in
+    let def_ptrs = CP.remove_dups_svl (CF.find_close (CP.remove_dups_svl (def_vs@unk_svl@eqNulls)) (eqs)) in
     (hds, hvs, def_ptrs, eqNulls)
   in
   let fs_config4 = List.map build_conf fs in
   let fs_config,ls_eqNulls = List.fold_left (fun (r1,r2) (a,b,c,d) -> (r1@[(a,b,c)],r2@[d])) ([],[]) fs_config4 in
-  let exam_conf r (hds,hvs,def_ptrs)=
+  let exam_conf r (hds,hvs,def_ptrs0)=
+    let def_ptrs = CP.remove_dups_svl (def_ptrs0@(List.filter (fun sv -> not (CP.eq_spec_var sv r)) args0)) in
     let closed_args = List.filter (CP.is_node_typ) (look_up_closed_ptr_args prog hds hvs [r]) in
+    let _ = DD.ninfo_hprint (add_str "        closed_args:" !CP.print_svl) closed_args no_pos in
+    let _ = DD.ninfo_hprint (add_str "        r:" !CP.print_sv) r no_pos in
+    let _ = DD.ninfo_hprint (add_str "        def_ptrs:" !CP.print_svl) def_ptrs no_pos in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
+    let _ = DD.ninfo_hprint (add_str "        undef_args:" !CP.print_svl) undef_args no_pos in
     undef_args = []
   in
   (* let args = r::(List.filter (fun sv -> not (CP.eq_spec_var r sv)) args0) in *)

@@ -16,10 +16,10 @@ data node{
 	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 
- GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
-   or self::node<left,right,DP> * left::GG<rr,l> 
-         * right::GG<l,t> & right!=null
-   inv true;
+ /* GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self */
+ /*   or self::node<left,right,DP> * left::GG<rr,l>  */
+ /*         * right::GG<l,t> & right!=null */
+ /*   inv true; */
 
 //lemma self::tll<a,b> -> self::GG<a,b>;
 

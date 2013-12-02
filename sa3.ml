@@ -1753,14 +1753,17 @@ let collect_sel_hpdef hpdefs sel_hps unk_hps m=
   Debug.no_3 "sa3.collect_sel_hpdef" pr1 pr2 pr3 pr1
       (fun _ _ _ -> collect_sel_hpdef_x hpdefs sel_hps unk_hps m) hpdefs sel_hps m
 
-let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* CF.h_formula list)=
+let match_one_hp_views_x iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* CF.h_formula list)=
   let helper args r paras vdcl=
+    let _ = DD.ninfo_hprint (add_str "        vdcl.CA.view_name:" pr_id) vdcl.CA.view_name no_pos in
     if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
       let f1 = CF.formula_of_heap def.CF.def_lhs no_pos in
       let self_sv = CP.SpecVar (CP.type_of_spec_var r ,self, Unprimed) in
       let sst = List.combine (r::paras) (self_sv::vdcl.CA.view_vars) in
+      let _ = DD.ninfo_hprint (add_str "        sst:" (pr_list (pr_pair
+          !CP.print_sv !CP.print_sv))) sst no_pos in
       (*type comparitive*)
-      if List.exists (fun (sv1, sv2) -> (CP.name_of_spec_var sv1) != (CP.name_of_spec_var sv2)) sst then [] else
+      if List.exists (fun (sv1, sv2) -> not (cmp_typ (CP.type_of_spec_var sv1) (CP.type_of_spec_var sv2))) sst then [] else
         let f1 = CF.subst sst f1 in
         let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
           (vdcl.CA.view_vars) no_pos in
@@ -1771,13 +1774,27 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* C
         else []
     else []
   in
+  let rec map_ret_first fnc vdcls=
+    match vdcls with
+      | [] -> []
+      | v::rest -> let eq_views = fnc v in
+        if eq_views = [] then map_ret_first fnc rest else eq_views
+  in
   match def.CF.def_cat with
     | CP.HPRelDefn (hp, r, paras) -> begin
+        let _ = DD.ninfo_hprint (add_str "        hp:" !CP.print_sv) hp no_pos in
         let args = r::paras in
-        let eq_views = List.concat (List.map (helper args r paras) vdcls) in
+        let eq_views = map_ret_first (helper args r paras) vdcls in
         (hp,eq_views)
       end
     | _ -> report_error no_pos "SA3.match_one_hp_views: support HPRELDEF only"
+
+let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def=
+  let pr1 = Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list Cprinter.prtt_string_of_h_formula in
+  Debug.no_1 "match_one_hp_views" pr1 (pr_pair !CP.print_sv pr2)
+      (fun _ -> match_one_hp_views_x iprog prog vdcls def)
+      def
 
 let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=

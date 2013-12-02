@@ -131,6 +131,32 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let rec cmp_typ t1 t2=
+  match t1,t2 with
+    | UNK, UNK
+    | AnnT, AnnT
+    | Bool, Bool
+    | Float, Float
+    | Int, Int
+    | INFInt, INFInt
+    | NUM, NUM
+    | Void, Void -> true
+    | TVar i1, TVar i2 -> i1=i2
+    | BagT t11, BagT t22
+    | List t11, List t22 -> cmp_typ t11 t22
+    | Named s1, Named s2 -> String.compare s1 s2 = 0
+    | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
+    | RelT lst1, RelT lst2 ->(
+          try
+            List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
+          with _ -> false
+      )
+    | HpT, HpT
+    | Tree_sh, Tree_sh
+    | Bptyp, Bptyp -> true
+    | Pointer t11, Pointer t22 -> cmp_typ t11 t22
+    | _ -> false
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
@@ -917,7 +943,7 @@ let print_type = ref false
 
 let print_en_tidy = ref true
 
-let print_html = ref true
+let print_html = ref false
 
 (* let enable_sat_statistics = ref false *)
 
