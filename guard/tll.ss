@@ -21,7 +21,7 @@ data node{
  /*         * right::GG<l,t> & right!=null */
  /*   inv true; */
 
-//lemma self::tll<a,b> -> self::GG<a,b>;
+//lemma self::tll<a,b> <-> self::GG<a,b>;
 
 // initializes the linked list fields
 

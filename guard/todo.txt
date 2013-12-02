@@ -1558,6 +1558,27 @@ Why isn't predicate reuse working at all?
  or x::node&lt;DP1,right,DP&gt;@M&right=null
  ]
 ==========================================================
+../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode 
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x1,x) ::= 
+ x1::node<val,next>@M * G2(next,n)&x=null
+ or emp&x1=null & x=null
+ ]
+
+It seems that only the syntactic equiv mode is working.
+
+However, I wonder what command will split G2(x1,x)?
+Adding: --pred-en-split results in incorrect splitting
+with unknown predicates. This seems to be buggy!
+
+!!!  pred_split (syn):G2([next_54_1022,n_1031]) :==  HP_1062(next_54_1022) * HP_1063(n_1031)
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::= HP_1062(next) * HP_1063(n)]
+*************************************
 ==========================================================
 ==========================================================
 ==========================================================
