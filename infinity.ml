@@ -1434,3 +1434,38 @@ let quantifier_elim (f: CP.formula): CP.formula list =
 let quantifier_elim (f: CP.formula): CP.formula list = 
 Debug.no_1 "elim_inf_exists" string_of_pure_formula (pr_list string_of_pure_formula)
 quantifier_elim f
+
+let rec elim_forall_exists (f: CP.formula) : CP.formula = 
+  let helper qid qf = 
+    let inner_f = elim_forall_exists qf in 
+    let ins_lst = gen_instantiations [qid] [] in
+    let l = List.map (fun pf -> arith_simplify 199 (mkAnd pf inner_f no_pos)) ins_lst in
+    conj_of_list l no_pos in
+  let helper_ex qid qf = 
+    let inner_f = elim_forall_exists qf in 
+    let ins_lst = gen_instantiations [qid] [] in
+    let l = List.map (fun pf -> arith_simplify 200 (mkAnd pf inner_f no_pos)) ins_lst in
+    disj_of_list l no_pos in
+    match f with
+      | CP.BForm (b,fl) -> f
+      | CP.And (pf1,pf2,pos) -> 
+            let pf1 = elim_forall pf1 in
+            let pf2 = elim_forall pf2 in
+            CP.And(pf1,pf2,pos) 
+      | CP.AndList pflst -> f
+      | CP.Or (pf1,pf2,fl,pos) -> 
+            let pf1 = elim_forall pf1 in
+            let pf2 = elim_forall pf2 in
+            CP.Or(pf1,pf2,fl,pos) 
+      | CP.Not (nf,fl,pos) -> 
+            let nf = elim_forall nf
+            in CP.Not(nf,fl,pos)
+      | CP.Forall (qid, qf,fl,pos) -> 
+            let insf = helper qid qf in 
+            CP.And(f,insf,pos)
+      | CP.Exists (qid, qf,fl,pos) -> 
+            let insf = helper_ex qid qf in
+           CP.Or(f,insf,None,pos)
+
+let elim_forall_exists (f: CP.formula) : CP.formula = 
+Debug.no_1 "elim_forall_exists_inf" string_of_pure_formula string_of_pure_formula elim_forall_exists f

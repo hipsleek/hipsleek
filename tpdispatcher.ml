@@ -1647,7 +1647,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let flag = tp_is_sat_no_cache f sat_no in 
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then  
-    let exists_inf f = 
+  (*  let exists_inf f = 
       let alist  = Infinity.quantifier_elim f in
        let rec aux al = match al with
          | [] -> false
@@ -1657,7 +1657,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
        in aux alist in
     let forall_lst = Infinity.get_inst_forall f in 
     let forall_lst = f::forall_lst in 
-    let f = List.exists (fun c -> exists_inf c) forall_lst in f
+    let f = List.exists (fun c -> exists_inf c) forall_lst in f*)
+    let expand_quantifier = Infinity.elim_forall_exists in
+    tp_is_sat_no_cache (expand_quantifier f) sat_no
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
     tp_is_sat_no_cache (Coqinf.check_sat_inf_formula f) sat_no
   else flag 
@@ -2193,7 +2195,10 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* (\* add invariant constraint @M<:v<:@A for each annotation var *\) *)
   (* let ante = CP.add_ann_constraints imm_vrs ante in *)
   (* Handle Infinity Constraints *)
-  let ante,conseq  = if !Globals.allow_inf 
+  let ante,conseq  = if !Globals.allow_inf (*&& !Globals.allow_inf_qe_coq
+    then let a,c = (Infinity.convert_inf_to_var (Cpure.arith_simplify 333 ante)),
+      (Infinity.convert_inf_to_var (Cpure.arith_simplify 332 conseq)) in a,c
+    else if !Globals.allow_inf*)
     then let a,c = Infinity.normalize_inf_formula_imply ante conseq
          in let a = Infinity.fixed_point_pai_num a in a,c
   else ante,conseq in
@@ -2378,7 +2383,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then
-    let exists_inf f = 
+(* the following is not complete as it does not expand the conseq quantifiers over PAInf *)
+    (* let exists_inf f = 
       let alist  = Infinity.quantifier_elim f in
        let rec aux al = match al with
          | [] -> false
@@ -2389,8 +2395,15 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     let forall_lst = Infinity.get_inst_forall ante in 
     let forall_lst = ante::forall_lst in
     let f = List.for_all (fun c -> exists_inf c) forall_lst in f
+    let expand_quantifier f  = 
+      let forall_lst = Infinity.get_inst_forall f in
+      let forall_lst = ante::forall_lst in
+      conj_of_list 
+        (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in*)
+    let expand_quantifier = Infinity.elim_forall_exists in
+    tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
-    tp_imply_no_cache (Coqinf.check_sat_inf_formula ante) (Coqinf.coqpure_to_cpure (Coqinf.cpure_to_coqpure conseq)) imp_no timeout process
+    tp_imply_no_cache (Coqinf.check_sat_inf_formula ante) (Coqinf.check_sat_inf_formula conseq) imp_no timeout process
   else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
