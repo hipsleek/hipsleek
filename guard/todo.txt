@@ -1579,8 +1579,26 @@ with unknown predicates. This seems to be buggy!
 [ H1(x) ::=x::ll<>@M,
  G2(x,x1) ::= HP_1062(next) * HP_1063(n)]
 *************************************
+
+chinwn@loris-7:~/hg/sl_default/guard$ ../hip ll-append5.ss --pred-en-equiv --pred-en-split
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::=x::G2<x1>@M,
+ HP_994(self) ::= 
+ self::node<val,next>@M * HP_994(next)
+ or emp&self=null
+ ,
+ HP_995(n) ::= emp&n=null]
 ==========================================================
-==========================================================
+../hip tll.ss --pred-en-split
+
+rocedure set_right$node~node SUCCESS.
+
+Context of Verification Failure: 1 File "tll.ss",Line:32,Col:36
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at _0:0_0:0 
+Message: should not have prime vars
 ==========================================================
 ==========================================================
 ==========================================================
