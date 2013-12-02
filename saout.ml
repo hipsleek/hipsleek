@@ -46,7 +46,9 @@ let norm_free_svl f0 args=
           let nf0 = if ss = [] then (CF.Base fb) else
             CF.subst ss (CF.Base fb)
           in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
           let nf = CF.add_quantifiers fr_svl1 nf0 in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
           let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = TI.fresh_proc_var_kind ls t in
               ls@[(sv,vk)]

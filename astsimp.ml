@@ -8320,6 +8320,11 @@ let rec rev_trans_formula f = match f with
 					IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
 					IF.formula_or_pos = b.CF.formula_or_pos;}
 
+let rev_trans_formula f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = Iprinter.string_of_formula in
+  Debug.no_1 "rev_trans_formula" pr1 pr2
+      (fun _ -> rev_trans_formula f) f
 
 let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
 (*CP.rel_cat * h_formula * formula*)

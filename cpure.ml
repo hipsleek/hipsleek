@@ -3609,6 +3609,24 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
         (qv :: qvars, new_f)
   | _ -> ([], f0)
 
+and split_ex_quantifiers_ext (f0 : formula) : (spec_var list * formula) = match f0 with
+  | Exists (qv, qf, lbl, pos) ->
+        let qvars, new_f = split_ex_quantifiers qf in
+        (qv :: qvars, new_f)
+  | And (p1, p2, pos) -> let svl1 = fv p1 in
+    let svl2 = fv p2 in
+    let qvars1, new_f1 = split_ex_quantifiers_ext p1 in
+    let qvars2, new_f2 = split_ex_quantifiers_ext p2 in
+    if intersect_svl qvars1 svl2 = [] && intersect_svl qvars2 svl1 = [] then
+    (qvars1@qvars2, mkAnd new_f1 new_f2 pos)
+    else ([], f0)
+  | _ -> ([], f0)
+
+and add_quantifiers qvars f0=
+  match qvars with
+    | [] -> f0
+    | v::rest ->  add_quantifiers rest (Exists (v, f0, None, pos_of_formula f0))
+
 and split_forall_quantifiers (f0 : formula) = match f0 with
   | Forall (qv, qf, lbl, pos) ->
         let qvars, new_f,_,_ = split_forall_quantifiers qf in

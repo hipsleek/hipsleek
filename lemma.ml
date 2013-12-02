@@ -395,8 +395,14 @@ let do_unfold_view_hf cprog hf0 =
   let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
       let in_r = List.map (fun (hf1, p1) ->
           let nh = aux_fnc hf1 hf2 in
-          let np = MCP.merge_mems p1 p2 true in
-          (nh, np)
+          let _ = Debug.info_hprint (add_str "        p1:" !CP.print_formula) (MCP.pure_of_mix p1) no_pos in
+          let _ = Debug.info_hprint (add_str "        p2:" !CP.print_formula) (MCP.pure_of_mix p2) no_pos in
+          let qvars1, bare1 = CP.split_ex_quantifiers (MCP.pure_of_mix p1) in
+          let qvars2, bare2 = CP.split_ex_quantifiers (MCP.pure_of_mix p2) in
+          let _ = Debug.info_hprint (add_str "        bare1:" !CP.print_formula) bare1 no_pos in
+          let _ = Debug.info_hprint (add_str "        bare2:" !CP.print_formula) bare2 no_pos in
+          let np = CP.mkAnd bare1 bare2 (CP.pos_of_formula bare1) in
+          (nh, MCP.mix_of_pure (CP.add_quantifiers (CP.remove_dups_svl (qvars1@qvars2)) np))
       ) ls1 in
       r@in_r
   ) [] ls2 in
@@ -487,9 +493,15 @@ let do_unfold_view_x cprog (f0: CF.formula) =
   match f with
     | CF.Base fb ->
           let ls_hf_pure = do_unfold_view_hf cprog fb.CF.formula_base_heap in
-          let fs = List.map (fun (hf, p) -> CF.Base {fb with CF.formula_base_heap = hf;
-              CF.formula_base_pure = MCP.merge_mems p fb.CF.formula_base_pure true;
-          }) ls_hf_pure in
+          let fs = List.map (fun (hf, p) ->
+              let _ = Debug.ninfo_hprint (add_str "        p:" !CP.print_formula) (MCP.pure_of_mix p) no_pos in
+              let qvars0, bare_f = CP.split_ex_quantifiers_ext (CP.elim_exists (MCP.pure_of_mix  p)) in
+               let _ = Debug.ninfo_hprint (add_str "        bare_f:" !CP.print_formula) bare_f no_pos in
+              let f = CF.Base {fb with CF.formula_base_heap = hf;
+                  CF.formula_base_pure = MCP.merge_mems (MCP.mix_of_pure bare_f) fb.CF.formula_base_pure true;
+              }
+              in CF.add_quantifiers qvars0 f
+          ) ls_hf_pure in
           CF.disj_of_list fs fb.CF.formula_base_pos
     | CF.Exists _ ->
           let qvars, base1 = CF.split_quantifiers f in
