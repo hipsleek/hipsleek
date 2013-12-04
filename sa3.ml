@@ -2695,10 +2695,13 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   (***********END INTERNAL***************)
-  let post_hps, dang_hps, link_hps = List.fold_left (fun (ls1,ls2,ls3) is ->
-      (ls1@ is.CF.is_post_hps , CP.intersect_svl ls2  (List.map fst is.CF.is_dang_hpargs),
+  let post_hps, dang_hps, link_hps = if ls_is = [] then ([],[],[])
+  else
+    let fst_is =List.hd ls_is in
+    List.fold_left (fun (ls1,ls2,ls3) is ->
+      (ls1@ is.CF.is_post_hps , CP.intersect_svl ls2 (List.map fst is.CF.is_dang_hpargs),
        CP.intersect_svl ls3  (List.map fst is.CF.is_link_hpargs)))
-    ([],[],[])ls_is
+    (fst_is.CF.is_post_hps,(List.map fst fst_is.CF.is_dang_hpargs),(List.map fst fst_is.CF.is_link_hpargs)) (List.tl ls_is)
   in
   let unk_hps = if !Globals.pred_elim_dangling then dang_hps else link_hps in
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->

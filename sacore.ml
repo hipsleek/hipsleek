@@ -2859,7 +2859,7 @@ let pred_split_cands_x prog unk_hps hp_defs=
       CP.eq_spec_var hp2 hp1
   ) n_cands in
       if to_split then
-        (r@n_cands, non_split_hps)
+        (r@n_cands1, non_split_hps)
       else
         (r, non_split_hps@[hp])
   ) ([],[]) hp_defs

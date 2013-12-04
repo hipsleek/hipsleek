@@ -1545,6 +1545,8 @@ Entailing lemma lem_16: Valid.
    inv true;
 ==========================================================
 # tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+- semantics: FIXED
+- syn: 
 
 Why isn't predicate reuse working at all?
 
@@ -1558,7 +1560,7 @@ Why isn't predicate reuse working at all?
  or x::node&lt;DP1,right,DP&gt;@M&right=null
  ]
 ==========================================================
-../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode 
+../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode FIXED
 
 [ H1(x) ::=x::ll<>@M,
  G2(x1,x) ::= 
@@ -1590,7 +1592,7 @@ chinwn@loris-7:~/hg/sl_default/guard$ ../hip ll-append5.ss --pred-en-equiv --pre
  ,
  HP_995(n) ::= emp&n=null]
 ==========================================================
-../hip tll.ss --pred-en-split
+../hip tll.ss --pred-en-split: FIXED
 rocedure set_right$node~node SUCCESS.
 
 Context of Verification Failure: 1 File "tll.ss",Line:32,Col:36
