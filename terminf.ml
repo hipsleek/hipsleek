@@ -214,7 +214,7 @@ let collect_used_data_struc_formula (sf: CF.struc_formula) : ident list =
 (* TermInf: Add rank constraints into view and struc_formula *)
 type rank_type =
   | VIEW of (string * CP.spec_var list * int)  (* view name * view's args * rel_id *)
-  | PRE of C.typed_ident list
+  | PRE of (string * C.typed_ident list) (* proc name * proc's args *)
   | POST
 
 let rec add_rank_constraint_view (vdef: C.view_decl): C.view_decl =
@@ -295,17 +295,19 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
             CP.rel_id = fresh_rrel_id (); 
             CP.rank_id = rankrel_id;
             CP.rank_args = rrel_args_r;
-            CP.rrel_raw = None;   
-          } in
+            CP.rrel_raw = None; } in
           let npf = MCP.memoise_add_pure_N pf (CP.mkRankConstraint rel_id rankrel_id 
             (List.map CP.mkRArg_var view_args) (Some rrel_raw)) in
           let npf = MCP.memoise_add_pure_N npf (CP.join_conjunctions rrels) in
           nhf_r, npf, rrel_ivars_r @ rrel_base_ivars_r
-    | PRE proc_args ->
+    | PRE (proc_name, proc_args) ->
         let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
-        (* Add Term[r] for PRE based on the args of proc *)
-        let npf = MCP.memoise_add_pure_N pf (CP.mkPure (CP.mkLexVar 
-          TermR [] (List.map (fun r -> CP.mkVar r no_pos) rankrel_ivars) no_pos )) in
+        (* Add r = RR(...) & Term[r] for PRE based on the args of proc *)
+        let r = view_rank_sv proc_name in
+        let rrel = CP.mkRankConstraint (fresh_rrel_id ()) r
+          (List.map CP.mkRArg_var rankrel_ivars) None in
+        let lv = CP.mkPure (CP.mkLexVar TermR [] [CP.mkVar r no_pos] no_pos) in
+        let npf = MCP.memoise_add_pure_N pf (CP.mkAnd rrel lv no_pos) in
         nhf, npf, rankrel_ivars
     | POST -> 
         let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
@@ -609,4 +611,23 @@ let collect_and_solve_rrel_slk ids rrel_store prog =
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   print_result n_vdefs
+
+let scc_rrel_stk: rrel Gen.stack_pr = new Gen.stack_pr 
+  !CF.print_rrel (==)
+
+let collect_rrel_hip prog (ctx: CF.list_failesc_context): unit =
+  let rrels = collect_rrel_list_failesc_context ctx in
+  scc_rrel_stk # push_list rrels
+
+let collect_and_solve_rrel_scc prog =
+  let rrels = scc_rrel_stk # get_stk in
+  let _ = scc_rrel_stk # reset in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let n_vdefs = List.map (fun vdef -> 
+    plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
+  let _ = print_collected_rrel (List.map (fun r -> 
+    (r, subst_rankrel_sol_mix_formula raw_subst sol_for_rrel r.rrel_ctx)) rrels) in
+  let _ = if !Globals.ti_gen_slk then gen_slk_file prog rrels else () in
+  List.iter (fun v -> Hashtbl.add prog.C.prog_inf_view_decls v.C.view_name v) n_vdefs
+
 

@@ -1674,11 +1674,11 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
     let rel_rhs = List.concat rel_rhs_ls in
     let other_rhs = List.concat other_rhs_ls in
     let pr = Cprinter.string_of_pure_formula_list in
-    DD.tinfo_hprint (add_str "rel_rhs" pr) rel_rhs pos; 
-     DD.tinfo_hprint (add_str "other_rhs" pr) other_rhs pos; 
+      DD.tinfo_hprint (add_str "rel_rhs" pr) rel_rhs pos; 
+      DD.tinfo_hprint (add_str "other_rhs" pr) other_rhs pos; 
     if rel_rhs==[] then (
         DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
-        DD.tinfo_pprint "no relation in rhs" pos; 
+        DD.tinfo_pprint "no relation in rhs" pos;
         (estate,lhs_mix,rhs_mix,None,[])
     )
     else 
@@ -1864,10 +1864,10 @@ RHS pure R(rs,n) & x=null
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
-  let pr2 = !print_entail_state_short in 
+  let pr2 = !print_entail_state(*_short*) in 
   let pr_rel_ass = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
   let pr_neg_lhs = pr_option (pr_pair pr2 !CP.print_formula) in
-  let pr2 (es,l,r,p,a) = 
+  let pr2 (es,l,r,p,a) =
     pr_penta pr1 pr1 (pr_list CP.print_lhs_rhs) pr_neg_lhs pr_rel_ass (l,r,es.es_infer_rel,p,a) in
   Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 

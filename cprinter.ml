@@ -727,6 +727,7 @@ let rec pr_formula_exp (e:P.exp) =
 			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  (")"))
+    | P.Template t -> pr_formula_exp (P.exp_of_template t)
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()
@@ -3789,6 +3790,7 @@ let rec html_of_formula_exp e =
     | P.Func (a, i, l) -> (html_of_spec_var a) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ ")"
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 	| P.InfConst _ -> Error.report_no_pattern ()
+  | P.Template t -> html_of_formula_exp (P.exp_of_template t)
 
 let rec html_of_pure_b_formula f = match f with
     | P.XPure _ -> "<b> XPURE </b>"

@@ -79,6 +79,7 @@ and cvc3_of_exp a = match a with
   | CP.Level _ -> failwith ("level should not be here in cvc3")
   | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> cvc3_of_exp (CP.exp_of_template t)
   
 and cvc3_of_b_formula b =
   let (pf,_) = b in

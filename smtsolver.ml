@@ -137,6 +137,7 @@ let rec smt_of_exp a =
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
 let rec smt_of_b_formula b =
   let (pf,_) = b in

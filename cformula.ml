@@ -13278,6 +13278,7 @@ let elim_prm e =
     | CP.Tsconst _
     | CP.FConst _ 
     | CP.Func _
+    | CP.Template _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Add _ 

@@ -1307,7 +1307,7 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
   | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])
   | P.List _ | P.ListCons _ | P.ListHead _ | P.ListTail _ -> ([], [])
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
-  | P.ArrayAt _ | P.Func _ -> ([], [])
+  | P.ArrayAt _ | P.Func _ | P.Template _ -> ([], [])
 
 and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
   let pr1 = !P.print_formula_exp in

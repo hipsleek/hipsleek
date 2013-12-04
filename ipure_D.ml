@@ -134,6 +134,15 @@ and exp =
   | ListReverse of (exp * loc)
   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *)
   | Func of (ident * (exp list) * loc)
+  | Template of template
+
+and template = {
+  (* ax + by + cz + d *)
+  templ_id: int;
+  templ_args: exp list; (* [x, y, z] *)
+  templ_unks: spec_var list; (* [a, b, c, d] *)
+  templ_pos: loc;
+}
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool

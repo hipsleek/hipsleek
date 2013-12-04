@@ -675,8 +675,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
 							else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
-                    (* TermInf: Collecting ALL ranking constraints and solving them here *)
-                    let _ = if !en_term_inf then TI.collect_and_solve_rrel_hip prog res_ctx else () in
+                    (* TermInf: Collecting ALL ranking constraints 
+                     * and solving them later per SCC group *)
+                    let _ = if !en_term_inf then TI.collect_rrel_hip prog res_ctx else () in
                     (*Clear es_pure before check_post*)
 	                let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
 	    	    let res_ctx = CF.list_failesc_to_partial res_ctx in
@@ -3110,6 +3111,8 @@ let check_prog iprog (prog : prog_decl) =
       let _ = Infer.scc_rel_ass_stk # reverse in
       let _ = proc_mutual_scc_shape_infer iprog prog scc in
       let _ = Infer.scc_rel_ass_stk # reset in
+
+      let _ = TI.collect_and_solve_rrel_scc prog in
       prog
   ) prog proc_scc 
   in 

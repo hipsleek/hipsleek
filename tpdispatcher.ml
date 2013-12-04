@@ -631,6 +631,7 @@ let rec is_array_exp e = match e with
                       | _ -> is_array_exp exp) (Some false) el
     )
   | CP.ArrayAt (_,_,_) -> Some true
+  | CP.Template _ -> Some false
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
@@ -665,7 +666,7 @@ let rec is_list_exp e = match e with
                       | _ -> is_list_exp exp) (Some false) el
     )
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
-  | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
+  | CP.ArrayAt (_,_,_) | CP.Func _ | CP.Template _ -> Some false
   | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false

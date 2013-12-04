@@ -554,6 +554,11 @@ and gather_type_info_exp_x a0 tlist et =
       let t = I.int_type in
       let (n_tlist,n_typ)= must_unify_expect t et tlist pos in
       (n_tlist,n_typ)
+  | IP.Template tp ->
+      let t = I.int_type in
+      let pos = tp.IP.templ_pos in
+      let (n_tlist,n_typ) = must_unify_expect t et tlist pos in
+      (n_tlist,n_typ)
   | IP.ArrayAt ((a,p),idx,pos) ->
       let dim = List.length idx in
       let new_et = Array (et, dim) in

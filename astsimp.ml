@@ -2361,7 +2361,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* TermInf: Add RankRel into Specs *)
       let final_static_specs_list = 
         if !en_term_inf && not is_primitive then
-          TI.add_rank_constraint_struc_formula final_static_specs_list (TI.PRE args)
+          TI.add_rank_constraint_struc_formula final_static_specs_list (TI.PRE  (proc.I.proc_name, args))
         else final_static_specs_list
       in
       (** An Hoa : print out final_static_specs_list for inspection **)
@@ -5594,6 +5594,13 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Func (id, es, pos) ->
           let es = List.map (fun e -> trans_pure_exp e tlist) es in
           CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
+    | IP.Template t ->
+        let pos = t.IP.templ_pos in
+        CP.Template {
+          CP.templ_id = t.IP.templ_id;
+          CP.templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args;
+          CP.templ_unks = List.map (fun v -> trans_var v tlist pos) t.IP.templ_unks;
+          CP.templ_pos = pos; }
     | IP.ArrayAt ((a, p), ind, pos) ->
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
@@ -7902,6 +7909,12 @@ let rec rev_trans_exp e = match e with
   | CP.ListReverse (e,p)  -> IP.ListReverse (rev_trans_exp e, p)
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
+  | CP.Template t -> IP.Template {
+      IP.templ_id = t.CP.templ_id;
+      IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
+      IP.templ_unks = List.map rev_trans_spec_var t.CP.templ_unks;
+      IP.templ_pos = t.CP.templ_pos;
+    } 
   | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
 
 let rec rev_trans_pf f = match f with

@@ -142,6 +142,8 @@ let rec isabelle_of_exp e0 = match e0 with
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
 	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
     | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> isabelle_of_exp (CP.exp_of_template t)
+
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with
