@@ -887,47 +887,66 @@ module InfSolver =
     let e1n = norm_Exp e1 in
     let e2n = norm_Exp e2 in
     (match e1n with
-     | ZExp_Const c1 ->
+     | ZExp_Const c ->
        (match e2n with
-        | ZExp_Const c2 ->
-          (match c1 with
+        | ZExp_Const c0 ->
+          (match c with
            | ZE_Fin s ->
-             (match c2 with
+             (match c0 with
               | ZE_Fin s0 -> exp
               | x -> ZExp_Const x)
            | ZE_Inf ->
-             (match c2 with
+             (match c0 with
               | ZE_NegInf -> exp
               | _ -> ZExp_Const ZE_Inf)
            | ZE_NegInf ->
-             (match c2 with
+             (match c0 with
               | ZE_Inf -> exp
               | _ -> ZExp_Const ZE_NegInf))
-        | _ -> exp)
-     | _ -> exp)
+        | _ ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x)
+        | _ -> exp))
   | ZExp_Sub (e1, e2) ->
     let e1n = norm_Exp e1 in
     let e2n = norm_Exp e2 in
     (match e1n with
-     | ZExp_Const c1 ->
+     | ZExp_Const c ->
        (match e2n with
-        | ZExp_Const c2 ->
-          (match c1 with
+        | ZExp_Const c0 ->
+          (match c with
            | ZE_Fin s ->
-             (match c2 with
+             (match c0 with
               | ZE_Fin s0 -> exp
               | ZE_Inf -> ZExp_Const ZE_NegInf
               | ZE_NegInf -> ZExp_Const ZE_Inf)
            | ZE_Inf ->
-             (match c2 with
+             (match c0 with
               | ZE_Inf -> exp
               | _ -> ZExp_Const ZE_Inf)
            | ZE_NegInf ->
-             (match c2 with
+             (match c0 with
               | ZE_NegInf -> exp
               | _ -> ZExp_Const ZE_NegInf))
-        | _ -> exp)
-     | _ -> exp)
+        | _ ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match c with
+           | ZE_Fin s -> exp
+           | ZE_Inf -> ZExp_Const ZE_NegInf
+           | ZE_NegInf -> ZExp_Const ZE_Inf)
+        | _ -> exp))
   | ZExp_Mult (s, e) ->
     let ef = norm_Exp e in
     (match ef with
@@ -938,116 +957,260 @@ module InfSolver =
      | _ -> exp)
   | _ -> exp
   
+  (** val norm_inf_neginf :
+      coq_ZE coq_ZExp -> coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
+  
+  let rec norm_inf_neginf e norm_bf =
+    match e with
+    | ZExp_Add (a1, a2) ->
+      (match a1 with
+       | ZExp_Const c1 ->
+         (match a2 with
+          | ZExp_Const c2 ->
+            (match c1 with
+             | ZE_Fin s -> norm_bf
+             | ZE_Inf ->
+               (match c2 with
+                | ZE_NegInf -> ZBF_Const false
+                | _ -> norm_bf)
+             | ZE_NegInf ->
+               (match c2 with
+                | ZE_Inf -> ZBF_Const false
+                | _ -> norm_bf))
+          | _ -> norm_bf)
+       | _ -> norm_bf)
+    | ZExp_Sub (a1, a2) ->
+      (match a1 with
+       | ZExp_Const c1 ->
+         (match a2 with
+          | ZExp_Const c2 ->
+            (match c1 with
+             | ZE_Fin s -> norm_bf
+             | ZE_Inf ->
+               (match c2 with
+                | ZE_Inf -> ZBF_Const false
+                | _ -> norm_bf)
+             | ZE_NegInf ->
+               (match c2 with
+                | ZE_NegInf -> ZBF_Const false
+                | _ -> norm_bf))
+          | _ -> norm_bf)
+       | _ -> norm_bf)
+    | _ -> norm_bf
+  
   (** val norm_BF : coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
   
-  let rec norm_BF bf = match bf with
-  | ZBF_Const b -> bf
-  | ZBF_Lt (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s ->
-             (match c2 with
-              | ZE_Fin s0 -> bf
-              | ZE_Inf -> ZBF_Const true
-              | ZE_NegInf -> ZBF_Const false)
-           | ZE_Inf -> ZBF_Const false
-           | ZE_NegInf ->
-             (match c2 with
-              | ZE_NegInf -> ZBF_Const false
-              | _ -> ZBF_Const true))
-        | _ -> bf)
-     | _ -> bf)
-  | ZBF_Lte (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s ->
-             (match c2 with
-              | ZE_Fin s0 -> bf
-              | ZE_Inf -> ZBF_Const true
-              | ZE_NegInf -> ZBF_Const false)
-           | ZE_Inf ->
-             (match c2 with
-              | ZE_Inf -> ZBF_Const true
-              | _ -> ZBF_Const false)
-           | ZE_NegInf -> ZBF_Const true)
-        | _ -> bf)
-     | _ -> bf)
-  | ZBF_Gt (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s ->
-             (match c2 with
-              | ZE_Fin s0 -> bf
-              | ZE_Inf -> ZBF_Const false
-              | ZE_NegInf -> ZBF_Const true)
-           | ZE_Inf ->
-             (match c2 with
-              | ZE_Inf -> ZBF_Const false
-              | _ -> ZBF_Const true)
-           | ZE_NegInf -> ZBF_Const false)
-        | _ -> bf)
-     | _ -> bf)
-  | ZBF_Gte (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s ->
-             (match c2 with
-              | ZE_Fin s0 -> bf
-              | ZE_Inf -> ZBF_Const false
-              | ZE_NegInf -> ZBF_Const true)
-           | ZE_Inf -> ZBF_Const true
-           | ZE_NegInf ->
-             (match c2 with
-              | ZE_NegInf -> ZBF_Const true
-              | _ -> ZBF_Const false))
-        | _ -> bf)
-     | _ -> bf)
-  | ZBF_Eq (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s -> bf
-           | ZE_Inf ->
-             (match c2 with
-              | ZE_Inf -> ZBF_Const true
-              | _ -> bf)
-           | ZE_NegInf ->
-             (match c2 with
-              | ZE_NegInf -> ZBF_Const true
-              | _ -> bf))
-        | _ -> bf)
-     | _ -> bf)
-  | ZBF_Neq (e1, e2) ->
-    (match norm_Exp e1 with
-     | ZExp_Const c1 ->
-       (match norm_Exp e2 with
-        | ZExp_Const c2 ->
-          (match c1 with
-           | ZE_Fin s -> bf
-           | ZE_Inf ->
-             (match c2 with
-              | ZE_Inf -> ZBF_Const false
-              | _ -> bf)
-           | ZE_NegInf ->
-             (match c2 with
-              | ZE_NegInf -> ZBF_Const false
-              | _ -> bf))
-        | _ -> bf)
-     | _ -> bf)
+  let rec norm_BF bf =
+    let norm_bf =
+      match bf with
+      | ZBF_Const b -> bf
+      | ZBF_Lt (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | ZE_Inf -> ZBF_Const true
+                  | ZE_NegInf -> ZBF_Const false)
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const false
+                  | _ -> ZBF_Const true))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false)
+            | _ -> bf))
+      | ZBF_Lte (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | ZE_Inf -> ZBF_Const true
+                  | ZE_NegInf -> ZBF_Const false)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const true
+                  | _ -> ZBF_Const false)
+               | ZE_NegInf -> ZBF_Const true)
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false)
+            | _ -> bf))
+      | ZBF_Gt (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | ZE_Inf -> ZBF_Const false
+                  | ZE_NegInf -> ZBF_Const true)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const false
+                  | _ -> ZBF_Const true)
+               | ZE_NegInf -> ZBF_Const false)
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true)
+            | _ -> bf))
+      | ZBF_Gte (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | ZE_Inf -> ZBF_Const false
+                  | ZE_NegInf -> ZBF_Const true)
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const true
+                  | _ -> ZBF_Const false))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true)
+            | _ -> bf))
+      | ZBF_Eq (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | _ -> ZBF_Const false)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const true
+                  | _ -> ZBF_Const false)
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const true
+                  | _ -> ZBF_Const false))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | _ -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | _ -> ZBF_Const false)
+            | _ -> bf))
+      | ZBF_Neq (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf
+                  | _ -> ZBF_Const true)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const false
+                  | _ -> ZBF_Const true)
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const false
+                  | _ -> ZBF_Const true))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf
+               | _ -> ZBF_Const true))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf
+               | _ -> ZBF_Const true)
+            | _ -> bf))
+    in
+    (match norm_bf with
+     | ZBF_Const b -> norm_bf
+     | ZBF_Lt (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf)
+     | ZBF_Lte (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf)
+     | ZBF_Gt (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf)
+     | ZBF_Gte (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf)
+     | ZBF_Eq (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf)
+     | ZBF_Neq (e1, e2) ->
+       (match norm_inf_neginf e1 norm_bf with
+        | ZBF_Const b ->
+          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
+        | _ -> norm_inf_neginf e2 norm_bf))
   
   (** val norm_F : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   

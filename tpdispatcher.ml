@@ -2403,7 +2403,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     let expand_quantifier = Infinity.elim_forall_exists in
     tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
-    tp_imply_no_cache (Coqinf.check_sat_inf_formula ante) (Coqinf.check_sat_inf_formula conseq) imp_no timeout process
+    tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
+      (Coqinf.check_sat_inf_formula conseq) imp_no timeout process
   else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
@@ -2420,8 +2421,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 (* 			   else ante in *)
 (* 	tp_imply_no_cache ante conseq imp_no timeout process *)
 
-  
-  
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool

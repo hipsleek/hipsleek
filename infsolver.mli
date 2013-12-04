@@ -268,6 +268,8 @@ module InfSolver :
   
   val norm_Exp : coq_ZE coq_ZExp -> coq_ZE coq_ZExp
   
+  val norm_inf_neginf : coq_ZE coq_ZExp -> coq_ZE coq_ZBF -> coq_ZE coq_ZBF
+  
   val norm_BF : coq_ZE coq_ZBF -> coq_ZE coq_ZBF
   
   val norm_F : coq_ZE coq_ZF -> coq_ZE coq_ZF

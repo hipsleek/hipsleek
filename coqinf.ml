@@ -233,8 +233,17 @@ let rec coqpure_to_cpure (cf: coq_formula) : formula =
 let coqpure_to_cpure (f:coq_formula) : formula = 
 Debug.no_1 "coqpure_to_cpure" (fun _ -> "")  Cprinter.string_of_pure_formula coqpure_to_cpure f
 
+let rec close_form_cpure (f: formula) : formula =
+  if List.length (fv f) > 0 then (close_form_cpure (Exists((List.hd (fv f)),f,None,no_pos)))
+  else f
+
+let close_form_cpure (f:formula) :formula =
+Debug.no_1 "close_form_cpure" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
+close_form_cpure f
+
 let check_sat_inf_formula (f: formula) : formula = 
-  coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string (coqpure_to_coq_infsolver_form (cpure_to_coqpure f))))
+ coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
+                  (coqpure_to_coq_infsolver_form (cpure_to_coqpure  f))))
 
 let check_sat_inf_formula (f:formula) :formula =
 Debug.no_1 "check_sat_coq" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula

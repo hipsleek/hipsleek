@@ -61,6 +61,7 @@ type sleek_token =
   | INVLOCK 
   | LOGICAL
   | INFINITY
+  | NEGINFINITY
   | XPURE
 
 
