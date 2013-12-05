@@ -25,11 +25,12 @@ lseg<p> == self=p
 l2<y> == self::node<a,null> & y=self
   or self::node<_,q>*q::l2<y> 
   inv y!=null;
-
+/*
  GG2<x> == 
    self::node<val,next>@M * next::GG2<n>&x=null
  or emp&self=null & x=null
    inv true;
+*/
 
 //lemma_safe self::GG2<x> <-> self::ll<> & x=null;
 

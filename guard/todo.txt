@@ -1617,6 +1617,30 @@ check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__nor
  head match:tll
  body view:GG
 ==========================================================
+# tll.ss --pred-en-split leads to incorrect result:
+
+   H(x,t) ::=x::H<t>@M,
+
+Not sure why..
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv 
+
+[ H(x,t) ::= 
+ x::node<left,right,DP>@M * H(left,l') * H(right,t)&right!=null
+ or x::node<DP1,right,DP>@M&right=null
+ ,
+ G(x,res,t) ::=x::tll<ll,lr>@M]
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv --pred-en-split
+
+[ H(x,t) ::=x::H<t>@M,
+ G(x,res,t) ::=x::tll<ll,lr>@M,
+ HP_1093(self) ::= 
+ self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null
+ or self::node<left,right,DP>@M&right=null
+ or self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null,
+ HP_1094(t) ::= emp]
+
 ==========================================================
 ==========================================================
 ==========================================================
