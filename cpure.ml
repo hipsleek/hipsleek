@@ -229,10 +229,11 @@ and exp =
   | Template of template
 
 and template = {
-  (* ax + by + cz + d *)
-  templ_id: int;
-  templ_args: exp list; (* [x, y, z] *)
-  templ_unks: spec_var list; (* [a, b, c, d] *)
+                        (* a + bx + cy + dz *)
+  templ_id: spec_var;
+  templ_args: exp list; (*    [x, y, z] *)
+  templ_unks: exp list; (* [a, b, c, d] *)
+  templ_body: exp option;
   templ_pos: loc;
 }
 
@@ -1144,7 +1145,9 @@ and afv (af : exp) : spec_var list =
   	  let ifv = List.map afv i in
   	  let ifv = List.flatten ifv in
   	  remove_dups_svl (a :: ifv) (* An Hoa *)
-    | Template t -> (List.concat (List.map afv t.templ_args)) @ t.templ_unks
+    | Template t -> 
+        (List.concat (List.map afv t.templ_args)) 
+        (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
@@ -1807,11 +1810,24 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkVar sv pos = Var (sv, pos)
 
-and exp_of_template t =
-  let pos = t.templ_pos in
-  let unks = List.map (fun v -> mkVar v pos) t.templ_unks in 
-  List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
-    (List.hd unks) (List.combine (List.tl unks) t.templ_args)
+and exp_of_template t = match t.templ_body with
+  | None ->
+      let pos = t.templ_pos in
+      List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
+        (List.hd t.templ_unks) (List.combine (List.tl t.templ_unks) t.templ_args)
+  | Some b -> b
+
+and mkLinearTemplate id (args: exp list) pos =
+  let mkUnk i pos = mkVar (SpecVar (Int, id ^ "_" ^ (string_of_int i), Unprimed)) pos in
+  let t_unks = List.fold_left (fun (a, i) _ -> a @ [mkUnk i pos], i+1) ([], 1) args in 
+  let t_unks = (mkUnk 0 pos)::(fst t_unks) in
+  let t = {
+    templ_id = SpecVar(Int, id, Unprimed);
+    templ_args = args;
+    templ_unks = t_unks;
+    templ_body = None;
+    templ_pos = pos; } in 
+  Template { t with templ_body = Some (exp_of_template t); }
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
@@ -3173,7 +3189,9 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
   (* Template: Do not substitute into unknowns *)
-  | Template t -> Template { t with templ_args = List.map (e_apply_subs sst) t.templ_args; }
+  | Template t -> Template { t with 
+      templ_args = List.map (e_apply_subs sst) t.templ_args; 
+      templ_body = map_opt (e_apply_subs sst) t.templ_body; }
 
 and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
 
@@ -3220,7 +3238,9 @@ and e_apply_one (fr, t) e = match e with
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
   | Func (a, i, pos) -> Func ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
-  | Template tp -> Template { tp with templ_args = List.map (e_apply_one (fr, t)) tp.templ_args; }
+  | Template tp -> Template { tp with 
+      templ_args = List.map (e_apply_one (fr, t)) tp.templ_args; 
+      templ_body = map_opt (e_apply_one (fr, t)) tp.templ_body; }
 
 
 and e_apply_one_list (fr, t) alist = match alist with
@@ -3345,7 +3365,9 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
       (match a1 with
         | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
         | _ -> failwith "Cannot substitute an array variable by a non variable!\n") 
-  | Template t -> Template { t with templ_args = List.map (a_apply_par_term sst) t.templ_args; }
+  | Template t -> Template { t with 
+      templ_args = List.map (a_apply_par_term sst) t.templ_args;
+      templ_body = map_opt (a_apply_par_term sst) t.templ_body; }
 
 and a_apply_par_term_list sst alist = match alist with
   |[] -> []
@@ -3458,7 +3480,9 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
             | _ -> failwith "Cannot apply a non-variable term to an array variable.")
         else a in
       ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *)
-  | Template tp -> Template { tp with templ_args = List.map (a_apply_one_term (fr, t)) tp.templ_args; }
+  | Template tp -> Template { tp with 
+      templ_args = List.map (a_apply_one_term (fr, t)) tp.templ_args; 
+      templ_body = map_opt (a_apply_one_term (fr, t)) tp.templ_body; }
 
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
@@ -3547,8 +3571,10 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
         let b1,i1 = (a_apply_one_term_list crt_var i) in
         (b1,ArrayAt (a, i1, pos)) 
     | Template t -> 
-        let b, args = a_apply_one_term_list crt_var t.templ_args in
-        (b, Template { t with templ_args = args; })
+        let b1, args = a_apply_one_term_list crt_var t.templ_args in
+        let b2, body = map_opt_def (false, None) (fun e ->
+          let b, e = helper crt_var e in b, Some e) t.templ_body in 
+        (b1||b2, Template { t with templ_args = args; templ_body = body; })
   in (helper true e)
 
 and a_apply_one_term_list (fr, t) alist = match alist with
@@ -4710,7 +4736,8 @@ and e_apply_one_exp (fr, t) e = match e with
          | _ -> failwith "Can only substitute array variable by array variable\n")  else a in
       ArrayAt (a1, e_apply_one_list_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
   | Template tp -> Template { tp with 
-      templ_args = e_apply_one_list_exp (fr, t) tp.templ_args; }
+      templ_args = e_apply_one_list_exp (fr, t) tp.templ_args;
+      templ_body = map_opt (e_apply_one_exp (fr, t)) tp.templ_body; }
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -5379,7 +5406,9 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
   |  Func (id, es, l) -> Func (id, List.map purge_mult es, l)
-  | Template t -> Template { t with templ_args = List.map purge_mult t.templ_args; }
+  | Template t -> Template { t with 
+      templ_args = List.map purge_mult t.templ_args;
+      templ_body = map_opt purge_mult t.templ_body; }
 	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (pf : b_formula) :  b_formula =   
@@ -5650,8 +5679,10 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
             let il,rl = List.split (List.map (fun c-> helper new_arg c) es) in
             (Func (id,il,l), f_comb rl)
         | Template t -> 
-            let il, rl = List.split (List.map (helper new_arg) t.templ_args) in
-            (Template { t with templ_args = il}, f_comb rl)
+            let il1, rl1 = List.split (List.map (helper new_arg) t.templ_args) in
+            let il2, rl2 = map_opt_def (None, []) (fun e -> 
+              let i, r = helper new_arg e in Some i, [r]) t.templ_body in
+            (Template { t with templ_args = il1; templ_body = il2}, f_comb (rl1@rl2))
         | ArrayAt (a, i, l) -> (* An Hoa *)
             let il = List.map (fun c-> helper new_arg c) i in
             let (il, rl) = List.split il in 
@@ -5727,7 +5758,9 @@ let rec transform_exp f e  =
       | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
-      | Template t -> Template { t with templ_args = List.map (transform_exp f) t.templ_args; }
+      | Template t -> Template { t with 
+          templ_args = List.map (transform_exp f) t.templ_args; 
+          templ_body = map_opt (transform_exp f) t.templ_body; }
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
       | InfConst _ -> Error.report_no_pattern ()
 
@@ -6203,7 +6236,9 @@ and norm_exp (e:exp) =
     | ListReverse (e,l)-> ListReverse(helper e, l) 
 		| ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) 
     | Func (id, es, l) -> Func (id, List.map helper es, l)
-    | Template t -> Template { t with templ_args = List.map helper t.templ_args; }
+    | Template t -> Template { t with 
+        templ_args = List.map helper t.templ_args; 
+        templ_body = map_opt helper t.templ_body; }
   in helper e
 
 (* if v->c, replace v by the constant whenever encountered 

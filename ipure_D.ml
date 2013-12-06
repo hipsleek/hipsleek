@@ -138,9 +138,10 @@ and exp =
 
 and template = {
   (* ax + by + cz + d *)
-  templ_id: int;
+  templ_id: spec_var;
   templ_args: exp list; (* [x, y, z] *)
-  templ_unks: spec_var list; (* [a, b, c, d] *)
+  templ_unks: exp list; (* [a, b, c, d] *)
+  templ_body: exp option;
   templ_pos: loc;
 }
 

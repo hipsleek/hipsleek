@@ -1996,6 +1996,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let st3= st2@st_ls@st_lsmu@st_waitlevel in
                   let pre2 = CF.subst_struc_pre st3 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
+                    (* let _ = print_endline ("PRE2: " ^ new_spec) in *)
                     (* Termination: Store unreachable state *)
                     let _ = 
                       if is_rec_flag then (* Only check termination of a recursive call *)
@@ -3112,7 +3113,9 @@ let check_prog iprog (prog : prog_decl) =
       let _ = proc_mutual_scc_shape_infer iprog prog scc in
       let _ = Infer.scc_rel_ass_stk # reset in
 
-      let _ = TI.collect_and_solve_rrel_scc prog in
+      let _ = 
+        if !Globals.en_term_inf then TI.collect_and_solve_rrel_scc prog
+        else () in
       prog
   ) prog proc_scc 
   in 

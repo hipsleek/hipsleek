@@ -5597,9 +5597,12 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Template t ->
         let pos = t.IP.templ_pos in
         CP.Template {
-          CP.templ_id = t.IP.templ_id;
+          CP.templ_id = trans_var t.IP.templ_id tlist pos;
           CP.templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args;
-          CP.templ_unks = List.map (fun v -> trans_var v tlist pos) t.IP.templ_unks;
+          CP.templ_unks = List.map (fun u -> trans_pure_exp u tlist) t.IP.templ_unks;
+          CP.templ_body = begin match t.IP.templ_body with
+            | None -> Some (trans_pure_exp (IP.exp_of_template t) tlist)
+            | Some b -> Some (trans_pure_exp b tlist) end;
           CP.templ_pos = pos; }
     | IP.ArrayAt ((a, p), ind, pos) ->
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
@@ -7910,9 +7913,12 @@ let rec rev_trans_exp e = match e with
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
   | CP.Template t -> IP.Template {
-      IP.templ_id = t.CP.templ_id;
+      IP.templ_id = rev_trans_spec_var t.CP.templ_id;
       IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
-      IP.templ_unks = List.map rev_trans_spec_var t.CP.templ_unks;
+      IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
+      IP.templ_body = begin match t.CP.templ_body with
+        | None -> None
+        | Some b -> Some (rev_trans_exp b) end;
       IP.templ_pos = t.CP.templ_pos;
     } 
   | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"

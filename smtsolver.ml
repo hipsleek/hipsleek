@@ -1166,10 +1166,12 @@ let get_model is_linear vars assertions =
     ";Variables Declarations\n" ^ smt_var_decls ^
     ";Assertion Declations\n" ^ smt_asserts ^
     (if is_linear then "(check-sat)\n" else "(check-sat-using qfnra-nlsat)\n") ^
+    (* "(check-sat)\n" ^ *)
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  (* let _ = print_endline ("Z3: " ^ smt_inp) in *)
+  let _ = print_endline ("Z3 INP: " ^ smt_inp) in
+  let _ = print_endline ("Z3 OUT: " ^ (pr_list (fun s -> s) model)) in
 
   let m = try
       if (List.hd model) = "sat" then
@@ -1178,8 +1180,13 @@ let get_model is_linear vars assertions =
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
         sol
       else []
-    with _ -> []
-  in m 
+    with ex -> 
+      print_endline ("get_model: " ^ (Printexc.to_string ex));
+      []
+  in 
+  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
+  let _ = print_endline ("MODEL: " ^ (pr2 m)) in
+  m 
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in

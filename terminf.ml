@@ -10,6 +10,8 @@ module CF = Cformula
 module MCP = Mcpure
 module CP = Cpure
 
+let scc_rrel_stk: rrel Gen.stack_pr = new Gen.stack_pr 
+  !CF.print_rrel (==)
 
 (*****************************)
 (* Functions for creating ID *)
@@ -272,6 +274,7 @@ and add_rank_constraint_formula (f: CF.formula) (rtyp: rank_type): (CF.formula *
   (fun _ -> add_rank_constraint_formula_x f rtyp) f
 
 and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula * CP.spec_var list) =
+  let p = no_pos in
   let add_rank_constraint_pure hf pf rtyp =
     match rtyp with
     | VIEW (view_id, view_args, rel_id) ->
@@ -302,12 +305,22 @@ and add_rank_constraint_formula_x (f: CF.formula) (rtyp: rank_type): (CF.formula
           nhf_r, npf, rrel_ivars_r @ rrel_base_ivars_r
     | PRE (proc_name, proc_args) ->
         let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
-        (* Add r = RR(...) & Term[r] for PRE based on the args of proc *)
-        let r = view_rank_sv proc_name in
-        let rrel = CP.mkRankConstraint (fresh_rrel_id ()) r
-          (List.map CP.mkRArg_var rankrel_ivars) None in
-        let lv = CP.mkPure (CP.mkLexVar TermR [] [CP.mkVar r no_pos] no_pos) in
-        let npf = MCP.memoise_add_pure_N pf (CP.mkAnd rrel lv no_pos) in
+        (* Add Term[RR(...)] for PRE based on the args of proc *)
+        let rid = view_rank_id proc_name in
+        let r = CP.mkLinearTemplate rid (List.map (fun v -> CP.mkVar v p) rankrel_ivars) p in
+        let lv = CP.mkPure (CP.mkLexVar TermR [] [r] no_pos) in
+        (* Add a boundedness constraints here *)
+        let bnd_rhs = CP.mkPure (CP.mkGte r (CP.mkIConst 0 p) p) in
+        let bnd_lhs = List.fold_left (fun a v -> 
+          let gte_zero = CP.mkPure (CP.mkGte (CP.mkVar v p) (CP.mkIConst 0 p) p) in
+          if CP.isConstTrue a then gte_zero else CP.mkAnd a gte_zero p) (CP.mkTrue p) rankrel_ivars in
+        let bnd_rrel = {
+          rrel_type = RR_BND;
+          rrel_ctx = MCP.mix_of_pure bnd_lhs;
+          rrel_ctr = MCP.mix_of_pure bnd_rhs;
+          rrel_orig_entail = (CF.formula_of_pure_formula bnd_lhs p, bnd_rhs); } in
+        let _ = scc_rrel_stk # push bnd_rrel in
+        let npf = MCP.memoise_add_pure_N pf lv in
         nhf, npf, rankrel_ivars
     | POST -> 
         let nhf, rankrel_vars, rankrel_ivars, _ = collect_rankrel_vars_h_formula_raw hf [] in
@@ -416,11 +429,20 @@ let replace_rankrel_by_b_formula (is_raw: bool) (f: CP.formula) =
         | None -> mkTrue_b no_pos, [], [], [] 
         | Some rr_raw -> b_formula_of_rankrel rr_raw
       in Some (nb, (const_coes, arg_coes, nneg_coes))
-    | _ -> Some (b, ([], [], [])) in
+    | _ -> None in
+  let f_e_f arg e =
+    match e with
+    | Template t ->
+        let const_coes = List.concat (List.map CP.afv t.templ_unks) in
+        let _ = print_endline ("CONST_C: " ^ (!CP.print_svl const_coes)) in
+        let arg_coes = CP.afv e in
+        Some (CP.exp_of_template t, (const_coes, arg_coes, []))
+    | _ -> Some (e, ([], [], []))
+  in
   let f_comb a bl = List.fold_left (fun (a1, a2, a3) (b1, b2, b3) -> 
     (a1@b1, a2@b2, a3@b3)) ([], [], []) bl in
   let f_arg = (voidf2, voidf2, voidf2) in
-  foldr_formula f () (nonef2, f_b_f, nonef2) f_arg (f_comb, f_comb, f_comb)
+  foldr_formula f () (nonef2, f_b_f, f_e_f) f_arg (f_comb, f_comb, f_comb)
 
 let b_formula_of_rankrel_sol (rr: rankrel) subst =
   let p = no_pos in
@@ -528,7 +550,7 @@ let rec solve_rrel_list rrel_list =
   let is_linear = List.for_all Redlog.is_linear_formula c_constrs in
   let fv = Gen.BList.remove_dups_eq eq_spec_var 
     (List.concat (List.map CP.fv c_constrs)) in
-  let model = Smtsolver.get_model is_linear fv c_constrs in 
+  let model = Smtsolver.get_model is_linear fv c_constrs in
   (model, List.exists (fun b -> b) is_raw)
 
 (* Plug inferred result into views *)
@@ -611,9 +633,6 @@ let collect_and_solve_rrel_slk ids rrel_store prog =
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   print_result n_vdefs
-
-let scc_rrel_stk: rrel Gen.stack_pr = new Gen.stack_pr 
-  !CF.print_rrel (==)
 
 let collect_rrel_hip prog (ctx: CF.list_failesc_context): unit =
   let rrels = collect_rrel_list_failesc_context ctx in

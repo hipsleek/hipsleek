@@ -292,6 +292,7 @@ let rec rl_of_exp e0 =
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
   | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
+  | CP.Template t -> rl_of_exp (CP.exp_of_template t)
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
   | CP.TypeCast (t, e1, _) -> (
@@ -1560,10 +1561,9 @@ let solve_constr_by_elim ctx ctr const_c var_c nneg_c =
   let rl_res = send_and_receive ("rlqe " ^ rrel_in_rl) in
 
   (* let _ = print_endline ("CTX: " ^ (!CP.print_formula ctx)) in *)
-  (* let _ = print_endline ("NCTX: " ^ (!CP.print_formula nctx)) in *)
   (* let _ = print_endline ("CTR: " ^ (!CP.print_formula ctr)) in *)
 
-  (* let _ = print_endline ("RREL: " ^ rl_of_rrel) in *)
+  (* let _ = print_endline ("RREL: " ^ rrel_in_rl) in *)
   (* let _ = print_endline ("RL_RES: " ^ rl_res) in *)
 
   let lexbuf = Lexing.from_string rl_res in

@@ -271,7 +271,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ArrayAt (a, i, _) -> 
       let ifv = List.flatten (List.map afv i) in
       Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
-  | Template t -> (List.concat (List.map afv t.templ_args)) @ t.templ_unks
+  | Template t -> 
+      (List.concat (List.map afv t.templ_args)) 
+      (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -348,9 +350,8 @@ and mkTypeCast t a pos = TypeCast (t, a, pos)
 
 and exp_of_template t =
   let pos = t.templ_pos in
-  let unks = List.map (fun v -> Var (v, pos)) t.templ_unks in 
   List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
-    (List.hd unks) (List.combine (List.tl unks) t.templ_args)
+    (List.hd t.templ_unks) (List.combine (List.tl t.templ_unks) t.templ_args)
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
