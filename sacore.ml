@@ -2955,13 +2955,21 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
     let _ = ass_stk # reset in
     let cur_hpdefs =  hpdef_stk # get_stk in
     let _ = hpdef_stk # reset in
-    (cur_ass, cur_hpdefs)
+    let cur_ihpdcl = iprog.Iast.prog_hp_decls in
+    let cur_chpdcl = cprog.Cast.prog_hp_decls in
+    let cviews = cprog.Cast.prog_view_decls in
+    (cur_ass, cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)
   in
-  let restore_state (cur_ass, cur_hpdefs)=
+  let restore_state (cur_ass, cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews)=
     let _ = ass_stk # reset in
     let _ = ass_stk # push_list cur_ass in
     let _ = hpdef_stk # reset in
     let _ = hpdef_stk # push_list cur_hpdefs in
+    let idiff = Gen.BList.difference_eq Iast.cmp_hp_def cur_ihpdcl iprog.Iast.prog_hp_decls in
+    let _ = iprog.Iast.prog_hp_decls <- (iprog.Iast.prog_hp_decls@idiff) in
+    let cdiff = Gen.BList.difference_eq Cast.cmp_hp_def cur_chpdcl cprog.Cast.prog_hp_decls in
+    let _ = cprog.Cast.prog_hp_decls <- (cprog.Cast.prog_hp_decls@cdiff) in
+    let _ = cprog.Cast.prog_view_decls <- cviews in
     ()
   in
   let rec look_up rest_defs rem=
@@ -3021,6 +3029,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
   (*shared*)
   (*END share*)
   let prove_sem ((* (k, rel, og, f) *)  cur_hpdef) =
+    let isettings = back_up_state () in
     let _ = DD.ninfo_hprint (add_str " cur_hpdef (sem)"  Cprinter.string_of_hp_rel_def) cur_hpdef no_pos in
     let r,paras = match cur_hpdef.CF.def_cat with
       | CP.HPRelDefn (hp,r, paras) -> Cast.get_root_args_hprel cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) args (*(r,paras)*)
@@ -3053,6 +3062,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       (List.map (fun (hp, _) -> CP.name_of_spec_var hp) comps) (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
     let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
+    let r =
     match lc_opt with
       | Some lcs ->
             let comp_hp_defs =
@@ -3069,10 +3079,8 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
                     | _ -> false
               ) hp_rest
               in
-              let (cur_ass, cur_defs) = back_up_state () in
               let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume (List.map fst comps) (List.map fst comps)
                 [] [] [] true true in
-              let _ = restore_state (cur_ass, cur_defs) in
               let ogs = List.map snd cur_hpdef.CF.def_rhs in
               let n_hp_def = {cur_hpdef with CF.def_rhs = [(CF.formula_of_heap rhs_hf no_pos, CF.combine_guard ogs)]} in
               let _ = DD.info_pprint (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
@@ -3082,6 +3090,9 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
             (*todo: remove map also*)
             comp_hp_defs
       | None -> [cur_hpdef]
+    in
+    let _ = restore_state isettings in
+    r
   in
   let prove_syn (* (k, rel, og, f) *) def =
     (* let fs0,ogs = List.split def.CF.def_rhs in *)
@@ -3172,7 +3183,8 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
       let fs,ogs = List.split def.CF.def_rhs in
       let f = CF.disj_of_list fs no_pos in
       {def with CF.def_rhs = [(CF.subst_hrel_f f ss_preds, CF.combine_guard ogs)]}) (tupled_hp_defs1@sing_hp_def1b) in
-  (sing_hp_defs2@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst)
+  let r = (sing_hp_defs2@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst) in
+  r
 
 let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list *
  (CP.spec_var*CP.spec_var list * (CP.spec_var*CP.spec_var list) list *CF.h_formula) list) =
