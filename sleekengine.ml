@@ -58,6 +58,7 @@ I.prog_view_decls = [];
 I.prog_func_decls = [];
 I.prog_rel_decls = [];
 I.prog_rel_ids = [];
+I.prog_templ_decls = [];
 I.prog_hp_decls = [];
 I.prog_hp_ids = [];
 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)

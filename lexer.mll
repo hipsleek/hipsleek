@@ -260,6 +260,8 @@ module Make (Token : SleekTokenS)
    ("RR", RANKREL);
    ("rank_constr", RANKC);
    ("solve_rank_constrs", SOLVE_RANKC);
+   (* Template *)
+   ("template", TEMPLATE);
 	 (flow, FLOW flow);]
 }
   

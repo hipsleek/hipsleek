@@ -4233,6 +4233,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: INFInt can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
+    | FuncT _ ->
+          failwith "default_value: FuncT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -5597,7 +5599,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Template t ->
         let pos = t.IP.templ_pos in
         CP.Template {
-          CP.templ_id = trans_var t.IP.templ_id tlist pos;
+          CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
           CP.templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args;
           CP.templ_unks = List.map (fun u -> trans_pure_exp u tlist) t.IP.templ_unks;
           CP.templ_body = begin match t.IP.templ_body with
@@ -7913,7 +7915,8 @@ let rec rev_trans_exp e = match e with
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
   | CP.Template t -> IP.Template {
-      IP.templ_id = rev_trans_spec_var t.CP.templ_id;
+      IP.templ_id = fst (rev_trans_spec_var t.CP.templ_id);
+      IP.templ_typ = CP.type_of_spec_var t.CP.templ_id;
       IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
       IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
       IP.templ_body = begin match t.CP.templ_body with

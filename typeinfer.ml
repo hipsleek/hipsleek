@@ -459,7 +459,7 @@ and gather_type_info_exp a0 tlist et =
                  Iprinter.string_of_formula_exp string_of_tlist string_of_typ
                  string_of_tlist_type gather_type_info_exp_x a0 tlist et
 
-and gather_type_info_exp_x a0 tlist et =
+and gather_type_info_exp_x prog a0 tlist et =
   match a0 with
   | IP.Null pos -> 
       let t = null_type in
@@ -554,11 +554,19 @@ and gather_type_info_exp_x a0 tlist et =
       let t = I.int_type in
       let (n_tlist,n_typ)= must_unify_expect t et tlist pos in
       (n_tlist,n_typ)
-  | IP.Template tp ->
-      let t = I.int_type in
-      let pos = tp.IP.templ_pos in
-      let (n_tlist,n_typ) = must_unify_expect t et tlist pos in
-      (n_tlist,n_typ)
+  | IP.Template tp -> begin try
+      let pos = tp.templ_pos in
+      let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls tp.templ_id in
+      let param_types = List.map (fun (t, n) -> trans_type prog t pos) rdef.I.templ_typed_params in
+      let arg_exp_types = List.map (fun t -> t) param_types in
+      let (n_tl, n_typ) = gather_type_info_var r tlist (RelT []) pos in
+      let tmp_list = List.combine args args_exp_types in
+      let n_tlist = List.fold_left (fun tl (arg,et) -> fst(gather_type_info_exp arg tl et )) n_tl tmp_list in
+      n_tlist             
+    with
+    | Not_found -> failwith ("gather_type_info_exp: template " ^ tp.templ_id ^ " cannot be found")
+    | _ -> print_endline ("gather_type_info_exp: template " ^ tp.templ_id); tlist       
+    end
   | IP.ArrayAt ((a,p),idx,pos) ->
       let dim = List.length idx in
       let new_et = Array (et, dim) in

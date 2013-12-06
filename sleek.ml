@@ -92,6 +92,7 @@ let proc_gen_cmd cmd =
                              ; process_barrier_def bdef)
     | FuncDef fdef -> process_func_def fdef
     | RelDef rdef -> process_rel_def rdef
+    | TemplDef tdef -> ()
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
@@ -202,6 +203,7 @@ let parse_file (parse) (source_file : string) =
       | RankC (id, iante, icons) -> process_rank_constraint id iante icons
       | SolveRankC idl -> process_solve_rank_constraints idl
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *)
+      | TemplDef _
       | EmptyCmd -> () in
   let cmds = parse_first [] in
   List.iter proc_one_def cmds;
@@ -239,6 +241,7 @@ let main () =
                 I.prog_func_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
+                I.prog_templ_decls = [];
                 I.prog_hp_decls = [];
 			    I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)

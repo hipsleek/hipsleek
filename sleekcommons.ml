@@ -38,6 +38,7 @@ type command =
   | PredDef of I.view_decl
   | FuncDef of I.func_decl
   | RelDef of I.rel_decl (* An Hoa *)
+  | TemplDef of I.templ_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
@@ -100,7 +101,8 @@ let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
-  | RelDef  _ -> "RelDef"  
+  | RelDef  _ -> "RelDef" 
+  | TemplDef _ -> "TemplDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
