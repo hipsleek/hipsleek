@@ -348,18 +348,13 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkTypeCast t a pos = TypeCast (t, a, pos)
 
-and mkTemplate id rtyp args pos = Template {
+and mkTemplate id args pos = Template {
   templ_id = id;
   templ_args = args;
   templ_unks = [];
-  templ_body = None;
+  templ_body = None; (* Need to fill in trans_exp *)
   templ_pos = pos;
 } 
-
-and exp_of_template t =
-  let pos = t.templ_pos in
-  List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
-    (List.hd t.templ_unks) (List.combine (List.tl t.templ_unks) t.templ_args)
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 

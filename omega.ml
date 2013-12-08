@@ -77,6 +77,7 @@ let rec omega_of_exp e0 = match e0 with
                 (* } *)
             in rr
       in r
+  | Template t -> omega_of_exp (exp_of_template t)
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)

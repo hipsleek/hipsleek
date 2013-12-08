@@ -2185,10 +2185,13 @@ rel_body:[[ (* formulas {
 (* Template Definition *)
 templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN; b = OPT templ_body -> 
   let _ = templ_names # push id in 
-  { templ_name = id;
+  let tdef = { 
+    templ_name = id;
     templ_ret_typ = t;
     templ_typed_params = tl;
-    templ_body = b; } ]];
+    templ_body = b; 
+    templ_pos = get_pos_camlp4 _loc 1; } in 
+  I.templ_decls # push tdef; tdef ]];
 
 templ_body: [[ `EQEQ; pc = cexp -> pc ]];
 

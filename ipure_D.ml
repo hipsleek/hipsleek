@@ -139,7 +139,6 @@ and exp =
 and template = {
   (* ax + by + cz + d *)
   templ_id: ident;
-  templ_ret_typ: typ;
   templ_args: exp list; (* [x, y, z] *)
   templ_unks: exp list; (* [a, b, c, d] *)
   templ_body: exp option;

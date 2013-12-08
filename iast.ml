@@ -110,6 +110,7 @@ and templ_decl = {
   templ_ret_typ: typ;
   templ_typed_params: (typ * ident) list;
   templ_body: P.exp option;
+  templ_pos: loc;
 }
 
 and hp_decl = { hp_name : ident; 
@@ -498,6 +499,9 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
+
+(* Stack of Template Declarations *)
+let templ_decls: templ_decl Gen.stack = new Gen.stack
 
 (* utility functions *)
 

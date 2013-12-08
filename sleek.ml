@@ -92,7 +92,7 @@ let proc_gen_cmd cmd =
                              ; process_barrier_def bdef)
     | FuncDef fdef -> process_func_def fdef
     | RelDef rdef -> process_rel_def rdef
-    | TemplDef tdef -> ()
+    | TemplDef tdef -> process_templ_def tdef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;())
@@ -111,7 +111,7 @@ let proc_gen_cmd cmd =
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-    | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
+    | InferCmd (ivars, iante, iconseq, etype) -> (process_infer ivars iante iconseq etype; ())
     | CaptureResidue lvar -> process_capture_residue lvar
     | LemmaDef ldef ->   process_list_lemma ldef
     | PrintCmd pcmd -> process_print_command pcmd
@@ -144,6 +144,7 @@ let parse_file (parse) (source_file : string) =
       | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
       | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
+      | TemplDef tdef -> process_templ_def tdef
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
             (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)

@@ -24,6 +24,7 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+    mutable prog_templ_decls: templ_decl list;
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
@@ -117,6 +118,14 @@ and rel_decl = {
     rel_name : ident; 
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
+
+and templ_decl = {
+  templ_name: ident;
+  templ_ret_typ: typ;
+  templ_params: P.spec_var list;
+  templ_body: P.exp option;
+  templ_pos: loc;
+}
 
 and hp_decl = { 
     hp_name : ident;

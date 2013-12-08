@@ -182,6 +182,14 @@ let collect_rrel_list_failesc_context (ctx: CF.list_failesc_context) : CF.rrel l
   let f_arg arg ctx = arg in
   snd (trans_list_failesc_context ctx () f_c f_arg List.concat)
 
+let collect_rrel_list_partial_context (ctx: CF.list_partial_context) : CF.rrel list =
+  let f_c arg ctx = match ctx with
+  | Ctx es -> Some (ctx, es.es_rrel)
+  | _ -> None
+  in
+  let f_arg arg ctx = arg in
+  snd (trans_list_partial_context ctx () f_c f_arg List.concat)
+
 let collect_rrel_list_context (ctx: CF.list_context) : CF.rrel list =
   let f_c arg ctx = match ctx with
   | Ctx es -> Some (ctx, es.es_rrel)
@@ -634,8 +642,8 @@ let collect_and_solve_rrel_slk ids rrel_store prog =
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   print_result n_vdefs
 
-let collect_rrel_hip prog (ctx: CF.list_failesc_context): unit =
-  let rrels = collect_rrel_list_failesc_context ctx in
+let collect_rrel_hip prog (ctx: CF.list_partial_context): unit =
+  let rrels = collect_rrel_list_partial_context ctx in
   scc_rrel_stk # push_list rrels
 
 let collect_and_solve_rrel_scc prog =

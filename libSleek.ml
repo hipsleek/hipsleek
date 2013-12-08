@@ -43,6 +43,7 @@ let process_cmd_list cmds :bool=
       | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
       | FuncDef fdef -> process_func_def fdef
       | RelDef rdef -> process_rel_def rdef
+      | TemplDef tdef -> process_templ_def tdef
       | HpDef hpdef -> process_hp_def hpdef
       | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       | _ -> ()) cmds;

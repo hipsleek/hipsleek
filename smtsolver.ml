@@ -87,7 +87,7 @@ let rec smt_of_typ t =
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)
   | RelT _ -> "Int"
-  | FuncT _ -> "Int"
+  (* | FuncT _ -> "Int" *)
   | HpT -> "Int"
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()

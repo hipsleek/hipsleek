@@ -81,6 +81,7 @@ let cprog = ref {
     C.prog_logical_vars = [];
     (*	C.prog_func_decls = [];*)
     C.prog_rel_decls = []; (* An Hoa *)
+    C.prog_templ_decls = [];
     C.prog_hp_decls = [];
     C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
     (*C.old_proc_decls = [];*)
@@ -337,6 +338,14 @@ let process_rel_def rdef =
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
+
+let process_templ_def tdef =
+  if AS.check_data_pred_name iprog tdef.I.templ_name then
+	  let tmp = iprog.I.prog_templ_decls in
+	  try
+      iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls)
+    with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
+  else print_endline (tdef.I.templ_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in

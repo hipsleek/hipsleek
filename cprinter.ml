@@ -727,7 +727,9 @@ let rec pr_formula_exp (e:P.exp) =
 			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  (")"))
-    | P.Template t -> pr_formula_exp (P.exp_of_template t)
+    | P.Template t -> 
+        fmt_string ((string_of_spec_var t.P.templ_id) ^ ": ");
+        pr_formula_exp (P.exp_of_template t)
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()

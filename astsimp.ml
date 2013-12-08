@@ -1086,11 +1086,12 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
-          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
-          let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps, pure_chps = List.split pr_chps in
-          let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
-          let crels = crels0@pure_chps in
+    let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
+    let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+    let chps, pure_chps = List.split pr_chps in
+    let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
+    let crels = crels0@pure_chps in
+    let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 	  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -1110,7 +1111,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
-              C.prog_hp_decls = chps;
+        C.prog_templ_decls = ctempls;
+        C.prog_hp_decls = chps;
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1531,7 +1533,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         | Some a -> 
               let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
               let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
@@ -1675,6 +1677,26 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+
+and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
+  let pos = tdef.I.templ_pos in
+  let c_ret_typ = trans_type prog tdef.I.templ_ret_typ pos in
+  let c_params = List.map (fun (t, n) -> 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) tdef.I.templ_typed_params in 
+  let n_tl = List.map (fun (t, n) -> 
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
+  let c_body = match tdef.I.templ_body with
+  | None -> None
+  | Some bd -> 
+      let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+      Some (trans_pure_exp bd (fst n_tl))
+  in {
+    C.templ_name = tdef.I.templ_name;
+    C.templ_ret_typ = c_ret_typ;
+    C.templ_params = c_params;
+    C.templ_body = c_body;
+    C.templ_pos = pos; }
+
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -4233,8 +4255,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: INFInt can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
-    | FuncT _ ->
-          failwith "default_value: FuncT can only be used for constraints"
+    (* | FuncT _ ->
+          failwith "default_value: FuncT can only be used for constraints" *)
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -5598,13 +5620,36 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
           CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
     | IP.Template t ->
         let pos = t.IP.templ_pos in
-        CP.Template {
+        let tid = t.IP.templ_id in
+        let tdef = I.look_up_templ_def_raw (I.templ_decls # get_stk) tid in
+        let targs = tdef.I.templ_typed_params in
+        let tbody = tdef.I.templ_body in
+
+        let templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args in
+        let sst = List.combine 
+          (List.map (fun (ty, id) -> CP.SpecVar(ty, id, Unprimed)) targs) 
+          templ_args in
+        let templ_unks, templ_body = match tbody with
+        | Some ib -> 
+            let cb = trans_pure_exp ib tlist in
+            let inst_cb = CP.a_apply_par_term sst cb in
+            let unks_sv = Gen.BList.difference_eq CP.eq_spec_var 
+              (CP.afv inst_cb) (List.concat (List.map CP.afv templ_args)) in
+            let unks_exp = List.map (fun v -> CP.mkVar v no_pos) unks_sv in
+            (unks_exp, Some (CP.a_apply_par_term sst cb))
+        | None ->
+            let unks_sv = fst (List.fold_left (fun (vl, i) _ -> 
+              (vl @ [CP.SpecVar(Int, tid ^ "_c" ^ (string_of_int i), Unprimed)], i+1)) ([], 1) templ_args) in
+            let unks_sv = (CP.SpecVar(Int, tid ^ "_c" ^ (string_of_int 0), Unprimed))::unks_sv in
+            let unks_exp = List.map (fun v -> CP.mkVar v no_pos) unks_sv in
+            let body = List.fold_left (fun a (c, e) -> CP.mkAdd a (CP.mkMult c e pos) pos) 
+              (List.hd unks_exp) (List.combine (List.tl unks_exp) templ_args) in
+            (unks_exp, Some body)
+        in CP.Template {
           CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
-          CP.templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args;
-          CP.templ_unks = List.map (fun u -> trans_pure_exp u tlist) t.IP.templ_unks;
-          CP.templ_body = begin match t.IP.templ_body with
-            | None -> Some (trans_pure_exp (IP.exp_of_template t) tlist)
-            | Some b -> Some (trans_pure_exp b tlist) end;
+          CP.templ_args = templ_args;
+          CP.templ_unks = templ_unks;
+          CP.templ_body = templ_body;
           CP.templ_pos = pos; }
     | IP.ArrayAt ((a, p), ind, pos) ->
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
@@ -7916,7 +7961,6 @@ let rec rev_trans_exp e = match e with
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
   | CP.Template t -> IP.Template {
       IP.templ_id = fst (rev_trans_spec_var t.CP.templ_id);
-      IP.templ_typ = CP.type_of_spec_var t.CP.templ_id;
       IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
       IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
       IP.templ_body = begin match t.CP.templ_body with
