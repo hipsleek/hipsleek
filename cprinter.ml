@@ -2819,7 +2819,7 @@ let pr_context_list_short (ctx : context list) =
 let pr_list_context_short (ctx:list_context) =
   match ctx with
     | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
-    | SuccCtx sc -> pr_context_list_short sc
+    | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
     
 let pr_entail_state_short e =
   fmt_open_vbox 1;
@@ -2843,11 +2843,15 @@ let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_contex
 
 let string_of_list_context_short (ctx:list_context): string =  poly_string_of_pr pr_list_context_short ctx
 
-let string_of_context_list_short (ctx:context list): string =  poly_string_of_pr pr_context_list_short ctx
+let string_of_context_list_short (ctx:context list): string 
+      =  poly_string_of_pr pr_context_list_short ctx
 
-let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
+let string_of_list_context (ctx:list_context): string 
+      =  poly_string_of_pr pr_context_list_short ctx
+      (* =  poly_string_of_pr pr_list_context ctx *)
 
-let string_of_list_context_list (ctxl:list_context list): string =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
+let string_of_list_context_list (ctxl:list_context list): string 
+      =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
 
 let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_entail_state_short e
 
