@@ -12,10 +12,13 @@ lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0
 //(1)
 checkentail x::lseg<p,n> & n=m |- x::lseg<q,m>.
 print residue.
+// p=q
 
 //(2)
 checkentail x::lseg<p,n> & n>m & m>=0 |- x::lseg<q,m>.
 print residue.
+// <1>q::lseg<p,b_667>@M&m<n & 0<=m & 0<=b_667 & n=b_667+m & 0<=m&{FLOW,(21,22)=__norm}[]
+
 
 //(3)
 checkentail x::lseg<p,n> & n<m |- x::lseg<q,m>.
@@ -28,18 +31,29 @@ print residue.
 // fail
 
 //(5)
-checkentail x::lseg<p,n> & m>=0 |- x::lseg<q,m>.
+checkentail x::lseg<p,n> & n>=0 |- x::lseg<q,m>.
 print residue.
-/*
+/* 2 solutions
+ <1>emp&0<=n & p=q & m=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+<2>q::lseg<p,b_810>@M&0<=n & 0<=b_810 & b_810<=n & n=b_810+m & 0<=m & 0<=b_810&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
 */
 
 //(6)
-checkentail x::lseg<p,n> & m>=0 |- (exists m: x::lseg<q,m>).
+checkentail x::lseg<p,n> & n>=0 |- (exists m: x::lseg<q,m>).
 print residue.
-// incomplete
+// 2 solutions
 
 //(7)
 checkentail x::lseg<p,n> & p!=q & n>=0 |- (exists m: x::lseg<q,m>).
 print residue.
-// fail - incomplete
+/*
+# incomplete?
+
+Entail 7: Fail.(may) cause: (((1<=a_915 & x!=null) | (q_928=x & a_915=0))) & (((1<=b_916 & 
+q_928!=null) | (p=q_928 & b_916=0))) & p!=q |-  q=q_928. LOCS:[1;0;42] (may-bug)
+*/
+
+
 
