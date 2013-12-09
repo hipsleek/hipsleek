@@ -1,0 +1,18 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <-> self::lseg<q,a>@D*q::lseg<p,b>.
+
+checkentail x::lseg<p,n> |- x::lseg<q1,a>.
+print residue.
+/*
+Why only one solution?
+ <1>emp&p=q1 & a=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+*/
