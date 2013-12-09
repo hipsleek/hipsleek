@@ -16,10 +16,12 @@ data node{
 	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 
+/*
  GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
    or self::node<left,right,DP> * left::GG<rr,l>
          * right::GG<l,t> & right!=null
    inv true;
+*/
 
 //lemma_safe self::tll<a,b> <-> self::GG<a,b>;
 
@@ -30,14 +32,14 @@ HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node t)
 infer [H,G] requires H(x,t) ensures G(x,res,t);
-                            //requires x::tree<> ensures x::tll<res,t>;
+//requires x::tree<> ensures x::tll<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;
   if (x.right==null) 
   	{
 //		assert xl'=null;
-  	  	x.next = t;
+                x.next = t;
   	  	return x;
   	}
   else 
