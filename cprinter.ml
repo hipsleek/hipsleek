@@ -2847,7 +2847,7 @@ let string_of_context_list_short (ctx:context list): string
       =  poly_string_of_pr pr_context_list_short ctx
 
 let string_of_list_context (ctx:list_context): string 
-      =  poly_string_of_pr pr_context_list_short ctx
+      =  poly_string_of_pr pr_list_context_short ctx
       (* =  poly_string_of_pr pr_list_context ctx *)
 
 let string_of_list_context_list (ctxl:list_context list): string 
