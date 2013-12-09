@@ -7934,7 +7934,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   es_unsat_flag = estate.es_unsat_flag;} in
               (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
               (* WN : need to drop outer Exist to avoid looping *)
-              let rs, prf1 = heap_entail_conjunct_helper 2 prog is_folding  new_ctx conseq rhs_h_matched_set pos in
+              let rs, prf1 = heap_entail_conjunct_helper_x (* 2 *) prog is_folding  new_ctx conseq rhs_h_matched_set pos in
               (* --- added 11.05.2008 *)
               let new_rs =
                 if !Globals.wrap_exist then
@@ -7962,7 +7962,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                   let new_baref = subst st baref in
                   let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
                                     Debug.tinfo_hprint (add_str "new_ctx match" (Cprinter.string_of_context)) new_ctx no_pos;
-                  let tmp_rs, tmp_prf = heap_entail_conjunct_helper 1 prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
+                  let tmp_rs, tmp_prf = heap_entail_conjunct_helper_x (* 5 *) prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
                   match tmp_rs with
                   | FailCtx _ -> (tmp_rs, tmp_prf)
                   | SuccCtx sl ->
@@ -8075,7 +8075,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     (ls_ctx, proof)
                                   else
                                     (*let n_ctx = SuccCtx [(Ctx new_es)] in*)
-                                    let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
+                                    let ctx, proof =  heap_entail_conjunct_helper_x (* 4 *) prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
                                     (ctx, proof)
                               )
                               (* if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then ( *)
@@ -8232,7 +8232,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               Debug.devel_pprint ("\nheap_entail_conjunct_helper: after heap_entail_thread: "
                               ^ "\nnew_ante:\n" ^ (Cprinter.string_of_entail_state new_estate)
                               ^ "\nnew_conseq:\n" ^ (Cprinter.string_of_formula new_conseq)) pos;
-                              let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_estate) new_conseq rhs_h_matched_set pos in
+                              let ctx, proof =  heap_entail_conjunct_helper_x (* 6 *) prog is_folding  (Ctx new_estate) new_conseq rhs_h_matched_set pos in
                               (ctx,proof)
                         )
                       )
