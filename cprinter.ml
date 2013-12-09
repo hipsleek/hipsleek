@@ -2755,7 +2755,7 @@ let pr_list_context (ctx:list_context) =
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
-      fmt_cut (); fmt_string str; pr_context_list sc; fmt_cut ()
+      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
