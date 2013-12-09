@@ -2743,19 +2743,6 @@ let string_of_fail_type (e:fail_type) : string =  poly_string_of_pr  pr_fail_typ
 let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
   poly_printer_of_pr fmt pr_fail_type e
 
-let pr_list_context (ctx:list_context) =
-  match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
-        (* (match ft with *)
-        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
-        (*     (\* TODO : to output must errors first *\) *)
-        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
-        (*     | _ -> fmt_string ""); *)
-        pr_fail_type ft; fmt_cut ()
-    | SuccCtx sc -> let str = 
-        if (get_must_error_from_ctx sc)==None then "Good Context: "
-        else "Error Context: " in
-      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
@@ -2838,6 +2825,20 @@ let pr_entail_state_short e =
   pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
   (* fmt_cut(); *)
   fmt_close_box()
+
+let pr_list_context (ctx:list_context) =
+  match ctx with
+    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+        (* (match ft with *)
+        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+        (*     (\* TODO : to output must errors first *\) *)
+        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+        (*     | _ -> fmt_string ""); *)
+        pr_fail_type ft; fmt_cut ()
+    | SuccCtx sc -> let str = 
+        if (get_must_error_from_ctx sc)==None then "Good Context: "
+        else "Error Context: " in
+      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list_short sc; fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
