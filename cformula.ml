@@ -13233,6 +13233,8 @@ let elim_prm e =
     | CP.Tsconst _
     | CP.FConst _ 
     | CP.Func _
+    | CP.InfConst _
+    | CP.NegInfConst _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
@@ -13254,7 +13256,7 @@ let elim_prm e =
     | CP.ListLength _
     | CP.ListAppend _
     | CP.ListReverse _ -> None
-    | CP.Level _| CP.InfConst _ -> report_error no_pos "CF.elim_prm: not handle yet"
+    | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"
   in
 	let rec f_h_f e = match e with 
 		| Star s -> None

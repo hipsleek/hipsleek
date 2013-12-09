@@ -136,7 +136,8 @@ let rec smt_of_exp a =
 	| CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
-  | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.NegInfConst _ 
+  | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
 
 let rec smt_of_b_formula b =
   let (pf,_) = b in

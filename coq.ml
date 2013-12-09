@@ -133,7 +133,8 @@ and coq_of_exp e0 =
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
-    | CP.InfConst _ -> Error.report_no_pattern ()
+    | CP.NegInfConst _
+    | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""

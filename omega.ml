@@ -671,6 +671,9 @@ let is_valid (pe : formula) timeout : bool =
         failwith s
       end
 
+let is_valid (pe : formula) timeout : bool =
+Gen.Profiling.do_1 "omega.is_valid" is_valid pe timeout
+
 let rec match_vars (vars_list0 : spec_var list) rel =
   (* let vars_list0 = vars_list0 in *)
   match rel with

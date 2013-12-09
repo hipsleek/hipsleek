@@ -1,5 +1,7 @@
 type __ = Obj.t
 
+val negb : bool -> bool
+
 type nat =
 | O
 | S of nat
@@ -146,6 +148,8 @@ module InfSolver :
   | ZF_And of 'const_type coq_ZF * 'const_type coq_ZF
   | ZF_Or of 'const_type coq_ZF * 'const_type coq_ZF
   | ZF_Not of 'const_type coq_ZF
+  | ZF_Forall_Fin of char list * 'const_type coq_ZF
+  | ZF_Exists_Fin of char list * 'const_type coq_ZF
   | ZF_Forall of char list * 'const_type coq_ZF
   | ZF_Exists of char list * 'const_type coq_ZF
   
@@ -153,13 +157,15 @@ module InfSolver :
     ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
     -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF -> 'a2
     -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1
-    coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2
+    coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+    (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2
   
   val coq_ZF_rec :
     ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
     -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF -> 'a2
     -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1
-    coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2
+    coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+    (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2
   
   type coq_ZE =
   | ZE_Fin of char list
@@ -169,6 +175,10 @@ module InfSolver :
   val coq_ZE_rect : (char list -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
   
   val coq_ZE_rec : (char list -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
+  
+  val mkOr : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
+  
+  val mkAnd : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
   
   val subs_Exp :
     (char list, coq_ZE) prod -> coq_ZE coq_ZExp -> coq_ZE coq_ZExp
@@ -213,7 +223,11 @@ module InfSolver :
      * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
   | R_elim_quant_4 of coq_ZE coq_ZF * coq_ZE coq_ZF * coq_ZE coq_ZF
      * coq_R_elim_quant
-  | R_elim_quant_5 of coq_ZE coq_ZF * coq_ZE coq_ZBF
+  | R_elim_quant_5 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_6 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_7 of coq_ZE coq_ZF * coq_ZE coq_ZF
   
   val coq_R_elim_quant_rect :
     (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
@@ -227,7 +241,10 @@ module InfSolver :
     coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1
     -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
     coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
-    -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __ -> 'a1) -> coq_ZE coq_ZF ->
+    -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+    coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+    coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) ->
+    (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> __ -> 'a1) -> coq_ZE coq_ZF ->
     coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1
   
   val coq_R_elim_quant_rec :
@@ -242,7 +259,10 @@ module InfSolver :
     coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1
     -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
     coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
-    -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __ -> 'a1) -> coq_ZE coq_ZF ->
+    -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+    coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+    coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) ->
+    (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> __ -> 'a1) -> coq_ZE coq_ZF ->
     coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1
   
   val elim_quant_rect :
@@ -251,7 +271,9 @@ module InfSolver :
     'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
     __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE
     coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
-    __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __ -> 'a1) ->
+    __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __
+    -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ ->
+    'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> __ -> 'a1) ->
     coq_ZE coq_ZF -> 'a1
   
   val elim_quant_rec :
@@ -260,7 +282,9 @@ module InfSolver :
     'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
     __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE
     coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
-    __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __ -> 'a1) ->
+    __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __
+    -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ ->
+    'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> __ -> 'a1) ->
     coq_ZE coq_ZF -> 'a1
   
   val coq_R_elim_quant_correct :

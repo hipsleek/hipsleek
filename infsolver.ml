@@ -1,6 +1,12 @@
 type __ = Obj.t
 let __ = let rec f _ = Obj.repr f in Obj.repr f
 
+(** val negb : bool -> bool **)
+
+let negb = function
+| true -> false
+| false -> true
+
 type nat =
 | O
 | S of nat
@@ -447,6 +453,8 @@ module InfSolver =
   | ZF_And of 'const_type coq_ZF * 'const_type coq_ZF
   | ZF_Or of 'const_type coq_ZF * 'const_type coq_ZF
   | ZF_Not of 'const_type coq_ZF
+  | ZF_Forall_Fin of char list * 'const_type coq_ZF
+  | ZF_Exists_Fin of char list * 'const_type coq_ZF
   | ZF_Forall of char list * 'const_type coq_ZF
   | ZF_Exists of char list * 'const_type coq_ZF
   
@@ -454,37 +462,43 @@ module InfSolver =
       ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
       -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF ->
       'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list ->
-      'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
+      'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+      (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
   
-  let rec coq_ZF_rect f f0 f1 f2 f3 f4 = function
+  let rec coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 = function
   | ZF_BF z1 -> f z1
   | ZF_And (z1, z2) ->
-    f0 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZF_rect f f0 f1 f2 f3 f4 z2)
+    f0 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z2)
   | ZF_Or (z1, z2) ->
-    f1 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZF_rect f f0 f1 f2 f3 f4 z2)
-  | ZF_Not z1 -> f2 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 z1)
-  | ZF_Forall (s, z1) -> f3 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 z1)
-  | ZF_Exists (s, z1) -> f4 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 z1)
+    f1 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Not z1 -> f2 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall_Fin (s, z1) -> f3 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists_Fin (s, z1) -> f4 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall (s, z1) -> f5 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists (s, z1) -> f6 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
   
   (** val coq_ZF_rec :
       ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
       -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF ->
       'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list ->
-      'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
+      'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+      (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
   
-  let rec coq_ZF_rec f f0 f1 f2 f3 f4 = function
+  let rec coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 = function
   | ZF_BF z1 -> f z1
   | ZF_And (z1, z2) ->
-    f0 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZF_rec f f0 f1 f2 f3 f4 z2)
+    f0 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z2)
   | ZF_Or (z1, z2) ->
-    f1 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZF_rec f f0 f1 f2 f3 f4 z2)
-  | ZF_Not z1 -> f2 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 z1)
-  | ZF_Forall (s, z1) -> f3 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 z1)
-  | ZF_Exists (s, z1) -> f4 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 z1)
+    f1 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Not z1 -> f2 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall_Fin (s, z1) -> f3 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists_Fin (s, z1) -> f4 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall (s, z1) -> f5 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists (s, z1) -> f6 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
   
   type coq_ZE =
   | ZE_Fin of char list
@@ -504,6 +518,38 @@ module InfSolver =
   | ZE_Fin x -> f x
   | ZE_Inf -> f0
   | ZE_NegInf -> f1
+  
+  (** val mkOr : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let rec mkOr f1 f2 =
+    match f1 with
+    | ZF_BF b1 ->
+      (match f2 with
+       | ZF_BF b2 ->
+         (match b1 with
+          | ZBF_Const c -> if c then f1 else f2
+          | _ ->
+            (match b2 with
+             | ZBF_Const c -> if c then f2 else f1
+             | _ -> ZF_Or (f1, f2)))
+       | _ -> ZF_Or (f1, f2))
+    | _ -> ZF_Or (f1, f2)
+  
+  (** val mkAnd : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let rec mkAnd f1 f2 =
+    match f1 with
+    | ZF_BF b1 ->
+      (match f2 with
+       | ZF_BF b2 ->
+         (match b1 with
+          | ZBF_Const c -> if negb c then f1 else f2
+          | _ ->
+            (match b2 with
+             | ZBF_Const c -> if negb c then f2 else f1
+             | _ -> ZF_And (f1, f2)))
+       | _ -> ZF_And (f1, f2))
+    | _ -> ZF_And (f1, f2)
   
   (** val subs_Exp :
       (char list, coq_ZE) prod -> coq_ZE coq_ZExp -> coq_ZE coq_ZExp **)
@@ -532,9 +578,13 @@ module InfSolver =
   
   let rec subs_F p f = match f with
   | ZF_BF bf -> ZF_BF (subs_BF p bf)
-  | ZF_And (f1, f2) -> ZF_And ((subs_F p f1), (subs_F p f2))
-  | ZF_Or (f1, f2) -> ZF_Or ((subs_F p f1), (subs_F p f2))
+  | ZF_And (f1, f2) -> mkAnd (subs_F p f1) (subs_F p f2)
+  | ZF_Or (f1, f2) -> mkOr (subs_F p f1) (subs_F p f2)
   | ZF_Not g -> ZF_Not (subs_F p g)
+  | ZF_Forall_Fin (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Forall_Fin (v, (subs_F p g))
+  | ZF_Exists_Fin (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Exists_Fin (v, (subs_F p g))
   | ZF_Forall (v, g) ->
     if Coq_sv.is_eq (fst p) v then f else ZF_Forall (v, (subs_F p g))
   | ZF_Exists (v, g) ->
@@ -581,6 +631,8 @@ module InfSolver =
   | ZF_And (f1, f2) -> ZF_And ((convert_ZE_to_Z f1), (convert_ZE_to_Z f2))
   | ZF_Or (f1, f2) -> ZF_Or ((convert_ZE_to_Z f1), (convert_ZE_to_Z f2))
   | ZF_Not g -> ZF_Not (convert_ZE_to_Z g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (convert_ZE_to_Z g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (convert_ZE_to_Z g))
   | ZF_Forall (v, g) -> ZF_Forall (v, (convert_ZE_to_Z g))
   | ZF_Exists (v, g) -> ZF_Exists (v, (convert_ZE_to_Z g))
   
@@ -629,6 +681,8 @@ module InfSolver =
   | ZF_Or (f1, f2) ->
     ZF_Or ((convert_ZE_to_string f1), (convert_ZE_to_string f2))
   | ZF_Not g -> ZF_Not (convert_ZE_to_string g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (convert_ZE_to_string g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (convert_ZE_to_string g))
   | ZF_Forall (v, g) -> ZF_Forall (v, (convert_ZE_to_string g))
   | ZF_Exists (v, g) -> ZF_Exists (v, (convert_ZE_to_string g))
   
@@ -639,6 +693,8 @@ module InfSolver =
   | ZF_And (f1, f2) -> plus (num_of_quant f1) (num_of_quant f2)
   | ZF_Or (f1, f2) -> plus (num_of_quant f1) (num_of_quant f2)
   | ZF_Not g -> plus (S O) (num_of_quant g)
+  | ZF_Forall_Fin (v, g) -> plus (S O) (num_of_quant g)
+  | ZF_Exists_Fin (v, g) -> plus (S O) (num_of_quant g)
   | ZF_Forall (v, g) -> plus (S O) (num_of_quant g)
   | ZF_Exists (v, g) -> plus (S O) (num_of_quant g)
   
@@ -655,14 +711,16 @@ module InfSolver =
   | ZF_And (f1, f2) -> ZF_And ((elim_quant0 f1), (elim_quant0 f2))
   | ZF_Or (f1, f2) -> ZF_Or ((elim_quant0 f1), (elim_quant0 f2))
   | ZF_Not g -> ZF_Not (elim_quant0 g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant0 g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant0 g))
   | ZF_Forall (v, g) ->
-    ZF_And ((ZF_Forall (v, (elim_quant0 g))), (ZF_And
-      ((elim_quant0 (subs_F (Pair (v, ZE_Inf)) g)),
-      (elim_quant0 (subs_F (Pair (v, ZE_NegInf)) g)))))
+    ZF_And ((ZF_Forall_Fin (v, (elim_quant0 g))), (ZF_And
+      ((subs_F (Pair (v, ZE_Inf)) (elim_quant0 g)),
+      (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))))
   | ZF_Exists (v, g) ->
-    ZF_Or ((ZF_Exists (v, (elim_quant0 g))), (ZF_Or
-      ((elim_quant0 (subs_F (Pair (v, ZE_Inf)) g)),
-      (elim_quant0 (subs_F (Pair (v, ZE_NegInf)) g)))))
+    ZF_Or ((ZF_Exists_Fin (v, (elim_quant0 g))), (ZF_Or
+      ((subs_F (Pair (v, ZE_Inf)) (elim_quant0 g)),
+      (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))))
   
   (** val elim_quant_terminate : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
@@ -673,14 +731,18 @@ module InfSolver =
   | ZF_Or (f1, f2) ->
     ZF_Or ((elim_quant_terminate f1), (elim_quant_terminate f2))
   | ZF_Not g -> ZF_Not (elim_quant_terminate g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant_terminate g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant_terminate g))
   | ZF_Forall (v, g) ->
-    ZF_And ((ZF_Forall (v, (elim_quant_terminate g))), (ZF_And
-      ((elim_quant_terminate (subs_F (Pair (v, ZE_Inf)) g)),
-      (elim_quant_terminate (subs_F (Pair (v, ZE_NegInf)) g)))))
+    let rec_res = elim_quant_terminate g in
+    ZF_And ((ZF_Forall_Fin (v, rec_res)), (ZF_And
+    ((subs_F (Pair (v, ZE_Inf)) rec_res),
+    (subs_F (Pair (v, ZE_NegInf)) rec_res))))
   | ZF_Exists (v, g) ->
-    ZF_Or ((ZF_Exists (v, (elim_quant_terminate g))), (ZF_Or
-      ((elim_quant_terminate (subs_F (Pair (v, ZE_Inf)) g)),
-      (elim_quant_terminate (subs_F (Pair (v, ZE_NegInf)) g)))))
+    let rec_res = elim_quant_terminate g in
+    ZF_Or ((ZF_Exists_Fin (v, rec_res)), (ZF_Or
+    ((subs_F (Pair (v, ZE_Inf)) rec_res),
+    (subs_F (Pair (v, ZE_NegInf)) rec_res))))
   
   (** val elim_quant : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
@@ -700,7 +762,11 @@ module InfSolver =
      * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
   | R_elim_quant_4 of coq_ZE coq_ZF * coq_ZE coq_ZF * coq_ZE coq_ZF
      * coq_R_elim_quant
-  | R_elim_quant_5 of coq_ZE coq_ZF * coq_ZE coq_ZBF
+  | R_elim_quant_5 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_6 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_7 of coq_ZE coq_ZF * coq_ZE coq_ZF
   
   (** val coq_R_elim_quant_rect :
       (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
@@ -714,35 +780,41 @@ module InfSolver =
       coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
       coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
       'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
-      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF ->
-      __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 **)
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
+      -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF
+      -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 **)
   
-  let rec coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 z0 = function
-  | R_elim_quant_0 (f6, v, g, res1, r0, res0, r1, res, r2) ->
-    f f6 v g __ res1 r0 (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 g res1 r0)
-      res0 r1
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_Inf)) g)
-        res0 r1) res r2
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4
-        (subs_F (Pair (v, ZE_NegInf)) g) res r2)
-  | R_elim_quant_1 (f6, v, g, res1, r0, res0, r1, res, r2) ->
-    f0 f6 v g __ res1 r0 (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 g res1 r0)
-      res0 r1
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_Inf)) g)
-        res0 r1) res r2
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4
-        (subs_F (Pair (v, ZE_NegInf)) g) res r2)
-  | R_elim_quant_2 (f6, f7, f8, res0, r0, res, r1) ->
-    f1 f6 f7 f8 __ res0 r0
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f7 res0 r0) res r1
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f8 res r1)
-  | R_elim_quant_3 (f6, f7, f8, res0, r0, res, r1) ->
-    f2 f6 f7 f8 __ res0 r0
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f7 res0 r0) res r1
-      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f8 res r1)
-  | R_elim_quant_4 (f6, g, res, r0) ->
-    f3 f6 g __ res r0 (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 g res r0)
-  | R_elim_quant_5 (f6, _x) -> f4 f6 _x __
+  let rec coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f7 z0 = function
+  | R_elim_quant_0 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f f8 v g __ res1 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_1 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f0 f8 v g __ res1 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_2 (f8, f9, f10, res0, r0, res, r1) ->
+    f1 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_3 (f8, f9, f10, res0, r0, res, r1) ->
+    f2 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_4 (f8, g, res, r0) ->
+    f3 f8 g __ res r0 (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_5 (f8, v, g, res, r0) ->
+    f4 f8 v g __ res r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_6 (f8, v, g, res, r0) ->
+    f5 f8 v g __ res r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_7 (f8, _x) -> f6 f8 _x __ __
   
   (** val coq_R_elim_quant_rec :
       (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
@@ -756,33 +828,41 @@ module InfSolver =
       coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
       coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
       'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
-      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF ->
-      __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 **)
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
+      -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF
+      -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 **)
   
-  let rec coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 z0 = function
-  | R_elim_quant_0 (f6, v, g, res1, r0, res0, r1, res, r2) ->
-    f f6 v g __ res1 r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 g res1 r0)
-      res0 r1
-      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_Inf)) g)
-        res0 r1) res r2
-      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_NegInf)) g)
-        res r2)
-  | R_elim_quant_1 (f6, v, g, res1, r0, res0, r1, res, r2) ->
-    f0 f6 v g __ res1 r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 g res1 r0)
-      res0 r1
-      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_Inf)) g)
-        res0 r1) res r2
-      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 (subs_F (Pair (v, ZE_NegInf)) g)
-        res r2)
-  | R_elim_quant_2 (f6, f7, f8, res0, r0, res, r1) ->
-    f1 f6 f7 f8 __ res0 r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f7 res0 r0)
-      res r1 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f8 res r1)
-  | R_elim_quant_3 (f6, f7, f8, res0, r0, res, r1) ->
-    f2 f6 f7 f8 __ res0 r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f7 res0 r0)
-      res r1 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f8 res r1)
-  | R_elim_quant_4 (f6, g, res, r0) ->
-    f3 f6 g __ res r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 g res r0)
-  | R_elim_quant_5 (f6, _x) -> f4 f6 _x __
+  let rec coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f7 z0 = function
+  | R_elim_quant_0 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f f8 v g __ res1 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_1 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f0 f8 v g __ res1 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_2 (f8, f9, f10, res0, r0, res, r1) ->
+    f1 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_3 (f8, f9, f10, res0, r0, res, r1) ->
+    f2 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_4 (f8, g, res, r0) ->
+    f3 f8 g __ res r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_5 (f8, v, g, res, r0) ->
+    f4 f8 v g __ res r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_6 (f8, v, g, res, r0) ->
+    f5 f8 v g __ res r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_7 (f8, _x) -> f6 f8 _x __ __
   
   (** val elim_quant_rect :
       (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1
@@ -790,59 +870,61 @@ module InfSolver =
       'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
       -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
       coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE
-      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __
-      -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ ->
+      __ -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
   
-  let rec elim_quant_rect f f0 f1 f2 f3 f4 f5 =
-    let f6 = f4 f5 in
-    let f7 = f3 f5 in
-    let f8 = f2 f5 in
-    let f9 = f1 f5 in
-    let f10 = f0 f5 in
-    let f11 = f f5 in
-    (match f5 with
-     | ZF_BF z0 -> f6 z0 __
+  let rec elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f7 =
+    let f8 = f6 f7 in
+    let f9 = f5 f7 in
+    let f10 = f4 f7 in
+    let f11 = f3 f7 in
+    let f12 = f2 f7 in
+    let f13 = f1 f7 in
+    let f14 = f0 f7 in
+    let f15 = f f7 in
+    (match f7 with
+     | ZF_BF z0 -> let _x = ZF_BF z0 in f8 _x __ __
      | ZF_And (z0, z1) ->
-       let f12 = f9 z0 z1 __ in
-       let f13 = let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z0 in f12 hrec
+       let f16 = f13 z0 z1 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
        in
-       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z1 in f13 hrec
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z1 in f17 hrec
      | ZF_Or (z0, z1) ->
-       let f12 = f8 z0 z1 __ in
-       let f13 = let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z0 in f12 hrec
+       let f16 = f12 z0 z1 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
        in
-       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z1 in f13 hrec
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z1 in f17 hrec
      | ZF_Not z0 ->
-       let f12 = f7 z0 __ in
-       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z0 in f12 hrec
+       let f16 = f11 z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+     | ZF_Forall_Fin (s, z0) ->
+       let f16 = f10 s z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+     | ZF_Exists_Fin (s, z0) ->
+       let f16 = f9 s z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
      | ZF_Forall (s, z0) ->
-       let f12 = f11 s z0 __ in
-       let f13 = let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z0 in f12 hrec
+       let f16 = f15 s z0 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
        in
-       let f14 =
-         let hrec =
-           elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (s, ZE_Inf)) z0)
-         in
-         f13 hrec
+       let f18 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f17 hrec
        in
-       let hrec =
-         elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (s, ZE_NegInf)) z0)
-       in
-       f14 hrec
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f18 hrec
      | ZF_Exists (s, z0) ->
-       let f12 = f10 s z0 __ in
-       let f13 = let hrec = elim_quant_rect f f0 f1 f2 f3 f4 z0 in f12 hrec
+       let f16 = f14 s z0 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
        in
-       let f14 =
-         let hrec =
-           elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (s, ZE_Inf)) z0)
-         in
-         f13 hrec
+       let f18 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f17 hrec
        in
-       let hrec =
-         elim_quant_rect f f0 f1 f2 f3 f4 (subs_F (Pair (s, ZE_NegInf)) z0)
-       in
-       f14 hrec)
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f18 hrec)
   
   (** val elim_quant_rec :
       (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1
@@ -850,8 +932,10 @@ module InfSolver =
       'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
       -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
       coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE
-      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZBF -> __
-      -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ ->
+      __ -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
   
   let elim_quant_rec =
     elim_quant_rect
@@ -861,24 +945,21 @@ module InfSolver =
   
   let coq_R_elim_quant_correct x res =
     elim_quant_rect (fun y y0 y1 _ y3 y4 y5 z0 _ -> R_elim_quant_0 (y, y0,
-      y1, (elim_quant y1), (y3 (elim_quant y1) __),
-      (elim_quant (subs_F (Pair (y0, ZE_Inf)) y1)),
-      (y4 (elim_quant (subs_F (Pair (y0, ZE_Inf)) y1)) __),
-      (elim_quant (subs_F (Pair (y0, ZE_NegInf)) y1)),
-      (y5 (elim_quant (subs_F (Pair (y0, ZE_NegInf)) y1)) __)))
+      y1, (elim_quant y1), (y3 (elim_quant y1) __), (elim_quant y1),
+      (y4 (elim_quant y1) __), (elim_quant y1), (y5 (elim_quant y1) __)))
       (fun y y0 y1 _ y3 y4 y5 z0 _ -> R_elim_quant_1 (y, y0, y1,
-      (elim_quant y1), (y3 (elim_quant y1) __),
-      (elim_quant (subs_F (Pair (y0, ZE_Inf)) y1)),
-      (y4 (elim_quant (subs_F (Pair (y0, ZE_Inf)) y1)) __),
-      (elim_quant (subs_F (Pair (y0, ZE_NegInf)) y1)),
-      (y5 (elim_quant (subs_F (Pair (y0, ZE_NegInf)) y1)) __)))
+      (elim_quant y1), (y3 (elim_quant y1) __), (elim_quant y1),
+      (y4 (elim_quant y1) __), (elim_quant y1), (y5 (elim_quant y1) __)))
       (fun y y0 y1 _ y3 y4 z0 _ -> R_elim_quant_2 (y, y0, y1,
       (elim_quant y0), (y3 (elim_quant y0) __), (elim_quant y1),
       (y4 (elim_quant y1) __))) (fun y y0 y1 _ y3 y4 z0 _ -> R_elim_quant_3
       (y, y0, y1, (elim_quant y0), (y3 (elim_quant y0) __), (elim_quant y1),
       (y4 (elim_quant y1) __))) (fun y y0 _ y2 z0 _ -> R_elim_quant_4 (y, y0,
-      (elim_quant y0), (y2 (elim_quant y0) __))) (fun y y0 _ z0 _ ->
-      R_elim_quant_5 (y, y0)) x res __
+      (elim_quant y0), (y2 (elim_quant y0) __))) (fun y y0 y1 _ y3 z0 _ ->
+      R_elim_quant_5 (y, y0, y1, (elim_quant y1), (y3 (elim_quant y1) __)))
+      (fun y y0 y1 _ y3 z0 _ -> R_elim_quant_6 (y, y0, y1, (elim_quant y1),
+      (y3 (elim_quant y1) __))) (fun y y0 _ _ z0 _ -> R_elim_quant_7 (y, y0))
+      x res __
   
   (** val norm_Exp : coq_ZE coq_ZExp -> coq_ZE coq_ZExp **)
   
@@ -1209,16 +1290,25 @@ module InfSolver =
      | ZBF_Neq (e1, e2) ->
        (match norm_inf_neginf e1 norm_bf with
         | ZBF_Const b ->
-          if b then norm_inf_neginf e2 norm_bf else ZBF_Const false
-        | _ -> norm_inf_neginf e2 norm_bf))
+          if b
+          then (match norm_inf_neginf e2 norm_bf with
+                | ZBF_Const b0 -> if b0 then norm_bf else ZBF_Const true
+                | _ -> norm_bf)
+          else ZBF_Const true
+        | _ ->
+          (match norm_inf_neginf e2 norm_bf with
+           | ZBF_Const b -> if b then norm_bf else ZBF_Const true
+           | _ -> norm_bf)))
   
   (** val norm_F : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
   let rec norm_F = function
   | ZF_BF bf -> ZF_BF (norm_BF bf)
-  | ZF_And (f1, f2) -> ZF_And ((norm_F f1), (norm_F f2))
-  | ZF_Or (f1, f2) -> ZF_Or ((norm_F f1), (norm_F f2))
+  | ZF_And (f1, f2) -> mkAnd (norm_F f1) (norm_F f2)
+  | ZF_Or (f1, f2) -> mkOr (norm_F f1) (norm_F f2)
   | ZF_Not g -> ZF_Not (norm_F g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (norm_F g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (norm_F g))
   | ZF_Forall (v, g) -> ZF_Forall (v, (norm_F g))
   | ZF_Exists (v, g) -> ZF_Exists (v, (norm_F g))
   

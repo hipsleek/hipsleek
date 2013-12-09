@@ -236,6 +236,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | IConst _ 
   | Tsconst _ 
   | InfConst _
+  | NegInfConst _
   | FConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Ann_Exp (e,_,_) -> afv e
@@ -561,6 +562,7 @@ and pos_of_exp (e : exp) = match e with
   | Tsconst (_, p)
   | Bptriple (_, p)
   | InfConst (_, p)
+  | NegInfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
   | Add (_, _, p) -> p
@@ -695,6 +697,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | FConst _ 
   | Tsconst _
   | InfConst _
+  | NegInfConst _
   | AConst _ -> e
   | Bptriple ((ec,et,ea),pos) ->
       Bptriple ((e_apply_one p ec,
@@ -873,6 +876,7 @@ and find_lexp_exp (e: exp) ls =
   | AConst _
   | Tsconst _
   | InfConst _
+  | NegInfConst _ 
   | FConst _ -> []
   | Ann_Exp(e,_,_) -> find_lexp_exp e ls
 	| Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
@@ -939,6 +943,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | AConst _ 
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
+  | InfConst _ 
+  | NegInfConst _
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -961,7 +967,6 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
   | ArrayAt _ -> true 
-  | InfConst _ -> Error.report_no_pattern ()
 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
@@ -971,6 +976,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | AConst _ 
   | Tsconst _
   | InfConst _ 
+  | NegInfConst _
   | FConst _ -> (e, None)
   | Ann_Exp (e, t, l) -> 
       let ne, np = float_out_exp_min_max e in
@@ -1404,6 +1410,7 @@ let rec typ_of_exp (e: exp) : typ =
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
+  | NegInfConst _               -> Globals.INFInt (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
   | Bptriple _ 				  -> Globals.Bptyp

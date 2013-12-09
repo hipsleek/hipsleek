@@ -671,6 +671,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
+    | P.NegInfConst (i,l) -> let r = "~\\inf" in fmt_string r
     | P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
 	| P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
@@ -3602,6 +3603,8 @@ let rec html_of_formula_exp e =
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
     | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
+	| P.InfConst(f,l) -> f
+    | P.NegInfConst(f,l) -> "~"
 	| P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -3639,7 +3642,6 @@ let rec html_of_formula_exp e =
     | P.ListReverse (e, l)  -> "<b>rev</b>(" ^ (html_of_formula_exp e) ^ ")"
     | P.Func (a, i, l) -> (html_of_spec_var a) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ ")"
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
-	| P.InfConst _ -> Error.report_no_pattern ()
 
 let rec html_of_pure_b_formula f = match f with
     | P.XPure _ -> "<b> XPURE </b>"

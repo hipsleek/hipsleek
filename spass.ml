@@ -45,6 +45,8 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> illegal_format "SPASS don't support infconst expresion"
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
@@ -71,7 +73,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
-  | Cpure.InfConst _ -> Error.report_no_pattern()
+
                            
 (* return b_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * string list) =
@@ -186,6 +188,8 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> illegal_format "SPASS don't support infconst expresion"
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -211,7 +215,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
-  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern()
+  | Cpure.Level _  -> Error.report_no_pattern()
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
   match bf with
@@ -269,6 +273,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
   | Cpure.Tsconst _      -> false
+  | Cpure.NegInfConst _
+  | Cpure.InfConst _ -> false
   (* arithmetic expressions *)
   | Cpure.Add _
   | Cpure.Subtract _
@@ -293,7 +299,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   (* array expressions *)
   | Cpure.ArrayAt _      -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
-  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern(); 
+  | Cpure.Level _  -> Error.report_no_pattern(); 
   | Cpure.Bptriple _      -> Error.report_no_pattern();
 
 

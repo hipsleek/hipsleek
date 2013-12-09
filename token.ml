@@ -126,6 +126,7 @@ module Token = struct
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
     | INFINITY -> "\\inf"
+    | NEGINFINITY -> "~\\inf"
     | TEMPL ->"template"
     | TERM -> "Term"
     | LOOP -> "Loop"

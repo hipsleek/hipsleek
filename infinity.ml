@@ -67,6 +67,7 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
                 | CP.Add(e3,e4,pos) -> let e5  = CP.Add(e4,e2_norm,pos) in helper e3 e5
                 | _ -> CP.Add(e1_norm,e2_norm,pos)
       in helper e1 e2
+   | CP.NegInfConst _  -> CP.mkNegInfConst no_pos
    | _ -> exp
 
 let normalize_exp (exp: CP.exp) : CP.exp =
@@ -308,6 +309,7 @@ let contains_inf (f:CP.formula) : bool =
   let f_e f = 
     match f with
       | InfConst _ -> Some(true)
+      | NegInfConst _ -> Some(true)
       | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
       | _ -> None
   in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
@@ -593,6 +595,7 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_e e =
     match e with
     | CP.InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
+    | CP.NegInfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Primed),pos))
     | _ -> None
   in
   let pf = map_formula pf (f_f,f_bf_neg,f_e_neg) in
@@ -868,6 +871,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.IConst _
     | CP.AConst _ 
     | CP.InfConst _
+    | CP.NegInfConst _
     | CP.Tsconst _
 	| CP.Bptriple _
     | CP.FConst _ -> exp

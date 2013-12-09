@@ -638,6 +638,7 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+  | CP.NegInfConst _
     | CP.Bptriple _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
@@ -671,7 +672,7 @@ let rec is_list_exp e = match e with
     )
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
   | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-  | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+  | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _ | CP.NegInfConst _
     | CP.Bptriple _
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false
@@ -1661,7 +1662,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     let expand_quantifier = Infinity.elim_forall_exists in
     tp_is_sat_no_cache (expand_quantifier f) sat_no
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
-    tp_is_sat_no_cache (Coqinf.check_sat_inf_formula f) sat_no
+    let f  = Coqinf.check_sat_inf_formula f in
+    let fl = CP.split_disjunctions_deep f in
+    let rec aux al = match al with
+      | [] -> false
+      | x::xs -> if (tp_is_sat_no_cache x sat_no) then true else aux xs
+    in aux fl
+    (*tp_is_sat_no_cache f sat_no*)
   else flag 
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
@@ -2403,8 +2410,19 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     let expand_quantifier = Infinity.elim_forall_exists in
     tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
-    tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
-      (Coqinf.check_sat_inf_formula conseq) imp_no timeout process
+    (*let f = mkAnd ante (mkNot_dumb conseq None no_pos) no_pos in
+    let f = mkForall (fv f) f None no_pos in*)
+    let f = Coqinf.check_imply_inf_formula ante conseq in
+    (*let fl = CP.list_of_disjs f in
+    let rec aux al = match al with
+      | [] -> false
+      | x::xs -> if (Omega.is_valid x timeout) then true else aux xs
+    in aux fl*)
+    Omega.is_valid f timeout
+   (* not(Omega.is_sat f imp_no)*)
+    (*(tp_is_sat_no_cache f imp_no)*)
+    (* tp_imply_no_cache (Coqinf.check_sat_inf_formula  ante) 
+      (Coqinf.check_sat_inf_formula conseq) imp_no timeout process*)
   else flag 
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)

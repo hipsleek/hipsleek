@@ -1302,7 +1302,7 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
     )
   | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])
-  | P.IConst _ | P.FConst _ | P.AConst _  | P.InfConst _ | P.Tsconst _ -> ([], [])
+  | P.IConst _ | P.FConst _ | P.AConst _  |P.NegInfConst _ | P.InfConst _ | P.Tsconst _ -> ([], [])
   | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])
   | P.Max _ | P.Min _ | P.TypeCast _ -> ([], [])
   | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])

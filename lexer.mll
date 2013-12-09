@@ -357,7 +357,7 @@ rule tokenizer file_name = parse
   | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
-  | "\\-inf" {NEGINFINITY}
+  | "~\\inf" {NEGINFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }

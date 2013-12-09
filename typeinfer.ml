@@ -486,7 +486,7 @@ and gather_type_info_exp_x a0 tlist et =
       let t = I.ann_type in
       let (n_tlist,_) = must_unify_expect t et tlist pos in
       (n_tlist,t)
-  | IP.IConst (_,pos) | IP.InfConst (_,pos) -> 
+  | IP.IConst (_,pos) | IP.InfConst (_,pos) | IP.NegInfConst (_,pos) -> 
       let t = I.int_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)      
