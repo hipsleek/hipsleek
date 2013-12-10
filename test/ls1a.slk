@@ -40,31 +40,21 @@ checkentail
   p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 & b>0
   |- p::lseg<q1,i2>*q1::node<q>.
 
-// (6)fail
-checkentail 
-  q1::lseg<q,b> & b>0
-  |- q1::node<q>.
 
-// (7)succeed
-checkentail 
-  q1::lseg<q,b> & b=1
-  |- q1::node<q>.
-
-// (8)to infer b
-infer[b] 
-  q1::lseg<q,b> & b>=0
-  |- q1::node<q>.
-print residue.
-
-// (9)to infer b
-infer[b] 
-  q1::lseg<q,b> 
-  |- q1::node<q>.
-print residue.
-
-// (10)to infer b
+// (6)to infer b
 // seems broken here!
 infer[b] 
-  q1::lseg<q,b> & b>0
+  q1::lseg<q,b> & q!=q1
   |- q1::node<q>.
+print residue.
+
+//(7)
+infer[b]
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(8)
+infer[a,b]
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & q!=q1 
+  |- p::lseg<q1,i2>*q1::node<q>.
 print residue.

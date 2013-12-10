@@ -8,7 +8,7 @@ pred lseg<p,n> == self=p & n=0
 
 // (1)to infer b
 // seems broken here!
-infer[b] q1::lseg<q,b> |- q1::node<q>.
+infer[b] q1::lseg<q,b> & q!=q1 |- q1::node<q>.
 print residue.
 //Entail (1) : Fail.(may) cause:OrR[Cannot infer heap and pure 2,valid]
 
