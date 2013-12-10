@@ -11,24 +11,60 @@ lemma_unsafe self::lseg<p,n> & n=a+b & a>=0 & b>=0
 
 // example from APLAS13 which sleek cannot solve..
 
+//(1)
 checkentail p::lseg<q',i'>*q'::node<q>*q::lseg<nil,m> & i=i'+1
   & i'>=0 & m=n-i'-1 & m>=0
  |- p::lseg<q,i>*q::lseg<nil,n-i>.
 /*
 fail: due to incompleteness?
 
-Entail 10: Fail.(may) cause:UnionR[UnionR[AndR[ 0<=m & 0<=i' & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
-(nil=q & m=0))) & q'!=null & exists(nil_1064:nil_1064=q) & 
-exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[71;1;0;70;72;5];  0<=m & 0<=i' & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
-(nil=q & m=0))) & q'!=null & exists(nil_1064:nil_1064=q) & 
-exists(q_1062:q'=q_1062) |-  nil=q. LOCS:[71;1;0;70;72;5];  0<=m & exists(q_1062:q'=q_1062) & exists(nil_1064:nil_1064=q) & q'!=null & 
-(((1<=m & q!=null) | (nil=q & m=0))) & (((1<=i' & p!=null) | (p=q' & 
-i'=0))) & n=m+1+i' & 0<=i' & i=1+i' |-  n=i+0. LOCS:[1;0;71;70;72] (may-bug).], 0<=i' & 0<=m & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
-(nil=q & m=0))) & q'!=null & exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[71;1;0;70;72;5] (may-bug)],AndR[ 0<=b_1335 & 0<=i' & 0<=m & b_1335<=m & (((1<=b_1335 & q_1349!=null) | 
-(nil=q_1349 & b_1335=0))) & (((1<=i' & p!=null) | (p=q' & i'=0))) & 
-(((1<=a_1334 & q!=null) | (q=q_1349 & a_1334=0))) & q'!=null & 
-exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[9;71;1;0;70;72;5];  0<=b_1335 & 0<=i' & 0<=m & exists(q_1062:q'=q_1062) & b_1335<=m & 
-q'!=null & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=a_1334 & q!=null) | 
-
-
 */
+
+//(2) fails but should succeed
+checkentail p::lseg<q',i'>*q'::node<q> & i=i'+1
+  & i'>=0 
+ |- p::lseg<q,i>.
+
+//(3) fail but should succeed
+checkentail 
+  p::lseg<q,i> & i=i2+1 & i2>=0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(4)
+checkentail 
+  p::lseg<q2,a> & q2::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 & b>=0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(5)
+checkentail 
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 & b>0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+// (6)fail
+checkentail 
+  q1::lseg<q,b> & b>0
+  |- q1::node<q>.
+
+// (7)succeed
+checkentail 
+  q1::lseg<q,b> & b=1
+  |- q1::node<q>.
+
+// (8)to infer b
+infer[b] 
+  q1::lseg<q,b> & b>=0
+  |- q1::node<q>.
+print residue.
+
+// (9)to infer b
+infer[b] 
+  q1::lseg<q,b> 
+  |- q1::node<q>.
+print residue.
+
+// (10)to infer b
+// seems broken here!
+infer[b] 
+  q1::lseg<q,b> & b>0
+  |- q1::node<q>.
+print residue.
