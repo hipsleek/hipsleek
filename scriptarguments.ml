@@ -238,15 +238,17 @@ let common_arguments = [
   ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--en-inf-qe", Arg.Unit( fun _ ->
 	Globals.allow_inf_qe := true;
-	Globals.elim_exists_flag := false;
+	(*Globals.elim_exists_flag := false;
 	Globals.simplify_imply := false;
-	Globals.filtering_flag := false;),
+	Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
 	"enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
 	Globals.allow_inf_qe_coq := true;
-	Globals.elim_exists_flag := false;
-	Globals.simplify_imply := false;
-	Globals.filtering_flag := false;),
+	(*Globals.elim_exists_flag := false;*)
+	(*Globals.simplify_imply := false;*)
+	(*Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
     "use the quantifier elimination procedure implemented in coq for PAinfinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");

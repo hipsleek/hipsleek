@@ -65,6 +65,126 @@ type coq_formula =
   | CForall of (string * coq_formula)
   | CExists of (string * coq_formula)
 
+let string_of_coq_const c = 
+match c with
+  | CFinConst i -> string_of_int i
+  | CInfConst -> "\\inf"
+  | CNegInfConst -> "~\\inf"
+
+let rec string_of_coq_exp e =
+match e with
+  | CVar s -> s
+  | Cconst c -> string_of_coq_const c 
+  | CAdd(e1,e2) -> (string_of_coq_exp e1)^" + "^(string_of_coq_exp e2)
+  | CSubtract(e1,e2) -> (string_of_coq_exp e1)^" - "^(string_of_coq_exp e2)
+  | CMult(i,e) -> (string_of_int i)^" * "^(string_of_coq_exp e)
+
+let string_of_coq_b_formula bf =
+match bf with
+  | CBConst b -> if b then "true" else "false"
+  | CLt(e1,e2) -> (string_of_coq_exp e1)^" < "^(string_of_coq_exp e2)
+  | CLte(e1,e2) -> (string_of_coq_exp e1)^" <= "^(string_of_coq_exp e2)
+  | CGt(e1,e2) -> (string_of_coq_exp e1)^" > "^(string_of_coq_exp e2)
+  | CGte(e1,e2) -> (string_of_coq_exp e1)^" >= "^(string_of_coq_exp e2)
+  | CEq(e1,e2) -> (string_of_coq_exp e1)^" = "^(string_of_coq_exp e2)
+  | CNeq(e1,e2) -> (string_of_coq_exp e1)^" != "^(string_of_coq_exp e2)
+
+let rec string_of_coq_formula cf = 
+match cf with
+  | CBForm b -> "("^(string_of_coq_b_formula b)^")"
+  | CAnd(cf1,cf2) -> (string_of_coq_formula cf1)^" & "^(string_of_coq_formula cf2)
+  | COr(cf1,cf2) -> (string_of_coq_formula cf1)^" | "^(string_of_coq_formula cf2)
+  | CNot(cf) -> "(!"^(string_of_coq_formula cf)^")"
+  | CForall_Fin(s,cf) -> "forall_Z("^s^":"^(string_of_coq_formula cf)^")"
+  | CExists_Fin(s,cf) -> "exists_Z("^s^":"^(string_of_coq_formula cf)^")"
+  | CForall(s,cf) -> "forall_ZE("^s^":"^(string_of_coq_formula cf)^")"
+  | CExists(s,cf) -> "exists_ZE("^s^":"^(string_of_coq_formula cf)^")"
+
+let is_coqinf_const c =
+match c with
+  | CFinConst i -> false
+  | CInfConst
+  | CNegInfConst -> true
+
+let is_coqinf_exp e =
+match e with
+  | Cconst c -> is_coqinf_const c
+  | _ -> false
+
+let is_var_exp e =
+match e with
+  | CVar _ -> true
+  | _ -> false
+
+let rec find_inf_quant_vars_exp e vl : string list =
+match e with
+  | CAdd(e1,e2) 
+  | CSubtract(e1,e2) -> 
+      let vl = find_inf_quant_vars_exp e1 vl in
+      let vl = find_inf_quant_vars_exp e2 vl in
+      (match e1, e2 with
+      | CVar s1,CVar s2 -> if Gen.BList.mem_eq (=) s1 vl then s2::vl else if Gen.BList.mem_eq (=) s2 vl then s1::vl else vl
+      | CVar s, Cconst c
+      | Cconst c, CVar s -> if is_coqinf_const c then s::vl else vl
+      | _ , _ -> vl )
+  | _ -> vl
+
+let find_inf_quant_vars_bform bf vl : string list =
+match bf with 
+  | CBConst _ -> vl
+  | CLt(e1,e2)
+  | CLte(e1,e2)
+  | CGt(e1,e2)
+  | CGte(e1,e2)
+  | CEq(e1,e2)
+  | CNeq(e1,e2) -> let vl = (find_inf_quant_vars_exp e1 vl) in
+                   let vl = (find_inf_quant_vars_exp e2 vl) in
+                   (match e1, e2 with
+                     | CVar s1,CVar s2 -> if Gen.BList.mem_eq (=) s1 vl then s2::vl else if Gen.BList.mem_eq (=) s2 vl then s1::vl else vl
+                     | CVar s, Cconst c
+                     | Cconst c, CVar s -> if is_coqinf_const c then s::vl else vl
+                     | CVar s, CAdd(a1,a2) 
+                     | CAdd(a1,a2), CVar s
+                     | CVar s, CSubtract(a1,a2) 
+                     | CSubtract(a1,a2), CVar s -> (match a1,a2 with
+                         | CVar r, x
+                         | x , CVar r -> if Gen.BList.mem_eq (=) r vl then s::vl else if Gen.BList.mem_eq (=) s vl then r::vl 
+                           else (match x with 
+                             | Cconst c -> if is_coqinf_const c then r::s::vl else vl
+                             | _ -> vl)
+                         | _,_ -> vl)
+                     | Cconst c, CAdd(a1,a2)
+                     | CAdd(a1,a2), Cconst c
+                     | Cconst c, CSubtract(a1,a2) 
+                     | CSubtract(a1,a2), Cconst c -> (match a1, a2 with
+                         | CVar s1, CVar s2 -> if is_coqinf_const c then s1::s2::vl else vl
+                         | CVar s, _ 
+                         | _, CVar s -> if is_coqinf_const c then s::vl else vl
+                         | _, _ -> vl)
+                     | _ , _ -> vl )
+ 
+let rec find_inf_quant_vars f vl : string list =
+let sl = match f with
+  | CBForm b -> find_inf_quant_vars_bform b vl
+  | CAnd(f1,f2) 
+  | COr(f1,f2) -> let vl = (find_inf_quant_vars f1 vl) in
+                   (find_inf_quant_vars f2 vl)
+  | CNot g -> find_inf_quant_vars g vl
+  | CForall_Fin (_,g)
+  | CExists_Fin (_,g) 
+  | CForall(_,g) 
+  | CExists(_,g) -> find_inf_quant_vars g vl
+in Gen.BList.remove_dups_eq (=) sl
+
+let get_inf_vars f = 
+  let rec aux ls  = let ls2 = find_inf_quant_vars f ls in
+                    if Gen.BList.list_equiv_eq (=) ls ls2 then ls2
+                    else aux ls2
+  in aux []
+
+let get_inf_vars f = 
+Debug.no_1 "get_inf_vars" (fun c -> "") (fun l -> "INF Vars:"^(String.concat "," l)) get_inf_vars f
+
 let transform_ZE_to_string f =
 Gen.Profiling.do_1 "CoqSolverZE" transform_ZE_to_string f
 
@@ -92,16 +212,25 @@ match bf with
   | CEq(e1,e2) -> ZBF_Eq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2)) 
   | CNeq(e1,e2) -> ZBF_Neq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))  
 
-let rec coqpure_to_coq_infsolver_form (f: coq_formula) : coq_ZE coq_ZF = 
+let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
 match f with
   | CBForm bf -> ZF_BF (coqpure_to_coq_infsolver_bf bf)
-  | CAnd(f1,f2) -> ZF_And((coqpure_to_coq_infsolver_form f1),(coqpure_to_coq_infsolver_form f2))
-  | COr(f1,f2) -> ZF_Or ((coqpure_to_coq_infsolver_form f1),(coqpure_to_coq_infsolver_form f2)) 
-  | CNot f -> ZF_Not (coqpure_to_coq_infsolver_form f)
-  | CForall_Fin(v,f) -> ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f))
-  | CExists_Fin(v,f) -> ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f))
-  | CForall(v,f) -> ZF_Forall((explode v),(coqpure_to_coq_infsolver_form f))
-  | CExists(v,f) -> ZF_Exists((explode v),(coqpure_to_coq_infsolver_form f))
+  | CAnd(f1,f2) -> ZF_And((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl))
+  | COr(f1,f2) -> ZF_Or ((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl)) 
+  | CNot f -> ZF_Not (coqpure_to_coq_infsolver_form f vl)
+  | CForall_Fin(v,f) -> ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
+  | CExists_Fin(v,f) -> ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
+  | CForall(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
+      ZF_Forall((explode v),(coqpure_to_coq_infsolver_form f vl))
+    else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
+         ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
+  | CExists(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
+      ZF_Exists((explode v),(coqpure_to_coq_infsolver_form f vl))
+    else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
+         ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
+
+let coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
+Debug.no_2 "coqpure_to_coq_inf" string_of_coq_formula (fun c -> "") (fun c -> "") coqpure_to_coq_infsolver_form f vl
 
 (*
 let coqinfsolver_to_coqpure_const (c:coq_ZE) : coq_const =
@@ -138,8 +267,11 @@ match f with
   | ZF_Forall (s,f)  (*CForall((implode s),(coq_infsolver_to_coqpure_form f))*)
   | ZF_Exists (s,f) -> (*CExists((implode s),(coq_infsolver_to_coqpure_form f))*)
       failwith "coqinf.ml Infinity quantifiers should be all eliminated"
-  | ZF_Forall_Fin(s,f) -> CForall((implode s),(coq_infsolver_to_coqpure_form f))
-  | ZF_Exists_Fin(s,f) -> CExists((implode s),(coq_infsolver_to_coqpure_form f))
+  | ZF_Forall_Fin(s,f) -> CForall_Fin((implode s),(coq_infsolver_to_coqpure_form f))
+  | ZF_Exists_Fin(s,f) -> CExists_Fin((implode s),(coq_infsolver_to_coqpure_form f))
+
+let coq_infsolver_to_coqpure_form (f: char list coq_ZF) : coq_formula = 
+Debug.no_1 "coq_inf_to_coqpure" (fun c -> "") string_of_coq_formula coq_infsolver_to_coqpure_form f 
 
 let rec cpure_to_coqpure_exp (e: exp) : coq_exp =
 match e with
@@ -205,11 +337,13 @@ match f with
   | Or(f1,f2,_,_) -> COr ((cpure_to_coqpure f1),(cpure_to_coqpure f2))
   | Not(f,_,_) -> CNot (cpure_to_coqpure f)
   | Forall(sv,f,_,_) -> 
-      if is_int_var sv then CForall((string_of_spec_var sv),(cpure_to_coqpure f))
-      else  CForall_Fin((string_of_spec_var sv),(cpure_to_coqpure f))
+(* type information is not reliable checking it here will lead to diff between sleek and hip output *)
+      (*if is_int_var sv then*) CForall((string_of_spec_var sv),(cpure_to_coqpure f))
+      (*else (*let () = print_endline ("Is_not_INFVar:  "^(Cprinter.string_of_spec_var sv)) in*)
+      CForall_Fin((string_of_spec_var sv),(cpure_to_coqpure f))*)
   | Exists(sv,f,_,_) -> 
-      if is_int_var sv then CExists((string_of_spec_var sv),(cpure_to_coqpure f))
-      else CExists_Fin((string_of_spec_var sv),(cpure_to_coqpure f))
+     (* if is_int_var sv then*) CExists((string_of_spec_var sv),(cpure_to_coqpure f))
+     (* else CExists_Fin((string_of_spec_var sv),(cpure_to_coqpure f))*)
   | AndList _ -> illegal_format "Cannot use AndList for CoqInf Solver"
 
 let cpure_to_coqpure (f:formula) :coq_formula = 
@@ -225,12 +359,12 @@ let string_to_spec_var str_sv =
 let rec coqpure_to_cpure_exp (e:coq_exp) : exp =
   match e with 
     | CVar s -> if s="ZInfinity" then mkInfConst no_pos (* another bug fix with strings *)
-      else if s="ZNegInfinity" then mkNegInfConst no_pos
+      else if s="ZNegInfinity" then NegInfConst(zinf_str, no_pos) (* bug fixed by testing neginfconst mkNegInfConst no_pos*)
       else Var((string_to_spec_var s),no_pos)
     | Cconst c -> 
         (match c with
           | CInfConst -> mkInfConst no_pos
-          | CNegInfConst -> mkNegInfConst no_pos
+          | CNegInfConst -> NegInfConst(zinf_str, no_pos) (* bug fixed by testing neginfconst*)
           | CFinConst i -> IConst(i,no_pos)
         )
     | CAdd(e1,e2) -> Add((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
@@ -255,13 +389,14 @@ let rec coqpure_to_cpure (cf: coq_formula) : formula =
 (*    | CAnd(e1,e2) -> And((coqpure_to_cpure e1),(coqpure_to_cpure e2),no_pos)
     | COr(e1,e2) -> Or((coqpure_to_cpure e1),(coqpure_to_cpure e2),None,no_pos)*)
 (* *)
-    | CAnd(e1,e2) -> Cpure.mkAnd_dumb (coqpure_to_cpure e1) (coqpure_to_cpure e2) no_pos
+    | CAnd(e1,e2) -> Cpure.mkAnd (coqpure_to_cpure e1) (coqpure_to_cpure e2) no_pos
     | COr(e1,e2) -> Cpure.mkOr (coqpure_to_cpure e1) (coqpure_to_cpure e2) None no_pos
-    | CNot f -> mkNot_dumb (coqpure_to_cpure f) None no_pos
+    | CNot f -> mkNot (coqpure_to_cpure f) None no_pos
+    | CForall(sv,f)  (*mkForall [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos*)
+    | CExists(sv,f) ->  failwith "coqinf.ml Infinity quantifiers should be all eliminated"
+(*mkExists [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos*)
     | CForall_Fin(sv,f) -> mkForall [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
     | CExists_Fin(sv,f) -> mkExists [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
-    | CForall(sv,f) -> mkForall [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
-    | CExists(sv,f) -> mkExists [(string_to_spec_var sv)] (coqpure_to_cpure f) None no_pos
 
 let coqpure_to_cpure (f:coq_formula) : formula = 
 Debug.no_1 "coqpure_to_cpure" (fun _ -> "")  Cprinter.string_of_pure_formula coqpure_to_cpure f
@@ -280,9 +415,9 @@ mkForall (fv f) f None no_pos
 
 let rec drop_quantifier (f:formula) vl : formula = 
 match f with 
-  | And(f1,f2,_) -> Cpure.mkAnd_dumb(drop_quantifier f1 vl) (drop_quantifier f2 vl) no_pos
+  | And(f1,f2,_) -> Cpure.mkAnd (drop_quantifier f1 vl) (drop_quantifier f2 vl) no_pos
   | Or(f1,f2,_,_) -> Cpure.mkOr (drop_quantifier f1 vl) (drop_quantifier f2 vl) None no_pos
-  | Not(f,_,_) -> mkNot_dumb (drop_quantifier f vl) None no_pos
+  | Not(f,_,_) -> mkNot (drop_quantifier f vl) None no_pos
   | Forall(sv,g,_,_) -> if (Gen.BList.mem_eq eq_spec_var sv vl) 
     then (drop_quantifier g vl)
     else mkForall [sv] (drop_quantifier g vl) None no_pos
@@ -331,20 +466,21 @@ let remove_redundant_after_inf (f:formula):formula =
 Gen.Profiling.no_1 "remove_redundant_after_inf" remove_redundant_after_inf f
 
 let check_sat_inf_formula (f: formula) : formula = 
-  (*let f = drop_exists f in
-  let f = remove_redundant (remove_redundant_after_inf f) in*)
+  (*let f = drop_exists f in*)
+  (*let f = remove_redundant (remove_redundant_after_inf f) in*)
   let var_lst = fv f in
- (*let var_lst_not_inf = List.filter (fun c -> not(is_int_var c)) var_lst in*)
+  (*let var_lst_not_inf = List.filter (fun c -> not(is_int_var c)) var_lst in*)
   let f = (close_form_cpure f) in
  (* let _ = print_endline("F: "^Cprinter.string_of_pure_formula f) in *)
-(*  let f = drop_quantifier f var_lst_not_inf in*)
+  (*let f = drop_quantifier f var_lst_not_inf in*)
 (*  let _ = print_endline("DF: "^Cprinter.string_of_pure_formula f) in *)
   let f = (cpure_to_coqpure f) in
 (*  let f = cpure_to_coqpure_vars var_lst f in *)
+  let vl = get_inf_vars f in
   let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
-                  (coqpure_to_coq_infsolver_form f))) in
+                  (coqpure_to_coq_infsolver_form f vl))) in
   let f = drop_quantifier f var_lst in
-  (*let f =  remove_redundant (remove_redundant_after_inf f) in *)
+  let f = remove_redundant (remove_redundant_after_inf f) in 
   f 
 
 let check_sat_inf_formula (f:formula) :formula =
@@ -356,19 +492,20 @@ Gen.Profiling.do_1 "check_sat_coq" check_sat_inf_formula f
 
 let check_imply_inf_formula (a: formula) (c:formula) : formula = 
   (*let a = drop_exists a in*)
-  let f = Cpure.mkOr (mkNot_dumb a None no_pos) c None no_pos in
- (* let f = remove_redundant (remove_redundant_after_inf f) in*)
+  let f = Cpure.mkOr (mkNot a None no_pos) c None no_pos in
+ (*let f = remove_redundant (remove_redundant_after_inf f) in*)
   let var_lst = fv f in
   (*let var_lst_not_inf = List.filter (fun c -> not(is_int_var c)) var_lst in*)
   let f = (close_form_cpure_all f) in
   (*let f = drop_quantifier f var_lst_not_inf in*)
   let f = (cpure_to_coqpure f) in
+  let vl = get_inf_vars f in
   (*let f = cpure_to_coqpure_vars var_lst f in *)
 (*let f = mkAnd a (mkNot_dumb c None no_pos) no_pos in*)
   let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string
-                  (coqpure_to_coq_infsolver_form f))) in
+                  (coqpure_to_coq_infsolver_form f vl))) in
   let f = drop_quantifier f var_lst in
-  (*let f =   remove_redundant (remove_redundant_after_inf f) in *)
+  let f = remove_redundant (remove_redundant_after_inf f) in 
   f
 
 let check_imply_inf_formula (a: formula) (c:formula) : formula = 

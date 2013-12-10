@@ -67,7 +67,7 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
                 | CP.Add(e3,e4,pos) -> let e5  = CP.Add(e4,e2_norm,pos) in helper e3 e5
                 | _ -> CP.Add(e1_norm,e2_norm,pos)
       in helper e1 e2
-   | CP.NegInfConst _  -> CP.mkNegInfConst no_pos
+   | CP.NegInfConst _  -> if !Globals.allow_inf_qe_coq then exp else CP.mkNegInfConst no_pos
    | _ -> exp
 
 let normalize_exp (exp: CP.exp) : CP.exp =
@@ -611,7 +611,8 @@ let convert_var_to_inf (pf:CP.formula) : CP.formula =
   let f_e e = 
     match e with
       | Var(sv,pos) -> if is_inf e 
-        then if not(is_primed sv) then Some (mkInfConst pos) else Some(mkNegInfConst pos) 
+        then if not(is_primed sv) then Some (mkInfConst pos) else 
+            if (!Globals.allow_inf_qe_coq) then Some(NegInfConst(zinf_str,pos)) else Some(mkNegInfConst pos) 
         else None
       | _ -> None
   in
