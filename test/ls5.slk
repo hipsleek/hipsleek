@@ -23,10 +23,14 @@ lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0
 
 // why contradictory lemma proving below..
 
-lemma_safe 
+lemma_test 
   self::lseg<q,a>*q::lseg<p,b> & n=a+b
   -> self::lseg<p,n>.//failed?
 
-lemma_safe self::lseg<p,n> 
+lemma_test self::lseg<p,n> 
    <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.//valid?
 
+/*
+It should fail, but currently succeeds for the
+2nd case. This is unsound.
+*/
