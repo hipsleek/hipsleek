@@ -14,7 +14,36 @@ Entail 1: Valid.
 <2>q1::lseg<p,b_60>@M&0<=n & 0<=b_60 & b_60<=n & n=b_60+a & 0<=a & 0<=b_60&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
 ====================================================================
+# ls6b3.slk -dre ".*coercion_check"
+
+lemma_test
+  self::ns<p,n> <- self::lseg<p,n>.
+// unsound
+
+SOLUTION : Need to unfold RHS (inp2)
+
+process_coercion_check inp1 : 
+ emp&p=self_lem_12 & n=0&{FLOW,(21,22)=__norm}[]
+ or (exists p_80,flted_7_81,q_82: self_lem_12::node<q_82>@M * 
+    q_82::lseg<p_80,flted_7_81>@M&n=flted_7_81+1 & p=p_80&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase self_lem_12::ns<p,n>@M&{FLOW,(21,22)=__norm}[]
 ====================================================================
+# ls6b4.slk --dis-lem-rhs-unfold
+
+lemma_test
+  self::ns<p,n> <-> self::lseg<p,n>.
+
+why is this unsound for <-- ?
+
+For folding lhs <- rhs
+we convert to:
+  unfold(rhs) --> lhs
+
+However, this is unsound if rhs is actually
+weaker. An issue is why is folding unsound
+under such a scenario?
 ====================================================================
 ====================================================================
 ====================================================================

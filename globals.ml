@@ -674,7 +674,7 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
-let enable_lemma_rhs_unfold = ref false
+let enable_lemma_rhs_unfold = ref true
 
 let dis_show_diff = ref false
 

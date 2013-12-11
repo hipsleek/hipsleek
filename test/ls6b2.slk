@@ -1,0 +1,41 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+pred ns<p,n> == self=p & n=0
+  or self::node<q>*q::ns<p,n-1> & self!=p 
+  inv n>=0.
+
+lemma_test
+  self::ns<p,n>
+  <-
+  self::lseg<p,n>
+  .
+// unsound
+
+lemma_unsafe
+  self::ns<p,n>
+  <-
+  self::lseg<p,n>
+  .
+
+checkentail
+  self=p & n=0
+  or self::node<q>*q::lseg<p,n-1>
+  |- 
+   self::ns<p,n>
+  .
+
+checkentail
+  self=p & n=0
+  or self::node<q>*q::lseg<p,n-1>
+  |- 
+  self=p & n=0
+  or self::node<q1>*q1::ns<p,n-1> & self!=p
+  .
+
