@@ -708,41 +708,41 @@ module InfSolver =
   
   let elim_quant_F elim_quant0 f = match f with
   | ZF_BF z0 -> f
-  | ZF_And (f1, f2) -> ZF_And ((elim_quant0 f1), (elim_quant0 f2))
-  | ZF_Or (f1, f2) -> ZF_Or ((elim_quant0 f1), (elim_quant0 f2))
+  | ZF_And (f1, f2) -> mkAnd (elim_quant0 f1) (elim_quant0 f2)
+  | ZF_Or (f1, f2) -> mkOr (elim_quant0 f1) (elim_quant0 f2)
   | ZF_Not g -> ZF_Not (elim_quant0 g)
   | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant0 g))
   | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant0 g))
   | ZF_Forall (v, g) ->
-    ZF_And ((ZF_Forall_Fin (v, (elim_quant0 g))), (ZF_And
-      ((subs_F (Pair (v, ZE_Inf)) (elim_quant0 g)),
-      (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))))
+    mkAnd (ZF_Forall_Fin (v, (elim_quant0 g)))
+      (mkAnd (subs_F (Pair (v, ZE_Inf)) (elim_quant0 g))
+        (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))
   | ZF_Exists (v, g) ->
-    ZF_Or ((ZF_Exists_Fin (v, (elim_quant0 g))), (ZF_Or
-      ((subs_F (Pair (v, ZE_Inf)) (elim_quant0 g)),
-      (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))))
+    mkOr (ZF_Exists_Fin (v, (elim_quant0 g)))
+      (mkOr (subs_F (Pair (v, ZE_Inf)) (elim_quant0 g))
+        (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))
   
   (** val elim_quant_terminate : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
   let rec elim_quant_terminate = function
   | ZF_BF z0 -> ZF_BF z0
   | ZF_And (f1, f2) ->
-    ZF_And ((elim_quant_terminate f1), (elim_quant_terminate f2))
+    mkAnd (elim_quant_terminate f1) (elim_quant_terminate f2)
   | ZF_Or (f1, f2) ->
-    ZF_Or ((elim_quant_terminate f1), (elim_quant_terminate f2))
+    mkOr (elim_quant_terminate f1) (elim_quant_terminate f2)
   | ZF_Not g -> ZF_Not (elim_quant_terminate g)
   | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant_terminate g))
   | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant_terminate g))
   | ZF_Forall (v, g) ->
     let rec_res = elim_quant_terminate g in
-    ZF_And ((ZF_Forall_Fin (v, rec_res)), (ZF_And
-    ((subs_F (Pair (v, ZE_Inf)) rec_res),
-    (subs_F (Pair (v, ZE_NegInf)) rec_res))))
+    mkAnd (ZF_Forall_Fin (v, rec_res))
+      (mkAnd (subs_F (Pair (v, ZE_Inf)) rec_res)
+        (subs_F (Pair (v, ZE_NegInf)) rec_res))
   | ZF_Exists (v, g) ->
     let rec_res = elim_quant_terminate g in
-    ZF_Or ((ZF_Exists_Fin (v, rec_res)), (ZF_Or
-    ((subs_F (Pair (v, ZE_Inf)) rec_res),
-    (subs_F (Pair (v, ZE_NegInf)) rec_res))))
+    mkOr (ZF_Exists_Fin (v, rec_res))
+      (mkOr (subs_F (Pair (v, ZE_Inf)) rec_res)
+        (subs_F (Pair (v, ZE_NegInf)) rec_res))
   
   (** val elim_quant : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
