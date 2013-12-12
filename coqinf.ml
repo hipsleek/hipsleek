@@ -30,7 +30,8 @@ struct
 let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 
 end
 
-module CoqInfSolver = Infsolver.InfSolver(StrSV)
+(*module CoqInfSolver = Infsolver.InfSolver(StrSV)*)
+module CoqInfSolver = Infsolver.InfSolver
 
 open CoqInfSolver
 
