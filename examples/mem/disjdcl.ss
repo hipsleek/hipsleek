@@ -5,9 +5,9 @@ node tnext;
 }
 
 lln<hd,R> == self = hd & R = {}
-	or self::node<_@L,p,_@A> * p::lln<hd,Rp> & R = union(Rp,{self}) & self != hd 
+	or self::node<_@M,p,_@A> * p::lln<hd,Rp> & R = union(Rp,{self}) & self != hd 
 	inv true
-    	memE R->(node<@L,@M,@A>);
+    	memE R->(node<@M,@M,@A>);
     
 llt<hd,R> == self = hd & R = {}
 	or self::node<_@L,_@A,p> * p::llt<hd,Rp> & R = union(Rp,{self}) & self != hd 
@@ -15,7 +15,7 @@ llt<hd,R> == self = hd & R = {}
     	memE R->(node<@L,@A,@M>);
     
 ll<v,hd,R> == self = hd & R = {} 
-	or self::node<_@L,p,_@A> * p::ll<1,hd,Rp> & R = union(Rp,{self}) & self != hd & v = 1
+	or self::node<_@M,p,_@A> * p::ll<1,hd,Rp> & R = union(Rp,{self}) & self != hd & v = 1
 	or self::node<_@L,_@A,p> * p::ll<2,hd,Rp> & R = union(Rp,{self}) & self != hd & v = 2;	
 
 void insert_node_dcll2(node v, node x)

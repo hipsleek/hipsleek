@@ -5059,12 +5059,6 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 	        (filter_set rs1, prf1)
       | _ -> begin
           let r1,p1 =
-            (*if !Globals.allow_mem && !Globals.allow_field_ann then
-              begin
-              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs")) pos;
-	      heap_entail_split_rhs prog is_folding ctx conseq pos     
-              end
-              else*)
             (* WN : check lhs_contra if infer_vars present *)
             (* check if ctx0 /\ conseq = false *)
             (* DD.binfo_start "Earlier LHS CONTRA check"; *)
@@ -5073,11 +5067,28 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             (* DD.binfo_end "LHS CONTRA check"; *)
             let heap_entail () = 
 	      if !Globals.allow_imm then
-                begin
-                  Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
+            let _ =
+              Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos in
+             if !Globals.allow_mem && !Globals.allow_field_ann then
+               let _ = Debug.devel_zprint (lazy ("Check for Compatible Sharing ...")) pos in
+                let h1,_,_,_,_ = split_components conseq in
+                let lhs = CF.formula_of_context ctx in
+                let h2,_,_,_,_ = split_components lhs in
+                if not(Mem.check_mem_sat_noninter h1 prog.prog_view_decls) || 
+                  not(Mem.check_mem_sat_noninter h2 prog.prog_view_decls)
+                then
+                  let es = get_estate_from_context ctx in
+                  (match es with
+                    | Some estate -> 
+                        let msg = "Compatible Sharing Check Failed" in 
+	                    let fail_ctx = (mkFailContext msg estate conseq None pos) in
+	                    let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
+	                    in mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex)), UnsatConseq
+	           (* heap_entail_split_rhs prog is_folding ctx conseq [] pos*)   
+                    | _ -> let _ = DD.info_pprint "WARNING : presence of disj context at Compatible Sharing Check" no_pos in report_error no_pos ("[solver.ml]: isj Context at compatible sharing check\n"))
+                else heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
                   (* TO CHECK: ignore this --imm at the moment*)
-               	  heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
-                end
+             else heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
 	      else
                 heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos in
 
@@ -5589,7 +5600,8 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
           let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
           heap_entail_conjunct 4 prog is_folding  c new_conseq []  pos
-    | OCtx (c1, c2) -> 
+    | OCtx
+ (c1, c2) -> 
           let cl1, prf1 = one_ctx_entail prog is_folding  c1 conseq func p pos in
           let cl2, prf2 = one_ctx_entail prog is_folding  c2 conseq func p pos in
           let entail_p_ctx = Cformula.or_list_context cl1 cl2  in 

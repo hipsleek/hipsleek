@@ -812,14 +812,34 @@ match (ann_lst_l, ann_lst_r) with
     | (_, _) ->	 false    
 
 let rec check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
-	let mpf1 = fst (xmem_heap h1 vl) in
-	let mpf2 = fst (xmem_heap h2 vl) in
+match h1,h2 with
+  | CF.ViewNode ({CF.h_formula_view_name = n1}), CF.ViewNode ({CF.h_formula_view_name = n2}) ->
+			 	let vdef1 = C.look_up_view_def_raw 20 vl n1 in
+			 	let mpfv1 = vdef1.C.view_mem in
+              	let vdef2 = C.look_up_view_def_raw 20 vl n2 in
+			 	let mpfv2 = vdef2.C.view_mem in
+                let mpf1,mpf2 = 
+                  match mpfv1,mpfv2 with
+                    | Some mpf1, Some mpf2 -> mpf1,mpf2
+                    | _, _ -> fst (xmem_heap h1 vl),fst (xmem_heap h2 vl) 
+                in
 	let mpe1,exact1,fl1 = mpf1.CF.mem_formula_exp , mpf1.CF.mem_formula_exact, mpf1.CF.mem_formula_field_layout in
 	let mpe2,exact2,fl2 = mpf2.CF.mem_formula_exp , mpf2.CF.mem_formula_exact, mpf2.CF.mem_formula_field_layout in
+(*let _ = List.map
+		    (fun c -> let _ = print_string ("fl1: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl1
+		    in let _ = List.map
+		    (fun c -> let _ = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
+		    in *)
 	let t = List.map (fun f1 -> 
 		let matched_fields = (List.filter (fun f2-> if (String.compare (fst f1) (fst f2)) == 0 then true else false) fl2)
 		in List.exists (fun c -> (is_compatible_field_layout (snd f1) (snd c))) matched_fields) fl1
 	in List.for_all (fun c -> c) t
+ 
+  | _ , _  -> true
+
+let check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
+Debug.ho_3 "check_mem_non_inter" string_of_h_formula string_of_h_formula (fun _ -> "") string_of_bool
+check_mem_non_inter h1 h2 vl
 
 let rec check_mem_conj (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
 	(*let mpf1 = fst (xmem_heap h1 vl) in
@@ -855,6 +875,46 @@ let rec check_mem_conjconj (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl 
 let check_mem_starminus (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
 	if (CF.is_data h1) || (CF.is_view h1) then if (CF.is_data h2) || (CF.is_view h2) then true
 	else false else false
+
+let rec check_mem_sat_noninter (h: CF.h_formula) (vl:C.view_decl list) : bool = 
+if contains_conj h then
+  let rec helper h vl = 
+    match h with 
+      | CF.Conj({CF.h_formula_conj_h1 = h1;
+	             CF.h_formula_conj_h2 = h2;
+	             CF.h_formula_conj_pos = pos}) 
+      | CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+	                 CF.h_formula_conjstar_h2 = h2;
+	                 CF.h_formula_conjstar_pos = pos}) 
+      | CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+	                 CF.h_formula_conjconj_h2 = h2;
+	                 CF.h_formula_conjconj_pos = pos}) 	   	   
+      | CF.Phase({CF.h_formula_phase_rd = h1;
+	        CF.h_formula_phase_rw = h2;
+	        CF.h_formula_phase_pos = pos})
+      | CF.StarMinus({CF.h_formula_starminus_h1 = h1;
+	                  CF.h_formula_starminus_h2 = h2;
+	                  CF.h_formula_starminus_pos = pos}) 
+      | CF.Star({CF.h_formula_star_h1 = h1;
+	             CF.h_formula_star_h2 = h2;
+	             CF.h_formula_star_pos = pos}) -> (helper h1 vl)@(helper h2 vl)
+      | CF.ViewNode _ -> h::vl
+      | _ -> vl
+  in let views_list = helper h [] in
+     let rec check_all ls = 
+       match ls with
+         | [] -> true
+         | x::xs -> List.for_all (fun h -> 
+           match x,h with
+             | CF.ViewNode v1, CF.ViewNode v2 ->
+                 if (CF.is_eq_view_name v1 v2) then true else check_mem_non_inter x h vl
+             | _,_ -> true
+         ) views_list && check_all xs
+     in check_all views_list
+else true
+    
+let check_mem_sat_noninter (h: CF.h_formula) (vl:C.view_decl list) : bool = 
+Debug.no_1 "check_mem_sat_noninter" string_of_h_formula string_of_bool (fun c -> check_mem_sat_noninter c vl) h 
 
 let rec check_mem_sat (h: CF.h_formula) (vl:C.view_decl list) : bool = 
 match h with 
