@@ -251,6 +251,7 @@ let clear_entailment_history_es (es :entail_state) :context =
 	(* es_var_ctx_lhs = es.es_var_ctx_lhs; *)
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
+    es_infer_templ = es.es_infer_templ;
     es_infer_pure = es.es_infer_pure;
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_rel = es.es_infer_rel;
@@ -3060,6 +3061,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_infer_hp_unk_map = fold_es.es_infer_hp_unk_map;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
+              es_infer_templ = fold_es.es_infer_templ;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
               es_infer_rel = fold_es.es_infer_rel;
@@ -7483,8 +7485,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let res = 
-                Inf.infer_pure_top_level estate unk_heaps
-                split_ante1 split_ante0 m_lhs split_conseq pos
+                Inf.infer_pure_top_level estate unk_heaps split_ante1 split_ante0 m_lhs split_conseq pos
               in
               let or_option (o1,o2) = (match o1,o2 with
                 | None,_ -> o2
@@ -8196,6 +8197,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars_sel_post_hp_rel = estate.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = estate.es_infer_hp_unk_map;
         es_infer_heap = estate.es_infer_heap;
+        es_infer_templ = estate.es_infer_templ;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
@@ -8376,6 +8378,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
+                 es_infer_templ = estate.es_infer_templ;
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;

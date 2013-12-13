@@ -16,6 +16,7 @@ rule tokenizer = parse
   | "ex" { EXISTS }
   | "true" { TRUE }
   | "false" { FALSE }
+  | "**" { POW }
   | ',' { COMMA }
   | ')' { CPAREN }
   | '(' { OPAREN }

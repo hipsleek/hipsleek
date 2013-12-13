@@ -12,7 +12,7 @@
 %token COMMA ENDF
 %token OR AND NOT IMPLY
 %token GT GTE LT LTE EQ NEQ
-%token PLUS MINUS STAR
+%token PLUS MINUS STAR POW
 
 %left IMPLY
 %left OR
@@ -67,6 +67,7 @@ exp:
   | exp PLUS exp { CP.mkAdd $1 $3 no_pos}
   | exp MINUS exp { CP.mkSubtract $1 $3 no_pos }
   | exp STAR exp { CP.mkMult $1 $3 no_pos }
+  | exp POW exp { CP.mkMult $1 $1 no_pos }
 ;
 
 %%

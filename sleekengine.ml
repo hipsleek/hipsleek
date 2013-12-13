@@ -110,6 +110,7 @@ let clear_iprog () =
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];
+  iprog.I.prog_templ_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
@@ -117,6 +118,7 @@ let clear_cprog () =
   !cprog.C.prog_view_decls <- [];
   !cprog.C.prog_rel_decls <- [];
   !cprog.C.prog_hp_decls <- [];
+  !cprog.C.prog_templ_decls <- [];
   (*!cprog.C.prog_left_coercions <- [];*)
   (*!cprog.C.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
@@ -343,7 +345,8 @@ let process_templ_def tdef =
   if AS.check_data_pred_name iprog tdef.I.templ_name then
 	  let tmp = iprog.I.prog_templ_decls in
 	  try
-      iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls)
+      iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
+      !cprog.C.prog_templ_decls <- (AS.trans_templ iprog tdef)::!cprog.C.prog_templ_decls
     with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
   else print_endline (tdef.I.templ_name ^ " is already defined.")
 

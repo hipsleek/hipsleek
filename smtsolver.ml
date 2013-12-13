@@ -87,8 +87,8 @@ let rec smt_of_typ t =
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)
   | RelT _ -> "Int"
-  (* | FuncT _ -> "Int" *)
   | HpT -> "Int"
+  | FuncT _ 
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
 
@@ -1171,8 +1171,8 @@ let get_model is_linear vars assertions =
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  let _ = print_endline ("Z3 INP: " ^ smt_inp) in
-  let _ = print_endline ("Z3 OUT: " ^ (pr_list (fun s -> s) model)) in
+  (* let _ = print_endline ("Z3 INP: " ^ smt_inp) in *)
+  (* let _ = print_endline ("Z3 OUT: " ^ (pr_list (fun s -> s) model)) in *)
 
   let m = try
       if (List.hd model) = "sat" then
@@ -1186,13 +1186,13 @@ let get_model is_linear vars assertions =
       []
   in 
   let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
-  let _ = print_endline ("MODEL: " ^ (pr2 m)) in
+  (* let _ = print_endline ("MODEL: " ^ (pr2 m)) in *)
   m 
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
   let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
-  Debug.no_1 "[Z3]get_model" pr1 pr2
+  Debug.no_1 "z3_get_model" pr1 pr2
   (fun _ -> get_model is_linear vars assertions) assertions
 
 

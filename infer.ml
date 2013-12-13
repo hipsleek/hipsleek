@@ -1408,9 +1408,17 @@ let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     Debug.tinfo_hprint (add_str "lhs_rels" (pr_opt !CP.print_formula)) lhs_rels no_pos;
     Debug.tinfo_hprint (add_str "xp" !CP.print_formula) xp no_pos;
     Debug.ninfo_hprint (add_str "infer_vars_rel" !CP.print_svl) estate.es_infer_vars_rel no_pos;
-    Debug.ninfo_hprint (add_str "infer_vars_hp_rel" !CP.print_svl) estate.es_infer_vars_hp_rel  no_pos;
-    let infer_vars = estate.es_infer_vars@estate.es_infer_vars_hp_rel in 
-    infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
+    Debug.ninfo_hprint (add_str "infer_vars_hp_rel" !CP.print_svl) estate.es_infer_vars_hp_rel no_pos;
+
+    let inf_templs, inf_vars = List.partition (fun v -> CP.is_func_var v) estate.es_infer_vars in
+    let infer_vars = inf_vars@estate.es_infer_vars_hp_rel in
+    if inf_templs = [] then
+      infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
+    else
+      let es_opt = Template.infer_template estate inf_templs xp (MCP.pure_of_mix rhs_mix) pos in 
+      match es_opt with
+      | None -> (None, None, [])
+      | Some es -> (Some (es, mkTrue pos), None, [])
 
 let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
@@ -1421,14 +1429,15 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
   (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4_num i "infer_pure_m_2" 
+  Debug.no_5_num i "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)
+    (add_str "lhs_wo_heap" pr1)
     (add_str "rhs xpure " pr1)
     (add_str "(new es,inf pure,rel_ass) " pr_res)
-  (fun _ _ _ _ -> infer_pure_m unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
-    estate lhs_xpure lhs_xpure0 rhs_xpure   
+  (fun _ _ _ _ _ -> infer_pure_m unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
+    estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure
 
 let infer_pure_top_level_aux estate unk_heaps
   ante1 ante0 m_lhs split_conseq pos =

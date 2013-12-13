@@ -126,7 +126,7 @@ type typ =
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
-  (* | FuncT of typ * typ *)
+  | FuncT of typ * typ
   | Pointer of typ (* base type and dimension *)
 
 let is_program_pointer (name:ident) = 
@@ -411,7 +411,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Tree_sh		  -> "Tsh"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
-  (* | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2) *)
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -424,6 +424,11 @@ let is_RelT x =
     | RelT _ -> true
     | _ -> false
 ;;
+
+let is_FuncT = function
+  | FuncT _ -> true
+  | _ -> false
+
 let is_HpT x =
   match x with
     | HpT -> true
@@ -447,7 +452,7 @@ let rec string_of_typ_alpha = function
   | List t        -> "list_"^(string_of_typ t)
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
-  (* | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2) *)
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -797,6 +802,8 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 let allow_norm = ref false
+
+let dis_norm = ref false
 
 let allow_ls = ref false (*enable lockset during verification*)
 

@@ -1686,17 +1686,26 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
   let n_tl = List.map (fun (t, n) -> 
     (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
   let c_body = match tdef.I.templ_body with
-  | None -> None
+  | None -> 
+    let unk_coes = List.map 
+      (fun (t, n) -> CP.SpecVar (trans_type prog t pos, tdef.I.templ_name ^ "_" ^ n, Unprimed)) 
+      tdef.I.templ_typed_params in 
+    let unk_const = CP.SpecVar (Int, tdef.I.templ_name ^ "_" ^ (string_of_int 0), Unprimed) in
+    let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
+    let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
+      (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
+    Some body
   | Some bd -> 
-      let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
-      Some (trans_pure_exp bd (fst n_tl))
-  in {
+    let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+    Some (trans_pure_exp bd (fst n_tl))
+  in
+  let c_templ = {
     C.templ_name = tdef.I.templ_name;
     C.templ_ret_typ = c_ret_typ;
     C.templ_params = c_params;
     C.templ_body = c_body;
-    C.templ_pos = pos; }
-
+    C.templ_pos = pos; } in
+  C.templ_decls # push c_templ; c_templ
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -4255,8 +4264,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: INFInt can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
-    (* | FuncT _ ->
-          failwith "default_value: FuncT can only be used for constraints" *)
+    | FuncT _ ->
+          failwith "default_value: FuncT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -5446,7 +5455,7 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
             | _,_ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1)))
     | _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
 else ()
-  
+
 and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   match f0 with
@@ -5469,7 +5478,8 @@ and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula
           CP.mkExists [ sv ] pf lbl pos
               
 and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
-  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0           
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) 
+    (fun b -> trans_pure_b_formula_x b tlist) b0           
       
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
@@ -5621,30 +5631,20 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Template t ->
         let pos = t.IP.templ_pos in
         let tid = t.IP.templ_id in
-        let tdef = I.look_up_templ_def_raw (I.templ_decls # get_stk) tid in
-        let targs = tdef.I.templ_typed_params in
-        let tbody = tdef.I.templ_body in
+        let tdef = C.look_up_templ_def_raw (C.templ_decls # get_stk) tid in
+        let tparams = tdef.C.templ_params in
+        let tbody = tdef.C.templ_body in
 
         let templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args in
-        let sst = List.combine 
-          (List.map (fun (ty, id) -> CP.SpecVar(ty, id, Unprimed)) targs) 
-          templ_args in
+        let sst = List.combine tparams templ_args in
         let templ_unks, templ_body = match tbody with
-        | Some ib -> 
-            let cb = trans_pure_exp ib tlist in
+          | Some cb -> 
             let inst_cb = CP.a_apply_par_term sst cb in
-            let unks_sv = Gen.BList.difference_eq CP.eq_spec_var 
+            let unk_svs = Gen.BList.difference_eq CP.eq_spec_var 
               (CP.afv inst_cb) (List.concat (List.map CP.afv templ_args)) in
-            let unks_exp = List.map (fun v -> CP.mkVar v no_pos) unks_sv in
-            (unks_exp, Some (CP.a_apply_par_term sst cb))
-        | None ->
-            let unks_sv = fst (List.fold_left (fun (vl, i) _ -> 
-              (vl @ [CP.SpecVar(Int, tid ^ "_c" ^ (string_of_int i), Unprimed)], i+1)) ([], 1) templ_args) in
-            let unks_sv = (CP.SpecVar(Int, tid ^ "_c" ^ (string_of_int 0), Unprimed))::unks_sv in
-            let unks_exp = List.map (fun v -> CP.mkVar v no_pos) unks_sv in
-            let body = List.fold_left (fun a (c, e) -> CP.mkAdd a (CP.mkMult c e pos) pos) 
-              (List.hd unks_exp) (List.combine (List.tl unks_exp) templ_args) in
-            (unks_exp, Some body)
+            let unk_exps = List.map (fun v -> CP.mkVar v no_pos) unk_svs in
+            (unk_exps, Some inst_cb)
+          | None -> ([], None)
         in CP.Template {
           CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
           CP.templ_args = templ_args;

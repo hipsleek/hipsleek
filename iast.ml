@@ -500,9 +500,6 @@ and exp =
   | VarDecl of exp_var_decl
   | While of exp_while
 
-(* Stack of Template Declarations *)
-let templ_decls: templ_decl Gen.stack = new Gen.stack
-
 (* utility functions *)
 
 let void_type = Void

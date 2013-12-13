@@ -93,7 +93,7 @@ let default_value (t :typ) pos : exp =
     | Pointer ptr -> Null pos
 	| Array (t, d) ->
        failwith "default_value: Array not supported"
-  (* | FuncT _ -> failwith "default_value: FuncT not supported" *)
+  | FuncT _ -> failwith "default_value: FuncT not supported"
 	| HpT | Tree_sh ->
        failwith "default_value: (HpT|Tree_sh) not supported"
 	| INFInt -> Error.report_no_pattern ()

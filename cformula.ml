@@ -6722,7 +6722,9 @@ think it is used to instantiate when folding.
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
-  es_infer_heap : h_formula list; 
+  es_infer_heap : h_formula list;
+  (* Template: Output of template inference *)
+  es_infer_templ: CP.exp list;
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
   (* output : post inferred relation lhs --> rhs *)
@@ -6957,6 +6959,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
+  es_infer_templ = [];
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
   es_infer_hp_rel = [] ;
@@ -7699,6 +7702,11 @@ let rec collect_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let rec collect_templ ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_templ 
+  | OCtx (ctx1, ctx2) -> (collect_templ ctx1) @ (collect_templ ctx2) 
+
 let rec collect_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_rel 
@@ -8023,6 +8031,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
+        es_infer_templ = es.es_infer_templ;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_hp_rel = es.es_infer_hp_rel;
@@ -10437,6 +10446,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
           es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
+          es_infer_templ = es.es_infer_templ;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
           es_infer_hp_rel = es.es_infer_hp_rel;

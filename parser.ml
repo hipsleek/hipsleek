@@ -2191,7 +2191,7 @@ templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_o
     templ_typed_params = tl;
     templ_body = b; 
     templ_pos = get_pos_camlp4 _loc 1; } in 
-  I.templ_decls # push tdef; tdef ]];
+  tdef ]];
 
 templ_body: [[ `EQEQ; pc = cexp -> pc ]];
 

@@ -422,6 +422,9 @@ let common_arguments = [
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Template *)
+  ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
+
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,

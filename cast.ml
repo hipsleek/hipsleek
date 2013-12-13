@@ -450,6 +450,8 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+(* Stack of Template Declarations *)
+let templ_decls: templ_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
@@ -934,6 +936,9 @@ let look_up_view_def_raw i (defs : view_decl list) (name : ident) =
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
 
 let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name

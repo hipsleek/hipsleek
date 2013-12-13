@@ -372,6 +372,8 @@ let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
+let is_func_var (sv: spec_var): bool = is_FuncT (type_of_spec_var sv)
+
 let is_hp_rel_var (sv : spec_var) : bool = is_HpT (type_of_spec_var sv)
 
 let is_primed (sv : spec_var) : bool = match sv with
@@ -1145,7 +1147,8 @@ and afv (af : exp) : spec_var list =
   	  let ifv = List.map afv i in
   	  let ifv = List.flatten ifv in
   	  remove_dups_svl (a :: ifv) (* An Hoa *)
-    | Template t -> 
+    | Template t ->
+        t.templ_id::
         (List.concat (List.map afv t.templ_args)) 
         (* @ (List.concat (List.map afv t.templ_unks)) *)
 
@@ -1222,6 +1225,12 @@ and is_zero_int (e : exp) : bool = match e with  | IConst (0, _) -> true
   | _ -> false
 
 and is_zero_float (e : exp) : bool = match e with
+  | FConst (0.0, _) -> true
+  | _ -> false
+
+and is_zero (e: exp): bool = 
+  match e with
+  | IConst (0, _) -> true
   | FConst (0.0, _) -> true
   | _ -> false
 
@@ -5565,6 +5574,7 @@ and arith_simplify_x (pf : formula) :  formula =
   convert proofs into normal form such as those of Mona (e.g. Mona
   does not allow subtraction*)
   (* if (not !Globals.allow_norm) then pf else *)
+  if !Globals.dis_norm then pf else
   let rec helper pf = match pf with
     |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
     |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
@@ -11464,4 +11474,40 @@ let simpl_equalities ante conseq  =
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
   
+(* For template *)
+(* Return transformed formula and list of templates, which need to be inferred *)
+let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spec_var list =
+  let f_arg arg _ = arg in 
+  let f_e _ e = match e with
+  | Template t ->
+      if t.templ_unks = [] then 
+        match t.templ_body with
+        | None -> Some (mkIConst 0 t.templ_pos, ([], true))
+        | Some b -> Some (b, ([], false))
+      else if mem_svl t.templ_id i_templ_ids then
+        let templ_unks = List.concat (List.map afv t.templ_unks) in
+        Some (exp_of_template t, (templ_unks, false))
+      else Some (mkIConst 0 t.templ_pos, ([], true))
+  | _ -> None
+  in
+  let f_comb c = 
+    let vl, is_only_zero = List.split c in
+    (List.concat vl, 
+    is_only_zero != [] && (List.for_all (fun i -> i) is_only_zero))
+  in
+  let f_b _ b = 
+    let nb, (templ_unks, is_only_zero) = trans_b_formula b () 
+      (nonef2, f_e) (f_arg, f_arg) f_comb in
+    if is_only_zero then Some (mkTrue_b (pos_of_b_formula b), ([], false))
+    else Some (nb, (templ_unks, false))
+  in
+  let nf, (templ_unks, _) = trans_formula f ()
+    (nonef2, f_b, f_e) (f_arg, f_arg, f_arg) f_comb
+  in (nf, templ_unks)
+
+let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spec_var list =
+  let pr1 = !print_svl in
+  let pr2 = !print_formula in
+  Debug.no_2 "trans_formula_templ" pr1 pr2 (pr_pair pr2 pr1)
+    trans_formula_templ i_templ_ids f
 

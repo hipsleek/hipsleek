@@ -562,8 +562,9 @@ and gather_type_info_exp_x prog a0 tlist et =
       let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls tid in
       let ret_typ = tdef.I.templ_ret_typ in
       let param_types = List.map (fun (t, n) -> trans_type prog t pos) tdef.I.templ_typed_params in
+      let func_typ = List.fold_right (fun (p_typ, _) r_typ -> FuncT (p_typ, r_typ)) tdef.I.templ_typed_params ret_typ in 
       let (n_tl, n_typ) = must_unify_expect ret_typ et tlist pos in
-      let (n_tl, n_typ) = gather_type_info_var tid n_tl ret_typ pos in
+      let (n_tl, n_typ) = gather_type_info_var tid n_tl (* ret_typ *) func_typ pos in
       let exp_et_list = List.combine tp.IP.templ_args param_types in
       let n_tlist = List.fold_left (fun tl (arg, et) -> 
         fst (gather_type_info_exp prog arg tl et)) n_tl exp_et_list in
