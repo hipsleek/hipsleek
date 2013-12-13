@@ -1,0 +1,2 @@
+checkentail union(S1_1645,{q1s})=union({q1s},S1_1685) & q1s notin S1_1645 & q1s notin S1_1685 |-  S1_1645=S1_1685.
+print residue.
