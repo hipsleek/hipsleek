@@ -1,0 +1,12 @@
+template int f(int x, int y).
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y').
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) >= 0.
+
+template_solve.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') & f(x, y) >= 0.
+
+template_solve.
+

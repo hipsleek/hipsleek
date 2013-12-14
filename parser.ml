@@ -833,6 +833,7 @@ non_empty_command:
       | t = rankc_cmd -> RankC t
       | t = solve_rankc_cmd -> SolveRankC t
       | t = templ_decl -> TemplDef t
+      | t = templ_solve_cmd -> TemplSolv t
 	    | t=macro				  -> EmptyCmd]];
   
 data_decl:
@@ -1830,6 +1831,9 @@ rankc_cmd:
 
 solve_rankc_cmd:
   [[ `SOLVE_RANKC; il = OPT id_list_w_brace -> un_option il [] ]];
+
+templ_solve_cmd: 
+  [[ `TEMPL_SOLVE; il = OPT id_list_w_brace -> un_option il [] ]];
 
 ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
 

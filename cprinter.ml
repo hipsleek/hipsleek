@@ -3297,8 +3297,17 @@ let slk_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_slk_vie
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
-  poly_printer_of_pr fmt pr_view_decl v 
+  poly_printer_of_pr fmt pr_view_decl v
 
+(* Template: Print Template Declarations *)
+let pr_templ_decl tdef =
+  fmt_string (tdef.Cast.templ_name ^ "(");
+  pr_wrap_test "" Gen.is_empty  (pr_seq "" pr_spec_var) tdef.Cast.templ_params;
+  pr_wrap_test ")" Gen.is_None (fun b -> match b with
+    | None -> ()
+    | Some e -> fmt_string " == "; pr_formula_exp e) tdef.Cast.templ_body
+
+let string_of_templ_decl = poly_string_of_pr pr_templ_decl
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 

@@ -73,6 +73,7 @@ type command =
   | Time of (bool*string*loc)
   | RankC of (ident * meta_formula * meta_formula)
   | SolveRankC of ident list
+  | TemplSolv of ident list
   | EmptyCmd 
 
 and print_cmd =
@@ -139,7 +140,8 @@ let string_of_command c = match c with
   | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
   | RankC _ -> "RankC"
-  | SolveRankC _ -> "SolveRankC" 
+  | SolveRankC _ -> "SolveRankC"
+  | TemplSolv _ -> "TemplSolv"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info

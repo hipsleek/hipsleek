@@ -308,8 +308,8 @@ let term_list_of_formula svl (f: formula): term list =
   | BForm (bf, _) -> term_list_of_b_formula svl bf
   | _ -> []
 
-let unk_lambda_sv i j = 
-  SpecVar (Int, "lambda_" ^ (string_of_int i) ^ "_" ^ (string_of_int j), Unprimed) 
+let unk_lambda_sv enum i j = 
+  SpecVar (Int, "lambda_" ^ (string_of_int enum) ^ (string_of_int i) ^ "_" ^ (string_of_int j), Unprimed) 
 
 let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
   (* let _ = print_endline ("ANTE: " ^ (print_term_list ante)) in *)
@@ -328,7 +328,7 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
     mkPure (mkEq ct.term_coe (mkIConst 0 pos) pos)) rem_cons in
   constrs @ rem_constrs
 
-let gen_unk_constrs vars (ante: formula) (cons: formula): formula list =
+let gen_unk_constrs enum vars (ante: formula) (cons: formula): formula list =
   let pos = pos_of_formula ante in
   let ante, subst = find_eq_subst_formula vars ante in
   let cons = normalize_formula (apply_par_term subst cons) in 
@@ -344,7 +344,7 @@ let gen_unk_constrs vars (ante: formula) (cons: formula): formula list =
 
   let constrs = List.concat (List.map (fun (i, cons_t) ->
     let _, ante_w_unks, unks = List.fold_left (fun (j, a, unks) tl ->
-      let unk_lambda = mkVar (unk_lambda_sv i j) pos in
+      let unk_lambda = mkVar (unk_lambda_sv enum i j) pos in
       let tl = List.map (fun t -> { t with term_coe = mkMult unk_lambda t.term_coe pos; }) tl in
       (j+1, a @ [tl], unks @ [unk_lambda])) (0, [], []) ante_tl in
     let ante_sum_t = partition_term_list (List.concat ante_w_unks) pos in
@@ -363,26 +363,48 @@ let exp_of_templ_decl (tdef: C.templ_decl): exp =
     templ_id = tid; templ_args = targs; templ_unks = []; 
     templ_body = tdef.C.templ_body; templ_pos = pos; }
 
+let templ_constr_stk: formula Gen.stack = new Gen.stack
+
+let templ_entail_num = ref 0
+
 let infer_template (es: CF.entail_state) (inf_templs: spec_var list) (ante: formula) (cons: formula) pos =
   let n_ante, ante_unks = trans_formula_templ inf_templs ante in
   let n_cons, cons_unks = trans_formula_templ inf_templs cons in
 
-  let constrs = gen_unk_constrs 
+  let constrs = gen_unk_constrs !templ_entail_num 
     (Gen.BList.difference_eq eq_spec_var ((fv n_ante) @ (fv n_cons)) (ante_unks @ cons_unks)) 
     n_ante n_cons in
+  templ_entail_num := !templ_entail_num + 1;
+  templ_constr_stk # push_list constrs;
+  Some es
 
+let collect_and_solve_templ_constrs inf_templs prog = 
+  let constrs = templ_constr_stk # get_stk in
+  let _ = templ_constr_stk # reset in
+  
   let unks = Gen.BList.remove_dups_eq eq_spec_var 
     (List.concat (List.map fv constrs)) in
   let model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
   match model with
-  | [] -> None
-  | _ -> 
+  | [] -> print_endline ("TEMPLATE INFERENCE: No result.")
+  | _ ->
+    let templ_decls = prog.C.prog_templ_decls in
+    let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
+    let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
     let unk_subst = List.map (fun v -> 
-      let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
-      (v, mkIConst v_val pos)) (ante_unks @ cons_unks) in
-    let templ_decls = List.find_all (fun tdef -> 
-      List.exists (fun id -> (name_of_spec_var id) = tdef.C.templ_name) inf_templs) 
-      (C.templ_decls # get_stk) in
-    let templ_exps = List.map (fun tdef -> 
-      a_apply_par_term unk_subst (exp_of_templ_decl tdef)) templ_decls in
-    Some { es with CF.es_infer_templ = templ_exps }
+        let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
+        (v, mkIConst v_val no_pos)) 
+      (Gen.BList.difference_eq eq_spec_var templ_fv templ_params) in
+    let inf_templ_decls = match inf_templs with
+    | [] -> templ_decls
+    | _ -> List.find_all (fun tdef -> List.exists (fun id -> 
+        id = tdef.C.templ_name) inf_templs) templ_decls
+    in
+    let res_templ_decls = List.map (fun tdef -> { tdef with
+      C.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.C.templ_body; 
+    }) inf_templ_decls in
+    print_string "TEMPLATE INFERENCE RESULT: ";
+    print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
+
+
+

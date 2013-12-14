@@ -128,6 +128,7 @@ let proc_gen_cmd cmd =
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
     | RankC (id, iante, icons) -> process_rank_constraint id iante icons
     | SolveRankC idl -> process_solve_rank_constraints idl
+    | TemplSolv idl -> process_templ_solve idl
     | EmptyCmd  -> ()
 
 let parse_file (parse) (source_file : string) =
@@ -157,7 +158,7 @@ let parse_file (parse) (source_file : string) =
       | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
       | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
       | ShapeSConseq _ | ShapeSAnte _
-      | RankC _ | SolveRankC _ 
+      | RankC _ | SolveRankC _ | TemplSolv _
       | Time _ | EmptyCmd | _ -> () 
   in
   let proc_one_def c =
@@ -218,6 +219,7 @@ let parse_file (parse) (source_file : string) =
       (* | LemmaDef ldef -> process_list_lemma ldef *)
       | RankC (id, iante, icons) -> process_rank_constraint id iante icons
       | SolveRankC idl -> process_solve_rank_constraints idl
+      | TemplSolv idl -> process_templ_solve idl
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
       | TemplDef _
       | EmptyCmd -> () in
