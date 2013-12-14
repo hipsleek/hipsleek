@@ -218,6 +218,7 @@ module Make (Token : SleekTokenS)
 	 ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
+     ("pred_split", PRED_SPLIT);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);

@@ -1,0 +1,15 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred zip(node@RO a, node b).
+
+relDefn zip(x,y) <->
+  x=null & y=null
+or z::node<_,p>*y::node<_,q>*zip(p,q).
+
+
+pred_split [zip].
+
+print residue.

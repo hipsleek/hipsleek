@@ -3167,7 +3167,7 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   in
   let sing_hp_defs1, sing_hp_def1b = List.partition (fun def ->
       let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] def.CF.def_rhs in
-      if List.length fs < 2 then false else true) sing_hp_defs1a in
+      if List.length fs < 1 then false else true) sing_hp_defs1a in
   (*compute candidates*)
   let split_cands = pred_split_cands prog unk_hps sing_hp_defs1 in
   (*split and obtain map*)

@@ -829,6 +829,7 @@ non_empty_command:
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t=pred_split_cmd     -> PredSplit t
       | t=simplify_cmd        -> Simplify t
       | t=hull_cmd        -> Slk_Hull t
       | t=pairwise_cmd        -> Slk_PairWise t
@@ -1906,6 +1907,13 @@ shape_sante_cmd:
    let il2 = un_option il2 [] in
    (il1,il2)
    ]];
+
+pred_split_cmd:
+   [[ `PRED_SPLIT; `OSQUARE;il1=OPT id_list;`CSQUARE->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
 
 simplify_cmd:
   [[ `SIMPLIFY; t=meta_constr -> t]];
