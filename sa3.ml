@@ -1769,11 +1769,14 @@ let match_one_hp_views_x iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var*
           (vdcl.CA.view_vars) no_pos in
         let f2 = CF.formula_of_heap vnode no_pos in
         if Lemma.checkeq_sem iprog prog f1 f2 [def] then
-          let self_ss = [(self_sv,r)] in
-          [CF.h_subst self_ss vnode]
+          (* let self_ss = [(self_sv,r)] in *)
+          (* [CF.h_subst self_ss vnode] *)
+          let matched_vnode = CF.mkViewNode r vdcl.CA.view_name paras no_pos in
+          [matched_vnode]
         else []
     else []
   in
+  (*return the first result*)
   let rec map_ret_first fnc vdcls=
     match vdcls with
       | [] -> []
