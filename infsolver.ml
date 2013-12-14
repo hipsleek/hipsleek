@@ -1,9 +1,6 @@
 type __ = Obj.t
 let __ = let rec f _ = Obj.repr f in Obj.repr f
 
-type unit0 =
-| Tt
-
 (** val negb : bool -> bool **)
 
 let negb = function
@@ -17,12 +14,6 @@ type nat =
 type 'a option =
 | Some of 'a
 | None
-
-(** val option_map : ('a1 -> 'a2) -> 'a1 option -> 'a2 option **)
-
-let option_map f = function
-| Some a -> Some (f a)
-| None -> None
 
 type ('a, 'b) prod =
 | Pair of 'a * 'b
@@ -82,16 +73,6 @@ let rec plus n0 m =
   match n0 with
   | O -> m
   | S p -> S (plus p m)
-
-(** val minus : nat -> nat -> nat **)
-
-let rec minus n0 m =
-  match n0 with
-  | O -> n0
-  | S k ->
-    (match m with
-     | O -> n0
-     | S l -> minus k l)
 
 (** val nat_iter : nat -> ('a1 -> 'a1) -> 'a1 -> 'a1 **)
 
@@ -1214,53 +1195,22 @@ module Coq_Pos =
     match p with
     | XI p0 ->
       (match n0 with
-       | N0 ->
-         true
-       | Npos n1 ->
-         testbit
-           p0
-           (pred_N
-             n1))
+       | N0 -> true
+       | Npos n1 -> testbit p0 (pred_N n1))
     | XO p0 ->
       (match n0 with
-       | N0 ->
-         false
-       | Npos n1 ->
-         testbit
-           p0
-           (pred_N
-             n1))
+       | N0 -> false
+       | Npos n1 -> testbit p0 (pred_N n1))
     | XH ->
       (match n0 with
-       | N0 ->
-         true
-       | Npos p0 ->
-         false)
+       | N0 -> true
+       | Npos p0 -> false)
   
-  (** val iter_op :
-      ('a1
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      positive
-      ->
-      'a1
-      ->
-      'a1 **)
+  (** val iter_op : ('a1 -> 'a1 -> 'a1) -> positive -> 'a1 -> 'a1 **)
   
   let rec iter_op op p a =
     match p with
-    | XI p0 ->
-      op
-        a
-        (iter_op
-          op
-          p0
-          (op
-            a
-            a))
+    | XI p0 -> op a (iter_op op p0 (op a a))
     | XO p0 ->
       iter_op
         op
@@ -4418,24 +4368,46 @@ module Z =
            (of_N
              r))))
   
-  (** val quot : z -> z -> z **)
+  (** val quot :
+      z
+      ->
+      z
+      ->
+      z **)
   
   let quot a b =
-    fst (quotrem a b)
+    fst
+      (quotrem
+        a
+        b)
   
-  (** val rem : z -> z -> z **)
+  (** val rem :
+      z
+      ->
+      z
+      ->
+      z **)
   
   let rem a b =
-    snd (quotrem a b)
+    snd
+      (quotrem
+        a
+        b)
   
-  (** val even : z -> bool **)
+  (** val even :
+      z
+      ->
+      bool **)
   
   let even = function
-  | Z0 -> true
+  | Z0 ->
+    true
   | Zpos p ->
     (match p with
-     | XO p0 -> true
-     | _ -> false)
+     | XO p0 ->
+       true
+     | _ ->
+       false)
   | Zneg p ->
     (match p with
      | XO p0 -> true
@@ -4843,2713 +4815,1343 @@ module Z =
     Private_Dec.min_dec
  end
 
-(** val divmod : nat -> nat -> nat -> nat -> (nat, nat) prod **)
-
-let rec divmod x y q u =
-  match x with
-  | O -> Pair (q, u)
-  | S x' ->
-    (match u with
-     | O -> divmod x' y (S q) y
-     | S u' -> divmod x' y q u')
-
-(** val div0 : nat -> nat -> nat **)
-
-let div0 x y = match y with
-| O -> y
-| S y' -> fst (divmod x y' O y')
-
-(** val modulo0 : nat -> nat -> nat **)
-
-let modulo0 x y = match y with
-| O -> y
-| S y' -> minus y' (snd (divmod x y' O y'))
-
-(** val z_le_dec : z -> z -> bool **)
-
-let z_le_dec x y =
-  match Z.compare x y with
-  | Gt -> false
-  | _ -> true
-
-module type VARIABLE = 
+module type SV = 
  sig 
-  type var 
-  
-  val var_eq_dec : var -> var -> bool
+  val is_eq : char list -> char list -> bool
  end
-
-module type NUMBER = 
- sig 
-  type coq_A 
-  
-  val coq_Const0 : coq_A
-  
-  val coq_Const1 : coq_A
-  
-  val num_eq_dec : coq_A -> coq_A -> bool
-  
-  val num_neg : coq_A -> coq_A
-  
-  val num_plus : coq_A -> coq_A -> coq_A
-  
-  val num_leq : coq_A -> coq_A -> bool
- end
-
-module ZInfinity = 
- struct 
-  type coq_ZE =
-  | ZE_Fin of z
-  | ZE_Inf
-  | ZE_NegInf
-  
-  (** val coq_ZE_rect : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
-  
-  let coq_ZE_rect f f0 f1 = function
-  | ZE_Fin x -> f x
-  | ZE_Inf -> f0
-  | ZE_NegInf -> f1
-  
-  (** val coq_ZE_rec : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
-  
-  let coq_ZE_rec f f0 f1 = function
-  | ZE_Fin x -> f x
-  | ZE_Inf -> f0
-  | ZE_NegInf -> f1
-  
-  (** val coq_ZE_eq_dec : coq_ZE -> coq_ZE -> bool **)
-  
-  let coq_ZE_eq_dec ze1 ze2 =
-    match ze1 with
-    | ZE_Fin z0 ->
-      (match ze2 with
-       | ZE_Fin z1 -> Z.eq_dec z0 z1
-       | _ -> false)
-    | ZE_Inf ->
-      (match ze2 with
-       | ZE_Inf -> true
-       | _ -> false)
-    | ZE_NegInf ->
-      (match ze2 with
-       | ZE_NegInf -> true
-       | _ -> false)
-  
-  (** val coq_ZEneg : coq_ZE -> coq_ZE **)
-  
-  let coq_ZEneg = function
-  | ZE_Fin z0 -> ZE_Fin (Z.opp z0)
-  | ZE_Inf -> ZE_NegInf
-  | ZE_NegInf -> ZE_Inf
-  
-  type coq_A = coq_ZE option
-  
-  (** val coq_Const0 : coq_ZE option **)
-  
-  let coq_Const0 =
-    Some (ZE_Fin Z0)
-  
-  (** val coq_Const1 : coq_ZE option **)
-  
-  let coq_Const1 =
-    Some (ZE_Fin (Zpos XH))
-  
-  (** val num_eq_dec : coq_A -> coq_A -> bool **)
-  
-  let num_eq_dec n1 n2 =
-    match n1 with
-    | Some z0 ->
-      (match n2 with
-       | Some z1 -> coq_ZE_eq_dec z0 z1
-       | None -> false)
-    | None ->
-      (match n2 with
-       | Some z0 -> false
-       | None -> true)
-  
-  (** val num_neg : coq_ZE option -> coq_ZE option **)
-  
-  let num_neg =
-    option_map coq_ZEneg
-  
-  (** val num_plus : coq_ZE option -> coq_ZE option -> coq_ZE option **)
-  
-  let num_plus ze1 ze2 =
-    match ze1 with
-    | Some z0 ->
-      (match z0 with
-       | ZE_Fin z1 ->
-         (match ze2 with
-          | Some z2 ->
-            (match z2 with
-             | ZE_Fin z3 -> Some (ZE_Fin (Z.add z1 z3))
-             | x -> Some x)
-          | None -> None)
-       | ZE_Inf ->
-         (match ze2 with
-          | Some z1 ->
-            (match z1 with
-             | ZE_NegInf -> None
-             | _ -> Some ZE_Inf)
-          | None -> None)
-       | ZE_NegInf ->
-         (match ze2 with
-          | Some z1 ->
-            (match z1 with
-             | ZE_Inf -> None
-             | _ -> Some ZE_NegInf)
-          | None -> None))
-    | None -> None
-  
-  (** val num_leq : coq_ZE option -> coq_ZE option -> bool **)
-  
-  let num_leq ze1 ze2 =
-    match ze1 with
-    | Some x ->
-      (match x with
-       | ZE_Fin z1 ->
-         (match ze2 with
-          | Some z0 ->
-            (match z0 with
-             | ZE_Fin z2 -> if z_le_dec z1 z2 then true else false
-             | ZE_Inf -> true
-             | ZE_NegInf -> if coq_ZE_eq_dec x ZE_NegInf then true else false)
-          | None -> false)
-       | ZE_Inf ->
-         (match ze2 with
-          | Some x0 ->
-            (match x0 with
-             | ZE_Inf -> true
-             | _ -> if coq_ZE_eq_dec x0 ZE_Inf then true else false)
-          | None -> false)
-       | ZE_NegInf ->
-         (match ze2 with
-          | Some z0 -> true
-          | None -> false))
-    | None -> false
- end
-
-module ZNumLattice = 
- struct 
-  type coq_A = z
-  
-  (** val coq_Const0 : z **)
-  
-  let coq_Const0 =
-    Z0
-  
-  (** val coq_Const1 : z **)
-  
-  let coq_Const1 =
-    Zpos XH
-  
-  (** val num_eq_dec : z -> z -> bool **)
-  
-  let num_eq_dec =
-    Z.eq_dec
-  
-  (** val num_neg : coq_A -> z **)
-  
-  let num_neg x =
-    Z.sub Z0 x
-  
-  (** val num_plus : coq_A -> coq_A -> z **)
-  
-  let num_plus x y =
-    Z.add x y
-  
-  (** val num_leq : coq_A -> coq_A -> bool **)
-  
-  let num_leq x y =
-    if z_le_dec x y then true else false
- end
-
-module type SEMANTICS_INPUT = 
- sig 
-  module N : 
-   NUMBER
-  
-  type coq_Q 
-  
-  type coq_QT 
-  
-  val conv : coq_Q -> coq_QT -> N.coq_A
-  
-  val constQT : coq_Q -> coq_QT
- end
-
-module PureInfinity = 
- struct 
-  module N = ZInfinity
-  
-  type coq_AQ =
-  | Q_Z
-  | Q_ZE
-  
-  (** val coq_AQ_rect : 'a1 -> 'a1 -> coq_AQ -> 'a1 **)
-  
-  let coq_AQ_rect f f0 = function
-  | Q_Z -> f
-  | Q_ZE -> f0
-  
-  (** val coq_AQ_rec : 'a1 -> 'a1 -> coq_AQ -> 'a1 **)
-  
-  let coq_AQ_rec f f0 = function
-  | Q_Z -> f
-  | Q_ZE -> f0
-  
-  type coq_Q = coq_AQ
-  
-  type coq_QT = __
-  
-  (** val conv : coq_Q -> coq_QT -> N.coq_A **)
-  
-  let conv q x =
-    match q with
-    | Q_Z -> Some (N.ZE_Fin (Obj.magic x))
-    | Q_ZE -> Some (Obj.magic x)
-  
-  (** val constQT : coq_Q -> coq_QT **)
-  
-  let constQT = function
-  | Q_Z -> Obj.magic Z0
-  | Q_ZE -> Obj.magic (N.ZE_Fin Z0)
- end
-
-module PureInt = 
- struct 
-  module N = ZNumLattice
-  
-  type coq_Q = unit0
-  
-  type coq_QT = z
-  
-  (** val conv : coq_Q -> coq_QT -> coq_QT **)
-  
-  let conv q x =
-    x
-  
-  (** val constQT : coq_Q -> coq_QT **)
-  
-  let constQT q =
-    Z0
- end
-
-module IntToInfinity = 
- struct 
-  module N = ZInfinity
-  
-  type coq_Q = unit0
-  
-  type coq_QT = z
-  
-  (** val conv : coq_Q -> coq_QT -> N.coq_ZE option **)
-  
-  let conv q x =
-    Some (N.ZE_Fin x)
-  
-  (** val constQT : coq_Q -> coq_QT **)
-  
-  let constQT q =
-    Z0
- end
-
-module ArithSemantics = 
- functor (I:SEMANTICS_INPUT) ->
- functor (V:VARIABLE) ->
- struct 
-  type coq_ZExp =
-  | ZExp_Var of V.var
-  | ZExp_Const of I.N.coq_A
-  | ZExp_Add of coq_ZExp * coq_ZExp
-  | ZExp_Inv of coq_ZExp
-  | ZExp_Sub of coq_ZExp * coq_ZExp
-  | ZExp_Mult of z * coq_ZExp
-  
-  (** val coq_ZExp_rect :
-      (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp ->
-      'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp
-      -> 'a1 -> 'a1) -> (z -> coq_ZExp -> 'a1 -> 'a1) -> coq_ZExp -> 'a1 **)
-  
-  let rec coq_ZExp_rect f f0 f1 f2 f3 f4 = function
-  | ZExp_Var v -> f v
-  | ZExp_Const a -> f0 a
-  | ZExp_Add (z1, z2) ->
-    f1 z1 (coq_ZExp_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZExp_rect f f0 f1 f2 f3 f4 z2)
-  | ZExp_Inv z1 -> f2 z1 (coq_ZExp_rect f f0 f1 f2 f3 f4 z1)
-  | ZExp_Sub (z1, z2) ->
-    f3 z1 (coq_ZExp_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZExp_rect f f0 f1 f2 f3 f4 z2)
-  | ZExp_Mult (z1, z2) -> f4 z1 z2 (coq_ZExp_rect f f0 f1 f2 f3 f4 z2)
-  
-  (** val coq_ZExp_rec :
-      (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp ->
-      'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp
-      -> 'a1 -> 'a1) -> (z -> coq_ZExp -> 'a1 -> 'a1) -> coq_ZExp -> 'a1 **)
-  
-  let rec coq_ZExp_rec f f0 f1 f2 f3 f4 = function
-  | ZExp_Var v -> f v
-  | ZExp_Const a -> f0 a
-  | ZExp_Add (z1, z2) ->
-    f1 z1 (coq_ZExp_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZExp_rec f f0 f1 f2 f3 f4 z2)
-  | ZExp_Inv z1 -> f2 z1 (coq_ZExp_rec f f0 f1 f2 f3 f4 z1)
-  | ZExp_Sub (z1, z2) ->
-    f3 z1 (coq_ZExp_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZExp_rec f f0 f1 f2 f3 f4 z2)
-  | ZExp_Mult (z1, z2) -> f4 z1 z2 (coq_ZExp_rec f f0 f1 f2 f3 f4 z2)
-  
-  type coq_ZBF =
-  | ZBF_Const of bool
-  | ZBF_Lt of coq_ZExp * coq_ZExp
-  | ZBF_Lte of coq_ZExp * coq_ZExp
-  | ZBF_Gt of coq_ZExp * coq_ZExp
-  | ZBF_Gte of coq_ZExp * coq_ZExp
-  | ZBF_Eq of coq_ZExp * coq_ZExp
-  | ZBF_Neq of coq_ZExp * coq_ZExp
-  
-  (** val coq_ZBF_rect :
-      (bool -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp
-      -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp ->
-      'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1)
-      -> coq_ZBF -> 'a1 **)
-  
-  let coq_ZBF_rect f f0 f1 f2 f3 f4 f5 = function
-  | ZBF_Const x -> f x
-  | ZBF_Lt (x, x0) -> f0 x x0
-  | ZBF_Lte (x, x0) -> f1 x x0
-  | ZBF_Gt (x, x0) -> f2 x x0
-  | ZBF_Gte (x, x0) -> f3 x x0
-  | ZBF_Eq (x, x0) -> f4 x x0
-  | ZBF_Neq (x, x0) -> f5 x x0
-  
-  (** val coq_ZBF_rec :
-      (bool -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp
-      -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp ->
-      'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1)
-      -> coq_ZBF -> 'a1 **)
-  
-  let coq_ZBF_rec f f0 f1 f2 f3 f4 f5 = function
-  | ZBF_Const x -> f x
-  | ZBF_Lt (x, x0) -> f0 x x0
-  | ZBF_Lte (x, x0) -> f1 x x0
-  | ZBF_Gt (x, x0) -> f2 x x0
-  | ZBF_Gte (x, x0) -> f3 x x0
-  | ZBF_Eq (x, x0) -> f4 x x0
-  | ZBF_Neq (x, x0) -> f5 x x0
-  
-  type coq_ZF =
-  | ZF_BF of coq_ZBF
-  | ZF_And of coq_ZF * coq_ZF
-  | ZF_Or of coq_ZF * coq_ZF
-  | ZF_Imp of coq_ZF * coq_ZF
-  | ZF_Not of coq_ZF
-  | ZF_Forall of V.var * I.coq_Q * coq_ZF
-  | ZF_Exists of V.var * I.coq_Q * coq_ZF
-  
-  (** val coq_ZF_rect :
-      (coq_ZBF -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF
-      -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 ->
-      'a1) -> (coq_ZF -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 ->
-      'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1) -> coq_ZF -> 'a1 **)
-  
-  let rec coq_ZF_rect f f0 f1 f2 f3 f4 f5 = function
-  | ZF_BF z1 -> f z1
-  | ZF_And (z1, z2) ->
-    f0 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Or (z1, z2) ->
-    f1 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Imp (z1, z2) ->
-    f2 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Not z1 -> f3 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1)
-  | ZF_Forall (v, q, z1) -> f4 v q z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1)
-  | ZF_Exists (v, q, z1) -> f5 v q z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 z1)
-  
-  (** val coq_ZF_rec :
-      (coq_ZBF -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF
-      -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 ->
-      'a1) -> (coq_ZF -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 ->
-      'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1) -> coq_ZF -> 'a1 **)
-  
-  let rec coq_ZF_rec f f0 f1 f2 f3 f4 f5 = function
-  | ZF_BF z1 -> f z1
-  | ZF_And (z1, z2) ->
-    f0 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Or (z1, z2) ->
-    f1 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Imp (z1, z2) ->
-    f2 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1) z2
-      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z2)
-  | ZF_Not z1 -> f3 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1)
-  | ZF_Forall (v, q, z1) -> f4 v q z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1)
-  | ZF_Exists (v, q, z1) -> f5 v q z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 z1)
-  
-  type coq_ZRExp =
-  | ZRExp_Var of V.var
-  | ZRExp_Const of I.N.coq_A
-  | ZRExp_Add of coq_ZRExp * coq_ZRExp
-  | ZRExp_Inv of coq_ZRExp
-  
-  (** val coq_ZRExp_rect :
-      (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZRExp -> 'a1 -> coq_ZRExp
-      -> 'a1 -> 'a1) -> (coq_ZRExp -> 'a1 -> 'a1) -> coq_ZRExp -> 'a1 **)
-  
-  let rec coq_ZRExp_rect f f0 f1 f2 = function
-  | ZRExp_Var v -> f v
-  | ZRExp_Const a -> f0 a
-  | ZRExp_Add (z1, z2) ->
-    f1 z1 (coq_ZRExp_rect f f0 f1 f2 z1) z2 (coq_ZRExp_rect f f0 f1 f2 z2)
-  | ZRExp_Inv z1 -> f2 z1 (coq_ZRExp_rect f f0 f1 f2 z1)
-  
-  (** val coq_ZRExp_rec :
-      (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZRExp -> 'a1 -> coq_ZRExp
-      -> 'a1 -> 'a1) -> (coq_ZRExp -> 'a1 -> 'a1) -> coq_ZRExp -> 'a1 **)
-  
-  let rec coq_ZRExp_rec f f0 f1 f2 = function
-  | ZRExp_Var v -> f v
-  | ZRExp_Const a -> f0 a
-  | ZRExp_Add (z1, z2) ->
-    f1 z1 (coq_ZRExp_rec f f0 f1 f2 z1) z2 (coq_ZRExp_rec f f0 f1 f2 z2)
-  | ZRExp_Inv z1 -> f2 z1 (coq_ZRExp_rec f f0 f1 f2 z1)
-  
-  type coq_ZRForm =
-  | ZR_Leq of coq_ZRExp * coq_ZRExp
-  | ZR_And of coq_ZRForm * coq_ZRForm
-  | ZR_Or of coq_ZRForm * coq_ZRForm
-  | ZR_Not of coq_ZRForm
-  | ZR_Forall of V.var * I.coq_Q * coq_ZRForm
-  | ZR_Exists of V.var * I.coq_Q * coq_ZRForm
-  
-  (** val coq_ZRForm_rect :
-      (coq_ZRExp -> coq_ZRExp -> 'a1) -> (coq_ZRForm -> 'a1 -> coq_ZRForm ->
-      'a1 -> 'a1) -> (coq_ZRForm -> 'a1 -> coq_ZRForm -> 'a1 -> 'a1) ->
-      (coq_ZRForm -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZRForm -> 'a1 ->
-      'a1) -> (V.var -> I.coq_Q -> coq_ZRForm -> 'a1 -> 'a1) -> coq_ZRForm ->
-      'a1 **)
-  
-  let rec coq_ZRForm_rect f f0 f1 f2 f3 f4 = function
-  | ZR_Leq (z1, z2) -> f z1 z2
-  | ZR_And (z1, z2) ->
-    f0 z1 (coq_ZRForm_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZRForm_rect f f0 f1 f2 f3 f4 z2)
-  | ZR_Or (z1, z2) ->
-    f1 z1 (coq_ZRForm_rect f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZRForm_rect f f0 f1 f2 f3 f4 z2)
-  | ZR_Not z1 -> f2 z1 (coq_ZRForm_rect f f0 f1 f2 f3 f4 z1)
-  | ZR_Forall (v, q, z1) -> f3 v q z1 (coq_ZRForm_rect f f0 f1 f2 f3 f4 z1)
-  | ZR_Exists (v, q, z1) -> f4 v q z1 (coq_ZRForm_rect f f0 f1 f2 f3 f4 z1)
-  
-  (** val coq_ZRForm_rec :
-      (coq_ZRExp -> coq_ZRExp -> 'a1) -> (coq_ZRForm -> 'a1 -> coq_ZRForm ->
-      'a1 -> 'a1) -> (coq_ZRForm -> 'a1 -> coq_ZRForm -> 'a1 -> 'a1) ->
-      (coq_ZRForm -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZRForm -> 'a1 ->
-      'a1) -> (V.var -> I.coq_Q -> coq_ZRForm -> 'a1 -> 'a1) -> coq_ZRForm ->
-      'a1 **)
-  
-  let rec coq_ZRForm_rec f f0 f1 f2 f3 f4 = function
-  | ZR_Leq (z1, z2) -> f z1 z2
-  | ZR_And (z1, z2) ->
-    f0 z1 (coq_ZRForm_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZRForm_rec f f0 f1 f2 f3 f4 z2)
-  | ZR_Or (z1, z2) ->
-    f1 z1 (coq_ZRForm_rec f f0 f1 f2 f3 f4 z1) z2
-      (coq_ZRForm_rec f f0 f1 f2 f3 f4 z2)
-  | ZR_Not z1 -> f2 z1 (coq_ZRForm_rec f f0 f1 f2 f3 f4 z1)
-  | ZR_Forall (v, q, z1) -> f3 v q z1 (coq_ZRForm_rec f f0 f1 f2 f3 f4 z1)
-  | ZR_Exists (v, q, z1) -> f4 v q z1 (coq_ZRForm_rec f f0 f1 f2 f3 f4 z1)
-  
-  (** val desugar_mult_nat : nat -> coq_ZRExp -> coq_ZRExp **)
-  
-  let rec desugar_mult_nat n0 exp =
-    match n0 with
-    | O -> ZRExp_Const I.N.coq_Const0
-    | S n1 -> ZRExp_Add (exp, (desugar_mult_nat n1 exp))
-  
-  (** val desugar_mult : z -> coq_ZRExp -> coq_ZRExp **)
-  
-  let desugar_mult z0 exp =
-    match z0 with
-    | Z0 -> ZRExp_Const I.N.coq_Const0
-    | Zpos x -> desugar_mult_nat (Coq_Pos.to_nat x) exp
-    | Zneg x -> ZRExp_Inv (desugar_mult_nat (Coq_Pos.to_nat x) exp)
-  
-  (** val desugar_exp : coq_ZExp -> coq_ZRExp **)
-  
-  let rec desugar_exp = function
-  | ZExp_Var v -> ZRExp_Var v
-  | ZExp_Const c -> ZRExp_Const c
-  | ZExp_Add (e1, e2) -> ZRExp_Add ((desugar_exp e1), (desugar_exp e2))
-  | ZExp_Inv e -> ZRExp_Inv (desugar_exp e)
-  | ZExp_Sub (e1, e2) ->
-    ZRExp_Add ((desugar_exp e1), (ZRExp_Inv (desugar_exp e2)))
-  | ZExp_Mult (z0, e) -> desugar_mult z0 (desugar_exp e)
-  
-  (** val desugar_bool : coq_ZBF -> coq_ZRForm **)
-  
-  let rec desugar_bool = function
-  | ZBF_Const b ->
-    if b
-    then ZR_Leq ((ZRExp_Const I.N.coq_Const0), (ZRExp_Const I.N.coq_Const1))
-    else ZR_Leq ((ZRExp_Const I.N.coq_Const1), (ZRExp_Const I.N.coq_Const0))
-  | ZBF_Lt (e1, e2) ->
-    let r1 = desugar_exp e1 in
-    let r2 = desugar_exp e2 in
-    ZR_And ((ZR_Leq (r1, r2)), (ZR_Not (ZR_Leq (r2, r1))))
-  | ZBF_Lte (e1, e2) -> ZR_Leq ((desugar_exp e1), (desugar_exp e2))
-  | ZBF_Gt (e1, e2) ->
-    let r1 = desugar_exp e1 in
-    let r2 = desugar_exp e2 in
-    ZR_And ((ZR_Leq (r2, r1)), (ZR_Not (ZR_Leq (r1, r2))))
-  | ZBF_Gte (e1, e2) -> ZR_Leq ((desugar_exp e2), (desugar_exp e1))
-  | ZBF_Eq (e1, e2) ->
-    let r1 = desugar_exp e1 in
-    let r2 = desugar_exp e2 in ZR_And ((ZR_Leq (r1, r2)), (ZR_Leq (r2, r1)))
-  | ZBF_Neq (e1, e2) ->
-    let r1 = desugar_exp e1 in
-    let r2 = desugar_exp e2 in
-    ZR_Or ((ZR_Not (ZR_Leq (r2, r1))), (ZR_Not (ZR_Leq (r1, r2))))
-  
-  (** val desugar : coq_ZF -> coq_ZRForm **)
-  
-  let rec desugar = function
-  | ZF_BF bf -> desugar_bool bf
-  | ZF_And (f1, f2) -> ZR_And ((desugar f1), (desugar f2))
-  | ZF_Or (f1, f2) -> ZR_Or ((desugar f1), (desugar f2))
-  | ZF_Imp (f1, f2) -> ZR_Or ((ZR_Not (desugar f1)), (desugar f2))
-  | ZF_Not f -> ZR_Not (desugar f)
-  | ZF_Forall (v, q, f) -> ZR_Forall (v, q, (desugar f))
-  | ZF_Exists (v, q, f) -> ZR_Exists (v, q, (desugar f))
-  
-  type ctx = V.var -> I.N.coq_A
-  
-  (** val ictx : ctx **)
-  
-  let ictx x =
-    I.N.coq_Const0
-  
-  (** val upd : ctx -> V.var -> I.N.coq_A -> ctx **)
-  
-  let upd rho v nv v' =
-    if V.var_eq_dec v v' then nv else rho v'
-  
-  type coq_HiExp =
-  | HiExp_Var of (V.var, I.N.coq_A) prod
-  | HiExp_Const of I.N.coq_A
-  | HiExp_Add of coq_HiExp * coq_HiExp
-  | HiExp_Inv of coq_HiExp
-  
-  (** val coq_HiExp_rect :
-      ((V.var, I.N.coq_A) prod -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_HiExp ->
-      'a1 -> coq_HiExp -> 'a1 -> 'a1) -> (coq_HiExp -> 'a1 -> 'a1) ->
-      coq_HiExp -> 'a1 **)
-  
-  let rec coq_HiExp_rect f f0 f1 f2 = function
-  | HiExp_Var p -> f p
-  | HiExp_Const a -> f0 a
-  | HiExp_Add (h0, h1) ->
-    f1 h0 (coq_HiExp_rect f f0 f1 f2 h0) h1 (coq_HiExp_rect f f0 f1 f2 h1)
-  | HiExp_Inv h0 -> f2 h0 (coq_HiExp_rect f f0 f1 f2 h0)
-  
-  (** val coq_HiExp_rec :
-      ((V.var, I.N.coq_A) prod -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_HiExp ->
-      'a1 -> coq_HiExp -> 'a1 -> 'a1) -> (coq_HiExp -> 'a1 -> 'a1) ->
-      coq_HiExp -> 'a1 **)
-  
-  let rec coq_HiExp_rec f f0 f1 f2 = function
-  | HiExp_Var p -> f p
-  | HiExp_Const a -> f0 a
-  | HiExp_Add (h0, h1) ->
-    f1 h0 (coq_HiExp_rec f f0 f1 f2 h0) h1 (coq_HiExp_rec f f0 f1 f2 h1)
-  | HiExp_Inv h0 -> f2 h0 (coq_HiExp_rec f f0 f1 f2 h0)
-  
-  type coq_HiForm =
-  | Hi_Leq of coq_HiExp * coq_HiExp
-  | Hi_And of coq_HiForm * coq_HiForm
-  | Hi_Or of coq_HiForm * coq_HiForm
-  | Hi_Not of coq_HiForm
-  | Hi_Forall of I.coq_Q * V.var * (I.coq_QT -> coq_HiForm)
-  | Hi_Exists of I.coq_Q * V.var * (I.coq_QT -> coq_HiForm)
-  
-  (** val coq_HiForm_rect :
-      (coq_HiExp -> coq_HiExp -> 'a1) -> (coq_HiForm -> 'a1 -> coq_HiForm ->
-      'a1 -> 'a1) -> (coq_HiForm -> 'a1 -> coq_HiForm -> 'a1 -> 'a1) ->
-      (coq_HiForm -> 'a1 -> 'a1) -> (I.coq_Q -> V.var -> (I.coq_QT ->
-      coq_HiForm) -> (I.coq_QT -> 'a1) -> 'a1) -> (I.coq_Q -> V.var ->
-      (I.coq_QT -> coq_HiForm) -> (I.coq_QT -> 'a1) -> 'a1) -> coq_HiForm ->
-      'a1 **)
-  
-  let rec coq_HiForm_rect f f0 f1 f2 f3 f4 = function
-  | Hi_Leq (h0, h1) -> f h0 h1
-  | Hi_And (h0, h1) ->
-    f0 h0 (coq_HiForm_rect f f0 f1 f2 f3 f4 h0) h1
-      (coq_HiForm_rect f f0 f1 f2 f3 f4 h1)
-  | Hi_Or (h0, h1) ->
-    f1 h0 (coq_HiForm_rect f f0 f1 f2 f3 f4 h0) h1
-      (coq_HiForm_rect f f0 f1 f2 f3 f4 h1)
-  | Hi_Not h0 -> f2 h0 (coq_HiForm_rect f f0 f1 f2 f3 f4 h0)
-  | Hi_Forall (q, v, h0) ->
-    f3 q v h0 (fun q0 -> coq_HiForm_rect f f0 f1 f2 f3 f4 (h0 q0))
-  | Hi_Exists (q, v, h0) ->
-    f4 q v h0 (fun q0 -> coq_HiForm_rect f f0 f1 f2 f3 f4 (h0 q0))
-  
-  (** val coq_HiForm_rec :
-      (coq_HiExp -> coq_HiExp -> 'a1) -> (coq_HiForm -> 'a1 -> coq_HiForm ->
-      'a1 -> 'a1) -> (coq_HiForm -> 'a1 -> coq_HiForm -> 'a1 -> 'a1) ->
-      (coq_HiForm -> 'a1 -> 'a1) -> (I.coq_Q -> V.var -> (I.coq_QT ->
-      coq_HiForm) -> (I.coq_QT -> 'a1) -> 'a1) -> (I.coq_Q -> V.var ->
-      (I.coq_QT -> coq_HiForm) -> (I.coq_QT -> 'a1) -> 'a1) -> coq_HiForm ->
-      'a1 **)
-  
-  let rec coq_HiForm_rec f f0 f1 f2 f3 f4 = function
-  | Hi_Leq (h0, h1) -> f h0 h1
-  | Hi_And (h0, h1) ->
-    f0 h0 (coq_HiForm_rec f f0 f1 f2 f3 f4 h0) h1
-      (coq_HiForm_rec f f0 f1 f2 f3 f4 h1)
-  | Hi_Or (h0, h1) ->
-    f1 h0 (coq_HiForm_rec f f0 f1 f2 f3 f4 h0) h1
-      (coq_HiForm_rec f f0 f1 f2 f3 f4 h1)
-  | Hi_Not h0 -> f2 h0 (coq_HiForm_rec f f0 f1 f2 f3 f4 h0)
-  | Hi_Forall (q, v, h0) ->
-    f3 q v h0 (fun q0 -> coq_HiForm_rec f f0 f1 f2 f3 f4 (h0 q0))
-  | Hi_Exists (q, v, h0) ->
-    f4 q v h0 (fun q0 -> coq_HiForm_rec f f0 f1 f2 f3 f4 (h0 q0))
-  
-  (** val exp2hi : ctx -> coq_ZRExp -> coq_HiExp **)
-  
-  let rec exp2hi rho = function
-  | ZRExp_Var v -> HiExp_Var (Pair (v, (rho v)))
-  | ZRExp_Const z0 -> HiExp_Const z0
-  | ZRExp_Add (e1, e2) -> HiExp_Add ((exp2hi rho e1), (exp2hi rho e2))
-  | ZRExp_Inv e -> HiExp_Inv (exp2hi rho e)
-  
-  (** val zrform2hi : ctx -> coq_ZRForm -> coq_HiForm **)
-  
-  let rec zrform2hi rho = function
-  | ZR_Leq (e1, e2) -> Hi_Leq ((exp2hi rho e1), (exp2hi rho e2))
-  | ZR_And (f1, f2) -> Hi_And ((zrform2hi rho f1), (zrform2hi rho f2))
-  | ZR_Or (f1, f2) -> Hi_Or ((zrform2hi rho f1), (zrform2hi rho f2))
-  | ZR_Not f -> Hi_Not (zrform2hi rho f)
-  | ZR_Forall (v, q, f) ->
-    Hi_Forall (q, v, (fun x -> zrform2hi (upd rho v (I.conv q x)) f))
-  | ZR_Exists (v, q, f) ->
-    Hi_Exists (q, v, (fun x -> zrform2hi (upd rho v (I.conv q x)) f))
-  
-  (** val hi2exp : coq_HiExp -> coq_ZRExp **)
-  
-  let rec hi2exp = function
-  | HiExp_Var p -> let Pair (v, a) = p in ZRExp_Var v
-  | HiExp_Const z0 -> ZRExp_Const z0
-  | HiExp_Add (e1, e2) -> ZRExp_Add ((hi2exp e1), (hi2exp e2))
-  | HiExp_Inv e -> ZRExp_Inv (hi2exp e)
-  
-  (** val hi2zrform : coq_HiForm -> coq_ZRForm **)
-  
-  let rec hi2zrform = function
-  | Hi_Leq (e1, e2) -> ZR_Leq ((hi2exp e1), (hi2exp e2))
-  | Hi_And (f1, f2) -> ZR_And ((hi2zrform f1), (hi2zrform f2))
-  | Hi_Or (f1, f2) -> ZR_Or ((hi2zrform f1), (hi2zrform f2))
-  | Hi_Not f -> ZR_Not (hi2zrform f)
-  | Hi_Forall (q, v, fx) -> ZR_Forall (v, q, (hi2zrform (fx (I.constQT q))))
-  | Hi_Exists (q, v, fx) -> ZR_Exists (v, q, (hi2zrform (fx (I.constQT q))))
-  
-  (** val hi2ZE : coq_HiExp -> I.N.coq_A **)
-  
-  let rec hi2ZE = function
-  | HiExp_Var p -> let Pair (v, a) = p in a
-  | HiExp_Const z0 -> z0
-  | HiExp_Add (e1, e2) -> I.N.num_plus (hi2ZE e1) (hi2ZE e2)
-  | HiExp_Inv e -> I.N.num_neg (hi2ZE e)
-  
-  (** val num_mult_nat : nat -> I.N.coq_A -> I.N.coq_A **)
-  
-  let rec num_mult_nat n0 x =
-    match n0 with
-    | O -> I.N.coq_Const0
-    | S n1 -> I.N.num_plus x (num_mult_nat n1 x)
-  
-  (** val num_mult : z -> I.N.coq_A -> I.N.coq_A **)
-  
-  let num_mult z0 exp =
-    match z0 with
-    | Z0 -> I.N.coq_Const0
-    | Zpos x -> num_mult_nat (Coq_Pos.to_nat x) exp
-    | Zneg x -> I.N.num_neg (num_mult_nat (Coq_Pos.to_nat x) exp)
-  
-  (** val subst_exp : (V.var, I.N.coq_A) prod -> coq_ZExp -> coq_ZExp **)
-  
-  let rec subst_exp p exp = match exp with
-  | ZExp_Var v -> if V.var_eq_dec (fst p) v then ZExp_Const (snd p) else exp
-  | ZExp_Const a -> exp
-  | ZExp_Add (e1, e2) -> ZExp_Add ((subst_exp p e1), (subst_exp p e2))
-  | ZExp_Inv e -> ZExp_Inv (subst_exp p e)
-  | ZExp_Sub (e1, e2) -> ZExp_Sub ((subst_exp p e1), (subst_exp p e2))
-  | ZExp_Mult (n0, e) -> ZExp_Mult (n0, (subst_exp p e))
-  
-  (** val subst_bf : (V.var, I.N.coq_A) prod -> coq_ZBF -> coq_ZBF **)
-  
-  let rec subst_bf p bf = match bf with
-  | ZBF_Const b -> bf
-  | ZBF_Lt (e1, e2) -> ZBF_Lt ((subst_exp p e1), (subst_exp p e2))
-  | ZBF_Lte (e1, e2) -> ZBF_Lte ((subst_exp p e1), (subst_exp p e2))
-  | ZBF_Gt (e1, e2) -> ZBF_Gt ((subst_exp p e1), (subst_exp p e2))
-  | ZBF_Gte (e1, e2) -> ZBF_Gte ((subst_exp p e1), (subst_exp p e2))
-  | ZBF_Eq (e1, e2) -> ZBF_Eq ((subst_exp p e1), (subst_exp p e2))
-  | ZBF_Neq (e1, e2) -> ZBF_Neq ((subst_exp p e1), (subst_exp p e2))
-  
-  (** val substitute : (V.var, I.N.coq_A) prod -> coq_ZF -> coq_ZF **)
-  
-  let rec substitute p form = match form with
-  | ZF_BF bf -> ZF_BF (subst_bf p bf)
-  | ZF_And (f1, f2) -> ZF_And ((substitute p f1), (substitute p f2))
-  | ZF_Or (f1, f2) -> ZF_Or ((substitute p f1), (substitute p f2))
-  | ZF_Imp (f1, f2) -> ZF_Imp ((substitute p f1), (substitute p f2))
-  | ZF_Not f -> ZF_Not (substitute p f)
-  | ZF_Forall (v, q, f) ->
-    if V.var_eq_dec (fst p) v
-    then form
-    else ZF_Forall (v, q, (substitute p f))
-  | ZF_Exists (v, q, f) ->
-    if V.var_eq_dec (fst p) v
-    then form
-    else ZF_Exists (v, q, (substitute p f))
-  
-  (** val dexp2ZE : coq_ZExp -> I.N.coq_A **)
-  
-  let rec dexp2ZE = function
-  | ZExp_Var v -> I.N.coq_Const0
-  | ZExp_Const z0 -> z0
-  | ZExp_Add (e1, e2) -> I.N.num_plus (dexp2ZE e1) (dexp2ZE e2)
-  | ZExp_Inv e -> I.N.num_neg (dexp2ZE e)
-  | ZExp_Sub (e1, e2) -> I.N.num_plus (dexp2ZE e1) (I.N.num_neg (dexp2ZE e2))
-  | ZExp_Mult (z0, e) -> num_mult z0 (dexp2ZE e)
-  
-  (** val dzbf2bool : coq_ZBF -> bool **)
-  
-  let rec dzbf2bool = function
-  | ZBF_Const b -> b
-  | ZBF_Lt (e1, e2) ->
-    let v1 = dexp2ZE e1 in
-    let v2 = dexp2ZE e2 in
-    if I.N.num_leq v1 v2 then negb (I.N.num_leq v2 v1) else false
-  | ZBF_Lte (e1, e2) -> I.N.num_leq (dexp2ZE e1) (dexp2ZE e2)
-  | ZBF_Gt (e1, e2) ->
-    let v1 = dexp2ZE e1 in
-    let v2 = dexp2ZE e2 in
-    if I.N.num_leq v2 v1 then negb (I.N.num_leq v1 v2) else false
-  | ZBF_Gte (e1, e2) -> I.N.num_leq (dexp2ZE e2) (dexp2ZE e1)
-  | ZBF_Eq (e1, e2) ->
-    let v1 = dexp2ZE e1 in
-    let v2 = dexp2ZE e2 in
-    if I.N.num_leq v1 v2 then I.N.num_leq v2 v1 else false
-  | ZBF_Neq (e1, e2) ->
-    let v1 = dexp2ZE e1 in
-    let v2 = dexp2ZE e2 in
-    negb (if I.N.num_leq v1 v2 then I.N.num_leq v2 v1 else false)
-  
-  (** val length_zform : coq_ZF -> nat **)
-  
-  let rec length_zform = function
-  | ZF_BF z0 -> S O
-  | ZF_And (f1, f2) -> S (plus (length_zform f1) (length_zform f2))
-  | ZF_Or (f1, f2) -> S (plus (length_zform f1) (length_zform f2))
-  | ZF_Imp (f1, f2) -> S (plus (length_zform f1) (length_zform f2))
-  | ZF_Not f -> S (length_zform f)
-  | ZF_Forall (v, q, f) -> S (length_zform f)
-  | ZF_Exists (v, q, f) -> S (length_zform f)
-  
-  (** val length_exp : coq_ZExp -> nat **)
-  
-  let rec length_exp = function
-  | ZExp_Add (e1, e2) -> S (plus (length_exp e1) (length_exp e2))
-  | ZExp_Inv e -> S (length_exp e)
-  | ZExp_Sub (e1, e2) -> S (plus (length_exp e1) (length_exp e2))
-  | ZExp_Mult (z0, e) -> S (length_exp e)
-  | _ -> S O
- end
-
-(** val string_dec : char list -> char list -> bool **)
-
-let rec string_dec s s0 =
-  match s with
-  | [] ->
-    (match s0 with
-     | [] -> true
-     | a::s1 -> false)
-  | a::s1 ->
-    (match s0 with
-     | [] -> false
-     | a0::s2 -> if (=) a a0 then string_dec s1 s2 else false)
-
-module STRVAR = 
- struct 
-  type var = char list
-  
-  (** val var_eq_dec : char list -> char list -> bool **)
-  
-  let var_eq_dec =
-    string_dec
- end
-
-module IA = ArithSemantics(PureInfinity)(STRVAR)
-
-module FA = ArithSemantics(PureInt)(STRVAR)
-
-module I2F = ArithSemantics(IntToInfinity)(STRVAR)
-
-(** val inf_trans_exp :
-    IA.coq_HiExp
-    ->
-    I2F.coq_HiExp **)
-
-let rec inf_trans_exp = function
-| IA.HiExp_Var v ->
-  I2F.HiExp_Var
-    (Obj.magic
-      v)
-| IA.HiExp_Const z0 ->
-  I2F.HiExp_Const
-    (Obj.magic
-      z0)
-| IA.HiExp_Add (e1,
-                e2) ->
-  I2F.HiExp_Add
-    ((inf_trans_exp
-       e1),
-    (inf_trans_exp
-      e2))
-| IA.HiExp_Inv e ->
-  I2F.HiExp_Inv
-    (inf_trans_exp
-      e)
-
-(** val inf_trans :
-    IA.coq_HiForm
-    ->
-    I2F.coq_HiForm **)
-
-let rec inf_trans = function
-| IA.Hi_Leq (v1,
-             v2) ->
-  I2F.Hi_Leq
-    ((inf_trans_exp
-       v1),
-    (inf_trans_exp
-      v2))
-| IA.Hi_And (f1,
-             f2) ->
-  I2F.Hi_And
-    ((inf_trans
-       f1),
-    (inf_trans
-      f2))
-| IA.Hi_Or (f1,
-            f2) ->
-  I2F.Hi_Or
-    ((inf_trans
-       f1),
-    (inf_trans
-      f2))
-| IA.Hi_Not f ->
-  I2F.Hi_Not
-    (inf_trans
-      f)
-| IA.Hi_Forall (q,
-                v,
-                px) ->
-  (match q with
-   | PureInfinity.Q_Z ->
-     I2F.Hi_Forall
-       (Tt,
-       v,
-       (fun x ->
-       inf_trans
-         (Obj.magic
-           px
-           x)))
-   | PureInfinity.Q_ZE ->
-     I2F.Hi_And
-       ((I2F.Hi_Forall
-       (Tt,
-       v,
-       (fun x ->
-       inf_trans
-         (Obj.magic
-           px
-           (ZInfinity.ZE_Fin
-           x))))),
-       (I2F.Hi_And
-       ((inf_trans
-          (Obj.magic
-            px
-            ZInfinity.ZE_Inf)),
-       (inf_trans
-         (Obj.magic
-           px
-           ZInfinity.ZE_NegInf))))))
-| IA.Hi_Exists (q,
-                v,
-                px) ->
-  (match q with
-   | PureInfinity.Q_Z ->
-     I2F.Hi_Exists
-       (Tt,
-       v,
-       (fun x ->
-       inf_trans
-         (Obj.magic
-           px
-           x)))
-   | PureInfinity.Q_ZE ->
-     I2F.Hi_Or
-       ((I2F.Hi_Exists
-       (Tt,
-       v,
-       (fun x ->
-       inf_trans
-         (Obj.magic
-           px
-           (ZInfinity.ZE_Fin
-           x))))),
-       (I2F.Hi_Or
-       ((inf_trans
-          (Obj.magic
-            px
-            ZInfinity.ZE_Inf)),
-       (inf_trans
-         (Obj.magic
-           px
-           ZInfinity.ZE_NegInf))))))
-
-(** val fA_True :
-    FA.coq_HiForm **)
-
-let fA_True =
-  FA.Hi_Leq
-    ((FA.HiExp_Const
-    Z0),
-    (FA.HiExp_Const
-    (Zpos
-    XH)))
-
-(** val fA_False :
-    FA.coq_HiForm **)
-
-let fA_False =
-  FA.Hi_Leq
-    ((FA.HiExp_Const
-    (Zpos
-    XH)),
-    (FA.HiExp_Const
-    Z0))
-
-(** val proj :
-    IntToInfinity.N.coq_A
-    ->
-    z **)
-
-let proj = function
-| Some z1 ->
-  (match z1 with
-   | IntToInfinity.N.ZE_Fin x ->
-     x
-   | _ ->
-     Z0)
-| None ->
-  Z0
-
-(** val int_trans_exp :
-    I2F.coq_HiExp
-    ->
-    FA.coq_HiExp **)
-
-let rec int_trans_exp = function
-| I2F.HiExp_Var p ->
-  let Pair (v,
-            a) =
-    p
-  in
-  FA.HiExp_Var
-  (Pair
-  (v,
-  (proj
-    a)))
-| I2F.HiExp_Const z0 ->
-  FA.HiExp_Const
-    (proj
-      z0)
-| I2F.HiExp_Add (e1,
-                 e2) ->
-  FA.HiExp_Add
-    ((int_trans_exp
-       e1),
-    (int_trans_exp
-      e2))
-| I2F.HiExp_Inv e ->
-  FA.HiExp_Inv
-    (int_trans_exp
-      e)
-
-(** val int_trans :
-    I2F.coq_HiForm
-    ->
-    FA.coq_HiForm **)
-
-let rec int_trans = function
-| I2F.Hi_Leq (v1,
-              v2) ->
-  (match I2F.hi2ZE
-           v1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.hi2ZE
-                 v2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.Hi_Leq
-                ((int_trans_exp
-                   v1),
-                (int_trans_exp
-                  v2))
-            | IntToInfinity.N.ZE_Inf ->
-              fA_True
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fA_True
-              else fA_False)
-         | None ->
-           fA_False)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.hi2ZE
-                 v2 with
-         | Some x0 ->
-           (match x0 with
-            | IntToInfinity.N.ZE_Fin z0 ->
-              if ZInfinity.coq_ZE_eq_dec
-                   ZInfinity.ZE_Inf
-                   (Obj.magic
-                     x0)
-              then fA_True
-              else fA_False
-            | IntToInfinity.N.ZE_Inf ->
-              fA_True
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fA_True
-              else fA_False)
-         | None ->
-           fA_False)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.hi2ZE
-                 v2 with
-         | Some z0 ->
-           fA_True
-         | None ->
-           fA_False))
-   | None ->
-     fA_False)
-| I2F.Hi_And (f1,
-              f2) ->
-  FA.Hi_And
-    ((int_trans
-       f1),
-    (int_trans
-      f2))
-| I2F.Hi_Or (f1,
-             f2) ->
-  FA.Hi_Or
-    ((int_trans
-       f1),
-    (int_trans
-      f2))
-| I2F.Hi_Not f ->
-  FA.Hi_Not
-    (int_trans
-      f)
-| I2F.Hi_Forall (q,
-                 v,
-                 px) ->
-  FA.Hi_Forall
-    (q,
-    v,
-    (fun x ->
-    int_trans
-      (px
-        x)))
-| I2F.Hi_Exists (q,
-                 v,
-                 px) ->
-  FA.Hi_Exists
-    (q,
-    v,
-    (fun x ->
-    int_trans
-      (px
-        x)))
-
-(** val zr2finite :
-    IA.ctx
-    ->
-    IA.coq_ZRForm
-    ->
-    FA.coq_HiForm **)
-
-let zr2finite ctx0 form =
-  int_trans
-    (inf_trans
-      (IA.zrform2hi
-        ctx0
-        form))
-
-(** val t0 :
-    IA.coq_ZF
-    ->
-    FA.coq_HiForm **)
-
-let t0 form =
-  zr2finite
-    IA.ictx
-    (IA.desugar
-      form)
 
 module InfSolver = 
+ functor (Coq_sv:SV) ->
  struct 
-  (** val coq_Z_of_bool :
-      bool
-      ->
-      z **)
+  (** val coq_Z_of_bool : bool -> z **)
   
   let coq_Z_of_bool = function
-  | true ->
-    Zpos
-      XH
-  | false ->
-    Z0
+  | true -> Zpos XH
+  | false -> Z0
   
-  (** val coq_Z_of_ascii :
-      char
-      ->
-      z **)
+  (** val coq_Z_of_ascii : char -> z **)
   
   let coq_Z_of_ascii a =
     (* If this appears, you're using Ascii internals. Please don't *) (fun f c -> let n = Char.code c in let h i = (n land (1 lsl i)) <> 0 in f (h 0) (h 1) (h 2) (h 3) (h 4) (h 5) (h 6) (h 7))
       (fun b1 b2 b3 b4 b5 b6 b7 b8 ->
-      Z.add
-        (coq_Z_of_bool
-          b1)
-        (Z.mul
-          (Zpos
-          (XO
-          XH))
-          (Z.add
-            (coq_Z_of_bool
-              b2)
-            (Z.mul
-              (Zpos
-              (XO
-              XH))
-              (Z.add
-                (coq_Z_of_bool
-                  b3)
-                (Z.mul
-                  (Zpos
-                  (XO
-                  XH))
-                  (Z.add
-                    (coq_Z_of_bool
-                      b4)
-                    (Z.mul
-                      (Zpos
-                      (XO
-                      XH))
-                      (Z.add
-                        (coq_Z_of_bool
-                          b5)
-                        (Z.mul
-                          (Zpos
-                          (XO
-                          XH))
-                          (Z.add
-                            (coq_Z_of_bool
-                              b6)
-                            (Z.mul
-                              (Zpos
-                              (XO
-                              XH))
-                              (Z.add
-                                (coq_Z_of_bool
-                                  b7)
-                                (Z.mul
-                                  (Zpos
-                                  (XO
-                                  XH))
-                                  (coq_Z_of_bool
-                                    b8)))))))))))))))
+      Z.add (coq_Z_of_bool b1)
+        (Z.mul (Zpos (XO XH))
+          (Z.add (coq_Z_of_bool b2)
+            (Z.mul (Zpos (XO XH))
+              (Z.add (coq_Z_of_bool b3)
+                (Z.mul (Zpos (XO XH))
+                  (Z.add (coq_Z_of_bool b4)
+                    (Z.mul (Zpos (XO XH))
+                      (Z.add (coq_Z_of_bool b5)
+                        (Z.mul (Zpos (XO XH))
+                          (Z.add (coq_Z_of_bool b6)
+                            (Z.mul (Zpos (XO XH))
+                              (Z.add (coq_Z_of_bool b7)
+                                (Z.mul (Zpos (XO XH)) (coq_Z_of_bool b8)))))))))))))))
       a
   
-  (** val coq_Z_of_0 :
-      z **)
+  (** val coq_Z_of_0 : z **)
   
   let coq_Z_of_0 =
-    Zpos
-      (XO
-      (XO
-      (XO
-      (XO
-      (XI
-      XH)))))
+    Zpos (XO (XO (XO (XO (XI XH)))))
   
-  (** val coq_Z_of_digit :
-      char
-      ->
-      z
-      option **)
+  (** val coq_Z_of_digit : char -> z option **)
   
   let coq_Z_of_digit a =
-    let v =
-      Z.sub
-        (coq_Z_of_ascii
-          a)
-        coq_Z_of_0
-    in
-    (match Z.compare
-             v
-             Z0 with
-     | Eq ->
-       Some
-         v
-     | Lt ->
-       None
+    let v = Z.sub (coq_Z_of_ascii a) coq_Z_of_0 in
+    (match Z.compare v Z0 with
+     | Eq -> Some v
+     | Lt -> None
      | Gt ->
-       (match Z.compare
-                v
-                (Zpos
-                (XO
-                (XI
-                (XO
-                XH)))) with
-        | Lt ->
-          Some
-            v
-        | _ ->
-          None))
+       (match Z.compare v (Zpos (XO (XI (XO XH)))) with
+        | Lt -> Some v
+        | _ -> None))
   
-  (** val coq_Z_of_string' :
-      char list
-      ->
-      z
-      ->
-      z
-      option **)
+  (** val coq_Z_of_string' : char list -> z -> z option **)
   
   let rec coq_Z_of_string' a n0 =
     match a with
-    | [] ->
-      None
+    | [] -> None
     | a0::s' ->
-      (match coq_Z_of_digit
-               a0 with
+      (match coq_Z_of_digit a0 with
        | Some va ->
-         (match coq_Z_of_string'
-                  s'
-                  (Z.add
-                    n0
-                    (Zpos
-                    XH)) with
+         (match coq_Z_of_string' s' (Z.add n0 (Zpos XH)) with
           | Some vs ->
-            Some
-              (Z.add
-                (Z.mul
-                  va
-                  (Z.pow
-                    (Zpos
-                    (XO
-                    (XI
-                    (XO
-                    XH))))
-                    n0))
-                vs)
-          | None ->
-            Some
-              va)
-       | None ->
-         None)
+            Some (Z.add (Z.mul va (Z.pow (Zpos (XO (XI (XO XH)))) n0)) vs)
+          | None -> Some va)
+       | None -> None)
   
-  (** val coq_Z_of_string :
-      char list
-      ->
-      z **)
+  (** val coq_Z_of_string : char list -> z option **)
   
   let coq_Z_of_string a =
-    match coq_Z_of_string'
-            a
-            Z0 with
-    | Some z0 ->
-      z0
-    | None ->
-      Z0
-  
-  (** val natToDigit :
-      nat
-      ->
-      char **)
-  
-  let natToDigit = function
-  | O ->
-    '0'
-  | S n1 ->
-    (match n1 with
-     | O ->
-       '1'
-     | S n2 ->
-       (match n2 with
-        | O ->
-          '2'
-        | S n3 ->
-          (match n3 with
-           | O ->
-             '3'
-           | S n4 ->
-             (match n4 with
-              | O ->
-                '4'
-              | S n5 ->
-                (match n5 with
-                 | O ->
-                   '5'
-                 | S n6 ->
-                   (match n6 with
-                    | O ->
-                      '6'
-                    | S n7 ->
-                      (match n7 with
-                       | O ->
-                         '7'
-                       | S n8 ->
-                         (match n8 with
-                          | O ->
-                            '8'
-                          | S n9 ->
-                            '9'))))))))
-  
-  (** val writeNatAux :
-      nat
-      ->
-      nat
-      ->
-      char list
-      ->
-      char list **)
-  
-  let rec writeNatAux time n0 acc =
-    let acc' =
-      (natToDigit
-        (modulo0
-          n0
-          (S
-          (S
-          (S
-          (S
-          (S
-          (S
-          (S
-          (S
-          (S
-          (S
-          O))))))))))))::acc
-    in
-    (match time with
-     | O ->
-       acc'
-     | S time' ->
-       (match div0
-                n0
-                (S
-                (S
-                (S
-                (S
-                (S
-                (S
-                (S
-                (S
-                (S
-                (S
-                O)))))))))) with
-        | O ->
-          acc'
-        | S n1 ->
-          writeNatAux
-            time'
-            (S
-            n1)
-            acc'))
-  
-  (** val writeNat :
-      nat
-      ->
-      char list **)
-  
-  let writeNat n0 =
-    writeNatAux
-      n0
-      n0
-      []
-  
-  (** val string_of_Z :
-      z
-      ->
-      char list **)
-  
-  let string_of_Z n0 =
-    writeNat
-      (Z.abs_nat
-        n0)
+    coq_Z_of_string' a Z0
   
   type 'const_type coq_ZExp =
   | ZExp_Var of char list
   | ZExp_Const of 'const_type
-  | ZExp_Add of 'const_type
-                coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZExp_Sub of 'const_type
-                coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZExp_Mult of char list
-     * 'const_type
-       coq_ZExp
+  | ZExp_Add of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZExp_Sub of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZExp_Mult of char list * 'const_type coq_ZExp
   
   (** val coq_ZExp_rect :
-      (char list
-      ->
-      'a2)
-      ->
-      ('a1
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZExp
-      ->
+      (char list -> 'a2) -> ('a1 -> 'a2) -> ('a1 coq_ZExp -> 'a2 -> 'a1
+      coq_ZExp -> 'a2 -> 'a2) -> ('a1 coq_ZExp -> 'a2 -> 'a1 coq_ZExp -> 'a2
+      -> 'a2) -> (char list -> 'a1 coq_ZExp -> 'a2 -> 'a2) -> 'a1 coq_ZExp ->
       'a2 **)
   
   let rec coq_ZExp_rect f f0 f1 f2 f3 = function
-  | ZExp_Var s ->
-    f
-      s
-  | ZExp_Const y ->
-    f0
-      y
-  | ZExp_Add (z1,
-              z2) ->
-    f1
-      z1
-      (coq_ZExp_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
-      z2
-      (coq_ZExp_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        z2)
-  | ZExp_Sub (z1,
-              z2) ->
-    f2
-      z1
-      (coq_ZExp_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
-      z2
-      (coq_ZExp_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        z2)
-  | ZExp_Mult (s,
-               z1) ->
-    f3
-      s
-      z1
-      (coq_ZExp_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
+  | ZExp_Var s -> f s
+  | ZExp_Const y -> f0 y
+  | ZExp_Add (z1, z2) ->
+    f1 z1 (coq_ZExp_rect f f0 f1 f2 f3 z1) z2
+      (coq_ZExp_rect f f0 f1 f2 f3 z2)
+  | ZExp_Sub (z1, z2) ->
+    f2 z1 (coq_ZExp_rect f f0 f1 f2 f3 z1) z2
+      (coq_ZExp_rect f f0 f1 f2 f3 z2)
+  | ZExp_Mult (s, z1) -> f3 s z1 (coq_ZExp_rect f f0 f1 f2 f3 z1)
   
   (** val coq_ZExp_rec :
-      (char list
-      ->
-      'a2)
-      ->
-      ('a1
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZExp
-      ->
+      (char list -> 'a2) -> ('a1 -> 'a2) -> ('a1 coq_ZExp -> 'a2 -> 'a1
+      coq_ZExp -> 'a2 -> 'a2) -> ('a1 coq_ZExp -> 'a2 -> 'a1 coq_ZExp -> 'a2
+      -> 'a2) -> (char list -> 'a1 coq_ZExp -> 'a2 -> 'a2) -> 'a1 coq_ZExp ->
       'a2 **)
   
   let rec coq_ZExp_rec f f0 f1 f2 f3 = function
-  | ZExp_Var s ->
-    f
-      s
-  | ZExp_Const y ->
-    f0
-      y
-  | ZExp_Add (z1,
-              z2) ->
-    f1
-      z1
-      (coq_ZExp_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
-      z2
-      (coq_ZExp_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        z2)
-  | ZExp_Sub (z1,
-              z2) ->
-    f2
-      z1
-      (coq_ZExp_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
-      z2
-      (coq_ZExp_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        z2)
-  | ZExp_Mult (s,
-               z1) ->
-    f3
-      s
-      z1
-      (coq_ZExp_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        z1)
+  | ZExp_Var s -> f s
+  | ZExp_Const y -> f0 y
+  | ZExp_Add (z1, z2) ->
+    f1 z1 (coq_ZExp_rec f f0 f1 f2 f3 z1) z2 (coq_ZExp_rec f f0 f1 f2 f3 z2)
+  | ZExp_Sub (z1, z2) ->
+    f2 z1 (coq_ZExp_rec f f0 f1 f2 f3 z1) z2 (coq_ZExp_rec f f0 f1 f2 f3 z2)
+  | ZExp_Mult (s, z1) -> f3 s z1 (coq_ZExp_rec f f0 f1 f2 f3 z1)
   
   type 'const_type coq_ZBF =
   | ZBF_Const of bool
-  | ZBF_Lt of 'const_type
-              coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZBF_Lte of 'const_type
-               coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZBF_Gt of 'const_type
-              coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZBF_Gte of 'const_type
-               coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZBF_Eq of 'const_type
-              coq_ZExp
-     * 'const_type
-       coq_ZExp
-  | ZBF_Neq of 'const_type
-               coq_ZExp
-     * 'const_type
-       coq_ZExp
+  | ZBF_Lt of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZBF_Lte of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZBF_Gt of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZBF_Gte of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZBF_Eq of 'const_type coq_ZExp * 'const_type coq_ZExp
+  | ZBF_Eq_Max of 'const_type coq_ZExp * 'const_type coq_ZExp
+     * 'const_type coq_ZExp
+  | ZBF_Eq_Min of 'const_type coq_ZExp * 'const_type coq_ZExp
+     * 'const_type coq_ZExp
+  | ZBF_Neq of 'const_type coq_ZExp * 'const_type coq_ZExp
   
   (** val coq_ZBF_rect :
-      (bool
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZBF
-      ->
-      'a2 **)
+      (bool -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp
+      -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) ->
+      ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp
+      -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) ->
+      ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp
+      -> 'a1 coq_ZExp -> 'a2) -> 'a1 coq_ZBF -> 'a2 **)
   
-  let coq_ZBF_rect f f0 f1 f2 f3 f4 f5 = function
-  | ZBF_Const x ->
-    f
-      x
-  | ZBF_Lt (x,
-            x0) ->
-    f0
-      x
-      x0
-  | ZBF_Lte (x,
-             x0) ->
-    f1
-      x
-      x0
-  | ZBF_Gt (x,
-            x0) ->
-    f2
-      x
-      x0
-  | ZBF_Gte (x,
-             x0) ->
-    f3
-      x
-      x0
-  | ZBF_Eq (x,
-            x0) ->
-    f4
-      x
-      x0
-  | ZBF_Neq (x,
-             x0) ->
-    f5
-      x
-      x0
+  let coq_ZBF_rect f f0 f1 f2 f3 f4 f5 f6 f7 = function
+  | ZBF_Const x -> f x
+  | ZBF_Lt (x, x0) -> f0 x x0
+  | ZBF_Lte (x, x0) -> f1 x x0
+  | ZBF_Gt (x, x0) -> f2 x x0
+  | ZBF_Gte (x, x0) -> f3 x x0
+  | ZBF_Eq (x, x0) -> f4 x x0
+  | ZBF_Eq_Max (x, x0, x1) -> f5 x x0 x1
+  | ZBF_Eq_Min (x, x0, x1) -> f6 x x0 x1
+  | ZBF_Neq (x, x0) -> f7 x x0
   
   (** val coq_ZBF_rec :
-      (bool
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZExp
-      ->
-      'a1
-      coq_ZExp
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZBF
-      ->
-      'a2 **)
+      (bool -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp
+      -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) ->
+      ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp
+      -> 'a2) -> ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) ->
+      ('a1 coq_ZExp -> 'a1 coq_ZExp -> 'a1 coq_ZExp -> 'a2) -> ('a1 coq_ZExp
+      -> 'a1 coq_ZExp -> 'a2) -> 'a1 coq_ZBF -> 'a2 **)
   
-  let coq_ZBF_rec f f0 f1 f2 f3 f4 f5 = function
-  | ZBF_Const x ->
-    f
-      x
-  | ZBF_Lt (x,
-            x0) ->
-    f0
-      x
-      x0
-  | ZBF_Lte (x,
-             x0) ->
-    f1
-      x
-      x0
-  | ZBF_Gt (x,
-            x0) ->
-    f2
-      x
-      x0
-  | ZBF_Gte (x,
-             x0) ->
-    f3
-      x
-      x0
-  | ZBF_Eq (x,
-            x0) ->
-    f4
-      x
-      x0
-  | ZBF_Neq (x,
-             x0) ->
-    f5
-      x
-      x0
+  let coq_ZBF_rec f f0 f1 f2 f3 f4 f5 f6 f7 = function
+  | ZBF_Const x -> f x
+  | ZBF_Lt (x, x0) -> f0 x x0
+  | ZBF_Lte (x, x0) -> f1 x x0
+  | ZBF_Gt (x, x0) -> f2 x x0
+  | ZBF_Gte (x, x0) -> f3 x x0
+  | ZBF_Eq (x, x0) -> f4 x x0
+  | ZBF_Eq_Max (x, x0, x1) -> f5 x x0 x1
+  | ZBF_Eq_Min (x, x0, x1) -> f6 x x0 x1
+  | ZBF_Neq (x, x0) -> f7 x x0
   
   type 'const_type coq_ZF =
-  | ZF_BF of 'const_type
-             coq_ZBF
-  | ZF_And of 'const_type
-              coq_ZF
-     * 'const_type
-       coq_ZF
-  | ZF_Or of 'const_type
-             coq_ZF
-     * 'const_type
-       coq_ZF
-  | ZF_Not of 'const_type
-              coq_ZF
-  | ZF_Forall_Fin of char list
-     * 'const_type
-       coq_ZF
-  | ZF_Exists_Fin of char list
-     * 'const_type
-       coq_ZF
-  | ZF_Forall of char list
-     * 'const_type
-       coq_ZF
-  | ZF_Exists of char list
-     * 'const_type
-       coq_ZF
+  | ZF_BF of 'const_type coq_ZBF
+  | ZF_And of 'const_type coq_ZF * 'const_type coq_ZF
+  | ZF_Or of 'const_type coq_ZF * 'const_type coq_ZF
+  | ZF_Not of 'const_type coq_ZF
+  | ZF_Forall_Fin of char list * 'const_type coq_ZF
+  | ZF_Exists_Fin of char list * 'const_type coq_ZF
+  | ZF_Forall of char list * 'const_type coq_ZF
+  | ZF_Exists of char list * 'const_type coq_ZF
   
   (** val coq_ZF_rect :
-      ('a1
-      coq_ZBF
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2 **)
+      ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
+      -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF ->
+      'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list ->
+      'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+      (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
   
   let rec coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 = function
-  | ZF_BF z1 ->
-    f
-      z1
-  | ZF_And (z1,
-            z2) ->
-    f0
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-      z2
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z2)
-  | ZF_Or (z1,
-           z2) ->
-    f1
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-      z2
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z2)
-  | ZF_Not z1 ->
-    f2
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Forall_Fin (s,
-                   z1) ->
-    f3
-      s
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Exists_Fin (s,
-                   z1) ->
-    f4
-      s
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Forall (s,
-               z1) ->
-    f5
-      s
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Exists (s,
-               z1) ->
-    f6
-      s
-      z1
-      (coq_ZF_rect
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
+  | ZF_BF z1 -> f z1
+  | ZF_And (z1, z2) ->
+    f0 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Or (z1, z2) ->
+    f1 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Not z1 -> f2 z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall_Fin (s, z1) -> f3 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists_Fin (s, z1) -> f4 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall (s, z1) -> f5 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists (s, z1) -> f6 s z1 (coq_ZF_rect f f0 f1 f2 f3 f4 f5 f6 z1)
   
   (** val coq_ZF_rec :
-      ('a1
-      coq_ZBF
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      ('a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      (char list
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2
-      ->
-      'a2)
-      ->
-      'a1
-      coq_ZF
-      ->
-      'a2 **)
+      ('a1 coq_ZBF -> 'a2) -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2)
+      -> ('a1 coq_ZF -> 'a2 -> 'a1 coq_ZF -> 'a2 -> 'a2) -> ('a1 coq_ZF ->
+      'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> (char list ->
+      'a1 coq_ZF -> 'a2 -> 'a2) -> (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) ->
+      (char list -> 'a1 coq_ZF -> 'a2 -> 'a2) -> 'a1 coq_ZF -> 'a2 **)
   
   let rec coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 = function
-  | ZF_BF z1 ->
-    f
-      z1
-  | ZF_And (z1,
-            z2) ->
-    f0
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-      z2
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z2)
-  | ZF_Or (z1,
-           z2) ->
-    f1
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-      z2
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z2)
-  | ZF_Not z1 ->
-    f2
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Forall_Fin (s,
-                   z1) ->
-    f3
-      s
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Exists_Fin (s,
-                   z1) ->
-    f4
-      s
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Forall (s,
-               z1) ->
-    f5
-      s
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
-  | ZF_Exists (s,
-               z1) ->
-    f6
-      s
-      z1
-      (coq_ZF_rec
-        f
-        f0
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        z1)
+  | ZF_BF z1 -> f z1
+  | ZF_And (z1, z2) ->
+    f0 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Or (z1, z2) ->
+    f1 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1) z2
+      (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z2)
+  | ZF_Not z1 -> f2 z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall_Fin (s, z1) -> f3 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists_Fin (s, z1) -> f4 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Forall (s, z1) -> f5 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
+  | ZF_Exists (s, z1) -> f6 s z1 (coq_ZF_rec f f0 f1 f2 f3 f4 f5 f6 z1)
   
   type coq_ZE =
   | ZE_Fin of char list
   | ZE_Inf
   | ZE_NegInf
   
-  (** val coq_ZE_rect :
-      (char list
-      ->
-      'a1)
-      ->
-      'a1
-      ->
-      'a1
-      ->
-      coq_ZE
-      ->
-      'a1 **)
+  (** val coq_ZE_rect : (char list -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
   
   let coq_ZE_rect f f0 f1 = function
-  | ZE_Fin x ->
-    f
-      x
-  | ZE_Inf ->
-    f0
-  | ZE_NegInf ->
-    f1
+  | ZE_Fin x -> f x
+  | ZE_Inf -> f0
+  | ZE_NegInf -> f1
   
-  (** val coq_ZE_rec :
-      (char list
-      ->
-      'a1)
-      ->
-      'a1
-      ->
-      'a1
-      ->
-      coq_ZE
-      ->
-      'a1 **)
+  (** val coq_ZE_rec : (char list -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
   
   let coq_ZE_rec f f0 f1 = function
-  | ZE_Fin x ->
-    f
-      x
-  | ZE_Inf ->
-    f0
-  | ZE_NegInf ->
-    f1
+  | ZE_Fin x -> f x
+  | ZE_Inf -> f0
+  | ZE_NegInf -> f1
   
-  (** val convert_ZF_to_IAZF_Exp :
-      coq_ZE
-      coq_ZExp
-      ->
-      IA.coq_ZExp **)
+  (** val mkOr : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
   
-  let rec convert_ZF_to_IAZF_Exp = function
-  | ZExp_Var v ->
-    IA.ZExp_Var
-      v
+  let rec mkOr f1 f2 =
+    match f1 with
+    | ZF_BF b1 ->
+      (match f2 with
+       | ZF_BF b2 ->
+         (match b1 with
+          | ZBF_Const c -> if c then f1 else f2
+          | _ ->
+            (match b2 with
+             | ZBF_Const c -> if c then f2 else f1
+             | _ -> ZF_Or (f1, f2)))
+       | _ -> ZF_Or (f1, f2))
+    | _ -> ZF_Or (f1, f2)
+  
+  (** val mkAnd : coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let rec mkAnd f1 f2 =
+    match f1 with
+    | ZF_BF b1 ->
+      (match f2 with
+       | ZF_BF b2 ->
+         (match b1 with
+          | ZBF_Const c -> if negb c then f1 else f2
+          | _ ->
+            (match b2 with
+             | ZBF_Const c -> if negb c then f2 else f1
+             | _ -> ZF_And (f1, f2)))
+       | _ -> ZF_And (f1, f2))
+    | _ -> ZF_And (f1, f2)
+  
+  (** val subs_Exp :
+      (char list, coq_ZE) prod -> coq_ZE coq_ZExp -> coq_ZE coq_ZExp **)
+  
+  let rec subs_Exp p exp = match exp with
+  | ZExp_Var v -> if Coq_sv.is_eq (fst p) v then ZExp_Const (snd p) else exp
+  | ZExp_Const z0 -> exp
+  | ZExp_Add (e1, e2) -> ZExp_Add ((subs_Exp p e1), (subs_Exp p e2))
+  | ZExp_Sub (e1, e2) -> ZExp_Sub ((subs_Exp p e1), (subs_Exp p e2))
+  | ZExp_Mult (s, e) -> ZExp_Mult (s, (subs_Exp p e))
+  
+  (** val subs_BF :
+      (char list, coq_ZE) prod -> coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
+  
+  let rec subs_BF p bf = match bf with
+  | ZBF_Const b -> bf
+  | ZBF_Lt (e1, e2) -> ZBF_Lt ((subs_Exp p e1), (subs_Exp p e2))
+  | ZBF_Lte (e1, e2) -> ZBF_Lte ((subs_Exp p e1), (subs_Exp p e2))
+  | ZBF_Gt (e1, e2) -> ZBF_Gt ((subs_Exp p e1), (subs_Exp p e2))
+  | ZBF_Gte (e1, e2) -> ZBF_Gte ((subs_Exp p e1), (subs_Exp p e2))
+  | ZBF_Eq (e1, e2) -> ZBF_Eq ((subs_Exp p e1), (subs_Exp p e2))
+  | ZBF_Eq_Max (e1, e2, e3) ->
+    ZBF_Eq_Max ((subs_Exp p e1), (subs_Exp p e2), (subs_Exp p e3))
+  | ZBF_Eq_Min (e1, e2, e3) ->
+    ZBF_Eq_Min ((subs_Exp p e1), (subs_Exp p e2), (subs_Exp p e3))
+  | ZBF_Neq (e1, e2) -> ZBF_Neq ((subs_Exp p e1), (subs_Exp p e2))
+  
+  (** val subs_F :
+      (char list, coq_ZE) prod -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let rec subs_F p f = match f with
+  | ZF_BF bf -> ZF_BF (subs_BF p bf)
+  | ZF_And (f1, f2) -> mkAnd (subs_F p f1) (subs_F p f2)
+  | ZF_Or (f1, f2) -> mkOr (subs_F p f1) (subs_F p f2)
+  | ZF_Not g -> ZF_Not (subs_F p g)
+  | ZF_Forall_Fin (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Forall_Fin (v, (subs_F p g))
+  | ZF_Exists_Fin (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Exists_Fin (v, (subs_F p g))
+  | ZF_Forall (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Forall (v, (subs_F p g))
+  | ZF_Exists (v, g) ->
+    if Coq_sv.is_eq (fst p) v then f else ZF_Exists (v, (subs_F p g))
+  
+  (** val convert_Exp : coq_ZE coq_ZExp -> z coq_ZExp **)
+  
+  let rec convert_Exp = function
+  | ZExp_Var v -> ZExp_Var v
   | ZExp_Const c ->
     (match c with
      | ZE_Fin v ->
-       IA.ZExp_Const
-         (Some
-         (PureInfinity.N.ZE_Fin
-         (coq_Z_of_string
-           v)))
+       let x =
+         match coq_Z_of_string v with
+         | Some n0 -> n0
+         | None -> Z0
+       in
+       ZExp_Const x
      | ZE_Inf ->
-       IA.ZExp_Const
-         (Some
-         PureInfinity.N.ZE_Inf)
+       ZExp_Var
+         ('Z'::('I'::('n'::('f'::('i'::('n'::('i'::('t'::('y'::[])))))))))
      | ZE_NegInf ->
-       IA.ZExp_Const
-         (Some
-         PureInfinity.N.ZE_NegInf))
-  | ZExp_Add (e1,
-              e2) ->
-    IA.ZExp_Add
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZExp_Sub (e1,
-              e2) ->
-    IA.ZExp_Sub
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZExp_Mult (s,
-               e) ->
-    IA.ZExp_Mult
-      ((coq_Z_of_string
-         s),
-      (convert_ZF_to_IAZF_Exp
-        e))
+       ZExp_Var
+         ('Z'::('N'::('e'::('g'::('I'::('n'::('f'::('i'::('n'::('i'::('t'::('y'::[])))))))))))))
+  | ZExp_Add (e1, e2) -> ZExp_Add ((convert_Exp e1), (convert_Exp e2))
+  | ZExp_Sub (e1, e2) -> ZExp_Sub ((convert_Exp e1), (convert_Exp e2))
+  | ZExp_Mult (s, e) -> ZExp_Mult (s, (convert_Exp e))
   
-  (** val convert_ZF_to_IAZF_BF :
-      coq_ZE
-      coq_ZBF
-      ->
-      IA.coq_ZBF **)
+  (** val convert_BF : coq_ZE coq_ZBF -> z coq_ZBF **)
   
-  let rec convert_ZF_to_IAZF_BF = function
-  | ZBF_Const b ->
-    IA.ZBF_Const
-      b
-  | ZBF_Lt (e1,
-            e2) ->
-    IA.ZBF_Lt
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZBF_Lte (e1,
-             e2) ->
-    IA.ZBF_Lte
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZBF_Gt (e1,
-            e2) ->
-    IA.ZBF_Gt
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZBF_Gte (e1,
-             e2) ->
-    IA.ZBF_Gte
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZBF_Eq (e1,
-            e2) ->
-    IA.ZBF_Eq
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
-  | ZBF_Neq (e1,
-             e2) ->
-    IA.ZBF_Neq
-      ((convert_ZF_to_IAZF_Exp
-         e1),
-      (convert_ZF_to_IAZF_Exp
-        e2))
+  let rec convert_BF = function
+  | ZBF_Const b -> ZBF_Const b
+  | ZBF_Lt (e1, e2) -> ZBF_Lt ((convert_Exp e1), (convert_Exp e2))
+  | ZBF_Lte (e1, e2) -> ZBF_Lte ((convert_Exp e1), (convert_Exp e2))
+  | ZBF_Gt (e1, e2) -> ZBF_Gt ((convert_Exp e1), (convert_Exp e2))
+  | ZBF_Gte (e1, e2) -> ZBF_Gte ((convert_Exp e1), (convert_Exp e2))
+  | ZBF_Eq (e1, e2) -> ZBF_Eq ((convert_Exp e1), (convert_Exp e2))
+  | ZBF_Eq_Max (e1, e2, e3) ->
+    ZBF_Eq_Max ((convert_Exp e1), (convert_Exp e2), (convert_Exp e3))
+  | ZBF_Eq_Min (e1, e2, e3) ->
+    ZBF_Eq_Min ((convert_Exp e1), (convert_Exp e2), (convert_Exp e3))
+  | ZBF_Neq (e1, e2) -> ZBF_Neq ((convert_Exp e1), (convert_Exp e2))
   
-  (** val convert_ZF_to_IAZF :
+  (** val convert_ZE_to_Z : coq_ZE coq_ZF -> z coq_ZF **)
+  
+  let rec convert_ZE_to_Z = function
+  | ZF_BF bf -> ZF_BF (convert_BF bf)
+  | ZF_And (f1, f2) -> ZF_And ((convert_ZE_to_Z f1), (convert_ZE_to_Z f2))
+  | ZF_Or (f1, f2) -> ZF_Or ((convert_ZE_to_Z f1), (convert_ZE_to_Z f2))
+  | ZF_Not g -> ZF_Not (convert_ZE_to_Z g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (convert_ZE_to_Z g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (convert_ZE_to_Z g))
+  | ZF_Forall (v, g) -> ZF_Forall (v, (convert_ZE_to_Z g))
+  | ZF_Exists (v, g) -> ZF_Exists (v, (convert_ZE_to_Z g))
+  
+  (** val convert_Exp_string : coq_ZE coq_ZExp -> char list coq_ZExp **)
+  
+  let rec convert_Exp_string = function
+  | ZExp_Var v -> ZExp_Var v
+  | ZExp_Const c ->
+    (match c with
+     | ZE_Fin v -> ZExp_Const v
+     | ZE_Inf ->
+       ZExp_Var
+         ('Z'::('I'::('n'::('f'::('i'::('n'::('i'::('t'::('y'::[])))))))))
+     | ZE_NegInf ->
+       ZExp_Var
+         ('Z'::('N'::('e'::('g'::('I'::('n'::('f'::('i'::('n'::('i'::('t'::('y'::[])))))))))))))
+  | ZExp_Add (e1, e2) ->
+    ZExp_Add ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZExp_Sub (e1, e2) ->
+    ZExp_Sub ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZExp_Mult (s, e) -> ZExp_Mult (s, (convert_Exp_string e))
+  
+  (** val convert_BF_string : coq_ZE coq_ZBF -> char list coq_ZBF **)
+  
+  let rec convert_BF_string = function
+  | ZBF_Const b -> ZBF_Const b
+  | ZBF_Lt (e1, e2) ->
+    ZBF_Lt ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZBF_Lte (e1, e2) ->
+    ZBF_Lte ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZBF_Gt (e1, e2) ->
+    ZBF_Gt ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZBF_Gte (e1, e2) ->
+    ZBF_Gte ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZBF_Eq (e1, e2) ->
+    ZBF_Eq ((convert_Exp_string e1), (convert_Exp_string e2))
+  | ZBF_Eq_Max (e1, e2, e3) ->
+    ZBF_Eq_Max ((convert_Exp_string e1), (convert_Exp_string e2),
+      (convert_Exp_string e3))
+  | ZBF_Eq_Min (e1, e2, e3) ->
+    ZBF_Eq_Min ((convert_Exp_string e1), (convert_Exp_string e2),
+      (convert_Exp_string e3))
+  | ZBF_Neq (e1, e2) ->
+    ZBF_Neq ((convert_Exp_string e1), (convert_Exp_string e2))
+  
+  (** val convert_ZE_to_string : coq_ZE coq_ZF -> char list coq_ZF **)
+  
+  let rec convert_ZE_to_string = function
+  | ZF_BF bf -> ZF_BF (convert_BF_string bf)
+  | ZF_And (f1, f2) ->
+    ZF_And ((convert_ZE_to_string f1), (convert_ZE_to_string f2))
+  | ZF_Or (f1, f2) ->
+    ZF_Or ((convert_ZE_to_string f1), (convert_ZE_to_string f2))
+  | ZF_Not g -> ZF_Not (convert_ZE_to_string g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (convert_ZE_to_string g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (convert_ZE_to_string g))
+  | ZF_Forall (v, g) -> ZF_Forall (v, (convert_ZE_to_string g))
+  | ZF_Exists (v, g) -> ZF_Exists (v, (convert_ZE_to_string g))
+  
+  (** val num_of_quant : coq_ZE coq_ZF -> nat **)
+  
+  let rec num_of_quant = function
+  | ZF_BF bf -> S O
+  | ZF_And (f1, f2) -> plus (num_of_quant f1) (num_of_quant f2)
+  | ZF_Or (f1, f2) -> plus (num_of_quant f1) (num_of_quant f2)
+  | ZF_Not g -> plus (S O) (num_of_quant g)
+  | ZF_Forall_Fin (v, g) -> plus (S O) (num_of_quant g)
+  | ZF_Exists_Fin (v, g) -> plus (S O) (num_of_quant g)
+  | ZF_Forall (v, g) -> plus (S O) (num_of_quant g)
+  | ZF_Exists (v, g) -> plus (S O) (num_of_quant g)
+  
+  (** val elim_quant_metric : coq_ZE coq_ZF -> nat **)
+  
+  let elim_quant_metric f =
+    num_of_quant f
+  
+  (** val elim_quant_F :
+      (coq_ZE coq_ZF -> coq_ZE coq_ZF) -> coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let elim_quant_F elim_quant0 f = match f with
+  | ZF_BF z0 -> f
+  | ZF_And (f1, f2) -> mkAnd (elim_quant0 f1) (elim_quant0 f2)
+  | ZF_Or (f1, f2) -> mkOr (elim_quant0 f1) (elim_quant0 f2)
+  | ZF_Not g -> ZF_Not (elim_quant0 g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant0 g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant0 g))
+  | ZF_Forall (v, g) ->
+    mkAnd (ZF_Forall_Fin (v, (elim_quant0 g)))
+      (mkAnd (subs_F (Pair (v, ZE_Inf)) (elim_quant0 g))
+        (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))
+  | ZF_Exists (v, g) ->
+    mkOr (ZF_Exists_Fin (v, (elim_quant0 g)))
+      (mkOr (subs_F (Pair (v, ZE_Inf)) (elim_quant0 g))
+        (subs_F (Pair (v, ZE_NegInf)) (elim_quant0 g)))
+  
+  (** val elim_quant_terminate : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let rec elim_quant_terminate = function
+  | ZF_BF z0 -> ZF_BF z0
+  | ZF_And (f1, f2) ->
+    mkAnd (elim_quant_terminate f1) (elim_quant_terminate f2)
+  | ZF_Or (f1, f2) ->
+    mkOr (elim_quant_terminate f1) (elim_quant_terminate f2)
+  | ZF_Not g -> ZF_Not (elim_quant_terminate g)
+  | ZF_Forall_Fin (v, g) -> ZF_Forall_Fin (v, (elim_quant_terminate g))
+  | ZF_Exists_Fin (v, g) -> ZF_Exists_Fin (v, (elim_quant_terminate g))
+  | ZF_Forall (v, g) ->
+    let rec_res = elim_quant_terminate g in
+    mkAnd (ZF_Forall_Fin (v, rec_res))
+      (mkAnd (subs_F (Pair (v, ZE_Inf)) rec_res)
+        (subs_F (Pair (v, ZE_NegInf)) rec_res))
+  | ZF_Exists (v, g) ->
+    let rec_res = elim_quant_terminate g in
+    mkOr (ZF_Exists_Fin (v, rec_res))
+      (mkOr (subs_F (Pair (v, ZE_Inf)) rec_res)
+        (subs_F (Pair (v, ZE_NegInf)) rec_res))
+  
+  (** val elim_quant : coq_ZE coq_ZF -> coq_ZE coq_ZF **)
+  
+  let elim_quant x =
+    elim_quant_terminate x
+  
+  type coq_R_elim_quant =
+  | R_elim_quant_0 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_1 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_2 of coq_ZE coq_ZF * coq_ZE coq_ZF * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_3 of coq_ZE coq_ZF * coq_ZE coq_ZF * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_4 of coq_ZE coq_ZF * coq_ZE coq_ZF * coq_ZE coq_ZF
+     * coq_R_elim_quant
+  | R_elim_quant_5 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_6 of coq_ZE coq_ZF * char list * coq_ZE coq_ZF
+     * coq_ZE coq_ZF * coq_R_elim_quant
+  | R_elim_quant_7 of coq_ZE coq_ZF * coq_ZE coq_ZF
+  
+  (** val coq_R_elim_quant_rect :
+      (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
+      char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant
+      -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
+      -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF
+      -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 **)
+  
+  let rec coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f7 z0 = function
+  | R_elim_quant_0 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f f8 v g __ res1 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_1 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f0 f8 v g __ res1 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_2 (f8, f9, f10, res0, r0, res, r1) ->
+    f1 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_3 (f8, f9, f10, res0, r0, res, r1) ->
+    f2 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_4 (f8, g, res, r0) ->
+    f3 f8 g __ res r0 (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_5 (f8, v, g, res, r0) ->
+    f4 f8 v g __ res r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_6 (f8, v, g, res, r0) ->
+    f5 f8 v g __ res r0
+      (coq_R_elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_7 (f8, _x) -> f6 f8 _x __ __
+  
+  (** val coq_R_elim_quant_rec :
+      (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
+      char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant
+      -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 ->
+      'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list ->
+      coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF -> coq_R_elim_quant -> 'a1 -> 'a1)
+      -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> coq_ZE coq_ZF
+      -> coq_R_elim_quant -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> __ -> 'a1) -> coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_R_elim_quant -> 'a1 **)
+  
+  let rec coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f7 z0 = function
+  | R_elim_quant_0 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f f8 v g __ res1 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_1 (f8, v, g, res1, r0, res0, r1, res, r2) ->
+    f0 f8 v g __ res1 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res1 r0) res0 r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res0 r1) res r2
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r2)
+  | R_elim_quant_2 (f8, f9, f10, res0, r0, res, r1) ->
+    f1 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_3 (f8, f9, f10, res0, r0, res, r1) ->
+    f2 f8 f9 f10 __ res0 r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f9 res0 r0) res r1
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 f10 res r1)
+  | R_elim_quant_4 (f8, g, res, r0) ->
+    f3 f8 g __ res r0 (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_5 (f8, v, g, res, r0) ->
+    f4 f8 v g __ res r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_6 (f8, v, g, res, r0) ->
+    f5 f8 v g __ res r0
+      (coq_R_elim_quant_rec f f0 f1 f2 f3 f4 f5 f6 g res r0)
+  | R_elim_quant_7 (f8, _x) -> f6 f8 _x __ __
+  
+  (** val elim_quant_rect :
+      (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1
+      -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 ->
+      'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ ->
+      __ -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
+  
+  let rec elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 f7 =
+    let f8 = f6 f7 in
+    let f9 = f5 f7 in
+    let f10 = f4 f7 in
+    let f11 = f3 f7 in
+    let f12 = f2 f7 in
+    let f13 = f1 f7 in
+    let f14 = f0 f7 in
+    let f15 = f f7 in
+    (match f7 with
+     | ZF_BF z0 -> let _x = ZF_BF z0 in f8 _x __ __
+     | ZF_And (z0, z1) ->
+       let f16 = f13 z0 z1 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+       in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z1 in f17 hrec
+     | ZF_Or (z0, z1) ->
+       let f16 = f12 z0 z1 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+       in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z1 in f17 hrec
+     | ZF_Not z0 ->
+       let f16 = f11 z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+     | ZF_Forall_Fin (s, z0) ->
+       let f16 = f10 s z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+     | ZF_Exists_Fin (s, z0) ->
+       let f16 = f9 s z0 __ in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+     | ZF_Forall (s, z0) ->
+       let f16 = f15 s z0 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+       in
+       let f18 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f17 hrec
+       in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f18 hrec
+     | ZF_Exists (s, z0) ->
+       let f16 = f14 s z0 __ in
+       let f17 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f16 hrec
+       in
+       let f18 =
+         let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f17 hrec
+       in
+       let hrec = elim_quant_rect f f0 f1 f2 f3 f4 f5 f6 z0 in f18 hrec)
+  
+  (** val elim_quant_rec :
+      (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1
+      -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE coq_ZF -> __ -> 'a1 ->
+      'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_ZE coq_ZF
+      -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF ->
+      coq_ZE coq_ZF -> __ -> 'a1 -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> char list -> coq_ZE
+      coq_ZF -> __ -> 'a1 -> 'a1) -> (coq_ZE coq_ZF -> coq_ZE coq_ZF -> __ ->
+      __ -> 'a1) -> coq_ZE coq_ZF -> 'a1 **)
+  
+  let elim_quant_rec =
+    elim_quant_rect
+  
+  (** val coq_R_elim_quant_correct :
+      coq_ZE coq_ZF -> coq_ZE coq_ZF -> coq_R_elim_quant **)
+  
+  let coq_R_elim_quant_correct x res =
+    elim_quant_rect (fun y y0 y1 _ y3 y4 y5 z0 _ -> R_elim_quant_0 (y, y0,
+      y1, (elim_quant y1), (y3 (elim_quant y1) __), (elim_quant y1),
+      (y4 (elim_quant y1) __), (elim_quant y1), (y5 (elim_quant y1) __)))
+      (fun y y0 y1 _ y3 y4 y5 z0 _ -> R_elim_quant_1 (y, y0, y1,
+      (elim_quant y1), (y3 (elim_quant y1) __), (elim_quant y1),
+      (y4 (elim_quant y1) __), (elim_quant y1), (y5 (elim_quant y1) __)))
+      (fun y y0 y1 _ y3 y4 z0 _ -> R_elim_quant_2 (y, y0, y1,
+      (elim_quant y0), (y3 (elim_quant y0) __), (elim_quant y1),
+      (y4 (elim_quant y1) __))) (fun y y0 y1 _ y3 y4 z0 _ -> R_elim_quant_3
+      (y, y0, y1, (elim_quant y0), (y3 (elim_quant y0) __), (elim_quant y1),
+      (y4 (elim_quant y1) __))) (fun y y0 _ y2 z0 _ -> R_elim_quant_4 (y, y0,
+      (elim_quant y0), (y2 (elim_quant y0) __))) (fun y y0 y1 _ y3 z0 _ ->
+      R_elim_quant_5 (y, y0, y1, (elim_quant y1), (y3 (elim_quant y1) __)))
+      (fun y y0 y1 _ y3 z0 _ -> R_elim_quant_6 (y, y0, y1, (elim_quant y1),
+      (y3 (elim_quant y1) __))) (fun y y0 _ _ z0 _ -> R_elim_quant_7 (y, y0))
+      x res __
+  
+  (** val norm_Exp : coq_ZE coq_ZExp -> coq_ZE coq_ZExp **)
+  
+  let rec norm_Exp exp = match exp with
+  | ZExp_Add (e1, e2) ->
+    let e1n = norm_Exp e1 in
+    let e2n = norm_Exp e2 in
+    (match e1n with
+     | ZExp_Const c ->
+       (match e2n with
+        | ZExp_Const c0 ->
+          (match c with
+           | ZE_Fin s ->
+             (match c0 with
+              | ZE_Fin s0 -> exp
+              | x -> ZExp_Const x)
+           | ZE_Inf ->
+             (match c0 with
+              | ZE_NegInf -> exp
+              | _ -> ZExp_Const ZE_Inf)
+           | ZE_NegInf ->
+             (match c0 with
+              | ZE_Inf -> exp
+              | _ -> ZExp_Const ZE_NegInf))
+        | _ ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x)
+        | _ -> exp))
+  | ZExp_Sub (e1, e2) ->
+    let e1n = norm_Exp e1 in
+    let e2n = norm_Exp e2 in
+    (match e1n with
+     | ZExp_Const c ->
+       (match e2n with
+        | ZExp_Const c0 ->
+          (match c with
+           | ZE_Fin s ->
+             (match c0 with
+              | ZE_Fin s0 -> exp
+              | ZE_Inf -> ZExp_Const ZE_NegInf
+              | ZE_NegInf -> ZExp_Const ZE_Inf)
+           | ZE_Inf ->
+             (match c0 with
+              | ZE_Inf -> exp
+              | _ -> ZExp_Const ZE_Inf)
+           | ZE_NegInf ->
+             (match c0 with
+              | ZE_NegInf -> exp
+              | _ -> ZExp_Const ZE_NegInf))
+        | _ ->
+          (match c with
+           | ZE_Fin s -> exp
+           | x -> ZExp_Const x))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match c with
+           | ZE_Fin s -> exp
+           | ZE_Inf -> ZExp_Const ZE_NegInf
+           | ZE_NegInf -> ZExp_Const ZE_Inf)
+        | _ -> exp))
+  | ZExp_Mult (s, e) ->
+    let ef = norm_Exp e in
+    (match ef with
+     | ZExp_Const c ->
+       (match c with
+        | ZE_Fin s0 -> exp
+        | _ -> ef)
+     | _ -> exp)
+  | _ -> exp
+  
+  (** val norm_inf_neginf :
+      coq_ZE coq_ZExp -> coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
+  
+  let rec norm_inf_neginf e norm_bf =
+    match e with
+    | ZExp_Add (a1, a2) ->
+      (match a1 with
+       | ZExp_Const c1 ->
+         (match a2 with
+          | ZExp_Const c2 ->
+            (match c1 with
+             | ZE_Fin s -> norm_bf
+             | ZE_Inf ->
+               (match c2 with
+                | ZE_NegInf -> ZBF_Const false
+                | _ -> norm_bf)
+             | ZE_NegInf ->
+               (match c2 with
+                | ZE_Inf -> ZBF_Const false
+                | _ -> norm_bf))
+          | _ -> norm_bf)
+       | _ -> norm_bf)
+    | ZExp_Sub (a1, a2) ->
+      (match a1 with
+       | ZExp_Const c1 ->
+         (match a2 with
+          | ZExp_Const c2 ->
+            (match c1 with
+             | ZE_Fin s -> norm_bf
+             | ZE_Inf ->
+               (match c2 with
+                | ZE_Inf -> ZBF_Const false
+                | _ -> norm_bf)
+             | ZE_NegInf ->
+               (match c2 with
+                | ZE_NegInf -> ZBF_Const false
+                | _ -> norm_bf))
+          | _ -> norm_bf)
+       | _ -> norm_bf)
+    | _ -> norm_bf
+  
+  (** val num_of_exps_base : coq_ZE coq_ZExp -> nat **)
+  
+  let rec num_of_exps_base = function
+  | ZExp_Add (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZExp_Sub (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZExp_Mult (s, e0) -> plus (S O) (num_of_exps_base e0)
+  | _ -> S O
+  
+  (** val num_of_exps : coq_ZE coq_ZBF -> nat **)
+  
+  let rec num_of_exps = function
+  | ZBF_Const b -> O
+  | ZBF_Lt (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZBF_Lte (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZBF_Gt (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZBF_Gte (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZBF_Eq (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  | ZBF_Eq_Max (e1, e2, e3) ->
+    plus (plus (num_of_exps_base e1) (num_of_exps_base e2))
+      (num_of_exps_base e3)
+  | ZBF_Eq_Min (e1, e2, e3) ->
+    plus (plus (num_of_exps_base e1) (num_of_exps_base e2))
+      (num_of_exps_base e3)
+  | ZBF_Neq (e1, e2) -> plus (num_of_exps_base e1) (num_of_exps_base e2)
+  
+  (** val norm_BF_metric : coq_ZE coq_ZBF -> nat **)
+  
+  let norm_BF_metric bf =
+    num_of_exps bf
+  
+  (** val norm_BF_min_max_aux : coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
+  
+  let rec norm_BF_min_max_aux bf = match bf with
+  | ZBF_Eq_Max (e1, e2, e3) ->
+    let e1n = norm_Exp e1 in
+    let e2n = norm_Exp e2 in
+    let e3n = norm_Exp e3 in
+    (match e1n with
+     | ZExp_Const c ->
+       (match e2n with
+        | ZExp_Const c0 ->
+          (match e3n with
+           | ZExp_Const c1 ->
+             (match c0 with
+              | ZE_Fin s ->
+                (match c1 with
+                 | ZE_Fin s0 -> bf
+                 | ZE_Inf -> ZBF_Eq (e1, e3n)
+                 | ZE_NegInf -> ZBF_Eq (e1, e2n))
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n))
+           | _ ->
+             (match c0 with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n)))
+        | _ ->
+          (match e3n with
+           | ZExp_Const c0 ->
+             (match c0 with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n))
+           | _ ->
+             (match c with
+              | ZE_Fin s -> bf
+              | _ -> ZBF_Const false)))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match e3n with
+           | ZExp_Const c0 ->
+             (match c with
+              | ZE_Fin s ->
+                (match c0 with
+                 | ZE_Fin s0 -> bf
+                 | ZE_Inf -> ZBF_Eq (e1, e3n)
+                 | ZE_NegInf -> ZBF_Eq (e1, e2n))
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n))
+           | _ ->
+             (match c with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n)))
+        | _ ->
+          (match e3n with
+           | ZExp_Const c ->
+             (match c with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n))
+           | _ -> bf)))
+  | ZBF_Eq_Min (e1, e2, e3) ->
+    let e1n = norm_Exp e1 in
+    let e2n = norm_Exp e2 in
+    let e3n = norm_Exp e3 in
+    (match e1n with
+     | ZExp_Const c ->
+       (match e2n with
+        | ZExp_Const c0 ->
+          (match e3n with
+           | ZExp_Const c1 ->
+             (match c0 with
+              | ZE_Fin s ->
+                (match c1 with
+                 | ZE_Fin s0 -> bf
+                 | ZE_Inf -> ZBF_Eq (e1, e2n)
+                 | ZE_NegInf -> ZBF_Eq (e1, e3n))
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n))
+           | _ ->
+             (match c0 with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n)))
+        | _ ->
+          (match e3n with
+           | ZExp_Const c0 ->
+             (match c0 with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n))
+           | _ ->
+             (match c with
+              | ZE_Fin s -> bf
+              | _ -> ZBF_Const false)))
+     | _ ->
+       (match e2n with
+        | ZExp_Const c ->
+          (match e3n with
+           | ZExp_Const c0 ->
+             (match c with
+              | ZE_Fin s ->
+                (match c0 with
+                 | ZE_Fin s0 -> bf
+                 | ZE_Inf -> ZBF_Eq (e1, e2n)
+                 | ZE_NegInf -> ZBF_Eq (e1, e3n))
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n))
+           | _ ->
+             (match c with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e3n)
+              | ZE_NegInf -> ZBF_Eq (e1, e2n)))
+        | _ ->
+          (match e3n with
+           | ZExp_Const c ->
+             (match c with
+              | ZE_Fin s -> bf
+              | ZE_Inf -> ZBF_Eq (e1, e2n)
+              | ZE_NegInf -> ZBF_Eq (e1, e3n))
+           | _ -> bf)))
+  | _ -> bf
+  
+  (** val norm_BF : coq_ZE coq_ZBF -> coq_ZE coq_ZBF **)
+  
+  let rec norm_BF bf =
+    let bf0 = norm_BF_min_max_aux bf in
+    let norm_bf =
+      match bf0 with
+      | ZBF_Lt (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | ZE_Inf -> ZBF_Const true
+                  | ZE_NegInf -> ZBF_Const false)
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const false
+                  | _ -> ZBF_Const true))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false)
+            | _ -> bf0))
+      | ZBF_Lte (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | ZE_Inf -> ZBF_Const true
+                  | ZE_NegInf -> ZBF_Const false)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const true
+                  | _ -> ZBF_Const false)
+               | ZE_NegInf -> ZBF_Const true)
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false)
+            | _ -> bf0))
+      | ZBF_Gt (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | ZE_Inf -> ZBF_Const false
+                  | ZE_NegInf -> ZBF_Const true)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const false
+                  | _ -> ZBF_Const true)
+               | ZE_NegInf -> ZBF_Const false)
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true)
+            | _ -> bf0))
+      | ZBF_Gte (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | ZE_Inf -> ZBF_Const false
+                  | ZE_NegInf -> ZBF_Const true)
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const true
+                  | _ -> ZBF_Const false))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const true
+               | ZE_NegInf -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | ZE_Inf -> ZBF_Const false
+               | ZE_NegInf -> ZBF_Const true)
+            | _ -> bf0))
+      | ZBF_Eq (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | _ -> ZBF_Const false)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const true
+                  | _ -> ZBF_Const false)
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf -> ZBF_Const true
+                  | _ -> ZBF_Const false))
+            | _ ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | _ -> ZBF_Const false))
+         | _ ->
+           (match norm_Exp e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s -> bf0
+               | _ -> ZBF_Const false)
+            | _ -> bf0))
+      | ZBF_Neq (e1, e2) ->
+        (match norm_Exp e1 with
+         | ZExp_Const c ->
+           (match norm_Exp e2 with
+            | ZExp_Const c0 ->
+              (match c with
+               | ZE_Fin s ->
+                 (match c0 with
+                  | ZE_Fin s0 -> bf0
+                  | _ -> ZBF_Const true)
+               | ZE_Inf ->
+                 (match c0 with
+                  | ZE_Inf -> ZBF_Const false
+                  | _ -> ZBF_Const true)
+               | ZE_NegInf ->
+                 (match c0 with
+                  | ZE_NegInf ->
+                    ZBF_Const
+                      false
+                  | _ ->
+                    ZBF_Const
+                      true))
+            | _ ->
+              (match c with
+               | ZE_Fin s ->
+                 bf0
+               | _ ->
+                 ZBF_Const
+                   true))
+         | _ ->
+           (match norm_Exp
+                    e2 with
+            | ZExp_Const c ->
+              (match c with
+               | ZE_Fin s ->
+                 bf0
+               | _ ->
+                 ZBF_Const
+                   true)
+            | _ ->
+              bf0))
+      | _ ->
+        bf0
+    in
+    (match norm_bf with
+     | ZBF_Lt (e1,
+               e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then norm_inf_neginf
+                 e2
+                 norm_bf
+          else ZBF_Const
+                 false
+        | _ ->
+          norm_inf_neginf
+            e2
+            norm_bf)
+     | ZBF_Lte (e1,
+                e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then norm_inf_neginf
+                 e2
+                 norm_bf
+          else ZBF_Const
+                 false
+        | _ ->
+          norm_inf_neginf
+            e2
+            norm_bf)
+     | ZBF_Gt (e1,
+               e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then norm_inf_neginf
+                 e2
+                 norm_bf
+          else ZBF_Const
+                 false
+        | _ ->
+          norm_inf_neginf
+            e2
+            norm_bf)
+     | ZBF_Gte (e1,
+                e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then norm_inf_neginf
+                 e2
+                 norm_bf
+          else ZBF_Const
+                 false
+        | _ ->
+          norm_inf_neginf
+            e2
+            norm_bf)
+     | ZBF_Eq (e1,
+               e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then norm_inf_neginf
+                 e2
+                 norm_bf
+          else ZBF_Const
+                 false
+        | _ ->
+          norm_inf_neginf
+            e2
+            norm_bf)
+     | ZBF_Neq (e1,
+                e2) ->
+       (match norm_inf_neginf
+                e1
+                norm_bf with
+        | ZBF_Const b ->
+          if b
+          then (match norm_inf_neginf
+                        e2
+                        norm_bf with
+                | ZBF_Const b0 ->
+                  if b0
+                  then norm_bf
+                  else ZBF_Const
+                         true
+                | _ ->
+                  norm_bf)
+          else ZBF_Const
+                 true
+        | _ ->
+          (match norm_inf_neginf
+                   e2
+                   norm_bf with
+           | ZBF_Const b ->
+             if b
+             then norm_bf
+             else ZBF_Const
+                    true
+           | _ ->
+             norm_bf))
+     | _ ->
+       norm_bf)
+  
+  (** val norm_F :
       coq_ZE
       coq_ZF
       ->
-      IA.coq_ZF **)
+      coq_ZE
+      coq_ZF **)
   
-  let rec convert_ZF_to_IAZF = function
+  let rec norm_F = function
   | ZF_BF bf ->
-    IA.ZF_BF
-      (convert_ZF_to_IAZF_BF
+    ZF_BF
+      (norm_BF
         bf)
   | ZF_And (f1,
             f2) ->
-    IA.ZF_And
-      ((convert_ZF_to_IAZF
-         f1),
-      (convert_ZF_to_IAZF
-        f2))
+    mkAnd
+      (norm_F
+        f1)
+      (norm_F
+        f2)
   | ZF_Or (f1,
            f2) ->
-    IA.ZF_Or
-      ((convert_ZF_to_IAZF
-         f1),
-      (convert_ZF_to_IAZF
-        f2))
+    mkOr
+      (norm_F
+        f1)
+      (norm_F
+        f2)
   | ZF_Not g ->
-    IA.ZF_Not
-      (convert_ZF_to_IAZF
+    ZF_Not
+      (norm_F
         g)
   | ZF_Forall_Fin (v,
                    g) ->
-    IA.ZF_Forall
+    ZF_Forall_Fin
       (v,
-      PureInfinity.Q_Z,
-      (convert_ZF_to_IAZF
+      (norm_F
         g))
   | ZF_Exists_Fin (v,
                    g) ->
-    IA.ZF_Exists
+    ZF_Exists_Fin
       (v,
-      PureInfinity.Q_Z,
-      (convert_ZF_to_IAZF
+      (norm_F
         g))
   | ZF_Forall (v,
                g) ->
-    IA.ZF_Forall
+    ZF_Forall
       (v,
-      PureInfinity.Q_ZE,
-      (convert_ZF_to_IAZF
+      (norm_F
         g))
   | ZF_Exists (v,
                g) ->
-    IA.ZF_Exists
+    ZF_Exists
       (v,
-      PureInfinity.Q_ZE,
-      (convert_ZF_to_IAZF
+      (norm_F
         g))
   
-  (** val convert_FAZRForm_to_ZF_Z_Exp :
-      FA.coq_ZRExp
+  (** val transform_ZE_to_Z :
+      coq_ZE
+      coq_ZF
       ->
-      char list
-      coq_ZExp **)
-  
-  let rec convert_FAZRForm_to_ZF_Z_Exp = function
-  | FA.ZRExp_Var v ->
-    ZExp_Var
-      v
-  | FA.ZRExp_Const z0 ->
-    ZExp_Const
-      (string_of_Z
-        z0)
-  | FA.ZRExp_Add (e1,
-                  e2) ->
-    ZExp_Add
-      ((convert_FAZRForm_to_ZF_Z_Exp
-         e1),
-      (convert_FAZRForm_to_ZF_Z_Exp
-        e2))
-  | FA.ZRExp_Inv e0 ->
-    ZExp_Sub
-      ((ZExp_Const
-      (string_of_Z
-        Z0)),
-      (convert_FAZRForm_to_ZF_Z_Exp
-        e0))
-  
-  (** val convert_FAZRForm_to_ZF_Z :
-      FA.coq_ZRForm
-      ->
-      char list
+      z
       coq_ZF **)
   
-  let rec convert_FAZRForm_to_ZF_Z = function
-  | FA.ZR_Leq (e1,
-               e2) ->
-    (match e1 with
-     | FA.ZRExp_Const a ->
-       (match a with
-        | Z0 ->
-          (match e2 with
-           | FA.ZRExp_Const a0 ->
-             (match a0 with
-              | Zpos p ->
-                (match p with
-                 | XH ->
-                   ZF_BF
-                     (ZBF_Const
-                     true)
-                 | _ ->
-                   ZF_BF
-                     (ZBF_Lte
-                     ((convert_FAZRForm_to_ZF_Z_Exp
-                        e1),
-                     (convert_FAZRForm_to_ZF_Z_Exp
-                       e2))))
-              | _ ->
-                ZF_BF
-                  (ZBF_Lte
-                  ((convert_FAZRForm_to_ZF_Z_Exp
-                     e1),
-                  (convert_FAZRForm_to_ZF_Z_Exp
-                    e2))))
-           | _ ->
-             ZF_BF
-               (ZBF_Lte
-               ((convert_FAZRForm_to_ZF_Z_Exp
-                  e1),
-               (convert_FAZRForm_to_ZF_Z_Exp
-                 e2))))
-        | Zpos p ->
-          (match p with
-           | XH ->
-             (match e2 with
-              | FA.ZRExp_Const a0 ->
-                (match a0 with
-                 | Z0 ->
-                   ZF_BF
-                     (ZBF_Const
-                     false)
-                 | _ ->
-                   ZF_BF
-                     (ZBF_Lte
-                     ((convert_FAZRForm_to_ZF_Z_Exp
-                        e1),
-                     (convert_FAZRForm_to_ZF_Z_Exp
-                       e2))))
-              | _ ->
-                ZF_BF
-                  (ZBF_Lte
-                  ((convert_FAZRForm_to_ZF_Z_Exp
-                     e1),
-                  (convert_FAZRForm_to_ZF_Z_Exp
-                    e2))))
-           | _ ->
-             ZF_BF
-               (ZBF_Lte
-               ((convert_FAZRForm_to_ZF_Z_Exp
-                  e1),
-               (convert_FAZRForm_to_ZF_Z_Exp
-                 e2))))
-        | Zneg p ->
-          ZF_BF
-            (ZBF_Lte
-            ((convert_FAZRForm_to_ZF_Z_Exp
-               e1),
-            (convert_FAZRForm_to_ZF_Z_Exp
-              e2))))
-     | _ ->
-       ZF_BF
-         (ZBF_Lte
-         ((convert_FAZRForm_to_ZF_Z_Exp
-            e1),
-         (convert_FAZRForm_to_ZF_Z_Exp
-           e2))))
-  | FA.ZR_And (f1,
-               f2) ->
-    ZF_And
-      ((convert_FAZRForm_to_ZF_Z
-         f1),
-      (convert_FAZRForm_to_ZF_Z
-        f2))
-  | FA.ZR_Or (f1,
-              f2) ->
-    ZF_Or
-      ((convert_FAZRForm_to_ZF_Z
-         f1),
-      (convert_FAZRForm_to_ZF_Z
-        f2))
-  | FA.ZR_Not g ->
-    ZF_Not
-      (convert_FAZRForm_to_ZF_Z
-        g)
-  | FA.ZR_Forall (v,
-                  q,
-                  g) ->
-    ZF_Forall_Fin
-      (v,
-      (convert_FAZRForm_to_ZF_Z
-        g))
-  | FA.ZR_Exists (v,
-                  q,
-                  g) ->
-    ZF_Exists_Fin
-      (v,
-      (convert_FAZRForm_to_ZF_Z
-        g))
+  let transform_ZE_to_Z f =
+    convert_ZE_to_Z
+      (norm_F
+        (elim_quant
+          f))
   
   (** val transform_ZE_to_string :
       coq_ZE
@@ -7559,10 +6161,9 @@ module InfSolver =
       coq_ZF **)
   
   let transform_ZE_to_string f =
-    convert_FAZRForm_to_ZF_Z
-      (FA.hi2zrform
-        (t0
-          (convert_ZF_to_IAZF
-            f)))
+    convert_ZE_to_string
+      (norm_F
+        (elim_quant
+          f))
  end
 

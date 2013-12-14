@@ -30,8 +30,8 @@ struct
 let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 
 end
 
-(*module CoqInfSolver = Infsolver.InfSolver(StrSV)*)
-module CoqInfSolver = Infsolver.InfSolver
+module CoqInfSolver = Infsolver.InfSolver(StrSV)
+(*module CoqInfSolver = Infsolver.InfSolver*)
 
 open CoqInfSolver
 
@@ -54,6 +54,8 @@ type coq_b_formula =
   | CGt of (coq_exp * coq_exp)
   | CGte of (coq_exp * coq_exp)
   | CEq of (coq_exp * coq_exp) 
+  | CEqMax of (coq_exp * coq_exp * coq_exp) 
+  | CEqMin of (coq_exp * coq_exp * coq_exp) 
   | CNeq of (coq_exp * coq_exp)
 
 type coq_formula =
@@ -88,6 +90,8 @@ match bf with
   | CGt(e1,e2) -> (string_of_coq_exp e1)^" > "^(string_of_coq_exp e2)
   | CGte(e1,e2) -> (string_of_coq_exp e1)^" >= "^(string_of_coq_exp e2)
   | CEq(e1,e2) -> (string_of_coq_exp e1)^" = "^(string_of_coq_exp e2)
+  | CEqMax(e1,e2,e3) -> (string_of_coq_exp e1)^" = max("^(string_of_coq_exp e2)^","^(string_of_coq_exp e3)^")"
+  | CEqMin(e1,e2,e3) -> (string_of_coq_exp e1)^" = min("^(string_of_coq_exp e2)^","^(string_of_coq_exp e3)^")"
   | CNeq(e1,e2) -> (string_of_coq_exp e1)^" != "^(string_of_coq_exp e2)
 
 let rec string_of_coq_formula cf = 
@@ -163,7 +167,19 @@ match bf with
                          | _, CVar s -> if is_coqinf_const c then s::vl else vl
                          | _, _ -> vl)
                      | _ , _ -> vl )
- 
+  | CEqMax(e1,e2,e3) 
+  | CEqMin(e1,e2,e3) -> 
+      let vl = (find_inf_quant_vars_exp e1 vl) in
+      let vl = (find_inf_quant_vars_exp e2 vl) in
+      let vl = (find_inf_quant_vars_exp e3 vl) in
+      (match e1,e2,e3 with
+        | CVar s1, CVar s2, CVar s3 -> 
+            if Gen.BList.mem_eq (=) s1 vl then s2::s3::vl else 
+              if Gen.BList.mem_eq (=) s2 vl then s1::s3::vl else 
+                if Gen.BList.mem_eq (=) s3 vl then s1::s2::vl else vl
+        | _ ,_, _ -> vl 
+      )
+
 let rec find_inf_quant_vars f vl : string list =
 let sl = match f with
   | CBForm b -> find_inf_quant_vars_bform b vl
@@ -211,6 +227,8 @@ match bf with
   | CGt(e1,e2) -> ZBF_Gt((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CGte(e1,e2) -> ZBF_Gte((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CEq(e1,e2) -> ZBF_Eq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2)) 
+  | CEqMax(e1,e2,e3) -> ZBF_Eq_Max((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
+  | CEqMin(e1,e2,e3) -> ZBF_Eq_Min((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
   | CNeq(e1,e2) -> ZBF_Neq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))  
 
 let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
@@ -257,6 +275,8 @@ match bf with
   | ZBF_Gt(e1,e2) -> CGt((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
   | ZBF_Gte(e1,e2) -> CGte((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
   | ZBF_Eq(e1,e2) -> CEq((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
+  | ZBF_Eq_Max(e1,e2,e3) -> CEqMax((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2),(coq_infsolver_to_coqpure_exp e3))
+  | ZBF_Eq_Min(e1,e2,e3) -> CEqMin((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2),(coq_infsolver_to_coqpure_exp e3))
   | ZBF_Neq(e1,e2) -> CNeq((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
 
 let rec coq_infsolver_to_coqpure_form (f: char list coq_ZF) : coq_formula = 
@@ -315,11 +335,13 @@ let rec cpure_to_coqpure_bformula (bf: b_formula) : coq_b_formula =
     | Gte(e1,e2,_) -> CGte((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2))
     | Eq(e1,e2,_) -> CEq ((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2))
     | Neq(e1,e2,_) -> CNeq ((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2))
+    | EqMax(e1,e2,e3, _) ->CEqMax ((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2),(cpure_to_coqpure_exp e3))
+    | EqMin(e1,e2,e3, _) ->CEqMin ((cpure_to_coqpure_exp e1),(cpure_to_coqpure_exp e2),(cpure_to_coqpure_exp e3))
     | _ -> illegal_format ("Cannot use the constraint with CoqInf Solver "^(Cprinter.string_of_b_formula bf))
 
 let rec cpure_to_coqpure (f: formula) : coq_formula =
 match f with
-  | BForm(bf,_) ->let pf,_ = bf in (match pf with 
+  | BForm(bf,_) ->(*let pf,_ = bf in (match pf with 
                    | EqMax(e1,e2,e3,_) -> 
                        let ce1 = cpure_to_coqpure_exp e1 in
                        let ce2 = cpure_to_coqpure_exp e2 in
@@ -333,7 +355,7 @@ match f with
                        COr(CAnd(CBForm(CGte(ce2,ce3)),CBForm(CEq(ce1,ce3))),
                            CAnd(CBForm(CGt(ce3,ce2)),CBForm(CEq(ce1,ce2))))
 (*Added to handle min and max constraints *)
-                   | _ -> CBForm(cpure_to_coqpure_bformula bf))
+                   | _ -> *)CBForm(cpure_to_coqpure_bformula bf)
   | And(f1,f2,_) -> CAnd ((cpure_to_coqpure f1),(cpure_to_coqpure f2))
   | Or(f1,f2,_,_) -> COr ((cpure_to_coqpure f1),(cpure_to_coqpure f2))
   | Not(f,_,_) -> CNot (cpure_to_coqpure f)
@@ -381,6 +403,8 @@ let rec coqpure_to_cpure_bformula (cbf: coq_b_formula): b_formula =
       | CGt(e1,e2) -> Gt((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
       | CGte(e1,e2) -> Gte((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
       | CEq(e1,e2) -> Eq((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
+      | CEqMax(e1,e2,e3) -> EqMax((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),(coqpure_to_cpure_exp e3),no_pos)
+      | CEqMin(e1,e2,e3) -> EqMin((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),(coqpure_to_cpure_exp e3),no_pos)
       | CNeq(e1,e2) -> Neq((coqpure_to_cpure_exp e1),(coqpure_to_cpure_exp e2),no_pos)
   in (pf,None)
 

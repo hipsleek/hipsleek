@@ -1049,6 +1049,12 @@ let norm_pure_result f =
              match pf with
                | Lt(a1,a2,pos) -> if Infinity.check_neg_inf2_inf a1 a2 || Infinity.check_neg_inf2_inf a2 a1
                  then Some(mkTrue_b pos) else Some bf
+               | Lte(e1,e2,pos) -> (match e1 with
+                   | Add(a1,a2,pos) -> (match a1,a2 with
+                       | IConst(1,_), e 
+                       | e,IConst(1,_) ->  if is_inf e then Some(Lt(e,e2,pos),None) else Some bf
+                       | _, _ -> Some bf)
+                   | _ -> Some bf)
                | _ -> Some bf
            in
            let f_e e = (Some e) in
@@ -1812,7 +1818,7 @@ let simplify (f : CP.formula) : CP.formula =
     else 
       let cmd = PT_SIMPLIFY f in
       let _ = Log.last_proof_command # set cmd in
-      if !Globals.allow_inf_qe_coq then f else 
+      (* if !Globals.allow_inf_qe_coq then f else *)
       (* if !Globals.allow_inf && Infinity.contains_inf f then f
       else
       let f = if !Globals.allow_inf then Infinity.convert_inf_to_var f else f in*)

@@ -479,7 +479,8 @@ let is_const_or_tmp (f:exp) = match f with
 
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
-  | InfConst  _ -> true
+  | InfConst  _  
+  | NegInfConst _ -> true
   | Var(sv,_) -> is_inf_sv sv
   | _ -> false
 
