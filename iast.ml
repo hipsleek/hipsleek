@@ -111,6 +111,7 @@ and hp_decl = { hp_name : ident;
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
 hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+mutable hp_root_pos: int;
 hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
@@ -1122,6 +1123,7 @@ let genESpec_x body_opt args ret pos=
             in
             (arg.param_type, arg.param_name, in_info)
         ) args;
+        hp_root_pos = 0;
         hp_is_pre = true;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
@@ -1145,6 +1147,7 @@ let genESpec_x body_opt args ret pos=
 	      | Globals.Void -> []
 	      | _ -> [(ret, res_name, Globals.I)]
 	    );
+        hp_root_pos = 0;
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in

@@ -163,6 +163,7 @@ let syn_hprel_x crem_hprels irem_hprels=
                     I.hp_name = chp.C.hp_name;
                     I.hp_typed_inst_vars= List.map
                         (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) chp.C.hp_vars_inst;
+                    I.hp_root_pos = chp.C.hp_root_pos;
                     I.hp_is_pre = chp.C.hp_is_pre;
                     I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) top_flow [] no_pos;
                 }

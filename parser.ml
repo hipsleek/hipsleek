@@ -30,6 +30,7 @@ let parser_name = ref "unknown"
 let set_parser name =
   parser_name := name
 
+let pred_root_id = ref ""
 
 (* type definitions *)
 
@@ -745,6 +746,15 @@ let set_slicing_utils_pure_double f il =
                           (* let _ = Hashtbl.add !Ipure.linking_exp_list ann0 0 in *)
                           f
   else f
+
+let pred_get_root_pos root_id args=
+  let rec look_up rest_args n=
+    match rest_args with
+      | [] -> 0
+      | (_,id,_)::rest -> if String.compare id root_id = 0 then n else
+          look_up rest (n+1)
+  in
+  if String.compare root_id "" = 0 then 0 else look_up args 0
 
 let rec get_heap_ann annl : P.ann = 
   match annl with
@@ -2167,6 +2177,9 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
 typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
+  | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
+  |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
+  |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
  ]];
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
@@ -2220,17 +2233,23 @@ axiom_decl:[[
 hp_decl:[[
 `HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
+        hp_root_pos = root_pos;
         hp_is_pre = true;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }
   | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
+        hp_root_pos = root_pos;
         hp_is_pre = false;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }

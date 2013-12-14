@@ -337,6 +337,7 @@ rule tokenizer file_name = parse
   | "@R" {PASS_REF}
   | "@REC" {REC}
   | "@NI" {NI}
+  | "@RO" {RO}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
