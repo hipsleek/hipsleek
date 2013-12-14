@@ -89,6 +89,10 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
+    (* below to detect @L in post-condition *)
+    mutable view_contains_L_ann : bool;
+    view_ann_params : (P.annot_arg * int) list;
+    view_params_orig: (P.view_arg * int) list;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
@@ -163,6 +167,7 @@ and proc_decl = {
     (*set of heap predicate constraints derived from calls in this method*)
     (*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
+    proc_by_copy_params: P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
     proc_logical_vars : P.spec_var list;
@@ -265,8 +270,8 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : Cformula.ann;
-    exp_bind_param_imm : Cformula.ann list;
+    exp_bind_imm : P.ann;
+    exp_bind_param_imm : P.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
@@ -287,7 +292,7 @@ and exp_cond = { exp_cond_type : typ;
 exp_cond_condition : ident;
 exp_cond_then_arm : exp;
 exp_cond_else_arm : exp;
-exp_cond_path_id : control_path_id;
+exp_cond_path_id : control_path_id_strict;
 exp_cond_pos : loc }
 
 and exp_debug = { 
@@ -949,6 +954,8 @@ let look_up_hp_def_raw defs name=
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
 
+let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
   let _ = hpdclr.hp_root_pos <- r_pos in
@@ -1098,7 +1105,6 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
 	with Not_found -> Error.report_error {
     Error.error_loc = pos;
     Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
-
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) = 
   try
       let proc = Hashtbl.find procs name in
@@ -1234,31 +1240,32 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let h,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then 
-	  let sm = List.hd hs in (match sm with
-	  | F.StarMinus _ -> true
-	  | _ -> false)
+	    let sm = List.hd hs in (match sm with
+	      | F.StarMinus _ -> true
+	      | _ -> false)
 	  else false in
   if(flag) then Ramify
   else
-  let fct f = match f with
-    | Cformula.Base {F.formula_base_heap=h}
-    | Cformula.Exists {F.formula_exists_heap=h} ->      
+    let fct f = match f with
+      | Cformula.Base {F.formula_base_heap=h}
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let _ = Debug.tinfo_hprint (add_str "formula_exists_heap" !print_h_formula ) h no_pos in 
           let hs = F.split_star_conjunctions h in
-	  let self_n = List.for_all (fun c-> 
+          let hs = List.filter (fun c -> not (c=F.HTrue || c=F.HEmp)) hs in
+	      let self_n = List.for_all (fun c-> 
               let _ = Debug.tinfo_hprint (add_str "c" !print_h_formula ) c no_pos in
               let only_self = match c with
                 | F.DataNode _
                 | F.ViewNode _-> (P.name_of_spec_var (F.get_node_var c)) = self 
                 | F.HRel (sv,exp_lst,_) -> (
-                      let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
-                      match exp_lst with
-                        | [sv] -> (
-                              match sv with
-                                | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
-                                | _ -> false)
-                        | _ -> false
-                  )
+                    let _ = Debug.tinfo_hprint (add_str "sv" !print_sv ) sv no_pos in
+                    match exp_lst with
+                      | [sv] -> (
+                          match sv with
+                            | (P.Var (v,_)) -> (P.name_of_spec_var v) = self
+                            | _ -> false)
+                      | _ -> false
+                )
                 | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") 
               in
               only_self) hs  in
@@ -1268,19 +1275,21 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
             | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
             | _ -> failwith ("Only nodes and HRel allowed after split_star_conjunctions ") in
           (List.length hs),self_n, List.map get_name hs
-    | _ -> 1,false,[]
-  in
-  (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
-  let lhs_length,l_sn,lhs_typ = fct lhs in
-  let rhs_length,r_sn,rhs_typ = fct rhs in
-  match lhs_typ@rhs_typ with
-	| [] -> Simple
+      | _ -> 1,false,[]
+    in
+    (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
+    let lhs_length,l_sn,lhs_typ = fct lhs in
+    let rhs_length,r_sn,rhs_typ = fct rhs in
+    match lhs_typ@rhs_typ with
+	  | [] -> Simple
 	| h::t ->
         (*
           Why using concret numbers (e.g. 1,2) here ?
           If there is a lemma that split 1 node into 3 nodes,
           it is also considered a split lemma?
         *)
+        (*special case, detecting inconsistency using lemmas*)
+        if rhs_length=0  then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
@@ -1767,7 +1776,7 @@ let get_xpure_one vdef rm_br  =
     | Some l -> let n=(List.length l) in  
       if n<(List.length vdef.view_prune_branches) then None
       else (match vdef.view_complex_inv with 
-        | None -> None 
+        | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
     | None -> Some vdef.view_x_formula 
 
@@ -1864,9 +1873,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
   (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
   (*                       ^ "\n\n") in *)
   let uni_vars = P.remove_dups_svl res1 in
-  (* let _ = print_string ("\n add_uni_vars_to_view:" *)
-  (*                       ^"\n ### uni_vars = " ^ (Cprinter.string_of_spec_var_list uni_vars) *)
-  (*                       ^ "\n\n") in *)
   if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
   else
 	let rec process_h_formula (h_f:F.h_formula):P.spec_var list = match h_f with

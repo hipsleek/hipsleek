@@ -93,7 +93,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   (* match named arguments with formal parameters to generate a list of    *)
   (* position-based arguments. If a parameter does not appear in args,     *)
   (* then it is instantiated to a fresh name.                              *)
-  let rec match_args (params : ident list) args_ann :  (IP.exp * IF.ann option) list =
+  let rec match_args (params : ident list) args_ann :  (IP.exp * IP.ann option) list =
     match params with
       | p :: rest ->
             let tmp1 = match_args rest args_ann in
@@ -168,7 +168,8 @@ let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let pr = (* string_of_typ *) pr_none in
-  Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
+  let pr_out (_, t) = string_of_typ t in
+  Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
@@ -180,7 +181,7 @@ and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
   let pr = (* string_of_typ *) pr_none in
-  Debug.no_2 "must_unify_expect" pr pr pr (fun _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2
+  Debug.no_3 "must_unify_expect" string_of_typ string_of_typ string_of_tlist string_of_tlist_type (fun _ _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tl,k) = unify_expect k1 k2 tlist in
@@ -211,7 +212,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | t1, t2  -> 
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (tl, Some (Named n2))
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (tl, Some (Named n1))
+      | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
           else 
@@ -233,6 +236,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                   | _,(n_tl,_) -> (n_tl,None))
               | _,_ -> (tl,None)
             end
+        )
   in unify k1 k2 tlist
 
 (* k2 is expected type *)
@@ -495,6 +499,19 @@ and gather_type_info_exp_x prog a0 tlist et =
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
       (n_tl,n_typ)      
+  | IP.Bptriple ((pc,pt,pa), pos) ->
+      let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
+      let (tmp1,tmp2)=nt in
+	  let (n_tl1,t1) = gather_type_info_exp prog pc n_tl new_et in (* Int *)
+	  let (n_tl2,t2) = gather_type_info_exp_x prog pt n_tl1 new_et in (* Int *)
+	  let (n_tl3,t3) = gather_type_info_exp_x prog pa n_tl2 new_et in (* Int *)
+      let (n_tlist1,_) = must_unify_expect t1 Int n_tl3 pos in
+      let (n_tlist2,_) = must_unify_expect t2 Int n_tlist1 pos in
+      let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
+      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
+      (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) -> 
       let _ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
       let (new_et, n_tl) = fresh_tvar tlist in          
@@ -933,7 +950,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let base_ddecl = (
         let dname = (
           match c with
-          | "int" | "float" | "void" | "bool" -> c ^ "__star"
+          | "int" | "float" | "void" | "bool" -> c ^ "_star"
           | _ -> c
         ) in
         I.look_up_data_def_raw prog.I.prog_data_decls dname
@@ -941,7 +958,7 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
       let holder_name = (
         let deref_str = ref "" in
         for i = 1 to deref do
-          deref_str := !deref_str ^ "__star";
+          deref_str := !deref_str ^ "_star";
         done;
         c ^ !deref_str
       ) in
@@ -975,12 +992,15 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
       n_tl
     else 
       let expect_dname = (
-        let s = ref "" in
-        for i = 1 to deref do
-          s := !s ^ "__star";
-        done;
-        dname ^ !s
+          let s = ref "" in
+          for i = 1 to deref do
+            s := !s ^ "_star";
+          done;
+          dname ^ !s
       ) in
+     (*      Named expect_dname *)
+  (* ) in *)
+      (* let (n_tl,_) = gather_type_info_var v tlist expect_type pos in *)
       let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
   ) in
@@ -1136,8 +1156,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let ft = cperm_typ () in
       let gather_type_info_ann c tlist = (
         match c with
-        | IF.ConstAnn _ -> tlist
-        | IF.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
+        | IP.ConstAnn _ -> tlist
+        | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
       ) in
       let rec gather_type_info_param_ann lst tl = (
         match lst with
@@ -1155,7 +1175,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       ) in
       let n_tl = gather_type_info_perm perm tlist in
       let n_tl = gather_type_info_ann ann n_tl in
-      let n_tl = if (!Globals.allow_field_ann) then gather_type_info_param_ann ann_param n_tl else n_tl in
+      let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
       (*Deal with the generic pointer! *)
       if (c = Parser.generic_pointer_type_name) then 
         (* Assumptions:

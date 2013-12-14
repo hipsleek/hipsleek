@@ -1,0 +1,66 @@
+Consider: pair3.c
+
+  Here we used &p and &pp, so let us
+  introduce stack allocated addr_p, addr_pp
+  however ppp can be represented by simple variable
+  since &ppp is not being used: 
+
+  struct pair p;
+  p.x = 1;
+  struct pair* pp;
+  pp = &p;
+  pp->x = pp->x +1;
+  struct pair** ppp;
+  ppp = &pp;
+  return (*ppp)->x;
+
+Hand-translation pair3.txt
+  pair addr_p = new pair(0,0); //stack allocate
+  addr_p.x = 1;
+  pair_star addr_pp = new pair_star(null); // stack allocate
+  addr_pp.deref = addr_p;
+  addr_pp.deref.x = addr_pp.deref.x +1;
+  pair_star ppp;
+  ppp = addr_pp;
+  return ppp.deref.x;
+
+For pair3.c, a longer translation can be obtained by
+changing ppp to addr_ppp, but this is not strictly required
+since we did not use &ppp.
+
+  pair addr_p = new pair(0,0); //stack allocate
+  addr_p.x = 1;
+  pair_star addr_pp = new pair_star(null); // stack allocate
+  addr_pp.deref = addr_p;
+  addr_pp.deref.x = addr_pp.deref.x +1;
+  pair_star_star addr_ppp = new pair_star_star(null);
+  addr_ppp.deref = addr_pp;
+  return addr_ppp.deref.deref.x;
+
+Scheme used:
+  pair p ===> pair addr_p = new pair(0,0)
+  &p     ===> addr_p
+  p.f    ===> addr_p.f
+  pair* pp ===> pair_star addr_pp = new pair_star(null)
+  &pp    ===> addr_pp
+  *pp    ===> addr_pp.deref
+  pp->f  ===> addr_pp.deref.f
+  pair** ppp ==> pair_star ppp;
+  *ppp   ===> ppp.deref
+  
+Current compilation: longer and had some timeouts!
+
+{ local: pair p,pair__star pp,pair__star__star ppp,pair__star address__var__0,pair__star__star address__var__1
+
+ pair p = new pair(0, 0); // call it addr_p
+ pair__star pp = new pair__star(null); // call it addr_pp
+ pair__star__star ppp = new pair__star__star(null); // not needed
+ pair__star address__var__0 = new pair__star(null); // not needed
+ pair__star__star address__var__1 = new pair__star__star(null); // not needed
+ {member access p~~>x = 1;
+  member access address__var__0~~>pdata = p; // not needed
+  pp = address__var__0;
+  member access member access pp~~>pdata~~>x = (int)member access member access pp~~>pdata~~>x + 1;
+  member access address__var__1~~>pdata = pp; // not needed
+  ppp = address__var__1; 
+  (85, ):return member access member access member access ppp~~>pdata~~>pdata~~>x}

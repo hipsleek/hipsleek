@@ -1,0 +1,74 @@
+In the current setting, for *-ptr code:
+
+int goo(pair* q)
+// pass by value
+/*@
+  requires q::pair*<r> * r::pair<a,b>
+  ensures q::pair*<r> * r::pair<a,b> & res=a;
+*/
+{
+  return q->x;
+}
+
+we translate each call to use pass-by-copy semantics:
+
+int goo(pair_star@C q)
+  requires q::pair*<r> * r::pair<a,b>
+  ensures q::pair*<r> * r::pair<a,b> & res=a;
+{
+  return q.deref.x;
+}
+
+// alternative_translation 
+int goo2(pair q)
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
+{
+  return q.x;
+}
+
+However, each call of the form:
+  goo(p_star)
+would have to be translated to:
+  goo2(*p_star)
+
+Also, within the method body, each use of:
+  *q is translated to q
+  q->field is translated to q.field
+
+An odd thing is what should we do to q:
+   q is translated to ?
+
+For example:
+   q = ...
+The original type of q is pair*. Hence,
+we probably want to use say &q since
+this would have the correct type pair*.
+
+Perhaps, we could introduce a parameter,
+called pair* addr_q which would be
+initialized as:
+   *addr_q =q
+so that it would initially contain q, but it
+could be modified later.
+
+Thus, a more comprehensive translation should have been:
+
+// alternative_translation 
+int goo2(pair q)
+  requires q::pair<a,b>
+  ensures q::pair<a,b> & res=a;
+{
+  pair_star addr_q = new pair_star();
+  addr_q.deref=q;
+  int res= add_q.deref.x
+  dispose(addr_q);
+  return res;
+}
+
+Thus: q --> addr_q
+     *q --> addr_q.deref
+     q->field --> addr_q.deref
+
+However, this translation seems to be more complex than
+our naive translation.

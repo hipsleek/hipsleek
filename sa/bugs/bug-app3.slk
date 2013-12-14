@@ -10,12 +10,21 @@ pred lseg<p> ==
   or self::node<_,q> * q::lseg<p> 
  inv true.
 
-//infer [H2] H2(r)   |- (exists p: r::node<_,p> & p =null).
-//print residue.
-//infer [y] r::node<_,y>   |- r::node<_,null> .
-infer [H2] H2(r)   |- r::node<_,null> .
-//infer [H2] H2(r)   |- r::node<n,q> & n>0 .
+
+//1
+infer [H2] H2(r)   |- (exists p: r::node<_,p> & p =null).
 print residue.
+
+
+
+//2
+infer [H2] H2(r)   |- r::node<_,null> .
+print residue.
+
+/*
+checkentail  r::node<_,null>  |- r::node<_,null> .
+print residue.
+*/
 //checkentail (exists p: r::node<_,p> & p!=null)   |- r::node<_,null> .
 //print residue.
 //infer [H2] H2(r)   |- r::node<_,p> & p=null .

@@ -1,0 +1,81 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+}.
+
+/*
+pred cell<v,a> == self::node<v>@a
+   inv self!=null.
+*/
+
+//checkentail x::node<_@A>|- x::node<_@L>.
+//checkentail x::node<_@L>|- x::node<_@A>.
+
+checkentail x::node<_@v> & v=@L|- x::node<_@w> & w=@A.
+
+/*
+checkentail v=@A & v=w |- w=@L.
+
+checkentail v=@L & v=w |- w=@A.
+
+checkentail v=@L & v=w |- w=@L.
+*/
+
+/*
+(i) why are ante0,ante1 false for
+  x::node<Anon_11@v>@M[Orig]&0<=v & v=@A & Anon_11=Anon_12&
+  {FLOW,(19,20)=__norm}[]
+
+!!!ann-bugs1a.slk:15: 35: ante0 : : false
+!!!ann-bugs1a.slk:15: 35: ante1 : : false
+
+(ii) need to carry v<=w_22 into the next conseq
+
+!!!ann-bugs1a.slk:15: 35: heap_entail_empty_heap: rhs:
+ 0<=w_22 & w_22=@L
+!!!ann-bugs1a.slk:15: 35: rhs_p : : 0<=w_22 & w_22=@L
+*/
+
+//checkentail x::cell<_,@L>|- x::cell<_,v> & v=@A.
+
+/*
+checkentail a1=@L & a1<:a2 |- a2=@A.
+
+checkentail a1=@A  |- (exists a2: a1<:a2 & a2=@L).
+
+checkentail a1=@A  |- (exists a2: a1<:a2).
+checkentail a1=@A  |- (exists a2: a2=@L).
+
+checkentail a1=@L  |- (exists a2: a1<:a2 & a2=@A).
+*/
+
+/*
+checkentail x::cell<5,@A>|- x::cell<5,@L>.
+print residue.
+*/
+/*
+checkentail v1=@L & v2=@A|-  v1<:v2.
+print residue.
+*/
+/*checkentail x::node<v,q>@M * q::node<_,_> |- x::node<v,q@M> * q::node<_,_>.
+print residue.*/
+
+/*
+              a1<:a2
+ --------------------------------------------------
+  x::pred<...,a1> & a1=@A |- x::pred<..,a2> & a2=@L
+
+      a1=@A & a1<:a2 |- a2=@L
+ --------------------------------------------------
+  x::pred<...,a1> & a1=@A |- x::pred<..,a2> & a2=@L
+ 
+ ---------------------------------------------
+  checkentail x::cell<5,@A>|- x::cell<5,v>.
+
+
+
+*/
+
+
+

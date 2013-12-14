@@ -1,0 +1,20 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) residue must not contain v
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+print residue.
+
+/*
+// (27) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+
+// (30) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+*/
+
+// (1) residue must not contain v
+infer [] y::node<_,_@w> |-  y::node<a,b@v>.
+print residue.

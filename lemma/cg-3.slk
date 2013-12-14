@@ -1,0 +1,38 @@
+data node {
+ node pxPrevious;
+ node pxNext;
+}.
+
+// doubly linked list with extra pointer for the last element
+
+pred dll<prev,o,l> == 
+  case {
+   self=l -> [] self::node<prev,o> ; 
+   self!=l -> [] self::node<prev,t> * t::dll<self,o,l>;
+  }
+inv self!=null & l!=null.
+
+lemma_unsafe "taildls" self::dll<prev,o,l>& l!=self -> 
+   self::dll<prev,l,ib3> * l::node<ib3,o>.
+
+/*
+checkentail self::node<prev_195,t_199>@M 
+     * t_199::dll<self_196,o_197,l_198>@M
+  & l!=self & prev=prev_195 & self_196=self & o=o_197 
+  & l=l_198 & l!=self
+ |- (exists self_201,o_202,l_203,ib3_205: 
+    l::node<ib3_205,o>@M * 
+    self::node<prev_200,t_204>@M * t_199::dll<self_201,o_202,l_203>@M
+).
+*/
+
+checkentail 
+     t_199::dll<self_196,o_197,l_198>@M
+  & l!=self & prev=prev_195 & self_196=self & o=o_197 
+  & l=l_198 & l!=self
+  & t_199!=l_198 // missing info needed for proving lemma
+  //& t_199=l_198
+ |- (exists self_201,o_202,l_203,ib3_205: 
+    l::node<ib3_205,o>@M * 
+    t_199::dll<self_201,o_202,l_203>@M
+).

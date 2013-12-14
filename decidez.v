@@ -330,6 +330,6 @@ end
 with solve_all := repeat (repeat hyp; repeat sim; subst); auto with *
 (* with solve_all := repeat (repeat hyp; autorewrite with simpl_lists_db in *; subst); auto with * *)
 
-with decidez := intros; solve_exists; solve_all; elimtype False; auto.
+with decidez := intros; solve_exists; solve_all; elimtype False; omega||auto.
 
 (* ------------------------------------------------------------------------------------------------------------ *)

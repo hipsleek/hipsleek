@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|sleek_veribsync|hip_veribsync [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -206,13 +206,18 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-	"infinity" =>[["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	"infinity" =>[
+	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
+	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
 	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf","merge","SUCCESS"],
+	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -346,6 +351,14 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "get_next", "SUCCESS"
         ]],
+    "imm-field" => [
+        ["imspd.ss",2,"-tp oc --field-ann --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
+        ["getset.ss",5,"-tp oc --field-ann --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
+        ["bigint.ss",15,"-tp redlog --field-ann --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
+        ["insertion_simple.ss",1,"-tp oc --field-ann --etcsu1 ","insert","SUCCESS"],
+        ["schorr-waite-list.ss",1,"-tp om --field-ann --etcsu1 ","lscan","SUCCESS"],
+        ["sll.ss",4,"-tp oc --field-ann --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
+    ],
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["dag_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
@@ -727,7 +740,7 @@ $output_file = "log";
 								],
 				["parahip/cell.ss",2,  "--en-para -tp parahip", 
                                 "test","SUCCESS",
-                                "test1","FAIL-1"
+                                "test1","FAIL"
 								],
 				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
                                 "inc","SUCCESS",
@@ -735,13 +748,13 @@ $output_file = "log";
 								],
 				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
                                 "testCell","SUCCESS",
-                                "testVar","FAIL-1"
+                                "testVar","FAIL"
 								],
 				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
-                                "test","FAIL-2",
-                                "test2","FAIL-2",
-                                "test3","FAIL-1",
-                                "test4","FAIL-1"
+                                "test","FAIL",
+                                "test2","FAIL",
+                                "test3","FAIL",
+                                "test4","FAIL"
 								],
 				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -755,7 +768,7 @@ $output_file = "log";
         ### DEADLOCKED and DEADLOCK-FREE scenarios
 				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-2"
+                                "main","FAIL"
 								],
 				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -771,15 +784,15 @@ $output_file = "log";
 								],
 				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
@@ -795,14 +808,14 @@ $output_file = "log";
 								],
 				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL"
 								],
 				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
 				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
-                                "func","FAIL-1",
+                                "func","FAIL",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
@@ -832,6 +845,239 @@ $output_file = "log";
 								]
         ### END parahip
              ],
+	"hip_veribsync" =>[
+				["veribsync/while-loop.ss",4,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_753_while_50_2","SUCCESS",
+                                # "f_r_843_while_10_2","SUCCESS",
+                                "fun","SUCCESS",
+                                "fun3","SUCCESS",
+                                "loop_fun","SUCCESS",
+                                "loop_fun3","SUCCESS"
+								],
+				["veribsync/while-loop2.ss",8,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1049_while_74_2","SUCCESS",
+                                # "f_r_1101_while_58_2","SUCCESS",
+                                # "f_r_1150_while_43_2","SUCCESS",
+                                # "f_r_1200_while_27_2","SUCCESS",
+                                # "f_r_1254_while_10_2","SUCCESS",
+                                # "f_r_786_while_149_2","SUCCESS",
+                                # "f_r_860_while_130_2","SUCCESS",
+                                # "f_r_925_while_112_2","SUCCESS",
+                                # "f_r_990_while_93_2","SUCCESS",
+                                "fun","SUCCESS",
+                                "fun3","SUCCESS",
+                                "fun4","SUCCESS",
+                                "fun5","SUCCESS",
+                                "fun6","SUCCESS",
+                                "fun7","SUCCESS",
+                                "fun8","SUCCESS",
+                                "fun9","SUCCESS"
+								],
+				["veribsync/hip-bperm1.ss",6,  "--en-para -perm bperm -tp redlog",
+                                "destroyCellFail","FAIL",
+                                "readCell","SUCCESS",
+                                "testNewCell","SUCCESS",
+                                "testNewCell2","SUCCESS",
+                                "updateCell","SUCCESS",
+                                "updateCellFail","FAIL"
+								],
+				["veribsync/bperm-exp.ss",4,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS",
+                                "thread3","SUCCESS"
+								],
+				["veribsync/barrier-static-primitives.ss",1,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS"
+								],
+				["veribsync/barrier-static-exp1.ss",3,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-static-exp2.ss",3,  "--en-para -perm bperm -tp redlog",
+                                "main","FAIL",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-static-exp3.ss",3,  "--en-para -perm bperm -tp redlog",
+                                "main","FAIL",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-static-complex.ss",3,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_938_while_29_2","SUCCESS",
+                                # "f_r_1069_while_15_2","SUCCESS",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-static-complex2.ss",3,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1035_while_42_2","SUCCESS",
+                                # "f_r_1172_while_16_2","SUCCESS",
+                                # "f_r_931_while_31_2","SUCCESS",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-static-complex3.ss",2,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_923_while_16_2","SUCCESS",
+                                "main","SUCCESS",
+                                "thread","SUCCESS"
+								],
+				["veribsync/barrier-static-multiple.ss",4,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "main_fail","SUCCESS",
+                                "participant","SUCCESS",
+                                "participant_fail","FAIL"
+								],
+				["veribsync/barrier-static-consistency.ss",5,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "main_fail","FAIL",
+                                "participant","SUCCESS",
+                                "participant1","SUCCESS",
+                                "participant_fail","FAIL"
+								],
+				["veribsync/barrier-dynamic-exp1.ss",4,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS",
+                                "thread3","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp2.ss",4,  "--en-para -perm bperm -tp redlog",
+                                "main","FAIL",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS",
+                                "thread3","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp3.ss",4,  "--en-para -perm bperm -tp redlog",
+                                "main","FAIL",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS",
+                                "thread3","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp4.ss",5,  "--en-para -perm bperm -tp redlog",
+                                "childthread1","SUCCESS",
+                                "childthread2","SUCCESS",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp5.ss",2,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "thread","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp6.ss",3,  "--en-para -perm bperm -tp redlog",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["veribsync/barrier-dynamic-exp7.ss",2,  "--en-para -perm bperm -tp redlog",
+                                "CalculationInTask","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/barnes.ss",16,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1069_while_201_2","SUCCESS",
+                                "ANLinit","SUCCESS", "ComputeForces","SUCCESS",
+                                "Housekeep","SUCCESS","find_my_bodies","SUCCESS",
+                                "hackcofm","SUCCESS","maketree","SUCCESS",
+                                "stepsystem","SUCCESS","find_my_initial_bodies","SUCCESS",
+                                "SlaveStart","SUCCESS","diagnostics","SUCCESS",
+                                "initoutput","SUCCESS","initparam","SUCCESS",
+                                "startrun","SUCCESS","tab_init","SUCCESS",
+                                "main","SUCCESS","output","SUCCESS"
+								],
+				["veribsync/benchmark/fmm.ss",22,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1254_while_197_2","SUCCESS",
+                                # "f_r_1135_while_261_2","SUCCESS",
+                                "MergeLocalGridSize","SUCCESS","DetermineGridSize","SUCCESS",
+                                "MergeLocalGrid","SUCCESS","ConstructGrid","SUCCESS",
+                                "ConstructLists","SUCCESS","CostZonesHelper","SUCCESS",
+                                "CostZones","SUCCESS","ZeroBox","SUCCESS",
+                                "CreateBoxes","SUCCESS","CreateDistribution","SUCCESS",
+                                "CreateParticleList","SUCCESS","gets","SUCCESS",
+                                "GetArguments","SUCCESS","InitExpTables","SUCCESS",
+                                "InitGlobalMemory","SUCCESS","InitParticleList","SUCCESS",
+                                "PartitionGrid","SUCCESS","StepSimulation","SUCCESS",
+                                "generateNumBoxes","SUCCESS","ParallelExecute","SUCCESS",
+                                "PrintGrid","SUCCESS","main","SUCCESS"
+								],
+				["veribsync/benchmark/ocean.ss",5,  "--en-para -perm bperm -tp redlog",
+                                "gets","SUCCESS","main","SUCCESS",
+                                "multig","SUCCESS","slave2","SUCCESS",
+                                "slave","SUCCESS"
+								],
+				["veribsync/benchmark/raytrace.ss",7,  "--en-para -perm bperm -tp redlog",
+                                "BuildHierarchy_Uniform","SUCCESS","PrintStatistics","SUCCESS",
+                                "ReadEnvFile","SUCCESS","ReadGeoFile","SUCCESS",
+                                "StartRayTrace","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/volrend.ss",20,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1934_while_92_2","SUCCESS",
+                                "Compute_Base","SUCCESS","Compute_Normal","SUCCESS",
+                                "Compute_Octree","SUCCESS","Compute_Opacity","SUCCESS",
+                                "Init_Decomposition","SUCCESS","Init_Options","SUCCESS",
+                                "Load_Map","SUCCESS","Load_Normal","SUCCESS",
+                                "Load_Opacity","SUCCESS","Frame","SUCCESS",
+                                "Normal_Compute","SUCCESS","Opacity_Compute","SUCCESS",
+                                "Or_Neighbors_In_Base","SUCCESS","Ray_Trace","SUCCESS",
+                                "Render","SUCCESS","Render_Loop","SUCCESS",
+                                "getAdaptive","SUCCESS","getNumNodes","SUCCESS",
+                                "getRotateSteps","SUCCESS","main","SUCCESS"
+								],
+				["veribsync/benchmark/water-nsquared.ss",11,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1304_while_29_2","SUCCESS",
+                                "INTERF","SUCCESS","INTRAF","SUCCESS",
+                                "POTENG","SUCCESS","PREDIC","SUCCESS",
+                                "MDMAIN","SUCCESS","WorkStart","SUCCESS",
+                                "getNPRINT","SUCCESS","getNSAVE","SUCCESS",
+                                "getNSTEP","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/water-spatial.ss",11,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1304_while_36_2","SUCCESS",
+                                "INTERF","SUCCESS","INTRAF","SUCCESS",
+                                "POTENG","SUCCESS","PREDIC","SUCCESS",
+                                "MDMAIN","SUCCESS","WorkStart","SUCCESS",
+                                "getNPRINT","SUCCESS","getNSAVE","SUCCESS",
+                                "getNSTEP","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/cholesky.ss",9,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_908_while_257_2","SUCCESS",
+                                "AssignBlocksNow","SUCCESS","ComputeTargetBlockSize","SUCCESS",
+                                "PreProcessFO","SUCCESS","Go","SUCCESS",
+                                "InitOneFreeList","SUCCESS","MallocInit","SUCCESS",
+                                "ReadSparse","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/fft.ss",5,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1089_while_69_2","SUCCESS",
+                                # "f_r_1099_while_88_2","SUCCESS",
+                                "FFT1DOnce","SUCCESS","FFT1D","SUCCESS",
+                                "SlaveStart","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/lu.ss",5,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1088_while_27_2","SUCCESS",
+                                "lu","SUCCESS","OneSolve","SUCCESS",
+                                "SlaveStart","SUCCESS","gets","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["veribsync/benchmark/radix.ss",3,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_989_while_39_2","SUCCESS",
+                                "getNumProcs","SUCCESS","main","SUCCESS",
+                                "slave_sort","SUCCESS"
+								],
+				["veribsync/benchmark/radiosity.ss",8,  "--en-para -perm bperm -tp redlog",
+                                # "f_r_1016_while_69_2","FAIL",
+                                "init_ray_tasks","SUCCESS","process_tasks","SUCCESS",
+                                "init_global","SUCCESS","init_visibility_module","SUCCESS",
+                                "input","SUCCESS","parse_args","SUCCESS",
+                                "main","SUCCESS","radiosity","FAIL"
+								]
+             ], # END hip_veribsync
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
          "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
@@ -1212,8 +1458,9 @@ $output_file = "log";
                       ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
                       ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Fail.Fail."],
+                      ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
               ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
+		      ["xpure3nodes.slk","","","Valid.Valid."],
                       ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", "", "Fail."],
@@ -1232,29 +1479,33 @@ $output_file = "log";
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer16.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
-                      ["ann1.slk", " --imm --en-imm-inv", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
-                      ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["ann1.slk", " --imm --en-imm-inv --etcsu1 ", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["ann2.slk", " --imm --en-imm-inv --etcsu1 ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/imm1.slk", " --imm --etcsu1 ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
+                      ["imm/imm2.slk", " --imm --etcsu1 ", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", " --imm --etcsu1 ", "", "Fail.Fail.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", " --imm --etcsu1 ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek03.slk", " --field-ann ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek01.slk", " --field-ann --etcsu1 ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-ann --etcsu1 ", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek03.slk", " --field-ann --etcsu1 ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek05.slk", " --field-ann --etcsu1 ", "", "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid"],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
-        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
-        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
-        ["ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
-        ["sll_tailL.slk", "", "Valid.Valid", ""]
+        ["inflem.slk", "--en-inf --elp ", "Valid.", "Fail.Valid."],
+#        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
+        ["lemmas/lseg.slk", " --elp ", "Valid.Valid.", ""],
+        ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+        ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
+        ["lemmas/sll_tailL.slk", " --elp --en-lem-rhs-unfold ", "Valid.Valid", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -1291,6 +1542,19 @@ $output_file = "log";
 					["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                   ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
            ],
+    "sleek_veribsync" => [
+                      ["veribsync/bperm1.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/bperm-split.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid."],
+                      ["veribsync/bperm-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier1.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["veribsync/barrier-split.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Fail.Valid."],
+                      ["veribsync/barrier-combine.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-sep.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid."],
+                      ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."]],
+
     # "lemmas"=>[
     #     ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
     #     ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
@@ -1498,7 +1762,7 @@ sub grep_failures {
     my ($res,$exp,$prefix) = @_;
     @results = split (/\./, $res);
     @expected = split (/\./, $exp);
-    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my %mark_failures = map {if ($results[$_] ne $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#expected; #results
     my @failures = grep {  $_ > 0 } keys  %mark_failures;
     my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
     @failures_e = sort  @failures_e;
@@ -1510,7 +1774,7 @@ sub grep_failures {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
 	  my $barr = 0;
       if ("$param" =~ "musterr") {
@@ -1518,7 +1782,8 @@ sub sleek_process_file  {
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
-      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+      $lem = index($script_arguments, "--elp");
+      if (("$param" =~ "lemmas") ) {  $lem = 1; }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
@@ -1533,6 +1798,7 @@ sub sleek_process_file  {
       foreach $test (@{$t_list})
       {
           my $extra_options = $test->[1];
+          my $leme = index($extra_options, "--elp") + $lem;
           if ("$extra_options" eq "") {
               print "Checking $test->[0]\n";
           } else {
@@ -1542,7 +1808,7 @@ sub sleek_process_file  {
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
           print LOGFILE "\n======================================\n";
           print LOGFILE "$output";
-          #print "$output";
+          #print "\n!!!output: $output";
           my $lemmas_results = "";
           my $entail_results = "";
           my $barrier_results = "";
@@ -1573,13 +1839,16 @@ sub sleek_process_file  {
                   }
               }
           }
+          #print "\n!!!!!Ent Res: $entail_results \n";
+          #print "\n!!!!!Exp Res: $test->[3] $leme\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+          if  (($leme >= 0 )  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
-          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+          if ((($barr==0) && ($entail_results ne $test->[3])) || 
               # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
               ($barr==1 && ($barrier_results ne $test->[2]))){
+              #print "\n !!!!!!!!!!! bef grep for failures: \n";
               @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
           }
           if ($#failures >= 0 ){

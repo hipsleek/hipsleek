@@ -333,7 +333,7 @@ let rec analyze_stmt (s : stmt ) : unit =
         analyze_block h
     | Break l -> ()
     | Continue l -> ()
-    | HipStmtSpec _ -> ()
+    | HipStmt _ -> ()
 
 
 and analyze_block (b : block ) : unit =

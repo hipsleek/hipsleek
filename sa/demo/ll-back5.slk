@@ -1,0 +1,29 @@
+data node {
+       node next;
+}.
+
+HeapPred HP4(node a).
+HeapPred G2(node a).
+HeapPred G1(node a).
+HeapPred H1(node a).
+
+/*
+pred G1<> ==
+ n::G1<> * self::node<x>@M
+ or HP4(self).
+*/
+
+relAssume 
+H1(old_31') * 
+ptr'::node<old_31'>@M --> H1(ptr').
+
+relAssume
+H1(ptr') --> G1(ptr').
+
+relAssume
+  x=null --> H1(x).
+
+relAssume 
+  G1(x) --> G2(x).
+
+shape_infer [][G2].

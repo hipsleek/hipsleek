@@ -1,5 +1,6 @@
 open GlobProver
 
+
 let parse_only = ref false
 
 let dump_ss = ref false
@@ -33,9 +34,9 @@ let set_proc_verified arg =
   let procs = Gen.split_by "," arg in
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
-let set_file_cp arg =
-  Globals.file_cp := arg;
-   Globals.cp_test := true
+let set_validate_config arg =
+  Globals.validate_target := arg;
+   Globals.validate := true
 
 let set_gen_cpfile arg =
  Globals.cpfile := arg;
@@ -213,9 +214,11 @@ let common_arguments = [
   ("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
   ("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
   ("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+	("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
+	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
-  ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
@@ -286,6 +289,9 @@ let common_arguments = [
   ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
+  ("--print-tidy", Arg.Set Globals.print_en_tidy,"enable tidy printing");
+  ("--print-dis-tidy", Arg.Clear Globals.print_en_tidy,"disable tidy printing");
+  ("--print-html", Arg.Set Globals.print_html,"enable html printing");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
@@ -300,7 +306,7 @@ let common_arguments = [
    "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
-  ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
+  ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),
    "Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
   ("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
   ("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
@@ -505,13 +511,20 @@ let common_arguments = [
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
+  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--en-lem-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
+  ("--dis-lem-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
-  ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
+  ("--sa-ep", Arg.Set Globals.sap, "Print intermediate results of normalization");
+  ("--sa-gen-spec", Arg.Set Globals.sags, "enable generate spec with unknown preds for inference");
+  ("--sa-dp", Arg.Clear Globals.sap, "disable Printing intermediate results of normalization");
+  ("--gsf", Arg.Set Globals.sa_gen_slk, "shorthand for -sa-gen-sleek-file");
+  ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
@@ -552,6 +565,9 @@ let common_arguments = [
    ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
+  ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");
+  ("--pred-unify-inter", Arg.Set Globals.pred_unify_inter, "unify inter definition of predicates. before inlining");
+  ("--pred-dis-unify-inter", Arg.Clear Globals.pred_unify_inter, "disable unify inter definition of predicates. before inlining");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   (* ("--norm-useless", Arg.Set Globals.norm_elim_useless, "elim useless parameters of user-defined predicates (view)"); *)
@@ -570,7 +586,8 @@ let common_arguments = [
   ("--etcnf",Arg.Set Globals.tc_drop_unused, "quantify names that will not be used from the context after each Hoare rule");
   (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
-  ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply")
+  ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
+  ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator")
   ]
 
 (* arguments/flags used only by hip *)	
@@ -594,7 +611,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "disable pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
-  ("-cp-test", Arg.String set_file_cp,
+  ("-validate", Arg.String set_validate_config,
    "compare set of constraints");
   ("-cp-pre-test", Arg.Set Globals.cp_prefile,
    "compare set of constraints");
@@ -645,8 +662,7 @@ let check_option_consistency () =
   (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
-  
-  
+
 Typechecker.save_flags  := fun ()->() ;;
 Typechecker.restore_flags := fun ()-> ();;
 Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)-> 

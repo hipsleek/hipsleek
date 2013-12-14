@@ -5,11 +5,11 @@ data node {
 
 
 /* view for a singly linked list */
-/*
+
 ll<> == self = null
 	or self::node<_, q> * q::ll<>
   inv true;
-*/
+
 HeapPred H1(node a, int v).
   HeapPred G1(node a, int v).
 node insert(node x, int v)

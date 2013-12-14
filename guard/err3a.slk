@@ -1,0 +1,40 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a,cell b).
+PostPred G(cell a,cell b).
+PostPred HP_907(cell a,cell@NI b).
+
+relAssume 
+ // BIND
+H(p,q) & p=null --> q::cell<val>@M.
+
+relAssume 
+ // BIND
+H(p,q) & p!=null --> p::cell<val>@M * HP_907(q,p).
+
+
+shape_infer [H,HP_907][].
+
+
+/*
+# err3a.slk
+
+GOT:
+
+ H(p_28,q_29) ::= 
+ p_28::cell<val>@M * HP_907(q_29,p_28)
+ or emp&p_28=null
+ ]
+
+What happen to --print-en-tidy?
+Why are we not getting below.
+
+ H(p_28,q_29) ::= 
+ p_28::cell<val>@M * HP_907(q_29,p_28)
+ or q_29::cell<_> & p_28=null
+
+
+*/
+

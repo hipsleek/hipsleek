@@ -244,6 +244,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tsconst _ 
   | InfConst _
   | FConst _ -> []
+  | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
@@ -578,6 +579,7 @@ and pos_of_exp (e : exp) = match e with
   | IConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | Bptriple (_, p)
   | InfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
@@ -604,8 +606,8 @@ and pos_of_exp (e : exp) = match e with
   | Template t -> t.templ_pos
 
 
-and fresh_old_name (s: string):string = 
-	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+and fresh_old_name (s: string):string =
+  	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
 	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
 	n
 	
@@ -620,6 +622,16 @@ and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_
 
 and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
   ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
+
+and eq_ann (a1 :  ann) (a2 : ann) : bool =
+  match a1, a2 with
+    | ConstAnn ha1, ConstAnn ha2 -> ha1 == ha2
+    | PolyAnn (sv1,_), PolyAnn (sv2,_) -> eq_var sv1 sv2
+    | _ -> false
+
+(* andreeac TODOIMM use wrapper below, use emap for spec eq *)
+and eq_ann_list (a1 :  ann list) (a2 : ann list) : bool =
+  List.fold_left (fun acc (a1,a2) -> acc &&(eq_ann a1 a2)) true (List.combine a1 a2)
 
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -722,6 +734,10 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Tsconst _
   | InfConst _
   | AConst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((e_apply_one p ec,
+                 e_apply_one p et,
+                 e_apply_one p ea),pos)
   | Ann_Exp (e,ty,pos) -> Ann_Exp ((e_apply_one p e), ty, pos)
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
@@ -901,6 +917,7 @@ and find_lexp_exp (e: exp) ls =
   | InfConst _
   | FConst _ -> []
   | Ann_Exp(e,_,_) -> find_lexp_exp e ls
+	| Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
   | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -965,6 +982,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | IConst _ 
   | AConst _ 
   | Tsconst _
+  | Bptriple _ (* TOCHECK *)
   | FConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1002,6 +1020,19 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Ann_Exp (e, t, l) -> 
       let ne, np = float_out_exp_min_max e in
       (Ann_Exp (ne, t, l), np) 
+  | Bptriple ((ec,et,ea),l) -> 
+      let ec1,ec_r = float_out_exp_min_max ec in
+      let et1,et_r = float_out_exp_min_max et in
+      let ea1,ea_r = float_out_exp_min_max ea in
+      let r = List.fold_left ( fun np1 np2 ->
+          let res = match (np1, np2) with
+		    | None, None -> None
+		    | Some p, None -> Some p
+		    | None, Some p -> Some p
+		    | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+          in res) ec_r [et_r;ea_r]
+      in
+      (Bptriple ((ec1,et1,ea1),l),r)
   | Add (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -1010,6 +1041,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | Some p, None -> Some p
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+
       (Add (ne1, ne2, l), r) 
   | Subtract (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
@@ -1429,6 +1461,7 @@ let rec typ_of_exp (e: exp) : typ =
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
+  | Bptriple _ 				  -> Globals.Bptyp
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
   | Subtract (ex1, ex2, _)

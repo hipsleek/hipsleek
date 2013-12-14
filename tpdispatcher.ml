@@ -26,11 +26,13 @@ let wrap_ocredlog = Wrapper.wrap_oc_redlog
 let test_db = false
 
 (* let pure_tp = ref OmegaCalc *)
+(* let tp = ref OmegaCalc *)
 let pure_tp = ref OM
 (* let tp = ref OZ *)
-(* let tp = ref Redlog *)
+let tp = ref Redlog
 (* let tp = ref AUTO *)
 (* let tp = ref PARAHIP *)
+(* let tp = ref Z3 *)
 
 let provers_process = ref None
 
@@ -540,7 +542,9 @@ let stop_prover () =
   | Mona -> Mona.stop();
   | Mathematica -> Mathematica.stop();
   | OM -> (
+    if !Mona.is_mona_running then
       Mona.stop();
+   if !Omega.is_omega_running then
       Omega.stop();
     )
   | ZM -> (
@@ -635,6 +639,7 @@ let rec is_array_exp e = match e with
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+    | CP.Bptriple _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
 
@@ -668,6 +673,7 @@ let rec is_list_exp e = match e with
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
   | CP.ArrayAt (_,_,_) | CP.Func _ | CP.Template _ -> Some false
   | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+    | CP.Bptriple _
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
@@ -1036,7 +1042,7 @@ let cnv_int_to_ptr f =
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
   let f = if !Globals.allow_inf
-    then let f =  CP.arith_simplify 13 (Infinity.convert_var_to_inf f) in
+    then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
          let drop_inf_constr f =   
            let f_f e = None in
            let f_bf bf = 
@@ -1093,8 +1099,8 @@ let add_imm_inv f1 f2 =
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
   let f1_inv = join_conjunctions (f1::inv) in
-  let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
-  let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
 
 let cnv_ptr_to_int_weak f =
@@ -1367,6 +1373,7 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
 
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
+  if (CP.isConstFalse cons) then (ante,cons) else
   let conseq_vars = CP.fv cons in
   if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
     (ante,cons)
@@ -1378,7 +1385,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
   Debug.no_2 "assumption_filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
-	  
+
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
 let norm_var_name (e: CP.formula) : CP.formula =
@@ -1479,6 +1486,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let f = CP.infer_level_pure f in (*add l.mu>0*)
         let f = CP.translate_waitlevel_pure f in
         let f = CP.translate_level_pure f in
         let _ = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
@@ -1969,7 +1977,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
 
 let om_hull f =
   wrap_pre_post norm_pure_input norm_pure_result
-      Omega.hull f 
+      Omega.hull f
 
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
@@ -2120,6 +2128,10 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
+let om_gist f1 f2 =
+  wrap_pre_post norm_pure_input norm_pure_result
+      (fun f1 -> Omega.gist f1 f2) f1
+
 
 let should_output () = !print_proof && not !suppress_imply_out
 
@@ -2142,8 +2154,10 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let ante = CP.infer_level_pure ante in (*add l.mu>0*)
         let ante = CP.translate_waitlevel_pure ante in
         let ante = CP.translate_level_pure ante in
+        let conseq = CP.infer_level_pure conseq in (*add l.mu>0*)
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
         let _ = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
@@ -2657,6 +2671,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
+        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
+        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -3477,3 +3493,6 @@ let check_diff xp0 xp1 =
 let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
+
+
+let _ = CP.simplify := simplify

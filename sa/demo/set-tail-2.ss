@@ -4,7 +4,7 @@ data node{
 }
 
 
-HeapPred H(node a, node@NI b).
+HeapPred H(node a, node b).
 HeapPred G(node a, node b).
 
   void set_tail (node x,node y)
@@ -18,6 +18,14 @@ HeapPred G(node a, node b).
 }
 
 /*
+with #
+ G(x_875,y_876) ::= HP_870(prev_17_868,y_876) * x_875::node<prev_17_868,y_876>@M,
+ H(x_873,y_874) ::= x_873::node<prev_17_868,next_17_869>@M * HP_870(prev_17_868,y_874) *
+HP_871(next_17_869,y_874),
+ HP_870(prev_17_868,y) ::= NONE,
+ HP_871(next_17_869,y) ::= NONE
+
+Without #:
 
 [ H(x,y) --> x::node<prev_15_778,next_15_779>@M * 
   HP_780(prev_15_778,y@NI) * HP_781(next_15_779,y@NI) 

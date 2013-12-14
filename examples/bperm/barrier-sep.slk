@@ -1,0 +1,19 @@
+/*
+  Notation of separation in barrier permissions
+*/
+
+lemma "combineBarrier" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
+
+//(1)
+checkentail b1::barrier(2,2,0)<_> * b2::barrier(2,3,0)<_>  |- b1!=b2.
+print residue. //VALID, because t_b1!=t_b2 (2!=3)
+
+//(2)
+checkentail b1::barrier(2,2,0)<_> * b2::barrier(1,2,0)<_>  |- b1!=b2.
+print residue. //VALID, because 2=2 but 1+2>2+0+0
+
+//(3)
+checkentail b::barrier(1,2,0)<_> * b::barrier(1,3,0)<_>  |- false.
+print residue. //VALID, because 2!=3 --> undefined
+//false |- false
+//residue: false

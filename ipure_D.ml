@@ -37,6 +37,12 @@ type xpure_view = {
     (* xpure_view_label : formula_label option; *)
 }
 
+type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
+
+(*annotations *)
+let imm_ann_top = ConstAnn imm_top
+let imm_ann_bot = ConstAnn imm_bot
+
 type formula = 
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
@@ -89,7 +95,7 @@ and p_formula =
   | BagNotIn of ((ident * primed) * exp * loc)
   | BagSub of (exp * exp * loc)
   | BagMin of ((ident * primed) * (ident * primed) * loc)
-  | BagMax of ((ident * primed) * (ident * primed) * loc)	
+  | BagMax of ((ident * primed) * (ident * primed) * loc)
 	  (* lists and list formulae *)
   | VarPerm of (vp_ann * ((ident * primed) list) * loc)
   | ListIn of (exp * exp * loc)
@@ -111,6 +117,7 @@ and exp =
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
+  | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)

@@ -1,0 +1,38 @@
+================================================================
+field-imm works best with the following args:
+
+--eps
+--dis-precise-xpure  --dis-ann-vp ----> these options are needed to 
+  disable vperm for the cases when we allow * for nodes with disjoint fields
+
+================================================================
+for now, when using ann param for views, matching is done rather naive:
+- in case of a view node match, the solver only checks for ann compatibility of the data which describes the view. 
+  this imm info is collected from the view def, during the translation. In this version, we !!assume!!
+  that all the nodes in the predicate def has the same ann pattern. Later it should be extended
+  such that we can collect info abt all the nodes (maybe create a fix point for imm ann collection for preds)
+
+================================================================
+in this version the parameters allowed for views are extended to allow ann constants. 
+These annotation constants are excepted from liniarization & normalization.  
+The view decl and view nodes now contain a list of nodes with the parameters set by the user 
+(along with their position). This list (params_orig) is later split in between 
+an annotation list and a parameter list:
+* the annotation list also contains the position of the annot position in params_orig 
+  list and it is used by the solver during view nodes match.
+* param list contains a list of spec vars, representing the view params different than the 
+  annotations used to annotate the view data. This list is subject to liniarization and normalization.
+
+** note: the parameters which are of annot type but are not used as annotations, that is, they are
+   not used to annotate data fields inside the view definitions, are considered to be part of 
+   the view param list. Thus, they are subject to liniarization and normalization.
+   ex: ll<n,a1,a2> == self = null & n=0 or
+                      self::node<_@a1,q> * q::ll<n-1,a1,a2>.
+   a1 is considered to be part of the annotations list (view imm map), but a2 acts as
+   a normal param because it is not used to annotate fields of the data fields:
+           normalize (x::ll<n,@M,@M>) = (x::ll<n,@M,fltd_xx> & fltd_xx = @M)
+
+
+================================================================
+using imm view params as variables is not yet stable. For now, we !!assume!! the view params
+of annot type are constants which are propagated as constants inside the view def when needed. 

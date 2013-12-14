@@ -1,0 +1,112 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred H1(node a, node@NI c).
+HeapPred H2(node a, node@NI c).
+HeapPred HP_953(node next_76_952, node@NI sent).
+PostPred G1(node ra, node rb, node@NI c).
+
+relAssume 
+  H1(cur,sent) --> cur::node<val_76_951,next_76_952>@M 
+      * HP_953(next_76_952,sent).
+
+relAssume 
+  H2(prev,sent) * cur'::node<val_76_951,prev>@M --> H1(cur',sent).
+
+relAssume 
+  emp&prev'=null --> H2(prev',sent).
+
+relAssume 
+  HP_953(cur',sent)&cur'!=sent & cur'!=null --> H1(cur',sent).
+
+relAssume 
+  HP_953(next_76_952,sent) & next_76_952!=sent & next_76_952=null --> emp.
+
+relAssume 
+ HP_953(next_76_952,sent) & next_76_952=sent  --> emp.
+
+
+// is this a relational obligation?
+relAssume 
+ cur_960::node<val_76_951,prev>@M * H2(prev,sent) --> H2(cur_960,sent).
+
+relAssume 
+ H2(prev,cur') * HP_953(next_76_952,sent) * 
+  prev'::node<val_76_951,prev>@M&next_76_952=sent & cur'=sent & 
+  cur'=next_76_952 --> G1(cur',prev',sent).
+
+/*
+relAssume 
+ H2(prev,cur') * HP_953(next_76_952,sent) * 
+  prev'::node<val_76_951,prev>@M&next_76_952=sent & cur'=sent & 
+  cur'=next_76_952 --> G1(cur',prev',sent).
+
+relAssume 
+ HP_953(next_76_952,sent) * G1(cur',prev',sent)&next_76_952!=sent & 
+  next_76_952=null --> G1(cur',prev',sent).
+
+relAssume 
+ G1(cur',prev',sent) --> G1(cur',prev',sent).
+*/
+
+
+shape_infer [H1,H2,HP_953][G1].
+
+/*
+# mod_swl-h2.slk
+
+Derived:
+
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_953(next,sent),
+ H2(prev,sent) ::= prev::HP_953<sent>@M,
+ HP_953(cur,sent) ::= 
+  emp&cur=sent
+  or cur::node<val,next>@M * HP_953(next,sent)&cur!=sent
+  or emp&cur!=sent & cur=null,
+
+ G1(next,prev,sent) ::= prev::node<val,prev1>@M 
+   * prev1::HP_953<next>@M&next=sent
+
+ Why is HP_953 presented in 2-ways? as x::HP_953<s> and HP_953(x,s)?
+
+ This could be correct shape but seems not strong enough
+ for re-verification.
+
+
+
+*************************************
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_953(next,sent),
+
+ H2(prev,sent) ::= prev::HP_953<sent>@M,
+
+ HP_953(cur,sent) ::= 
+   cur::node<val,next>@M * HP_953(next,sent)&cur!=sent
+   or emp&cur!=sent & cur=null
+
+
+ HP_953(cur,sent) & cur!=sent & cur!=null 
+     --> cur::node<val,next>@M * HP_953(next,sent)
+ HP_953(cur,sent) & cur!=sent & cur=null 
+     --> emp.
+
+ HP_953(cur,sent) & cur!=sent 
+     --> cur::node<val,next>@M * HP_953(next,sent) 
+         or cur=null.
+
+ HP_953(cur,sent) & cur=sent 
+     --> emp
+
+  H(x) & x=null --> G(x)
+
+*************************************
+
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_953(next,sent),
+ H2(prev,sent) ::= prev::HP_953<sent>@M,
+ HP_953(cur,sent) ::=  emp&cur=sent
+  or cur::node<val,next>@M * HP_953(next,sent)&cur!=sent
+  or emp&cur!=sent & cur=null
+
+*/

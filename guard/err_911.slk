@@ -1,0 +1,19 @@
+data cell {
+ int val;
+}
+
+HeapPred H(cell a).
+
+HeapPred G(cell a).
+
+Declare_Unknown [].
+
+
+relAssume 
+ H(p)&p=null --> hfalse&false.
+
+relAssume 
+ (2;0)H(p)&p!=null --> G(p).
+
+
+shape_infer [H][G].

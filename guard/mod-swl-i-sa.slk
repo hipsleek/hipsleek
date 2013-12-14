@@ -1,0 +1,64 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H(node a, node b, node@NI c).
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+HeapPred HP_945(node next_50_944, node@NI prev, node@NI sent).
+PostPred G(node ra, node rb,node a, node b, node@NI c).
+
+// BIND
+relAssume
+ H(cur,prev,sent) --> cur::node<val,next>@M *  
+    HP_945(next,prev,sent) * HP_946(prev,cur,sent).
+ 
+// PRE_REC
+relAssume
+  HP_946(prev,cur,sent) * cur::node<val,prev>@M
+    & prev1'=null --> H(cur,prev1',sent).
+
+// PRE_REC
+relAssume
+ cur1::node<val,prev>@M * HP_946(prev,cur1,sent) 
+  * HP_945(cur',prev,sent)&cur'!=sent 
+  & cur'!=null --> H(cur',cur1,sent).
+
+ // POST
+relAssume
+  HP_945(next,prev,sent) * HP_946(prev,cur,cur1') * 
+   cur::node<val,prev>@M&next=sent & cur1'=sent & cur1'=next & 
+   cur=prev1' --> G(cur,cur1',prev,prev1',sent).
+
+// POST
+relAssume
+ HP_945(next,prev1,sent) * G(cur,cur1',prev,prev2',sent)&
+   next!=sent & next=null & prev=null & 
+   cur!=null --> G(cur,cur1',prev1,prev2',sent).
+
+// POST
+relAssume
+  G(next,cur1',cur,prev1',sent)&next!=sent & next!=null 
+    & cur!=null --> G(cur,cur1',prev,prev1',sent).
+
+shape_infer [H,HP_945,HP_946][G].
+
+/*
+# mod-swl-i-sa.slk
+
+  expected sleek file from swl-i-sa.slk
+
+[ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+ emp&cur!=sent & cur=null
+ or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_233(prev1)
+ ,
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M * HP_946(prev,prev1',next)&cur=prev1' & next=sent,
+ DP_233(prev1) ::= NONE]
+*/

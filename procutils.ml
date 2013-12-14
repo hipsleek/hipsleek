@@ -64,12 +64,12 @@ struct
     let _ = set_timer limit in
     let proof_no = get_proof_no_str () in
     try
-      let _ = Timelog.logtime # timer_start proof_no limit in
+      let _ = if !Globals.enable_time_stats then Timelog.logtime # timer_start proof_no limit else () in
       let res = fn arg in
       let x = Unix.getitimer Unix.ITIMER_REAL in
       (* let nt = limit -. x.Unix.it_value in *)
       let nt = limit -. x.Unix.it_value in
-      let _ = Timelog.logtime # timer_stop proof_no nt in
+      let _ = if !Globals.enable_time_stats then Timelog.logtime # timer_stop proof_no nt else () in
       set_timer 0.0;
       reset_sigalrm ();
       res

@@ -1,0 +1,138 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+}.
+
+/*
+pred cell<v,a> == self::node<v>@a
+   inv self!=null.
+*/
+
+checkentail x::node<_@v> & v=@A|- x::node<_@w>.
+
+//checkentail x::node<_@A>|- x::node<_@L>.
+//checkentail x::node<_>@M|- x::node<_>@A.
+/*
+checkentail x::node<_>@M |- [v] x::node<_>@v & v=@M.
+print residue.
+
+checkentail x::node<_>@M |- [v] x::node<_>@v & v=@A.
+print residue.
+*/
+//to check below residue
+checkentail x::node<5>@M |- (exists a,v: x::node<a>@v & v=@A & a=5).
+print residue.
+/*
+checkentail x::node<5> |- (exists v: x::node<v> & v=5).
+print residue.
+*/
+
+
+//false on ante
+/*checkentail x::node<_@v> & v=@A |- (exists w: x::node<_@w> & w=@L).
+print residue.
+
+checkentail x::node<_@v> & v=@L |- (exists w: x::node<_@w> & w=@A).
+print residue.
+
+checkentail x::node<_@v> & v=@M |- (exists w: x::node<_@w> & w=@A).
+print residue.
+*/
+//false on ante
+//checkentail x::node<_@v> & v=@A|- x::node<_@w>.
+
+//false on ante
+//checkentail x::node<a@v> |- x::node<a@w>.
+
+/*
+@27! lhs_h: emp
+@27! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@27! curr_lhs_h: x::node<a@M>@M[Orig]
+@27! curr_lhs_h: x::node<a@M>@M[Orig]
+*/
+/*checkentail x::node<a@M> |- x::node<a@A>.
+print residue.
+*/
+/*
+@16! lhs_h: x::node<a@M>@M[Orig]
+@16! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+*/
+//checkentail x::node<a@M> |- x::node<a@A>.
+//print residue.
+
+/*
+@16! lhs_h: x::node<a@M>@M[Orig]
+@16! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+*/
+//checkentail x::node<a@M> |- x::node<a@v>.
+
+//no false on ante
+//checkentail x::node<_@v> & v=@A|- true.
+
+//no false on ante
+//checkentail x::node<Anon_11@v>@M & v=@A & Anon_11=Anon_12 |- false.
+
+//checkentail x::node<Anon_11@v>@M & @M<:v & v=@A & Anon_11=Anon_12 |- false.
+
+/*
+(i) why are ante0,ante1 false for
+  x::node<Anon_11@v>@M[Orig]&0<=v & v=@A & Anon_11=Anon_12&
+  {FLOW,(19,20)=__norm}[]
+
+!!!ann-bugs1a.slk:15: 35: ante0 : : false
+!!!ann-bugs1a.slk:15: 35: ante1 : : false
+
+(ii) need to carry v<=w_22 into the next conseq
+
+!!!ann-bugs1a.slk:15: 35: heap_entail_empty_heap: rhs:
+ 0<=w_22 & w_22=@L
+!!!ann-bugs1a.slk:15: 35: rhs_p : : 0<=w_22 & w_22=@L
+*/
+
+//checkentail x::cell<_,@L>|- x::cell<_,v> & v=@A.
+
+/*
+checkentail a1=@L & a1<:a2 |- a2=@A.
+
+checkentail a1=@A  |- (exists a2: a1<:a2 & a2=@L).
+
+checkentail a1=@A  |- (exists a2: a1<:a2).
+checkentail a1=@A  |- (exists a2: a2=@L).
+
+checkentail a1=@L  |- (exists a2: a1<:a2 & a2=@A).
+*/
+
+/*
+checkentail x::cell<5,@A>|- x::cell<5,@L>.
+print residue.
+*/
+/*
+checkentail v1=@L & v2=@A|-  v1<:v2.
+print residue.
+*/
+/*checkentail x::node<v,q>@M * q::node<_,_> |- x::node<v,q@M> * q::node<_,_>.
+print residue.*/
+
+/*
+              a1<:a2
+ --------------------------------------------------
+  x::pred<...,a1> & a1=@A |- x::pred<..,a2> & a2=@L
+
+      a1=@A & a1<:a2 |- a2=@L
+ --------------------------------------------------
+  x::pred<...,a1> & a1=@A |- x::pred<..,a2> & a2=@L
+ 
+ ---------------------------------------------
+  checkentail x::cell<5,@A>|- x::cell<5,v>.
+
+
+
+*/
+
+
+

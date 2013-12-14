@@ -16,11 +16,12 @@ type sleek_token =
   | ANDLIST
   | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
+  | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
   | CASE | CHECKEQ | SIMPLIFY | CHECKENTAIL | CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT | CAPTURERESIDUE | CLASS (* | COERCION *) | COMPOSE | CONST | CONTINUE
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
-  | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER
+  | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
   | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
   | DTIME
@@ -37,7 +38,7 @@ type sleek_token =
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
   | PRED | PRED_PRIM | DPRINT | PRED_EXT | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
-  | REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
+  | PASS_REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP | TERMR
@@ -46,6 +47,7 @@ type sleek_token =
   | WHILE | FLOW of string
         (*operators*)  
   | CARET 
+  | DOTDOT
   (* TermInf: Token for Termination Inference *)
   | CONSTVAR | RANKREL | RANKC | SOLVE_RANKC
   | TEMPLATE
@@ -63,6 +65,7 @@ type sleek_token =
   | INVLOCK 
   | LOGICAL
   | INFINITY
+  | VALIDATE
   | XPURE
 
 
@@ -85,10 +88,10 @@ module Token = struct
     | ANDLIST -> "AndList"
     | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" 
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"
-    | CASE ->"case" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" (* | COERCION ->"coercion" *)
+    | CASE ->"case" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
-    |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer"
+    |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
     | SHAPE_SPLIT_BASE -> "shape_split_base" | SHAPE_ELIM_USELESS -> "shape_elim_useless" | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
@@ -105,12 +108,13 @@ module Token = struct
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
     | PRINT_LEMMAS -> "print_lemmas" 
-    |CMP -> "sleek compare" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    |CMP -> "sleek compare" | PASS_REF ->"@R"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
           (*operators*)
     | NI ->"@NI" | ATATSQ -> "@@[" | CARET -> "^"
+    | DOTDOT ->".."
     | CONSTVAR -> "@C" | RANKREL -> "RR" | RANKC -> "rank_constr" | SOLVE_RANKC -> "solve_rank_constrs"
     | TEMPLATE -> "template"
     | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "-*" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" | VAL ->"@VAL" | REC ->"@REC"
@@ -133,6 +137,7 @@ module Token = struct
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
     | TERMR -> "TermR"
+    | VALIDATE -> "validate"
     | XPURE -> "XPURE"
 
 

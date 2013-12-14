@@ -1,0 +1,23 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a).
+HeapPred G(cell a).
+
+relAssume
+ H(p)& p!=null --> G(p).
+
+shape_split_base [H][G].
+
+/*
+# err-1b-split.slk
+
+No splitting
+However, I think we need to
+still split, by using:
+
+ H(p) & p!=null --> DG_3(p)
+ DG_3(p) & p!=null --> G(p)
+
+*/

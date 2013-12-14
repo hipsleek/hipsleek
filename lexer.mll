@@ -136,6 +136,8 @@ module Make (Token : SleekTokenS)
    ( "shape_post_obligation", SHAPE_POST_OBL);
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
+   ("shape_lfp" , SHAPE_LFP);
+   ("shape_rec" , SHAPE_REC);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
@@ -223,7 +225,6 @@ module Make (Token : SleekTokenS)
 	 ("dprint", DPRINT);
 	 ("sleek_compare", CMP);
    ("raise", RAISE);
-	 ("ref", REF);
 ("relation", REL);
 	 ("requires", REQUIRES);
    ("refines", REFINES);
@@ -251,6 +252,7 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
+         ("validate", VALIDATE);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
@@ -337,9 +339,10 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
-  | "@R" { MAT }
   | "@S" { SAT }
   | "@VAL" {VAL}
+  | "@C" {PASS_COPY}
+  | "@R" {PASS_REF}
   | "@REC" {REC}
   | "@NI" {NI}
   | "@pre" { PRE }
@@ -362,6 +365,7 @@ rule tokenizer file_name = parse
   | ']' { CSQUARE }
   | '$' { DOLLAR }
   | "." { DOT }
+  | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
   | "=" { EQ }
@@ -406,6 +410,7 @@ rule tokenizer file_name = parse
 	  {
 		if idstr = "_" then
 		  IDENTIFIER ("Anon" ^ fresh_trailer ())
+		  (* IDENTIFIER ("Anon" ^ fresh_trailer ()) *)
 		else if idstr = "java" then begin
       store file_name; JAVA (parse_nested java file_name)
 		end else

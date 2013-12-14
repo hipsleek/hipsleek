@@ -401,6 +401,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Func _ ->  false
   | Cpure.Template _ -> false
   | Cpure.Level _ | Cpure.InfConst _ | Cpure.Tsconst _ -> Error.report_no_pattern()
+  | Cpure.Bptriple _ -> Error.report_no_pattern()
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =

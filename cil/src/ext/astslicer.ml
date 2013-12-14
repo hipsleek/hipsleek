@@ -108,8 +108,8 @@ let enumerate out (f : Cil.file) =
           incr i 
     | TryExcept _ | TryFinally _ -> 
         E.s (E.unimp "astslicer:enumerate")
-    | HipStmtSpec _ -> 
-        E.s (E.unimp "astslicer: HipStmtSpec")
+    | HipStmt _ -> 
+        E.s (E.unimp "astslicer: HipStmt")
     ) sl 
   and doIL il base i = 
     List.iter (fun ins -> match ins with
@@ -382,8 +382,8 @@ let mark_file (f : Cil.file) (names : (string, mark) Hashtbl.t) =
         incr i 
     | TryExcept _ | TryFinally _ -> 
         E.s (E.unimp "astslicer: mark")
-    | HipStmtSpec _ -> 
-        E.s (E.unimp "astslicer: HipStmtSpec")
+    | HipStmt _ -> 
+        E.s (E.unimp "astslicer: HipStmt")
     ) sl 
   and doIL il base i default = 
     List.iter (fun ins -> mark wi ins (check base i default) ; incr i) il 

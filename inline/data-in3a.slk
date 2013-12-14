@@ -1,0 +1,93 @@
+data pair {
+	int x;
+	int y;
+}.
+
+data quad {
+	inline pair p1;
+	pair p2;
+}.
+
+
+//(1)
+//checkentail p::pair<_@A,a> * q::pair<b,_@A> |- true.
+//print residue.
+
+//(1)
+//checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
+//print residue.
+/*
+ <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+//(2)
+checkentail v.quad.p1.x::<a> |- true.
+print residue.
+
+
+//(2)
+checkentail v::quad<#,_@A,p> * p::pair<a,b>|- true.
+print residue.
+
+/*
+ <1>v::quad<Anon_12@A,Anon_11@A,p@M>@M * p::pair<a@M,b@M>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+/*
+
+data octuple {
+	inline quadruple q1;
+	inline quadruple q2;
+}.
+
+//(3)
+checkentail v::octuple<_@A,_@A,_@A,_@A,k,_@A> 
+          * v::octuple<_@A,_@A,_@A,_@A,k,_@A>|- true.
+print residue.
+
+//(4)
+checkentail v::octuple<_@A,_@A,_@A,_@A,_@A,k1> 
+          * v::octuple<_@A,_@A,_@A,_@A,k,_@A>|- true.
+print residue.
+// <1>v::octuple<Anon_29@A,Anon_30@A,Anon_31@A,Anon_32@A,k@M,k1@M>@M&{FLOW,(21,22)=__norm}[]
+// ann-1
+
+
+//(5)
+checkentail v.octuple.q2.p1.x::<a> |- true.
+print residue.
+//<1>v::octuple<-,-,-,a,-,->@M([0,1,2,4,5])&{FLOW,(21,22)=__norm}[]
+
+
+//(6)
+checkentail v.octuple.q2.p1.x::<a> * v.octuple.q2.p1.y::<b> |- true.
+print residue.
+
+
+//checkentail p::pair<_@A,a> * p::pair<_@A,b> |- true.
+//print residue.
+
+
+//(7)
+checkentail p::pair<_@A,a> * q::pair<b,_@A> |- true.
+print residue.
+*/
+
+/* checkentail v.quadruple.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.x::<a> |- true.
+
+checkentail v.octuple.q2.p1.y::<a> |- true.
+
+checkentail v.octuple.q2.p1.y::<5> |- true. */
+
+// Two v must be merged
+//checkentail v.octuple.q2.p1.x::<5> * a::pair<_,_> * v.octuple.q2.p1.y::<4>|- true.
+
+// The heap above must be false
+//checkentail v.octuple.q2.p1.x::<5> * v.octuple.q2.p1.x::<k>|- true.
+
+// The following fails in translation
+//checkentail v.octuple.q2.p1.x::<5> * v::octuple<#,#,#,#,k,#>|- true.

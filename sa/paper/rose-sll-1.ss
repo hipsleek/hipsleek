@@ -11,7 +11,7 @@ data node {
 
 HeapPred H1(tree a).
 PostPred G1(tree a).
-HeapPred H2(node a,tree b).
+HeapPred H2(node a,tree@NI b).
 PostPred G2(node a,tree b).
 /*
 treep<> == 
@@ -39,7 +39,7 @@ bool check_child (node l, tree par)
  requires l::dll<par, prev> 
   ensures  res;
  */
-  infer [H1,H2,G2,G2]
+  infer [H1,H2,G1,G2]
   requires H2(l,par) //l::sll<par>@L 
   ensures  G2(l,par) & res;
 {

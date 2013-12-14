@@ -35,7 +35,7 @@ type flags =
 	  Flag_str of string
 	| Flag_int of int
 	| Flag_float of float
-	
+
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
@@ -87,7 +87,9 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
+(* and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn *)
+let imm_top = Accs
+let imm_bot = Mutable
 
 type hp_arg_kind=
   | I
@@ -127,7 +129,10 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   | FuncT of typ * typ
+  | Bptyp
   | Pointer of typ (* base type and dimension *)
+
+let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
@@ -201,7 +206,9 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
 let hppost_default_prefix_name = "GP_"
-let dang_hp_default_prefix_name = "__DP"
+let unkhp_default_prefix_name = "DP_"
+let dang_hp_default_prefix_name = "DP_DP"
+let ex_first = "v"
 (*
   Data types for code gen
 *)
@@ -217,6 +224,7 @@ type perm_type =
   | Frac (*fractional permissions*)
   | Count (*counting permissions*)
   | Dperm (*distinct fractional shares*)
+  | Bperm (*bounded permissions*)
   
 let perm = ref NoPerm
 
@@ -271,6 +279,10 @@ let string_of_loc (p : loc) =
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
+
+let is_valid_loc p=
+  (p.start_pos.Lexing.pos_lnum>=0 &&
+   p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
 
 let string_of_pos (p : Lexing.position) = 
     Printf.sprintf "(Line:%d,Col:%d)"
@@ -409,6 +421,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
@@ -447,6 +460,7 @@ let rec string_of_typ_alpha = function
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -552,6 +566,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 let null_name = "null"
+let inline_field_expand = "_"
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"
@@ -643,15 +658,21 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
+let enable_lemma_rhs_unfold = ref false
 
 let dis_show_diff = ref false
 
-let sa_print_inter = ref false
+let sap = ref false
+
+let sags = ref false
+
+let sa_gen_slk = ref false
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
 let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
+let simpl_memset = ref false
 
 let print_heap_pred_decl = ref true
 
@@ -710,6 +731,10 @@ let pred_disj_unify = ref false
 
 let pred_equiv = ref false
 
+let pred_unify_post = ref false
+
+let pred_unify_inter = ref true
+
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false
@@ -721,6 +746,7 @@ let allow_norm_disj = ref true
 
 let norm_cont_analysis = ref true
 
+(*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
 
 let dis_sem = ref false
@@ -757,10 +783,11 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
+let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
-let allow_field_ann = ref false 
+(* let allow_field_ann = ref false  *)
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
 
@@ -783,11 +810,12 @@ let print_clean_flag = ref false
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
 to end-users*)
-let is_deployed = ref false 
+(*Unify is_deployed an web_compile_flag*)
+(* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-
 let web_compile_flag = ref false (*enable compilation flag for website*)
+
 
 (* Decide whether normalization/simplification
 such as x<1 --> x+1<=1 is allowed
@@ -801,7 +829,10 @@ such as x<1 --> x+1<=1 is allowed
    for more details.
    Currently, conservativly do not allow such simplification
 *)
-let allow_norm = ref false
+
+let allow_lsmu_infer = ref false
+
+let allow_norm = ref true
 
 let dis_norm = ref false
 
@@ -895,6 +926,10 @@ let print_mvars = ref false
 
 let print_type = ref false
 
+let print_en_tidy = ref true
+
+let print_html = ref false
+
 (* let enable_sat_statistics = ref false *)
 
 let wrap_exists_implicit_explicit = ref false
@@ -914,7 +949,7 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref false
 
-let enable_time_stats = ref true
+let enable_time_stats = ref false
 
 let enable_count_stats = ref true
 
@@ -932,7 +967,7 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
@@ -952,7 +987,7 @@ let enable_constraint_based_filtering = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref true
+let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
@@ -970,13 +1005,13 @@ let disable_multiple_specs =ref false
 
 let perm_prof = ref false
 
-let cp_test = ref false 
+let validate = ref false 
 
 let cp_prefile = ref false 
 
 let gen_cpfile = ref false 
 
-let file_cp = ref ""
+let validate_target = ref ""
 
 let cpfile = ref ""
 
@@ -1133,6 +1168,11 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
+  match id with 
+    | Some i -> i
+    | None -> fresh_formula_label s
+
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let fresh_int () =
@@ -1153,6 +1193,7 @@ let fresh_int () =
   !seq_number
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
+  let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_var_name (tn:string)(ln:int):string = 
@@ -1241,6 +1282,9 @@ let fst3 (x,_,_) = x
 let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
+
+let concat_pair_of_lists l1 l2 =
+  (((fst l1)@(fst l2)), ((snd l1)@(snd l2)))
 
 let path_trace_eq p1 p2 =
   let rec eq pt1 pt2 = match pt1,pt2 with
@@ -1432,6 +1476,9 @@ let set_last_sleek_fail () =
 (*     Hashtbl.find debug_map x *)
 (*   with _ -> DO_None *)
 
+(* let inf_number = ref 0 *)
 
-
+(* let fresh_inf_number() =  *)
+(*   inf_number := !inf_number + 1; *)
+(*   string_of_int(!inf_number) *)
 

@@ -1,0 +1,71 @@
+/*
+@M - mutable  
+@L - lending  
+@A - no access 
+*/
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+// (1) valid
+checkentail x::node<p,q>@L |- true.
+print residue.
+
+// (2) valid
+checkentail x::node<p,q>@M |- x::node<p,r>@L.
+print residue.
+
+// (3) valid
+checkentail x::node<p@L,q@L> |- x::node<a@L,b@L>.
+print residue.
+
+// (4) valid
+checkentail x::node<p@L,q@A> |- x::node<_@L,_@A>.
+print residue.
+
+// (5) valid
+checkentail x::node<p,q@L> |- x::node<_@A,b@L>.
+print residue.
+
+// (6) valid
+checkentail x::node<p,q@L> |- x::node<_,b@L>.
+print residue.
+
+// (7) valid
+checkentail x::node<p,q>@M |- x::node<_@A,b@L>.
+print residue.
+
+// (8) valid
+checkentail x::node<p,q>@M |- x::node<_@A,b@L>.
+print residue.
+
+// (9) valid
+checkentail x::node<p,q@L> |- x::node<_,b@L>.
+print residue.
+
+// (10) valid
+checkentail x::node<p@A,q@L> |- x::node<_,b>@A.
+print residue.
+
+// (11) valid
+checkentail x::node<p@L,q@L> * y::node<c,d> |- x::node<a@L,b@L>.
+print residue.
+
+// (12) valid
+checkentail x::node<p@L,q@A> |- true.
+print residue.
+
+// (13) fail
+checkentail x::node<p@L,q@A> |- false.
+print residue.
+
+// (14) valid
+checkentail x::node<p@A,q@M> * x::node<p@L,q@A> |- x::node<p@L,q@M>.
+print residue.
+
+// (15) valid
+checkentail x::node<p@A,q@M> * x::node<p@L,q@A> |- x::node<p@L,q@L>.
+print residue.

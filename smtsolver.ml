@@ -91,6 +91,7 @@ let rec smt_of_typ t =
   | FuncT _ 
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
+    | Bptyp -> "int-triple"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -121,7 +122,7 @@ let rec smt_of_exp a =
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
-  | CP.TypeCast _ -> illegal_format ("z3.smt_of_exp: TypeCast should not appear here")
+  | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
@@ -135,6 +136,7 @@ let rec smt_of_exp a =
   | CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
   | CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
   | CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
+	| CP.Bptriple _ -> ""
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
@@ -284,6 +286,8 @@ and collect_bformula_info b = match b with
       else 
         { default_formula_info with relations = [r]; }
   | _ -> default_formula_info
+
+
 
 and combine_formula_info if1 if2 =
   { relations = List.append if1.relations if2.relations;
@@ -724,7 +728,8 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info in
-  res
+    (* let _ = print_endline (" ### res = \n " ^ res) in *)
+    res
   
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
   Debug.no_1 "to_smt" (fun _ -> "") (fun c -> c) (fun c-> to_smt pr_weak pr_strong ante conseq prover) prover

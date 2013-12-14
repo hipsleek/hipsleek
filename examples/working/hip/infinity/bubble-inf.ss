@@ -23,19 +23,16 @@ bnd<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or
       self!=null & n=1 & mi=mx & -\inf<mi<\inf |
       self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf;
 
-sll<n, mi,mx> == 
-   self = null & mi = \inf & mx = -\inf & n = 0
- or self::node<mi, null> & n=1 & -\inf<mi<\inf & mi=mx
- or self::node<mi, q> * q::sll<n-1, qs,mx> & -\inf<mi<\inf & mi <= qs
-      &  q!=null 
-  inv self=null & n=0 & mi=\inf & mx=-\inf |
-      self!=null & n>0 & mi<=mx  & -\inf<mi & mx<\inf;
+sll<n, sm, lg> ==
+		self::node<sm, null> & sm=lg & n=1 
+	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+	inv n>=1 & sm<=lg;
 
 ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
-lemma self::sll<n, sm, lg> <- self::ll<n>;
+//lemma self::sll<n, sm, lg> <- self::ll<n>;
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
 

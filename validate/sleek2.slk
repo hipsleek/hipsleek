@@ -1,0 +1,74 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll2<n> == self = null & n = 0
+	or self::node<next = r> * r::ll2<n-1>
+	inv n >= 0.
+
+pred ll3<n> == self::node<next = r> * r::ll2<n-1>
+	inv n >= 1.
+
+/*
+//(1) FAIL
+checkentail x::node<_, null> * z::node<_,_> * y::ll<_> |- x::ll<m> & m = 2.
+print residue.
+*/
+
+//(2)
+checkentail x::node<_, null> * z::node<_,_> * y::ll<_> & m = 1 |- x::ll<m>.
+print residue.
+validate Valid:[
+( [z,y,m],
+  z::node<_,_>@M * y::ll<_> & r=null & m=1 & a=b,
+  []
+)
+]
+.
+/*Valid.
+<2>z::node<Anon_16,Anon_17>@M * y::ll<Anon_18>@M&r_109=null & m=1 & Anon_108=Anon_15&{FLOW,(19,20)=__norm}[]
+*/
+
+/*
+//(3) FAIL
+checkentail x::node<_, null> * z::node<_,_> * y::ll<_> & m = 0 |- x::ll<m>.
+print residue.
+*/
+/*
+//(4) FAIL
+checkentail x::node<_, null> * y::ll<1> |- x::ll<m> & m = 0.
+print residue.
+*/
+/*
+//(5)
+checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
+print residue.
+*/
+/*
+<1>emp&Anon_159=Anon_24 & r=r_160 & Anon_165=Anon_25 & r2=r_166&{FLOW,(19,20)=__norm}[]
+*/
+
+/*
+//(6)
+checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<m> & m >= n+1.
+print residue.
+*/
+/*
+Valid
+<1>emp&Anon_184=Anon_26 & r=r_185 & Anon_190=Anon_27 & r2=r_191 & m=n+1+1&{FLOW,(19,20)=__norm}[]
+*/
+/*
+//(7)
+checkentail x::ll<n> & n > 0 |- x::ll<m> & m > 0.
+print residue.
+*/
+/*
+<1>emp&0<n & m=n&{FLOW,(19,20)=__norm}[]
+*/
+
+/*
+//(8) FAIL
+checkentail x::ll<n> & n > 3 |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+*/

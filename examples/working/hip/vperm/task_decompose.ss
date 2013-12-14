@@ -15,7 +15,7 @@ void inc(ref int i)
 int creator(ref int x,ref int y)
   requires true // @full[x] & @full[y]
   ensures y'=y+1 & res=z //& @full[y]
-          and x'=x+1 & thread=z; // & @full[x] ; //'
+          and thread=z & true --> x'=x+1; // & @full[x] ; //'
 {
   int id;
   id=fork(inc,x);
@@ -25,7 +25,7 @@ int creator(ref int x,ref int y)
 
 void joiner(int id, ref int x)
   requires [i] true //@value[id]
-           and x'=i+1 & thread=id // & @full[x] //'
+           and thread=id & true --> x'=i+1 // & @full[x] //'
   ensures  x'=i+1; //' @full[x] &
 {
   join(id);

@@ -1,0 +1,6 @@
+data node { int val;}.
+																	
+checkentail e::node<_> * pxR::node<_> |- e!=pxR.
+
+checkentail e::node<_> * pxR::node<_> * o2::node<_>   |- e!=pxR.
+

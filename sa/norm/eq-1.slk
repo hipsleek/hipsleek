@@ -1,0 +1,112 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+HeapPred P1(node a).
+
+pred lseg<p> ==
+    self::node<_,p> 
+  or self::node<_,q> * q::lseg<p> 
+ inv true.
+
+
+//1
+infer [H2] H2(r)   |- r::node<_,null> .
+print residue.
+
+/*
+ <1>(exists flted_16_35: emp&flted_16_35=null&{FLOW,(19,20)=__norm})[]
+ inferred hprel: [H2(r) --> r::node<Anon_36,flted_16_37>@M * 
+                   HP_38(flted_16_37); 
+                  HP_38(flted_16_35) --> emp&flted_16_35=null]
+*/
+
+/*
+//1a
+checkentail  r::node<_,null>  |- r::node<_,null> .
+print residue.
+*/
+/*
+do_match@1
+do_match inp1 : r::node<Anon_13,flted_20_41>@M
+do_match inp2 : r::node<Anon_14,flted_20_42>@M
+do_match inp3 : es_formula: emp&flted_20_41=null&{FLOW,(19,20)=__norm}[]
+ es_ante_evars: [flted_20_41]
+ es_evars: [flted_20_42]
+ es_ante_evars: [flted_20_41]
+ es_gen_impl_vars: [Anon_14]
+ es_unsat_flag: false
+do_match inp4 : emp&{FLOW,(19,20)=__norm}[]
+do_match inp5 :[]
+do_match@1 EXIT: 
+Good Context: [es_formula: emp&flted_20_41=null & Anon_13=Anon_14&{FLOW,(19,20)=__norm}[]
+               es_heap: r::node<Anon_13,flted_20_41>@M
+               es_ante_evars: [flted_20_41]
+               es_evars: [flted_20_42]
+               es_ante_evars: [flted_20_41]
+               es_subst (from): [flted_20_42]
+               es_subst (to): [flted_20_41]
+               es_unsat_flag: false]
+
+*/
+
+
+//2
+infer [H2,n] H2(r)   |- r::node<n,q> & n>0 .
+print residue.
+
+/*
+<1>HP_53(q)&q=q_52 & 1<=n&{FLOW,(19,20)=__norm}[]
+ inferred pure: [1<=n]
+ inferred hprel: [H2(r) --> r::node<n,q_52>@M * HP_53(q_52)]
+*/
+
+//3
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & q36=yy)
+.
+print residue.
+/*
+<1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
+
+*/
+
+
+//4
+infer_exact [P1]
+P1(yy)
+|- (exists y,q36: P1(q36) & y=q36 & y=yy)
+.
+print residue.
+/*
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
+
+*/
+
+//5
+infer_exact [P1]
+P1(yy) & yy = y1 & y1 = y2 & y2=yy
+|-  (exists y2,q36: P1(q36) & y2=q36 & y2=yy)
+.
+print residue.
+/*
+ <1>emp&y1=yy & y1=y2 & y2=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
+*/
+
+//6
+infer_exact [P1]
+P1(yy) & yy = y1
+|-  (exists y2,q36: P1(q36) & y2=q36 & y1=y2 )
+.
+print residue.
+
+/*
+ <1>emp&y1=yy&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [P1(yy) --> P1(yy)]
+*/

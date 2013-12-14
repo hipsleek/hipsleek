@@ -787,7 +787,7 @@ and checkStmt (s: stmt) =
           checkBlock h
 
       | Instr il -> List.iter checkInstr il
-      | HipStmtSpec _ -> ())
+      | HipStmt _ -> ())
     () (* argument of withContext *)
 
 and checkBlock (b: block) : unit = 

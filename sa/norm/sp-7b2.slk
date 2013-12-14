@@ -4,12 +4,12 @@ data node{
 }.
 
 HeapPred P1(node a).
-/*
+
 infer_exact [P1]
    P1(ppp) 
 |- P1(y).
 print residue.
-*/
+
 /*
 # sp-7b2.slk
 

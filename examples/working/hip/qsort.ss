@@ -14,9 +14,9 @@ sll<n, sm, lg> ==
   or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
-node partition(ref node xs, int c)
+node partition(node@R xs, int c)
   requires xs::bnd<n, sm, bg> & sm <= c <= bg
-    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
+    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;//'
 {
 	node tmp1;
 	int v; 
@@ -61,7 +61,7 @@ node append_bll(node x, node y)
 }
 
 
-void qsort(ref node xs)
+void qsort(node@R xs)
     requires xs=null
 	ensures  xs'=null;
 	requires xs::bnd<n, sm, bg> & n>0 

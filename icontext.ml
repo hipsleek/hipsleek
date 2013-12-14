@@ -75,6 +75,7 @@ let icompute_action_init need_preprocess detect_dang=
 
 (*
 That means the following priorities:
+   0. H(...) & p -> emp
    1. H(..) --> H2(..)
    2. H(..) | G --> H2(..)
    3. H(..) * D --> H2(..)
@@ -84,29 +85,45 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
   let pre_preds_4_equal_w_prio = List.map (fun (hp,cs,deps) ->
       let is_lhs_emp = (CF.extract_hrel_head cs.CF.hprel_lhs <> None) in
       let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
-      let is_empty_both = is_lhs_emp && (deps=[]) in
+      let is_pure = try
+        let _ = CF.extract_HRel_f cs.CF.hprel_lhs in
+        SAU.is_empty_f cs.CF.hprel_rhs
+      with _ -> false
+      in
+      let is_empty_both = is_lhs_emp && is_rhs_emp (*&& (deps=[]) *) in
       let is_guard = (cs.CF.hprel_guard <> None) && is_rhs_emp in
-      (hp,cs, is_empty_both, is_guard, (not is_lhs_emp) && is_rhs_emp , CF.get_h_size_f cs.CF.hprel_rhs)
+      (hp,cs, is_pure, is_empty_both, is_guard, (not is_lhs_emp) && is_rhs_emp , CF.get_h_size_f cs.CF.hprel_rhs)
   )
     pr_hp_cs
   in
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = pr_list_ln (pr_hepta !CP.print_sv pr1 string_of_bool string_of_bool string_of_bool string_of_bool
+      string_of_int
+  ) in
+  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_4_equal_w_prio: " ^ ((pr2) pre_preds_4_equal_w_prio))) no_pos in
   (*first ranking*)
-  let fst_ls = List.filter (fun (_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
-  match fst_ls with
-    | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
-    | _ -> begin
-        let snd_ls = List.filter (fun (_,_, _, is_guard, _ , _) ->  is_guard) pre_preds_4_equal_w_prio in
-        match snd_ls with
-          | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
+  (* let pure_ls = List.filter (fun (_,_, is_pure,_, _, _ , _) ->  is_pure) pre_preds_4_equal_w_prio in *)
+  (* match pure_ls with *)
+  (*   | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])] *)
+  (*   | _ -> *) begin
+        let fst_ls = List.filter (fun (_,_,_, is_empty_both, _, _ , _) ->  is_empty_both) pre_preds_4_equal_w_prio in
+        let _ = Debug.ninfo_zprint  (lazy  ("    fst_ls: " ^ ((pr2) fst_ls))) no_pos in
+        match fst_ls with
+          | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
           | _ -> begin
-              let rd_ls = List.filter (fun (_,_, _, _, is_emp_r , _) ->  is_emp_r) pre_preds_4_equal_w_prio in
-              match rd_ls with
-                | (hp,cs,_,_,_,_)::_ -> [(hp,[cs])]
+              let snd_ls = List.filter (fun (_,_,_, _, is_guard, _ , _) ->  is_guard) pre_preds_4_equal_w_prio in
+              match snd_ls with
+                | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
                 | _ -> begin
-                    let hp,cs,_,_,_,_ = List.fold_left (fun (hp0,cs0,a0,b0,c0, s0) (hp1,cs1,a1,b1,c1, s1) ->
-                        if s1<s0 then (hp1,cs1,a1,b1,c1, s1) else (hp0,cs0,a0, b0, c0, s0)
-                    ) (List.hd pre_preds_4_equal_w_prio) (List.tl pre_preds_4_equal_w_prio) in
-                    [(hp,[cs])]
+                    let rd_ls = List.filter (fun (_, _,_, _, _, is_emp_r , _) ->  is_emp_r) pre_preds_4_equal_w_prio in
+                    match rd_ls with
+                      | (hp,cs,_,_,_,_,_)::_ -> [(hp,[cs])]
+                      | _ -> begin
+                          let hp,cs,_,_,_,_,_ = List.fold_left (fun (hp0,cs0,a, a0,b0,c0, s0) (hp1,cs1,b, a1,b1,c1, s1) ->
+                              if s1<s0 then (hp1,cs1,b, a1,b1,c1, s1) else (hp0,cs0,a,a0, b0, c0, s0)
+                          ) (List.hd pre_preds_4_equal_w_prio) (List.tl pre_preds_4_equal_w_prio) in
+                          [(hp,[cs])]
+                        end
                   end
             end
       end
@@ -122,8 +139,8 @@ let ranking_frozen_mutrec_preds pr_hp_cs=
 (*
   find all pre-preds that has only one assumption ===> equal
 *)
-let icompute_action_pre_x constrs post_hps frozen_hps=
-  let ignored_hps = post_hps@frozen_hps in
+let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
+  let ignored_hps = post_hps@frozen_hps@pre_fix_hps in
   let partition_pre_preds (pre_preds, rem_constrs, tupled_hps) cs=
     let l_hpargs = CF.get_HRels_f cs.CF.hprel_lhs in
     let r_hpargs = CF.get_HRels_f cs.CF.hprel_rhs in
@@ -188,16 +205,29 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
            in
            partition_equal n_res rest1
   in
+  (* let is_pure_guard (hp0, grp) = *)
+  (*   let fs, ogs = List.fold_left (fun (r1,r2) cs -> (cs.CF.hprel_rhs::r1, cs.CF.hprel_guard::r2)) ([],[]) grp in *)
+  (*   if List.exists (fun og -> *)
+  (*       match og with *)
+  (*         | None -> false *)
+  (*         | Some f -> not (CP.isConstTrue (CF.get_pure f)) *)
+  (*   ) ogs then *)
+  (*     let hps = List.fold_left (fun r f -> r@(CF.get_hp_rel_name_formula f)) [] fs in *)
+  (*     CP.diff_svl hps [hp0] <> [] *)
+  (*   else false *)
+  (* in *)
+  (************END************)
   (*tupled_hps: will be processed as pre-oblg *)
   let pr_pre_preds, _, tupled_hps = List.fold_left partition_pre_preds ([],[],[]) constrs in
   let pre_preds_cand_equal0, complex_nrec_ndep, complex_nonrec_guard_grps, complex_hps =
     partition_equal ([],[],[],[]) pr_pre_preds
   in
   let pr2 (a,_,_) = !CP.print_sv a in
-  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
+  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal0: " ^ ((pr_list pr2) pre_preds_cand_equal0))) no_pos in
   let _ = Debug.ninfo_zprint  (lazy  ("    tupled_hps: " ^ (!CP.print_svl tupled_hps))) no_pos in
   (*filter the tupled_hps *)
   let pre_preds_cand_equal1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp tupled_hps)) pre_preds_cand_equal0 in
+  let _ = Debug.ninfo_zprint  (lazy  ("    pre_preds_cand_equal1: " ^ ((pr_list pr2) pre_preds_cand_equal1))) no_pos in
   (*filter frozen candidates that depends on others. they will be synthesized next round.*)
   (* let cand_equal_hps = List.map fst3 pre_preds_cand_equal1 in *)
   let nonrec_complex_guard_hps = List.map fst complex_nonrec_guard_grps in
@@ -210,9 +240,15 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
   ) [] pre_preds_cand_equal1 in
   (*mut rec dep*)
   let pre_preds_4_equal1 = (* if pre_preds_4_equal = [] && pre_preds_cand_equal1 <> [] then *)
-    if  pre_preds_4_equal  <> [] then
-    ranking_frozen_mutrec_preds pre_preds_cand_equal1
-    else []
+    if  complex_nonrec_guard_grps = [] && pre_preds_4_equal <> [] then
+      ranking_frozen_mutrec_preds pre_preds_cand_equal1
+    else
+      if complex_nonrec_guard_grps != [] then
+        (*move guard with pure to the end*)
+        (* let complex_nonrec_pguard_grps, rem = List.partition is_pure_guard complex_nonrec_guard_grps in *)
+        (* (rem@complex_nonrec_pguard_grps) *)
+        complex_nonrec_guard_grps
+      else []
   in
   (*process_complex, nonrec, non depend on others
     testcases: check-dll.ss; check-sorted
@@ -233,23 +269,23 @@ let icompute_action_pre_x constrs post_hps frozen_hps=
   else pre_preds_4_equal2
   in
   (*find rem_constrs for weaken*)
-  let is_not_in_frozen frozen_hps cs=
+  let is_not_in_frozen complex_hps frozen_hps cs=
     let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
-    if CP.intersect_svl lhps frozen_hps = [] then true else false
+    if (CP.intersect_svl lhps frozen_hps) = [] || (CP.intersect_svl lhps complex_hps <> []) then true else false
   in
+  let complex_hps1 = List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps in
   let rem_constrs = if pre_preds_4_equal3 =[] then constrs else
     let hps = List.map fst pre_preds_4_equal3 in
-    List.filter (is_not_in_frozen hps) constrs
+    List.filter (is_not_in_frozen complex_hps hps) constrs
   in
-  (pre_preds_4_equal3,
-  List.filter (fun hp -> not (CP.mem_svl hp tupled_hps)) complex_hps,rem_constrs)
+  (pre_preds_4_equal3, complex_hps1,rem_constrs)
 
-let icompute_action_pre constrs post_hps frozen_hps=
+let icompute_action_pre constrs post_hps frozen_hps pre_fix_hps=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv  pr1) in
   Debug.no_3 "icompute_action_pre" pr1 !CP.print_svl !CP.print_svl
       (pr_triple pr2 !CP.print_svl pr1)
-      (fun _ _ _ -> icompute_action_pre_x constrs post_hps frozen_hps)
+      (fun _ _ _ -> icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps)
       constrs post_hps frozen_hps
 
 

@@ -1,0 +1,39 @@
+//(1)
+checkentail b::barrier(3,2,1)<p> |- b::barrier(3,2,1)<p1>.
+print residue.
+// VALID, exact match
+
+//(2)
+checkentail b::barrier(1,2,1)<p> |- b::barrier(1,3,1)<p>.
+print residue.
+// FAIL, exact match
+
+//(3)
+checkentail b::barrier(1,2,1)<p> |- (exists c,t,a: b::barrier(c,t,a)<p>).
+print residue.
+//VALID
+
+//(4)
+checkentail b::barrier(1,2,1)<p> |- b::barrier(c,t,a)<p>.
+print residue.
+//VALID with implicit instantiation
+
+//(5)
+checkentail b::barrier(c,t,a)<p> |- 0<=c<=t+a & t>=0.
+print residue.
+// VALID, invariant
+
+//(6)
+checkentail b::barrier(1,2,1)<p> |- [c,t,a] b::barrier(c,t,a)<p>.
+print residue.
+//VALID with explicit instantiation, residue: c=1, t=2, a=1
+
+//(7)
+checkentail b::barrier(1,2,1)<p> |- (exists c: b::barrier(c,t,a)<p>).
+print residue.
+//VALID with implicit instantiation, residue: t=2, a=1
+
+//(8)
+checkentail b::barrier(1,2,1)<p> |- (exists a1: b::barrier(c,t,a)<p> & a=a1 & a1=2).
+print residue.
+//FAIL

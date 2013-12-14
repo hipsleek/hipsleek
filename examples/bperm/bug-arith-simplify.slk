@@ -1,0 +1,47 @@
+/*
+  Fixed BUG:
+  n=2*r ==> n=r+r
+  while n=r*2 ==> n=2+2
+
+  Hence, (1) is valid but (2) is false.
+  Both should be valid.
+
+
+arith_simplify LHS5@16@11@10@9
+arith_simplify LHS5 inp1 : n=r_14*2
+arith_simplify LHS5@16 EXIT out : n=2+2
+--> purge_mult
+
+================ --pcp --pip =====================
+
+INPUT: 
+ ### ante = IFORM:(emp)*(n = (2) * (r1))( FLOW __norm)
+ ### conseq = IFORMStruc:EBase: [][](EX r . (emp)*(n = (2) * (r))( FLOW __norm)) 
+INPUT: 
+ ### ante =  emp&n=r1+r1&{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase EXISTS(r_14: emp&n=r_14+r_14&{FLOW,(21,22)=__norm})[]
+
+run_infer:
+ emp&n=r1+r1&{FLOW,(21,22)=__norm}[] [] |-  EBase EXISTS(r_14: emp&n=r_14+r_14&{FLOW,(21,22)=__norm})[]
+
+Entail (1) : Valid. 
+
+INPUT: 
+ ### ante = IFORM:(emp)*(n = (2) * (r1))( FLOW __norm)
+ ### conseq = IFORMStruc:EBase: [][](EX r . (emp)*(n = (r) * (2))( FLOW __norm)) 
+INPUT: 
+ ### ante =  emp&n=r1+r1&{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase emp&n=2+2&{FLOW,(21,22)=__norm}[]
+
+run_infer:
+ emp&n=r1+r1&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&n=2+2&{FLOW,(21,22)=__norm}[]
+
+Entail (2) : Fail.(may) cause: n=r1+r1 |-  n=2+2. LOCS:[34] (may-bug)
+
+*/
+
+//(1)
+checkentail n=2*r1 |- (exists r: n=2*r).
+
+//(2)
+checkentail n=2*r1 |- (exists r: n=r*2).

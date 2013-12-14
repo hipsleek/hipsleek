@@ -1,0 +1,6 @@
+checkentail true |- (exists v: v<\inf). // Valid
+checkentail true |- (exists v: v=\inf). // Valid
+checkentail true |- (exists v: v=v+5). // Fail
+checkentail true |- 
+ (exists v: v!=\inf & v!=-\inf & v=v+5). 
+

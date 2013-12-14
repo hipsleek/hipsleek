@@ -264,7 +264,9 @@ let bf_to_var p = match p with
 type pure_double =
   | Pure_f of P.formula
   | Pure_c of P.exp
-  | Pure_t of(P.exp * (F.ann option)) (* for data ann: var * ann, where var represents a data field *) 
+  | Pure_t of(P.exp * (P.ann option)) (* for data ann: var * ann, where var represents a data field *) 
+
+let mk_purec_absent e = Pure_t(e,Some F.mk_absent_ann)
 
 let string_of_pure_double p =
   match p with
@@ -687,19 +689,15 @@ let peek_pointer_type =
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
-  if ((ref_level == 0) && (deref_level == 0)) then
-    (cid, base_heap_id, 0)
-  else if ((ref_level > 0) && (deref_level = 0) && (!is_cparser_mode)) then (
-    (* reference case, used to parse specs in C programs *)
-    let s = ref base_heap_id in
-    for i = 1 to ref_level do
-      s := !s ^ "__star";
-    done;
+  let s = ref base_heap_id in
+  for i = 1 to ref_level do
+    s := !s ^ "_star";
+  done;
+  if (deref_level == 0) then
     (cid, !s, 0)
-  )
-  else if ((ref_level = 0) && (deref_level > 0) && (!is_cparser_mode)) then
+  else if ((deref_level > 0) && (!is_cparser_mode)) then
     (* dereference case, used to parse specs in C programs *)
-    (cid, base_heap_id, deref_level)
+    (cid, !s, deref_level)
   else
     report_error (get_pos_camlp4 l 1) "unexpected heap_id"
 
@@ -750,21 +748,21 @@ let set_slicing_utils_pure_double f il =
                           f
   else f
 
-let rec get_heap_ann annl : F.ann = 
+let rec get_heap_ann annl : P.ann = 
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  F.ConstAnn(Mutable)
+    | [] ->  P.ConstAnn(Mutable)
 
-and get_heap_ann_opt annl : F.ann option = 
+and get_heap_ann_opt annl : P.ann option = 
   match annl with
     | a :: r -> a
     | [] ->  None
 
-and get_heap_ann_list annl : F.ann list  = 
+and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  F.ConstAnn(Mutable) :: get_heap_ann_list r
+    |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
     | [] -> []
 				   
 let sprog = SHGram.Entry.mk "sprog" 
@@ -806,11 +804,14 @@ non_empty_command:
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
+      | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
       | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
       | t=shapeconquer_cmd     -> ShapeConquer t
+      | t=shapelfp_cmd     -> ShapeLFP t
+      | t=shaperec_cmd     -> ShapeRec t
       | t=shapepost_obl_cmd     -> ShapePostObl t
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
@@ -1041,11 +1042,11 @@ ann_label:
 
 ann_heap: 
   [[
-    `MUT -> Some (F.ConstAnn(Mutable))
-   | `IMM  -> Some (F.ConstAnn(Imm))
-   | `LEND -> Some (F.ConstAnn(Lend))
-   | `ACCS -> Some (F.ConstAnn(Accs))
-   | `AT; t=cid  -> Some (F.PolyAnn(t, get_pos_camlp4 _loc 1))
+    `MUT -> Some (P.ConstAnn(Mutable))
+   | `IMM  -> Some (P.ConstAnn(Imm))
+   | `LEND -> Some (P.ConstAnn(Lend))
+   | `ACCS -> Some (P.ConstAnn(Accs))
+   | `AT; t=cid  -> Some (P.PolyAnn(t, get_pos_camlp4 _loc 1))
    | `DERV -> None
    ]];
 
@@ -1089,6 +1090,7 @@ view_header:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_imm_map = [];
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
@@ -1121,6 +1123,7 @@ view_header_ext:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_imm_map = [];
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
@@ -1272,19 +1275,26 @@ disjunctive_constr:
    ]
   ];
 
-core_constr_and : [[ ls=core_constr_conjunctions ->
- 
- let main = List.hd ls in
-    let formula_and = List.tl ls in
-    let formula_and = List.map (F.one_formula_of_formula) formula_and in
-    let main = F.add_formula_and formula_and main in
-    main
- ]];
+core_constr_and : [[ 
+    f1 = core_constr; `ANDWORD; ls=core_constr_conjunctions ->
+      let main = F.add_formula_and ls f1 in
+      main
+  | f1 = core_constr -> f1
+]];
 
 core_constr_conjunctions: [ "core_constr_and" LEFTA
                    [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
-                   | [f1 = core_constr -> [f1]]
+                   | [f1 = and_core_constr -> [f1]]
                   ];
+
+and_core_constr:
+  [
+    [ dl = pure_constr; `CONSTR; f = core_constr  ->
+       let h,p,fl,_ = F.split_components f in
+       let pos = (get_pos_camlp4 _loc 2) in 
+       F.mkOneFormula h p dl None pos
+    ]
+  ];
 
 core_constr:
   [
@@ -1373,7 +1383,10 @@ heap_id:
    | `IDENTIFIER id; `CARET -> (id, 0, 1, _loc)
    | hid = heap_id; `STAR -> 
        let (h, s, c, l) = hid in
-       (h, s+1, c, l)
+       if (c > 0) then
+         report_error (get_pos_camlp4 _loc 1) "invalid heap_id string"
+       else
+         (h, s+1, c, l)
    | hid = heap_id; `CARET ->
        let (h, s, c, l) = hid in
        (h, s, c+1, l)
@@ -1429,8 +1442,8 @@ simple_heap_constr:
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        match hal with
-       | ([],t) -> F.mkHeapNode2 c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid deref dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | t = ho_fct_header -> (
        let frac = (
@@ -1439,7 +1452,7 @@ simple_heap_constr:
          else 
            empty_iperm ()
        ) in
-       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (F.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
+       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
@@ -1451,8 +1464,8 @@ simple_heap_constr:
      )
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        match hal with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (F.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
          (* if hp_names # mem id then *)
@@ -1466,7 +1479,20 @@ simple_heap_constr:
 opt_perm: [[t = OPT perm -> t ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
-perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
+perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
+          match !Globals.perm with
+            | Bperm -> (*Bounded permissions have 3 parameters*)
+                if ((List.length t) ==3) then
+                  let pc = List.hd t in
+                  let pt = List.hd (List.tl t) in
+                  let pa = List.hd (List.tl (List.tl t)) in
+                  Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
+                else
+                  let _ = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
+                  Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
+            | _ -> List.hd t (*other permission systems have one parameter*)
+       ]];
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -1661,8 +1687,9 @@ cexp_w:
   | "una"
     [ `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
     | `HASH ->
-        let _ = hash_count := !hash_count + 1 in 
-        Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+        (* let _ = hash_count := !hash_count + 1 in  *)
+        (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
+        mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
         if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
@@ -1804,6 +1831,27 @@ rankc_cmd:
 solve_rankc_cmd:
   [[ `SOLVE_RANKC; il = OPT id_list_w_brace -> un_option il [] ]];
 
+ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
+
+rel_ass : [[ t=meta_constr; `CONSTR; b=meta_constr -> (t, b)]];
+
+validate_entail_state:
+  [[
+     `OPAREN ; `OSQUARE; il1=OPT id_list;`CSQUARE; `COMMA; ef = meta_constr; `COMMA; ls_ass = ls_rel_ass ; `CPAREN->
+         let il1 = un_option il1 [] in
+         (il1, ef, ls_ass)
+  ]];
+
+validate_list_context:
+  [[
+     `OSQUARE; t = LIST0 validate_entail_state SEP `SEMICOLON ;`CSQUARE-> t
+  ]];
+
+validate_cmd:
+  [[ `VALIDATE; lc = OPT validate_list_context  ->
+      (un_option lc [])
+   ]];
+
 cond_path:
     [[ `OPAREN; il2 = OPT int_list; `CPAREN -> un_option il2 []
     ]];
@@ -1844,6 +1892,18 @@ shapeconquer_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il2, il1)
+   ]];
+
+shapelfp_cmd:
+   [[ `SHAPE_LFP; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   il1
+   ]];
+
+shaperec_cmd:
+   [[ `SHAPE_REC; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   il1
    ]];
 
 shapepost_obl_cmd:
@@ -2258,7 +2318,9 @@ hprogn:
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
-        | Proc pdef -> proc_defs := pdef :: !proc_defs 
+        | Proc pdef ->
+              let _ = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
+              proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
@@ -2310,7 +2372,7 @@ mdecl:
 	  |t=decl -> [t]]];
   
 decl:
-  [[ `HIP_INCLUDE; `PRIME; `IDENTIFIER ic; `PRIME -> Include ic
+  [[ `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> Include ic
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
@@ -2324,6 +2386,16 @@ decl:
         { coercion_list_elems = [c];
           coercion_list_kind  = (convert_lem_kind kind)}
   | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}]];
+
+dir_path: [[t = LIST1 file_name SEP `DIV ->
+    let str  = List.fold_left (fun res str -> res^str^"/") "" t in
+    let len = String.length str in
+    Str.string_before str (len-1)
+           ]];
+
+file_name: [[ `DOTDOT -> ".."
+              | `IDENTIFIER id -> id
+            ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -2485,7 +2557,6 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
-
 flag_arg : [[
 	`IDENTIFIER t -> Flag_str t
 	| `INT_LITER (i,_)-> Flag_int i
@@ -2499,7 +2570,9 @@ flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
-  [[ h=proc_header; flgs=opt_flag_list;b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+  [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
+      let n_h = genESpec_wNI h (Some b) h.proc_args h.proc_return h.proc_loc in
+      { n_h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header; _=opt_flag_list-> h]];
   
 proc_header:
@@ -2529,14 +2602,16 @@ opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
 
 fixed_parameter:
-  [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
+  [[ t=typ; pm=OPT pass_t; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }]];
 
-ref_t: [[`REF -> RefMod]];
-  
+
+pass_t: [[`PASS_REF -> RefMod
+       | `PASS_COPY -> CopyMod]];
+
 proc_body: [[t=block-> t]];
 
 (*********** Statements ***************)
@@ -3129,8 +3204,20 @@ test_ele:
 
 constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 
-constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
-ass_rhs = F.subst_stub_flow n_flow b}]];
+
+constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr ->
+    {ass_lhs = F.subst_stub_flow n_flow t;
+    ass_guard = None;
+    ass_rhs = F.subst_stub_flow n_flow b}
+  | t=disjunctive_constr; `REL_GUARD; guard = disjunctive_constr; `CONSTR; b=disjunctive_constr ->
+        {ass_lhs = F.subst_stub_flow n_flow t;
+        ass_guard = Some guard;
+        ass_rhs = F.subst_stub_flow n_flow b}
+  |  t=disjunctive_constr; `EQUIV; b=disjunctive_constr ->
+         {ass_lhs = F.subst_stub_flow n_flow t;
+         ass_guard = None;
+         ass_rhs = F.subst_stub_flow n_flow b}
+]];
 
 (*end of cp_list*)
 END;;

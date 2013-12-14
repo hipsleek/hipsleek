@@ -32,7 +32,7 @@ int find_min(node x)
 	}
 }
 
-void delete_min(ref node x, int a)
+void delete_min(node@R x, int a)
 	requires x::bnd1<n, s, l, mi> & n >= 1 & a = mi 
 	ensures x' = null & n = 1 & s <= mi < l or 
                 x'::bnd1<n-1, s, l, mi1> & mi1 >= mi & x' != null & n > 1;
@@ -47,7 +47,7 @@ void delete_min(ref node x, int a)
 	}
 }
 
-node selection_sort(ref node x)
+node selection_sort(node@R x)
 	requires x::bnd1<n, sm, lg, mi> & n > 0 
 	ensures res::sll<n, mi, l> & l < lg & x' = null;
 
