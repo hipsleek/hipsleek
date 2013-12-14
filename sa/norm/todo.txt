@@ -248,7 +248,7 @@ lemma with annotation vars
 
 ===================================================================
 # zip-1.slk
-  - add --> possible lemma if fail to split
+  - add --> possible lemma if fail to split: DONE
   - pred-en-pure: do split
   - pred_split should work on both known (view) and unknown preds
 

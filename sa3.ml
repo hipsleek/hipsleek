@@ -2573,12 +2573,29 @@ and infer_core iprog prog proc_name callee_hps is need_preprocess detect_dang =
 
 let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps all_post_hps
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang =
+  let rectify_type_root hp_def=
+    match hp_def.CF.def_cat with
+      | CP.HPRelDefn (hp,(CP.SpecVar (rt, r_id, rp)),paras) -> begin
+          match rt with
+            | Named id -> if String.compare id "" = 0  then
+                let svl = (CF.h_fv hp_def.CF.def_lhs)@(List.fold_left (fun l (f,_) -> l@(CF.fv f)) [] hp_def.CF.def_rhs) in
+                let r_svl = List.filter (fun ((CP.SpecVar (rt1, r_id1, rp1))) ->
+                    String.compare r_id r_id1 = 0 && not (is_null_type rt1)
+                ) svl in
+                if r_svl = [] then hp_def else
+                  {hp_def with CF.def_cat = CP.HPRelDefn (hp,(CP.SpecVar (CP.type_of_spec_var (List.hd r_svl), r_id, rp)),paras)}
+              else hp_def
+            | _ -> hp_def
+        end
+      | _ -> hp_def
+  in
   let process_one_path (cond_path, link_hpargs, constrs1)=
     let is0 = infer_init iprog prog proc_name cond_path constrs1
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs0
       link_hpargs need_preprocess detect_dang in
     let is = if !Globals.sa_syn then
-      let is1 = infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
+      let is1a = infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
+      let is1 = {is1a with CF.is_hp_defs = List.map rectify_type_root is1a.CF.is_hp_defs} in
       let is2 = if !Globals.pred_elim_useless then
         (*detect and elim useless paramters*)
         {is1 with CF.is_hp_defs = SAC.norm_elim_useless_paras prog

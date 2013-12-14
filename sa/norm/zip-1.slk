@@ -7,7 +7,7 @@ HeapPred zip(node@RO a, node b).
 
 relDefn zip(x,y) <->
   x=null & y=null
-or z::node<_,p>*y::node<_,q>*zip(p,q).
+or x::node<_,p>*y::node<_,q>*zip(p,q).
 
 
 pred_split [zip].
