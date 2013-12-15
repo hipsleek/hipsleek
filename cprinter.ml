@@ -521,7 +521,7 @@ let string_of_spec_var x =
     | P.SpecVar (t, id, p) ->
     	  (* An Hoa : handle printing of holes *)
           let ts = if !print_type then ":"^(string_of_typ t) else "" in
-    	  (* let real_id = if (id.[0] = '#') then "#" else id *)
+          (* let real_id = if (id.[0] = '#') then "#" else id *)
           (* in  *)
           (id ^(match p with
             | Primed -> "'"
@@ -800,8 +800,12 @@ let rec pr_formula_exp (e:P.exp) =
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  (")"))
     | P.Template t -> 
-        fmt_string ((string_of_spec_var t.P.templ_id) ^ ": ");
-        pr_formula_exp (P.exp_of_template t)
+      if !Globals.gen_templ_slk then 
+        fmt_string ((string_of_spec_var t.P.templ_id) ^ 
+          (pr_list_round_sep "," !P.print_exp t.P.templ_args))
+      else
+        (fmt_string ((string_of_spec_var t.P.templ_id) ^ ": ");
+        pr_formula_exp (P.exp_of_template t))
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()
@@ -3304,11 +3308,12 @@ let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
 
 (* Template: Print Template Declarations *)
 let pr_templ_decl tdef =
-  fmt_string (tdef.Cast.templ_name ^ "(");
-  pr_wrap_test "" Gen.is_empty  (pr_seq "" pr_spec_var) tdef.Cast.templ_params;
-  pr_wrap_test ")" Gen.is_None (fun b -> match b with
+  fmt_string ("template " ^ (string_of_typ tdef.Cast.templ_ret_typ) ^ " " ^ tdef.Cast.templ_name ^
+    (pr_list_round_sep "," (fun (CP.SpecVar (t, v, _)) -> (string_of_typ t) ^ " " ^ v) tdef.Cast.templ_params));
+  pr_wrap_test "" Gen.is_None (fun b -> match b with
     | None -> ()
-    | Some e -> fmt_string " == "; pr_formula_exp e) tdef.Cast.templ_body
+    | Some e -> fmt_string " == "; pr_formula_exp e) tdef.Cast.templ_body;
+  fmt_string "."
 
 let string_of_templ_decl = poly_string_of_pr pr_templ_decl
 

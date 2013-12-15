@@ -449,6 +449,8 @@ let common_arguments = [
   ("--en-term-inf", Arg.Set Globals.en_term_inf, "Enable termination inference");
   ("--ti-reverify", Arg.Set Globals.ti_reverify_flag, "Enable re-verification after termination inference");
   ("--ti-gen-sleek-file", Arg.Set Globals.ti_gen_slk, "Generate sleek file for termination inference constraints");
+  ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
+  ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

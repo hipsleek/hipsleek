@@ -1041,6 +1041,7 @@ let phase_infer_ind = ref false
 let en_term_inf = ref false
 let ti_reverify_flag = ref false
 let ti_gen_slk = ref false
+let gen_templ_slk = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false

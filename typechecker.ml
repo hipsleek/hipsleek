@@ -3260,7 +3260,12 @@ let check_prog iprog (prog : prog_decl) =
       in
       prog
   ) prog proc_scc 
-  in 
+  in
+
+  let _ = 
+    if !Globals.gen_templ_slk then Template.gen_slk_file prog
+    else ()
+  in
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)

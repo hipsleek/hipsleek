@@ -377,12 +377,22 @@ let exp_of_templ_decl (tdef: C.templ_decl): exp =
 
 let templ_constr_stk: formula Gen.stack = new Gen.stack
 
+let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack
+
+let templ_sleek_stk: string Gen.stack = new Gen.stack
+
 let templ_entail_num = ref 0
 
 let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
   let inf_templs = es.CF.es_infer_vars_templ in
-  let ante = MCP.find_rel_constraints ante (fv cons) in
 
+  let _ = 
+    if !gen_templ_slk then 
+      templ_sleek_scc_stk # push (inf_templs, MCP.pure_of_mix ante, cons)
+    else () 
+  in
+
+  let ante = MCP.find_rel_constraints ante (fv cons) in
   let n_ante, ante_unks = trans_formula_templ inf_templs (MCP.pure_of_mix ante) in
   let n_cons, cons_unks = trans_formula_templ inf_templs cons in
 
@@ -402,33 +412,71 @@ let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula)
   Debug.no_2 "infer_template" pr1 pr2 (pr_opt !CF.print_entail_state) 
     (fun _ _ -> infer_template es ante cons pos) ante cons
 
+let gen_slk_infer_templ_scc () =
+  let inp = List.rev (templ_sleek_scc_stk # get_stk) in
+  let _ = templ_sleek_stk # reset in
+
+  let out = List.map (fun (templ_vars, ante, cons) ->
+    "infer " ^ (!print_svl templ_vars) ^ " " ^ 
+    (!print_formula ante) ^ " |- " ^ (!print_formula cons) ^ ".") inp in
+  let str = (String.concat "\n" out) ^ "\ntemplate_solve.\n" in
+  templ_sleek_stk # push str
+
+let gen_slk_file prog =
+  let file_name_ss = List.hd !Globals.source_files in
+  let out_chn =
+    let reg = Str.regexp "\.ss" in
+    let file_name_slk = "logs/rank_" ^ (Str.global_replace reg ".slk" file_name_ss) in
+    let _ = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    open_out (file_name_slk)
+  in
+
+  let templ_decl_str = String.concat "\n" 
+    (List.map Cprinter.string_of_templ_decl prog.C.prog_templ_decls)
+  in
+
+  let templ_infer_str = String.concat "\n" (List.rev (templ_sleek_stk # get_stk)) in
+  
+  let slk_output = templ_decl_str ^ "\n\n" ^ templ_infer_str in
+  let _ = output_string out_chn slk_output in
+  let _ = close_out out_chn in
+  ()
+
 let collect_and_solve_templ_constrs inf_templs prog = 
   let constrs = templ_constr_stk # get_stk in
   let _ = templ_constr_stk # reset in
-  
-  let unks = Gen.BList.remove_dups_eq eq_spec_var 
-    (List.concat (List.map fv constrs)) in
-  let model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
-  match model with
-  | [] -> print_endline ("TEMPLATE INFERENCE: No result.")
-  | _ ->
-    let templ_decls = prog.C.prog_templ_decls in
-    let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
-    let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
-    let unk_subst = List.map (fun v -> 
-        let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
-        (v, mkIConst v_val no_pos)) 
-      (Gen.BList.difference_eq eq_spec_var templ_fv templ_params) in
-    let inf_templ_decls = match inf_templs with
-    | [] -> templ_decls
-    | _ -> List.find_all (fun tdef -> List.exists (fun id -> 
-        id = tdef.C.templ_name) inf_templs) templ_decls
-    in
-    let res_templ_decls = List.map (fun tdef -> { tdef with
-      C.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.C.templ_body; 
-    }) inf_templ_decls in
-    print_string "TEMPLATE INFERENCE RESULT: ";
-    print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
+
+  let _ = 
+    if !gen_templ_slk then gen_slk_infer_templ_scc () 
+    else ()
+  in
+
+  if constrs == [] then ()
+  else
+    let unks = Gen.BList.remove_dups_eq eq_spec_var 
+      (List.concat (List.map fv constrs)) in
+    let model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
+    match model with
+    | [] -> print_endline ("TEMPLATE INFERENCE: No result.")
+    | _ ->
+      let templ_decls = prog.C.prog_templ_decls in
+      let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
+      let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
+      let unk_subst = List.map (fun v -> 
+          let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
+          (v, mkIConst v_val no_pos)) 
+        (Gen.BList.difference_eq eq_spec_var templ_fv templ_params) in
+      let inf_templ_decls = match inf_templs with
+      | [] -> templ_decls
+      | _ -> List.find_all (fun tdef -> List.exists (fun id -> 
+          id = tdef.C.templ_name) inf_templs) templ_decls
+      in
+      let res_templ_decls = List.map (fun tdef -> { tdef with
+        C.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.C.templ_body; 
+      }) inf_templ_decls in
+      print_string "TEMPLATE INFERENCE RESULT: ";
+      print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
 
 
 
