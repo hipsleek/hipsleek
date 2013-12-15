@@ -1,0 +1,39 @@
+template int f(int x, int y).
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y & Term[f(x,y)] 
+   |- Term[f(x', y')].
+//print residue.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) >= 0.
+//infer [f] true |- f(x, y) >= 0.
+//print residue.
+
+template_solve.
+
+/*
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') & f(x, y) >= 0.
+//print residue.
+
+template_solve.
+*/
+
+/*
+#../sleek templ-2.slk --en-term-inf -tp redlog
+
+Is redlog strictly required. I got some error with
+Omega and z3. Maybe it is better to use
+RelAssume than infer which has a different purpose.
+
+Entail (1) : Valid. 
+ <1>Base emp&(1+x)<=y & x'=1+x & y=y'&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>Base emp&(1+x)<=(y+y)&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+TEMPLATE INFERENCE RESULT: [ f([x; y]) == 0+(-1*x)+(2*y)]
+
+*/

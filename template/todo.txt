@@ -13,6 +13,17 @@ print residue.
 // incorrect:
 // inferred rel: [RELDEFN R: ( true) -->  R(a,b)]
 =============================================================
+# mc91.ss
+
+why did we infer 900-9n instead of simpler 100-n?
+
+
+# mc91-v.ss
+why did the presence of infer[r] leads to:
+
+Starting Omega...oc
+trans_prog
+WARNING (must fix): Vars from[r]has type UNK
 =============================================================
 =============================================================
 =============================================================
