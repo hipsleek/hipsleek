@@ -85,13 +85,13 @@ let rec smt_of_typ t =
   | List _ -> illegal_format ("z3.smt_of_typ: List not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+  | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
   (* TODO *)
   | RelT _ -> "Int"
   | HpT -> "Int"
-  | FuncT _ 
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
-    | Bptyp -> "int-triple"
+  | Bptyp -> "int-triple"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -644,7 +644,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   let smt_var_decls = List.map (fun v ->
     let tp = (CP.type_of_spec_var v)in
     let t = smt_of_typ tp in
-    "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+    match tp with
+    | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
   ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)

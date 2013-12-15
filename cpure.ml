@@ -9455,10 +9455,12 @@ let drop_complex_ops =
 let drop_lexvar_ops =
   let pr_weak b = match b with
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkFalse (pos_of_b_formula (b, None))) else None in
   (pr_weak,pr_strong)
 
 let drop_complex_ops_z3 = drop_lexvar_ops
