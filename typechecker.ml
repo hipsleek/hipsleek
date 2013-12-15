@@ -17,6 +17,7 @@ module CP = Cpure
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 module I = Iast
+module C = Cast
 module LP = Lemproving
 module Inf = Infer
 module AS = Astsimp
@@ -30,8 +31,6 @@ let store_label = new store LO2.unlabelled LO2.string_of
 let save_flags = ref (fun ()->()) ;;
 let restore_flags = ref (fun ()->());;
 let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
-
-let phase_infer_ind = ref false
 
 let log_spec = ref ""
   (* checking expression *)
@@ -311,8 +310,8 @@ and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =
     (* Termination: filter the exp of phase variables 
      * (their value non-negative numbers in default) *)
-    let m = List.filter (fun e -> 
-        not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
+    let m = List.filter (fun e -> not (CP.is_nat e) &&
+      not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
     if m == [] then (es, CF.SuccCtx [(CF.Ctx es)])
     else begin
       let m_pos = match m with
@@ -516,7 +515,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             in
             let _ = proc.proc_stk_of_static_specs # push einfer in
             let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
-            let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
+            (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
+            (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
+            let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
+              let typ = CP.type_of_spec_var v in
+              if is_RelT typ then (vr@[v], vt, vi)
+              else if is_FuncT typ then (vr, vt@[v], vi)
+              else (vr, vt, vi@[v])) ([], [], []) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
 (*              if old_vars=[] then *)
@@ -570,6 +575,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
+                    CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
                     CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
@@ -3152,7 +3158,7 @@ let check_proc_wrapper_map_net iprog prog  (proc,num) cout_option =
 let stk_tmp_checks = new Gen.stack
 
 
-let drop_phase_infer_checks() =
+let drop_phase_infer_checks () =
   stk_tmp_checks # push !dis_bnd_chk;
   stk_tmp_checks # push !dis_term_msg;
   stk_tmp_checks # push !dis_post_chk;
@@ -3244,9 +3250,14 @@ let check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
-      let _ = 
+      let _ =  
         if !Globals.en_term_inf then TI.collect_and_solve_rrel_scc prog
-        else () in
+        else () 
+      in
+      let _ = 
+        let inf_templs = List.map (fun tdef -> tdef.C.templ_name) prog.C.prog_templ_decls in
+        Template.collect_and_solve_templ_constrs inf_templs prog 
+      in
       prog
   ) prog proc_scc 
   in 

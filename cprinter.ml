@@ -2713,6 +2713,7 @@ let pr_estate (es : entail_state) =
   *)
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+  pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_templ;
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
@@ -2734,6 +2735,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_rel;
+  pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
@@ -2868,7 +2870,7 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e ->
-        [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_templ,e.es_infer_pure,e.es_infer_rel,
+        [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_heap,e.es_infer_templ,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e.es_rrel,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,(* ac, *)iv,ih,it,ip,ir,vm,rrel,vperms,trace,ecp, ptraces,evars) =
@@ -2908,7 +2910,7 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_heap,
                  e.es_infer_templ,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
   let pr (f,(* ac, *)iv,ih,it,ip,ir,vperms) =
@@ -2941,6 +2943,7 @@ let pr_entail_state_short e =
   pr_wrap_test "@zero:" Gen.is_empty  (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
+  pr_wrap_test "es_infer_vars_templ: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_templ;
   (* pr_wrap_test "es_ante_vars: " Gen.is_empty (pr_seq "" pr_spec_var) e.es_ante_evars;*)
   (* pr_vwrap "es_pure: " pr_mix_formula_branches e.es_pure; *)
   (* pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)

@@ -7411,7 +7411,8 @@ think it is used to instantiate when folding.
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
   es_infer_heap : h_formula list;
-  (* Template: Output of template inference *)
+  (* Template: For template inference *)
+  es_infer_vars_templ: CP.spec_var list;
   es_infer_templ: CP.exp list;
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
@@ -7648,6 +7649,7 @@ let empty_es flowt grp_lbl pos =
   (* es_subst_ref = []; *)
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
+  es_infer_vars_templ = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_templ = [];
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -7671,7 +7673,7 @@ let flatten_context ctx0=
   helper ctx0
 
 let es_fv es=
-  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@
+  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_templ@es.es_infer_vars_hp_rel@
       (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
       (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
 
@@ -8730,6 +8732,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
+        es_infer_vars_templ = es.es_infer_vars_templ;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
         es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
@@ -11143,6 +11146,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
       es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_templ = es.es_infer_vars_templ;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
           es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
@@ -11187,6 +11191,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_templ = es.es_infer_vars_templ;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
           es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;

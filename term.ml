@@ -429,7 +429,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
        * Do not need to add messages to stack *)
     | None -> (estate, lhs_p, rhs_p, None)     
     | Some (src_lv, dst_lv) ->
-        (* TODO : Let us assume Term[] is for base-case
+        (* TODO: Let us assume Term[] is for base-case
            and primitives. In the case of non-primitive,
            it will be converted to Term[call] using
            the call hierarchy. No need for Term[-1]
@@ -485,7 +485,15 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
           let rank_formula = MCP.pure_of_mix rank_formula in*)
-          let entail_res, _, _ = TP.imply_one 30 lhs rank_formula "" false None in 
+          let entail_res = 
+            if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+              let _ = Template.infer_template estate 
+                (MCP.merge_mems lhs_p xpure_lhs_h1 true) rank_formula pos 
+              in true
+            else
+              let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
+              in res
+          in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
@@ -504,7 +512,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               None, 
               None
             else
-              if Inf.no_infer_all estate then (* No inference at all*)
+              if Inf.no_infer_all estate then (* No inference at all *)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),

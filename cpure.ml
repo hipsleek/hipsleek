@@ -1341,6 +1341,11 @@ and is_int (e : exp) : bool =
     | IConst _ -> true
     | _ -> false
 
+and is_nat (e: exp): bool =
+  match e with
+    | IConst (i, _) -> i >= 0
+    | _ -> false
+
 and is_float (e : exp) : bool =
   match e with
     | FConst _ -> true
@@ -6024,6 +6029,12 @@ let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
   let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
   let new_f = trans_func f_bf, trans_func f_e in
   fst (trans_b_formula bf arg new_f f_arg voidf)
+
+let fold_b_formula (e: b_formula) (f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
+  let trans_func func = (fun _ e -> push_opt_val_rev (func e) e) in
+  let new_f = trans_func f_bf, trans_func f_e in
+  let f_arg = voidf2, voidf2 in
+  snd (trans_b_formula e () new_f f_arg f_comb)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
   let (f_b_formula, f_exp) = f in
@@ -9373,6 +9384,22 @@ let rec has_lexvar (f: formula) : bool =
   | Forall (_, f, _, _)
   | Exists (_, f, _, _) -> has_lexvar f
 
+let has_template_formula (f: formula): bool =
+  let f_e e = match e with
+  | Template _ -> Some true
+  | _ -> None
+  in
+  let f_comb bl = List.exists (fun b -> b) bl in
+  fold_formula f (nonef, nonef, f_e) f_comb
+
+let has_template_b_formula (f: b_formula): bool =
+  let f_e e = match e with
+  | Template _ -> Some true
+  | _ -> None
+  in
+  let f_comb bl = List.exists (fun b -> b) bl in
+  fold_b_formula f (nonef, f_e) f_comb
+
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 
@@ -9413,14 +9440,16 @@ let drop_complex_ops =
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkTrue p)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
         | LexVar t_info -> (Some (mkFalse t_info.lex_loc))
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkFalse p)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkFalse (pos_of_b_formula (b, None))) else None in
   (pr_weak,pr_strong)
 
 let drop_lexvar_ops =

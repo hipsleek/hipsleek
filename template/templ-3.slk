@@ -1,0 +1,7 @@
+template int p(int x, int y, int z).
+
+infer [p] y >= z & x >= y |- p(x, y, z) <= 0.
+
+infer [p] p(x, y, z) <= 0 & x+1 <= z |- false.
+
+template_solve.

@@ -32,17 +32,18 @@ let string_of_lem_formula lf = match lf with
   | CSFormula csf -> Cprinter.string_of_struc_formula csf
 
 let split_infer_vars vrs =
-  let p,rl,hp = List.fold_left (fun (p,rl,hp) var -> 
+  let p,rl,tl,hp = List.fold_left (fun (p,rl,tl,hp) var -> 
       match var with
-        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,hp)
-        | CP.SpecVar(HpT, _, _ ) -> (p,rl,var::hp)
-        | _      -> (var::p,rl,hp)
-  ) ([],[],[]) vrs in
-  (p,rl,hp)
+        | CP.SpecVar(RelT _,_,_) -> (p,var::rl,tl,hp)
+        | CP.SpecVar (FuncT _, _, _) -> (p, rl, var::tl, hp)
+        | CP.SpecVar(HpT, _, _ ) -> (p,rl,tl,var::hp)
+        | _      -> (var::p,rl,tl,hp)
+  ) ([],[],[],[]) vrs in
+  (p,rl,tl,hp)
 
 let add_infer_vars_to_ctx ivs ctx =
-  let (p,rl,hp) = split_infer_vars ivs in
-  let ctx = Infer.init_vars ctx p rl hp [] in 
+  let (p,rl,tl,hp) = split_infer_vars ivs in
+  let ctx = Infer.init_vars ctx p rl tl hp [] in 
   ctx
    
 

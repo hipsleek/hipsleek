@@ -145,13 +145,19 @@ and term_of_mult_exp svl (e: exp): term =
   mkTerm coe vl
 
 and is_same_degree (t1: term) (t2: term): bool =
+  let pr = print_term in
+  Debug.no_2 "tl_is_same_degree" pr pr string_of_bool
+    is_same_degree_x t1 t2
+
+and is_same_degree_x (t1: term) (t2: term): bool =
   let d1 = t1.term_var in
   let d2 = t2.term_var in
   (* d1 and d2 are sorted *)
   let rec helper (d1: (spec_var * int) list) (d2: (spec_var * int) list) =
     match d1, d2 with
     | [], [] -> true
-    | d1::ds1, d2::ds2 -> if d1 = d2 then helper ds1 ds2 else false
+    | (v1, d1)::ds1, (v2, d2)::ds2 -> 
+        if (eq_spec_var v1 v2) && (d1 == d2) then helper ds1 ds2 else false
     | _ -> false
   in helper d1 d2 
 
@@ -290,7 +296,8 @@ let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
     match find_eq_subst_exp svl f with
     | None -> (fa @ [f], sa)
     | Some s -> (fa, sa @ [s])) ([], []) fl in
-  (join_conjunctions fl, subst)
+  let subst = List.map (fun (v, e) -> (v, a_apply_par_term subst e)) subst in
+  (apply_par_term subst (join_conjunctions fl), subst)
 
 let normalize_formula (f: formula): formula =
   let f_b b = Some (normalize_b_formula b) in
@@ -309,7 +316,8 @@ let term_list_of_formula svl (f: formula): term list =
   | _ -> []
 
 let unk_lambda_sv enum i j = 
-  SpecVar (Int, "lambda_" ^ (string_of_int enum) ^ (string_of_int i) ^ "_" ^ (string_of_int j), Unprimed) 
+  SpecVar (Int, "lambda_" ^ (string_of_int enum) ^ "_" ^ 
+          (string_of_int i) ^ "_" ^ (string_of_int j), Unprimed) 
 
 let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
   (* let _ = print_endline ("ANTE: " ^ (print_term_list ante)) in *)
@@ -339,6 +347,10 @@ let gen_unk_constrs enum vars (ante: formula) (cons: formula): formula list =
     
   let cons_fl = split_conjunctions cons in
   let cons_tl = List.map (term_list_of_formula vars) cons_fl in
+
+  (* let _ = print_endline ("ANTE: " ^ (pr_list print_term_list ante_tl)) in *)
+  (* let _ = print_endline ("CONS: " ^ (pr_list print_term_list cons_tl)) in *)
+
   let cons_tl = snd (List.fold_left (fun (i, a) t -> 
     (i+1, a @ [(i, t)])) (0, []) cons_tl) in
 
@@ -367,9 +379,15 @@ let templ_constr_stk: formula Gen.stack = new Gen.stack
 
 let templ_entail_num = ref 0
 
-let infer_template (es: CF.entail_state) (inf_templs: spec_var list) (ante: formula) (cons: formula) pos =
-  let n_ante, ante_unks = trans_formula_templ inf_templs ante in
+let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
+  let inf_templs = es.CF.es_infer_vars_templ in
+  let ante = MCP.find_rel_constraints ante (fv cons) in
+
+  let n_ante, ante_unks = trans_formula_templ inf_templs (MCP.pure_of_mix ante) in
   let n_cons, cons_unks = trans_formula_templ inf_templs cons in
+
+  (* let _ = print_endline ("ANTE: " ^ (!print_formula n_ante)) in *)
+  (* let _ = print_endline ("CONS: " ^ (!print_formula n_cons)) in *)
 
   let constrs = gen_unk_constrs !templ_entail_num 
     (Gen.BList.difference_eq eq_spec_var ((fv n_ante) @ (fv n_cons)) (ante_unks @ cons_unks)) 
@@ -377,6 +395,12 @@ let infer_template (es: CF.entail_state) (inf_templs: spec_var list) (ante: form
   templ_entail_num := !templ_entail_num + 1;
   templ_constr_stk # push_list constrs;
   Some es
+
+let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
+  let pr1 = !MCP.print_mix_formula in
+  let pr2 = !print_formula in
+  Debug.no_2 "infer_template" pr1 pr2 (pr_opt !CF.print_entail_state) 
+    (fun _ _ -> infer_template es ante cons pos) ante cons
 
 let collect_and_solve_templ_constrs inf_templs prog = 
   let constrs = templ_constr_stk # get_stk in

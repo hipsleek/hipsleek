@@ -2380,6 +2380,7 @@ decl:
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+  |  r=templ_decl; `DOT -> Template r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

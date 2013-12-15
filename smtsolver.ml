@@ -1187,7 +1187,7 @@ let get_model is_linear vars assertions =
         sol
       else []
     with ex -> 
-      print_endline ("get_model: " ^ (Printexc.to_string ex));
+      (* print_endline ("get_model: " ^ (Printexc.to_string ex)); *)
       []
   in 
   let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in

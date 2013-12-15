@@ -82,6 +82,8 @@ let no_infer_vars estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
+let no_infer_templ estate = (estate.es_infer_vars_templ == [])
+
 let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == [])
 
 let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
@@ -277,10 +279,12 @@ let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
   List.concat r
 
-let init_vars ctx infer_vars iv_rel v_hp_rel orig_vars = 
+let init_vars ctx infer_vars iv_rel iv_templ v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
-      | Ctx estate -> Ctx {estate with es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel;
+      | Ctx estate -> Ctx {estate with 
+          es_infer_vars = infer_vars; es_infer_vars_rel = iv_rel;
+          es_infer_vars_templ = iv_templ;
           es_infer_vars_hp_rel = v_hp_rel;}
       | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
@@ -865,7 +869,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
       let hps = CF.get_hp_rel_name_h_formula hf in
       CP.diff_svl hps iv_orig = []
   ) unk_heaps in
-  if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
+  if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate && no_infer_templ estate) || (lhs_rels==None)) 
   then 
     (* let _ = Debug.info_pprint "exit" no_pos in *)
     (None,None,[])
@@ -1436,9 +1440,15 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
       estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
 let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
-  if no_infer_all estate && unk_heaps==[] then 
+  if no_infer_all estate && no_infer_templ estate && unk_heaps==[] then 
     (None,None,[])
-  else 
+  else if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+    (* Disable template inference when phase numbers are being inferred *)
+    let es_opt = Template.infer_template estate lhs_mix (MCP.pure_of_mix rhs_mix) pos in 
+    match es_opt with
+    | None -> (None, None, [])
+    | Some es -> (Some (es, mkTrue pos), None, [])
+  else
     let ivs = estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel in
     (* let rhs_p = MCP.pure_of_mix rhs_mix in *)
     let lhs_p = MCP.pure_of_mix lhs_mix in
@@ -1467,16 +1477,9 @@ let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     Debug.ninfo_hprint (add_str "infer_vars_rel" !CP.print_svl) estate.es_infer_vars_rel no_pos;
     Debug.ninfo_hprint (add_str "infer_vars_hp_rel" !CP.print_svl) estate.es_infer_vars_hp_rel no_pos;
 
-    let inf_templs, inf_vars = List.partition (fun v -> CP.is_func_var v) estate.es_infer_vars in
-    let infer_vars = inf_vars@estate.es_infer_vars_hp_rel in
-    if inf_templs = [] then
-      infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
-    else
-      let es_opt = Template.infer_template estate inf_templs xp (MCP.pure_of_mix rhs_mix) pos in 
-      match es_opt with
-      | None -> (None, None, [])
-      | Some es -> (Some (es, mkTrue pos), None, [])
-
+    let infer_vars = estate.es_infer_vars@estate.es_infer_vars_hp_rel in
+    infer_pure_m unk_heaps estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix infer_vars pos
+    
 let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state(* _short *) in 
@@ -1510,7 +1513,8 @@ let infer_pure_top_level_aux estate unk_heaps
 
 let infer_pure_top_level estate unk_heaps
   ante1 ante0 m_lhs split_conseq pos = 
-  if no_infer_all_all estate then [(None,None,[],[],false,ante1)]
+  if (no_infer_all_all estate) && (no_infer_templ estate) then 
+    [(None,None,[],[],false,ante1)]
   else
     let ante0_pure = MCP.pure_of_mix ante0 in
     (* TODO: filter_var with relations *)
