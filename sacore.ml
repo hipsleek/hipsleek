@@ -3030,9 +3030,29 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
   (*shared*)
   (*END share*)
   let prov_right_implication lhs rhs gen_hp_defs=
+    (*do unfold the rhs*)
+    (* let pr_hp_defs = List.map (fun hp_def -> *)
+    (*     let hp,args = CF.extract_HRel hp_def.CF.def_lhs in *)
+    (*     (hp, hp_def, args) *)
+    (* ) gen_hp_defs in *)
+    (* let rhs1 = CF.do_unfold_hp_def cprog pr_hp_defs rhs in *)
     let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name gen_hp_defs in
-    let n_rhs = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs rhs in
-    let (valid, _, _) = SC.sleek_entail_check [] cprog [] n_rhs (CF.struc_formula_of_formula lhs no_pos) in
+    let rhs2 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs rhs in
+    (* let (valid, _, _) = SC.sleek_entail_check [] cprog [] rhs2 (CF.struc_formula_of_formula lhs no_pos) in *)
+    (*iformula to construct lemma*)
+    let ilhs = AS.rev_trans_formula lhs in
+    let irhs = AS.rev_trans_formula rhs2 in
+    let _ = Debug.ninfo_hprint (add_str  "ilhs " Iprinter.string_of_formula) ilhs no_pos in
+    let _ = Debug.ninfo_hprint (add_str  "irhs " Iprinter.string_of_formula) irhs no_pos in
+    (*construct lemma_safe*)
+    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") IA.Right
+      [] (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
+    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+    let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
+    let valid = match lc_opt with
+      | Some _ -> true
+      | None -> false
+    in
     valid
   in
   (********END INTERNAL***********)

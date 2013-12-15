@@ -246,11 +246,18 @@ lemma with annotation vars
   - to add pred_split for known pred (DONE)
   -  to support views also
 
+
+===================================================================
+# zip-1a.slk
+
+ - support pure extension for pred (relDefn)
+
 ===================================================================
 # zip-1.slk
   - add --> possible lemma if fail to split: DONE
-  - pred-en-pure: do split
-  - pred_split should work on both known (view) and unknown preds
+  - pred-en-pure: do split with pure extension
+  - (may) cause:OrR[ q=null |-  q!=null. LOCS:[0;10] (must-bug),valid]
+          ===> (how to know which properties to extend?)
 
 
 ===================================================================
