@@ -451,13 +451,19 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let ss = List.combine extn_args extn_view.CA.view_vars in
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
   let orig_pred = look_up_hp_def orig_pred_name hp_defs in
+  let _,orig_args_in_def = CF.extract_HRel orig_pred.CF.def_lhs in
+  let pr_orig_vars = List.combine orig_args_in_def orig_args in
+  let orig_args,orig_ss = List.fold_left (fun (r1,r2) (CP.SpecVar (t, id, p), new_id) ->
+      let n_sv = CP.SpecVar (t, new_id, p) in
+      (r1@[n_sv], r2@[(CP.SpecVar (t, id, p), n_sv)])
+  ) ([],[]) pr_orig_vars in
   let orig_pred_data_name = CA.look_up_hp_decl_data_name cprog.CA.prog_hp_decls (CP.name_of_spec_var hp) (List.hd ls_extn_pos) in
   (*find data fields anns*)
   let ls_dname_pos = I.look_up_field_ann prog orig_pred_data_name extn_props in
    (*formula: extend with new args*)
-  let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
-  let _,orig_args_in_def = CF.extract_HRel orig_pred.CF.def_lhs in
-  let pure_extn_svl = CF.retrieve_args_from_locs orig_args_in_def ls_extn_pos in
+  let fs0 = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
+  let fs = List.map (CF.subst orig_ss) fs0 in
+  let pure_extn_svl = CF.retrieve_args_from_locs orig_args ls_extn_pos in
   let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
   (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
