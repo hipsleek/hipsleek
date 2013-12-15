@@ -913,7 +913,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
-let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
+let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in

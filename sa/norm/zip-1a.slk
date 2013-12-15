@@ -11,14 +11,15 @@ pred_extn size[R]<n> ==
 //pred llN<n> == extend ll<> with size[REC]<n> .
 
 HeapPred zip(node@RO a, node b).
-
+HeapPred zipN(node@RO a, node b, int n).
+HeapPred zipNM(node@RO a, node b, int n, int m).
 
 relDefn zip(x,y) <->
   x=null & y=null
 or x::node<_,p>*y::node<_,q>*zip(p,q).
 
- relDefn zipN<a,b,n> == extends zip<a,b> with size[REC:0]<n> .
-// relDefn zipNM<a,b,n,m> == extends zipN<a,b,n> with size[REC:1]<m> .
+ relDefn zipN<a,b,n> <-> extends zip<a,b> at 0 with size[REC]<n> .
+// relDefn zipNM<a,b,n,m> <-> extends zipN<a,b,n> at 1 with size[REC]<m> .
 
 /*
 pred_split [zip].

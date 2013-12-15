@@ -932,7 +932,17 @@ barrier_decl:
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
- 
+
+derv_view:
+[[
+   `IDENTIFIER vn;`LT;sl= id_list_opt; `GT -> (vn,sl)
+]];
+
+prop_extn:
+[[
+  `IDENTIFIER vn;`OSQUARE;props= id_list_opt;`CSQUARE;`LT;sl= id_list_opt;`GT -> (vn,props,sl)
+]];
+
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
@@ -1844,7 +1854,9 @@ relassume_cmd:
    ]];
 
 reldefn_cmd:
-   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV;r=meta_constr -> (un_option il2 [], l, r)
+   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV ;r=meta_constr -> (un_option il2 [], l, r, [])
+     | `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV; `EXTENDS;orig_pred = derv_view; `ATPOS; extn_pos=integer_literal; `WITH ; extn = prop_extn->
+           (un_option il2 [], l, MetaForm (F.mkTrue n_flow (get_pos_camlp4 _loc 1)) , [(orig_pred, extn, [extn_pos])])
    ]];
 
 decl_dang_cmd:

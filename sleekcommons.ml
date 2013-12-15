@@ -47,7 +47,7 @@ type command =
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
-  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
+  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
   | Validate of ( (ident list * meta_formula * (meta_formula * meta_formula) list) list)
   | ShapeDivide of (ident list * ident list)
