@@ -25,6 +25,20 @@ Starting Omega...oc
 trans_prog
 WARNING (must fix): Vars from[r]has type UNK
 =============================================================
+# templ-2.ss --gts
+
+ template int r(int x,int y) == r_0+(r_x*x)+(r_y*y).
+
+infer [r]  y=y' & x=x' |-  0<=(r( x, y)).
+
+  this seems to be boundedness check at pre-condition
+  I suppose we should have >=0 at recursive call, namely:
+
+  y=y' & x'<y' & xx=x+1 & x'=x |-  0<=(r( xx, y)).
+ 
+infer [r]  y=y' & x=x' & x'<y' & !(v_bool_18_851') & x'<y' & !(v_bool_18_851') & 
+v_int_19_850'=1+x' |-  (r( x, y))>(r( v_int_19_850', y')).
+template_solve.
 =============================================================
 =============================================================
 =============================================================
