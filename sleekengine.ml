@@ -931,13 +931,23 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
-  in
-  (*hp_defn*)
-  (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
-  (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
-  let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
-  ()
+  if extn_info = [] then
+    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
+    in
+    (*hp_defn*)
+    (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
+    (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
+    let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
+    ()
+  else
+    let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
+    let r, others = SAU.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
+    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
+    let _ = C.set_proot_hp_def_raw (SAU.get_pos args 0 r) (!cprog).C.prog_hp_decls (CP.name_of_spec_var hp) in
+    let pr_new_rel_defn =  (cond_path, exted_pred) in
+    let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
+    let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
+    ()
 
 let process_decl_hpdang hp_names =
   let process hp_name=

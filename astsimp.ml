@@ -1242,14 +1242,14 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (** 
       * An Hoa [22/08/2011] : translate field with inline consideration.
   **)
-  let trans_field_ann ann=
-    match ann with
-      | Iast.VAL -> Cast.VAL
-      | Iast.REC -> Cast.REC
-      | Iast.F_NO_ANN -> Cast.F_NO_ANN
-  in
+  (* let trans_field_ann ann= *)
+  (*   match ann with *)
+  (*     | Iast.VAL -> Cast.VAL *)
+  (*     | Iast.REC -> Cast.REC *)
+  (*     | Iast.F_NO_ANN -> Cast.F_NO_ANN *)
+  (* in *)
   let trans_field ((t, c), pos, il, ann) =
-    (((trans_type prog t pos), c),trans_field_ann ann)
+    (((trans_type prog t pos), c),(* trans_field_ann *) ann)
   in
   (* let _ = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in
      let temp = expand_inline_fields ddef.I.data_fields in
@@ -1381,7 +1381,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (xform', _ (*addr_vars'*), ms) = Solver.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in	
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-      let formula1 = CF.formula_of_mix_formula xform pos in
+      let xform1 =
+        if vdef.C.view_kind = C.View_EXTN then
+          let r = Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
+          in
+          (MCP.mix_of_pure r)
+        else xform
+      in
+      let formula1 = CF.formula_of_mix_formula xform1 pos in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -1564,6 +1571,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
+      let view_prop_extns =  List.map (fun c-> trans_var (c,Unprimed) n_tl pos) vdef.I.view_prop_extns in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let null_c_var = Cpure.null_var in 
       let _ =
@@ -1576,6 +1584,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
 	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+        let ffv = CP.diff_svl ffv view_prop_extns in
         (* filter out intermediate dereference vars and update them to view vars *)
         
         let ffv = List.filter (fun v ->
@@ -1633,6 +1642,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
           C.view_kind = view_kind;
+          C.view_prop_extns = view_prop_extns;
           C.view_vars = view_sv;
           C.view_cont_vars = [];
           C.view_uni_vars = [];

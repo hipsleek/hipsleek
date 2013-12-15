@@ -10104,6 +10104,7 @@ let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
+
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
   let b =

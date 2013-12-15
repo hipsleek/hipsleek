@@ -876,45 +876,53 @@ data_body:
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
 
+(* field_ann: [[ *)
+(*      `REC -> Iast.REC *)
+(*   |  `VAL -> Iast.VAL *)
+(* ]]; *)
+
 field_ann: [[
-     `REC -> Iast.REC
-  |  `VAL -> Iast.VAL
+     `HASH;`IDENTIFIER id -> id
+]];
+
+field_anns: [[
+     anns = LIST0 field_ann -> anns
 ]];
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, F_NO_ANN)]
-  | t = typ; `IDENTIFIER n ; ann=field_ann -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, F_NO_ANN)]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, [] (* F_NO_ANN *))]
+  | t = typ; `IDENTIFIER n ; ann=field_anns -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, [](* F_NO_ANN *))]
   |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
-	  if List.mem n (List.map get_field_name fl) then
-		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-	  else
-		((t, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
-  |  t=typ; `IDENTIFIER n; ann=field_ann ; peek_try; `SEMICOLON; fl = SELF ->(  
-	  if List.mem n (List.map get_field_name fl) then
-		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-	  else
-		((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
+	 if List.mem n (List.map get_field_name fl) then
+	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	 else
+	   ((t, n), get_pos_camlp4 _loc 3, false, [] (* F_NO_ANN *)) :: fl )
+  |  t=typ; `IDENTIFIER n; ann=field_anns ; peek_try; `SEMICOLON; fl = SELF ->(  
+	 if List.mem n (List.map get_field_name fl) then
+	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	 else
+	   ((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t1, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
-   ]
-	(* An Hoa [22/08/2011] Inline fields extension*)
-	| "inline fields" [
-	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true,F_NO_ANN)]
- 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true,F_NO_ANN)]
-	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
-			if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )
-	| `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t1, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )]];
+	(if List.mem n (List.map get_field_name fl) then
+	  report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	else
+	  ((t1, n), get_pos_camlp4 _loc 3, false, [](*F_NO_ANN*)) :: fl )
+]
+    (* An Hoa [22/08/2011] Inline fields extension*)
+  | "inline fields" [
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true, [] (*F_NO_ANN*))]
+      | `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true, [] (*F_NO_ANN*))]
+      | `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
+	    if List.mem n (List.map get_field_name fl) then
+	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	    else
+	      ((t, n), get_pos_camlp4 _loc 3, true, [] (*F_NO_ANN*)) :: fl )
+      | `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
+	    (if List.mem n (List.map get_field_name fl) then
+	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	    else
+	      ((t1, n), get_pos_camlp4 _loc 3, true, [] (*F_NO_ANN*)) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -1853,9 +1861,14 @@ relassume_cmd:
            (un_option il2 [], l, Some guard,  r)
    ]];
 
+derv_pred:
+[[
+   `IDENTIFIER vn;`OPAREN;sl= id_list_opt; `CPAREN -> (vn,sl)
+]];
+
 reldefn_cmd:
    [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV ;r=meta_constr -> (un_option il2 [], l, r, [])
-     | `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV; `EXTENDS;orig_pred = derv_view; `ATPOS; extn_pos=integer_literal; `WITH ; extn = prop_extn->
+     | `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV; `EXTENDS;orig_pred = derv_pred; `ATPOS; extn_pos=integer_literal; `WITH ; extn = prop_extn->
            (un_option il2 [], l, MetaForm (F.mkTrue n_flow (get_pos_camlp4 _loc 1)) , [(orig_pred, extn, [extn_pos])])
    ]];
 
@@ -2412,7 +2425,7 @@ class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
-		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
+		let t1 = List.map (fun (t, p) -> (t, p, false, [] (* F_NO_ANN *))) t1 in
       let cdef = { data_name = id;
                    data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";

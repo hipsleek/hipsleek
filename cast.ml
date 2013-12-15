@@ -44,7 +44,7 @@ and data_field_ann =
 and data_decl = { 
     data_name : ident;
     data_pos : loc;
-    data_fields : (typed_ident * data_field_ann) list;
+    data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -86,6 +86,7 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
+    view_prop_extns:  P.spec_var list;
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;
@@ -929,6 +930,20 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let look_up_hp_decl_data_name decls hp arg_pos=
+  let rec look_up_data_name args n=
+    match args with
+      | [] -> report_error no_pos "Cast.look_up_hp_decl_data_name 1"
+      | (sv,_)::rest ->( if n = arg_pos then
+          match Cpure.type_of_spec_var sv with
+            | Named id -> id
+            | _ -> report_error no_pos "Cast.look_up_hp_decl_data_name: only pure-extend for pointer"
+          else look_up_data_name rest (n+1)
+        )
+  in
+  let hp_dcl = look_up_hp_def_raw decls hp in
+  look_up_data_name hp_dcl.hp_vars_inst 0
 
 let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
 

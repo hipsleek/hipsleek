@@ -248,9 +248,19 @@ lemma with annotation vars
 
 
 ===================================================================
-# zip-1a.slk
+# ll.slk: DONE
 
  - support pure extension for pred (relDefn)
+
+===================================================================
+# zip-1b.slk DONE
+
+ - support pure extension for pred (relDefn) for the second pointer
+
+===================================================================
+# zip-1a.slk
+
+ - support pure extension for pred (relDefn) for 2 pointers
 
 ===================================================================
 # zip-1.slk

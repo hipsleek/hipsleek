@@ -46,7 +46,7 @@ and data_field_ann =
 
 and data_decl = { 
     data_name : ident;
-    data_fields : (typed_ident * loc * bool * data_field_ann) list; 
+    data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
     (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
     data_parent_name : ident;
     data_invs : F.formula list;
@@ -2583,13 +2583,13 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
-		{ data_name = bn;
-                data_pos = no_pos;
-		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
-		  data_parent_name = if bn = b_datan then "Object" else b_datan;
-		  data_invs =[];
+	  { data_name = bn;
+          data_pos = no_pos;
+	  data_fields = List.map (fun c-> c,no_pos,false,[] (*F_NO_ANN *)) larg ;
+	  data_parent_name = if bn = b_datan then "Object" else b_datan;
+	  data_invs =[];
           data_is_template = false;
-		  data_methods =[]; }
+	  data_methods =[]; }
 	else report_error no_pos ("the first field of barrier "^bn^" is not state")
 	
 	
@@ -2704,6 +2704,33 @@ let rec get_breaks e =
 				Some (List.concat (lb::lbc))
 		| _ -> None in
 	fold_exp e f (List.concat) [] 
+
+let look_up_field_ann_x prog data_name sel_anns=
+  let rec ann_w_pos ls_anns n res=
+    match ls_anns with
+      | [] -> res
+      | anns::rest -> if Gen.BList.intersect_eq (fun s1 s2 -> String.compare s1 s2 = 0) anns sel_anns <> [] then
+             ann_w_pos rest (n+1) (res@[((data_name,n),anns)])
+          else ann_w_pos rest (n+1) res
+  in
+  let dd = look_up_data_def_raw prog.prog_data_decls data_name in
+  let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
+  let ann_w_pos,ls_anns_only = List.split (ann_w_pos ls_anns 0 []) in
+  let anns_only = List.concat ls_anns_only in
+  let not_delcared_anns = Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) sel_anns anns_only in
+  if not_delcared_anns <> [] then
+    let prr = if List.length not_delcared_anns > 1 then " are " else " is " in
+    report_error no_pos ( (String.concat ", " not_delcared_anns) ^ prr ^
+                                "not specified in the data structure " ^ data_name)
+  else
+    ann_w_pos
+
+let look_up_field_ann prog view_data_name sel_anns=
+  let pr1 = pr_id in
+  let pr2 =  pr_list pr_id in
+  let pr3 = pr_list (pr_pair pr_id string_of_int) in
+  Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
+      (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
 
 let exists_return_x e0=
   let rec helper e=

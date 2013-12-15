@@ -3063,6 +3063,8 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
+      pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 
@@ -3383,10 +3385,11 @@ let rec string_of_exp = function
 
 let string_of_field_ann ann=
   if not !print_ann then ""
-  else match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+  else (* match ann with *)
+    (* | VAL -> "@VAL" *)
+    (* | REC -> "@REC" *)
+    (* | F_NO_ANN -> "" *)
+    String.concat "@" ann
 
 (* pretty printing for one data declaration*)
 let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
@@ -3413,11 +3416,11 @@ let rec string_of_data_decl_list l c = match l with
 ;;
 
 (* function to print a list of typed_ident *) 
-let rec string_of_decl_list l c = match l with 
-  | [] -> ""
-  | h::[] -> "  " ^ string_of_decl h 
-  | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
-;;
+(* let rec string_of_decl_list l c = match l with  *)
+(*   | [] -> "" *)
+(*   | h::[] -> "  " ^ string_of_decl h  *)
+(*   | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c) *)
+(* ;; *)
 
 (* pretty printing for a data declaration *)
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
@@ -4069,11 +4072,11 @@ Mcpure.print_sv_f := string_of_spec_var ;;
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
-Mcpure.print_exp_f := string_of_formula_exp;;
+Cpure.print_exp := string_of_formula_exp;;
+(* Mcpure.print_exp_f := string_of_formula_exp;; *)
 Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
-Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
 Cpure.print_svl := string_of_spec_var_list;;

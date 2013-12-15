@@ -466,7 +466,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                               (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                               let ftyp = deref_ty in
                 let fname = str_deref in
-                              let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                              let dfields = [((ftyp, fname), no_pos, false, [] (* Iast.F_NO_ANN *))] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in
                               Hashtbl.add tbl_pointer_typ refined_ty dtyp;
@@ -544,7 +544,7 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
                     (* create new Globals.typ and Iast.data_decl update to hash tables *)
                     let ftyp = translate_typ actual_ty pos in
                     let fname = str_deref in
-                    let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                    let dfields = [((ftyp, fname), no_pos, false, [] (* Iast.F_NO_ANN *))] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtype = Globals.Named dname in
                     Hashtbl.add tbl_pointer_typ actual_ty dtype;
@@ -624,23 +624,23 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-      : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
+      : (Iast.typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ftyp = field.Cil.ftype in
   match ftyp with
     | Cil.TComp (comp, _) ->
           let ty = Globals.Named comp.Cil.cname in
-          ((ty, name), pos, true, Iast.F_NO_ANN)                     (* struct ~~> inline data *)
+          ((ty, name), pos, true, [] (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
     | Cil.TPtr (ty, _) ->
           let new_ty = (
               if (is_cil_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
               else translate_typ ftyp pos
           ) in
-          ((new_ty, name), pos, false, Iast.F_NO_ANN)
+          ((new_ty, name), pos, false, [] (* Iast.F_NO_ANN *))
     | _ ->
           let ty = translate_typ ftyp pos in
-          ((ty, name), pos, false, Iast.F_NO_ANN)
+          ((ty, name), pos, false, [] (* Iast.F_NO_ANN *))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =

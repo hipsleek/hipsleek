@@ -334,10 +334,10 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@S" { SAT }
-  | "@VAL" {VAL}
+  (* | "@VAL" {VAL} *)
   | "@C" {PASS_COPY}
   | "@R" {PASS_REF}
-  | "@REC" {REC}
+  (* | "@REC" {REC} *)
   | "@NI" {NI}
   | "@RO" {RO}
   | "@pre" { PRE }
