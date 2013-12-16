@@ -6,10 +6,25 @@ infer [f] x + 1 <= y & x' = x + 1 & y' = y & Term[f(x,y)]
 print residue.
 */
 
-infer [f] x + 1 <= y & x' = x + 1 & y' = y 
+infer [f] x + 1 <= y & x' = x + 1 & y' = y & r>0 
     |- f(x, y) >= 1 &   y>=x.
-//infer [f] true |- f(x, y) >= 0.
 print residue.
+/*
+# temp-2b.slk
+
+inferred templ: [(1+x)<=y & x'=1+x & y=y' --> 1<=((a*x)+(b*y)) & x<=y]
+
+However x<=y in consequent is redundant, as it has
+already been proven.
+*/
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y 
+    |- f(x, y) >= 1 .
+print residue.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y 
+    |- f(x, y) >= 1 &   x>=y.
+//infer [f] true |- f(x, y) >= 0.
 // where is the template relAssume kept?
 
 template_solve {f}.
