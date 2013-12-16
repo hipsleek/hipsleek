@@ -1,0 +1,17 @@
+template int f(int x, int y).
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') | x < y.
+print residue.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') | x > y.
+print residue.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') & x < y.
+print residue.
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y |- f(x, y) > f(x', y') & x > y.
+print residue.
+
+template_solve.
+
+

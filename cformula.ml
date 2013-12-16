@@ -7413,6 +7413,7 @@ think it is used to instantiate when folding.
   es_infer_heap : h_formula list;
   (* Template: For template inference *)
   es_infer_vars_templ: CP.spec_var list;
+  es_infer_templ_assume: (CP.formula * CP.formula) list;
   es_infer_templ: CP.exp list;
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
@@ -7659,6 +7660,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_templ = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_templ = [];
+  es_infer_templ_assume = [];
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
   es_infer_hp_rel = [] ;
@@ -8417,7 +8419,12 @@ let rec collect_pre_heap ctx =
 let rec collect_templ ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_templ 
-  | OCtx (ctx1, ctx2) -> (collect_templ ctx1) @ (collect_templ ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_templ ctx1) @ (collect_templ ctx2)
+
+let rec collect_templ_assume ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_templ_assume
+  | OCtx (ctx1, ctx2) -> (collect_templ_assume ctx1) @ (collect_templ_assume ctx2) 
 
 let rec collect_rel ctx = 
   match ctx with
@@ -8747,6 +8754,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_templ = es.es_infer_templ;
+        es_infer_templ_assume = es.es_infer_templ_assume;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_hp_rel = es.es_infer_hp_rel;
@@ -11161,6 +11169,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
+          es_infer_templ_assume = es.es_infer_templ_assume;
           es_infer_hp_rel = es.es_infer_hp_rel;
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;
@@ -11207,6 +11216,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_templ = es.es_infer_templ;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
+          es_infer_templ_assume = es.es_infer_templ_assume;
           es_infer_hp_rel = es.es_infer_hp_rel;
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;

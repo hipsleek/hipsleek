@@ -252,6 +252,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
     es_infer_templ = es.es_infer_templ;
+    es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_pure = es.es_infer_pure;
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_vars_templ = es.es_infer_vars_templ;
@@ -3949,6 +3950,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_templ = fold_es.es_infer_templ;
+              es_infer_templ_assume = fold_es.es_infer_templ_assume;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
               es_infer_rel = fold_es.es_infer_rel;
@@ -6225,8 +6227,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if ((Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag))
-     || not (Infer.no_infer_templ estate)
+  if ((Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag)) && (Infer.no_infer_templ estate)
   then
     let _ = Debug.ninfo_hprint (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
@@ -9552,6 +9553,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_hp_unk_map = estate.es_infer_hp_unk_map;
         es_infer_heap = estate.es_infer_heap;
         es_infer_templ = estate.es_infer_templ;
+        es_infer_templ_assume = estate.es_infer_templ_assume;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
@@ -9733,6 +9735,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
                  es_infer_templ = estate.es_infer_templ;
+                 es_infer_templ_assume = estate.es_infer_templ_assume;
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;

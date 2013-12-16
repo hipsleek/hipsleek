@@ -1555,6 +1555,8 @@ let infer_pure_top_level estate unk_heaps
           )) split_mix1
       in res
 
+
+
 (*let remove_contra_disjs f1s f2 =*)
 (*  let helper c1 c2 = *)
 (*    let conjs1 = CP.list_of_conjs c1 in*)
@@ -1572,6 +1574,11 @@ let infer_pure_top_level estate unk_heaps
 (*  let disjs = CP.list_of_disjs lhs_h in*)
 (*  let disjs = remove_contra_disjs disjs lhs_p in*)
 (*  snd (trans_dnf (CP.mkAnd (disj_of_list disjs no_pos) lhs_p no_pos))*)
+let infer_pure_top_level estate unk_heaps
+  ante1 ante0 m_lhs split_conseq pos = 
+  let pr = !CF.print_entail_state in
+  Debug.no_1 "infer_pure_top_level" pr (pr_list (fun (_,_,_,r,_,_) -> pr_list pr r))
+  (fun _ -> infer_pure_top_level estate unk_heaps ante1 ante0 m_lhs split_conseq pos) estate
 
 (* TODO : proc below seems very inefficient *)
 (*let rec simplify_fml pf =                                         *)

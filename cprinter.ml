@@ -2144,6 +2144,13 @@ let pr_hprel_short_inst cprog hpa=
   prtt_pr_formula_inst cprog hpa.hprel_rhs;
   fmt_close()
 
+let pr_templ_assume (ante, cons) = 
+  fmt_open_box 1;
+  pr_pure_formula ante;
+  fmt_string " --> ";
+  pr_pure_formula cons;
+  fmt_close ()
+
 let pr_path_of (path, off)=
    (* fmt_string "PATH format"; *)
    pr_wrap_test_nocut "" skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path
@@ -2314,7 +2321,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
     | (ctx,(a,b))::xs -> 
           begin
           let lh = collect_pre_heap ctx in
-          let lt = collect_templ ctx in
+          let lt = collect_templ_assume ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
@@ -2323,7 +2330,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
-          pr_wrap_test "inferred templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) lt; 
+          pr_wrap_test "inferred templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) lt; 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" pr_hprel_short) (hprel); 
@@ -2339,7 +2346,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
     | (ctx,(a,b))::xs -> 
           begin
           let lh = collect_pre_heap ctx in
-          let lt = collect_templ ctx in
+          let lt = collect_templ_assume ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
@@ -2348,7 +2355,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh);
-          pr_wrap_test "inferred templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) lt; 
+          pr_wrap_test "inferred templ: " Gen.is_empty  (pr_seq "" pr_templ_assume) lt; 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
@@ -2723,7 +2730,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
-  pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
+  pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel; 
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
@@ -2745,7 +2752,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_vars_hp_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_infer_vars_hp_rel;
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
-  pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ; 
+  pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel) es.es_infer_hp_rel; 
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
@@ -2876,21 +2883,20 @@ let pr_list_context (ctx:list_context) =
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
     | Ctx e ->
-        [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_heap,e.es_infer_templ,e.es_infer_pure,e.es_infer_rel,
+        [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_heap,e.es_infer_templ_assume,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e.es_rrel,e.es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,it,ip,ir,vm,rrel,vperms,trace,ecp, ptraces,evars) =
+  let pr (f,(* ac, *)iv,ih,ta,ip,ir,vm,rrel,vperms,trace,ecp, ptraces,evars) =
     fmt_open_vbox 0;
     let f1 = if !Globals.print_en_tidy then Cformula.shorten_formula f else f in pr_formula_wrap f1;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
-    pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_vars/rel/templ: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;
-    pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) it;
+    pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
     pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
-    if !Globals.en_term_inf then
       pr_wrap_test "es_rrel: " Gen.is_empty (pr_seq "" pr_rrel) rrel;
     pr_vwrap "es_trace: " pr_es_trace trace;
     (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *)
@@ -2917,16 +2923,16 @@ let pr_formula_vperm_wrap t =
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
     | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel@e.es_infer_vars_templ,e.es_infer_heap,
-                 e.es_infer_templ,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
+                 e.es_infer_templ_assume,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,it,ip,ir,vperms) =
+  let pr (f,(* ac, *)iv,ih,ta,ip,ir,vperms) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
-    pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
+    pr_wrap_test "es_infer_vars/rel/templ: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih;
-    pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) it;
+    pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) ta;
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;
     fmt_close_box();
@@ -2954,7 +2960,7 @@ let pr_entail_state_short e =
   (* pr_vwrap "es_pure: " pr_mix_formula_branches e.es_pure; *)
   (* pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap;
-  pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) e.es_infer_templ; 
+  pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) e.es_infer_templ_assume; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel; 
   (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) e.es_subst_ref;  *)

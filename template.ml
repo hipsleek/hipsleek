@@ -404,7 +404,7 @@ let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula)
     n_ante n_cons in
   templ_entail_num := !templ_entail_num + 1;
   templ_constr_stk # push_list constrs;
-  Some es
+  Some { es with CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(n_ante, n_cons)]; }
 
 let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
   let pr1 = !MCP.print_mix_formula in
