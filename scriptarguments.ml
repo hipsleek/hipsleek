@@ -439,6 +439,10 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify,
    "enable re-verification for inferred termination specifications");
+  ("--term-en-bnd-pre", Arg.Set Globals.term_bnd_pre_flag,
+   "enable boundedness check at pre-condition");
+  ("--term-dis-bnd-pre", Arg.Clear Globals.term_bnd_pre_flag,
+   "disable boundedness check at pre-condition (boundedness check at recursive call)");
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
