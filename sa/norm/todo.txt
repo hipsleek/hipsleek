@@ -336,6 +336,15 @@ Is it because both P1 and P2 are post-pred?
   or emp&y_82=null
   ]]
 ===================================================================
+# zip-1e3v.slk
+
+Can we infer [n,m] or must we derive pre-relation?
+How to do this with fixpoint? greatest or least?
+
+lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
+// we need to allow residue here
+// need --lem-en-residue
+// need to infer weakest pre-relation
 ===================================================================
 ===================================================================
 ===================================================================

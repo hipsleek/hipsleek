@@ -90,7 +90,9 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)    (exact : bool option) =
-  wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
+  if (!Globals.allow_lemma_residue)
+  then wrap_classic (Some false) (* inexact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
+  else wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
