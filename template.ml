@@ -432,7 +432,7 @@ let gen_slk_file prog =
   let file_name_ss = List.hd !Globals.source_files in
   let out_chn =
     let reg = Str.regexp "\.ss" in
-    let file_name_slk = "logs/rank_" ^ (Str.global_replace reg ".slk" file_name_ss) in
+    let file_name_slk = "logs/templ_" ^ (Str.global_replace reg ".slk" file_name_ss) in
     let _ = print_endline ("\n Generating sleek file: " ^ file_name_slk) in
     (try Unix.mkdir "logs" 0o750 with _ -> ());
     open_out (file_name_slk)
@@ -448,6 +448,22 @@ let gen_slk_file prog =
   let _ = output_string out_chn slk_output in
   let _ = close_out out_chn in
   ()
+
+let rec gcd (a: int) (b: int): int = 
+  if b == 0 then a
+  else gcd b (a mod b)
+
+let gcd_l (l: int list): int =
+  match l with
+  | [] -> 1
+  | x::xs -> List.fold_left (fun a x -> gcd a x) x xs
+
+let abs (x: int) = if x < 0 then -x else x
+
+let norm_model (m: (string * int) list): (string * int) list =
+  let mi = List.map (fun (_, i) -> i) m in
+  let gcd_mi = abs (gcd_l mi) in
+  List.map (fun (v, i) -> (v, i / gcd_mi)) m
 
 let collect_and_solve_templ_constrs inf_templs prog = 
   let constrs = templ_constr_stk # get_stk in
@@ -466,6 +482,7 @@ let collect_and_solve_templ_constrs inf_templs prog =
     match model with
     | [] -> print_endline ("TEMPLATE INFERENCE: No result.")
     | _ ->
+      let model = norm_model model in
       let templ_decls = prog.C.prog_templ_decls in
       let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
       let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
