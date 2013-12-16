@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|coqinf|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -216,8 +216,21 @@ $output_file = "log";
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
-	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
 	["merge-inf.ss",1,"--en-inf --en-disj-compute","merge","SUCCESS"],
+	],
+	"coqinf" =>[
+	["inflist.ss",3,"--en-inf --en-inf-qe-coq","remove","SUCCESS","append","SUCCESS","fail_remove","FAIL"],
+	["infll_take.ss",1,"--en-inf --en-inf-qe-coq","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf --en-inf-qe-coq","count","SUCCESS"],
+	["stream.ss",1,"--en-inf --en-inf-qe-coq","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf --en-inf-qe-coq --eps --etcsu2 --etcsu3","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf --en-inf-qe-coq","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf --en-inf-qe-coq --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf --en-inf-qe-coq","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --eps --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-inf-qe-coq","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",

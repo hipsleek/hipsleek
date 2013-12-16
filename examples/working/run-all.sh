@@ -18,6 +18,9 @@ time ./run-fast-tests.pl musterr $@
 echo -e "\n##################### infinity tests ########################"
 time ./run-fast-tests.pl infinity $@
 
+echo -e "\n##################### coqinf tests ########################"
+time ./run-fast-tests.pl coqinf $@
+
 echo -e "\n##################### mem tests ######################"
 time ./run-fast-tests.pl mem $@
 
