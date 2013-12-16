@@ -285,6 +285,30 @@ lemma with annotation vars
 
 Can ll predicate be directly synthesized by lemma_infer?
 ===================================================================
+# zip-2c.slk
+
+relation R(int a, int b).
+
+lemma_infer[R] self::zipNM<y> <- self::zipN<n> * y::zipN<m> & R(n,m).
+
+
+Why error below?
+
+ Temp Lemma(s) inferred as valid in current context.
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")
+ Formula: exists(m_433:exists(n_432:R(n_432,m_433) & (((1<=n_432 & p_378>0) | 
+(n_432=0 & p_378=0)))) & (((1<=m_433 & q_408>0) | (m_433=0 & q_408=0))))
+
+
+lemma_infer[n,m] self::zipNM<y> <- self::zipN<n> * y::zipN<m> .
+print residue.
+
+why failure?
+
+ntailing lemma lem_17: Fail. (may) cause:OrR[ y=null |-  y!=null. LOCS:[11;8] (must-bug),valid]
+
+Failed to inferred for lem_17:<== ==> invalid lemma encountered.
+
 ===================================================================
 ===================================================================
 ===================================================================
