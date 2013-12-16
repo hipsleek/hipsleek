@@ -1,0 +1,31 @@
+relation R(int x, int y).
+
+infer [R] x + 1 <= y & x' = x + 1 & y' = y |- R(x, y) & (R(x, y) | x > y).
+print residue.
+
+infer [R] x + 1 <= y & x' = x + 1 & y' = y |- R(x, y).
+print residue.
+
+infer [R] x + 1 <= y & x' = x + 1 & y' = y |- R(x, y) | x > y.
+print residue.
+
+/*
+Entail (1) : Fail.(may) cause: (1+x)<=y |-  (R(x,y) | y<x). LOCS:[3] (may-bug)
+
+
+Entail (2) : Valid.
+
+ <1>Base emp&(1+x)<=y & x'=1+x & y=y'&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELDEFN R: ( x<y) -->  R(x,y)]
+[[empty]]
+
+
+Entail (3) : Valid.
+
+ <1>Base emp&(1+x)<=y & x'=1+x & y=y'&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELDEFN R: ( x<y) -->  R(x,y)]
+[[empty]]
+*/
+
+
+
