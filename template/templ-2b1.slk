@@ -5,7 +5,17 @@ infer [f] x + 1 <= y & x' = x + 1 & y' = y & Term[f(x,y)]
    |- Term[f(x', y')].
 print residue.
 
+/*
+# templ-2b1.slk
+
+why no inferred templ?
+
+ <1>Base emp&Term[f: f_0+(f_x*x)+(f_y*y)] & y=y' & x'=1+x & (1+x)<=y&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
 template_solve {f}.
+
 
 /*
 infer [g] x + 1 <= y & x' = x + 1 & y' = y  

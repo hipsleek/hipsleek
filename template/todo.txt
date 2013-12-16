@@ -27,6 +27,12 @@ WARNING (must fix): Vars from[r]has type UNK
 =============================================================
 # templ-2.ss --gts
 
+To make --term-dis-bnd-pre work properly..
+
+  (* need to perform boundedness check at recursive call *)
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk 
+      || not(!Globals.term_bnd_pre_flag)) then (ctx, [])
+
  template int r(int x,int y) == r_0+(r_x*x)+(r_y*y).
 
 infer [r]  y=y' & x=x' |-  0<=(r( x, y)).
