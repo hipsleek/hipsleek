@@ -31,6 +31,23 @@ lemma_test "one" self::zipN<n> * y::zipN<m> & n=m
                      -> self::zipNM<y> .
 */
 
+HeapPred H(node x).
+
+lemma_infer[H] self::zipNM<y>  -> H(self) * H(y).
+
+/*
+ inferred hprel: [emp&self_lem_15=null --> H(self_lem_15); 
+                  H(p_341) * self_lem_15::node<_,p_341>@M --> H(self_lem_15); 
+                  H(q_338) * y::node<_,q_338>@M --> H(y)]
+
+Can ll predicate be directly synthesized by lemma_infer?
+
+*/
+
+
+
+print residue.
+
 /*
 checkentail self_lem_15::node<_,p_113>@M * p_113::zipN<n1_114>@M * y::zipN<m>@M&n=1+
 n1_114 & m=n
