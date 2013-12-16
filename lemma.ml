@@ -17,6 +17,15 @@ module SC = Sleekcore
 module LP = Lemproving
 module SAO = Saout
 
+let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name: ident)
+  (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
+  (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
+  (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
+  (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
+  (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
+  let b = ([] : CF.hp_rel_def list) in
+  (a, b)
+)
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
@@ -307,6 +316,7 @@ let manage_infer_lemmas str repo iprog cprog =
           let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
           Some nctx
 
+
 (* verify  a list of lemmas *)
 (* if one of them fails, return failure *)
 (* otherwise, return a list of their successful contexts 
@@ -355,6 +365,52 @@ let sa_infer_lemmas iprog cprog lemmas  =
 let sa_infer_lemmas iprog cprog lemmas  =
   let pr1 = pr_list pr_none in
   Debug.no_1 "sa_infer_lemmas" pr1 pr_none (fun _ -> sa_infer_lemmas iprog cprog lemmas) lemmas
+
+let manage_infer_pred_lemmas repo iprog cprog = 
+  let rec helper coercs res_so_far=
+    match coercs with
+      | [] -> (Some res_so_far)
+      | coer::rest -> begin
+          let lems = process_one_repo [coer] iprog cprog in
+          let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
+          let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
+          let _ = Lem_store.all_lemma # add_coercion left right in
+          let (invalid_lem, lcs) =  verify_one_repo lems cprog in
+          Lem_store.all_lemma # pop_coercion;
+          match invalid_lem with
+            | None ->
+                  let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in
+                  let (_,hp_rest) = List.partition (fun hp ->
+                      match hp.CF.hprel_kind with
+                        | CP.RelDefn _ -> true
+                        | _ -> false
+                  ) hprels
+                  in
+                  let (hp_lst_assume,(* hp_rest *)_) = List.partition (fun hp ->
+                      match hp.CF.hprel_kind with
+                        | CP.RelAssume _ -> true
+                        | _ -> false
+                  ) hp_rest
+                  in
+                  let all_ccoers = left@right in
+                  let post_hps, sel_hps = match all_ccoers  with
+                    | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body), coer.C.coercion_infer_vars)
+                    | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
+                  in
+                  let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                    [] [] [] true true in
+                  let hp_defs1 = List.map (fun def -> {def with CF.def_rhs = [(CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos,None)]}) hp_defs in
+                  let _=  print_endline ""in
+                  let _=  print_endline "\n*************************************" in
+                  let _=  print_endline "*******relational definition ********" in
+                  let _=  print_endline "*************************************" in
+                  let _ = print_endline ((pr_list_ln Cprinter.string_of_hp_rel_def_short) hp_defs1) in
+                  let _=  print_endline "*************************************" in
+                  helper rest (res_so_far@lcs)
+            | Some _ -> (* (false,res_so_far) *) None
+        end
+  in
+  helper repo []
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 

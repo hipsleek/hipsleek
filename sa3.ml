@@ -13,6 +13,7 @@ module TP = Tpdispatcher
 module SAC = Sacore
 module SAU = Sautility
 module IC = Icontext
+module LEM = Lemma
 let step_change = new Gen.change_flag
 
 (* outcome from shape_infer *)
@@ -2892,4 +2893,4 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
           need_preprocess detect_dang)
       proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
 
-let _ = Sacore.infer_shapes := infer_shapes
+let _ = LEM.infer_shapes := infer_shapes

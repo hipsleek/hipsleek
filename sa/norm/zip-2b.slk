@@ -33,7 +33,7 @@ lemma_test "one" self::zipN<n> * y::zipN<m> & n=m
 
 HeapPred H(node x).
 
-lemma_infer[H] self::zipNM<y>  -> H(self) * H(y).
+lemma_infer_pred [H] self::zipNM<y>  -> H(self) * H(y).
 
 /*
  inferred hprel: [emp&self_lem_15=null --> H(self_lem_15); 

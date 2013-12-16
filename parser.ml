@@ -86,6 +86,7 @@ let convert_lem_kind (l: lemma_kind_t) =
       | TLEM_UNSAFE    -> LEM_UNSAFE
       | TLEM_SAFE      -> LEM_SAFE
       | TLEM_INFER     -> LEM_INFER
+      | TLEM_INFER_PRED   -> LEM_INFER_PRED
 
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
@@ -2082,6 +2083,9 @@ coerc_decl_aux:
       `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
           { coercion_list_elems = [t];
             coercion_list_kind  = LEM_INFER }
+      | `LEMMA TLEM_INFER_PRED; t = infer_coercion_decl -> 
+          { coercion_list_elems = [t];
+          coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
       | `LEMMA kind;t = coercion_decl -> 

@@ -2848,13 +2848,6 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
   in
   (**********END INTERNAL***********)
   let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
-  (* let es0,lhs_b0,rhs0,rhs_b0 = if pk = PK_POST && es0.CF.es_subst_ref <> [] then *)
-  (*   let es1 = {es0 with CF.es_formula = CF.subst es0.CF.es_subst_ref es0.CF.es_formula} in *)
-  (*   let lhs_b1 = CF.subst_b es0.CF.es_subst_ref lhs_b0 in *)
-  (*   let rhs1 = CF.h_subst es0.CF.es_subst_ref rhs0 in *)
-  (*   let rhs_b1 = CF.subst_b es0.CF.es_subst_ref rhs_b0 in *)
-  (*   (es1,lhs_b1,rhs1,rhs_b1) *)
-  (* else (es0,lhs_b0,rhs0,rhs_b0) in *)
   (*for debugging*)
   (* DD.info_hprint (add_str  ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
   let _ = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel " !CP.print_svl) es0.es_infer_vars_hp_rel no_pos in
@@ -2872,7 +2865,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     if CP.intersect ivs (lhrs@rhrs) = [] then
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
-        let _ = DD.ninfo_pprint " no hp_rel found" pos in
+        let _ = DD.info_pprint " no hp_rel found" pos in
         constant_checking prog rhs0 lhs_b0 rhs_b0 es0
             (* (false,es) *)
       end

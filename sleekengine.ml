@@ -392,7 +392,7 @@ let process_lemma ldef =
   let r2l = get_coercion r2l in
   (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
   let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
-                     ()
+  ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
   (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
@@ -428,6 +428,7 @@ let process_list_lemma ldef_lst =
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
       | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+      | LEM_INFER_PRED      -> Lemma.manage_infer_pred_lemmas lst iprog !cprog 
   in
   match res with
     | None | Some [] -> CF.clear_residue ()

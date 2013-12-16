@@ -200,6 +200,7 @@ module Make (Token : SleekTokenS)
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
          ("lemma_safe", LEMMA TLEM_SAFE);
 	 ("lemma_infer", LEMMA TLEM_INFER);
+         ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
 	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);

@@ -277,7 +277,7 @@ lemma with annotation vars
 
 
 ===================================================================
-#zip-2b.slk
+#zip-2b.slk: DONE (lemma_infer_pred)
 
  inferred hprel: [emp&self_lem_15=null --> H(self_lem_15); 
                   H(p_341) * self_lem_15::node<_,p_341>@M --> H(self_lem_15); 

@@ -20,15 +20,15 @@ module Inf = Infer
 module SC = Sleekcore
 module LEM = Lemma
 
-let infer_shapes = ref (fun (iprog: IA.prog_decl) (cprog: CA.prog_decl) (proc_name: ident)
-  (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
-  (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
-  (unk_hpargs: (CP.spec_var * CP.spec_var list) list)
-  (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
-  (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
-  let b = ([] : CF.hp_rel_def list) in
-  (a, b)
-)
+(* let infer_shapes = ref (fun (iprog: IA.prog_decl) (cprog: CA.prog_decl) (proc_name: ident) *)
+(*   (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list) *)
+(*   (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list) *)
+(*   (unk_hpargs: (CP.spec_var * CP.spec_var list) list) *)
+(*   (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list) *)
+(*   (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in *)
+(*   let b = ([] : CF.hp_rel_def list) in *)
+(*   (a, b) *)
+(* ) *)
 
 let cmp_hp_pos (hp1,pos1) (hp2,pos2)= (CP.eq_spec_var hp1 hp2) && pos1=pos2
 
@@ -3135,7 +3135,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
                     | _ -> false
               ) hp_rest
               in
-              let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume (List.map fst comps) (List.map fst comps)
+              let _, hp_defs = !LEM.infer_shapes iprog cprog "temp" hp_lst_assume (List.map fst comps) (List.map fst comps)
                 [] [] [] true true in
               (*we need to prove if12 <=== if22: zip example*)
               if not (prov_right_implication f12 f22 hp_defs) then
