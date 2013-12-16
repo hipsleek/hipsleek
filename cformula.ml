@@ -12128,7 +12128,13 @@ let rec norm_specs (sp:struc_formula) : struc_formula = match sp with
 		  then match b.formula_struc_continuation with | None -> mkETrue  (mkTrueFlow ()) no_pos |Some l -> norm_specs l
           else  EBase {b with formula_struc_continuation = map_opt norm_specs b.formula_struc_continuation}
     | EAssume _ -> sp
-    | EInfer b -> norm_specs b.formula_inf_continuation (* eliminate EInfer where possible *)
+    | EInfer b ->
+        (* Template: Keep the infer vars of template for other methods in SCC *)
+        let templ_vars = List.filter (fun (CP.SpecVar (t, _, _)) -> is_FuncT t) b.formula_inf_vars in
+        if templ_vars = [] then norm_specs b.formula_inf_continuation (* eliminate EInfer where possible *)
+        else EInfer { b with
+          formula_inf_vars = templ_vars;
+          formula_inf_continuation = norm_specs b.formula_inf_continuation }
 	| EList b -> mkEList_no_flatten (map_l_snd norm_specs b)
 
 let rec simplify_post post_fml post_vars = match post_fml with

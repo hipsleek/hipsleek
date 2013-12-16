@@ -380,7 +380,7 @@ and check_bounded_term prog ctx post_pos =
       
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
-  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) *
+  let rec helper_x (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) *
         ((CP.spec_var * int list)  *CP.xpure_view) list * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
@@ -390,7 +390,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let r =
 	      List.map (fun (c1, c2) -> 
 		  let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
-		          let (new_c2,pre,rel,hprel, sel_hps,sel_post_hps, unk_map,f) = helper nctx c2 in
+		          let (new_c2,pre,rel,hprel, sel_hps,sel_post_hps, unk_map,f) = helper 2 nctx c2 in
                   (* Thai: Need to generate EBase from pre if necessary *)
                   let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre new_c2 pre) else new_c2 in
 		          ((c1,new_c2),(rel,f),((hprel, sel_hps),(sel_post_hps,unk_map)))) b.CF.formula_case_branches
@@ -429,7 +429,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
 	    (* Termination: Move lexvar to es_var_measures *)
 	    let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
-            let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[],[], [], [],true) | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) in            stk_vars # pop_list vs;
+            let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) = match
+            b.CF.formula_struc_continuation with | None -> (None,[],[],[],[],[],[],true) | Some l -> let r1,r2,r3,r4,r5,r6,r7,r8 = helper 3 nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8) in            stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
               | [] -> b.CF.formula_struc_base
@@ -580,7 +581,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
                     CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
-            let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = helper nctx new_formula_inf_continuation in
+            let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = helper 4 nctx new_formula_inf_continuation in
 (*            let nctx_sc, pr_rel, po_rel, new_formula_inf_continuation_sc =*)
 (*              if !TP.tp == TP.Z3 & proc.proc_is_recursive then*)
 (*                let tmp_rel1, tmp_rel2, tmp_fml = CF.remove_rel new_formula_inf_continuation in*)
@@ -622,12 +623,19 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       CF.formula_struc_continuation = Some c;
                       CF.formula_struc_pos = pos_spec;}
                 | _ -> c in
+            (* Template: Restore template vars in specs *)
+            let new_c =
+              if vars_templ = [] then new_c 
+              else CF.EInfer { b with 
+                CF.formula_inf_vars = vars_templ;
+                CF.formula_inf_continuation = new_c; } 
+            in
             (new_c,[],rel,hprel,vars_hp_rel,post_hps,unk_map,f)
       | CF.EList b -> 
 	        let (sl,pl,rl,hprl,selhps,sel_posthps,unk_map,bl) = List.fold_left (fun (a1,a2,a3,a4,a5,a6,a7,a8) (l,c) ->
 		        let (b1,b2,b3,b4,b5,b6,b7,b8) =
                   store_label # set l;
-                  helper (CF.update_ctx_label ctx l) c in
+                  helper 5 (CF.update_ctx_label ctx l) c in
 		        (a1@[(l,b1)],a2@b2,a3@b3,a4@b4,a5@b5,a6@b6,a7@b7,a8@[b8])) ([],[],[],[],[],[],[],[]) b in
 	    Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
 	        (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhps,sel_posthps, unk_map,List.for_all pr_id bl) 
@@ -889,8 +897,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         )
                   |_ as e ->
 	               let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
+  
+
+  and helper i ctx spec =
+    let pr = !CF.print_struc_formula in
+    Debug.no_1_num i "check_specs_infer" pr (fun (r, _, _, _, _, _, _, _) -> pr r) 
+    (fun _ -> helper_x ctx spec) spec
   in 
-  helper ctx spec 
+  helper 1 ctx spec 
 
 (*we infer automatically from ctx*)
 and infer_lock_invariant_x lock_var ctx pos =
@@ -2713,6 +2727,8 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (*TODO: old_hpdecls is for CP TEST*)
 		      (* let old_hpdecls = prog.prog_hp_decls in *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
+                      let _ = print_endline ("OLD: " ^ (!CF.print_struc_formula proc.proc_static_specs)) in
+                      let _ = print_endline ("NEW: " ^ (!CF.print_struc_formula new_spec)) in
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                       Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                       let new_spec =  CF.simplify_ann new_spec in

@@ -1,6 +1,14 @@
 template int r1(int x).
 template int r2(int y).
 
+void g (int y)
+infer[r2]
+requires y>=0 & Term[r2(y)]
+ensures true;
+{
+	return f(y-1);
+}
+
 void f (int x) 
 infer[r1]
 case {
@@ -12,10 +20,4 @@ case {
 	else return g(x);
 }
 
-void g (int y)
-infer[r2]
-requires y>=0 & Term[r2(y)]
-ensures true;
-{
-	return f(y-1);
-}
+

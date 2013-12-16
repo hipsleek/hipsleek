@@ -5719,7 +5719,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             | EInfer e -> 
                                 let inf_vars = e.CF.formula_inf_vars in
                                 let templ_inf_vars = List.filter (fun (CP.SpecVar (t, _, _)) -> is_FuncT t) inf_vars in
-                                let _ = print_endline ("TVARS: " ^ (!CP.print_svl templ_inf_vars)) in
                                 let ctx11 = CF.add_infer_vars_templ_ctx ctx11 templ_inf_vars in
                                 helper_inner 22 ctx11 e.Cformula.formula_inf_continuation
                                   
