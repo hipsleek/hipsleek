@@ -308,8 +308,19 @@ why failure?
 ntailing lemma lem_17: Fail. (may) cause:OrR[ y=null |-  y!=null. LOCS:[11;8] (must-bug),valid]
 
 Failed to inferred for lem_17:<== ==> invalid lemma encountered.
-
 ===================================================================
+# zip-2b1.slk
+
+How come below not normalized? This can be done at
+either relational assumption or pred normalization.
+Did we not have disjunctive unification?
+
+[ H(self) ::= 
+ self::node<_,p>@M * H(p)
+ or self::node<_,q>@M * H(q)
+ or emp&self=null
+ ]
+
 ===================================================================
 ===================================================================
 ===================================================================
