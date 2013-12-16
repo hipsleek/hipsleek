@@ -12233,7 +12233,9 @@ let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
     | EAssume b -> EAssume {b with
 		formula_assume_simpl = remove_lend (simplify_fml_ann b.formula_assume_simpl);
 		formula_assume_struc = simplify_ann b.formula_assume_struc;}
-    | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
+    | EInfer b -> 
+        (* report_error no_pos "Do not expect EInfer at this level" *)
+        EInfer { b with formula_inf_continuation = simplify_ann b.formula_inf_continuation; }
 	| EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
 
 let rec get_vars_without_rel pre_vars f = match f with

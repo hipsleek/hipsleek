@@ -2727,8 +2727,8 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (*TODO: old_hpdecls is for CP TEST*)
 		      (* let old_hpdecls = prog.prog_hp_decls in *)
                       let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx (proc.proc_static_specs (* @ proc.proc_dynamic_specs *)) body true in
-                      let _ = print_endline ("OLD: " ^ (!CF.print_struc_formula proc.proc_static_specs)) in
-                      let _ = print_endline ("NEW: " ^ (!CF.print_struc_formula new_spec)) in
+                      (* let _ = print_endline ("OLD: " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
+                      (* let _ = print_endline ("NEW: " ^ (!CF.print_struc_formula new_spec)) in *)
                       Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                       Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                       let new_spec =  CF.simplify_ann new_spec in

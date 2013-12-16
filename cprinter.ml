@@ -2545,7 +2545,9 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()
-  | EInfer _ -> report_error no_pos "Do not expect EInfer at this level"
+  | EInfer b -> 
+      (* report_error no_pos "Do not expect EInfer at this level" *)
+      pr_struc_formula_for_spec b.Cformula.formula_inf_continuation
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
   (*| EOr b ->
     let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in

@@ -13891,7 +13891,10 @@ let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog
 	  (EAssume{b with 
 		formula_assume_simpl = new_f;
 		formula_assume_struc = new_f_struc;}, pres)
-  | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
+  | EInfer b -> 
+      (* report_error no_pos "Do not expect EInfer at this level" *)
+      let cont, pres = simplify_relation b.CF.formula_inf_continuation subst_fml pre_vars post_vars prog inf_post evars lst_assume in 
+      EInfer { b with CF.formula_inf_continuation = cont; }, pres
 	| EList b ->   
 		let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
 	   (EList new_sp, List.concat pres)
