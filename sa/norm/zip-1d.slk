@@ -15,10 +15,14 @@ pred zipM<m> ==
    self=null & m=0
 or self::node<_,q>*q::zipM<m1> & m=m1+1.
 
-//1
-checkentail x::zipNM<y,m,n> |- x::zipN<n> * y::zipM<m>.
 
-//2
-checkentail x::zipN<n> * y::zipM<m> |- x::zipNM<y,m,n>.
+//lemma_safe self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m>.
+
+lemma_safe self::zipNM<y,m,n> <- self::zipN<n> * y::zipM<m> & m=n.
+
+checkentail self_lem_15::node<_,p_113>@M * p_113::zipN<n1_114>@M * y::zipM<m>@M&n=1+
+n1_114 & m=n
+ |-  (exists q_115: self_lem_15::node<_,p_89>@M * y::node<_,q_90>@M * 
+p_89::zipNM<q_115,n1_91,m1_92>@M).
 
 print residue.
