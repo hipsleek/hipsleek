@@ -124,6 +124,7 @@ and rel_decl = {
 and hp_decl = { 
     hp_name : ident;
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
     mutable hp_root_pos: int;
     hp_is_pre: bool;
     hp_formula : F.formula;}
@@ -930,6 +931,10 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let look_up_hp_parts decls hp=
+  let hp_dc = look_up_hp_def_raw decls hp in
+  hp_dc.hp_part_vars
 
 let look_up_hp_decl_data_name decls hp arg_pos=
   let rec look_up_data_name args n=

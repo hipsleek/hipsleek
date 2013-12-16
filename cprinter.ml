@@ -2018,7 +2018,8 @@ let string_of_hp_decl hpdecl =
   let decl_kind = if hpdecl.hp_is_pre then "HeapPred " else "PostPred " in
   let pr_inst (sv, i) = (pr_arg sv i) in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
-  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+  let parts = if hpdecl.Cast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Cast.hp_part_vars) in
+  decl_kind ^ name ^ "(" ^ args ^parts ^").\n"
 
 
 let string_of_hp_rels (e) : string =

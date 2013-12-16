@@ -976,7 +976,8 @@ let string_of_hp_decl hpdecl =
   let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
       ^ " " ^ n
   ) hpdecl.Iast.hp_typed_inst_vars) in
-  name^"("^args^")"
+  let parts = if hpdecl.Iast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Iast.hp_part_vars) in
+  name^"("^args^")"^parts
 
 
 (* An Hoa : print axioms *)

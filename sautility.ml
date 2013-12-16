@@ -257,10 +257,11 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
       { Cast.hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
         if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
         ^ (string_of_int (Globals.fresh_int()));
+      Cast.hp_part_vars = [];
       Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
-        Cast.hp_vars_inst = unknown_ptrs;
-        Cast.hp_is_pre = is_pre;
-        Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
+      Cast.hp_vars_inst = unknown_ptrs;
+      Cast.hp_is_pre = is_pre;
+      Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
     in
     let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);

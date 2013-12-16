@@ -756,6 +756,25 @@ let pred_get_root_pos root_id args=
   in
   if String.compare root_id "" = 0 then 0 else look_up args 0
 
+let pred_get_args_partition args_ann=
+  let rec helper rem_args_ann parts=
+    match rem_args_ann with
+      | [] -> parts
+      | (i,dep_i)::rest ->
+            let part,rest1 = List.partition (fun (i1,dep_i1) -> i=dep_i1 || i1 =dep_i) rest in
+            if part = [] then
+              helper rest parts
+            else
+              let new_part = i::(List.map (fun (i,_) -> i) part) in
+              helper rest1 (parts@[new_part])
+  in
+  (*ann the order*)
+  let _, tripl_args_ann, args = List.fold_left (fun (n, r1,r2) (t,(id,i), p) ->
+      (n+1, r1@[(n, i)], r2@[(t,id,p)])
+  ) (0,[],[]) args_ann in
+  let parts = helper tripl_args_ann [] in
+  (args, parts)
+
 let rec get_heap_ann annl : P.ann = 
   match annl with
     | (Some a) :: r -> a
@@ -2208,12 +2227,26 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
-typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
+id_part_ann: [[
+    `IDENTIFIER id-> (id,-1)
+  | `IDENTIFIER id; `COLON; t=integer_literal-> (id, t)
+]]
+;
+
+typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
   | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
   |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
   |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
  ]];
+
+typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
+  |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
+  | t = typ; `RO; (id,n) = id_part_ann -> let _ = pred_root_id := id in (t,(id,n), Globals.I)
+  |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
+  |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
+ ]];
+
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
@@ -2264,24 +2297,28 @@ axiom_decl:[[
 ]];
 
 hp_decl:[[
-`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`HP; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
     let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
         hp_root_pos = root_pos;
+        hp_part_vars = parts;
         hp_is_pre = true;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }
-  | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
     let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
+        hp_part_vars = parts;
         hp_root_pos = root_pos;
         hp_is_pre = false;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);

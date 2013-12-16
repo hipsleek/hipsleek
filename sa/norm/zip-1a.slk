@@ -19,10 +19,13 @@ relDefn zip(x,y) <->
 or x::node<_,p>*y::node<_,q>*zip(p,q).
 
 relDefn zipN(a,b,n) <-> extends zip(a,b) at 0 with size[REC]<n> .
- relDefn zipNM(a,b,n,m) <-> extends zipN(a,b,n) at 1 with size[REC]<m> .
+
+relDefn zipNM(a,b,n,m) <-> extends zipN(a,b,n) at 1 with size[REC]<m> .
+
 
 /*
-pred_split [zip].
+pred_split [zipNM].
+
 
 print residue.
 */

@@ -1718,6 +1718,7 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   ) hp_sv_vars in
   let chprel = {C.hp_name = hpdef.I.hp_name; 
   C.hp_vars_inst = hp_sv_vars1;
+  C.hp_part_vars = hpdef.I.hp_part_vars;
   Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }

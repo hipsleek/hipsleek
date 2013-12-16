@@ -2782,8 +2782,9 @@ let compute_lfp_def prog post_hps dang_hps hp_defs hpdefs=
 (*=============**************************================*)
        (*=============PRED SPLIT================*)
 (*=============**************************================*)
-let pred_split_cands_one_branch prog unk_hps hprel f=
-  let do_partition hns hvs eqs args=
+let pred_split_cands_one_branch_x prog unk_hps hprel f=
+  (*******************INTERNAL************************)
+  let do_partition hns hvs p eqs args=
     let rec intersect_with_pre_parts parts svl r_parts r_svl=
       match parts with
         | [] -> (r_parts,r_svl)
@@ -2811,6 +2812,15 @@ let pred_split_cands_one_branch prog unk_hps hprel f=
           else parts
       | _ -> parts
   in
+  let group_helper cur_parts args_part=
+    let parts1 = List.map (fun args ->
+        let args1 = List.fold_left (fun r svl -> if CP.intersect_svl r svl != [] then (r@svl) else r) args args_part in
+        CP.remove_dups_svl args1
+    ) cur_parts in
+    let parts2 = Gen.BList.remove_dups_eq (fun ls1 ls2 -> CP.diff_svl ls1 ls2 = []) parts1 in
+    parts2
+  in
+  (*******************END INTERNAL************************)
   let hns, hvs, hrs = CF.get_hp_rel_formula f in
   let ( _,mf,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
@@ -2824,11 +2834,30 @@ let pred_split_cands_one_branch prog unk_hps hprel f=
   let cands1 = List.filter (fun (hp,el,l) -> (List.length el) >= 2) cands0 in
   let cands2 = List.map (fun (hp,el,l) ->
       let args = List.concat (List.map CP.afv el) in
-      let parts = do_partition hns hvs eqs args in
-     (hp,args, List.filter (fun svl -> CP.diff_svl svl unk_args <> []) parts,l)
+      let parts = do_partition hns hvs (MCP.pure_of_mix mf) eqs args in
+      (*look_up hp partition*)
+      let arg_parts_pos = CA.look_up_hp_parts prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
+      let parts1 = if arg_parts_pos = [] then parts else
+        (*from pos to var*)
+        let arg_parts = List.map (fun ls_pos -> CF.retrieve_args_from_locs args ls_pos) arg_parts_pos in
+        let parts2 = group_helper parts arg_parts in
+        match parts2 with
+          | [args0] -> if List.length args0 = List.length args then []
+            else parts2
+          | _ -> parts2
+      in
+      (hp,args, List.filter (fun svl -> CP.diff_svl svl unk_args <> []) parts1,l)
   ) cands1
   in
   (cands2)
+
+let pred_split_cands_one_branch prog unk_hps hprel f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 (hp,_,_) = !CP.print_sv hp in
+  let pr3 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
+  Debug.no_2 "pred_split_cands_one_branch" pr2 pr1 pr3
+      (fun _ _ ->  pred_split_cands_one_branch_x prog unk_hps hprel f)
+      hprel f
 
 let pred_split_cands_x prog unk_hps hp_defs=
   (*******INTERNAL*******)
@@ -2853,11 +2882,11 @@ let pred_split_cands_x prog unk_hps hp_defs=
               hrel, hp , List.concat (List.map CP.afv eargs)
         | _ -> report_error no_pos "SAC.pred_split_cands"
       in
-      let f = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
-      let to_split, n_cands =  process_one_pred hrel hp args [] (CF.list_of_disjs f) in
+      let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] def.CF.def_rhs in
+      let to_split, n_cands =  process_one_pred hrel hp args [] fs in
       let n_cands1 = Gen.BList.remove_dups_eq  (fun (hp1, args1,_,_) (hp2, args2, _,_) ->
-      CP.eq_spec_var hp2 hp1
-  ) n_cands in
+          CP.eq_spec_var hp2 hp1
+      ) n_cands in
       if to_split then
         (r@n_cands1, non_split_hps)
       else
