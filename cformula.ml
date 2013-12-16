@@ -7588,6 +7588,13 @@ let get_infer_vars_sel_post_hp_partial_ctx_list ls=
 if List.length ls == 0  then [] else 
   get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
+let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
+  match ctx with
+  | Ctx es -> Ctx { es with es_infer_vars_templ = es.es_infer_vars_templ @ inf_vars_templ; }
+  | OCtx (ctx1, ctx2) -> 
+      OCtx (add_infer_vars_templ_ctx ctx1 inf_vars_templ,
+      add_infer_vars_templ_ctx ctx2 inf_vars_templ)
+
 let es_fv (es:entail_state) : CP.spec_var list =
   (fv es.es_formula)@(h_fv es.es_heap)
 

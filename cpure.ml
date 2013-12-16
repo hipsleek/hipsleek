@@ -11805,10 +11805,10 @@ let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spe
         match t.templ_body with
         | None -> Some (mkIConst 0 t.templ_pos, ([], true))
         | Some b -> Some (b, ([], false))
-      else (* if mem_svl t.templ_id i_templ_ids then *)
+      else if mem_svl t.templ_id i_templ_ids then
         let templ_unks = List.concat (List.map afv t.templ_unks) in
         Some (exp_of_template t, (templ_unks, false))
-      (* else Some (mkIConst 0 t.templ_pos, ([], true)) *)
+      else Some (mkIConst 0 t.templ_pos, ([], true))
   | _ -> None
   in
   let f_comb c = 
