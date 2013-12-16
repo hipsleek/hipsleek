@@ -322,6 +322,19 @@ Did we not have disjunctive unification?
  ]
 
 ===================================================================
+# zip-1e2.slk --en-pred-equiv
+
+How come --en-pred-equiv is not working here?
+Is it because both P1 and P2 are post-pred?
+
+[ P1(self_one2_81) ::=  [
+  P1(p_73) * self_one2_81::node<_,p_73>@M
+  or emp&self_one2_81=null
+  ],
+ P2(y_82) ::=  [
+  P2(q_70) * y_82::node<_,q_70>@M
+  or emp&y_82=null
+  ]]
 ===================================================================
 ===================================================================
 ===================================================================
