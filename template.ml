@@ -343,16 +343,18 @@ let infer_template_rhs cnum (es: CF.entail_state) (ante: MCP.mix_formula) (cons:
     CF.entail_state * formula list =
   let inf_templs = es.CF.es_infer_vars_templ in
   let ante = MCP.find_rel_constraints ante (fv cons) in
-  let ante, ante_unks = trans_formula_templ inf_templs (MCP.pure_of_mix ante) in
+  let ante = MCP.pure_of_mix ante in
+
+  let es =  { es with 
+    CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
+
+  let ante, ante_unks = trans_formula_templ inf_templs ante in
   let cons, cons_unks = trans_formula_templ inf_templs cons in
   let vars = Gen.BList.difference_eq eq_spec_var 
     ((fv ante) @ (fv cons)) (ante_unks @ cons_unks) in
 
   let ante, subst = find_eq_subst_formula vars ante in
   let cons = normalize_formula (apply_par_term subst cons) in
-
-  let es =  { es with 
-    CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
 
   let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
   let ante_fl = true_f::(split_conjunctions ante) in
