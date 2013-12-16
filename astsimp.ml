@@ -2511,23 +2511,28 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
 (** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
-  let v= get_spec_var_ident n_tl id p (* Unprimed  *)in
+  let v = get_spec_var_ident n_tl id p (* Unprimed  *)in
   match v with
-    | CP.SpecVar(t,id,pr) ->
-          if t==UNK then
+  | CP.SpecVar(t,id,pr) ->
+    if t == UNK then
+      try
+        let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        CP.SpecVar(RelT[],id,pr)
+      with _ ->
+        try
+          let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+          CP.SpecVar(RelT[],id,pr)
+        with _ ->
+          try
+            let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+            CP.SpecVar(HpT,id,pr)
+          with _ -> 
             try
-              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-              CP.SpecVar(RelT[],id,pr)
-            with _ ->
-                try
-                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> v
-          else v
+              let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
+              let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
+              CP.SpecVar (ftyp, id, pr)
+            with _ -> v
+    else v
 
 and ident_list_to_spec_var_list ivs n_tl prog =
   let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
@@ -4953,7 +4958,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
         let (n_tl,n_cl) = aux tl b in
         (n_tl,CF.mkEList_no_flatten n_cl)
   ) in
-  let n_tl =gather_type_info_struc_f prog f0 tlist in
+  let n_tl = gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
@@ -8519,8 +8524,13 @@ let check_data_pred_name iprog name : bool =
 			  try
 			    let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in	false
 			  with
-			    | Not_found -> true
+          | Not_found -> begin
+            try
+              let _ = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false 
+            with
+            | Not_found -> true
 		        end
+          end
 		  end
 	    end
       end

@@ -132,6 +132,9 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 
+let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
+  List.fold_right (fun p_typ r_typ -> FuncT (p_typ, r_typ)) param_typ ret_typ
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
