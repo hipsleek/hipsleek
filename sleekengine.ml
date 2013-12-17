@@ -1111,6 +1111,7 @@ let process_rel_infer pre_rels post_rels=
   let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_constrs pre_rels proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   let _ = Debug.info_hprint (add_str "fixpoint for post-rels" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
+  let _ = print_endline "" in
   ()
 
 let process_shape_lfp sel_hps=
