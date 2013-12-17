@@ -1092,13 +1092,20 @@ let relation_pre_process constrs pre_hps post_hps=
       let t = CP.type_of_spec_var sv in
       not ( is_RelT t  )) post_vars1 in
   (*END*)
-  let infer_vars = infer_pre_vars@infer_post_vars in
   (*pairs of (cpure.formula, rel name)*)
-  let post_constrs = List.fold_left (fun r hprel ->
+  let pre_constrs, post_constrs = List.fold_left (fun (r1,r2) hprel ->
       match hprel.CF.hprel_kind with
-        | CP.RelAssume _ -> r@[(CF.get_pure hprel.CF.hprel_lhs, CF.get_pure hprel.CF.hprel_rhs)]
-        | _ -> r
-  ) [] constrs in
+        | CP.RelAssume _ -> begin
+              let rhs_p =  CF.get_pure hprel.CF.hprel_rhs in
+              try
+                let rel = CP.name_of_rel_form rhs_p in
+                if CP.mem_svl rel post_hp_rels then
+                  r1,r2@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)]
+                else (r1@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)], r2)
+              with _ -> r1@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)], r2
+          end
+        | _ -> (r1,r2)
+  ) ([],[]) constrs in
   ([], post_constrs,  pre_hp_rels, post_hp_rels)
 
 let process_rel_infer pre_rels post_rels=
