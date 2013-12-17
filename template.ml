@@ -389,7 +389,23 @@ let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen
 
 let templ_sleek_stk: string Gen.stack = new Gen.stack
 
+let replace_eq_conseq (cons: formula): formula =
+  let f_f f = match f with
+    | BForm (bf, lbl) -> (match bf with
+      | Eq (e1, e2, pos), il -> 
+        let f1 = BForm ((Gte (e1, e2, pos), il), lbl) in
+        let f2 = BForm ((Lte (e1, e2, pos), il), lbl) in
+        Some (mkAnd f1 f2 pos)
+      | _ -> Some f)
+    | _ -> None 
+  in transform_formula (nonef, nonef, f_f, nonef, nonef) cons
+
+let replace_eq_conseq (cons: formula): formula =
+  let pr = !print_formula in
+  Debug.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
+
 let simply_templ_conseq (cons: formula) =
+  let cons = replace_eq_conseq cons in
   let cons_l = split_conjunctions cons in
   let cons_l = List.filter has_template_formula cons_l in
   cons_l
@@ -425,7 +441,7 @@ let gen_slk_infer_templ_scc () =
   let out = List.map (fun (templ_vars, ante, cons) ->
     "infer " ^ (!print_svl templ_vars) ^ " " ^ 
     (!print_formula ante) ^ " |- " ^ (!print_formula cons) ^ ".") inp in
-  let str = (String.concat "\n" out) ^ "\ntemplate_solve.\n" in
+  let str = (String.concat "\n\n" out) ^ "\n\ntemplate_solve.\n" in
   templ_sleek_stk # push str
 
 let gen_slk_file prog =
@@ -442,7 +458,7 @@ let gen_slk_file prog =
     (List.map Cprinter.string_of_templ_decl prog.C.prog_templ_decls)) ^ ".\n"
   in
 
-  let templ_infer_str = String.concat "\n" (List.rev (templ_sleek_stk # get_stk)) in
+  let templ_infer_str = String.concat "\n\n" (List.rev (templ_sleek_stk # get_stk)) in
   
   let slk_output = templ_decl_str ^ "\n\n" ^ templ_infer_str in
   let _ = output_string out_chn slk_output in
