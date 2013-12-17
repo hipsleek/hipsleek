@@ -438,8 +438,8 @@ let gen_slk_file prog =
     open_out (file_name_slk)
   in
 
-  let templ_decl_str = String.concat "\n" 
-    (List.map Cprinter.string_of_templ_decl prog.C.prog_templ_decls)
+  let templ_decl_str = (String.concat ".\n" 
+    (List.map Cprinter.string_of_templ_decl prog.C.prog_templ_decls)) ^ ".\n"
   in
 
   let templ_infer_str = String.concat "\n" (List.rev (templ_sleek_stk # get_stk)) in
@@ -449,18 +449,11 @@ let gen_slk_file prog =
   let _ = close_out out_chn in
   ()
 
-let rec gcd (a: int) (b: int): int = 
-  if b == 0 then a
-  else gcd b (a mod b)
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let vl, il = List.split m in
+  let il = Smtsolver.z3m_val_to_int il in
+  let m = List.combine vl il in
 
-let gcd_l (l: int list): int =
-  match l with
-  | [] -> 1
-  | x::xs -> List.fold_left (fun a x -> gcd a x) x xs
-
-let abs (x: int) = if x < 0 then -x else x
-
-let norm_model (m: (string * int) list): (string * int) list =
   let mi = List.map (fun (_, i) -> i) m in
   let gcd_mi = abs (gcd_l mi) in
   List.map (fun (v, i) -> (v, i / gcd_mi)) m
@@ -474,7 +467,7 @@ let collect_and_solve_templ_constrs inf_templs prog =
     else ()
   in
 
-  if constrs == [] then ()
+  if constrs = [] then ()
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
       (List.concat (List.map fv constrs)) in
@@ -482,14 +475,15 @@ let collect_and_solve_templ_constrs inf_templs prog =
     match model with
     | [] -> print_endline ("TEMPLATE INFERENCE: No result.")
     | _ ->
-      let model = norm_model model in
       let templ_decls = prog.C.prog_templ_decls in
       let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
       let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
+      let templ_unks = Gen.BList.difference_eq eq_spec_var templ_fv templ_params in
+      let model = norm_model (List.filter (fun (v, _) -> List.exists (
+        fun (SpecVar (_, id, _)) -> v = id) templ_unks) model) in
       let unk_subst = List.map (fun v -> 
-          let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
-          (v, mkIConst v_val no_pos)) 
-        (Gen.BList.difference_eq eq_spec_var templ_fv templ_params) in
+        let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
+        (v, mkIConst v_val no_pos)) templ_unks in
       let inf_templ_decls = match inf_templs with
       | [] -> templ_decls
       | _ -> List.find_all (fun tdef -> List.exists (fun id -> 

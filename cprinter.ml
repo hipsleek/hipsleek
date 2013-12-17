@@ -3320,8 +3320,7 @@ let pr_templ_decl tdef =
     (pr_list_round_sep "," (fun (CP.SpecVar (t, v, _)) -> (string_of_typ t) ^ " " ^ v) tdef.Cast.templ_params));
   pr_wrap_test "" Gen.is_None (fun b -> match b with
     | None -> ()
-    | Some e -> fmt_string " == "; pr_formula_exp e) tdef.Cast.templ_body;
-  fmt_string "."
+    | Some e -> fmt_string " == "; pr_formula_exp e) tdef.Cast.templ_body
 
 let string_of_templ_decl = poly_string_of_pr pr_templ_decl
 

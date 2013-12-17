@@ -625,6 +625,9 @@ let gen_slk_file prog (rrels: CF.rrel list) =
 let collect_and_solve_rrel_hip prog (ctx: CF.list_failesc_context): unit =
   let rrels = collect_rrel_list_failesc_context ctx in
   let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let vl, il = List.split sol_for_rrel in
+  let il = Smtsolver.z3m_val_to_int il in
+  let sol_for_rrel = List.combine vl il in
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   let _ = print_collected_rrel (List.map (fun r -> 
@@ -638,6 +641,9 @@ let collect_and_solve_rrel_slk ids rrel_store prog =
   | _ -> List.concat (List.map (fun id -> 
       try Hashtbl.find rrel_store id with _ -> []) ids) in
   let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let vl, il = List.split sol_for_rrel in
+  let il = Smtsolver.z3m_val_to_int il in
+  let sol_for_rrel = List.combine vl il in
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   print_result n_vdefs
@@ -650,6 +656,9 @@ let collect_and_solve_rrel_scc prog =
   let rrels = scc_rrel_stk # get_stk in
   let _ = scc_rrel_stk # reset in
   let sol_for_rrel, raw_subst = solve_rrel_list rrels in
+  let vl, il = List.split sol_for_rrel in
+  let il = Smtsolver.z3m_val_to_int il in
+  let sol_for_rrel = List.combine vl il in
   let n_vdefs = List.map (fun vdef -> 
     plug_rank_into_view raw_subst sol_for_rrel vdef) prog.C.prog_view_decls in
   let _ = print_collected_rrel (List.map (fun r -> 

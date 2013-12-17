@@ -1182,7 +1182,7 @@ let get_model is_linear vars assertions =
   (* let _ = print_endline ("Z3 OUT: " ^ (pr_list (fun s -> s) model)) in *)
 
   let m = try
-      if (List.hd model) = "sat" then
+      if not ((List.hd model) = "unsat") then
         let inp = String.concat "\n" (List.tl model) in
         let lexbuf = Lexing.from_string inp in
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
@@ -1198,9 +1198,30 @@ let get_model is_linear vars assertions =
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
-  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
+  let pr2 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
   Debug.no_1 "z3_get_model" pr1 pr2
   (fun _ -> get_model is_linear vars assertions) assertions
+
+exception Invalid_Z3m_val 
+
+let z3m_val_to_int (vl: z3m_val list): int list =
+  let int_of_float (f: float) = 
+    let i = truncate f in
+    if (float_of_int i) = f then i
+    else raise Invalid_Z3m_val 
+  in
+  let den_l = List.fold_left (fun a v -> match v with
+    | Z3_Int _ -> a | Z3_Frac (_, d) -> a @ [int_of_float d]) [] vl in
+  let den_lcm = lcm_l den_l in
+  List.map (fun v -> match v with
+    | Z3_Int i -> i * den_lcm
+    | Z3_Frac (n, d) -> (int_of_float n) * den_lcm / (int_of_float d) 
+  ) vl
+
+let z3m_val_to_int (vl: z3m_val list): int list =
+  let pr1 = pr_list string_of_z3m_val in
+  let pr2 = pr_list string_of_int in
+  Debug.no_1 "z3m_val_to_int" pr1 pr2 z3m_val_to_int vl
 
 
 
