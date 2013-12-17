@@ -75,6 +75,46 @@ why no inferred templ?
 template_solve {f}.
 =============================================================
 =============================================================
+# templ-2b1.slk (FIXED)
+
+infer [f] x + 1 <= y & x' = x + 1 & y' = y & Term[f(x,y)] 
+   |- Term[f(x', y')].
+print residue.
+
+------------------
+ <1>Base emp&Term[f: f_0+(f_x*x)+(f_y*y)] & y=y' & x'=1+x & (1+x)<=y&{FLOW,(21,22)=__norm}[]
+ inferred templ: [y=y' & x'=1+x & (1+x)<=y --> (f: f_0+(f_x*x)+(f_y*
+                   y))>(f: f_0+(f_x*x')+(f_y*y'))]
+[[empty]]
+
+TEMPLATE INFERENCE RESULT: [ template int f(int x,int y) == 0+(-1*x)+(0*y)]
+------------------
+Is it better to just print:
+
+ inferred templ[f]: [y=y' & x'=1+x & (1+x)<=y --> f(x,y)>f(x',y')]
+
+I suppose this is how it is being captured internally?
+or am I wrong?
+=============================================================
+# Ack-i3-infer.ss
+
+Split relational assumption phase from template inference phase!
+
+Can we support a lexicographic template?
+
+Can we support relAssumption generation first, and then
+to perform solving only during template infer?
+
+Termination checking result:  
+ 
+ (7)->(14) (MayTerm ERR: not decreasing) 
+Term[4; r: r_0+(r_n*m)+(r_m*n)] -> Term[4; r: r_0+(r_n*m')+(r_m*v_int_14_868')]
+
+ (7)->(12) (MayTerm ERR: not decreasing) 
+Term[4; r: r_0+(r_n*m)+(r_m*n)] -> Term[4; r: r_0+(r_n*v_int_12_864')+(r_m*v_int_12_863')]
+
+ (7) 
+(MayTerm ERR: not bounded)[r: r_0+(r_n*m)+(r_m*n)]
 =============================================================
 =============================================================
 =============================================================
