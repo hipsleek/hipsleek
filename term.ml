@@ -485,14 +485,14 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
           let rank_formula = MCP.pure_of_mix rank_formula in*)
-          let entail_res = 
+          let estate, entail_res = 
             if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
-              let _ = Template.infer_template estate 
+              let es = Template.infer_template estate 
                 (MCP.merge_mems lhs_p xpure_lhs_h1 true) rank_formula pos 
-              in true
+              in (match es with Some es -> es | None -> estate), true
             else
               let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
-              in res
+              in estate, res
           in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
