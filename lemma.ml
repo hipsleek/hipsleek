@@ -400,12 +400,12 @@ let manage_infer_pred_lemmas repo iprog cprog =
                   let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                     [] [] [] true true in
                   let hp_defs1 = List.map (fun def -> {def with CF.def_rhs = [(CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos,None)]}) hp_defs in
-                  let _=  print_endline ""in
-                  let _=  print_endline "\n*************************************" in
-                  let _=  print_endline "*******relational definition ********" in
-                  let _=  print_endline "*************************************" in
-                  let _ = print_endline ((pr_list_ln Cprinter.string_of_hp_rel_def_short) hp_defs1) in
-                  let _=  print_endline "*************************************" in
+                  (* let _=  print_endline ""in *)
+                  (* let _=  print_endline "\n*************************************" in *)
+                  (* let _=  print_endline "*******relational definition ********" in *)
+                  (* let _=  print_endline "*************************************" in *)
+                  (* let _ = print_endline ((pr_list_ln Cprinter.string_of_hp_rel_def_short) hp_defs1) in *)
+                  (* let _=  print_endline "*************************************" in *)
                   helper rest (res_so_far@lcs)
             | Some _ -> (* (false,res_so_far) *) None
         end

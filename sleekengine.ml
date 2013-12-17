@@ -428,7 +428,32 @@ let process_list_lemma ldef_lst =
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
       | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
-      | LEM_INFER_PRED      -> Lemma.manage_infer_pred_lemmas lst iprog !cprog 
+      | LEM_INFER_PRED      -> let r = Lemma.manage_infer_pred_lemmas lst iprog !cprog in
+        let _ =
+          begin
+            let rel_defs = if not (!Globals.pred_syn_modular) then
+              Sa2.rel_def_stk
+            else Sa3.rel_def_stk
+            in
+            if not(rel_defs# is_empty) then
+              let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+              (* let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d -> *)
+              (*     match d.CF.hprel_def_kind with *)
+              (*       | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp sel_post_hps) then (r1,r2@[d],r3) else *)
+              (*           if (CP.mem_svl hp sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d]) *)
+              (*       | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in *)
+              (* let defs = pre_preds@post_pred@rem in *)
+              let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs0 else defs0 in
+              print_endline "";
+              print_endline "\n*************************************";
+              print_endline "*******relational definition ********";
+              print_endline "*************************************";
+              let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+              print_endline (pr1 defs1);
+              print_endline "*************************************"
+          end
+        in
+        r
   in
   match res with
     | None | Some [] -> CF.clear_residue ()
