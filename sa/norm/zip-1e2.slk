@@ -16,15 +16,16 @@ HeapPred P1(node a).
 HeapPred P2(node a).
 //relation P3(int a, int b).
 
+/*
 pred zip<> ==
   self=null  
  or self::node<_,p>*p::zip<>  
  inv true.
 
-
 pred P3<> ==
   p::P3<> * self::node<_,p>@M
   or emp&self=null.
+*/
 
 
 //lemma_safe self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m>.
@@ -38,7 +39,7 @@ lemma_infer_pred [P1,P2] "one2" self::zipNM<y> -> P1(self) * P2(y).
 
 print residue.
 
-lemma_test self::P3<> <-> self::zip<>.
+//lemma_test self::P3<> <-> self::zip<>.
 
-lemma_test self::zipNM<y> <-> self::zip<> * y::zip<>.
+//lemma_test self::zipNM<y> <-> self::zip<> * y::zip<>.
 
