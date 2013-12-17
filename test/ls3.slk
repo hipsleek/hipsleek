@@ -6,10 +6,11 @@ pred lseg<p,n> == self=p & n=0
   or self::node<q>*q::lseg<p,n-1> & self!=p
   inv n>=0.
 
-lemma_unsafe self::lseg<p,n> & n=a+b & a>=0 & b>=0 //& n>=0
-   <-> self::lseg<q,a>@D*q::lseg<p,b>.
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>@D*q::lseg<p,b>.
 
-checkentail x::lseg<p,n> & n>=0 |- x::lseg<q1,a>.
+checkentail x::lseg<p,n> //& n>=0 
+    |- x::lseg<q1,a>.
 print residue.
 /*
 Two solutions when n>=0 added explicitly. 
