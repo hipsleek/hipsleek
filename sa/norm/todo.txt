@@ -346,6 +346,22 @@ lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
 // need --lem-en-residue
 // need to infer weakest pre-relation
 ===================================================================
+# zip-1e3v1.slk
+
+More testing with sleek
+
+// dynamically add option in sleek
+add_option "--lem-en-residue".
+lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
+test_assert "Valid".
+test_assert "Fail(may)".
+test_assert "Fail(must)".
+test_assert "x+y>4".
+// on last command
+//IF failure, print
+// - last command
+// - current answer
+// - expected answer
 ===================================================================
 ===================================================================
 ===================================================================

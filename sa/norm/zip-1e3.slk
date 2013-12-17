@@ -23,6 +23,12 @@ pred zip<> ==
 
 //lemma_safe "both" self::zipNM<y> & n=m <-> self::zipN<n> * y::zipN<m> .
 
+lemma_infer[] "oneX" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n<=m.
+
+lemma_infer[] "oneZ" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n=m.
+
+//lemma_test "oneY" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n<=m.
+
 lemma_infer[R] "one" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & R(n,m) .
 
 print residue.

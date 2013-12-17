@@ -69,6 +69,32 @@ as n=0, p=self_lem_11 and self_lem_11!=null, n>0 that
 are unbound; and then pick a pair that is disjoint for
 case-spec; as above
 ====================================================================
+# ../sleek ls7a1.slk -dre ".*coercion_check"
+
+process_coercion_check@1
+process_coercion_check inp1 : 
+ (exists q_67,b_68,a_69: q_67::lseg<p,b_68>@M&q_67=self_lem_11 & a_69=0 & 
+ 0<=a_69 & 0<=b_68 & n=b_68+a_69&{FLOW,(21,22)=__norm})[]
+ or (exists p_79,flted_7_80,q_81,q_67,b_68,a_69: self_lem_11::node<q_81>@M * 
+    q_81::lseg<p_79,flted_7_80>@M * q_67::lseg<p,b_68>@M&a_69=flted_7_80+1 & 
+    p_79=q_67 & 0<=a_69 & 0<=b_68 & n=b_68+a_69&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : :EBase emp&p=self_lem_11 & n=0&{FLOW,(21,22)=__norm}[]
+|| :EBase exists (Expl)[](Impl)[q_82](ex)[](exists p_88,
+          flted_7_89: self_lem_11::node<q_82>@M * 
+          q_82::lseg<p_88,flted_7_89>@M&n=flted_7_89+1 & p=p_88&
+          {FLOW,(21,22)=__norm})[]
+
+
+(i) free var on LHS (inp1) --> self_lem_11, n, p
+(ii) pure expr conjunctive on each branch of RHS (inp2) b
+     ased on free var
+      [p=self_lem_1, n=0]
+      [n>0]
+
+
+formula -> case-formula
+
 ====================================================================
 ====================================================================
 ====================================================================
