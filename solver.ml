@@ -6510,7 +6510,13 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     let _ = Debug.tinfo_hprint (add_str "temp" (pr_pair Cprinter.string_of_list_context pr_none )) temp no_pos in 
     if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
       temp 
-    else match conseq with
+    else 
+      (* Trung : can we use new RHS \/ rule below *)
+      (*  P & not(p1) |- R2 * G *)
+      (* ----------------------------------- *)
+      (*  P |- (p1 \/ R2) * G *)
+      (* let (ctx,conseq) = trigger_new_entail ctx conseq in *)
+      match conseq with
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos1}) ->
