@@ -1018,10 +1018,16 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
             let quan_null_svl,_ = get_null_quans f0 in
             let quan_null_svl0 = List.map (CP.fresh_spec_var) quan_null_svl in
-            let defs,defs_wg, ogs, unk_svl = List.fold_left (fun (r1,r2,r3,r4) pdef->
+            let defs0 (*not in used*),defs0_wg, ogs, unk_svl = List.fold_left (fun (r1,r2,r3,r4) pdef->
                 let (f, og, unk_args) = obtain_and_norm_def hp args0 quan_null_svl0 pdef in
                 (r1@[f], r2@[(f,og)],r3@[og],r4@unk_args)
             ) ([],[],[],[]) par_defs in
+            let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
+            (* let defs = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula args0 f1 f2) defs0 in *)
+            let defs_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> SAU.check_relaxeq_formula args0 f1 f2) defs0_wg in
+            let defs = List.map fst defs_wg in
+            let _ = DD.ninfo_hprint (add_str "defs0: " pr1) defs0_wg no_pos in
+            let _ = DD.ninfo_hprint (add_str "defs: " pr1) defs_wg no_pos in
             let r,non_r_args = SAU.find_root prog (hp::skip_hps) args0 defs in
             (*make explicit root*)
             (* (\*for temporal*\) *)
@@ -1045,7 +1051,6 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             let defs5_wg =  if is_pre then defs5a_wg else
               SAU.perform_conj_unify_post_wg prog hp args0 (unk_hps@link_hps) unk_svl defs5a_wg no_pos
             in
-            let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
             let _ = DD.ninfo_hprint (add_str "defs5a: " pr1) defs5a_wg no_pos in
             let _ = DD.ninfo_hprint (add_str "defs5: " pr1) defs5_wg no_pos in
             (*remove duplicate with self-recursive*)

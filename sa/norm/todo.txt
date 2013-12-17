@@ -309,7 +309,7 @@ ntailing lemma lem_17: Fail. (may) cause:OrR[ y=null |-  y!=null. LOCS:[11;8] (m
 
 Failed to inferred for lem_17:<== ==> invalid lemma encountered.
 ===================================================================
-# zip-2b1.slk
+# zip-2b1.slk: FIXED
 
 How come below not normalized? This can be done at
 either relational assumption or pred normalization.
