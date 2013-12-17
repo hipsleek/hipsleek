@@ -39,10 +39,17 @@ pred ll<> ==
 //lemma_test "one" self::zipNM<y,n,m>  <- self::zipN<n> * y::zipM<m> & n=m .
 
 
-lemma_infer_pred [P1,P2] "one2a" self::zipNM<y,m,n> -> P1(self,n) * P2(y,m).
+//lemma_infer_pred [P1,P2] "one2a" self::zipNM<y,m,n> -> P1(self,n) * P2(y,m).
 
-lemma_infer_pred [P3] "one2b" self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m> & P3(m,n).
+//lemma_infer_pred [P3] "one2b" self::zip<y> -> self::zipN<n> * y::zipM<m> & P3(m,n).
 
-//lemma_infer_pred [P1,P2,P3] "one3" self::zipNM<y,m,n>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
+lemma_infer_pred [P1,P2,P3] "one3" self::zip<y>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
+
+/*
+inferred rel: [RELASS [P3]: ( P3(n_115,m_116)) -->  m_116=0;
+                RELASS [P3]: ( P3(n_127,m_128)) -->  (m_128!=0 | 1>n_127);
+                RELDEFN P3: ( P3(n_127,m_128) & 1<=n_127 & 1<=m_128 & n1_146=m_128-1 & n1_126=n_127-1) -->  P3(n1_126,n1_146)]
+*/
+
 
 print residue.

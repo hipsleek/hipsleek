@@ -322,7 +322,7 @@ Did we not have disjunctive unification?
  ]
 
 ===================================================================
-# zip-1e2.slk --en-pred-equiv
+# zip-1e2.slk --en-pred-equiv: FIXED (lemma_infer_pred: print the final result instead of the inter. one)
 
 How come --en-pred-equiv is not working here?
 Is it because both P1 and P2 are post-pred?
