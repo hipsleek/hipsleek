@@ -33,6 +33,7 @@ module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
 module LO2 = Label_only.Lab2_List
+module TP = Tpdispatcher
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -1075,6 +1076,41 @@ let process_shape_infer pre_hps post_hps=
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
+  ()
+
+let relation_pre_process constrs pre_hps post_hps=
+  (*** BEGIN PRE/POST ***)
+  let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
+  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars1 = (CP.remove_dups_svl pre_vars) in
+  let post_vars1 = (CP.remove_dups_svl post_vars) in
+  let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ( is_RelT t )) pre_vars1 in
+  let infer_post_vars,post_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ( is_RelT t  )) post_vars1 in
+  (*END*)
+  let infer_vars = infer_pre_vars@infer_post_vars in
+  (*pairs of (cpure.formula, rel name)*)
+  let post_constrs = List.fold_left (fun r hprel ->
+      match hprel.CF.hprel_kind with
+        | CP.RelAssume _ -> r@[(CF.get_pure hprel.CF.hprel_lhs, CF.get_pure hprel.CF.hprel_rhs)]
+        | _ -> r
+  ) [] constrs in
+  ([], post_constrs,  pre_hp_rels, post_hp_rels)
+
+let process_rel_infer pre_rels post_rels=
+  let _ = DD.info_pprint "process_rel_infer" no_pos in
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let proc_spec = CF.mkETrue_nf no_pos in
+  let pre_rel_constrs, post_rel_constrs, pre_rels, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
+  (*post fix-point*)
+  let pr = !CP.print_formula in
+  let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_constrs pre_rels proc_spec in
+  let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
+  let _ = Debug.info_hprint (add_str "fixpoint for post-rels" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
   ()
 
 let process_shape_lfp sel_hps=

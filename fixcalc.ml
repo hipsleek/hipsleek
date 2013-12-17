@@ -742,8 +742,8 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
 
   let pairs = preprocess input_pairs_num in
 
-  DD.ninfo_pprint ("input_pairs(b4): " ^ (pr_list 
-    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) no_pos;
+  DD.ninfo_hprint (add_str "input_pairs(b4): " (pr_list 
+    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
 
 (*  let pairs, subs = if bottom_up then arrange_para_new pairs ante_vars,[] *)
 (*    else arrange_para_td pairs ante_vars,[]*)
@@ -753,8 +753,8 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     else arrange_para_td pairs ante_vars
   in
 
-  DD.ninfo_pprint ("input_pairs(af): " ^ (pr_list 
-    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) no_pos;
+  DD.ninfo_hprint (add_str "input_pairs(af): "  (pr_list 
+    (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
 
   let rel_defs = List.concat 
     (List.map (fun pair -> helper pair ante_vars specs) pairs) in

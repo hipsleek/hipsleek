@@ -850,6 +850,7 @@ non_empty_command:
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t=pred_split_cmd     -> PredSplit t
+      | t = rel_infer_cmd -> RelInfer t
       | t=simplify_cmd        -> Simplify t
       | t=hull_cmd        -> Slk_Hull t
       | t=pairwise_cmd        -> Slk_PairWise t
@@ -1907,6 +1908,13 @@ shapeinfer_cmd:
    (il1,il2)
    ]];
 
+rel_infer_cmd:
+   [[ `REL_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1, il2)
+   ]];
+
 shapedivide_cmd:
    [[ `SHAPE_DIVIDE; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
@@ -1931,6 +1939,7 @@ shaperec_cmd:
    let il1 = un_option il1 [] in
    il1
    ]];
+
 
 shapepost_obl_cmd:
    [[ `SHAPE_POST_OBL; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->

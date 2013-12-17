@@ -150,6 +150,7 @@ module Make (Token : SleekTokenS)
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("infer_exact", INFER_EXACT);
    ("infer_inexact", INFER_INEXACT);
+   ("relation_infer", REL_INFER);
    ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
