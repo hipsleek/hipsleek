@@ -363,6 +363,67 @@ test_assert "x+y>4".
 // - current answer
 // - expected answer
 ===================================================================
+# zip-1e-fix.slk
+
+This requires gfp to be computed for pre-relation.
+
+relAssume
+   P3(n,m) -->  (n!=0 | m<1).
+
+relAssume
+   P3(n,m) -->  (m!=0 | n<1).
+
+relAssume
+   P3(n,m) & 1<=n 
+     & 1<=m & m2=m-1 & n2=n-1
+   -->  P3(n2,m2).
+
+relation_infer [P3][].
+
+We first form two things:
+
+  check: P3(n,m) --> (n!=0 | m<1) & (m!=0 | n<1)
+  recurrence: P3(n,m) & 1<=n & 1<=m & m2=m-1 & n2=n-1
+              -->  P3(n2,m2).
+
+Steps for computing pre-relations are
+in topd-zip.fc and topd-zip.oc.
+
+# fixcalc topd-zip.fc 
+
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+wh:={[n,m]->[pn,pm]->[]:
+  (exists (m2,n2:n>=1 && m>=1 && m2=m-1 && n2=n-1 && wh(n2,m2,pn,pm)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
+
+# derive top-down fix-point:
+#(((RECn >= 0 && n >= 1 + RECn) && RECn + m >= n) && RECn + m = RECm + n)
+
+# we also need to satisfy the CHECK initially & recursively
+# P3(n,m) --> (n!=0 | m<1) & (m!=0 | n<1)
+
+# oc topd-zip.oc
+
+# Form a recursive check using top-down fixpoint
+RecChecks := {[n,m]:forall(RECn,RECm: 
+   not(RECn >= 0 
+      & n >= 1 + RECn & RECn + m >= n & RECn + m = RECm + n
+      ) 
+    | ((RECn!=0 | RECm<1) & (RECm!=0 | RECn<1))
+    )
+  };
+
+# Form initial check.
+InitChecks := {[n,m]:(n!=0 | m<1) & (m!=0 | n<1)};
+
+Pre:=RecChecks intersection InitChecks;
+Inv := {[n,m]:n>=0 & m>=0};
+
+# Form pre-condition given invariant
+D:=gist Pre given Inv;
+PairWiseCheck D;
+
 ===================================================================
 ===================================================================
 ===================================================================

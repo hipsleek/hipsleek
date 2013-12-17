@@ -1,14 +1,14 @@
 relation P3(int a, int b).
 
 relAssume
-   P3(n_115,m_116) -->  m_116=0.
+   P3(n,m) -->  (n!=0 | m<1).
 
 relAssume
-   P3(n_127,m_128) -->  (m_128!=0 | 1>n_127).
+   P3(n,m) -->  (m!=0 | n<1).
 
 relAssume
-   P3(n_127,m_128) & 1<=n_127 
-     & 1<=m_128 & n1_146=m_128-1 & n1_126=n_127-1
-   -->  P3(n1_126,n1_146).
+   P3(n,m) & 1<=n 
+     & 1<=m & m2=m-1 & n2=n-1
+   -->  P3(n2,m2).
 
 relation_infer [P3][].
