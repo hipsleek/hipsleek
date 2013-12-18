@@ -1168,7 +1168,7 @@ let process_rel_infer pre_rels post_rels=
     let pre_rel = CP.mkRel rel_name (List.map (fun sv -> CP.mkVar sv no_pos) rel_args) no_pos in
     let rec_oblgs,ini_oblgs = normalize_pre_oblgs rel_args rel_name pre_oblgs in
     let pre_fixs = Solver.pre_rel_fixpoint pre_rel [] Fixcalc.compute_fixpoint_td
-      ini_oblgs [] proc_spec rec_oblgs in
+      ini_oblgs rel_args proc_spec rec_oblgs in
     let _ = List.map (fun ( _,_, pre_rel,pre_def) ->
         let _ = Debug.info_hprint (add_str "fixpoint for pre-rels" ( (pr_pair pr pr))) (pre_rel, pre_def) no_pos in
         (pre_rel,pre_def)
