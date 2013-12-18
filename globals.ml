@@ -600,6 +600,8 @@ let constinfinity = "ZInfinity"
 let deep_split_disjuncts = ref false
 let check_integer_overflow = ref false
 
+let preprocess_disjunctive_consequence = ref false
+
 let this = "this"
 
 let is_self_ident id = self=id

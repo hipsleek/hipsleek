@@ -240,6 +240,7 @@ let common_arguments = [
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
+  ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");

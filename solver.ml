@@ -6515,7 +6515,10 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
       temp 
     else 
-      let (ctx, conseq) = handle_disjunctive_conseq ctx conseq in
+      let (ctx, conseq) = (match !Globals.preprocess_disjunctive_consequence with
+        | true -> handle_disjunctive_conseq ctx conseq
+        | false -> ctx, conseq 
+      ) in
       match conseq with
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
