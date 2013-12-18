@@ -8990,6 +8990,27 @@ let get_rel_id (f:formula)
                 | _ -> None)
         | _ -> None
 
+let get_relargs_opt (f:formula) 
+      = match f with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(id,eargs,_),_) -> Some (id, (List.fold_left List.append [] (List.map afv eargs)))
+                | _ -> None)
+        | _ -> None
+
+
+let get_list_rel_args (f0:formula) =
+  let rec helper f=
+    match f with
+      | BForm (bf,_) ->
+            (match bf with
+              | (RelForm(id,eargs,_),_) -> [(id, (List.fold_left List.append [] (List.map afv eargs)))]
+              | _ -> [])
+      | And (f1,f2,_) -> (helper f1)@(helper f2)
+      | _ -> []
+  in
+  helper f0
+
 let get_rel_id_list (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with

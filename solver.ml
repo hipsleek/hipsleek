@@ -13970,6 +13970,24 @@ let compute_td_fml pre_rel_df pre_rel =
   in
   List.map (fun x -> compute_td_one x rhs pre_rel) pre_rel_df
 
+(*from update_with_td_fp, in case post-fixpoint is empty.
+ compute fix-point for one pre-relation*)
+let pre_rel_fixpoint pre_rel pre_fmls fp_func reloblgs pre_vars proc_spec pre_rel_df=
+  let constTrue = CP.mkTrue no_pos in
+  let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
+  let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
+  let pure_oblg_to_check = 
+    List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
+  let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
+  let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
+  if checkpoint1 then [(constTrue,constTrue,pre_rel,constTrue)]
+  else 
+    let input_fml = compute_td_fml pre_rel_df pre_rel in
+    let pr = Cprinter.string_of_pure_formula in
+    let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
+    pre_calculate fp_func input_fml pre_vars proc_spec 
+        constTrue pure_oblg_to_check ([constTrue,constTrue],pre_rel) pre_fmls pre_rel_vars pre_rel_df
+
 let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func 
   preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df 
   pre_vars proc_spec grp_post_rel_flag = 
@@ -13977,20 +13995,20 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func
   let constTrue = CP.mkTrue no_pos in
   match bottom_up_fp, pre_rel_fmls with
   | [], [pre_rel] ->
-    let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
-    let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
-    let pure_oblg_to_check = 
-      List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
-    let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
+        pre_rel_fixpoint pre_rel (*formula of pre_rel_var*) pre_fmls fp_func reloblgs pre_vars proc_spec pre_rel_df
+(*     let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in *)
+(*     let pure_oblg_to_check =  *)
+(*       List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in *)
+(*     let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in *)
 
-    let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
-    if checkpoint1 then [(constTrue,constTrue,pre_rel,constTrue)]
-    else 
-(*      [(constTrue,constTrue,constTrue,constTrue)]*)
-      let input_fml = compute_td_fml pre_rel_df pre_rel in
-      let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
-      pre_calculate fp_func input_fml pre_vars proc_spec 
-        constTrue pure_oblg_to_check ([constTrue,constTrue],pre_rel) pre_fmls pre_rel_vars pre_rel_df
+(*     let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in *)
+(*     if checkpoint1 then [(constTrue,constTrue,pre_rel,constTrue)] *)
+(*     else  *)
+(* (\*      [(constTrue,constTrue,constTrue,constTrue)]*\) *)
+(*       let input_fml = compute_td_fml pre_rel_df pre_rel in *)
+(*       let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in *)
+(*       pre_calculate fp_func input_fml pre_vars proc_spec  *)
+(*         constTrue pure_oblg_to_check ([constTrue,constTrue],pre_rel) pre_fmls pre_rel_vars pre_rel_df *)
   | rel_posts, [pre_rel] ->
   if grp_post_rel_flag = 2 then List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
   else

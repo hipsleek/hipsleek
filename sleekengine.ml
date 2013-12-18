@@ -1106,19 +1106,89 @@ let relation_pre_process constrs pre_hps post_hps=
           end
         | _ -> (r1,r2)
   ) ([],[]) constrs in
-  ([], post_constrs,  pre_hp_rels, post_hp_rels)
+  (pre_constrs, post_constrs,  pre_hp_rels, post_hp_rels)
 
 let process_rel_infer pre_rels post_rels=
-  let _ = DD.info_pprint "process_rel_infer" no_pos in
+  (* let _ = DD.info_pprint "process_rel_infer" no_pos in *)
+  (*************INTERNAL*****************)
+  let pr = !CP.print_formula in
+  let rec look_up_rel_form obgs rel_var=
+    match obgs with
+      | [] -> report_error no_pos "SE.process_rel_infer"
+      | (lhs,rhs)::rest -> begin
+            let rel_args = (CP.get_list_rel_args lhs)@(CP.get_list_rel_args rhs) in
+            try
+              let _,args = List.find (fun (rel,_) -> CP.eq_spec_var rel rel_var) rel_args in
+              args
+            with _ -> look_up_rel_form rest rel_var
+        end
+  in
+  let normalize_pre_oblgs args0 rel_var oblgs0=
+    let rec_process (rec_oblgs,init_oblgs) args0 lhs rhs=
+      let r_rel_args_opt = CP.get_relargs_opt rhs in
+      match r_rel_args_opt with
+        | Some (r_rel,_) -> begin
+              let l_rel_args = CP.get_list_rel_args lhs in
+              let sel_l_rel_args = List.filter (fun (rel,_) -> CP.eq_spec_var rel rel_var) l_rel_args in
+              match sel_l_rel_args with
+                | [] -> rec_oblgs,init_oblgs
+                | [(_,args)] ->
+                      let ss = List.combine args args0 in
+                      let n_lhs = CP.subst ss lhs in
+                      let n_rhs = CP.subst ss rhs in
+                      (rec_oblgs@[(n_lhs,n_rhs)],init_oblgs)
+                | _ -> report_error no_pos "SE.process_rel_infer: >=2 rec in gfp is not supported yet"
+          end
+        | None -> rec_oblgs,init_oblgs
+    in
+    let rec helper args0 (rec_oblgs,init_oblgs) oblgs=
+      match oblgs with
+        | [] -> rec_oblgs,init_oblgs
+        | (lhs,rhs)::rest -> begin
+            let rel_var1_opt =  CP.get_relargs_opt lhs in
+            let n_rec_oblgs,n_init_oblgs=
+              match rel_var1_opt with
+                | Some (rel_var1, args) ->
+                      if CP.eq_spec_var rel_var rel_var1 then
+                        let ss = List.combine args args0 in
+                        let n_lhs = CP.subst ss lhs in
+                        let n_rhs = CP.subst ss rhs in
+                        (rec_oblgs,init_oblgs@[(CP.RelDefn rel_var, n_lhs,n_rhs)])
+                      else
+                        rec_process (rec_oblgs,init_oblgs) args0 lhs rhs
+                | None ->
+                      rec_process (rec_oblgs,init_oblgs) args0 lhs rhs
+            in
+            helper args0 (n_rec_oblgs,n_init_oblgs) rest
+          end
+    in
+    helper args0 ([],[]) oblgs0
+  in
+  let compute_fixpoint_pre_rel rel_name rel_args pre_oblgs proc_spec=
+    let pre_rel = CP.mkRel rel_name (List.map (fun sv -> CP.mkVar sv no_pos) rel_args) no_pos in
+    let rec_oblgs,ini_oblgs = normalize_pre_oblgs rel_args rel_name pre_oblgs in
+    let pre_fixs = Solver.pre_rel_fixpoint pre_rel [] Fixcalc.compute_fixpoint_td
+      ini_oblgs [] proc_spec rec_oblgs in
+    let _ = List.map (fun ( _,_, pre_rel,pre_def) ->
+        let _ = Debug.info_hprint (add_str "fixpoint for pre-rels" ( (pr_pair pr pr))) (pre_rel, pre_def) no_pos in
+        (pre_rel,pre_def)
+    ) pre_fixs in
+    ()
+  in
+  (*************END INTERNAL*****************)
   let hp_lst_assume = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
   let pre_rel_constrs, post_rel_constrs, pre_rels, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
   (*post fix-point*)
-  let pr = !CP.print_formula in
   let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_constrs pre_rels proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   let _ = Debug.info_hprint (add_str "fixpoint for post-rels" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
   let _ = print_endline "" in
+  let _ = List.map (fun pre_rel_sv ->
+      let args = look_up_rel_form pre_rel_constrs pre_rel_sv in
+      let rel_args = CP.fresh_spec_vars args in
+      compute_fixpoint_pre_rel pre_rel_sv rel_args pre_rel_constrs proc_spec
+  ) pre_rels in
   ()
 
 let process_shape_lfp sel_hps=

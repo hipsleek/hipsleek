@@ -712,6 +712,8 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let print_relassume  = ref true
+
 let lemma_syn = ref false
 
 let sa_en_split = ref false
