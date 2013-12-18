@@ -10995,9 +10995,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
 	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
-        let contra, c,r =
+        let contra, es_pure_lst,r =
           match r_inf_contr with
-            | Some r ->  (true, [r], relass)
+            | Some es_pure ->  (true, [es_pure], relass)
             | None ->
                   begin
                     match relass with
@@ -11005,8 +11005,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
                       | []   ->  (false, [], [])
                   end
         in
-        
-        if (contra) then (c,r)
+        if (contra) then (es_pure_lst,r)
         else
           (* contra with  HP args *)
           let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
@@ -11095,7 +11094,7 @@ and solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg =
   let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
   let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) new_estate.es_infer_vars no_pos in
   (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
-  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
+  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 6 new_estate lhs_xpure pos msg  in 
   r_inf_contr,relass
 
 and sort_infer_vars_hp_rel prog infer_vars_hp_rel = 

@@ -749,13 +749,14 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
             let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
             (Some (new_estate,pf),[])
 
+(* estate is present twice in result *)
 let infer_lhs_contra_estate i estate lhs_xpure pos msg =
   let pr0 = !print_entail_state_short in
   let pr1 = !print_mix_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr_es (es,e) =  pr_pair pr0 Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in
-  let pr3 (_,lr,b) =  pr_pair (pr_list pr) string_of_bool (lr,b) in
+  let pr3 (es,lr,b) =  pr_triple pr0 (pr_list pr) string_of_bool (es,lr,b) in
   let pr_res = (pr_pair (pr_option pr_es) (pr_list pr3)) in
   Debug.no_2_num i "infer_lhs_contra_estate" (add_str "estate" pr0) 
       (add_str "lhs_xpure" pr1) pr_res (fun _ _ -> infer_lhs_contra_estate estate lhs_xpure pos msg) estate lhs_xpure
