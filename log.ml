@@ -85,6 +85,10 @@ let string_of_sleek_proving_kind ()
 let string_of_top_proving_kind () 
       = string_of_proving_kind (proving_kind#top_no_exc)
 
+let string_of_impt_proving_kind () 
+      = string_of_proving_kind (Others.find_impt_proving_kind ())
+
+
 let string_of_log_type lt =
   match lt with
     |PT_IMPLY_TOP (ante, conseq) -> 
@@ -380,7 +384,8 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
         sleek_proving_classic_flag = classic_flag;
         sleek_proving_hec = hec;
         sleek_proving_pos = pos;
-        sleek_proving_kind = string_of_top_proving_kind ();
+        (* sleek_proving_kind = string_of_top_proving_kind (); *)
+        sleek_proving_kind = string_of_impt_proving_kind ();
         (* !sleek_proving_kind; *)
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;

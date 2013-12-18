@@ -24,7 +24,7 @@ ensures res::ll<k> & k=m;
       if (y==null) return null;
       else 
         {
-          assert false; 
+          assert false assume false; 
           return x;
         }
     }

@@ -1335,7 +1335,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (ps@res)
 	        end
 	      in
-              wrap_classic atype (wrap_proving_kind PK_Assert assert_op) ()
+              (* why is wrap classic needed for assert/assume? *)
+              (wrap_proving_kind 
+                  (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
+                  (wrap_classic atype assert_op)) ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) ->

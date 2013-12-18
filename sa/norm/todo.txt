@@ -511,7 +511,9 @@ infer [m,n]
  inferred pure: [(m<=-1 | n<=-1)]
 [[empty]]
 ===================================================================
-# zip_paper_eq-1.ss
+# zip_paper_eq-1.ss (FIXED)
+
+# Need to use assert/assume to capture pure property more permanently
 
 One pure relational assumption was lost...
 
@@ -528,6 +530,13 @@ RELDEFN Q: ( n=0 & k=0 & 1<=m & P(m,n)) -->  Q(m,n,k),
 RELDEFN Q: ( Q(m_1028,n_1027,k_1049) & 0<=k_1049 & n_1027=n-1 & m_1028=m-1 & k=k_1049+
 1 & 1<=m & 1<=n & P(m,n)) -->  Q(m,n,k)]
 ===================================================================
+# zip_paper_eq-1.ss --esl (FIXED)
+
+
+id: 9 src:2; caller: []; line: 27; classic: false; kind: UNKNOWN; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+
+Can we support ASSERT and ASSERT/ASSUME..
+
 ===================================================================
 ===================================================================
 ===================================================================
