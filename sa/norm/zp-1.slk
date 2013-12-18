@@ -47,3 +47,15 @@ However, x & y are also present!
 
 */
 print residue.
+
+infer [P] x::ll<n>@L * y::ll<m>@L&P(m,n) & y=y' & x=x' & x'=null & v_bool_22_910' & 
+x'=null & v_bool_22_910' & y'!=null & !(v_bool_24_894') & y'!=null & 
+!(v_bool_24_894')
+ |-  hfalse&false.
+print residue.
+
+infer [P] (x=null & n=0 | x!=null & n>0) & (y=null & m=0 | y!=null & m>0)  &P(m,n) & y=y' & x=x' & x'=null & v_bool_22_910' & 
+x'=null & v_bool_22_910' & y'!=null & !(v_bool_24_894') & y'!=null & 
+!(v_bool_24_894')
+ |-  hfalse&false.
+print residue.

@@ -15,7 +15,19 @@ lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0
 checkentail p::lseg<q',i'>*q'::node<q>*q::lseg<nil,m> & i=i'+1
   & i'>=0 & m=n-i'-1 & m>=0
  |- p::lseg<q,i>*q::lseg<nil,n-i>.
+
+
+checkentail p::lseg<q',i'>*q'::node<q>
+  & i'>=0 & m=n-i'-1 & m>=0
+ |- p::lseg<q,i>
 /*
+lemma_safe x::ls<y>*y::ls<z>*z::node<k> --> x::ls<z>*z::node<k>
+lemma_safe x::ls<y>*y::ls<z>*z::ls<nil> --> x::ls<z>*z::ls<nil>
+
+m = n-i'-1
+  = n- (i'+1_
+  = n-i
+ 
 fail: due to incompleteness?
 
 */
