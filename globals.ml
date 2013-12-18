@@ -868,6 +868,7 @@ let use_field = ref false
 let large_bind = ref false
 
 let print_x_inv = ref false
+let print_relassume = ref true
 let print_cnv_null = ref false
 
 let hull_pre_inv = ref false
