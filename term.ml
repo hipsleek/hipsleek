@@ -488,7 +488,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let estate, entail_res = 
             if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
               let es = Template.infer_template estate 
-                (MCP.merge_mems lhs_p xpure_lhs_h1 true) rank_formula pos 
+                (* (MCP.merge_mems lhs_p xpure_lhs_h1 true) *) lhs_p rank_formula pos 
               in (match es with Some es -> es | None -> estate), true
             else
               let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
