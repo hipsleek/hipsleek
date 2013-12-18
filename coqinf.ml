@@ -30,8 +30,8 @@ struct
 let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 
 end
 
-module CoqInfSolver = Infsolver.InfSolver(StrSV)
-(*module CoqInfSolver = Infsolver.InfSolver*)
+(*module CoqInfSolver = Infsolver.InfSolver(StrSV)*)
+module CoqInfSolver = Infsolver.InfSolver
 
 open CoqInfSolver
 
@@ -230,10 +230,24 @@ match bf with
   | CEqMax(e1,e2,e3) -> ZBF_Eq_Max((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
   | CEqMin(e1,e2,e3) -> ZBF_Eq_Min((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2),(coqpure_to_coqinfsolver_exp e3)) 
   | CNeq(e1,e2) -> ZBF_Neq((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))  
+(*  | _ ->  failwith "coqinf.ml Max Min shoulbe all eliminated"*)
 
 let rec coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
 match f with
-  | CBForm bf -> ZF_BF (coqpure_to_coq_infsolver_bf bf)
+  | CBForm bf -> (*(match bf with
+      | CEqMax(e1,e2,e3) -> 
+          let ce1 = coqpure_to_coqinfsolver_exp e1 in
+          let ce2 = coqpure_to_coqinfsolver_exp e2 in
+          let ce3 = coqpure_to_coqinfsolver_exp e3 in
+          ZF_Or(ZF_And(ZF_BF(ZBF_Gte(ce2,ce3)),ZF_BF(ZBF_Eq(ce1,ce2))),
+              ZF_And(ZF_BF(ZBF_Gt(ce3,ce2)),ZF_BF(ZBF_Eq(ce1,ce3))))
+      | CEqMin(e1,e2,e3) -> 
+          let ce1 = coqpure_to_coqinfsolver_exp e1 in
+          let ce2 = coqpure_to_coqinfsolver_exp e2 in
+          let ce3 = coqpure_to_coqinfsolver_exp e3 in
+          ZF_Or(ZF_And(ZF_BF(ZBF_Gte(ce2,ce3)),ZF_BF(ZBF_Eq(ce1,ce3))),
+              ZF_And(ZF_BF(ZBF_Gt(ce3,ce2)),ZF_BF(ZBF_Eq(ce1,ce2))))
+      | _ -> *) ZF_BF (coqpure_to_coq_infsolver_bf bf)
   | CAnd(f1,f2) -> ZF_And((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl))
   | COr(f1,f2) -> ZF_Or ((coqpure_to_coq_infsolver_form f1 vl),(coqpure_to_coq_infsolver_form f2 vl)) 
   | CNot f -> ZF_Not (coqpure_to_coq_infsolver_form f vl)
