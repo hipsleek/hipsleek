@@ -9520,7 +9520,7 @@ let memoise_rel_formula ivs (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
     | RelForm (i,_,p) -> mem i ivs
-    | _ -> false
+    | _ -> if has_template_b_formula (b, None) then true else false
   in memoise_formula_ho pr f
 
 let memoise_rel_formula ivs (f:formula) : 
@@ -9533,7 +9533,7 @@ let memoise_all_rel_formula (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
     | RelForm (i,_,p) -> true
-    | _ -> false
+    | _ -> if has_template_b_formula (b, None) then true else false
   in memoise_formula_ho pr f
 
 let mk_bvar_subs v subs =

@@ -1070,6 +1070,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           (***************************************************)
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
+    let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
 	  let tmp_views = order_views prog.I.prog_view_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
@@ -1095,8 +1096,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
     let chps, pure_chps = List.split pr_chps in
     let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
     let crels = crels0@pure_chps in
-    let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
-	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
+    let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 	  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
@@ -1586,6 +1586,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
 	      let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+        let ffv = List.filter (fun v -> not (is_FuncT (CP.type_of_spec_var v))) ffv in
         (* filter out intermediate dereference vars and update them to view vars *)
         
         let ffv = List.filter (fun v ->

@@ -23,6 +23,7 @@ Term[4; r: r_0+(r_n*m)+(r_m*n)] -> Term[4; r: r_0+(r_n*v_int_12_864')+(r_m*v_int
 
 
 int ack (int m, int n)
+	infer [r]
   requires m>=0 & n>=0 & Term[r(m,n)] ensures res>0;
 {
 	if (m <= 0) 

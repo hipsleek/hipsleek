@@ -200,7 +200,7 @@ let omega_of_formula i pr_w pr_s f  =
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =
-  let (pr_w,pr_s) = no_drop_ops in
+  let (pr_w, pr_s) = no_drop_ops in
   try 
     Some(omega_of_formula i pr_w pr_s f)
   with | _ -> None
@@ -821,8 +821,12 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   end
 
 let simplify (pe : formula) : formula =
-  let pr x = None in 
-  simplify_ops pr pr pe
+  let pr_w, pr_s = no_drop_ops in
+  (* simplify_ops pr_w pr_s pe *)
+  let f_memo, subs, bvars = memoise_rel_formula [] pe in
+  let res_memo = simplify_ops pr_w pr_s f_memo in
+  restore_memo_formula subs bvars res_memo
+
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
