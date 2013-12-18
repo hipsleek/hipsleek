@@ -13997,7 +13997,7 @@ let pre_rel_fixpoint pre_rel pre_fmls fp_func reloblgs pre_vars proc_spec pre_re
       (fun _ _ _ _ _ -> pre_rel_fixpoint_x pre_rel pre_fmls fp_func reloblgs pre_vars proc_spec pre_rel_df)
       pre_rel pre_fmls reloblgs pre_vars pre_rel_df
 
-let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func 
+let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls fp_func 
   preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df 
   pre_vars proc_spec grp_post_rel_flag = 
   let pr = Cprinter.string_of_pure_formula in
@@ -14029,7 +14029,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func
     let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
     let exist_vars = CP.diff_svl (CP.fv_wo_rel rel) pre_rel_vars in
     let pre = TP.simplify_exists_raw exist_vars post in
-    let _ = Debug.ninfo_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
+    let _ = Debug.info_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
 
     let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
     let pure_oblg_to_check = 
@@ -14098,6 +14098,21 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func
 (*      else [(rel,post,constTrue,constTrue)])*)
   | _,_ -> List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
 
+let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func 
+  preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df 
+  pre_vars proc_spec grp_post_rel_flag = 
+  let pr1 = Cprinter.string_of_pure_formula in
+  let pr2 = pr_pair pr1 pr1 in
+  let pr2a = pr_list pr2 in
+  let pr3 = CP.print_rel_cat in
+  let pr3a = pr_list_ln (pr_triple pr3 pr1 pr1) in
+  let pr4 = pr_list (pr_quad pr1 pr1 pr1 pr1) in
+  Debug.no_7 "update_with_td_fp" (pr_list_ln pr1) (pr_list_ln pr1)
+      pr3a pr2a pr2a pr2a !CP.print_svl pr4
+      (fun _ _ _ _ _ _ _ -> update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls fp_func
+          preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
+          pre_vars proc_spec grp_post_rel_flag)
+      pre_rel_fmls pre_fmls reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars
 
 (*
 module frac_normaliz = struct
