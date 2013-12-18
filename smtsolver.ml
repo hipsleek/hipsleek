@@ -1178,8 +1178,8 @@ let get_model is_linear vars assertions =
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  (* let _ = print_endline ("Z3 INP: " ^ smt_inp) in *)
-  (* let _ = print_endline ("Z3 OUT: " ^ (pr_list (fun s -> s) model)) in *)
+  let _ = Debug.tinfo_pprint ("Z3m INP: " ^ smt_inp) no_pos in
+  let _ = Debug.tinfo_pprint ("Z3m OUT: " ^ (pr_list (fun s -> s) model)) no_pos in
 
   let m = try
       if not ((List.hd model) = "unsat") then

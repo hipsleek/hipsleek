@@ -533,9 +533,11 @@ let collect_and_solve_templ_constrs inf_templs prog =
     if !print_relassume then
       let templ_assumes = templ_assume_stk # get_stk in
       let _ = templ_assume_stk # reset in
-      print_endline "**** TEMPLATE ASSUMPTION ****";
-      print_endline (pr_list 
-        (fun a -> (Cprinter.string_of_templ_assume a) ^ "\n") templ_assumes)
+      if templ_assumes = [] then ()
+      else
+        print_endline "**** TEMPLATE ASSUMPTION ****";
+        print_endline (pr_list 
+          (fun a -> (Cprinter.string_of_templ_assume a) ^ "\n") templ_assumes)
     else ()
   in
 
