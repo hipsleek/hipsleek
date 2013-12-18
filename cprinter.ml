@@ -800,12 +800,16 @@ let rec pr_formula_exp (e:P.exp) =
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  (")"))
     | P.Template t -> 
+      fmt_string ((string_of_spec_var t.P.templ_id) ^ 
+        (pr_list_round_sep "," !P.print_exp t.P.templ_args))
+      (*
       if !Globals.gen_templ_slk then 
         fmt_string ((string_of_spec_var t.P.templ_id) ^ 
           (pr_list_round_sep "," !P.print_exp t.P.templ_args))
       else
         (fmt_string ((string_of_spec_var t.P.templ_id) ^ ": ");
         pr_formula_exp (P.exp_of_template t))
+      *)
 		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
 		match i with
 			| [] -> ()
@@ -2150,6 +2154,8 @@ let pr_templ_assume (ante, cons) =
   fmt_string " --> ";
   pr_pure_formula cons;
   fmt_close ()
+
+let string_of_templ_assume = poly_string_of_pr pr_templ_assume
 
 let pr_path_of (path, off)=
    (* fmt_string "PATH format"; *)

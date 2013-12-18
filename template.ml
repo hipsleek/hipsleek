@@ -16,6 +16,18 @@ let print_term (t: term) =
     (!print_sv v) ^ "^" ^ (string_of_int d)) 
     ("(" ^ (!print_exp t.term_coe) ^ ")") t.term_var
 
+(* Stack of generated constraints *)
+let templ_constr_stk: formula Gen.stack = new Gen.stack
+
+(* Stack for SLEEK generation per scc *)
+let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack
+
+(* Stack for SLEEK generation whole program *)
+let templ_sleek_stk: string Gen.stack = new Gen.stack
+
+(* Stack of template assumption per scc *)
+let templ_assume_stk: (formula * formula) Gen.stack = new Gen.stack 
+
 let rec print_term_list (tl: term list) =
   match tl with
   | [] -> ""
@@ -346,6 +358,11 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
 
   let es =  { es with 
     CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
+  let _ =
+    if !print_relassume then
+      templ_assume_stk # push (ante, cons)
+    else ()
+  in
 
   let ante, ante_unks = trans_formula_templ inf_templs ante in
   let cons, cons_unks = trans_formula_templ inf_templs cons in
@@ -386,12 +403,6 @@ let exp_of_templ_decl (tdef: C.templ_decl): exp =
   Template {
     templ_id = tid; templ_args = targs; templ_unks = []; 
     templ_body = tdef.C.templ_body; templ_pos = pos; }
-
-let templ_constr_stk: formula Gen.stack = new Gen.stack
-
-let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack
-
-let templ_sleek_stk: string Gen.stack = new Gen.stack
 
 let replace_eq_conseq (cons: formula): formula =
   let f_f f = match f with
@@ -518,6 +529,16 @@ let collect_and_solve_templ_constrs inf_templs prog =
     else ()
   in
 
+  let _ = 
+    if !print_relassume then
+      let templ_assumes = templ_assume_stk # get_stk in
+      let _ = templ_assume_stk # reset in
+      print_endline "**** TEMPLATE ASSUMPTION ****";
+      print_endline (pr_list 
+        (fun a -> (Cprinter.string_of_templ_assume a) ^ "\n") templ_assumes)
+    else ()
+  in
+
   if constrs = [] then ()
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
@@ -543,7 +564,7 @@ let collect_and_solve_templ_constrs inf_templs prog =
       let res_templ_decls = List.map (fun tdef -> { tdef with
         C.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.C.templ_body; 
       }) inf_templ_decls in
-      print_string "TEMPLATE INFERENCE RESULT: ";
+      print_endline "**** TEMPLATE INFERENCE RESULT ****";
       print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
 
 
