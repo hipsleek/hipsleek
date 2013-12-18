@@ -25,7 +25,7 @@ Starting Omega...oc
 trans_prog
 WARNING (must fix): Vars from[r]has type UNK
 =============================================================
-# templ-2.ss --gts
+# templ-2.ss --gts (DONE)
 
 To make --term-dis-bnd-pre work properly..
 
@@ -105,17 +105,26 @@ Can we support a lexicographic template?
 Can we support relAssumption generation first, and then
 to perform solving only during template infer?
 
-Termination checking result:  
- 
- (7)->(14) (MayTerm ERR: not decreasing) 
-Term[4; r: r_0+(r_n*m)+(r_m*n)] -> Term[4; r: r_0+(r_n*m')+(r_m*v_int_14_868')]
-
- (7)->(12) (MayTerm ERR: not decreasing) 
-Term[4; r: r_0+(r_n*m)+(r_m*n)] -> Term[4; r: r_0+(r_n*v_int_12_864')+(r_m*v_int_12_863')]
-
- (7) 
-(MayTerm ERR: not bounded)[r: r_0+(r_n*m)+(r_m*n)]
 =============================================================
+# ll-length-r.ss
+
+**** TEMPLATE ASSUMPTION ****
+[ n=fr( v_946, n1_948) & n1_948=n_952 --> (r( n))>(r( n_952))
+, 0<=n --> 0<=(r( n))
+, n=fr( v_897, n1_896) & 0<=n1_896 --> 0<=n
+, n=fb() --> 0<=n
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int r(int n) == 2+(1*n), 
+template int fb() == 2, 
+template int fr(int v,int n) == 3+(0*v)+(1*n)]
+
+Looks good, though I was wondering
+if we could support a more minimalistic outcome?
+
+   fb() = 0
+   fr(v,n) = 1+1*n
+   r(n) = 0+1*n
 =============================================================
 =============================================================
 =============================================================
