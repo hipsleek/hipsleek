@@ -41,13 +41,19 @@ ensures res::ll<k> & k=m;
 
 /*
 
-Missing relational assumption?
+Correctly inferred pre/post pure relation:
 
-[RELDEFN P: ( P(m,n) & 1<=m & 1<=n & n_1027=n-1 & m_1028=m-1) -->  P(m_1028,n_1027),
-RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n),
-RELDEFN Q: ( n=0 & m=0 & k=0 & P(m,n)) -->  Q(m,n,k),
-RELDEFN Q: ( n=0 & k=0 & 1<=m & P(m,n)) -->  Q(m,n,k),
-RELDEFN Q: ( Q(m_1028,n_1027,k_1049) & 0<=k_1049 & n_1027=n-1 & m_1028=m-1 & k=k_1049+
-1 & 1<=m & 1<=n & P(m,n)) -->  Q(m,n,k)]
+!!! pure pre: m=n & 0<=m
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( Q(m,n,k), k=m & k=n & 0<=k, P(m,n), m=n)]
+*************************************
+
+!!!REL POST :  Q(m,n,k)
+!!!POST:  k=m & k=n & 0<=k
+!!!REL PRE :  P(m,n)
+!!!PRE :  m=n
 
 */
+

@@ -1,4 +1,4 @@
-relation P3(int a, int b).
+.relation P3(int a, int b).
 
 relAssume
    P3(n,m) -->  (n!=0 | m<1).
