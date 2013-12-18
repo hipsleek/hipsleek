@@ -13,6 +13,7 @@ RecChecks := {[n,m]:forall(RECn,RECm:
     )
   };
 
+
 # Form initial check.
 InitChecks := {[n,m]:(n!=0 | m<1) & (m!=0 | n<1)};
 
@@ -21,4 +22,7 @@ Inv := {[n,m]:n>=0 & m>=0};
 
 # Form pre-condition given invariant
 D:=gist Pre given Inv;
+
+RecChecks;Pre;
+D;
 PairWiseCheck D;

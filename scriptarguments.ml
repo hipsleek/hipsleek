@@ -297,6 +297,10 @@ let common_arguments = [
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
+  ("--print-en-relassume", Arg.Set Globals.print_relassume,
+   "Enable printing of inferred relational assumptions (hip)");
+  ("--print-dis-relassume", Arg.Clear Globals.print_relassume,
+   "Disable printing of inferred relational assumptions (hip)");
   ("--print-cnv-null", Arg.Set Globals.print_cnv_null,
    "Print translation to convert null");
   ("--pr_str_assume", Arg.Set Globals.print_assume_struc, "Print structured formula for assume");
