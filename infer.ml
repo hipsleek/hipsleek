@@ -84,11 +84,12 @@ let no_infer_rel estate = (estate.es_infer_vars_rel == [])
 
 let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == [])
 
-let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == [])
+(* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
 
-let no_infer_all_all estate = no_infer_all estate && (no_infer_hp_rel estate)
+let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
 
-let no_infer estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
+let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate)
+
 
 let remove_infer_vars_all estate =
   let iv = estate.es_infer_vars in
@@ -421,7 +422,7 @@ let is_elem_of conj conjs =
 (*       Debug.no_1_num 13 "aux_test2" pr_no pr_no aux_test2 () *)
 
 let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
-  if no_infer es then None
+  if no_infer_pure es then None
   else 
     let iv = es.es_infer_vars in
     let dead_iv = es.es_infer_vars_dead in
@@ -606,9 +607,12 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let qvars0, bare_f = split_ex_quantifiers f in
       let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
       let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
-      let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in
-      (* let _ = DD.info_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in *)
-      (* let _ = DD.info_hprint (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in *)
+      (* let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in *)
+      (* WN : do not distinguish between ptr and non-ptrs *)
+      (* see zp-1a.slk *)
+      let ptrs_ps, non_ptrs_ps = ([],ps) in
+      let _ = DD.tinfo_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in
+      let _ = DD.tinfo_hprint (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in
       let non_ptr_f = simplify_helper 
         (CP.mkExists (non_ptrs0_qvars0@exists_var) 
           (CP.conj_of_list non_ptrs_ps pos) None pos) in
@@ -683,7 +687,7 @@ let infer_lhs_contra pre_thus f ivars pos msg =
       (fun _ _ -> infer_lhs_contra pre_thus f ivars pos msg) f ivars
 
 let infer_lhs_contra_estate estate lhs_xpure pos msg =
-  if no_infer_all estate then 
+  if no_infer_pure estate then 
     (None,[])
   else 
     let lhs_pure = MCP.pure_of_mix lhs_xpure in
@@ -700,7 +704,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
             let v = join_conjunctions lhs_rel in
             Some v, join_conjunctions (v::lhs_wo_rel)
     in
-    if no_infer estate && lhs_rels = None then (None,[])
+    if no_infer_pure estate && lhs_rels = None then (None,[])
     else
       let ivars = estate.es_infer_vars in
       let p_thus = estate.es_infer_pure_thus in
@@ -1437,7 +1441,7 @@ and infer_pure_m unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap
       estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
 let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
-  if no_infer_all estate && unk_heaps==[] then 
+  if no_infer_pure estate && unk_heaps==[] then 
     (None,None,[])
   else 
     let ivs = estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel in

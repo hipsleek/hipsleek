@@ -453,7 +453,7 @@ m_39)>=n_38 & RECn_38+m_39=RECm_39+n_38)) | (((true | RECm_39<1)) & ((true |
 RECn_38<1)))))) & ((true | m_39<1)) & ((true | n_38<1)))Stop Omega... 8 invocations 
 
 ===================================================================
-# zp-1b.slk
+# zp-1b.slk (FIXED by Loc)
 
 infer [m,n] x=0 & y!=0 & (x=0 & n=0) & (y!=0 & m>0)
  |-  false.
@@ -485,7 +485,7 @@ Entail (2) : Valid.
  ../../sleek zp-1b.slk -debug z-debug.log > 2
 ../../sleek zp-1c.slk -debug z-debug.log > 1
 ===================================================================
-# zp-1a.slk
+# zp-1a.slk (FIXED)
 
 Why did we have such different answer
 when null is replaced by 0?
@@ -511,6 +511,22 @@ infer [m,n]
  inferred pure: [(m<=-1 | n<=-1)]
 [[empty]]
 ===================================================================
+# zip_paper_eq-1.ss
+
+One pure relational assumption was lost...
+
+Sleek log captured:
+   es_infer_rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+   es_infer_rel: [RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n)]
+
+However, only the following were printed:
+
+[RELDEFN P: ( P(m,n) & 1<=m & 1<=n & n_1027=n-1 & m_1028=m-1) -->  P(m_1028,n_1027),
+RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n),
+RELDEFN Q: ( n=0 & m=0 & k=0 & P(m,n)) -->  Q(m,n,k),
+RELDEFN Q: ( n=0 & k=0 & 1<=m & P(m,n)) -->  Q(m,n,k),
+RELDEFN Q: ( Q(m_1028,n_1027,k_1049) & 0<=k_1049 & n_1027=n-1 & m_1028=m-1 & k=k_1049+
+1 & 1<=m & 1<=n & P(m,n)) -->  Q(m,n,k)]
 ===================================================================
 ===================================================================
 ===================================================================
