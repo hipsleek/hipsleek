@@ -6515,11 +6515,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
       temp 
     else 
-      (* Trung : can we use new RHS \/ rule below *)
-      (*  P & not(p1) |- R2 * G *)
-      (* ----------------------------------- *)
-      (*  P |- (p1 \/ R2) * G *)
-      (* let (ctx,conseq) = trigger_new_entail ctx conseq in *)
+      let (ctx, conseq) = handle_disjunctive_conseq ctx conseq in
       match conseq with
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
@@ -6621,6 +6617,72 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
           in
 	  (r1,p1)
  end
+
+(* Trung : can we use new RHS \/ rule below *)
+(*  P & not(p1) |- R2 * G                   *)
+(* -----------------------------------      *)
+(*  P |- (p1 \/ R2) * G                     *)
+and handle_disjunctive_conseq (ctx:context) (conseq:CF.formula) : context * CF.formula =
+  let rec split_pure_heap (f: CF.formula) = (
+    match f with
+    | CF.Or {CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; CF.formula_or_pos = p} ->
+        let h1, p1 = split_pure_heap f1 in
+        let h2, p2 = split_pure_heap f2 in
+        let newh_opt = (match h1, h2 with
+          | None, None -> None
+          | None, Some hf -> Some hf
+          | Some hf, None -> Some hf
+          | Some hf1, Some hf2 -> 
+              Some (CF.Or { CF.formula_or_f1 = hf1;
+                            CF.formula_or_f2 = hf2;
+                            CF.formula_or_pos = p;})
+        ) in
+        newh_opt, p1 @ p2
+    | CF.Base {CF.formula_base_heap = HEmp;
+               CF.formula_base_pure = pf} ->
+        None, [pf]
+    | CF.Exists {CF.formula_exists_heap = HEmp;
+                 CF.formula_exists_pure = pf} ->
+        None, [pf]
+    | _ -> Some f , []
+  ) in
+  let rec add_pure_to_formula (f: CF.formula) pure_fs = (
+    match f with
+    | CF.Or {CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; CF.formula_or_pos = p} ->
+        let newf1 = add_pure_to_formula f1 pure_fs in
+        let newf2 = add_pure_to_formula f2 pure_fs in
+        CF.Or {CF.formula_or_f1 = newf1;
+               CF.formula_or_f2 = newf2;
+               CF.formula_or_pos = p}
+    | CF.Base _ | CF.Exists _ ->
+        List.fold_left (fun f1 pf ->
+          match pf with
+          | MemoF mf ->
+              let f = MCP.pure_of_memo_pure mf in
+              let neg_pf = OnePF (CP.mkNot_s f) in
+              CF.add_mix_formula_to_formula neg_pf f1
+          | OnePF f ->
+              let neg_pf = OnePF (CP.mkNot_s f) in
+              CF.add_mix_formula_to_formula neg_pf f1
+        ) f pure_fs
+  ) in
+  let rec create_new_context ctx pure_fs = (match ctx with
+    | Ctx es ->
+        let ef = es.CF.es_formula in
+        let new_ef = add_pure_to_formula ef pure_fs in
+        Ctx {es with CF.es_formula = new_ef}
+    | OCtx (ctx1, ctx2) -> 
+        let new_ctx1 = create_new_context ctx1 pure_fs in
+        let new_ctx2 = create_new_context ctx2 pure_fs in
+        OCtx (new_ctx1, new_ctx2)
+  ) in
+  let conseq_opt, pure_fs = split_pure_heap conseq in
+  let new_ctx = create_new_context ctx pure_fs in
+  let new_conseq = (match conseq_opt with
+    | None -> mkTrue_nf no_pos
+    | Some f -> f
+  ) in 
+  (new_ctx, new_conseq) 
 
 and log_contra_detect hec_num conseq result pos =
   let new_slk_log result es =
