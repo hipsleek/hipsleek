@@ -953,7 +953,7 @@ let trans_logical_vars lvars =
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
-  print_string "trans_prog\n";
+  (* print_string "trans_prog\n"; *)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -1327,7 +1327,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-  let _=proving_loc # set pos in
+  let _ = proving_loc # set pos in
   let rec helper n do_not_compute_flag =
     (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
@@ -1391,8 +1391,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let (xform', _ (*addr_vars'*), ms) = Solver.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in	
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+      let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (MCP.mfv xform) in
       let formula1 = CF.formula_of_mix_formula xform pos in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+      let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
       let _ = 

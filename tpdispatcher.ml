@@ -1920,8 +1920,10 @@ let rec simplify_raw (f: CP.formula) =
     let rels = CP.get_RelForm f in
     let ids = List.concat (List.map get_rel_id_list rels) in
     let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-    let res_memo = simplify f_memo in
-    CP.restore_memo_formula subs bvars res_memo
+    if CP.has_template_formula f_memo then f
+    else
+      let res_memo = simplify f_memo in
+      CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
@@ -2107,8 +2109,10 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let rels = CP.get_RelForm f in
   let ids = List.concat (List.map get_rel_id_list rels) in
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-  let res_memo = pairwisecheck f_memo in
-  CP.restore_memo_formula subs bvars res_memo
+  if CP.has_template_formula f_memo then f
+  else
+    let res_memo = pairwisecheck f_memo in
+    CP.restore_memo_formula subs bvars res_memo
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in

@@ -9520,7 +9520,15 @@ let memoise_rel_formula ivs (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
     | RelForm (i,_,p) -> mem i ivs
-    | _ -> if has_template_b_formula (b, None) then true else false
+    | _ ->
+      (* Template: For soundness, do not remove 
+       * templates which contains bound variables *)
+      let bf = (b, None) in
+      if has_template_b_formula bf then 
+        Gen.BList.subset_eq eq_spec_var 
+          (List.filter (fun v -> not (is_FuncT (type_of_spec_var v))) (bfv bf)) 
+          (fv f)
+      else false
   in memoise_formula_ho pr f
 
 let memoise_rel_formula ivs (f:formula) : 

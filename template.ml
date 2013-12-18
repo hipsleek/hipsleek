@@ -315,9 +315,9 @@ let term_list_of_formula svl (f: formula): term list =
   | BForm (bf, _) -> term_list_of_b_formula svl bf
   | _ -> []
 
-let unk_lambda_sv enum i j = 
-  SpecVar (Int, "lambda_" ^ (string_of_int enum) ^ "_" ^ 
-          (string_of_int i) ^ "_" ^ (string_of_int j), Unprimed) 
+let unk_lambda_sv num =
+  let order = List.fold_left (fun a i -> a ^ "_" ^ (string_of_int i)) "" num in
+  SpecVar (Int, "lambda" ^ order, Unprimed) 
 
 let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
   (* let _ = print_endline ("ANTE: " ^ (print_term_list ante)) in *)
@@ -339,11 +339,10 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
 let templ_entail_num = ref 0
 
 (* cons is a base formula and cnum is its order in the original consequent *)
-let infer_template_rhs cnum (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos: 
+let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
   let inf_templs = es.CF.es_infer_vars_templ in
-  let ante = MCP.find_rel_constraints ante (fv cons) in
-  let ante = MCP.pure_of_mix ante in
+  let ante = find_rel_constraints ante (fv cons) in
 
   let es =  { es with 
     CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
@@ -361,13 +360,11 @@ let infer_template_rhs cnum (es: CF.entail_state) (ante: MCP.mix_formula) (cons:
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
   let cons_t = term_list_of_formula vars cons in
 
-  let enum = !templ_entail_num in
-
   let constrs = 
-    let _, ante_w_unks, unks = List.fold_left (fun (i, a, unks) tl ->
-      let unk_lambda = mkVar (unk_lambda_sv enum cnum i) pos in
+    let ante_w_unks, unks, _ = List.fold_left (fun (a, unks, i) tl ->
+      let unk_lambda = mkVar (unk_lambda_sv (num @ [i])) pos in
       let tl = List.map (fun t -> { t with term_coe = mkMult unk_lambda t.term_coe pos; }) tl in
-      (i+1, a @ [tl], unks @ [unk_lambda])) (0, [], []) ante_tl in
+      (a @ [tl], unks @ [unk_lambda], i)) ([], [], 0) ante_tl in
     let ante_sum_t = partition_term_list (List.concat ante_w_unks) pos in
     (List.map (fun unk -> mkPure (mkGte unk (mkIConst 0 pos) pos)) unks) @
     (collect_unk_constrs ante_sum_t cons_t pos) in
@@ -404,26 +401,37 @@ let replace_eq_conseq (cons: formula): formula =
   let pr = !print_formula in
   Debug.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
 
-let simply_templ_conseq (cons: formula) =
+let simplify_templ_conseq (cons: formula) =
   let cons = replace_eq_conseq cons in
   let cons_l = split_conjunctions cons in
   let cons_l = List.filter has_template_formula cons_l in
   cons_l
 
-let infer_template_conjunct_rhs (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
+let infer_template_conjunct_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos =
+  let cons_l = simplify_templ_conseq cons in
+  let es, constrs, _ = List.fold_left (fun (es, ac, cnum) cons ->
+    let es, cl = infer_template_rhs (num @ [cnum]) es ante cons pos in
+    (es, ac @ cl, cnum+1)) (es, [], 0) cons_l in
+  (es, constrs)
+
+let simplify_templ_ante (ante: formula) =
+  [ante]
+  
+let infer_template_disjunct_lhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos = 
+  let ante_l = simplify_templ_ante ante in
+  let es, constrs, _ = List.fold_left (fun (es, ac, anum) ante ->
+    let es, cl = infer_template_conjunct_rhs (num @ [anum]) es ante cons pos in
+    (es, ac @ cl, anum+1)) (es, [], 0) ante_l in
+  (es, constrs)
+
+let infer_template_init (es: CF.entail_state) (ante: formula) (cons: formula) pos =
   let inf_templs = es.CF.es_infer_vars_templ in
   let _ = 
     if !gen_templ_slk then 
-      templ_sleek_scc_stk # push (inf_templs, MCP.pure_of_mix ante, cons)
+      templ_sleek_scc_stk # push (inf_templs, ante, cons)
     else () 
   in
-
-  let cons_l = simply_templ_conseq cons in
-
-  let es, constrs, _ = List.fold_left (fun (es, ac, cnum) cons ->
-    let es, cl = infer_template_rhs cnum es ante cons pos in
-    (es, ac @ cl, cnum+1)) (es, [], 0) cons_l in
-
+  let es, constrs = infer_template_conjunct_rhs [!templ_entail_num] es ante cons pos in
   templ_entail_num := !templ_entail_num + 1;
   templ_constr_stk # push_list constrs;
   Some es
@@ -432,7 +440,7 @@ let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula)
   let pr1 = !MCP.print_mix_formula in
   let pr2 = !print_formula in
   Debug.no_2 "infer_template" pr1 pr2 (pr_opt !CF.print_entail_state) 
-    (fun _ _ -> infer_template_conjunct_rhs es ante cons pos) ante cons
+    (fun _ _ -> infer_template_init es (MCP.pure_of_mix ante) cons pos) ante cons
 
 let gen_slk_infer_templ_scc () =
   let inp = List.rev (templ_sleek_scc_stk # get_stk) in

@@ -824,8 +824,10 @@ let simplify (pe : formula) : formula =
   let pr_w, pr_s = no_drop_ops in
   (* simplify_ops pr_w pr_s pe *)
   let f_memo, subs, bvars = memoise_rel_formula [] pe in
-  let res_memo = simplify_ops pr_w pr_s f_memo in
-  restore_memo_formula subs bvars res_memo
+  if has_template_formula f_memo then pe
+  else
+    let res_memo = simplify_ops pr_w pr_s f_memo in
+    restore_memo_formula subs bvars res_memo
 
 
 let simplify (pe : formula) : formula =
