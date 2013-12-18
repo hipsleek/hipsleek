@@ -1,7 +1,10 @@
 #compute_actions
-infer_lhs_contra_estate,Trace
-infer_lhs_contra
-solver_detect_lhs_rhs_contra_all
-solver_detect_lhs_rhs_contra
+#infer_lhs_contra_estate,Trace
+#infer_lhs_contra
+#solver_detect_lhs_rhs_contra_all
+#solver_detect_lhs_rhs_contra
 choose_best_candidate
+early_pure_contra_detection
+early_hp_contra_detection
+add_infer_hp_contr_to_list_context
 #process_action,Loop

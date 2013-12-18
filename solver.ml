@@ -6235,9 +6235,13 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let rhs_xpure,_,_ = xpure prog conseq in
                 let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
                 (*check the contra is in LHS or between LHS and RHS*)
-                let _ = Debug.ninfo_hprint (add_str "pf : " ( (!CP.print_formula))) pf pos in
+                (* let _ = Debug.info_hprint (add_str "pf : " ( (!CP.print_formula))) pf pos in *)
+                (* let _ = Debug.info_hprint (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in *)
+                (* let _ = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
                 let pf,rele_p_rhs_xpure =
-                  if TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))) then (pf,p_rhs_xpure) else
+                  if (CP.isConstFalse p_rhs_xpure) || TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))) then
+                    (pf,p_rhs_xpure)
+                  else
                     let rele_svl = CP.fv pf in
                     let sst = (MCP.ptr_equations_without_null lhs_xpure) in
                     let rele_sst = List.fold_left (fun r (sv1,sv2) ->
@@ -6251,7 +6255,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                     ) [] sst in
                     let l_ps = CP. remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
                     let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
-                    let _ = Debug.ninfo_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+                    (* let _ = Debug.info_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in *)
                     (CP.join_conjunctions l_ps1, CP.subst rele_sst p_rhs_xpure)
                 in
                 let res_ctx_opt = Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx rele_p_rhs_xpure in
@@ -10995,9 +10999,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
 	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
-        let contra, es_pure_lst,r =
+        let contra, c,r =
           match r_inf_contr with
-            | Some es_pure ->  (true, [es_pure], relass)
+            | Some r ->  (true, [r], relass)
             | None ->
                   begin
                     match relass with
@@ -11005,7 +11009,8 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
                       | []   ->  (false, [], [])
                   end
         in
-        if (contra) then (es_pure_lst,r)
+        
+        if (contra) then (c,r)
         else
           (* contra with  HP args *)
           let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
@@ -11094,7 +11099,7 @@ and solver_infer_lhs_contra estate lhs_xpure h_inf_args pos msg =
   let _ = DD.tinfo_hprint (add_str "h_inf_args" Cprinter.string_of_spec_var_list) h_inf_args no_pos in
   let _ = DD.tinfo_hprint (add_str "es_infer_vars" Cprinter.string_of_spec_var_list) new_estate.es_infer_vars no_pos in
   (* let _ = DD.tinfo_hprint (add_str "h_inf_args_add" Cprinter.string_of_spec_var_list) h_inf_args_add no_pos in *)
-  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 6 new_estate lhs_xpure pos msg  in 
+  let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 new_estate lhs_xpure pos msg  in 
   r_inf_contr,relass
 
 and sort_infer_vars_hp_rel prog infer_vars_hp_rel = 
@@ -14081,20 +14086,20 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls fp_func
     let pairs = preprocess_fun rel_ass in
     let _ = Debug.ninfo_hprint (add_str "pairs" (pr_list (pr_pair pr (pr_list pr)))) pairs no_pos in
     (match pairs with
-    | [] -> [(rel,post,constTrue,constTrue)]
-    | [(r,lst)] ->
-      let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
-      let final_pre = TP.simplify_raw final_pre in
-      let final_pre = filter_disj final_pre pre_fmls in
-      let final_pre = TP.pairwisecheck_raw final_pre in
-      let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
-      let checkpoint1 = check_defn r final_pre new_pre_rel_df in
-      if checkpoint1 then [(rel,post,r,final_pre)]
-      else [(rel,post,constTrue,constTrue)]
-    | _ -> [(rel,post,constTrue,constTrue)])
-(*      let checkpoint = check_defn r final_pre pre_rel_df in*)
-(*      if checkpoint then [(rel,post,pre_rel,final_pre)]*)
-(*      else [(rel,post,constTrue,constTrue)])*)
+      | [] -> [(rel,post,constTrue,constTrue)]
+      | [(r,lst)] ->
+            let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
+            let final_pre = TP.simplify_raw final_pre in
+            let final_pre = filter_disj final_pre pre_fmls in
+            let final_pre = TP.pairwisecheck_raw final_pre in
+            let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
+            let checkpoint1 = check_defn r final_pre new_pre_rel_df in
+            if checkpoint1 then [(rel,post,r,final_pre)]
+            else [(rel,post,constTrue,constTrue)]
+      | _ -> [(rel,post,constTrue,constTrue)])
+        (*      let checkpoint = check_defn r final_pre pre_rel_df in*)
+        (*      if checkpoint then [(rel,post,pre_rel,final_pre)]*)
+        (*      else [(rel,post,constTrue,constTrue)])*)
   | _,_ -> List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
 
 let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func 

@@ -13,7 +13,7 @@ inv n>=0;
 node zip (node x, node y)
 infer [P]  
 requires x::ll<n>@L*y::ll<m>@L & P(m,n) 
-ensures res::ll<k> & k=m;
+ensures res::ll<k> & k=m & m=n;
 /*
 requires x::ll<n>@L*y::ll<m>@L & n<=m 
 ensures res::ll<k> & k=m;
