@@ -1,0 +1,41 @@
+/*
+ relation P(int a, int b).
+
+//pre
+relAssume
+   P(m,n) & (((1<=n & x!=null) | (n=0 & x=null))) & (((1<=m & y!=null) | 
+(m=0 & y=null))) -->  true.
+
+relAssume
+   P(m,n) & 1<=n & 1<=m & m2=m-1 & n2=n-1 -->  P(m2,n2).
+*/
+
+relation Q(int a, int b, int c).
+
+// removed pre
+//post
+relAssume
+  n=0 & m=0 & k=0 -->  Q(m,n,k).
+
+relAssume
+  n=0 & k=0 & 1<=m -->  Q(m,n,k).
+
+relAssume
+  m=0 & k=0 & 1<=n -->  Q(m,n,k).
+
+relAssume
+  Q(mx,nx,kx) 
+  & 0<=kx & nx=n-1 & mx=m-1 & k=kx+1 & 1<=m & 1<=n -->  Q(m,n,k).
+
+relation_infer [][Q].
+
+/*
+!!! fixpoint:[( Q(m,n,k), 
+ ((k=m & 0<=m & m<=n) | (k=n & 0<=k & k<=((2*m)-2)))
+, true, true)]
+
+This fix-point isn't good. Expecting
+instead: 0<=m<=n & k=m | 0<=n<=m & k=n
+*/
+
+

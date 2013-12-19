@@ -45,7 +45,7 @@ pred ll<> ==
 
 //lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
 
-print residue.
+//print residue.
 
 /*
 inferred rel: [RELASS [P3]: ( P3(n_115,m_116)) -->  m_116=0;
@@ -60,3 +60,15 @@ inferred rel: [RELASS [P3]: ( P3(n_115,m_116)) -->  m_116=0;
 
 lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipM<n> * y::zipM<m> & P3(n,m) .
 print residue.
+
+/*
+ <1>(exists m_134,n_133,n1_132,n1_152: emp&m_134=1+n1_152 & n_133=1+n1_132 & P3(n_133,m_134)&{FLOW,(21,22)=__norm})[]
+ inferred rel: [RELASS [P3]: ( P3(n_90,m_91)) -->  (n_90!=0 | 0>m_91); 
+                RELASS [P3]: ( P3(n_133,m_134)) -->  (m_134!=0 | 1>n_133); 
+                RELDEFN P3: ( P3(n_133,m_134) & 1<=n_133 & 1<=m_134 & n1_152=m_134-1 & n1_132=n_133-1) -->  P3(n1_132,n1_152)]
+[[ Match ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  Match ==>  SEARCH ==>  (Lemma <== one3) ==> (right: one3) ==>  COND ==>  COND ==>  Match ==>  COND ==>  Match ==> ]]
+
+Above should be followed by a pure fix-point that would give
+the closed fixpoint definition of P3?
+
+*/

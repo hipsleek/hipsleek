@@ -363,7 +363,9 @@ test_assert "x+y>4".
 // - current answer
 // - expected answer
 ===================================================================
-# zip-1e-fix.slk: FIXED (but zip_paper_eq-2.ss has not been fixed because of wrong invs)
+# zip-fix-eq-2.slk: FIXED 
+(but zip_paper_eq-2.ss has not been fixed because of wrong invs)
+// WN : FIXED by using assert-assume.
 
 This requires gfp to be computed for pre-relation.
 
@@ -449,7 +451,7 @@ Through zp-1a.oc, we should obtain:
   m=0 & 0<=n | 1<=m & 1<=n
 
 ===================================================================
-# zip-1e-fix.slk
+# zip-fix-eq-2.slk (FIXED)
 
 Is below correct?
 
@@ -543,7 +545,7 @@ id: 9 src:2; caller: []; line: 27; classic: false; kind: UNKNOWN; hec_num: 1; ev
 Can we support ASSERT and ASSERT/ASSUME..
 
 ===================================================================
-# zip-1e-fix.slk
+# zip-fix-eq-2.slk
 
 not giving correct answer:
 
@@ -576,12 +578,16 @@ Please provide an option --gsf that will output the
 sleek file for inferred pure unknown relations.
 ===================================================================
 #hip zip_paper_eq-2.ss -debug zd-bug.log
+ 
+Must remember that untracked child calls always belong
+to current the current traced parent.
 
 pre_rel_fixpoint
 update_with_td_fp,Trace
 # why not tracing when more than one lines?
 ===================================================================
-#hip zip_paper_eq-2.ss -debug zd-bug.log: fIXED bug in tp.cnv_int_to_ptr
+#hip zip_paper_eq-2.ss -debug zd-bug.log: 
+  FIXED bug in tp.cnv_int_to_ptr
 
 bug with pairwisecheck?
 (see pw.oc)
@@ -634,10 +640,25 @@ inferred rel: [RELASS [P3]: ( P3(n_90,m_91)) -->  (n_90!=0 | 0>m_91);
 
 ====>
 [( true, true, P3(n_90,m_91), ((n_90<=(m_91-1) & n_90<=(0-1)) | (m_91<=n_90 & m_91<=(0-1))))]
-
-
 ===================================================================
+# fix-2.fc
+# fixpoint at BU2 seems incomparable with BU3
+# fixpoint at BU3 seems worse than BU2
+# likely due to bad SimHeuristic
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+# Ideal fix-point below:
+Best :={[m,n,k]:
+  (m>=n && n>=0 && k=n) || (n>=m && m>=0 && k=m)};
 ===================================================================
+# fix-2.fc
+
+Why these fix-point all gave the same result?
+  #(k >= 0 && m >= k && n >= k)
+
+E1:=bottomup(Q,1,SimHeur);
+E2:=bottomup(Q,2,SimHeur);
+E3:=bottomup(Q,3,SimHeur);
+E1;E2;E3;
 ===================================================================
 ===================================================================
 ===================================================================

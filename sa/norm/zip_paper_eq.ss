@@ -29,10 +29,10 @@ ensures res::ll<k> & k=m;
         }
     }
   else {
-    if (y==null) { 
-       assert false;
-       return y;
-    } else    
+    /* if (y==null) {  */
+    /*    assert false assume false; */
+    /*    return y; */
+    /* } else     */
     return new node(x.val+y.val, zip(x.next,y.next));
   }
 }
