@@ -540,7 +540,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 (*    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;*)
   res
 
-let helper (rel, pfs) ante_vars specs =
+let extract_inv_helper_x (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
   Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;
   let pfs = List.map (fun p -> 
@@ -567,7 +567,15 @@ let helper (rel, pfs) ante_vars specs =
   let def = List.fold_left 
           (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
   [(rel, def, no)]
-  
+
+let extract_inv_helper (rel, pfs) ante_vars specs =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = Cprinter.string_of_struc_formula in
+  Debug.no_3 "extract_inv_helper" (pr_pair pr1 pr2) !CP.print_svl pr3 (pr_list_ln (pr_triple pr1 pr1 string_of_int))
+      (fun _ _ _ -> extract_inv_helper_x (rel, pfs) ante_vars specs)
+      (rel, pfs) ante_vars specs
+
 let arrange_para input_pairs ante_vars =
   let pairs, subs = List.split 
     (List.map (fun (r,pfs) ->
@@ -757,7 +765,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;
 
   let rel_defs = List.concat 
-    (List.map (fun pair -> helper pair ante_vars specs) pairs) in
+    (List.map (fun pair -> extract_inv_helper pair ante_vars specs) pairs) in
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
   let non_rec_defs, rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
@@ -781,7 +789,7 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
-  let pr1 = pr_list (pr_pair pr0 pr0) in
+  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
   DD.no_2_num i "compute_fixpoint" pr1 pr2 pr_res
@@ -790,7 +798,7 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
 
 let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
-  let pr1 = pr_list (pr_pair pr0 pr0) in
+  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   let pr_res = pr_list (pr_pair pr0 pr0) in
   DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res 

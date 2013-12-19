@@ -176,8 +176,8 @@ let filter_disj (p:CP.formula) (t:CP.formula list) =
     ) ps) in
   CP.disj_of_list ps no_pos
 
-let pre_calculate fp_func input_fml pre_vars proc_spec
-  pre pure_oblg_to_check (rel_posts,pre_rel) 
+let pre_calculate_x fp_func input_fml pre_vars proc_spec
+  pre pure_oblg_to_check (rel_posts,pre_rel)
   pre_fmls pre_rel_vars pre_rel_df =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
@@ -186,7 +186,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let _ = Debug.devel_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
-  | [(_,rec_inv)] -> 
+  | [(_,rec_inv)] ->
     let args = List.map (fun a -> (a,CP.add_prefix_to_spec_var "REC" a)) pre_rel_vars in
     let to_check = CP.subst args pure_oblg_to_check in
     let _ = Debug.ninfo_hprint (add_str "to check" !CP.print_formula) to_check no_pos in
@@ -209,11 +209,23 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     let _ = Debug.devel_hprint (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
     (* let _ = Debug.devel_hprint (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
-    if checkpoint2 then 
+    if checkpoint2 then
       List.map (fun (rel,post) -> (rel,post,pre_rel,final_pre)) rel_posts
     else List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
   | [] -> List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
   | _ -> report_error no_pos "Error in top-down fixpoint calculation"
+
+let pre_calculate fp_func input_fml pre_vars proc_spec
+  pre pure_oblg_to_check (rel_posts,pre_rel)
+  pre_fmls pre_rel_vars pre_rel_df =
+  let pr1 = Cprinter.string_of_pure_formula in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_list_ln (pr_pair pr1 pr1) in
+  let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in
+  Debug.no_7 "pre_calculate" pr3 !CP.print_svl pr1 pr1 (pr_pair pr3 pr1) pr2 (pr_pair !CP.print_svl pr3) pr4
+      (fun _ _ _ _ _ _ _ -> pre_calculate_x fp_func input_fml pre_vars proc_spec
+          pre pure_oblg_to_check (rel_posts,pre_rel)  pre_fmls pre_rel_vars pre_rel_df)
+      input_fml pre_vars pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls (pre_rel_vars, pre_rel_df)
 
 let update_rel rel pre_rel new_args old_rhs =
   match old_rhs, pre_rel, rel with
@@ -381,8 +393,8 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func
   let pr3a = pr_list_ln (pr_triple pr3 pr1 pr1) in
   let pr4 = pr_list (pr_quad pr1 pr1 pr1 pr1) in
   Debug.no_7 "update_with_td_fp" (pr_list_ln pr1) (pr_list_ln pr1)
-      pr3a pr2a pr2a pr2a !CP.print_svl pr4
+      pr3a pr2a pr2a pr2a (pr_pair !CP.print_svl string_of_int) pr4
       (fun _ _ _ _ _ _ _ -> update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls fp_func
           preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
           pre_vars proc_spec grp_post_rel_flag)
-      pre_rel_fmls pre_fmls reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars
+      pre_rel_fmls pre_fmls reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars,grp_post_rel_flag)
