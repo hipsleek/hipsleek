@@ -614,7 +614,7 @@ PairWiseCheck K :=
 Why is fixcalc.compute_fixpoint sensitive with the order of input?
 
 ===================================================================
-#hip zip_paper_eq-2.ss
+#hip zip_paper_eq-2.ss: FIXED
 
 to extract proper invs from pre_fmls
 
