@@ -398,10 +398,15 @@ TD:=topdown(wh,1,SimHeur);
 TD;
 
 # derive top-down fix-point:
-#(((RECn >= 0 && n >= 1 + RECn) && RECn + m >= n) && RECn + m = RECm + n)
+#(((RECn >= 0 
+&& n >= 1 + RECn) 
+&& RECn + m >= n) 
+&& RECn + m = RECm + n)
 
 # we also need to satisfy the CHECK initially & recursively
-# P3(n,m) --> (n!=0 | m<1) & (m!=0 | n<1)
+# P3(n,m) --> 
+(n!=0 | m<1) 
+& (m!=0 | n<1)
 
 # oc topd-zip.oc
 
@@ -570,7 +575,39 @@ Correctly inferred pre/post pure relation:
 Please provide an option --gsf that will output the
 sleek file for inferred pure unknown relations.
 ===================================================================
+#hip zip_paper_eq-2.ss -debug zd-bug.log
+
+pre_rel_fixpoint
+update_with_td_fp,Trace
+# why not tracing when more than one lines?
 ===================================================================
+#hip zip_paper_eq-2.ss -debug zd-bug.log
+
+bug with pairwisecheck?
+(see pw.oc)
+
+K :=
+pairwisecheck@11@10
+pairwisecheck inp1 : forall(RECm:forall(RECn:(!((RECm>=0 & m>=(1+RECm) & (RECm+n)>=m & RECm+
+n=RECn+m)) | (((RECn!=0 | 1>RECm)) & ((RECm!=0 | 1>RECn)))))) & ((n!=0 | 
+1>m)) & ((m!=0 | 1>n))
+pairwisecheck@11 EXIT: forall(RECm:forall(RECn:(!((RECm>=0 & m>=(1+RECm) & (RECm+n)>=m & RECm+
+n=RECn+m)) | (((true | 1>RECm)) & ((true | 1>RECn)))))) & ((true | 1>m)) & 
+((true | 1>n))
+
+
+K :=
+{[n,n]: n <= 0} union
+ {[n,m]: n <= m-1, -1} union
+ {[n,m]: m <= n-1, -1} union
+ {[n,n]: 1 <= n}
+
+
+PairWiseCheck K :=
+{[n,m]: n <= m-1, -1} union
+ {[n,m]: m <= n-1, -1} union
+ {[n,n]}
+
 ===================================================================
 ===================================================================
 ===================================================================

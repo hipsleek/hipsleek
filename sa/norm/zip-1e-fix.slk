@@ -1,4 +1,4 @@
-.relation P3(int a, int b).
+relation P3(int a, int b).
 
 relAssume
    P3(n,m) -->  (n!=0 | m<1).
@@ -18,8 +18,29 @@ relation_infer [P3][].
 
 Is below correct?
 
-!!! fixpoint for pre-rels:( P3(n_38,m_39), forall(RECm_39:forall(RECn_38:(!((RECn_38>=0 & n_38>=(1+RECn_38) & (RECn_38+
-m_39)>=n_38 & RECn_38+m_39=RECm_39+n_38)) | (((true | RECm_39<1)) & ((true | 
-RECn_38<1)))))) & ((true | m_39<1)) & ((true | n_38<1)))Stop Omega... 8 invocations 
+!!! fixpoint for pre-rels:
+( P3(n_38,m_39), 
+forall(RECm_39:forall(RECn_38:
+(!((RECn_38>=0 
+& n_38>=(1+RECn_38) 
+& (RECn_38+m_39)>=n_38 
+& RECn_38+m_39=RECm_39+n_38)) 
+| (((true | RECm_39<1)) 
+& ((true | RECn_38<1)))))) 
+& ((true | m_39<1)) 
+& ((true | n_38<1)))
+
+
+[( true, true, P(m,n), 
+forall(RECm:forall(RECn:
+(!((RECm>=0 
+& m>=(1+RECm) 
+& (RECm+n)>=m 
+& RECm+n=RECn+m)) 
+| (((true | 1>RECm)) & ((true | 1>RECn)))))) 
+& ((true | 1>m)) & ((true | 1>n)))]
+
+
+Stop Omega... 8 invocations 
 
 */
