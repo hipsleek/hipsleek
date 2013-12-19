@@ -919,7 +919,7 @@ let simplify (pe : formula) : formula =
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
-	omega_subst_lst := [];
+    omega_subst_lst := [];
     let pe = drop_varperm_formula pe in
     match (omega_of_formula_old 21 pe) with
       | None -> pe
@@ -930,8 +930,7 @@ let pairwisecheck (pe : formula) : formula =
             let _ = set_proof_string ("PAIRWISE:"^fomega) in
 	        (*test*)
 	        (*print_endline (Gen.break_lines fomega);*)
-	        
-            if !log_all_flag then begin
+	    if !log_all_flag then begin
               output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
               output_string log_all ((Gen.break_lines_1024 fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
               flush log_all;

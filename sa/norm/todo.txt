@@ -581,7 +581,7 @@ pre_rel_fixpoint
 update_with_td_fp,Trace
 # why not tracing when more than one lines?
 ===================================================================
-#hip zip_paper_eq-2.ss -debug zd-bug.log
+#hip zip_paper_eq-2.ss -debug zd-bug.log: fIXED bug in tp.cnv_int_to_ptr
 
 bug with pairwisecheck?
 (see pw.oc)

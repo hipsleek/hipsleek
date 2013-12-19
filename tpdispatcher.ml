@@ -993,11 +993,15 @@ let cnv_int_to_ptr f =
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
             if is_null_flag then
               Some(Neq(a1,Null ll,ll),l)
-            else let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
-              if is_valid_ann i then
-                if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
-                else  Some(BConst (true,ll),l) (* of course *)
-            else Some bf
+            else
+              let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_ann_flag then
+                if is_valid_ann i then
+                  Some(Neq(a1,int_to_ann i,ll),l)
+                else
+                  (*let _ = print_endline "xxxxxx" in*)
+                  Some(BConst (true,ll),l) (* of course *)
+              else Some bf
       | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
@@ -2089,14 +2093,13 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   
 let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
   if no_andl f then  tp_pairwisecheck f 
-  else 
-	  let rec helper f =  match f with 
-	  | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
-	  | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
-	  | _ ->  tp_pairwisecheck f in
-	  helper f
-	  
-  
+  else
+    let rec helper f =  match f with 
+      | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
+      | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
+      | _ ->  tp_pairwisecheck f in
+    helper f
+
 let pairwisecheck (f : CP.formula) : CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "pairwisecheck" pr pr pairwisecheck_x f
@@ -2106,8 +2109,14 @@ let pairwisecheck (f : CP.formula) : CP.formula =
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let rels = CP.get_RelForm f in
   let ids = List.concat (List.map get_rel_id_list rels) in
+  (* let pr = Cprinter.string_of_pure_formula in *)
+  (* Debug.info_hprint (add_str "f" pr) f no_pos; *)
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+  (* Debug.info_hprint (add_str "f_memo" pr) f_memo no_pos; *)
+  (* Debug.info_hprint (add_str "bvars" !CP.print_svl) bvars no_pos; *)
+  (* Debug.info_hprint (add_str "subs" (pr_list_ln (pr_pair !CP.print_sv pr))) subs no_pos; *)
   let res_memo = pairwisecheck f_memo in
+  (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
   CP.restore_memo_formula subs bvars res_memo
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
