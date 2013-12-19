@@ -1,6 +1,9 @@
 relation P3(int a, int b).
 
 relAssume
+  n>=0 & m>=0 & P3(n,m) --> true.
+
+relAssume
    P3(n,m) -->  (n!=0 | m<1).
 
 relAssume

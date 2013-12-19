@@ -363,7 +363,7 @@ test_assert "x+y>4".
 // - current answer
 // - expected answer
 ===================================================================
-# zip-1e-fix.slk
+# zip-1e-fix.slk: FIXED (but zip_paper_eq-2.ss has not been fixed because of wrong invs)
 
 This requires gfp to be computed for pre-relation.
 
@@ -614,6 +614,15 @@ PairWiseCheck K :=
 Why is fixcalc.compute_fixpoint sensitive with the order of input?
 
 ===================================================================
+#hip zip_paper_eq-2.ss
+
+to extract proper invs from pre_fmls
+
+!!!REL POST :  true
+!!!POST:  true
+!!!REL PRE :  P(m,n)
+!!!PRE :  ((m<=(n-1) & m<=(0-1)) | (n<=(m-1) & n<=(0-1)) | m=n)
+
 ===================================================================
 ===================================================================
 ===================================================================
