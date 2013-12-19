@@ -1,0 +1,5 @@
+K := {[n,m]:forall(RECm:forall(RECn:(!((RECm>=0 & m>=(1+RECm) & (RECm+n)>=m & RECm+
+n=RECn+m)) | (((RECn!=0 | 1>RECm)) & ((RECm!=0 | 1>RECn)))))) & ((n!=0 | 
+1>m)) & ((m!=0 | 1>n))};
+K;
+PairWiseCheck K;

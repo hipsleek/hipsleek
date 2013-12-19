@@ -274,6 +274,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls fp_func
   pre_vars proc_spec grp_post_rel_flag = 
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
+  let _ = Debug.tinfo_pprint ("inside update_with_td") no_pos in
   match bottom_up_fp, pre_rel_fmls with
   | [], [pre_rel] ->
         pre_rel_fixpoint pre_rel (*formula of pre_rel_var*) pre_fmls fp_func reloblgs pre_vars proc_spec pre_rel_df
