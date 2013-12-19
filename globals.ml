@@ -1514,6 +1514,7 @@ let gcd_l (l: int list): int =
   let l = List.filter (fun x -> x != 0) l in
   match l with
   | [] -> 1
+  | x::[] -> 1
   | x::xs -> List.fold_left (fun a x -> gcd a x) x xs
 
 let abs (x: int) = if x < 0 then -x else x
@@ -1524,4 +1525,5 @@ let lcm_l (l: int list): int =
   if List.exists (fun x -> x == 0) l then 0
   else match l with
   | [] -> 1
+  | x::[] -> x
   | x::xs -> List.fold_left (fun a x -> lcm a x) x xs
