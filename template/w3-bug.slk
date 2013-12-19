@@ -1,0 +1,9 @@
+template int r(int n) == r_0+(r_n*n).
+template int fb() == fb_0.
+template int fr(int v,int n) == fr_0+(fr_v*v)+(fr_n*n).
+
+infer [fr,fb]  (self=null & n=fb()+fb()) 
+//| (exists(n1:exists(v:n=fr( v, n1)) & 0<=n1) & self!=null)) 
+|-  n>4 & n<10 .
+
+template_solve.

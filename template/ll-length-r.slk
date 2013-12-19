@@ -1,0 +1,21 @@
+ template int r(int n) == r_0+(r_n*n).
+ template int fb() == fb_0.
+ template int fr(int v,int n) == fr_0+(fr_v*v)+(fr_n*n).
+
+
+infer [fb,fr]  ((self=null & n=fb()) | (exists(n1:exists(v:n=fr( v, n1)) & 0<=n1) & 
+self!=null)) |-  0<=n.
+
+
+template_solve.
+/*
+infer [r,fr,fb]  x=x' & 0<=n |-  0<=(r( n)).
+
+infer [r,fr,fb,r,fr,fb]  n=fr( v_946, n1_948) & x=x' & x'!=null & !(v_bool_24_893') & x'!=null & 
+!(v_bool_24_893') & v_int_26_891'=1 & p_947=v_node_26_889' & n1_948=n_952 |-  (r( n))>(r( n_952)).
+
+infer [r,fr,fb,r,fr,fb]  n=fr( v_946, n1_948) & x=x' & x'!=null & !(v_bool_24_893') & x'!=null & 
+!(v_bool_24_893') & v_int_26_891'=1 & p_947=v_node_26_889' & n1_948=n_952 |-  (r( n))>(r( n_952)).
+*/
+
+

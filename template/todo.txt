@@ -126,6 +126,11 @@ if we could support a more minimalistic outcome?
    fr(v,n) = 1+1*n
    r(n) = 0+1*n
 =============================================================
+# sleek ll-length-r.slk --gts
+
+(i) duplicate vars, (ii) better use relAssume relational assumption
+
+infer [r,fr,fb,r,fr,fb]
 =============================================================
 =============================================================
 =============================================================

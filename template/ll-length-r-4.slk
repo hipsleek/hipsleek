@@ -1,0 +1,21 @@
+ template int r(int n) == r_0+(r_n*n).
+ template int fb() == fb_0.
+ template int fr(int v,int n) == fr_0+(fr_v*v)+(fr_n*n).
+
+//infer [r] 0<=n |- 0<=(r( n)).
+infer [fr,r] n=fr( v_946, n_952) |- (r( n_952))<(r( n)).
+infer [fr,r] n=fr( v_40, n1_39) & 0<=n1_39 |- 0<=n.
+
+template_solve.
+/*
+# ll-length-r-3.slk
+
+Can we simplify further?
+
+template int fr(int v,int n) == 2+(0*v)+(1*n), 
+template int fb() == 0, 
+template int r(int n) == 2+(1*n)]
+
+*/
+
+
