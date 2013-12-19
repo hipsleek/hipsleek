@@ -43,7 +43,7 @@ pred ll<> ==
 
 //lemma_infer_pred [P3] "one2b" self::zip<y> -> self::zipN<n> * y::zipM<m> & P3(m,n).
 
-lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
+//lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
 
 print residue.
 

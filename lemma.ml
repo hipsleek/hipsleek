@@ -16,6 +16,7 @@ module I  = Iast
 module SC = Sleekcore
 module LP = Lemproving
 module SAO = Saout
+module FP = Fixpoint
 
 let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name: ident)
   (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
@@ -366,7 +367,29 @@ let sa_infer_lemmas iprog cprog lemmas  =
   let pr1 = pr_list pr_none in
   Debug.no_1 "sa_infer_lemmas" pr1 pr_none (fun _ -> sa_infer_lemmas iprog cprog lemmas) lemmas
 
-let manage_infer_pred_lemmas repo iprog cprog = 
+let manage_infer_pred_lemmas repo iprog cprog =
+  let partition_pure_oblgs constrs post_rel_ids=
+    let pre_invs, pre_constrs, post_constrs = List.fold_left (fun (r0,r1,r2) (cat,lhs_p,rhs_p) ->
+        match cat with
+          | CP.RelAssume _ | CP.RelDefn _ -> begin
+              try
+                let rel = CP.name_of_rel_form rhs_p in
+                if CP.mem_svl rel post_rel_ids then
+                  r0,r1,r2@[(lhs_p, rhs_p)]
+                else
+                  if CP.isConstTrue rhs_p then
+                    (r0@[lhs_p], r1, r2)
+                  else
+                    (r0, r1@[(lhs_p, rhs_p)], r2)
+              with _ ->
+                  if CP.isConstTrue rhs_p then
+                    (r0@[(lhs_p)], r1, r2)
+                  else (r0, r1@[(lhs_p, rhs_p)], r2)
+          end
+          | _ -> (r0,r1,r2)
+    ) ([],[],[]) constrs in
+    (pre_invs, pre_constrs, post_constrs)
+  in
   let rec helper coercs res_so_far=
     match coercs with
       | [] -> (Some res_so_far)
@@ -392,14 +415,82 @@ let manage_infer_pred_lemmas repo iprog cprog =
                         | _ -> false
                   ) hp_rest
                   in
-                  let all_ccoers = left@right in
-                  let post_hps, sel_hps = match all_ccoers  with
-                    | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body), coer.C.coercion_infer_vars)
-                    | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
+                  let oblgs = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_rel_list_context lc)) [] lcs in
+                  (*left*)
+                  let _ = if left = [] then () else
+                    let post_hps, post_rel_ids, sel_hps, rel_ids = match left  with
+                      | [] -> [],[],[],[]
+                      | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body),
+                        CP.remove_dups_svl (List.map fst (CP.get_list_rel_args (CF.get_pure coer.C.coercion_body))),
+                        List.filter (fun sv -> CP.is_hprel_typ sv) coer.C.coercion_infer_vars,
+                        List.filter (fun sv -> CP.is_rel_typ sv) coer.C.coercion_infer_vars
+                        )
+                      | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
+                    in
+                    let _ = if sel_hps = [] || hp_lst_assume = [] then () else
+                      let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                        [] [] [] true true in
+                      ()
+                    in
+                    (*pure fixpoint*)
+                    let _ = if rel_ids = [] || oblgs = [] then () else
+                      let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
+                      let proc_spec = CF.mkETrue_nf no_pos in
+                      let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
+                      let r = FP.rel_fixpoint_comp pre_invs pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let _ = Debug.info_hprint (add_str "fixpoint"
+                          (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+                      let _ = print_endline "" in
+                      ()
+                    in
+                    ()
                   in
-                  let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
-                    [] [] [] true true in
-                  let hp_defs1 = List.map (fun def -> {def with CF.def_rhs = [(CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos,None)]}) hp_defs in
+                  (*right*)
+                  let _ = if right = [] then () else
+                    let post_hps, post_rel_ids, sel_hps, rel_ids = match right  with
+                      | [] -> [],[],[],[]
+                      | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_head),
+                        CP.remove_dups_svl (List.map fst (CP.get_list_rel_args (CF.get_pure coer.C.coercion_head))),
+                        List.filter (fun sv -> CP.is_hprel_typ sv) coer.C.coercion_infer_vars,
+                        List.filter (fun sv -> CP.is_rel_typ sv) coer.C.coercion_infer_vars
+                        )
+                      | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 2"
+                    in
+                    let _ = if sel_hps = [] || hp_lst_assume = [] then () else
+                      let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                        [] [] [] true true in
+                      ()
+                    in
+                    (*pure fixpoint*)
+                    let _ = if rel_ids = [] || oblgs = [] then () else
+                      let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
+                      let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
+                      let proc_spec = CF.mkETrue_nf no_pos in
+                      (*more invs*)
+                      let pre_inv_ext = match right with
+                        | [] -> []
+                        | [coer] ->
+                               let pre_vnodes = CF.get_views coer.C.coercion_body in
+                               let ls_rel_args = CP.get_list_rel_args (CF.get_pure coer.C.coercion_body) in
+                               let _ = Debug.info_hprint (add_str "coercion_body" !CP.print_formula) (CF.get_pure coer.C.coercion_body) no_pos in
+                               (* let _ = Debug.info_hprint (add_str "pre_rel_ids" !CP.print_svl) pre_rel_ids no_pos in *)
+                               let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
+                               else r
+                               ) [] ls_rel_args in
+                               let invs = List.map (FP.get_inv cprog pre_rel_args) pre_vnodes in
+                               let inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (pre_invs@invs) in
+                               [inv]
+                        | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
+                      in
+                      let r = FP.rel_fixpoint_comp pre_inv_ext pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let _ = Debug.info_hprint (add_str "fixpoint"
+                          (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+                      let _ = print_endline "" in
+                      ()
+                    in
+                    ()
+                  in
+                  (* let hp_defs1 = List.map (fun def -> {def with CF.def_rhs = [(CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos,None)]}) hp_defs in *)
                   (* let _=  print_endline ""in *)
                   (* let _=  print_endline "\n*************************************" in *)
                   (* let _=  print_endline "*******relational definition ********" in *)

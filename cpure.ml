@@ -8999,7 +8999,7 @@ let get_relargs_opt (f:formula)
         | _ -> None
 
 
-let get_list_rel_args (f0:formula) =
+let get_list_rel_args_x (f0:formula) =
   let rec helper f=
     match f with
       | BForm (bf,_) ->
@@ -9007,9 +9007,15 @@ let get_list_rel_args (f0:formula) =
               | (RelForm(id,eargs,_),_) -> [(id, (List.fold_left List.append [] (List.map afv eargs)))]
               | _ -> [])
       | And (f1,f2,_) -> (helper f1)@(helper f2)
+      | Exists (_,p1,_,_) -> helper p1
       | _ -> []
   in
   helper f0
+
+let get_list_rel_args (f0:formula) =
+  let pr1 = pr_list (pr_pair !print_sv !print_svl) in
+  Debug.no_1 "get_list_rel_args" !print_formula pr1
+      (fun _ ->  get_list_rel_args_x f0) f0
 
 let get_rel_id_list (f:formula) = match f with
   | BForm (bf,_) ->

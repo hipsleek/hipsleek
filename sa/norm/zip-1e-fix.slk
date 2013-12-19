@@ -1,5 +1,6 @@
 relation P3(int a, int b).
 
+//inv decl
 relAssume
   n>=0 & m>=0 & P3(n,m) --> true.
 
