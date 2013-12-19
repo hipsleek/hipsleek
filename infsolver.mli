@@ -1514,9 +1514,7 @@ module ArithSemantics :
 
 module type STRVAR = 
  sig 
-  type var
-    =
-    char list
+  type var 
   
   val var_eq_dec :
     var
@@ -1524,6 +1522,16 @@ module type STRVAR =
     var
     ->
     bool
+  
+  val var2string :
+    var
+    ->
+    char list
+  
+  val string2var :
+    char list
+    ->
+    var
  end
 
 module InfSolver : 
@@ -4498,7 +4506,7 @@ module InfSolver :
     char list
   
   type 'const_type coq_ZExp =
-  | ZExp_Var of char list
+  | ZExp_Var of Coq_sv.var
   | ZExp_Const of 'const_type
   | ZExp_Add of 'const_type
                 coq_ZExp
@@ -4508,12 +4516,12 @@ module InfSolver :
                 coq_ZExp
      * 'const_type
        coq_ZExp
-  | ZExp_Mult of char list
+  | ZExp_Mult of Coq_sv.var
      * 'const_type
        coq_ZExp
   
   val coq_ZExp_rect :
-    (char list
+    (Coq_sv.var
     ->
     'a2)
     ->
@@ -4545,7 +4553,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZExp
@@ -4560,7 +4568,7 @@ module InfSolver :
     'a2
   
   val coq_ZExp_rec :
-    (char list
+    (Coq_sv.var
     ->
     'a2)
     ->
@@ -4592,7 +4600,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZExp
@@ -4818,16 +4826,16 @@ module InfSolver :
        coq_ZF
   | ZF_Not of 'const_type
               coq_ZF
-  | ZF_Forall_Fin of char list
+  | ZF_Forall_Fin of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Exists_Fin of char list
+  | ZF_Exists_Fin of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Forall of char list
+  | ZF_Forall of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Exists of char list
+  | ZF_Exists of Coq_sv.var
      * 'const_type
        coq_ZF
   
@@ -4868,7 +4876,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4877,7 +4885,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4886,7 +4894,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4895,7 +4903,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4946,7 +4954,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4955,7 +4963,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4964,7 +4972,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4973,7 +4981,7 @@ module InfSolver :
     ->
     'a2)
     ->
-    (char list
+    (Coq_sv.var
     ->
     'a1
     coq_ZF
@@ -4988,12 +4996,12 @@ module InfSolver :
     'a2
   
   type coq_ZE =
-  | ZE_Fin of char list
+  | ZE_Fin of Coq_sv.var
   | ZE_Inf
   | ZE_NegInf
   
   val coq_ZE_rect :
-    (char list
+    (Coq_sv.var
     ->
     'a1)
     ->
@@ -5006,7 +5014,7 @@ module InfSolver :
     'a1
   
   val coq_ZE_rec :
-    (char list
+    (Coq_sv.var
     ->
     'a1)
     ->
@@ -5039,38 +5047,26 @@ module InfSolver :
   val convert_FAZF_to_ZF_Exp :
     FA.coq_ZExp
     ->
-    char list
+    Coq_sv.var
     coq_ZExp
   
   val convert_FAZF_to_ZF_BF :
     FA.coq_ZBF
     ->
-    char list
+    Coq_sv.var
     coq_ZBF
   
   val convert_FAZF_to_ZF :
     FA.coq_ZF
     ->
-    char list
-    coq_ZF
-  
-  val convert_FAZRForm_to_ZF_Z_Exp :
-    FA.coq_ZRExp
-    ->
-    char list
-    coq_ZExp
-  
-  val convert_FAZRForm_to_ZF_Z :
-    FA.coq_ZRForm
-    ->
-    char list
+    Coq_sv.var
     coq_ZF
   
   val transform_ZE_to_string :
     coq_ZE
     coq_ZF
     ->
-    char list
+    Coq_sv.var
     coq_ZF
  end
 

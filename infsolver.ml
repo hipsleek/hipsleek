@@ -5953,9 +5953,7 @@ module ArithSemantics =
 
 module type STRVAR = 
  sig 
-  type var
-    =
-    char list
+  type var 
   
   val var_eq_dec :
     var
@@ -5963,6 +5961,16 @@ module type STRVAR =
     var
     ->
     bool
+  
+  val var2string :
+    var
+    ->
+    char list
+  
+  val string2var :
+    char list
+    ->
+    var
  end
 
 module InfSolver = 
@@ -7420,7 +7428,7 @@ module InfSolver =
         n0)
   
   type 'const_type coq_ZExp =
-  | ZExp_Var of char list
+  | ZExp_Var of Coq_sv.var
   | ZExp_Const of 'const_type
   | ZExp_Add of 'const_type
                 coq_ZExp
@@ -7430,12 +7438,12 @@ module InfSolver =
                 coq_ZExp
      * 'const_type
        coq_ZExp
-  | ZExp_Mult of char list
+  | ZExp_Mult of Coq_sv.var
      * 'const_type
        coq_ZExp
   
   (** val coq_ZExp_rect :
-      (char list
+      (Coq_sv.var
       ->
       'a2)
       ->
@@ -7467,7 +7475,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZExp
@@ -7482,9 +7490,9 @@ module InfSolver =
       'a2 **)
   
   let rec coq_ZExp_rect f f0 f1 f2 f3 = function
-  | ZExp_Var s ->
+  | ZExp_Var v ->
     f
-      s
+      v
   | ZExp_Const y ->
     f0
       y
@@ -7526,10 +7534,10 @@ module InfSolver =
         f2
         f3
         z2)
-  | ZExp_Mult (s,
+  | ZExp_Mult (v,
                z1) ->
     f3
-      s
+      v
       z1
       (coq_ZExp_rect
         f
@@ -7540,7 +7548,7 @@ module InfSolver =
         z1)
   
   (** val coq_ZExp_rec :
-      (char list
+      (Coq_sv.var
       ->
       'a2)
       ->
@@ -7572,7 +7580,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZExp
@@ -7587,9 +7595,9 @@ module InfSolver =
       'a2 **)
   
   let rec coq_ZExp_rec f f0 f1 f2 f3 = function
-  | ZExp_Var s ->
+  | ZExp_Var v ->
     f
-      s
+      v
   | ZExp_Const y ->
     f0
       y
@@ -7631,10 +7639,10 @@ module InfSolver =
         f2
         f3
         z2)
-  | ZExp_Mult (s,
+  | ZExp_Mult (v,
                z1) ->
     f3
-      s
+      v
       z1
       (coq_ZExp_rec
         f
@@ -7954,16 +7962,16 @@ module InfSolver =
        coq_ZF
   | ZF_Not of 'const_type
               coq_ZF
-  | ZF_Forall_Fin of char list
+  | ZF_Forall_Fin of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Exists_Fin of char list
+  | ZF_Exists_Fin of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Forall of char list
+  | ZF_Forall of Coq_sv.var
      * 'const_type
        coq_ZF
-  | ZF_Exists of char list
+  | ZF_Exists of Coq_sv.var
      * 'const_type
        coq_ZF
   
@@ -8004,7 +8012,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8013,7 +8021,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8022,7 +8030,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8031,7 +8039,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8112,10 +8120,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Forall_Fin (s,
+  | ZF_Forall_Fin (v,
                    z1) ->
     f3
-      s
+      v
       z1
       (coq_ZF_rect
         f
@@ -8127,10 +8135,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Exists_Fin (s,
+  | ZF_Exists_Fin (v,
                    z1) ->
     f4
-      s
+      v
       z1
       (coq_ZF_rect
         f
@@ -8142,10 +8150,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Forall (s,
+  | ZF_Forall (v,
                z1) ->
     f5
-      s
+      v
       z1
       (coq_ZF_rect
         f
@@ -8157,10 +8165,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Exists (s,
+  | ZF_Exists (v,
                z1) ->
     f6
-      s
+      v
       z1
       (coq_ZF_rect
         f
@@ -8210,7 +8218,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8219,7 +8227,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8228,7 +8236,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8237,7 +8245,7 @@ module InfSolver =
       ->
       'a2)
       ->
-      (char list
+      (Coq_sv.var
       ->
       'a1
       coq_ZF
@@ -8318,10 +8326,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Forall_Fin (s,
+  | ZF_Forall_Fin (v,
                    z1) ->
     f3
-      s
+      v
       z1
       (coq_ZF_rec
         f
@@ -8333,10 +8341,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Exists_Fin (s,
+  | ZF_Exists_Fin (v,
                    z1) ->
     f4
-      s
+      v
       z1
       (coq_ZF_rec
         f
@@ -8348,10 +8356,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Forall (s,
+  | ZF_Forall (v,
                z1) ->
     f5
-      s
+      v
       z1
       (coq_ZF_rec
         f
@@ -8363,10 +8371,10 @@ module InfSolver =
         f5
         f6
         z1)
-  | ZF_Exists (s,
+  | ZF_Exists (v,
                z1) ->
     f6
-      s
+      v
       z1
       (coq_ZF_rec
         f
@@ -8380,12 +8388,12 @@ module InfSolver =
         z1)
   
   type coq_ZE =
-  | ZE_Fin of char list
+  | ZE_Fin of Coq_sv.var
   | ZE_Inf
   | ZE_NegInf
   
   (** val coq_ZE_rect :
-      (char list
+      (Coq_sv.var
       ->
       'a1)
       ->
@@ -8407,7 +8415,7 @@ module InfSolver =
     f1
   
   (** val coq_ZE_rec :
-      (char list
+      (Coq_sv.var
       ->
       'a1)
       ->
@@ -8445,7 +8453,8 @@ module InfSolver =
          (Some
          (PureInfinity.N.ZE_Fin
          (coq_Z_of_string
-           v)))
+           (Coq_sv.var2string
+             v))))
      | ZE_Inf ->
        IA.ZExp_Const
          (Some
@@ -8472,7 +8481,8 @@ module InfSolver =
                e) ->
     IA.ZExp_Mult
       ((coq_Z_of_string
-         s),
+         (Coq_sv.var2string
+           s)),
       (convert_ZF_to_IAZF_Exp
         e))
   
@@ -8610,7 +8620,7 @@ module InfSolver =
   (** val convert_FAZF_to_ZF_Exp :
       FA.coq_ZExp
       ->
-      char list
+      Coq_sv.var
       coq_ZExp **)
   
   let rec convert_FAZF_to_ZF_Exp = function
@@ -8619,8 +8629,9 @@ module InfSolver =
       v
   | FA.ZExp_Const c ->
     ZExp_Const
-      (string_of_Z
-        c)
+      (Coq_sv.string2var
+        (string_of_Z
+          c))
   | FA.ZExp_Add (e1,
                  e2) ->
     ZExp_Add
@@ -8631,8 +8642,9 @@ module InfSolver =
   | FA.ZExp_Inv e ->
     ZExp_Sub
       ((ZExp_Const
-      (string_of_Z
-        Z0)),
+      (Coq_sv.string2var
+        (string_of_Z
+          Z0))),
       (convert_FAZF_to_ZF_Exp
         e))
   | FA.ZExp_Sub (e1,
@@ -8645,15 +8657,16 @@ module InfSolver =
   | FA.ZExp_Mult (c,
                   e) ->
     ZExp_Mult
-      ((string_of_Z
-         c),
+      ((Coq_sv.string2var
+         (string_of_Z
+           c)),
       (convert_FAZF_to_ZF_Exp
         e))
   
   (** val convert_FAZF_to_ZF_BF :
       FA.coq_ZBF
       ->
-      char list
+      Coq_sv.var
       coq_ZBF **)
   
   let rec convert_FAZF_to_ZF_BF = function
@@ -8726,7 +8739,7 @@ module InfSolver =
   (** val convert_FAZF_to_ZF :
       FA.coq_ZF
       ->
-      char list
+      Coq_sv.var
       coq_ZF **)
   
   let rec convert_FAZF_to_ZF = function
@@ -8775,161 +8788,11 @@ module InfSolver =
       (convert_FAZF_to_ZF
         g))
   
-  (** val convert_FAZRForm_to_ZF_Z_Exp :
-      FA.coq_ZRExp
-      ->
-      char list
-      coq_ZExp **)
-  
-  let rec convert_FAZRForm_to_ZF_Z_Exp = function
-  | FA.ZRExp_Var v ->
-    ZExp_Var
-      v
-  | FA.ZRExp_Const z0 ->
-    ZExp_Const
-      (string_of_Z
-        z0)
-  | FA.ZRExp_Add (e1,
-                  e2) ->
-    ZExp_Add
-      ((convert_FAZRForm_to_ZF_Z_Exp
-         e1),
-      (convert_FAZRForm_to_ZF_Z_Exp
-        e2))
-  | FA.ZRExp_Inv e0 ->
-    ZExp_Sub
-      ((ZExp_Const
-      (string_of_Z
-        Z0)),
-      (convert_FAZRForm_to_ZF_Z_Exp
-        e0))
-  
-  (** val convert_FAZRForm_to_ZF_Z :
-      FA.coq_ZRForm
-      ->
-      char list
-      coq_ZF **)
-  
-  let rec convert_FAZRForm_to_ZF_Z = function
-  | FA.ZR_Leq (e1,
-               e2) ->
-    (match e1 with
-     | FA.ZRExp_Const a ->
-       (match a with
-        | Z0 ->
-          (match e2 with
-           | FA.ZRExp_Const a0 ->
-             (match a0 with
-              | Zpos p ->
-                (match p with
-                 | XH ->
-                   ZF_BF
-                     (ZBF_Const
-                     true)
-                 | _ ->
-                   ZF_BF
-                     (ZBF_Lte
-                     ((convert_FAZRForm_to_ZF_Z_Exp
-                        e1),
-                     (convert_FAZRForm_to_ZF_Z_Exp
-                       e2))))
-              | _ ->
-                ZF_BF
-                  (ZBF_Lte
-                  ((convert_FAZRForm_to_ZF_Z_Exp
-                     e1),
-                  (convert_FAZRForm_to_ZF_Z_Exp
-                    e2))))
-           | _ ->
-             ZF_BF
-               (ZBF_Lte
-               ((convert_FAZRForm_to_ZF_Z_Exp
-                  e1),
-               (convert_FAZRForm_to_ZF_Z_Exp
-                 e2))))
-        | Zpos p ->
-          (match p with
-           | XH ->
-             (match e2 with
-              | FA.ZRExp_Const a0 ->
-                (match a0 with
-                 | Z0 ->
-                   ZF_BF
-                     (ZBF_Const
-                     false)
-                 | _ ->
-                   ZF_BF
-                     (ZBF_Lte
-                     ((convert_FAZRForm_to_ZF_Z_Exp
-                        e1),
-                     (convert_FAZRForm_to_ZF_Z_Exp
-                       e2))))
-              | _ ->
-                ZF_BF
-                  (ZBF_Lte
-                  ((convert_FAZRForm_to_ZF_Z_Exp
-                     e1),
-                  (convert_FAZRForm_to_ZF_Z_Exp
-                    e2))))
-           | _ ->
-             ZF_BF
-               (ZBF_Lte
-               ((convert_FAZRForm_to_ZF_Z_Exp
-                  e1),
-               (convert_FAZRForm_to_ZF_Z_Exp
-                 e2))))
-        | Zneg p ->
-          ZF_BF
-            (ZBF_Lte
-            ((convert_FAZRForm_to_ZF_Z_Exp
-               e1),
-            (convert_FAZRForm_to_ZF_Z_Exp
-              e2))))
-     | _ ->
-       ZF_BF
-         (ZBF_Lte
-         ((convert_FAZRForm_to_ZF_Z_Exp
-            e1),
-         (convert_FAZRForm_to_ZF_Z_Exp
-           e2))))
-  | FA.ZR_And (f1,
-               f2) ->
-    ZF_And
-      ((convert_FAZRForm_to_ZF_Z
-         f1),
-      (convert_FAZRForm_to_ZF_Z
-        f2))
-  | FA.ZR_Or (f1,
-              f2) ->
-    ZF_Or
-      ((convert_FAZRForm_to_ZF_Z
-         f1),
-      (convert_FAZRForm_to_ZF_Z
-        f2))
-  | FA.ZR_Not g ->
-    ZF_Not
-      (convert_FAZRForm_to_ZF_Z
-        g)
-  | FA.ZR_Forall (v,
-                  q,
-                  g) ->
-    ZF_Forall_Fin
-      (v,
-      (convert_FAZRForm_to_ZF_Z
-        g))
-  | FA.ZR_Exists (v,
-                  q,
-                  g) ->
-    ZF_Exists_Fin
-      (v,
-      (convert_FAZRForm_to_ZF_Z
-        g))
-  
   (** val transform_ZE_to_string :
       coq_ZE
       coq_ZF
       ->
-      char list
+      Coq_sv.var
       coq_ZF **)
   
   let transform_ZE_to_string f =
