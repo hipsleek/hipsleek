@@ -5951,1213 +5951,1183 @@ module ArithSemantics =
       O
  end
 
-(** val string_dec :
-    char list
-    ->
-    char list
-    ->
-    bool **)
-
-let rec string_dec s s0 =
-  match s with
-  | [] ->
-    (match s0 with
-     | [] ->
-       true
-     | a::s1 ->
-       false)
-  | a::s1 ->
-    (match s0 with
-     | [] ->
-       false
-     | a0::s2 ->
-       if (=)
-            a
-            a0
-       then string_dec
-              s1
-              s2
-       else false)
-
-module STRVAR = 
- struct 
+module type STRVAR = 
+ sig 
   type var
     =
     char list
   
-  (** val var_eq_dec :
-      char list
-      ->
-      char list
-      ->
-      bool **)
-  
-  let var_eq_dec =
-    string_dec
+  val var_eq_dec :
+    var
+    ->
+    var
+    ->
+    bool
  end
 
-module IA = ArithSemantics(PureInfinity)(STRVAR)
-
-module FA = ArithSemantics(PureInt)(STRVAR)
-
-module I2F = ArithSemantics(IntToInfinity)(STRVAR)
-
-(** val inf_trans_exp :
-    IA.coq_ZExp
-    ->
-    I2F.coq_ZExp **)
-
-let rec inf_trans_exp = function
-| IA.ZExp_Var v ->
-  I2F.ZExp_Var
-    v
-| IA.ZExp_Const a ->
-  I2F.ZExp_Const
-    (Obj.magic
-      a)
-| IA.ZExp_Add (e1,
-               e2) ->
-  I2F.ZExp_Add
-    ((inf_trans_exp
-       e1),
-    (inf_trans_exp
-      e2))
-| IA.ZExp_Inv e ->
-  I2F.ZExp_Inv
-    (inf_trans_exp
-      e)
-| IA.ZExp_Sub (e1,
-               e2) ->
-  I2F.ZExp_Sub
-    ((inf_trans_exp
-       e1),
-    (inf_trans_exp
-      e2))
-| IA.ZExp_Mult (z0,
-                e) ->
-  I2F.ZExp_Mult
-    (z0,
-    (inf_trans_exp
-      e))
-
-(** val inf_trans_bf :
-    IA.coq_ZBF
-    ->
-    I2F.coq_ZBF **)
-
-let inf_trans_bf = function
-| IA.ZBF_Const b ->
-  I2F.ZBF_Const
-    b
-| IA.ZBF_Lt (f1,
-             f2) ->
-  I2F.ZBF_Lt
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-| IA.ZBF_Lte (f1,
-              f2) ->
-  I2F.ZBF_Lte
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-| IA.ZBF_Gt (f1,
-             f2) ->
-  I2F.ZBF_Gt
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-| IA.ZBF_Gte (f1,
-              f2) ->
-  I2F.ZBF_Gte
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-| IA.ZBF_Eq (f1,
-             f2) ->
-  I2F.ZBF_Eq
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-| IA.ZBF_Eq_Max (f1,
-                 f2,
-                 f3) ->
-  I2F.ZBF_Eq_Max
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2),
-    (inf_trans_exp
-      f3))
-| IA.ZBF_Eq_Min (f1,
-                 f2,
-                 f3) ->
-  I2F.ZBF_Eq_Min
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2),
-    (inf_trans_exp
-      f3))
-| IA.ZBF_Neq (f1,
-              f2) ->
-  I2F.ZBF_Neq
-    ((inf_trans_exp
-       f1),
-    (inf_trans_exp
-      f2))
-
-(** val inf_trans' :
-    IA.coq_ZF
-    ->
-    nat
-    ->
-    I2F.coq_ZF **)
-
-let rec inf_trans' form = function
-| O ->
-  I2F.ZF_BF
-    (I2F.ZBF_Const
-    false)
-| S c' ->
-  (match form with
-   | IA.ZF_BF bf ->
-     I2F.ZF_BF
-       (inf_trans_bf
-         bf)
-   | IA.ZF_And (f1,
-                f2) ->
-     I2F.ZF_And
-       ((inf_trans'
-          f1
-          c'),
-       (inf_trans'
-         f2
-         c'))
-   | IA.ZF_Or (f1,
-               f2) ->
-     I2F.ZF_Or
-       ((inf_trans'
-          f1
-          c'),
-       (inf_trans'
-         f2
-         c'))
-   | IA.ZF_Imp (f1,
-                f2) ->
-     I2F.ZF_Imp
-       ((inf_trans'
-          f1
-          c'),
-       (inf_trans'
-         f2
-         c'))
-   | IA.ZF_Not f ->
-     I2F.ZF_Not
-       (inf_trans'
-         f
-         c')
-   | IA.ZF_Forall (v,
-                   q,
-                   f) ->
-     (match q with
-      | PureInfinity.Q_Z ->
-        I2F.ZF_Forall
-          (v,
-          Tt,
-          (inf_trans'
-            f
-            c'))
-      | PureInfinity.Q_ZE ->
-        I2F.ZF_And
-          ((I2F.ZF_Forall
-          (v,
-          Tt,
-          (inf_trans'
-            f
-            c'))),
-          (I2F.ZF_And
-          ((inf_trans'
-             (IA.substitute
-               (Pair
-               (v,
-               (PureInfinity.conv
-                 PureInfinity.Q_ZE
-                 (Obj.magic
-                   ZInfinity.ZE_Inf))))
-               f)
-             c'),
-          (inf_trans'
-            (IA.substitute
-              (Pair
-              (v,
-              (PureInfinity.conv
-                PureInfinity.Q_ZE
-                (Obj.magic
-                  ZInfinity.ZE_NegInf))))
-              f)
-            c')))))
-   | IA.ZF_Exists (v,
-                   q,
-                   f) ->
-     (match q with
-      | PureInfinity.Q_Z ->
-        I2F.ZF_Exists
-          (v,
-          Tt,
-          (inf_trans'
-            f
-            c'))
-      | PureInfinity.Q_ZE ->
-        I2F.ZF_Or
-          ((I2F.ZF_Exists
-          (v,
-          Tt,
-          (inf_trans'
-            f
-            c'))),
-          (I2F.ZF_Or
-          ((inf_trans'
-             (IA.substitute
-               (Pair
-               (v,
-               (PureInfinity.conv
-                 PureInfinity.Q_ZE
-                 (Obj.magic
-                   ZInfinity.ZE_Inf))))
-               f)
-             c'),
-          (inf_trans'
-            (IA.substitute
-              (Pair
-              (v,
-              (PureInfinity.conv
-                PureInfinity.Q_ZE
-                (Obj.magic
-                  ZInfinity.ZE_NegInf))))
-              f)
-            c'))))))
-
-(** val inf_trans :
-    IA.coq_ZF
-    ->
-    I2F.coq_ZF **)
-
-let inf_trans form =
-  inf_trans'
-    form
-    (IA.length_zform
-      form)
-
-(** val fATrue :
-    FA.coq_ZF **)
-
-let fATrue =
-  FA.ZF_BF
-    (FA.ZBF_Const
-    true)
-
-(** val fAFalse :
-    FA.coq_ZF **)
-
-let fAFalse =
-  FA.ZF_BF
-    (FA.ZBF_Const
-    false)
-
-(** val proj :
-    IntToInfinity.N.coq_A
-    ->
-    z **)
-
-let proj = function
-| Some z1 ->
-  (match z1 with
-   | IntToInfinity.N.ZE_Fin x ->
-     x
-   | _ ->
-     Z0)
-| None ->
-  Z0
-
-(** val int_trans_exp :
-    I2F.coq_ZExp
-    ->
-    FA.coq_ZExp **)
-
-let rec int_trans_exp = function
-| I2F.ZExp_Var v ->
-  FA.ZExp_Var
-    v
-| I2F.ZExp_Const a ->
-  FA.ZExp_Const
-    (proj
-      a)
-| I2F.ZExp_Add (e1,
-                e2) ->
-  FA.ZExp_Add
-    ((int_trans_exp
-       e1),
-    (int_trans_exp
-      e2))
-| I2F.ZExp_Inv e ->
-  FA.ZExp_Inv
-    (int_trans_exp
-      e)
-| I2F.ZExp_Sub (e1,
-                e2) ->
-  FA.ZExp_Sub
-    ((int_trans_exp
-       e1),
-    (int_trans_exp
-      e2))
-| I2F.ZExp_Mult (z0,
-                 e) ->
-  FA.ZExp_Mult
-    (z0,
-    (int_trans_exp
-      e))
-
-(** val int_trans_bf :
-    I2F.coq_ZBF
-    ->
-    FA.coq_ZF **)
-
-let int_trans_bf = function
-| I2F.ZBF_Const f ->
-  FA.ZF_BF
-    (FA.ZBF_Const
-    f)
-| I2F.ZBF_Lt (e1,
-              e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Lt
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_Inf
-              then fAFalse
-              else fATrue
-            | IntToInfinity.N.ZE_NegInf ->
-              fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z0 ->
-           (match z0 with
-            | IntToInfinity.N.ZE_Inf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_Inf
-              then fAFalse
-              else fATrue
-            | _ ->
-              fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           if ZInfinity.coq_ZE_eq_dec
-                (Obj.magic
-                  x0)
-                ZInfinity.ZE_NegInf
-           then fAFalse
-           else fATrue
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Lte (e1,
-               e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Lte
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              fATrue
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fATrue
-              else fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           (match x0 with
-            | IntToInfinity.N.ZE_Inf ->
-              fATrue
-            | _ ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x0)
-                   ZInfinity.ZE_Inf
-              then fATrue
-              else fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z0 ->
-           fATrue
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Gt (e1,
-              e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Gt
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              fAFalse
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fAFalse
-              else fATrue)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           if ZInfinity.coq_ZE_eq_dec
-                (Obj.magic
-                  x0)
-                ZInfinity.ZE_Inf
-           then fAFalse
-           else fATrue
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z0 ->
-           (match z0 with
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fAFalse
-              else fATrue
-            | _ ->
-              fAFalse)
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Gte (e1,
-               e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Gte
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_Inf
-              then fATrue
-              else fAFalse
-            | IntToInfinity.N.ZE_NegInf ->
-              fATrue)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z0 ->
-           fATrue
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           (match x0 with
-            | IntToInfinity.N.ZE_NegInf ->
-              fATrue
-            | _ ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x0)
-                   ZInfinity.ZE_NegInf
-              then fATrue
-              else fAFalse)
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Eq (e1,
-              e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Eq
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_Inf
-              then fATrue
-              else fAFalse
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fATrue
-              else fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           (match x0 with
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fATrue
-              else fAFalse
-            | _ ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x0)
-                   ZInfinity.ZE_Inf
-              then fATrue
-              else fAFalse)
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           if ZInfinity.coq_ZE_eq_dec
-                (Obj.magic
-                  x0)
-                ZInfinity.ZE_NegInf
-           then fATrue
-           else fAFalse
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Eq_Max (e1,
-                  e2,
-                  e3) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match y with
-            | IntToInfinity.N.ZE_Fin z1 ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some z2 ->
-                 (match z2 with
-                  | IntToInfinity.N.ZE_Fin z3 ->
-                    FA.ZF_BF
-                      (FA.ZBF_Eq_Max
-                      ((int_trans_exp
-                         e1),
-                      (int_trans_exp
-                        e2),
-                      (int_trans_exp
-                        e3)))
-                  | IntToInfinity.N.ZE_Inf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_Inf
-                    then fATrue
-                    else fAFalse
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fATrue
-                         else fAFalse
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fAFalse
-                         else FA.ZF_BF
-                                (FA.ZBF_Eq
-                                ((int_trans_exp
-                                   e1),
-                                (int_trans_exp
-                                  e2))))
-               | None ->
-                 fAFalse)
-            | IntToInfinity.N.ZE_Inf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 (match y0 with
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fATrue
-                         else fAFalse
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fAFalse
-                         else FA.ZF_BF
-                                (FA.ZBF_Eq
-                                ((int_trans_exp
-                                   e1),
-                                (int_trans_exp
-                                  e2)))
-                  | _ ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_Inf
-                    then fATrue
-                    else fAFalse)
-               | None ->
-                 fAFalse)
-            | IntToInfinity.N.ZE_NegInf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 if ZInfinity.coq_ZE_eq_dec
-                      (Obj.magic
-                        x)
-                      ZInfinity.ZE_NegInf
-                 then if ZInfinity.coq_ZE_eq_dec
-                           (Obj.magic
-                             y0)
-                           ZInfinity.ZE_NegInf
-                      then fATrue
-                      else fAFalse
-                 else if ZInfinity.coq_ZE_eq_dec
-                           (Obj.magic
-                             y0)
-                           ZInfinity.ZE_NegInf
-                      then fAFalse
-                      else FA.ZF_BF
-                             (FA.ZBF_Eq
-                             ((int_trans_exp
-                                e1),
-                             (int_trans_exp
-                               e3)))
-               | None ->
-                 fAFalse))
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match y with
-            | IntToInfinity.N.ZE_NegInf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 if ZInfinity.coq_ZE_eq_dec
-                      (Obj.magic
-                        x)
-                      ZInfinity.ZE_NegInf
-                 then if ZInfinity.coq_ZE_eq_dec
-                           (Obj.magic
-                             y0)
-                           ZInfinity.ZE_NegInf
-                      then fATrue
-                      else fAFalse
-                 else if ZInfinity.coq_ZE_eq_dec
-                           (Obj.magic
-                             y0)
-                           ZInfinity.ZE_NegInf
-                      then fAFalse
-                      else FA.ZF_BF
-                             (FA.ZBF_Eq
-                             ((int_trans_exp
-                                e1),
-                             (int_trans_exp
-                               e3)))
-               | None ->
-                 fAFalse)
-            | _ ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 (match y0 with
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fATrue
-                         else fAFalse
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_NegInf
-                         then fAFalse
-                         else FA.ZF_BF
-                                (FA.ZBF_Eq
-                                ((int_trans_exp
-                                   e1),
-                                (int_trans_exp
-                                  e2)))
-                  | _ ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           y)
-                         ZInfinity.ZE_Inf
-                    then fATrue
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y0)
-                              ZInfinity.ZE_Inf
-                         then fATrue
-                         else fAFalse)
-               | None ->
-                 fAFalse))
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match I2F.dexp2ZE
-                    e3 with
-            | Some y0 ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     y)
-                   ZInfinity.ZE_NegInf
-              then if ZInfinity.coq_ZE_eq_dec
-                        (Obj.magic
-                          y0)
-                        ZInfinity.ZE_NegInf
-                   then fATrue
-                   else fAFalse
-              else fAFalse
-            | None ->
-              fAFalse)
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Eq_Min (e1,
-                  e2,
-                  e3) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match y with
-            | IntToInfinity.N.ZE_Fin z1 ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some z2 ->
-                 (match z2 with
-                  | IntToInfinity.N.ZE_Fin z3 ->
-                    FA.ZF_BF
-                      (FA.ZBF_Eq_Min
-                      ((int_trans_exp
-                         e1),
-                      (int_trans_exp
-                        e2),
-                      (int_trans_exp
-                        e3)))
-                  | IntToInfinity.N.ZE_Inf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_Inf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_Inf
-                         then fATrue
-                         else fAFalse
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y)
-                              ZInfinity.ZE_Inf
-                         then fAFalse
-                         else FA.ZF_BF
-                                (FA.ZBF_Eq
-                                ((int_trans_exp
-                                   e1),
-                                (int_trans_exp
-                                  e2)))
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then fATrue
-                    else fAFalse)
-               | None ->
-                 fAFalse)
-            | IntToInfinity.N.ZE_Inf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 (match y0 with
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then fATrue
-                    else fAFalse
-                  | _ ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_Inf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y0)
-                              ZInfinity.ZE_Inf
-                         then fATrue
-                         else fAFalse
-                    else if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y0)
-                              ZInfinity.ZE_Inf
-                         then fAFalse
-                         else FA.ZF_BF
-                                (FA.ZBF_Eq
-                                ((int_trans_exp
-                                   e1),
-                                (int_trans_exp
-                                  e3))))
-               | None ->
-                 fAFalse)
-            | IntToInfinity.N.ZE_NegInf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 if ZInfinity.coq_ZE_eq_dec
-                      (Obj.magic
-                        x)
-                      ZInfinity.ZE_NegInf
-                 then fATrue
-                 else fAFalse
-               | None ->
-                 fAFalse))
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match y with
-            | IntToInfinity.N.ZE_NegInf ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 if ZInfinity.coq_ZE_eq_dec
-                      (Obj.magic
-                        x)
-                      ZInfinity.ZE_NegInf
-                 then fATrue
-                 else fAFalse
-               | None ->
-                 fAFalse)
-            | _ ->
-              (match I2F.dexp2ZE
-                       e3 with
-               | Some y0 ->
-                 (match y0 with
-                  | IntToInfinity.N.ZE_NegInf ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           x)
-                         ZInfinity.ZE_NegInf
-                    then fATrue
-                    else fAFalse
-                  | _ ->
-                    if ZInfinity.coq_ZE_eq_dec
-                         (Obj.magic
-                           y)
-                         ZInfinity.ZE_Inf
-                    then if ZInfinity.coq_ZE_eq_dec
-                              (Obj.magic
-                                y0)
-                              ZInfinity.ZE_Inf
-                         then fATrue
-                         else fAFalse
-                    else fAFalse)
-               | None ->
-                 fAFalse))
-         | None ->
-           fAFalse)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some y ->
-           (match I2F.dexp2ZE
-                    e3 with
-            | Some y0 ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     y)
-                   ZInfinity.ZE_NegInf
-              then fATrue
-              else if ZInfinity.coq_ZE_eq_dec
-                        (Obj.magic
-                          y0)
-                        ZInfinity.ZE_NegInf
-                   then fATrue
-                   else fAFalse
-            | None ->
-              fAFalse)
-         | None ->
-           fAFalse))
-   | None ->
-     fAFalse)
-| I2F.ZBF_Neq (e1,
-               e2) ->
-  (match I2F.dexp2ZE
-           e1 with
-   | Some x ->
-     (match x with
-      | IntToInfinity.N.ZE_Fin z0 ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some z1 ->
-           (match z1 with
-            | IntToInfinity.N.ZE_Fin z2 ->
-              FA.ZF_BF
-                (FA.ZBF_Neq
-                ((int_trans_exp
-                   e1),
-                (int_trans_exp
-                  e2)))
-            | IntToInfinity.N.ZE_Inf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_Inf
-              then fAFalse
-              else fATrue
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fAFalse
-              else fATrue)
-         | None ->
-           fATrue)
-      | IntToInfinity.N.ZE_Inf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           (match x0 with
-            | IntToInfinity.N.ZE_NegInf ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x)
-                   ZInfinity.ZE_NegInf
-              then fAFalse
-              else fATrue
-            | _ ->
-              if ZInfinity.coq_ZE_eq_dec
-                   (Obj.magic
-                     x0)
-                   ZInfinity.ZE_Inf
-              then fAFalse
-              else fATrue)
-         | None ->
-           fATrue)
-      | IntToInfinity.N.ZE_NegInf ->
-        (match I2F.dexp2ZE
-                 e2 with
-         | Some x0 ->
-           if ZInfinity.coq_ZE_eq_dec
-                (Obj.magic
-                  x0)
-                ZInfinity.ZE_NegInf
-           then fAFalse
-           else fATrue
-         | None ->
-           fATrue))
-   | None ->
-     fATrue)
-
-(** val int_trans :
-    I2F.coq_ZF
-    ->
-    FA.coq_ZF **)
-
-let rec int_trans = function
-| I2F.ZF_BF bf ->
-  int_trans_bf
-    bf
-| I2F.ZF_And (f1,
-              f2) ->
-  FA.ZF_And
-    ((int_trans
-       f1),
-    (int_trans
-      f2))
-| I2F.ZF_Or (f1,
-             f2) ->
-  FA.ZF_Or
-    ((int_trans
-       f1),
-    (int_trans
-      f2))
-| I2F.ZF_Imp (f1,
-              f2) ->
-  FA.ZF_Imp
-    ((int_trans
-       f1),
-    (int_trans
-      f2))
-| I2F.ZF_Not f ->
-  FA.ZF_Not
-    (int_trans
-      f)
-| I2F.ZF_Forall (v,
-                 q,
-                 f) ->
-  FA.ZF_Forall
-    (v,
-    q,
-    (int_trans
-      f))
-| I2F.ZF_Exists (v,
-                 q,
-                 f) ->
-  FA.ZF_Exists
-    (v,
-    q,
-    (int_trans
-      f))
-
-(** val t0 :
-    IA.coq_ZF
-    ->
-    FA.coq_ZF **)
-
-let t0 f =
-  int_trans
-    (inf_trans
-      f)
-
 module InfSolver = 
+ functor (Coq_sv:STRVAR) ->
  struct 
+  module IA = ArithSemantics(PureInfinity)(Coq_sv)
+  
+  module FA = ArithSemantics(PureInt)(Coq_sv)
+  
+  module I2F = ArithSemantics(IntToInfinity)(Coq_sv)
+  
+  (** val inf_trans_exp :
+      IA.coq_ZExp
+      ->
+      I2F.coq_ZExp **)
+  
+  let rec inf_trans_exp = function
+  | IA.ZExp_Var v ->
+    I2F.ZExp_Var
+      v
+  | IA.ZExp_Const a ->
+    I2F.ZExp_Const
+      (Obj.magic
+        a)
+  | IA.ZExp_Add (e1,
+                 e2) ->
+    I2F.ZExp_Add
+      ((inf_trans_exp
+         e1),
+      (inf_trans_exp
+        e2))
+  | IA.ZExp_Inv e ->
+    I2F.ZExp_Inv
+      (inf_trans_exp
+        e)
+  | IA.ZExp_Sub (e1,
+                 e2) ->
+    I2F.ZExp_Sub
+      ((inf_trans_exp
+         e1),
+      (inf_trans_exp
+        e2))
+  | IA.ZExp_Mult (z0,
+                  e) ->
+    I2F.ZExp_Mult
+      (z0,
+      (inf_trans_exp
+        e))
+  
+  (** val inf_trans_bf :
+      IA.coq_ZBF
+      ->
+      I2F.coq_ZBF **)
+  
+  let inf_trans_bf = function
+  | IA.ZBF_Const b ->
+    I2F.ZBF_Const
+      b
+  | IA.ZBF_Lt (f1,
+               f2) ->
+    I2F.ZBF_Lt
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Lte (f1,
+                f2) ->
+    I2F.ZBF_Lte
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Gt (f1,
+               f2) ->
+    I2F.ZBF_Gt
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Gte (f1,
+                f2) ->
+    I2F.ZBF_Gte
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Eq (f1,
+               f2) ->
+    I2F.ZBF_Eq
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Eq_Max (f1,
+                   f2,
+                   f3) ->
+    I2F.ZBF_Eq_Max
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2),
+      (inf_trans_exp
+        f3))
+  | IA.ZBF_Eq_Min (f1,
+                   f2,
+                   f3) ->
+    I2F.ZBF_Eq_Min
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2),
+      (inf_trans_exp
+        f3))
+  | IA.ZBF_Neq (f1,
+                f2) ->
+    I2F.ZBF_Neq
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  
+  (** val inf_trans' :
+      IA.coq_ZF
+      ->
+      nat
+      ->
+      I2F.coq_ZF **)
+  
+  let rec inf_trans' form = function
+  | O ->
+    I2F.ZF_BF
+      (I2F.ZBF_Const
+      false)
+  | S c' ->
+    (match form with
+     | IA.ZF_BF bf ->
+       I2F.ZF_BF
+         (inf_trans_bf
+           bf)
+     | IA.ZF_And (f1,
+                  f2) ->
+       I2F.ZF_And
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Or (f1,
+                 f2) ->
+       I2F.ZF_Or
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Imp (f1,
+                  f2) ->
+       I2F.ZF_Imp
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Not f ->
+       I2F.ZF_Not
+         (inf_trans'
+           f
+           c')
+     | IA.ZF_Forall (v,
+                     q,
+                     f) ->
+       (match q with
+        | PureInfinity.Q_Z ->
+          I2F.ZF_Forall
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))
+        | PureInfinity.Q_ZE ->
+          I2F.ZF_And
+            ((I2F.ZF_Forall
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))),
+            (I2F.ZF_And
+            ((inf_trans'
+               (IA.substitute
+                 (Pair
+                 (v,
+                 (PureInfinity.conv
+                   PureInfinity.Q_ZE
+                   (Obj.magic
+                     ZInfinity.ZE_Inf))))
+                 f)
+               c'),
+            (inf_trans'
+              (IA.substitute
+                (Pair
+                (v,
+                (PureInfinity.conv
+                  PureInfinity.Q_ZE
+                  (Obj.magic
+                    ZInfinity.ZE_NegInf))))
+                f)
+              c')))))
+     | IA.ZF_Exists (v,
+                     q,
+                     f) ->
+       (match q with
+        | PureInfinity.Q_Z ->
+          I2F.ZF_Exists
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))
+        | PureInfinity.Q_ZE ->
+          I2F.ZF_Or
+            ((I2F.ZF_Exists
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))),
+            (I2F.ZF_Or
+            ((inf_trans'
+               (IA.substitute
+                 (Pair
+                 (v,
+                 (PureInfinity.conv
+                   PureInfinity.Q_ZE
+                   (Obj.magic
+                     ZInfinity.ZE_Inf))))
+                 f)
+               c'),
+            (inf_trans'
+              (IA.substitute
+                (Pair
+                (v,
+                (PureInfinity.conv
+                  PureInfinity.Q_ZE
+                  (Obj.magic
+                    ZInfinity.ZE_NegInf))))
+                f)
+              c'))))))
+  
+  (** val inf_trans :
+      IA.coq_ZF
+      ->
+      I2F.coq_ZF **)
+  
+  let inf_trans form =
+    inf_trans'
+      form
+      (IA.length_zform
+        form)
+  
+  (** val coq_FATrue :
+      FA.coq_ZF **)
+  
+  let coq_FATrue =
+    FA.ZF_BF
+      (FA.ZBF_Const
+      true)
+  
+  (** val coq_FAFalse :
+      FA.coq_ZF **)
+  
+  let coq_FAFalse =
+    FA.ZF_BF
+      (FA.ZBF_Const
+      false)
+  
+  (** val proj :
+      IntToInfinity.N.coq_A
+      ->
+      z **)
+  
+  let proj = function
+  | Some z1 ->
+    (match z1 with
+     | IntToInfinity.N.ZE_Fin x ->
+       x
+     | _ ->
+       Z0)
+  | None ->
+    Z0
+  
+  (** val int_trans_exp :
+      I2F.coq_ZExp
+      ->
+      FA.coq_ZExp **)
+  
+  let rec int_trans_exp = function
+  | I2F.ZExp_Var v ->
+    FA.ZExp_Var
+      v
+  | I2F.ZExp_Const a ->
+    FA.ZExp_Const
+      (proj
+        a)
+  | I2F.ZExp_Add (e1,
+                  e2) ->
+    FA.ZExp_Add
+      ((int_trans_exp
+         e1),
+      (int_trans_exp
+        e2))
+  | I2F.ZExp_Inv e ->
+    FA.ZExp_Inv
+      (int_trans_exp
+        e)
+  | I2F.ZExp_Sub (e1,
+                  e2) ->
+    FA.ZExp_Sub
+      ((int_trans_exp
+         e1),
+      (int_trans_exp
+        e2))
+  | I2F.ZExp_Mult (z0,
+                   e) ->
+    FA.ZExp_Mult
+      (z0,
+      (int_trans_exp
+        e))
+  
+  (** val int_trans_bf :
+      I2F.coq_ZBF
+      ->
+      FA.coq_ZF **)
+  
+  let int_trans_bf = function
+  | I2F.ZBF_Const f ->
+    FA.ZF_BF
+      (FA.ZBF_Const
+      f)
+  | I2F.ZBF_Lt (e1,
+                e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Lt
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
+                then coq_FAFalse
+                else coq_FATrue
+              | IntToInfinity.N.ZE_NegInf ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z0 ->
+             (match z0 with
+              | IntToInfinity.N.ZE_Inf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
+                then coq_FAFalse
+                else coq_FATrue
+              | _ ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             if ZInfinity.coq_ZE_eq_dec
+                  (Obj.magic
+                    x0)
+                  ZInfinity.ZE_NegInf
+             then coq_FAFalse
+             else coq_FATrue
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Lte (e1,
+                 e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Lte
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                coq_FATrue
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FATrue
+                else coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             (match x0 with
+              | IntToInfinity.N.ZE_Inf ->
+                coq_FATrue
+              | _ ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x0)
+                     ZInfinity.ZE_Inf
+                then coq_FATrue
+                else coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z0 ->
+             coq_FATrue
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Gt (e1,
+                e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Gt
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                coq_FAFalse
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FAFalse
+                else coq_FATrue)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             if ZInfinity.coq_ZE_eq_dec
+                  (Obj.magic
+                    x0)
+                  ZInfinity.ZE_Inf
+             then coq_FAFalse
+             else coq_FATrue
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z0 ->
+             (match z0 with
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FAFalse
+                else coq_FATrue
+              | _ ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Gte (e1,
+                 e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Gte
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
+                then coq_FATrue
+                else coq_FAFalse
+              | IntToInfinity.N.ZE_NegInf ->
+                coq_FATrue)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z0 ->
+             coq_FATrue
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             (match x0 with
+              | IntToInfinity.N.ZE_NegInf ->
+                coq_FATrue
+              | _ ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x0)
+                     ZInfinity.ZE_NegInf
+                then coq_FATrue
+                else coq_FAFalse)
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Eq (e1,
+                e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Eq
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
+                then coq_FATrue
+                else coq_FAFalse
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FATrue
+                else coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             (match x0 with
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FATrue
+                else coq_FAFalse
+              | _ ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x0)
+                     ZInfinity.ZE_Inf
+                then coq_FATrue
+                else coq_FAFalse)
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             if ZInfinity.coq_ZE_eq_dec
+                  (Obj.magic
+                    x0)
+                  ZInfinity.ZE_NegInf
+             then coq_FATrue
+             else coq_FAFalse
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Eq_Max (e1,
+                    e2,
+                    e3) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match y with
+              | IntToInfinity.N.ZE_Fin z1 ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some z2 ->
+                   (match z2 with
+                    | IntToInfinity.N.ZE_Fin z3 ->
+                      FA.ZF_BF
+                        (FA.ZBF_Eq_Max
+                        ((int_trans_exp
+                           e1),
+                        (int_trans_exp
+                          e2),
+                        (int_trans_exp
+                          e3)))
+                    | IntToInfinity.N.ZE_Inf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_Inf
+                      then coq_FATrue
+                      else coq_FAFalse
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FAFalse
+                           else FA.ZF_BF
+                                  (FA.ZBF_Eq
+                                  ((int_trans_exp
+                                     e1),
+                                  (int_trans_exp
+                                    e2))))
+                 | None ->
+                   coq_FAFalse)
+              | IntToInfinity.N.ZE_Inf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   (match y0 with
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FAFalse
+                           else FA.ZF_BF
+                                  (FA.ZBF_Eq
+                                  ((int_trans_exp
+                                     e1),
+                                  (int_trans_exp
+                                    e2)))
+                    | _ ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_Inf
+                      then coq_FATrue
+                      else coq_FAFalse)
+                 | None ->
+                   coq_FAFalse)
+              | IntToInfinity.N.ZE_NegInf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   if ZInfinity.coq_ZE_eq_dec
+                        (Obj.magic
+                          x)
+                        ZInfinity.ZE_NegInf
+                   then if ZInfinity.coq_ZE_eq_dec
+                             (Obj.magic
+                               y0)
+                             ZInfinity.ZE_NegInf
+                        then coq_FATrue
+                        else coq_FAFalse
+                   else if ZInfinity.coq_ZE_eq_dec
+                             (Obj.magic
+                               y0)
+                             ZInfinity.ZE_NegInf
+                        then coq_FAFalse
+                        else FA.ZF_BF
+                               (FA.ZBF_Eq
+                               ((int_trans_exp
+                                  e1),
+                               (int_trans_exp
+                                 e3)))
+                 | None ->
+                   coq_FAFalse))
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match y with
+              | IntToInfinity.N.ZE_NegInf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   if ZInfinity.coq_ZE_eq_dec
+                        (Obj.magic
+                          x)
+                        ZInfinity.ZE_NegInf
+                   then if ZInfinity.coq_ZE_eq_dec
+                             (Obj.magic
+                               y0)
+                             ZInfinity.ZE_NegInf
+                        then coq_FATrue
+                        else coq_FAFalse
+                   else if ZInfinity.coq_ZE_eq_dec
+                             (Obj.magic
+                               y0)
+                             ZInfinity.ZE_NegInf
+                        then coq_FAFalse
+                        else FA.ZF_BF
+                               (FA.ZBF_Eq
+                               ((int_trans_exp
+                                  e1),
+                               (int_trans_exp
+                                 e3)))
+                 | None ->
+                   coq_FAFalse)
+              | _ ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   (match y0 with
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_NegInf
+                           then coq_FAFalse
+                           else FA.ZF_BF
+                                  (FA.ZBF_Eq
+                                  ((int_trans_exp
+                                     e1),
+                                  (int_trans_exp
+                                    e2)))
+                    | _ ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             y)
+                           ZInfinity.ZE_Inf
+                      then coq_FATrue
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y0)
+                                ZInfinity.ZE_Inf
+                           then coq_FATrue
+                           else coq_FAFalse)
+                 | None ->
+                   coq_FAFalse))
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match I2F.dexp2ZE
+                      e3 with
+              | Some y0 ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       y)
+                     ZInfinity.ZE_NegInf
+                then if ZInfinity.coq_ZE_eq_dec
+                          (Obj.magic
+                            y0)
+                          ZInfinity.ZE_NegInf
+                     then coq_FATrue
+                     else coq_FAFalse
+                else coq_FAFalse
+              | None ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Eq_Min (e1,
+                    e2,
+                    e3) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match y with
+              | IntToInfinity.N.ZE_Fin z1 ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some z2 ->
+                   (match z2 with
+                    | IntToInfinity.N.ZE_Fin z3 ->
+                      FA.ZF_BF
+                        (FA.ZBF_Eq_Min
+                        ((int_trans_exp
+                           e1),
+                        (int_trans_exp
+                          e2),
+                        (int_trans_exp
+                          e3)))
+                    | IntToInfinity.N.ZE_Inf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_Inf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_Inf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y)
+                                ZInfinity.ZE_Inf
+                           then coq_FAFalse
+                           else FA.ZF_BF
+                                  (FA.ZBF_Eq
+                                  ((int_trans_exp
+                                     e1),
+                                  (int_trans_exp
+                                    e2)))
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then coq_FATrue
+                      else coq_FAFalse)
+                 | None ->
+                   coq_FAFalse)
+              | IntToInfinity.N.ZE_Inf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   (match y0 with
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then coq_FATrue
+                      else coq_FAFalse
+                    | _ ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_Inf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y0)
+                                ZInfinity.ZE_Inf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y0)
+                                ZInfinity.ZE_Inf
+                           then coq_FAFalse
+                           else FA.ZF_BF
+                                  (FA.ZBF_Eq
+                                  ((int_trans_exp
+                                     e1),
+                                  (int_trans_exp
+                                    e3))))
+                 | None ->
+                   coq_FAFalse)
+              | IntToInfinity.N.ZE_NegInf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   if ZInfinity.coq_ZE_eq_dec
+                        (Obj.magic
+                          x)
+                        ZInfinity.ZE_NegInf
+                   then coq_FATrue
+                   else coq_FAFalse
+                 | None ->
+                   coq_FAFalse))
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match y with
+              | IntToInfinity.N.ZE_NegInf ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   if ZInfinity.coq_ZE_eq_dec
+                        (Obj.magic
+                          x)
+                        ZInfinity.ZE_NegInf
+                   then coq_FATrue
+                   else coq_FAFalse
+                 | None ->
+                   coq_FAFalse)
+              | _ ->
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   (match y0 with
+                    | IntToInfinity.N.ZE_NegInf ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             x)
+                           ZInfinity.ZE_NegInf
+                      then coq_FATrue
+                      else coq_FAFalse
+                    | _ ->
+                      if ZInfinity.coq_ZE_eq_dec
+                           (Obj.magic
+                             y)
+                           ZInfinity.ZE_Inf
+                      then if ZInfinity.coq_ZE_eq_dec
+                                (Obj.magic
+                                  y0)
+                                ZInfinity.ZE_Inf
+                           then coq_FATrue
+                           else coq_FAFalse
+                      else coq_FAFalse)
+                 | None ->
+                   coq_FAFalse))
+           | None ->
+             coq_FAFalse)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some y ->
+             (match I2F.dexp2ZE
+                      e3 with
+              | Some y0 ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       y)
+                     ZInfinity.ZE_NegInf
+                then coq_FATrue
+                else if ZInfinity.coq_ZE_eq_dec
+                          (Obj.magic
+                            y0)
+                          ZInfinity.ZE_NegInf
+                     then coq_FATrue
+                     else coq_FAFalse
+              | None ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Neq (e1,
+                 e2) ->
+    (match I2F.dexp2ZE
+             e1 with
+     | Some x ->
+       (match x with
+        | IntToInfinity.N.ZE_Fin z0 ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some z1 ->
+             (match z1 with
+              | IntToInfinity.N.ZE_Fin z2 ->
+                FA.ZF_BF
+                  (FA.ZBF_Neq
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
+              | IntToInfinity.N.ZE_Inf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
+                then coq_FAFalse
+                else coq_FATrue
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FAFalse
+                else coq_FATrue)
+           | None ->
+             coq_FATrue)
+        | IntToInfinity.N.ZE_Inf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             (match x0 with
+              | IntToInfinity.N.ZE_NegInf ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_NegInf
+                then coq_FAFalse
+                else coq_FATrue
+              | _ ->
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x0)
+                     ZInfinity.ZE_Inf
+                then coq_FAFalse
+                else coq_FATrue)
+           | None ->
+             coq_FATrue)
+        | IntToInfinity.N.ZE_NegInf ->
+          (match I2F.dexp2ZE
+                   e2 with
+           | Some x0 ->
+             if ZInfinity.coq_ZE_eq_dec
+                  (Obj.magic
+                    x0)
+                  ZInfinity.ZE_NegInf
+             then coq_FAFalse
+             else coq_FATrue
+           | None ->
+             coq_FATrue))
+     | None ->
+       coq_FATrue)
+  
+  (** val int_trans :
+      I2F.coq_ZF
+      ->
+      FA.coq_ZF **)
+  
+  let rec int_trans = function
+  | I2F.ZF_BF bf ->
+    int_trans_bf
+      bf
+  | I2F.ZF_And (f1,
+                f2) ->
+    FA.ZF_And
+      ((int_trans
+         f1),
+      (int_trans
+        f2))
+  | I2F.ZF_Or (f1,
+               f2) ->
+    FA.ZF_Or
+      ((int_trans
+         f1),
+      (int_trans
+        f2))
+  | I2F.ZF_Imp (f1,
+                f2) ->
+    FA.ZF_Imp
+      ((int_trans
+         f1),
+      (int_trans
+        f2))
+  | I2F.ZF_Not f ->
+    FA.ZF_Not
+      (int_trans
+        f)
+  | I2F.ZF_Forall (v,
+                   q,
+                   f) ->
+    FA.ZF_Forall
+      (v,
+      q,
+      (int_trans
+        f))
+  | I2F.ZF_Exists (v,
+                   q,
+                   f) ->
+    FA.ZF_Exists
+      (v,
+      q,
+      (int_trans
+        f))
+  
+  (** val coq_T :
+      IA.coq_ZF
+      ->
+      FA.coq_ZF **)
+  
+  let coq_T f =
+    int_trans
+      (inf_trans
+        f)
+  
   (** val coq_Z_of_bool :
       bool
       ->
@@ -8964,7 +8934,7 @@ module InfSolver =
   
   let transform_ZE_to_string f =
     convert_FAZF_to_ZF
-      (t0
+      (coq_T
         (convert_ZF_to_IAZF
           f))
  end

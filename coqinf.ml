@@ -27,11 +27,13 @@ let implode (l:char list) : string =
 
 module StrSV =
 struct
-let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 
+(*let is_eq s1 s2 = String.compare (implode s1) (implode s2) = 0 *)
+  type var = char list
+  let var_eq_dec s1 s2 = String.compare (implode s1) (implode s2) = 0
 end
 
-(*module CoqInfSolver = Infsolver.InfSolver(StrSV)*)
-module CoqInfSolver = Infsolver.InfSolver
+module CoqInfSolver = Infsolver.InfSolver(StrSV)
+(*module CoqInfSolver = Infsolver.InfSolver*)
 
 open CoqInfSolver
 
@@ -208,16 +210,19 @@ Gen.Profiling.do_1 "CoqSolverZE" transform_ZE_to_string f
 let coqpure_to_coqinfsolver_const (c: coq_const) : coq_ZE =
 match c with
   | CFinConst i -> ZE_Fin (explode (string_of_int i))
+(*  | CFinConst i -> ZE_Fin (string_of_int i)*)
   | CInfConst -> ZE_Inf
   | CNegInfConst -> ZE_NegInf
 
 let rec coqpure_to_coqinfsolver_exp (e:coq_exp) : coq_ZE coq_ZExp  =
 match e with
-  | CVar v -> ZExp_Var (explode v)
+ | CVar v -> ZExp_Var (explode v)
+(* | CVar v -> ZExp_Var v*)
   | Cconst c -> ZExp_Const (coqpure_to_coqinfsolver_const c)
   | CAdd(e1, e2) -> ZExp_Add((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CSubtract(e1,e2) -> ZExp_Sub((coqpure_to_coqinfsolver_exp e1),(coqpure_to_coqinfsolver_exp e2))
   | CMult(i,e) -> ZExp_Mult((explode (string_of_int i)),(coqpure_to_coqinfsolver_exp e))
+(*  | CMult(i,e) -> ZExp_Mult((string_of_int i),(coqpure_to_coqinfsolver_exp e))*)
 
 let rec coqpure_to_coq_infsolver_bf (bf: coq_b_formula) : coq_ZE coq_ZBF =
 match bf with 
@@ -253,7 +258,9 @@ match f with
   | CNot f -> ZF_Not (coqpure_to_coq_infsolver_form f vl)
   | CForall_Fin(v,f) -> ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
   | CExists_Fin(v,f) -> ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
-  | CForall(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
+(*  | CForall_Fin(v,f) -> ZF_Forall_Fin(v,(coqpure_to_coq_infsolver_form f vl))
+  | CExists_Fin(v,f) -> ZF_Exists_Fin(v,(coqpure_to_coq_infsolver_form f vl))*)
+ | CForall(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
       ZF_Forall((explode v),(coqpure_to_coq_infsolver_form f vl))
     else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
          ZF_Forall_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
@@ -261,6 +268,14 @@ match f with
       ZF_Exists((explode v),(coqpure_to_coq_infsolver_form f vl))
     else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
          ZF_Exists_Fin((explode v),(coqpure_to_coq_infsolver_form f vl))
+(* | CForall(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
+      ZF_Forall(v,(coqpure_to_coq_infsolver_form f vl))
+    else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
+         ZF_Forall_Fin(v,(coqpure_to_coq_infsolver_form f vl))
+  | CExists(v,f) -> if Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2) == 0) v vl then
+      ZF_Exists(v,(coqpure_to_coq_infsolver_form f vl))
+    else (*let () = print_endline ("Is_not_INFVar:  "^v) in*)
+         ZF_Exists_Fin(v,(coqpure_to_coq_infsolver_form f vl))*)
 
 let coqpure_to_coq_infsolver_form (f: coq_formula) vl : coq_ZE coq_ZF = 
 Debug.no_2 "coqpure_to_coq_inf" string_of_coq_formula (fun c -> "") (fun c -> "") coqpure_to_coq_infsolver_form f vl
@@ -276,10 +291,13 @@ match c with
 let rec coq_infsolver_to_coqpure_exp (e: char list coq_ZExp) : coq_exp = 
 match e with
   | ZExp_Var v -> CVar (implode v)
+(*  | ZExp_Var v -> CVar v*)
   | ZExp_Const c -> Cconst (CFinConst (int_of_string(implode c)))
+(*  | ZExp_Const c -> Cconst (CFinConst (int_of_string c))*)
   | ZExp_Add(e1,e2) -> CAdd((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
   | ZExp_Sub(e1,e2) -> CSubtract((coq_infsolver_to_coqpure_exp e1),(coq_infsolver_to_coqpure_exp e2))
   | ZExp_Mult(i,e) -> CMult(int_of_string (implode i),(coq_infsolver_to_coqpure_exp e))
+(* | ZExp_Mult(i,e) -> CMult(int_of_string i,(coq_infsolver_to_coqpure_exp e))*)
 
 let rec coq_infsolver_to_coqpure_bf (bf: char list coq_ZBF) : coq_b_formula =
 match bf with
@@ -304,6 +322,8 @@ match f with
       failwith "coqinf.ml Infinity quantifiers should be all eliminated"
   | ZF_Forall_Fin(s,f) -> CForall_Fin((implode s),(coq_infsolver_to_coqpure_form f))
   | ZF_Exists_Fin(s,f) -> CExists_Fin((implode s),(coq_infsolver_to_coqpure_form f))
+(*| ZF_Forall_Fin(s,f) -> CForall_Fin(s,(coq_infsolver_to_coqpure_form f))
+  | ZF_Exists_Fin(s,f) -> CExists_Fin(s,(coq_infsolver_to_coqpure_form f))*)
 
 let coq_infsolver_to_coqpure_form (f: char list coq_ZF) : coq_formula = 
 Debug.no_1 "coq_inf_to_coqpure" (fun c -> "") string_of_coq_formula coq_infsolver_to_coqpure_form f 

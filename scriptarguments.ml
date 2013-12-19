@@ -238,6 +238,9 @@ let common_arguments = [
   ("--en-inf", Arg.Set Globals.allow_inf,"enable support for infinity ");
   ("--en-inf-qe", Arg.Unit( fun _ ->
 	Globals.allow_inf_qe := true;
+    (*Globals.early_contra_flag := false;
+    Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
 	(*Globals.elim_exists_flag := false;
 	Globals.simplify_imply := false;
 	Globals.filtering_flag := false;*)
@@ -245,6 +248,9 @@ let common_arguments = [
 	"enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
 	Globals.allow_inf_qe_coq := true;
+    Globals.early_contra_flag := false;
+    (*Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
 	(*Globals.elim_exists_flag := false;*)
 	(*Globals.simplify_imply := false;*)
 	(*Globals.filtering_flag := false;*)
