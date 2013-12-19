@@ -132,6 +132,13 @@ if we could support a more minimalistic outcome?
 
 infer [r,fr,fb,r,fr,fb]
 =============================================================
+# valid-1a-bug.ss
+
+ fail pre + but gave an incorrect non-decreasing message?
+ Can we avoid terminating checking if there were other failures
+ so user would not be mis-lead?
+
+Termination checking result:  (3)->(20) (MayTerm ERR: not decreasing) Term[29; pv_868] -> Term[29; pv_868]
 =============================================================
 =============================================================
 =============================================================
