@@ -2872,7 +2872,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                     let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in
                                     let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
                                     let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
-                                    FP.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls []
+                                    let pre_invs =
+                                      CF.get_pre_invs pre_rel_ids (FP.get_inv prog) (proc.proc_stk_of_static_specs # top) in
+                                    FP.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                                         Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
                                         reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
                                 in

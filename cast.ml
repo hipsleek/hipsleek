@@ -917,6 +917,10 @@ let look_up_view_def_raw i (defs : view_decl list) (name : ident) =
   let pr_out = !print_view_decl in
   Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
+let look_up_view_inv defs act_args name=
+  let vdcl = look_up_view_def_raw 46 defs name in
+  let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
+  P.subst ss (MP.pure_of_mix vdcl.view_user_inv (*view_x_formula*))
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with

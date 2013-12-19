@@ -5213,6 +5213,15 @@ let get_vnodes (f: formula) =
   Debug.no_1 "get_vnodes" pr1 pr2
       (fun _ -> get_vnodes_x f) f
 
+let get_views (f: formula) =
+  let get_vn hf=
+    match hf with
+      | ViewNode vn -> [vn]
+      | _ -> []
+  in
+  let views = get_one_kind_heap get_vn f in
+  views
+
 let get_hp_rel_name_assumption cs=
   CP.remove_dups_svl ((get_hp_rel_name_formula cs.hprel_lhs)@
       (get_hp_rel_name_formula cs.hprel_rhs))
@@ -12542,6 +12551,32 @@ let rec get_pre_post_vars (pre_vars: CP.spec_var list) xpure_heap (sp:struc_form
   | EList b ->  
     let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars xpure_heap c prog) b in
     fold_left_6 l
+
+let rec get_pre_invs (pre_rel_vars: CP.spec_var list) get_inv_fn (sp:struc_formula) =
+  match sp with
+    | ECase b -> 
+          List.fold_left (fun r (_, s)->  r@(get_pre_invs pre_rel_vars get_inv_fn s)) [] b.formula_case_branches
+    | EBase b ->
+          let p = get_pure b.formula_struc_base in
+          let rel_fmls0 = CP.get_list_rel_args p in
+          let rel_fmls1 = List.filter (fun (rel,_) -> CP.mem_svl rel pre_rel_vars) rel_fmls0 in
+          if rel_fmls1 = [] then [] else
+            let sel_svl = List.fold_left (fun r (_,args) -> r@args) [] rel_fmls1 in
+            let rel_fm = CP.filter_var p sel_svl in
+            let sel_vnodes =  get_views b.formula_struc_base in
+            let invs = List.map (get_inv_fn sel_svl) sel_vnodes in
+            let inv_ext = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos) rel_fm invs in
+            (*to inv*)
+	    (match b.formula_struc_continuation with
+              | None -> [inv_ext]
+              | Some l -> let np = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos)
+                  inv_ext (get_pre_invs pre_rel_vars get_inv_fn l) in
+                [np]
+            )
+    | EAssume b -> []
+    | EInfer b -> (get_pre_invs pre_rel_vars get_inv_fn b.formula_inf_continuation)
+    | EList b ->
+          List.fold_left (fun r (_,c)-> r@(get_pre_invs pre_rel_vars get_inv_fn c)) [] b
 
 let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula): 
   (CP.spec_var list * CP.spec_var list) =

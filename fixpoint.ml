@@ -15,9 +15,21 @@ module CP = Cpure
 module MCP = Mcpure
 module TP = Tpdispatcher
 module I = Iast
+module C = Cast
 module AS = Astsimp
 module Inf = Infer
 module SO = Solver
+
+let get_inv_x prog sel_vars vnode=
+  let inv = C.look_up_view_inv prog.C.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
+    vnode.CF.h_formula_view_name in
+  CP.filter_var inv sel_vars
+
+let get_inv prog sel_vars vnode=
+  let pr1 vn = Cprinter.string_of_h_formula (CF.ViewNode vn) in
+  Debug.no_2 "get_inv" !CP.print_svl pr1 !CP.print_formula 
+      (fun _ _ -> get_inv_x prog sel_vars vnode)
+      sel_vars vnode
 
 let rec eqHeap h1 h2 = match (h1,h2) with
   | (CF.Star _, CF.Star _) -> 
@@ -384,7 +396,8 @@ let compute_td_fml pre_rel_df pre_rel =
  compute fix-point for one pre-relation*)
 let pre_rel_fixpoint_x pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df=
   let constTrue = CP.mkTrue no_pos in
-  let pre_inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) constTrue pre_invs in
+  let pre_inv = CP.disj_of_list pre_invs no_pos in
+    (* List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) constTrue pre_invs in *)
   let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
   let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
   let pure_oblg_to_check = 
@@ -519,9 +532,9 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
   let pr3 = CP.print_rel_cat in
   let pr3a = pr_list_ln (pr_triple pr3 pr1 pr1) in
   let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in
-  Debug.no_7 "update_with_td_fp" (pr_pair pr2a (pr_list_ln pr1)) (pr_list_ln pr1)
+  Debug.no_7 "update_with_td_fp" (pr_pair pr2a (pr_list_ln pr1)) (pr_pair (pr_list_ln pr1) (pr_list_ln pr1))
       pr3a pr2a pr2a pr2a (pr_pair !CP.print_svl string_of_int) pr4
       (fun _ _ _ _ _ _ _ -> update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
           preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
           pre_vars proc_spec grp_post_rel_flag)
-      (bottom_up_fp,pre_rel_fmls) pre_fmls reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars,grp_post_rel_flag)
+      (bottom_up_fp,pre_rel_fmls) (pre_fmls,pre_invs) reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars,grp_post_rel_flag)
