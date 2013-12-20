@@ -11063,7 +11063,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       begin
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
-        (* let lhs_f_wprhs = CF.mkAnd_pure temp_estate.es_formula (MCP.mix_of_pure (CF.xpure_for_hnodes_f conseq)) no_pos in *)
+        (*sa/norm/zip-1e.slk: lhs_rhs_contra: xpure lhs should consider the rhs (pairwaisecheck + neg produces imprecise result) *)
         let lhs_xpure0,_,_ = xpure prog temp_estate.es_formula in
         let lhs_xpure = MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq)) in
 	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
