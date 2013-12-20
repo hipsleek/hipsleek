@@ -29,7 +29,7 @@ let templ_sleek_stk: string Gen.stack = new Gen.stack
 let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack
 
 (* Stack of simplified template assumption per scc *)
-let simpl_templ_assume_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack 
+let simpl_templ_assume_scc_stk: (spec_var list * term list list * formula) Gen.stack = new Gen.stack 
 
 let rec print_term_list (tl: term list) =
   match tl with
@@ -353,13 +353,7 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
 
 let templ_entail_num = ref 0
 
-let infer_template_rhs_simpl num (es: CF.entail_state) vars (ante: formula) (cons: formula) pos: 
-    CF.entail_state * formula list =
-  let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
-  let ante_fl = true_f::(split_conjunctions ante) in
-  let ante_tl = List.map (term_list_of_formula vars) ante_fl in
-  let cons_t = term_list_of_formula vars (normalize_formula cons) in
-
+let infer_template_rhs_farkas num (ante_tl: term list list) (cons_t: term list) pos: formula list =
   let constrs = 
     let ante_w_unks, unks, _ = List.fold_left (fun (a, unks, i) tl ->
       let unk_lambda = mkVar (unk_lambda_sv (num @ [i])) pos in
@@ -368,7 +362,7 @@ let infer_template_rhs_simpl num (es: CF.entail_state) vars (ante: formula) (con
     let ante_sum_t = partition_term_list (List.concat ante_w_unks) pos in
     (List.map (fun unk -> mkPure (mkGte unk (mkIConst 0 pos) pos)) unks) @
     (collect_unk_constrs ante_sum_t cons_t pos) in
-  (es, constrs)
+  constrs
 
 (* cons is a base formula and cnum is its order in the original consequent *)
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
@@ -386,9 +380,16 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
 
   let ante, subst = find_eq_subst_formula vars ante in
   let cons = apply_par_term subst cons in
-  let _ = simpl_templ_assume_scc_stk # push (vars, ante, cons) in
+  
+  let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
+  let ante_fl = true_f::(split_conjunctions ante) in
+  let ante_tl = List.map (term_list_of_formula vars) ante_fl in
+  let cons_t = term_list_of_formula vars (normalize_formula cons) in
 
-  infer_template_rhs_simpl num es vars ante cons pos
+  let _ = simpl_templ_assume_scc_stk # push (vars, ante_tl, cons) in
+
+  let farkas_contrs = infer_template_rhs_farkas num ante_tl cons_t pos in
+  es, farkas_contrs
 
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
@@ -533,6 +534,11 @@ let subst_model_to_templ_decls inf_templs templ_decls model =
   }) inf_templ_decls in
   res_templ_decls
 
+(***************************)
+(* LEXICOGRAPHIC INFERENCE *)
+(***************************)
+exception Lex_Infer_Failure of string 
+
 (* e1 > e2 --> e1 >= 0 *)
 let trans_dec_to_bnd_constr (f: formula) =
   let f_b b = 
@@ -549,18 +555,30 @@ let trans_dec_to_unaff_constr (f: formula) =
     | _ -> Some (mkTrue_b (pos_of_b_formula b)) 
   in transform_formula (nonef, nonef, nonef, f_b, nonef) f
 
-(* TODO: Need to remove redundant simplification *)
-let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-  let unaff_il, unaff_ctrs = List.split unaff_constrs in
-  let fv_templs = List.filter (fun v -> is_FuncT (type_of_spec_var v)) 
-    (List.concat (List.map (fun (_, _, cons) -> fv cons) (rank_constrs @ unaff_ctrs))) in
-  let fv_templs = List.filter (fun v -> Gen.BList.mem_eq (=) (name_of_spec_var v) inf_templs) fv_templs in
-  let es = { es with CF.es_infer_vars_templ = fv_templs; } in
+let rec strict_subset l =
+  match l with 
+  | [] -> []
+  | x::xs ->
+    let xs_subset = strict_subset xs in
+    [xs] @ (List.map (fun xs -> x::xs) xs_subset) @ xs_subset @ [[x]]
 
-  let es, constrs, _ = List.fold_left (fun (es, ac, cnum) (vars, ante, cons) ->
-    let es, cl = infer_template_rhs_simpl [cnum] es vars ante cons no_pos in
-    (es, ac @ cl, cnum+1)) (es, [], 0) (rank_constrs @ unaff_ctrs) in
+let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+  let pr_ctr = fun (_, ante, cons) -> pr_pair (pr_list print_term_list) !print_formula (ante, cons) in
+  let pr1 = pr_list pr_ctr in
+  let pr2 = pr_list (pr_pair string_of_int pr_ctr) in
+  let pr3 = pr_pair string_of_int (pr_list string_of_int) in
+  let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
+  Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
+  (fun _ _ -> find_potential_lex_single_rank_x prog inf_templs i rank_constrs unaff_constrs)
+  rank_constrs unaff_constrs
+
+and find_potential_lex_single_rank_x prog inf_templs i rank_constrs unaff_constrs =
+  let unaff_il, unaff_ctrs = List.split unaff_constrs in
+  
+  let constrs, _ = List.fold_left (fun (ac, cnum) (vars, ante, cons) ->
+    let cons_t = term_list_of_formula vars (normalize_formula cons) in
+    let cl = infer_template_rhs_farkas [cnum] ante cons_t no_pos in
+    (ac @ cl, cnum+1)) ([], 0) (rank_constrs @ unaff_ctrs) in
   if constrs = [] then None
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
@@ -568,28 +586,22 @@ let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_cons
     let is_sat, model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
     match model with
     | [] -> begin match is_sat with
-      | Z3m.Z3m_Unsat -> begin match unaff_constrs with
-        | [] -> None
-        | _::rs -> (* TODO *) find_potential_lex_single_rank prog inf_templs i rank_constrs rs
-        end
-      | Z3m.Z3m_Sat_or_Unk -> None
+      | Z3m.Z3m_Unsat ->
+        let rec search_rank ls = match ls with
+          | [] -> None
+          | x::xs ->
+            let r = find_potential_lex_single_rank prog inf_templs i rank_constrs x in 
+            match r with
+            | Some _ -> r
+            | None -> search_rank xs
+        in search_rank (strict_subset unaff_constrs)
+      | _ -> None
       end
     | _ -> 
-      let res_templ_decls = subst_model_to_templ_decls 
-        (List.map name_of_spec_var fv_templs) prog.C.prog_templ_decls model in
+      let res_templ_decls = subst_model_to_templ_decls inf_templs prog.C.prog_templ_decls model in
       Some (List.concat (List.map (fun tdef -> 
         fold_opt (fun e -> [e]) tdef.C.templ_body) res_templ_decls), 
         (i, unaff_il))
-
-let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let pr_ctr = fun (_, ante, cons) -> Cprinter.string_of_templ_assume (ante, cons) in
-  let pr1 = pr_list pr_ctr in
-  let pr2 = pr_list (pr_pair string_of_int pr_ctr) in
-  let pr3 = pr_pair string_of_int (pr_list string_of_int) in
-  let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
-  Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
-  (fun _ _ -> find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs)
-  rank_constrs unaff_constrs
 
 (* [1; 2; 3] --> [[1; 2; 3]; [2; 3; 1]; [3; 1; 2]] *)
 let rec rotate_head_list ls =
@@ -599,8 +611,9 @@ let rec rotate_head_list ls =
 
 let find_lex_rank prog inf_templs dec_assumes =
   match dec_assumes with
-  | [] -> []
-  | _::[] -> []
+  | [] 
+  | _::[] -> raise (Lex_Infer_Failure 
+      "Nothing to do with Lexicographic Inference")
   | c::cs -> 
     let i, (vars, ante, dec) = c in
     let bnd = trans_dec_to_bnd_constr dec in
@@ -608,26 +621,37 @@ let find_lex_rank prog inf_templs dec_assumes =
       [(vars, ante, dec); (vars, ante, bnd)]
       (List.map (fun (i, (vars, ante, cons)) -> 
         (i, (vars, ante, trans_dec_to_unaff_constr cons))) cs)
-    in fold_opt (fun r -> [r]) rank
+    in match rank with
+    | None -> raise (Lex_Infer_Failure 
+        "Cannot find the potential ranking function")
+    | Some r -> r
 
 let rec sort_rank_list num rank_l =
-  let hd, tl = List.partition (fun (r, (_, unaff_l)) -> 
-    (List.length unaff_l) == num) rank_l in
-  match hd with
-  | [] -> []
-  | (r, (i, _))::xs -> 
-    let r_tl = List.map (fun (r, (j, unaff_l)) -> (r, (j, List.filter (fun k -> k != i) unaff_l))) (xs @ tl) in
-    r::(sort_rank_list (num-1) r_tl)
+  if num < 0 then []
+  else
+    let hd, tl = List.partition (fun (r, (_, unaff_l)) -> 
+      (List.length unaff_l) == num) rank_l in
+    match hd with
+    | [] -> raise (Lex_Infer_Failure 
+        "Cannot find suitable lexicographic ranking function")
+    | (r, (i, _))::xs -> (* TODO: Backtracking here *) 
+      let r_tl = List.map (fun (r, (j, unaff_l)) -> (r, (j, List.filter (fun k -> k != i) unaff_l))) (xs @ tl) in
+      r::(sort_rank_list (num-1) r_tl)
 
-let infer_lex_template_init prog (inf_templs: ident list) (templ_assumes: (spec_var list * formula * formula) list) =
+let infer_lex_template_init prog (inf_templs: ident list) 
+    (templ_assumes: (spec_var list * term list list * formula) list) =
   let dec_templ_assumes = List.filter (fun (_, _, cons) -> is_Gt_formula cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
-  let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
-  let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
-  let rank_l = List.concat (List.map (find_lex_rank prog inf_templs) dec_templ_assumes_l) in
-  let res = sort_rank_list (num_call_ctx-1) rank_l in
-  print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****";
-  print_endline (pr_list (pr_list !print_exp) res)
+  if num_call_ctx == 1 then
+    print_endline ("Nothing to do with Lexicographic Inference.")
+  else try
+    let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
+    let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
+    let rank_l = List.map (find_lex_rank prog inf_templs) dec_templ_assumes_l in
+    let res = sort_rank_list (num_call_ctx-1) rank_l in
+    print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****";
+    print_endline (pr_list (pr_list !print_exp) res)
+  with Lex_Infer_Failure reason -> print_endline reason
 
 let collect_and_solve_templ_constrs prog (inf_templs: ident list) = 
   let constrs = templ_constr_stk # get_stk in
@@ -666,8 +690,6 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
         let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
         let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
         let _ = print_endline ("or conditional termination or non-termination ...") in
-        let _ = Debug.tinfo_pprint ("LEX ASSUMES: " ^ (pr_list 
-          (pr_triple !print_svl !print_formula !print_formula) simpl_templ_assumes)) in
         infer_lex_template_init prog inf_templs simpl_templ_assumes 
       | _ -> print_endline ("TEMPLATE INFERENCE: No result.")
       end

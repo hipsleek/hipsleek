@@ -10,8 +10,10 @@ ensures true;
 	if (x > 0 && y > 0 && z > 0) {
 		if (rand_bool ()) { 
 			x = x - 1;
+			//z = rand_int ();
 			loop (x, y, z);
 		} else if (rand_bool ()) {
+			x = rand_int ();
 			y = y - 1;
 			z = rand_int ();
 			loop (x, y, z);
