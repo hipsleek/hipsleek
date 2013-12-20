@@ -26,7 +26,10 @@ let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen
 let templ_sleek_stk: string Gen.stack = new Gen.stack
 
 (* Stack of template assumption per scc *)
-let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack 
+let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack
+
+(* Stack of simplified template assumption per scc *)
+let simpl_templ_assume_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack 
 
 let rec print_term_list (tl: term list) =
   match tl with
@@ -350,21 +353,12 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
 
 let templ_entail_num = ref 0
 
-let infer_template_rhs_simpl num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
+let infer_template_rhs_simpl num (es: CF.entail_state) vars (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
-  let inf_templs = es.CF.es_infer_vars_templ in
-  let ante, ante_unks = trans_formula_templ inf_templs ante in
-  let cons, cons_unks = trans_formula_templ inf_templs cons in
-  let vars = Gen.BList.difference_eq eq_spec_var 
-    ((fv ante) @ (fv cons)) (ante_unks @ cons_unks) in
-
-  let ante, subst = find_eq_subst_formula vars ante in
-  let cons = normalize_formula (apply_par_term subst cons) in
-
   let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
   let ante_fl = true_f::(split_conjunctions ante) in
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
-  let cons_t = term_list_of_formula vars cons in
+  let cons_t = term_list_of_formula vars (normalize_formula cons) in
 
   let constrs = 
     let ante_w_unks, unks, _ = List.fold_left (fun (a, unks, i) tl ->
@@ -380,11 +374,21 @@ let infer_template_rhs_simpl num (es: CF.entail_state) (ante: formula) (cons: fo
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
   let ante = find_rel_constraints ante (fv cons) in
-
   let es =  { es with 
     CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
   let _ = templ_assume_scc_stk # push (ante, cons) in
-  infer_template_rhs_simpl num es ante cons pos
+
+  let inf_templs = es.CF.es_infer_vars_templ in
+  let ante, ante_unks = trans_formula_templ inf_templs ante in
+  let cons, cons_unks = trans_formula_templ inf_templs cons in
+  let vars = Gen.BList.difference_eq eq_spec_var 
+    ((fv ante) @ (fv cons)) (ante_unks @ cons_unks) in
+
+  let ante, subst = find_eq_subst_formula vars ante in
+  let cons = apply_par_term subst cons in
+  let _ = simpl_templ_assume_scc_stk # push (vars, ante, cons) in
+
+  infer_template_rhs_simpl num es vars ante cons pos
 
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
@@ -550,12 +554,12 @@ let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_cons
   let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let unaff_il, unaff_ctrs = List.split unaff_constrs in
   let fv_templs = List.filter (fun v -> is_FuncT (type_of_spec_var v)) 
-    (List.concat (List.map (fun (_, cons) -> fv cons) (rank_constrs @ unaff_ctrs))) in
+    (List.concat (List.map (fun (_, _, cons) -> fv cons) (rank_constrs @ unaff_ctrs))) in
   let fv_templs = List.filter (fun v -> Gen.BList.mem_eq (=) (name_of_spec_var v) inf_templs) fv_templs in
   let es = { es with CF.es_infer_vars_templ = fv_templs; } in
 
-  let es, constrs, _ = List.fold_left (fun (es, ac, cnum) (ante, cons) ->
-    let es, cl = infer_template_rhs_simpl [cnum] es ante cons no_pos in
+  let es, constrs, _ = List.fold_left (fun (es, ac, cnum) (vars, ante, cons) ->
+    let es, cl = infer_template_rhs_simpl [cnum] es vars ante cons no_pos in
     (es, ac @ cl, cnum+1)) (es, [], 0) (rank_constrs @ unaff_ctrs) in
   if constrs = [] then None
   else
@@ -578,8 +582,9 @@ let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_cons
         (i, unaff_il))
 
 let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let pr1 = pr_list Cprinter.string_of_templ_assume in
-  let pr2 = pr_list (pr_pair string_of_int Cprinter.string_of_templ_assume) in
+  let pr_ctr = fun (_, ante, cons) -> Cprinter.string_of_templ_assume (ante, cons) in
+  let pr1 = pr_list pr_ctr in
+  let pr2 = pr_list (pr_pair string_of_int pr_ctr) in
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in
   let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
   Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
@@ -597,12 +602,12 @@ let find_lex_rank prog inf_templs dec_assumes =
   | [] -> []
   | _::[] -> []
   | c::cs -> 
-    let i, (ante, dec) = c in
+    let i, (vars, ante, dec) = c in
     let bnd = trans_dec_to_bnd_constr dec in
     let rank = find_potential_lex_single_rank prog inf_templs i 
-      [(ante, dec); (ante, bnd)]
-      (List.map (fun (i, (ante, cons)) -> 
-        (i, (ante, trans_dec_to_unaff_constr cons))) cs)
+      [(vars, ante, dec); (vars, ante, bnd)]
+      (List.map (fun (i, (vars, ante, cons)) -> 
+        (i, (vars, ante, trans_dec_to_unaff_constr cons))) cs)
     in fold_opt (fun r -> [r]) rank
 
 let rec sort_rank_list num rank_l =
@@ -614,8 +619,8 @@ let rec sort_rank_list num rank_l =
     let r_tl = List.map (fun (r, (j, unaff_l)) -> (r, (j, List.filter (fun k -> k != i) unaff_l))) (xs @ tl) in
     r::(sort_rank_list (num-1) r_tl)
 
-let infer_lex_template_init prog (inf_templs: ident list) (templ_assumes: (formula * formula) list) =
-  let dec_templ_assumes = List.filter (fun (_, cons) -> is_Gt_formula cons) templ_assumes in
+let infer_lex_template_init prog (inf_templs: ident list) (templ_assumes: (spec_var list * formula * formula) list) =
+  let dec_templ_assumes = List.filter (fun (_, _, cons) -> is_Gt_formula cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
   let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
   let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
@@ -635,6 +640,9 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
 
   let templ_assumes = templ_assume_scc_stk # get_stk in
   let _ = templ_assume_scc_stk # reset in
+
+  let simpl_templ_assumes = simpl_templ_assume_scc_stk # get_stk in
+  let _ = simpl_templ_assume_scc_stk # reset in
 
   let _ = 
     if !print_relassume then
@@ -658,7 +666,9 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
         let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
         let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
         let _ = print_endline ("or conditional termination or non-termination ...") in
-        infer_lex_template_init prog inf_templs templ_assumes 
+        let _ = Debug.tinfo_pprint ("LEX ASSUMES: " ^ (pr_list 
+          (pr_triple !print_svl !print_formula !print_formula) simpl_templ_assumes)) in
+        infer_lex_template_init prog inf_templs simpl_templ_assumes 
       | _ -> print_endline ("TEMPLATE INFERENCE: No result.")
       end
     | _ ->
