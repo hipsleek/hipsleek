@@ -540,7 +540,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       (bottom_up_fp,pre_rel_fmls) (pre_fmls,pre_invs) reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars,grp_post_rel_flag)
 
 
-let rel_fixpoint_comp pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec=
+let rel_fixpoint_wrapper pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec=
   (*******************)
   let rec look_up_rel_form obgs rel_var=
     match obgs with
@@ -645,3 +645,63 @@ let rel_fixpoint_comp pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids pos
       reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars@pre_rel_ids) proc_spec grp_post_rel_flag
   in
   r
+
+(*GEN SLEEK FILE --gsl*)
+let gen_slk_file_4fix prog file_name pre_rel_ids post_rel_ids rel_oblgs=
+  (************INTERNAL************)
+  let to_str_one_constr (_,lhs,rhs)=
+    "\nrelAssume \n" ^ (!CP.print_formula lhs) ^ " --> " ^ (!CP.print_formula rhs)
+  in
+  (***********END**INTERNAL******************)
+  let all_rel_vars0, all_data_used0 = List.fold_left (fun (r1,r2) (_,lhs,rhs) ->
+      let l_svl = CP.fv lhs in
+      let r_svl = CP.fv rhs in
+      let ptrs = l_svl@r_svl in
+      let ptrs_node_used = List.fold_left (fun r t ->
+          match t with
+            | Named ot -> if ((String.compare ot "") ==0) then r else r@[ot]
+            | _ -> r
+      ) [] (List.map CP.type_of_spec_var ptrs) in
+      let nr1 = r1@(List.filter (fun sv -> CP.is_rel_typ sv) ptrs) in
+      let nr2 = r2@ptrs_node_used in
+      (nr1,nr2)
+  ) ([],[]) rel_oblgs in
+  (*data declare*)
+  let all_data_used = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) all_data_used0 in
+  let all_data_decls = List.fold_left (fun ls data_name ->
+      try
+        let data_decl = Cast.look_up_data_def no_pos prog.Cast.prog_data_decls data_name in
+        ls@[data_decl]
+      with _ -> ls
+  ) [] all_data_used
+  in
+  let str_data_decls = List.fold_left (fun s s1 -> s^ s1 ^ ".\n") "" (List.map Cprinter.string_of_data_decl all_data_decls) in
+  (*rels decl*)
+  let all_rel_vars = CP.remove_dups_svl all_rel_vars0 in
+  let all_rel_decls = List.fold_left (fun ls rel_sv ->
+      try
+        let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var rel_sv) in
+        ls@[rel_decl]
+      with _ -> ls
+  ) [] all_rel_vars
+  in
+  let str_rel_decl = String.concat "\n" (List.map Cprinter.string_of_rel_decl all_rel_decls) in
+  (*relational assumptions decl*)
+  let str_constrs = List.fold_left (fun s s1 -> s ^ s1 ^ ".\n") "" (List.map to_str_one_constr rel_oblgs) in
+  let str_infer_cmd = ("relation_infer ") ^
+    (!CP.print_svl (CP.remove_dups_svl  pre_rel_ids ) )^
+    (!CP.print_svl post_rel_ids) ^"." in
+  (*write to file*)
+  let out_chn =
+    let reg = Str.regexp "\.ss" in
+    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" file_name) in
+    (* let _ = print_endline (file_name1 ^ ".slk") in *)
+    let _ = print_endline ("\n generating sleek file : " ^ file_name1) in
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    open_out (file_name1)
+  in
+  let str_slk = str_data_decls ^ "\n" ^ str_rel_decl ^
+    "\n"  ^ str_constrs ^ "\n\n" ^ str_infer_cmd in
+  let _ = output_string out_chn str_slk in
+  let _ = close_out out_chn in
+  ()

@@ -545,7 +545,7 @@ id: 9 src:2; caller: []; line: 27; classic: false; kind: UNKNOWN; hec_num: 1; ev
 Can we support ASSERT and ASSERT/ASSUME..
 
 ===================================================================
-# zip-fix-eq-2.slk
+# zip-fix-eq-2.slk: FIXED
 
 not giving correct answer:
 
@@ -572,7 +572,7 @@ Correctly inferred pre/post pure relation:
 !!!PRE :  m=n
 
 ===================================================================
-# zip_paper_eq-1.ss
+# zip_paper_eq-1.ss: DONE (why the output is diff??)
 
 Please provide an option --gsf that will output the
 sleek file for inferred pure unknown relations.

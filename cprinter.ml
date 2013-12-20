@@ -2022,6 +2022,18 @@ let string_of_hp_decl hpdecl =
   decl_kind ^ name ^ "(" ^ args ^parts ^").\n"
 
 
+let string_of_rel_decl reldecl =
+  let name = reldecl.Cast.rel_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = " relation " in
+  let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e

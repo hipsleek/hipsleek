@@ -2844,6 +2844,17 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                         print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                                         print_endline "*************************************";
                                       end;
+                                     (*gen sleek file*)
+                                    let _ = if !Globals.sa_gen_slk then
+                                      try
+                                        let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv
+                                            && not(CP.mem_svl sv post_vars)) pre_vars in
+                                        let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
+                                        FP.gen_slk_file_4fix prog (List.hd !Globals.source_files)
+                                            pre_rel_ids post_rel_ids rels
+                                      with _ -> ()
+                                    else ()
+                                    in
                                     let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
                                     let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
                                     let is_post_rel fml pvars =

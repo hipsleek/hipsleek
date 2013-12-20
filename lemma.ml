@@ -437,7 +437,7 @@ let manage_infer_pred_lemmas repo iprog cprog =
                       let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
                       let proc_spec = CF.mkETrue_nf no_pos in
                       let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
-                      let r = FP.rel_fixpoint_comp pre_invs pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let r = FP.rel_fixpoint_wrapper pre_invs pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
                       let _ = Debug.info_hprint (add_str "fixpoint"
                           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
                       let _ = print_endline "" in
@@ -482,7 +482,7 @@ let manage_infer_pred_lemmas repo iprog cprog =
                                [inv]
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                       in
-                      let r = FP.rel_fixpoint_comp pre_inv_ext pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let r = FP.rel_fixpoint_wrapper pre_inv_ext pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
                       let _ = Debug.info_hprint (add_str "fixpoint"
                           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
                       let _ = print_endline "" in
