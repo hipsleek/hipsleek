@@ -430,7 +430,7 @@ let process_list_lemma ldef_lst =
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
       | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
-      | LEM_INFER_PRED      -> let r = Lemma.manage_infer_pred_lemmas lst iprog !cprog in
+      | LEM_INFER_PRED      -> let r = Lemma.manage_infer_pred_lemmas lst iprog !cprog Solver.xpure_heap in
         let _ =
           begin
             let rel_defs = if not (!Globals.pred_syn_modular) then
@@ -1135,7 +1135,7 @@ let process_rel_infer pre_rels post_rels=
   let hp_lst_assume = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
   let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
-  let r = FP.rel_fixpoint_wrapper pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec in
+  let r = FP.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
   let _ = Debug.info_hprint (add_str "fixpoint"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
   let _ = print_endline "" in

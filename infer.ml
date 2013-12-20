@@ -626,7 +626,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let f = CP.conj_of_list ps pos in
       (* let a_fml = CP.conj_of_list (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) pos in *)
       (* let f = CP.mkExists exists_vars a_fml None pos in *)
-      let _ = DD.tinfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
+      let _ = DD.info_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
       (* let _ = DD.info_hprint (add_str "f: " !print_formula) f pos in  *)
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
       if CP.isConstTrue f || CP.isConstFalse f then None
@@ -638,7 +638,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
           ) ps2 
           then
             let ps3 = List.map CP.neg_eq_neq ps2 in
-            (* let _ = DD.info_hprint (add_str "ps3: " (pr_list !print_formula)) ps3 pos in *)
+            let _ = DD.info_hprint (add_str "ps3: " (pr_list !print_formula)) ps3 pos in
             (*we have a ranking function after that: check-tll*)
             let ps4 = (* if List.length (CP.remove_dups_svl ivars) > 1 then *)
             (*   List.filter (fun p -> not (CP.is_neq_null_exp p) ) ps3 *)
@@ -646,8 +646,9 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
             in
             disj_of_list ps4 pos
           else
+            let _ = DD.ninfo_hprint (add_str "f1: " !print_formula) f pos in
             let f = TP.pairwisecheck_raw f in
-            (* let _ = DD.info_hprint (add_str "f2: " !print_formula) f pos in *) 
+            let _ = DD.ninfo_hprint (add_str "f2: " !print_formula) f pos in
             Redlog.negate_formula f
         in
         (* let _ = DD.info_hprint (add_str "neg_f: " !print_formula) neg_f pos in  *)

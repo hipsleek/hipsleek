@@ -367,7 +367,7 @@ let sa_infer_lemmas iprog cprog lemmas  =
   let pr1 = pr_list pr_none in
   Debug.no_1 "sa_infer_lemmas" pr1 pr_none (fun _ -> sa_infer_lemmas iprog cprog lemmas) lemmas
 
-let manage_infer_pred_lemmas repo iprog cprog =
+let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
   let partition_pure_oblgs constrs post_rel_ids=
     let pre_invs, pre_constrs, post_constrs = List.fold_left (fun (r0,r1,r2) (cat,lhs_p,rhs_p) ->
         match cat with
@@ -437,7 +437,7 @@ let manage_infer_pred_lemmas repo iprog cprog =
                       let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
                       let proc_spec = CF.mkETrue_nf no_pos in
                       let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
-                      let r = FP.rel_fixpoint_wrapper pre_invs pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let r = FP.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in
                       let _ = Debug.info_hprint (add_str "fixpoint"
                           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
                       let _ = print_endline "" in
@@ -467,22 +467,31 @@ let manage_infer_pred_lemmas repo iprog cprog =
                       let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
                       let proc_spec = CF.mkETrue_nf no_pos in
                       (*more invs*)
-                      let pre_inv_ext = match right with
-                        | [] -> []
+                      let pre_inv_ext,pre_fmls,grp_post_rel_flag = match right with
+                        | [] -> [],[],0
                         | [coer] ->
-                               let pre_vnodes = CF.get_views coer.C.coercion_body in
-                               let ls_rel_args = CP.get_list_rel_args (CF.get_pure coer.C.coercion_body) in
-                               let _ = Debug.info_hprint (add_str "coercion_body" !CP.print_formula) (CF.get_pure coer.C.coercion_body) no_pos in
-                               (* let _ = Debug.info_hprint (add_str "pre_rel_ids" !CP.print_svl) pre_rel_ids no_pos in *)
-                               let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
-                               else r
-                               ) [] ls_rel_args in
-                               let invs = List.map (FP.get_inv cprog pre_rel_args) pre_vnodes in
-                               let inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) (pre_invs@invs) in
-                               [inv]
+                              let _,bare = CF.split_quantifiers coer.C.coercion_body in
+                              let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
+                                CF.get_pre_post_vars [] xpure_fnc (CF.struc_formula_of_formula bare no_pos) cprog in
+                              let _ = Debug.info_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
+                              let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
+                              let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
+                              let pre_vnodes = CF.get_views coer.C.coercion_body in
+                              let ls_rel_args = CP.get_list_rel_args (CF.get_pure bare) in
+                              let _ = Debug.info_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
+                              (* let _ = Debug.info_hprint (add_str "pre_rel_ids" !CP.print_svl) pre_rel_ids no_pos in *)
+                              let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
+                              else r
+                              ) [] ls_rel_args in
+                              let invs = List.map (FP.get_inv cprog pre_rel_args) pre_vnodes in
+                              let rel_fm = CP.filter_var (CF.get_pure bare) pre_rel_args in
+                              (* let invs = CF.get_pre_invs pre_rel_ids (FP.get_inv cprog) *)
+                              (*   (CF.struc_formula_of_formula coer.C.coercion_body no_pos) in *)
+                              let inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) rel_fm (pre_invs@invs) in
+                              [inv],pre_fmls,grp_post_rel_flag
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                       in
-                      let r = FP.rel_fixpoint_wrapper pre_inv_ext pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec in
+                      let r = FP.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
                       let _ = Debug.info_hprint (add_str "fixpoint"
                           (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
                       let _ = print_endline "" in

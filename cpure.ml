@@ -8885,6 +8885,7 @@ let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
       (fun _ -> get_neq_null_svl_x f) f
+
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -11979,3 +11980,29 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
       pr2 update_positions_for_annot_view_params aa old_lst
 
 (* end utilities for allowing annotations as view arguments *)
+
+(*x=null /\ x!=null*)
+let is_unsat_null f=
+  let neq_null_ptrs = get_neq_null_svl f in
+  if neq_null_ptrs = [] then false else
+    let null_ptrs = get_null_ptrs f in
+    intersect_svl neq_null_ptrs null_ptrs != []
+
+let prune_relative_unsat_disj_x p0 base_p=
+  let prune_cons p=
+    let ps = list_of_disjs p in
+    let ps1 = List.filter (fun p1 ->
+        let p2 = mkAnd p1 base_p no_pos in
+        not ( is_unsat_null p2)
+    ) ps in
+    disj_of_list ps1 (pos_of_formula p)
+  in
+  let ps0 = list_of_conjs p0 in
+  let ps1 = List.map prune_cons ps0 in
+  conj_of_list ps1 (pos_of_formula p0)
+
+let prune_relative_unsat_disj p0 base_p=
+  let pr1 = !print_formula in
+  Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
+      (fun _ _ -> prune_relative_unsat_disj_x p0 base_p)
+      p0 base_p

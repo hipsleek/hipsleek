@@ -11054,7 +11054,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure,_,_ = xpure prog conseq in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure pos in
+    let contr, _ = Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
     contr in
   let r_inf_contr,relass = 
     if lhs_rhs_contra_flag then
@@ -11063,6 +11063,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       begin
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
+        (* let lhs_f_wprhs = CF.mkAnd_pure temp_estate.es_formula (MCP.mix_of_pure (CF.xpure_for_hnodes_f conseq)) no_pos in *)
+        let lhs_xpure0,_,_ = xpure prog temp_estate.es_formula in
+        let lhs_xpure = MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq)) in
 	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with

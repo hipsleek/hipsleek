@@ -540,7 +540,8 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       (bottom_up_fp,pre_rel_fmls) (pre_fmls,pre_invs) reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars,grp_post_rel_flag)
 
 
-let rel_fixpoint_wrapper pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec=
+let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pre_rel_ids post_rels
+      proc_spec grp_post_rel_flag=
   (*******************)
   let rec look_up_rel_form obgs rel_var=
     match obgs with
@@ -615,15 +616,16 @@ let rel_fixpoint_wrapper pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids 
   (*******************)
   let post_rel_df0 = List.filter (fun (_,x) -> is_post_rel x post_rels) post_rel_constrs in
   (*norm pre-rel*)
-  let pre_invs,pre_rel_fmls,pre_rel_df, reloblgs , pre_vars,post_rel_df  = List.fold_left (fun (pre_invs,r1,r2,r3,r4,post_rel_df) pre_rel_sv ->
+  let pre_invs, pre_fmls, pre_rel_fmls,pre_rel_df, reloblgs , pre_vars,post_rel_df  = List.fold_left (fun (pre_invs,pre_fmls,r1,r2,r3,r4,post_rel_df) pre_rel_sv ->
       let args = look_up_rel_form pre_rel_constrs pre_rel_sv in
       let rel_args = (* CP.fresh_spec_vars *) args in
       let pre_invs1 = List.map (subs_inv pre_rel_sv rel_args) pre_invs in
+      let pre_fmls1 = List.map (subs_inv pre_rel_sv rel_args) pre_fmls in
       let post_rel_df1 = List.map (fun (lhs,rhs) -> (subs_inv pre_rel_sv rel_args lhs, subs_inv pre_rel_sv rel_args rhs)) post_rel_df in
       let pre_rel,rec_oblgs,ini_oblgs  = pre_rel_process pre_rel_sv rel_args pre_rel_constrs in
-      (pre_invs1, r1@[pre_rel],r2@rec_oblgs, r3@ini_oblgs ,r4@rel_args, post_rel_df1)
+      (pre_invs1,pre_fmls1, r1@[pre_rel],r2@rec_oblgs, r3@ini_oblgs ,r4@rel_args, post_rel_df1)
       (* compute_fixpoint_pre_rel pre_rel_sv rel_args pre_rel_constrs proc_spec *)
-  ) (pre_invs0,[],[],[],[],post_rel_df0) pre_rel_ids in
+  ) (pre_invs0,pre_fmls0,[],[],[],[],post_rel_df0) pre_rel_ids in
   (*norm post-rel also*)
   let post_rel_df_new =
     if pre_rel_ids=[] then post_rel_df
@@ -639,8 +641,7 @@ let rel_fixpoint_wrapper pre_invs0 pre_rel_constrs post_rel_constrs pre_rel_ids 
   let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_df_new pre_vars proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   (****pre fixpoint***********)
-  let grp_post_rel_flag = 1 in
-  let r= update_with_td_fp bottom_up_fp pre_rel_fmls [] pre_invs
+  let r= update_with_td_fp bottom_up_fp (pre_rel_fmls) pre_fmls pre_invs
       Fixcalc.compute_fixpoint_td Fixcalc.preprocess
       reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars@pre_rel_ids) proc_spec grp_post_rel_flag
   in

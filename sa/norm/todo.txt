@@ -630,7 +630,8 @@ to extract proper invs from pre_fmls
 !!!PRE :  ((m<=(n-1) & m<=(0-1)) | (n<=(m-1) & n<=(0-1)) | m=n)
 
 ===================================================================
-#zip-1e.slk:
+#zip-1e.slk: FIXED
+ (lhs_rhs_contra: xpure lhs should consider the rhs (pairwaisecheck + neg produces imprecise result))
 
 
 inferred rel: [RELASS [P3]: ( P3(n_90,m_91)) -->  (n_90!=0 | 0>m_91);
