@@ -1,0 +1,3 @@
+Q :={[m,n,k]: ((k=m & 0<=m & m<=n) | (k=n & 0<=k & k<=((2*m)-2)))};
+hull Q;
+PairWiseCheck Q;

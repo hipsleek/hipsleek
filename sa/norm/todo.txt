@@ -661,7 +661,34 @@ E2:=bottomup(Q,2,SimHeur);
 E3:=bottomup(Q,3,SimHeur);
 E1;E2;E3;
 ===================================================================
+# zip-le-2.ss
+
+ !!!PRE :  (n<=0 | (n<=m & 1<=m))
+
+We obtained this because we did GIST before PairWiseCheck.
+
+I like to suggest the following step instead:
+
+   /\ Inv
+   PairWiseCheck
+   Gist given Inv
+
+This would allow us to derive (see zip-le-2.oc):
+
+  n<=m 
 ===================================================================
+# zip-norm.ss
+
+derived:
+!!!POST:  ((k=n & 0<=n & n<=m) | (k=m & 0<=k & k<n))
+
+which included Invariant info. We can simplify the
+presentation by performing gist POST given INV
+
+This would then yield a simpler:
+ {[n,m,n]: n <= m} union
+  {[n,m,m]: m < n}
+
 ===================================================================
 ===================================================================
 ===================================================================
