@@ -3274,7 +3274,7 @@ let check_prog iprog (prog : prog_decl) =
       in
       let _ = 
         let inf_templs = List.map (fun tdef -> tdef.C.templ_name) prog.C.prog_templ_decls in
-        Template.collect_and_solve_templ_constrs inf_templs prog 
+        Template.collect_and_solve_templ_constrs prog inf_templs 
       in
       prog
   ) prog proc_scc 

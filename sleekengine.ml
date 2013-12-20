@@ -1610,7 +1610,7 @@ let process_rank_constraint (id: ident) (iante: meta_formula) (icons: meta_formu
   Hashtbl.add rrel_store id rrels
 
 let process_templ_solve (idl: ident list) = 
-  Template.collect_and_solve_templ_constrs idl !cprog
+  Template.collect_and_solve_templ_constrs !cprog idl
 
 let process_solve_rank_constraints ids = 
   TInf.collect_and_solve_rrel_slk ids rrel_store !cprog

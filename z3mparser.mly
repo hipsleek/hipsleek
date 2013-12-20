@@ -1,5 +1,6 @@
 %{
   open Globals
+  open Z3m
 %}
 
 %token <int> INT_LIT
@@ -9,7 +10,7 @@
 %token MODEL DEFFUN INT TOINT MINUS MULT DIV EOF
 
 %start input
-  %type <(string * Globals.z3m_val) list> input
+  %type <(string * Z3m.z3m_val) list> input
 %%
 
 input:

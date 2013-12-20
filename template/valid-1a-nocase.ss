@@ -30,7 +30,6 @@ int foo (int x)
  ensures  res=2*x;
 //valid
 
- requires x<0 & Loop or x=0 & Term[] or x>0 & Term[x]
  ensures  res=2*x;
 
  fail pre + but gave an incorrect non-decreasing message?
@@ -40,13 +39,23 @@ Termination checking result:  (3)->(20) (MayTerm ERR: not decreasing) Term[29; p
 */
 //ensures  x=0 & res=0 or x>0 & res=2*x;
 /*
- ensures x<0 & false or 
+ requires x<0 or x=0 or x>0 
+ ensures  res=2*x;
+ //ensures  x=0 & res=0 or x>0 & res=2*x;
+*/
+
+requires x<0 & Loop or x>=0 & Term[x]
+ensures res=2*x;
+
+/*
+requires true
+ensures x<0 & false or x=0 & res=0 or x>0 & res=2*x;
+*/
+
+/*
  case {
-	x<0 -> requires Loop 
-           ensures false;
-	x=0 -> requires Term[] 
-           ensures res=0;
-	x>0 -> requires Term[x] 
-           ensures res=2*x;
+	x<0 -> requires Loop ensures false;
+	x=0 -> requires Term ensures res=0;
+	x>0 -> requires Term[x] ensures res=2*x;
  }
 */

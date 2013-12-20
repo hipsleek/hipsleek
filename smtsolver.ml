@@ -1157,6 +1157,8 @@ let solve_rrel ctx ctr =
   with _ -> []
 *)
 
+open Z3m
+
 let get_model is_linear vars assertions =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
@@ -1178,7 +1180,7 @@ let get_model is_linear vars assertions =
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  let _ = Debug.tinfo_pprint ("Z3m INP: " ^ smt_inp) no_pos in
+  let _ = Debug.tinfo_pprint ("Z3m INP:\n" ^ smt_inp) no_pos in
   let _ = Debug.tinfo_pprint ("Z3m OUT: " ^ (pr_list (fun s -> s) model)) no_pos in
 
   let m = try
@@ -1186,11 +1188,9 @@ let get_model is_linear vars assertions =
         let inp = String.concat "\n" (List.tl model) in
         let lexbuf = Lexing.from_string inp in
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-        sol
-      else []
-    with ex -> 
-      (* print_endline ("get_model: " ^ (Printexc.to_string ex)); *)
-      []
+        (Z3m_Sat_or_Unk, sol)
+      else (Z3m_Unsat, [])
+    with _ -> (Z3m_Sat_or_Unk, [])
   in 
   let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
   (* let _ = print_endline ("MODEL: " ^ (pr2 m)) in *)
@@ -1198,30 +1198,20 @@ let get_model is_linear vars assertions =
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
-  let pr2 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
-  Debug.no_1 "z3_get_model" pr1 pr2
+  let pr2 = string_of_z3m_res in
+  let pr3 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
+  Debug.no_1 "z3_get_model" pr1 (pr_pair pr2 pr3)
   (fun _ -> get_model is_linear vars assertions) assertions
 
-exception Invalid_Z3m_val 
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let vl, il = List.split m in
+  let il = z3m_val_to_int il in
+  let m = List.combine vl il in
 
-let z3m_val_to_int (vl: z3m_val list): int list =
-  let int_of_float (f: float) = 
-    let i = truncate f in
-    if (float_of_int i) = f then i
-    else raise Invalid_Z3m_val 
-  in
-  let den_l = List.fold_left (fun a v -> match v with
-    | Z3_Int _ -> a | Z3_Frac (_, d) -> a @ [int_of_float d]) [] vl in
-  let den_lcm = lcm_l den_l in
-  List.map (fun v -> match v with
-    | Z3_Int i -> i * den_lcm
-    | Z3_Frac (n, d) -> (int_of_float n) * den_lcm / (int_of_float d) 
-  ) vl
+  let mi = List.map (fun (_, i) -> i) m in
+  let gcd_mi = abs (gcd_l mi) in
+  List.map (fun (v, i) -> (v, i / gcd_mi)) m
 
-let z3m_val_to_int (vl: z3m_val list): int list =
-  let pr1 = pr_list string_of_z3m_val in
-  let pr2 = pr_list string_of_int in
-  Debug.no_1 "z3m_val_to_int" pr1 pr2 z3m_val_to_int vl
 
 
 

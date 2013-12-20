@@ -1491,21 +1491,6 @@ let set_last_sleek_fail () =
 (*   inf_number := !inf_number + 1; *)
 (*   string_of_int(!inf_number) *)
 
-type z3m_val = 
-  | Z3_Int of int
-  | Z3_Frac of (float * float)
-
-let string_of_z3m_val = function
-  | Z3_Int i -> string_of_int i
-  | Z3_Frac (f1, f2) -> (string_of_float f1) ^ "/" ^ (string_of_float f2)
-
-let z3m_val_mult v1 v2 = 
-  match v1, v2 with
-  | Z3_Int i1, Z3_Int i2 -> Z3_Int (i1 * i2)
-  | Z3_Int i1, Z3_Frac (n2, d2) -> Z3_Frac ((float_of_int i1) *. n2, d2)
-  | Z3_Frac (n1, d1), Z3_Int i2 -> Z3_Frac (n1 *. (float_of_int i2), d1)
-  | Z3_Frac (n1, d1), Z3_Frac (n2, d2) -> Z3_Frac (n1 *. n2, d1 *. d2)
-
 let rec gcd (a: int) (b: int): int = 
   if b == 0 then a
   else gcd b (a mod b)

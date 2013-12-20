@@ -1250,10 +1250,13 @@ and string_of_relation (e:relation) : string =
 and isConstTrue_debug (p:formula) =
   Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
-
-
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
+  | _ -> false
+
+and is_Gt_formula (f: formula) = 
+  match f with
+  | BForm ((Gt _, _), _) -> true
   | _ -> false
         
 and isConstBTrue (p:b_formula) =
@@ -8064,6 +8067,7 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 	match r with 
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
+
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
 if (!Globals.enable_constraint_based_filtering) then 
   let conseq_disjs = list_of_disjs conseq in 
