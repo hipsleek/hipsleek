@@ -1,0 +1,6 @@
+(declare-const a1 (Array Int (Array Int Real)))
+(declare-const a2 (Array Int (Array Int Real)))
+(declare-const a3 (Array Int Real))
+(assert (= (store a1 0 (store a3 0 1.1)) a2))
+(assert (not (= (select (select a2 0) 0) 1.1)))
+(check-sat)
