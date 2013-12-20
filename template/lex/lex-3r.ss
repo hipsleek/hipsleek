@@ -13,7 +13,7 @@ ensures true;
 			//z = rand_int ();
 			loop (x, y, z);
 		} else if (rand_bool ()) {
-			x = rand_int ();
+			//x = rand_int ();
 			y = y - 1;
 			z = rand_int ();
 			loop (x, y, z);

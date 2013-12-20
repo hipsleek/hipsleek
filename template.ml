@@ -555,24 +555,18 @@ let trans_dec_to_unaff_constr (f: formula) =
     | _ -> Some (mkTrue_b (pos_of_b_formula b)) 
   in transform_formula (nonef, nonef, nonef, f_b, nonef) f
 
-let rec strict_subset l =
+let rec powerset l =
   match l with 
-  | [] -> []
+  | [] -> [[]]
   | x::xs ->
-    let xs_subset = strict_subset xs in
-    [xs] @ (List.map (fun xs -> x::xs) xs_subset) @ xs_subset @ [[x]]
+    let powerset_xs = powerset xs in
+    powerset_xs @ (List.map (fun e -> x::e) powerset_xs)
 
-let rec find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let pr_ctr = fun (_, ante, cons) -> pr_pair (pr_list print_term_list) !print_formula (ante, cons) in
-  let pr1 = pr_list pr_ctr in
-  let pr2 = pr_list (pr_pair string_of_int pr_ctr) in
-  let pr3 = pr_pair string_of_int (pr_list string_of_int) in
-  let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
-  Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
-  (fun _ _ -> find_potential_lex_single_rank_x prog inf_templs i rank_constrs unaff_constrs)
-  rank_constrs unaff_constrs
+let powerset l = 
+  List.stable_sort (fun l1 l2 -> 
+    (List.length l2) - (List.length l1)) (powerset l)
 
-and find_potential_lex_single_rank_x prog inf_templs i rank_constrs unaff_constrs =
+let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
   let unaff_il, unaff_ctrs = List.split unaff_constrs in
   
   let constrs, _ = List.fold_left (fun (ac, cnum) (vars, ante, cons) ->
@@ -583,25 +577,35 @@ and find_potential_lex_single_rank_x prog inf_templs i rank_constrs unaff_constr
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
       (List.concat (List.map fv constrs)) in
-    let is_sat, model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
+    let _, model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
     match model with
-    | [] -> begin match is_sat with
-      | Z3m.Z3m_Unsat ->
-        let rec search_rank ls = match ls with
-          | [] -> None
-          | x::xs ->
-            let r = find_potential_lex_single_rank prog inf_templs i rank_constrs x in 
-            match r with
-            | Some _ -> r
-            | None -> search_rank xs
-        in search_rank (strict_subset unaff_constrs)
-      | _ -> None
-      end
+    | [] -> None
     | _ -> 
       let res_templ_decls = subst_model_to_templ_decls inf_templs prog.C.prog_templ_decls model in
       Some (List.concat (List.map (fun tdef -> 
         fold_opt (fun e -> [e]) tdef.C.templ_body) res_templ_decls), 
         (i, unaff_il))
+
+let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+  let pr_ctr = fun (_, ante, cons) -> pr_pair (pr_list print_term_list) !print_formula (ante, cons) in
+  let pr1 = pr_list pr_ctr in
+  let pr2 = pr_list (fun (i, _) -> string_of_int i) in
+  let pr3 = pr_pair string_of_int (pr_list string_of_int) in
+  let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
+  Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
+  (fun _ _ -> find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs)
+  rank_constrs unaff_constrs
+
+let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+  let rec search_rank ls = 
+    match ls with
+    | [] -> None
+    | u::us ->
+      let r = find_potential_lex_single_rank prog inf_templs i rank_constrs u in 
+      match r with
+      | Some _ -> r
+      | None -> search_rank us
+  in search_rank (powerset unaff_constrs) 
 
 (* [1; 2; 3] --> [[1; 2; 3]; [2; 3; 1]; [3; 1; 2]] *)
 let rec rotate_head_list ls =
@@ -613,7 +617,7 @@ let find_lex_rank prog inf_templs dec_assumes =
   match dec_assumes with
   | [] 
   | _::[] -> raise (Lex_Infer_Failure 
-      "Nothing to do with Lexicographic Inference")
+      "Nothing to do with Lexicographic Inference (less than 2 call contexts).")
   | c::cs -> 
     let i, (vars, ante, dec) = c in
     let bnd = trans_dec_to_bnd_constr dec in
@@ -638,18 +642,21 @@ let rec sort_rank_list num rank_l =
       let r_tl = List.map (fun (r, (j, unaff_l)) -> (r, (j, List.filter (fun k -> k != i) unaff_l))) (xs @ tl) in
       r::(sort_rank_list (num-1) r_tl)
 
+(* We reuse the term-form of the antecedents 
+ * from prior normal termination inference *)
 let infer_lex_template_init prog (inf_templs: ident list) 
     (templ_assumes: (spec_var list * term list list * formula) list) =
   let dec_templ_assumes = List.filter (fun (_, _, cons) -> is_Gt_formula cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
+  let _ = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
+
   if num_call_ctx == 1 then
-    print_endline ("Nothing to do with Lexicographic Inference.")
+    print_endline ("Nothing to do with Lexicographic Inference (only one call context).")
   else try
     let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
     let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
     let rank_l = List.map (find_lex_rank prog inf_templs) dec_templ_assumes_l in
     let res = sort_rank_list (num_call_ctx-1) rank_l in
-    print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****";
     print_endline (pr_list (pr_list !print_exp) res)
   with Lex_Infer_Failure reason -> print_endline reason
 
