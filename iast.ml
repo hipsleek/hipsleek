@@ -2905,3 +2905,15 @@ let annot_args_getter_all prog vn: (P.ann * int) list =
 
 let annot_args_getter prog vn =
   List.filter (fun (_,p) -> (p != 0) ) (annot_args_getter_all prog vn)
+
+(*todo: for REC, same type should have the same ann (e.g. size of tree)*)
+let annotate_field_pure_ext iprog=
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.data_fields in
+      {ddef with data_fields = ndfields}
+  ) iprog.prog_data_decls in
+  let _ = iprog.prog_data_decls <- idatas in
+  ()

@@ -330,14 +330,7 @@ let process_source_full source =
     in
     (**************************************)
     (*to improve: annotate field*)
-    let idatas = List.map (fun ddef ->
-        let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-            let n_ann = if ann = [] then [gen_field_ann t] else ann in
-            ((t, c), pos, il, n_ann)
-        ) ddef.I.data_fields in
-        {ddef with I.data_fields = ndfields}
-    ) intermediate_prog.I.prog_data_decls in
-    let _ = intermediate_prog.I.prog_data_decls <- idatas in
+    let _ = I.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
@@ -555,29 +548,21 @@ let process_source_full_after_parser source (prog, prims_list) =
   in
   (**************************************)
   (*annotate field*)
-  let idatas = List.map (fun ddef ->
-      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-          let n_ann = if ann = [] then [gen_field_ann t] else ann in
-          ((t, c), pos, il, n_ann)
-      ) ddef.I.data_fields in
-      {ddef with I.data_fields = ndfields}
-  ) intermediate_prog.I.prog_data_decls in
-  let _ = intermediate_prog.I.prog_data_decls <- idatas in
+  let _ = I.annotate_field_pure_ext intermediate_prog in
   let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
- 	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
-   
+  (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
       Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
-		        else if(!Globals.print_core) then
-							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
-						else ()
-	in
-  let _ = 
+  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
+  else if(!Globals.print_core) then
+    print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+  else ()
+  in
+  let _ =
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
       Globals.procs_verified := tmp

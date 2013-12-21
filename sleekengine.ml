@@ -587,14 +587,7 @@ let process_barrier_def bd =
  **)
 let perform_second_parsing_stage () =
   (*annotate field*)
-  let idatas = List.map (fun ddef ->
-      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-          let n_ann = if ann = [] then [gen_field_ann t] else ann in
-          ((t, c), pos, il, n_ann)
-      ) ddef.I.data_fields in
-      {ddef with I.data_fields = ndfields}
-  ) iprog.I.prog_data_decls in
-  let _ = iprog.I.prog_data_decls <- idatas in
+  let _ = I.annotate_field_pure_ext iprog in
   let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
   !cprog.C.prog_data_decls <- cddefs
 

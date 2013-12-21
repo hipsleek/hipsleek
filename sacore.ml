@@ -2875,6 +2875,19 @@ let pred_split_cands_x prog unk_hps hp_defs=
             else
               process_one_pred hrel hp args (cands@n_cands) rest
   in
+  let rec remove_dups_cand args cands res=
+    match cands with
+      | [] -> res
+      | (hp1, args1,c,d)::rest -> begin
+          let part,rest1 = List.partition (fun (hp2, _,_,_) -> CP.eq_spec_var hp2 hp1 ) rest in
+          let split_kepts = try
+            let kept =List.find (fun (_,args2,_,_) -> SAU.eq_spec_var_order_list args args2) ((hp1, args1,c,d)::part) in
+            [kept]
+          with _ -> [(hp1, args1,c,d)]
+          in
+          remove_dups_cand args rest1 (res@split_kepts)
+        end
+  in
   (*******END INTERNAL*******)
   let cands, non_split_hps = List.fold_left (fun (r, non_split_hps) def ->
       let hrel, hp, args = match def.CF.def_lhs with
@@ -2884,9 +2897,10 @@ let pred_split_cands_x prog unk_hps hp_defs=
       in
       let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] def.CF.def_rhs in
       let to_split, n_cands =  process_one_pred hrel hp args [] fs in
-      let n_cands1 = Gen.BList.remove_dups_eq  (fun (hp1, args1,_,_) (hp2, args2, _,_) ->
-          CP.eq_spec_var hp2 hp1
-      ) n_cands in
+      let n_cands1 = remove_dups_cand args n_cands [] in
+       (*  Gen.BList.remove_dups_eq  (fun (hp1, args1,_,_) (hp2, args2, _,_) -> *)
+      (*     CP.eq_spec_var hp2 hp1 *)
+      (* ) n_cands in *)
       if to_split then
         (r@n_cands1, non_split_hps)
       else
@@ -3091,57 +3105,51 @@ let normalize_hp_defs rhs hp_defs=
       (fun _ _ -> normalize_hp_defs_x rhs hp_defs)
       rhs hp_defs
 
-(* ********************************* *************************** *)
-(* *********** END PRED SPLIT HELPERS *************************** *)
-(* ********************************* *************************** *)
-
-let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
-      (hp, args, comps, lhs_hf, rhs_hf0) cur_hpdef=
-  (****************************************************************)
-       (*************************INTERNAL*********************)
-  (****************************************************************)
-  (*
+(*
     output:
     0: fail two ways            1: succ left, fail right
     2: succ right, fail left    3: succ
     ---------
     list of split preds (1,2,3)
   *)
-  let prove_sem infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num=
-    let need_find_new_split = cur_split_hpdefs =[] in
-    let isettings = back_up_state iprog cprog ass_stk hpdef_stk in
-    let _ = DD.ninfo_hprint (add_str " cur_hpdef (sem)"  Cprinter.string_of_hp_rel_def) cur_hpdef no_pos in
-    let r,paras = match cur_hpdef.CF.def_cat with
-      | CP.HPRelDefn (hp,r, paras) -> Cast.get_root_args_hprel cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) args (*(r,paras)*)
-      | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
-    in
-    (*transform to view*)
-    let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in
-    (*trans_hp_view_formula*)
-    (* let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
-    (*lemma need self for root*)
-    let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
-    let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
-    let f12 = CF.formula_of_heap vnode no_pos in
-    let f22_0 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] rhs_f in
-    let sst = [(r, self_sv)] in
-    (* let f12 = CF.subst sst f12_0 in *)
-    let f22 = CF.subst sst f22_0 in
-    let _ = Debug.ninfo_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in
-    let _ = Debug.ninfo_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in
-    (*iformula to construct lemma*)
-    let if12 = AS.rev_trans_formula f12 in
-    let if22 = AS.rev_trans_formula f22 in
-    let _ = Debug.ninfo_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in
-    let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
-    (*prove*)
-    (*construct lemma_infer*)
-    let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps) else [] in
-    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
-       infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
-    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
-    let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
-    let r =
+let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
+      infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num=
+  let need_find_new_split = cur_split_hpdefs =[] in
+  let isettings = back_up_state iprog cprog ass_stk hpdef_stk in
+  let _ = DD.ninfo_hprint (add_str " cur_hpdef (sem)"  Cprinter.string_of_hp_rel_def) cur_hpdef no_pos in
+  let r,paras = match cur_hpdef.CF.def_cat with
+    | CP.HPRelDefn (hp,r, paras) -> Cast.get_root_args_hprel cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) args (*(r,paras)*)
+    | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
+  in
+  (*transform to view*)
+  let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in
+  (*trans_hp_view_formula*)
+  (* let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
+  (*lemma need self for root*)
+  let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
+  let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
+  let f12 = CF.formula_of_heap vnode no_pos in
+  let f22_0 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] rhs_f in
+  (*need self for lemma*)
+  let sst = [(r, self_sv)] in
+  let rev_sst = [(self_sv,r)] in (*to revert the result*)
+  (* let f12 = CF.subst sst f12_0 in *)
+  let f22 = CF.subst sst f22_0 in
+  let _ = Debug.info_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in
+  let _ = Debug.info_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in
+  (*iformula to construct lemma*)
+  let if12 = AS.rev_trans_formula f12 in
+  let if22 = AS.rev_trans_formula f22 in
+  let _ = Debug.ninfo_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
+  (*prove*)
+  (*construct lemma_infer*)
+  let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps) else [] in
+  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
+    infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
+  let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+  let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
+  let r =
     match lc_opt with
       | Some lcs ->
             let b,comp_hp_defs =
@@ -3171,19 +3179,30 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
                     (Cprinter.prtt_string_of_formula rhs_f)) in
                 (1, hp_defs)
               else
+                (*susbt self to the orginal*)
+                let n_rhs1 = CF.subst rev_sst n_rhs in
                 let ogs = List.map snd cur_hpdef.CF.def_rhs in
-                let n_hp_def = {cur_hpdef with CF.def_rhs = [(n_rhs , CF.combine_guard ogs)]} in
+                let n_hp_def = {cur_hpdef with CF.def_rhs = [(n_rhs1 , CF.combine_guard ogs)]} in
                 let _ = print_endline (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
-                    (Cprinter.prtt_string_of_formula n_rhs)) in
+                    (Cprinter.prtt_string_of_formula n_rhs1)) in
                 (3,n_hp_def::hp_defs)
             in
             (*todo: remove map also*)
             b,comp_hp_defs
       | None -> 0,[]
-    in
-    let _ = restore_state iprog cprog ass_stk hpdef_stk isettings in
-    r
   in
+  let _ = restore_state iprog cprog ass_stk hpdef_stk isettings in
+  r
+
+(* ********************************* *************************** *)
+(* *********** END PRED SPLIT HELPERS *************************** *)
+(* ********************************* *************************** *)
+
+let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
+      ((hp, args, comps, lhs_hf, rhs_hf0) as old_split) cur_hpdef=
+  (****************************************************************)
+       (*************************INTERNAL*********************)
+  (****************************************************************)
   let analyse_error () =
     (*size*)
     0
@@ -3264,10 +3283,12 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
     n_setting
   in
   let rec prove_sem_ext infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num=
-    let i,n_split_defs = prove_sem infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num in
-    if i = old_ext_num then (false, [cur_hpdef]) else
+    let i,n_split_defs = prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
+      infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num in
+    (*check termination*)
+    if i = old_ext_num then (false, [cur_hpdef], old_split) else
       match i with
-        | 0 -> false, [cur_hpdef]
+        | 0 -> false, [cur_hpdef], old_split
         | 1 -> begin
             if !Globals.sa_ex then
               (*to size pure ext rhs*)
@@ -3275,21 +3296,25 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
               match new_extn_opt with
                 | Some (n_infer_hps, n_rhs, infer_rel_ids, n_hpdefs) ->
                       prove_sem_ext n_infer_hps infer_rel_ids n_rhs cur_hpdef n_hpdefs i
-                | None -> false, [cur_hpdef]
+                | None -> false, [cur_hpdef], old_split
             else
-              false, [cur_hpdef]
+              false, [cur_hpdef], old_split
           end
         | 2 -> (*to pure ext lhs*)
-              false, [cur_hpdef]
-        | _ -> true,n_split_defs
+              false, [cur_hpdef], old_split
+        | _ ->
+              let lst_hpargs = CF.get_HRels_f rhs_f in
+              let n_split = (hp, args, lst_hpargs, lhs_hf, List.hd (CF.heap_of rhs_f)) in
+              true,n_split_defs, n_split
   in
   (****************************************************************)
     (*************************END INTERNAL*********************)
   (****************************************************************)
-  let r = prove_sem_ext (List.map fst comps) [] (CF.formula_of_heap rhs_hf0 no_pos) cur_hpdef [] 0 in
-  r
+  let is_valid, nhp_defs, n_split = prove_sem_ext (List.map fst comps) [] (CF.formula_of_heap rhs_hf0 no_pos) cur_hpdef [] 0 in
+  (is_valid, nhp_defs, n_split)
 
-let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
+let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs
+      ((hp, args, comps, lhs_hf, rhs_hf) as old_split) =
   let proc_name = "split_pred" in
   let rec look_up rest_defs rem=
     match rest_defs with
@@ -3348,77 +3373,6 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
   (*shared*)
   (*END share*)
   (********END INTERNAL***********)
-  (* let prove_sem ((\* (k, rel, og, f) *\)  cur_hpdef) = *)
-  (*   let isettings = back_up_state iprog cprog ass_stk hpdef_stk in *)
-  (*   let _ = DD.ninfo_hprint (add_str " cur_hpdef (sem)"  Cprinter.string_of_hp_rel_def) cur_hpdef no_pos in *)
-  (*   let r,paras = match cur_hpdef.CF.def_cat with *)
-  (*     | CP.HPRelDefn (hp,r, paras) -> Cast.get_root_args_hprel cprog.Cast.prog_hp_decls (CP.name_of_spec_var hp) args (\*(r,paras)*\) *)
-  (*     | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only" *)
-  (*   in *)
-  (*   (\*transform to view*\) *)
-  (*   let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in *)
-  (*   (\*trans_hp_view_formula*\) *)
-  (*   (\* let f12 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *\) *)
-  (*   (\*lemma need self for root*\) *)
-  (*   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in *)
-  (*   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in *)
-  (*   let f12 = CF.formula_of_heap vnode no_pos in *)
-  (*   let f22_0 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] (CF.formula_of_heap rhs_hf no_pos) in *)
-  (*   let sst = [(r, self_sv)] in *)
-  (*   (\* let f12 = CF.subst sst f12_0 in *\) *)
-  (*   let f22 = CF.subst sst f22_0 in *)
-  (*   let _ = Debug.ninfo_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in *)
-  (*   let _ = Debug.ninfo_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in *)
-  (*   (\*iformula to construct lemma*\) *)
-  (*   let if12 = AS.rev_trans_formula f12 in *)
-  (*   let if22 = AS.rev_trans_formula f22 in *)
-  (*   let _ = Debug.ninfo_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in *)
-  (*   let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in *)
-  (*   (\*prove*\) *)
-  (*   (\* let valid,lc,_ = proving_fnc (List.map fst comps) f12 (CF.struc_formula_of_formula f22 no_pos) in *\) *)
-  (*   (\*construct lemma_infer*\) *)
-  (*   let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left *)
-  (*     (List.map (fun (hp, _) -> CP.name_of_spec_var hp) comps) (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in *)
-  (*   let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in *)
-  (*   let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
-  (*   let r = *)
-  (*   match lc_opt with *)
-  (*     | Some lcs -> *)
-  (*           let b,comp_hp_defs = *)
-  (*             let hprels = List.fold_left (fun r_ass lc -> r_ass@(Inf.collect_hp_rel_list_context lc)) [] lcs in *)
-  (*             let (_,hp_rest) = List.partition (fun hp -> *)
-  (*                 match hp.CF.hprel_kind with *)
-  (*                   | CP.RelDefn _ -> true *)
-  (*                   | _ -> false *)
-  (*             ) hprels *)
-  (*             in *)
-  (*             let (hp_lst_assume,(\* hp_rest *\)_) = List.partition (fun hp -> *)
-  (*                 match hp.CF.hprel_kind with *)
-  (*                   | CP.RelAssume _ -> true *)
-  (*                   | _ -> false *)
-  (*             ) hp_rest *)
-  (*             in *)
-  (*             let _, hp_defs = !LEM.infer_shapes iprog cprog "temp" hp_lst_assume (List.map fst comps) (List.map fst comps) *)
-  (*               [] [] [] true true in *)
-  (*             (\*we need to prove if12 <=== if22: zip example*\) *)
-  (*             if not (prove_right_implication iprog cprog proc_name f12 f22 hp_defs) then *)
-  (*               let _ = print_endline (" can not pred_split (sem). add lemma: " ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") --> " ^ *)
-  (*                   (Cprinter.prtt_string_of_h_formula rhs_hf)) in *)
-  (*               (false, [cur_hpdef]) *)
-  (*             else *)
-  (*               let ogs = List.map snd cur_hpdef.CF.def_rhs in *)
-  (*               let n_hp_def = {cur_hpdef with CF.def_rhs = [(CF.formula_of_heap rhs_hf no_pos, CF.combine_guard ogs)]} in *)
-  (*               let _ = print_endline (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^ *)
-  (*                   (Cprinter.prtt_string_of_h_formula rhs_hf)) in *)
-  (*               (true,n_hp_def::hp_defs) *)
-  (*           in *)
-  (*           (\*todo: remove map also*\) *)
-  (*           b,comp_hp_defs *)
-  (*     | None -> false,[cur_hpdef] *)
-  (*   in *)
-  (*   let _ = restore_state iprog cprog ass_stk hpdef_stk isettings in *)
-  (*   r *)
-  (* in *)
   let prove_syn (* (k, rel, og, f) *) def =
     (* let fs0,ogs = List.split def.CF.def_rhs in *)
     (* let fs = List.fold_left (fun r f-> r@(CF.list_of_disjs f)) [] fs0 in *)
@@ -3435,22 +3389,26 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
   try
     let (* (k, rel, og, f) *)def, rem_hp_defs = look_up hp_defs [] in
     (*try: do the split to obtain new defs sematically*)
-    let is_succ,split_hp_defs = if !Globals.syntatic_mode then
-      (*syntactically*)
-      try
-        prove_syn def
-      with _ -> (false,[def])
-    else (*prove_sem def*)  pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
-      (hp, args, comps, lhs_hf, rhs_hf) def
+    let is_succ,split_hp_defs, new_split =
+      if !Globals.syntatic_mode then
+        (*syntactically*)
+        try
+          let is_valid, defs = prove_syn def in
+          (is_valid,defs,old_split)
+        with _ -> (false,[def], old_split)
+      else (*prove_sem def*)  pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
+        (hp, args, comps, lhs_hf, rhs_hf) def
     in
-    (is_succ,split_hp_defs@rem_hp_defs)
-  with _ -> (false, hp_defs)
+    (is_succ,split_hp_defs@rem_hp_defs, new_split)
+  with _ -> (false, hp_defs, old_split)
 
 let prove_split_cand iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf)=
   let pr1 = pr_list_num Cprinter.string_of_hp_rel_def in
   let pr2 = Cprinter.prtt_string_of_h_formula in
-  Debug.no_5 "prove_split_cand" pr1 !CP.print_svl (pr_list (pr_pair !CP.print_sv !CP.print_svl)) pr2 pr2
-      (pr_pair string_of_bool pr1)
+  let pr_comp = (pr_list (pr_pair !CP.print_sv !CP.print_svl)) in
+  let pr3 = pr_penta !CP.print_sv !CP.print_svl pr_comp pr2 pr2 in
+  Debug.no_5 "prove_split_cand" pr1 !CP.print_svl pr_comp pr2 pr2
+      (pr_triple string_of_bool pr1 pr3)
       (fun _ _ _ _ _ -> prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk
           unk_hps ss_preds hp_defs (hp, args, comps, lhs_hf, rhs_hf))
       hp_defs args comps lhs_hf rhs_hf
@@ -3503,9 +3461,9 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   (*prove and do split*)
   let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check svl prog [] f1) in
   let sing_hp_defs2, split_map_hprel_subst1 = List.fold_left (fun (hp_defs0, r_split) split ->
-      let is_succ, hp_defs1 = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
+      let is_succ, hp_defs1, n_split = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
       if is_succ then
-        (hp_defs1, r_split@[split])
+        (hp_defs1, r_split@[n_split])
       else (hp_defs0, r_split)
   ) (sing_hp_defs1,[]) split_map_hprel_subst
   in
