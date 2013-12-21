@@ -911,14 +911,14 @@ field_anns: [[
 ]];
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, [] (* F_NO_ANN *))]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, [(fresh_any_name field_rec_ann)] (* F_NO_ANN *))]
   | t = typ; `IDENTIFIER n ; ann=field_anns -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, [](* F_NO_ANN *))]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, [(fresh_any_name field_rec_ann)](* F_NO_ANN *))]
   |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
 	 if List.mem n (List.map get_field_name fl) then
 	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	 else
-	   ((t, n), get_pos_camlp4 _loc 3, false, [] (* F_NO_ANN *)) :: fl )
+	   ((t, n), get_pos_camlp4 _loc 3, false, [(fresh_any_name field_rec_ann)] (* F_NO_ANN *)) :: fl )
   |  t=typ; `IDENTIFIER n; ann=field_anns ; peek_try; `SEMICOLON; fl = SELF ->(  
 	 if List.mem n (List.map get_field_name fl) then
 	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
@@ -928,7 +928,7 @@ field_list2:[[
 	(if List.mem n (List.map get_field_name fl) then
 	  report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	else
-	  ((t1, n), get_pos_camlp4 _loc 3, false, [](*F_NO_ANN*)) :: fl )
+	  ((t1, n), get_pos_camlp4 _loc 3, false, [(fresh_any_name field_rec_ann)](*F_NO_ANN*)) :: fl )
 ]
     (* An Hoa [22/08/2011] Inline fields extension*)
   | "inline fields" [
@@ -2475,7 +2475,7 @@ class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
-		let t1 = List.map (fun (t, p) -> (t, p, false, [] (* F_NO_ANN *))) t1 in
+		let t1 = List.map (fun (t, p) -> (t, p, false, [fresh_any_name field_rec_ann] (* F_NO_ANN *))) t1 in
       let cdef = { data_name = id;
                    data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";

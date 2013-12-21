@@ -430,7 +430,7 @@ let process_list_lemma ldef_lst =
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
       | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
-      | LEM_INFER_PRED      -> let r = Lemma.manage_infer_pred_lemmas lst iprog !cprog Solver.xpure_heap in
+      | LEM_INFER_PRED      -> let r1,r2 = Lemma.manage_infer_pred_lemmas lst iprog !cprog Solver.xpure_heap in
         let _ =
           begin
             let rel_defs = if not (!Globals.pred_syn_modular) then
@@ -455,7 +455,13 @@ let process_list_lemma ldef_lst =
               print_endline "*************************************"
           end
         in
-        r
+        let _ =
+          let _ = Debug.info_hprint (add_str "fixpoint"
+              (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
+          let _ = print_endline "" in
+          ()
+        in
+        r2
   in
   match res with
     | None | Some [] -> CF.clear_residue ()

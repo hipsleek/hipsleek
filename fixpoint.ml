@@ -22,7 +22,7 @@ module SO = Solver
 
 let get_inv_x prog sel_vars vnode=
   let inv = C.look_up_view_inv prog.C.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
-    vnode.CF.h_formula_view_name in
+    vnode.CF.h_formula_view_name Fixcalc.compute_inv in
   CP.filter_var inv sel_vars
 
 let get_inv prog sel_vars vnode=
@@ -30,6 +30,7 @@ let get_inv prog sel_vars vnode=
   Debug.no_2 "get_inv" !CP.print_svl pr1 !CP.print_formula 
       (fun _ _ -> get_inv_x prog sel_vars vnode)
       sel_vars vnode
+
 
 let rec eqHeap h1 h2 = match (h1,h2) with
   | (CF.Star _, CF.Star _) -> 
@@ -106,6 +107,7 @@ and elim_heap h p pre_vars heap_vars aset ref_vars =
   let pr3 = !print_svl in
   Debug.no_4 "elim_heap" pr pr2 pr3 pr3 pr
       (fun _ _ _ _ -> elim_heap_x h p pre_vars heap_vars aset ref_vars) h p pre_vars heap_vars
+
 let helper heap pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars =
   let h, p, _, _, _ = CF.split_components post_fml in
   let p = MCP.pure_of_mix p in

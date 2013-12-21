@@ -626,7 +626,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let f = CP.conj_of_list ps pos in
       (* let a_fml = CP.conj_of_list (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) pos in *)
       (* let f = CP.mkExists exists_vars a_fml None pos in *)
-      let _ = DD.info_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
+      let _ = DD.ninfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
       (* let _ = DD.info_hprint (add_str "f: " !print_formula) f pos in  *)
       (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
       if CP.isConstTrue f || CP.isConstFalse f then None

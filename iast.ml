@@ -937,6 +937,17 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 
+let mkhp_decl iprog hp_id vars parts rpos is_pre body=
+  let nhp_dclr = { hp_name = hp_id;
+  hp_typed_inst_vars = vars;
+  hp_part_vars = [];
+  hp_root_pos = rpos;
+  hp_is_pre = is_pre;
+  hp_formula =  body;
+  } in
+  let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
+  nhp_dclr
+
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
   let f e=

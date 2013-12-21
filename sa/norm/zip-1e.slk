@@ -58,7 +58,7 @@ inferred rel: [RELASS [P3]: ( P3(n_115,m_116)) -->  m_116=0;
 
 */
 
-lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipM<n> * y::zipM<m> & P3(n,m) .
+lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipN<n> * y::zipM<m> & P3(n,m) .
 print residue.
 
 /*

@@ -234,6 +234,9 @@ let hppost_default_prefix_name = "GP_"
 let unkhp_default_prefix_name = "DP_"
 let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
+let size_rel_name = "size"
+let size_rel_arg = "n"
+let field_rec_ann = "REC"
 (*
   Data types for code gen
 *)
@@ -738,7 +741,7 @@ let pred_elim_dangling = ref false
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_ex = ref false
+let sa_ex = ref true
 
 let sa_infer_split_base = ref true
 

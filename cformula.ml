@@ -3319,6 +3319,18 @@ and get_rel_args f0=
   in
   helper f0
 
+and get_list_rel_args f0=
+  let rec helper f=
+    match f with
+      | Base ({formula_base_pure = p; }) ->
+            CP.get_list_rel_args (MCP.pure_of_mix p)
+      | Exists ({ formula_exists_pure = p;}) ->
+            CP.get_list_rel_args (MCP.pure_of_mix p)
+      | Or ({formula_or_f1 = of1;
+          formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
+  in
+  helper f0
+
 and check_rel_args_quan_clash args f0=
   let rec helper f=
     match f with
@@ -12577,6 +12589,23 @@ let rec get_pre_invs (pre_rel_vars: CP.spec_var list) get_inv_fn (sp:struc_formu
     | EInfer b -> (get_pre_invs pre_rel_vars get_inv_fn b.formula_inf_continuation)
     | EList b ->
           List.fold_left (fun r (_,c)-> r@(get_pre_invs pre_rel_vars get_inv_fn c)) [] b
+
+(*todo: drop sel only. now drop all*)
+let drop_sel_rel sel_rel_vars f0=
+  let rec drop_helper f=
+    match f with
+      | Base fb -> let np = CP.drop_rel_formula (MCP.pure_of_mix fb.formula_base_pure) in
+        Base {fb with formula_base_pure = (MCP.mix_of_pure np)}
+      | Exists fe ->
+            let qvars, base1 = split_quantifiers f in
+            let base2 = drop_helper base1 in
+            add_quantifiers qvars base2
+      | Or orf ->
+            Or {orf with formula_or_f1 = drop_helper orf.formula_or_f1;
+                formula_or_f2 = drop_helper orf.formula_or_f2;
+            }
+  in
+  drop_helper f0
 
 let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula): 
   (CP.spec_var list * CP.spec_var list) =

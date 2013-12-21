@@ -285,7 +285,7 @@ lemma with annotation vars
 
 Can ll predicate be directly synthesized by lemma_infer?
 ===================================================================
-# zip-2c.slk
+# zip-2c.slk: FIXED
 
 relation R(int a, int b).
 
@@ -661,7 +661,15 @@ E2:=bottomup(Q,2,SimHeur);
 E3:=bottomup(Q,3,SimHeur);
 E1;E2;E3;
 ===================================================================
+# zip-2a.slk
+  - gen ext_pred size on-the-flight
+  - each field of each data ==> unique label
+
 ===================================================================
+# zip-2.slk: DONE
+  - provide ext_pred for size
+  -split + pure extn : OK
+
 ===================================================================
 ===================================================================
 ===================================================================

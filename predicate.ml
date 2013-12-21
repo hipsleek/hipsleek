@@ -460,7 +460,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let orig_pred_data_name = CA.look_up_hp_decl_data_name cprog.CA.prog_hp_decls (CP.name_of_spec_var hp) (List.hd ls_extn_pos) in
   (*find data fields anns*)
   let ls_dname_pos = I.look_up_field_ann prog orig_pred_data_name extn_props in
-   (*formula: extend with new args*)
+  (*formula: extend with new args*)
   let fs0 = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
   let fs = List.map (CF.subst orig_ss) fs0 in
   let pure_extn_svl = CF.retrieve_args_from_locs orig_args ls_extn_pos in

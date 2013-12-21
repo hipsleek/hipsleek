@@ -307,7 +307,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
 
 (******************************************************************************)
 
-let compute_inv name vars fml pf =
+let compute_inv_x name vars fml pf =
 if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
 else 
   if not !Globals.do_infer_inv then pf
@@ -315,9 +315,16 @@ else
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then 
       let _ = DD.info_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
+      let _ = print_endline "" in
       new_pf
     else pf
 
+let compute_inv name vars fml pf =
+  let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
+  let pr2 = !CP.print_formula in
+  Debug.no_4 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) pr2 pr2
+      (fun _ _ _ _ -> compute_inv_x name vars fml pf)
+      name vars fml pf
 (******************************************************************************)
 
 (******************************************************************************)
