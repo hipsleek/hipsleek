@@ -663,7 +663,7 @@ E1;E2;E3;
 ===================================================================
 # zip-2a.slk
   - gen ext_pred size on-the-flight
-  - each field of each data ==> unique label
+  - each field of each data ==> unique label (DONE)
   
  ===================================================================
 # zip-le-2.ss
@@ -686,6 +686,7 @@ This would allow us to derive (see zip-le-2.oc):
   - provide ext_pred for size
   -split + pure extn : OK
 
+===================================================================
 # zip-norm.ss
 
 derived:

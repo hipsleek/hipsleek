@@ -237,6 +237,8 @@ let ex_first = "v"
 let size_rel_name = "size"
 let size_rel_arg = "n"
 let field_rec_ann = "REC"
+let field_val_ann = "VAL"
+
 (*
   Data types for code gen
 *)
@@ -741,7 +743,7 @@ let pred_elim_dangling = ref false
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_ex = ref true
+let sa_ex = ref false
 
 let sa_infer_split_base = ref true
 
@@ -1489,3 +1491,7 @@ let set_last_sleek_fail () =
 (*   inf_number := !inf_number + 1; *)
 (*   string_of_int(!inf_number) *)
 
+let gen_field_ann t=
+  match t with
+    | Named _ -> fresh_any_name field_rec_ann
+    | _ -> fresh_any_name field_val_ann

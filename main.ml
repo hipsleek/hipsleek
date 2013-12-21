@@ -4,6 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
+module I = Iast
 
 module M = Lexer.Make(Token.Token)
 
@@ -328,7 +329,16 @@ let process_source_full source =
           ()
     in
     (**************************************)
-
+    (*to improve: annotate field*)
+    let idatas = List.map (fun ddef ->
+        let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+            let n_ann = if ann = [] then [gen_field_ann t] else ann in
+            ((t, c), pos, il, n_ann)
+        ) ddef.I.data_fields in
+        {ddef with I.data_fields = ndfields}
+    ) intermediate_prog.I.prog_data_decls in
+    let _ = intermediate_prog.I.prog_data_decls <- idatas in
+    (*END: annotate field*)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
@@ -544,7 +554,16 @@ let process_source_full_after_parser source (prog, prims_list) =
         ()
   in
   (**************************************)
- let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  (*annotate field*)
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.I.data_fields in
+      {ddef with I.data_fields = ndfields}
+  ) intermediate_prog.I.prog_data_decls in
+  let _ = intermediate_prog.I.prog_data_decls <- idatas in
+  let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
  	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
    
 

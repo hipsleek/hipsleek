@@ -1105,7 +1105,7 @@ let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match dd
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a data/class declaration"}
 
-let look_up_extn_info_rec_field ddefs dname=
+let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
     match fields with
       | ((t,_), extns)::rest -> begin
@@ -1118,11 +1118,18 @@ let look_up_extn_info_rec_field ddefs dname=
       | [] -> raise Not_found
   in
   let dd = look_up_data_def no_pos ddefs dname in
+  let _ = Debug.ninfo_hprint (add_str "    dd.data_fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id))))
+      dd.data_fields no_pos in
   try
     look_up_helper dd.data_fields
   with _ ->
       let (_, extns) = List.hd dd.data_fields in
       extns
+
+let look_up_extn_info_rec_field ddefs dname=
+  Debug.no_1 "look_up_extn_info_rec_field" pr_id (pr_list pr_id)
+      (fun _ -> look_up_extn_info_rec_field_x ddefs dname)
+      dname
 
 let rec look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def pos ddefs name in

@@ -1,41 +1,22 @@
 data node{
-     int val;
-     node next;
+  int val;
+  node next#REC;
 }.
 
-pred zipNM<y> ==
-  self=null & y=null 
-or self::node<_,p>*y::node<_,q>*p::zipNM<q>.
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
 
-pred zipN<n> ==
-  self=null & n=0 
- or self::node<_,p>*p::zipN<n1> & n=n1+1 
- inv n>=0.
+HeapPred zip(node@RO a, node b).
+HeapPred zipN(node@RO a, node b, int n:1).
 
+relDefn zip(x,y) <->
+  x=null & y=null
+or x::node<_,p>*y::node<_,q>*zip(p,q).
 
-pred zip<> ==
-  self=null  
- or self::node<_,p>*p::zip<>  
- inv true.
+//relDefn zipN(a,b,n) <-> extends zip(a,b) at 0 with size[REC]<n> .
 
-//lemma_safe self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m>.
-
-//lemma_safe "both" self::zipNM<y> & n=m <-> self::zipN<n> * y::zipN<m> .
-
-lemma_test "both2" self::zipNM<y>  <-> self::zip<> * y::zip<> .
-
-lemma_test "one" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n=m .
-
-/* complex LHS not handled properly
-lemma_test "one" self::zipN<n> * y::zipN<m> & n=m
-                     -> self::zipNM<y> .
-*/
-
-/*
-checkentail self_lem_15::node<_,p_113>@M * p_113::zipN<n1_114>@M * y::zipN<m>@M&n=1+
-n1_114 & m=n
- |-  (exists q_115: self_lem_15::node<_,p_89>@M * y::node<_,q_90>@M * 
-p_89::zipNM<q_115,n1_91,m1_92>@M).
+pred_split [zip].
 
 print residue.
-*/

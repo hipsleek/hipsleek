@@ -484,6 +484,15 @@ let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
 let convert_data_and_pred_to_cast_x () =
+  (*annotate field*)
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.I.data_fields in
+      {ddef with I.data_fields = ndfields}
+  ) iprog.I.prog_data_decls in
+  let _ = iprog.I.prog_data_decls <- idatas in
   (* convert data *)
   List.iter (fun ddef ->
     let cddef = AS.trans_data iprog ddef in
@@ -577,9 +586,18 @@ let process_barrier_def bd =
              is deferred in case of mutually dependent data definition.
  **)
 let perform_second_parsing_stage () =
-	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
-		!cprog.C.prog_data_decls <- cddefs
-	
+  (*annotate field*)
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.I.data_fields in
+      {ddef with I.data_fields = ndfields}
+  ) iprog.I.prog_data_decls in
+  let _ = iprog.I.prog_data_decls <- idatas in
+  let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
+  !cprog.C.prog_data_decls <- cddefs
+
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
 	: (TI.spec_var_type_list*CF.struc_formula) = 
   let rec helper (mf0 : meta_formula) quant fv_idents tl : (TI.spec_var_type_list*CF.struc_formula) = 

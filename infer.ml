@@ -638,7 +638,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
           ) ps2 
           then
             let ps3 = List.map CP.neg_eq_neq ps2 in
-            let _ = DD.info_hprint (add_str "ps3: " (pr_list !print_formula)) ps3 pos in
+            let _ = DD.ninfo_hprint (add_str "ps3: " (pr_list !print_formula)) ps3 pos in
             (*we have a ranking function after that: check-tll*)
             let ps4 = (* if List.length (CP.remove_dups_svl ivars) > 1 then *)
             (*   List.filter (fun p -> not (CP.is_neq_null_exp p) ) ps3 *)

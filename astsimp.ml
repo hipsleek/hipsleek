@@ -1095,7 +1095,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
           let crels = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
-	  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
+          (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 	  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
@@ -1249,15 +1249,20 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (*     | Iast.F_NO_ANN -> Cast.F_NO_ANN *)
   (* in *)
   let trans_field ((t, c), pos, il, ann) =
-    (((trans_type prog t pos), c),(* trans_field_ann *) ann)
+    let n_ann = if ann = [] then [gen_field_ann t] else ann in
+    (((trans_type prog t pos), c),(* trans_field_ann *) n_ann)
   in
   (* let _ = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in
      let temp = expand_inline_fields ddef.I.data_fields in
      let _ = print_endline "[trans_data] expand inline fields result :" in
      let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
+  (* let pr1 ((t, c), pos, il, ann) = (pr_triple string_of_typ pr_id (pr_list pr_id)) (t,c,ann) in *)
+  (* let _ = Debug.info_hprint (add_str "    ddef.I.data_fields:" (pr_list pr1)) ddef.I.data_fields no_pos in *)
   let fields = 
     List.map trans_field (I.expand_inline_fields prog.I.prog_data_decls ddef.I.data_fields)
   in
+  (* let _ = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
+  (*     fields no_pos in *)
   let res = {
       C.data_name = ddef.I.data_name;
       C.data_pos = ddef.I.data_pos;
