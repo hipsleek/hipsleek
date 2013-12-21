@@ -2868,6 +2868,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                     (*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
                                     let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
                                         && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
+                                    let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in
                                     let _ = Debug.devel_hprint (add_str "pre_rel_ids" !print_svl) pre_rel_ids no_pos in
                                     let post_rel_df_new = 
                                       if pre_rel_ids=[] then post_rel_df 
@@ -2880,11 +2881,17 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                       ) post_rel_df)
                                     in
                                     let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
-                                    let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in
-                                    let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
+                                    let pre_invs,post_invs =
+                                      CF.get_pre_post_invs pre_rel_ids post_rel_ids (FP.get_inv prog) (proc.proc_stk_of_static_specs # top) in
+                                    let post_inv = CP.join_disjunctions post_invs in
+                                    let _ = Debug.ninfo_hprint (add_str "post_inv" pr ) post_inv no_pos in
+                                    let bottom_up_fp0 = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in
+                                    let bottom_up_fp = List.map (fun (r,p) ->
+                                        let p1 = TP.om_gist p post_inv in
+                                        let p2 = TP.pairwisecheck_raw p1 in
+                                        (r,p2)
+                                    ) bottom_up_fp0 in
                                     let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
-                                    let pre_invs =
-                                      CF.get_pre_invs pre_rel_ids (FP.get_inv prog) (proc.proc_stk_of_static_specs # top) in
                                     FP.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
                                         Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
                                         reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag

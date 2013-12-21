@@ -460,7 +460,7 @@ let update_with_td_fp_x bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
     let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
     let exist_vars = CP.diff_svl (CP.fv_wo_rel rel) pre_rel_vars in
     let pre = TP.simplify_exists_raw exist_vars post in
-    let _ = Debug.info_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
+    let _ = Debug.ninfo_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
 
     let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in
     let pure_oblg_to_check = 

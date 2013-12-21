@@ -90,14 +90,14 @@ and struc_formula =
   | EInfer of struc_infer_formula
 
 and assume_formula = 
-	{
-		formula_assume_simpl : formula; 
-		formula_assume_struc : struc_formula;
-		formula_assume_lbl : formula_label;
-		formula_assume_ensures_type : ensures_type;
-		formula_assume_vars : Cpure.spec_var list;
-	}
-	
+    {
+	formula_assume_simpl : formula; 
+	formula_assume_struc : struc_formula;
+	formula_assume_lbl : formula_label;
+	formula_assume_ensures_type : ensures_type;
+	formula_assume_vars : Cpure.spec_var list;
+    }
+
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
@@ -12564,31 +12564,67 @@ let rec get_pre_post_vars (pre_vars: CP.spec_var list) xpure_heap (sp:struc_form
     let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars xpure_heap c prog) b in
     fold_left_6 l
 
-let rec get_pre_invs (pre_rel_vars: CP.spec_var list) get_inv_fn (sp:struc_formula) =
+let get_pre_post_invs_x (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn (sp0:struc_formula) =
+  let rec helper sp lend_vnodes0=
   match sp with
     | ECase b -> 
-          List.fold_left (fun r (_, s)->  r@(get_pre_invs pre_rel_vars get_inv_fn s)) [] b.formula_case_branches
+          List.fold_left (fun (r1,r2) (_, s)->
+              let pre_invs,post_invs = (helper s lend_vnodes0) in
+              (r1@pre_invs,r2@post_invs)
+          ) ([],[]) b.formula_case_branches
     | EBase b ->
           let p = get_pure b.formula_struc_base in
           let rel_fmls0 = CP.get_list_rel_args p in
           let rel_fmls1 = List.filter (fun (rel,_) -> CP.mem_svl rel pre_rel_vars) rel_fmls0 in
-          if rel_fmls1 = [] then [] else
+          let sel_vnodes =  get_views b.formula_struc_base in
+          let lend_vnodes = List.filter (fun vn -> CP.isLend vn.h_formula_view_imm) sel_vnodes in
+          let  inv_exts =
+            if rel_fmls1 = [] then ([]) else
+              let sel_svl = List.fold_left (fun r (_,args) -> r@args) [] rel_fmls1 in
+              let rel_fm = CP.filter_var p sel_svl in
+              let invs = List.map (get_inv_fn sel_svl) sel_vnodes in
+              let inv_ext = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos) rel_fm invs in
+              let inv_ext = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos) rel_fm invs in
+             [inv_ext]
+          in
+            (*to inv*)
+	  (match b.formula_struc_continuation with
+            | None -> inv_exts,[]
+            | Some l ->
+                  let pre_invs,post_invs = (helper l (lend_vnodes@lend_vnodes0)) in
+                  let np = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos)
+                    (CP.mkTrue no_pos) (inv_exts@pre_invs) in
+                  ([np],post_invs)
+          )
+    | EAssume b ->
+          let _, bare = split_quantifiers b.formula_assume_simpl in
+          let p = get_pure bare in
+          let rel_fmls0 = CP.get_list_rel_args p in
+          let rel_fmls1 = List.filter (fun (rel,_) -> CP.mem_svl rel post_rel_vars) rel_fmls0 in
+          if rel_fmls1 = [] then ([],[]) else
             let sel_svl = List.fold_left (fun r (_,args) -> r@args) [] rel_fmls1 in
             let rel_fm = CP.filter_var p sel_svl in
-            let sel_vnodes =  get_views b.formula_struc_base in
-            let invs = List.map (get_inv_fn sel_svl) sel_vnodes in
-            let inv_ext = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos) rel_fm invs in
-            (*to inv*)
-	    (match b.formula_struc_continuation with
-              | None -> [inv_ext]
-              | Some l -> let np = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 b.formula_struc_pos)
-                  inv_ext (get_pre_invs pre_rel_vars get_inv_fn l) in
-                [np]
-            )
-    | EAssume b -> []
-    | EInfer b -> (get_pre_invs pre_rel_vars get_inv_fn b.formula_inf_continuation)
+            let post_vnodes =  get_views bare in
+            let post_vnodes1 = Gen.BList.remove_dups_eq (fun vn1 vn2 -> CP.eq_spec_var vn1.h_formula_view_node vn2.h_formula_view_node) (lend_vnodes0@post_vnodes) in
+            let post_invs = List.map (get_inv_fn sel_svl) post_vnodes1 in
+            let post_inv = CP.conj_of_list (rel_fm::post_invs) no_pos in
+            [],[post_inv]
+    | EInfer b -> (helper b.formula_inf_continuation lend_vnodes0)
     | EList b ->
-          List.fold_left (fun r (_,c)-> r@(get_pre_invs pre_rel_vars get_inv_fn c)) [] b
+          List.fold_left (fun (r1,r2) (_,c)->
+              let pre_invs,post_invs = (helper c lend_vnodes0) in
+              (r1@pre_invs,r2@post_invs)
+          ) ([],[]) b
+  in
+  let pre_invs,post_invs = helper sp0 [] in
+  pre_invs,post_invs
+
+let get_pre_post_invs (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn (sp:struc_formula) =
+  let pr1 = pr_list_ln !CP.print_formula in
+  let pr2 = !print_struc_formula in
+  Debug.no_3 "get_pre_post_invs" !CP.print_svl !CP.print_svl pr2 (pr_pair pr1 pr1)
+      (fun _ _ _ -> get_pre_post_invs_x pre_rel_vars post_rel_vars get_inv_fn sp)
+      pre_rel_vars post_rel_vars sp
 
 (*todo: drop sel only. now drop all*)
 let drop_sel_rel sel_rel_vars f0=
