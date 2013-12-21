@@ -28,8 +28,15 @@ let templ_sleek_stk: string Gen.stack = new Gen.stack
 (* Stack of template assumption per scc *)
 let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack
 
+type simpl_templ_assume = {
+  ass_vars: spec_var list;
+  ass_ante: term list list;
+  ass_cons: formula;
+  ass_pos: loc;
+}
+
 (* Stack of simplified template assumption per scc *)
-let simpl_templ_assume_scc_stk: (spec_var list * term list list * formula) Gen.stack = new Gen.stack 
+let simpl_templ_assume_scc_stk: simpl_templ_assume Gen.stack = new Gen.stack 
 
 let rec print_term_list (tl: term list) =
   match tl with
@@ -386,7 +393,11 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
   let cons_t = term_list_of_formula vars (normalize_formula cons) in
 
-  let _ = simpl_templ_assume_scc_stk # push (vars, ante_tl, cons) in
+  let _ = simpl_templ_assume_scc_stk # push 
+    { ass_vars = vars;
+      ass_ante = ante_tl;
+      ass_cons = cons;
+      ass_pos = pos; } in
 
   let farkas_contrs = infer_template_rhs_farkas num ante_tl cons_t pos in
   es, farkas_contrs
@@ -481,8 +492,9 @@ let infer_template_init (es: CF.entail_state) (ante: formula) (cons: formula) po
 let infer_template (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
   let pr1 = !MCP.print_mix_formula in
   let pr2 = !print_formula in
-  Debug.no_2 "infer_template" pr1 pr2 (pr_opt !CF.print_entail_state) 
-    (fun _ _ -> infer_template_init es (MCP.pure_of_mix ante) cons pos) ante cons
+  let pr3 = string_of_loc in
+  Debug.no_3 "infer_template" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
+    (fun _ _ _ -> infer_template_init es (MCP.pure_of_mix ante) cons pos) ante cons pos 
 
 let gen_slk_infer_templ_scc () =
   let inp = List.rev (templ_sleek_scc_stk # get_stk) in
@@ -560,7 +572,7 @@ let rec powerset l =
   | [] -> [[]]
   | x::xs ->
     let powerset_xs = powerset xs in
-    powerset_xs @ (List.map (fun e -> x::e) powerset_xs)
+    powerset_xs @ (List.map (fun e -> x::e) powerset_xs) 
 
 let powerset l = 
   List.stable_sort (fun l1 l2 -> 
@@ -569,9 +581,9 @@ let powerset l =
 let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
   let unaff_il, unaff_ctrs = List.split unaff_constrs in
   
-  let constrs, _ = List.fold_left (fun (ac, cnum) (vars, ante, cons) ->
-    let cons_t = term_list_of_formula vars (normalize_formula cons) in
-    let cl = infer_template_rhs_farkas [cnum] ante cons_t no_pos in
+  let constrs, _ = List.fold_left (fun (ac, cnum) ta ->
+    let cons_t = term_list_of_formula ta.ass_vars (normalize_formula ta.ass_cons) in
+    let cl = infer_template_rhs_farkas [cnum] ta.ass_ante cons_t ta.ass_pos in
     (ac @ cl, cnum+1)) ([], 0) (rank_constrs @ unaff_ctrs) in
   if constrs = [] then None
   else
@@ -587,9 +599,10 @@ let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs 
         (i, unaff_il))
 
 let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let pr_ctr = fun (_, ante, cons) -> pr_pair (pr_list print_term_list) !print_formula (ante, cons) in
+  let pr_ctr = fun ta -> pr_pair string_of_loc !print_formula 
+    (ta.ass_pos, ta.ass_cons) in
   let pr1 = pr_list pr_ctr in
-  let pr2 = pr_list (fun (i, _) -> string_of_int i) in
+  let pr2 = pr_list (fun (i, ta) -> (string_of_int i) ^ "@" ^ (string_of_loc ta.ass_pos)) in
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in
   let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
   Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
@@ -619,15 +632,15 @@ let find_lex_rank prog inf_templs dec_assumes =
   | _::[] -> raise (Lex_Infer_Failure 
       "Nothing to do with Lexicographic Inference (less than 2 call contexts).")
   | c::cs -> 
-    let i, (vars, ante, dec) = c in
-    let bnd = trans_dec_to_bnd_constr dec in
+    let i, c_templ_assume = c in
+    let bnd = trans_dec_to_bnd_constr c_templ_assume.ass_cons in
     let rank = find_potential_lex_single_rank prog inf_templs i 
-      [(vars, ante, dec); (vars, ante, bnd)]
-      (List.map (fun (i, (vars, ante, cons)) -> 
-        (i, (vars, ante, trans_dec_to_unaff_constr cons))) cs)
+      [c_templ_assume; { c_templ_assume with ass_cons = bnd; }]
+      (List.map (fun (i, cs_templ_assume) -> 
+        (i, { cs_templ_assume with ass_cons = trans_dec_to_unaff_constr cs_templ_assume.ass_cons; })) cs)
     in match rank with
     | None -> raise (Lex_Infer_Failure 
-        "Cannot find the potential ranking function")
+        "Cannot find a potential ranking function")
     | Some r -> r
 
 let rec sort_rank_list num rank_l =
@@ -645,8 +658,8 @@ let rec sort_rank_list num rank_l =
 (* We reuse the term-form of the antecedents 
  * from prior normal termination inference *)
 let infer_lex_template_init prog (inf_templs: ident list) 
-    (templ_assumes: (spec_var list * term list list * formula) list) =
-  let dec_templ_assumes = List.filter (fun (_, _, cons) -> is_Gt_formula cons) templ_assumes in
+    (templ_assumes: simpl_templ_assume list) =
+  let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
   let _ = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
 
@@ -672,7 +685,7 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
   let templ_assumes = templ_assume_scc_stk # get_stk in
   let _ = templ_assume_scc_stk # reset in
 
-  let simpl_templ_assumes = simpl_templ_assume_scc_stk # get_stk in
+  let simpl_templ_assumes = List.rev (simpl_templ_assume_scc_stk # get_stk) in
   let _ = simpl_templ_assume_scc_stk # reset in
 
   let _ = 
