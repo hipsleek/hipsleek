@@ -1,0 +1,8 @@
+K:={[n,m]:n<=0 | (n<=m & 1<=m)};
+Inv:={[n,m]:n>=0 & m>=0};
+L:=gist K given Inv;
+R:= L intersection Inv;
+PairWiseCheck L;
+S:=PairWiseCheck R;
+gist S given Inv;
+
