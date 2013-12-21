@@ -9394,6 +9394,7 @@ let mk_neg_bvar_subs v subs =
 *)
 let restore_bool_omega bf bvars subs =
   match bf with
+    | BVar (v,_)
     | Lt (IConst(0,_),Var(v,_),_) 
     | Lte (IConst(1,_),Var(v,_),_) 
     | Gt(Var(v,_),IConst(0,_),_) 
@@ -9408,8 +9409,11 @@ let restore_bool_omega bf bvars subs =
 
 let restore_memo_formula subs bvars (f:formula) : formula =
   let bvars = bvars@(List.map fst subs) in
-  let pr b = restore_bool_omega b bvars subs 
-  in drop_formula pr pr f
+  let pr b = restore_bool_omega b bvars subs in
+  drop_formula pr pr f
+  (* let ps = split_conjunctions f in *)
+  (* let ps1 = List.map (drop_formula pr pr) ps in *)
+  (* conj_of_list ps1 (pos_of_formula f) *)
 
 let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in

@@ -337,16 +337,20 @@ let pre_calculate_x fp_func input_fml pre_vars proc_spec
     let list_pre = [pre_rec;pure_oblg_to_check] in
     let final_pre0 = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
     let final_pre1 = TP.simplify final_pre0 in
-    let final_pre2 = filter_disj final_pre1 pre_fmls in
+    let final_pre2 = filter_disj final_pre1 (pre_fmls) in
     (* NEW procedure# Form pre-condition given invariant:  D:=gist Pre given Inv;*)
     let final_pre3 = TP.om_gist final_pre2 pre in
-    let final_pre4 = TP.pairwisecheck_raw final_pre3 in
-    let final_pre = final_pre4 in
+    let final_pre3a = CP.mkAnd final_pre3 pre no_pos in
+    (* let final_pre4a = TP.pairwisecheck_raw final_pre3 in *)
+    let final_pre4b = TP.pairwisecheck_raw final_pre3a in
+    let final_pre = TP.om_gist final_pre4b pre in
     let _ = Debug.devel_hprint (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
     let _ = Debug.devel_hprint (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
     let _ = Debug.devel_hprint (add_str "final_pre2" !CP.print_formula) final_pre2 no_pos in
     let _ = Debug.devel_hprint (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
-    let _ = Debug.devel_hprint (add_str "final_pre4" !CP.print_formula) final_pre4 no_pos in
+    let _ = Debug.devel_hprint (add_str "final_pre3a" !CP.print_formula) final_pre3a no_pos in
+    (* let _ = Debug.devel_hprint (add_str "final_pre4a" !CP.print_formula) final_pre4a no_pos in *)
+    let _ = Debug.devel_hprint (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
     (* let _ = Debug.devel_hprint (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
     let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
     if checkpoint2 then

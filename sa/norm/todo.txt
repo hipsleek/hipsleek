@@ -666,7 +666,7 @@ E1;E2;E3;
   - each field of each data ==> unique label (DONE)
   
  ===================================================================
-# zip-le-2.ss
+# zip-le-2.ss: DONE
 
  !!!PRE :  (n<=0 | (n<=m & 1<=m))
 
