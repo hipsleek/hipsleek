@@ -687,7 +687,7 @@ This would allow us to derive (see zip-le-2.oc):
   -split + pure extn : OK
 
 ===================================================================
-# zip-norm.ss
+# zip-norm.ss (FIXED)
 
 derived:
 !!!POST:  ((k=n & 0<=n & n<=m) | (k=m & 0<=k & k<n))
@@ -698,6 +698,9 @@ presentation by performing gist POST given INV
 This would then yield a simpler:
  {[n,m,n]: n <= m} union
   {[n,m,m]: m < n}
+
+Below is an equivalent information:
+!!!POST:  ((k=n & k<=m) | (k=m & k<n))
 
 ===================================================================
 #zip-3.slk, #zip-3a.slk
