@@ -1,0 +1,55 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+//(1)
+checkentail self_two::node<_,null>@M
+ |-  (exists flted_34_60,pp_61: self_two::lseg<pp_61>@M * 
+pp_61::node<_,flted_34_60>@M & flted_34_60=null). 
+print residue.
+// no residue!
+
+//(2)
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * 
+pp::node<_,null>). 
+
+//(3)
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+
+/*
+checkentail_exact self_two::node<_,null>
+ |-  self_two::lseg<pp> * pp::node<_,null>. 
+*/
+
+checkentail_exact self::node<_,null>
+ |-    (exists pp: pp::node<_,null> & self=pp
+    or self::node<_,p>*p::lseg<pp> * pp::node<_,null>).
+
+/*
+checkentail_exact self::node<_,null>
+ |-    self::node<_,p>*p::lseg<pp> * pp::node<_,null>.
+
+checkentail_exact self::node<_,null>
+ |-    self::node<_,null> .
+
+checkentail_exact self::node<_,null>
+ |-    pp::node<_,null> & self=pp.
+print residue.
+
+checkentail_exact self::node<_,null>
+ |-    (exists pp: pp::node<_,null> & self=pp).
+print residue.
+*/

@@ -718,7 +718,40 @@ m_81<k_82 & 1<=k_82)))]
 n1_184=m_161-1 & n1_159=n_160-1) -->  P3(n1_159,n1_184,n1_201)]
 
 ===================================================================
+# ls-lem-1a.slk --dis-lem-rhs-unfold
+
+Why proving ls-lem-1a fail though it succeeds in ls-lem-1a1.slk?
+
+process_coercion_check inp1 : 
+ (exists flted_19_50,_: self_two::node<_,flted_19_50>@M&flted_19_50=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_53: self_two::node<_,p_53>@M * p_53::HP<>@M&p_53!=null&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists flted_34_36,pp,_: self_two::lseg<pp>@M * 
+       pp::node<_,flted_34_36>@M&flted_34_36=null&{FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :[]
+process_coercion_check@1 EXIT:(false, Error Context: 1[
+                  emp&p_64=null&{FLOW,(3,4)=__Error}[]
+                  ])
 ===================================================================
+# ls-lem-1a2b
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+
+Why did classic fail when we have no residue?
+It seems to be caused by folding...
+
+checkentail self_two::node<_,flted_19_41>@M&flted_19_41=null&{FLOW,(21,22)=__norm}[]
+ |-  (exists flted_20_42,pp_43: self_two::lseg<pp_43>@M * 
+pp_43::node<_,flted_20_42>@M&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  p_45=null |-  pp_43!=null & p_45=pp_43. LOCS
+*/
 ===================================================================
 ===================================================================
 ===================================================================

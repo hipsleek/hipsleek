@@ -1,0 +1,45 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+/*
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,pp>*pp::HP<> & pp!=null
+ inv self!=null.
+*/
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+/*
+# ls-lem-1.slk --dis-lem-rhs-unfold
+
+Why is it added even though lemmna proving has failed?
+
+Entailing lemma two: Fail. (must) cause:lor[ p_64=null |-  p_61!=null & p_61=p_64. LOCS:[19;8;33;7] (must-bug),UnionR[residue is forbidden.,residue is forbidden.]]
+
+Valid Lemmas : [two:==>] added to lemma store.
+
+*/
+
+lemma_safe "two" self::HP<> -> self::lseg<pp> * pp::node<_,null>.
+
+/*
+# ls-lem-1a.slk --dis-lem-rhs-unfold
+
+Why NO unfold for LHS?
+
+check_coercion_struc inp2 : self::HP<>@M&{FLOW,(21,22)=__norm}[]
+check_coercion_struc inp3 : EBase (exists flted_33_36,p,_: self::lseg<p>@M * p::node<_,flted_33_36>@M&
+       flted_33_36=null&{FLOW,(21,22)=__norm})[]
+
+*/

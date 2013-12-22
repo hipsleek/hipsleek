@@ -1,0 +1,54 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+/*
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,pp>*pp::HP<> & pp!=null
+ inv self!=null.
+*/
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+
+lemma_unsafe "two" self::HP<> -> self::lseg<pp> * pp::node<_,null>.
+
+/*
+# ls-lem-1a1.slk --dis-lem-rhs-unfold
+
+process_coercion_check inp1 : 
+ (exists flted_19_50,_: self_two::node<_,flted_19_50>@M&flted_19_50=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_53: self_two::node<_,p_53>@M * p_53::HP<>@M&p_53!=null&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists flted_34_36,pp,_: self_two::lseg<pp>@M * 
+       pp::node<_,flted_34_36>@M&flted_34_36=null&{FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :[]
+process_coercion_check@1 EXIT:(false, Error Context: 1[
+                  emp&p_64=null&{FLOW,(3,4)=__Error}[]
+                  ])
+
+Why ls-lem-1a1 fail though it succeeds below?
+
+*/
+
+checkentail
+ (exists flted_19_50: self_two::node<_,flted_19_50>@M&flted_19_50=null
+ )
+ or (exists p_53: self_two::node<_,p_53>@M * p_53::HP<>@M&p_53!=null)
+ |-
+  (exists flted_34_36,pp,A1: self_two::lseg<pp>@M * 
+       pp::node<A1,flted_34_36>@M&flted_34_36=null).
+
+print residue.
