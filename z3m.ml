@@ -23,6 +23,11 @@ let z3m_val_mult v1 v2 =
   | Z3_Frac (n1, d1), Z3_Int i2 -> Z3_Frac (n1 *. (float_of_int i2), d1)
   | Z3_Frac (n1, d1), Z3_Frac (n2, d2) -> Z3_Frac (n1 *. n2, d1 *. d2)
 
+let z3m_val_neg v = 
+  match v with
+  | Z3_Int i -> Z3_Int (-i)
+  | Z3_Frac (n, d) -> Z3_Frac (-.n, d)
+
 exception Invalid_Z3m_val 
 
 let z3m_val_to_int (vl: z3m_val list): int list =

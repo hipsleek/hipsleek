@@ -488,6 +488,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
           let rank_formula = MCP.pure_of_mix rank_formula in*)
           let estate, entail_dec_res = 
             if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+              let _ = Globals.templ_term_inf := true in
               let es = Template.infer_template estate 
                 (* (MCP.merge_mems lhs_p xpure_lhs_h1 true) *) lhs_p rank_formula pos 
               in (match es with Some es -> es | None -> estate), true

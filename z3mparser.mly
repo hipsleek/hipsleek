@@ -20,26 +20,30 @@ input:
 sol_list:
     sol { [$1] }
 	| sol sol_list { [$1] @ $2 }
-;
+  ;
 
 sol:
     OPAREN DEFFUN ID OPAREN CPAREN INT z3m_val CPAREN { ($3, $7) }
 ;
 
 z3m_val:
-    int_val { Z3_Int $1 }
-  | TOINT OPAREN DIV float_val float_val CPAREN { Z3_Frac ($4, $5) }
+    prim_val { $1 }
+  | TOINT prim_val { $2 }
   | MULT z3m_val z3m_val { z3m_val_mult $2 $3 }
   | OPAREN z3m_val CPAREN { $2 }
+  ;
 
-int_val:
-    INT_LIT { $1 }
-  | MINUS INT_LIT { -$2 }
+prim_val:
+    int_val { $1 }
+  | frac_val { $1 } 
+  | OPAREN prim_val CPAREN { $2 }
+  | MINUS prim_val { z3m_val_neg $2 }
+  ;
+
+int_val: INT_LIT { Z3_Int $1 }
 ;
 
-float_val:
-    FLOAT_LIT { $1 }
-  | MINUS FLOAT_LIT { -.$2 }
+frac_val: DIV FLOAT_LIT FLOAT_LIT { Z3_Frac ($2, $3) }
 ;
 
 %%

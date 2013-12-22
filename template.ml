@@ -31,6 +31,7 @@ let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack
 type simpl_templ_assume = {
   ass_vars: spec_var list;
   ass_ante: term list list;
+  ass_orig_ante: formula;
   ass_cons: formula;
   ass_pos: loc;
 }
@@ -396,6 +397,7 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
   let _ = simpl_templ_assume_scc_stk # push 
     { ass_vars = vars;
       ass_ante = ante_tl;
+      ass_orig_ante = ante;
       ass_cons = cons;
       ass_pos = pos; } in
 
@@ -599,8 +601,8 @@ let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs 
         (i, unaff_il))
 
 let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
-  let pr_ctr = fun ta -> pr_pair string_of_loc !print_formula 
-    (ta.ass_pos, ta.ass_cons) in
+  let pr_ctr = fun ta -> pr_pair string_of_loc (pr_pair !print_formula !print_formula)
+    (ta.ass_pos, (ta.ass_orig_ante, ta.ass_cons)) in
   let pr1 = pr_list pr_ctr in
   let pr2 = pr_list (fun (i, ta) -> (string_of_int i) ^ "@" ^ (string_of_loc ta.ass_pos)) in
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in
@@ -708,9 +710,11 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
     | [] -> begin match is_sat with
       | Z3m.Z3m_Unsat -> 
         let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
-        let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
-        let _ = print_endline ("or conditional termination or non-termination ...") in
-        infer_lex_template_init prog inf_templs simpl_templ_assumes 
+        if !Globals.templ_term_inf then
+          let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
+          let _ = print_endline ("or conditional termination or non-termination ...") in
+          infer_lex_template_init prog inf_templs simpl_templ_assumes 
+        else ()
       | _ -> print_endline ("TEMPLATE INFERENCE: No result.")
       end
     | _ ->

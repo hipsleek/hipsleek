@@ -1212,6 +1212,27 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   let gcd_mi = abs (gcd_l mi) in
   List.map (fun (v, i) -> (v, i / gcd_mi)) m
 
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let pr1 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
+  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
+  Debug.no_1 "z3_norm_model" pr1 pr2
+  norm_model m
+
+let get_opt_model vars assertions =
+  let res, model = get_model true vars assertions in
+  match res with
+  | Z3m_Unsat -> res, model
+  | _ ->
+    let model = norm_model model in
+    let lambda_vals = List.filter (fun (v, _) -> (String.length v >= 6) && (String.sub v 0 6) = "lambda") model in
+    let lambda_assertions = List.map (fun (v, i) -> 
+      CP.mkPure (CP.mkEq (CP.mkVar (CP.SpecVar (Int, v, Unprimed)) no_pos) (CP.mkIConst i no_pos) no_pos)) lambda_vals in
+    get_model true vars (assertions @ lambda_assertions)
+
+let get_model is_linear vars assertions =
+  get_opt_model vars assertions
+
+
 
 
 
