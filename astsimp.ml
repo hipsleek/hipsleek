@@ -1997,8 +1997,9 @@ and find_materialized_prop_x params forced_vars (f0 : CF.formula) : C.mater_prop
   let res = if  (List.length lm ==0) then []
   else List.fold_left (fun a c -> merge_mater_lists a c)(List.hd lm) (List.tl lm) in
   if (Gen.BList.subset_eq C.mater_prop_cmp_var forced_vars res) then res
-  else Error.report_error {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: the view body does not ensure that all the @R annotated variables would be materialized"}
-        
+  else (* Error.report_error {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: the view body does not ensure that all the @R annotated variables would be materialized"} *)
+    let _ = report_warning no_pos "find_materialized_prop: the view body does not ensure that all the @R annotated variables would be materialized" in []
+ 
 (*
   and set_materialized_vars prog cdef =
   let mvars =
