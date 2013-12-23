@@ -691,6 +691,7 @@ let sap = ref false
 let sags = ref false
 
 let sa_gen_slk = ref false
+let gen_fixcalc = ref false
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false

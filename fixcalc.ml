@@ -37,6 +37,22 @@ let rec string_of_elems elems string_of sep = match elems with
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 (******************************************************************************)
+let gen_fixcalc_file str_fc=
+  let file_name = (List.hd !Globals.source_files) in
+  let out_chn =
+    let reg = Str.regexp "\(\.ss\)\|\(.slk\)" in
+    let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".fc" file_name) in
+    (* let _ = print_endline (file_name1 ^ ".fc") in *)
+    let _ = print_endline ("\n generating fixcalc file : " ^ file_name1) in
+    (try Unix.mkdir "logs" 0o750 with _ -> ());
+    (*open_out*) open_out_gen [Open_wronly; Open_append; Open_creat] 0o600 (file_name1)
+  in
+  let _ = output_string out_chn str_fc in
+  let _ = close_out out_chn in
+  ()
+
+
+(******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
   | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
@@ -257,6 +273,10 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   in 
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
 
+  let _ =
+    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+  in
+
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
   let oc = open_out output_of_sleek in
@@ -287,6 +307,10 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+
+  let _ =
+    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+  in
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
@@ -344,6 +368,10 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
   DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+
+  let _ =
+    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+  in
 
   (* Call the fixpoint calculation *)
   let output_of_sleek = "fixcalc.inp" in
@@ -503,6 +531,12 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_zprint (lazy (("fixpoint input = " ^ input_fixcalc))) no_pos; *)
   (* Call the fixpoint calculation *)
+  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+
+  let _ =
+    if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
+  in
+
   let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
