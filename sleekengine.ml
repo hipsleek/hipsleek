@@ -511,7 +511,7 @@ let convert_data_and_pred_to_cast_x () =
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
     then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
-  let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
+  let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   let l2r, r2l = if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else [],[] in
