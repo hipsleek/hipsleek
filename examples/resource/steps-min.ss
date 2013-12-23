@@ -22,12 +22,12 @@ bool rand()
 
 void f() 
   requires s_min::RMin<a> 
-  ensures  s_min'::RMin<a+3>;//'
+  ensures  s_min'::RMin<b> & b-a>=2;//' at least two steps.
 {
   sub_call(); //add stack frame used
   dprint;
   g(); 
-  h(); // a bit slow when this is added
+  if (rand()) h(); // a bit slow when this is added
 }
 
 void g() 
