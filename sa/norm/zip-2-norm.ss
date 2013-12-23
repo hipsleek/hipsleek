@@ -30,11 +30,30 @@ ensures res::ll<k> & k<=m & k<=n;
 }
 
 /*
+# zip-2-norm
 This result is weaker from fixcalc than zip-norm.ss
 
 !!REL POST :  Q(n,m,k)
 !!!POST:  (k=n | (k=m & k<=n))
 !!!REL PRE :  P(m,n)
 !!!PRE :  true
+
+RELDEFN Q: ( n=0 & m=0 & k=0 & P(m,n)) -->  Q(n,m,k),
+RELDEFN Q: ( n=0 & k=0 & 1<=m & P(m,n)) -->  Q(n,m,k),
+RELDEFN Q: ( m=0 & k=0 & 1<=n & P(m,n)) -->  Q(n,m,k),
+RELDEFN Q: ( Q(n_1039,m_1040,k_1064) & 0<=k_1064 & n_1039=n-1 & m_1040=m-1 & k=k_1064+
+1 & 1<=m & 1<=n & P(m,n)) -->  Q(n,m,k)]
+
+
+# zip-norm.ss
+
+!!!REL POST :  Q(n,m,k)
+!!!POST:  ((k=n & k<=m) | (k=m & k<n))
+
+RELDEFN Q: ( n=0 & k=0 & 0<=m & P(m,n)) -->  Q(n,m,k),
+RELDEFN Q: ( m=0 & k=0 & 1<=n & P(m,n)) -->  Q(n,m,k),
+RELDEFN Q: ( Q(n_998,m_999,k_1020) & 0<=k_1020 & n_998=n-1 & m_999=m-1 & k=k_1020+1 & 
+1<=m & 1<=n & P(m,n)) -->  Q(n,m,k)]
+
 
 */
