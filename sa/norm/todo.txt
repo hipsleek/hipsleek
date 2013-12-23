@@ -709,6 +709,14 @@ Below is an equivalent information:
 add preprocess to reduce the number of disjs before fixpoint computation
 
 ===================================================================
+#fix-3.slk
+
+!!! fixpoint:[( true, true, P3(n_80,m_81,k_82), ((m_81=n_80 & k_82=n_80) | (n_80<=0 & k_82<=0 & 1<=m_81) | (k_82=n_80 &
+n_80<m_81 & 1<=n_80) | (m_81<=0 & k_82<=0 & 1<=n_80) | (n_80<=0 & m_81<=0 &
+1<=k_82) | (m_81=n_80 & 1<=n_80 & n_80<k_82) | (k_82=m_81 & 1<=m_81 &
+m_81<n_80)))]
+
+===================================================================
 #zip-3.slk, #zip-3a.slk
 
 pre-rel fixpoint for 3 parameters
