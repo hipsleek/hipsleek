@@ -31,6 +31,10 @@ checkentail_exact self::node<_,null>
 //succeeded!
 */
 
+checkentail self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+print residue.
+
 
 checkentail_exact self_two::node<_,null>@M
  |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
