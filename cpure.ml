@@ -12194,3 +12194,29 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
       pr2 update_positions_for_annot_view_params aa old_lst
 
 (* end utilities for allowing annotations as view arguments *)
+
+let rec nonlinear_var_list_exp (e: exp) =
+  let f_e e = 
+    match e with
+    | Mult (e1, e2, _) ->
+      let p1 = nonlinear_var_list_exp e1 in
+      let p2 = nonlinear_var_list_exp e2 in
+      let p = match p1, p2 with
+      | [], _ -> p2
+      | _, [] -> p1
+      | _ -> List.concat (List.map (fun v1 -> List.map (fun v2 -> v1 @ v2) p2) p1)
+      in Some p
+    | Var (v, _) -> Some ([[v]])
+    | _ -> None
+  in fold_exp e f_e List.concat 
+
+let nonlinear_var_list_formula (f: formula) =
+  let f_e e = Some (nonlinear_var_list_exp e) in
+  let r = fold_formula f (nonef, nonef, f_e) List.concat in
+  List.filter (fun l -> (List.length l) >= 2) r
+
+let nonlinear_var_list_formula (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list !print_svl in
+  Debug.no_1 "nonlinear_var_list_formula" pr1 pr2 
+  nonlinear_var_list_formula f

@@ -106,7 +106,8 @@ Can we support relAssumption generation first, and then
 to perform solving only during template infer?
 
 =============================================================
-# ll-length-r.ss
+# ll-length-r.ss (FIXED by linearize approach)
+# TODO: Using Clp to find optimal solution.
 
 **** TEMPLATE ASSUMPTION ****
 [ n=fr( v_946, n1_948) & n1_948=n_952 --> (r( n))>(r( n_952))

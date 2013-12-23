@@ -1218,19 +1218,72 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   Debug.no_1 "z3_norm_model" pr1 pr2
   norm_model m
 
-let get_opt_model vars assertions =
-  let res, model = get_model true vars assertions in
-  match res with
-  | Z3m_Unsat -> res, model
-  | _ ->
-    let model = norm_model model in
-    let lambda_vals = List.filter (fun (v, _) -> (String.length v >= 6) && (String.sub v 0 6) = "lambda") model in
-    let lambda_assertions = List.map (fun (v, i) -> 
-      CP.mkPure (CP.mkEq (CP.mkVar (CP.SpecVar (Int, v, Unprimed)) no_pos) (CP.mkIConst i no_pos) no_pos)) lambda_vals in
-    get_model true vars (assertions @ lambda_assertions)
+let rec most_common_nonlinear_vars nl = 
+  match nl with
+  | [] -> []
+  | _ -> 
+    let flatten_nl = List.concat nl in
+    let app_nl = List.fold_left (fun a v ->
+      try
+        let v_cnt = List.assoc v a in
+        (v, v_cnt + 1)::(List.remove_assoc v a)
+      with Not_found -> (v, 1)::a
+      ) [] flatten_nl in
+    (* List of the most appearance variables *)
+    let v, v_cnt = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) app_nl) in
+    let same_v_cnt = List.find_all (fun (_, c) -> c == v_cnt) (List.tl app_nl) in
+    let most_common_v = match same_v_cnt with
+    | [] -> v
+    | _ -> 
+      let l_candidate = v::(List.map (fun (v, _) -> v) same_v_cnt) in
+      let candidate_rank = List.fold_left (fun a vl ->
+        if Gen.BList.subset_eq CP.eq_spec_var vl l_candidate then a
+        else 
+          let inc_v = Gen.BList.intersect_eq CP.eq_spec_var vl l_candidate in
+          List.fold_left (fun a v ->
+            try
+              let v_rank = List.assoc v a in
+              (v, v_rank + 1)::(List.remove_assoc v a)
+            with Not_found -> a) a inc_v) 
+            (List.map (fun v -> (v, 0)) l_candidate) nl in 
+      (* The variable appears in the most other group *)
+      let v, _ = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) candidate_rank) in
+      v
+    in
+    let rm_nl = List.map (fun vl -> List.filter (fun v1 -> not (CP.eq_spec_var most_common_v v1)) vl) nl in
+    most_common_v::(most_common_nonlinear_vars (List.filter (fun vl -> (List.length vl) >= 2) rm_nl))
+
+let most_common_nonlinear_vars nl = 
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list pr1 in
+  Debug.no_1 "most_common_nonlinear_vars" pr2 pr1
+  most_common_nonlinear_vars nl
+
+let get_opt_model is_linear vars assertions =
+  let res, model = get_model is_linear vars assertions in
+  if is_linear then res, model
+  else
+    match res with
+    | Z3m_Unsat -> res, model
+    | _ -> 
+      let nl_var_list = List.concat (List.map CP.nonlinear_var_list_formula assertions) in
+      let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
+      let nl_vars_w_z3m_val = List.map (fun v -> 
+        let v_name = CP.name_of_spec_var v in
+        List.find (fun (vm, _) -> v_name = vm) model) subst_nl_vars in
+      let nl_vars_w_int_val = norm_model nl_vars_w_z3m_val in
+      let sst = List.map (fun v -> 
+        let v_name = CP.name_of_spec_var v in
+        let v_val = List.assoc v_name nl_vars_w_int_val in
+        (v, CP.mkIConst v_val no_pos)) subst_nl_vars in
+      let assertions = List.map (fun f -> CP.apply_par_term sst f) assertions in
+      let res, model = get_model true vars assertions in
+      res, model @ nl_vars_w_z3m_val
 
 let get_model is_linear vars assertions =
-  get_opt_model vars assertions
+  get_opt_model is_linear vars assertions
+
+
 
 
 

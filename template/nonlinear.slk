@@ -1,0 +1,9 @@
+template int r(int x, int y).
+
+infer [r] x > 0 & x' = x + y & y' = y & r(x, y) <= 0 |- x' > 0.
+
+template_solve. // -y <= 0 --> y >= 0
+
+infer [r] x > 0 & x' = x + y & y' = y & r(x, y) >= 0 |- x' > 0.
+
+template_solve. // -1+x+y >= 0 --> x+y >= 1. Need to find optimal solution: y >= 0
