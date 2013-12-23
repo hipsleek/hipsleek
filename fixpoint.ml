@@ -647,7 +647,6 @@ let rel_fixpoint_wrapper pre_invs0 pre_fmls0 pre_rel_constrs post_rel_constrs pr
   let bottom_up_fp = Fixcalc.compute_fixpoint 3 post_rel_df_new pre_vars proc_spec in
   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
   (****pre fixpoint***********)
-  let grp_post_rel_flag = 1 in
   let r= update_with_td_fp bottom_up_fp (pre_rel_fmls) pre_fmls pre_invs
       Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess
       reloblgs pre_rel_df post_rel_df_new post_rel_df (pre_vars@pre_rel_ids) proc_spec grp_post_rel_flag

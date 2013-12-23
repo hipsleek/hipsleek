@@ -576,6 +576,7 @@ Correctly inferred pre/post pure relation:
 
 Please provide an option --gsf that will output the
 sleek file for inferred pure unknown relations.
+
 ===================================================================
 #hip zip_paper_eq-2.ss -debug zd-bug.log
  
