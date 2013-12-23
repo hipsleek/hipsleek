@@ -1,0 +1,9 @@
+// by a given method; it is specified in the post-condition
+
+pred_prim RMin<low:int>
+  inv true.
+
+
+ checkentail s_min_16::RMin<flted_17_979>@M&a=a_968 & 0<=a 
+ & flted_17_979=1+a_968 & 0<=a_968
+ |-  s_min_16::RMin<n>@M . 
