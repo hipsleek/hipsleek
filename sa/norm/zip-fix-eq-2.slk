@@ -1,4 +1,4 @@
-# sleek file of zip_paper_eq-2.ss
+// sleek file of zip_paper_eq-2.ss
 
 relation P3(int a, int b).
 

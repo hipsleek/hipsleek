@@ -772,6 +772,8 @@ let sa_subsume = ref false
 let norm_extract = ref false
 let allow_norm_disj = ref true
 
+let sa_fix_bound = ref 4
+
 let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)

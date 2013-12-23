@@ -2893,7 +2893,7 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                                     ) bottom_up_fp0 in
                                     let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                     FP.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
-                                        Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
+                                        Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess 
                                         reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
                                 in
                                 (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)

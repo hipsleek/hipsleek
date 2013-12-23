@@ -50,7 +50,7 @@ let fixcalc_of_spec_var x = match x with
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
 let fixcalc_of_spec_var x =
-DD.no_1 "compute_fixpoint" !CP.print_sv (fun c->c) fixcalc_of_spec_var x
+DD.no_1 "fixcalc_of_spec_var" !CP.print_sv (fun c->c) fixcalc_of_spec_var x
 
 let rec fixcalc_of_exp_list e op number = match number with
   | 0 -> ""
@@ -704,23 +704,123 @@ let rec unify_rels rel a_rel = match rel, a_rel with
   | _ -> report_error no_pos ("unify_rels: Expected a relation, " ^ 
         (pr_pair !CP.print_formula !CP.print_formula) (snd rel, snd a_rel))
 
-let rec preprocess pairs = match pairs with
-  | [] -> []
-  | r::rs -> 
-    let rel = snd r in
-    let name = CP.name_of_rel_form rel in
-    let same_rels, diff_rels = 
-      List.partition (fun r0 -> 
-        CP.eq_spec_var (CP.name_of_rel_form (snd r0)) name) rs in
-    let unified_rels = 
-      if same_rels == [] then [(snd r, [fst r])]
-      else 
-        let res = List.map (fun r0 -> 
+(*(n=0 & m=0) | (n=0 & m>0) ==> (n=0 & m>=0) *)
+let fixc_reduce_disj_one_rel_x (rel_p, oblgs0)=
+  (****************INTERNAL********************)
+  let red_measure = 1 in
+  let rec partition_comm_diff_x lst_ps1 lst_ps2 (comm, diff1, diff2)=
+    match lst_ps1 with
+      | [] -> (comm, diff1, diff2@lst_ps2)
+      | p1::rest1 -> let n_comm, rest2 = List.partition (fun p2 -> CP.equalFormula p1 p2) lst_ps2 in
+        if n_comm = [] then partition_comm_diff_x rest1 lst_ps2 (comm, diff1@[p1], diff2) else
+         partition_comm_diff_x rest1 rest2 (comm@[p1], diff1, diff2)
+  in
+  let partition_comm_diff lst_ps1 lst_ps2 (comm, diff1, diff2)=
+    let pr1 = pr_list !CP.print_formula in
+    let pr2 = pr_triple pr1 pr1 pr1 in
+    Debug.no_3 "partition_comm_diff" pr1 pr1 pr2 pr2
+        (fun _ _ _ -> partition_comm_diff_x lst_ps1 lst_ps2 (comm, diff1, diff2))
+            lst_ps1 lst_ps2 (comm, diff1, diff2)
+  in
+  let collect_comm lst_p lst_ps=
+    let lst_comm, lst_rest = List.fold_left (fun (r_comm, r_rest) lst_p1 ->
+        let comm,diff1,diff2 = partition_comm_diff lst_p lst_p1 ([],[],[]) in
+        (*do reduce for one*)
+        if comm = [] || (List.length diff1 != red_measure) || (List.length diff2 != red_measure) then
+          (r_comm, r_rest@[lst_p1])
+        else (r_comm@[comm,diff1,diff2], r_rest)
+    ) ([],[]) lst_ps in
+    if lst_comm = [] then ([], lst_p::lst_ps) else
+      (lst_comm, lst_rest)
+  in
+  let find_max_common lst_ps=
+    let rec collect_comm_lst lst_p rest_lst_ps done_lst_ps res=
+      match rest_lst_ps with
+        | [] ->
+              let r1 = collect_comm lst_p done_lst_ps in
+              (res@[r1])
+        | lst_p1::rest_lsp1 -> let r1 = collect_comm lst_p (rest_lst_ps@done_lst_ps) in
+          collect_comm_lst lst_p1 rest_lsp1 (done_lst_ps@[lst_p]) (res@[r1])
+    in
+    match lst_ps with
+      | [] -> ([], lst_ps)
+      | lst_p::rest -> let lst_comm = collect_comm_lst lst_p rest [] [] in
+        (*get max_comm*)
+        let sorted_comm = List.sort (fun (_,rest1) (_,rest2) -> List.length rest1 - List.length rest2) lst_comm in
+        List.hd sorted_comm
+  in
+  let do_reduce_x (comm_ps, diff_ps1, diff_ps2)=
+    let p1 = CP.conj_of_list diff_ps1 no_pos in
+    let p2 = CP.conj_of_list diff_ps2 no_pos in
+    let p = CP.mkOr p1 p2 None (CP.pos_of_formula p1) in
+    let p1 = TP.pairwisecheck_raw p in
+    let _ = Debug.ninfo_hprint (add_str "p"  !CP.print_formula) p no_pos in
+    let _ = Debug.ninfo_hprint (add_str "p1"  !CP.print_formula) p1 no_pos in
+    if CP.is_disjunct p1 then
+      [(comm_ps@diff_ps1);(comm_ps@diff_ps2)]
+    else [(p1::comm_ps)]
+  in
+  let do_reduce (comm_ps, diff_ps1, diff_ps2)=
+    let pr1 = pr_list_ln !CP.print_formula in
+    let pr2 =  pr_list_ln pr1 in
+    let pr3 = pr_triple pr1 pr1 pr1 in
+    Debug.no_1 "do_reduce" pr3 pr2
+        (fun _ -> do_reduce_x (comm_ps, diff_ps1, diff_ps2))
+        (comm_ps, diff_ps1, diff_ps2)
+  in
+  let rec reduce_one_disj oblgs=
+    let lst_ps = List.map (CP.list_of_conjs) oblgs in
+    let (lst_com_ps, rest_lst_ps) = find_max_common lst_ps in
+    let lst_reduced_ps = List.fold_left (fun r comp -> r@(do_reduce comp)) [] lst_com_ps in
+    let reduced_ps = List.map (fun ps -> CP.conj_of_list ps no_pos) lst_reduced_ps in
+    let reduced_ps1 = Gen.BList.remove_dups_eq CP.equalFormula reduced_ps in
+    let rest_ps= List.map (fun ps -> CP.conj_of_list ps no_pos) rest_lst_ps in
+    (reduced_ps1@rest_ps)
+  in
+  (*****************END*INTERNAL****************)
+  let ini_oblgs, rec_oblgs = List.partition (fun p ->
+      (CP.get_list_rel_args p) = []
+  ) oblgs0 in
+  let ini_oblgs1 = reduce_one_disj ini_oblgs in
+  (rel_p, rec_oblgs@ini_oblgs1)
+
+let fixc_reduce_disj_one_rel pairs=
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_pair pr1 (pr_list_ln pr1) in
+  Debug.no_1 "fixc_reduce_disj_one_rel" pr2 pr2
+      (fun _ -> fixc_reduce_disj_one_rel_x pairs) pairs
+
+let fixc_preprocess_x pairs0 =
+  let rec helper pairs res=
+    match pairs with
+      | [] -> res
+      | r::rs ->
+            let rel = snd r in
+            let name = CP.name_of_rel_form rel in
+            let same_rels, diff_rels = 
+              List.partition (fun r0 -> 
+                  CP.eq_spec_var (CP.name_of_rel_form (snd r0)) name) rs in
+            let unified_rels = 
+              if same_rels == [] then [(snd r, [fst r])]
+              else 
+                let res = List.map (fun r0 -> 
                     if CP.equalFormula rel (snd r0) then (fst r0)
                     else unify_rels r r0) same_rels in
-        [(snd r, (fst r) :: res)]
-    in
-    unified_rels @ (preprocess diff_rels)
+                let unified_oblgs = (snd r, (fst r) :: res) in
+                (*reduce number of disj*)
+                let red_pairs = fixc_reduce_disj_one_rel unified_oblgs in
+                [red_pairs]
+            in
+            helper diff_rels (res@unified_rels)
+  in
+  helper pairs0 []
+
+let fixc_preprocess pairs0 =
+  let pr1 = !CP.print_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 pr1) in
+  let pr3 = pr_list_ln (pr_pair pr1 (pr_list_ln pr1)) in
+  Debug.no_1 "fixc_preprocess" pr2 pr3
+      (fun _ -> fixc_preprocess_x pairs0) pairs0
 
 (*let rec unify_rels_ass rel a_rel = match rel, a_rel with*)
 (*  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3),f1), *)
@@ -755,7 +855,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list 
     (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
 
-  let pairs = preprocess input_pairs_num in
+  let pairs = fixc_preprocess input_pairs_num in
 
   DD.ninfo_hprint (add_str "input_pairs(b4): " (pr_list 
     (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos;

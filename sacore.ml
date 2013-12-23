@@ -2549,7 +2549,7 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
     (*       (fun _ -> rec_helper_x pdef_fix_i) pdef_fix_i *)
     (* in *)
     (*recusive call*)
-    if diff = [] || i>4 then fix_i_plus1 else
+    if diff = [] || i> (!sa_fix_bound) then fix_i_plus1 else
     rec_helper (i+1) fix_i_plus1
   in
   (*END INTERNAL*)
@@ -2638,8 +2638,10 @@ let compute_lfp_x prog dang_hps defs pdefs=
           let fix_0 = (* (base_fs@dep_fs) *) [] in
           (*iterate*)
           let fixn = lfp_iter prog 0 hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
-          let def = CF.formula_of_disjuncts fixn in
-          (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None def pos)
+          (* let def = CF.formula_of_disjuncts fixn in *)
+          let def = List.map (fun f -> (f,None)) fixn in
+          let lhs = CF.HRel (hp0, List.map (fun x -> CP.mkVar x pos) args0, pos) in
+          (hp0, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp0, r, non_r_args)) lhs def)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
   in
   let _ = Debug.info_ihprint ( add_str "    synthesize (lfp): " !CP.print_sv) hp no_pos in

@@ -703,6 +703,11 @@ Below is an equivalent information:
 !!!POST:  ((k=n & k<=m) | (k=m & k<n))
 
 ===================================================================
+#zip-2-norm.ss: DONE
+
+add preprocess to reduce the number of disjs before fixpoint computation
+
+===================================================================
 #zip-3.slk, #zip-3a.slk
 
 pre-rel fixpoint for 3 parameters
