@@ -11,13 +11,21 @@ type term = {
   term_var: (spec_var * int) list; (* [(x, 2)] -> x^2; [(x, 1), (y, 1)] -> xy *)
 }
 
+type solver_res =
+  | Unsat
+  | Sat of (string * int) list
+  | Unknown
+  | Aborted
+
 let print_term (t: term) =
   List.fold_left (fun s (v, d) -> s ^ "*" ^ 
     (!print_sv v) ^ "^" ^ (string_of_int d)) 
     ("(" ^ (!print_exp t.term_coe) ^ ")") t.term_var
 
-(* Stack of generated constraints *)
+(* Stacks of generated constraints and the unknown vars of templates *)
 let templ_constr_stk: formula Gen.stack = new Gen.stack
+
+let templ_unknown_var_stk: spec_var Gen.stack = new Gen.stack
 
 (* Stack for SLEEK generation per scc *)
 let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack
@@ -349,11 +357,19 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
   let rem_cons, constrs = List.fold_left (fun (cons, fl) at -> 
     let cons_same_deg, cons_notsame_deg = 
       List.partition (fun t -> is_same_degree t at) cons in
-    let constr_exp = List.fold_left (fun a ct -> mkAdd a ct.term_coe pos) 
-      (mkMult (mkIConst (-1) pos) at.term_coe pos) cons_same_deg in
-    let constr = 
-      if at.term_var = [] then mkPure (mkLte constr_exp (mkIConst 0 pos) pos)
-      else mkPure (mkEq constr_exp (mkIConst 0 pos) pos)
+    (* let constr_exp = List.fold_left (fun a ct -> mkAdd a ct.term_coe pos)     *)
+    (*   (mkMult (mkIConst (-1) pos) at.term_coe pos) cons_same_deg in           *)
+    (* let constr =                                                              *)
+    (*   if at.term_var = [] then mkPure (mkLte constr_exp (mkIConst 0 pos) pos) *)
+    (*   else mkPure (mkEq constr_exp (mkIConst 0 pos) pos)                      *)
+    let a_exp = at.term_coe in
+    let c_exp = match cons_same_deg with
+    | [] -> mkIConst 0 pos
+    | c::cs -> List.fold_left (fun a ct -> mkAdd a ct.term_coe pos) c.term_coe cs
+    in
+    let constr = mkPure (mkEq a_exp c_exp pos)
+      (* if at.term_var = [] then mkPure (mkGte a_exp c_exp pos) *)
+      (* else mkPure (mkEq a_exp c_exp pos)                      *)
     in (cons_notsame_deg, fl @ [constr])) (cons, []) ante in
   let rem_constrs = List.map (fun ct -> 
     mkPure (mkEq ct.term_coe (mkIConst 0 pos) pos)) rem_cons in
@@ -365,7 +381,7 @@ let infer_template_rhs_farkas num (ante_tl: term list list) (cons_t: term list) 
   let constrs = 
     let ante_w_unks, unks, _ = List.fold_left (fun (a, unks, i) tl ->
       let unk_lambda = mkVar (unk_lambda_sv (num @ [i])) pos in
-      let tl = List.map (fun t -> { t with term_coe = mkMult unk_lambda t.term_coe pos; }) tl in
+      let tl = List.map (fun t -> { t with term_coe = mkMult t.term_coe unk_lambda pos; }) tl in
       (a @ [tl], unks @ [unk_lambda], i+1)) ([], [], 0) ante_tl in
     let ante_sum_t = partition_term_list (List.concat ante_w_unks) pos in
     (List.map (fun unk -> mkPure (mkGte unk (mkIConst 0 pos) pos)) unks) @
@@ -394,6 +410,7 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
   let ante_tl = List.map (term_list_of_formula vars) ante_fl in
   let cons_t = term_list_of_formula vars (normalize_formula cons) in
 
+  let _ = templ_unknown_var_stk # push_list (ante_unks @ cons_unks) in
   let _ = simpl_templ_assume_scc_stk # push 
     { ass_vars = vars;
       ass_ante = ante_tl;
@@ -408,7 +425,8 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
     CF.entail_state * formula list =
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
-  Debug.no_3 "infer_template_rhs" pr1 pr2 pr2 (fun (es, _) -> pr1 es)
+  let pr3 = pr_list !print_formula in
+  Debug.no_3 "infer_template_rhs" pr1 pr2 pr2 (pr_pair pr1 pr3)
     (fun _ _ _ -> infer_template_rhs num es ante cons pos) es ante cons
 
 let exp_of_templ_decl (tdef: C.templ_decl): exp =
@@ -529,12 +547,92 @@ let gen_slk_file prog =
   let _ = close_out out_chn in
   ()
 
-let subst_model_to_templ_decls inf_templs templ_decls model =
-  let templ_params = List.concat (List.map (fun tdef -> tdef.C.templ_params) templ_decls) in
-  let templ_fv = List.concat (List.map (fun tdef -> fold_opt afv tdef.C.templ_body) templ_decls) in
-  let templ_unks = Gen.BList.difference_eq eq_spec_var templ_fv templ_params in
-  let model = Smtsolver.norm_model (List.filter (fun (v, _) -> List.exists (
-    fun (SpecVar (_, id, _)) -> v = id) templ_unks) model) in
+(********************)
+(* MODEL GENERATION *)
+(********************)
+let rec most_common_nonlinear_vars nl = 
+  match nl with
+  | [] -> []
+  | _ -> 
+    let flatten_nl = List.concat nl in
+    let app_nl = List.fold_left (fun a v ->
+      try
+        let v_cnt = List.assoc v a in
+        (v, v_cnt + 1)::(List.remove_assoc v a)
+      with Not_found -> (v, 1)::a
+      ) [] flatten_nl in
+    (* List of the most appearance variables *)
+    let v, v_cnt = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) app_nl) in
+    let same_v_cnt = List.find_all (fun (_, c) -> c == v_cnt) (List.tl app_nl) in
+    let most_common_v = match same_v_cnt with
+    | [] -> v
+    | _ -> 
+      let l_candidate = v::(List.map (fun (v, _) -> v) same_v_cnt) in
+      let candidate_rank = List.fold_left (fun a vl ->
+        if Gen.BList.subset_eq eq_spec_var vl l_candidate then a
+        else 
+          let inc_v = Gen.BList.intersect_eq eq_spec_var vl l_candidate in
+          List.fold_left (fun a v ->
+            try
+              let v_rank = List.assoc v a in
+              (v, v_rank + 1)::(List.remove_assoc v a)
+            with Not_found -> a) a inc_v) 
+            (List.map (fun v -> (v, 0)) l_candidate) nl in 
+      (* The variable appears in the most other group *)
+      let v, _ = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) candidate_rank) in
+      v
+    in
+    let rm_nl = List.map (fun vl -> List.filter (fun v1 -> not (eq_spec_var most_common_v v1)) vl) nl in
+    most_common_v::(most_common_nonlinear_vars (List.filter (fun vl -> (List.length vl) >= 2) rm_nl))
+
+let most_common_nonlinear_vars nl = 
+  let pr1 = !print_svl in
+  let pr2 = pr_list pr1 in
+  Debug.no_1 "most_common_nonlinear_vars" pr2 pr1
+  most_common_nonlinear_vars nl
+
+let get_model is_linear templ_unks vars assertions =
+  let res = Smtsolver.get_model is_linear vars assertions in
+  match res with
+  | Z3m.Z3m_Unsat -> Unsat
+  | Z3m.Z3m_Sat_or_Unk m ->
+    match m with
+    | [] -> Unknown
+    | _ -> 
+      let model = Smtsolver.norm_model (List.filter (fun (v, _) -> 
+        List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) m) in
+      Sat model
+
+let get_opt_model is_linear templ_unks vars assertions =
+  if is_linear then get_model is_linear templ_unks vars assertions
+  else
+    let res = Smtsolver.get_model is_linear vars assertions in
+    match res with
+    | Z3m.Z3m_Unsat -> Unsat
+    | Z3m.Z3m_Sat_or_Unk model -> 
+      let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
+      let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
+      let nl_vars_w_z3m_val = List.map (fun v -> 
+        let v_name = name_of_spec_var v in
+        List.find (fun (vm, _) -> v_name = vm) model) subst_nl_vars in
+      let nl_vars_w_int_val = Smtsolver.norm_model nl_vars_w_z3m_val in
+      let sst = List.map (fun v -> 
+        let v_name = name_of_spec_var v in
+        let v_val = List.assoc v_name nl_vars_w_int_val in
+        (v, mkIConst v_val no_pos)) subst_nl_vars in
+      let assertions = List.map (fun f -> apply_par_term sst f) assertions in
+      let res2 = Lp.get_model Lp.LPSolve templ_unks assertions in
+      match res2 with
+      | Lp.Sat model2 -> Sat (model2 @ nl_vars_w_int_val)
+      | _ -> 
+        let model = Smtsolver.norm_model (List.filter (fun (v, _) -> 
+          List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in
+        Sat model
+
+let get_model is_linear templ_unks vars assertions =
+  get_opt_model is_linear templ_unks vars assertions
+
+let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
   let unk_subst = List.map (fun v -> 
     let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
     (v, mkIConst v_val no_pos)) templ_unks in
@@ -580,7 +678,7 @@ let powerset l =
   List.stable_sort (fun l1 l2 -> 
     (List.length l2) - (List.length l1)) (powerset l)
 
-let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs =
   let unaff_il, unaff_ctrs = List.split unaff_constrs in
   
   let constrs, _ = List.fold_left (fun (ac, cnum) ta ->
@@ -591,16 +689,16 @@ let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs 
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
       (List.concat (List.map fv constrs)) in
-    let _, model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
-    match model with
-    | [] -> None
-    | _ -> 
-      let res_templ_decls = subst_model_to_templ_decls inf_templs prog.C.prog_templ_decls model in
+    let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
+    match res with
+    | Sat model -> 
+      let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks prog.C.prog_templ_decls model in
       Some (List.concat (List.map (fun tdef -> 
         fold_opt (fun e -> [e]) tdef.C.templ_body) res_templ_decls), 
         (i, unaff_il))
+    | _ -> None
 
-let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs =
   let pr_ctr = fun ta -> pr_pair string_of_loc (pr_pair !print_formula !print_formula)
     (ta.ass_pos, (ta.ass_orig_ante, ta.ass_cons)) in
   let pr1 = pr_list pr_ctr in
@@ -608,15 +706,15 @@ let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs 
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in
   let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
   Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
-  (fun _ _ -> find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs)
+  (fun _ _ -> find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs)
   rank_constrs unaff_constrs
 
-let find_potential_lex_single_rank prog inf_templs i rank_constrs unaff_constrs =
+let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs =
   let rec search_rank ls = 
     match ls with
     | [] -> None
     | u::us ->
-      let r = find_potential_lex_single_rank prog inf_templs i rank_constrs u in 
+      let r = find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs u in 
       match r with
       | Some _ -> r
       | None -> search_rank us
@@ -628,7 +726,7 @@ let rec rotate_head_list ls =
   | [] -> []
   | x::xs -> ls::(List.map (fun xs -> xs @ [x]) (rotate_head_list xs))
 
-let find_lex_rank prog inf_templs dec_assumes =
+let find_lex_rank prog inf_templs templ_unks dec_assumes =
   match dec_assumes with
   | [] 
   | _::[] -> raise (Lex_Infer_Failure 
@@ -636,7 +734,7 @@ let find_lex_rank prog inf_templs dec_assumes =
   | c::cs -> 
     let i, c_templ_assume = c in
     let bnd = trans_dec_to_bnd_constr c_templ_assume.ass_cons in
-    let rank = find_potential_lex_single_rank prog inf_templs i 
+    let rank = find_potential_lex_single_rank prog inf_templs templ_unks i 
       [c_templ_assume; { c_templ_assume with ass_cons = bnd; }]
       (List.map (fun (i, cs_templ_assume) -> 
         (i, { cs_templ_assume with ass_cons = trans_dec_to_unaff_constr cs_templ_assume.ass_cons; })) cs)
@@ -660,7 +758,7 @@ let rec sort_rank_list num rank_l =
 (* We reuse the term-form of the antecedents 
  * from prior normal termination inference *)
 let infer_lex_template_init prog (inf_templs: ident list) 
-    (templ_assumes: simpl_templ_assume list) =
+    templ_unks (templ_assumes: simpl_templ_assume list) =
   let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
   let _ = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
@@ -670,7 +768,7 @@ let infer_lex_template_init prog (inf_templs: ident list)
   else try
     let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
     let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
-    let rank_l = List.map (find_lex_rank prog inf_templs) dec_templ_assumes_l in
+    let rank_l = List.map (find_lex_rank prog inf_templs templ_unks) dec_templ_assumes_l in
     let res = sort_rank_list (num_call_ctx-1) rank_l in
     print_endline (pr_list (pr_list !print_exp) res)
   with Lex_Infer_Failure reason -> print_endline reason
@@ -678,6 +776,10 @@ let infer_lex_template_init prog (inf_templs: ident list)
 let collect_and_solve_templ_constrs prog (inf_templs: ident list) = 
   let constrs = templ_constr_stk # get_stk in
   let _ = templ_constr_stk # reset in
+
+  let templ_unks = templ_unknown_var_stk # get_stk in
+  let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
+  let _ = templ_unknown_var_stk # reset in
 
   let _ = 
     if !gen_templ_slk then gen_slk_infer_templ_scc () 
@@ -705,23 +807,21 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
   else
     let unks = Gen.BList.remove_dups_eq eq_spec_var 
       (List.concat (List.map fv constrs)) in
-    let is_sat, model = Smtsolver.get_model (List.for_all is_linear_formula constrs) unks constrs in
-    match model with
-    | [] -> begin match is_sat with
-      | Z3m.Z3m_Unsat -> 
-        let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
-        if !Globals.templ_term_inf then
-          let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
-          let _ = print_endline ("or conditional termination or non-termination ...") in
-          infer_lex_template_init prog inf_templs simpl_templ_assumes 
-        else ()
-      | _ -> print_endline ("TEMPLATE INFERENCE: No result.")
-      end
-    | _ ->
+    let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
+    match res with
+    | Unsat -> 
+      let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
+      if !Globals.templ_term_inf then
+        let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
+        let _ = print_endline ("or conditional termination or non-termination ...") in
+        infer_lex_template_init prog inf_templs templ_unks simpl_templ_assumes 
+      else ()
+    | Sat model ->
       let templ_decls = prog.C.prog_templ_decls in
-      let res_templ_decls = subst_model_to_templ_decls inf_templs templ_decls model in
+      let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
       print_endline "**** TEMPLATE INFERENCE RESULT ****";
       print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
+    | _ -> print_endline ("TEMPLATE INFERENCE: No result.")
 
 
 

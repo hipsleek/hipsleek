@@ -1,20 +1,22 @@
 open Globals
+open Gen
 
 type z3m_val = 
   | Z3_Int of int
   | Z3_Frac of (float * float)
 
-type z3m_res =
-  | Z3m_Unsat
-  | Z3m_Sat_or_Unk
-
 let string_of_z3m_val = function
   | Z3_Int i -> string_of_int i
   | Z3_Frac (f1, f2) -> (string_of_float f1) ^ "/" ^ (string_of_float f2)
 
+type z3m_res =
+  | Z3m_Unsat
+  | Z3m_Sat_or_Unk of (string * z3m_val) list 
+
 let string_of_z3m_res = function
   | Z3m_Unsat -> "Unsat"
-  | Z3m_Sat_or_Unk -> "Sat or Unk"
+  | Z3m_Sat_or_Unk m -> "Sat or Unk: " ^
+    (pr_list (pr_pair (fun s -> s) string_of_z3m_val) m)
 
 let z3m_val_mult v1 v2 = 
   match v1, v2 with

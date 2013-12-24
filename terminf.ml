@@ -558,7 +558,8 @@ let rec solve_rrel_list rrel_list =
   let is_linear = List.for_all Redlog.is_linear_formula c_constrs in
   let fv = Gen.BList.remove_dups_eq eq_spec_var 
     (List.concat (List.map CP.fv c_constrs)) in
-  let model = Smtsolver.get_model is_linear fv c_constrs in
+  let res = Smtsolver.get_model is_linear fv c_constrs in
+  let model = match res with | Z3m.Z3m_Sat_or_Unk m -> m | _ -> [] in
   (model, List.exists (fun b -> b) is_raw)
 
 (* Plug inferred result into views *)
@@ -624,7 +625,7 @@ let gen_slk_file prog (rrels: CF.rrel list) =
   
 let collect_and_solve_rrel_hip prog (ctx: CF.list_failesc_context): unit =
   let rrels = collect_rrel_list_failesc_context ctx in
-  let (_, sol_for_rrel), raw_subst = solve_rrel_list rrels in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
   let vl, il = List.split sol_for_rrel in
   let il = Z3m.z3m_val_to_int il in
   let sol_for_rrel = List.combine vl il in
@@ -640,7 +641,7 @@ let collect_and_solve_rrel_slk ids rrel_store prog =
   | [] -> Hashtbl.fold (fun _ rrels a -> a @ rrels) rrel_store []
   | _ -> List.concat (List.map (fun id -> 
       try Hashtbl.find rrel_store id with _ -> []) ids) in
-  let (_, sol_for_rrel), raw_subst = solve_rrel_list rrels in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
   let vl, il = List.split sol_for_rrel in
   let il = Z3m.z3m_val_to_int il in
   let sol_for_rrel = List.combine vl il in
@@ -655,7 +656,7 @@ let collect_rrel_hip prog (ctx: CF.list_partial_context): unit =
 let collect_and_solve_rrel_scc prog =
   let rrels = scc_rrel_stk # get_stk in
   let _ = scc_rrel_stk # reset in
-  let (_, sol_for_rrel), raw_subst = solve_rrel_list rrels in
+  let sol_for_rrel, raw_subst = solve_rrel_list rrels in
   let vl, il = List.split sol_for_rrel in
   let il = Z3m.z3m_val_to_int il in
   let sol_for_rrel = List.combine vl il in

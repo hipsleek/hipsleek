@@ -94,8 +94,7 @@ let rec smt_of_typ t =
   | Bptyp -> "int-triple"
 
 let smt_of_typ t =
-  Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
-  smt_of_typ t
+  Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
 
 let smt_of_spec_var sv =
   (CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -230,7 +229,7 @@ let rec smt_of_formula pr_w pr_s f =
 
 let smt_of_formula pr_w pr_s f =
   let _ = set_prover_type () in
-  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
+  Debug.no_1 "smt_of_formula"  !CP.print_formula idf
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
 
@@ -555,7 +554,7 @@ and start() =
       if !smtsolver_name = "z3-2.19" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
       else
-           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
@@ -1181,26 +1180,23 @@ let get_model is_linear vars assertions =
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
   let _ = Debug.tinfo_pprint ("Z3m INP:\n" ^ smt_inp) no_pos in
-  let _ = Debug.tinfo_pprint ("Z3m OUT: " ^ (pr_list (fun s -> s) model)) no_pos in
+  let _ = Debug.tinfo_pprint ("Z3m OUT: " ^ (pr_list idf model)) no_pos in
 
-  let m = try
+  let m = 
+    try
       if not ((List.hd model) = "unsat") then
         let inp = String.concat "\n" (List.tl model) in
         let lexbuf = Lexing.from_string inp in
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-        (Z3m_Sat_or_Unk, sol)
-      else (Z3m_Unsat, [])
-    with _ -> (Z3m_Sat_or_Unk, [])
-  in 
-  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
-  (* let _ = print_endline ("MODEL: " ^ (pr2 m)) in *)
-  m 
+        Z3m_Sat_or_Unk sol
+      else Z3m_Unsat
+    with _ -> Z3m_Sat_or_Unk []
+  in m 
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in
   let pr2 = string_of_z3m_res in
-  let pr3 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
-  Debug.no_1 "z3_get_model" pr1 (pr_pair pr2 pr3)
+  Debug.no_1 "z3_get_model" pr1 pr2
   (fun _ -> get_model is_linear vars assertions) assertions
 
 let norm_model (m: (string * z3m_val) list): (string * int) list =
@@ -1213,82 +1209,9 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   List.map (fun (v, i) -> (v, i / gcd_mi)) m
 
 let norm_model (m: (string * z3m_val) list): (string * int) list =
-  let pr1 = pr_list (pr_pair (fun s -> s) string_of_z3m_val) in
-  let pr2 = pr_list (pr_pair (fun s -> s) string_of_int) in
+  let pr1 = pr_list (pr_pair idf string_of_z3m_val) in
+  let pr2 = pr_list (pr_pair idf string_of_int) in
   Debug.no_1 "z3_norm_model" pr1 pr2
   norm_model m
-
-let rec most_common_nonlinear_vars nl = 
-  match nl with
-  | [] -> []
-  | _ -> 
-    let flatten_nl = List.concat nl in
-    let app_nl = List.fold_left (fun a v ->
-      try
-        let v_cnt = List.assoc v a in
-        (v, v_cnt + 1)::(List.remove_assoc v a)
-      with Not_found -> (v, 1)::a
-      ) [] flatten_nl in
-    (* List of the most appearance variables *)
-    let v, v_cnt = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) app_nl) in
-    let same_v_cnt = List.find_all (fun (_, c) -> c == v_cnt) (List.tl app_nl) in
-    let most_common_v = match same_v_cnt with
-    | [] -> v
-    | _ -> 
-      let l_candidate = v::(List.map (fun (v, _) -> v) same_v_cnt) in
-      let candidate_rank = List.fold_left (fun a vl ->
-        if Gen.BList.subset_eq CP.eq_spec_var vl l_candidate then a
-        else 
-          let inc_v = Gen.BList.intersect_eq CP.eq_spec_var vl l_candidate in
-          List.fold_left (fun a v ->
-            try
-              let v_rank = List.assoc v a in
-              (v, v_rank + 1)::(List.remove_assoc v a)
-            with Not_found -> a) a inc_v) 
-            (List.map (fun v -> (v, 0)) l_candidate) nl in 
-      (* The variable appears in the most other group *)
-      let v, _ = List.hd (List.sort (fun (_, c1) (_, c2) -> c2 - c1) candidate_rank) in
-      v
-    in
-    let rm_nl = List.map (fun vl -> List.filter (fun v1 -> not (CP.eq_spec_var most_common_v v1)) vl) nl in
-    most_common_v::(most_common_nonlinear_vars (List.filter (fun vl -> (List.length vl) >= 2) rm_nl))
-
-let most_common_nonlinear_vars nl = 
-  let pr1 = !CP.print_svl in
-  let pr2 = pr_list pr1 in
-  Debug.no_1 "most_common_nonlinear_vars" pr2 pr1
-  most_common_nonlinear_vars nl
-
-let get_opt_model is_linear vars assertions =
-  let res, model = get_model is_linear vars assertions in
-  if is_linear then res, model
-  else
-    match res with
-    | Z3m_Unsat -> res, model
-    | _ -> 
-      let nl_var_list = List.concat (List.map CP.nonlinear_var_list_formula assertions) in
-      let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
-      let nl_vars_w_z3m_val = List.map (fun v -> 
-        let v_name = CP.name_of_spec_var v in
-        List.find (fun (vm, _) -> v_name = vm) model) subst_nl_vars in
-      let nl_vars_w_int_val = norm_model nl_vars_w_z3m_val in
-      let sst = List.map (fun v -> 
-        let v_name = CP.name_of_spec_var v in
-        let v_val = List.assoc v_name nl_vars_w_int_val in
-        (v, CP.mkIConst v_val no_pos)) subst_nl_vars in
-      let assertions = List.map (fun f -> CP.apply_par_term sst f) assertions in
-      let res, model = get_model true vars assertions in
-      res, model @ nl_vars_w_z3m_val
-
-let get_model is_linear vars assertions =
-  get_opt_model is_linear vars assertions
-
-
-
-
-
-
-
-
 
 
