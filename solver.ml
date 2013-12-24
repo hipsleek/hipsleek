@@ -5714,7 +5714,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			            if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
 			            else 
 			              let l1,l2 = List.split (List.map (fun c-> helper_inner 10 ctx (snd c)) conseq) in
-			              ((fold_context_left 2 l1),(mkCaseStep ctx (EList conseq) l2))
+			              ((fold_context_left 42 l1),(mkCaseStep ctx (EList conseq) l2))
 			          else (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error)) , UnsatConseq)
 			            (* TODO : can do a stronger falsity check on LHS *)
                   ) (* END match join_id with *)

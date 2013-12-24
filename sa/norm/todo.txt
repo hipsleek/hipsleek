@@ -644,6 +644,9 @@ inferred rel: [RELASS [P3]: ( P3(n_90,m_91)) -->  (n_90!=0 | 0>m_91);
 [( true, true, P3(n_90,m_91), ((n_90<=(m_91-1) & n_90<=(0-1)) | (m_91<=n_90 & m_91<=(0-1))))]
 ===================================================================
 # fix-2.fc
+
+TODO : pairwisecheck on base cases..
+
 # fixpoint at BU2 seems incomparable with BU3
 # fixpoint at BU3 seems worse than BU2
 # likely due to bad SimHeuristic
@@ -663,7 +666,7 @@ E3:=bottomup(Q,3,SimHeur);
 E1;E2;E3;
 ===================================================================
 # zip-2a.slk
-  - gen ext_pred size on-the-flight
+  - gen ext_pred size on-the-fly
   - each field of each data ==> unique label (DONE)
   
  ===================================================================
@@ -781,5 +784,81 @@ Why did classic fail when we have no residue?
 Entail 2: Fail.(must) cause: p_76=null |-  pp_74!=null & p_76=pp_74. LOCS:[39;8;40;7] (must-bug)
 
 */
+===================================================================
+zip-le-2.ss --gff
+
+For pre-cond, it generated:
+
+P:={[m,n] -> [pm,pn] -> []:  (exists (n_990:(( (exists (m_991:((m=1+m_991 && 0<=m_991) && P(m_991,n_990,pm,pn))))  && n=1+n_990) && 0<=n_990))) 
+};
+TD:=topdown(P, 2, SimHeur);
+TD;
+
+zip-norm-2.ss --gff
+
+No file generated. I presume it is cos there
+are no checks to perform?
+===================================================================
+classic-bug-1a.ss (without)
+classic-bug-1b.ss (with classic)
+
+-debgug lem.log
+
+Need to investigate point of difference
+at heap_entail_conjunct_helper.
+
+
+                              if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                                  (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
+                                  let r, new_es = Inf.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
+                                  if not r then
+                                    let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+
+heap_entail_empty_rhs_heap#1@23@22@1
+heap_entail_empty_rhs_heap#1 inp1 : es_formula: emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+ es_heap: self_two::node<_,flted_12_39>@M
+ es_evars: [flted_13_40; pp_41]
+ es_ante_evars: [flted_12_39; flted_13_40; pp_41]
+ es_rhs_eqset: [self_two:pp_41]
+ es_subst (from): [flted_13_40]
+ es_subst (to): [flted_12_39]
+ es_aux_conseq: pp_41=self_two
+ es_trace:  SEARCH ==>  Fold ==>  Match ==> 
+heap_entail_empty_rhs_heap#1 inp2 : emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+heap_entail_empty_rhs_heap#1 inp3 : flted_12_39=null & pp_41=self_two
+heap_entail_empty_rhs_heap#1@23 EXIT: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+
+@22! l_inst: true
+@22! p2: flted_12_39=null & pp_41=self_two
+@22! new_ctx: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+heap_entail_conjunct_helper#3@22@1
+heap_entail_conjunct_helper#3 inp1 : es_formula: emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+ es_heap: self_two::node<_,flted_12_39>@M
+ es_evars: [flted_13_40; pp_41]
+ es_ante_evars: [flted_12_39; flted_13_40; pp_41]
+ es_rhs_eqset: [self_two:pp_41]
+ es_subst (from): [flted_13_40]
+ es_subst (to): [flted_12_39]
+ es_aux_conseq: pp_41=self_two
+ es_trace:  SEARCH ==>  Fold ==>  Match ==> 
+heap_entail_conjunct_helper#3 inp2 : emp&flted_12_39=null & pp_41=self_two&{FLOW,(21,22)=__norm}[]
+heap_entail_conjunct_helper#3@22 EXIT: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
