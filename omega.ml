@@ -946,6 +946,10 @@ let hull (pe : formula) : formula =
 	        match_vars (fv pe) rel
   end
 
+let hull (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "omega.hull" pf pf hull pe
+
 let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
@@ -973,11 +977,10 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 	          match_vars vars_list rel
             end
       | _, _ -> pe1
-            end
+  end
 
 let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
     flush log_all;
   end;
-

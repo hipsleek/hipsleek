@@ -236,6 +236,15 @@ let is_False cp = match cp with
         end
   | _ -> false
 
+let is_True cp = match cp with
+  | BForm (p,_) -> 
+        begin
+        match p with
+          | (BConst (b,_),_) -> b
+          | _ -> false
+        end
+  | _ -> false
+
 let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false

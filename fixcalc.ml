@@ -540,6 +540,18 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
 (*    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;*)
   res
 
+let compute_fixpoint_aux rel_defs ante_vars bottom_up = 
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list (pr_triple pr0 pr0 string_of_int) in
+  let pr2 = !CP.print_svl in
+  let pr_res = pr_list (pr_pair pr0 pr0) in
+  if (!Globals.allow_qe_fix)
+    then List.map (fun ((a,_) as f) -> a,(Coqinf.qe_fixpoint f)) (List.map (fun (a,b,_) -> a,b) rel_defs) 
+    else
+  DD.no_2 "compute_fixpoint_aux" pr1 pr2 pr_res
+    (fun _ _ -> compute_fixpoint_aux rel_defs ante_vars bottom_up) 
+      rel_defs ante_vars
+
 let helper (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
   Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;

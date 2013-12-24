@@ -773,6 +773,7 @@ let allow_inf_qe = ref false (*enable support to use quantifier elimination with
 let allow_inf_qe_coq = ref false
 (* enable support to use quantifier elimination procedure
 implemented in coq and extracted as infsolver.ml *)
+let allow_qe_fix = ref false
 
 let ann_derv = ref false
 

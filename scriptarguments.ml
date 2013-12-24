@@ -256,6 +256,9 @@ let common_arguments = [
 	(*Globals.filtering_flag := false;*)
     Globals.ann_vp := false;),
     "use the quantifier elimination procedure implemented in coq for PAinfinity ");
+  ("--en-qe-fix", Arg.Unit( fun _ ->
+	Globals.allow_qe_fix := true;),
+    "use the quantifier elimination procedure for inference ");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
   ("--no-coercion", Arg.Clear Globals.use_coercion,

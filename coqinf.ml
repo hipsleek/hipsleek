@@ -1,5 +1,6 @@
 open Cpure
 open Globals
+open Gen
 (*module type SV_TYPE =
 sig
   type t
@@ -462,6 +463,11 @@ let rec coqpure_to_cpure (cf: coq_formula) : formula =
 let coqpure_to_cpure (f:coq_formula) : formula = 
 Debug.no_1 "coqpure_to_cpure" (fun _ -> "")  Cprinter.string_of_pure_formula coqpure_to_cpure f
 
+let rec add_exists (f: formula) vl : formula =
+match vl with
+  | [] -> f
+  | x::xs -> Exists(x,(add_exists f xs),None,no_pos)
+
 let rec close_form_cpure (f: formula) : formula =
 (*if List.length (fv f) > 0 
 then (close_form_cpure (Exists((List.hd (fv f)),f,None,no_pos)))
@@ -473,6 +479,8 @@ let rec close_form_cpure_all (f: formula) : formula =
 then (close_form_cpure_all (Forall((List.hd (fv f)),f,None,no_pos)))
 else f*)
 mkForall (fv f) f None no_pos
+
+
 
 let rec drop_quantifier (f:formula) vl : formula = 
 match f with 
@@ -516,7 +524,7 @@ let drop_forall (f:formula) :formula =
 
 let close_form_cpure (f:formula) :formula =
 Debug.no_1 "close_form_cpure" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
-close_form_cpure f
+close_form_cpure  f
 
 let remove_redundant_after_inf (f:formula):formula =
   let l_disj = split_disjunctions f in
@@ -576,3 +584,128 @@ check_imply_inf_formula a c
 
 let check_imply_inf_formula (a: formula) (c:formula) :formula =
 Gen.Profiling.no_1 "check_imply_coq" check_imply_inf_formula a c
+
+let fresh_l_name () = SpecVar(Int,fresh_old_name "l_",Unprimed)
+
+let fresh_u_name () = SpecVar(Int,fresh_old_name "u_",Unprimed)
+
+let rec generate_oct_inv (svl: spec_var list) : formula list =
+let mk_inv_1 v = 
+  let i1 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) (mkVar v no_pos) no_pos),None),None) in
+  let i2 = BForm(((mkLte (mkVar v no_pos) (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
+  Cpure.mkAnd i1 i2 no_pos 
+in
+let mk_inv_2_add x y = 
+  let x = mkVar x no_pos in
+  let y = mkVar y no_pos in
+  let add_xy = mkAdd x y no_pos in
+  let i1 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) add_xy no_pos),None),None) in
+  let i2 = BForm(((mkLte add_xy (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
+  (Cpure.mkAnd i1 i2 no_pos)
+in
+let mk_inv_2_sub x y =
+  let x = mkVar x no_pos in
+  let y = mkVar y no_pos in
+  let sub_xy = mkSubtract x y no_pos in
+  let i3 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) sub_xy no_pos),None),None) in
+  let i4 = BForm(((mkLte sub_xy (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
+  (Cpure.mkAnd i3 i4 no_pos)
+in 
+match svl with
+  | [] -> []
+  | x::xs -> let f1 = mk_inv_1 x in
+             let f2 = (List.map (fun y -> mk_inv_2_add x y) xs) in
+             let f3 = (List.map (fun y -> mk_inv_2_sub x y) xs) in
+             (*let f4 = List.map (fun y -> Cpure.mkAnd f1 y no_pos) f3 in
+             let f5 = List.map (fun y -> (mk_inv_1 y)) xs in
+             let f6 = List.combine f5 f3 in
+             let f4 = List.map (fun (x,y) -> Cpure.mkAnd y (Cpure.mkAnd f1 x no_pos) no_pos) f6 in*)
+             f1::f2@f3@(generate_oct_inv xs)
+             (*let f2 = join_conjunctions (List.map (fun y -> mk_inv_2 x y) xs) in
+             let fx = (Cpure.mkAnd f1 f2 no_pos) in
+             Cpure.mkAnd fx (generate_oct_inv xs) no_pos*)
+
+let get_svl relf = 
+match relf with
+  | BForm ((RelForm (name,args,_),_),_) -> List.concat (List.map afv args)
+  | _ -> []
+
+let strongest_inv f = 
+  let f_f f = None in
+  let f_bf bf = let pf,l = bf in
+    match pf with
+    | Lte(a1,a2,p) -> Some((Eq(a1,a2,p),l))
+    | _ -> Some bf in
+  let f_e e = Some e
+  in map_formula f (f_f,f_bf,f_e)
+
+let qe_fixpoint rel_def = 
+  let svl = get_svl (fst rel_def) in
+  let rsv = name_of_rel_form (fst rel_def) in
+  let octinv_lst = generate_oct_inv svl in
+  (*let flist = list_of_disjs (snd rel_def) in*)
+  let flist = ([(snd rel_def)]) in
+  let aux f octinv = 
+  let f_fa f = 
+    let rec f_f f = match f with
+    | BForm((RelForm(n,a,_),_),_) -> 
+        if eq_spec_var rsv n                      
+        then let sl = List.combine svl (List.concat (List.map afv a)) in
+             (subst sl octinv)  
+        else f
+    | Or(f1,f2,l,p) -> (mkOr (f_f f1) (f_f f2) l p) 
+    | And(f1,f2,p) ->  (mkAnd (f_f f1) (f_f f2) p)
+    | Exists(sv,f,l,p) -> (Exists(sv,(f_f f),l,p))
+    | Forall(sv,f,l,p) -> (Forall(sv,(f_f f),l,p))
+    | Not(f,l,p) -> (Not((f_f f),l,p))
+    | _ -> f
+  in Some(f_f f) in
+  let f_bf bf = Some bf in
+  let f_e e = (Some e) in
+  let orig_vl = fv f in
+  let f1 = map_formula f (f_fa,f_bf,f_e) in
+  let fa = Cpure.mkOr (mkNot f1 None no_pos) octinv None no_pos in
+  (*let fa = Cpure.mkAnd f1 (mkNot octinv None no_pos) no_pos in*)
+  (*let fa = Cpure.mkOr (mkNot octinv None no_pos) f1 None no_pos in*)
+  (*let _ = print_endline ("FA: "^Cprinter.string_of_pure_formula fa ) in*)
+  let var_lst = List.filter (fun v -> not(mem_svl v orig_vl)) (fv fa) in
+  let f = (close_form_cpure_all fa) in
+  let f = drop_quantifier f var_lst in
+  (*Omega.is_valid f !Globals.imply_timeout_limit*)
+  let r = (Omega.simplify f) in
+  (*let r = mkNot r None no_pos in*)
+  let res = 
+    if (is_False r) && !allow_inf_qe_coq then 
+      let f = (close_form_cpure f) in
+      let f = (cpure_to_coqpure f) in
+      let vl = List.map (fun sv -> string_of_spec_var sv) var_lst in
+      let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
+                                                                 (coqpure_to_coq_infsolver_form f vl))) in
+      Omega.simplify f
+    else if (is_False r) && !allow_inf_qe then
+      let inf_inst = Infinity.gen_instantiations var_lst [] in
+      let inf_inst = inf_inst in
+      let flist = List.map (fun c -> Omega.simplify (Infinity.normalize_inf_formula_sat (mkAnd f c no_pos))) inf_inst in
+      (conj_of_list flist no_pos)
+  (*Omega.qe f*)
+  else r
+  in (f1,res) in
+  let fl = List.map (fun f -> (join_conjunctions (List.map (fun c ->
+      let fa,fu = aux f c in
+     if (is_True fu) then fu
+      else 
+        let vl = fv fu in
+        (*let fulst = list_of_disjs fu in*)
+        Omega.simplify (mkExists vl (mkAnd c (strongest_inv fu) no_pos) None no_pos)) 
+        (*Omega.simplify (add_exists (mkOr f1 c None no_pos) vl))*)
+        octinv_lst))) flist in
+       (* Omega.simplify (mkExists vl (mkOr fa (mkNot fu None no_pos) None no_pos) None no_pos))*)
+  (disj_of_list fl no_pos)
+ (*(join_conjunctions (List.map Omega.hull fl))*)
+ (* let cnsts = (list_of_conjs (Omega.hull f)) in*)
+  (*Omega.gist  (join_conjunctions (List.tl fl)) (List.hd fl)*)
+
+let qe_fixpoint rel_def = 
+  let pr0 = !print_formula in
+  let pr1 = (pr_pair pr0 pr0) in
+Debug.no_1 "qe_fixpoint" pr1 Cprinter.string_of_pure_formula qe_fixpoint rel_def
