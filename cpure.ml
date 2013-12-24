@@ -1779,6 +1779,10 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
+and mkEqMax a1 a2 a3 pos = EqMax (a1, a2, a3,pos)
+
+and mkEqMin a1 a2 a3 pos = EqMin (a1, a2, a3,pos)
+
 and mkVar sv pos = Var (sv, pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)

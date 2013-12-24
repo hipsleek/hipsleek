@@ -611,11 +611,33 @@ let mk_inv_2_sub x y =
   let i4 = BForm(((mkLte sub_xy (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
   (Cpure.mkAnd i3 i4 no_pos)
 in 
+let mk_inv_2_min x y =
+  let x = mkVar x no_pos in
+  let y = mkVar y no_pos in
+  let new_name = ("min"^(fresh_trailer())) in
+  let nv = (mkVar (SpecVar(Int,new_name,Unprimed)) no_pos) in
+  let min_xy = BForm(((mkEqMin nv x y no_pos),None),None) in
+  let i3 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) nv no_pos),None),None) in
+  let i4 = BForm(((mkLte nv (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
+  mkAnd (Cpure.mkAnd i3 i4 no_pos) min_xy no_pos
+in 
+let mk_inv_2_max x y =
+  let x = mkVar x no_pos in
+  let y = mkVar y no_pos in
+  let new_name = ("max"^(fresh_trailer())) in
+  let nv = (mkVar (SpecVar(Int,new_name,Unprimed)) no_pos) in
+  let max_xy = BForm(((mkEqMax nv x y no_pos),None),None) in
+  let i1 = BForm(((mkLte (mkVar (fresh_l_name ()) no_pos) nv no_pos),None),None) in
+  let i2 = BForm(((mkLte nv (mkVar (fresh_u_name ()) no_pos) no_pos),None),None) in
+  mkAnd (Cpure.mkAnd i1 i2 no_pos) max_xy no_pos
+in 
 match svl with
   | [] -> []
   | x::xs -> let f1 = mk_inv_1 x in
              let f2 = (List.map (fun y -> mk_inv_2_add x y) xs) in
              let f3 = (List.map (fun y -> mk_inv_2_sub x y) xs) in
+             let f4 = (List.map (fun y -> mk_inv_2_min x y) xs) in
+             let f5 = (List.map (fun y -> mk_inv_2_max x y) xs) in
              (*let f4 = List.map (fun y -> Cpure.mkAnd f1 y no_pos) f3 in
              let f5 = List.map (fun y -> (mk_inv_1 y)) xs in
              let f6 = List.combine f5 f3 in
@@ -681,6 +703,7 @@ let qe_fixpoint rel_def =
       let vl = List.map (fun sv -> string_of_spec_var sv) var_lst in
       let f = coqpure_to_cpure (coq_infsolver_to_coqpure_form (transform_ZE_to_string 
                                                                  (coqpure_to_coq_infsolver_form f vl))) in
+      let f = remove_redundant (remove_redundant_after_inf f) in 
       Omega.simplify f
     else if (is_False r) && !allow_inf_qe then
       let inf_inst = Infinity.gen_instantiations var_lst [] in
@@ -696,7 +719,7 @@ let qe_fixpoint rel_def =
       else 
         let vl = fv fu in
         (*let fulst = list_of_disjs fu in*)
-        Omega.simplify (mkExists vl (mkAnd c (strongest_inv fu) no_pos) None no_pos)) 
+        Omega.simplify (add_exists (mkAnd c (strongest_inv fu) no_pos) vl)) 
         (*Omega.simplify (add_exists (mkOr f1 c None no_pos) vl))*)
         octinv_lst))) flist in
        (* Omega.simplify (mkExists vl (mkOr fa (mkNot fu None no_pos) None no_pos) None no_pos))*)
