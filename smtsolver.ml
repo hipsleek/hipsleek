@@ -1188,9 +1188,9 @@ let get_model is_linear vars assertions =
         let inp = String.concat "\n" (List.tl model) in
         let lexbuf = Lexing.from_string inp in
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-        Z3m_Sat_or_Unk sol
-      else Z3m_Unsat
-    with _ -> Z3m_Sat_or_Unk []
+        Sat_or_Unk sol
+      else Unsat
+    with _ -> Sat_or_Unk []
   in m 
 
 let get_model is_linear vars assertions =

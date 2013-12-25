@@ -559,7 +559,7 @@ let rec solve_rrel_list rrel_list =
   let fv = Gen.BList.remove_dups_eq eq_spec_var 
     (List.concat (List.map CP.fv c_constrs)) in
   let res = Smtsolver.get_model is_linear fv c_constrs in
-  let model = match res with | Z3m.Z3m_Sat_or_Unk m -> m | _ -> [] in
+  let model = match res with | Z3m.Sat_or_Unk m -> m | _ -> [] in
   (model, List.exists (fun b -> b) is_raw)
 
 (* Plug inferred result into views *)

@@ -17,6 +17,20 @@ type solver_res =
   | Unknown
   | Aborted
 
+type solver = 
+  | Z3
+  | Clp
+  | LPSolve
+  | Glpk
+
+let lp_solver = ref Z3
+
+let set_solver solver_name =
+  if solver_name = "clp" then lp_solver := Clp
+  else if solver_name = "lps" then lp_solver := LPSolve
+  else if solver_name = "glpk" then lp_solver := Glpk
+  else lp_solver := Z3
+
 let print_term (t: term) =
   List.fold_left (fun s (v, d) -> s ^ "*" ^ 
     (!print_sv v) ^ "^" ^ (string_of_int d)) 
@@ -591,11 +605,11 @@ let most_common_nonlinear_vars nl =
   Debug.no_1 "most_common_nonlinear_vars" pr2 pr1
   most_common_nonlinear_vars nl
 
-let get_model is_linear templ_unks vars assertions =
+let get_model_z3 is_linear templ_unks vars assertions =
   let res = Smtsolver.get_model is_linear vars assertions in
   match res with
-  | Z3m.Z3m_Unsat -> Unsat
-  | Z3m.Z3m_Sat_or_Unk m ->
+  | Z3m.Unsat -> Unsat
+  | Z3m.Sat_or_Unk m ->
     match m with
     | [] -> Unknown
     | _ -> 
@@ -603,13 +617,29 @@ let get_model is_linear templ_unks vars assertions =
         List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) m) in
       Sat model
 
+let get_model_lp solver is_linear templ_unks vars assertions =
+  let res = Lp.get_model solver templ_unks assertions in
+  match res with
+  | Lp.Sat m -> Sat m
+  | Lp.Unsat -> Unsat
+  | Lp.Unknown -> Unknown
+  | Lp.Aborted -> Aborted
+
+let get_model solver is_linear templ_unks vars assertions =
+  match solver with
+  | Z3 -> get_model_z3 is_linear templ_unks vars assertions
+  | Clp -> get_model_lp Lp.Clp is_linear templ_unks vars assertions
+  | Glpk -> get_model_lp Lp.Glpk is_linear templ_unks vars assertions
+  | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
+
 let get_opt_model is_linear templ_unks vars assertions =
-  if is_linear then get_model is_linear templ_unks vars assertions
+  if is_linear then get_model !lp_solver is_linear templ_unks vars assertions
   else
+    (* Linearize constraints *)
     let res = Smtsolver.get_model is_linear vars assertions in
     match res with
-    | Z3m.Z3m_Unsat -> Unsat
-    | Z3m.Z3m_Sat_or_Unk model -> 
+    | Z3m.Unsat -> Unsat
+    | Z3m.Sat_or_Unk model -> 
       let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
       let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
       let nl_vars_w_z3m_val = List.map (fun v -> 
@@ -621,12 +651,22 @@ let get_opt_model is_linear templ_unks vars assertions =
         let v_val = List.assoc v_name nl_vars_w_int_val in
         (v, mkIConst v_val no_pos)) subst_nl_vars in
       let assertions = List.map (fun f -> apply_par_term sst f) assertions in
-      let res2 = Lp.get_model Lp.LPSolve 
-        (Gen.BList.difference_eq eq_spec_var templ_unks subst_nl_vars) assertions in
+      (* let res2 = Lp.get_model Lp.LPSolve *)
+      (*   (Gen.BList.difference_eq eq_spec_var templ_unks subst_nl_vars) assertions in *)
+      (* match res2 with *)
+      (* | Lp.Sat model2 -> Sat (nl_vars_w_int_val @ model2) *)
+      (* | _ -> *)
+      (*   let model = Smtsolver.norm_model (List.filter (fun (v, _) -> *)
+      (*     List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in *)
+      (*   Sat model *)
+      let res2 = get_model !lp_solver true 
+        (Gen.BList.difference_eq eq_spec_var templ_unks subst_nl_vars) 
+        (Gen.BList.difference_eq eq_spec_var vars subst_nl_vars)
+        assertions in
       match res2 with
-      | Lp.Sat model2 -> Sat (nl_vars_w_int_val @ model2)
+      | Sat model2 -> Sat (nl_vars_w_int_val @ model2)
       | _ -> 
-        let model = Smtsolver.norm_model (List.filter (fun (v, _) -> 
+        let model = Smtsolver.norm_model (List.filter (fun (v, _) ->
           List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in
         Sat model
 

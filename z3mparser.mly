@@ -40,10 +40,10 @@ prim_val:
   | MINUS prim_val { z3m_val_neg $2 }
   ;
 
-int_val: INT_LIT { Z3_Int $1 }
+int_val: INT_LIT { Int $1 }
 ;
 
-frac_val: DIV FLOAT_LIT FLOAT_LIT { Z3_Frac ($2, $3) }
+frac_val: DIV FLOAT_LIT FLOAT_LIT { Frac ($2, $3) }
 ;
 
 %%

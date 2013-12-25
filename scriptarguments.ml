@@ -434,6 +434,7 @@ let common_arguments = [
 
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
+  ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps" ], Template.set_solver), "Choose LP solver");
 
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
