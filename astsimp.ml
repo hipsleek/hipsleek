@@ -1083,59 +1083,65 @@ let rec splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.s
 
 (* TODO *)
 let rec move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_var list) = match f with
-    | CF.EBase b->
-	      let nc, vars = Gen.map_opt_res move_instantiations b.CF.formula_struc_continuation in
-	      let qvars, nf = CF.split_quantifiers b.CF.formula_struc_base in
-	      let global_ex, imp_inst = (b.CF.formula_struc_exists, b.CF.formula_struc_implicit_inst) in
-	      let n_qvars = Gen.BList.difference_eq (=) qvars vars in
-	      let n_globals = Gen.BList.difference_eq (=) global_ex vars in
-	      let inst_from_qvars = Gen.BList.difference_eq (=) vars qvars in
-	      let inst_from_global = Gen.BList.difference_eq (=) vars global_ex in
-	      (CF.EBase {b with 
-			  CF.formula_struc_continuation = nc;
-			  CF.formula_struc_base = CF.push_exists n_qvars nf ;
-			  CF.formula_struc_exists = n_globals;
-			  CF.formula_struc_implicit_inst = b.CF.formula_struc_implicit_inst @ inst_from_global @ inst_from_qvars;
-		  },(Gen.BList.difference_eq (=) vars (inst_from_qvars@inst_from_global)))
-    | CF.ECase b-> 
-	      let new_cases, var_list = 
-	        List.split 
-	            (List.map 
-	                (fun (c1,c2)-> 
-		                let nf , vars = move_instantiations c2 in
-		                ((c1,nf), (vars@(Cpure.fv c1)))
-	                ) 
-	                b.CF.formula_case_branches) in
-	      (
-	          (CF.ECase {b with 
-			      CF.formula_case_branches = new_cases}),
-	          (List.concat var_list))			
-    | CF.EAssume b-> (f,[])
+  | CF.EBase b->
+	let nc, vars = Gen.map_opt_res move_instantiations b.CF.formula_struc_continuation in
+	let qvars, nf = CF.split_quantifiers b.CF.formula_struc_base in
+	let global_ex, imp_inst = (b.CF.formula_struc_exists, b.CF.formula_struc_implicit_inst) in
+	let n_qvars = Gen.BList.difference_eq (=) qvars vars in
+	let n_globals = Gen.BList.difference_eq (=) global_ex vars in
+	let inst_from_qvars = Gen.BList.difference_eq (=) vars qvars in
+	let inst_from_global = Gen.BList.difference_eq (=) vars global_ex in
+	(CF.EBase {b with 
+	    CF.formula_struc_continuation = nc;
+	    CF.formula_struc_base = CF.push_exists n_qvars nf ;
+	    CF.formula_struc_exists = n_globals;
+	    CF.formula_struc_implicit_inst = b.CF.formula_struc_implicit_inst @ inst_from_global @ inst_from_qvars;
+	},(Gen.BList.difference_eq (=) vars (inst_from_qvars@inst_from_global)))
+  | CF.ECase b-> 
+	let new_cases, var_list = 
+	  List.split 
+	      (List.map 
+	          (fun (c1,c2)-> 
+		      let nf , vars = move_instantiations c2 in
+		      ((c1,nf), (vars@(Cpure.fv c1)))
+	          ) 
+	          b.CF.formula_case_branches) in
+	(
+	    (CF.ECase {b with 
+		CF.formula_case_branches = new_cases}),
+	    (List.concat var_list))			
+  | CF.EAssume b-> (f,[])
 	(*| CF.EVariance b ->
-		  let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
-			| None -> Cpure.afv e1
-			| Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.CF.formula_var_measures in
-		  let i_var_list = List.fold_left (fun rs e -> rs@(Cpure.afv e)) [] b.CF.formula_var_infer in
-		  let new_cont, c_var_list = helper b.CF.formula_var_continuation in
-		  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))*)
-    | CF.EInfer b ->
-      let new_cont, c_var_list = move_instantiations b.CF.formula_inf_continuation in
-      (CF.EInfer {b with CF.formula_inf_continuation = new_cont}, c_var_list)
-	| CF.EList l -> 
-		let l,vars = map_l_snd_res move_instantiations l in
-		(CF.EList l, List.concat vars)
-      
-      
+	  let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
+	  | None -> Cpure.afv e1
+	  | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.CF.formula_var_measures in
+	  let i_var_list = List.fold_left (fun rs e -> rs@(Cpure.afv e)) [] b.CF.formula_var_infer in
+	  let new_cont, c_var_list = helper b.CF.formula_var_continuation in
+	  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))*)
+  | CF.EInfer b ->
+        let new_cont, c_var_list = move_instantiations b.CF.formula_inf_continuation in
+        (CF.EInfer {b with CF.formula_inf_continuation = new_cont}, c_var_list)
+  | CF.EList l -> 
+	let l,vars = map_l_snd_res move_instantiations l in
+	(CF.EList l, List.concat vars)
+            
+            
 and formula_case_inference cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list) : CF.struc_formula = 
+  let pr = Cprinter.string_of_struc_formula in
+  let pr2 = Cprinter.string_of_spec_var_list in
+  Debug.no_2 "formula_case_inference" pr pr2 pr (fun _ _ -> formula_case_inference_x cp f_ext v1) f_ext v1
+
+
+and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list) : CF.struc_formula = 
   (*let _ = print_string (" case inference, this feature needs to be revisited \n") in*)
   match f_ext with 
     | CF.EList l -> 
 	  (try 
-       let f_list = List.map (fun (_,c)->
+            let f_list = List.map (fun (_,c)->
 		let d = match c with
 		  | CF.EBase b-> if b.CF.formula_struc_continuation <> None then
-			  Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
-			else b.CF.formula_struc_base 
+		      Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+		    else b.CF.formula_struc_base 
 		  | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 		in
 		let not_fact,_, _ = (Solver.xpure_symbolic 11 cp d) in
@@ -1145,26 +1151,34 @@ and formula_case_inference cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list) :
 		let fact,_,_(*all,exist*) = Cpure.float_out_quantif fact in
 		let fact = Cpure.check_not fact in
 		(fact,c)) l in    
-	   fst (move_instantiations (List.hd (splitter f_list v1)))
-	   with _ -> f_ext)
+	    fst (move_instantiations (List.hd (splitter f_list v1)))
+	  with _ -> f_ext)
     | _ -> f_ext 
-      
-and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.view_decl = 
+          
+and view_case_inference_x cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.view_decl = 
   try
     let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
     if (iv.Iast.try_case_inference) then
-	  let sf = (CP.SpecVar (Named cv.Cast.view_data_name, self, Unprimed)) in
+      let _ = Debug.info_pprint "perform view case_infer" no_pos in
+      let sf = (CP.SpecVar (Named cv.Cast.view_data_name, self, Unprimed)) in
       (*TODO: disallow variables that are not instantiated in the case guards, more specifically, 
         view parameters should not be in case guards*)
-	  let f = formula_case_inference cp cv.Cast.view_formula [sf] in
-	  {cv with 
-	      Cast.view_formula = f; 
-	      Cast.view_case_vars =Gen.BList.intersect_eq (=) (sf::cv.C.view_vars) (CF.guard_vars f); }
+      let f = formula_case_inference cp cv.Cast.view_formula [sf] in
+      {cv with 
+	  Cast.view_formula = f; 
+	  Cast.view_case_vars =Gen.BList.intersect_eq (=) (sf::cv.C.view_vars) (CF.guard_vars f); }
     else cv
   with _ -> cv 	
-      
-and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
+
+and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.view_decl =
+  let pr = Cprinter.string_of_view_decl in
+  Debug.no_1 "view_case_inference" pr pr (fun _ -> view_case_inference_x cp ivl cv) cv
+
+and case_inference_x (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
+
+and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
+  Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
   
 (*HIP*)
 let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =

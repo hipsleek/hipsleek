@@ -1,0 +1,22 @@
+====================================================
+#case-ls.slk --eci -dre "formula_case_infer"
+
+case_inference methods traced, but there isn't any change
+to its transformed spec.
+
+formula_case_inference@3@2@1
+formula_case_inference inp1 : :EBase {1}->emp&self=null & n=0&{FLOW,(1,24)=__flo
+w}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_13,
+          flted_11_12: self::node<q>@M * q::ll<p_13,flted_11_12>@M&
+          n=flted_11_12+1 & p=p_13&{FLOW,(1,24)=__flow})[]
+formula_case_inference inp2 :[self]
+formula_case_inference@3 EXIT: :EBase {1}->emp&self=null & n=0&{FLOW,(1,24)=__fl
+ow}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[](exists p_13,
+          flted_11_12: self::node<q>@M * q::ll<p_13,flted_11_12>@M&
+          n=flted_11_12+1 & p=p_13&{FLOW,(1,24)=__flow})[]
+====================================================
+====================================================
+====================================================
+====================================================
