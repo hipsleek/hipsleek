@@ -636,7 +636,7 @@ let get_opt_model is_linear templ_unks vars assertions =
   if is_linear then get_model !lp_solver is_linear templ_unks vars assertions
   else
     (* Linearize constraints *)
-    let res = Smtsolver.get_model is_linear vars assertions in
+    let res = Smtsolver.get_model true vars assertions in
     match res with
     | Z3m.Unsat -> Unsat
     | Z3m.Sat_or_Unk model -> 
