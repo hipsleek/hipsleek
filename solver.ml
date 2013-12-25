@@ -8140,7 +8140,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 ) 
                                 else h1
                               ) in
-                              if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                              if (!Globals.do_classic_frame_rule &&  not(is_folding) && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
                                   (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
                                   let r, new_es = Inf.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                                   if not r then
