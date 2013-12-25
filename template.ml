@@ -621,9 +621,10 @@ let get_opt_model is_linear templ_unks vars assertions =
         let v_val = List.assoc v_name nl_vars_w_int_val in
         (v, mkIConst v_val no_pos)) subst_nl_vars in
       let assertions = List.map (fun f -> apply_par_term sst f) assertions in
-      let res2 = Lp.get_model Lp.LPSolve templ_unks assertions in
+      let res2 = Lp.get_model Lp.LPSolve 
+        (Gen.BList.difference_eq eq_spec_var templ_unks subst_nl_vars) assertions in
       match res2 with
-      | Lp.Sat model2 -> Sat (model2 @ nl_vars_w_int_val)
+      | Lp.Sat model2 -> Sat (nl_vars_w_int_val @ model2)
       | _ -> 
         let model = Smtsolver.norm_model (List.filter (fun (v, _) -> 
           List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in

@@ -167,7 +167,7 @@ let clp_process_output lp_output =
 
 exception Parse_error_LPSolve
 
-let lpsolve_process_out lp_output =
+let lpsolve_process_output lp_output =
   let out_ls = Str.split (Str.regexp "[\n]+") lp_output in
   match out_ls with
   | _::_::str_model -> begin
@@ -182,7 +182,7 @@ let lpsolve_process_out lp_output =
 let process_output solver lp_output = 
   match solver with
   | Clp -> clp_process_output lp_output
-  | LPSolve -> lpsolve_process_out lp_output
+  | LPSolve -> lpsolve_process_output lp_output
 
 let run solver input =
   let lp_input = "logs/allinput.lp" in 
@@ -219,7 +219,7 @@ let gen_lpsolve_input obj_vars assertions =
   let var_decl = String.concat "\n" (List.map (fun v ->
     (lp_of_typed_spec_var v) ^ ";") obj_vars)
   in
-  let lp_inp = obj_stmt ^ "\n" ^ model_stmt in
+  let lp_inp = obj_stmt ^ "\n\n" ^ model_stmt ^ "\n\n" ^ var_decl in
   lp_inp
 
 let gen_lp_input solver obj_vars assertions =
