@@ -22,3 +22,6 @@ or x::node<_,p>*ll_nth(p).
 //pred_disj_unify [ll_last].
 
 //pred_disj_unify [ll_nth].
+
+
+pred_split [ll_last].

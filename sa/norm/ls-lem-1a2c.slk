@@ -8,20 +8,21 @@ pred lseg<last> ==
  or self::node<_,p>*p::lseg<last> //& self!=last
  inv true.
 
-
+/*
 checkentail self_two::node<_,null>@M
  |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
 print residue.
 
-/*
+
 checkentail_exact self_two::node<_,null>@M
  |-  (exists pp:   pp::node<_,null> & self_two=pp)
    or (exists pp,p: self_two::node<_,p>*p::lseg<pp> * pp::node<_,null>).
 print residue.
+*/
 
 checkentail_exact self_two::node<_,null>@M
  |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
-*/
+
 
 
 
