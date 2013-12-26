@@ -33,6 +33,8 @@ module TP = Tpdispatcher
 module LO = Label_only.LOne
 module ME = Musterr
 
+(*used for classic*)
+let rhs_rest_emp = ref true
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
@@ -8140,8 +8142,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 ) 
                                 else h1
                               ) in
-                              (* let _ = DD.info_hprint (add_str "is_folding: " string_of_bool) is_folding no_pos in *)
-                              if (!Globals.do_classic_frame_rule && (* not(is_folding) && *) (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                              let _ = DD.ninfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
+                              let _ = DD.ninfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
+                              (*use global var is dangerous, should pass as parameter*)
+                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && (* not(is_folding) && *) (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
                                   if  not (Inf.no_infer_hp_rel estate) then
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
@@ -11319,6 +11323,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     end;
     (*add tracing into the entailment state*)
     let action_name:string = Context.string_of_action_name a in
+    let _ = rhs_rest_emp := Context.get_rhs_rest_emp_flag a !rhs_rest_emp in
     let estate = {estate with es_trace = action_name::estate.es_trace} in
     let r1, r2 = match a with  (* r1: list_context, r2: proof *)
       | Context.M_match ({
@@ -11331,7 +11336,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
             Debug.tinfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-             (*******SPLIT/COMBINE permissions********>>
+            (*******SPLIT/COMBINE permissions********>>
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
@@ -11489,8 +11494,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
-            Context.match_res_rhs_rest = rhs_rest;} -> 
-	    let l_perm = get_node_perm lhs_node in
+            Context.match_res_rhs_rest = rhs_rest;} ->
+            let l_perm = get_node_perm lhs_node in
 	    let r_perm = get_node_perm rhs_node in
 	    let v_rest, v_consumed = 
 	      let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> (Cpure.get_var v) in			
@@ -11525,7 +11530,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} ->
             (* let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_entail_state)) estate pos in *)
-          let estate =
+            let estate =
               if Inf.no_infer_rel estate then estate
               else
                 let lhs_h,lhs_p,_, _, lhs_a  = CF.split_components estate.es_formula in

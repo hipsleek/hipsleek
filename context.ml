@@ -65,6 +65,28 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
+let get_rhs_rest_emp_flag act old_is_rhs_emp =
+  match act with
+    | M_match m
+    | M_split_match m
+    | M_fold m
+    | M_unfold  (m,_)
+    | M_base_case_unfold m
+    | M_base_case_fold m
+    | M_rd_lemma m
+    | M_lemma  (m, _)
+    | Undefined_action m
+    | M_lhs_case m
+    | M_cyclic m ->
+          if m.match_res_rhs_rest = HEmp then true else false
+    | M_Nothing_to_do _ -> old_is_rhs_emp
+    | M_infer_heap _ -> old_is_rhs_emp
+    | M_unmatched_rhs_data_node _ -> old_is_rhs_emp
+          (* perform a list of actions until there is one succeed*)
+    | Cond_action _ -> old_is_rhs_emp
+          (*not handle yet*)
+    | Seq_action _ -> old_is_rhs_emp
+    | Search_action _ -> old_is_rhs_emp
 
 let is_complex_action a = match a with
   | Search_action _ 

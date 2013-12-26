@@ -752,7 +752,7 @@ process_coercion_check@1 EXIT:(false, Error Context: 1[
                   emp&p_64=null&{FLOW,(3,4)=__Error}[]
                   ])
 ===================================================================
-# ls-lem-1a2b
+# ls-lem-1a2b: FIXED
 
 checkentail_exact self_two::node<_,null>@M
  |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
@@ -770,7 +770,7 @@ res:  failctx
                    fc_message:  p_45=null |-  pp_43!=null & p_45=pp_43. LOCS
 */
 ===================================================================
-# ls-lem-1a2c.slk
+# ls-lem-1a2c.slk: FIXED
 
 The first entail succeed without residue:
 
