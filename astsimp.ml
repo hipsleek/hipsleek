@@ -1006,7 +1006,7 @@ let line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_
 
       
       
-let rec splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.spec_var list) : CF.struc_formula list =
+let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.spec_var list) : CF.struc_formula list =
   (*let _ = print_string ("\n splitter got: "^(
     List.fold_left (fun a (c1,c2)-> a^"\n"^(Cprinter.string_of_pure_formula c1)^"--"^
     (Cprinter.string_of_ext_formula c2)) "" f_list_init)
@@ -1029,8 +1029,7 @@ let rec splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.s
 				let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
 			  (c1,c2,aset,eqs)) f_list_init in
 	      let f_a_list = Gen.Profiling.add_index f_list in
-	      let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->
-			  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
+	      let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
 	      let constr_list = Gen.BList.remove_dups_eq (fun (x1,c1,_)(x2,c2,_)-> (x1=x2)&&(Cpure.equalBFormula c1 c2)) constr_list in
 	      let constr_array = Array.of_list constr_list in
 	      let sz = Array.length constr_array in
@@ -1038,19 +1037,14 @@ let rec splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.s
 
 	      let filled_matr = 
 	        Array.mapi(fun x c->(Array.mapi (fun y c->
-				if (x>y) then 
-				  Cpure.compute_constraint_relation 
-					  (constr_array.(x)) 
-					  (constr_array.(y)) 
-				else if x=y then 
-				  Cpure.Equal else 
-					matr.(x).(y) 
-			) c)) matr in
+				if (x>y) then Cpure.compute_constraint_relation (constr_array.(x)) (constr_array.(y)) 
+				else if x=y then Cpure.Equal 
+				else matr.(x).(y) ) c)) matr in
 	      let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
 			  if (x<y) then filled_matr.(y).(x)
 			  else filled_matr.(x).(y)) c)) filled_matr in
-	      (*
-	        let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
+	      
+	        (*let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
 	        (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
 	        (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
 	        let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
@@ -1064,23 +1058,27 @@ let rec splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.s
 			  let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
 			  ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
 		  ) constr_array in
-	      
-	      
-	      
+
 	      let splitting_constraints = 
 	        List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0)) (Array.to_list splitting_constraints) in
 	      if (List.length splitting_constraints)>0 then
 	        List.concat (List.map (fun (constr,neg_constr,l1,l2)->
-				let nf1 = splitter l1 rest_vars in
-				let nf2 = splitter l2 rest_vars in
+				let nf1 = splitter_x l1 rest_vars in
+				let nf2 = splitter_x l2 rest_vars in
 				List.concat (List.map (fun c1-> List.map (fun c2-> 
 					CF.ECase{					
 						CF.formula_case_branches =[(constr,c1);(neg_constr,c2)];
 						CF.formula_case_pos = no_pos;
 					}) nf2) nf1)					
 			) splitting_constraints)
-	      else splitter f_list_init rest_vars
+	      else splitter_x f_list_init rest_vars
 
+let splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.spec_var list) : CF.struc_formula list =
+  let pr1 l = pr_list (pr_pair !CP.print_formula !CF.print_struc_formula) l in
+  let pr2 (l:CP.spec_var list) :string = !CP.print_svl l in
+  let pr3 (l:CF.struc_formula list):string = pr_list !CF.print_struc_formula l in
+  Debug.no_2 "splitter" pr1 pr2 pr3 splitter_x f_list_init v1
+		  
 (* TODO *)
 let rec move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_var list) = match f with
   | CF.EBase b->
