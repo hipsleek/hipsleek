@@ -14,7 +14,7 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-/* return the first element of a singly linked list 
+/*return the first element of a singly linked list */
 relation RF(int m, int n).
 node ret_first(node x)
   infer[RF]
@@ -23,10 +23,10 @@ node ret_first(node x)
 {
   return x;
 }
-*/
+
 
 /* function to insert a node in a singly linked list 
-
+ */
 relation GNN(int m, int n).
 node get_next_next(node x)
   infer[n,GNN]
@@ -51,7 +51,7 @@ node delete2(node x, int a)
 	}
 }
 
- function to create a singly linked list with a nodes */
+/* function to create a singly linked list with a nodes */
 relation INS(int m, int n).
 void insert(node x, int a)
   infer[INS]
@@ -115,7 +115,7 @@ void list_remove(node x, int v)
 
 void dispose(ref node x)
   requires x::node<_,_>
-  ensures x'=null;
+  ensures x'=null; // '
 
 
 
