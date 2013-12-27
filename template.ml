@@ -338,14 +338,49 @@ let find_eq_subst_exp svl (f: formula): (spec_var * exp) option =
     | _ -> None)
   | _ -> None
 
+let norm_subst svl subst =
+  let rec helper subst = 
+    let grouped_subst = TU.partition_by_assoc eq_spec_var subst in
+    if (List.length grouped_subst) == (List.length subst) then subst
+    else
+      (* (x, e1), (x, e2) --> (e1 = e2) *)
+      helper (List.fold_left (fun a s -> match s with
+      | [] -> a
+      | x::[] -> a @ [x]
+      | (v, e)::xs -> 
+        let pos = pos_of_exp e in
+        let n_xs = List.concat (List.map (fun (vs, es) -> 
+          let f = mkPure (mkEq e es pos)  in
+          let s = find_eq_subst_exp svl f in
+          match s with
+          | None -> []
+          | Some s -> [s]) xs) in
+        a @ ((v, e)::n_xs)) [] grouped_subst) 
+  in
+  let normalized_subst = helper subst in
+  let sorted_subst = List.sort (fun (v1, e1) (v2, e2) -> 
+    if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1
+    else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1
+    else 0) normalized_subst in
+  List.fold_left (fun subst (v, e) -> 
+    (v, a_apply_par_term subst e)::(List.remove_assoc v subst)) sorted_subst sorted_subst
+
 let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
   let fl = split_conjunctions f in
   let fl, subst = List.fold_left (fun (fa, sa) f ->
     match find_eq_subst_exp svl f with
     | None -> (fa @ [f], sa)
     | Some s -> (fa, sa @ [s])) ([], []) fl in
-  let subst = List.map (fun (v, e) -> (v, a_apply_par_term subst e)) subst in
+  (* let subst = List.map (fun (v, e) -> (v, a_apply_par_term subst e)) subst in *)
+  let subst = norm_subst svl subst in
   (apply_par_term subst (join_conjunctions fl), subst)
+
+let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !print_sv !print_exp) in
+  let pr3 = pr_pair pr1 pr2 in
+  Debug.no_1 "find_eq_subst_formula" pr1 pr3 
+  (fun _ -> find_eq_subst_formula svl f) f
 
 let normalize_formula (f: formula): formula =
   let f_b b = Some (normalize_b_formula b) in
@@ -424,6 +459,9 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
 
   let ante, subst = find_eq_subst_formula vars ante in
   let cons = apply_par_term subst cons in
+
+  let _ = print_endline ("S_ANTE: " ^ (!print_formula ante)) in
+  let _ = print_endline ("S_CONS: " ^ (!print_formula cons)) in
   
   let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
   let ante_fl = true_f::(split_conjunctions ante) in
@@ -811,6 +849,15 @@ type term_status =
   | Term
   | MayLoop
 
+type rec_trans = {
+  trans_ctx: formula;
+  trans_src_id: spec_var;
+  trans_src_fv: spec_var list;
+  trans_dst_id: spec_var;
+  trans_dst_args: exp list;
+  trans_rec_cond: formula; (* Simplification of trans_ctx *)
+}
+
 exception Cond_Infer_Failure of string 
 
 let string_of_term_status = function
@@ -825,7 +872,7 @@ let get_loop_trans_templ (f: formula) =
     | _ -> Some []
   in fold_formula f (nonef, f_b, nonef) List.concat
 
-let get_loop_cond_templ_assume (ta: simpl_templ_assume) =
+let get_loop_trans_templ_assume (ta: simpl_templ_assume) =
   let dec_cons = ta.ass_orig_cons in
   let src_templ, dst_templ = match (get_loop_trans_templ dec_cons) with
   | (s, d)::[] -> (s, d)
@@ -836,7 +883,12 @@ let get_loop_cond_templ_assume (ta: simpl_templ_assume) =
   let rec_cond = mkExists_with_simpl idf (* TP.simplify *) 
     (Gen.BList.difference_eq eq_spec_var (fv call_ctx) fv_call_ctx) 
     call_ctx None (pos_of_formula call_ctx) in
-  (src_templ.templ_id, (fv_call_ctx, rec_cond))
+  { trans_ctx = call_ctx;
+    trans_src_id = src_templ.templ_id;
+    trans_src_fv = fv_call_ctx;
+    trans_dst_id = dst_templ.templ_id;
+    trans_dst_args = dst_templ.templ_args;
+    trans_rec_cond = rec_cond; }
 
 let merge_loop_cond loop_cond_list = 
   match loop_cond_list with
@@ -846,19 +898,6 @@ let merge_loop_cond loop_cond_list =
     let rc_xs = List.map (fun (id, (svx, rcx)) -> 
       subst_avoid_capture svx sv rcx) xs in
     Some (id, (sv, TP.hull (List.fold_left (fun a c -> mkOr a c None pos) rc rc_xs)))
-
-let trans_dec_to_loop_cond loop_cond_list (f: formula) = 
-  let f_f f =
-    match f with
-    | BForm (b, _) ->
-      let (p, _) = b in begin match p with
-      | Gt (Template _, Template t, _) ->
-        let sv, loop_cond = List.assoc t.templ_id loop_cond_list in 
-        let subs_loop_cond = apply_par_term (List.combine sv t.templ_args) loop_cond in 
-        Some subs_loop_cond
-      | _ -> Some f end
-    | _ -> Some f
-  in transform_formula (nonef, nonef, f_f, nonef, nonef) f
 
 let infer_loop_status ctx loop_cond = 
   let imply ante cons = 
@@ -870,19 +909,34 @@ let infer_loop_status ctx loop_cond =
     let r2 = imply ctx (mkNot loop_cond None (pos_of_formula loop_cond)) in
     if r2 then Term else MayLoop
 
+let infer_loop_status ctx loop_cond =
+  let pr = !print_formula in
+  Debug.no_2 "infer_loop_status" pr pr string_of_term_status
+  infer_loop_status ctx loop_cond
+
+let infer_loop_trans_status loop_cond_list trans =
+  let (ctx, (src_id, src_fv), (dst_id, dst_args)) = trans in
+  let dst_sv, dst_loop_cond = List.assoc dst_id loop_cond_list in
+  let subst_loop_cond = apply_par_term (List.combine dst_sv dst_args) dst_loop_cond in 
+  let status = infer_loop_status ctx subst_loop_cond in
+  match status with
+  | MayLoop ->
+    (* Do infer and return new loop_cond_list with 
+     * the inferred conditional non-termination *)
+    status
+  | _ -> status
+
 let infer_loop_template_init prog (templ_assumes: simpl_templ_assume list) = 
-  let loop_cond_list = List.map get_loop_cond_templ_assume templ_assumes in
+  (*let loop_trans_list = List.map get_loop_trans_templ_assume templ_assumes in
+  let loop_cond_list =  
   let grouped_loop_cond = TU.partition_by_assoc eq_spec_var loop_cond_list in
   let merged_loop_cond = List.concat (List.map (fun lc -> 
     fold_opt (fun rc -> [rc]) (merge_loop_cond lc)) grouped_loop_cond) in
   let _ = print_endline ("REC CTX: " ^ (pr_list (fun (id, rc) -> 
     (name_of_spec_var id) ^ ": " ^ (pr_pair !print_svl !print_formula rc)) merged_loop_cond)) in
 
-  let loop_imply_check = List.map (fun ta -> 
-    (ta.ass_orig_ante, trans_dec_to_loop_cond merged_loop_cond ta.ass_orig_cons)) templ_assumes in
-  let _ = print_endline ("IMPLY: " ^ (pr_list (fun (a, c) -> 
-    (pr_pair !print_formula !print_formula (a, c)) ^ " --> " ^
-    (string_of_term_status (infer_loop_status a c))) loop_imply_check)) in
+  let loop_trans_status = List.map (infer_loop_trans_status merged_loop_cond)
+  loop_trans_list in*)
   ()
 
 (******************)
