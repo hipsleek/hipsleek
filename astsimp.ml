@@ -1017,61 +1017,60 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
     | 0 -> raise Not_found
     | 1 -> [(snd (List.hd f_list_init))]
     | _ ->
-	      let crt_v = List.hd v1 in
-	      let rest_vars = List.tl v1 in	
-	      let br_cnt = List.length f_list_init in
-	      let f_list = List.map (fun (c1,c2)-> 
-			  let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
-			  let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
-			  let eqs = (Solver.get_equations_sets c1 aset)in
-			  let eqs = (Solver.transform_null eqs) in
-			  (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
-				let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
-			  (c1,c2,aset,eqs)) f_list_init in
-	      let f_a_list = Gen.Profiling.add_index f_list in
-	      let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
-	      let constr_list = Gen.BList.remove_dups_eq (fun (x1,c1,_)(x2,c2,_)-> (x1=x2)&&(Cpure.equalBFormula c1 c2)) constr_list in
-	      let constr_array = Array.of_list constr_list in
-	      let sz = Array.length constr_array in
-	      let matr = Array.make_matrix sz sz Cpure.Unknown in
+	  let crt_v = List.hd v1 in
+	  let rest_vars = List.tl v1 in	
+	  let br_cnt = List.length f_list_init in
+	  let f_list = List.map (fun (c1,c2)-> 
+	      let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
+	      let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
+	      let eqs = (Solver.get_equations_sets c1 aset)in
+	      let eqs = (Solver.transform_null eqs) in
+	      (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
+		let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
+	      (c1,c2,aset,eqs)) f_list_init in
+	  let f_a_list = Gen.Profiling.add_index f_list in
+	  let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
+	  let constr_list = Gen.BList.remove_dups_eq (fun (x1,c1,_)(x2,c2,_)-> (x1=x2)&&(Cpure.equalBFormula c1 c2)) constr_list in
+	  let constr_array = Array.of_list constr_list in
+	  let sz = Array.length constr_array in
+	  let matr = Array.make_matrix sz sz Cpure.Unknown in
 
-	      let filled_matr = 
-	        Array.mapi(fun x c->(Array.mapi (fun y c->
-				if (x>y) then Cpure.compute_constraint_relation (constr_array.(x)) (constr_array.(y)) 
-				else if x=y then Cpure.Equal 
-				else matr.(x).(y) ) c)) matr in
-	      let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
-			  if (x<y) then filled_matr.(y).(x)
-			  else filled_matr.(x).(y)) c)) filled_matr in
-	      
-	        (*let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
-	        (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
-	        (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
-	        let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
-	        Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
-	        ) filled_matr "")^"\n") in*)
-	      
-	      let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
-			  let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
-			  let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
-			  let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
-			  let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
-			  ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
-		  ) constr_array in
+	  let filled_matr = 
+	    Array.mapi(fun x c->(Array.mapi (fun y c->
+		if (x>y) then Cpure.compute_constraint_relation (constr_array.(x)) (constr_array.(y)) 
+		else if x=y then Cpure.Equal 
+		else matr.(x).(y) ) c)) matr in
+	  let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
+	      if (x<y) then filled_matr.(y).(x)
+	      else filled_matr.(x).(y)) c)) filled_matr in
+	  (*let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
+	    (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
+	    (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
+	    let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
+	    Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
+	    ) filled_matr "")^"\n") in*)
+	  
+	  let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
+	      let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
+	      let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
+	      let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
+	      let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
+	      ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
+	  ) constr_array in
 
-	      let splitting_constraints = 
-	        List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0)) (Array.to_list splitting_constraints) in
-	      if (List.length splitting_constraints)>0 then
-	        List.concat (List.map (fun (constr,neg_constr,l1,l2)->
-				let nf1 = splitter_x l1 rest_vars in
-				let nf2 = splitter_x l2 rest_vars in
-				List.concat (List.map (fun c1-> List.map (fun c2-> 
-					CF.ECase{					
-						CF.formula_case_branches =[(constr,c1);(neg_constr,c2)];
-						CF.formula_case_pos = no_pos;
-					}) nf2) nf1)					
-			) splitting_constraints)
-	      else splitter_x f_list_init rest_vars
+	  let splitting_constraints = 
+	    List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0)) (Array.to_list splitting_constraints) in
+	  if (List.length splitting_constraints)>0 then
+	    List.concat (List.map (fun (constr,neg_constr,l1,l2)->
+		let nf1 = splitter_x l1 rest_vars in
+		let nf2 = splitter_x l2 rest_vars in
+		List.concat (List.map (fun c1-> List.map (fun c2-> 
+		    CF.ECase{					
+			CF.formula_case_branches =[(constr,c1);(neg_constr,c2)];
+			CF.formula_case_pos = no_pos;
+		    }) nf2) nf1)					
+	    ) splitting_constraints)
+	  else splitter_x f_list_init rest_vars
 
 let splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.spec_var list) : CF.struc_formula list =
   let pr1 l = pr_list (pr_pair !CP.print_formula !CF.print_struc_formula) l in
@@ -1144,12 +1143,25 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
 		in
 		let not_fact,_, _ = (Solver.xpure_symbolic 11 cp d) in
 		let fact =  Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
-		let fact = Cpure.drop_disjunct fact in
+                let sfact = TP.simplify fact in
+                let hfact = TP.hull sfact in
+                let fact = hfact in
+                let _ = Debug.tinfo_hprint (add_str "after norm" Cprinter.string_of_pure_formula) fact no_pos in
+                let _ = Debug.tinfo_hprint (add_str "after simplify" Cprinter.string_of_pure_formula) sfact no_pos in
+                let _ = Debug.tinfo_hprint (add_str "after hull" Cprinter.string_of_pure_formula) hfact no_pos in
+ 		(* let fact = Cpure.drop_disjunct fact in *)
+                (* let _ = Debug.tinfo_hprint (add_str "drop_disj" Cprinter.string_of_pure_formula) fact no_pos in *)
 		let fact = Cpure.rename_top_level_bound_vars fact in
+                let _ = Debug.tinfo_hprint (add_str "rename" Cprinter.string_of_pure_formula) fact no_pos in
 		let fact,_,_(*all,exist*) = Cpure.float_out_quantif fact in
+                let _ = Debug.tinfo_hprint (add_str "float out" Cprinter.string_of_pure_formula) fact no_pos in
 		let fact = Cpure.check_not fact in
+                let _ = Debug.tinfo_hprint (add_str "check not" Cprinter.string_of_pure_formula) fact no_pos in
 		(fact,c)) l in    
-	    fst (move_instantiations (List.hd (splitter f_list v1)))
+            let pr = pr_list (fun (f,_) -> Cprinter.string_of_pure_formula f) in
+            let _ = Debug.info_hprint (add_str "f_list" pr) f_list no_pos in
+            let sp = splitter f_list v1 in
+	    fst (move_instantiations (List.hd sp))
 	  with _ -> f_ext)
     | _ -> f_ext 
           
@@ -1157,11 +1169,13 @@ and view_case_inference_x cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.
   try
     let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
     if (iv.Iast.try_case_inference) then
-      let _ = Debug.info_pprint "perform view case_infer" no_pos in
+      let _ = Debug.ninfo_pprint "perform view case_infer" no_pos in
       let sf = (CP.SpecVar (Named cv.Cast.view_data_name, self, Unprimed)) in
+      let vp = cv.Cast.view_vars in
+      let _ = Debug.tinfo_hprint (add_str "view params" Cprinter.string_of_spec_var_list) vp no_pos in
       (*TODO: disallow variables that are not instantiated in the case guards, more specifically, 
         view parameters should not be in case guards*)
-      let f = formula_case_inference cp cv.Cast.view_formula [sf] in
+      let f = formula_case_inference cp cv.Cast.view_formula ([sf]@vp) in
       {cv with 
 	  Cast.view_formula = f; 
 	  Cast.view_case_vars =Gen.BList.intersect_eq (=) (sf::cv.C.view_vars) (CF.guard_vars f); }

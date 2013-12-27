@@ -1,0 +1,19 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+pred ls<p,n> == self=p & n=0
+  or self::node<q>*q::ls<p,n-1> //& n!=0 
+  inv n>=0.
+
+/*
+pred ls<p,n> == case {
+   n=0 -> [] self=p ;
+   n!=0 -> [] self::node<q>*q::ls<p,n-1> ;
+} inv n>=0.
+*/
+
