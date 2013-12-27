@@ -166,6 +166,16 @@ However splitter did not form case. Expecting:
      n=0 -> ..
      n!=0 -> ..
   }
+
+@2! splitter-flist:[
+        ( p=self & n=0,[p,self],[ p=self]),
+        ( self!=null & 1<=n,[self],[ self!=null])]
+@2! splitter-flist:[
+        ( p=self & n=0,[p,self],[ p=self]),
+        ( self!=null & 1<=n,[p],[])]
+@2! splitter-flist:[( p=self & n=0,[n],[ n=0]),
+        ( self!=null & 1<=n,[n],[ 1<=n])]
+
 ====================================================================
 ====================================================================
 ====================================================================
