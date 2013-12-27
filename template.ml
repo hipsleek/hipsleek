@@ -5,6 +5,8 @@ open Cpure
 module MCP = Mcpure
 module CF = Cformula
 module C = Cast
+module TP = Tpdispatcher
+module TU = Tlutils
 
 type term = {
   term_coe: exp;
@@ -53,8 +55,9 @@ let templ_assume_scc_stk: (formula * formula) Gen.stack = new Gen.stack
 type simpl_templ_assume = {
   ass_vars: spec_var list;
   ass_ante: term list list;
-  ass_orig_ante: formula;
   ass_cons: formula;
+  ass_orig_ante: formula;
+  ass_orig_cons: formula;
   ass_pos: loc;
 }
 
@@ -410,6 +413,9 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
     CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
   let _ = templ_assume_scc_stk # push (ante, cons) in
 
+  let orig_ante = ante in
+  let orig_cons = cons in
+
   let inf_templs = es.CF.es_infer_vars_templ in
   let ante, ante_unks = trans_formula_templ inf_templs ante in
   let cons, cons_unks = trans_formula_templ inf_templs cons in
@@ -428,8 +434,9 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
   let _ = simpl_templ_assume_scc_stk # push 
     { ass_vars = vars;
       ass_ante = ante_tl;
-      ass_orig_ante = ante;
       ass_cons = cons;
+      ass_orig_ante = orig_ante;
+      ass_orig_cons = orig_cons;
       ass_pos = pos; } in
 
   let farkas_contrs = infer_template_rhs_farkas num ante_tl cons_t pos in
@@ -796,23 +803,115 @@ let rec sort_rank_list num rank_l =
       let r_tl = List.map (fun (r, (j, unaff_l)) -> (r, (j, List.filter (fun k -> k != i) unaff_l))) (xs @ tl) in
       r::(sort_rank_list (num-1) r_tl)
 
+(*************************************)
+(* CONDITIONAL TERMINATION INFERENCE *)
+(*************************************)
+type term_status = 
+  | Loop
+  | Term
+  | MayLoop
+
+exception Cond_Infer_Failure of string 
+
+let string_of_term_status = function
+  | Loop -> "Loop"
+  | Term -> "Term"
+  | MayLoop -> "MayLoop"
+
+let get_loop_trans_templ (f: formula) =
+  let f_b b = 
+    let (p, _) = b in match p with
+    | Gt (Template t1, Template t2, _) -> Some [(t1, t2)]
+    | _ -> Some []
+  in fold_formula f (nonef, f_b, nonef) List.concat
+
+let get_loop_cond_templ_assume (ta: simpl_templ_assume) =
+  let dec_cons = ta.ass_orig_cons in
+  let src_templ, dst_templ = match (get_loop_trans_templ dec_cons) with
+  | (s, d)::[] -> (s, d)
+  | _ -> raise (Cond_Infer_Failure "There are more than one decreasing constraints") 
+  in
+  let fv_call_ctx = List.concat (List.map afv src_templ.templ_args) in 
+  let call_ctx = ta.ass_orig_ante in
+  let rec_cond = mkExists_with_simpl idf (* TP.simplify *) 
+    (Gen.BList.difference_eq eq_spec_var (fv call_ctx) fv_call_ctx) 
+    call_ctx None (pos_of_formula call_ctx) in
+  (src_templ.templ_id, (fv_call_ctx, rec_cond))
+
+let merge_loop_cond loop_cond_list = 
+  match loop_cond_list with
+  | [] -> None
+  | (id, (sv, rc))::xs ->
+    let pos = pos_of_formula rc in
+    let rc_xs = List.map (fun (id, (svx, rcx)) -> 
+      subst_avoid_capture svx sv rcx) xs in
+    Some (id, (sv, TP.hull (List.fold_left (fun a c -> mkOr a c None pos) rc rc_xs)))
+
+let trans_dec_to_loop_cond loop_cond_list (f: formula) = 
+  let f_f f =
+    match f with
+    | BForm (b, _) ->
+      let (p, _) = b in begin match p with
+      | Gt (Template _, Template t, _) ->
+        let sv, loop_cond = List.assoc t.templ_id loop_cond_list in 
+        let subs_loop_cond = apply_par_term (List.combine sv t.templ_args) loop_cond in 
+        Some subs_loop_cond
+      | _ -> Some f end
+    | _ -> Some f
+  in transform_formula (nonef, nonef, f_f, nonef, nonef) f
+
+let infer_loop_status ctx loop_cond = 
+  let imply ante cons = 
+    let (r, _, _) = TP.imply_one 0 ante cons "0" true None in r 
+  in
+  let r1 = imply ctx loop_cond in
+  if r1 then Loop
+  else 
+    let r2 = imply ctx (mkNot loop_cond None (pos_of_formula loop_cond)) in
+    if r2 then Term else MayLoop
+
+let infer_loop_template_init prog (templ_assumes: simpl_templ_assume list) = 
+  let loop_cond_list = List.map get_loop_cond_templ_assume templ_assumes in
+  let grouped_loop_cond = TU.partition_by_assoc eq_spec_var loop_cond_list in
+  let merged_loop_cond = List.concat (List.map (fun lc -> 
+    fold_opt (fun rc -> [rc]) (merge_loop_cond lc)) grouped_loop_cond) in
+  let _ = print_endline ("REC CTX: " ^ (pr_list (fun (id, rc) -> 
+    (name_of_spec_var id) ^ ": " ^ (pr_pair !print_svl !print_formula rc)) merged_loop_cond)) in
+
+  let loop_imply_check = List.map (fun ta -> 
+    (ta.ass_orig_ante, trans_dec_to_loop_cond merged_loop_cond ta.ass_orig_cons)) templ_assumes in
+  let _ = print_endline ("IMPLY: " ^ (pr_list (fun (a, c) -> 
+    (pr_pair !print_formula !print_formula (a, c)) ^ " --> " ^
+    (string_of_term_status (infer_loop_status a c))) loop_imply_check)) in
+  ()
+
+(******************)
+(* MAIN FUNCTIONS *)
+(******************)  
+
 (* We reuse the term-form of the antecedents 
  * from prior normal termination inference *)
-let infer_lex_template_init prog (inf_templs: ident list) 
+let infer_term_template_init prog (inf_templs: ident list) 
     templ_unks (templ_assumes: simpl_templ_assume list) =
   let dec_templ_assumes = List.filter (fun ta -> is_Gt_formula ta.ass_cons) templ_assumes in
   let num_call_ctx = List.length dec_templ_assumes in
   let _ = print_endline "**** LEXICOGRAPHIC RANK INFERENCE RESULT ****" in
 
-  if num_call_ctx == 1 then
-    print_endline ("Nothing to do with Lexicographic Inference (only one call context).")
+  if num_call_ctx == 1 then begin
+    print_endline ("Nothing to do with Lexicographic Inference (only one call context).");
+    print_endline ("Trying to infer conditional termination and/or non-termination ...");
+    infer_loop_template_init prog dec_templ_assumes
+  end
   else try
-    let dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
-    let dec_templ_assumes_l = rotate_head_list dec_templ_assumes in
+    let num_dec_templ_assumes, _ = List.fold_left (fun (a, i) dta -> a @ [(i, dta)], i+1) ([], 1) dec_templ_assumes in
+    let dec_templ_assumes_l = rotate_head_list num_dec_templ_assumes in
     let rank_l = List.map (find_lex_rank prog inf_templs templ_unks) dec_templ_assumes_l in
     let res = sort_rank_list (num_call_ctx-1) rank_l in
     print_endline (pr_list (pr_list !print_exp) res)
-  with Lex_Infer_Failure reason -> print_endline reason
+  with Lex_Infer_Failure reason -> 
+    print_endline reason;
+    print_endline ("Trying to infer conditional termination and/or non-termination ...");
+    infer_loop_template_init prog dec_templ_assumes
 
 let collect_and_solve_templ_constrs prog (inf_templs: ident list) = 
   let constrs = templ_constr_stk # get_stk in
@@ -854,8 +953,7 @@ let collect_and_solve_templ_constrs prog (inf_templs: ident list) =
       let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
       if !Globals.templ_term_inf then
         let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in 
-        let _ = print_endline ("or conditional termination or non-termination ...") in
-        infer_lex_template_init prog inf_templs templ_unks simpl_templ_assumes 
+        infer_term_template_init prog inf_templs templ_unks simpl_templ_assumes 
       else ()
     | Sat model ->
       let templ_decls = prog.C.prog_templ_decls in
