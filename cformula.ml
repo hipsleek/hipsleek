@@ -781,6 +781,17 @@ and is_trivial_formula f =
       is_trivial_formula base
   | _ -> false
 
+(* allow explicit false to be considered trivial formula *)
+and is_trivial_f f = 
+  match f with
+  | Base {formula_base_heap = h;
+    formula_base_pure = p;
+    } ->   ( is_trivial_h_formula h ||  MCP.isTrivMTerm p)
+  | Exists ({formula_exists_heap = h}) 
+      -> let _,base = split_quantifiers f in
+      is_trivial_f base
+  | _ -> false
+
 and isTrivTerm_x f = match f with
   | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
   | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval

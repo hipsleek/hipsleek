@@ -177,7 +177,28 @@ However splitter did not form case. Expecting:
         ( self!=null & 1<=n,[n],[ 1<=n])]
 
 ====================================================================
+# ls-case-bug-2c.slk -debug case.log (FIXED)
+
+make into warning ...
+
+the view body for ls3 contains unsat branch(es) :
+    {3}->(exists flted_9_37,q_38: self::node<q_38>@M * q_38::ls3<flted_9_37>@M&
+n!=0 & n<0 & n=flted_9_37+1&{FLOW,(1,24)=__flow})[]
 ====================================================================
+# ls-case-bug-2c3.slk -debug case.log
+
+pred ls3<n> == case {
+   n=0 -> [] self=null; 
+   n!=0 -> case {
+             n>0 -> [] self::node<q>*q::ls3<n-1> & false ;
+             n<0 -> [] false;
+        };
+  } inv n>=0.
+
+
+Why the warning message below?
+
+WARNING: _0:0_0:0:self of ls3 cannot have its type determined
 ====================================================================
 ====================================================================
 ====================================================================

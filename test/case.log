@@ -1,8 +1,9 @@
 #compute_actions
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
-formula_case_inference
+#formula_case_inference
 #view_case_inference
-splitter,Trace
-line_split
+#splitter,Trace
+#line_split
+case_coverage
 #xpure_symbolic
