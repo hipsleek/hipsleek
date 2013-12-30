@@ -604,7 +604,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
         let p = List.map (fun c-> (c,Primed)) fv_idents in
         let wf,_ = AS.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
-        AS.trans_I2C_struc_formula 8 iprog quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
+        AS.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
         begin
         try 
@@ -629,7 +629,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
         true (*allow_post_vars*) true [] in
-      let (n_tl,res) = AS.trans_I2C_struc_formula 9 iprog quant fv_idents wf tl false 
+      let (n_tl,res) = AS.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
         false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)

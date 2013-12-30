@@ -336,6 +336,7 @@ let mkTrueFlow () =
 
 
 let mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
+(* let mkFalseFlow () = mkTrueFlow () *)
 
 let mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_heap = HEmp; 

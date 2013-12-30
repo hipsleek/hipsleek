@@ -1807,7 +1807,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
     true (*check_pre*) in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
@@ -2560,11 +2560,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
       (* let _ = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
-      let (n_tl,cf) = trans_I2C_struc_formula 2 prog true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
+      let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
       let static_specs_list = set_pre_flow cf in
       (* let _ = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
       (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
-      let (n_tl,cf) = trans_I2C_struc_formula 3 prog true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+      let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
       let dynamic_specs_list = set_pre_flow cf in
       (****** Infering LSMU from LS if there is LS in spec >>*********)
       let static_specs_list =
@@ -2899,7 +2899,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula coer.I.coercion_body) false 
     false (*allow_post_vars*) true [] in
   let quant = true in
-  let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog quant (* fv_names *) lhs_fnames0 wf n_tl false 
+  let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
@@ -2914,7 +2914,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false 
     false (*allow_post_vars*) true [] in
   let quant = true in
-  let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog quant (* fv_names  *) fnames  wf n_tl false 
+  let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
     true (*check_pre*) in
   let c_head_norm = CF.struc_to_formula cs_head_norm in
   (* free vars in RHS but not LHS *)
@@ -3158,7 +3158,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
             let (n_tl,assert_cf_o) = match assert_f_o with
               | Some f -> 
-                    let (n_tl,cf) = trans_I2C_struc_formula 6 prog false free_vars (fst f) n_tl false true in  
+                    let (n_tl,cf) = trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false true in  
                     (n_tl,Some cf)
               | None -> (n_tl,None) in
             let (n_tl,assume_cf_o) = match assume_f_o with
@@ -4921,10 +4921,10 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
                     C.exp_block_pos = pos; }
                 in block_e))
 
-and case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
-  Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)  
-      Cprinter.string_of_struc_formula string_of_bool
-      case_coverage_x instant f
+(* and case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): bool = *)
+(*   Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)   *)
+(*       Cprinter.string_of_struc_formula string_of_bool *)
+(*       case_coverage_x instant f *)
 
 and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
   let _ = trans_case_coverage instant f in
@@ -4983,6 +4983,28 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 (*   | CF.EList b -> List.for_all (fun c-> struc_case_coverage instant ctx (snd c)) b in *)
 (* struc_case_coverage instant (CP. mkTrue no_pos) f *)
 
+(* ctx - context of case *)
+(* all - disj of pure formula encountered *)
+and add_case_coverage ctx all
+(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+=
+  let sat_subno  = ref 0 in
+  let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
+  let coverage_error = 
+    Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
+        (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
+  if coverage_error then
+    let simp_all = TP.pairwisecheck f_sat in
+    (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
+    let _ = Debug.info_pprint "WARNING : case construct has missing scenario" no_pos in
+    let _ = Debug.info_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
+    let _ = Debug.info_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
+    [(simp_all,(CF.mkEFalse (CF.mkFalseFlow) no_pos))]
+        (* let s = (Cprinter.string_of_struc_formula f) in *)
+        (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
+        (* Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} *)
+  else []
+
 and trans_case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "trans_case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)  
@@ -5035,20 +5057,25 @@ and trans_case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.
           let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-          let _ = 
-            let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
-            let coverage_error = 
-                Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
-                (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
-            if coverage_error then
-              let simp_all = TP.pairwisecheck f_sat in
-              let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in
-              let _ = Debug.info_hprint (add_str "simplified" Cprinter.string_of_pure_formula) simp_all no_pos in
-              let s = (Cprinter.string_of_struc_formula f) in
-              Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
-              Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";}    in
+          let nf = add_case_coverage ctx all in
+          (*   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in *)
+          (*   let coverage_error =  *)
+          (*       Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno *)
+          (*       (\*not (Tpdispatcher.simpl_imply_raw ctx all)*\) in *)
+          (*   if coverage_error then *)
+          (*     let simp_all = TP.pairwisecheck f_sat in *)
+          (*     (\* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *\) *)
+          (*     let _ = Debug.info_pprint "WARNING : case construct has missing scenario" no_pos in *)
+          (*     let _ = Debug.info_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in *)
+          (*     let _ = Debug.info_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in *)
+          (*     [(simp_all,(CF.mkEFalse (CF.mkFalseFlow) no_pos))] *)
+          (*     (\* let s = (Cprinter.string_of_struc_formula f) in *\) *)
+          (*     (\* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *\) *)
+          (*     (\* Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} *\) *)
+          (*   else [] *)
+          (* in *)
           let new_br = List.map (fun (c1,c2)->(c1,struc_case_coverage instant (CP.mkAnd c1 ctx no_pos) c2)) b.CF.formula_case_branches 
-          in CF.ECase {b with CF.formula_case_branches = new_br}
+          in CF.ECase {b with CF.formula_case_branches = new_br@nf}
     | CF.EInfer b -> 
           begin
             let nf = (struc_case_coverage instant ctx b.CF.formula_inf_continuation)
@@ -5185,26 +5212,26 @@ and trans_copy_spec_4caller copy_params sf=
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "trans_copy_spec_4caller" !Cpure.print_svl pr pr trans_copy_spec_4caller_x copy_params sf
 
-and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
+and trans_I2C_struc_formula i (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       (tlist:spec_var_type_list) (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : (spec_var_type_list*CF.struc_formula) = 
   let prb = string_of_bool in
   let pr_out (_, f) = Cprinter.string_of_struc_formula f in
   (* Debug.no_5_loop    *)
   Debug.no_eff_5_num  i
-      "trans_I2C_struc_formula" [true] string_of_tlist prb prb Cprinter.str_ident_list 
+      "trans_I2C_struc_formula" [true] string_of_tlist prb (add_str "check_pre" prb) Cprinter.str_ident_list 
       (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
       (add_str "Output Struc:" pr_out)
-      (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog quantify fvars f0 tlist check_self_sp (check_pre:bool)) 
-      tlist (* type table *) quantify (* quantified flag *) check_self_sp
+      (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog prepost_flag quantify  fvars f0 tlist check_self_sp (check_pre:bool)) 
+      tlist (* type table *) quantify (* quantified flag *) check_pre
       fvars (* free vars *) f0 (*struc formula *)
 
-and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify : bool) (fvars : ident list)
       (f0 : IF.struc_formula) (tlist:spec_var_type_list) (check_self_sp:bool) (check_pre:bool): (spec_var_type_list*CF.struc_formula) = 
   let rec trans_struc_formula (fvars : ident list) (tl:spec_var_type_list) (f0 : IF.struc_formula) : (spec_var_type_list*CF.struc_formula) = (
     match f0 with
     | IF.EAssume b ->   (*add res, self*)
         let (n_tl,f) = trans_formula prog true (self::res_name::eres_name::fvars) false b.IF.formula_assume_simpl tl true in
-        let (n_tl,f_struc) = trans_I2C_struc_formula_x prog true (res_name::eres_name::fvars) b.IF.formula_assume_struc n_tl check_self_sp false in
+        let (n_tl,f_struc) = trans_I2C_struc_formula_x prog prepost_flag true (res_name::eres_name::fvars) b.IF.formula_assume_struc n_tl check_self_sp false in
         (n_tl,CF.mkEAssume [] f f_struc b.IF.formula_assume_lbl b.IF.formula_assume_ensures_type)
     | IF.ECase b-> (
         let rec aux tlist clist = (
@@ -5284,7 +5311,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
   let cfvhp = cfvhp1@cfvhp2 in
-  let _ = case_coverage cfvhp r in
+  let r = trans_case_coverage cfvhp r in
   let tmp_vars  =  (CF.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
   let pre_fv = List.map CP.name_of_spec_var (Gen.BList.difference_eq (=) (CF.struc_fv r) tmp_vars) in
@@ -8432,7 +8459,7 @@ and trans_bdecl_x prog bd =
       match il with 
       | []->tl,[]
       | hd::tail ->
-          let (n_tl,sf) = trans_I2C_struc_formula 7 prog true vl hd tl false true in
+          let (n_tl,sf) = trans_I2C_struc_formula 7 prog false true vl hd tl false true in
           let (n_tl,n_il) = aux1 n_tl tail in
           (n_tl, (sf::n_il))
     ) in
