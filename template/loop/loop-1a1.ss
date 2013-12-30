@@ -5,9 +5,10 @@ infer [r]
 requires Term[r(x)]
 ensures true;
 {
-	if (x > 0)
+	int z = x + 1;	
+	if (z > 0)
 		loop(x-1); // loop(x+1);
-	else if (x == 0)
+	else if (z == 0)
 		loop(x-1); // loop(x-1);
 	else return;
 }

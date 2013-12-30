@@ -38,6 +38,12 @@ let print_term (t: term) =
     (!print_sv v) ^ "^" ^ (string_of_int d)) 
     ("(" ^ (!print_exp t.term_coe) ^ ")") t.term_var
 
+let print_solver_res = function
+  | Unsat -> "Unsat"
+  | Sat m -> "Sat" ^ (pr_list (pr_pair idf string_of_int) m)
+  | Unknown -> "Unknown"
+  | Aborted -> "Aborted"
+
 (* Stacks of generated constraints and the unknown vars of templates *)
 let templ_constr_stk: formula Gen.stack = new Gen.stack
 
@@ -358,6 +364,8 @@ let norm_subst svl subst =
         a @ ((v, e)::n_xs)) [] grouped_subst) 
   in
   let normalized_subst = helper subst in
+  (* We assume that trivial and cyclic substs like 
+   * (x1, x2) and (x2, x1) have been remove by simplify *)
   let sorted_subst = List.sort (fun (v1, e1) (v2, e2) -> 
     if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1
     else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1
@@ -443,7 +451,11 @@ let infer_template_rhs_farkas num (ante_tl: term list list) (cons_t: term list) 
 (* cons is a base formula and cnum is its order in the original consequent *)
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
-  let ante = find_rel_constraints ante (fv cons) in
+  let cons_fv = fv cons in
+  let ante = find_rel_constraints ante cons_fv in
+  (* let ante = mkExists_with_simpl TP.simplify *)
+  (*  (Gen.BList.difference_eq eq_spec_var (fv ante) cons_fv) ante None pos in *)
+  
   let es =  { es with 
     CF.es_infer_templ_assume = es.CF.es_infer_templ_assume @ [(ante, cons)]; } in
   let _ = templ_assume_scc_stk # push (ante, cons) in
@@ -459,9 +471,6 @@ let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula)
 
   let ante, subst = find_eq_subst_formula vars ante in
   let cons = apply_par_term subst cons in
-
-  let _ = print_endline ("S_ANTE: " ^ (!print_formula ante)) in
-  let _ = print_endline ("S_CONS: " ^ (!print_formula cons)) in
   
   let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
   let ante_fl = true_f::(split_conjunctions ante) in
@@ -844,10 +853,10 @@ let rec sort_rank_list num rank_l =
 (*************************************)
 (* CONDITIONAL TERMINATION INFERENCE *)
 (*************************************)
-type term_status = 
-  | Loop
-  | Term
-  | MayLoop
+type reach_status = 
+  | Reach_Base
+  | Reach_Loop
+  | Reach_Both
 
 type rec_trans = {
   trans_ctx: formula;
@@ -860,10 +869,16 @@ type rec_trans = {
 
 exception Cond_Infer_Failure of string 
 
-let string_of_term_status = function
-  | Loop -> "Loop"
-  | Term -> "Term"
-  | MayLoop -> "MayLoop"
+let print_reach_status = function
+  | Reach_Base -> "Base"
+  | Reach_Loop -> "Rec"
+  | Reach_Both -> "Both"
+
+let print_rec_trans t = 
+  let pr1 = !print_formula in
+  let pr2 = !print_sv in
+  (pr1 t.trans_ctx) ^ ": " ^ 
+  (pr2 t.trans_src_id) ^ " -> " ^ (pr2 t.trans_dst_id)
 
 let get_loop_trans_templ (f: formula) =
   let f_b b = 
@@ -904,39 +919,85 @@ let infer_loop_status ctx loop_cond =
     let (r, _, _) = TP.imply_one 0 ante cons "0" true None in r 
   in
   let r1 = imply ctx loop_cond in
-  if r1 then Loop
+  if r1 then Reach_Loop
   else 
     let r2 = imply ctx (mkNot loop_cond None (pos_of_formula loop_cond)) in
-    if r2 then Term else MayLoop
+    if r2 then Reach_Base else Reach_Both
 
 let infer_loop_status ctx loop_cond =
   let pr = !print_formula in
-  Debug.no_2 "infer_loop_status" pr pr string_of_term_status
+  Debug.no_2 "infer_loop_status" pr pr print_reach_status
   infer_loop_status ctx loop_cond
 
+let strengthen_trans_with_templ trans loop_cond_list =
+  let src_id = trans.trans_src_id in
+  let src_fv = trans.trans_src_fv in
+  let ctx = trans.trans_ctx in
+  let  (cond_fv, cond_f) = List.assoc src_id loop_cond_list in
+  let pos = pos_of_formula ctx in
+
+  let templ_id = fresh_spec_var src_id in
+  let templ = mkLinearTemplate (name_of_spec_var templ_id)
+    (List.map (fun sv -> mkVar sv pos) src_fv) pos in
+  let templ_constr = mkPure (mkLte templ (mkIConst 0 pos) pos) in
+  let s_ctx = mkAnd ctx templ_constr pos in
+  let s_cond_f = mkAnd cond_f 
+    (subst_avoid_capture src_fv cond_fv templ_constr) (pos_of_formula cond_f) in
+  { trans with trans_ctx = s_ctx; }, 
+  (src_id, (cond_fv, s_cond_f))::(List.remove_assoc src_id loop_cond_list),
+  templ_id
+
 let infer_loop_trans_status loop_cond_list trans =
-  let (ctx, (src_id, src_fv), (dst_id, dst_args)) = trans in
+  let ctx = trans.trans_ctx in
+  let dst_id = trans.trans_dst_id in
+  let dst_args = trans.trans_dst_args in
   let dst_sv, dst_loop_cond = List.assoc dst_id loop_cond_list in
   let subst_loop_cond = apply_par_term (List.combine dst_sv dst_args) dst_loop_cond in 
   let status = infer_loop_status ctx subst_loop_cond in
-  match status with
-  | MayLoop ->
-    (* Do infer and return new loop_cond_list with 
-     * the inferred conditional non-termination *)
-    status
-  | _ -> status
+  status
 
 let infer_loop_template_init prog (templ_assumes: simpl_templ_assume list) = 
-  (*let loop_trans_list = List.map get_loop_trans_templ_assume templ_assumes in
-  let loop_cond_list =  
+  let loop_trans_list = List.map get_loop_trans_templ_assume templ_assumes in
+  let loop_cond_list = List.map (fun t -> 
+    (t.trans_src_id, (t.trans_src_fv, t.trans_rec_cond))) loop_trans_list in  
   let grouped_loop_cond = TU.partition_by_assoc eq_spec_var loop_cond_list in
-  let merged_loop_cond = List.concat (List.map (fun lc -> 
-    fold_opt (fun rc -> [rc]) (merge_loop_cond lc)) grouped_loop_cond) in
-  let _ = print_endline ("REC CTX: " ^ (pr_list (fun (id, rc) -> 
-    (name_of_spec_var id) ^ ": " ^ (pr_pair !print_svl !print_formula rc)) merged_loop_cond)) in
+  let merged_loop_cond = List.concat (List.map (fun lc -> fold_opt (fun rc -> [rc]) 
+    (merge_loop_cond lc)) grouped_loop_cond) in
 
-  let loop_trans_status = List.map (infer_loop_trans_status merged_loop_cond)
-  loop_trans_list in*)
+  let reach_status_trans = List.map (fun t -> 
+    infer_loop_trans_status merged_loop_cond t, t) loop_trans_list in
+  let _ = List.iter (fun (r, t) -> print_endline 
+    ((print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")\n")) reach_status_trans in
+  let reach_both_trans, reach_other_trans = List.partition (fun (st, _) -> 
+    match st with Reach_Both -> true | _ -> false) reach_status_trans in
+  let templ_reach_both_trans, templ_loop_cond, templ_id_list = List.fold_left (
+    fun (trans_list, loop_cond_list, templ_id_list) (_, trans) -> 
+      let templ_trans, n_loop_cond_list, templ_id = strengthen_trans_with_templ trans loop_cond_list in
+      trans_list @ [templ_trans], n_loop_cond_list, templ_id_list @ [templ_id]) 
+    ([], merged_loop_cond, []) reach_both_trans in
+  let reach_both_src_ids = List.map (fun t -> t.trans_src_id) templ_reach_both_trans in
+  let rel_trans = List.filter (fun t -> 
+    Gen.BList.mem_eq eq_spec_var t.trans_dst_id reach_both_src_ids) 
+    (List.map snd reach_other_trans) in
+  let es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let es = { es with CF.es_infer_vars_templ = templ_id_list; } in 
+
+  let _, constrs, _ = List.fold_left (fun (es, a, num) trans ->
+    let rec_cond_fv, rec_cond = List.assoc trans.trans_dst_id templ_loop_cond in
+    let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in 
+    let es, cl = infer_template_rhs [num] es trans.trans_ctx rec_cond no_pos in
+    es, a @ cl, num + 1) (es, [], 0) (templ_reach_both_trans @ rel_trans)
+  in
+
+  let templ_unks = templ_unknown_var_stk # get_stk in
+  let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
+  let _ = templ_unknown_var_stk # reset in
+  let unks = Gen.BList.remove_dups_eq eq_spec_var (List.concat (List.map fv constrs)) in
+  let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
+
+  let _ = List.iter (fun t -> print_endline ((print_rec_trans t) ^ "\n")) templ_reach_both_trans in
+  let _ = List.iter (fun (id, (_, lc)) -> print_endline ((!print_sv id) ^ ": " ^ (!print_formula lc))) templ_loop_cond in
+  let _ = print_endline (print_solver_res res) in
   ()
 
 (******************)
