@@ -1173,7 +1173,9 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
 		in
 		let not_fact,_, _ = (Solver.xpure_symbolic 11 cp d) in
 		let fact =  Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
+                (* let fact = CP.drop_disjunct fact in *)
                 let sfact = TP.simplify fact in
+                (* let sfact = fact in *)
                 let hfact = TP.hull sfact in
                 let fact = hfact in
                 let _ = Debug.tinfo_hprint (add_str "after norm" Cprinter.string_of_pure_formula) fact no_pos in
@@ -4983,9 +4985,16 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 (*   | CF.EList b -> List.for_all (fun c-> struc_case_coverage instant ctx (snd c)) b in *)
 (* struc_case_coverage instant (CP. mkTrue no_pos) f *)
 
-(* ctx - context of case *)
-(* all - disj of pure formula encountered *)
 and add_case_coverage ctx all
+(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+      = let pr = Cprinter.string_of_pure_formula in
+      let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
+      Debug.no_2 "add_case_coverage" pr pr 
+              pr2 add_case_coverage_x ctx all
+
+(* ctx - pure context of case expression *)
+(* all - disj of pure formula encountered *)
+and add_case_coverage_x ctx all
 (* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
 =
   let sat_subno  = ref 0 in
