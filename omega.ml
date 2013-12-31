@@ -1015,5 +1015,10 @@ let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
     flush log_all;
-  end;
+  end
+
+let get_model templ_unks vars assertions =
+  let bnd_vars = Gen.BList.difference_eq eq_spec_var vars templ_unks in
+  let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
+  simplify inp_f
 
