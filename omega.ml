@@ -1017,8 +1017,7 @@ let log_mark (mark : string) =
     flush log_all;
   end
 
-let get_model templ_unks vars assertions =
-  let bnd_vars = Gen.BList.difference_eq eq_spec_var vars templ_unks in
+let get_model bnd_vars assertions =
   let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
   simplify inp_f
 

@@ -8,6 +8,7 @@ let diff = Gen.BList.difference_eq eq_spec_var
 let mem = Gen.BList.mem_eq eq_spec_var
 let subset = Gen.BList.subset_eq eq_spec_var
 let intersect = Gen.BList.intersect_eq eq_spec_var
+let overlap = Gen.BList.overlap_eq eq_spec_var
 
 let is_sat f = TP.is_sat_sub_no 0 f (ref 0) 
 
@@ -493,66 +494,104 @@ let split ls =
 
 (* Determine the constraint on nonlinear lambda variable x 
  * x >= 0 or x = 0 or x > 0 *)
-let rec search_bound_nln_vars nln_vars sst asserts =
-  let p = no_pos in
-  match nln_vars with
-  | [] -> asserts, sst, []
-  | v::vs -> 
-    let v_sst, r_sst = List.partition (fun (_, e) -> mem v (afv e)) sst in
-    let zero = mkIConst 0 p in
+let partition_nln_vars nln_vars sst asserts =
+  let must_be_positive_var v sst asserts =
+    (* If v = 0 causes UNSAT *)
+    let v_sst = List.filter (fun (_, e) -> mem v (afv e)) sst in
+    let zero = mkIConst 0 no_pos in
     let v_zero_sst = List.map (fun (x, _) -> (x, zero)) v_sst in
     let v_zero_sst = (v, zero)::v_zero_sst in
     let v_zero_asserts = List.map (fun f -> apply_par_term v_zero_sst f) asserts in
     let is_sat = is_sat (join_conjunctions v_zero_asserts) in 
-    if is_sat then (* v = 0 *)
-      search_bound_nln_vars vs r_sst v_zero_asserts
-    else (* v > 0 *)
-      (* (x, a*v) --> (x, a*v0 + a) with v0 = v - 1 >= 0 or v = v0 + 1 *)
-      let v0 = fresh_spec_var v in 
-      let v_exp = mkAdd (mkVar v0 p) (mkIConst 1 p) p in (* v = v0 + 1 *)
-      let v0_sst = List.map (fun (x, e) -> (x, a_apply_par_term [(v, v_exp)] e)) v_sst in
-      let positive_v = mkPure (mkGt (mkVar v p) (mkIConst 0 p) p) in (* v > 0 *)
-      let n_asserts, n_sst, n_nln_vars = search_bound_nln_vars vs 
-        (r_sst @ v0_sst) (positive_v::asserts) in
-      n_asserts, n_sst, v0::n_nln_vars
+    not is_sat
+  in
+  List.partition (fun v -> must_be_positive_var v sst asserts) nln_vars
 
-let search_bound_nln_vars nln_vars sst asserts =
+let norm_sst_pos vl sst =
+  (* (x, a*v) with v > 0 --> (x, a*(v0+1)) with v0 = v-1 >= 0 *)
+  let p = no_pos in
+  let vl0 = List.map fresh_spec_var vl in 
+  let vl_exp = List.map (fun v0 -> mkAdd (mkVar v0 p) (mkIConst 1 p) p) vl0 in (* v = v0 + 1 *)
+  let vl0_sst = List.map (fun (x, e) -> 
+    (x, a_apply_par_term (List.combine vl vl_exp) e)) sst in
+  vl0, vl0_sst
+
+let norm_sst_pos vl sst =
   let pr1 = !print_svl in
   let pr2 = pr_list (pr_pair !print_sv !print_exp) in
-  let pr3 = pr_list !print_formula in
-  let pr4 = pr_triple pr3 pr2 pr1 in
-  Debug.no_3 "search_bound_nln_vars" pr1 pr2 pr3 pr4
-  search_bound_nln_vars nln_vars sst asserts
+  Debug.no_2 "norm_sst_pos" pr1 pr2 (pr_pair pr1 pr2)
+  norm_sst_pos vl sst
+
+let norm_sst_zero vl sst =
+  let zero = mkIConst 0 no_pos in
+  let vl_sst = List.filter (fun (_, e) -> overlap vl (afv e)) sst in
+  let vl_zero_sst = List.map (fun (x, _) -> (x, zero)) vl_sst in
+  let vl_zero_sst = (List.map (fun v -> (v, zero)) vl) @ vl_zero_sst in
+  vl_zero_sst
+
+let rec search_model_om pos_zero_vars bnd_vars nln_vars sst asserts =
+  let p = no_pos in
+  match pos_zero_vars with
+  | [] -> mkFalse p
+  | (pos_vars, zero_vars)::rem ->
+    let n_asserts = 
+      (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
+      @ asserts in
+    let rep_pos_vars, pos_sst = norm_sst_pos pos_vars sst in
+    let zero_sst = norm_sst_zero zero_vars sst in
+    let n_asserts = List.map (fun f -> apply_par_term zero_sst f) n_asserts in
+
+    let _ = print_endline ("N_LN: " ^ (pr_list !print_formula n_asserts)) in
+
+    let ln_r = Omega.get_model bnd_vars n_asserts in
+
+    let _ = print_endline ("LN_R: " ^ (!print_formula ln_r)) in
+
+    if is_False ln_r then
+      search_model_om rem bnd_vars nln_vars sst asserts
+    else
+      let nln_r = apply_par_term pos_sst ln_r in
+      let nln_r = normalize_eq_formula nln_r in
+
+      let _ = print_endline ("NLN_R: " ^ (!print_formula nln_r)) in
+
+      let term_l = List.map (fun f -> term_list_of_formula (nln_vars @ rep_pos_vars)
+        (normalize_formula f)) (split_conjunctions nln_r) in
+      let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
+
+      let _ = print_endline ("CTRS: " ^ (pr_list !print_formula templ_unk_constrs)) in
+
+      let r = Omega.get_model bnd_vars templ_unk_constrs in
+      if is_False r then
+        search_model_om rem bnd_vars nln_vars sst asserts
+      else r
 
 let get_model_om is_linear templ_unks vars assertions =
+  let bnd_vars = diff vars templ_unks in
   if is_linear then
-    let r = Omega.get_model templ_unks vars assertions in
+    let r = Omega.get_model bnd_vars assertions in
     print_endline ("OM: " ^ (!print_formula r))
   else
+    let p = no_pos in
     let ln_asserts, sst = List.split (List.map linearize_nonlinear_formula assertions) in
     let sst = List.concat sst in
-    let bnd_vars = diff vars templ_unks in
     let bnd_nln_vars = intersect bnd_vars (List.concat (List.map (fun (_, e) -> afv e) sst)) in
-    let ln_asserts, sst, n_nln_vars = search_bound_nln_vars bnd_nln_vars sst ln_asserts in
+    let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
 
-    let ln_r = Omega.get_model templ_unks vars ln_asserts in
-    let nln_r = apply_par_term sst ln_r in
-    let nln_r = normalize_eq_formula nln_r in
+    let _ = print_endline ("LN: " ^ (pr_list !print_formula ln_asserts)) in
+    let _ = print_endline ("POS: " ^ (!print_svl pos_vars)) in
+    let _ = print_endline ("NNEG: " ^ (!print_svl nneg_vars)) in
 
-    let _ = print_endline ("LN_A: " ^ (pr_list !print_formula ln_asserts)) in
-    let _ = print_endline ("LN_R: " ^ (!print_formula ln_r)) in
-    let _ = print_endline ("NLN_R: " ^ (!print_formula nln_r)) in
-
-    let term_l = List.map (fun f -> term_list_of_formula (bnd_vars @ n_nln_vars)
-      (normalize_formula f)) (split_conjunctions nln_r) in
-    (* All bnd_vars are non-negative *)
-    let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
-    let r = Omega.get_model templ_unks vars templ_unk_constrs in
-    print_endline ("OM: " ^ (!print_formula nln_r));
-    print_endline ("TL: " ^ (pr_list print_term_list term_l));
-    print_endline ("UNK: " ^ (pr_list !print_formula templ_unk_constrs));
-    print_endline ("R: " ^ (!print_formula r))
-
+    let ln_asserts = 
+      (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
+      @ ln_asserts in
+    let rep_pos_vars, sst = norm_sst_pos pos_vars sst in
+    let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
+    let r = search_model_om splitted_nneg_vars 
+      bnd_vars (bnd_nln_vars @ rep_pos_vars) sst ln_asserts in
+    let _ = print_endline ("OM_RES: " ^ (!print_formula r)) in
+    ()
+    
 let get_model is_linear templ_unks vars assertions =
   let _ = get_model_om is_linear templ_unks vars assertions in 
   get_opt_model is_linear templ_unks vars assertions
