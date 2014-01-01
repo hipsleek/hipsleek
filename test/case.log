@@ -1,11 +1,12 @@
 #compute_actions
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
-formula_case_inference
+xpure_symbolic
+formula_case_inference,Trace
 #view_case_inference
 compute_constraint_relation
-splitter
+#splitter
 #line_split
-add_case_coverage
+#add_case_coverage
 #trans_case_coverage
 #xpure_symbolic

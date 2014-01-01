@@ -258,6 +258,13 @@ splitter@2 EXIT:[ ECase case {
 How come f_list did not contain self!=p in the 2nd formula?
 This caused case-inference to be missed..
 
+Problem seems to be at normalize_to_CNF:
+  let fact =  Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
+
+@7! not_fact: exists(p_12:p=p_12 & (((q!=null & p_12!=q) | p_12=q))) & p!=self & 
+self!=null
+@7! after norm: self!=null
+
 !!! f_list:[ p=self, self!=null]
 compute_constraint_relation@3@2@1
 compute_constraint_relation inp1 :(1, self!=null,[self])
@@ -286,6 +293,10 @@ Entail (2) : Valid.
  inferred pure: [y=0]
 [[empty]]
 ====================================================================
+# hip append.ss --eps --eci
+
+
+
 ====================================================================
 ====================================================================
 ====================================================================

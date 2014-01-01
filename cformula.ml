@@ -11734,10 +11734,12 @@ let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :s
 let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br -> 
-		let rec filter_formula (f:formula):formula list = match f with
+		let rec filter_formula (f:formula):formula list = 
+                  let cf = !print_formula f in
+                  match f with
 			| Base {formula_base_label = lbl} 
 			| Exists {formula_exists_label = lbl} -> (match lbl with
-			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
+			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"} 
 			  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
 			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
 		let rec filter_helper (f:struc_formula):struc_formula = match f with
