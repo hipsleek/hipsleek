@@ -949,7 +949,35 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
 
+let rec add_case_coverage in_pre ctx all =
+(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+      let pr = Cprinter.string_of_pure_formula in
+      let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
+      Debug.no_2 "add_case_coverage" pr pr 
+              pr2 (add_case_coverage_x in_pre) ctx all
 
+(* ctx - pure context of case expression *)
+(* all - disj of pure formula encountered *)
+and add_case_coverage_x in_pre ctx all =
+(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
+  let sat_subno  = ref 0 in
+  let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
+  let coverage_error = 
+    Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
+        (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
+  if coverage_error then
+    let simp_all = TP.pairwisecheck f_sat in
+    (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
+    let _ = Debug.info_pprint "WARNING : case construct has missing scenario" no_pos in
+    let _ = Debug.info_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
+    let _ = Debug.info_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
+	let cont = if in_pre then CF.mkEFalse (CF.mkFalseFlow) no_pos else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
+    [(simp_all,cont)]
+        (* let s = (Cprinter.string_of_struc_formula f) in *)
+        (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
+        (* Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} *)
+  else []  
+  
 let line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_rel*(int* Cpure.b_formula *(Cpure.spec_var list))) list)
       :Cpure.b_formula*int list * int list =
   (*let _ = print_string ("\n line split start "^(Cprinter.string_of_b_formula cons)^"\n") in*)
@@ -1045,10 +1073,8 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	      (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
 		let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
 	      (c1,c2,aset,eqs)) f_list_init in
-          let pr = pr_list (fun (f,_,vl,bf) -> 
-              pr_triple Cprinter.string_of_pure_formula
-                  Cprinter.string_of_spec_var_list (pr_list Cprinter.string_of_b_formula) 
-                  (f,vl,bf)) in
+          let pr = pr_list (fun (f,_,vl,bf) -> pr_triple Cprinter.string_of_pure_formula Cprinter.string_of_spec_var_list 
+							(pr_list Cprinter.string_of_b_formula) (f,vl,bf)) in
           let _ = Debug.tinfo_hprint (add_str "splitter-f_list" pr) f_list no_pos in
 	  let f_a_list = Gen.Profiling.add_index f_list in
 	  let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
@@ -1056,10 +1082,11 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	  let constr_array = Array.of_list constr_list in
 	  let sz = Array.length constr_array in
 	  let matr = Array.make_matrix sz sz Cpure.Unknown in
-
+	  let f_sat f = TP.is_sat_sub_no 12 f (ref 0) in
+	  let f_imply f1 f2 = if (CP.fast_imply [] [f1] f2>0) then true else false in
 	  let filled_matr = 
 	    Array.mapi(fun x c->(Array.mapi (fun y c->
-		if (x>y) then Cpure.compute_constraint_relation (constr_array.(x)) (constr_array.(y)) 
+		if (x>y) then Cpure.compute_constraint_relation f_sat f_imply (constr_array.(x)) (constr_array.(y)) 
 		else if x=y then Cpure.Equal 
 		else matr.(x).(y) ) c)) matr in
 	  let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
@@ -1095,10 +1122,10 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
                 let nf1 = splitter_x l1 rest_vars in
                 let nf2 = splitter_x l2 rest_vars in
                 List.concat (List.map (fun c1-> List.map (fun c2-> 
+				let nf = add_case_coverage true (CP. mkTrue no_pos) (Cpure.mkStupid_Or constr neg_constr None no_pos) in
 	            CF.ECase{					
-	                CF.formula_case_branches =[(constr,c1);(neg_constr,c2)];
-	                CF.formula_case_pos = no_pos;
-	            }) nf2) nf1)					
+	                CF.formula_case_branches =[(constr,c1);(neg_constr,c2)]@nf;
+	                CF.formula_case_pos = no_pos;} ) nf2) nf1)					
             ) splitting_constraints)
           else splitter_x f_list_init rest_vars
 
@@ -1109,9 +1136,9 @@ let splitter (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure.spec_
   Debug.no_2 "splitter" pr1 pr2 pr3 splitter_x f_list_init v1
 		  
 (* TODO *)
-let rec move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_var list) = match f with
+let rec move_instantiations_x (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_var list) = match f with
   | CF.EBase b->
-	let nc, vars = Gen.map_opt_res move_instantiations b.CF.formula_struc_continuation in
+	let nc, vars = Gen.map_opt_res move_instantiations_x b.CF.formula_struc_continuation in
 	let qvars, nf = CF.split_quantifiers b.CF.formula_struc_base in
 	let global_ex, imp_inst = (b.CF.formula_struc_exists, b.CF.formula_struc_implicit_inst) in
 	let n_qvars = Gen.BList.difference_eq (=) qvars vars in
@@ -1129,7 +1156,7 @@ let rec move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_va
 	  List.split 
 	      (List.map 
 	          (fun (c1,c2)-> 
-		      let nf , vars = move_instantiations c2 in
+		      let nf , vars = move_instantiations_x c2 in
 		      ((c1,nf), (vars@(Cpure.fv c1)))
 	          ) 
 	          b.CF.formula_case_branches) in
@@ -1146,11 +1173,15 @@ let rec move_instantiations (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_va
 	  let new_cont, c_var_list = helper b.CF.formula_var_continuation in
 	  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))*)
   | CF.EInfer b ->
-        let new_cont, c_var_list = move_instantiations b.CF.formula_inf_continuation in
+        let new_cont, c_var_list = move_instantiations_x b.CF.formula_inf_continuation in
         (CF.EInfer {b with CF.formula_inf_continuation = new_cont}, c_var_list)
   | CF.EList l -> 
-	let l,vars = map_l_snd_res move_instantiations l in
+	let l,vars = map_l_snd_res move_instantiations_x l in
 	(CF.EList l, List.concat vars)
+	
+and move_instantiations f = 
+	let pr = Cprinter.string_of_struc_formula in
+	Debug.no_1 "move_instantiations" pr (pr_pair pr !CP.print_svl) move_instantiations_x f
             
             
 and formula_case_inference cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list) : CF.struc_formula = 
@@ -1402,10 +1433,10 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
-          let cprog2 = sat_warnings cprog1 in   
+      let cprog2 = sat_warnings cprog1 in   
 	  
 	  let cprog2 = Solver.normalize_perm_prog cprog2 in
-	  let cprog2 = if (!Globals.enable_case_inference) then case_inference prog cprog2 else cprog2 in 
+	  let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
           let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
           then pred_prune_inference cprog2 else cprog2 in
 	  (*let cprog3 = normalize_fracs cprog3 in*)
@@ -4928,9 +4959,9 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
 (*       Cprinter.string_of_struc_formula string_of_bool *)
 (*       case_coverage_x instant f *)
 
-and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
+(*and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
   let _ = trans_case_coverage instant f in
-  true
+  true*)
       (* let sat_subno  = ref 0 in *)
       (* let rec struc_case_coverage (instant:Cpure.spec_var list) ctx (f1:CF.struc_formula):bool = match f1 with *)
       (*   | CF.EAssume b ->  struc_case_coverage instant ctx b.CF.formula_assume_struc *)
@@ -4985,35 +5016,6 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 (*   | CF.EList b -> List.for_all (fun c-> struc_case_coverage instant ctx (snd c)) b in *)
 (* struc_case_coverage instant (CP. mkTrue no_pos) f *)
 
-and add_case_coverage ctx all
-(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
-      = let pr = Cprinter.string_of_pure_formula in
-      let pr2 = pr_list (pr_pair pr Cprinter.string_of_struc_formula) in
-      Debug.no_2 "add_case_coverage" pr pr 
-              pr2 add_case_coverage_x ctx all
-
-(* ctx - pure context of case expression *)
-(* all - disj of pure formula encountered *)
-and add_case_coverage_x ctx all
-(* (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula  *)
-=
-  let sat_subno  = ref 0 in
-  let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in
-  let coverage_error = 
-    Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno
-        (*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
-  if coverage_error then
-    let simp_all = TP.pairwisecheck f_sat in
-    (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
-    let _ = Debug.info_pprint "WARNING : case construct has missing scenario" no_pos in
-    let _ = Debug.info_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
-    let _ = Debug.info_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
-    [(simp_all,(CF.mkEFalse (CF.mkFalseFlow) no_pos))]
-        (* let s = (Cprinter.string_of_struc_formula f) in *)
-        (* Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
-        (* Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} *)
-  else []
-
 and trans_case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "trans_case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)  
@@ -5022,16 +5024,16 @@ and trans_case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.st
 
 and trans_case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.struc_formula =
   let sat_subno  = ref 0 in
-  let rec struc_case_coverage (instant:Cpure.spec_var list) ctx (f1:CF.struc_formula):CF.struc_formula
+  let rec struc_case_coverage in_pre (instant:Cpure.spec_var list) ctx (f1:CF.struc_formula):CF.struc_formula
          = match f1 with
     | CF.EAssume b ->  
-          let nf = (struc_case_coverage instant ctx b.CF.formula_assume_struc) 
+          let nf = (struc_case_coverage false instant ctx b.CF.formula_assume_struc) 
           in CF.EAssume { b with CF.formula_assume_struc = nf }
     | CF.EBase b -> (match b.CF.formula_struc_continuation with 
         | None -> f1
         | Some l -> 
           begin
-            let nf = (struc_case_coverage (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) (CP.mkAnd (CF.extract_pure b.CF.formula_struc_base) ctx no_pos)l)
+            let nf = (struc_case_coverage in_pre (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) (CP.mkAnd (CF.extract_pure b.CF.formula_struc_base) ctx no_pos)l)
             in CF.EBase { b with CF.formula_struc_continuation = Some nf}
           end)
     | CF.ECase b -> 
@@ -5066,7 +5068,7 @@ and trans_case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.
           let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-          let nf = add_case_coverage ctx all in
+          let nf = add_case_coverage in_pre ctx all in
           (*   let f_sat = Cpure.mkAnd ctx (Cpure.mkNot all None no_pos) no_pos in *)
           (*   let coverage_error =  *)
           (*       Tpdispatcher.is_sat_sub_no 11 f_sat sat_subno *)
@@ -5083,16 +5085,16 @@ and trans_case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.
           (*     (\* Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} *\) *)
           (*   else [] *)
           (* in *)
-          let new_br = List.map (fun (c1,c2)->(c1,struc_case_coverage instant (CP.mkAnd c1 ctx no_pos) c2)) b.CF.formula_case_branches 
+          let new_br = List.map (fun (c1,c2)->(c1,struc_case_coverage in_pre instant (CP.mkAnd c1 ctx no_pos) c2)) b.CF.formula_case_branches 
           in CF.ECase {b with CF.formula_case_branches = new_br@nf}
     | CF.EInfer b -> 
           begin
-            let nf = (struc_case_coverage instant ctx b.CF.formula_inf_continuation)
+            let nf = (struc_case_coverage in_pre instant ctx b.CF.formula_inf_continuation)
             in CF.EInfer { b with CF.formula_inf_continuation = nf}
           end
     | CF.EList b -> 
-          CF.EList (List.map (fun (l,c) -> (l,struc_case_coverage instant ctx c)) b) 
-      in struc_case_coverage instant (CP. mkTrue no_pos) f
+          CF.EList (List.map (fun (l,c) -> (l,struc_case_coverage in_pre instant ctx c)) b) 
+      in struc_case_coverage true instant (CP. mkTrue no_pos) f
 
 and trans_var p (tlist: spec_var_type_list) pos =
   let pr = pr_var_prime in

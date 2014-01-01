@@ -3370,8 +3370,9 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
 	formula_exists_type = t;
 	formula_exists_flow = fl;
 	formula_exists_and = a;
+	formula_exists_label = lbl;
 	formula_exists_pos = pos}) -> 
-        (qvars, mkBase h p t fl a pos)
+        (qvars, mkBase_w_lbl h p t fl a pos lbl)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument (formula_or)")
 
@@ -3381,16 +3382,18 @@ and add_quantifiers_x (qvars : CP.spec_var list) (f : formula) : formula = match
 	formula_base_type = t;
 	formula_base_flow = fl;
         formula_base_and = a;
-        formula_base_pos = pos}) -> mkExists qvars h p t fl a pos
+		formula_base_label = lbl;
+        formula_base_pos = pos}) -> mkExists_w_lbl qvars h p t fl a pos lbl
   | Exists ({formula_exists_qvars = qvs; 
 	formula_exists_heap = h; 
 	formula_exists_pure = p; 
 	formula_exists_type = t;
 	formula_exists_flow = fl;
     formula_exists_and = a;
+	formula_exists_label = lbl;
 	formula_exists_pos = pos}) -> 
 	    let new_qvars = CP.remove_dups_svl (qvs @ qvars) in
-		mkExists new_qvars h p t fl a pos
+		mkExists_w_lbl new_qvars h p t fl a pos lbl
   | _ -> failwith ("add_quantifiers: invalid argument")
 
 and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = 

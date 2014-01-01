@@ -5012,9 +5012,9 @@ and rel_compute e1 e2:constraint_rel = match (e1,e2) with
   | IConst (i1,_) ,IConst (i2,_) -> if (i1<i2) then Subsumed else if (i1=i2) then Equal else Subsuming
   | _ -> Unknown
 	    
-and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list))) ((b1,b3,b4):(int* b_formula *(spec_var list)))
+and compute_constraint_relation_x f_sat f_imply ((a1,a3,a4):(int* b_formula *(spec_var list))) ((b1,b3,b4):(int* b_formula *(spec_var list)))
 	  :constraint_rel =
-  match (fst a3,fst b3) with
+  let r = match (fst a3,fst b3) with
 	    | ((BVar v1),(BVar v2))-> if (v1=v2) then Equal else Unknown
 	    | (Neq (e1,e2,_), Neq (d1,d2,_))
 	    | (Eq (e1,e2,_), Eq  (d1,d2,_)) -> begin match ((rel_compute e1 d1),(rel_compute e2 d2)) with
@@ -5029,7 +5029,19 @@ and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list)))
 			  | _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
 				  | Equal,Equal-> Contradicting
 				  | _ ->  Unknown end 
-	    | (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
+	    | _ -> Unknown in
+	match r with
+	| Unknown ->
+		if equalBFormula_f eq_spec_var a3 b3 then Equal
+		else if f_sat (mkAnd (BForm (a3,None)) (BForm (b3,None)) no_pos) then
+			(match f_imply a3 b3,f_imply b3 a3 with
+				| true, true -> Equal
+				| true, false -> Subsuming
+				| false, true -> Subsumed
+				| false, false -> Unknown)
+		else Contradicting	
+	| _ -> r
+		(*| (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
 	    | (Lt (e1,e2,_), Lte (d1,d2,_)) 
 	    | (Lt (e1,e2,_), Eq  (d1,d2,_)) 
 	    | (Lt (e1,e2,_), Neq (d1,d2,_)) 
@@ -5040,13 +5052,12 @@ and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list)))
 	    | (Eq (e1,e2,_), Lt  (d1,d2,_)) 
 	    | (Eq (e1,e2,_), Lte (d1,d2,_)) 
 	    | (Neq (e1,e2,_), Lt  (d1,d2,_)) 
-	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown
-	    | _ -> Unknown
-	   
-and compute_constraint_relation a b =
+	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown*)
+	    
+and compute_constraint_relation f_sat f_imply a b =
  let pr1 = pr_triple string_of_int !print_b_formula !print_svl in
  let pr r = match r with | Unknown -> "Unk" | Subsumed -> "<" | Subsuming -> ">" | Equal -> "=" | Contradicting -> "Contr" in
- Debug.no_2 "compute_constraint_relation" pr1 pr1 pr compute_constraint_relation_x a b
+ Debug.no_2 "compute_constraint_relation" pr1 pr1 pr (compute_constraint_relation_x f_sat f_imply) a b
        
 and b_form_list f: b_formula list = match f with
   | BForm (b,_) -> [b]

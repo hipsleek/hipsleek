@@ -3,7 +3,8 @@
 #cnv_ptr_to_int,Loop
 #formula_case_inference
 #view_case_inference
-#splitter,Trace
+compute_constraint_relation
+splitter,Trace
 line_split
 #trans_case_coverage
 #xpure_symbolic
