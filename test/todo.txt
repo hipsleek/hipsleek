@@ -204,9 +204,87 @@ WARNING: _0:0_0:0:self of ls3 cannot have its type determined
 
 
 ====================================================================
+# case-1s.slk (FIXED)
+
+--eci did not give case spec ...
+
+ view ll<p:TVar[27],n:int>= 
+  :EBase {1}->emp&self=null & n=0&{FLOW,(1,24)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[q](ex)[](exists p_13,
+            flted_11_12: self::node<q>@M * q::ll<p_13,flted_11_12>@M&
+            n=flted_11_12+1 & p=p_13&{FLOW,(1,24)=__flow})[]
+
+
 ====================================================================
+# case-1s.slk 
+
+(i) add_case_coverage being invoked twice by splitter
+
+add_case_coverage@5@2@1
+add_case_coverage inp1 : true
+add_case_coverage inp2 : (n=0 | 1<=n)
+add_case_coverage@5 EXIT:[( n<=(0-1), EBase hfalse&false&{FLOW,(0,0)=__false}[])]
+
+add_case_coverage@6@2@1
+add_case_coverage inp1 : true
+add_case_coverage inp2 : (1<=n | n=0)
+add_case_coverage@6 EXIT:[( n<=(0-1), EBase hfalse&false&{FLOW,(0,0)=__false}[])]
+
+splitter@2@1
+splitter inp1 :[( p=self & n=0, EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]),( self!=null & 1<=n, EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+       flted_7_13: self::node<q>@M * q::lseg<p_14,flted_7_13>@M&n=flted_7_13+
+       1 & p!=self & p=p_14&{FLOW,(1,24)=__flow})[])]
+splitter inp2 :[self,p,n]
+splitter@2 EXIT:[ ECase case {
+        n=0 -> :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+        1<=n -> :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+                       flted_7_13: self::node<q>@M * 
+                       q::lseg<p_14,flted_7_13>@M&n=flted_7_13+1 & p!=self & 
+                       p=p_14&{FLOW,(1,24)=__flow})[]
+        ;
+        n<=(0-1) -> EBase hfalse&false&{FLOW,(0,0)=__false}[] 
+        }, ECase case {
+        1<=n -> :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+                       flted_7_13: self::node<q>@M * 
+                       q::lseg<p_14,flted_7_13>@M&n=flted_7_13+1 & p!=self & 
+                       p=p_14&{FLOW,(1,24)=__flow})[]
+        ;
+        n=0 -> :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+        n<=(0-1) -> EBase hfalse&false&{FLOW,(0,0)=__false}[] 
+        }]
 ====================================================================
+# case-ls-3.slk --eci -debug case.log
+
+How come f_list did not contain self!=p in the 2nd formula?
+This caused case-inference to be missed..
+
+!!! f_list:[ p=self, self!=null]
+compute_constraint_relation@3@2@1
+compute_constraint_relation inp1 :(1, self!=null,[self])
+compute_constraint_relation inp2 :(0, p=self,[p,self])
+compute_constraint_relation@3 EXIT:Unk
+
 ====================================================================
+# infer2b.slk
+
+// (1)
+infer [y] y=null |- y!=null.
+print residue.
+
+// (2)
+infer [y] y=0|- y!=0.
+print residue.
+
+Why isn't contra inference not working for pointers?
+
+Entail (1) : Fail.(must) cause: y=null |-  y!=null. LOCS:[7] (must-bug)
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [y=0]
+[[empty]]
 ====================================================================
 ====================================================================
 ====================================================================

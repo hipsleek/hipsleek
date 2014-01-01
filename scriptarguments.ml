@@ -356,6 +356,8 @@ let common_arguments = [
 	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
+  ("--dci", Arg.Clear Globals.enable_case_inference,
+   "disable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,
    "print core representation");
   ("--pip", Arg.Set Globals.print_input,

@@ -305,7 +305,41 @@ checkentail x::l6<_> * y::l6<_> |- y::l6<a>.
 
 checkentail x::l6<_> * x::l6<_> |- x::l6<a>.
 ====================================================================
+Why are there some infer bugs?
+
+--eci
+  infer/infer1.slk({E12#Valid},{E13#Valid}) infer/infer5.slk({E1#Valid}) 
+infer/infer7.slk({E2#Valid},{E3#Valid},{E4#Valid},{E8#Valid}) 
+infer/infer8.slk({E11#Valid},{E20#Valid},{E21#Valid}) 
+infer/infer9.slk({E1#Valid},{E2#Valid},{E9#Valid}) 
+infer/infer12.slk({E16#Valid}) 
+infer/infer14.slk({E10#Valid},{E23#Valid},{E25#Valid},{E26#Valid},{E27#Valid},{E28#Valid},{E7#Valid}).
+  
+--dci
+ infer/infer1.slk({E12#Valid},{E13#Valid}) infer/infer5.slk({E1#Valid}) 
+infer/infer7.slk({E2#Valid},{E3#Valid},{E4#Valid},{E8#Valid}) 
+infer/infer8.slk({E11#Valid},{E20#Valid},{E21#Valid}) 
+infer/infer9.slk({E1#Valid},{E2#Valid},{E9#Valid}) 
+infer/infer12.slk({E16#Valid}) 
+infer/infer14.slk({E10#Valid},{E23#Valid},{E25#Valid},{E26#Valid},{E27#Valid},{E28#Valid},{E7#Valid}) 
+
+lemmas/lseg.slk({L2#Valid})
 ====================================================================
+-flags "--eci" lead to following bugs not present without
+
+ error at: append.ss append
+error at: append-tail.ss append
+error at: bubble.ss bubble
+error at: cll.ss insert
+error at: cll.ss count_rest
+error at: insertion.ss insert
+error at: merge.ss merge_sort
+error at: merge.ss insert
+error at: qsort.ss append_bll
+error at: qsort.ss qsort
+error at: selection.ss find_min
+error at: selection.ss delete_min
+error at: selection.ss selection_sort
 ====================================================================
 ====================================================================
 ====================================================================

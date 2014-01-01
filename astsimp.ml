@@ -968,9 +968,9 @@ and add_case_coverage_x in_pre ctx all =
   if coverage_error then
     let simp_all = TP.pairwisecheck f_sat in
     (* let _ = Debug.info_hprint (add_str "case pure" Cprinter.string_of_pure_formula) all no_pos in *)
-    let _ = Debug.info_pprint "WARNING : case construct has missing scenario" no_pos in
-    let _ = Debug.info_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
-    let _ = Debug.info_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
+    let _ = Debug.tinfo_pprint "WARNING : case construct has missing scenario" no_pos in
+    let _ = Debug.tinfo_hprint (add_str "Found : " Cprinter.string_of_pure_formula) all no_pos in
+    let _ = Debug.tinfo_hprint (add_str "Added : " Cprinter.string_of_pure_formula) simp_all no_pos in
 	let cont = if in_pre then CF.mkEFalse (CF.mkFalseFlow) no_pos else CF.mkETrue (CF.mkTrueFlow ()) no_pos in
     [(simp_all,cont)]
         (* let s = (Cprinter.string_of_struc_formula f) in *)
