@@ -425,6 +425,21 @@ process_coercion_check inp1 :
 
   case study
 ====================================================================
+# loc-lem-4c.slk 
+
+
+why it failed for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+but succeeds for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
 ====================================================================
 ====================================================================
 ====================================================================
