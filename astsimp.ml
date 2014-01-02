@@ -1100,22 +1100,27 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	    ) filled_matr "")^"\n") in*)
 	  
 	  let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
-	      let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
-	      let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
-	      let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
-	      let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
-	      ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
+			let rec arr_exists i b = 
+				if i=x then b 
+				else if filled_matr.(i).(x)=Cpure.Contradicting || (filled_matr.(i).(x)=Cpure.Equal) then true 
+				else arr_exists (i+1) b in 
+		  if (arr_exists 0 false) then ((Cpure.BForm (cons, None)),(Cpure.BForm (cons, None)),[],[])
+		  else 
+			let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
+			let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
+			let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
+			let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
+			((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
 	  ) constr_array in
           (* type: (Cpure.formula * Cpure.formula  *)
           (*       * (CP.formula * CF.struc_formula) list * *)
           (*       (CP.formula * CF.struc_formula) list)  list *)
           let sc = (Array.to_list splitting_constraints) in
-          let prp = Cprinter.string_of_pure_formula in 
+		  let prp = Cprinter.string_of_pure_formula in 
           let pr2 = pr_list (pr_pair prp Cprinter.string_of_struc_formula) in
           let pr = pr_list (pr_quad prp prp pr2 pr2) in
           let _ = Debug.tinfo_hprint (add_str "split-ctr" pr) sc no_pos in
-          let splitting_constraints = 
-            List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0))  sc in
+          let splitting_constraints = List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0))  sc in
           let _ = Debug.tinfo_hprint (add_str "split-ctr (filter)" pr) splitting_constraints no_pos in
           if (List.length splitting_constraints)>0 then
             List.concat (List.map (fun (constr,neg_constr,l1,l2)->
