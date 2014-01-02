@@ -4,4 +4,5 @@
 process_coercion_check
 check_coercion_struc
 unfold
-unfold_struc_nth,Trace
+unfold_struc_nth
+struc_unfold_heap

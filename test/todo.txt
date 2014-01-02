@@ -393,7 +393,7 @@ the case expression should not float out of its
 quantifier.
 
 
-unfold_struc_nth#9@5@1
+unfold_struc_nth#9@5@
 unfold_struc_nth#9 inp1 :true
 unfold_struc_nth#9 inp2 :p
 unfold_struc_nth#9 inp3 : EBase (exists _,p: self::node<_,p>@M * p::ll<>@M&{FLOW,(21,22)=__norm})[]
