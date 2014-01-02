@@ -42,7 +42,7 @@ type sleek_token =
   | PRED | PRED_PRIM | DPRINT | PRED_EXT | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
   | PASS_REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
-  | THEN| THIS of string | TO | TRUE | LEXVAR
+  | THEN | THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP
   | UNFOLD | UNION
   | VOID 

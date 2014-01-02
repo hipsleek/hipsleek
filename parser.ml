@@ -1287,12 +1287,16 @@ extended_constr_grp:
    [[ c=extended_constr -> [(Lbl.empty_spec_label_def,c)]
     | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
+(* then_extended : [[ `THEN; il = extended_l -> il ]]; *)
+
+then_extended : [[ il = extended_l -> il ]];
+
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT then_extended -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 

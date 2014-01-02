@@ -12005,7 +12005,7 @@ let is_unsat_null f=
     let null_ptrs = get_null_ptrs f in
     intersect_svl neq_null_ptrs null_ptrs != []
 
-let prune_relative_unsat_disj_x p0 base_p=
+let prune_relative_unsat_disj p0 (*lhs*) base_p (*rhs*)=
   let prune_cons p=
     let ps = list_of_disjs p in
     let ps1 = List.filter (fun p1 ->
@@ -12021,5 +12021,5 @@ let prune_relative_unsat_disj_x p0 base_p=
 let prune_relative_unsat_disj p0 base_p=
   let pr1 = !print_formula in
   Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
-      (fun _ _ -> prune_relative_unsat_disj_x p0 base_p)
+      (fun _ _ -> prune_relative_unsat_disj p0 base_p)
       p0 base_p

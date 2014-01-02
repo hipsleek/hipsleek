@@ -968,7 +968,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref false
+let enable_case_inference = ref true
 
 let print_core = ref false
 let print_core_all = ref false
