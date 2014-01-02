@@ -31,7 +31,7 @@ pred HP<> ==
  inv self!=null.
 */
 
-lemma_safe "one" self::HP<> <- self::node<_,p> * p::ll<>.
+lemma_safe "one" self::HP<> -> self::node<_,p> * p::ll<>.
 
 
 //checkentail self::node<_,p> * p::ll<> |- self::HP<>.

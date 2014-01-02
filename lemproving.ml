@@ -198,15 +198,17 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.tinfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
   let _ = Debug.tinfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
-  let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in
-  let lhs = (
-    let unfolded_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] in
-    List.fold_left (fun f sv ->
-      let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in
-      Solver.unfold_nth 9 (cprog, None) f sv true 0 pos
-    ) lhs unfolded_ptrs
+  (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
+  let lhs,_ = (
+    let unfolded_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true in
+    List.fold_left (fun (f,ss) sv0 ->
+        let sv = CP.subst_var_par ss sv0 in
+        (* let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
+        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 pos in
+        (nf, ss@ss1)
+    ) (lhs, []) unfolded_ptrs
   ) in
-  let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in
+  (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
@@ -216,10 +218,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.tinfo_hprint (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
   let _ = Debug.tinfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
-  let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in
+  (* let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let rhs = 
     if !Globals.enable_lemma_rhs_unfold then (
-      let unfolded_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] in
+      let unfolded_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true in
       List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
       ) rhs unfolded_ptrs

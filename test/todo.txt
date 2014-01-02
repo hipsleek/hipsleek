@@ -367,7 +367,7 @@ m_136=0 & n_135=1+n1_134
 
 
 ====================================================================
-# loc-lem2.slk -debug lem.log
+# loc-lem-2.slk -debug lem.log: FIXED by Trung
 
  unfold needs to be applied to predicates reachable from self.
 
@@ -379,6 +379,12 @@ process_coercion_check inp2 : :EBase exists (Expl)[](Impl)[_](ex)[](exists flted
 || :EBase exists (Expl)[](Impl)[_; p_91](ex)[]self_one::node<_,p_91>@M * 
           p_91::HP<>@M&p_91!=null&{FLOW,(21,22)=__norm}[]
 ====================================================================
+# loc-lem-3.slk
+
+Fail
+
+succ with --dci
+
 ====================================================================
 ====================================================================
 ====================================================================

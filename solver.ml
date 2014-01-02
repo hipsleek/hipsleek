@@ -2953,7 +2953,7 @@ and expand_all_preds prog f0 do_unsat: formula =
       formula_base_and = a; (*TO CHECK: ???*)
       formula_base_pos =pos}) -> begin
         let proots = find_pred_roots_heap h in 
-        let ef0 = List.fold_left (fun f -> fun v -> unfold_nth 3 (prog,None) f v do_unsat 0 pos ) f0 proots in
+        let ef0 = List.fold_left (fun f v -> fst (unfold_nth 3 (prog,None) f v do_unsat 0 pos) ) f0 proots in
         ef0
       end
     | Exists ({ formula_exists_qvars = qvars;
@@ -2971,7 +2971,11 @@ and expand_all_preds prog f0 do_unsat: formula =
 	formula_base_flow = fl;
 	formula_base_label = lbl;
 	formula_base_pos = pos}) in
-        let ef = List.fold_left (fun f -> fun v -> unfold_nth 4 (prog,None) f v do_unsat 0 pos  ) f proots in
+        let ef,_ = List.fold_left (fun (f,ss) v0 ->
+            let v = CP.subst_var_par ss v0 in
+            let nf,ss1 =  unfold_nth 4 (prog,None) f v do_unsat 0 pos in
+            (nf, ss@ss1)
+        ) (f,[]) proots in
         let ef0 = push_exists qvars ef in
         ef0
       end
@@ -3038,7 +3042,7 @@ and unfold_context_unsat_now prog0 (prog:prog_or_branches) (ctx : list_context) 
 (* unfolding *)
 and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_context =
   let fct es = 
-    let unfolded_f = unfold_nth 5 prog es.es_formula v already_unsat 0 pos in
+    let unfolded_f,_ = unfold_nth 5 prog es.es_formula v already_unsat 0 pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if already_unsat then set_unsat_flag res true
     else res in 
@@ -3046,7 +3050,7 @@ and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var
 
 and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_partial_context =
   let fct es = 
-    let unfolded_f = unfold_nth 6 prog es.es_formula v already_unsat 0 pos in
+    let unfolded_f,_ = unfold_nth 6 prog es.es_formula v already_unsat 0 pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if already_unsat then set_unsat_flag res true
     else res in 
@@ -3066,7 +3070,7 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       (*add in, rename, then filter out*)
       let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in
       let new_f = add_pure_formula_to_formula zero_f es.es_formula in
-      let unfolded_f = unfold_nth 7 prog new_f v already_unsat 0 pos in
+      let unfolded_f,_ = unfold_nth 7 prog new_f v already_unsat 0 pos in
       (* let vp_list, _ = filter_varperm_formula unfolded_f in *)
       (* let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in *)
       (* let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in *)
@@ -3078,7 +3082,7 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       else res
     else
       (*let _ = print_string("Before: "^(Cprinter.string_of_formula es.es_formula)^"\n") in*)
-      let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
+      let unfolded_f,_ = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
       (*let _ = print_string("After: "^(Cprinter.string_of_formula unfolded_f)^"\n") in*)
       let res = build_context (Ctx es) unfolded_f pos in
       if already_unsat then set_unsat_flag res true
@@ -3145,7 +3149,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
     | ECase b -> ECase {b with formula_case_branches = map_l_snd struc_helper b.formula_case_branches}	 
     | EList b -> EList (map_l_snd struc_helper b)
     | EAssume b -> EAssume { b with 
-	  formula_assume_simpl = unfold_x prog b.formula_assume_simpl v already_unsat uf pos; 
+	  formula_assume_simpl = fst(unfold_x prog b.formula_assume_simpl v already_unsat uf pos); 
 	  formula_assume_struc = struc_helper b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = struc_helper b.formula_inf_continuation;}
     | EBase {
@@ -3229,19 +3233,20 @@ and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.sp
   let prh = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
-  let pr_out = pr_pair prh (pr_opt pr) in
+  let pr_out = ( (pr_pair prh (pr_opt pr))  ) in
   Debug.no_5 "struc_unfold_heap"  prh (pr_list prs) prs pr2 (pr_list prs) pr_out
       (fun _ _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf qvars pos)  f aset v prog qvars
       
-and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula =
+and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc): (formula * (CP.spec_var*CP.spec_var) list) =
   (* unfold_x prog f v already_unsat pos *)
+  let prs = Cprinter.string_of_spec_var in
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
-  let prs = Cprinter.string_of_spec_var in
-  Debug.no_4_num (*loop*) n "unfold" string_of_bool prs pr pr2 pr 
+  let pr_out = pr_pair pr (pr_list (pr_pair prs prs)) in
+  Debug.no_4_num (*loop*) n "unfold" string_of_bool prs pr pr2 pr_out
       (fun _ _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f prog
 
-and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = 
+and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc)  = 
   let rec aux f v  uf pos = 
     match f with
       | Base ({ formula_base_heap = h;
@@ -3251,7 +3256,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 	formula_base_pos = pos}) ->  
 	    let new_f = unfold_baref prog h p a fl v pos [] already_unsat uf in
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*) 
+	    (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) 
 
       | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
             let rf,l = rename_bound_vars_with_subst f in
@@ -3261,18 +3266,18 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
             (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
             let uf = unfold_baref prog h p a fl v pos qvars already_unsat uf in
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*)
+	    (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*)
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos}) ->
-            let uf1 = aux f1 v uf pos in
-            let uf2 = aux f2 v uf pos in
+            let uf1,l1 = aux f1 v uf pos in
+            let uf2,l2 = aux f2 v uf pos in
             let resform = mkOr uf1 uf2 pos in
-            resform
+            resform,l1@l2
   in 
-  let new_f = aux f v uf pos in
+  let new_f,ss0 = aux f v uf pos in
   let new_f = Immutable.normalize_field_ann_formula new_f in
-  new_f
+  new_f,ss0
 
 
 
@@ -9740,11 +9745,11 @@ and do_unfold_for_classic_reasoning_x prog (f: CF.formula) (pos : loc) =
     | CF.HEmp -> []
   ) in
   let view_hvars = collect_view_hvars_formula f in
-  let unfolded_f = ref f in
-  List.iter (fun v ->
-    unfolded_f := unfold_nth 1 (prog, None) !unfolded_f v false 0 pos
-  ) view_hvars;
-  let res = elim_unsat_for_unfold prog !unfolded_f in
+  let unfolded_f = List.fold_left (fun old_f v ->
+      let nf,_ = unfold_nth 1 (prog, None) old_f v false 0 pos in
+      nf
+  ) f view_hvars in
+  let res = elim_unsat_for_unfold prog unfolded_f in
   (* return *)
   res
 
@@ -10858,7 +10863,7 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) ->
           let lhs_var = get_node_var lhs_node in
-          let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+          let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
           let ctx1 = build_context (Ctx estate) delta1 pos in
 	      let ctx1 = set_unsat_flag ctx1 true in
 	      let res_rs, prf1 = heap_entail_one_context_struc_x prog is_folding has_post ctx1 conseq None None None pos pid in
@@ -11563,7 +11568,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (CF.mkFailCtx_in(Basic_Reason(mkFailContext "ensuring finite unfold" estate conseq (get_node_label lhs_node) pos,
               CF.mk_failure_must "infinite unfolding" Globals.sl_error)),NoAlias)
             else
-              let delta1 = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+              let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
               let ctx1 = build_context (Ctx estate) delta1 pos in
               (* let ctx1 = elim_unsat_ctx_now prog (ref 1) ctx1 in *)
               (* let ctx1 = set_unsat_flag ctx1 true in *)
@@ -12379,7 +12384,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		            let f0 = normalize 10 f (formula_of_heap node pos) pos in
 		            let f1 = normalize 11 f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			    (* unfold the case with the negation of the guard. *)
-		            let f1 = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
+		            let f1,_ = unfold_nth 2 (prog,None) f1 p1 true 0 pos in
 		            let f2 = normalize 12 f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			    (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		            let new_f = mkOr f1 f2 pos in

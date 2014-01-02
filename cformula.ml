@@ -5023,26 +5023,27 @@ and get_hp_rel_h_formula hf=
     | HFalse
     | HEmp -> ([],[],[])
 
-let look_up_reachable_ptrs_f_x prog f roots=
+let look_up_reachable_ptrs_f_x prog f roots ptr_only=
   let obtain_reachable_ptr_conj f=
     let hds, hvs, _ = get_hp_rel_formula f in
     look_up_reachable_ptr_args prog hds hvs roots
   in
   let fs = list_of_disjs f in
   let ptrs = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
-  CP.remove_dups_svl ptrs
+  let ptrs1 = CP.remove_dups_svl ptrs in
+  if ptr_only then List.filter CP.is_node_typ ptrs1 else ptrs1
 
-let look_up_reachable_ptrs_f prog f roots =
+let look_up_reachable_ptrs_f prog f roots ptr_only=
   let pr1 = !print_formula in
   let pr2 = !print_spec_var_list in
   let pr_out = !print_spec_var_list in
   Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out
-             (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots) f roots
+             (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only) f roots
 
-let rec look_up_reachable_ptrs_sf_x prog sf roots =
+let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
     let ptrs = List.fold_left (fun r (_, sf) ->
-      r @ look_up_reachable_ptrs_sf prog sf roots
+      r @ (look_up_reachable_ptrs_sf prog sf roots ptr_only)
     ) [] sfs in
     CP.remove_dups_svl ptrs
   ) in
@@ -5051,25 +5052,25 @@ let rec look_up_reachable_ptrs_sf_x prog sf roots =
   | ECase { formula_case_branches = sfs } ->
       look_up_reachable_ptrs_sf_list prog sfs roots
   | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
-      let ptrs1 = look_up_reachable_ptrs_f prog f roots in
+      let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only in
       let ptrs2 = (match sf_opt with
         | None -> []
-        | Some sf -> look_up_reachable_ptrs_sf prog sf roots
+        | Some sf -> look_up_reachable_ptrs_sf prog sf roots ptr_only
       ) in
       CP.remove_dups_svl (ptrs1 @ ptrs2)
   | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
-      let ptrs1 = look_up_reachable_ptrs_f prog f roots in
-      let ptrs2 = look_up_reachable_ptrs_sf prog sf roots in
+      let ptrs1 = look_up_reachable_ptrs_f prog f roots  ptr_only in
+      let ptrs2 = look_up_reachable_ptrs_sf prog sf roots  ptr_only in
       CP.remove_dups_svl (ptrs1 @ ptrs2)
   | EInfer { formula_inf_continuation = sf } ->
-      look_up_reachable_ptrs_sf prog sf roots
+      look_up_reachable_ptrs_sf prog sf roots ptr_only
 
-and look_up_reachable_ptrs_sf prog sf roots =
+and look_up_reachable_ptrs_sf prog sf roots ptr_only =
   let pr1 = !print_struc_formula in
   let pr2 = !print_spec_var_list in
   let pr_out = !print_spec_var_list in
   Debug.no_2 "look_up_reachable_ptrs_sf" pr1 pr2 pr_out
-             (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots) sf roots
+             (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots ptr_only) sf roots
 
 let rec get_hprel (f:formula) =
   match f with
