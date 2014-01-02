@@ -4714,38 +4714,6 @@ let remove_dups_recursive_wg prog cdefs hp args unk_hps unk_svl defs_wg=
   Debug.no_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
       (fun _ _ _ -> remove_dups_recursive_x prog cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
 
-(* let simplify_set_of_formulas_x prog is_pre cdefs hp args unk_hps unk_svl defs= *)
-(*   let is_self_rec f= *)
-(*     let hpargs = CF.check_and_get_one_hpargs f in *)
-(*     match hpargs with *)
-(*       | [(hp1,_,_)] -> if CP.eq_spec_var hp hp1 then true else false *)
-(*       | _ -> false *)
-(*   in *)
-(*   let helper f= *)
-(*     let f1 = filter_var prog args f in *)
-(*     let f2 = elim_irr_eq_exps prog (args@unk_svl) f1 in *)
-(*     let _ = Debug.ninfo_zprint (lazy (("  f2: "^ (Cprinter.prtt_string_of_formula f)))) no_pos in *)
-(*     if is_pre && ( (is_trivial f2 (hp,args)) || is_self_rec f2) then [] else [f2] *)
-(*   in *)
-(*   if List.length defs < 2 then (false, defs) else *)
-(*     let base_case_exist,defs1 = remove_dups_recursive prog cdefs hp args unk_hps unk_svl defs in *)
-(*     let defs2 = List.concat (List.map helper defs1) in *)
-(*     let b_defs3,r_defs3=List.partition is_empty_heap_f defs2 in *)
-(*     (\*remove duplicate for base cases*\) *)
-(*     let b_defs4 = (\* remove_subsumed_pure_formula args *\) b_defs3 in *)
-(*     (\*remove duplicate for recursive cases*\) *)
-(*     let r_defs4 = (\* Gen.BList.remove_dups_eq check_relaxeq_formula *\) r_defs3 in *)
-(*     (\*  if base_case_exist then *\) *)
-(*     (\*      List.concat (List.map helper defs1) *\) *)
-(*     (\*    else defs1 *\) *)
-(*     (\* in *\) *)
-(*     (base_case_exist,b_defs4@r_defs4) *)
-
-(* let simplify_set_of_formulas prog is_pre cdefs hp args unk_hps unk_svl defs= *)
-(*    let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
-(*    let pr2 = pr_pair string_of_bool pr1 in *)
-(*    Debug.no_3 "simplify_set_of_formulas" !CP.print_sv !CP.print_svl pr1 pr2 *)
-(*        (fun _ _ _ -> simplify_set_of_formulas_x prog is_pre cdefs hp args unk_hps unk_svl defs) hp args defs *)
 
 let simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg=
   let is_self_rec f=
@@ -4779,6 +4747,20 @@ let simplify_set_of_formulas_wg prog is_pre cdefs hp args unk_hps unk_svl defs_w
    let pr2 = pr_pair string_of_bool pr1 in
    Debug.no_3 "simplify_set_of_formulas_wg" !CP.print_sv !CP.print_svl pr1 pr2
        (fun _ _ _ -> simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
+
+
+let split_seg_x prog hp r other_args unk_hps defs_wg=
+  (*in rec branches, one parameter is continuous*)
+  (*in base case, root is closed and continuos parameter is contant*)
+  None
+
+let split_seg prog hp r other_args unk_hps defs_wg=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  let pr3 = Cprinter.string_of_hp_rel_def in
+  Debug.no_4 "split_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 (pr_option (pr_pair pr1 pr3))
+      (fun _ _ _ _ -> split_seg_x prog hp r  other_args unk_hps defs_wg)
+      hp r other_args defs_wg
 
 (**********************)
 (*

@@ -63,6 +63,7 @@ type command =
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
   | PredSplit of (ident list)
+  | PredNormDisj of (ident list)
   | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
@@ -130,6 +131,7 @@ let string_of_command c = match c with
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
   | PredSplit _ -> "PredSplit"
+  | PredNormDisj _ -> "Pred Normal Disj"
   | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"

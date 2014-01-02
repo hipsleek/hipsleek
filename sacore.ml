@@ -3432,6 +3432,22 @@ let find_closure_tuplep_hps tupled_hps hp_defs=
     let tpl_aset2 = List.fold_left (fun tpl (sv1,sv2) -> CP.add_equiv_eq tpl sv1 sv2) tpl_aset1 tuple_deps in
     CP.EMapSV.find_equiv_all fst_sv tpl_aset2
 
+let seg_split prog unk_hps ass_stk hpdef_stk hp_def=
+  let hp,args = CF.extract_HRel hp_def.CF.def_lhs in
+  if List.length args = 2 then
+    match hp_def.CF.def_cat with
+      | CP.HPRelDefn (hp,r, others) ->begin
+          let split_seg_opt = SAU.split_seg prog hp r others unk_hps hp_def.CF.def_rhs in
+          match split_seg_opt with
+            | None -> [hp_def]
+            | Some (n_rhs, h_def) ->
+                  (*prove equiv*)
+                  [hp_def]
+        end
+      | _ -> [hp_def]
+  else
+    [hp_def]
+
 (*return new hpdefs and hp split map *)
 let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list)  =
   let sing_hp_defs, tupled_hp_defs, tupled_hps = List.fold_left (fun (s_hpdefs, t_hpdefs, t_hps)  hp_def->
@@ -3466,14 +3482,18 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
       let is_succ, hp_defs1, n_split = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
       if is_succ then
         (hp_defs1, r_split@[n_split])
-      else (hp_defs0, r_split)
+      else
+        (hp_defs0, r_split)
   ) (sing_hp_defs1,[]) split_map_hprel_subst
   in
+  (*do seg split*)
+  let sing_hp_defs3 = List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def))
+      [] sing_hp_defs2 in
   let tupled_hp_defs2 = List.map (fun def ->
       let fs,ogs = List.split def.CF.def_rhs in
       let f = CF.disj_of_list fs no_pos in
       {def with CF.def_rhs = [(CF.subst_hrel_f f ss_preds, CF.combine_guard ogs)]}) (tupled_hp_defs1@sing_hp_def1b) in
-  let r = (sing_hp_defs2@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst1) in
+  let r = (sing_hp_defs3@tupled_hp_defs2,List.map (fun (a1,a2,a3,a4,_) -> (a1,a2,a3,a4)) split_map_hprel_subst1) in
   r
 
 let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list *
@@ -3492,3 +3512,13 @@ let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def l
 (*=============**************************================*)
        (*=============END PRED SPLIT================*)
 (*=============**************************================*)
+let pred_norm_disj_x iprog prog unk_hps hp_defs=
+
+  (1,[])
+
+let pred_norm_disj iprog prog unk_hps hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = !CP.print_sv in
+  Debug.no_2 "pred_norm_disj" pr2 pr1 (pr_pair string_of_int pr1)
+      (fun _ _ -> pred_norm_disj_x iprog prog unk_hps hp_defs)
+      unk_hps hp_defs

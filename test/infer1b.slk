@@ -1,3 +1,13 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// (1)
+infer [y] y=null|- y!=null.
+print residue.
+
+
 // (2)
 infer [y] y=0|- y!=0.
 print residue.

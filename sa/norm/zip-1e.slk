@@ -12,15 +12,15 @@ pred zip<y> ==
 or self::node<_,p>*y::node<_,q>*p::zip<q>.
 
 
-pred zipN<n> ==
-  self=null & n=0 
- or self::node<_,p>*p::zipN<n1> & n=n1+1 
- inv n>=0.
+pred zipN<i> ==
+  self=null & i=0 
+ or self::node<_,p>*p::zipN<i1> & i=i1+1 
+ inv i>=0.
 
-pred zipM<n> ==
-  self=null & n=0 
- or self::node<_,p>*p::zipM<n1> & n=n1+1 
- inv n>=0.
+pred zipM<k> ==
+  self=null & k=0 
+ or self::node<_,p>*p::zipM<k1> & k=k1+1 
+ inv k>=0.
 
 
 HeapPred P1(node a, int b).
