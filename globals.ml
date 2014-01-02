@@ -663,6 +663,8 @@ let label_split_ante = ref true
 let label_aggressive_sat = ref true
 let label_aggressive_imply = ref true
 
+let force_verbose_xpure = ref false
+
 let texify = ref false
 let testing_flag = ref false
 

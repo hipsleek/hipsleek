@@ -2225,11 +2225,10 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let _ = if diff_flag then smart_same_flag := false in
           let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
-          (match lbl_lst with
-            | None ->
-                  (*--imm only*)
+		  let helper () = 
+				  (*--imm only*)
                   (*LDK: add fractional invariant 0<f<=1, if applicable*)
-                  let diff_flag = not(vdef.view_xpure_flag) in
+			      let diff_flag = not(vdef.view_xpure_flag) in
                   let _ = if diff_flag then smart_same_flag := false in
                   let frac_inv = match perm with
                     | None -> CP.mkTrue pos
@@ -2239,8 +2238,11 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                   let frac_inv_mix = MCP.OnePF frac_inv in
                   let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
                   let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
-                  (subst_m_fun vinv, ba)
-            | Some ls ->
+                  (subst_m_fun vinv, ba) in
+          (match lbl_lst with
+            | None -> helper ()
+            | Some ls -> if !force_verbose_xpure then helper ()
+				else 
                   (*--imm and --eps *)
                   let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
                   (MCP.mkMTrue no_pos, ba))

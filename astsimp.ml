@@ -1207,7 +1207,10 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
 		    else b.CF.formula_struc_base 
 		  | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 		in
+		let f_aux = !force_verbose_xpure in
+		force_verbose_xpure:=true;
 		let not_fact,_, _ = (Solver.xpure_symbolic 11 cp d) in
+		force_verbose_xpure:=f_aux;
 		let fact =  Solver.normalize_to_CNF (pure_of_mix not_fact) no_pos in
                 (* let fact = CP.drop_disjunct fact in *)
                 let sfact = TP.simplify fact in
