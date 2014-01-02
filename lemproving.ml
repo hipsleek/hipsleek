@@ -228,7 +228,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     )
     else new_rhs
   in
-  let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in
+  (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 

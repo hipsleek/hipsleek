@@ -386,6 +386,26 @@ Fail
 succ with --dci
 
 ====================================================================
+# loc-lem2.slk -debug lem.log
+
+This unfold_struc_nth spec is inaccurate since
+the case expression should not float out of its
+quantifier.
+
+
+unfold_struc_nth#9@5@1
+unfold_struc_nth#9 inp1 :true
+unfold_struc_nth#9 inp2 :p
+unfold_struc_nth#9 inp3 : EBase (exists _,p: self::node<_,p>@M * p::ll<>@M&{FLOW,(21,22)=__norm})[]
+unfold_struc_nth#9 inp4 :None
+unfold_struc_nth#9@5 EXIT: ECase case {
+        p_50=null -> :EBase (exists _,p_50: self::node<_,p_50>@M&p_50=null&
+                            {FLOW,(21,22)=__norm})[]
+        ;
+        p_50!=null -> :EBase exists (Expl)[](Impl)[_; p_52](ex)[](exists _,
+                             p_50: self::node<_,p_50>@M * 
+                             p_50::node<_,p_52>@M * p_52::ll<>@M&
+                             {FLOW,(21,22)=__norm})[]
 ====================================================================
 ====================================================================
 ====================================================================

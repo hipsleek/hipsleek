@@ -1231,7 +1231,7 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
                 let _ = Debug.tinfo_hprint (add_str "check not" Cprinter.string_of_pure_formula) fact no_pos in
 		(fact,c)) l in    
             let pr = pr_list (fun (f,_) -> Cprinter.string_of_pure_formula f) in
-            let _ = Debug.info_hprint (add_str "f_list" pr) f_list no_pos in
+            let _ = Debug.tinfo_hprint (add_str "f_list" pr) f_list no_pos in
             let sp = splitter f_list v1 in
 	    fst (move_instantiations (List.hd sp))
 	  with _ -> f_ext)
