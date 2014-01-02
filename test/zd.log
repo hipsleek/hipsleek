@@ -1,5 +1,8 @@
-#compute_actions
+compute_actions
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
-process_action
-heap_entail_conjunct_helper,Trace
+#process_action
+#heap_entail_conjunct_helper,Trace
+do_match
+subst_avoid_capture
+subst_eqset

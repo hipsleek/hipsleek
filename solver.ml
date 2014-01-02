@@ -51,6 +51,20 @@ let simple_imply f1 f2 =
   Debug.no_2 "simple_imply" pr pr string_of_bool
   simple_imply f1 f2
 
+let apply_subs subst v =
+  try
+    List.assoc v subst 
+  with _ -> v
+
+let subst_eqset subst eqset =
+  let subs = apply_subs subst in
+  List.map (fun (v1,v2) -> (subs v1,subs v2)) eqset
+
+let subst_eqset s e =
+  let pr_sv = Cprinter.string_of_spec_var in
+  let pr = pr_list (pr_pair pr_sv pr_sv) in
+  Debug.no_2 "subst_eqset" pr pr pr subst_eqset s e
+
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
 	| ViewNode v ->
@@ -10360,12 +10374,19 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let _ = Debug.tinfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
               let lhs_vars = CP.fv to_lhs in
               (* apply the new bindings to the consequent *)
-              let r_subs, l_subs = List.split (ivar_subs_to_conseq@ext_subst) in
-              (*IMPORTANT TODO: global existential not took into consideration*)
+              let e_subs = ivar_subs_to_conseq@ext_subst in
               (*do not subst heap relation*)
-              let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in
-              let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in
+              let e_subs = List.filter (fun (sv1,sv2) -> (not (CP.is_rel_typ sv1)) && (not(CP.is_rel_typ sv2))) e_subs in
+              let _ = Debug.tinfo_hprint (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs pos in
+              let r_subs, l_subs = List.split e_subs in
+              (*IMPORTANT TODO: global existential not took into consideration*)
+              (* let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in *)
+              (* let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in *)
+              let _ = Debug.tinfo_hprint (add_str "r_subs" Cprinter.string_of_spec_var_list) r_subs pos in
+              let _ = Debug.tinfo_hprint (add_str "l_subs" Cprinter.string_of_spec_var_list) l_subs pos in
               let _ = DD.ninfo_zprint (lazy ((" tmp_conseq: " ^ (Cprinter.prtt_string_of_formula tmp_conseq)))) no_pos in
+              let rhs_eqset = estate.es_rhs_eqset in
+              let subs_rhs_eqset = subst_eqset e_subs rhs_eqset in
               let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
@@ -10425,6 +10446,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_heap = new_consumed;
                   es_residue_pts = n_es_res;
                   es_success_pts = n_es_succ; 
+                  es_rhs_eqset = subs_rhs_eqset;
 	          } in
               Debug.tinfo_hprint (add_str "new_es" (Cprinter.string_of_entail_state)) new_es pos;
 	          (* An Hoa : trace detected: need to change the left hand side before this point which forces to change the new_ante at an earlier check point *)

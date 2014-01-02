@@ -24,11 +24,10 @@ checkentail_exact
 //Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
 
 
-/*
 checkentail_exact
  self::node<_,last>*last::node<_,null>
 |- (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
-*/
+
 
 /*
 # loc-lem-4c.slk 

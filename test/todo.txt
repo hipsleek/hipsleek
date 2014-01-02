@@ -386,12 +386,11 @@ Fail
 succ with --dci
 
 ====================================================================
-# loc-lem2.slk -debug lem.log
+# loc-lem2.slk -debug lem.log (FIXED)
 
 This unfold_struc_nth spec is inaccurate since
 the case expression should not float out of its
 quantifier.
-
 
 unfold_struc_nth#9@5@
 unfold_struc_nth#9 inp1 :true
@@ -407,7 +406,7 @@ unfold_struc_nth#9@5 EXIT: ECase case {
                              p_50::node<_,p_52>@M * p_52::ll<>@M&
                              {FLOW,(21,22)=__norm})[]
 ====================================================================
-# loc-lem-4.slk -debug lem.log
+# loc-lem-4.slk -debug lem.log (FIXED)
 
 error in process_coercion_check that that was
 avoided by hand translation. Is it due to unnecessary
@@ -425,8 +424,7 @@ process_coercion_check inp1 :
 
   case study
 ====================================================================
-# loc-lem-4c.slk 
-
+# loc-lem-4c.slk (FIXED by substituting rhs_eqset from subst)
 
 why it failed for:
 
