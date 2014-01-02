@@ -293,7 +293,10 @@ Entail (2) : Valid.
  inferred pure: [y=0]
 [[empty]]
 ====================================================================
-# hip append.ss --eps --eci
+# hip append.ss --eps --eci (FIXED by allowing unlabelled false)
+
+Exception Failure("view is unlabeled\n") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
 
 
 

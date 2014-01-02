@@ -321,7 +321,11 @@ let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
 		formula_base_label = lbl;
 		formula_base_pos = pos})
 
-let mkFalse (flowt: flow_formula) pos = mkFalseLbl flowt None pos 
+let dummy_lbl n = None 
+(* Some (-n,"")  *)
+
+(* added a dummy_label for --eps *)
+let mkFalse (flowt: flow_formula) pos = mkFalseLbl flowt (dummy_lbl 1) pos 
   
 let mkEFalse flowt pos = EBase({
 	formula_struc_explicit_inst = [];
@@ -344,7 +348,7 @@ let mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_type = TypeTrue; 
 	    formula_base_and = [];
 		formula_base_flow = flowt (*(mkTrueFlow ())*);
-		formula_base_label = None;
+		formula_base_label = dummy_lbl 2;
 		formula_base_pos = pos}
 let mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
@@ -11735,12 +11739,17 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
     | None -> f0
     | Some br -> 
 		let rec filter_formula (f:formula):formula list = 
-                  let cf = !print_formula f in
                   match f with
-			| Base {formula_base_label = lbl} 
-			| Exists {formula_exists_label = lbl} -> (match lbl with
-			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"} 
-			  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
+			| Base {formula_base_label = lbl; formula_base_flow = flowt} 
+			| Exists {formula_exists_label = lbl; formula_exists_flow = flowt} -> (match lbl with
+			  | None -> 
+                                (* HACK : this assumed that unlabelled disj is false *)
+                                let cf = !print_formula f in
+                                if is_false_flow flowt.formula_flow_interval then []
+                                else Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"}
+			  | Some lbl -> 
+                                if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) 
+                                else (Gen.Profiling.inc_counter "saved_unfolds";[]))
 			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
 		let rec filter_helper (f:struc_formula):struc_formula = match f with
 			| EBase b -> (match b.formula_struc_continuation with
