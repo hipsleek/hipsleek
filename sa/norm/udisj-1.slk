@@ -16,12 +16,9 @@ or x::node<_,p>*ll_last(p) & p!=null.
 
 relDefn ll_nth(x) <->
   x=null
-or HP(x)
+or x::node<_,p>*HP(x)
 or x::node<_,p>*ll_nth(p).
 
-//pred_disj_unify [ll_last].
+pred_disj_unify [ll_last].
 
 //pred_disj_unify [ll_nth].
-
-
-pred_split [ll_last].

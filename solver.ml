@@ -11075,11 +11075,11 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
         (* lhs_rhs contradiction detected *)
         (* try to first infer contra on lhs only with direct vars *)
         (*sa/norm/zip-1e.slk: lhs_rhs_contra: xpure lhs should consider the rhs (pairwaisecheck + neg produces imprecise result) *)
-        let lhs_xpure0,_,_ = xpure prog temp_estate.es_formula in
-        let lhs_xpure = MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq)) in
-        let _ = Debug.tinfo_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in 
-        let _ =  Debug.tinfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in 
-	let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
+        let lhs_xpure,_,_ = xpure prog temp_estate.es_formula in
+        (* let lhs_xpure = MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq)) in *)
+        (* let _ = Debug.tinfo_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in  *)
+        (* let _ =  Debug.tinfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in *)
+        let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with
             | Some r ->  (true, [r], relass)

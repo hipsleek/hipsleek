@@ -1473,6 +1473,19 @@ let process_pred_split ids=
   in
   ()
 
+let process_pred_norm_disj ids=
+  let _ = DD.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
+  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
+  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (*find all sel pred def*)
+  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+          if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
+        | _ -> r
+  ) [] !sleek_hprel_defns in
+  ()
+
 let process_shape_infer_prop pre_hps post_hps=
   (* let _ = DD.info_pprint "process_shape_infer_prop" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in

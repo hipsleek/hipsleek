@@ -800,7 +800,7 @@ No file generated. I presume it is cos there
 are no checks to perform?
 ===================================================================
 classic-bug-1a.ss (without)
-classic-bug-1b.ss (with classic)
+classic-bug-1b.ss (with classic) : FIXED
 
 -debgug lem.log
 

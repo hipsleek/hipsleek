@@ -850,6 +850,7 @@ non_empty_command:
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t=pred_split_cmd     -> PredSplit t
+      | t=pred_norm_disj_cmd     -> PredNormDisj t
       | t = rel_infer_cmd -> RelInfer t
       | t=simplify_cmd        -> Simplify t
       | t=hull_cmd        -> Slk_Hull t
@@ -1969,6 +1970,12 @@ shape_sante_cmd:
 
 pred_split_cmd:
    [[ `PRED_SPLIT; `OSQUARE;il1=OPT id_list;`CSQUARE->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
+pred_norm_disj_cmd:
+   [[ `PRED_NORM_DISJ; `OSQUARE;il1=OPT id_list;`CSQUARE->
    let il1 = un_option il1 [] in
    (il1)
    ]];
