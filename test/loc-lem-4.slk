@@ -1,0 +1,80 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+lemma_safe "two" self::HP<> -> self::lseg<p> * p::node<_,null>.
+
+/*
+
+// succeeds with unsafe lemma
+checkentail
+  self::node<_,null>
+ or self::node<_,p1>*p1::HP<> 
+|-
+  (exists p: self::node<_,null> & p=self)
+ or self::node<_,p2>*p2::lseg<p>*p::node<_,null>
+.
+*/
+
+/*
+# loc-lem-4.slk -debug lem.log
+
+error in process_coercion_check that went thru
+with the above entailment..
+
+process_coercion_check@11@1
+process_coercion_check inp1 : 
+ (exists flted_12_55,_: self_two::node<_,flted_12_55>@M&flted_12_55=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_58: self_two::node<_,p_58>@M * p_58::HP<>@M&p_58!=null&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : :EBase (exists flted_16_59,p_60,_: p_60::node<_,flted_16_59>@M&
+        flted_16_59=null & p_60=self_two&{FLOW,(21,22)=__norm})[]
+|| :EBase exists (Expl)[](Impl)[_; p_63](ex)[](exists last_69,flted_16_59,
+          p_60,_: p_60::node<_,flted_16_59>@M * self_two::node<_,p_63>@M * 
+          p_63::lseg<last_69>@M&flted_16_59=null & last_69=p_60&
+          {FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :[]
+process_coercion_check@11 EXIT:(false, failctx
+         
+          fe_kind: Valid
+          fe_name: 
+          fe_locs: Failure_Valid
+        FAIL_OR 
+         
+          
+           fe_kind: MUST
+           fe_name: 
+           fe_locs: {
+                     fc_message: classical separation logic
+                     fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+         FAIL_UNION 
+          
+           fe_kind: MUST
+           fe_name: separation entailment
+           fe_locs: {
+                     fc_message: base_case_unfold failed
+                     fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+         FAIL_UNION 
+          
+           fe_kind: MUST
+           fe_name: separation entailment
+           fe_locs: {
+                     fc_message: infer_heap_node
+                     fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+         
+        )
+
+*/
