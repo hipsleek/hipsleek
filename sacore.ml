@@ -487,7 +487,7 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
         (ls1@unk_svl, ls2@non_unk_svl)
     ) ([],[]) cs_unk_hps in
     let cs_non_unk_svl1 =
-      CP.remove_dups_svl (* (SAU.look_up_closed_ptr_args prog (lhds@rhds) (lhvs@rhvs) *) (cs_non_unk_svl2@cs_non_unk_svl)
+      CP.remove_dups_svl (* (CF.look_up_reachable_ptr_args prog (lhds@rhds) (lhvs@rhvs) *) (cs_non_unk_svl2@cs_non_unk_svl)
           (* ) *)
     in
     let poss_unk_svl_hps = CP.remove_dups_svl unk_svl_hps in
@@ -1423,7 +1423,7 @@ let check_imply prog lhs_b rhs_b=
             (* let nrdns,nrvns,_ = CF.get_hp_rel_bformula n_rhs_b in *)
             (*loc-1b1.slk*)
             (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
-               (look_up_closed_ptr_args prog nrdns nrvns all_matched_svl2) in *)
+               (look_up_reachable_ptr_args prog nrdns nrvns all_matched_svl2) in *)
             let rmf = (MCP.pure_of_mix n_rhs_b.CF.formula_base_pure) in
             let lmf = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
             let _ = Debug.ninfo_zprint (lazy (("    n_rhs_b: " ^ (Cprinter.string_of_formula_base n_rhs_b)))) no_pos in
@@ -2801,7 +2801,7 @@ let pred_split_cands_one_branch_x prog unk_hps hprel f=
         | [a] -> (parts@[[a]])
         | a::tl ->
               let part1 = CF.find_close [a] eqs in
-              let part2 = SAU.look_up_closed_ptr_args prog hns hvs (CP.remove_dups_svl part1) in
+              let part2 = CF.look_up_reachable_ptr_args prog hns hvs (CP.remove_dups_svl part1) in
               let part2a = (CF.find_close part2 eqs) in
               let new_parts,part2b = intersect_with_pre_parts parts part2a [] [] in
               let part3 = CP.remove_dups_svl (a::(CP.intersect_svl part2a tl)) in

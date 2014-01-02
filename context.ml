@@ -5,6 +5,8 @@ open Cprinter
 open Gen.Basic
 open Immutable
 
+module CF = Cformula
+
 type match_res = {
     match_res_lhs_node : h_formula; (* node from the extracted formula *)    
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
@@ -593,7 +595,7 @@ and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   List.filter (fun node ->
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_data_node) !unlinked_nodes then false
       else
-        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
+        let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
         if (empty_inters view_sv ptrs) then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
@@ -606,7 +608,7 @@ and get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   List.filter (fun node ->
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_view_node) !unlinked_nodes then false
       else
-        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
+        let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
         if (empty_inters view_sv ptrs)then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
@@ -618,7 +620,7 @@ and get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv =
   (List.filter (fun (hp0, e0,_) ->  
       let args0 = CP.diff_svl (get_all_sv (HRel(hp0, e0,no_pos))) [hp0] in
       let root0, _  = Sautility.find_root prog [hp0] args0  [] in
-      let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [root0] in
+      let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [root0] in
       (* replace root with aset *)
       not(empty_inters view_sv ptrs)
   ) hrels)

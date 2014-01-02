@@ -4431,6 +4431,74 @@ let simplify_pure_f (f0:formula) =
   Debug.no_1 "simplify_pure_f" pr pr
       (fun _ -> simplify_pure_f_x f0) f0
 
+
+let rec look_up_ptr_args_data_node_x hd=
+  List.filter CP.is_node_typ hd.h_formula_data_arguments
+  (*data nodes*)
+  (* let data_def =  C.look_up_data_def no_pos prog.C.prog_data_decls hd.CF.h_formula_data_name in *)
+  (* (\*get prototype of a node declaration*\) *)
+  (* let args = List.map (fun (t,_) -> t) data_def.C.data_fields in *)
+  (* (\*combine with actual areg*\) *)
+  (* let targs = List.combine args hd.CF.h_formula_data_arguments in *)
+  (* (\*get pointer*\) *)
+  (* snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs)) *)
+
+and look_up_ptr_args_data_node hd=
+  let pr1 = fun dn -> dn.h_formula_data_name in
+Debug.no_1 " look_up_ptr_args_data_node" pr1 !CP.print_svl
+    (fun _ ->  look_up_ptr_args_data_node_x hd) hd
+
+(* let loop_up_ptr_args_view_node prog hv= *)
+(*   (\*view node*\) *)
+(*   let view_def =  Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
+(*   (\*get prototype of a node declaration*\) *)
+(*   let args = List.map (fun (t,_) -> t) view_def.Cast.view_fields in *)
+(*   (\*combine with actual areg*\) *)
+(*   let targs = List.combine args hd.CF.h_formula_view_arguments in *)
+(*   (\*get pointer*\) *)
+(*   snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs)) *)
+
+and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
+  let rec look_up_data_node ls=
+    match ls with
+      | [] -> []
+      | dn::ds ->
+          if CP.eq_spec_var node_name dn.h_formula_data_node then
+            (* loop_up_ptr_args_data_node prog dn *)
+              (* List.filter CP.is_node_typ *) dn.h_formula_data_arguments
+          else
+              (* let args =  List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in *)
+          (*     if (CP.intersect_svl args cur_ptrs) <> [] then *)
+          (*       [dn.CF.h_formula_data_node] *)
+          (*     else [] *)
+          (* in *)
+            look_up_data_node ds
+  in
+  let rec look_up_view_node ls=
+    match ls with
+      | [] -> []
+      | vn::vs -> if CP.eq_spec_var node_name vn.h_formula_view_node then
+            (* List.filter CP.is_node_typ *) vn.h_formula_view_arguments
+          else look_up_view_node vs
+  in
+  let ptrs = look_up_data_node hd_nodes in
+  if ptrs = [] then look_up_view_node hv_nodes
+  else ptrs
+
+(*should improve: should take care hrel also*)
+let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
+  let rec helper old_ptrs inc_ptrs=
+    let new_ptrs = List.concat
+      (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes)
+           inc_ptrs) in
+    let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
+    let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
+    if diff_ptrs = [] then old_ptrs
+    else (helper (old_ptrs@diff_ptrs) diff_ptrs)
+  in
+  helper node_names node_names
+
+
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)
@@ -4954,6 +5022,16 @@ and get_hp_rel_h_formula hf=
     | HTrue
     | HFalse
     | HEmp -> ([],[],[])
+
+
+let look_up_reachable_ptrs prog f roots=
+  let obtain_reachable_ptr_conj f=
+    let hds, hvs, _ = get_hp_rel_formula f in
+    look_up_reachable_ptr_args prog hds hvs roots
+  in
+  let fs = list_of_disjs f in
+  let ptrs = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
+  CP.remove_dups_svl ptrs
 
 let rec get_hprel (f:formula) =
   match f with
