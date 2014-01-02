@@ -4,7 +4,7 @@ data node {
 }.
 
 pred lseg<p,n> == self=p & n=0
-  or self::node<q>*q::lseg<p,n-1> & self!=p
+  or self::node<q>*q::lseg<p,n-1> //& self!=p
   inv n>=0.
 
 

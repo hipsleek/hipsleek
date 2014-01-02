@@ -1216,11 +1216,11 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
                 let sfact = TP.simplify fact in
                 (* let sfact = fact in *)
                 let hfact = TP.hull sfact in
-                let fact = hfact in
                 let _ = Debug.tinfo_hprint (add_str "not_fact" Cprinter.string_of_mix_formula) not_fact no_pos in
                 let _ = Debug.tinfo_hprint (add_str "after norm" Cprinter.string_of_pure_formula) fact no_pos in
                 let _ = Debug.tinfo_hprint (add_str "after simplify" Cprinter.string_of_pure_formula) sfact no_pos in
                 let _ = Debug.tinfo_hprint (add_str "after hull" Cprinter.string_of_pure_formula) hfact no_pos in
+                let fact = hfact in
  		(* let fact = Cpure.drop_disjunct fact in *)
                 (* let _ = Debug.tinfo_hprint (add_str "drop_disj" Cprinter.string_of_pure_formula) fact no_pos in *)
 		let fact = Cpure.rename_top_level_bound_vars fact in

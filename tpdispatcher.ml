@@ -2032,9 +2032,24 @@ let hull (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then stop_prover ();
   res
 
+(* this extracts basic conjunct prior to hulling the disj form remainder *)
+let clever_hull f =
+  let x = CP.split_conjunctions f in
+  let (others,basic) = List.partition (CP.is_disjunct) x in
+  if others==[] then f
+  else
+    (* let x = []@[] in *)
+    (* let z = [] in *)
+    (* let z = [] in *)
+    let others = hull(CP.join_conjunctions others) in
+     CP.join_conjunctions (others::basic)
+
+(* let k f = [] *)
+
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "hull" pr pr hull f
+  Debug.no_1 "hull" pr pr clever_hull f
+
 
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result

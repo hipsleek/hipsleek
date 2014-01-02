@@ -3595,15 +3595,20 @@ and remove_conj_new (f : CP.formula list) (conj : CP.formula) pos : (bool * CP.f
 (*17.04.2009*)	
 (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 
-and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
+and normalize_to_CNF (f : CP.formula) pos : CP.formula = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "normalize_to_CNF" 
+      pr pr (fun _ -> normalize_to_CNF_x f pos) f
+ 
+and normalize_to_CNF_x (f : CP.formula) pos : CP.formula = match f with
   | CP.Or (f1, f2, lbl, p) ->
         let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
         (CP.mkAnd conj (CP.mkOr disj1 disj2 lbl p) p)
-  | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
-  | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF f1 p, lbl ,p)
-  | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl ,p)
-  | CP.Exists (sp, f1, lbl, p) -> CP.mkExists [sp] (normalize_to_CNF f1 p)  lbl p
-  | CP.AndList b-> CP.AndList (map_l_snd (fun c-> normalize_to_CNF c no_pos) b)
+  | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF_x f1 p) (normalize_to_CNF_x f2 p) p
+  | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF_x f1 p, lbl ,p)
+  | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF_x f1 p, lbl ,p)
+  | CP.Exists (sp, f1, lbl, p) -> CP.mkExists [sp] (normalize_to_CNF_x f1 p)  lbl p
+  | CP.AndList b-> CP.AndList (map_l_snd (fun c-> normalize_to_CNF_x c no_pos) b)
   | _ -> f
 
 (* take two formulas f1 and f2 and returns:
@@ -3625,8 +3630,8 @@ and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP
         let outer_conj_prim, new_f1_prim, new_f2_prim  = (find_common_conjs f12 new_f2 p) in
         ((CP.mkAnd outer_conj outer_conj_prim p), (CP.mkAnd new_f1 new_f1_prim p), new_f2_prim)
   | CP.Or(f11, f12, lbl ,p) ->
-        let new_f11 = (normalize_to_CNF f11 p) in
-        let new_f12 = (normalize_to_CNF f12 p) in
+        let new_f11 = (normalize_to_CNF_x f11 p) in
+        let new_f12 = (normalize_to_CNF_x f12 p) in
         (CP.mkTrue pos),(CP.mkOr new_f11 new_f12 lbl p),f2
   | _ -> ((CP.mkTrue pos), f1, f2)
 
