@@ -15,11 +15,10 @@ pred hd2<n> ==
   }
  inv n >= 0.
 
-
 checkentail_exact
  r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
   & 0<n & v=v' & x=x' & next=r 
- |- x::hd2<n+1>.
+ |- x::hd2<m> & m=n+1.
 print residue.
 
 /*
