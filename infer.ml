@@ -2794,9 +2794,9 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
      let _ = DD.ninfo_hprint (add_str  "  lselected_hpargs2: " (pr_list (pr_pair !CP.print_sv  !CP.print_svl))) lselected_hpargs2 pos
      in
      let _ = DD.tinfo_hprint (add_str  "  root_vars_ls2 " !CP.print_svl) root_vars_ls2 pos in
-     let root_vars_ls3 = CP.remove_dups_svl (List.fold_left (fun r sv ->
+     let root_vars_ls3 = CP.remove_dups_svl ((List.fold_left (fun r sv ->
          r@(CP.EMapSV.find_equiv_all sv all_aset)
-     ) [] root_vars_ls2) in
+     ) [] root_vars_ls2)@root_vars_ls2) in
      
      let _ = DD.tinfo_hprint (add_str  "  root_vars_ls3 " !CP.print_svl) root_vars_ls3 pos in
      let _ = DD.ninfo_hprint (add_str  "  residue (before)" Cprinter.string_of_formula) new_es_formula pos in
