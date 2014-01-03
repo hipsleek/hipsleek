@@ -1,0 +1,32 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd2<n> == 
+ case {
+   n=0 -> [] self=null;
+   n>0 -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |-  (exists m: self::node<_, r1> * r1::cll<self, m-1> & m=n+1).
+print residue.
+
+/*
+# bug-cll-5.slk
+
+Why --eci fail for above but not dci?
+
+*/
+

@@ -1,0 +1,46 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred hd2<n> == 
+  case {
+   n=0 ->  [] self=null;
+   n!=0 -> [] self::node<_, null> & n=1;
+ }
+ inv n >= 0.
+
+checkentail_exact
+ x::node<_,null> & n>=0
+ |-   case {
+   n=0 ->  [] x=null & n=1;
+   n!=0 -> [] x::node<_, null> & n=1;
+ }.
+
+print residue.
+
+checkentail_exact
+ x::node<_,null> & n=1
+ |-   case {
+   n=0 ->  [] x=null ;
+   n!=0 -> [] x::node<_, null> & n=1;
+ }.
+print residue.
+
+checkentail_exact
+ x::node<_,null> 
+ |-    (exists n: x=null & n=0)
+   or (exists n:x::node<_, null> & n=1)
+ .
+print residue.
+
+
+/*
+# bug-cll-6.slk
+
+why this folding cannot find emp answer
+when 6a can
+
+
+*/

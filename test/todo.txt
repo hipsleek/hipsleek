@@ -513,7 +513,41 @@ use gist?
          }
 
 ====================================================================
+# bug-cll-5.slk
+
+Why --eci fail for above but not dci?
+
+--dci
+
+Entail 1: Valid. 
+
+ <1>emp&n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_15 & r1=tmp' & Anon_85=v' & r=r_86 & exists(self_82:r1!=self_82 & self=self_82) & exists(flted_23_83:flted_23_83=flted+1)&{FLOW,(21,22)=__norm}[]
+[[ Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+--eci
+
+Entail 1: Fail.(may) cause:OrR[residue is forbidden.,valid]
+
 ====================================================================
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd2<m> & m=n+1.
+print residue.
+
+/*
+# bug-cll-4.slk
+
+why isn't folding triggered by above 
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd2<m>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp
 ====================================================================
 ====================================================================
 ====================================================================
