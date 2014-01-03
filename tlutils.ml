@@ -470,7 +470,7 @@ let linearize_nonlinear_formula f =
   trans_formula f () (nonef2, nonef2, (fun _ e -> Some (helper e))) 
     (f_arg, f_arg, f_arg) List.concat
 
-(* forall x. x >= 0 -> a*x + b > 0 --> a >= 0 & b > 0 *)
+(* forall x. x >= 0 & y >= 0 -> a*x + b*y + c > 0 --> a >= 0 & b >= 0 & c > 0 *)
 let gen_templ_unk_constr (tl: term list): formula =
   if not (List.exists (fun t -> t.term_var = []) tl) then
     mkTrue no_pos
@@ -507,6 +507,7 @@ let partition_nln_vars nln_vars sst asserts =
   in
   List.partition (fun v -> must_be_positive_var v sst asserts) nln_vars
 
+(* Only when v is integer (not rational) *)  
 let norm_sst_pos vl sst =
   (* (x, a*v) with v > 0 --> (x, a*(v0+1)) with v0 = v-1 >= 0 *)
   let p = no_pos in
@@ -529,6 +530,20 @@ let norm_sst_zero vl sst =
   let vl_zero_sst = (List.map (fun v -> (v, zero)) vl) @ vl_zero_sst in
   vl_zero_sst
 
+(* Change rational lambda variables to integer *)  
+let norm_rational_asserts asserts = 
+  let lcm_denom = SpecVar (Int, "lcm", Unprimed) in 
+  let f_b b =
+    let (pf, _) = b in
+    match pf with
+    | Eq (e1, e2, pos) -> 
+      if is_zero e1 || is_zero e2 then Some b
+      else
+        Some (Eq (e1, normalize_mult (mkMult (mkVar lcm_denom pos) e2 pos), pos), None)
+    | _ -> None
+  in 
+  lcm_denom, List.map (transform_formula (nonef, nonef, nonef, f_b, nonef)) asserts
+
 let rec search_model_om pos_zero_vars bnd_vars nln_vars sst asserts =
   let p = no_pos in
   match pos_zero_vars with
@@ -541,11 +556,10 @@ let rec search_model_om pos_zero_vars bnd_vars nln_vars sst asserts =
     let zero_sst = norm_sst_zero zero_vars sst in
     let n_asserts = List.map (fun f -> apply_par_term zero_sst f) n_asserts in
 
-    let _ = print_endline ("N_LN: " ^ (pr_list !print_formula n_asserts)) in
-
     let ln_r = Omega.get_model bnd_vars n_asserts in
 
-    let _ = print_endline ("LN_R: " ^ (!print_formula ln_r)) in
+    let _ = Debug.trace_pprint ("N_LN: " ^ (pr_list !print_formula n_asserts)) in
+    let _ = Debug.trace_pprint ("LN_R: " ^ (!print_formula ln_r)) in
 
     if is_False ln_r then
       search_model_om rem bnd_vars nln_vars sst asserts
@@ -553,15 +567,14 @@ let rec search_model_om pos_zero_vars bnd_vars nln_vars sst asserts =
       let nln_r = apply_par_term pos_sst ln_r in
       let nln_r = normalize_eq_formula nln_r in
 
-      let _ = print_endline ("NLN_R: " ^ (!print_formula nln_r)) in
-
       let term_l = List.map (fun f -> term_list_of_formula (nln_vars @ rep_pos_vars)
         (normalize_formula f)) (split_conjunctions nln_r) in
       let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
-
-      let _ = print_endline ("CTRS: " ^ (pr_list !print_formula templ_unk_constrs)) in
-
       let r = Omega.get_model bnd_vars templ_unk_constrs in
+
+      let _ = Debug.trace_pprint ("CTRS: " ^ (pr_list !print_formula templ_unk_constrs)) in
+      let _ = Debug.trace_pprint ("NLN_R: " ^ (!print_formula nln_r)) in
+
       if is_False r then
         search_model_om rem bnd_vars nln_vars sst asserts
       else r
@@ -573,10 +586,12 @@ let get_model_om is_linear templ_unks vars assertions =
     print_endline ("OM: " ^ (!print_formula r))
   else
     let p = no_pos in
-    let ln_asserts, sst = List.split (List.map linearize_nonlinear_formula assertions) in
+    let lcm, asserts = norm_rational_asserts assertions in
+    let ln_asserts, sst = List.split (List.map linearize_nonlinear_formula asserts) in
     let sst = List.concat sst in
     let bnd_nln_vars = intersect bnd_vars (List.concat (List.map (fun (_, e) -> afv e) sst)) in
     let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
+    let pos_vars = lcm::pos_vars in
 
     let _ = print_endline ("LN: " ^ (pr_list !print_formula ln_asserts)) in
     let _ = print_endline ("POS: " ^ (!print_svl pos_vars)) in
@@ -588,12 +603,12 @@ let get_model_om is_linear templ_unks vars assertions =
     let rep_pos_vars, sst = norm_sst_pos pos_vars sst in
     let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
     let r = search_model_om splitted_nneg_vars 
-      bnd_vars (bnd_nln_vars @ rep_pos_vars) sst ln_asserts in
+      (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) sst ln_asserts in
     let _ = print_endline ("OM_RES: " ^ (!print_formula r)) in
     ()
     
 let get_model is_linear templ_unks vars assertions =
-  let _ = get_model_om is_linear templ_unks vars assertions in 
+  let _ = get_model_om is_linear templ_unks vars assertions in
   get_opt_model is_linear templ_unks vars assertions
 
 let get_model is_linear templ_unks vars assertions =

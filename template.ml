@@ -35,10 +35,6 @@ type simpl_templ_assume = {
 (* Stack of simplified template assumption per scc *)
 let simpl_templ_assume_scc_stk: simpl_templ_assume Gen.stack = new Gen.stack 
 
-
-
-
-
 let find_eq_subst_exp svl (f: formula): (spec_var * exp) option =
   match f with
   | BForm (bf, _) -> (match bf with
@@ -111,9 +107,6 @@ let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
   Debug.no_1 "find_eq_subst_formula" pr1 pr3 
   (fun _ -> find_eq_subst_formula svl f) f
 
-
-
-
 let unk_lambda_sv num =
   let name = List.fold_left (fun a i -> a ^ "_" ^ (string_of_int i)) "lambda" num in
   SpecVar (Int, name, Unprimed)
@@ -140,7 +133,7 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
       (* else mkPure (mkEq a_exp c_exp pos)                      *)
     in (cons_notsame_deg, fl @ [constr])) (cons, []) ante in
   let rem_constrs = List.map (fun ct -> 
-    mkPure (mkEq ct.term_coe (mkIConst 0 pos) pos)) rem_cons in
+    mkPure (mkEq (mkIConst 0 pos) ct.term_coe pos)) rem_cons in
   constrs @ rem_constrs
 
 let templ_entail_num = ref 0

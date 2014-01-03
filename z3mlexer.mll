@@ -17,6 +17,7 @@ rule tokenizer = parse
   | "define-fun" { DEFFUN }
   | "to_int" { TOINT }
   | "Int" { INT }
+  | "Real" { REAL }
   | '-' { MINUS }
   | '/' { DIV }
   | '*' { MULT }
