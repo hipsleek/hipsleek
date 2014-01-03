@@ -23,7 +23,8 @@ void insert(node x, int v)
 	node tmp;
 
 	tmp = new node(v, x.next);
-	x.next = tmp;	
+	x.next = tmp;
+        dprint;	
 }
 
 
