@@ -4457,32 +4457,31 @@ Debug.no_1 " look_up_ptr_args_data_node" pr1 !CP.print_svl
 (*   let targs = List.combine args hd.CF.h_formula_view_arguments in *)
 (*   (\*get pointer*\) *)
 (*   snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs)) *)
-
-and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
-  let rec look_up_data_node ls=
-    match ls with
-      | [] -> []
-      | dn::ds ->
+let rec look_up_data_node ls node_name=
+  match ls with
+    | [] -> []
+    | dn::ds ->
           if CP.eq_spec_var node_name dn.h_formula_data_node then
             (* loop_up_ptr_args_data_node prog dn *)
-              (* List.filter CP.is_node_typ *) dn.h_formula_data_arguments
+            (* List.filter CP.is_node_typ *) dn.h_formula_data_arguments
           else
-              (* let args =  List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in *)
-          (*     if (CP.intersect_svl args cur_ptrs) <> [] then *)
-          (*       [dn.CF.h_formula_data_node] *)
-          (*     else [] *)
-          (* in *)
-            look_up_data_node ds
-  in
-  let rec look_up_view_node ls=
-    match ls with
-      | [] -> []
-      | vn::vs -> if CP.eq_spec_var node_name vn.h_formula_view_node then
-            (* List.filter CP.is_node_typ *) vn.h_formula_view_arguments
-          else look_up_view_node vs
-  in
-  let ptrs = look_up_data_node hd_nodes in
-  if ptrs = [] then look_up_view_node hv_nodes
+            (* let args =  List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in *)
+            (*     if (CP.intersect_svl args cur_ptrs) <> [] then *)
+            (*       [dn.CF.h_formula_data_node] *)
+            (*     else [] *)
+            (* in *)
+            look_up_data_node ds node_name
+
+let rec look_up_view_node ls node_name=
+  match ls with
+    | [] -> []
+    | vn::vs -> if CP.eq_spec_var node_name vn.h_formula_view_node then
+        (* List.filter CP.is_node_typ *) vn.h_formula_view_arguments
+      else look_up_view_node vs node_name
+
+let look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
+  let ptrs = look_up_data_node hd_nodes node_name in
+  if ptrs = [] then look_up_view_node hv_nodes node_name
   else ptrs
 
 (*should improve: should take care hrel also*)
@@ -4497,6 +4496,22 @@ let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
     else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   helper node_names node_names
+
+let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes roots=
+  let rec helper old_ptrs inc_ptrs=
+    let new_ptrs = List.fold_left (fun r sv ->
+        r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes sv)) [] inc_ptrs in
+    let unfold_ptrs = List.filter (fun sv -> List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) new_ptrs in
+    if unfold_ptrs != [] then unfold_ptrs else
+      let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
+      let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
+      if diff_ptrs = [] then []
+      else (helper (old_ptrs@diff_ptrs) diff_ptrs)
+  in
+  (*check onl_ptrs are unfold points - view*)
+  if List.exists (fun sv -> List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes
+  ) roots then roots else
+    helper roots roots
 
 
 let extract_HRel_orig hf=
@@ -5023,27 +5038,31 @@ and get_hp_rel_h_formula hf=
     | HFalse
     | HEmp -> ([],[],[])
 
-let look_up_reachable_ptrs_f_x prog f roots ptr_only=
+(*first_ptr = true: stop at the first*)
+let look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr=
+  let search_fnc = if first_ptr then look_up_first_reachable_unfold_ptr
+  else look_up_reachable_ptr_args
+  in
   let obtain_reachable_ptr_conj f=
     let hds, hvs, _ = get_hp_rel_formula f in
-    look_up_reachable_ptr_args prog hds hvs roots
+    search_fnc prog hds hvs roots
   in
   let fs = list_of_disjs f in
   let ptrs = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
   let ptrs1 = CP.remove_dups_svl ptrs in
   if ptr_only then List.filter CP.is_node_typ ptrs1 else ptrs1
 
-let look_up_reachable_ptrs_f prog f roots ptr_only=
+let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr=
   let pr1 = !print_formula in
   let pr2 = !print_spec_var_list in
   let pr_out = !print_spec_var_list in
   Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out
-             (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only) f roots
+             (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr) f roots
 
-let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only=
+let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
     let ptrs = List.fold_left (fun r (_, sf) ->
-      r @ (look_up_reachable_ptrs_sf prog sf roots ptr_only)
+      r @ (look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr)
     ) [] sfs in
     CP.remove_dups_svl ptrs
   ) in
@@ -5052,25 +5071,25 @@ let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only=
   | ECase { formula_case_branches = sfs } ->
       look_up_reachable_ptrs_sf_list prog sfs roots
   | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
-      let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only in
+      let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in
       let ptrs2 = (match sf_opt with
         | None -> []
-        | Some sf -> look_up_reachable_ptrs_sf prog sf roots ptr_only
+        | Some sf -> look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr
       ) in
       CP.remove_dups_svl (ptrs1 @ ptrs2)
   | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
-      let ptrs1 = look_up_reachable_ptrs_f prog f roots  ptr_only in
-      let ptrs2 = look_up_reachable_ptrs_sf prog sf roots  ptr_only in
+      let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in
+      let ptrs2 = look_up_reachable_ptrs_sf prog sf roots  ptr_only first_ptr in
       CP.remove_dups_svl (ptrs1 @ ptrs2)
   | EInfer { formula_inf_continuation = sf } ->
-      look_up_reachable_ptrs_sf prog sf roots ptr_only
+      look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr
 
-and look_up_reachable_ptrs_sf prog sf roots ptr_only =
+and look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr=
   let pr1 = !print_struc_formula in
   let pr2 = !print_spec_var_list in
   let pr_out = !print_spec_var_list in
   Debug.no_2 "look_up_reachable_ptrs_sf" pr1 pr2 pr_out
-             (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots ptr_only) sf roots
+             (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr) sf roots
 
 let rec get_hprel (f:formula) =
   match f with

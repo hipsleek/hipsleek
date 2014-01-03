@@ -202,7 +202,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let lhs,_ = (
     let unfolded_ptrs = 
       if !Globals.allow_lemma_deep_unfold then
-        CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true
+        CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true
       else [sv_self]
     in
     List.fold_left (fun (f,ss) sv0 ->
@@ -227,7 +227,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     if !Globals.enable_lemma_rhs_unfold then (
       let unfolded_ptrs = 
         if !Globals.allow_lemma_deep_unfold then
-          CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true 
+          CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
       in
       List.fold_left (fun sf sv ->
