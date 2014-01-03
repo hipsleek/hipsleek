@@ -117,7 +117,7 @@ let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (
   let pr = string_of_lem_formula in
   let pr3 = Cprinter.string_of_spec_var_list in
   let pr_out = pr_pair string_of_bool (Cprinter.string_of_list_context) in
-  Debug.no_3 "process_coercion_check" pr pr pr3 pr_out 
+  Debug.no_3 "process_coercion_check" pr pr (add_str "inf_vars" pr3) pr_out 
       (fun _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars
 
 (* prepares the lhs&rhs of the coercion to be checked 
