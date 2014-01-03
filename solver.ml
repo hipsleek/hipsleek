@@ -5482,11 +5482,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                          else 
 			            (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
                                     let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
-                                    (* always do nonclassical reasoning whenever there is continuation in struct formula *)
-                                    let saved_classic_setting = !do_classic_frame_rule in
-                                    if (formula_cont != None) then do_classic_frame_rule := false;
                                     (*delayed lockset constraints*)
-                                    let n_ctx_list, prf, new_delayed_f = match tid with
+                                    let cont_fn () =
+                                      match tid with
                                       | None ->
 	                                    let n_ctx_list, prf = heap_entail_one_context 13 prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None None None pos in
                                             (n_ctx_list, prf, None)
@@ -5511,8 +5509,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                       (n_ctx_list, prf ,Some df)
                                               )
                                     in
+                                    (* always do nonclassical reasoning whenever there is continuation in struct formula *)
+                                    (* let saved_classic_setting = !do_classic_frame_rule in *)
+                                    let n_ctx_list, prf, new_delayed_f = 
+                                      if (formula_cont != None) then Wrapper.wrap_classic (Some false) cont_fn ()
+                                      else cont_fn () 
+                                    in
                                     (* restore classic setting *)
-                                    do_classic_frame_rule := saved_classic_setting;
+                                    (* do_classic_frame_rule := saved_classic_setting; *)
 			            (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
 	                            let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
                                     (*l2: debugging*)

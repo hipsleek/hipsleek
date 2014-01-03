@@ -12,7 +12,7 @@ pred hd2<n> ==
  inv n >= 0.
 
 checkentail_exact
- x::node<_,null>
+ x::node<_,null> & n=1
  |- x::hd2<n> & n=1 .
 print residue.
 
