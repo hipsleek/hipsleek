@@ -15,13 +15,14 @@ infer [K]
 .
 print residue.
 
+/*
 infer_exact [K] 
    self::node<q>*q::ll<>
 |-  K(self)
 .
 
 print residue.
-
+*/
 /*
 # useless-3a.slk
 
