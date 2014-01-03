@@ -6,4 +6,4 @@ check_coercion_struc
 #unfold
 #unfold_struc_nth
 #struc_unfold_heap
-infer_collect_hp_rel
+infer_collect_hp_rel,Trace

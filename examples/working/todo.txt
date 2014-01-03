@@ -325,7 +325,7 @@ infer/infer14.slk({E10#Valid},{E23#Valid},{E25#Valid},{E26#Valid},{E27#Valid},{E
 
 lemmas/lseg.slk({L2#Valid})
 ====================================================================
--flags "--eci" lead to following bugs not present without
+-flags "--eci" lead to following bugs not present without (FIXED)
 
  error at: append.ss append
 error at: append-tail.ss append
@@ -341,6 +341,10 @@ error at: selection.ss find_min
 error at: selection.ss delete_min
 error at: selection.ss selection_sort
 ====================================================================
+bug from lemma proving?
+
+Total number of errors: 1 in files:
+ error at: cll.ss insert.
 ====================================================================
 ====================================================================
 ====================================================================

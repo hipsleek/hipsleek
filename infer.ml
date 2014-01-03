@@ -2723,17 +2723,24 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let hp_rels, n_es_heap_opt=
     (* if b && m <> [] then [] else *)
       let knd = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)) in
+      let before_lhs = CF.Base new_lhs_b in
+      let before_rhs = CF.Base new_rhs_b in
       let lhs0,rhs = if !Globals.allow_field_ann then
-        (CF.formula_trans_heap_node hn_trans_field_mut  (CF.Base new_lhs_b),
-        CF.formula_trans_heap_node hn_trans_field_mut  (CF.Base new_rhs_b))
+        (CF.formula_trans_heap_node hn_trans_field_mut before_lhs,
+        CF.formula_trans_heap_node hn_trans_field_mut before_rhs)
       else
-        (CF.Base new_lhs_b, CF.Base new_rhs_b)
+        (before_lhs,before_rhs)
       in
       let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
-      let _ = DD.ninfo_hprint (add_str  "   lhs_b" Cprinter.prtt_string_of_formula) (CF.Base lhs_b) pos in
-      let _ = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in
+      (* let _ = DD.ninfo_hprint (add_str  "   lhs_b" Cprinter.prtt_string_of_formula) (CF.Base lhs_b) pos in *)
+      (* let _ = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in *)
       let grd = check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
+      let _ = Debug.info_hprint (add_str "before_lhs"  Cprinter.prtt_string_of_formula) before_lhs no_pos in
+      let _ = Debug.info_hprint (add_str "before_rhs"  Cprinter.prtt_string_of_formula) before_rhs no_pos in
+      let _ = Debug.info_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
+      let _ = Debug.info_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
+      let _ = Debug.info_hprint (add_str "rhs"  Cprinter.prtt_string_of_formula) rhs no_pos in
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
@@ -2747,7 +2754,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
   (* let _ = DD.info_hprint (add_str  "  rvhp_rels" !CP.print_svl rvhp_rels) pos in *)
   (* let _ = DD.info_hprint (add_str  "  new_post_hps" !CP.print_svl) new_post_hps pos in *)
-  let _ = DD.tinfo_hprint (add_str  "  hp_rels " (pr_list_ln Cprinter.string_of_hprel))  hp_rels pos in
+  let _ = DD.tinfo_hprint (add_str  "  hp_rels" (pr_list_ln Cprinter.string_of_hprel))  hp_rels pos in
   let _ = DD.tinfo_hprint (add_str  "  hp_rel_list"  (pr_list_ln Cprinter.string_of_hprel)) hp_rel_list pos in
   r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list, n_es_heap_opt
 

@@ -1,0 +1,14 @@
+
+id: 22; caller: []; line: 21; classic: false; kind: POST; hec_num: 4; evars: [flted_21_1017]; infer_vars: []; c_heap: x'::node<_,tmp_1016>@M@ rem br[{1}]
+
+
+ checkentail r_1006::cll<self_1003,flted_15_1004>@M@ rem br[{173,174}] * 
+tmp_1016::node<v',r_1006>@M@ rem br[{1}]&(
+([Anon_1005=Anon_1018][next_26_1013=r_1006][v=v']
+ [n=1+flted_15_1004 & 0<=flted_15_1004 & n!=0 & 1<=n & 0<=n]
+ [x=x' & self_1003=x' & r_1019=x' & tmp_1016=x' & x'!=null]))&
+{FLOW,(24,25)=__norm}[]
+ |-  (exists flted_21_1017: emp&(
+([flted_21_1017=1 & n=-1+flted_21_1017 & 0<=flted_21_1017]))
+&
+{FLOW,(24,25)=__norm})[]. 

@@ -4,7 +4,7 @@ data node {
 
 HeapPred K(node s).
 
-infer [K]  self::node<q>
+infer [K]  self::node<q> * y::node<_>
 |- (exists p: K(p) & self=p)
 .
 print residue.
