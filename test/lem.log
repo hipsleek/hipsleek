@@ -3,6 +3,6 @@
 #cnv_ptr_to_int,Loop
 process_coercion_check
 check_coercion_struc
-unfold
+#unfold
 unfold_struc_nth
-struc_unfold_heap
+#struc_unfold_heap

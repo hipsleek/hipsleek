@@ -10386,7 +10386,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let _ = Debug.tinfo_hprint (add_str "l_subs" Cprinter.string_of_spec_var_list) l_subs pos in
               let _ = DD.ninfo_zprint (lazy ((" tmp_conseq: " ^ (Cprinter.prtt_string_of_formula tmp_conseq)))) no_pos in
               let rhs_eqset = estate.es_rhs_eqset in
-              let subs_rhs_eqset = subst_eqset e_subs rhs_eqset in
+              let subs_rhs_eqset = 
+                if !Globals.allow_imm_subs_rhs then
+                  subst_eqset e_subs rhs_eqset 
+                else rhs_eqset in
               let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in

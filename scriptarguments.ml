@@ -235,6 +235,8 @@ let common_arguments = [
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
+  ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
   ("--dis-imm-inv", Arg.Clear Globals.allow_imm_inv,"disable the additionof of immutability invariant for implication");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
@@ -514,6 +516,8 @@ let common_arguments = [
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--lem-en-deep-unfold", Arg.Set Globals.allow_lemma_deep_unfold, "Allow deep unfold for Lemma Proving");
+  ("--lem-dis-deep-unfold", Arg.Clear Globals.allow_lemma_deep_unfold, "Disallow deep unfold for Lemma Proving");
   ("--lem-en-residue", Arg.Set Globals.allow_lemma_residue, "Allow residue for Lemma Proving");
   ("--lem-dis-residue", Arg.Clear Globals.allow_lemma_residue, "Disallow residue for Lemma Proving");
   ("--en-lem-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");

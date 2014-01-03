@@ -685,6 +685,7 @@ let consume_all = ref false
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref true
 let allow_lemma_residue = ref false
+let allow_lemma_deep_unfold = ref true
 
 let dis_show_diff = ref false
 
@@ -816,6 +817,7 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
+let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
