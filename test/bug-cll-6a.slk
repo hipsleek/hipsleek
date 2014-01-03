@@ -10,11 +10,15 @@ pred hd2<n> ==
  }
  inv n >= 0.
 
-checkentail
+checkentail_exact
  x::node<_,null>
  |- (exists n: x::hd2<n> & n=1).
 print residue.
 
+checkentail_exact
+ x::node<_,null>
+ |- x::hd2<n> & n=1.
+print residue.
 
 /*
 # bug-cll-6a.slk

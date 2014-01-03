@@ -15,7 +15,6 @@ pred hd2<n> ==
   }
  inv n >= 0.
 
-
 checkentail_exact
  r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
   & 0<n & v=v' & x=x' & next=r 
@@ -25,7 +24,9 @@ print residue.
 /*
 # bug-cll-4.slk
 
-why isn't folding triggered by above 
+why --eci fail
+
+but --dci works
 
 Entail 1: Fail.(may) cause:Nothing_to_do? 
   Type: WArg
