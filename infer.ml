@@ -2736,11 +2736,11 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       (* let _ = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in *)
       let grd = check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
-      let _ = Debug.info_hprint (add_str "before_lhs"  Cprinter.prtt_string_of_formula) before_lhs no_pos in
-      let _ = Debug.info_hprint (add_str "before_rhs"  Cprinter.prtt_string_of_formula) before_rhs no_pos in
-      let _ = Debug.info_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
-      let _ = Debug.info_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
-      let _ = Debug.info_hprint (add_str "rhs"  Cprinter.prtt_string_of_formula) rhs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "before_lhs"  Cprinter.prtt_string_of_formula) before_lhs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "before_rhs"  Cprinter.prtt_string_of_formula) before_rhs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
+      let _ = Debug.tinfo_hprint (add_str "rhs"  Cprinter.prtt_string_of_formula) rhs no_pos in
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
       [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap

@@ -5,7 +5,7 @@ data node {
 
 /* view for singly linked circular lists */
 pred cll<p, n> == self = p & n = 0
-	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	or self::node<_, r> * r::cll<p, n-1> //& self != p  
 	inv n >= 0.
 
 /*

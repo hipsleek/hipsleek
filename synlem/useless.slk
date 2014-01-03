@@ -14,13 +14,12 @@ pred lseg<p> == self=p
   or self::node<q>*q::lseg<p>
 inv true.
 
-
+// why useless G failing
 HeapPred G(node s).
-
 lemma_infer_pred [G] self::H<p> -> G(self).
 print residue.
 
-HeapPred K(node s).
 
+HeapPred K(node s).
 lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
 print residue.
