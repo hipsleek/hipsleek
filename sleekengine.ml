@@ -33,6 +33,8 @@ module MCP = Mcpure
 module SC = Sleekcore
 module LEM = Lemma
 module LO2 = Label_only.Lab2_List
+module TP = Tpdispatcher
+module FP = Fixpoint
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -392,7 +394,7 @@ let process_lemma ldef =
   let r2l = get_coercion r2l in
   (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
   let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
-                     ()
+  ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)
   (*   | Some ls_ctx -> Some (ls_ctx, true)) *)
@@ -428,6 +430,38 @@ let process_list_lemma ldef_lst =
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
       | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+      | LEM_INFER_PRED      -> let r1,r2 = Lemma.manage_infer_pred_lemmas lst iprog !cprog Solver.xpure_heap in
+        let _ =
+          begin
+            let rel_defs = if not (!Globals.pred_syn_modular) then
+              Sa2.rel_def_stk
+            else Sa3.rel_def_stk
+            in
+            if not(rel_defs# is_empty) then
+              let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
+              (* let pre_preds,post_pred,rem = List.fold_left ( fun (r1,r2,r3) d -> *)
+              (*     match d.CF.hprel_def_kind with *)
+              (*       | CP.HPRelDefn (hp,_,_) -> if (CP.mem_svl hp sel_post_hps) then (r1,r2@[d],r3) else *)
+              (*           if (CP.mem_svl hp sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d]) *)
+              (*       | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in *)
+              (* let defs = pre_preds@post_pred@rem in *)
+              let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs0 else defs0 in
+              print_endline "";
+              print_endline "\n*************************************";
+              print_endline "*******relational definition ********";
+              print_endline "*************************************";
+              let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+              print_endline (pr1 defs1);
+              print_endline "*************************************"
+          end
+        in
+        let _ =
+          let _ = Debug.info_hprint (add_str "fixpoint"
+              (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r1 no_pos in
+          let _ = print_endline "" in
+          ()
+        in
+        r2
   in
   match res with
     | None | Some [] -> CF.clear_residue ()
@@ -450,6 +484,15 @@ let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
 let convert_data_and_pred_to_cast_x () =
+  (*annotate field*)
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.I.data_fields in
+      {ddef with I.data_fields = ndfields}
+  ) iprog.I.prog_data_decls in
+  let _ = iprog.I.prog_data_decls <- idatas in
   (* convert data *)
   List.iter (fun ddef ->
     let cddef = AS.trans_data iprog ddef in
@@ -543,9 +586,11 @@ let process_barrier_def bd =
              is deferred in case of mutually dependent data definition.
  **)
 let perform_second_parsing_stage () =
-	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
-		!cprog.C.prog_data_decls <- cddefs
-	
+  (*annotate field*)
+  let _ = I.annotate_field_pure_ext iprog in
+  let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
+  !cprog.C.prog_data_decls <- cddefs
+
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
 	: (TI.spec_var_type_list*CF.struc_formula) = 
   let rec helper (mf0 : meta_formula) quant fv_idents tl : (TI.spec_var_type_list*CF.struc_formula) = 
@@ -559,7 +604,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
         let p = List.map (fun c-> (c,Primed)) fv_idents in
         let wf,_ = AS.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
           true (*allow_post_vars*) true [] in
-        AS.trans_I2C_struc_formula 8 iprog quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
+        AS.trans_I2C_struc_formula 8 iprog false quant fv_idents wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*) 
     | MetaVar mvar -> 
         begin
         try 
@@ -584,7 +629,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
         true (*allow_post_vars*) true [] in
-      let (n_tl,res) = AS.trans_I2C_struc_formula 9 iprog quant fv_idents wf tl false 
+      let (n_tl,res) = AS.trans_I2C_struc_formula 9 iprog false quant fv_idents wf tl false 
         false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
@@ -913,7 +958,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
   ()
 
-let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
+let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
   (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
@@ -931,13 +976,23 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula)=
   (* let _ =  print_endline ("LHS = " ^ (Cprinter.string_of_formula lhs)) in *)
   (* let _ =  print_endline ("RHS = " ^ (Cprinter.string_of_formula rhs)) in *)
   (*TODO: LOC: hp_id should be cond_path*)
-  let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
-  in
-  (*hp_defn*)
-  (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
-  (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
-  let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
-  ()
+  if extn_info = [] then
+    let pr_new_rel_defn =  (cond_path, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, List.hd args, List.tl args))  hf [(rhs, None)])
+    in
+    (*hp_defn*)
+    (* let pr= pr_pair CF.string_of_cond_path Cprinter.string_of_hp_rel_def_short in *)
+    (* let _ = Debug.ninfo_zprint  (lazy  ((pr pr_new_rel_defn) ^ "\n")) no_pos in *)
+    let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
+    ()
+  else
+    let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
+    let r, others = SAU.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
+    let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
+    let _ = C.set_proot_hp_def_raw (SAU.get_pos args 0 r) (!cprog).C.prog_hp_decls (CP.name_of_spec_var hp) in
+    let pr_new_rel_defn =  (cond_path, exted_pred) in
+    let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
+    let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
+    ()
 
 let process_decl_hpdang hp_names =
   let process hp_name=
@@ -1039,6 +1094,68 @@ let process_shape_infer pre_hps post_hps=
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
+  ()
+
+let relation_pre_process constrs pre_hps post_hps=
+  (*** BEGIN PRE/POST ***)
+  let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
+  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars1 = (CP.remove_dups_svl pre_vars) in
+  let post_vars1 = (CP.remove_dups_svl post_vars) in
+  let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ( is_RelT t )) pre_vars1 in
+  let infer_post_vars,post_hp_rels  = List.partition (fun sv ->
+      let t = CP.type_of_spec_var sv in
+      not ( is_RelT t  )) post_vars1 in
+  (*END*)
+  (*pairs of (cpure.formula, rel name)*)
+  let pre_invs, pre_constrs, post_constrs = List.fold_left (fun (r0,r1,r2) hprel ->
+      match hprel.CF.hprel_kind with
+        | CP.RelAssume _ -> begin
+              let rhs_p =  CF.get_pure hprel.CF.hprel_rhs in
+              try
+                let rel = CP.name_of_rel_form rhs_p in
+                if CP.mem_svl rel post_hp_rels then
+                  r0,r1,r2@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)]
+                else
+                  if CP.isConstTrue rhs_p then
+                    (r0@[(CF.get_pure hprel.CF.hprel_lhs)], r1, r2)
+                  else
+                    (r0, r1@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)], r2)
+              with _ ->
+                  if CP.isConstTrue rhs_p then
+                    (r0@[(CF.get_pure hprel.CF.hprel_lhs)], r1, r2)
+                  else (r0, r1@[(CF.get_pure hprel.CF.hprel_lhs, rhs_p)], r2)
+          end
+        | _ -> (r0,r1,r2)
+  ) ([],[],[]) constrs in
+  (pre_invs, pre_constrs, post_constrs,  pre_hp_rels, post_hp_rels)
+
+let process_rel_infer pre_rels post_rels=
+  (* let _ = DD.info_pprint "process_rel_infer" no_pos in *)
+  (*************INTERNAL*****************)
+  let pr = !CP.print_formula in
+  (* let compute_fixpoint_pre_rel rel_name rel_args pre_oblgs proc_spec= *)
+  (*   let pre_rel = CP.mkRel rel_name (List.map (fun sv -> CP.mkVar sv no_pos) rel_args) no_pos in *)
+  (*   let rec_oblgs,ini_oblgs = normalize_pre_oblgs rel_args rel_name pre_oblgs in *)
+  (*   let pre_fixs = FP.pre_rel_fixpoint pre_rel [] [] Fixcalc.compute_fixpoint_td *)
+  (*     ini_oblgs rel_args proc_spec rec_oblgs in *)
+  (*   let _ = List.map (fun ( _,_, pre_rel,pre_def) -> *)
+  (*       let _ = Debug.info_hprint (add_str "fixpoint for pre-rels" ( (pr_pair pr pr))) (pre_rel, pre_def) no_pos in *)
+  (*       (pre_rel,pre_def) *)
+  (*   ) pre_fixs in *)
+  (*   () *)
+  (* in *)
+  (*************END INTERNAL*****************)
+  let hp_lst_assume = !sleek_hprel_assumes in
+  let proc_spec = CF.mkETrue_nf no_pos in
+  let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
+  let r = FP.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
+  let _ = Debug.info_hprint (add_str "fixpoint"
+      (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+  let _ = print_endline "" in
   ()
 
 let process_shape_lfp sel_hps=
@@ -1335,6 +1452,38 @@ let process_shape_sante pre_hps post_hps=
   (* let _ = if(!Globals.cp_test || !Globals.cp_prefile) then *)
   (*    CEQ.cp_test !cprog hp_lst_assume ls_inferred_hps sel_hps *)
   (* in *)
+  ()
+
+let process_pred_split ids=
+  let _ = DD.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
+  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
+  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (*find all sel pred def*)
+  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+          if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
+        | _ -> r
+  ) [] !sleek_hprel_defns in
+  let hp_defs1, split_map = SAC.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Sa3.rel_def_stk sel_hp_defs in
+  let _ = if split_map = [] then () else
+    (*print*)
+    let _ = print_endline ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
+    ()
+  in
+  ()
+
+let process_pred_norm_disj ids=
+  let _ = DD.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
+  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
+  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (*find all sel pred def*)
+  let sel_hp_defs = List.fold_left (fun r (_,def) ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+          if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
+        | _ -> r
+  ) [] !sleek_hprel_defns in
   ()
 
 let process_shape_infer_prop pre_hps post_hps=

@@ -16,12 +16,14 @@ data node{
 	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 
+/*
  GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
-   or self::node<left,right,DP> * left::GG<rr,l> 
+   or self::node<left,right,DP> * left::GG<rr,l>
          * right::GG<l,t> & right!=null
    inv true;
+*/
 
-lemma self::tll<a,b> -> self::GG<a,b>;
+//lemma_safe self::tll<a,b> <-> self::GG<a,b>;
 
 // initializes the linked list fields
 
@@ -30,14 +32,14 @@ HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node t)
 infer [H,G] requires H(x,t) ensures G(x,res,t);
-                            //requires x::tree<> ensures x::tll<res,t>;
+//requires x::tree<> ensures x::tll<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;
   if (x.right==null) 
   	{
 //		assert xl'=null;
-  	  	x.next = t;
+                x.next = t;
   	  	return x;
   	}
   else 
@@ -49,7 +51,36 @@ infer [H,G] requires H(x,t) ensures G(x,res,t);
 }
 
 /*
+# tll.ss
+
+Why isn't -dre "check_.*coercion" below called?
+
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]==> self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+check_right_coercion@3
+check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]<== self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+
 # tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+
+Why isn't predicate reuse working at all?
+
+[ H(x,t) ::= HP_1123(x),
+ G(x,res,t) ::= 
+ x::node&lt;DP1,right,t&gt;@M&right=null & res=x
+ or x::node&lt;left,right,DP&gt;@M * G(left,res,l) * G(right,l,t)&right!=null
+ ,
+ HP_1123(x) ::= 
+ x::node&lt;left,right,DP&gt;@M * HP_1123(left) * HP_1123(right)&right!=null
+ or x::node&lt;DP1,right,DP&gt;@M&right=null
+ ]
+
+
 # tll.ss 
 
 hip produced:

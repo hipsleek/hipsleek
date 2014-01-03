@@ -1,0 +1,29 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+// (1)
+infer [y] y=null|- y!=null.
+print residue.
+
+
+// (2)
+infer [y] y=0|- y!=0.
+print residue.
+
+/*
+# infer1b.slk
+
+Why isn't contra inference not working for pointers?
+
+Entail (1) : Fail.(must) cause: y=null |-  y!=null. LOCS:[7] (must-bug)
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [y=0]
+[[empty]]
+
+*/

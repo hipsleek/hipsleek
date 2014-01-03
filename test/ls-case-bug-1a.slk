@@ -1,0 +1,27 @@
+data node {
+  node next;
+}.
+
+
+pred ls<p,n> == self=p & n=0
+  or self::node<q>*q::ls<p,n-1> & n>0 //n!=0
+  inv n>=0.
+
+/*
+# ls-case-bug-1a.slk -debug case.log
+
+ why isn't n>0 accepted BUT only n!=0?
+
+formula_case_inference@1
+formula_case_inference inp1 : :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[]{2}->(exists p_14,
+          flted_7_13: self::node<q>@M * q::ls<p_14,flted_7_13>@M&
+          n=flted_7_13+1 & 0<n & p=p_14&{FLOW,(1,24)=__flow})[]
+formula_case_inference inp2 :[self,p,n]
+formula_case_inference@1 EXIT: :EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[q](ex)[](exists p_14,
+          flted_7_13: self::node<q>@M * q::ls<p_14,flted_7_13>@M&
+          n=flted_7_13+1 & 0<n & p=p_14&{FLOW,(1,24)=__flow})[]
+
+*/
+

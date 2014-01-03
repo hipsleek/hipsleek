@@ -1,0 +1,22 @@
+data node {
+  node next;
+}.
+
+pred ls3<n> == case {
+   n=0 -> [] self=null; 
+   n!=0 -> case {
+             n>0 -> [] self::node<q>*q::ls3<n-1> & false ;
+             n<0 -> [] false;
+        };
+  } inv n>=0.
+
+
+/*
+# ls-case-bug-2c3.slk -debug case.log
+
+Why?
+
+WARNING: _0:0_0:0:self of ls3 cannot have its type determined
+
+*/
+

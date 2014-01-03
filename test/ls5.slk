@@ -1,0 +1,61 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+/*
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> & (a=0 | a>0 & self!=p).
+
+
+lemma_safe 
+   self::lseg<q,a>*q::lseg<p,b> & (a=0 | a>0 & self!=p) ->
+   self::lseg<p,n> & n=a+b.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <- self::lseg<q,a>*q::lseg<p,b>.//valid?
+
+
+*/
+
+
+lemma_test self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> .
+// proven
+
+lemma_test self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> & (a=0 | a>0 & self!=p).
+// proven
+
+lemma_test self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> & self!=p.
+// failed as expected..
+
+// why contradictory lemma proving below..
+
+lemma_test 
+  self::lseg<q,a>*q::lseg<p,b> & n=a+b
+  -> self::lseg<p,n>.
+//failed as expected
+
+lemma_test self::lseg<p,n> 
+   <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.
+// why valid? unsound?
+
+/*
+It should fail, but currently succeeds for the
+2nd case. This is unsound.
+*/
+
+lemma_test 
+  self::lseg<q,a>*q::lseg<p,b> 
+  -> self::lseg<p,n> & n=a+b.
+//failed as expected
+
+lemma_test self::lseg<p,n> & n=a+b
+   <- self::lseg<q,a>*q::lseg<p,b> .
+// why valid? unsound?
+

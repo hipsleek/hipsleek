@@ -1,0 +1,23 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+pred ns<p,n> == self=p & n=0
+  or self::node<q>*q::ns<p,n-1> & self!=p 
+  inv n>=0.
+
+lemma_test
+  self::lseg<p,n> 
+   <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.
+// folding lemma seems OK here
+
+lemma_test
+  self::ns<p,n> 
+   <- self::ns<q,a>*q::ns<p,b> & n=a+b.
+// folding lemma seems OK here
+

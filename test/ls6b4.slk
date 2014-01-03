@@ -1,0 +1,35 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+pred ns<p,n> == self=p & n=0
+  or self::node<q>*q::ns<p,n-1> & self!=p 
+  inv n>=0.
+
+lemma_test
+  self::ns<p,n> <-> self::lseg<p,n>.
+
+/*
+lemma_test
+  self::lseg<p,n> <-> self::ns<p,n>.
+*/
+
+/*
+# ls6b4.slk --dis-lem-rhs-unfold
+
+why is this unsound for <-- ?
+
+For folding lhs <- rhs
+we convert to:
+  unfold(rhs) --> lhs
+
+However, this is unsound if rhs is actually
+weaker. An issue is why is folding unsound
+under such a scenario?
+*/
+

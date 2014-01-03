@@ -149,9 +149,9 @@ let op_min = "min"
 let op_union = "union" 
 let op_intersect = "intersect" 
 let op_diff = "-" 
-let op_lt = "<" 
+let op_lt = if not (!print_html) then "<" else "&lt;"
 let op_lte = "<=" 
-let op_gt = ">" 
+let op_gt = if not (!print_html) then ">" else "&gt;"
 let op_gte = ">=" 
 let op_sub_ann = "<:" 
 let op_eq = "=" 
@@ -2018,8 +2018,21 @@ let string_of_hp_decl hpdecl =
   let decl_kind = if hpdecl.hp_is_pre then "HeapPred " else "PostPred " in
   let pr_inst (sv, i) = (pr_arg sv i) in
   let args = pr_lst ", " pr_inst hpdecl.Cast.hp_vars_inst in
-  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+  let parts = if hpdecl.Cast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Cast.hp_part_vars) in
+  decl_kind ^ name ^ "(" ^ args ^parts ^").\n"
 
+
+let string_of_rel_decl reldecl =
+  let name = reldecl.Cast.rel_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = " relation " in
+  let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
+  decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
@@ -2759,12 +2772,17 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+    | Ctx e -> [(e.es_formula,e.es_heap,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
-    let f1 = if !Globals.print_en_tidy then Cformula.shorten_formula f else f in pr_formula_wrap f1;
+    let f1 = f
+      (* if !Globals.print_en_tidy *)
+      (* then Cformula.shorten_formula f *)
+      (* else f *)
+    in pr_formula_wrap f1;
+    pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
@@ -2772,7 +2790,7 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
     pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
-    pr_vwrap "es_trace: " pr_es_trace trace;
+    (* pr_vwrap "es_trace: " pr_es_trace trace; *)
     (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *)
     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
@@ -2824,6 +2842,7 @@ let pr_list_context_short (ctx:list_context) =
 let pr_entail_state_short e =
   fmt_open_vbox 1;
   pr_formula_wrap e.es_formula;
+  pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty  (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;
@@ -2838,6 +2857,20 @@ let pr_entail_state_short e =
   pr_wrap_opt "es_var_measures 3: " pr_var_measures e.es_var_measures;
   (* fmt_cut(); *)
   fmt_close_box()
+
+let pr_list_context (ctx:list_context) =
+  match ctx with
+    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+        (* (match ft with *)
+        (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
+        (*     (\* TODO : to output must errors first *\) *)
+        (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
+        (*     | _ -> fmt_string ""); *)
+        pr_fail_type ft; fmt_cut ()
+    | SuccCtx sc -> let str = 
+        if (get_must_error_from_ctx sc)==None then "Good Context: "
+        else "Error Context: " in
+      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list_short sc; fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
@@ -3065,6 +3098,8 @@ let pr_view_decl v =
     | View_NORM -> " "
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
+      pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 
@@ -3385,10 +3420,11 @@ let rec string_of_exp = function
 
 let string_of_field_ann ann=
   if not !print_ann then ""
-  else match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+  else (* match ann with *)
+    (* | VAL -> "@VAL" *)
+    (* | REC -> "@REC" *)
+    (* | F_NO_ANN -> "" *)
+    String.concat "@" ann
 
 (* pretty printing for one data declaration*)
 let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
@@ -3415,11 +3451,11 @@ let rec string_of_data_decl_list l c = match l with
 ;;
 
 (* function to print a list of typed_ident *) 
-let rec string_of_decl_list l c = match l with 
-  | [] -> ""
-  | h::[] -> "  " ^ string_of_decl h 
-  | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
-;;
+(* let rec string_of_decl_list l c = match l with  *)
+(*   | [] -> "" *)
+(*   | h::[] -> "  " ^ string_of_decl h  *)
+(*   | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c) *)
+(* ;; *)
 
 (* pretty printing for a data declaration *)
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
@@ -4071,11 +4107,11 @@ Mcpure.print_sv_f := string_of_spec_var ;;
 Mcpure.print_sv_l_f := string_of_spec_var_list;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
-Mcpure.print_exp_f := string_of_formula_exp;;
+Cpure.print_exp := string_of_formula_exp;;
+(* Mcpure.print_exp_f := string_of_formula_exp;; *)
 Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
-Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
 Cpure.print_svl := string_of_spec_var_list;;

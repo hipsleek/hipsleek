@@ -1,0 +1,53 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <-> self::lseg<q,a>*q::lseg<p,b>.
+
+//(1)
+checkentail x::lseg<p,n> & n=m |- x::lseg<q,m>.
+print residue.
+
+//(2)
+checkentail x::lseg<p,n> & n>m & m>=0 |- x::lseg<q,m>.
+print residue.
+
+//(3)
+checkentail x::lseg<p,n> & n<m |- x::lseg<q,m>.
+print residue.
+// fail
+
+//(4)
+checkentail x::lseg<p,n> & n<=m |- x::lseg<q,m>.
+print residue.
+// fail
+
+//(5)
+checkentail x::lseg<p,n> |- x::lseg<q,m>.
+print residue.
+/*
+incomplete:
+ <1>emp&p=q & m=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+*/
+
+//(6)
+checkentail x::lseg<p,n> |- (exists m: x::lseg<q,m>).
+print residue.
+// incomplete
+
+//(7)
+checkentail x::lseg<p,n> & p!=q |- (exists m: x::lseg<q,m>).
+print residue.
+// fail - incomplete
+
+infer[n,m] x::lseg<p,n> |- x::lseg<q,m>.
+print residue.
+
+infer[] x::lseg<q1,a>*q1::lseg<p,b>&n=a+b |- x::lseg<q,m>.
+print residue.

@@ -1,0 +1,55 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+checkentail 
+r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x' & 0<n & v=v' & x=x' & next=r
+|- x'::hd<n+1>.
+
+print residue.
+
+// no --eps
+checkentail 
+x'::node<_,tmp_992> * // this from consumed heap
+r_972::cll<self_969,flted_15_970>@M * tmp_992::node<v',r_972>@M&
+n=flted_15_970+1 & self_969=x' & 0<n & v=v' & x=x' & next_26_979=r_972 & 
+x!=null & Anon_971=Anon_994 & r_995=tmp_992 & r_995=x
+ |-  (exists flted_21_993: emp&flted_21_993=1+n & flted_21_993=0+1). 
+
+
+/*
+checkentail 
+ x'::node<_,tmp_1027> *
+ r_1006::cll<self_1003,flted_15_1004>@M* 
+tmp_1027::node<v',r_1006>@M & Anon_1005=Anon_1029 & next_26_1013=r_1006 & v=v' 
+ & n=1+flted_15_1004 & 0<=flted_15_1004 & n!=0 & 1<=n & 0<=n 
+ & x=x' & self_1003=x' & r_1030=x' & tmp_1027=x' & x'!=null 
+ |-  (exists flted_21_1028: emp& flted_21_1028=1 & n=-1+flted_21_1028 & 0<=flted_21_1028). 
+
+checkentail 
+ x'::node<_,tmp_1027> *
+ r_1006::cll<self_1003,flted_15_1004>@M* 
+tmp_1027::node<v',r_1006>@M & Anon_1005=Anon_1029 & next_26_1013=r_1006 & v=v' 
+ & n=1+flted_15_1004 & 0<=flted_15_1004 & n!=0 & 1<=n & 0<=n 
+ & x=x' & self_1003=x' & r_1030=x' & tmp_1027=x' & x'!=null 
+ |-  false.
+*/
+
+checkentail 
+x::node<_,tmp_992> * // this from consumed heap
+r_972::cll<x,flted_15_970>@M * tmp_992::node<v',r_972>@M&
+n=flted_15_970+1  & 0<n & v=v' & next_26_979=r_972 & 
+x!=null & Anon_971=Anon_994 & r_995=tmp_992 & r_995=x
+ |-  false.
+
+// why are there two x::node<...>??

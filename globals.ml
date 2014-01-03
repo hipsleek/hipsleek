@@ -28,7 +28,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER
+type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -131,6 +131,32 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let rec cmp_typ t1 t2=
+  match t1,t2 with
+    | UNK, UNK
+    | AnnT, AnnT
+    | Bool, Bool
+    | Float, Float
+    | Int, Int
+    | INFInt, INFInt
+    | NUM, NUM
+    | Void, Void -> true
+    | TVar i1, TVar i2 -> i1=i2
+    | BagT t11, BagT t22
+    | List t11, List t22 -> cmp_typ t11 t22
+    | Named s1, Named s2 -> String.compare s1 s2 = 0
+    | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
+    | RelT lst1, RelT lst2 ->(
+          try
+            List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
+          with _ -> false
+      )
+    | HpT, HpT
+    | Tree_sh, Tree_sh
+    | Bptyp, Bptyp -> true
+    | Pointer t11, Pointer t22 -> cmp_typ t11 t22
+    | _ -> false
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
@@ -208,6 +234,11 @@ let hppost_default_prefix_name = "GP_"
 let unkhp_default_prefix_name = "DP_"
 let dang_hp_default_prefix_name = "DP_DP"
 let ex_first = "v"
+let size_rel_name = "size"
+let size_rel_arg = "n"
+let field_rec_ann = "REC"
+let field_val_ann = "VAL"
+
 (*
   Data types for code gen
 *)
@@ -574,6 +605,8 @@ let constinfinity = "ZInfinity"
 let deep_split_disjuncts = ref false
 let check_integer_overflow = ref false
 
+let preprocess_disjunctive_consequence = ref false
+
 let this = "this"
 
 let is_self_ident id = self=id
@@ -630,6 +663,8 @@ let label_split_ante = ref true
 let label_aggressive_sat = ref true
 let label_aggressive_imply = ref true
 
+let force_verbose_xpure = ref false
+
 let texify = ref false
 let testing_flag = ref false
 
@@ -648,7 +683,9 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
-let enable_lemma_rhs_unfold = ref false
+let enable_lemma_rhs_unfold = ref true
+let allow_lemma_residue = ref false
+let allow_lemma_deep_unfold = ref true
 
 let dis_show_diff = ref false
 
@@ -657,6 +694,7 @@ let sap = ref false
 let sags = ref false
 
 let sa_gen_slk = ref false
+let gen_fixcalc = ref false
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
@@ -685,6 +723,8 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let print_relassume  = ref true
+
 let lemma_syn = ref false
 
 let sa_en_split = ref false
@@ -706,6 +746,8 @@ let pred_elim_dangling = ref false
 
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
+
+let sa_ex = ref true
 
 let sa_infer_split_base = ref true
 
@@ -734,6 +776,8 @@ let sa_subsume = ref false
 let norm_extract = ref false
 let allow_norm_disj = ref true
 
+let sa_fix_bound = ref 4
+
 let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
@@ -752,6 +796,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let unsat_consumed_heap = ref false (* to add consumed heap for unsat_now *)
 let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
@@ -773,6 +818,7 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
+let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
 let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
@@ -785,6 +831,7 @@ let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
 
 let infer_mem = ref false
+let infer_raw_flag = ref true
 
 let pa = ref false
 
@@ -926,7 +973,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref false
+let enable_case_inference = ref true
 
 let print_core = ref false
 let print_core_all = ref false
@@ -1452,3 +1499,7 @@ let set_last_sleek_fail () =
 (*   inf_number := !inf_number + 1; *)
 (*   string_of_int(!inf_number) *)
 
+let gen_field_ann t=
+  match t with
+    | Named _ -> fresh_any_name field_rec_ann
+    | _ -> fresh_any_name field_val_ann

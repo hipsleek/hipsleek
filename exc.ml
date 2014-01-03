@@ -566,8 +566,9 @@ struct
   let bfail_flow_int  = ref empty_flow 
   let false_flow_int = (0,0) 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
+  let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
-    if is_empty_flow nf then (false_flow,1)
+    if (is_empty_flow nf) or (is_false_flow nf) then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow_ne nf n)) elist in
       match res with
@@ -576,7 +577,6 @@ struct
           if is_exact_flow_ne nf nf2 then 0 (* exact *)
           else if is_eq_flow_ne nf nf2 then 1 (* full *)
           else -1) (* partial *)
-  let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
   let is_subsume_flow (n1,n2)(p1,p2) : bool =
     if (is_false_flow (p1,p2)) then true 
     else (n1<=p1)&&(p2<=n2)
@@ -893,7 +893,7 @@ struct
       else if s1<s2 then 2
       else -2
   let get_closest_new elist ((((min,max),lst):dflow) as nf):(string * int) =
-    if is_empty_flow nf then (false_flow,1)
+    if (is_empty_flow nf) or (is_false_flow nf) then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow nf n)) elist in
       match res with

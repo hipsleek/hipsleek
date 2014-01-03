@@ -1,0 +1,61 @@
+/*
+id: 9 src:2; caller: []; line: 27; classic: false; kind: UNKNOWN; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+*/
+
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<n> == self = null & n=0  or self::node<_, q> * q::ll<n-1>
+inv n>=0.
+
+  relation P(int a, int b).
+  relation Q(int a, int b, int c).
+
+//(1)
+infer [P] x::ll<n>@L * y::ll<m>@L&P(m,n)
+   & x=null & y!=null
+   //& y=y' & x=x' 
+   //& x'=null & v_bool_22_910' 
+   //& x'=null & v_bool_22_910' & y'!=null 
+   //& !(v_bool_24_894') 
+   //& y'!=null & !(v_bool_24_894')
+ |-  false.
+print residue.
+// inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+//(2)
+infer [P] 
+   P(m,n)
+   & x=null & y!=null
+   & (x=null & n=0 | x!=null & n>0)
+   & (y=null & m=0 | y!=null & m>0)
+ |-  false.
+print residue.
+// inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+//(3)
+infer [m,n] 
+   x=0 & y!=0
+   & (x=0 & n=0 | x!=0 & n>0)
+   & (y=0 & m=0 | y!=0 & m>0)
+ |-  false.
+print residue.
+// inferred pure: [(n!=0 | m<=0)]
+
+//(4)
+infer [P] x::ll<n>@L * y::ll<m>@L&P(m,n) & y=y' & x=x' & x'=null & v_bool_22_910' & 
+x'=null & v_bool_22_910' & y'!=null & !(v_bool_24_894') & y'!=null & 
+!(v_bool_24_894')
+ |-  hfalse&false.
+print residue.
+//inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+//(5)
+infer [P] (x=null & n=0 | x!=null & n>0) & (y=null & m=0 | y!=null & m>0)  &P(m,n) & y=y' & x=x' & x'=null & v_bool_22_910' & 
+x'=null & v_bool_22_910' & y'!=null & !(v_bool_24_894') & y'!=null & 
+!(v_bool_24_894')
+ |-  hfalse&false.
+print residue.
+//inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]

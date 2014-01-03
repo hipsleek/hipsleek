@@ -1,0 +1,21 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+
+// (1)
+infer [H1] H1(y) |- y::node<a,b>.
+print residue.
+
+// (2)
+infer [y] H1(y) |- y::node<a,b>.
+print residue.
+
+

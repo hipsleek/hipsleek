@@ -1,0 +1,60 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+/*
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+*/
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+/*
+pred HP<> ==
+  [] self::node<_,p> 
+  p::HP<>
+  case { 
+    p=null -> [] emp;
+    p!=null -> [] p::HP<>;
+  }
+ inv self!=null.
+*/
+
+lemma_safe "one" self::HP<> -> self::node<_,p> * p::ll<>.
+
+
+//checkentail self::node<_,p> * p::ll<> |- self::HP<>.
+
+/*
+process_coercion_check@1
+process_coercion_check inp1 : 
+ (exists flted_19_39,_: self_one::node<_,flted_19_39>@M&flted_19_39=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_42: self_one::node<_,p_42>@M * p_42::HP<>@M&p_42!=null&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists _,p: self_one::node<_,p>@M * p::ll<>@M&
+       {FLOW,(21,22)=__norm})[]
+*/
+/*
+checkentail self_one::node<_,p>@M * p::ll<>@M
+  |- self_one::node<_,flted_19_39>@M&flted_19_39=null
+ or self_one::node<_,p_42>@M * p_42::HP<>@M&p_42!=null.
+
+checkentail 
+ self_one::node<_,null>@M 
+ or self_one::node<_,p>*p::node<_,p1>*p1::ll<>
+  |- self_one::node<_,flted_19_39>@M&flted_19_39=null
+ or self_one::node<_,p_42>@M * p_42::HP<>@M&p_42!=null.
+*/

@@ -11,7 +11,6 @@ int foo(cell p)
   ensures G(p);
 {
     int i = p.val;
-    dprint;
     goo(p);
     return i;
 }

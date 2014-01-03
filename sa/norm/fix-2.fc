@@ -1,0 +1,51 @@
+# from recursive definition of pre-relation
+#
+#   P3(n,m) & 1<=n 
+#     & 1<=m & m2=m-1 & n2=n-1
+#   -->  P3(n2,m2).
+
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+Q:={[m,n]->[k]->[]:
+  (n=0 && m=0 && k=0) || (n=0 && k=0 && 1<=m) || (m=0 && k=0 && 1<=n) ||
+  (exists (kx,mx,nx: 0<=kx && nx=n-1 && mx=m-1 && k=kx+1 && 1<=m && 1<=n
+    && Q(mx,nx,kx)))};
+
+
+E1:=bottomup(Q,1,SimHeur);
+E2:=bottomup(Q,2,SimHeur);
+E3:=bottomup(Q,3,SimHeur);
+E1;E2;E3;
+#(k >= 0 && m >= k && n >= k)
+
+
+[BU3]:=bottomupgen([Q],[3],SimHeur);
+BU3;
+[BU2]:=bottomupgen([Q],[2],SimHeur);
+#((m >= 0 && m = k) || ((n >= 0 && 2m >= 2 + n) && n = k))
+BU2;
+#(((k >= 0 && n >= k) && k = m) || ((k >= 0 && 2m >= 2 + k) && k = n))
+[BU1]:=bottomupgen([Q],[1],SimHeur);
+BU1;
+#(k >= 0 && m >= k && n >= k)
+BU2 subset BU3; # BU2 more accurate
+BU3 subset BU2;
+BU2 subset BU1;
+BU1 subset BU2; # BU1 & BU2 incomparable
+fixtestPost([Q],[BU1]);
+fixtestPost([Q],[BU2]);
+fixtestPost([Q],[BU3]);
+
+# fix-2.fc
+# fixpoint at BU2 seems incomparable with BU3
+# fixpoint at BU3 seems worse than BU2
+# likely due to bad SimHeuristic
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+# Ideal fix-point below:
+Best :={[m,n,k]:
+  (m>=n && n>=0 && k=n) || (n>=m && m>=0 && k=m)};
+Best subset BU1;
+Best subset BU2;
+Best subset BU3;
+fixtestPost([Q],[Best]);
+
+

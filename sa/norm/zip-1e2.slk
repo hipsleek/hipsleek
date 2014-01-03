@@ -1,0 +1,45 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zipNM<y> ==
+  self=null & y=null 
+or self::node<_,p>*y::node<_,q>*p::zipNM<q> .
+
+pred zipN<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipN<n1> & n=n1+1 
+ inv n>=0.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+//relation P3(int a, int b).
+
+/*
+pred zip<> ==
+  self=null  
+ or self::node<_,p>*p::zip<>  
+ inv true.
+
+pred P3<> ==
+  p::P3<> * self::node<_,p>@M
+  or emp&self=null.
+*/
+
+
+//lemma_safe self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m>.
+
+//lemma_safe "both" self::zipNM<y> & n=m <-> self::zipN<n> * y::zipN<m> .
+
+//lemma_test "one" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n=m .
+
+
+lemma_infer_pred [P1,P2] "one2" self::zipNM<y> -> P1(self) * P2(y).
+
+print residue.
+
+//lemma_test self::P3<> <-> self::zip<>.
+
+//lemma_test self::zipNM<y> <-> self::zip<> * y::zip<>.
+

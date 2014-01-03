@@ -1,0 +1,59 @@
+data node {
+  node next;
+}.
+
+pred ll<> == self=null
+  or self::node<q>*q::ll<>
+inv true.
+
+pred lseg<p> == self=p
+  or self::node<q>*q::lseg<p>
+inv true.
+
+HeapPred K(node s).
+
+//lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+//print residue.
+
+
+/*
+lemma_safe self::ll<> <-> self::lseg<p> & p=null.
+
+lemma_safe self::ll<> -> self::lseg<p> *p::ll<>.
+
+lemma_safe self::ll<> <- self::lseg<p> * p::ll<>.
+*/
+
+lemma_unsafe self::ll<> -> self::lseg<p> * K(p).
+
+
+infer [K] 
+  self=null
+  or self::node<q>*q::ll<>
+|- (exists p: K(p) & self=p)
+  or self::node<q>*q::lseg<p> * K(p)
+.
+
+print residue.
+
+/*
+# useless-3.slk
+
+residue present in <1>
+
+ntail (1) : Valid. 
+
+ <1>
+    emp&self=null&{FLOW,(21,22)=__norm}[]
+    or self::node<q>@M&{FLOW,(21,22)=__norm}[]
+    
+ inferred hprel: [emp&p_38=null --> K(p_38); 
+                  p_39::node<q>@M * q::ll<>@M --> K(p_39)]
+[[ COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap ==> ]]
+<2>
+   emp&self=null&{FLOW,(21,22)=__norm}[]
+   or emp&{FLOW,(21,22)=__norm}[]
+   
+inferred hprel: [emp&p_38=null --> K(p_38); K(p) --> K(p)]
+[
+*/

@@ -1,0 +1,43 @@
+data node {
+  node next;
+}.
+
+pred ll<> == self=null
+  or self::node<q>*q::ll<>
+inv true.
+
+
+HeapPred K(node s).
+
+infer [K] 
+   self::node<q>*q::ll<>
+|- (exists p: K(p) & self=p)
+.
+print residue.
+
+/*
+infer_exact [K] 
+   self::node<q>*q::ll<>
+|-  K(self)
+.
+
+print residue.
+*/
+/*
+# useless-3a.slk
+
+Why is residue present in (1) but not (2)
+
+
+ <1>self::node<q>@M&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [p_23::node<q>@M * q::ll<>@M --> K(p_23)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [self::node<q>@M * q::ll<>@M --> K(self)]
+[[ COND ==>  InferHeap ==> ]]
+
+*/

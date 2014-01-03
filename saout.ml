@@ -46,7 +46,9 @@ let norm_free_svl f0 args=
           let nf0 = if ss = [] then (CF.Base fb) else
             CF.subst ss (CF.Base fb)
           in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
           let nf = CF.add_quantifiers fr_svl1 nf0 in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
           let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = TI.fresh_proc_var_kind ls t in
               ls@[(sv,vk)]
@@ -161,6 +163,8 @@ let syn_hprel_x crem_hprels irem_hprels=
                     I.hp_name = chp.C.hp_name;
                     I.hp_typed_inst_vars= List.map
                         (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) chp.C.hp_vars_inst;
+                    I.hp_part_vars = chp.C.hp_part_vars;
+                    I.hp_root_pos = chp.C.hp_root_pos;
                     I.hp_is_pre = chp.C.hp_is_pre;
                     I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) top_flow [] no_pos;
                 }

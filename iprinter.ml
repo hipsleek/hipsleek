@@ -787,11 +787,11 @@ and
 
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann ann= String.concat "@" ann
+  (* match ann with *)
+  (*   | VAL -> "@VAL" *)
+  (*   | REC -> "@REC" *)
+  (*   | F_NO_ANN -> "" *)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
@@ -912,6 +912,7 @@ let string_of_lem_kind l =
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
+    | LEM_INFER_PRED    -> "infer lemmas + pred"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)
@@ -976,7 +977,8 @@ let string_of_hp_decl hpdecl =
   let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
       ^ " " ^ n
   ) hpdecl.Iast.hp_typed_inst_vars) in
-  name^"("^args^")"
+  let parts = if hpdecl.Iast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Iast.hp_part_vars) in
+  name^"("^args^")"^parts
 
 
 (* An Hoa : print axioms *)

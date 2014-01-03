@@ -1,0 +1,24 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last,n> ==
+  self=last & n=0
+ or self::node<_,p>*p::lseg<last,n-1> 
+ inv n>=0.
+
+
+lemma_safe "split" self::lseg<last,n> & n=a+b & a>=0 & b>=0 
+    <-> self::lseg<p,a> * p::lseg<last,b>.
+
+/*
+# ls-lem-2.slk --dis-lem-rhs-unfold
+
+Why NO unfold for LHS?
+
+check_coercion_struc inp2 : self::HP<>@M&{FLOW,(21,22)=__norm}[]
+check_coercion_struc inp3 : EBase (exists flted_33_36,p,_: self::lseg<p>@M * p::node<_,flted_33_36>@M&
+       flted_33_36=null&{FLOW,(21,22)=__norm})[]
+
+*/

@@ -8,7 +8,7 @@ void loop_1 (int x, int y)
 case {
 	x <= 0 -> requires Term[0] ensures true;
 	x > 0 -> case {
-		y < 0 -> requires Term[0,x] ensures true;
+		y < 0 -> requires Term[0,-x] ensures true;
 		y >= 0 -> requires Loop ensures false;
 	}
 }

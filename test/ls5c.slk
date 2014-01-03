@@ -1,0 +1,43 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_test 
+  self::lseg<q,a>*q::lseg<p,b> 
+  -> self::lseg<p,n> & n=a+b.
+//failed as expected
+/*
+process_coercion_check@1
+process_coercion_check inp1 : 
+ q::lseg<p,b>@M&q=self_lem_11 & a=0&{FLOW,(21,22)=__norm}[]
+ or (exists p_60,flted_6_61,q_62: self_lem_11::node<q_62>@M * 
+    q_62::lseg<p_60,flted_6_61>@M * q::lseg<p,b>@M&a=flted_6_61+1 & 
+    q!=self_lem_11 & p_60=q&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists n: self_lem_11::lseg<p,n>@M&n=b+a&{FLOW,(21,22)=__norm})[]
+*/
+
+lemma_test 
+  self::lseg<p,n> & n=a+b
+   <- self::lseg<q,a>*q::lseg<p,b> .
+// why valid? unsound?
+
+/*
+process_coercion_check inp1 : 
+ (exists q_199,b_200,a_201: q_199::lseg<p,b_200>@M&q_199=self_lem_12 & 
+ a_201=0 & n=b_200+a_201&{FLOW,(21,22)=__norm})[]
+ or (exists p_211,flted_6_212,q_213,q_199,b_200,
+    a_201: self_lem_12::node<q_213>@M * q_213::lseg<p_211,flted_6_212>@M * 
+    q_199::lseg<p,b_200>@M&a_201=flted_6_212+1 & q_199!=self_lem_12 & 
+    p_211=q_199 & n=b_200+a_201&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase self_lem_12::lseg<p,n>@M&{FLOW,(21,22)=__norm}[]
+*/
+
+lemma_test 
+  self::lseg<p,n> 
+   <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.

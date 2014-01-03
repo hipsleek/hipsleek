@@ -1272,7 +1272,7 @@ Successful States:
  ]
 
 ==========================================================
-# swl-i-sa.ss -sa-gen-sleek-file
+# swl-i-sa.ss -sa-gen-sleek-file: FIXED
 
 generated mods_swl-i-sa.slk which when run produced.
 
@@ -1324,7 +1324,9 @@ both sleek and hip should produce the same result.
  or DP_1140(prev1)
  ]
 ==========================================================
-# logs/mod_swl-i-sa.slk
+# logs/mod_swl-i-sa.slk: FIXED
+ if complete in root pointers,
+do not introduce unk-pred. otherwise, do it (see ll-back.ss)
 
 For this version, we obtain below:
 
@@ -1353,7 +1355,7 @@ be fixed?
   & cur'!=null --> H(cur',cur1,sent@NI),
 
 ==========================================================
-swl-i-sa.ss
+swl-i-sa.ss: FIXED
 mod_swl-i-sa2.slk
 logs/mod_swl-i-sa.slk
 
@@ -1379,7 +1381,7 @@ variable renaming and existential quantification.
  or G(next,cur',cur,prev',sent)&cur!=null & next!=null & 
     next!=sent
 ==========================================================
-#swl-lfp-3.slk
+#swl-lfp-3.slk: Can not reproduce
 
 has a clash when building the initial recurrence
 
@@ -1477,7 +1479,7 @@ look odd (seems incorrect).
 ==========================================================
 ==========================================================
 ==========================================================
-# tll.ss --gsf
+# tll.ss --gsf: FIXED
 
 This spurious message came from below. They don't look
 correct, and should also be omitted.
@@ -1542,11 +1544,103 @@ Entailing lemma lem_16: Valid.
          * right::GG<l,t> & right!=null
    inv true;
 ==========================================================
+# tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+- semantics: FIXED
+- syn: 
+
+Why isn't predicate reuse working at all?
+
+[ H(x,t) ::= HP_1123(x),
+ G(x,res,t) ::= 
+ x::node&lt;DP1,right,t&gt;@M&right=null & res=x
+ or x::node&lt;left,right,DP&gt;@M * G(left,res,l) * G(right,l,t)&right!=null
+ ,
+ HP_1123(x) ::= 
+ x::node&lt;left,right,DP&gt;@M * HP_1123(left) * HP_1123(right)&right!=null
+ or x::node&lt;DP1,right,DP&gt;@M&right=null
+ ]
 ==========================================================
+../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode FIXED
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x1,x) ::= 
+ x1::node<val,next>@M * G2(next,n)&x=null
+ or emp&x1=null & x=null
+ ]
+
+It seems that only the syntactic equiv mode is working.
+
+However, I wonder what command will split G2(x1,x)?
+Adding: --pred-en-split results in incorrect splitting
+with unknown predicates. This seems to be buggy!
+
+!!!  pred_split (syn):G2([next_54_1022,n_1031]) :==  HP_1062(next_54_1022) * HP_1063(n_1031)
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::= HP_1062(next) * HP_1063(n)]
+*************************************
+
+chinwn@loris-7:~/hg/sl_default/guard$ ../hip ll-append5.ss --pred-en-equiv --pred-en-split
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::=x::G2<x1>@M,
+ HP_994(self) ::= 
+ self::node<val,next>@M * HP_994(next)
+ or emp&self=null
+ ,
+ HP_995(n) ::= emp&n=null]
 ==========================================================
+../hip tll.ss --pred-en-split: FIXED
+rocedure set_right$node~node SUCCESS.
+
+Context of Verification Failure: 1 File "tll.ss",Line:32,Col:36
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at _0:0_0:0 
+Message: should not have prime vars
 ==========================================================
+# tll.ss
+
+./hip tll.ss --pred-en-useless-para --pred-en-dangling --pred-en-equiv -dre "check.*coercion"
+
+Why isn't -dre "check_.*coercion" below called?
+
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]==> self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+check_right_coercion@3
+check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]<== self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
 ==========================================================
-==========================================================
+# tll.ss --pred-en-split leads to incorrect result:
+
+   H(x,t) ::=x::H<t>@M,
+
+Not sure why..
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv 
+
+[ H(x,t) ::= 
+ x::node<left,right,DP>@M * H(left,l') * H(right,t)&right!=null
+ or x::node<DP1,right,DP>@M&right=null
+ ,
+ G(x,res,t) ::=x::tll<ll,lr>@M]
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv --pred-en-split
+
+[ H(x,t) ::=x::H<t>@M,
+ G(x,res,t) ::=x::tll<ll,lr>@M,
+ HP_1093(self) ::= 
+ self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null
+ or self::node<left,right,DP>@M&right=null
+ or self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null,
+ HP_1094(t) ::= emp]
+
 ==========================================================
 ==========================================================
 ==========================================================

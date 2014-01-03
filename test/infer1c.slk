@@ -1,0 +1,19 @@
+// (1)
+infer [y] y=null |- y!=null.
+print residue.
+
+/*
+infer_lhs_contra_estate#4@4@3@2@1
+infer_lhs_contra_estate#4 inp1 :estate: emp&y=null&{FLOW,(21,22)=__norm}[]
+  es_infer_vars: [y]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: true
+infer_lhs_contra_estate#4@4 EXIT:(None,[])
+
+infer_lhs_contra_estate#4@5@3@2@1
+infer_lhs_contra_estate#4 inp1 :estate: emp&y=null&{FLOW,(21,22)=__norm}[]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: true
+infer_lhs_contra_estate#4@5 EXIT:(None,[])
+
+Why is it true?
+
+*/

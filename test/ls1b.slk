@@ -1,0 +1,27 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+// (1)to infer b
+// seems broken here!
+infer[b] q1::lseg<q,b> & q!=q1 |- q1::node<q>.
+print residue.
+//Entail (1) : Fail.(may) cause:OrR[Cannot infer heap and pure 2,valid]
+
+// (2) pure inference is broken here
+infer[b] 
+  q1::lseg<q,b> & b>0  |- q1::node<q>.
+print residue.
+/*
+Entail (1) : Valid. 
+ <1>(exists q_50,flted_6_49: q_50::lseg<q,flted_6_49>@M&b=flted_6_49+1 & q!=q1 & 0<b & b=1&{FLOW,(21,22)=__norm})[]
+ inferred pure: [b=1]
+[[ SEARCH ==>  Unfold 0 ==>  Match ==> ]]
+*/
+
+
+

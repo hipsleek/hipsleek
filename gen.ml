@@ -982,6 +982,7 @@ struct
   (* stack of calls being traced by ho_debug *)
   let debug_stk = new stack_noexc (-2) string_of_int (=)
 
+  (* stack of calls with detailed tracing *)
   let dd_stk = new stack
 
   (* let force_dd_print () = *)
@@ -1036,18 +1037,20 @@ struct
     (* debug_stk # push (-3) *)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
-  let push_call_gen (os:string) (flag:bool) : (string * string) = 
+  let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
     ctr#inc;
     let v = ctr#get in
-    debug_stk#push v; if flag then dd_stk#push v;
+    debug_stk#push v; if flag_detail then dd_stk#push v;
     let s = os^"@"^(string_of_int v) in
     let h = os^"@"^string_of() in
     (* let _ = print_endline ("push_call:"^os^":"^s^":"^h) in  *)
     s,h
 
+  (* push call without detailed tracing *)
   let push_call (os:string) : (string * string) = 
     push_call_gen os false
 
+  (* push call with detailed tracing *)
   let push_call_dd (os:string) : (string * string) = 
     push_call_gen os true
 

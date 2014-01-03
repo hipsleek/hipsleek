@@ -1,0 +1,40 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+
+lemma_safe "one" self::HP<> <-> self::node<_,p> * p::ll<>.
+
+lemma_safe "oneb"  self::node<_,p> * p::ll<> <-> self::HP<>.
+
+lemma_safe "two" self::HP<> <-> self::lseg<p> * p::node<_,null>.
+
+/*
+# ls.slk --dis-lem-rhs-unfold
+
+lem-rs-unfold performed for soundness
+However, it required case-analysis/inference for completeness.
+Why did we add lemma when part of it has been proved invalid?
+
+Entailing lemma two: Fail. Details below:
+	 "->" implication: : Fail. (must) cause:lor[ p_321=null |-  p_318!=null & p_318=p_321. LOCS:[18;14;27;13] (must-bug),UnionR[residue is forbidden.,residue is forbidden.]]
+	 "<-" implication: : Valid.
+
+Valid Lemmas : [two:<==>] added to lemma store.
+*/

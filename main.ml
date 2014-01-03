@@ -4,6 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
+module I = Iast
 
 module M = Lexer.Make(Token.Token)
 
@@ -328,7 +329,9 @@ let process_source_full source =
           ()
     in
     (**************************************)
-
+    (*to improve: annotate field*)
+    let _ = I.annotate_field_pure_ext intermediate_prog in
+    (*END: annotate field*)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
@@ -544,21 +547,22 @@ let process_source_full_after_parser source (prog, prims_list) =
         ()
   in
   (**************************************)
- let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
- 	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
-   
+  (*annotate field*)
+  let _ = I.annotate_field_pure_ext intermediate_prog in
+  let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
       Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
-		        else if(!Globals.print_core) then
-							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
-						else ()
-	in
-  let _ = 
+  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
+  else if(!Globals.print_core) then
+    print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+  else ()
+  in
+  let _ =
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
       Globals.procs_verified := tmp

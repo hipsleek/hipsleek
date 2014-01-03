@@ -3609,6 +3609,24 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
         (qv :: qvars, new_f)
   | _ -> ([], f0)
 
+and split_ex_quantifiers_ext (f0 : formula) : (spec_var list * formula) = match f0 with
+  | Exists (qv, qf, lbl, pos) ->
+        let qvars, new_f = split_ex_quantifiers qf in
+        (qv :: qvars, new_f)
+  | And (p1, p2, pos) -> let svl1 = fv p1 in
+    let svl2 = fv p2 in
+    let qvars1, new_f1 = split_ex_quantifiers_ext p1 in
+    let qvars2, new_f2 = split_ex_quantifiers_ext p2 in
+    if intersect_svl qvars1 svl2 = [] && intersect_svl qvars2 svl1 = [] then
+    (qvars1@qvars2, mkAnd new_f1 new_f2 pos)
+    else ([], f0)
+  | _ -> ([], f0)
+
+and add_quantifiers qvars f0=
+  match qvars with
+    | [] -> f0
+    | v::rest ->  add_quantifiers rest (Exists (v, f0, None, pos_of_formula f0))
+
 and split_forall_quantifiers (f0 : formula) = match f0 with
   | Forall (qv, qf, lbl, pos) ->
         let qvars, new_f,_,_ = split_forall_quantifiers qf in
@@ -4994,9 +5012,9 @@ and rel_compute e1 e2:constraint_rel = match (e1,e2) with
   | IConst (i1,_) ,IConst (i2,_) -> if (i1<i2) then Subsumed else if (i1=i2) then Equal else Subsuming
   | _ -> Unknown
 	    
-and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list))) ((b1,b3,b4):(int* b_formula *(spec_var list)))
+and compute_constraint_relation_x f_sat f_imply ((a1,a3,a4):(int* b_formula *(spec_var list))) ((b1,b3,b4):(int* b_formula *(spec_var list)))
 	  :constraint_rel =
-  match (fst a3,fst b3) with
+  let r = match (fst a3,fst b3) with
 	    | ((BVar v1),(BVar v2))-> if (v1=v2) then Equal else Unknown
 	    | (Neq (e1,e2,_), Neq (d1,d2,_))
 	    | (Eq (e1,e2,_), Eq  (d1,d2,_)) -> begin match ((rel_compute e1 d1),(rel_compute e2 d2)) with
@@ -5011,7 +5029,19 @@ and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list)))
 			  | _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
 				  | Equal,Equal-> Contradicting
 				  | _ ->  Unknown end 
-	    | (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
+	    | _ -> Unknown in
+	match r with
+	| Unknown ->
+		if equalBFormula_f eq_spec_var a3 b3 then Equal
+		else if f_sat (mkAnd (BForm (a3,None)) (BForm (b3,None)) no_pos) then
+			(match f_imply a3 b3,f_imply b3 a3 with
+				| true, true -> Equal
+				| true, false -> Subsuming
+				| false, true -> Subsumed
+				| false, false -> Unknown)
+		else Contradicting	
+	| _ -> r
+		(*| (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
 	    | (Lt (e1,e2,_), Lte (d1,d2,_)) 
 	    | (Lt (e1,e2,_), Eq  (d1,d2,_)) 
 	    | (Lt (e1,e2,_), Neq (d1,d2,_)) 
@@ -5022,13 +5052,12 @@ and compute_constraint_relation_x ((a1,a3,a4):(int* b_formula *(spec_var list)))
 	    | (Eq (e1,e2,_), Lt  (d1,d2,_)) 
 	    | (Eq (e1,e2,_), Lte (d1,d2,_)) 
 	    | (Neq (e1,e2,_), Lt  (d1,d2,_)) 
-	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown
-	    | _ -> Unknown
-	   
-and compute_constraint_relation a b =
+	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown*)
+	    
+and compute_constraint_relation f_sat f_imply a b =
  let pr1 = pr_triple string_of_int !print_b_formula !print_svl in
  let pr r = match r with | Unknown -> "Unk" | Subsumed -> "<" | Subsuming -> ">" | Equal -> "=" | Contradicting -> "Contr" in
- Debug.no_2 "compute_constraint_relation" pr1 pr1 pr compute_constraint_relation_x a b
+ Debug.no_2 "compute_constraint_relation" pr1 pr1 pr (compute_constraint_relation_x f_sat f_imply) a b
        
 and b_form_list f: b_formula list = match f with
   | BForm (b,_) -> [b]
@@ -8869,6 +8898,7 @@ let get_neq_null_svl (f:formula)=
   let pr1 = !print_formula in
   Debug.no_1 "get_neq_null_svl" pr1 !print_svl
       (fun _ -> get_neq_null_svl_x f) f
+
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8973,6 +9003,33 @@ let get_rel_id (f:formula)
                 | (RelForm(id,_,_),_) -> Some id
                 | _ -> None)
         | _ -> None
+
+let get_relargs_opt (f:formula) 
+      = match f with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(id,eargs,_),_) -> Some (id, (List.fold_left List.append [] (List.map afv eargs)))
+                | _ -> None)
+        | _ -> None
+
+
+let get_list_rel_args_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | BForm (bf,_) ->
+            (match bf with
+              | (RelForm(id,eargs,_),_) -> [(id, (List.fold_left List.append [] (List.map afv eargs)))]
+              | _ -> [])
+      | And (f1,f2,_) -> (helper f1)@(helper f2)
+      | Exists (_,p1,_,_) -> helper p1
+      | _ -> []
+  in
+  helper f0
+
+let get_list_rel_args (f0:formula) =
+  let pr1 = pr_list (pr_pair !print_sv !print_svl) in
+  Debug.no_1 "get_list_rel_args" !print_formula pr1
+      (fun _ ->  get_list_rel_args_x f0) f0
 
 let get_rel_id_list (f:formula) = match f with
   | BForm (bf,_) ->
@@ -9350,6 +9407,7 @@ let mk_neg_bvar_subs v subs =
 *)
 let restore_bool_omega bf bvars subs =
   match bf with
+    | BVar (v,_)
     | Lt (IConst(0,_),Var(v,_),_) 
     | Lte (IConst(1,_),Var(v,_),_) 
     | Gt(Var(v,_),IConst(0,_),_) 
@@ -9364,8 +9422,11 @@ let restore_bool_omega bf bvars subs =
 
 let restore_memo_formula subs bvars (f:formula) : formula =
   let bvars = bvars@(List.map fst subs) in
-  let pr b = restore_bool_omega b bvars subs 
-  in drop_formula pr pr f
+  let pr b = restore_bool_omega b bvars subs in
+  drop_formula pr pr f
+  (* let ps = split_conjunctions f in *)
+  (* let ps1 = List.map (drop_formula pr pr) ps in *)
+  (* conj_of_list ps1 (pos_of_formula f) *)
 
 let restore_memo_formula subs bvars (f:formula) : formula =
   let pr = !print_formula in
@@ -10087,6 +10148,7 @@ let get_eqs_rel_args_x p eqs rel_args pos=
 let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
+
 
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
@@ -11935,3 +11997,29 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
       pr2 update_positions_for_annot_view_params aa old_lst
 
 (* end utilities for allowing annotations as view arguments *)
+
+(*x=null /\ x!=null*)
+let is_unsat_null f=
+  let neq_null_ptrs = get_neq_null_svl f in
+  if neq_null_ptrs = [] then false else
+    let null_ptrs = get_null_ptrs f in
+    intersect_svl neq_null_ptrs null_ptrs != []
+
+let prune_relative_unsat_disj p0 (*lhs*) base_p (*rhs*)=
+  let prune_cons p=
+    let ps = list_of_disjs p in
+    let ps1 = List.filter (fun p1 ->
+        let p2 = mkAnd p1 base_p no_pos in
+        not ( is_unsat_null p2)
+    ) ps in
+    disj_of_list ps1 (pos_of_formula p)
+  in
+  let ps0 = list_of_conjs p0 in
+  let ps1 = List.map prune_cons ps0 in
+  conj_of_list ps1 (pos_of_formula p0)
+
+let prune_relative_unsat_disj p0 base_p=
+  let pr1 = !print_formula in
+  Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
+      (fun _ _ -> prune_relative_unsat_disj p0 base_p)
+      p0 base_p

@@ -1,0 +1,45 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd2<n> == 
+ case {
+   n=0 -> [] self=null;
+   n>0 -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+checkentail
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd2<n+1>.
+print residue.
+
+
+/*
+# bug-cll-3a.slk --dci
+
+classic problem
+
+Why (1) fail but (2) succeeds without residue.
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd2<flted_22_74>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp
+
+
+Entail 2: Valid. 
+
+ <1>(exists flted_29_139: emp&0<flted_29_139 & 0<flted_29_139 & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_140=Anon_15 & r_141=tmp' & Anon_148=v' & r=r_149 & exists(self_146:r_141!=self_146 & self=self_146) & exists(flted_14_147:flted_14_147=flted+1) & 0<(flted+1+1)&{FLOW,(21,22)=__norm})[]
+
+*/

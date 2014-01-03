@@ -1,0 +1,11 @@
+B1 :={[n,m,k]:(n=0 && m=0 && k=0) || (n=0 && k=0 && 1<=m) || (m=0 && k=0 && 1<=n)};
+B2 :={[n,m,k]:  (n=0 && k=0 && m>=0) || (m=0 && k=0 && 1<=n)};
+B1 subset B2;
+B2 subset B1;
+
+P1 :={[n,m,k]:(n=0 && m=0 && k=0)};
+P2 :={[n,m,k]: (n=0 && k=0 && 1<=m)};
+P3 :={[n,m,k]: (m=0 && k=0 && 1<=n)};
+
+PairWiseCheck(P1 union P2);
+PairWiseCheck(P1 union P3);

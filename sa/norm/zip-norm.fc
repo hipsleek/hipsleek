@@ -1,0 +1,33 @@
+
+# from recursive definition of pre-relation
+#
+#   P3(n,m) & 1<=n 
+#     & 1<=m & m2=m-1 & n2=n-1
+#   -->  P3(n2,m2).
+
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+Q:={[m,n]->[k]->[]:
+  (n=0 && m=0 && k=0) || (n=0 && k=0 && 1<=m) || (m=0 && k=0 && 1<=n) ||
+  (exists (kx,mx,nx: 0<=kx && nx=n-1 && mx=m-1 && k=kx+1 && 1<=m && 1<=n
+    && Q(mx,nx,kx)))};
+
+
+Q2:={[m,n]->[k]->[]:
+  (n=0 && k=0 && m>=0) || (m=0 && k=0 && 1<=n) ||
+  (exists (kx,mx,nx: 0<=kx && nx=n-1 && mx=m-1 && k=kx+1 && 1<=m && 1<=n
+    && Q2(mx,nx,kx)))};
+
+Q3:={[m,n]->[k]->[]:
+  (n=0 && k=0 && m>=0) || (m=0 && k=0 && 0<=n) ||
+  (exists (kx,mx,nx: 0<=kx && nx=n-1 && mx=m-1 && k=kx+1 && 1<=m && 1<=n
+    && Q3(mx,nx,kx)))};
+
+
+[BU]:=bottomupgen([Q],[2],SimHeur);
+[BU2]:=bottomupgen([Q2],[2],SimHeur);
+[BU3]:=bottomupgen([Q3],[2],SimHeur);
+BU;BU2;
+BU subset BU2;
+BU2 subset BU;
+BU3 subset BU2;
+BU2 subset BU3;
