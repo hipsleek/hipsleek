@@ -2945,8 +2945,13 @@ and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = List.map CF.remove_dupl_false_fe r in r
 
+and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context =
+  let pr_ctx = Cprinter.string_of_context_short in
+  let pr_mf = Cprinter.string_of_mix_formula in
+  Debug.no_2 "combine_context_and_unsat_now" pr_ctx pr_mf pr_ctx (fun _ _ -> combine_context_and_unsat_now_x prog ctx f) ctx f
 
-and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context = 
+
+and combine_context_and_unsat_now_x prog (ctx : context) (f : MCP.mix_formula) : context = 
   let r = transform_context (combine_es_and prog f true) ctx in
   let r = transform_context (elim_unsat_es_now 3 prog (ref 1)) r in
   TP.incr_sat_no () ; r
@@ -4251,16 +4256,24 @@ and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : co
   in helper ctx
 
 and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
-  let pr1 = Cprinter.string_of_entail_state in
-  let pr2 = Cprinter.string_of_context in
+  let pr1 = Cprinter.string_of_entail_state_short in
+  let pr2 = Cprinter.string_of_context_short in
   Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
-  let f = (* match es.es_orig_ante with *)
+  (* let f = CF.normalize_combine_heap es.es_formula es.es_heap in *)
+  let temp_f = if !Globals.unsat_consumed_heap then 
+    CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos 
+  else es.es_formula
+  in
+  (* added consumed heap for unsat_now checking *)
+   (* match es.es_orig_ante with *)
     (* | Some f -> f *)
-    (* | None   ->  *)es.es_formula in
-  let _ = reset_int2 () in
-  let b = unsat_base_nth 1 prog sat_subno f in
+    (* | None   ->  *)
+    (* es.es_formula  *)
+   let _ = reset_int2 () in
+  let b = unsat_base_nth 1 prog sat_subno temp_f in
+  let f = es.es_formula in
   (* Slicing: Set the flag memo_group_unsat to false *)
   let f = reset_unsat_flag_formula f in
   let es = { es with es_formula = f; es_unsat_flag = true } in
@@ -5361,7 +5374,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			          let combinator f ctx=  
 			            let f = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) f) in
 			            if !Globals.delay_case_sat then transform_context (combine_es_and prog f true) ctx
-			            else combine_context_and_unsat_now prog ctx f in	
+			            else 
+                                      Wrapper.wrap_one_bool Globals.unsat_consumed_heap true
+                                          (combine_context_and_unsat_now prog ctx) f in	
                                   if (d==[] && case_vs!=[]) then
                                     begin
                                       (* place to add case LHS to infer_pure *)

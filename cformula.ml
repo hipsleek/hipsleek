@@ -1441,6 +1441,11 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
       (!print_formula)
       (!print_formula)
       (fun f1 f2 -> mkStar_combine_x f1 f2 flow_tr pos) f1 f2 
+
+and mkStar_combine_heap (f1 : formula) (f2 : h_formula) 
+      flow_tr (pos : loc) 
+      =  mkStar_combine f1 (formula_of_heap f2 pos) flow_tr pos
+
 	  
 and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, t1, a1 = split_components f1 in

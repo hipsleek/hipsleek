@@ -796,6 +796,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let unsat_consumed_heap = ref false (* to add consumed heap for unsat_now *)
 let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true

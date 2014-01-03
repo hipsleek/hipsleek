@@ -2772,12 +2772,17 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+    | Ctx e -> [(e.es_formula,e.es_heap,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
       e.es_var_measures,e. es_var_zero_perm,e.es_trace,e.es_cond_path, e.es_proof_traces, e.es_ante_evars(* , e.es_subst_ref *))]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
+  let pr (f,eh,(* ac, *)iv,ih,ip,ir,vm,vperms,trace,ecp, ptraces,evars(* , vars_ref *)) =
     fmt_open_vbox 0;
-    let f1 = if !Globals.print_en_tidy then Cformula.shorten_formula f else f in pr_formula_wrap f1;
+    let f1 = f
+      (* if !Globals.print_en_tidy *)
+      (* then Cformula.shorten_formula f *)
+      (* else f *)
+    in pr_formula_wrap f1;
+    pr_wrap_test "es_heap: " (fun _ -> false)  (pr_h_formula) eh;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
     pr_wrap_test "es_infer_vars/rel: " Gen.is_empty  (pr_seq "" pr_spec_var) iv;
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
@@ -2785,7 +2790,7 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
     pr_wrap_opt "es_var_measures 2: " pr_var_measures vm;
-    pr_vwrap "es_trace: " pr_es_trace trace;
+    (* pr_vwrap "es_trace: " pr_es_trace trace; *)
     (* pr_wrap_test "es_subst_ref: " Gen.is_empty  (pr_seq "a" (pr_pair_aux pr_spec_var pr_spec_var)) vars_ref;  *)
     pr_wrap_test "es_cond_path: " Gen.is_empty (pr_seq "" (fun s -> fmt_int s)) ecp;
     pr_wrap_test "es_proof_traces: " Gen.is_empty (pr_seq "" (pr_pair_aux pr_formula pr_formula)) ptraces;
@@ -2837,6 +2842,7 @@ let pr_list_context_short (ctx:list_context) =
 let pr_entail_state_short e =
   fmt_open_vbox 1;
   pr_formula_wrap e.es_formula;
+  pr_wrap_test "es_heap:" (fun _ -> false)  (pr_h_formula) e.es_heap;
   pr_wrap_test "@zero:" Gen.is_empty  (pr_seq "" pr_spec_var) e.es_var_zero_perm;
   pr_wrap_test "es_infer_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars;
   pr_wrap_test "es_infer_vars_rel: " Gen.is_empty  (pr_seq "" pr_spec_var) e.es_infer_vars_rel;

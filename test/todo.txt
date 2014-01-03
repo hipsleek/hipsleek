@@ -441,7 +441,7 @@ checkentail_exact
 ====================================================================
 
 
---lem-en-deep-unfold
+--lem-en-deep-unfold  (FIXED)
 
   lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) 
   lemmas/sll_tailL.slk({L2#Valid}).
@@ -463,7 +463,7 @@ tmp_1016::node<v',r_1006>@M@ rem br[{1}]&(
 {FLOW,(24,25)=__norm})[]. 
 
 ====================================================================
-# bug-cll-3a.slk
+# bug-cll-3a.slk (FIXED)
 
 classic problem
 
@@ -482,7 +482,7 @@ Entail 2: Valid.
 
  <1>(exists flted_29_139: emp&0<flted_29_139 & 0<flted_29_139 & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_140=Anon_15 & r_141=tmp' & Anon_148=v' & r=r_149 & exists(self_146:r_141!=self_146 & self=self_146) & exists(flted_14_147:flted_14_147=flted+1) & 0<(flted+1+1)&{FLOW,(21,22)=__norm})[]
 ====================================================================
-# bug-cll-3b.slk
+# bug-cll-3b.slk (FIXED)
 
 Why did --eci lead to failure?
 --dci lead to success.
@@ -552,10 +552,13 @@ Entail 1: Fail.(may) cause:Nothing_to_do?
 # bug-cll-6,6a,6b.slk  (FIXED)
 
 ====================================================================
-# bug-cll-8.slk -debug zd1.dd
+# bug-cll-8.slk -debug zd1.dd (FIXED)
+
+ by temporarily adding consumed heap for UNSAT_now checking
 
 --eci fail here (but --dci works)
 
+(DUE to tidy print errors here)
 How come 
  & Anon_14=Anon_86 & r_87=tmp' // ??
 became:
@@ -582,7 +585,10 @@ heap_entail_one_context_struc inp1 : es_formula:
 &  {FLOW,(21,22)=__norm}[]
 
 ====================================================================
-# bug-cll-8.slk -debug zd1.dd
+# bug-cll-8.slk -debug zd1.dd (DUE to tidy_print renamings)
+
+- removed tidy_print renaming from string_of_context_short
+
 
 @16! es(3): r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_86 & r_87=tmp'&{FLOW,(21,22)=__norm}[]
 @16! annot: 2

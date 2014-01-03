@@ -254,6 +254,8 @@ let common_arguments = [
    "Turn off set-of-states search");
   ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
+  ("--unsat-consumed", Arg.Set Globals.unsat_consumed_heap,
+   "Add consumed heap for unsat checking");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");
   ("--dis-comp-xp0", Arg.Clear Globals.compute_xpure_0,
