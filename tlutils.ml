@@ -320,11 +320,17 @@ type solver =
 
 let lp_solver = ref Z3
 
-let set_solver solver_name =
-  if solver_name = "clp" then lp_solver := Clp
-  else if solver_name = "lps" then lp_solver := LPSolve
-  else if solver_name = "glpk" then lp_solver := Glpk
-  else lp_solver := Z3
+let oc_solver = ref false
+
+let rec set_solver solver_name =
+  if (Str.first_chars solver_name 1) = "o" then
+    (oc_solver := true;
+    set_solver (Str.string_after solver_name 1))
+  else
+    if solver_name = "clp" then lp_solver := Clp
+    else if solver_name = "lps" then lp_solver := LPSolve
+    else if solver_name = "glpk" then lp_solver := Glpk
+    else lp_solver := Z3
 
 let print_solver_res = function
   | Unsat -> "Unsat"
@@ -579,11 +585,37 @@ let rec search_model_om pos_zero_vars bnd_vars nln_vars sst asserts =
         search_model_om rem bnd_vars nln_vars sst asserts
       else r
 
+let get_model is_linear templ_unks vars assertions =
+  get_opt_model is_linear templ_unks vars assertions
+
+let get_abs_model is_linear templ_unks vars assertions = 
+  let pos = no_pos in
+  let abs_obj_vars = List.map (fun v ->
+    let typ = type_of_spec_var v in
+    let name = name_of_spec_var v in
+    let vp = SpecVar (typ, name ^ "p", Unprimed) in
+    let vm = SpecVar (typ, name ^ "m", Unprimed) in
+    (v, (vp, vm))) templ_unks in 
+  let sst = List.map (fun (v, (vp, vm)) -> 
+    (v, mkSubtract (mkVar vp pos) (mkVar vm pos) pos)) abs_obj_vars in
+  let abs_vars = List.fold_left (fun a (_, (vp, vm)) -> a @ [vp; vm]) [] abs_obj_vars in
+  let n_asserts = List.map (fun a -> apply_par_term sst a) assertions in
+  let nneg_asserts = List.map (fun v -> mkPure (mkGte (mkVar v pos) (mkIConst 0 pos) pos)) abs_vars in
+  let r = get_model is_linear abs_vars (vars @ abs_vars) (nneg_asserts @ n_asserts) in
+  match r with
+  | Sat abs_m -> 
+    let m = List.map (fun v -> 
+      let vm = name_of_spec_var v in
+      (vm, (List.assoc (vm ^ "p") abs_m) - ((List.assoc (vm ^ "m") abs_m)))
+    ) templ_unks in Sat m
+  | _ -> r
+
 let get_model_om is_linear templ_unks vars assertions =
   let bnd_vars = diff vars templ_unks in
   if is_linear then
     let r = Omega.get_model bnd_vars assertions in
-    print_endline ("OM: " ^ (!print_formula r))
+    let m = get_abs_model true templ_unks vars (split_conjunctions r) in
+    m
   else
     let p = no_pos in
     let lcm, asserts = norm_rational_asserts assertions in
@@ -593,9 +625,9 @@ let get_model_om is_linear templ_unks vars assertions =
     let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
     let pos_vars = lcm::pos_vars in
 
-    let _ = print_endline ("LN: " ^ (pr_list !print_formula ln_asserts)) in
-    let _ = print_endline ("POS: " ^ (!print_svl pos_vars)) in
-    let _ = print_endline ("NNEG: " ^ (!print_svl nneg_vars)) in
+    let _ = Debug.trace_pprint ("LN: " ^ (pr_list !print_formula ln_asserts)) in
+    let _ = Debug.trace_pprint ("POS: " ^ (!print_svl pos_vars)) in
+    let _ = Debug.trace_pprint ("NNEG: " ^ (!print_svl nneg_vars)) in
 
     let ln_asserts = 
       (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
@@ -604,12 +636,14 @@ let get_model_om is_linear templ_unks vars assertions =
     let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
     let r = search_model_om splitted_nneg_vars 
       (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) sst ln_asserts in
-    let _ = print_endline ("OM_RES: " ^ (!print_formula r)) in
-    ()
-    
+    let m = get_abs_model true templ_unks vars (split_conjunctions r) in
+    m
+
 let get_model is_linear templ_unks vars assertions =
-  let _ = get_model_om is_linear templ_unks vars assertions in
-  get_opt_model is_linear templ_unks vars assertions
+  if !oc_solver then
+    get_model_om is_linear templ_unks vars assertions
+  else
+    get_opt_model is_linear templ_unks vars assertions
 
 let get_model is_linear templ_unks vars assertions =
   let pr1 = !print_svl in
@@ -617,6 +651,7 @@ let get_model is_linear templ_unks vars assertions =
   Debug.no_3 "tl_get_model" pr1 pr1 pr2 print_solver_res
   (fun _ _ _ -> get_model is_linear templ_unks vars assertions)
     templ_unks vars assertions
+
   
 (*****************)
 (* GENERAL UTILS *)

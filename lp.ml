@@ -48,7 +48,7 @@ let rec lp_of_exp a =
   | CP.Add (e1, e2, _) -> (lp_of_exp e1) ^ " " ^ (lp_of_exp e2)
   | CP.Mult (e1, e2, _) -> (lp_of_exp e1) ^ " " ^ (lp_of_exp e2)
   (* UNHANDLED *)
-  | _ -> Error.report_no_pattern ()
+  | _ -> print_endline (!print_exp a); Error.report_no_pattern ()
 
 let rec lp_of_b_formula b =
   let (pf, _) = b in
@@ -57,16 +57,20 @@ let rec lp_of_b_formula b =
   | CP.Gte (e1, e2, _) -> (lp_of_exp e1) ^ " >= " ^ (lp_of_exp e2)
   | CP.Eq (e1, e2, _) -> (lp_of_exp e1) ^ " = " ^ (lp_of_exp e2)
     (* UNHANDLED *)
-  | _ -> Error.report_no_pattern ()
+  | _ -> print_endline (!print_b_formula b); Error.report_no_pattern ()
 
 let lp_of_formula f =
   match f with
   | CP.BForm ((b,_) as bf,_) -> lp_of_b_formula bf
-  | _ -> Error.report_no_pattern ()
+  | _ -> print_endline (!print_formula f); Error.report_no_pattern ()
 
 let rec split_add (e: exp): exp list =
   match e with 
   | Add (e1, e2, _) -> (split_add e1) @ (split_add e2)
+  | Subtract (e1, e2, _) -> 
+    let pos = pos_of_exp e2 in
+    (split_add e1) @ 
+    (List.map (fun e -> mkMult (mkIConst (-1) pos) e pos) (split_add e2))
   | _ -> [e]
 
 let rec split_mult (e: exp): exp list =
@@ -80,8 +84,10 @@ let norm_mult_exp in_lhs e =
   let cl, el = List.partition is_int el in
   let c = List.fold_left (fun a c -> a * (to_int_const c Ceil)) 1 cl in
   if el = [] then
+    (* Move const to rhs *)
     None, if in_lhs then -c else c
   else
+    (* Move var exp to lhs *)
     Some (List.fold_left (fun a e -> mkMult a e pos) 
       (mkIConst (if in_lhs then c else -c) pos) el), 0
 
@@ -95,6 +101,7 @@ let norm_add_exp in_lhs e =
   let vl = List.fold_left (fun a v -> match v with Some e -> a @ [e] | _ -> a) [] vl in
   vl, if c == 0 then None else Some c
 
+(* e1 {<, <=, >, >=, =} e2 --> f(vars) = const *)  
 let norm_formula f =
   let rec f_b b =
     let (pf, _) = b in
