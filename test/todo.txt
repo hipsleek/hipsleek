@@ -581,10 +581,34 @@ heap_entail_one_context_struc inp1 : es_formula:
 & Anon_14=Anon_86 & r_87=tmp' // ??
 &  {FLOW,(21,22)=__norm}[]
 
-
-
-
 ====================================================================
+# bug-cll-8.slk -debug zd1.dd
+
+@16! es(3): r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_86 & r_87=tmp'&{FLOW,(21,22)=__norm}[]
+@16! annot: 2
+@16! annot: [0,0]
+@16! p: 1
+@16! i: 0
+@16! i: 0
+@16! p: 2
+@16! i: 0
+@16! i: 0
+@16! view_args_pos: 2
+@16! to_be_updated: 2
+@16! hargs: 2
+@16! annot: 2
+@16! annot: [0,0]
+@16! p: 1
+@16! i: 0
+@16! i: 0
+@16! p: 2
+@16! i: 0
+@16! i: 0
+@16! view_args_pos: 2
+@16! to_be_updated: 2
+@16! hargs: 2
+heap_entail_conjunct_lhs_struc@17@16@15@14@13@12@11@7@6@5@4@3@2@1 ENTRY :Ctx  r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon=Anon1 & r1=tmp'&{FLOW,(21,22)=__norm}[]
+
 ====================================================================
 ====================================================================
 ====================================================================

@@ -11798,6 +11798,10 @@ let overwrite_estate_with_steps (es:entail_state) (ss:steps) =
 let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
   {es with es_prior_steps = ss@es.es_prior_steps; }
 
+let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
+  let pr = !print_entail_state_short in
+  Debug.no_1 "add_to_estate_with_steps" pr pr
+      (fun _ -> add_to_estate_with_steps es ss) es
 (*let rec add_post post f = match f with*)
 (*  | EBase b -> *)
 (*      let fec = match b.formula_struc_continuation with *)
