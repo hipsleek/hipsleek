@@ -31,6 +31,10 @@ print residue.
 
 
 /*
+# bug-cll-3a.slk
+
+classic problem
+
 Why (1) fail but (2) succeeds without residue.
 
 Entail 1: Fail.(may) cause:Nothing_to_do? 

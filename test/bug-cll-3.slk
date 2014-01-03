@@ -4,13 +4,23 @@ data node {
 }.
 
 /* view for singly linked circular lists */
+
 pred cll<p, n> == self = p & n = 0
 	or self::node<_, r> * r::cll<p, n-1> & self != p  
 	inv n >= 0.
 
+/*
+pred cll<p, n> == 
+  case {
+    self = p -> [] n = 0;
+    self!=p -> [] self::node<_, r> * r::cll<p, n-1> ;
+  } inv n >= 0.
+
 pred hd<n> == self = null & n = 0
 	or self::node<_, r> * r::cll<self, n-1>  
 	inv n >= 0.
+*/
+
 
 pred hd1<n> == 
  case {
