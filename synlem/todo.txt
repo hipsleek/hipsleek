@@ -15,8 +15,49 @@ Entail (2) : Valid.
 [[ COND ==>  InferHeap ==> ]]
  
 =================================================================
+#bt-left.slk
+
+Entailing lemma sthn: Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+
+bt-left-1.slk --lem-en-residue: OK
 =================================================================
+# rlseg.slk
+---------------------------
+one:
+
+Entailing lemma lem_14: Fail. Details below:
+         "->" implication: : Fail. (may) cause: q_75!=null & q_75!=self_lem_14 & self_lem_14!=null |-  p=self_lem_14. LOCS:[0;10;8;7] (may-bug)
+         "<-" implication: : Fail. (may) cause:UnionR[Nothing_to_do?matching data with deriv self-rec LHS node
+  Type: Root
+  LHS: self_lem_14::rlseg<q_190>@M
+  RHS: self_lem_14::node<_,p1_168>@M
+ lhs_rest: q_190::node<_,p_189>@M *
+  q_165::node<_,p_164>@M
+ rhs_rest: emp,Nothing_to_do?matching data with deriv self-rec LHS node
+  Type: Root
+  LHS: self_lem_14::rlseg<q_220>@M
+  RHS: self_lem_14::node<_,p1_200>@M
+ lhs_rest: q_220::node<_,p_219>@M *
+  q_196::node<_,p_195>@M
+ rhs_rest: p1_200::rlseg<q_144>@M *
+  q_144::node<_,p_198>@M]
+---------------------
+two: should be proved when one is proved
+
+Entailing lemma two: Fail. Details below:
+         "->" implication: : Fail. (may) cause:OrR[ true |-  p=self_two. LOCS:[7] (may-bug), true |-  p=self_two. LOCS:[0;7] (may-bug)]
+         "<-" implication: : Valid.
+
 =================================================================
+# dseg.slk
+
+three:
+
+Entailing lemma two: Fail. Details below:
+         "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+         "<-" implication: : Valid.
+
+-------------------
 =================================================================
 =================================================================
 =================================================================
