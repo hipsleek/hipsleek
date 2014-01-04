@@ -66,3 +66,9 @@ infer [r] x >= 0 & x' = x - 1 |- r(x) >= 0.
 infer [r] x >= 0 & x' = x - 1 |- r(x) > r(x').
 
 template_solve.
+
+infer [r] x >= 0 & x' = x + 1 |- r(x) >= 0.
+
+infer [r] x >= 0 & x' = x + 1 |- r(x) > r(x').
+
+template_solve.

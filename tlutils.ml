@@ -611,31 +611,28 @@ let get_abs_model is_linear templ_unks vars assertions =
   | _ -> r
 
 let get_model_om is_linear templ_unks vars assertions =
+  let p = no_pos in
   let bnd_vars = diff vars templ_unks in
-  if is_linear then
-    let r = Omega.get_model bnd_vars assertions in
-    let m = get_abs_model true templ_unks vars (split_conjunctions r) in
-    m
+  let lcm, asserts = norm_rational_asserts assertions in
+  let ln_asserts, sst = List.split (List.map linearize_nonlinear_formula asserts) in
+  let sst = List.concat sst in
+  let bnd_nln_vars = intersect bnd_vars (List.concat (List.map (fun (_, e) -> afv e) sst)) in
+  let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
+  let pos_vars = lcm::pos_vars in
+
+  let _ = Debug.trace_pprint ("LN: " ^ (pr_list !print_formula ln_asserts)) in
+  let _ = Debug.trace_pprint ("POS: " ^ (!print_svl pos_vars)) in
+  let _ = Debug.trace_pprint ("NNEG: " ^ (!print_svl nneg_vars)) in
+
+  let ln_asserts = 
+    (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
+    @ ln_asserts in
+  let rep_pos_vars, sst = norm_sst_pos pos_vars sst in
+  let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
+  let r = search_model_om splitted_nneg_vars 
+    (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) sst ln_asserts in
+  if is_False r then Unsat
   else
-    let p = no_pos in
-    let lcm, asserts = norm_rational_asserts assertions in
-    let ln_asserts, sst = List.split (List.map linearize_nonlinear_formula asserts) in
-    let sst = List.concat sst in
-    let bnd_nln_vars = intersect bnd_vars (List.concat (List.map (fun (_, e) -> afv e) sst)) in
-    let pos_vars, nneg_vars = partition_nln_vars bnd_nln_vars sst ln_asserts in
-    let pos_vars = lcm::pos_vars in
-
-    let _ = Debug.trace_pprint ("LN: " ^ (pr_list !print_formula ln_asserts)) in
-    let _ = Debug.trace_pprint ("POS: " ^ (!print_svl pos_vars)) in
-    let _ = Debug.trace_pprint ("NNEG: " ^ (!print_svl nneg_vars)) in
-
-    let ln_asserts = 
-      (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
-      @ ln_asserts in
-    let rep_pos_vars, sst = norm_sst_pos pos_vars sst in
-    let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
-    let r = search_model_om splitted_nneg_vars 
-      (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) sst ln_asserts in
     let m = get_abs_model true templ_unks vars (split_conjunctions r) in
     m
 
