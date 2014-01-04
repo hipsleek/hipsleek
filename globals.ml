@@ -683,8 +683,8 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
-let enable_lemma_rhs_unfold = ref true
-let enable_lemma_lhs_rhs_unfold = ref true
+let enable_lemma_rhs_unfold = ref false
+let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 

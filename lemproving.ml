@@ -211,30 +211,31 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
   let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
   (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let lhs_unfold_ptrs0,rhs_unfold_ptrs0=
-    let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
-    let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
-    if is_singl sv_self lhs_unfold_ptrs then
-      if is_singl sv_self rhs_unfold_ptrs then
-        let lhs_vns = CF.get_views lhs in
-        let rhs_vns = CF.get_views_struc new_rhs in
-        if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
+  let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
+    !Globals.enable_lemma_rhs_unfold then ([],[]) else
+      let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
+      let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
+      if is_singl sv_self lhs_unfold_ptrs then
+        if is_singl sv_self rhs_unfold_ptrs then
+          let lhs_vns = CF.get_views lhs in
+          let rhs_vns = CF.get_views_struc new_rhs in
+          if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
+            [sv_self],[]
+          else [sv_self],[sv_self]
+        else
           [sv_self],[]
-        else [sv_self],[sv_self]
-      else
-        [sv_self],[]
-    else begin
-      if is_singl sv_self rhs_unfold_ptrs then (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
-      else if !Globals.allow_lemma_deep_unfold then
-        let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
-        let r_ptrs = if rhs_unfold_ptrs != [] then [sv_self] else [] in
-        (l_ptrs, r_ptrs)
-      else
-        (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
-    end
+      else begin
+        if is_singl sv_self rhs_unfold_ptrs then (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
+        else if !Globals.allow_lemma_deep_unfold then
+          let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
+          let r_ptrs = if rhs_unfold_ptrs != [] then [sv_self] else [] in
+          (l_ptrs, r_ptrs)
+        else
+          (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
+      end
   in
   let lhs,_ = (
-    let lhs_unfold_ptrs = if not !Globals.enable_lemma_lhs_rhs_unfold then
+    let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
         CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true
       else [sv_self]
@@ -249,7 +250,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       ) (lhs, []) lhs_unfold_ptrs
   ) in
   (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let _ = Debug.info_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
+  let _ = Debug.tinfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
   let _ = Debug.tinfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
@@ -258,9 +259,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.tinfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
   (* let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let rhs = 
-    if !Globals.enable_lemma_rhs_unfold then (
-      let rhs_unfold_ptrs = if not !Globals.enable_lemma_lhs_rhs_unfold then
+  let rhs =
+    let rhs_unfold_ptrs = if !Globals.enable_lemma_rhs_unfold then
         if !Globals.allow_lemma_deep_unfold then
           CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
@@ -269,11 +269,9 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
       ) new_rhs rhs_unfold_ptrs
-    )
-    else new_rhs
   in
   (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let _ = Debug.info_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
+  let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
