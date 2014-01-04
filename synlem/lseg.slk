@@ -22,3 +22,5 @@ Entailing lemma three: Fail. Details below:
 	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
 
 */
+
+// checkentail self::lseg<p>@M |- p=self.
