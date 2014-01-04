@@ -1,0 +1,24 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+lemma_safe "three" 
+  self::lseg<p> <->  self::lseg<p1>*p1::lseg<p>.
+
+/*
+# lseg.slk
+
+(fixed by option below)
+../sleek lseg.slk --dis-lem-rhs-unfold
+
+Remedy : disable rhs-unfold? since we have deep-unfold now?
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
+
+*/

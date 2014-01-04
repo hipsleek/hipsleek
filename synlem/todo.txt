@@ -59,8 +59,79 @@ Entailing lemma two: Fail. Details below:
 
 -------------------
 =================================================================
+# useless.slk
+
+print_residue seems to print the last residue of 
+lemma_infer. It seems lemma_infer is processed completely first.
+
+GOT two outcomes:
+
+
+!! fixpoint:[]
+ <1>
+    emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+    or emp&{FLOW,(21,22)=__norm}[]
+    
+ inferred hprel: [emp&p_74=null --> K(p_74); 
+                  p_77::node<q_76>@M * q_76::ll<>@M --> K(p_77)]
+[[ COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap ==> ]]
+<2>
+   emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+   or emp&{FLOW,(21,22)=__norm}[]
+   
+inferred hprel: [emp&p_74=null --> K(p_74); K(p_81) --> K(p_81)]
+
+However, only one fix point. What happens to the other? Dropped?
+
+[ G(self) ::= 
+ self::node<q>@M * G(q)
+ or emp&self=null
+ ,
+ K(p) ::= 
+ p::node<q>@M * q::ll<>@M
+ or emp&p=null
+ ]
+
 =================================================================
+# dseg-1a.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+lemma_safe "three" 
+  self::dseg<pr,p,last> <->
+      self::dseg<pr,p1,last2>*p1::dseg<last2,p,last>.
+
+Why proving <- fails?
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[AndR[ (p1_702!=null | (last=pr & p=p1_702)) |-  last=pr. LOCS:[12;1;0;7];  (self_three!=null | (last=last2_701 & p=self_three)) |-  p=self_three. LOCS:[12;1;0;7] (may-bug).],OrR[Cannot infer heap and pure 2,valid]]
+
 =================================================================
+# dseg-1b.slk
+
+lemma_safe "last"
+  self::dseg<pr,p,last> <-> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+-> seems invalid, in general.
+
+Entailing lemma last: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+	 "<-" implication: : Valid.
+=================================================================
+# lseg.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+lemma_safe "three" 
+  self::lseg<p> <-  self::lseg<p1>*p1::lseg<p>.
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
 =================================================================
 =================================================================
 =================================================================
