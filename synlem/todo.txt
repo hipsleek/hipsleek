@@ -133,6 +133,23 @@ Entailing lemma three: Fail. Details below:
 	 "->" implication: : Valid.
 	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
 =================================================================
+../sleek rlseg-2.slk -debug lem.dd > 1
+
+This example goes into TIMEOUT due to bug Omega file.
+BUG caused by our use of "-" as name..
+Revise code to avoid adding the user supplied string as name of variables
+Just use unique extra numbers.
+
+process_coercion_check@1 ENTRY : 
+ emp&p=self_four-a&{FLOW,(21,22)=__norm}[]
+ or (exists p_38,_,q_40: self_four-a::node<_,q_40>@M * q_40::rlseg<p_38>@M&
+    p=p_38&{FLOW,(21,22)=__norm})[]v
+
+ 
+@1! hargs: 1
+@1! f:#VN# self_four-a::rlseg<p1>@M
+@1! f:#DN# p1::node<_,p>@MTimeout when checking #simplify  Restarting Omega after ... 19 invocations Stop Omega... 19 invocations Starting Omega...oc
+
 =================================================================
 =================================================================
 =================================================================

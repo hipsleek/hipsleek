@@ -101,6 +101,7 @@ let print_exc (check_id: string) =
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
+  let _ = Debug.tinfo_hprint (add_str "iconseq" string_of_lem_formula) iconseq no_pos in
   let dummy_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in  
   try 
     let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
