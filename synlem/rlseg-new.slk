@@ -11,3 +11,4 @@ lemma_safe "one" self::node<_,p1>*p1::rlseg<p> -> self::rlseg<p>.
 // provable with rhs_unfold
 
 lemma_safe "two" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+// <-- provable with both
