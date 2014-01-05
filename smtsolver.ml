@@ -1179,8 +1179,11 @@ let get_model is_linear vars assertions =
     "(get-model)" in
   let model = (run "" "z3" smt_inp 5.0).original_output_text in
 
-  let _ = Debug.tinfo_pprint ("Z3m INP:\n" ^ smt_inp) no_pos in
-  let _ = Debug.tinfo_pprint ("Z3m OUT: " ^ (pr_list idf model)) no_pos in
+  let _ = 
+    Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;
+    Debug.tinfo_hprint (add_str "z3m input:\n " idf) smt_inp no_pos;
+    Debug.tinfo_hprint (add_str "z3m output: " (pr_list idf)) model no_pos 
+  in
 
   let m = 
     try
