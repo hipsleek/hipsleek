@@ -1159,7 +1159,7 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                               (* let b_right = if (not(!ann_derv) || vr_new_orig) then if right_ls=[] then false else true *)
                               (* else false in *)
                               let lst=
-                                if (* b_left && b_right *)(left_ls@right_ls)=[] then [(1,M_cyclic (c,uf_i))(* ;(1,M_unfold (c, uf_i)) *)]
+                                if (* b_left && b_right *)!Globals.lemma_syn && (left_ls@right_ls)=[] then [(1,M_cyclic (c,uf_i))(* ;(1,M_unfold (c, uf_i)) *)]
                                 else
                                   [(1,M_base_case_unfold c) (* ;(1,M_cyclic c) *)]
                               in
