@@ -328,9 +328,9 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
     if !Globals.disable_failure_explaining then ""
     else
       match CF.get_must_failure ctx with
-        | Some s -> "(must) cause:" ^ s 
+        | Some s -> "(must) cause: " ^ s 
         | _ -> (match CF.get_may_failure ctx with
-            | Some s -> "(may) cause:" ^ s
+            | Some s -> "(may) cause: " ^ s
             | None -> "INCONSISTENCY : expected failure but success instead"
           )
   in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
