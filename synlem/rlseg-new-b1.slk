@@ -21,8 +21,11 @@ Valid Lemmas : [2:==>] added to lemma store.
 
 */
 
+lemma_unsafe "3" self::node<_,q>*q::rlseg<p> 
+    <-> self::rlseg<p1>* p1::node<_,p>.
 
-lemma_unsafe "2" self::rlseg<p> & self!=p 
+
+lemma_safe "2" self::rlseg<p> & self!=p 
     -> self::rlseg<p1>* p1::node<_,p>.
 
 
@@ -30,6 +33,21 @@ checkentail_exact self::rlseg<p> & self!=p
     |- self::rlseg<p1>* p1::node<_,p>
 .
 
+// trivially valid
+
+checkentail_exact 
+   self!=p & self=p
+   or self::node<_,q> * q::rlseg<p> & self!=p 
+    |- self::rlseg<p1>* p1::node<_,p>
+.
+
+
+checkentail_exact 
+   self::node<_,q> * q::rlseg<p> & self!=p 
+    |- self::rlseg<p1>* p1::node<_,p>
+.
+
+/*
 checkentail_exact self::rlseg<p> & self!=p 
     |- self::node<_,p> 
   or self::node<_,q> * q::rlseg<p1> *p1::node<_,p>.
@@ -54,5 +72,4 @@ checkentail
 print residue.
 
 
-lemma_safe "3" self::node<_,q>*q::rlseg<p> 
-    <-> self::rlseg<p1>* p1::node<_,p>.
+*/

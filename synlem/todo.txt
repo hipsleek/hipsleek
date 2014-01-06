@@ -189,6 +189,15 @@ checkentail_exact
     |- self::rlseg<p1>* p1::node<_,p>.
 
 =================================================================
+../sleek rlseg-new-b5.slk 
+
+../sleek rlseg-new-b4a.slk -debug lem.dd > 1
+ 2174  ../sleek rlseg-new-b4b.slk -debug lem.dd > 2
+
+--> seems easier to prove than <--
+Could it be due to the way complex lemmas are being
+handled. Can we use a single way for consistency.
+
 =================================================================
 =================================================================
 =================================================================

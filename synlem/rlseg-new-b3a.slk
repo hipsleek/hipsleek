@@ -17,6 +17,21 @@ checkentail_exact
   self::node<_,q> & q=p 
   or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
     |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+    |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::node<_,q2>*q2::rlseg<p1>* p1::node<_,p>.
 
 print residue.
 
@@ -32,7 +47,6 @@ process_coercion_check inp2 : EBase (exists p1,_:
        {FLOW,(21,22)=__norm})[]
 process_coercion_check inp3 :inf_vars:[]
 process_coercion_check@1 EXIT:(false, failctx
-*/
 
 checkentail_exact 
   self::node<_,q> & q=p 
@@ -45,3 +59,6 @@ checkentail_exact
  or (exists p_44,q_46,b,c: self_3a::node<c,q>@M * q::node<b,q_46>@M * 
     q_46::rlseg<p_44>@M&p=p_44)
     |- (exists p1,a: self_3a::rlseg<p1>* p1::node<a,p>).
+
+*/
+
