@@ -150,7 +150,17 @@ process_coercion_check@1 ENTRY :
 @1! f:#VN# self_four-a::rlseg<p1>@M
 @1! f:#DN# p1::node<_,p>@MTimeout when checking #simplify  Restarting Omega after ... 19 invocations Stop Omega... 19 invocations Starting Omega...oc
 
-=================================================================
+=============================
+../sleek rlseg-new-a.slk --urhs
+Starting Omega...oc
+
+Why is a invalid lemma added???
+
+Entailing lemma one: Fail. (must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
+
+Valid Lemmas : [one:==>] added to lemma store.
+====================================
+
 =================================================================
 =================================================================
 =================================================================
