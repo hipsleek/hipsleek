@@ -175,6 +175,19 @@ Valid Lemmas : [2:==>] added to lemma store.
 
 
 =================================================================
+# rlseg-new-b3a1.slk
+
+lemma_safe "3a" self::node<_,q>*q::rlseg<p> 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+Cannot be proven automatically, but manual
+version in rlseg-new-b3a.slk went thru!
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+
 =================================================================
 =================================================================
 =================================================================
