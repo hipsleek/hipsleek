@@ -161,6 +161,19 @@ Entailing lemma one: Fail. (must) cause:UnionR[residue is forbidden.(2),residue 
 Valid Lemmas : [one:==>] added to lemma store.
 ====================================
 
+# rlseg-new-b1.slk
+
+lemma_safe "2" self::rlseg<p> & self!=p 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+
+Why failure? Why invalid lemma added..
+ 
+Entailing lemma 2: Fail. (must) cause:residue is forbidden.(2)
+
+Valid Lemmas : [2:==>] added to lemma store.
+
+
 =================================================================
 =================================================================
 =================================================================

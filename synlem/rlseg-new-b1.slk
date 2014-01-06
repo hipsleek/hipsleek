@@ -1,0 +1,25 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_safe "2" self::rlseg<p> & self!=p 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+/* 
+
+# rlseg-new-b1.slk
+
+Why failure? Why invalid lemma added..
+ 
+Entailing lemma 2: Fail. (must) cause:residue is forbidden.(2)
+
+Valid Lemmas : [2:==>] added to lemma store.
+
+*/
+
+
