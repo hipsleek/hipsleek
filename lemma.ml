@@ -283,7 +283,7 @@ let manage_safe_lemmas repo iprog cprog =
           None
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas repo iprog cprog = 
+let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) = 
   let (left,right) = List.fold_left (fun (left,right) ldef -> 
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right)
@@ -787,4 +787,5 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
 
 
 
-let _ = Sleekcore.generate_lemma := generate_lemma_helper
+let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
+let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;

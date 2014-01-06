@@ -19,6 +19,18 @@ inv true.
 checkentail x::ll1<> |- x::ll<>.
 print residue.
 
+
+//1a1
+checkentail x::ll1<> & y=x|- y::ll<>.
+print residue.
+
+
 //1b
-//checkentail x::ll<> |- x::ll1<>.
-//print residue.
+checkentail x::ll<> |- x::ll1<>.
+print residue.
+
+
+//2a
+checkentail x::node<_, q> * q::ll1<> |- x::ll<>.
+print residue.
+
