@@ -3205,6 +3205,9 @@ class type cilPrinter = object
   method pBlock: unit -> block -> Pretty.doc
     (** Print a block. *)
 
+  method pFunDecl: unit -> fundec -> Pretty.doc
+    (** Print a fundec. *)
+
   method pGlobal: unit -> global -> doc
     (** Global (vars, types, etc.). This can be slow and is used only by 
      * {!Cil.printGlobal} but by {!Cil.dumpGlobal} for everything else except 
@@ -4079,7 +4082,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
            (proto ++ (self#pLineDirective ~forcefile:true l));
          (* Temporarily remove the function attributes *)
          fdec.svar.vattr <- [];
-         fprint out !lineLength (self#pFunDecl () fdec);               
+         fprint out !lineLength (self#pFunDecl () fdec);
          fdec.svar.vattr <- oldattr;
          output_string out "\n"
 
@@ -4113,7 +4116,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        ++ self#pAttrs () fi.fattr
        ++ text ";"
        
-  method private pFunDecl () f =
+  method pFunDecl () f =
       self#pVDecl () f.svar
       ++  line
       ++ text "{ "
@@ -4464,6 +4467,10 @@ let printBlock (pp: cilPrinter) () (b: block) : doc =
   (* We must add the alignment ourselves, beucase pBlock will pop it *)
   align ++ pp#pBlock () b
 
+let printFundec (pp: cilPrinter) () (fd: fundec) : doc = 
+  (* We must add the alignment ourselves, beucase pBlock will pop it *)
+  align ++ pp#pFunDecl () fd
+
 let dumpStmt (pp: cilPrinter) (out: out_channel) (ind: int) (s: stmt) : unit = 
   pp#dStmt out ind s
 
@@ -4492,6 +4499,7 @@ let d_attrparam () e = defaultCilPrinter#pAttrParam () e
 let d_label () l = defaultCilPrinter#pLabel () l
 let d_stmt () s = printStmt defaultCilPrinter () s
 let d_block () b = printBlock defaultCilPrinter () b
+let d_fundec () fd = printFundec defaultCilPrinter () fd
 let d_instr () i = printInstr defaultCilPrinter () i
 
 let d_shortglobal () = function

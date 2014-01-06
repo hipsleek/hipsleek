@@ -75,6 +75,9 @@ let string_of_cil_stmt (s: Cil.stmt) : string =
 let string_of_cil_block (b: Cil.block) : string =
   Pretty.sprint 10 (Cil.d_block () b)
 
+let string_of_cil_fundec (fd: Cil.fundec) : string =
+  Pretty.sprint 10 (Cil.d_fundec () fd)
+
 let string_of_cil_instr (i: Cil.instr) : string =
   Pretty.sprint 10 (Cil.d_instr () i)
 
@@ -133,7 +136,6 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.Var e -> e.Iast.exp_var_pos
   | Iast.VarDecl e -> e.Iast.exp_var_decl_pos
   | Iast.While e -> e.Iast.exp_while_pos
-
 
 let loc_of_cil_exp (exp: Cil.exp) : Cil.location =
   match exp with
@@ -347,6 +349,164 @@ let create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
     Hashtbl.add tbl_aux_proc proc_name proc_decl;
     proc_decl
   )
+
+(************************************************************)
+(***************** remove goto statements *******************)
+(************************************************************)
+
+(* Collect all statement which either is goto statement or has labels                  *)
+(* Information about each collected statement includes (statement, index, depth level) *)
+let rec collect_goto_label_in_block (blk: Cil.block) (index: int) (depth: int)
+    : ((Cil.stmt * int * int) list * (Cil.stmt * int * int) list * int) =
+  let stmts = blk.Cil.bstmts in
+  let depth = depth + 1 in
+  collect_goto_label_in_stmts stmts index depth
+
+and collect_goto_label_in_stmt (stmt: Cil.stmt) (index: int) (depth: int)
+    : ((Cil.stmt * int * int) list * (Cil.stmt * int * int) list * int) =
+  match stmt.Cil.skind with
+    | Cil.Block blk -> collect_goto_label_in_block blk index depth
+    | _ -> ([], [], index)
+
+and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
+    : ((Cil.stmt * int * int) list * (Cil.stmt * int * int) list * int) =
+  let (gotos, labels, index) = List.fold_left (
+    fun (gts, lbls, index) stmt ->
+      (* collect label statements *)
+      let new_lbls1, index = (match stmt.Cil.labels with
+        | [] -> [], index
+        | _ -> 
+            let index = index + 1 in
+            let new_lbls = [(stmt, index, depth)] in
+            (new_lbls, index)
+      ) in
+      (* collect goto statements *)
+      let new_gts, new_lbls2, index = (match stmt.Cil.skind with
+        | Cil.Goto (st, _) ->
+            (* because Goto is always placed in an If-statment, *)
+            (* the depth of Goto is consider to be equal to the depth of If-statement *)
+            let index = index + 1 in
+            let goto_depth = depth - 1 in
+            let new_gts = [(!st, index, goto_depth)] in
+            (new_gts, [], index)
+        | Cil.If (_, blk1, blk2, _) ->
+            let g1, l1, index = collect_goto_label_in_block blk1 index depth in
+            let g2, l2, index = collect_goto_label_in_block blk2 index depth in
+            (g1 @ g2, l1 @ l2, index)
+        | Cil.Switch (_, blk, stmts, _) ->
+            let g1, l1, index = collect_goto_label_in_block blk index depth in
+            let g2, l2, index = collect_goto_label_in_stmts stmts index depth in
+            (g1 @ g2, l1 @ l2, index)
+        | Cil.Loop (blk, _, _, stmt1_opt, stmt2_opt) ->
+            let g1, l1, index = collect_goto_label_in_block blk index depth in
+            let g2, l2, index = (match stmt1_opt with
+              | Some s -> collect_goto_label_in_stmt s index depth
+              | _ -> [], [], index) in
+            let g3, l3, index = (match stmt2_opt with
+              | Some s -> collect_goto_label_in_stmt s index depth
+              | _ -> [], [], index) in
+            (g1 @ g2 @ g3, l1 @ l2 @ l3, index)
+        | Cil.Block blk ->
+            collect_goto_label_in_block blk index depth
+        | Cil.TryFinally _
+        | Cil.TryExcept _ -> 
+            let _ = print_endline ("Cilparser: handle TryFinally, TryExcept later") in
+            ([], [], index)
+        | _ -> ([], [], index)
+      ) in
+      (gts @ new_gts, lbls @ new_lbls1 @ new_lbls2, index)
+  ) ([], [], index) stmts in
+  (gotos, labels, index)
+
+let rec collect_goto_label_in_fundec_x (fd: Cil.fundec) =
+  let body = fd.Cil.sbody in
+  collect_goto_label_in_block body 0 0
+
+and collect_goto_label_in_fundec (fd: Cil.fundec)
+    : ((Cil.stmt * int * int) list * (Cil.stmt * int * int) list * int) =
+  let pr_in = add_str "fundec: " string_of_cil_fundec in
+  let pr_out = (fun (gotos, labels, _) ->
+    let pr_stmt (stmt, i, j) = ("[[ (" ^ (string_of_cil_stmt stmt) ^ "), <" 
+                               ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ "> ]]") in
+    let gotos_str = add_str "\n  - gotos: " (pr_list pr_stmt) gotos in
+    let labels_str = add_str "\n  - labels: " (pr_list pr_stmt) labels in
+    gotos_str ^ labels_str
+  ) in
+  Debug.no_1 "collect_goto_label_in_fundec" pr_in pr_out
+    (fun _ -> collect_goto_label_in_fundec_x fd) fd
+    
+ (* Normalizing all goto-statements:                          *)
+ (* all goto-statement must be conditioned by an If-statment  *)
+ (* an unconditional goto is converted into "If (true) goto"  *)
+let rec normalize_goto_stmt (stmt: Cil.stmt) : Cil.stmt =
+  let skind = stmt.Cil.skind in
+  let new_skind = (match skind with
+    | Cil.Instr _ -> skind
+    | Cil.Return _ -> skind
+    | Cil.Goto (_, p) -> (* translate unconditional Goto to If (true) Goto *)
+        let true_exp = Cil.Const (Cil.CInt64 (Int64.one, Cil.IInt, None), p) in
+        let goto_blk = Cil.mkBlock [stmt] in
+        let empty_blk = Cil.mkBlock [] in
+        Cil.If (true_exp, goto_blk, empty_blk, p)
+    | Cil.Break _ -> skind
+    | Cil.Continue _ -> skind
+    | Cil.If (exp, blk1, blk2, p) ->
+        let new_blk1 = (match blk1.Cil.bstmts with
+          | [st] -> (match st.Cil.skind with
+              | Cil.Goto _ -> blk1
+              | _ -> normalize_goto_block blk1 
+            )
+          | _ -> normalize_goto_block blk1
+        ) in
+        let new_blk2 = (match blk2.Cil.bstmts with
+          | [st] -> (match st.Cil.skind with
+              | Cil.Goto _ -> blk2
+              | _ -> normalize_goto_block blk2 
+            )
+          | _ -> normalize_goto_block blk2
+        ) in
+        Cil.If (exp, new_blk1, new_blk2, p)
+    | Cil.Switch (exp, blk, stmts, p) ->
+        let new_blk = normalize_goto_block blk in
+        let new_stmts = List.map normalize_goto_stmt stmts in
+        Cil.Switch (exp, new_blk, new_stmts, p)
+    | Cil.Loop (blk, sf, p, stmt1, stmt2) ->
+        let new_blk = normalize_goto_block blk in
+        let new_stmt1 = map_opt normalize_goto_stmt stmt1 in
+        let new_stmt2 = map_opt normalize_goto_stmt stmt2 in
+        Cil.Loop (new_blk, sf, p, new_stmt1, new_stmt2)
+    | Cil.Block blk ->
+        Cil.Block (normalize_goto_block blk)
+    | Cil.TryFinally (blk1, blk2, p) ->
+        let new_blk1 = normalize_goto_block blk1 in
+        let new_blk2 = normalize_goto_block blk2 in
+        Cil.TryFinally (new_blk1, new_blk2, p)
+    | Cil.TryExcept (blk1, ies, blk2, p) ->
+        let new_blk1 = normalize_goto_block blk1 in
+        let new_blk2 = normalize_goto_block blk2 in
+        Cil.TryExcept (new_blk1, ies, new_blk2, p)
+    | Cil.HipStmt _ -> skind
+  ) in
+  {stmt with Cil.skind = new_skind}
+
+and normalize_goto_block (blk: Cil.block) : Cil.block =
+  let new_stmts = List.map normalize_goto_stmt blk.Cil.bstmts in
+  {blk with Cil.bstmts = new_stmts}
+
+let rec normalize_goto_fundec_x (fd: Cil.fundec) : Cil.fundec =
+  let new_body = normalize_goto_block fd.Cil.sbody in
+  {fd with Cil.sbody = new_body}
+
+and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
+  let pr_in = string_of_cil_fundec in
+  let pr_out = string_of_cil_fundec in
+  Debug.no_1 "normalize_goto_fundec" pr_in pr_out
+    (fun _ -> normalize_goto_fundec_x fd) fd
+
+let remove_goto (fd: Cil.fundec) : Cil.fundec =
+  let fd = normalize_goto_fundec fd in
+  let (gotos, labels, _) = collect_goto_label_in_fundec fd in
+  fd
 
 (************************************************************)
 (****** collect information about address-of operator *******)
@@ -1306,41 +1466,6 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       )
     | _ -> exp
 
-(* and h_formula_heap = { h_formula_heap_node : (ident * primed);                              *)
-(*                        h_formula_heap_name : ident;                                         *)
-(*                        h_formula_heap_deref : int;                                          *)
-(*                        h_formula_heap_derv : bool;                                          *)
-(*                        h_formula_heap_imm : ann;                                            *)
-(*                        h_formula_heap_imm_param : ann option list;                          *)
-(*                        h_formula_heap_full : bool;                                          *)
-(*                        h_formula_heap_with_inv : bool;                                      *)
-(*                        h_formula_heap_perm : iperm; (*LDK: optional fractional permission*) *)
-(*                        h_formula_heap_arguments : P.exp list;                               *)
-(*                        h_formula_heap_pseudo_data : bool;                                   *)
-(*                        h_formula_heap_label : formula_label option;                         *)
-(*                        h_formula_heap_pos : loc }                                           *)
-
-(* and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);                            *)
-(*                         h_formula_heap2_name : ident;                                       *)
-(*                         h_formula_heap2_deref : int;                                        *)
-(*                         h_formula_heap2_derv : bool;                                        *)
-(*                         h_formula_heap2_imm : ann;                                          *)
-(*                         h_formula_heap2_imm_param : ann option list;                        *)
-(*                         h_formula_heap2_full : bool;                                        *)
-(*                         h_formula_heap2_with_inv : bool;                                    *)
-(*                         h_formula_heap2_perm : iperm; (*LDK: fractional permission*)        *)
-(*                         h_formula_heap2_arguments : (ident * P.exp) list;                   *)
-(*                         h_formula_heap2_pseudo_data : bool;                                 *)
-(*                         h_formula_heap2_label : formula_label option;                       *)
-(*                         h_formula_heap2_pos : loc }                                         *)
-
-(*   match stmt with                                                                           *)
-(*   | Iast.Assert assert_e ->                                                                 *)
-(*   | Iast.Dprint _ -> stmt                                                                   *)
-(*   | _ -> report_error pos ("translate_hip_stmt: unexpected hip statement: "                 *)
-(*                            ^ (Iprinter.string_of_exp stmt))                                 *)
-
-
 and translate_block (blk: Cil.block): Iast.exp =
   let stmts = blk.Cil.bstmts in
   match stmts with
@@ -1352,7 +1477,6 @@ and translate_block (blk: Cil.block): Iast.exp =
           let pos = translate_location (blk.Cil.bloc) in
           Iast.mkBlock body Iast.NoJumpLabel [] pos
       )
-
 
 and translate_init (init: Cil.init) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with
@@ -1592,6 +1716,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
               let gvar = translate_global_var v init (Some l) in
               global_var_decls := !global_var_decls @ [gvar];
         | Cil.GFun (fd, l) ->
+              let fd = remove_goto fd in
               let proc = translate_fundec fd (Some l) in
               proc_decls := !proc_decls @ [proc]
         | Cil.GAsm _ ->
@@ -1648,7 +1773,6 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
 
 (*****************   end of translation functions *******************)
 (********************************************************************)
-
 
 (**************************************************************)
 (*****************   main parsing functions *******************)
