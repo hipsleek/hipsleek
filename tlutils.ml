@@ -445,6 +445,9 @@ let get_opt_model is_linear templ_unks vars assertions =
           List.exists (fun sv -> v = (name_of_spec_var sv)) templ_unks) model) in
         Sat model
 
+let get_model is_linear templ_unks vars assertions =
+  get_opt_model is_linear templ_unks vars assertions
+
 (* a*b*c -> ab*c -> a_b_c *)
 let linearize_nonlinear_formula f = 
   let f_arg arg _ = arg in
@@ -551,49 +554,6 @@ let norm_rational_asserts asserts =
   in 
   lcm_denom, List.map (transform_formula (nonef, nonef, nonef, f_b, nonef)) asserts
 
-let rec search_model_ln pos_zero_vars bnd_vars nln_vars sst asserts =
-  let p = no_pos in
-  match pos_zero_vars with
-  | [] -> mkFalse p
-  | (pos_vars, zero_vars)::rem ->
-    let n_asserts = 
-      (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
-      @ asserts in
-    let rep_pos_vars, pos_sst = norm_sst_pos pos_vars sst in
-    let zero_sst = norm_sst_zero zero_vars sst in
-    let n_asserts = List.map (fun f -> apply_par_term zero_sst f) n_asserts in
-
-    let ln_r = Omega.get_model bnd_vars n_asserts in
-
-    let _ = 
-      DD.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
-      DD.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
-      DD.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
-    in
-
-    if is_False ln_r then
-      search_model_ln rem bnd_vars nln_vars sst asserts
-    else
-      let nln_r = apply_par_term pos_sst ln_r in
-      let nln_r = normalize_eq_formula nln_r in
-
-      let term_l = List.map (fun f -> term_list_of_formula (nln_vars @ rep_pos_vars)
-        (normalize_formula f)) (split_conjunctions nln_r) in
-      let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
-      let r = Omega.get_model bnd_vars templ_unk_constrs in
-
-      let _ = 
-        DD.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
-        DD.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos
-      in
-
-      if is_False r then
-        search_model_ln rem bnd_vars nln_vars sst asserts
-      else r
-
-let get_model is_linear templ_unks vars assertions =
-  get_opt_model is_linear templ_unks vars assertions
-
 let get_abs_model is_linear templ_unks vars assertions = 
   let pos = no_pos in
   let abs_obj_vars = List.map (fun v ->
@@ -615,6 +575,63 @@ let get_abs_model is_linear templ_unks vars assertions =
       (vm, (List.assoc (vm ^ "p") abs_m) - ((List.assoc (vm ^ "m") abs_m)))
     ) templ_unks in Sat m
   | _ -> r
+
+let is_feasible_model m asserts =
+  let subst_asserts = List.map (fun a -> apply_par_term m a) asserts in
+  is_sat (join_conjunctions subst_asserts)
+
+let rec search_model_ln pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
+  let p = no_pos in
+  match pos_zero_vars with
+  | [] -> Unsat
+  | (pos_vars, zero_vars)::rem ->
+    let n_asserts = 
+      (List.map (fun v -> mkPure (mkGt (mkVar v p) (mkIConst 0 p) p)) pos_vars) 
+      @ asserts in
+    let rep_pos_vars, pos_sst = norm_sst_pos pos_vars sst in
+    let zero_sst = norm_sst_zero zero_vars sst in
+    let n_asserts = List.map (fun f -> apply_par_term zero_sst f) n_asserts in
+
+    let ln_r = Omega.get_model bnd_vars n_asserts in
+
+    let _ = 
+      DD.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
+      DD.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
+      DD.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
+    in
+
+    if is_False ln_r then
+      search_model_ln rem bnd_vars nln_vars templ_unks sst asserts
+    else
+      let nln_r = apply_par_term pos_sst ln_r in
+      let nln_r = normalize_eq_formula nln_r in
+
+      let term_l = List.map (fun f -> term_list_of_formula (nln_vars @ rep_pos_vars)
+        (normalize_formula f)) (split_conjunctions nln_r) in
+      let templ_unk_constrs = List.map gen_templ_unk_constr term_l in
+      let r = Omega.get_model bnd_vars templ_unk_constrs in
+
+      let _ = 
+        DD.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
+        DD.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
+        DD.tinfo_hprint (add_str "simpl unk constrs: " !print_formula) r no_pos 
+      in
+
+      if is_False r then
+        search_model_ln rem bnd_vars nln_vars templ_unks sst asserts
+      else
+        let res = get_abs_model true templ_unks (templ_unks @ bnd_vars) (split_conjunctions r) in
+        match res with
+        | Sat m -> 
+          (* Check feasible model here *) 
+          let unk_m = List.map (fun v -> 
+            let vval = mkIConst (List.assoc (name_of_spec_var v) m) no_pos in
+            (v, vval)) templ_unks in
+          if is_feasible_model unk_m asserts then res
+          else
+            (* Find another model - Early eliminate infeasible model branches for fast searching *)
+            res
+        | _ -> search_model_ln rem bnd_vars nln_vars templ_unks sst asserts
 
 let get_model_ln is_linear templ_unks vars assertions =
   let p = no_pos in
@@ -640,12 +657,9 @@ let get_model_ln is_linear templ_unks vars assertions =
   let rep_pos_vars, sst = norm_sst_pos pos_vars sst in
   let splitted_nneg_vars = split nneg_vars in (* (pos, zero) list *)
   let r = search_model_ln splitted_nneg_vars 
-    (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) sst ln_asserts in
-  if is_False r then Unsat
-  else
-    let m = get_abs_model true templ_unks vars (split_conjunctions r) in
-    m
-
+    (lcm::bnd_vars) ((lcm::bnd_nln_vars) @ rep_pos_vars) templ_unks sst ln_asserts in
+  r
+  
 let get_model_ln is_linear templ_unks vars assertions =
   let pr = pr_list !print_formula in
   DD.no_1 "get_model_ln" pr print_solver_res
