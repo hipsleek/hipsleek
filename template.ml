@@ -149,6 +149,14 @@ let infer_template_rhs_farkas num (ante_tl: term list list) (cons_t: term list) 
     (collect_unk_constrs ante_sum_t cons_t pos) in
   constrs
 
+let infer_template_rhs_farkas num (ante_tl: term list list) (cons_t: term list) pos: formula list =
+  let pr1 = print_term_list in
+  let pr2 = pr_list pr1 in
+  let pr3 = pr_list !print_formula in
+  Debug.no_2 "infer_template_rhs_farkas" pr2 pr1 pr3 
+  (fun _ _ -> infer_template_rhs_farkas num ante_tl cons_t pos)
+  ante_tl cons_t
+
 (* cons is a base formula and cnum is its order in the original consequent *)
 let infer_template_rhs num (es: CF.entail_state) (ante: formula) (cons: formula) pos: 
     CF.entail_state * formula list =
@@ -522,7 +530,7 @@ let strengthen_trans_with_templ trans loop_cond_list =
   let src_id = trans.trans_src_id in
   let src_fv = trans.trans_src_fv in
   let ctx = trans.trans_ctx in
-  let  (cond_fv, cond_f) = List.assoc src_id loop_cond_list in
+  let (cond_fv, cond_f) = List.assoc src_id loop_cond_list in
   let pos = pos_of_formula ctx in
 
   let templ_id = fresh_spec_var src_id in
@@ -550,6 +558,7 @@ let infer_loop_template_init prog (templ_assumes: simpl_templ_assume list) =
   let loop_cond_list = List.map (fun t -> 
     (t.trans_src_id, (t.trans_src_fv, t.trans_rec_cond))) loop_trans_list in  
   let grouped_loop_cond = TU.partition_by_assoc eq_spec_var loop_cond_list in
+  (* merged_loop_cond = disj of loop_cond_list *)
   let merged_loop_cond = List.concat (List.map (fun lc -> fold_opt (fun rc -> [rc]) 
     (merge_loop_cond lc)) grouped_loop_cond) in
 
@@ -574,7 +583,7 @@ let infer_loop_template_init prog (templ_assumes: simpl_templ_assume list) =
   let _, constrs, _ = List.fold_left (fun (es, a, num) trans ->
     let rec_cond_fv, rec_cond = List.assoc trans.trans_dst_id templ_loop_cond in
     let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in 
-    let es, cl = infer_template_rhs [num] es trans.trans_ctx rec_cond no_pos in
+    let es, cl = infer_template_conjunct_rhs [num] es trans.trans_ctx rec_cond no_pos in
     es, a @ cl, num + 1) (es, [], 0) (templ_reach_both_trans @ rel_trans)
   in
 

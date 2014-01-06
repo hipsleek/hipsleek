@@ -171,6 +171,19 @@ let term_of_mult_exp svl (e: exp): term =
   let coe = List.fold_left (fun a vc -> mkMult a vc pos) (mkIConst c pos) vcl in
   mkTerm coe vl
 
+(* Syntactic check only *)
+let rec is_zero_exp (e: exp) =
+  match e with
+  | IConst (0, _) -> true
+  | Mult (e1, e2, _) -> (is_zero_exp e1) || (is_zero_exp e2)
+  | Div (e1, _, _) -> is_zero_exp e1
+  | Add (e1, e2, _) -> (is_zero_exp e1) && (is_zero_exp e2)
+  | Subtract (e1, e2, _) -> (is_zero_exp e1) && (is_zero_exp e2)
+  | _ -> false
+
+let remove_zero_term (tl: term list): term list =
+  List.filter (fun t -> not (is_zero_exp t.term_coe)) tl
+
 let is_same_degree (t1: term) (t2: term): bool =
   let d1 = t1.term_var in
   let d2 = t2.term_var in
@@ -189,6 +202,7 @@ let is_same_degree (t1: term) (t2: term): bool =
     is_same_degree t1 t2
 
 let merge_term_list (tl: term list) deg pos: term =
+  let tl = remove_zero_term tl in
   let coes = List.map (fun t -> t.term_coe) tl in
   let cl, vcl = List.partition is_int coes in
   let c = List.fold_left (fun a c -> a + (to_int_const c Ceil)) 0 cl in
@@ -197,20 +211,7 @@ let merge_term_list (tl: term list) deg pos: term =
   | vc::vcs -> 
     if c == 0 then List.fold_left (fun a vc -> mkAdd a vc pos) vc vcs
     else List.fold_left (fun a vc -> mkAdd a vc pos) (mkIConst c pos) vcl in
-  { term_coe = coe; term_var = deg; }
-
-(* Syntactic check only *)
-let rec is_zero_exp (e: exp) =
-  match e with
-  | IConst (0, _) -> true
-  | Mult (e1, e2, _) -> (is_zero_exp e1) || (is_zero_exp e2)
-  | Div (e1, _, _) -> is_zero_exp e1
-  | Add (e1, e2, _) -> (is_zero_exp e1) && (is_zero_exp e2)
-  | Subtract (e1, e2, _) -> (is_zero_exp e1) && (is_zero_exp e2)
-  | _ -> false
-
-let remove_zero_term (tl: term list): term list =
-  List.filter (fun t -> not (is_zero_exp t.term_coe)) tl
+    { term_coe = coe; term_var = deg; }
 
 let rec partition_term_list (tl: term list) pos: term list =
   let merged_tl = match tl with
@@ -243,6 +244,13 @@ let term_list_of_formula svl (f: formula): term list =
   match f with
   | BForm (bf, _) -> term_list_of_b_formula svl bf
   | _ -> []
+
+let term_list_of_formula svl (f: formula): term list =
+  let pr1 = !print_svl in
+  let pr2 = !print_formula in
+  let pr3 = print_term_list in
+  Debug.no_2 "term_list_of_formula" pr1 pr2 pr3
+  term_list_of_formula svl f
 
 let rec exp_of_var_deg (v, d) pos =
   match d with
@@ -475,10 +483,17 @@ let linearize_nonlinear_formula f =
           let ne = List.fold_right (fun e a -> mkMult e a pos) rem_nel (mkVar v pos) in
           Some (ne, (v, ve)::(List.concat sst)) end
       | _ -> None
-    in trans_exp e () f_e f_arg List.concat
+    in trans_exp (normalize_mult e) () f_e f_arg List.concat
   in 
   trans_formula f () (nonef2, nonef2, (fun _ e -> Some (helper e))) 
     (f_arg, f_arg, f_arg) List.concat
+
+let linearize_nonlinear_formula f = 
+  let pr1 = !print_formula in
+  let pr2 = pr_pair !print_sv !print_exp in
+  let pr3 = pr_pair pr1 (pr_list pr2) in
+  Debug.no_1 "linearize_nonlinear_formula" pr1 pr3
+  linearize_nonlinear_formula f
 
 (* forall x. x >= 0 & y >= 0 -> a*x + b*y + c > 0 --> a >= 0 & b >= 0 & c > 0 *)
 let gen_templ_unk_constr (tl: term list): formula =
@@ -540,7 +555,8 @@ let norm_sst_zero vl sst =
   let vl_zero_sst = (List.map (fun v -> (v, zero)) vl) @ vl_zero_sst in
   vl_zero_sst
 
-(* Change rational lambda variables to integer *)  
+(* Change rational lambda variables to integer by 
+ * multiplying the RHS of assertions to an lcm integer *)  
 let norm_rational_asserts asserts = 
   let lcm_denom = SpecVar (Int, "lcm", Unprimed) in 
   let f_b b =
@@ -549,7 +565,7 @@ let norm_rational_asserts asserts =
     | Eq (e1, e2, pos) -> 
       if is_zero e1 || is_zero e2 then Some b
       else
-        Some (Eq (e1, normalize_mult (mkMult (mkVar lcm_denom pos) e2 pos), pos), None)
+        Some (Eq (e1, (mkMult (mkVar lcm_denom pos) e2 pos), pos), None)
     | _ -> None
   in 
   lcm_denom, List.map (transform_formula (nonef, nonef, nonef, f_b, nonef)) asserts
@@ -630,7 +646,7 @@ let rec search_model_ln pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
           if is_feasible_model unk_m asserts then res
           else
             (* Find another model - Early eliminate infeasible model branches for fast searching *)
-            res
+            search_model_ln rem bnd_vars nln_vars templ_unks sst asserts
         | _ -> search_model_ln rem bnd_vars nln_vars templ_unks sst asserts
 
 let get_model_ln is_linear templ_unks vars assertions =

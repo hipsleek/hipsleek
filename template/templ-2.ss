@@ -1,3 +1,4 @@
+// --term-dis-bnd-pre
 template int r(int x, int y).
 
 void loop (int x, int y)
