@@ -152,6 +152,15 @@ let common_arguments = [
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
+  ("--dump-lemmas-short", Arg.Unit 
+      (fun _ -> Globals.dump_lemmas := true;
+          Globals.dump_lemmas_med := true;),
+   "enable lemma printing (short version)");
+  ("--dls", Arg.Unit
+      (fun _ -> 
+          Globals.dump_lemmas_med := true;
+          Globals.dump_lemmas := true;),
+   "enable lemma printing (short version)");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
