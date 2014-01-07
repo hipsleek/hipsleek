@@ -189,7 +189,7 @@ checkentail_exact
     |- self::rlseg<p1>* p1::node<_,p>.
 
 =================================================================
-../sleek rlseg-new-b5.slk 
+# rlseg-new-b4a.slk  vs rlseg-new-b4b.slk
 
 ../sleek rlseg-new-b4a.slk -debug lem.dd > 1
  2174  ../sleek rlseg-new-b4b.slk -debug lem.dd > 2
@@ -197,6 +197,28 @@ checkentail_exact
 --> seems easier to prove than <--
 Could it be due to the way complex lemmas are being
 handled. Can we use a single way for consistency.
+
+rlseg-new-b4b.slk has an extra lemma step that is
+absent in rlseg-new-b4a.slk
+
+!!!rlseg-new-b4b.slk:13: 38: process_action :
+ ### action =  (Lemma ==> xx) =>
+                   Type: Root
+                   LHS: q_64::rlseg<p_62>@M
+                   RHS: q_64::rlseg<p>@M
+ lhs_rest: p1::node<_,p>@M
+ rhs_rest: emp
+ ### estate =  q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+  es_heap:self_xx::node<_,q_64>@M
+ ### conseq =  q_64::rlseg<p>@M&{FLOW,(21,22)=__norm}[]
+
+
+!!!rlseg-new-b4b.slk:13: 38: do_coercion: estate : es_formula: q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+ es_heap: self_xx::node<_,q_64>@M
+ es_evars: [_; q_66]
+ es_ante_evars: [p_62; _; q_64]
+ es_trace:  Match ==>  SEARCH ==>  (Lemma ==> xx) ==> 
+ es_unsat_flag: false
 
 =================================================================
 lemma syn: --lem-en-syn

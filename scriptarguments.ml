@@ -158,6 +158,8 @@ let common_arguments = [
    "Turn off brief tracing");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
+  ("--dd-trace", Arg.Set Globals.debug_precise_trace,
+   "Turn on more precise tracing");
   ("--dis-ddb", Arg.Clear Debug.trace_on,
    "Turn off experimental trace_on");
   ("--en-ddb", Arg.Set Debug.trace_on,

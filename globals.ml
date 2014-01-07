@@ -6,6 +6,8 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let debug_precise_trace = ref false
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
