@@ -227,7 +227,7 @@ lemma syn: --lem-en-syn
 
 2. syn-mix-2.slk: with null: ll vs lseg. OK
 
-3. syn-ls.slk (run-fast-test): w/wo size
+3. syn-ls.slk (run-fast-test): w/wo size: OK
 
 4. syn-lseg-(1|2).slk: OK
 
@@ -236,7 +236,7 @@ lemma syn: --lem-en-syn
 6. syn-lseg-s.slk
 
 =================================================================
-#yn-mix-2.slk: FIXED
+#syn-mix-2.slk: FIXED
 
 rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
 
