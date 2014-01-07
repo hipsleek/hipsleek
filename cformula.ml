@@ -290,6 +290,7 @@ approx_formula_and_a2 : approx_formula }
 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
 let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
@@ -10489,6 +10490,11 @@ let type_of_formula (f: formula) : formula_type =
         else Simple
     | _ -> Complex
 
+
+let type_of_formula (f: formula) : formula_type =
+  let pr1 = !print_formula in
+  let pr2 = !print_formula_type in
+  Debug.no_1 "type_of_formula" pr1 pr2 type_of_formula f
 
 let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
   let ifo = (struc_to_formula_gen f0) in

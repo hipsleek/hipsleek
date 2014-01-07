@@ -1,9 +1,11 @@
 #compute_actions
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
-trans_one_coercion
-process_coercion_check,Trace
-check_coercion_struc
+case_of_coercion
+trans_one_coercion,Trace
+type_of_formula
+#process_coercion_check,Trace
+#check_coercion_struc
 #look_up_reachable_ptrs_f
 #look_up_reachable_ptrs_sf
 #unfold

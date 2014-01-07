@@ -2867,10 +2867,31 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
     Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
   let univ_vars = compute_univ () in
+  let _ = Debug.tinfo_hprint (add_str "univ_vars" Cprinter.string_of_spec_var_list) univ_vars no_pos in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let (n_tl,c_rhs) = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body n_tl false in
   (*translate TrueFlow to NormalFlow*)
   let c_rhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int c_rhs in
+  let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
+  let  coercion_rhs_type = (CF.type_of_formula c_rhs) in
+  let coer_type = coer.I.coercion_type in
+  let _ = Debug.info_hprint (add_str "coer_type" Cprinter.string_of_coercion_type) coer_type no_pos in
+  let _ = Debug.info_hprint (add_str "c_lhs" Cprinter.string_of_formula) c_lhs no_pos in
+  let _ = Debug.info_hprint (add_str "c_rhs" Cprinter.string_of_formula) c_rhs no_pos in
+  (* complex_lhs <- rhs       ==> rhs    -> complex_lhs *)
+  (* complex_lhs <-> simple   ==> simple <-> complex_lhs *)
+  let _ = 
+  (* let (coer_type,c_lhs,r_rhs) =  *)
+    if coercion_lhs_type == CF.Complex then 
+      if coer_type == I.Right then
+        let _ = Debug.info_pprint "WARNING : changing lemma <- to -> " no_pos in
+        (I.Left,c_rhs,c_lhs)
+      else if (coer_type == I.Equiv && coercion_rhs_type == CF.Simple) then 
+        let _ = Debug.info_pprint "WARNING : swapping equiv lemma lhs/rhs " no_pos in
+        (coer_type,c_rhs,c_lhs)
+      else (coer_type,c_lhs,c_rhs)
+    else (coer_type,c_lhs,c_rhs)
+  in
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
   let lhs_heap ,_,_, _,_  = CF.split_components c_lhs in
@@ -2902,7 +2923,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*LDK: In the body of a coercions, there may be multiple nodes with
     a same name with self => only add [coercion_name] to origins of the
     first node*)
-  let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
   let c_rhs = 
     match (coercion_lhs_type) with
       | CF.Simple ->
@@ -2982,7 +3002,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (  
         let args = CF.fv_simple_formula c_lhs in 
         let m_vars = find_materialized_prop args [] c_rhs in
-        let c_coer ={ C.coercion_type = coer.I.coercion_type;
+        let c_coer ={ C.coercion_type = coer_type;
 	C.coercion_exact= coer.I.coercion_exact;
         C.coercion_name = coer.I.coercion_name;
         C.coercion_head = c_lhs;

@@ -4119,6 +4119,7 @@ Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_formula_type := string_of_formula_type;;
 Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_formula_base := string_of_formula_base;;
 Cformula.print_pure_f := string_of_pure_formula;;
