@@ -3,14 +3,17 @@ data node {
 	node next;	
 }.
 
-
-prb4b1ed rlseg<p:node> == 
+pred rlseg<p:node> == 
      self=p
   or self::node<_,q> * q::rlseg<p>
 .
 
 lemma_unsafe "xx" 
     self::rlseg<p1>* p1::node<_,p> -> self::node<_,q>*q::rlseg<p>  .
+
+checkentail_exact
+    self::rlseg<p1>* p1::node<_,p> 
+  |-  self::node<_,q>*q::rlseg<p> .
 
 /*
 [Lemma "xx":  self::rlseg<p1>@M * p1::node<_,p>@M&{FLOW,(21,22)=__norm}[]==> (exists _,q: self::node<_,q>@M * q::rlseg<p>@M&{FLOW,(21,22)=__norm})[]
