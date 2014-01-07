@@ -146,7 +146,7 @@ install-native: hip.native sleek.native
 cmi: clean_cmi all create_cmi
 
 clean_cmi:
-	echo "Temp" > temp.mli
+	echo 'Temp' > temp.mli
 	rm *.mli
 	rm -r _build
 
@@ -156,6 +156,11 @@ create_cmi:
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
 	ocamlc -i globals.ml > globals.mli
 	ocamlc -i auxnorm.ml > auxnorm.mli
+	ocamlc -i cformula.ml > cformula.mli
+	ocamlc -i iast.ml > iast.mli
+	ocamlc -i cast.ml > cast.mli
+	ocamlc -i checks.ml > checks.mli
+	ocamlc -i cleanUp.ml > cleanUp.mli
 	ocamlc -i coq.ml > coq.mli
 	ocamlc -i lem_store.ml > lem_store.mli
 	ocamlc -i cprinter.ml > cprinter.mli
@@ -164,12 +169,14 @@ create_cmi:
 	ocamlc -i cvclite.ml > cvclite.mli
 	ocamlc -i debug.ml > debug.mli
 	ocamlc -i dp.ml > dp.mli
+	ocamlc -i env.ml > env.mli
 	ocamlc -i error.ml > error.mli
 	ocamlc -i exc.ml > exc.mli
 	ocamlc -i fixcalc.ml > fixcalc.mli
 	ocamlc -i gen.ml > gen.mli
 	ocamlc -i globProver.ml > globProver.mli
 	ocamlc -i iformula.ml > iformula.mli
+	ocamlc -i immutable.ml > immutable.mli
 	ocamlc -i infinity.ml > infinity.mli
 	ocamlc -i inliner.ml > inliner.mli
 	ocamlc -i iprinter.ml > iprinter.mli
@@ -181,25 +188,52 @@ create_cmi:
 	ocamlc -i label.ml > label.mli
 	ocamlc -i label_only.ml > label_only.mli
 	ocamlc -i lem_store.ml > lem_store.mli
+	ocamlc -i log.ml > log.mli
 	ocamlc -i mathematica.ml > mathematica.mli
 	ocamlc -i mcpure_D.ml > mcpure_D.mli
 	ocamlc -i mcpure.ml > mcpure.mli
+	ocamlc -i minisat.ml > minisat.mli
 	ocamlc -i machdep.ml > machdep.mli
+	ocamlc -i mem.ml > mem.mli
 	ocamlc -i mona.ml > mona.mli
 	ocamlc -i net.ml > net.mli
 	ocamlc -i omega.ml > omega.mli
 	ocamlc -i others.ml > others.mli
 	ocamlc -i perm.ml > perm.mli
+	ocamlc -i predcomp.ml > predcomp.mli
 	ocamlc -i procutils.ml > procutils.mli
+	ocamlc -i prooftracer.ml > prooftracer.mli
 	ocamlc -i redlog.ml > redlog.mli
+	ocamlc -i rtc.ml > rtc.mli
+	ocamlc -i rtc_algorithm.ml > rtc_algorithm.mli
 	ocamlc -i setmona.ml > setmona.mli
 	ocamlc -i share_prover.ml > share_prover.mli
 	ocamlc -i share_prover_w.ml > share_prover_w.mli
+	ocamlc -i sleekcommons.ml > sleekcommons.mli
 	ocamlc -i slicing.ml > slicing.mli
 	ocamlc -i smtsolver.ml > smtsolver.mli
 	ocamlc -i spass.ml > spass.mli
+	ocamlc -i stat_global.ml > stat_global.mli
 	ocamlc -i timelog.ml > timelog.mli
 	ocamlc -i tpdispatcher.ml > tpdispatcher.mli
 	ocamlc -i tree_shares.ml > tree_shares.mli
+	ocamlc -i typeinfer.ml > typeinfer.mli
 	ocamlc -i wrapper.ml > wrapper.mli
 	rm *.cmi
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' cformula.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' cast.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' iast.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' prooftracer.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' immutable.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' env.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' typeinfer.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' sleekcommons.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' log.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' mem.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' stat_global.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' checks.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' rtc.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' cleanUp.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' rtc_algorithm.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' minisat.mli
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' predcomp.mli

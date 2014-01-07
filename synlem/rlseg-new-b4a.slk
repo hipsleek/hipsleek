@@ -3,7 +3,6 @@ data node {
 	node next;	
 }.
 
-
 pred rlseg<p:node> == 
      self=p
   or self::node<_,q> * q::rlseg<p>

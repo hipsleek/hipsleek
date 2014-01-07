@@ -1021,10 +1021,13 @@ struct
   let pop_aft_apply_with_exc_no (f:'a->'b) (e:'a) : 'b =
     try 
       let r = (f e) in
-      (* debug_stk # pop;  *)
+      if !Globals.debug_precise_trace then debug_stk # pop; 
       r
-    with exc -> ((* debug_stk # pop;  *)raise exc)
-
+    with exc -> 
+        begin
+          if !Globals.debug_precise_trace then debug_stk # pop; 
+          raise exc
+        end
 
   (* string representation of call stack of ho_debug *)
   let string_of () : string =
@@ -1033,8 +1036,8 @@ struct
     String.concat "@" (List.map string_of_int (List.filter (fun n -> n>0) h) )
 
   let push_no_call () =
-    ()
-    (* debug_stk # push (-3) *)
+    if !Globals.debug_precise_trace then debug_stk # push (-3)
+    else ()
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push_call_gen (os:string) (flag_detail:bool) : (string * string) = 
