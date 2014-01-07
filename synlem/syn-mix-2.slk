@@ -16,7 +16,7 @@ inv true.
 //lemma_safe self::ll<> <-> self::lseg<null>.
 
 //1 FAIL. --lem-en-syn
-checkentail x::ll<> |- x::lseg<null>.
+checkentail x::ll<> |- x::lseg<p> & p=null.
 print residue.
 
 /*

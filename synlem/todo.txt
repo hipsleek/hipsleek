@@ -224,10 +224,16 @@ absent in rlseg-new-b4a.slk
 lemma syn: --lem-en-syn
 
 1. syn-mix-1.slk: OK
-2. syn-mix-2.slk: with pure
-2. syn-lseg-(1|2).slk: OK
-3. syn-ls.slk
-4. syn-lseg-s.slk
+
+2. syn-mix-2.slk: with null: ll vs lseg
+
+3. syn-ls.slk (run-fast-test): w/wo size
+
+4. syn-lseg-(1|2).slk: OK
+
+5. syn-ls.slk
+
+6. syn-lseg-s.slk
 
 =================================================================
 =================================================================
