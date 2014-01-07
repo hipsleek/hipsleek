@@ -19,8 +19,8 @@ inv true.
 checkentail x::ll<> |- x::lseg<p> & p=null.
 print residue.
 
-/*
+
 //2.  FAIL. --lem-en-syn
 checkentail x::lseg<null> |- x::ll<>.
 print residue.
-*/
+

@@ -7048,6 +7048,11 @@ and heap_entail_split_rhs_phases
 
 and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) 
       (drop_read_phase : bool) pos : (list_context * proof) =
+  let rec map_ctx ctx fnc=
+    match ctx with
+      | Ctx(estate) -> Ctx (fnc estate)
+      | OCtx (c1, c2) -> OCtx (map_ctx c1 fnc, map_ctx c2 fnc)
+  in
   let ctx_with_rhs =  
     let h, rhs_pure, fl, t, a  = CF.split_components conseq in
     let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in
@@ -7156,8 +7161,13 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	          match conseq with  
 	            | Base(bf) -> 
 	                  let h, p, fl, t, a = CF.split_components conseq in
-                          let _ =  Debug.tinfo_hprint (add_str "HERE p: "  (Cprinter.string_of_mix_formula)) p no_pos in
-	                  helper ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
+                          let _ =  Debug.ninfo_hprint (add_str "HERE mf: "  (Cprinter.string_of_mix_formula)) p no_pos in
+                          let null_p = CP.get_null_formula (MCP.pure_of_mix p) in
+                          let _ =  Debug.ninfo_hprint (add_str "HERE pure: "  (Cprinter.string_of_pure_formula)) null_p no_pos in
+                          let n_ctx_with_rhs = if CP.isConstTrue null_p then ctx_with_rhs else
+                            map_ctx ctx_with_rhs (fun es -> {es with CF.es_conseq_pure_lemma = CP.mkAnd es.CF.es_conseq_pure_lemma null_p pos;})
+                          in
+	                  helper n_ctx_with_rhs (* ctx_0 *) h p (fun xh xp -> CF.mkBase xh xp t fl a pos)
 	            | Exists ({formula_exists_qvars = qvars;
 		          formula_exists_heap = qh;
 		          formula_exists_pure = qp;
@@ -7227,7 +7237,10 @@ and heap_n_pure_entail_x (prog : prog_decl) (is_folding : bool) (ctx0 : context)
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
-          let entail_p = List.map (fun c -> one_ctx_entail prog is_folding  c conseq func rhs_pure pos) cl in
+          let entail_p = List.map (fun c ->
+              let _ = DD.ninfo_hprint (add_str "heap_n_pure_entail.rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in
+              one_ctx_entail prog is_folding c conseq func rhs_pure pos
+          ) cl in
           let entail_p_ctx, entail_p_prf = List.split entail_p in
           let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
           let entail_p_ctx = fold_context_left 6 entail_p_ctx in 
@@ -11582,13 +11595,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (*   CF.mk_failure_may s Globals.sl_error)), NoAlias) in *)
             (*   res *)
             (*add checkpoint for cyclic proof*)
+            let orig_rhs_b = if CP.isConstTrue estate.CF.es_conseq_pure_lemma then rhs_b
+              else CF.mkAnd_base_pure rhs_b (MCP.mix_of_pure estate.CF.es_conseq_pure_lemma) no_pos
+            in
             let _ = if !Globals.lemma_syn then let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
-              estate lhs_node lhs_b rhs_node rhs_b in () else () in
+              estate lhs_node lhs_b rhs_node orig_rhs_b in () else () in
             (*unfold*)
             let n_act = Context.M_unfold (m_res, unfold_num) in
             let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
             let new_trace = str::(List.tl estate.es_trace) in
-            let new_estate = {estate with es_trace = new_trace} in
+            let new_estate = {estate with CF.es_trace = new_trace;
+                CF.es_conseq_pure_lemma = CP.mkTrue no_pos;
+            } in
             process_action 6 caller prog new_estate conseq lhs_b rhs_b n_act rhs_h_matched_set is_folding pos
       | Context.M_split_match {
             Context.match_res_lhs_node = lhs_node;

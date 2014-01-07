@@ -7862,7 +7862,8 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
-  es_heap_lemma : h_formula list; 
+  es_heap_lemma : h_formula list;
+  es_conseq_pure_lemma : CP.formula; (*conseq of entailment before rhs_plit. for lemmasyn*)
     (* heaps that have been replaced by lemma rewriting *)
     (* to be used for xpure conversion *)
   es_history : h_formula list; (* for sa *)
@@ -8143,6 +8144,7 @@ let empty_es flowt grp_lbl pos =
   es_formula = x;
   es_heap = HEmp;
   es_heap_lemma = [];
+  es_conseq_pure_lemma = CP.mkTrue pos;
   es_history = [];
   es_pure = MCP.mkMTrue pos;
   es_evars = [];

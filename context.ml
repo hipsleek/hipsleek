@@ -1100,7 +1100,6 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let vr_view_derv = vr.h_formula_view_derv in
                   let _ = Debug.tinfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
                   let _ = Debug.tinfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
-                  (*Are they in LOCKED state*)
                   let is_l_lock = match vl_vdef.view_inv_lock with
                     | Some _ -> true
                     | None -> false

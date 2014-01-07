@@ -8776,6 +8776,11 @@ let is_eq_null_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let get_null_formula p=
+  let ps = list_of_conjs p in
+  let ps1 = List.filter is_eq_null_exp ps in
+  conj_of_list ps1 (pos_of_formula p)
+
 let is_eq_between_vars (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
