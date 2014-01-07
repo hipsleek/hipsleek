@@ -1439,8 +1439,8 @@ let check_imply prog lhs_b rhs_b=
               (*drop hps and matched svl in n_rhs2*)
               let l_res = {lhs_b with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      lhs_b.CF.formula_base_heap SAU.select_dnode
-                      SAU.select_vnode SAU.select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
+                      lhs_b.CF.formula_base_heap CF.select_dnode
+                      CF.select_vnode SAU.select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
                           (MCP.pure_of_mix lhs_b.CF.formula_base_pure) all_matched_svl2)}
@@ -3332,8 +3332,8 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
     match comps with
       | [] -> res
       | (hp,args)::rest ->
-            let f_comp = CF.drop_data_view_hrel_nodes f SAU.check_nbelongsto_dnode
-              SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode
+            let f_comp = CF.drop_data_view_hrel_nodes f CF.check_nbelongsto_dnode
+              CF.check_nbelongsto_vnode SAU.check_neq_hrelnode
               args args [hp]
             in
             let _ = Debug.ninfo_hprint (add_str  "f_comp " Cprinter.prtt_string_of_formula) f_comp no_pos in

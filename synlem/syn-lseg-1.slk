@@ -11,3 +11,8 @@ pred lseg<p> == self=p
 
 //1. FAIL. need cyclic->
 checkentail x::lseg<p1>* p1::node<_,p> |- x::lseg<p>.
+
+//1a.
+checkentail x::lseg<p1>* p2::node<_,p> & p1=p2 |- x::lseg<p>.
+
+

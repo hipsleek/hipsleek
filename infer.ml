@@ -13,6 +13,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 module CF = Cformula
+module CFU = Cfutil
 module TP = Tpdispatcher
 module IF = Iformula
 module I = Iast
@@ -2972,7 +2973,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
         let r_hpargs = CF.get_HRels rhs0b in
         (**smart subst**)
         (* let n_es_evars = CP.subst_var_list sst0 es.CF.es_evars in *)
-        let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst_new lhs_b0 (formula_base_of_heap rhs0b pos) (l_hpargs@r_hpargs)
+        let lhs_b1, rhs_b1, subst_prog_vars = CFU.smart_subst_new lhs_b0 (formula_base_of_heap rhs0b pos) (l_hpargs@r_hpargs)
            l_emap0 r_emap r_eqsetmap [] (prog_vars@es.es_infer_vars)
         in
         (* let lhs_b1, rhs_b1, subst_prog_vars = SAU.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs) *)
@@ -3204,7 +3205,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
               let empty_eqset = CP.EMapSV.mkEmpty in
               let all_aset = CP.add_equiv_list_eqs empty_eqset (leqs0@reqs0@es0.CF.es_rhs_eqset) in
               let sel_hpargs2 = List.map (fun (hp,args) -> (hp, CP.find_eq_closure all_aset args)) sel_hpargs in
-              let nhf = CF.drop_data_view_hpargs_nodes_hf lhs_b0.CF.formula_base_heap SAU.select_dnode SAU.select_vnode SAU.select_subsumehpargs [] [] sel_hpargs2 in
+              let nhf = CF.drop_data_view_hpargs_nodes_hf lhs_b0.CF.formula_base_heap CF.select_dnode CF.select_vnode SAU.select_subsumehpargs [] [] sel_hpargs2 in
               let new_es_formula = CF.Base {lhs_b0 with CF.formula_base_heap = nhf} in
               let es1 = {es0 with CF.es_formula = new_es_formula} in
               (true, es1, hprel_ass)

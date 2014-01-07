@@ -4008,6 +4008,33 @@ and infer_state = {
     is_hp_defs: hp_rel_def list;
 }
 
+(*for drop non-selective subformulas*)
+let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
+  ((CP.eq_spec_var hp1 hp2) && (CP.eq_spec_var_order_list args1 args2))
+
+(*check a data node does not belong to a set of data node name*)
+let check_nbelongsto_dnode dn dn_names=
+      List.for_all (fun dn_name -> not(CP.eq_spec_var dn.h_formula_data_node dn_name)) dn_names
+
+(*check a view node does not belong to a set of view node name*)
+let check_nbelongsto_vnode vn vn_names=
+      List.for_all (fun vn_name -> not(CP.eq_spec_var vn.h_formula_view_node vn_name)) vn_names
+
+let check_neq_hpargs id ls=
+      not (Gen.BList.mem_eq check_hp_arg_eq id ls)
+
+(*check a data node belongs to a list of data node names*)
+let select_dnode dn1 dn_names=
+  List.exists (CP.eq_spec_var dn1.h_formula_data_node) dn_names
+
+(*check a view node belongs to a list of view node names*)
+let select_vnode vn1 vn_names=
+    (*return subst of args and add in lhs*)
+  List.exists (CP.eq_spec_var vn1.h_formula_view_node) vn_names
+
+let check_neq_hrelnode id ls=
+      not (CP.mem_svl id ls)
+
 let to_new_hp_rel_def (r,hf,g,f) = 
   { def_cat = r;
   def_lhs = hf;
@@ -4501,6 +4528,17 @@ let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
     else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   helper node_names node_names
+
+let look_up_reachable_ptrs_w_alias prog hd_nodes hv_nodes eqset roots=
+  let rec helper old_ptrs inc_ptrs=
+    let new_ptrs = List.fold_left (fun r sv -> r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes sv)) [] inc_ptrs in
+    let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) (find_close new_ptrs eqset) in
+    let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
+    if diff_ptrs = [] then old_ptrs
+    else (helper (old_ptrs@diff_ptrs) diff_ptrs)
+  in
+  let cl_roots = find_close roots eqset in
+  helper cl_roots cl_roots
 
 let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes roots=
   let rec helper old_ptrs inc_ptrs=
@@ -5063,6 +5101,26 @@ let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr=
   let pr_out = !print_spec_var_list in
   Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out
              (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr) f roots
+
+let look_up_reachable_data_node_w_alias_x prog f roots=
+  let search_fnc = look_up_reachable_ptrs_w_alias in
+  let obtain_reachable_ptr_conj f=
+    let (h ,mf,_,_,_) = split_components f in
+    let hds, hvs, _ = get_hp_rel_h_formula h in
+    let eqsets = (MCP.ptr_equations_without_null mf) in
+    let reach_ptrs = search_fnc prog hds hvs eqsets roots in
+    List.filter (fun hd -> CP.mem_svl hd.h_formula_data_node reach_ptrs) hds
+  in
+  let fs = list_of_disjs f in
+  let data_nodes = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
+  data_nodes
+
+let look_up_reachable_data_node_w_alias prog f roots=
+  let pr1 = !print_formula in
+  let pr2 = !print_spec_var_list in
+  let pr_data_node dn= !print_h_formula (DataNode dn) in
+  Debug.no_2 "look_up_reachable_data_node_w_alias" pr1 pr2 (pr_list pr_data_node)
+             (fun _ _ -> look_up_reachable_data_node_w_alias_x prog f roots) f roots
 
 let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (

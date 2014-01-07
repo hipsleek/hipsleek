@@ -7,6 +7,7 @@ open Gen
 
 module DD = Debug
 module CF = Cformula
+module CFU = Cfutil
 module CP = Cpure
 module MCP = Mcpure
 module C = Cast
@@ -230,8 +231,17 @@ let eq_spec_var_order_list = CP.eq_spec_var_order_list
   (*       else false *)
   (*   | _ -> false *)
 
-let check_hp_arg_eq (hp1, args1) (hp2, args2)=
-  ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_order_list args1 args2))
+let select_dnode = CF.select_dnode
+
+let select_vnode = CF.select_vnode
+
+let check_hp_arg_eq (hp1, args1) (hp2, args2)= CF.check_hp_arg_eq (hp1, args1) (hp2, args2)
+
+let check_neq_hpargs id ls= CF.check_neq_hpargs id ls
+
+let check_nbelongsto_dnode = CF.check_nbelongsto_dnode
+
+let check_nbelongsto_vnode = CF.check_nbelongsto_vnode
 
 let eq_two_int_order_list l10 l20=
   let rec helper l1 l2=
@@ -765,29 +775,7 @@ let get_intersect_hps keep_ptrs (hp, args)=
   let interse = CP.intersect_svl args keep_ptrs in
   if interse = [] then [] else [hp]
 
-(*for drop non-selective subformulas*)
-(*check a data node does not belong to a set of data node name*)
-let check_nbelongsto_dnode dn dn_names=
-      List.for_all (fun dn_name -> not(CP.eq_spec_var dn.CF.h_formula_data_node dn_name)) dn_names
-
-(*check a view node does not belong to a set of view node name*)
-let check_nbelongsto_vnode vn vn_names=
-      List.for_all (fun vn_name -> not(CP.eq_spec_var vn.CF.h_formula_view_node vn_name)) vn_names
-
-let check_neq_hrelnode id ls=
-      not (CP.mem_svl id ls)
-
-let check_neq_hpargs id ls=
-      not (Gen.BList.mem_eq check_hp_arg_eq id ls)
-
-(*check a data node belongs to a list of data node names*)
-let select_dnode dn1 dn_names=
-  List.exists (CP.eq_spec_var dn1.CF.h_formula_data_node) dn_names
-
-(*check a view node belongs to a list of view node names*)
-let select_vnode vn1 vn_names=
-    (*return subst of args and add in lhs*)
-  List.exists (CP.eq_spec_var vn1.CF.h_formula_view_node) vn_names
+let check_neq_hrelnode id ls= CF.check_neq_hrelnode id ls
 
 let select_hrel =  CP.mem_svl
 
@@ -953,8 +941,8 @@ let filter_var_x prog svl0 f=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes (svl0@svl1) in
   let keep_ptrs1 = CP.remove_dups_svl (keep_ptrs@svl1) in
   let keep_hps = List.concat (List.map (get_intersect_hps keep_ptrs1) ls_hpargs) in
-  CF.drop_data_view_hrel_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
-      check_neq_hrelnode keep_ptrs1 keep_ptrs1 keep_hps
+  CF.drop_data_view_hrel_nodes f CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode
+      CF.check_neq_hrelnode keep_ptrs1 keep_ptrs1 keep_hps
 
 let filter_var prog svl f=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -966,8 +954,8 @@ let filter_var prog svl f=
 (*todo: merge three following functions in a higher-order function*)
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
-  CF.drop_data_view_hrel_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
-    check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels
+  CF.drop_data_view_hrel_nodes f CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode
+    CF.check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels
 
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -977,28 +965,19 @@ let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
       f keep_rootvars keep_hrels
 
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
-  let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
-  CF.drop_data_view_hpargs_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
-    check_neq_hpargs keep_ptrs keep_ptrs keep_hpargs
-
-let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_3 "keep_data_view_hpargs_nodes" pr1 !CP.print_svl pr2 pr1
-      (fun _ _ _ -> keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs)
-      f keep_rootvars keep_hpargs
+  CFU.keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs
 
 let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
-  CF.drop_data_view_hpargs_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
+  CF.drop_data_view_hpargs_nodes_fb fb CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode
     check_neq_hpargs keep_ptrs keep_ptrs keep_hrels keep_ptrs
 
 let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs rhs_keep_rootvars rhs_keep_hrels=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes rhs_keep_rootvars in
   let closed_keep_ptrs = CF.find_close (keep_ptrs) eqs in
   let lhs_keep_hrels = List.concat (List.map (get_intersect_hps closed_keep_ptrs) lhs_hpargs) in
-  let nf1 = CF.drop_data_view_hrel_nodes lhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs lhs_keep_hrels in
-  let nf2 = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
+  let nf1 = CF.drop_data_view_hrel_nodes lhs CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs lhs_keep_hrels in
+  let nf2 = CF.drop_data_view_hrel_nodes rhs CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
   (nf1,nf2)
 
 let filter_eqs keep_svl prog_vars eqs0=
@@ -1179,6 +1158,7 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
   Debug.no_5 "smart_subst" pr1 pr1 pr2 pr3 pr3 (pr_triple pr1 pr1 pr2)
       (fun _ _ _ _ _ -> smart_subst_x nf1 nf2 hpargs eqs reqs unk_svl prog_vars) nf1 nf2 prog_vars eqs reqs
 
+(*moved to CFU*)
 (*
 (i) build emap for LHS/RHS 
   - eqnull -> make closure. do not subst
@@ -1188,257 +1168,257 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
 (iii) subs both sides to use smallest common vars
         lhs     |- P(v* )
 *)
-let cmp_fn sv1 sv2 = let n= String.compare (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2) in
-  if n=0 then
-    if CP.primed_of_spec_var sv1 = Unprimed then -1 else 1
-  else n
-let build_subst_comm_x args prog_vars emap comm_svl=
-  (* let find_comm_eq ls_eq sv= *)
-  (*   if List.exists (fun svl -> CP.mem_svl sv svl) ls_eq then ls_eq else *)
-  (*     let com_eq_svl = CP.EMapSV.find_equiv_all sv emap in *)
-  (*     if com_eq_svl = [] then ls_eq else *)
-  (*       ls_eq@[com_eq_svl] *)
-  (* in *)
-  let build_subst subst evars=
-    let inter1 = CP.intersect_svl evars prog_vars in
-    let keep_sv = if inter1 <> [] then
-      List.hd (List.sort cmp_fn inter1)
-    else
-      let inter2 = CP.intersect_svl evars args in
-      if inter2 <> [] then
-        List.hd (List.sort cmp_fn inter2)
-      else
-        let evars1 = List.sort cmp_fn evars in
-        List.hd evars1
-    in
-    let new_ss = List.fold_left (fun r sv -> if CP.eq_spec_var keep_sv sv then r else r@[(sv, keep_sv)]) [] evars in
-    subst@new_ss
-  in
-  let epart0 = CP.EMapSV.partition emap in
-  (* let ls_com_eq_svl = List.fold_left find_comm_eq [] comm_svl in *)
-  let ls_com_eq_svl, ls_non_com_eq_svl = List.partition (fun svl ->
-      CP.intersect_svl svl comm_svl <> []
-  ) epart0 in
-  let ss1 =  if ls_com_eq_svl = [] then [] else
-    List.fold_left build_subst [] ls_com_eq_svl
-  in
-  let ss2 = if ls_non_com_eq_svl = [] then [] else
-    List.fold_left build_subst [] ls_non_com_eq_svl
-  in
-  (ss1@ss2)
+(* let cmp_fn sv1 sv2 = let n= String.compare (CP.name_of_spec_var sv1) (CP.name_of_spec_var sv2) in *)
+(*   if n=0 then *)
+(*     if CP.primed_of_spec_var sv1 = Unprimed then -1 else 1 *)
+(*   else n *)
+(* let build_subst_comm_x args prog_vars emap comm_svl= *)
+(*   (\* let find_comm_eq ls_eq sv= *\) *)
+(*   (\*   if List.exists (fun svl -> CP.mem_svl sv svl) ls_eq then ls_eq else *\) *)
+(*   (\*     let com_eq_svl = CP.EMapSV.find_equiv_all sv emap in *\) *)
+(*   (\*     if com_eq_svl = [] then ls_eq else *\) *)
+(*   (\*       ls_eq@[com_eq_svl] *\) *)
+(*   (\* in *\) *)
+(*   let build_subst subst evars= *)
+(*     let inter1 = CP.intersect_svl evars prog_vars in *)
+(*     let keep_sv = if inter1 <> [] then *)
+(*       List.hd (List.sort cmp_fn inter1) *)
+(*     else *)
+(*       let inter2 = CP.intersect_svl evars args in *)
+(*       if inter2 <> [] then *)
+(*         List.hd (List.sort cmp_fn inter2) *)
+(*       else *)
+(*         let evars1 = List.sort cmp_fn evars in *)
+(*         List.hd evars1 *)
+(*     in *)
+(*     let new_ss = List.fold_left (fun r sv -> if CP.eq_spec_var keep_sv sv then r else r@[(sv, keep_sv)]) [] evars in *)
+(*     subst@new_ss *)
+(*   in *)
+(*   let epart0 = CP.EMapSV.partition emap in *)
+(*   (\* let ls_com_eq_svl = List.fold_left find_comm_eq [] comm_svl in *\) *)
+(*   let ls_com_eq_svl, ls_non_com_eq_svl = List.partition (fun svl -> *)
+(*       CP.intersect_svl svl comm_svl <> [] *)
+(*   ) epart0 in *)
+(*   let ss1 =  if ls_com_eq_svl = [] then [] else *)
+(*     List.fold_left build_subst [] ls_com_eq_svl *)
+(*   in *)
+(*   let ss2 = if ls_non_com_eq_svl = [] then [] else *)
+(*     List.fold_left build_subst [] ls_non_com_eq_svl *)
+(*   in *)
+(*   (ss1@ss2) *)
 
-let build_subst_comm args prog_vars emap comm_svl=
-  let pr1 = CP.EMapSV.string_of in
-  let pr2 =  !CP.print_svl in
-  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in
-  Debug.no_4 "SAU.build_subst_comm" pr2 pr2 pr1 pr2 pr3
-      (fun _ _ _ _ ->  build_subst_comm_x args prog_vars emap comm_svl)
-      args prog_vars emap comm_svl
+(* let build_subst_comm args prog_vars emap comm_svl= *)
+(*   let pr1 = CP.EMapSV.string_of in *)
+(*   let pr2 =  !CP.print_svl in *)
+(*   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in *)
+(*   Debug.no_4 "SAU.build_subst_comm" pr2 pr2 pr1 pr2 pr3 *)
+(*       (fun _ _ _ _ ->  build_subst_comm_x args prog_vars emap comm_svl) *)
+(*       args prog_vars emap comm_svl *)
 
-let expose_expl_closure_eq_null_x lhs_b lhs_args emap0=
-  let rec find_equiv_all eparts sv all_parts=
-    match eparts with
-      | [] -> [],all_parts
-      | ls::rest -> if CP.mem_svl sv ls then (ls,all_parts@rest) else
-          find_equiv_all rest sv (all_parts@[ls])
-  in
-  let look_up_eq_null (epart, ls_null_args, ls_expl_eqs, ss) sv=
-    (* let eq_nulls,rem_parts = find_equiv_all epart sv [] in *)
-    let eq_nulls,rem_parts = find_equiv_all epart sv [] in
-    let eq_null_args = CP.intersect_svl eq_nulls lhs_args in
-    if List.length eq_null_args > 1 then
-      let eq_null_args1 = (List.sort cmp_fn eq_null_args) in
-      let keep_sv = List.hd eq_null_args1 in
-      let ss2 = List.fold_left (fun ss1 sv ->
-          if CP.eq_spec_var keep_sv sv then ss1
-          else ss1@[(sv, keep_sv)]
-      ) [] eq_nulls
-      in
-      let ss3 = List.map (fun sv -> (sv, keep_sv) ) (List.tl eq_null_args1) in
-      (rem_parts, ls_null_args@eq_null_args, ls_expl_eqs@ss3,ss@ss2)
-    else (epart, ls_null_args, ls_expl_eqs, ss)
-  in
-  let eq_null_svl = CP.remove_dups_svl (MCP.get_null_ptrs lhs_b.CF.formula_base_pure) in
-  let epart0 = CP.EMapSV.partition emap0 in
-  let rem_parts, eq_null_args, expl_eq_args, ss = List.fold_left look_up_eq_null (epart0, [],[],[]) eq_null_svl in
-  let cls_e_null = List.map (fun sv -> CP.mkNull sv no_pos) eq_null_args in
-  (* let expl_eq_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) expl_eq_args in *)
-  (CP.EMapSV.un_partition rem_parts, (* expl_eq_ps@ *)cls_e_null, ss)
-
-
-let expose_expl_closure_eq_null lhs_b lhs_args emap=
-  let pr1 = CP.EMapSV.string_of in
-  let pr2 = pr_list !CP.print_formula in
-  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in
-  Debug.no_1 "SAU.expose_expl_closure_eq_null" pr1 (pr_triple pr1 pr2 pr3)
-      (fun _ -> expose_expl_closure_eq_null_x lhs_b lhs_args emap) emap
-(*
-  - cycle nodes: DO NOT subst
-  - inside one preds, do not subst
-
-for each ls_eqs, if it contains at least two vars of the same group,
-  - we remove this ls_eqs
-  - add equality in lhs
- input:
-  - emap: global emap (no r_qemap)
-  - groups of args of unknown preds + args + data nodes
- output:
-  - triple of (remain emap, equalifty formula to be added to lhs, ss for pure of lhs
-  rhs
-*)
-let expose_expl_eqs_x emap0 prog_vars vars_grps0=
-  (*move root to behind, donot loss it*)
-  let roots = List.fold_left (fun roots0 args -> match args with
-    | r::_ -> roots0@[r]
-    | _ -> roots0
-  ) [] vars_grps0 in
-  let all_vars = List.concat vars_grps0 in
-  let process_one_ls_eq ls_eqs =
-    let ls_eq_args = List.fold_left (fun r args ->
-        let inter = CP.intersect_svl args ls_eqs in
-        if List.length inter > 1 then r@[inter] else r
-        ) [] vars_grps0 in
-    let ls_eq_args1 = List.sort (fun ls1 ls2 -> List.length ls2 - List.length ls1) ls_eq_args in
-    let ls_eq_args2 = Gen.BList.remove_dups_eq (Gen.BList.subset_eq CP.eq_spec_var) ls_eq_args1 in
-    if ls_eq_args2=[] then (false,[],[])
-    else
-      (* let _ = Debug.info_hprint (add_str  "ls_eq_args2 " (pr_list !CP.print_svl)) ls_eq_args2 no_pos in *)
-      (*explicit equalities*)
-      let expl_eqs, link_svl = List.fold_left (fun (r, keep_svl) ls ->
-          let ls1 = List.sort cmp_fn ls in
-          (* let inter = CP.intersect_svl roots ls1 in *)
-          let keep_sv = (* if inter <> [] then List.hd inter else *) List.hd ls1 in
-          (r@(List.map (fun sv -> (sv, keep_sv)) (List.tl ls1)), keep_svl@[keep_sv])
-      ) ([],[]) ls_eq_args2
-      in
-      (*link among grps*)
-      let link_expl_eqs = if link_svl = [] then [] else
-        let link_svl1 = List.sort cmp_fn link_svl in
-        let fst_sv = List.hd link_svl1 in
-        List.map (fun sv -> (sv, fst_sv)) (List.tl link_svl1)
-      in
-      (*subst for others*)
-      let keep_sv =
-        let _ = Debug.ninfo_hprint (add_str  "link_svl" !CP.print_svl) link_svl no_pos in
-        let inters1 = CP.intersect_svl (prog_vars) link_svl in
-        let _ = Debug.ninfo_hprint (add_str  "inters1" !CP.print_svl) inters1 no_pos in
-        if inters1 != [] then List.hd inters1 else
-          (* let inters0 = CP.intersect_svl roots link_svl in *)
-          (* let _ = Debug.info_hprint (add_str  "inters0" !CP.print_svl) inters0 no_pos in *)
-          (* if inters0 != [] then List.hd (inters0) else *)
-            let inters = CP.intersect_svl all_vars link_svl in
-            let _ = Debug.ninfo_hprint (add_str  "inters" !CP.print_svl) inters no_pos in
-          if inters = [] then List.hd (List.sort cmp_fn link_svl)
-          else List.hd inters
-      in
-      (* let _ = Debug.info_hprint (add_str  "keep_sv " !CP.print_sv) keep_sv no_pos in *)
-      (* let _ = Debug.info_hprint (add_str  "ls_eqs " !CP.print_svl) ls_eqs no_pos in *)
-      let ss2 = List.fold_left (fun ss1 sv ->
-          if CP.eq_spec_var keep_sv sv then ss1
-          else ss1@[(sv, keep_sv)]
-      ) [] ls_eqs
-      in
-      (true, expl_eqs@link_expl_eqs,ss2)
-  in
-  let epart0 = CP.EMapSV.partition emap0 in
-  let rem_eparts, ls_eq_args, expl_eq_args,sst = List.fold_left (fun (r_eparts, r_eq_args, r_eqs, r_ss) ls_eqs->
-      let b, n_eqs, n_ss = process_one_ls_eq ls_eqs in
-      if b then
-        (r_eparts, r_eq_args@[ls_eqs], r_eqs@n_eqs, r_ss@n_ss)
-      else (r_eparts@[ls_eqs], r_eq_args, r_eqs, r_ss)
-  ) ([],[],[],[]) epart0 in
-  let expl_eq_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) expl_eq_args in
-  (CP.EMapSV.un_partition rem_eparts, ls_eq_args, expl_eq_ps ,sst)
-
-let expose_expl_eqs emap prog_vars vars_grps=
-  let pr1 = pr_list_ln !CP.print_svl in
-  let pr2 = CP.EMapSV.string_of in
-  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in
-  let pr4 = pr_quad pr2 pr1 (pr_list !CP.print_formula) pr3 in
-  Debug.no_2 "SAU.expose_expl_eqs" pr2 pr1 pr4
-      (fun _ _ -> expose_expl_eqs_x emap prog_vars vars_grps)
-      emap vars_grps
-
-let h_subst ss ls_eq_args0 hf0=
-  let rec is_expl_eqs ls_eq_args svl =
-    match ls_eq_args with
-      | [] -> false
-      | eqs::rest ->
-            if List.length (CP.intersect_svl eqs svl) > 1 then true else
-              is_expl_eqs rest svl
-  in
-  match hf0 with
-    | CF.DataNode dn ->
-          let svl = dn.CF.h_formula_data_node::dn.CF.h_formula_data_arguments in
-          if is_expl_eqs ls_eq_args0 svl then hf0 else
-            let hf1 = CF.h_subst ss hf0 in
-            hf1
-    | CF.ViewNode vn ->
-          let svl = vn.CF.h_formula_view_node::vn.CF.h_formula_view_arguments in
-          if is_expl_eqs ls_eq_args0 svl then hf0 else
-            let hf1 = CF.h_subst ss hf0 in
-            hf1
-    | CF.HRel (hp, eargs, pos) ->
-          let svl = List.fold_left List.append [] (List.map CP.afv eargs) in
-          let _ = Debug.ninfo_hprint (add_str  "svl " !CP.print_svl) svl no_pos in
-          if is_expl_eqs ls_eq_args0 svl then hf0 else
-            let hf1 = CF.h_subst ss hf0 in
-            hf1
-    | _ -> hf0
+(* let expose_expl_closure_eq_null_x lhs_b lhs_args emap0= *)
+(*   let rec find_equiv_all eparts sv all_parts= *)
+(*     match eparts with *)
+(*       | [] -> [],all_parts *)
+(*       | ls::rest -> if CP.mem_svl sv ls then (ls,all_parts@rest) else *)
+(*           find_equiv_all rest sv (all_parts@[ls]) *)
+(*   in *)
+(*   let look_up_eq_null (epart, ls_null_args, ls_expl_eqs, ss) sv= *)
+(*     (\* let eq_nulls,rem_parts = find_equiv_all epart sv [] in *\) *)
+(*     let eq_nulls,rem_parts = find_equiv_all epart sv [] in *)
+(*     let eq_null_args = CP.intersect_svl eq_nulls lhs_args in *)
+(*     if List.length eq_null_args > 1 then *)
+(*       let eq_null_args1 = (List.sort cmp_fn eq_null_args) in *)
+(*       let keep_sv = List.hd eq_null_args1 in *)
+(*       let ss2 = List.fold_left (fun ss1 sv -> *)
+(*           if CP.eq_spec_var keep_sv sv then ss1 *)
+(*           else ss1@[(sv, keep_sv)] *)
+(*       ) [] eq_nulls *)
+(*       in *)
+(*       let ss3 = List.map (fun sv -> (sv, keep_sv) ) (List.tl eq_null_args1) in *)
+(*       (rem_parts, ls_null_args@eq_null_args, ls_expl_eqs@ss3,ss@ss2) *)
+(*     else (epart, ls_null_args, ls_expl_eqs, ss) *)
+(*   in *)
+(*   let eq_null_svl = CP.remove_dups_svl (MCP.get_null_ptrs lhs_b.CF.formula_base_pure) in *)
+(*   let epart0 = CP.EMapSV.partition emap0 in *)
+(*   let rem_parts, eq_null_args, expl_eq_args, ss = List.fold_left look_up_eq_null (epart0, [],[],[]) eq_null_svl in *)
+(*   let cls_e_null = List.map (fun sv -> CP.mkNull sv no_pos) eq_null_args in *)
+(*   (\* let expl_eq_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) expl_eq_args in *\) *)
+(*   (CP.EMapSV.un_partition rem_parts, (\* expl_eq_ps@ *\)cls_e_null, ss) *)
 
 
-let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
-  let largs= CF.h_fv lhs_b.CF.formula_base_heap in
-  let rargs= CF.h_fv rhs_b.CF.formula_base_heap in
-  let all_args = CP.remove_dups_svl (largs@rargs) in
-  (*---------------------------------------*)
-  let lsvl = CF.fv (CF.Base lhs_b) in
-  let rsvl = (CF.fv (CF.Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in
-  let comm_svl = CP.intersect_svl lsvl rsvl in
-  let lhs_b1, rhs_b1, prog_vars =
-    if comm_svl = [] then
-      (lhs_b, rhs_b, prog_vars)
-    else
-      let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
-      let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
-      let vars_grps = (CF.get_data_node_ptrs_group_hf lhs_b.CF.formula_base_heap)@(CF.get_data_node_ptrs_group_hf rhs_b.CF.formula_base_heap)@
-        (List.map snd hpargs)
-      in
-      let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in
-      (* let _ = Debug.info_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in *)
-      let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in
-      let ss = build_subst_comm all_args prog_vars emap1 comm_svl in
-      let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-      (* let _ = Debug.info_hprint (add_str  "ss " (pr_ss)) ss no_pos in *)
-      (*LHS*)
-      let lhs_b1 = CF.subst_b ss lhs_b in
-      let lhs_pure1 = MCP.pure_of_mix lhs_b1.CF.formula_base_pure in
-      let lhs_pure2 = CP.subst (null_sst@eq_sst) lhs_pure1 in
-      let lpos = CF.pos_of_formula (CF.Base lhs_b1) in
-      let lhs_pure_w_expl = CP.conj_of_list (lhs_pure2::(null_ps@expl_eqs_ps)) lpos in
-      let lhs_b2 = {lhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
-              (CP.remove_redundant lhs_pure_w_expl);
-          CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) lhs_b1.CF.formula_base_heap;
-      } in
-      (*RHS*)
-      let rhs_b1 = CF.subst_b ss rhs_b in
-      (* let _ = Debug.info_hprint (add_str  "rhs_b1 " Cprinter.prtt_string_of_formula) (CF.Base rhs_b1) no_pos in *)
-      let rhs_b2 = {rhs_b1 with CF.formula_base_pure = MCP.mix_of_pure
-              (CP.remove_redundant (MCP.pure_of_mix rhs_b1.CF.formula_base_pure));
-          CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.CF.formula_base_heap;
-      } in
-      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars)
-  in
-  (lhs_b1, rhs_b1, prog_vars)
+(* let expose_expl_closure_eq_null lhs_b lhs_args emap= *)
+(*   let pr1 = CP.EMapSV.string_of in *)
+(*   let pr2 = pr_list !CP.print_formula in *)
+(*   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in *)
+(*   Debug.no_1 "SAU.expose_expl_closure_eq_null" pr1 (pr_triple pr1 pr2 pr3) *)
+(*       (fun _ -> expose_expl_closure_eq_null_x lhs_b lhs_args emap) emap *)
+(* (\* *)
+(*   - cycle nodes: DO NOT subst *)
+(*   - inside one preds, do not subst *)
 
-let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
-  let pr1 = Cprinter.string_of_formula_base in
-  let pr2 = !CP.print_svl in
-  let pr3 = CP.EMapSV.string_of in
-  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
-      (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
-      lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
+(* for each ls_eqs, if it contains at least two vars of the same group, *)
+(*   - we remove this ls_eqs *)
+(*   - add equality in lhs *)
+(*  input: *)
+(*   - emap: global emap (no r_qemap) *)
+(*   - groups of args of unknown preds + args + data nodes *)
+(*  output: *)
+(*   - triple of (remain emap, equalifty formula to be added to lhs, ss for pure of lhs *)
+(*   rhs *)
+(* *\) *)
+(* let expose_expl_eqs_x emap0 prog_vars vars_grps0= *)
+(*   (\*move root to behind, donot loss it*\) *)
+(*   let roots = List.fold_left (fun roots0 args -> match args with *)
+(*     | r::_ -> roots0@[r] *)
+(*     | _ -> roots0 *)
+(*   ) [] vars_grps0 in *)
+(*   let all_vars = List.concat vars_grps0 in *)
+(*   let process_one_ls_eq ls_eqs = *)
+(*     let ls_eq_args = List.fold_left (fun r args -> *)
+(*         let inter = CP.intersect_svl args ls_eqs in *)
+(*         if List.length inter > 1 then r@[inter] else r *)
+(*         ) [] vars_grps0 in *)
+(*     let ls_eq_args1 = List.sort (fun ls1 ls2 -> List.length ls2 - List.length ls1) ls_eq_args in *)
+(*     let ls_eq_args2 = Gen.BList.remove_dups_eq (Gen.BList.subset_eq CP.eq_spec_var) ls_eq_args1 in *)
+(*     if ls_eq_args2=[] then (false,[],[]) *)
+(*     else *)
+(*       (\* let _ = Debug.info_hprint (add_str  "ls_eq_args2 " (pr_list !CP.print_svl)) ls_eq_args2 no_pos in *\) *)
+(*       (\*explicit equalities*\) *)
+(*       let expl_eqs, link_svl = List.fold_left (fun (r, keep_svl) ls -> *)
+(*           let ls1 = List.sort cmp_fn ls in *)
+(*           (\* let inter = CP.intersect_svl roots ls1 in *\) *)
+(*           let keep_sv = (\* if inter <> [] then List.hd inter else *\) List.hd ls1 in *)
+(*           (r@(List.map (fun sv -> (sv, keep_sv)) (List.tl ls1)), keep_svl@[keep_sv]) *)
+(*       ) ([],[]) ls_eq_args2 *)
+(*       in *)
+(*       (\*link among grps*\) *)
+(*       let link_expl_eqs = if link_svl = [] then [] else *)
+(*         let link_svl1 = List.sort cmp_fn link_svl in *)
+(*         let fst_sv = List.hd link_svl1 in *)
+(*         List.map (fun sv -> (sv, fst_sv)) (List.tl link_svl1) *)
+(*       in *)
+(*       (\*subst for others*\) *)
+(*       let keep_sv = *)
+(*         let _ = Debug.ninfo_hprint (add_str  "link_svl" !CP.print_svl) link_svl no_pos in *)
+(*         let inters1 = CP.intersect_svl (prog_vars) link_svl in *)
+(*         let _ = Debug.ninfo_hprint (add_str  "inters1" !CP.print_svl) inters1 no_pos in *)
+(*         if inters1 != [] then List.hd inters1 else *)
+(*           (\* let inters0 = CP.intersect_svl roots link_svl in *\) *)
+(*           (\* let _ = Debug.info_hprint (add_str  "inters0" !CP.print_svl) inters0 no_pos in *\) *)
+(*           (\* if inters0 != [] then List.hd (inters0) else *\) *)
+(*             let inters = CP.intersect_svl all_vars link_svl in *)
+(*             let _ = Debug.ninfo_hprint (add_str  "inters" !CP.print_svl) inters no_pos in *)
+(*           if inters = [] then List.hd (List.sort cmp_fn link_svl) *)
+(*           else List.hd inters *)
+(*       in *)
+(*       (\* let _ = Debug.info_hprint (add_str  "keep_sv " !CP.print_sv) keep_sv no_pos in *\) *)
+(*       (\* let _ = Debug.info_hprint (add_str  "ls_eqs " !CP.print_svl) ls_eqs no_pos in *\) *)
+(*       let ss2 = List.fold_left (fun ss1 sv -> *)
+(*           if CP.eq_spec_var keep_sv sv then ss1 *)
+(*           else ss1@[(sv, keep_sv)] *)
+(*       ) [] ls_eqs *)
+(*       in *)
+(*       (true, expl_eqs@link_expl_eqs,ss2) *)
+(*   in *)
+(*   let epart0 = CP.EMapSV.partition emap0 in *)
+(*   let rem_eparts, ls_eq_args, expl_eq_args,sst = List.fold_left (fun (r_eparts, r_eq_args, r_eqs, r_ss) ls_eqs-> *)
+(*       let b, n_eqs, n_ss = process_one_ls_eq ls_eqs in *)
+(*       if b then *)
+(*         (r_eparts, r_eq_args@[ls_eqs], r_eqs@n_eqs, r_ss@n_ss) *)
+(*       else (r_eparts@[ls_eqs], r_eq_args, r_eqs, r_ss) *)
+(*   ) ([],[],[],[]) epart0 in *)
+(*   let expl_eq_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) expl_eq_args in *)
+(*   (CP.EMapSV.un_partition rem_eparts, ls_eq_args, expl_eq_ps ,sst) *)
+
+(* let expose_expl_eqs emap prog_vars vars_grps= *)
+(*   let pr1 = pr_list_ln !CP.print_svl in *)
+(*   let pr2 = CP.EMapSV.string_of in *)
+(*   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in *)
+(*   let pr4 = pr_quad pr2 pr1 (pr_list !CP.print_formula) pr3 in *)
+(*   Debug.no_2 "SAU.expose_expl_eqs" pr2 pr1 pr4 *)
+(*       (fun _ _ -> expose_expl_eqs_x emap prog_vars vars_grps) *)
+(*       emap vars_grps *)
+
+(* let h_subst ss ls_eq_args0 hf0= *)
+(*   let rec is_expl_eqs ls_eq_args svl = *)
+(*     match ls_eq_args with *)
+(*       | [] -> false *)
+(*       | eqs::rest -> *)
+(*             if List.length (CP.intersect_svl eqs svl) > 1 then true else *)
+(*               is_expl_eqs rest svl *)
+(*   in *)
+(*   match hf0 with *)
+(*     | CF.DataNode dn -> *)
+(*           let svl = dn.CF.h_formula_data_node::dn.CF.h_formula_data_arguments in *)
+(*           if is_expl_eqs ls_eq_args0 svl then hf0 else *)
+(*             let hf1 = CF.h_subst ss hf0 in *)
+(*             hf1 *)
+(*     | CF.ViewNode vn -> *)
+(*           let svl = vn.CF.h_formula_view_node::vn.CF.h_formula_view_arguments in *)
+(*           if is_expl_eqs ls_eq_args0 svl then hf0 else *)
+(*             let hf1 = CF.h_subst ss hf0 in *)
+(*             hf1 *)
+(*     | CF.HRel (hp, eargs, pos) -> *)
+(*           let svl = List.fold_left List.append [] (List.map CP.afv eargs) in *)
+(*           let _ = Debug.ninfo_hprint (add_str  "svl " !CP.print_svl) svl no_pos in *)
+(*           if is_expl_eqs ls_eq_args0 svl then hf0 else *)
+(*             let hf1 = CF.h_subst ss hf0 in *)
+(*             hf1 *)
+(*     | _ -> hf0 *)
+
+(*moved to CFU*)
+(* let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars= *)
+(*   let largs= CF.h_fv lhs_b.CF.formula_base_heap in *)
+(*   let rargs= CF.h_fv rhs_b.CF.formula_base_heap in *)
+(*   let all_args = CP.remove_dups_svl (largs@rargs) in *)
+(*   (\*---------------------------------------*\) *)
+(*   let lsvl = CF.fv (CF.Base lhs_b) in *)
+(*   let rsvl = (CF.fv (CF.Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in *)
+(*   let comm_svl = CP.intersect_svl lsvl rsvl in *)
+(*   let lhs_b1, rhs_b1, prog_vars = *)
+(*     if comm_svl = [] then *)
+(*       (lhs_b, rhs_b, prog_vars) *)
+(*     else *)
+(*       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in *)
+(*       let emap0 = CP.EMapSV.merge_eset l_emap r_emap in *)
+(*       let vars_grps = (CF.get_data_node_ptrs_group_hf lhs_b.CF.formula_base_heap)@(CF.get_data_node_ptrs_group_hf rhs_b.CF.formula_base_heap)@ *)
+(*         (List.map snd hpargs) *)
+(*       in *)
+(*       let emap0a, ls_eq_args, expl_eqs_ps, eq_sst = expose_expl_eqs emap0 prog_vars vars_grps in *)
+(*       (\* let _ = Debug.info_hprint (add_str  "ls_eq_args " (pr_list !CP.print_svl)) ls_eq_args no_pos in *\) *)
+(*       let emap1 = CP.EMapSV.merge_eset emap0a r_qemap in *)
+(*       let ss = build_subst_comm all_args prog_vars emap1 comm_svl in *)
+(*       let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+(*       (\* let _ = Debug.info_hprint (add_str  "ss " (pr_ss)) ss no_pos in *\) *)
+(*       (\*LHS*\) *)
+(*       let lhs_b1 = CF.subst_b ss lhs_b in *)
+(*       let lhs_pure1 = MCP.pure_of_mix lhs_b1.CF.formula_base_pure in *)
+(*       let lhs_pure2 = CP.subst (null_sst@eq_sst) lhs_pure1 in *)
+(*       let lpos = CF.pos_of_formula (CF.Base lhs_b1) in *)
+(*       let lhs_pure_w_expl = CP.conj_of_list (lhs_pure2::(null_ps@expl_eqs_ps)) lpos in *)
+(*       let lhs_b2 = {lhs_b1 with CF.formula_base_pure = MCP.mix_of_pure *)
+(*               (CP.remove_redundant lhs_pure_w_expl); *)
+(*           CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) lhs_b1.CF.formula_base_heap; *)
+(*       } in *)
+(*       (\*RHS*\) *)
+(*       let rhs_b1 = CF.subst_b ss rhs_b in *)
+(*       (\* let _ = Debug.info_hprint (add_str  "rhs_b1 " Cprinter.prtt_string_of_formula) (CF.Base rhs_b1) no_pos in *\) *)
+(*       let rhs_b2 = {rhs_b1 with CF.formula_base_pure = MCP.mix_of_pure *)
+(*               (CP.remove_redundant (MCP.pure_of_mix rhs_b1.CF.formula_base_pure)); *)
+(*           CF.formula_base_heap = CF.trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.CF.formula_base_heap; *)
+(*       } in *)
+(*       (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars) *)
+(*   in *)
+(*   (lhs_b1, rhs_b1, prog_vars) *)
+
+(* let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars= *)
+(*   let pr1 = Cprinter.string_of_formula_base in *)
+(*   let pr2 = !CP.print_svl in *)
+(*   let pr3 = CP.EMapSV.string_of in *)
+(*   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+(*   Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2) *)
+(*       (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars) *)
+(*       lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap *)
 
 let smart_subst_lhs f lhpargs leqs infer_vars=
   match f with
@@ -1471,10 +1451,10 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
   let _ = Debug.ninfo_zprint (lazy (("f1: " ^ (Cprinter.string_of_formula_base f1)))) no_pos in
   let _ = Debug.ninfo_zprint (lazy (("f2: " ^ (Cprinter.string_of_formula_base f2)))) no_pos in
   (*demo/cyc-lseg-3.ss*)
-  let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hpargs
+  let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hpargs
     (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs@
         (( List.filter (fun sv -> not (CP.is_node_typ sv)) lhs_args_ni)@rhs_args_ni)) in
-  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode
+  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode
     keep_vars keep_vars rkeep_hps (keep_vars@rhs_args_ni) in
   let _ = Debug.ninfo_zprint (lazy (("nf1: " ^ (Cprinter.string_of_formula_base nf1)))) no_pos in
   let _ = Debug.ninfo_zprint (lazy (("nf2: " ^ (Cprinter.string_of_formula_base nf2)))) no_pos in
@@ -1519,7 +1499,8 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   (* let _ = Debug.info_pprint ("drop_hps: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* pr drop_hps)) no_pos in *)
   (* let _ = Debug.info_zprint (lazy (("hf: " ^ (Cprinter.string_of_h_formula hf)))) no_pos in *)
-  let nhf = CF.drop_data_view_hpargs_nodes_hf hf select_dnode select_vnode select_subsumehpargs drop_vars drop_vars drop_hps in
+  let nhf = CF.drop_data_view_hpargs_nodes_hf hf CF.select_dnode CF.select_vnode select_subsumehpargs
+    drop_vars drop_vars drop_hps in
   (* let _ = Debug.info_zprint (lazy (("nhf: " ^ (Cprinter.string_of_h_formula nhf)))) no_pos in *)
   nhf
 
@@ -1758,9 +1739,9 @@ let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
       (*omit: not remove unk_hps in lhs*)
       (* let hrels1 = (List.filter (fun hp -> not(CP.mem_svl hp unk_hps)) hrels) in *)
       let lhs_nhf = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
-        select_dnode select_vnode select_hrel dnode_names vnode_names hrels in
+        CF.select_dnode CF.select_vnode select_hrel dnode_names vnode_names hrels in
       let rhs_nhf = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
-        select_dnode select_vnode select_hrel dnode_names vnode_names hrels in
+        CF.select_dnode CF.select_vnode select_hrel dnode_names vnode_names hrels in
       let rhs_nhf2 = if ss= [] then rhs_nhf else CF.h_subst ss rhs_nhf in
       (lhs_nhf,rhs_nhf2)
   in
@@ -3065,14 +3046,14 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               (* let _ = Debug.info_zprint (lazy (("    rhs2: " ^ (Cprinter.prtt_string_of_formula_base rhs2)))) no_pos in *)
               let l_res = {n_lhs1 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      n_lhs1.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel lnodes_match lnodes_match matched_hps}
+                      n_lhs1.CF.formula_base_heap CF.select_dnode
+                      CF.select_vnode select_hrel lnodes_match lnodes_match matched_hps}
               in
               (*drop hps and matched svl in n_rhs2*)
               let r_res = {rhs2 with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
-                      rhs2.CF.formula_base_heap select_dnode
-                      select_vnode select_hrel rnodes_match rnodes_match matched_hps;
+                      rhs2.CF.formula_base_heap CF.select_dnode
+                      CF.select_vnode select_hrel rnodes_match rnodes_match matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
                           (MCP.pure_of_mix rhs2.CF.formula_base_pure) (CP.diff_svl (CF.fv (CF.Base rhs2)) all_matched_svl2))}

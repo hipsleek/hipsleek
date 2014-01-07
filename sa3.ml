@@ -1603,7 +1603,7 @@ let generalize_hps_cs_new_x prog callee_hps hpdefs unk_hps link_hps cs=
             let pos = CF.pos_of_formula lhs in
             let nrhs = CF.mkAnd_pure rhs (MCP.mix_of_pure (CF.get_pure lhs)) pos in
             let keep_def_hps = lhps@rhps@unk_hps@hpdefs in
-            let r = CF.drop_data_view_hrel_nodes nrhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs keep_def_hps in
+            let r = CF.drop_data_view_hrel_nodes nrhs SAU.check_nbelongsto_dnode CF.check_nbelongsto_vnode CF.check_neq_hrelnode keep_ptrs keep_ptrs keep_def_hps in
             if (not (SAU.is_empty_f r)) then
               let hps = List.map fst diff in
               let hfs = List.map (fun (hp,args) -> (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos))) diff in

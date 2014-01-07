@@ -201,10 +201,10 @@ handled. Can we use a single way for consistency.
 =================================================================
 lemma syn: --lem-en-syn
 
-1. simp-syn.slk: OK
-2. lseg-syn(1|2).slk
-3. ls-syn.slk
-4. lseg-s-syn.slk
+1. syn-mix.slk: OK
+2. syn-lseg-(1|2).slk: OK
+3. syn-ls.slk
+4. syn-lseg-s.slk
 
 =================================================================
 =================================================================
