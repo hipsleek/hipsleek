@@ -201,7 +201,8 @@ handled. Can we use a single way for consistency.
 =================================================================
 lemma syn: --lem-en-syn
 
-1. syn-mix.slk: OK
+1. syn-mix-1.slk: OK
+2. syn-mix-2.slk: with pure
 2. syn-lseg-(1|2).slk: OK
 3. syn-ls.slk
 4. syn-lseg-s.slk
