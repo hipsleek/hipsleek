@@ -1012,10 +1012,11 @@ and check_lemma_not_exist vl vr=
   (* else false in *)
   (* b_left && b_right *)!Globals.lemma_syn && (left_ls@right_ls)=[]
 
-and need_cycle_point prog lvnode lhs rvnode rhs=
-  let l_reachable_dnodes = CF.look_up_reachable_data_node_w_alias prog lhs [lvnode.CF.h_formula_view_node] in
-  let r_reachable_dnodes = CF.look_up_reachable_data_node_w_alias prog rhs [rvnode.CF.h_formula_view_node] in
-  (List.length l_reachable_dnodes) > (List.length r_reachable_dnodes)
+and need_cycle_checkpoint prog lvnode lhs rvnode rhs=
+  let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
+  let _, r_reaqch_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
+  (List.length l_reach_dns) > (List.length r_reach_vns) ||
+      (List.length l_reach_vns) > (List.length r_reach_vns)
 
 and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_node,rhs_rest): action_wt =
   let rhs_node = c.match_res_rhs_node in
@@ -1119,7 +1120,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       [(0,M_match c)] (*force a MATCH after each lemma*)
                     else
                       let a1 = (1,M_base_case_unfold c) in
-		      let a2 = if check_lemma_not_exist vl vr && need_cycle_point prog vl estate.CF.es_formula vr rhs then
+		      let a2 = if check_lemma_not_exist vl vr && need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs then
                         let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                         let uf_i = if new_orig then 0 else 1 in
                         let a21 = (1,M_match c) in

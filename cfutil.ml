@@ -24,7 +24,7 @@ let obtain_reachable_formula prog f roots=
   let (h ,mf,_,_,_) = CF.split_components f in
   let hds, hvs, hrs = CF.get_hp_rel_h_formula h in
   let eqsets = (MCP.ptr_equations_without_null mf) in
-  let reach_ptrs = CF.look_up_reachable_ptrs_w_alias prog hds hvs eqsets roots in
+  let reach_ptrs= CF.look_up_reachable_ptrs_w_alias_helper prog hds hvs eqsets roots in
   let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in
   let sel_hpargs = List.filter (fun (_,args) -> CP.diff_svl args reach_ptrs = []) hpargs in
   let reach_f = keep_data_view_hpargs_nodes prog f hds hvs reach_ptrs sel_hpargs in

@@ -4529,7 +4529,7 @@ let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
   in
   helper node_names node_names
 
-let look_up_reachable_ptrs_w_alias prog hd_nodes hv_nodes eqset roots=
+let look_up_reachable_ptrs_w_alias_helper prog hd_nodes hv_nodes eqset roots=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.fold_left (fun r sv -> r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes sv)) [] inc_ptrs in
     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) (find_close new_ptrs eqset) in
@@ -5102,25 +5102,39 @@ let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr=
   Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out
              (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr) f roots
 
-let look_up_reachable_data_node_w_alias_x prog f roots=
-  let search_fnc = look_up_reachable_ptrs_w_alias in
+(*
+output_ctr = 0 return all pointer
+output_ctr = 1 return output_ctr + dnodes
+output_ctr = 2 return output_ctr + vnodes
+output_ctr = 3 return output_ctr + dnodes + vnodes
+*)
+let look_up_reachable_ptrs_w_alias_x prog f roots output_ctr=
+  let search_fnc = look_up_reachable_ptrs_w_alias_helper in
   let obtain_reachable_ptr_conj f=
     let (h ,mf,_,_,_) = split_components f in
     let hds, hvs, _ = get_hp_rel_h_formula h in
     let eqsets = (MCP.ptr_equations_without_null mf) in
     let reach_ptrs = search_fnc prog hds hvs eqsets roots in
-    List.filter (fun hd -> CP.mem_svl hd.h_formula_data_node reach_ptrs) hds
+    let dnodes = List.filter (fun hd -> CP.mem_svl hd.h_formula_data_node reach_ptrs) hds in
+    let vnodes = List.filter (fun vn -> CP.mem_svl vn.h_formula_view_node reach_ptrs) hvs in
+    (reach_ptrs, dnodes, vnodes)
   in
   let fs = list_of_disjs f in
-  let data_nodes = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
-  data_nodes
+  let reach_ptrs,dnodes, vnodes = List.fold_left (fun (r1,r2,r3) f ->
+      let reach_ptrs, reach_dns, reach_vns = obtain_reachable_ptr_conj f in
+      (r1@reach_ptrs, r2@reach_dns, r3@reach_vns)
+  ) ([],[],[]) fs in
+  reach_ptrs,dnodes, vnodes
 
-let look_up_reachable_data_node_w_alias prog f roots=
+let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
   let pr1 = !print_formula in
   let pr2 = !print_spec_var_list in
   let pr_data_node dn= !print_h_formula (DataNode dn) in
-  Debug.no_2 "look_up_reachable_data_node_w_alias" pr1 pr2 (pr_list pr_data_node)
-             (fun _ _ -> look_up_reachable_data_node_w_alias_x prog f roots) f roots
+  let pr_view_node dn= !print_h_formula (ViewNode dn) in
+  Debug.no_3 "look_up_reachable_data_node_w_alias" pr1 pr2 string_of_int
+      (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )
+             (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
+      f roots output_ctr
 
 let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
