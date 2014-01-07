@@ -399,7 +399,6 @@ let _ =
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
-    sleek_epilogue ();
     (* Get the total proof time *)
     let _ = if not(!Globals.no_cache_formula) then
       begin
@@ -428,6 +427,7 @@ let _ =
      end
           else ()
     in
+    let _ = sleek_epilogue () in
     let _ = if !Globals.enable_time_stats then
       begin
         let ptime4 = Unix.times () in

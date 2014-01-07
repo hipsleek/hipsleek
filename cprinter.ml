@@ -4189,4 +4189,5 @@ Mathematica.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
 Perm.print_exp := string_of_formula_exp;;
 Lem_store.lem_pr:= string_of_coerc_long;;
+Lem_store.lem_pr_med:= string_of_coerc_med;;
 

@@ -948,6 +948,7 @@ let pre_residue_lvl = ref 0
 
 let check_coercions = ref false
 let dump_lemmas = ref false
+let dump_lemmas_med = ref false
 
 let num_self_fold_search = ref 0
 
