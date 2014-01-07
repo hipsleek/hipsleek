@@ -838,7 +838,7 @@ match h1,h2 with
   | _ , _  -> true
 
 let check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
-Debug.ho_3 "check_mem_non_inter" string_of_h_formula string_of_h_formula (fun _ -> "") string_of_bool
+Debug.no_3 "check_mem_non_inter" string_of_h_formula string_of_h_formula (fun _ -> "") string_of_bool
 check_mem_non_inter h1 h2 vl
 
 let rec check_mem_conj (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
