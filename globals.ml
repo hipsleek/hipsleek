@@ -6,6 +6,8 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let debug_precise_trace = ref false
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -683,7 +685,8 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
-let enable_lemma_rhs_unfold = ref true
+let enable_lemma_rhs_unfold = ref false
+let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 
@@ -761,7 +764,7 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref false
+let pred_equiv = ref true
 
 let pred_unify_post = ref false
 
@@ -944,6 +947,7 @@ let pre_residue_lvl = ref 0
 (* Lvl -1 - never add any pre to residue *) 
 
 let check_coercions = ref false
+let dump_lemmas = ref false
 
 let num_self_fold_search = ref 0
 

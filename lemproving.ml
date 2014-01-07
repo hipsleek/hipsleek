@@ -101,6 +101,8 @@ let print_exc (check_id: string) =
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
+  let _ = Debug.tinfo_pprint "Calling process_coercion_check" no_pos in
+  let _ = Debug.tinfo_hprint (add_str "iconseq" string_of_lem_formula) iconseq no_pos in
   let dummy_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in  
   try 
     let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
@@ -193,29 +195,65 @@ let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : C
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
+  let is_singl sv0 svl=
+    match svl with
+      |[sv] -> CP.eq_spec_var sv0 sv
+      | _ -> false
+  in
+  let is_iden_unfold lhs_unfold_ptr rhs_unfold_ptr lhs_vns rhs_vns=
+    let lhs_vn = List.find (fun vn -> CP.eq_spec_var vn.CF.h_formula_view_node lhs_unfold_ptr) lhs_vns in
+    let rhs_vn = List.find (fun vn -> CP.eq_spec_var vn.CF.h_formula_view_node rhs_unfold_ptr) rhs_vns in
+    (CP.eq_spec_var lhs_vn.CF.h_formula_view_node rhs_vn.CF.h_formula_view_node) &&
+        (String.compare lhs_vn.CF.h_formula_view_name rhs_vn.CF.h_formula_view_name = 0)
+  in
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let fv_lhs = CF.fv lhs in
   let _ = Debug.tinfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
   let _ = Debug.tinfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
+  let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
   let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
   (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
+  let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
+    !Globals.enable_lemma_rhs_unfold then ([],[]) else
+      let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
+      let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
+      if is_singl sv_self lhs_unfold_ptrs then
+        if is_singl sv_self rhs_unfold_ptrs then
+          let lhs_vns = CF.get_views lhs in
+          let rhs_vns = CF.get_views_struc new_rhs in
+          if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
+            [sv_self],[]
+          else [sv_self],[sv_self]
+        else
+          [sv_self],[]
+      else begin
+        if is_singl sv_self rhs_unfold_ptrs then (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
+        else if !Globals.allow_lemma_deep_unfold then
+          let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
+          let r_ptrs = if rhs_unfold_ptrs != [] then [sv_self] else [] in
+          (l_ptrs, r_ptrs)
+        else
+          (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
+      end
+  in
   let lhs,_ = (
-    let unfolded_ptrs = 
+    let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
         CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true
       else [sv_self]
+    else
+      lhs_unfold_ptrs0
     in
-    List.fold_left (fun (f,ss) sv0 ->
-        let sv = CP.subst_var_par ss sv0 in
-        (* let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
-        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 pos in
-        (nf, ss@ss1)
-    ) (lhs, []) unfolded_ptrs
+      List.fold_left (fun (f,ss) sv0 ->
+          let sv = CP.subst_var_par ss sv0 in
+          (* let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
+          let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 pos in
+          (nf, ss@ss1)
+      ) (lhs, []) lhs_unfold_ptrs
   ) in
   (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
-  let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
   let _ = Debug.tinfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
   let _ = Debug.tinfo_hprint (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
@@ -223,18 +261,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let _ = Debug.tinfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
   (* let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let rhs = 
-    if !Globals.enable_lemma_rhs_unfold then (
-      let unfolded_ptrs = 
+  let rhs =
+    let rhs_unfold_ptrs = if !Globals.enable_lemma_rhs_unfold then
         if !Globals.allow_lemma_deep_unfold then
           CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
+      else rhs_unfold_ptrs0
       in
       List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
-      ) new_rhs unfolded_ptrs
-    )
-    else new_rhs
+      ) new_rhs rhs_unfold_ptrs
   in
   (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
@@ -293,9 +329,9 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
     if !Globals.disable_failure_explaining then ""
     else
       match CF.get_must_failure ctx with
-        | Some s -> "(must) cause:" ^ s 
+        | Some s -> "(must) cause: " ^ s 
         | _ -> (match CF.get_may_failure ctx with
-            | Some s -> "(may) cause:" ^ s
+            | Some s -> "(may) cause: " ^ s
             | None -> "INCONSISTENCY : expected failure but success instead"
           )
   in print_string (num_id ^ ": Fail. " ^ s ^ "\n")

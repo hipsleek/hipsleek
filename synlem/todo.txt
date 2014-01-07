@@ -59,13 +59,175 @@ Entailing lemma two: Fail. Details below:
 
 -------------------
 =================================================================
+# useless.slk
+
+print_residue seems to print the last residue of 
+lemma_infer. It seems lemma_infer is processed completely first.
+
+GOT two outcomes:
+
+
+!! fixpoint:[]
+ <1>
+    emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+    or emp&{FLOW,(21,22)=__norm}[]
+    
+ inferred hprel: [emp&p_74=null --> K(p_74); 
+                  p_77::node<q_76>@M * q_76::ll<>@M --> K(p_77)]
+[[ COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap ==> ]]
+<2>
+   emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+   or emp&{FLOW,(21,22)=__norm}[]
+   
+inferred hprel: [emp&p_74=null --> K(p_74); K(p_81) --> K(p_81)]
+
+However, only one fix point. What happens to the other? Dropped?
+
+[ G(self) ::= 
+ self::node<q>@M * G(q)
+ or emp&self=null
+ ,
+ K(p) ::= 
+ p::node<q>@M * q::ll<>@M
+ or emp&p=null
+ ]
+
 =================================================================
+# dseg-1a.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+lemma_safe "three" 
+  self::dseg<pr,p,last> <->
+      self::dseg<pr,p1,last2>*p1::dseg<last2,p,last>.
+
+Why proving <- fails?
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[AndR[ (p1_702!=null | (last=pr & p=p1_702)) |-  last=pr. LOCS:[12;1;0;7];  (self_three!=null | (last=last2_701 & p=self_three)) |-  p=self_three. LOCS:[12;1;0;7] (may-bug).],OrR[Cannot infer heap and pure 2,valid]]
+
 =================================================================
+# dseg-1b.slk
+
+lemma_safe "last"
+  self::dseg<pr,p,last> <-> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+-> seems invalid, in general.
+
+Entailing lemma last: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+	 "<-" implication: : Valid.
 =================================================================
+# lseg.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+lemma_safe "three" 
+  self::lseg<p> <-  self::lseg<p1>*p1::lseg<p>.
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
 =================================================================
+../sleek rlseg-2.slk -debug lem.dd > 1
+
+This example goes into TIMEOUT due to bug Omega file.
+BUG caused by our use of "-" as name..
+Revise code to avoid adding the user supplied string as name of variables
+Just use unique extra numbers.
+
+process_coercion_check@1 ENTRY : 
+ emp&p=self_four-a&{FLOW,(21,22)=__norm}[]
+ or (exists p_38,_,q_40: self_four-a::node<_,q_40>@M * q_40::rlseg<p_38>@M&
+    p=p_38&{FLOW,(21,22)=__norm})[]v
+
+ 
+@1! hargs: 1
+@1! f:#VN# self_four-a::rlseg<p1>@M
+@1! f:#DN# p1::node<_,p>@MTimeout when checking #simplify  Restarting Omega after ... 19 invocations Stop Omega... 19 invocations Starting Omega...oc
+
+=============================
+../sleek rlseg-new-a.slk --urhs
+Starting Omega...oc
+
+Why is a invalid lemma added???
+
+Entailing lemma one: Fail. (must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
+
+Valid Lemmas : [one:==>] added to lemma store.
+====================================
+
+# rlseg-new-b1.slk
+
+lemma_safe "2" self::rlseg<p> & self!=p 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+
+Why failure? Why invalid lemma added..
+ 
+Entailing lemma 2: Fail. (must) cause:residue is forbidden.(2)
+
+Valid Lemmas : [2:==>] added to lemma store.
+
+
 =================================================================
+# rlseg-new-b3a1.slk
+
+lemma_safe "3a" self::node<_,q>*q::rlseg<p> 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+Cannot be proven automatically, but manual
+version in rlseg-new-b3a.slk went thru!
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+
 =================================================================
+# rlseg-new-b4a.slk  vs rlseg-new-b4b.slk
+
+../sleek rlseg-new-b4a.slk -debug lem.dd > 1
+ 2174  ../sleek rlseg-new-b4b.slk -debug lem.dd > 2
+
+--> seems easier to prove than <--
+Could it be due to the way complex lemmas are being
+handled. Can we use a single way for consistency.
+
+rlseg-new-b4b.slk has an extra lemma step that is
+absent in rlseg-new-b4a.slk
+
+!!!rlseg-new-b4b.slk:13: 38: process_action :
+ ### action =  (Lemma ==> xx) =>
+                   Type: Root
+                   LHS: q_64::rlseg<p_62>@M
+                   RHS: q_64::rlseg<p>@M
+ lhs_rest: p1::node<_,p>@M
+ rhs_rest: emp
+ ### estate =  q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+  es_heap:self_xx::node<_,q_64>@M
+ ### conseq =  q_64::rlseg<p>@M&{FLOW,(21,22)=__norm}[]
+
+
+!!!rlseg-new-b4b.slk:13: 38: do_coercion: estate : es_formula: q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+ es_heap: self_xx::node<_,q_64>@M
+ es_evars: [_; q_66]
+ es_ante_evars: [p_62; _; q_64]
+ es_trace:  Match ==>  SEARCH ==>  (Lemma ==> xx) ==> 
+ es_unsat_flag: false
+
 =================================================================
+lemma syn: --lem-en-syn
+
+1. simp-syn.slk: OK
+2. lseg-syn(1|2).slk
+3. ls-syn.slk
+4. lseg-s-syn.slk
+
 =================================================================
 =================================================================
 =================================================================

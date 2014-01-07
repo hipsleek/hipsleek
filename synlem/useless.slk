@@ -17,7 +17,7 @@ inv true.
 // why useless G failing
 HeapPred G(node s).
 lemma_infer_pred [G] self::H<p> -> G(self).
-print residue.
+//print residue.
 
 
 HeapPred K(node s).

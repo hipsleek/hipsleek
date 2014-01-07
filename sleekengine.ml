@@ -557,7 +557,7 @@ let convert_data_and_pred_to_cast_x () =
   let cprog5 = if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
-  let l2r, r2l = if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else [],[] in
+  let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else *) [],[] in
   let _ = Lem_store.all_lemma # add_left_coercion l2r in
   let _ = Lem_store.all_lemma # add_right_coercion r2l in
   (* let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in *)
@@ -784,6 +784,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
   let _ = Sa3.rel_def_stk # reset in
+  let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)

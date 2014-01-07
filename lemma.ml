@@ -240,7 +240,11 @@ let verify_one_repo lems cprog =
       match fail_ans with
         | None ->
               let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
-              ((if CF.isFailCtx res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None), res::res_so_far)
+              let chk_for_fail =  if !Globals.disable_failure_explaining then CF.isFailCtx else CF.isFailCtx_gen in
+              let res_so_far = res::res_so_far in
+              let fail = if chk_for_fail res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None in
+              (fail, res_so_far)
+              (* ((if CF.isFailCtx res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None), res_so_far) *)
         | Some n ->
               res
   ) (None,[]) lems in
@@ -248,13 +252,18 @@ let verify_one_repo lems cprog =
 
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
-let update_store_with_repo repo iprog cprog =
+let update_store_with_repo_x repo iprog cprog =
   let lems = process_one_repo repo iprog cprog in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
   let _ = Lem_store.all_lemma # add_coercion left right in
   let (invalid_lem, lctx) =  verify_one_repo lems cprog in
   (invalid_lem, lctx)
+
+let update_store_with_repo repo iprog cprog =
+  let pr1 = pr_list Iprinter.string_of_coerc_decl in
+  let pr_out = pr_pair (pr_opt pr_id) (pr_list Cprinter.string_of_list_context) in 
+  Debug.no_1 "update_store_with_repo"  pr1 pr_out (fun _ -> update_store_with_repo_x repo iprog cprog) repo
 
 (* pop only if repo is invalid *)
 (* return None if all succeed, and result of first failure otherwise *)
@@ -274,7 +283,7 @@ let manage_safe_lemmas repo iprog cprog =
           None
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas repo iprog cprog = 
+let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) = 
   let (left,right) = List.fold_left (fun (left,right) ldef -> 
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right)
@@ -778,4 +787,5 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
 
 
 
-let _ = Sleekcore.generate_lemma := generate_lemma_helper
+let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
+let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;

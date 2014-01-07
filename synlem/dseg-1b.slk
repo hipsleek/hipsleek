@@ -1,0 +1,19 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+pred dseg<pr, p, last> == self=p & pr=last
+  or self::node<_,pr, q> * q::dseg<self,p,last>.
+
+lemma_safe "last"
+  self::dseg<pr,p,last> <-> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+/*
+# dseg-1b.slk
+
+Entailing lemma last: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+	 "<-" implication: : Valid.
+*/

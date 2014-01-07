@@ -60,7 +60,7 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
-  | M_cyclic of match_res
+  | M_cyclic of (match_res* int)
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -79,7 +79,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_lemma  (m, _)
     | Undefined_action m
     | M_lhs_case m
-    | M_cyclic m ->
+    | M_cyclic (m,_) ->
           if m.match_res_rhs_rest = HEmp then true else false
     | M_Nothing_to_do _ -> old_is_rhs_emp
     | M_infer_heap _ -> old_is_rhs_emp
@@ -181,7 +181,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic e -> fmt_string "Match cyclic =>"; pr_mr e
+  | M_cyclic (e,_) -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -216,7 +216,7 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
-  | M_cyclic e
+  | M_cyclic (e,_)
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
@@ -1144,8 +1144,27 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
                               (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                              let lst=[(1,M_base_case_unfold c)(* ;(1,M_cyclic c) *)] in
+                              let _ = Debug.ninfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
+                              let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                              let uf_i = if new_orig then 0 else 1 in
+                              (*cyclic: add lemma_unsafe then unfold lhs*)
+                              (*L2: change here for cyclic*)
+                              let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple) (Lem_store.all_lemma # get_left_coercion)) vl_name vr_name in
+                              let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple) (Lem_store.all_lemma # get_right_coercion) ) vr_name vl_name in
+                              (* let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in *)
+                              (* let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in *)
+                              (* let b_left = if (not(!ann_derv) || vl_new_orig) then if left_ls = [] then false else true *)
+                              (* else false in *)
+                              (* let b_right = if (not(!ann_derv) || vr_new_orig) then if right_ls=[] then false else true *)
+                              (* else false in *)
+                              let lst=
+                                if (* b_left && b_right *)!Globals.lemma_syn && (left_ls@right_ls)=[] then [(1,M_cyclic (c,uf_i))(* ;(1,M_unfold (c, uf_i)) *)]
+                                else
+                                  [(1,M_base_case_unfold c) (* ;(1,M_cyclic c) *)]
+                              in
                               (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
+                              (*L2: change here for cyclic*)
                               [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)

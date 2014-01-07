@@ -1,0 +1,49 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_test "four-a" self::rlseg<p1>*p1::node<_,p> <- self::rlseg<p>.
+//lemma_test "four_a" self::rlseg<p1>*p1::node<_,p> <-> self::rlseg<p>.
+
+// timout due to the use of "-" in "four-a"
+
+
+/*
+
+ntailing lemma one: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+
+Failed to prove one:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entailing lemma two: Valid.
+
+Valid Lemmas : [two:<==>] added to lemma store.
+
+Entailing lemma three: Valid.
+
+Valid Lemmas : [three:<==>] added to lemma store.
+../sleek rlseg-2.slk -debug lem.dd > 1
+
+This example goes into a loop due buggy Omega file.
+BUG caused by our use of "-" as name..
+Revise code to avoid adding the user supplied string as name of variables
+Just use unique extra numbers.
+
+process_coercion_check@1 ENTRY : 
+ emp&p=self_four-a&{FLOW,(21,22)=__norm}[]
+ or (exists p_38,_,q_40: self_four-a::node<_,q_40>@M * q_40::rlseg<p_38>@M&
+    p=p_38&{FLOW,(21,22)=__norm})[]v
+
+ 
+@1! hargs: 1
+@1! f:#VN# self_four-a::rlseg<p1>@M
+@1! f:#DN# p1::node<_,p>@MTimeout when checking #simplify  Restarting Omega after ... 19 invocations Stop Omega... 19 invocations Starting Omega...oc
+
+*/

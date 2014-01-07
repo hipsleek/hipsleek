@@ -38,6 +38,11 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 (*used for classic*)
 let rhs_rest_emp = ref true
 
+(*cyclic: should improve the desgim. why AS call solver??*)
+let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
+let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
+    (None: CF.list_context list option))
+
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
 
@@ -8123,28 +8128,28 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               | _ -> (
                     let h1, p1, fl1, t1, a1 = split_components ante in
                     let h2, p2, fl2, t2, a2 = split_components conseq in
-                                    Debug.tinfo_hprint (add_str "h1" (Cprinter.string_of_h_formula)) h1 no_pos;
-                                    Debug.tinfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
-                                    Debug.tinfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
-                                    Debug.tinfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
-                  (*ADD inequality constraints on heap nodes due to fractional permissions to ante
-                    For example: x::node(0.6)<> * y::node(0.6)<>
-                    then we have a constraint x!=y
-                  *)
-                  let p1 =
-                          (*This could introduce UNSAT*)
-                    if (Perm.allow_perm ()) then
-                      let nodes_f = xpure_perm prog h1 p1 in
-                      let p1 = MCP.merge_mems p1 nodes_f true in
-                      let p1 = MCP.remove_dupl_conj_mix_formula p1 in
-                      p1
-                    else p1
-                  in
-                  (*******************)
-                  if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then
-                    (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
-                  else
-                    if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then (
+                    Debug.tinfo_hprint (add_str "h1" (Cprinter.string_of_h_formula)) h1 no_pos;
+                    Debug.tinfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
+                    Debug.tinfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
+                    Debug.tinfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
+                    (*ADD inequality constraints on heap nodes due to fractional permissions to ante
+                      For example: x::node(0.6)<> * y::node(0.6)<>
+                      then we have a constraint x!=y
+                    *)
+                    let p1 =
+                      (*This could introduce UNSAT*)
+                      if (Perm.allow_perm ()) then
+                        let nodes_f = xpure_perm prog h1 p1 in
+                        let p1 = MCP.merge_mems p1 nodes_f true in
+                        let p1 = MCP.remove_dupl_conj_mix_formula p1 in
+                        p1
+                      else p1
+                    in
+                    (*******************)
+                    if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then
+                      (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
+                    else
+                      if (not(is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then (
                       Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                       ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                       (* TODO : change to meaningful msg *)
@@ -9614,7 +9619,7 @@ and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout mem
   Debug.devel_zprint (lazy ("IMP #" ^ (string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))) no_pos;
   (r1,r2,r3)
 
-and imply_formula_no_memo new_ante new_conseq imp_no memset =   
+and imply_formula_no_memo_x new_ante new_conseq imp_no memset =   
   let new_conseq = solve_ineq_pure_formula new_ante memset new_conseq in
   let res,_,_ = TP.imply_one 31  new_ante new_conseq ((string_of_int imp_no)) false None in
   let _ = Debug.devel_pprint ("asta6?") no_pos in
@@ -9635,6 +9640,10 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
         The reason is to allow the instantiations to support
         further entailment.*)
       *)
+
+and imply_formula_no_memo new_ante new_conseq imp_no memset =  
+  let pr = Cprinter.string_of_pure_formula in 
+  Debug.no_2 "imply_formula_no_memo" pr pr string_of_bool (fun _ _ -> imply_formula_no_memo_x new_ante new_conseq imp_no memset) new_ante new_conseq
 
 and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_folding pos rhs_b = 
   let pr x = match x with 
@@ -11556,21 +11565,30 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-            Context.match_res_holes = holes;} as m_res)->
+            Context.match_res_holes = holes;} as m_res, unfold_num)->
             Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
             Debug.tinfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-            let b = Syn_checkeq.check_exists_cyclic_proofs estate
-              (CF.formula_of_heap lhs_node no_pos, CF.formula_of_heap rhs_node no_pos) in
-            if b then
-              process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
-                  lhs_node lhs_rest rhs_node rhs_rest holes
-            else
-              let s = "search cyclic proof: FAIL" in
-              let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-              CF.mk_failure_may s Globals.sl_error)), NoAlias) in
-              res
+            (* let b = Syn_checkeq.check_exists_cyclic_proofs estate *)
+            (*   (CF.formula_of_heap lhs_node no_pos, CF.formula_of_heap rhs_node no_pos) in *)
+            (* if b then *)
+            (*   process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos *)
+            (*       lhs_node lhs_rest rhs_node rhs_rest holes *)
+            (* else *)
+            (*   let s = "search cyclic proof: FAIL" in *)
+            (*   let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos, *)
+            (*   CF.mk_failure_may s Globals.sl_error)), NoAlias) in *)
+            (*   res *)
+            (*add checkpoint for cyclic proof*)
+            let _ = if !Globals.lemma_syn then let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
+              lhs_node lhs_b rhs_node rhs_b in () else () in
+            (*unfold*)
+            let n_act = Context.M_unfold (m_res, unfold_num) in
+            let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
+            let new_trace = str::(List.tl estate.es_trace) in
+            let new_estate = {estate with es_trace = new_trace} in
+            process_action 6 caller prog new_estate conseq lhs_b rhs_b n_act rhs_h_matched_set is_folding pos
       | Context.M_split_match {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
@@ -11733,6 +11751,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
         } -> 
+            (* let _ = print_string ("!!!do_coercion: M_rd_lemma \n") in *)
             let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.M_lemma  ({
@@ -11741,9 +11760,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
         },ln) ->
+            (* let _ = print_string ("!!!do_coercion: M_lemma \n") in *)
             (* let _ = match ln with *)
-            (*   | None -> ()  *)
-            (*   | Some c -> ()(\* print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") *\) in *)
+            (*   | None -> () *)
+            (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
             let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)

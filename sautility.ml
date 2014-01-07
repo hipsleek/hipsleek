@@ -969,10 +969,24 @@ let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   CF.drop_data_view_hrel_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
     check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels
 
+let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_3 "keep_data_view_hrel_nodes" pr1 pr2 pr2 pr1
+      (fun _ _ _ -> keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels)
+      f keep_rootvars keep_hrels
+
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
   CF.drop_data_view_hpargs_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
     check_neq_hpargs keep_ptrs keep_ptrs keep_hpargs
+
+let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_3 "keep_data_view_hpargs_nodes" pr1 !CP.print_svl pr2 pr1
+      (fun _ _ _ -> keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs)
+      f keep_rootvars keep_hpargs
 
 let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
@@ -4683,17 +4697,101 @@ let simplify_set_of_formulas_wg prog is_pre cdefs hp args unk_hps unk_svl defs_w
        (fun _ _ _ -> simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
 
 
-let split_seg_x prog hp r other_args unk_hps defs_wg=
+let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
+  (**************INTERNAL**********)
+  let look_up_continuous_para non_root_args (f,_)=
+    let ls_hpargs = CF.get_HRels_f f in
+    let rec_hpargs, other_hpargs = List.partition (fun (hp,_) -> CP.eq_spec_var hp hp0) ls_hpargs in
+      if other_hpargs != [] then [] else
+        let ( _,mix_f,_,_,_) = CF.split_components f in
+        let eqs = (MCP.ptr_equations_without_null mix_f) in
+        (*cont paras are para not changed, just forwarded*)
+        let cont_paras = List.fold_left (fun cur_cont_paras (hp,args1) ->
+            let f_wo_rec_hps,_ = CF.drop_hrel_f f [hp0] in
+            let all_svl = CF.fv f_wo_rec_hps in
+            let all_svl1 = CP.diff_svl all_svl (CP.remove_dups_svl (
+                List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs)) in
+            let cont_args = CP.diff_svl args1 all_svl1 in
+            let closed_rec_args = CF.find_close cont_args eqs in
+            CP.intersect_svl cur_cont_paras closed_rec_args
+        ) non_root_args rec_hpargs
+        in
+        cont_paras
+  in
+  let exchange_nodes f hds hvs cont_vars eqs =
+    let neqs = List.fold_left (fun r (sv1,sv2) ->
+        let b1 = CP.mem_svl sv1 cont_vars in
+        let b2 = CP.mem_svl sv2 cont_vars in
+        match b1,b2 with
+          | true,false -> r@[(sv2,sv1)]
+          | false,true -> r@[(sv1,sv2)]
+          | _ -> r
+    ) [] eqs in
+    let n_f = CF.subst neqs f in
+    let cont_vars1 = CF.find_close cont_vars eqs in
+    let drop_node_svl = List.fold_left (fun r hd ->
+        if CP.mem_svl hd.CF.h_formula_data_node cont_vars1 then r@[hd.CF.h_formula_data_node] else r
+    ) [] hds in
+    let n_hds = List.map (fun hd -> {hd with CF.h_formula_data_node = CP.subs_one neqs hd.CF.h_formula_data_node}) hds in
+    let n_hvs = List.map (fun hv -> {hv with CF.h_formula_view_node = CP.subs_one neqs hv.CF.h_formula_view_node}) hvs in
+    (drop_node_svl,n_f, n_hds, n_hvs, neqs)
+  in
+  (*partition f into: cont_args and remain*)
+  let segmentation_on_base_cases rem_args cont_args f=
+    let ( _,mix_f,_,_,_) = CF.split_components f in
+    let eqs = (MCP.ptr_equations_without_null mix_f) in
+    let hds, hvs, hrs = CF.get_hp_rel_formula f in
+    let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in
+    let sel_hpargs, rem_sel_hpargs = List.partition (fun (_,args) -> CP.diff_svl args cont_args = []) hpargs in
+    let drop_node_svl,n_f, n_hds, n_hvs, eqs1 = exchange_nodes f hds hvs cont_args eqs in
+    let cont_f = keep_data_view_hpargs_nodes prog n_f n_hds n_hvs cont_args sel_hpargs in
+    let rem_f = drop_data_view_hrel_nodes_from_root prog f hds hvs eqs (drop_node_svl@cont_args)
+       (CF.look_up_reachable_ptr_args prog hds hvs drop_node_svl) [] sel_hpargs in
+    let _ = Debug.ninfo_hprint (add_str "   cont_f: " Cprinter.prtt_string_of_formula) cont_f no_pos in
+    let _ = Debug.ninfo_hprint (add_str "   rem_f: " Cprinter.prtt_string_of_formula) rem_f no_pos in
+    (cont_f, rem_f)
+  in
+  (********END INTERNAL*************)
+  (*classify base vs. rec*)
+  let rec_fs_wg,base_fs_wg = List.partition (fun (f,g) ->
+      let hps = CF.get_hp_rel_name_formula f in
+      (CP.mem_svl hp0 hps)
+  ) defs_wg in
   (*in rec branches, one parameter is continuous*)
-  (*in base case, root is closed and continuos parameter is contant*)
-  None
+  let cont_args = List.fold_left (look_up_continuous_para) other_args rec_fs_wg in
+  let _ = Debug.ninfo_hprint (add_str "cont_args: " !CP.print_svl) cont_args no_pos in
+  if cont_args = [] then
+    None
+  else
+    (*in base branches, root is closed and continuos parameter is contant*)
+    (*if there are > segments: need generation. NOW: ASSUME one base case*)
+    if base_fs_wg = [] || List.length base_fs_wg > 1 then
+      None
+    else
+      let rem_args = r::(CP.diff_svl other_args cont_args) in
+      let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
+          let cont_f,seg_f = segmentation_on_base_cases rem_args cont_args base in
+          (segs@[(seg_f,og)], cont_fs@[cont_f])
+      ) ([],[]) base_fs_wg in
+      if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
+        (*generate another pred*)
+        let n_lhs,n_hp =  add_raw_hp_rel prog false false ((r,I)::(List.map (fun sv -> (sv,NI)) cont_args)) no_pos in
+        let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
+        ) ([],[]) (seg_fs_wg@rec_fs_wg) in
+        let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
+        (*should generalize cont_fs*)
+        let rhs1 = CF.disj_of_list cont_fs no_pos in
+        let rhs2 = CF.mkAnd_f_hf rhs1 n_lhs no_pos in
+        Some (rhs2, n_hp_def)
+      else
+        None
 
-let split_seg prog hp r other_args unk_hps defs_wg=
+let norm_unfold_seg prog hp r other_args unk_hps defs_wg=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
   let pr3 = Cprinter.string_of_hp_rel_def in
-  Debug.no_4 "split_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 (pr_option (pr_pair pr1 pr3))
-      (fun _ _ _ _ -> split_seg_x prog hp r  other_args unk_hps defs_wg)
+  Debug.no_4 "SAU.norm_unfold_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 (pr_option (pr_pair pr1 pr3))
+      (fun _ _ _ _ -> norm_unfold_seg_x prog hp r other_args unk_hps defs_wg)
       hp r other_args defs_wg
 
 (**********************)

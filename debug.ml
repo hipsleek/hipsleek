@@ -36,9 +36,9 @@ let ho_print flag (pr:'a->string) (m:'a) : unit =
       | None -> ("\n!!!" ^ s)
       | Some cid -> ("\n@"^(string_of_int cid)^"!"^ s) 
     in
-    if !log_devel_debug then 
-      Buffer.add_string debug_log msg
-    else
+    (* if !log_devel_debug then  *)
+    (*   Buffer.add_string debug_log msg *)
+    (* else *)
       (print_string msg; flush stdout)
   else ()
 

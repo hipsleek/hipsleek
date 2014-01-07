@@ -719,6 +719,12 @@ let old_main () =
     print_string ("\nError3(s) detected at main \n");
   end
 
+let hip_epilogue () = 
+  (* ------------------ lemma dumping ------------------ *)
+  if (!Globals.dump_lemmas) then 
+    Lem_store.all_lemma # dump
+  else ()
+
 let _ = 
   if not(!Globals.do_infer_inc) then old_main ()
   else
@@ -745,7 +751,8 @@ let _ =
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
           print_string ("\nError4(s) detected at main \n");
         end
-    done
+    done;
+    hip_epilogue ()
 
 
   

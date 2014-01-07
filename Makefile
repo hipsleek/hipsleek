@@ -142,3 +142,64 @@ install:
 install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
+
+cmi: clean_cmi all create_cmi
+
+clean_cmi:
+	echo "Temp" > temp.mli
+	rm *.mli
+	rm -r _build
+
+create_cmi:
+	cp _build/*.cmi .
+	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
+	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	ocamlc -i globals.ml > globals.mli
+	ocamlc -i auxnorm.ml > auxnorm.mli
+	ocamlc -i coq.ml > coq.mli
+	ocamlc -i lem_store.ml > lem_store.mli
+	ocamlc -i cprinter.ml > cprinter.mli
+	ocamlc -i cpure.ml > cpure.mli
+	ocamlc -i cvc3.ml > cvc3.mli
+	ocamlc -i cvclite.ml > cvclite.mli
+	ocamlc -i debug.ml > debug.mli
+	ocamlc -i dp.ml > dp.mli
+	ocamlc -i error.ml > error.mli
+	ocamlc -i exc.ml > exc.mli
+	ocamlc -i fixcalc.ml > fixcalc.mli
+	ocamlc -i gen.ml > gen.mli
+	ocamlc -i globProver.ml > globProver.mli
+	ocamlc -i iformula.ml > iformula.mli
+	ocamlc -i infinity.ml > infinity.mli
+	ocamlc -i inliner.ml > inliner.mli
+	ocamlc -i iprinter.ml > iprinter.mli
+	ocamlc -i ipure_D.ml > ipure_D.mli
+	ocamlc -i ipure.ml > ipure.mli
+	ocamlc -i isabelle.ml > isabelle.mli
+	ocamlc -i java.ml > java.mli
+	ocamlc -i label_aggr.ml > label_aggr.mli
+	ocamlc -i label.ml > label.mli
+	ocamlc -i label_only.ml > label_only.mli
+	ocamlc -i lem_store.ml > lem_store.mli
+	ocamlc -i mathematica.ml > mathematica.mli
+	ocamlc -i mcpure_D.ml > mcpure_D.mli
+	ocamlc -i mcpure.ml > mcpure.mli
+	ocamlc -i machdep.ml > machdep.mli
+	ocamlc -i mona.ml > mona.mli
+	ocamlc -i net.ml > net.mli
+	ocamlc -i omega.ml > omega.mli
+	ocamlc -i others.ml > others.mli
+	ocamlc -i perm.ml > perm.mli
+	ocamlc -i procutils.ml > procutils.mli
+	ocamlc -i redlog.ml > redlog.mli
+	ocamlc -i setmona.ml > setmona.mli
+	ocamlc -i share_prover.ml > share_prover.mli
+	ocamlc -i share_prover_w.ml > share_prover_w.mli
+	ocamlc -i slicing.ml > slicing.mli
+	ocamlc -i smtsolver.ml > smtsolver.mli
+	ocamlc -i spass.ml > spass.mli
+	ocamlc -i timelog.ml > timelog.mli
+	ocamlc -i tpdispatcher.ml > tpdispatcher.mli
+	ocamlc -i tree_shares.ml > tree_shares.mli
+	ocamlc -i wrapper.ml > wrapper.mli
+	rm *.cmi

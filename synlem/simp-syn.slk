@@ -1,0 +1,36 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self=null
+     or self::node<_, q> * q::ll<>
+inv true.
+
+
+pred ll1<> == self=null
+     or self::node<_, q> * q::ll1<>
+inv true.
+
+
+//lemma_unsafe self::ll1<> -> self::ll<>.
+
+//1a
+checkentail x::ll1<> |- x::ll<>.
+print residue.
+
+
+//1a1
+checkentail x::ll1<> & y=x|- y::ll<>.
+print residue.
+
+
+//1b
+checkentail x::ll<> |- x::ll1<>.
+print residue.
+
+
+//2a
+checkentail x::node<_, q> * q::ll1<> |- x::ll<>.
+print residue.
+

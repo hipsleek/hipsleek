@@ -516,6 +516,16 @@ let bool_type = Bool
 let bag_type = BagT Int
 
 (* utility functions *)
+let iprog = ref (None: prog_decl option)
+
+let set_iprog ip=
+  let _ = iprog := (Some ip) in
+  ()
+
+let get_iprog ()=
+  match !iprog with
+    | Some ip -> ip
+    | None -> raise Not_found
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
