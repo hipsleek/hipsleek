@@ -345,6 +345,13 @@ let main () =
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
+
+let sleek_epilogue () =
+  (* ------------------ lemma dumping ------------------ *)
+  if (!Globals.dump_lemmas) then 
+    Lem_store.all_lemma # dump
+  else ()
+
 let sleek_proof_log_Z3 src_files =
   (* let _ = Log.process_proof_logging src_files in   *)
   if !Globals.proof_logging || !Globals.proof_logging_txt   then 
@@ -392,6 +399,7 @@ let _ =
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
+    sleek_epilogue ();
     (* Get the total proof time *)
     let _ = if not(!Globals.no_cache_formula) then
       begin

@@ -111,13 +111,14 @@ object (self)
 
   method dump_left =
     let lems = left_lem # reverse_of in
-    print_endline ("Left Lemmas:"^(pr_list !lem_pr lems))
+    print_endline ("\n===========\nLEFT LEMMAS\n===========\n"^(pr_list !lem_pr lems))
 
   method dump_right =
     let lems = right_lem # reverse_of in
-    print_endline ("Right Lemmas:"^(pr_list !lem_pr lems))
+    print_endline ("\n============\nRIGHT LEMMAS\n============\n"^(pr_list !lem_pr lems))
 
   method dump =
+    print_endline "\nLemma store dump:";
     self # dump_left;
     self # dump_right;
     print_endline ""
