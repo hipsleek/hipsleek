@@ -199,10 +199,12 @@ Could it be due to the way complex lemmas are being
 handled. Can we use a single way for consistency.
 
 =================================================================
-lemma syn:
+lemma syn: --lem-en-syn
 
-1. simp-syn.slk (--lem-en-syn)
-
+1. simp-syn.slk: OK
+2. lseg-syn(1|2).slk
+3. ls-syn.slk
+4. lseg-s-syn.slk
 
 =================================================================
 =================================================================

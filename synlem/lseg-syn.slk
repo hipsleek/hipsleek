@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+
+lemma_safe "one" self::node<_,p1>*p1::lseg<p> -> self::lseg<p>.
+
+
+lemma_safe "two" self::lseg<p1>*p1::lseg<p> <-> self::lseg<p>.
+
+lemma_safe "three" self::lseg<p> <->  self::lseg<p1>*p1::lseg<p>.
+
+
+ checkentail self::lseg<p>@M |- p=self.
