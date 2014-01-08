@@ -1248,8 +1248,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                       (* WN_2_Loc: clear c1 of inferred info first *)
                                       let pr2 = Cprinter.string_of_struc_formula in
                                       let c1a = CF.clear_infer_from_context c1 in
-                                      let _ = DD.binfo_hprint (add_str "c1(before clear)" pr2) c1 no_pos in
-                                      let _ = DD.binfo_hprint (add_str "c1(after clear)" pr2) c1a no_pos in
+                                      let _ = DD.info_hprint (add_str "c1(before clear)" pr2) c1 no_pos in
+                                      let _ = DD.info_hprint (add_str "c1(after clear)" pr2) c1a no_pos in
                                       c1a
                                 | Some _ -> c1
                               in
