@@ -2843,11 +2843,41 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_a prog coer) coer
 
 (* let pr x = "?" in *)
 (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
 (* Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
+
+and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
+      ((C.coercion_decl list) * (C.coercion_decl list)) =
+  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars ==[] then
+    (* complex_lhs <- rhs       ==> rhs    -> complex_lhs *)
+    (* complex_lhs <-> simple   ==> simple <-> complex_lhs *)
+    let  coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
+    let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
+    if coercion_lhs_type == Complex then 
+      if coer.I.coercion_type == I.Right then
+        let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
+        let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
+            I.coercion_body = coer.I.coercion_head;
+            I.coercion_type = I.Left} in
+        trans_one_coercion_x prog new_coer
+      else if (coer.I.coercion_type == I.Equiv) then 
+        let _ = Debug.info_pprint "WARNING : split equiv lemma into two -> lemmas " no_pos in
+        let new_coer1 = {coer with I.coercion_head = coer.I.coercion_head;
+            I.coercion_body = coer.I.coercion_body;
+            I.coercion_type = I.Left} in
+        let new_coer2 = {coer with I.coercion_head = coer.I.coercion_body;
+            I.coercion_body = coer.I.coercion_head;
+            I.coercion_type = I.Left} in
+        let (cdl11, cdl12) = trans_one_coercion_x prog new_coer1 in
+        let (cdl21, cdl22) = trans_one_coercion_x prog new_coer2 in
+        (cdl11@cdl21, cdl12@cdl22)
+      else trans_one_coercion_x prog coer
+    else trans_one_coercion_x prog coer
+  else trans_one_coercion_x prog coer
+
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -2860,22 +2890,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let _ = Debug.tinfo_hprint (add_str "coer_type" Cprinter.string_of_coercion_type) coer_type no_pos in
   let _ = Debug.tinfo_hprint (add_str "i_lhs" Iprinter.string_of_formula) i_lhs no_pos in
   let _ = Debug.tinfo_hprint (add_str "i_rhs" Iprinter.string_of_formula) i_rhs no_pos in
-  (* complex_lhs <- rhs       ==> rhs    -> complex_lhs *)
-  (* complex_lhs <-> simple   ==> simple <-> complex_lhs *)
-  let orig = (coercion_lhs_type,coer_type,i_lhs,i_rhs) in
-  let (coercion_lhs_type,coer_type,i_lhs,i_rhs) =
-    if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars ==[] then
-      if coercion_lhs_type == Complex then 
-        if coer_type == I.Right then
-          let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
-          (coercion_rhs_type,I.Left,i_rhs,i_lhs)
-        else if (coer_type == I.Equiv && coercion_rhs_type == Simple) then 
-          let _ = Debug.info_pprint "WARNING : swapping equiv lemma lhs/rhs " no_pos in
-          (coercion_rhs_type,coer_type,i_rhs,i_lhs)
-        else orig
-      else orig
-    else orig
-  in
   let n_tl = gather_type_info_formula prog i_lhs (* coer.I.coercion_head *) [] false in
   let n_tl = gather_type_info_formula prog i_rhs (* coer.I.coercion_body *) n_tl false in
   let (n_tl,c_lhs) = trans_formula prog false [ self ] false i_lhs (* coer.I.coercion_head *) n_tl false in
@@ -3042,24 +3056,13 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | I.Equiv -> 
                 let c_coer = {c_coer with 
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
-                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false;
-                    C.coercion_type = I.Left;
-                    }
+                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
                 in
                 if coercion_lhs_type==Complex && !Globals.allow_lemma_switch then
                   begin
-                    let _ = Debug.info_pprint "WARNING : changing <-> lemma to two -> lemmas " no_pos in
                     (* complex_lhs <-> complex_rhs       
                        ==> [complex_lhs -> complex_rhs; complex_rhs  -> complex_lhs],[] *)
-                     let c_coer1 = {c_coer with 
-                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_body true;
-                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_head false;
-                        (* C.coercion_head_view = c_coer.C.coercion_body_view; *)
-                        (* C.coercion_body_view = c_coer.C.coercion_head_view; *)
-                        C.coercion_type = I.Left
-                     }
-                    in
-                    ([ c_coer;], [c_coer1]) 
+                    ([ {c_coer with C.coercion_type = I.Left} ], []) 
                   end
                 else
                   begin

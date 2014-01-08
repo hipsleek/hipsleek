@@ -356,8 +356,8 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
     | None -> (true, None)
     | Some coerc ->
         let check_coerc = (match coerc.C.coercion_type with
-          | I.Left -> let _ = print_endline ("Left") in check_left_coercion
-          | I.Right -> let _ = print_endline ("Right") in check_right_coercion
+          | I.Left -> check_left_coercion
+          | I.Right -> check_right_coercion
           | _ -> Error.report_error_msg "Expect Left or Right coercion type"
         ) in
         let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
