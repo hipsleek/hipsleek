@@ -14,8 +14,12 @@ module CP = Cpure
 module MCP = Mcpure
 module H  = Hashtbl
 
-
-let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lhs_node lhs_b0 rhs_node rhs_b0 =
+(*
+lem_type = 0: LEFT
+lem_type = 1 :RIGHT
+*)
+let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
+      lhs_node lhs_b0 rhs_node rhs_b0 =
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
     let eqset = CP.EMapSV.build_eset subs in
@@ -57,18 +61,23 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lhs_node lhs_b0 r
     let rf2 = formula_rev_fnc rf1 in
     (*gen lemma*)
     let lemma_name = "cyc" in
-    let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2 in
+    let l_coer = if lem_type = 0 then
+      I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2
+    else I.mk_lemma (fresh_any_name lemma_name) I.Right [] rf2 lf2
+    in
     (*add lemma*)
     let iprog = I.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
-    let _ = print_endline (" gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ " -> "
+    let _ = print_endline (" \n gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ " -> "
     ^ (Cprinter.string_of_formula rf1)) in
     ()
   with _ -> ()
 
-let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lhs_node lhsb rhs_node rhsb =
+let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
+      lhs_node lhsb rhs_node rhsb =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_h_formula in
   Debug.no_4 "LEMSYN.gen_lemma" pr2 pr1 pr2 pr1 pr_none
-      (fun _ _ _ _ -> gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lhs_node lhsb rhs_node rhsb)
+      (fun _ _ _ _ -> gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
+          lhs_node lhsb rhs_node rhsb)
       lhs_node lhsb rhs_node rhsb

@@ -11579,7 +11579,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-            Context.match_res_holes = holes;} as m_res, unfold_num)->
+            Context.match_res_holes = holes;} as m_res, unfold_num, lem_type)->
             Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
@@ -11598,8 +11598,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let orig_rhs_b = if CP.isConstTrue estate.CF.es_conseq_pure_lemma then rhs_b
               else CF.mkAnd_base_pure rhs_b (MCP.mix_of_pure estate.CF.es_conseq_pure_lemma) no_pos
             in
-            let _ = if !Globals.lemma_syn then let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
-              estate lhs_node lhs_b rhs_node orig_rhs_b in () else () in
+            let _ = if !Globals.lemma_syn then
+              let _ = Lemsyn.gen_lemma prog (!rev_trans_formula)
+              (!manage_unsafe_lemmas) estate lem_type lhs_node lhs_b rhs_node orig_rhs_b in
+              ()
+            else ()
+            in
             (*unfold*)
             let n_act = Context.M_unfold (m_res, unfold_num) in
             let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)

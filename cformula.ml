@@ -5131,7 +5131,7 @@ let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
   let pr2 = !print_spec_var_list in
   let pr_data_node dn= !print_h_formula (DataNode dn) in
   let pr_view_node dn= !print_h_formula (ViewNode dn) in
-  Debug.no_3 "look_up_reachable_data_node_w_alias" pr1 pr2 string_of_int
+  Debug.no_3 "look_up_reachable_ptrs_w_alias" pr1 pr2 string_of_int
       (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )
              (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
       f roots output_ctr
