@@ -2864,7 +2864,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
             I.coercion_type = I.Left} in
         let cdl_r2l, _ = trans_one_coercion_x prog new_coer_r2l in
         ([], cdl_r2l)
-      else if (coer.I.coercion_type == I.Equiv) then 
+      else if (coer.I.coercion_type == I.Equiv) && (coercion_rhs_type == Simple) then 
         let _ = Debug.info_pprint "WARNING : split equiv lemma into two -> lemmas " no_pos in
         let new_coer_l2r = {coer with I.coercion_head = coer.I.coercion_head;
             I.coercion_body = coer.I.coercion_body;
@@ -3009,9 +3009,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let sv = CP.SpecVar (UNK,self,Unprimed) in
   let xx = find_trans_view_name c_rhs sv no_pos in
   let rhs_name =
-    try (List.hd xx)
-      (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
-    with | _ -> "" in
+    if (List.exists (fun s -> String.compare s lhs_name = 0) xx) then lhs_name
+    else 
+      try (List.hd xx)
+        (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
+      with | _ -> "" in
   if lhs_name = "" then
     Error.report_error
         {
