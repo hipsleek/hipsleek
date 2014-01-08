@@ -1,4 +1,5 @@
-#compute_actions
+compute_actions
+process_action
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
 #case_of_coercion
