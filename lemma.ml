@@ -240,7 +240,7 @@ let verify_one_repo lems cprog =
       match fail_ans with
         | None ->
               (* WN : what to add for 2nd l2r? *)
-              let res = LP.verify_lemma 3 (lst_to_opt l2r) None (lst_to_opt r2l) cprog name typ in 
+              let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
               let chk_for_fail =  if !Globals.disable_failure_explaining then CF.isFailCtx else CF.isFailCtx_gen in
               let res_so_far = res::res_so_far in
               let fail = if chk_for_fail res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None in

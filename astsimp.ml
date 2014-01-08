@@ -3052,14 +3052,14 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     (* complex_lhs <-> complex_rhs       
                        ==> [complex_lhs -> complex_rhs; complex_rhs  -> complex_lhs],[] *)
                      let c_coer1 = {c_coer with 
-                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_body false;
-                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_head true;
-                        C.coercion_head_view = c_coer.C.coercion_body_view;
-                        C.coercion_body_view = c_coer.C.coercion_head_view;
+                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_body true;
+                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_head false;
+                        (* C.coercion_head_view = c_coer.C.coercion_body_view; *)
+                        (* C.coercion_body_view = c_coer.C.coercion_head_view; *)
                         C.coercion_type = I.Left
                      }
                     in
-                    ([ c_coer; c_coer1  ], []) 
+                    ([ c_coer;], [c_coer1]) 
                   end
                 else
                   begin
@@ -3067,7 +3067,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                         C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
                         C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
                     in
-                    ([ c_coer ], [change_univ c_coer1]) (*??? try*)
+                    ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
                   end
           | I.Right -> 
                 let c_coer = {c_coer with 
