@@ -343,13 +343,15 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
    coerc_name: lemma name
    coerc_type: lemma type (Right, Left or Equiv)
 *)
-let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
+let verify_lemma (l2r: C.coercion_decl option) (l2r2: C.coercion_decl option)  (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
   (* if true (\* !Globals.check_coercions *\) then *)
   let helper coercs check_coerc = match coercs with
     | None -> (true, None)
     | Some coerc -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
   in
   let valid_l2r, rs_l2r = helper l2r (check_left_coercion) in
+  let valid_l2r2, rs_l2r2 = helper l2r2 (check_left_coercion) in
+  (* Trung : need to change below .. *)
   let valid_r2l, rs_r2l = helper r2l (check_right_coercion) in
   let num_id = "\nEntailing lemma "^ lemma_name ^"" in
   let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "empty residue" Globals.lemma_error)) in
@@ -376,17 +378,17 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
   residues
   (* else None *)
 
-let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)
+let verify_lemma (l2r: C.coercion_decl option) l2r2 (r2l: C.coercion_decl option) (cprog: C.prog_decl)
       coerc_name coerc_type  =
   wrap_proving_kind PK_Verify_Lemma
-      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
+      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) l2r2 (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
 
-let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
+let verify_lemma caller (l2r: C.coercion_decl option) l2r2 (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr c = match c with 
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in
-  Debug.no_3_num caller "verify_lemma" pr pr (fun x -> x) (Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+  Debug.no_3_num caller "verify_lemma" pr pr (fun x -> x) (Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r l2r2 r2l cprog coerc_name coerc_type) l2r r2l coerc_name
 
 
 (* check the validity of the lemma where:

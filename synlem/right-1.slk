@@ -18,17 +18,18 @@ checkentail self::rlseg<p1>* p1::node<_,p> |- self::node<_,q>*q::rlseg<p> .
 ============
 RIGHT LEMMAS
 ============
-[Lemma "xx":  self::rlseg<p1>@M * p1::node<_,p>@M&{FLOW,(21,22)=__norm}[]<== (exists p1_36,_: self::rlseg<p1_36>@M * p1_36::node<_,p>@M&
+[Lemma "xx":  self::node<_,q>@M * q::rlseg<p>@M&{FLOW,(21,22)=__norm}[]<== (exists p1_38,_: self::rlseg<p1_38>@M * p1_38::node<_,p>@M&
 {FLOW,(21,22)=__norm})[]
- head match:rlseg
+ head match:node
  body view:rlseg
  coercion_univ_vars: []
  materialized vars:  []
  coercion_case: Complex
- head_norm:  (exists p_33,_,q: self::node<_,q>@M * q::rlseg<p_33>@M&p=p_33&
+ head_norm:  (exists p_35,_,q: self::node<_,q>@M * q::rlseg<p_35>@M&p=p_35&
 {FLOW,(1,24)=__flow})[]
- body_norm:  EBase exists (Expl)[](Impl)[p1](ex)[](exists p_30,_: self::rlseg<p1>@M * 
-       p1::node<_,p_30>@M&p=p_30&{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[p1](ex)[](exists p_32,_: self::rlseg
+<p1>@M * 
+       p1::node<_,p_32>@M&p=p_32&{FLOW,(1,24)=__flow})[]
  coercion_univ_vars: []
  coercion_case: Complex
 ]

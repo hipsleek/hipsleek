@@ -242,9 +242,13 @@ rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
 
 solution: es_conseq_pure_lemma to keep
 =================================================================
+# equiv-1.slk and equiv-2.slk --lem-en-switch
 # bug-lemma_check01.slk
 
+should generate two left lemmas 
 
+=================================================================
+# bug-lemma_check01.slk
 lost n=b+a in body
 
 trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]<== (exists r_61,a,b: self::lseg<a,r_61>@M * r_61::lseg<b,p>@M&n=b+a & 0<=a & 
@@ -266,6 +270,10 @@ trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[
 
 
 =================================================================
+# equiv-1.slk
+
+Did we manage to prove two --> lemmas from <-> ?
+
 =================================================================
 =================================================================
 =================================================================

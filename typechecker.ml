@@ -3130,7 +3130,8 @@ let check_coercion (prog : prog_decl) =
        in
        (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
        (* let _ =  if !Globals.check_coercions then *)
-         let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
+       (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
+         let _ = LP.verify_lemma 1 l2r None r2l prog coerc_name coerc_type in ()
        (* else () *)
        (* in *)
        (* () *)

@@ -388,12 +388,13 @@ let process_lemma ldef =
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
   let get_coercion c_lst = match c_lst with
-    | [c] -> Some c
-    | _ -> None in
-  let l2r = get_coercion l2r in
-  let r2l = get_coercion r2l in
+    | [c] -> Some c,None
+    | c::c2::_ -> Some c,Some c2
+    | [] -> None,None in
+  let l2r,l2r2 = get_coercion l2r in
+  let r2l,_ = get_coercion r2l in
   (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
-  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = LP.verify_lemma 2 l2r l2r2 r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)

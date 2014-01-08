@@ -3042,13 +3042,24 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | I.Equiv -> 
                 let c_coer = {c_coer with 
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
-                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
+                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false;
+                    C.coercion_type = I.Left;
+                    }
                 in
                 if coercion_lhs_type==Complex && !Globals.allow_lemma_switch then
                   begin
+                    let _ = Debug.info_pprint "WARNING : changing <-> lemma to two -> lemmas " no_pos in
                     (* complex_lhs <-> complex_rhs       
                        ==> [complex_lhs -> complex_rhs; complex_rhs  -> complex_lhs],[] *)
-                    ([ {c_coer with C.coercion_type = I.Left} ], []) 
+                     let c_coer1 = {c_coer with 
+                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_body false;
+                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_head true;
+                        C.coercion_head_view = c_coer.C.coercion_body_view;
+                        C.coercion_body_view = c_coer.C.coercion_head_view;
+                        C.coercion_type = I.Left
+                     }
+                    in
+                    ([ c_coer; c_coer1  ], []) 
                   end
                 else
                   begin
@@ -3056,7 +3067,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                         C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
                         C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
                     in
-                    ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
+                    ([ c_coer ], [change_univ c_coer1]) (*??? try*)
                   end
           | I.Right -> 
                 let c_coer = {c_coer with 
