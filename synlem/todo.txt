@@ -242,6 +242,29 @@ rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
 
 solution: es_conseq_pure_lemma to keep
 =================================================================
+# bug-lemma_check01.slk
+
+
+lost n=b+a in body
+
+trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]<== (exists r_61,a,b: self::lseg<a,r_61>@M * r_61::lseg<b,p>@M&n=b+a & 0<=a & 
+0<=b&{FLOW,(21,22)=__norm})[]
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head_norm:  (exists n_55,p_56: self::lseg<n_55,p_56>@M&n=n_55 & p=p_56&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[r](ex)[](exists a_46,b_47,
+       p_48: self::lseg<a_46,r>@M * r::lseg<b_47,p_48>@M&a=a_46 & b=b_47 & 
+       p=p_48&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
+
+
+
 =================================================================
 =================================================================
 =================================================================
