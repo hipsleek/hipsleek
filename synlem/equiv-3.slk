@@ -16,15 +16,15 @@ lemma_safe "xx2"
 
 lemma_safe "yy"
     self::node<_,q>*q::rlseg<p> ->  self::rlseg<p1>* p1::node<_,p>.
-// fail
+ /* fail. */
 
 lemma_safe "yy2" 
     self::rlseg<p1>* p1::node<_,p> <-  self::node<_,q>*q::rlseg<p>.
 
 lemma_safe "zz1" 
-    self::rlseg<p1>* p1::node<_,p> <->  self::node<_,q>*q::rlseg<p>.
-// fail <-
+    self::rlseg<p1>* p1::node<_,p> <-  self::node<_,q>*q::rlseg<p>.
+ /* fail <-. */
 
 lemma_safe "zz2" 
     self::node<_,q>*q::rlseg<p> <->  self::rlseg<p1>* p1::node<_,p>.
-// fail ->
+ /* fail -> */

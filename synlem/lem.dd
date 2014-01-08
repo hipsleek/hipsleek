@@ -4,7 +4,8 @@ process_action
 #cnv_ptr_to_int,Loop
 #case_of_coercion
 #set_lhs_case
-#trans_one_coercion,Trace
+trans_one_coercion,Trace
+verify_lemma
 #type_of_formula
 process_coercion_check
 #,Trace
