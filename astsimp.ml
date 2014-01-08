@@ -2852,9 +2852,33 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
-  let n_tl = gather_type_info_formula prog coer.I.coercion_head [] false in
-  let n_tl = gather_type_info_formula prog coer.I.coercion_body n_tl false in
-  let (n_tl,c_lhs) = trans_formula prog false [ self ] false coer.I.coercion_head n_tl false in
+  let i_rhs = coer.I.coercion_body in
+  let i_lhs = coer.I.coercion_head in
+  let  coercion_lhs_type = (IF.type_of_formula i_lhs) in
+  let  coercion_rhs_type = (IF.type_of_formula i_rhs) in
+  let coer_type = coer.I.coercion_type in
+  let _ = Debug.tinfo_hprint (add_str "coer_type" Cprinter.string_of_coercion_type) coer_type no_pos in
+  let _ = Debug.tinfo_hprint (add_str "i_lhs" Iprinter.string_of_formula) i_lhs no_pos in
+  let _ = Debug.tinfo_hprint (add_str "i_rhs" Iprinter.string_of_formula) i_rhs no_pos in
+  (* complex_lhs <- rhs       ==> rhs    -> complex_lhs *)
+  (* complex_lhs <-> simple   ==> simple <-> complex_lhs *)
+  let orig = (coercion_lhs_type,coer_type,i_lhs,i_rhs) in
+  let (coercion_lhs_type,coer_type,i_lhs,i_rhs) =
+    if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars ==[] then
+      if coercion_lhs_type == Complex then 
+        if coer_type == I.Right then
+          let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
+          (coercion_rhs_type,I.Left,i_rhs,i_lhs)
+        else if (coer_type == I.Equiv && coercion_rhs_type == Simple) then 
+          let _ = Debug.info_pprint "WARNING : swapping equiv lemma lhs/rhs " no_pos in
+          (coercion_rhs_type,coer_type,i_rhs,i_lhs)
+        else orig
+      else orig
+    else orig
+  in
+  let n_tl = gather_type_info_formula prog i_lhs (* coer.I.coercion_head *) [] false in
+  let n_tl = gather_type_info_formula prog i_rhs (* coer.I.coercion_body *) n_tl false in
+  let (n_tl,c_lhs) = trans_formula prog false [ self ] false i_lhs (* coer.I.coercion_head *) n_tl false in
   (*translate TrueFlow to NormalFlow*)
   let c_lhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int  c_lhs in
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
@@ -2869,29 +2893,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let univ_vars = compute_univ () in
   let _ = Debug.tinfo_hprint (add_str "univ_vars" Cprinter.string_of_spec_var_list) univ_vars no_pos in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
-  let (n_tl,c_rhs) = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body n_tl false in
+  let (n_tl,c_rhs) = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false i_rhs (* coer.I.coercion_body *) n_tl false in
   (*translate TrueFlow to NormalFlow*)
   let c_rhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int c_rhs in
-  let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
-  let  coercion_rhs_type = (CF.type_of_formula c_rhs) in
-  let coer_type = coer.I.coercion_type in
-  let _ = Debug.info_hprint (add_str "coer_type" Cprinter.string_of_coercion_type) coer_type no_pos in
-  let _ = Debug.info_hprint (add_str "c_lhs" Cprinter.string_of_formula) c_lhs no_pos in
-  let _ = Debug.info_hprint (add_str "c_rhs" Cprinter.string_of_formula) c_rhs no_pos in
-  (* complex_lhs <- rhs       ==> rhs    -> complex_lhs *)
-  (* complex_lhs <-> simple   ==> simple <-> complex_lhs *)
-  let _ = 
-  (* let (coer_type,c_lhs,r_rhs) =  *)
-    if coercion_lhs_type == CF.Complex then 
-      if coer_type == I.Right then
-        let _ = Debug.info_pprint "WARNING : changing lemma <- to -> " no_pos in
-        (I.Left,c_rhs,c_lhs)
-      else if (coer_type == I.Equiv && coercion_rhs_type == CF.Simple) then 
-        let _ = Debug.info_pprint "WARNING : swapping equiv lemma lhs/rhs " no_pos in
-        (coer_type,c_rhs,c_lhs)
-      else (coer_type,c_lhs,c_rhs)
-    else (coer_type,c_lhs,c_rhs)
-  in
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
   let lhs_heap ,_,_, _,_  = CF.split_components c_lhs in
@@ -2925,7 +2929,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     first node*)
   let c_rhs = 
     match (coercion_lhs_type) with
-      | CF.Simple ->
+      | Simple ->
             if (Perm.allow_perm ()) then
               let rec helper f = 
                 match f with
@@ -2952,19 +2956,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
               else c_rhs
             else
               CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] false
-      | CF.Complex -> c_rhs
+      | Complex -> c_rhs
   in
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
   let p = List.map (fun c-> (c,Primed)) lhs_fnames0 in
   (* let unfold_body = unfold_self prog coer.I.coercion_body in *)
-  let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula coer.I.coercion_body) false 
+  let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula i_rhs (* coer.I.coercion_body *)) false 
     false (*allow_post_vars*) true [] in
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
-  let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
+  let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 [] no_pos in
@@ -2985,7 +2989,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (Gen.BList.difference_eq CP.eq_spec_var (CF.fv c_rhs) hrels)) in 
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
-  let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
+  let lhs_name = find_view_name c_lhs self (IF.pos_of_formula i_lhs (* coer.I.coercion_head *)) in
   let sv = CP.SpecVar (UNK,self,Unprimed) in
   let xx = find_trans_view_name c_rhs sv no_pos in
   let rhs_name =
@@ -2995,7 +2999,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   if lhs_name = "" then
     Error.report_error
         {
-            Err.error_loc = IF.pos_of_formula coer.I.coercion_head;
+            Err.error_loc = IF.pos_of_formula i_lhs (* coer.I.coercion_head *);
             Err.error_text = "root pointer of node on LHS must be self";
         }
   else
@@ -3004,7 +3008,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let m_vars = find_materialized_prop args [] c_rhs in
         let c_coer ={ C.coercion_type = coer_type;
 	C.coercion_exact= coer.I.coercion_exact;
-        C.coercion_name = coer.I.coercion_name;
+        C.coercion_name = coer.I.coercion_name ;
         C.coercion_head = c_lhs;
         C.coercion_head_norm = c_head_norm;
         C.coercion_body = c_rhs;
@@ -3028,7 +3032,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_univ_vars = [];} in
-        match coer.I.coercion_type with
+        match coer_type with
           | I.Left -> 
                 let c_coer = {c_coer with 
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true;
@@ -3040,11 +3044,20 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
                     C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
                 in
-                let c_coer1 = {c_coer with 
-                    C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
-                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
-                in
-                ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
+                if coercion_lhs_type==Complex && !Globals.allow_lemma_switch then
+                  begin
+                    (* complex_lhs <-> complex_rhs       
+                       ==> [complex_lhs -> complex_rhs; complex_rhs  -> complex_lhs],[] *)
+                    ([ {c_coer with C.coercion_type = I.Left} ], []) 
+                  end
+                else
+                  begin
+                     let c_coer1 = {c_coer with 
+                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
+                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
+                    in
+                    ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
+                  end
           | I.Right -> 
                 let c_coer = {c_coer with 
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;

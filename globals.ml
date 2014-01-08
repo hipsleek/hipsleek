@@ -8,6 +8,10 @@ let total_entailments = ref 0
 
 let debug_precise_trace = ref false
 
+type formula_type =
+  | Simple
+  | Complex
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -689,6 +693,7 @@ let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
+let allow_lemma_switch = ref true
 
 let dis_show_diff = ref false
 

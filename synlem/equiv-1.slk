@@ -9,7 +9,7 @@ pred rlseg<p:node> ==
 .
 
 lemma_unsafe "xx" 
-   self::node<_,q>*q::rlseg<p>  <- self::rlseg<p1>* p1::node<_,p> 
+   self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,p> 
 .
 // wrong if we use <- for complex lemma
 checkentail self::rlseg<p1>* p1::node<_,p> |- self::node<_,q>*q::rlseg<p> .

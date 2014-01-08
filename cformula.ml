@@ -56,10 +56,10 @@ and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_guards : CP.formula list; 
 }
 
-and formula_type =
-  | Simple
-  | Complex
-(*later, type of formula, based on #nodes ....*)
+(* and formula_type = *)
+(*   | Simple *)
+(*   | Complex *)
+(* (\*later, type of formula, based on #nodes ....*\) *)
 
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
@@ -2061,7 +2061,7 @@ and add_struc_original original (f : struc_formula) = match f with
 	  (*| EVariance b -> EVariance {b with formula_var_continuation = ext_f b.formula_var_continuation}*)
    | EInfer b -> EInfer {b with formula_inf_continuation = add_struc_original original b.formula_inf_continuation}
 
-and set_lhs_case (f : formula) flag = 
+and set_lhs_case_x (f : formula) flag = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
@@ -2072,6 +2072,10 @@ and set_lhs_case (f : formula) flag =
     | Base b -> Base ({b with formula_base_heap = h_set_lhs_case b.formula_base_heap flag})
     | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
   in helper f
+
+and set_lhs_case (f : formula) flag = 
+  let pr = !print_formula in
+  Debug.no_2 "set_lhs_case" pr string_of_bool pr set_lhs_case_x f flag
 
 and set_lhs_case_of_a_view (f : formula) (v_name:ident) flag : formula = 
   let rec helper f = match f with
@@ -10453,7 +10457,7 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   join_star_conjunctions_opt_x hs
 
 
-let split_star_conjunctions_x (f:h_formula): (h_formula list) =
+let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
@@ -10473,7 +10477,7 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
   in
   Debug.no_1 "split_star_conjunctions" !print_h_formula pr
-  split_star_conjunctions_x f
+  split_star_conjunctions f
 
 let type_of_formula (f: formula) : formula_type =
   if (isAnyConstFalse f) then Simple
