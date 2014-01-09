@@ -376,7 +376,7 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
             let typ1_str = Cprinter.string_of_coercion_type typ1 in
             let typ2_str = Cprinter.string_of_coercion_type typ2 in
             let _ = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
-            let _ = print_lemma_entail_result valid1 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
+            let _ = print_lemma_entail_result valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
             ()
         ) in
         residue
