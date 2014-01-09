@@ -320,21 +320,23 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
-  if valid then 
-    let _ = print_string (num_id ^ ": Valid.\n") in ()
-    (* print_string ((Cprinter.string_of_numbered_list_formula_trace_inst cprog *)
-    (*     (CF.list_formula_trace_of_list_context ctx))^"\n" )  *)
-  else let s = 
-    if !Globals.disable_failure_explaining then ""
-    else
-      match CF.get_must_failure ctx with
-        | Some s -> "(must) cause: " ^ s 
-        | _ -> (match CF.get_may_failure ctx with
-            | Some s -> "(may) cause: " ^ s
-            | None -> "INCONSISTENCY : expected failure but success instead"
-          )
-  in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
+let print_lemma_entail_result (valid: bool option) (ctx: CF.list_context) (num_id: string) =
+  match valid with
+  | None ->
+      print_string (num_id ^ ": Lemma not found!\n")
+  | Some true ->
+      print_string (num_id ^ ": Valid.\n")
+  | Some false ->
+      let s = 
+      if !Globals.disable_failure_explaining then ""
+      else
+        match CF.get_must_failure ctx with
+          | Some s -> "(must) cause: " ^ s 
+          | _ -> (match CF.get_may_failure ctx with
+              | Some s -> "(may) cause: " ^ s
+              | None -> "INCONSISTENCY : expected failure but success instead"
+            )
+      in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
 
 (* check the validity of the lemma where:
    l2r: "->" implication
@@ -344,23 +346,15 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
    coerc_type: lemma type (Right, Left or Equiv)
 *)
 let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
-  (* if true (\* !Globals.check_coercions *\) then *)
-  (* let helper coercs check_coerc = match coercs with                               *)
-  (*   | None -> (true, None)                                                        *)
-  (*   | Some coerc -> let (valid, rs) = check_coerc coerc cprog in (valid, Some rs) *)
-  (* in                                                                              *)
-  (* let valid_l2r, rs_l2r = helper l2r (check_left_coercion) in                     *)
-  (* (* Trung : need to change below .. *)                                           *)
-  (* let valid_r2l, rs_r2l = helper r2l (check_right_coercion) in                    *)
   let helper coercs = match coercs with
-    | None -> (true, None)
+    | None -> (None, None)
     | Some coerc ->
         let check_coerc = (match coerc.C.coercion_type with
           | I.Left -> check_left_coercion
           | I.Right -> check_right_coercion
           | _ -> Error.report_error_msg "Expect Left or Right coercion type"
         ) in
-        let (valid, rs) = check_coerc coerc cprog in (valid, Some rs)
+        let (valid, rs) = check_coerc coerc cprog in (Some valid, Some rs)
   in
   let valid_l2r, rs_l2r = helper l2r in
   let valid_r2l, rs_r2l = helper r2l in
@@ -374,8 +368,12 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
   let residues = match lemma_type with
     | I.Equiv -> 
           let residue = CF.and_list_context rs1 rs2 in
-          let valid = valid_l2r && valid_r2l in
-          let _ = if valid then print_lemma_entail_result valid residue num_id 
+          let valid = (match valid_l2r, valid_r2l with
+            | None, _ -> false
+            | _, None -> false
+            | Some v1, Some v2 -> (v1 && v2)
+          ) in
+          let _ = if valid then print_lemma_entail_result (Some valid) residue num_id 
           else 
             let _ = print_string (num_id ^ ": Fail. Details below:\n") in
             let _ = print_lemma_entail_result valid_l2r rs1 "\t \"->\" implication: " in
@@ -395,11 +393,12 @@ let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cp
       ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
 
 let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
+  let pr_t = Iprinter.string_of_coerc_type in
   let pr c = match c with 
     | Some coerc -> Cprinter.string_of_coercion coerc
     | None -> ""
   in
-  Debug.no_3_num caller "verify_lemma" pr pr (fun x -> x) (Cprinter.string_of_list_context) (fun _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name
+  Debug.no_4_num caller "verify_lemma" pr pr (fun x -> x) pr_t (Cprinter.string_of_list_context) (fun _ _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
 
 
 (* check the validity of the lemma where:
