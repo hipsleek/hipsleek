@@ -25,12 +25,12 @@ axiom mark(G,l,Gm) & update(Gm,x,d,l,r,Gmm) & mark(Gmm,r,Gmmm)==> mark(G,x,Gmmm)
 axiom update(G,x,d,l,r,Gm) & mark(Gm,l,Gmm) & mark(Gm,r,Gmmm) ==> mark(G,x,Gmmm).
 
 
-lemma l::dag<Gm> * l::dag<G> -* (l::dag<G> U* r::dag<G>) 
+/*lemma l::dag<Gm> * l::dag<G> -* (l::dag<G> U* r::dag<G>) 
 	& reach(G,l,R) & reach(Gm,l,Rm) & R subset Rm 
 	& notreach(G,l,NR) & notreach(Gm,l,NRm) & NR = NRm
-	-> l::dag<Gm> U* r::dag<Gm>;
+	-> l::dag<Gm> U* r::dag<Gm>;*/
 
-lemma x::node<d,l,r> * l::dag<G> U* r::dag<G> -> x::dag<Gm> & update(G,x,d,l,r,Gm);
+//lemma x::node<d,l,r> * l::dag<G> U* r::dag<G> -> x::dag<Gm> & update(G,x,d,l,r,Gm);
 // lemma self::dag<G> -> self::dag<Gm> & update(G,x,d,l,r,Gm);
 
 void mark(ref node x)
