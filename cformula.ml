@@ -6363,7 +6363,7 @@ let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula
 (*******************************************)
 
 let xpure_for_hnodes hf=
-let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
+  let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   (*currently we just work with data nodes*)
   let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in

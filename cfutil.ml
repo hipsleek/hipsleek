@@ -7,6 +7,7 @@ module CP = Cpure
 module MCP = Mcpure
 module C = Cast
 module I = Iast
+module TP = Tpdispatcher
 
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
@@ -299,6 +300,53 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
       (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
       lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
 
+let check_inconsistency hf mixf=
+  let new_mf = CF.xpure_for_hnodes hf in
+  let cmb_mf = MCP.merge_mems new_mf mixf true in
+  not (TP.is_sat_raw cmb_mf)
+
+let check_inconsistency_f f0 pure_f=
+  let p = MCP.mix_of_pure (CF.get_pure pure_f) in
+  let rec helper f=
+    match f with
+      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap p
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
+        (*may not correct*)
+          check_inconsistency fe.CF.formula_exists_heap p
+  in
+  helper f0
+
+let rec is_unsat_x f0=
+  let rec helper f=
+    match f with
+      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
+        (*may not correct*)
+          check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure
+  in
+  helper f0
+
+and is_unsat f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = string_of_bool in
+  Debug.no_1 "is_unsat" pr1 pr2
+      (fun _ -> is_unsat_x f) f
+
+let check_separation_unsat f0=
+  let rec helper f=
+    match  f with
+      | CF.Base fb -> let hds, hvs, _ (*hvs, hrs*) = CF.get_hp_rel_h_formula fb.CF.formula_base_heap in
+        let d_ptrs = List.map (fun dn -> dn.CF.h_formula_data_node) hds in
+        let v_ptrs = List.map (fun vn -> vn.CF.h_formula_view_node) hvs in
+        CP.intersect_svl d_ptrs v_ptrs != []
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
+      | CF.Exists _ ->
+            let _,base = CF.split_quantifiers f in
+          helper base
+  in
+  helper f0
 
 (*
   res = -1: NO cyclic - not syn lemma
@@ -306,7 +354,7 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   res = 1: syn Right lemma
 *)
 let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
-  if not !Globals.lemma_syn then -1 else
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
     (*check root has unfold information information??*)
     let null_neq_svl = (CF.get_neqNull lhs)@(CF.get_null_svl lhs) in
     if CP.mem_svl lvnode.CF.h_formula_view_node null_neq_svl then -1 else
@@ -334,7 +382,7 @@ let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
       lhs rhs
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
-  if not !Globals.lemma_syn then -1 else
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
     let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [ldnode.CF.h_formula_data_node] 3 in
     let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
     (* let lnlength = List.length l_reach_dns in *)
@@ -352,7 +400,7 @@ let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
       lhs rhs
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
-  if not !Globals.lemma_syn then -1 else
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs)  then -1 else
     let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
     let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rdnode.CF.h_formula_data_node] 3 in
     (* let lnlength = List.length l_reach_dns in *)

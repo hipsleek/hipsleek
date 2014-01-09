@@ -2660,39 +2660,39 @@ let check_com_pre_eq_formula f1 f2=
       (fun _ _ -> check_com_pre_eq_formula_x f1 f2) f1 f2
 
 
-let check_inconsistency hf mixf=
-  let new_mf = CF.xpure_for_hnodes hf in
-  let cmb_mf = MCP.merge_mems new_mf mixf true in
-  not (TP.is_sat_raw cmb_mf)
+let check_inconsistency hf mixf= CFU.check_inconsistency hf mixf
+  (* let new_mf = CF.xpure_for_hnodes hf in *)
+  (* let cmb_mf = MCP.merge_mems new_mf mixf true in *)
+  (* not (TP.is_sat_raw cmb_mf) *)
 
-let check_inconsistency_f f0 pure_f=
-  let p = MCP.mix_of_pure (CF.get_pure pure_f) in
-  let rec helper f=
-    match f with
-      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap p
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
-      | CF.Exists fe ->
-        (*may not correct*)
-          check_inconsistency fe.CF.formula_exists_heap p
-  in
-  helper f0
+let check_inconsistency_f f0 pure_f= CFU.check_inconsistency_f f0 pure_f
+  (* let p = MCP.mix_of_pure (CF.get_pure pure_f) in *)
+  (* let rec helper f= *)
+  (*   match f with *)
+  (*     | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap p *)
+  (*     | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2) *)
+  (*     | CF.Exists fe -> *)
+  (*       (\*may not correct*\) *)
+  (*         check_inconsistency fe.CF.formula_exists_heap p *)
+  (* in *)
+  (* helper f0 *)
 
-let rec is_unsat_x f0=
-  let rec helper f=
-    match f with
-      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2)
-      | CF.Exists fe ->
-        (*may not correct*)
-          check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure
-  in
-  helper f0
+(* let rec is_unsat_x f0= *)
+(*   let rec helper f= *)
+(*     match f with *)
+(*       | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure *)
+(*       | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2) *)
+(*       | CF.Exists fe -> *)
+(*         (\*may not correct*\) *)
+(*           check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure *)
+(*   in *)
+(*   helper f0 *)
 
-and is_unsat f=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = string_of_bool in
-  Debug.no_1 "is_unsat" pr1 pr2
-      (fun _ -> is_unsat_x f) f
+let is_unsat f= CFU.is_unsat f
+  (* let pr1 = Cprinter.prtt_string_of_formula in *)
+  (* let pr2 = string_of_bool in *)
+  (* Debug.no_1 "is_unsat" pr1 pr2 *)
+  (*     (fun _ -> is_unsat_x f) f *)
 
 let check_heap_inconsistency unk_hpargs f0=
   let do_check hf=
