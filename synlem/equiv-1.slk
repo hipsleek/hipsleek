@@ -8,7 +8,7 @@ pred rlseg<p:node> ==
   or self::node<_,q> * q::rlseg<p>
 .
 
-lemma_safe "xx" 
+lemma "xx" 
    self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,p> 
 .
 // wrong if we use <- for complex lemma
