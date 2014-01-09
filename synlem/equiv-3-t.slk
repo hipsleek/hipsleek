@@ -12,6 +12,7 @@ lemma_safe "yy"
     self::node<_,q>*q::rlseg<p> ->  self::rlseg<p1>* p1::node<_,p>.
  /* fail. */
 
+/*
 lemma_safe "yy2" 
     self::rlseg<p1>* p1::node<_,p> <-  self::node<_,q>*q::rlseg<p>.
-
+*/
