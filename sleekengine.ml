@@ -387,13 +387,6 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
-  let get_coercion c_lst = match c_lst with
-    | [] -> None
-    | [c] -> Some c
-    | _ -> report_error no_pos ("get_coercion: expect at most 1 coercion!") in
-  let l2r = get_coercion l2r in
-  let r2l = get_coercion r2l in
-  (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
   let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)

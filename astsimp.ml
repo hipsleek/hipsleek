@@ -2859,27 +2859,27 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
         let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
-        let new_coer_r2l = {coer with I.coercion_head = coer.I.coercion_body;
+        let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
             I.coercion_body = coer.I.coercion_head;
+            I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
             I.coercion_type = I.Left} in
-        let cdl_r2l, _ = trans_one_coercion_x prog new_coer_r2l in
-        ([], cdl_r2l)
+        trans_one_coercion_x prog new_coer
       else if (coer.I.coercion_type == I.Equiv) && (coercion_rhs_type == Simple) then 
         let _ = Debug.info_pprint "WARNING : split equiv lemma into two -> lemmas " no_pos in
-        let new_coer_l2r = {coer with I.coercion_head = coer.I.coercion_head;
+        let new_coer1 = {coer with I.coercion_head = coer.I.coercion_head;
             I.coercion_body = coer.I.coercion_body;
+            I.coercion_type_orig = Some I.Left; (* store origin coercion type *)
             I.coercion_type = I.Left} in
-        let new_coer_r2l = {coer with I.coercion_head = coer.I.coercion_body;
+        let new_coer2 = {coer with I.coercion_head = coer.I.coercion_body;
             I.coercion_body = coer.I.coercion_head;
+            I.coercion_type_orig = Some I.Right; (* store origin coercion type *)
             I.coercion_type = I.Left} in
-        let (cdl_l2r, _) = trans_one_coercion_x prog new_coer_l2r in
-        let (cdl_r2l, _) = trans_one_coercion_x prog new_coer_r2l in
-        (cdl_l2r, cdl_r2l)
+        let (cdl11, cdl12) = trans_one_coercion_x prog new_coer1 in
+        let (cdl21, cdl22) = trans_one_coercion_x prog new_coer2 in
+        (cdl11@cdl21, cdl12@cdl22)
       else trans_one_coercion_x prog coer
     else trans_one_coercion_x prog coer
   else trans_one_coercion_x prog coer
-
-
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -3025,6 +3025,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let args = CF.fv_simple_formula c_lhs in 
         let m_vars = find_materialized_prop args [] c_rhs in
         let c_coer ={ C.coercion_type = coer_type;
+        C.coercion_type_orig = None;
 	C.coercion_exact= coer.I.coercion_exact;
         C.coercion_name = coer.I.coercion_name ;
         C.coercion_head = c_lhs;
@@ -6989,6 +6990,7 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
   { Iast.coercion_type = cd.Iast.coercion_type;
+  Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
   Iast.coercion_exact = cd.Iast.coercion_exact;
   Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
   Iast.coercion_name = cd.Iast.coercion_name;

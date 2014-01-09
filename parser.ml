@@ -2076,7 +2076,8 @@ coercion_decl:
         (* coercion_body = (F.subst_stub_flow n_flow dc2); *)
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
-                     exp_return_pos = get_pos_camlp4 _loc 1 })}]];
+                     exp_return_pos = get_pos_camlp4 _loc 1 });
+        coercion_type_orig = None};]];
 
 coercion_decl_list:
     [[

@@ -211,6 +211,7 @@ and coercion_decl = {
     coercion_mater_vars : mater_property list;
     (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
     coercion_case : coercion_case; (*Simple or Complex*)
+    coercion_type_orig: coercion_type option; 
 }
 
 and coercion_type = Iast.coercion_type

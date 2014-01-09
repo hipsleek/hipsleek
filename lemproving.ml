@@ -319,13 +319,10 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_lemma_entail_result (valid: bool option) (ctx: CF.list_context) (num_id: string) =
+let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
   match valid with
-  | None ->
-      print_string (num_id ^ ": Lemma not found!\n")
-  | Some true ->
-      print_string (num_id ^ ": Valid.\n")
-  | Some false ->
+  | true -> print_string (num_id ^ ": Valid.\n")
+  | false ->
       let s = 
       if !Globals.disable_failure_explaining then ""
       else
@@ -344,59 +341,64 @@ let print_lemma_entail_result (valid: bool option) (ctx: CF.list_context) (num_i
    coerc_name: lemma name
    coerc_type: lemma type (Right, Left or Equiv)
 *)
-let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  lemma_name lemma_type =
-  let helper coercs = match coercs with
-    | None -> (None, None)
-    | Some coerc ->
-        let check_coerc = (match coerc.C.coercion_type with
-          | I.Left -> check_left_coercion
-          | I.Right -> check_right_coercion
-          | _ -> Error.report_error_msg "Expect Left or Right coercion type"
-        ) in
-        let (valid, rs) = check_coerc coerc cprog in (Some valid, Some rs)
-  in
-  let valid_l2r, rs_l2r = helper l2r in
-  let valid_r2l, rs_r2l = helper r2l in
+let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
+  let coercs = l2r @ r2l in
+  let coercs_info = List.map (fun c ->
+    let typ_orig = (match c.C.coercion_type_orig with
+      | None -> c.C.coercion_type
+      | Some t -> t
+    ) in
+    match c.C.coercion_type with
+    | I.Left ->
+        let (valid, rs) = check_left_coercion c cprog in
+        (valid, rs, typ_orig)
+    | I.Right ->
+        let (valid, rs) = check_right_coercion c cprog in
+        (valid, rs, typ_orig)
+    | _ -> Error.report_error_msg "verify_lemma: expect Left or Right coercion type"
+  ) coercs in
   let num_id = "\nEntailing lemma "^ lemma_name ^"" in
-  let empty_resid = CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "empty residue" Globals.lemma_error)) in
-  let (rs1, rs2) = match (rs_l2r, rs_r2l) with
-    | (None, None) -> (empty_resid, empty_resid)
-    | (None, Some rsr) -> (empty_resid, rsr)
-    | (Some rsl, None) -> (rsl, empty_resid)
-    | (Some rsl_, Some rsr_) -> (rsl_, rsr_) in
-  let residues = match lemma_type with
-    | I.Equiv -> 
-          let residue = CF.and_list_context rs1 rs2 in
-          let valid = (match valid_l2r, valid_r2l with
-            | None, _ -> false
-            | _, None -> false
-            | Some v1, Some v2 -> (v1 && v2)
-          ) in
-          let _ = if valid then print_lemma_entail_result (Some valid) residue num_id 
-          else 
+  let residues = (match lemma_type with
+    | I.Equiv -> (
+        let (valid1, rs1, typ1, valid2, rs2, typ2) = (match coercs_info with
+          | c1::c2::[] ->
+              let (valid1, rs1, typ1) = c1 in
+              let (valid2, rs2, typ2) = c2 in
+              (valid1, rs1, typ1, valid2, rs2, typ2)
+          | _ -> Error.report_error_msg "verify_lemma: Eqiv-lemma expects 2 coercions"
+        ) in
+        let residue = CF.and_list_context rs1 rs2 in
+        let valid = valid1 && valid2 in
+        let _ = (
+          if valid then print_lemma_entail_result valid residue num_id
+          else
             let _ = print_string (num_id ^ ": Fail. Details below:\n") in
-            let _ = print_lemma_entail_result valid_l2r rs1 "\t \"->\" implication: " in
-            let _ = print_lemma_entail_result valid_r2l rs2 "\t \"<-\" implication: " in
+            let typ1_str = Cprinter.string_of_coercion_type typ1 in
+            let typ2_str = Cprinter.string_of_coercion_type typ2 in
+            let _ = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
+            let _ = print_lemma_entail_result valid1 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
             ()
-          in
-          residue
-    | I.Left -> let _ = print_lemma_entail_result valid_l2r rs1 num_id  in rs1
-    | I.Right  -> let _ = print_lemma_entail_result valid_r2l rs2 num_id  in rs2
-  in
+        ) in
+        residue
+      )
+   | I.Left | I.Right -> (
+       let valid, rs, typ = (match coercs_info with
+         | c::[] -> c
+         | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 
+       ) in
+       let _ = print_lemma_entail_result valid rs num_id  in rs
+     )
+  ) in
   residues
   (* else None *)
 
-let verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)
+let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)
       coerc_name coerc_type  =
-  wrap_proving_kind PK_Verify_Lemma
-      ((* wrap_classic (Some true) *) (verify_lemma (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl) coerc_name)) coerc_type
+  wrap_proving_kind PK_Verify_Lemma ((verify_lemma l2r r2l cprog coerc_name)) coerc_type
 
-let verify_lemma caller (l2r: C.coercion_decl option) (r2l: C.coercion_decl option) (cprog: C.prog_decl)  coerc_name coerc_type =
+let verify_lemma caller (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr_t = Iprinter.string_of_coerc_type in
-  let pr c = match c with 
-    | Some coerc -> Cprinter.string_of_coercion coerc
-    | None -> ""
-  in
+  let pr = pr_list Cprinter.string_of_coercion in
   Debug.no_4_num caller "verify_lemma" pr pr (fun x -> x) pr_t (Cprinter.string_of_list_context) (fun _ _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
 
 

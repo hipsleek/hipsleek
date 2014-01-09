@@ -3104,8 +3104,8 @@ let check_data iprog (prog : prog_decl) (cdef : data_decl) =
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
     try
-      Some (List.find (fun coerc -> coerc.coercion_name = name) coercs)
-    with _ -> None in
+      [(List.find (fun coerc -> coerc.coercion_name = name) coercs)]
+    with _ -> [] in
 
   (* combine the 2 lists of coercions into one list of lemmas:
      - coercions that have the same name in the left and right list of coercions -> (Some c1,Some c2)
@@ -3114,27 +3114,27 @@ let check_coercion (prog : prog_decl) =
   *)
   let left_coercs  =  Lem_store.all_lemma # get_left_coercion in
   let right_coercs =  Lem_store.all_lemma # get_right_coercion in
-  let lemmas = List.map (fun l2r_coerc -> (Some l2r_coerc, find_coerc right_coercs (*prog.prog_right_coercions*) l2r_coerc.coercion_name) ) left_coercs (*prog.prog_left_coercions*) in
+  let lemmas = List.map (fun l2r_coerc -> ([l2r_coerc], find_coerc right_coercs (*prog.prog_right_coercions*) l2r_coerc.coercion_name) ) left_coercs (*prog.prog_left_coercions*) in
   (* add to lemmas the coercions from prog.prog_right_coercions that do not have a corresponding pair in prog.prog_left_coercions *)
-  let lemmas = lemmas @ List.map (fun r2l_coerc -> (None, Some r2l_coerc))
+  let lemmas = lemmas @ List.map (fun r2l_coerc -> ([], [r2l_coerc]))
     (List.filter 
         (fun r2l_coerc -> List.for_all (fun l2r_coerc -> r2l_coerc.coercion_name <> l2r_coerc.coercion_name) left_coercs (*prog.prog_left_coercions*))
         right_coercs (*prog.prog_right_coercions*)) in
    List.iter (fun (l2r, r2l) -> 
-       let (coerc_type, coerc_name) = 
-       match (l2r, r2l) with
-         | (Some coerc_l2r, None) -> (I.Left, coerc_l2r.coercion_name)
-         | (None, Some coerc_r2l) -> (I.Right, coerc_r2l.coercion_name)
-         | (Some coerc1, Some coerc2) -> (I.Equiv, coerc1.coercion_name)
-         | (None, None) ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma can't be empty"}
-       in
-       (* let ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled no_pos] in *)
-       (* let _ =  if !Globals.check_coercions then *)
-       (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
-       let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
-       (* else () *)
-       (* in *)
-       (* () *)
+     let (coerc_type, coerc_name) =
+       let coercs = l2r @ r2l in
+       match coercs with
+         | [c] -> 
+             let typ = (match c.coercion_type_orig with 
+               | None -> c.coercion_type
+               | Some t -> t
+             ) in
+             (typ, c.coercion_name)
+         | c1::c2::[] -> (I.Equiv, c1.coercion_name)
+         | _ ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma must contain only 1 or 2 coercions."}
+     in
+     (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
+     let _ = LP.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
    ) lemmas
 
 let init_files () =

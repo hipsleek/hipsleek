@@ -12547,16 +12547,12 @@ and find_coercions_x c1 c2 prog anode ln2 =
   let is_not_norm c = match c.coercion_case with | Normalize _ -> false | _ -> true in
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
   let left_co = Lem_store.all_lemma # get_left_coercion in
-  let _ = print_endline ("== left_co length = " ^ (string_of_int (List.length left_co))) in
   let coers1 = look_up_coercion_def_raw left_co (* prog.prog_left_coercions *) c1 in  
   let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && is_not_norm c) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
   let right_co = Lem_store.all_lemma # get_right_coercion in
-  let _ = print_endline ("== right_co length = " ^ (string_of_int (List.length right_co))) in
   let coers2 = look_up_coercion_def_raw (Lem_store.all_lemma # get_right_coercion)(*prog.prog_right_coercions*) c2 in
-  let _ = print_endline ("== coers2 1 length = " ^ (string_of_int (List.length coers2))) in
   let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && is_not_norm c) coers2  in (* keep only non-cyclic coercion rule *)
-  let _ = print_endline ("== coers2 2 length = " ^ (string_of_int (List.length coers2))) in
   let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
   ((coers1,coers2),univ_coers)
