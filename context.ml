@@ -1003,16 +1003,16 @@ and check_lemma_not_exist vl vr=
     let vl_name = vl.h_formula_view_name in
     let vr_name = vr.h_formula_view_name in
 
-    let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+    (* let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in *)
     let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple || c.coercion_case = Complex ) (Lem_store.all_lemma # get_left_coercion)) vl_name vr_name in
     let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple || c.coercion_case = Complex) (Lem_store.all_lemma # get_right_coercion) ) vr_name vl_name in
-    (* let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in *)
-    (* let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in *)
-    (* let b_left = if (not(!ann_derv) || vl_new_orig) then if left_ls = [] then false else true *)
-    (* else false in *)
-    (* let b_right = if (not(!ann_derv) || vr_new_orig) then if right_ls=[] then false else true *)
-    (* else false in *)
-    (* b_left && b_right *)(left_ls@right_ls)=[]
+    let vl_new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+    let vr_new_orig = if !ann_derv then not(vr.h_formula_view_derv) else vr.h_formula_view_original in
+    let b_left = if (not(!ann_derv) || vl_new_orig) then true
+    else false in
+    let b_right = if (not(!ann_derv) || vr_new_orig) then true
+    else false in
+    b_left && b_right &&(left_ls@right_ls)=[]
 
 
 and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_node,rhs_rest): action_wt =
@@ -1175,10 +1175,11 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                               (*cyclic: add lemma_unsafe then unfold lhs*)
                               (*L2: change here for cyclic*)
                               let lst=
-                                if check_lemma_not_exist vl vr then
+                                let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
+                                if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                                   let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                   let uf_i = if new_orig then 0 else 1 in
-                                  [(1,M_cyclic (c,uf_i,0,1, None))(* ;(1,M_unfold (c, uf_i)) *)]
+                                  [(1,M_cyclic (c,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (c, uf_i)) *)]
                                 else
                                   [(1,M_base_case_unfold c) (* ;(1,M_cyclic c) *)]
                               in
@@ -1256,7 +1257,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let a1 = 
                     if is_r_lock then [] else
                       if ((new_orig || vr_self_pts==[]) && sub_ann) then
-                        let _ = Debug.info_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
+                        let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                         let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
                          if (syn_lem_typ != -1) then
                            let acts =
@@ -1317,7 +1318,17 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       if ((new_orig || vl_self_pts==[]) && sub_ann) then 
                       (*then [(1,M_unfold (c,uf_i))] else [] in*)
                         if vl_vdef.view_is_prim then []
-                        else [(1,M_unfold (c,uf_i))] 
+                        else
+                          (*cyclic checkpoint here*)
+                          let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs in
+                          if (syn_lem_typ != -1) then
+                            (*find the first viewnode readable from right datanode*)
+                               let lvs = CF.look_up_reachable_first_reachable_view prog
+                                 rhs [dr.CF.h_formula_data_node] in
+                               if lvs = [] then [(1,M_unfold (c,uf_i))] else
+                                 [(1,M_cyclic( c, uf_i, 0, syn_lem_typ, None))]
+                          else
+                          [(1,M_unfold (c,uf_i))] 
                       else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)

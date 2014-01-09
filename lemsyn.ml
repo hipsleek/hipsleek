@@ -30,8 +30,9 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     | CF.DataNode dl -> dl.CF.h_formula_data_node
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
-  let rview = match rhs_node with
-    |  CF.ViewNode vr -> vr
+  let rr = match rhs_node with
+    |  CF.ViewNode vr -> vr.CF.h_formula_view_node
+    |  CF.DataNode dr -> dr.CF.h_formula_data_node
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
   try
@@ -40,7 +41,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let lselfr = CP.SpecVar (CP.type_of_spec_var lr, self, CP.primed_of_spec_var lr) in
     let lss = [(lr, lselfr)] in
     (*right*)
-    let rr = rview.CF.h_formula_view_node in
+    (* let rr = rview.CF.h_formula_view_node in *)
     let rselfr = CP.SpecVar (CP.type_of_spec_var rr, self, CP.primed_of_spec_var rr) in
     let rss = [(rr, rselfr)] in
     (*TEMP*)

@@ -307,16 +307,25 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
 *)
 let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
   if not !Globals.lemma_syn then -1 else
-    let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
-    let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
-    let lnlength = List.length l_reach_dns in
-    let lvlength = List.length l_reach_vns in
-    let rnlength = List.length r_reach_dns in
-    let rvlength = List.length r_reach_vns in
-    if lvlength = rvlength then
-      if (lnlength != rnlength) then 0 else -1
-    else
-      if (lvlength > rvlength) then 1 else -1
+    (*check root has unfold information information??*)
+    let null_neq_svl = (CF.get_neqNull lhs)@(CF.get_null_svl lhs) in
+    if CP.mem_svl lvnode.CF.h_formula_view_node null_neq_svl then -1 else
+      let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
+      let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
+      let lnlength = List.length l_reach_dns in
+      let lvlength = List.length l_reach_vns in
+      let rnlength = List.length r_reach_dns in
+      let rvlength = List.length r_reach_vns in
+      if lvlength = rvlength then
+        if (lnlength != rnlength) then 0 else
+          let lview_names = List.map (fun v -> v.CF.h_formula_view_name) l_reach_vns in
+          let rview_names = List.map (fun v -> v.CF.h_formula_view_name) r_reach_vns in
+          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+            1
+          else
+            -1
+      else
+        if (lvlength > rvlength) then 0 else -1
 
 let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -338,8 +347,26 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
 
 let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "need_cycle_checkpoint" pr1 pr1 string_of_int
+  Debug.no_2 "need_cycle_checkpoint_fold" pr1 pr1 string_of_int
       (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs)
+      lhs rhs
+
+let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
+  if not !Globals.lemma_syn then -1 else
+    let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
+    let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rdnode.CF.h_formula_data_node] 3 in
+    (* let lnlength = List.length l_reach_dns in *)
+    let lview_names = List.map (fun v -> v.CF.h_formula_view_name) l_reach_vns in
+    (* let rnlength = List.length r_reach_dns in *)
+    let rview_names = List.map (fun v -> v.CF.h_formula_view_name) r_reach_vns in
+    if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+      0
+    else -1
+
+let need_cycle_checkpoint_unfold prog lvnode lhs rdnode rhs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_2 "need_cycle_checkpoint_unfold" pr1 pr1 string_of_int
+      (fun _ _ -> need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs)
       lhs rhs
 
 let get_shortest_length_base_x fs vname=

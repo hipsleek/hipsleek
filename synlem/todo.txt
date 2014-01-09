@@ -223,15 +223,16 @@ absent in rlseg-new-b4a.slk
 =================================================================
 lemma syn: --lem-en-syn
 
-1. syn-mix-1.slk: OK
+1. syn-mix-1.slk: OK (added cyclic checkpoint for view-view matching (diff view name))
 
 2. syn-mix-2.slk: with null: ll vs lseg. OK
 
 3. syn-ll.slk (run-fast-test): w/wo size: OK
 
 4. syn-lseg-(1|2).slk: OK
+   (added cyclic checkpoint for view-view matching (same view name))
 
-5. syn-ls.slk
+5. syn-ls.slk: OK (added cyclic checkpoint for fold + unfold)
 
 6. syn-lseg-s.slk
 
