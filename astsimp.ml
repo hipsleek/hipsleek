@@ -2842,7 +2842,7 @@ and trans_coercions (prog : I.prog_decl) :
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
-  let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
+  let pr2 (r1,r2) = pr_list Cprinter.string_of_coerc_long (r1@r2) in
   Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* let pr x = "?" in *)

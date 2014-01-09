@@ -20,9 +20,7 @@ pred lseg<p> == self=p
 //checkentail x::lseg<p1>* p2::node<_,p> & p1=p2 |- x::lseg<p>.
 
 
-//2a. need cyclic
+//2. need cyclic
 //checkentail x::lseg<p1>* p2::node<_,p> & p1=p2 |- x::node<_,p3> * p3::lseg<p>.
 
 
-//2b. wait for lemma three
-checkentail x::node<_,p3> * p3::lseg<p> |- x::lseg<p1>* p1::node<_,p> .

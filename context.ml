@@ -6,6 +6,7 @@ open Gen.Basic
 open Immutable
 
 module CF = Cformula
+module CFU = Cfutil
 
 type match_res = {
     match_res_lhs_node : h_formula; (* node from the extracted formula *)    
@@ -60,7 +61,7 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
-  | M_cyclic of (match_res* int * int)
+  | M_cyclic of (match_res* int * int * int * h_formula option) (*match * number_of_unfold * unfold_or_fold * type_lemma_syn*)
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -79,7 +80,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_lemma  (m, _)
     | Undefined_action m
     | M_lhs_case m
-    | M_cyclic (m,_,_) ->
+    | M_cyclic (m,_,_,_,_) ->
           if m.match_res_rhs_rest = HEmp then true else false
     | M_Nothing_to_do _ -> old_is_rhs_emp
     | M_infer_heap _ -> old_is_rhs_emp
@@ -181,7 +182,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic (e,_,_) -> fmt_string "Match cyclic =>"; pr_mr e
+  | M_cyclic (e,_,_,_,_) -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -216,7 +217,7 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
-  | M_cyclic (e,_,_)
+  | M_cyclic (e,_,_,_,_)
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
@@ -1013,17 +1014,6 @@ and check_lemma_not_exist vl vr=
     (* else false in *)
     (* b_left && b_right *)(left_ls@right_ls)=[]
 
-and need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
-  let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
-  let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
-  (List.length l_reach_dns) > (List.length r_reach_dns) ||
-      (List.length l_reach_vns) > (List.length r_reach_vns)
-
-and need_cycle_checkpoint prog lvnode lhs rvnode rhs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "need_cycle_checkpoint" pr1 pr1 string_of_bool
-      (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
-      lhs rhs
 
 and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_node,rhs_rest): action_wt =
   let rhs_node = c.match_res_rhs_node in
@@ -1126,12 +1116,12 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       [(0,M_match c)] (*force a MATCH after each lemma*)
                     else
                       let a1 = (1,M_base_case_unfold c) in
-		      let a2 = if check_lemma_not_exist vl vr &&
-                        need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs then
+                      let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
+		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                           let uf_i = if new_orig then 0 else 1 in
                           let a21 = (1,M_match c) in
-                          let a22 = (1,M_cyclic (c,uf_i,0)) in
+                          let a22 = (1,M_cyclic (c,uf_i, 0, syn_lem_typ, None)) in
                           (* (1,Cond_action [a21;a22]) *) a22
                       else (1,M_match c)
                       in
@@ -1188,7 +1178,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                                 if check_lemma_not_exist vl vr then
                                   let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                   let uf_i = if new_orig then 0 else 1 in
-                                  [(1,M_cyclic (c,uf_i,1))(* ;(1,M_unfold (c, uf_i)) *)]
+                                  [(1,M_cyclic (c,uf_i,0,1, None))(* ;(1,M_unfold (c, uf_i)) *)]
                                 else
                                   [(1,M_base_case_unfold c) (* ;(1,M_cyclic c) *)]
                               in
@@ -1265,7 +1255,31 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let _ = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
                   let a1 = 
                     if is_r_lock then [] else
-                      if ((new_orig || vr_self_pts==[]) && sub_ann) then [(1,M_fold c)] else [] in
+                      if ((new_orig || vr_self_pts==[]) && sub_ann) then
+                        let _ = Debug.info_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
+                        let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
+                         if (syn_lem_typ != -1) then
+                           let acts =
+                             if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
+                             vr_name) >0 then
+                               (*find the first viewnode readable from left datanode*)
+                               let lvs = CF.look_up_reachable_first_reachable_view prog
+                                 (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
+                               if lvs = [] then [(1,M_fold c)]
+                               else
+                                 let vl = List.hd lvs in
+                                 if check_lemma_not_exist vl vr then
+                                   let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                                   let uf_i = if new_orig then 0 else 1 in
+                                   (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
+                                   [(1,M_cyclic( c, uf_i, 0, syn_lem_typ, Some (CF.ViewNode vl)))]
+                                 else [(1,M_fold c)]
+                             else [(1,M_fold c)]
+                           in
+                           acts
+                         else
+                        [(1,M_fold c)]
+                      else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   let r_lem = 
                     if (Lem_store.all_lemma # any_coercion) then

@@ -5136,6 +5136,19 @@ let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
              (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
       f roots output_ctr
 
+let look_up_reachable_first_reachable_view prog f roots=
+  let ptrs = look_up_reachable_ptrs_f prog f roots true true in
+  if ptrs = [] then [] else
+    let _, hvs, _ = get_hp_rel_formula f in
+    List.filter (fun hv -> CP.mem_svl hv.h_formula_view_node ptrs) hvs
+
+let look_up_reachable_first_reachable_view prog f roots=
+  let pr1 = !print_formula in
+  let pr_view_node dn= !print_h_formula (ViewNode dn) in
+  Debug.no_2 "look_up_reachable_first_reachable_view" pr1 !CP.print_svl (pr_list pr_view_node)
+      (fun _ _ -> look_up_reachable_first_reachable_view prog f roots)
+      f roots
+
 let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
     let ptrs = List.fold_left (fun r (_, sf) ->

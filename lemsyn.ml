@@ -25,13 +25,18 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let eqset = CP.EMapSV.build_eset subs in
     eqset
   in
-  let lview,rview = match lhs_node,lhs_node with
-    | CF.ViewNode vl, CF.ViewNode vr -> vl,vr
+  let lr = match lhs_node with
+    | CF.ViewNode vl -> vl.CF.h_formula_view_node
+    | CF.DataNode dl -> dl.CF.h_formula_data_node
+    | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
+  in
+  let rview = match rhs_node with
+    |  CF.ViewNode vr -> vr
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
   try
     (*left*)
-    let lr = lview.CF.h_formula_view_node in
+    (* let lr = lview.CF.h_formula_view_node in *)
     let lselfr = CP.SpecVar (CP.type_of_spec_var lr, self, CP.primed_of_spec_var lr) in
     let lss = [(lr, lselfr)] in
     (*right*)
@@ -68,7 +73,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (*add lemma*)
     let iprog = I.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
-    let _ = print_endline (" \n gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ " -> "
+    let _ = print_endline (" \n gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
     ^ (Cprinter.string_of_formula rf1)) in
     ()
   with _ -> ()

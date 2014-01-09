@@ -237,6 +237,8 @@ lemma syn: --lem-en-syn
 
 7. syn-dseg-new.slk (run-fast-test) OK
 
+8. syn-lemma_check01.slk (run-fast-test)
+
 =================================================================
 #syn-mix-2.slk: FIXED
 

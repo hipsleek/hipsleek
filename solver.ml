@@ -24,6 +24,7 @@ open Stat_global
 module Inf = Infer
 module CP = Cpure
 module CF = Cformula
+module CFU = Cfutil
 module PR = Cprinter
 module MCP = Mcpure
 module Err = Error
@@ -11579,7 +11580,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-            Context.match_res_holes = holes;} as m_res, unfold_num, lem_type)->
+            Context.match_res_holes = holes;} as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
             Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
@@ -11605,7 +11606,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             else ()
             in
             (*unfold*)
-            let n_act = Context.M_unfold (m_res, unfold_num) in
+            let new_m_res = match unfold_opt with
+              | None -> m_res
+              | Some lv -> {m_res with Context.match_res_lhs_node = lv}
+            in
+            let n_act =  Context.M_unfold (new_m_res, unfold_num) in
             let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
             let new_trace = str::(List.tl estate.es_trace) in
             let new_estate = {estate with CF.es_trace = new_trace;
