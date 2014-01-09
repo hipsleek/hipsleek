@@ -12547,11 +12547,16 @@ and find_coercions_x c1 c2 prog anode ln2 =
   let is_not_norm c = match c.coercion_case with | Normalize _ -> false | _ -> true in
   let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
   let left_co = Lem_store.all_lemma # get_left_coercion in
+  let _ = print_endline ("== left_co length = " ^ (string_of_int (List.length left_co))) in
   let coers1 = look_up_coercion_def_raw left_co (* prog.prog_left_coercions *) c1 in  
   let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) && is_not_norm c) coers1  in (* keep only non-cyclic coercion rule *)
   let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
+  let right_co = Lem_store.all_lemma # get_right_coercion in
+  let _ = print_endline ("== right_co length = " ^ (string_of_int (List.length right_co))) in
   let coers2 = look_up_coercion_def_raw (Lem_store.all_lemma # get_right_coercion)(*prog.prog_right_coercions*) c2 in
+  let _ = print_endline ("== coers2 1 length = " ^ (string_of_int (List.length coers2))) in
   let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) && is_not_norm c) coers2  in (* keep only non-cyclic coercion rule *)
+  let _ = print_endline ("== coers2 2 length = " ^ (string_of_int (List.length coers2))) in
   let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
   ((coers1,coers2),univ_coers)
@@ -12565,8 +12570,8 @@ and find_coercions c1 c2 prog anode ln2 =
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Debug.no_5 "do_coercion" pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base pr
-    (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
+  Debug.no_6 "do_coercion" pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base (pr_opt Cprinter.string_of_coercion) pr 
+    (fun _ _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b c_opt
 
 (*
   - c_opt : coercion declaration

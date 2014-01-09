@@ -119,8 +119,8 @@ let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (
   let pr = string_of_lem_formula in
   let pr3 = Cprinter.string_of_spec_var_list in
   let pr_out = pr_pair string_of_bool (Cprinter.string_of_list_context) in
-  Debug.no_3 "process_coercion_check" pr pr (add_str "inf_vars" pr3) pr_out 
-      (fun _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars
+  Debug.no_4 "process_coercion_check" pr pr (add_str "inf_vars" pr3) (add_str "iexact" string_of_bool) pr_out 
+      (fun _ _ _ _ -> process_coercion_check iante0 iconseq0 inf_vars iexact lemma_name cprog) iante0 iconseq0 inf_vars iexact
 
 (* prepares the lhs&rhs of the coercion to be checked 
    - unfold lhs once
@@ -298,10 +298,9 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
-  (*let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
-  let ent_lhs =coer.C.coercion_head in
-  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in
-  (* let ent_rhs =  coer.C.coercion_body_norm in *)
+  (* using normalization form of lemma body and head to check *)
+  let ent_lhs =coer.C.coercion_head_norm in
+  let ent_rhs =  coer.C.coercion_body_norm in
   check_coercion_struc coer ent_lhs ent_rhs cprog
 
 let check_left_coercion coer cprog  =
@@ -310,9 +309,9 @@ let check_left_coercion coer cprog  =
 
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
-  (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
-  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head(* _norm *) no_pos in
-  let ent_lhs = coer.C.coercion_body in
+  (* using normalization form of lemma body and head to check *)
+  let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
+  let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
   check_coercion_struc coer ent_lhs ent_rhs cprog 
 
 let check_right_coercion coer (cprog: C.prog_decl) =

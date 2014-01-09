@@ -1278,8 +1278,9 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers
   
-let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
-	let pr1 l = string_of_int (List.length l) in
+let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
+  let pr1 = !print_coerc_decl_list in
+	(* let pr1 l = string_of_int (List.length l) in *)
 	Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "") look_up_coercion_def_raw coers c
   (* match coers with *)
   (* | p :: rest -> begin *)
