@@ -3062,20 +3062,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
                     C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
                 in
-                if coercion_lhs_type==Complex && !Globals.allow_lemma_switch then
-                  begin
-                    (* complex_lhs <-> complex_rhs       
-                       ==> [complex_lhs -> complex_rhs; complex_rhs  -> complex_lhs],[] *)
-                    ([ {c_coer with C.coercion_type = I.Left} ], []) 
-                  end
-                else
-                  begin
-                     let c_coer1 = {c_coer with 
-                        C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
-                        C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
-                    in
-                    ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
-                  end
+                let c_coer1 = {c_coer with 
+                    C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
+                    C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
+                in
+                ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer1]) (*??? try*)
           | I.Right -> 
                 let c_coer = {c_coer with 
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;

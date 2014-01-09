@@ -210,11 +210,6 @@ let process_one_lemma iprog cprog ldef =
   (l2r,r2l,ldef.I.coercion_type)
 
 
-let lst_to_opt l = 
-  match l with
-    | [c] -> Some c
-    | _   -> None
-
 (* ilemma repo ----> (left coerc list, right coerc list) *)
 let process_one_repo repo iprog cprog = 
   List.map (fun ldef -> 
@@ -239,13 +234,18 @@ let verify_one_repo lems cprog =
   let res = List.fold_left (fun ((fail_ans,res_so_far) as res) (l2r,r2l,typ,name) ->
       match fail_ans with
         | None ->
-              (* WN : what to add for 2nd l2r? *)
-              let res = LP.verify_lemma 3 (lst_to_opt l2r) (lst_to_opt r2l) cprog name typ in 
-              let chk_for_fail =  if !Globals.disable_failure_explaining then CF.isFailCtx else CF.isFailCtx_gen in
-              let res_so_far = res::res_so_far in
-              let fail = if chk_for_fail res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None in
-              (fail, res_so_far)
-              (* ((if CF.isFailCtx res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None), res_so_far) *)
+            let get_coerc coercs = 
+              match coercs with
+                | [] -> None
+                | [c] -> Some c
+                | _   -> report_error no_pos "Expect at most 1 coerc" in
+            (* WN : what to add for 2nd l2r? *)
+            let res = LP.verify_lemma 3 (get_coerc l2r) (get_coerc r2l) cprog name typ in 
+            let chk_for_fail =  if !Globals.disable_failure_explaining then CF.isFailCtx else CF.isFailCtx_gen in
+            let res_so_far = res::res_so_far in
+            let fail = if chk_for_fail res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None in
+            (fail, res_so_far)
+            (* ((if CF.isFailCtx res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None), res_so_far) *)
         | Some n ->
               res
   ) (None,[]) lems in
