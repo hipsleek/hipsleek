@@ -42,6 +42,7 @@ let rhs_rest_emp = ref true
 (*cyclic: should improve the desgim. why AS call solver??*)
 let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
 let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
+    let _ = print_endline ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)

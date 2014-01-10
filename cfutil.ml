@@ -340,13 +340,27 @@ let check_separation_unsat f0=
       | CF.Base fb -> let hds, hvs, _ (*hvs, hrs*) = CF.get_hp_rel_h_formula fb.CF.formula_base_heap in
         let d_ptrs = List.map (fun dn -> dn.CF.h_formula_data_node) hds in
         let v_ptrs = List.map (fun vn -> vn.CF.h_formula_view_node) hvs in
-        CP.intersect_svl d_ptrs v_ptrs != []
+        if CP.intersect_svl d_ptrs v_ptrs = [] then
+          let p = (MCP.pure_of_mix fb.CF.formula_base_pure) in
+          if (CP.isConstTrue p) then false else
+            let null_svl = MCP.get_null_ptrs fb.CF.formula_base_pure in
+            let nNull_svl = CP.get_neq_null_svl p in
+            if (null_svl = []) && nNull_svl =[] then false else
+              (CP.intersect_svl null_svl nNull_svl !=[]) || (CP.intersect_svl (d_ptrs@v_ptrs) (null_svl@nNull_svl) !=[])
+        else true
       | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
       | CF.Exists _ ->
             let _,base = CF.split_quantifiers f in
           helper base
   in
   helper f0
+
+let check_separation_unsat f0=
+  let pr1 =  Cprinter.prtt_string_of_formula in
+  let pr2 = string_of_bool in
+  Debug.no_1 "check_separation_unsat" pr1 pr2
+      (fun _ -> check_separation_unsat f0)
+      f0
 
 (*
   res = -1: NO cyclic - not syn lemma

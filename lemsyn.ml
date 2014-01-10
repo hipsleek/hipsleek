@@ -77,7 +77,8 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let _ = print_endline (" \n gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
     ^ (Cprinter.string_of_formula rf1)) in
     ()
-  with _ -> ()
+  with e ->
+      let _ = print_endline (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) in ()
 
 let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       lhs_node lhsb rhs_node rhsb =
