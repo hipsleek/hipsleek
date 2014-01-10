@@ -105,7 +105,7 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
     (* let n = IP.Null no_pos in *)
     let ip = IP.mkEqExp (IP.Var (((CP.name_of_spec_var cont, CP.primed_of_spec_var cont)), no_pos)) (IP.Null no_pos) no_pos in
     let cp = CP.mkNull cont pos in
-    (subst_helper ss f, IF.mkBase ihf ip IF.n_flow [] pos,
+    (subst_helper ss f, IF.mkBase ihf ip IF.top_flow [] pos,
     CF.mkBase chf (MCP.mix_of_pure cp) CF.TypeTrue (CF.mkNormalFlow()) [] pos)
   else if self_hns <> [] then
     let _ = report_warning no_pos ("Lemma.subst_cont: to handle") in
