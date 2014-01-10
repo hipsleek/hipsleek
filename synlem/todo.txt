@@ -367,6 +367,12 @@ do_full_fold@4 EXIT: 2[
    emp&Anon_12=Anon_47 & q=r_48 & exists(kkk_44:kkk_44=n+1 & 1<=kkk_44) & exists(p_43:p=p_43)&{FLOW,(21,22)=__norm}[]
    ]
 =================================================================
+# fold-2.slk
+
+why this fails? when fold-1.slk succeeds
+How come right lemma is not being triggered?
+
+Entail 3: Fail.(must) cause: self!=null |-  self=null. LOCS:[19;0] (must-bug)
 =================================================================
 =================================================================
 =================================================================
