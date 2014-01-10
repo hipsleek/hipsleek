@@ -1,0 +1,23 @@
+data node {
+  node next;
+}.
+
+pred ls<p,n> == self=null & n=0
+ or self::node<q>*q::ls<p,n-1>
+ inv n>=0.
+
+lemma_unsafe self::ls<p,n> <- self::ls<q,n-1> * q::node<p>.
+
+checkentail x::ls<q,n>*q::node<p>  |- (exists m: x::ls<p,m> & m=2).
+print residue.
+
+/*
+# fold-1b.slk -debug fold.dd
+
+This is unsound. For such examples, it may be best to use
+folding libraries as seen in do_full_fold to cater for it.
+We can generalize these methods to include a the use of right-lemma,
+and to call it when using right-lemma with a simple lhs,
+and without universal vars.
+
+*/
