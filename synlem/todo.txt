@@ -282,6 +282,13 @@ why lemma proving fail but the steps in equiv-3a.slk succeeds?
  - due to not using normalized form for conseq
 
 =================================================================
+# run-fast-test
+
+
+Total number of errors: 2 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L2#Valid}).
+
+
 Total number of errors: 6 in files:
   inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
 
@@ -291,6 +298,9 @@ Total number of errors: 6 in files:
 --dci
 Total number of errors: 6 in files:
   inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+
+
+
 
 =================================================================
 # ll-1.slk fails but ll-1a.slk --dl succeeds

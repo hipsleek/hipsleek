@@ -8,10 +8,17 @@ pred rlseg<p:node> ==
   or self::node<_,q> * q::rlseg<p>
 .
 
-
 lemma_unsafe "yy"
     self::node<_,q>*q::rlseg<p> ->  self::rlseg<p1>* p1::node<_,p>.
 // fail
+
+checkentail_exact
+    self_yy::node<_,q> & q=p 
+ or self_yy::node<_,q>*q::node<_,q_46>*q_46::rlseg<p_44> & p=p_44
+ |- (exists p1: self_yy::rlseg<p1>* p1::node<_,p> )
+ .
+
+
 
 /*
 ===========
@@ -31,17 +38,15 @@ LEFT LEMMAS
  coercion_case: Complex
 */
 
+/*
 checkentail_exact
    self::node<_,q>*q::rlseg<p> 
  |- self::rlseg<p1>* p1::node<_,p>
  .
+*/
 
-checkentail_exact
-    self::node<_,q> & q=p 
- or self::node<_,q>*q::node<_,r>*r::rlseg<p> 
- |- self::rlseg<p1>* p1::node<_,p>
- .
 
+/*
 checkentail_exact
     self::node<_,q> & q=p 
  |- self::rlseg<p1>* p1::node<_,p>.
@@ -60,3 +65,4 @@ checkentail_exact
  q::node<_,r>*r::rlseg<p> 
  |- q::rlseg<p1>* p1::node<_,p>
 .
+*/
