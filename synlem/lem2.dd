@@ -1,6 +1,6 @@
-substitute_flow_in_f
-#compute_actions
-#process_action
+#substitute_flow_in_f
+compute_actions
+process_action
 #cnv_ptr_to_int,Trace
 #cnv_ptr_to_int,Loop
 #case_of_coercion
@@ -8,7 +8,7 @@ substitute_flow_in_f
 #trans_one_coercion
 #verify_lemma
 #type_of_formula
-process_coercion_check
+#process_coercion_check
 #,Trace
 #check_coercion_struc
 #look_up_reachable_ptrs_f
