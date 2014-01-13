@@ -32,7 +32,7 @@ LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBG
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/header,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
@@ -154,6 +154,7 @@ create_cmi:
 	cp _build/*.cmi .
 	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	ocamlc -i context.ml > context.mli
 	ocamlc -i globals.ml > globals.mli
 	ocamlc -i auxnorm.ml > auxnorm.mli
 	ocamlc -i cformula.ml > cformula.mli
@@ -237,3 +238,34 @@ create_cmi:
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' rtc_algorithm.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' minisat.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' predcomp.mli
+
+mli: create_mli all
+
+files := globals gen ipure iformula cpure cformula cprinter
+
+create_mli:
+	cp _build/*.cmi .
+	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
+	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	$(foreach file, $(files), \
+		cmp -s $(file).ml mlold/$(file).ml; \
+		RETVAL=$$?; \
+		if [ $$RETVAL -eq 0 ]; then \
+			echo  "SAME"; \
+		else \
+			cp $(file).ml mlold/$(file).ml; \
+			ocamlc -i mlold/$(file).ml > mlold/$(file).mli; \
+			sed -i 's/type vertex = vertex$$/type vertex = V.t/' mlold/$(file).mli; \
+			cmp -s $(file).mli mlold/$(file).mli; \
+			RETVAL=$$?; \
+			if [ $$RETVAL -eq 0 ]; then \
+				echo "SAME"; \
+			else \
+				echo "DIFF"; \
+				ocamlc mlold/$(file).mli; \
+				mv mlold/$(file).cmi .; \
+				cp mlold/$(file).mli .; \
+			fi; \
+		fi; \
+	)
+	rm *.cmi
