@@ -4757,8 +4757,10 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
         (*generate another pred*)
         let n_lhs,n_hp =  add_raw_hp_rel prog false false ((r,I)::(List.map (fun sv -> (sv,NI)) cont_args)) no_pos in
+        let ss = [(hp0,n_hp)] in
+        let rec_fs_wg1 = List.map (fun (f,og) -> (CF.subst ss f,og)) rec_fs_wg in
         let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
-        ) ([],[]) (seg_fs_wg@rec_fs_wg) in
+        ) ([],[]) (seg_fs_wg@rec_fs_wg1) in
         let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
         (*should generalize cont_fs*)
         let rhs1 = CF.disj_of_list cont_fs no_pos in

@@ -255,6 +255,18 @@ do not generate lemma without meaning, e.g. with false in the lhs, rhs
 
 should FAIL
 =================================================================
+lemma syn: ss
+
+1. syn-ll-inst-last.ss --pred-en-split (DONE)
+
+2. syn-append-tail.ss
+
+3. syn-qsort.ss
+
+4. syn-bubble-all.ss
+
+5. syn-bubble.ss
+
 =================================================================
 =================================================================
 =================================================================
