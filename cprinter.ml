@@ -2870,7 +2870,7 @@ let pr_list_context (ctx:list_context) =
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
-      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list_short sc; fmt_cut ()
+      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
@@ -2880,8 +2880,8 @@ let string_of_context_list_short (ctx:context list): string
       =  poly_string_of_pr pr_context_list_short ctx
 
 let string_of_list_context (ctx:list_context): string 
-      =  poly_string_of_pr pr_list_context_short ctx
-      (* =  poly_string_of_pr pr_list_context ctx *)
+      (* =  poly_string_of_pr pr_list_context_short ctx *)
+      =  poly_string_of_pr pr_list_context ctx
 
 let string_of_list_context_list (ctxl:list_context list): string 
       =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
