@@ -3493,9 +3493,10 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_vars
               "/Impl="^(Cprinter.string_of_spec_var_list impl_inst_vars)^
               "/Expl="^(Cprinter.string_of_spec_var_list expl_inst_vars)^
               "/view vars:"^ (Cprinter.string_of_spec_var_list vvars))
-      (fun (f1,f2,_) -> 
-          (Cprinter.string_of_pure_formula f1)^"/"^ 
-              (Cprinter.string_of_pure_formula f2)) 
+      (fun (f1,f2,evars) -> 
+          ("to_ante =" ^ Cprinter.string_of_pure_formula f1)^"/ "^ 
+              "to_conseq = " ^ (Cprinter.string_of_pure_formula f2) ^
+              "/ evars: "^ (Cprinter.string_of_spec_var_list evars))
       (fun f vv -> split_universal_x f0 evars expl_inst_vars impl_inst_vars vvars pos)
       f0 vv
       (*
@@ -3931,7 +3932,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
 
 and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pr_es = Cprinter.string_of_entail_state in
-  let pr1 = Cprinter.string_of_list_context_short in
+  let pr1 = Cprinter.string_of_list_context in
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
@@ -4004,7 +4005,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
 	  (r, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 
     let pr1 = Cprinter.string_of_context(* _short *)  in
-    let pr2 (c,_) = Cprinter.string_of_list_context_short c in
+    let pr2 (c,_) = Cprinter.string_of_list_context(*_short*) c in
     Debug.no_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
   (*Debug.no_1 "process_fold_result: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in*)
   match fold_rs0 with
@@ -6846,11 +6847,11 @@ and move_impl_inst_estate_x es (f:MCP.mix_formula) =
   let f_v = MCP.mfv f in
   let inst_to_keep = Gen.BList.difference_eq CP.eq_spec_var l_inst f_v in
   let new_to_elim = Gen.BList.intersect_eq CP.eq_spec_var f_v to_elim_vars in
-  (* Debug.info_hprint (add_str "move_impl(l_inst)" !CP.print_svl) l_inst no_pos; *)
-  (* Debug.info_hprint (add_str "move_impl(to_elim_evars)" !CP.print_svl) to_elim_vars no_pos; *)
-  (* Debug.info_hprint (add_str "move_impl(inst_to_keep)" !CP.print_svl) inst_to_keep no_pos; *)
-  (* Debug.info_hprint (add_str "move_impl(f)" !print_mix_formula) f no_pos; *)
-  (* Debug.info_hprint (add_str "move_impl(new_to_elim)" !CP.print_svl) new_to_elim no_pos;*)
+  Debug.tinfo_hprint (add_str "move_impl(l_inst)" !CP.print_svl) l_inst no_pos;
+  Debug.tinfo_hprint (add_str "move_impl(to_elim_evars)" !CP.print_svl) to_elim_vars no_pos;
+  Debug.tinfo_hprint (add_str "move_impl(inst_to_keep)" !CP.print_svl) inst_to_keep no_pos;
+  Debug.tinfo_hprint (add_str "move_impl(f)" !print_mix_formula) f no_pos;
+  Debug.tinfo_hprint (add_str "move_impl(new_to_elim)" !CP.print_svl) new_to_elim no_pos;
   let nf,nflg = 
     let f2 = if ( to_elim_vars = []) then f else 
       (elim_exists_mix_formula to_elim_vars f no_pos) in
@@ -10884,7 +10885,7 @@ and do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 
 and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
-  let pr2 x = Cprinter.string_of_list_context_short (fst x) in
+  let pr2 x = Cprinter.string_of_list_context (fst x) in
   Debug.no_2 "do_full_fold" Cprinter.string_of_entail_state pr1 pr2 
       (fun _ _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate rhs_node
       
