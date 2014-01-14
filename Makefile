@@ -1,6 +1,5 @@
 OCAMLBUILD = ocamlbuild
 
-
 # OPAM repository
 OPREP = $(OCAML_TOPLEVEL_PATH)/..
 #~/.opam/system/lib
@@ -221,6 +220,7 @@ create_cmi:
 	ocamlc -i typeinfer.ml > typeinfer.mli
 	ocamlc -i wrapper.ml > wrapper.mli
 	rm *.cmi
+	sed -i 's/type vertex = vertex$$/type vertex = V.t/' context.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' cformula.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' cast.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' iast.mli
@@ -238,20 +238,22 @@ create_cmi:
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' rtc_algorithm.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' minisat.mli
 	sed -i 's/type vertex = vertex$$/type vertex = V.t/' predcomp.mli
+	mkdir -p mlold
+	cp *.ml mlold/
 
 mli: create_mli all
 
-files := globals gen ipure iformula cpure cformula cprinter
+FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer
 
 create_mli:
 	cp _build/*.cmi .
 	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
-	$(foreach file, $(files), \
+	$(foreach file, $(FILES), \
 		cmp -s $(file).ml mlold/$(file).ml; \
 		RETVAL=$$?; \
 		if [ $$RETVAL -eq 0 ]; then \
-			echo  "SAME"; \
+			echo  "SAME" $(file); \
 		else \
 			cp $(file).ml mlold/$(file).ml; \
 			ocamlc -i mlold/$(file).ml > mlold/$(file).mli; \
@@ -259,9 +261,9 @@ create_mli:
 			cmp -s $(file).mli mlold/$(file).mli; \
 			RETVAL=$$?; \
 			if [ $$RETVAL -eq 0 ]; then \
-				echo "SAME"; \
+				echo "SAME" $(file); \
 			else \
-				echo "DIFF"; \
+				echo "DIFF" $(file); \
 				ocamlc mlold/$(file).mli; \
 				mv mlold/$(file).cmi .; \
 				cp mlold/$(file).mli .; \
