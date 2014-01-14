@@ -10840,8 +10840,12 @@ and combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
   let pr x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) (* ^ "\n Proof: " ^ (Prooftracer.string_of_proof (snd x)) *) in
   (*let pr3 = Cprinter.string_of_spec_var_list in*)
   Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
-      
+
 and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
+  let pr = fun _ -> "??" in
+  Debug.no_1 "do_fold" pr pr (fun _ -> do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) vd
+
+and do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let fold_ctx = Ctx { estate with
       (* without unsat_flag reset:
          error at: imm/kara-tight.ss karatsuba_mult
@@ -10859,6 +10863,20 @@ and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       es_must_error = None;
   } in
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
+
+(* WN/Trung : to revise this into a right lemma with fold operatio *)
+and do_right_lemma_w_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
+  let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
+  let vd = (vdef_fold_use_bc prog rhs_node) in
+  let (cl,prf) =
+    match vd with
+        (* CF.mk_failure_must "99" Globals.sl_error)), NoAlias) *)
+      | None ->
+            (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
+            CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
+      | Some vd ->
+            do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+  in  ((* Inf.restore_infer_vars iv  *)cl,prf)
 
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
