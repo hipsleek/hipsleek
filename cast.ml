@@ -12,6 +12,7 @@ type n
 
 
 module F = Cformula
+module CF = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
@@ -1841,18 +1842,26 @@ let vdef_fold_use_bc prog ln2  =
 let vdef_lemma_fold prog coer  = 
   let cfd = coer.coercion_fold_def in
   let lhs = coer.coercion_head in
-  let rhs = coer.coercion_body_norm in
-  let _ = Debug.info_hprint (add_str "head" !print_formula) lhs no_pos in
-  let _ = Debug.info_hprint (add_str "body" !print_struc_formula) rhs no_pos in
+  (* body contains orig=false but not body_norm*)
+  let rhs = CF.formula_to_struc_formula coer.coercion_body in
+  (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
   if cfd # is_init then cfd # get
   else
     let vd2 = match lhs with
-      | F.Base bf ->
+      | CF.Base bf ->
             begin
-              match bf.F.formula_base_heap with
-                | F.ViewNode vn -> 
+              match bf.CF.formula_base_heap with
+                | CF.ViewNode vn -> 
                       (try 
                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+                        let to_vars = vd.view_vars in
+                        let from_vars = vn.CF.h_formula_view_arguments in
+                        let subs = List.combine from_vars to_vars in
+                        (* let pr = Cprinter.string_of_spec_var_list in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
+                        let rhs = CF.subst_struc subs rhs in
                         Some {vd with view_formula = rhs}
                       with  
                         | Not_found -> None
@@ -1860,8 +1869,34 @@ let vdef_lemma_fold prog coer  =
                 | _ -> None 
             end
       | _ -> None in
+    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
     let _ = cfd # set vd2 in
     vd2
+
+(* let vdef_lemma_fold prog coer  =  *)
+(*   let cfd = coer.coercion_fold_def in *)
+(*   let lhs = coer.coercion_head in *)
+(*   let rhs = coer.coercion_body_norm in *)
+(*   let _ = Debug.info_hprint (add_str "head" !print_formula) lhs no_pos in *)
+(*   let _ = Debug.info_hprint (add_str "body" !print_struc_formula) rhs no_pos in *)
+(*   if cfd # is_init then cfd # get *)
+(*   else *)
+(*     let vd2 = match lhs with *)
+(*       | F.Base bf -> *)
+(*             begin *)
+(*               match bf.F.formula_base_heap with *)
+(*                 | F.ViewNode vn ->  *)
+(*                       (try  *)
+(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         Some {vd with view_formula = rhs} *)
+(*                       with   *)
+(*                         | Not_found -> None *)
+(*                       ) *)
+(*                 | _ -> None  *)
+(*             end *)
+(*       | _ -> None in *)
+(*     let _ = cfd # set vd2 in *)
+(*     vd2 *)
 
 let vdef_lemma_fold prog coer  = 
   let op = coer.coercion_fold_def in

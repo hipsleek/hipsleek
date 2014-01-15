@@ -1,11 +1,11 @@
 #process_fold_result
-#do_fold_w_ctx,Loop
+do_fold_w_ctx
 #do_full_fold
-#do_fold,Loop
+do_fold
 #do_base_fold
-apply_right_coercion,Loop
+#apply_right_coercion,Loop
 #fold_op,Loop,Trace
-#vdef_lemma_fold
+vdef_lemma_fold
 #heap_entail_one_context_struc,Loop
-compute_actions
-process_action
+#compute_actions
+#process_action

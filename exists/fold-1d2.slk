@@ -1,0 +1,20 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+//lemma_unsafe self::ls<uu,ll> <- self::ls<vv,ll-1> * vv::node<uu>.
+
+checkentail x::node<zz> * zz::ls<rr,hh>  |- x::ls<tt,kk>.
+print residue.
+/*
+Entail 3: Valid. 
+
+ <1>emp&x!=null & qq_32=zz & kk=hh+1 & rr=tt&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+*/
+
