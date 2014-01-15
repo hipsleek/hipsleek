@@ -2884,8 +2884,14 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
-  let i_rhs = coer.I.coercion_body in
   let i_lhs = coer.I.coercion_head in
+  let lhs_vars = IF.all_fv i_lhs in
+  let _ = Debug.tinfo_hprint (add_str "lhs_vars" (pr_list string_of_primed_ident)) lhs_vars no_pos in
+  let i_rhs = coer.I.coercion_body in
+  let i_rhs = 
+    if !Globals.allow_lemma_norm then case_normalize_formula prog lhs_vars i_rhs 
+    else i_rhs 
+  in
   let  coercion_lhs_type = (IF.type_of_formula i_lhs) in
   let  coercion_rhs_type = (IF.type_of_formula i_rhs) in
   let coer_type = coer.I.coercion_type in
@@ -6739,9 +6745,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 (* AN HOA : TODO CECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula): IF.formula =
   let pr = Iprinter.string_of_formula in
-  Debug.no_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f) f
-      
-      
+  let pr2 = pr_list (string_of_primed_ident) in
+  Debug.no_2 "case_normalize_formula" pr2 pr pr (fun _ _ -> case_normalize_formula_x prog h f) h f
+
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)

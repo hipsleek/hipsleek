@@ -1118,12 +1118,12 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let flag = (s_eq && 
                         ((vl_view_orig==false && vl_b) 
                         || ((vr_view_orig==false && vr_b)))) in
-                  let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
-                  let _ = Debug.info_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
-                  let _ = Debug.info_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-                  let _ = Debug.info_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                   let l2 = 
                     if flag  then 
                       [(0,M_match c)] (*force a MATCH after each lemma*)
