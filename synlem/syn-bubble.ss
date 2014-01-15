@@ -42,6 +42,7 @@ bool bubble(node xs)
       flag = true;
     }
     return (flag || tmp);
+    //dprint;
     //SYN LEMMA HERE
     // xs::ll<n> & res;
   }

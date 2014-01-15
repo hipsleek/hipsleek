@@ -344,7 +344,7 @@ let check_separation_unsat f0=
           let p = (MCP.pure_of_mix fb.CF.formula_base_pure) in
           if (CP.isConstTrue p) then false else
             let null_svl = MCP.get_null_ptrs fb.CF.formula_base_pure in
-            let nNull_svl = CP.get_neq_null_svl p in
+            let nNull_svl = (* CP.get_neq_null_svl p *)[] in
             if (null_svl = []) && nNull_svl =[] then false else
               (CP.intersect_svl null_svl nNull_svl !=[]) || (CP.intersect_svl (d_ptrs@v_ptrs) (null_svl@nNull_svl) !=[])
         else true
@@ -371,7 +371,7 @@ let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
   if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
     (*check root has unfold information information??*)
     let null_neq_svl = (CF.get_neqNull lhs)@(CF.get_null_svl lhs) in
-    if CP.mem_svl lvnode.CF.h_formula_view_node null_neq_svl then -1 else
+    (* if CP.mem_svl lvnode.CF.h_formula_view_node null_neq_svl then -1 else *)
       let _, l_reach_dns,l_reach_vns = CF.look_up_reachable_ptrs_w_alias prog lhs [lvnode.CF.h_formula_view_node] 3 in
       let _, r_reach_dns,r_reach_vns = CF.look_up_reachable_ptrs_w_alias prog rhs [rvnode.CF.h_formula_view_node] 3 in
       let lnlength = List.length l_reach_dns in

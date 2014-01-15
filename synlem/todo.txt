@@ -260,14 +260,22 @@ lemma syn: ss
 1. syn-ll-inst-last.ss --pred-en-split (DONE)
 
 2. syn-append-tail.ss
+   - syn-append-tail-2.slk: w/o size: OK with --lem-en-syn
+   - syn-append-tail.slk: w/ size
+   - syn-append-tail-2a.slk
 
 3. syn-qsort.ss
 
-4. syn-bubble-all.ss
+4. syn-bubble-all.ss (MONA timout)
 
-5. syn-bubble.ss
+5. syn-bubble.ss: --lem-en-syn
 
 =================================================================
+# syn-append-tail-2a.slk
+
+generate lemma template (bi-abduction?)
+
+
 =================================================================
 =================================================================
 =================================================================

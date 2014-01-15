@@ -3193,6 +3193,7 @@ let check_prog iprog (prog : prog_decl) =
   )
     else  None
   in
+  let _ = I.set_iprog iprog in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
   if true (* !Globals.check_coercions *) then 

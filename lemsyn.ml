@@ -36,14 +36,6 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
   try
-    (*left*)
-    (* let lr = lview.CF.h_formula_view_node in *)
-    let lselfr = CP.SpecVar (CP.type_of_spec_var lr, self, CP.primed_of_spec_var lr) in
-    let lss = [(lr, lselfr)] in
-    (*right*)
-    (* let rr = rview.CF.h_formula_view_node in *)
-    let rselfr = CP.SpecVar (CP.type_of_spec_var rr, self, CP.primed_of_spec_var rr) in
-    let rss = [(rr, rselfr)] in
     (*TEMP*)
     (* let lf1 = CF.subst lss (CF.formula_of_heap lhs_node no_pos) in *)
     (* let rf1 = CF.subst rss (CF.formula_of_heap rhs_node no_pos) in *)
@@ -56,6 +48,18 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let lhs_b1, rhs_b1, _ = CFU.smart_subst_new lhs_b0 rhs_b0 []
            l_emap0 r_emap0 r_eqsetmap0 [] ([lr;rr])
     in
+     (*left*)
+    (* let lr = lview.CF.h_formula_view_node in *)
+    let lselfr = CP.SpecVar (CP.type_of_spec_var lr, self, Unprimed) in
+    let cl_lseffr0 = CP.EMapSV.find_equiv_all lr l_emap0 in
+    let cl_lseffr = if cl_lseffr0 = [] then [lr] else cl_lseffr0 in
+    let lss = List.map (fun lr -> (lr, lselfr)) cl_lseffr in
+    (*right*)
+    (* let rr = rview.CF.h_formula_view_node in *)
+    let rselfr = CP.SpecVar (CP.type_of_spec_var rr, self, Unprimed) in
+    let cl_rseffr0 = CP.EMapSV.find_equiv_all rr (CP.EMapSV.merge_eset l_emap0 r_emap0) in
+    let cl_rseffr = if cl_rseffr0 = [] then [rr] else cl_rseffr0 in
+    let rss = List.map (fun rr -> (rr, rselfr)) cl_rseffr in
     (*LHS: find reachable heap + pure*)
     let lf1a = CF.subst_b lss lhs_b1 in
     let rf1a = CF.subst_b lss rhs_b1 in
