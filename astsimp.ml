@@ -3036,6 +3036,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_univ_vars = univ_vars;
         C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
         C.coercion_head_view = lhs_name;
+        C.coercion_fold_def = new Gen.mut_option;
+                (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
         C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs)} in

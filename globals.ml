@@ -694,6 +694,7 @@ let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
+let allow_lemma_fold = ref false
 
 let dis_show_diff = ref false
 

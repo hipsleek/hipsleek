@@ -5022,9 +5022,10 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
 
 and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
   Debug.no_2 "heap_entail_one_context_struc" 
-      Cprinter.string_of_context Cprinter.string_of_struc_formula
+      Cprinter.string_of_struc_formula
+      Cprinter.string_of_context 
       (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-      (fun cl cs -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cl cs
+      (fun cs cl -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cs cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
@@ -10864,15 +10865,20 @@ and do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   } in
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
 
-(* WN/Trung : to revise this into a right lemma with fold operatio *)
-and do_right_lemma_w_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
+(* assumes coer is a right lemma *)
+and vdef_fold_right_lemma coer  = 
+  if coer.coercion_case == Simple then coer.coercion_fold_def # get
+  else None
+
+(* WN/Trung : to revise this into a right lemma with fold operation *)
+and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
-  let vd = (vdef_fold_use_bc prog rhs_node) in
+  let vd = (vdef_fold_right_lemma coer) in
   let (cl,prf) =
     match vd with
         (* CF.mk_failure_must "99" Globals.sl_error)), NoAlias) *)
       | None ->
-            (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
+            (CF.mkFailCtx_in (Basic_Reason (mkFailContext "WARNING : no fold_def for right lemma" estate (CF.formula_of_heap HFalse pos) None pos, 
             CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
       | Some vd ->
             do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
@@ -13406,7 +13412,61 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) resth2 ln2 (*rhs_p
    pos 
    pid - ?id
 *)
+
+and vdef_lemma_fold prog coer  = 
+  let cfd = coer.coercion_fold_def in
+  let lhs = coer.coercion_head in
+  let rhs = coer.coercion_body_norm in
+  (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
+  if cfd # is_init then cfd # get
+  else
+    let vd2 = match lhs with
+      | CF.Base bf ->
+            begin
+              match bf.CF.formula_base_heap with
+                | CF.ViewNode vn -> 
+                      (try 
+                        let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+                        let to_vars = vd.view_vars in
+                        let from_vars = vn.h_formula_view_arguments in
+                        let subs = List.combine from_vars to_vars in
+                        let pr = Cprinter.string_of_spec_var_list in
+                        let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in
+                        let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in
+                        let rhs = subst_struc subs rhs in
+                        Some {vd with view_formula = rhs}
+                      with  
+                        | Not_found -> None
+                      )
+                | _ -> None 
+            end
+      | _ -> None in
+    let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in
+    let _ = cfd # set vd2 in
+    vd2
+
+(* CF.list_context * Prooftracer.proof *)
+
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
+  let vd = vdef_lemma_fold prog coer in
+  match vd with
+    | None -> apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+    | Some vd -> 
+          if not(!Globals.allow_lemma_fold) then
+           apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+          else
+            let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
+            let rhs_node = ln2 in
+            let rhs_rest = resth2 in
+            let _ = Debug.tinfo_hprint (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+            let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+            let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+            (a,[b])
+                (* why do_fold use proof 
+                   & apply_right_coercion is proof list *)
+
+and apply_right_coercion_b estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let _,rhs_p,rhs_t,rhs_fl, rhs_a = CF.extr_formula_base rhs_b in
   let f = mkBase resth2 rhs_p rhs_t rhs_fl rhs_a pos in
   let _ = Debug.tinfo_zprint (lazy ("do_right_coercion : c2 = "
