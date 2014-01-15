@@ -1112,10 +1112,20 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
                   (*let en_num = !num_self_fold_search in*)
                   let en_self_fold = !self_fold_search_flag in
+                  let s_eq = (String.compare vl_name vr_name)==0 in
+                  let vl_b = vl_view_origs!=[] in
+                  let vr_b = vr_view_origs!=[] in
+                  let flag = (s_eq && 
+                        ((vl_view_orig==false && vl_b) 
+                        || ((vr_view_orig==false && vr_b)))) in
+                  let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                  let _ = Debug.info_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
+                  let _ = Debug.info_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
+                  let _ = Debug.info_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                   let l2 = 
-                    if ((String.compare vl_name vr_name)==0 && 
-                        ((vl_view_orig==false && (vl_view_origs!=[])) 
-                        || ((vr_view_orig==false && vr_view_origs!=[])))) then 
+                    if flag  then 
                       [(0,M_match c)] (*force a MATCH after each lemma*)
                     else
                       let a1 = (1,M_base_case_unfold c) in
