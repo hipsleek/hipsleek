@@ -15,8 +15,21 @@ pred_prim RSteps<low:int,high:int>
       needs possibly infinite steps.
 
    Term = RSteps<a,m> & m<\inf
+
+    RSteps<a,b> & m<\inf 
+    {..}
+    RSteps<c,d> & a-c>=0
+
    Loop = RSteps<a,m> & a=\inf & m=\inf 
+
+    RSteps<a,b> & b=\inf 
+    {..}
+    RSteps<c,d> & a-c>=\inf
+
    MayLoop = RSteps<a,m> & m=\inf 
+    RSteps<a,b> & b=\inf 
+    {..}
+    RSteps<c,d> & a-c>=0
 */
 
 global RSteps rs;
@@ -51,8 +64,8 @@ int length(node x)
 }
 
 void loop() 
-  requires rs::RSteps<a,m> & m=\inf
-  ensures  rs'::RSteps<a,m> & a=\inf; //'
+  requires rs::RSteps<a,b> & b=\inf 
+  ensures  rs'::RSteps<c,b> & a-c>=\inf; //'
   // at least infinity steps
 {
   sub_call(); //subtract current call
@@ -60,8 +73,8 @@ void loop()
 }
 
 void mayloop() 
-  requires rs::RSteps<a,m> & m=\inf
-  ensures  rs'::RSteps<_,m> ; //'
+  requires rs::RSteps<a,b> & b=\inf 
+  ensures  rs'::RSteps<c,b> & a-c>=0; //'
   // at least infinity steps
 {
   sub_call(); //subtract current call
