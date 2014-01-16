@@ -208,7 +208,8 @@ let get_inf_vars f =
 Debug.no_1 "get_inf_vars" (fun c -> "") (fun l -> "INF Vars:"^(String.concat "," l)) get_inf_vars f
 
 let transform_ZE_to_string f =
-Gen.Profiling.do_1 "CoqSolverZE" transform_ZE_to_string f
+if !Globals.allow_inf_qe_coq_simp then Gen.Profiling.do_1 "CoqSolverZE" transform_ZE_to_string_simplify f
+else Gen.Profiling.do_1 "CoqSolverZE" transform_ZE_to_string f
 
 let coqpure_to_coqinfsolver_const (c: coq_const) : coq_ZE =
 match c with

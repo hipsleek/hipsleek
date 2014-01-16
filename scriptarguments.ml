@@ -256,6 +256,17 @@ let common_arguments = [
 	(*Globals.filtering_flag := false;*)
     Globals.ann_vp := false;),
     "use the quantifier elimination procedure implemented in coq for PAinfinity ");
+  ("--en-inf-qe-coq-simp", Arg.Unit( fun _ ->
+	Globals.allow_inf_qe_coq := true;
+    Globals.allow_inf_qe_coq_simp := true;
+    Globals.early_contra_flag := false;
+    (*Globals.simpl_unfold2 := true;
+    Globals.simpl_unfold3 := true;*)
+	(*Globals.elim_exists_flag := false;*)
+	(*Globals.simplify_imply := false;*)
+	(*Globals.filtering_flag := false;*)
+    Globals.ann_vp := false;),
+    "use the quantifier elimination procedure with simplification implemented in coq for PAinfinity ");
   ("--en-qe-fix", Arg.Unit( fun _ ->
 	Globals.allow_qe_fix := true;),
     "use the quantifier elimination procedure for inference ");
