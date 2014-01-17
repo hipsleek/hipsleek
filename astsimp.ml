@@ -4386,7 +4386,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               However, this may not be important.*)
             let _,fvars_body = Pointers.modifies body [] in
             let _,fvars_cond = Pointers.modifies cond [] in
-            let fvars = Gen.BList.remove_dups_eq (=) (fvars_body@fvars_cond) in
+            let fvars_while = fvars_body@fvars_cond in
+            let fvars_specs, _ = List.split (Iformula.struc_free_vars false prepost) in
+            let fvars = Gen.BList.remove_dups_eq (=) (fvars_while@fvars_specs) in
             (* let _ = print_endline ("fvars = " ^ (string_of_ident_list fvars)) in *)
             let tvars = List.filter (fun (t,id) -> List.mem id fvars) tvars in
             (************************************************)
@@ -4436,7 +4438,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let w_formal_args = List.map (fun tv ->{
                 I.param_type = fst tv;
                 I.param_name = snd tv;
-                I.param_mod = I.RefMod;
+                I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
+                              else I.NoMod; (* other vars from specification, declared with NoMod *)
                 I.param_loc = pos; }) tvars in
             let w_proc ={
 		I.proc_hp_decls = [];
