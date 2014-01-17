@@ -8,11 +8,18 @@ sumll<s> == self=null & s=0
   inv true;
 
 sumls<p,s> == self=p & s=0
-  or self::node<v,q>*q::sumls<p,s-v> 
+  or self::node<v,q>*q::sumls<p,s-v>// & self!=p
   inv true;
 
-lemma_unsafe "xx" self::sumll<s> <-> 
+/*
+lemma_safe "xx" self::sumll<s> <-> 
    (exists a,b: self::sumls<p,a> * p::sumll<b> & s=a+b);
+*/
+
+lemma_safe "x4" self::sumll<s> <-> self::sumls<null,s>;
+
+lemma_safe "x2" self::sumll<s> <-> self::sumls<self,0>*self::sumls<null,s>;
+
 
 lemma_safe "yy" self::sumls<p,s> <- 
    (exists a,v: self::sumls<q,a> * q::node<v,p> & s=a+v);
@@ -40,5 +47,14 @@ void wloop(node ys, node@R xs, int@R sum)
 }
 
 
-
+int sumfnloop(node ys) 
+  requires ys::sumll<s>
+  ensures ys::sumll<s> & res = s;
+{
+  node xs = ys;
+  int sum = 0;
+  wloop(ys,xs,sum);
+  //dprint;
+  return sum;
+}
 
