@@ -1407,7 +1407,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       | Coerc_mater s -> (1,M_lemma (c,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
                   let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
-                  let lem_infer_opt = CFU.check_seg_split_pred prog vdef vl dr in
+                  let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
                   let a1 = if !Globals.lemma_syn && lem_infer_opt !=None then
                     let _ = DD.info_hprint (add_str "lemma_infer" pr_id) "1" no_pos in
                     (1,M_cyclic (c,uf_i, 0, 2, None))

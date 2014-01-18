@@ -262,7 +262,11 @@ lemma syn: ss
 2. syn-append-tail.ss
    - syn-append-tail-2.slk: w/o size: OK with --lem-en-syn
    - syn-append-tail.slk: w/ size
-   - syn-append-tail-2a.slk
+   - syn-append-tail-2a.slk: OK
+
+2a. syn-append-tail-1.ss wo size: DONE
+    - gen lemma template with unknown pred
+    - gen lemma hypo
 
 3. syn-qsort.ss
 

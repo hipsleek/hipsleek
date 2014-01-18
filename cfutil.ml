@@ -511,17 +511,23 @@ let norm_seg_split prog vname r other_args unk_hps defs=
       vname r other_args defs
 
 
-let check_seg_split_pred_x prog vdef vnode dnode=
+let check_seg_split_pred_x prog es_formula vdef vnode dnode=
   let ss0 = List.combine vdef.C.view_vars vnode.CF.h_formula_view_arguments in
   let cont_args = CP.subst_var_list ss0 vdef.C.view_cont_vars in
-  if CP.mem_svl dnode.CF.h_formula_data_node cont_args then
-    Some (vnode, dnode)
+  let ( _,mix_f,_,_,_) = CF.split_components es_formula in
+  let eqs = (MCP.ptr_equations_without_null mix_f) in
+  let deqset = CF.find_close [dnode.CF.h_formula_data_node] eqs in
+  if CP.intersect_svl deqset cont_args !=[] then
+    let eqs1 = List.map (fun (sv1,sv2) -> if CP.mem_svl sv1 vnode.CF.h_formula_view_arguments then
+      (sv2,sv1) else (sv1,sv2)
+    ) eqs in
+    Some (vnode, {dnode with CF.h_formula_data_node = CP.subs_one eqs1 dnode.CF.h_formula_data_node})
   else
     None
 
-let check_seg_split_pred prog vdef vnode dnode=
+let check_seg_split_pred prog es_formula vdef vnode dnode=
   let pr1 vn = Cprinter.prtt_string_of_h_formula (CF.ViewNode vn) in
   let pr2 vn = Cprinter.prtt_string_of_h_formula (CF.DataNode vn) in
-  Debug.no_2 "check_seg_split_pred" pr1 pr2 (pr_option (pr_pair pr1 pr2))
-      (fun _ _ -> check_seg_split_pred_x prog vdef vnode dnode)
-      vnode dnode
+  Debug.no_3 "check_seg_split_pred" Cprinter.prtt_string_of_formula pr1 pr2 (pr_option (pr_pair pr1 pr2))
+      (fun _ _ _ -> check_seg_split_pred_x prog es_formula vdef vnode dnode)
+      es_formula vnode dnode

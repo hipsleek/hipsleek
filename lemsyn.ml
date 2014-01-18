@@ -15,18 +15,29 @@ module CP = Cpure
 module MCP = Mcpure
 module H  = Hashtbl
 
+
+let get_eqset puref =
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  eqset
 (*
 lem_type = 0: LEFT
 lem_type = 1 :RIGHT
 lem_type = 2: INFER
 *)
 let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
-      lhs_node lhs_b0 rhs_node rhs_b0 =
-  let get_eqset puref =
-    let (subs,_) = CP.get_all_vv_eqs puref in
-    let eqset = CP.EMapSV.build_eset subs in
-    eqset
-  in
+      lhs_node0 lhs_b0 rhs_node0 rhs_b0 =
+  let lsvl = CF.fv (CF.Base lhs_b0) in
+  let rsvl = CF.fv (CF.Base rhs_b0) in
+  let ss1 = List.fold_left (fun r ((CP.SpecVar (t, id, p)) as sv1) ->
+      if p = Primed then
+        r@[(sv1, CP.SpecVar (t, fresh_name (), Unprimed))]
+      else r
+  ) [] (CP.remove_dups_svl (lsvl@rsvl)) in
+  let lhs_node = CF.h_subst ss1 lhs_node0 in
+  let rhs_node = CF.h_subst ss1 rhs_node0 in
+  let lhs_b0 = CF.subst_b ss1 lhs_b0 in
+  let rhs_b0 = CF.subst_b ss1 rhs_b0 in
   let lr = match lhs_node with
     | CF.ViewNode vl -> vl.CF.h_formula_view_node
     | CF.DataNode dl -> dl.CF.h_formula_data_node
@@ -120,30 +131,56 @@ let add_ihprel iprog chp_dclrs=
   let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@nihp_dclr in
   nihp_dclr
 
-let gen_lemma_infer_x prog ass_stk hpdef_stk
+let gen_lemma_infer_x (prog) ass_stk hpdef_stk
       formula_rev_fnc manage_unsafe_lemmas_fnc manage_infer_pred_lemmas_fnc trans_hprel_2_cview_fnc trans_formula_hp_2_view_fnc
-      xpure_heap es lem_type h_vnode h_dnode=
-  let vnode = match h_vnode with
+      xpure_heap es lem_type h_vnode0 h_dnode0=
+  let vnode0 = match h_vnode0 with
     | CF.ViewNode vl -> vl
     (* | CF.DataNode dl -> dl.CF.h_formula_data_node *)
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
-  let dnode = match h_dnode with
+  let dnode0 = match h_dnode0 with
     (* |  CF.ViewNode vr -> vr.CF.h_formula_view_node *)
     |  CF.DataNode dr -> dr
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
+  (*for subst*)
+  let ( _,mf,_,_,_) = CF.split_components es.CF.es_formula in
+  let eqs = (MCP.ptr_equations_without_null mf) in
+  let cl_dns = CF.find_close [dnode0.CF.h_formula_data_node] eqs in
+  let inter_vargs = CP.intersect_svl cl_dns vnode0.CF.h_formula_view_arguments in
+  let _ = Debug.info_hprint (add_str "cl_dns" !CP.print_svl) cl_dns no_pos in
+  let _ = Debug.info_hprint (add_str "inter_vargs" !CP.print_svl) inter_vargs no_pos in
+  let ss1 = List.map (fun sv -> (dnode0.CF.h_formula_data_node, sv)) inter_vargs in
+  let ss2 = List.fold_left (fun r ((CP.SpecVar (t, id, p)) as sv1) ->
+      if p = Primed then
+        r@[(sv1, CP.SpecVar (t, id, Unprimed))]
+      else r
+  ) [] dnode0.CF.h_formula_data_arguments in
+  let h_dnode1 = (CF.h_subst (ss1@ss2) h_dnode0) in
+  let dnode1 = match h_dnode1 with
+    (* |  CF.ViewNode vr -> vr.CF.h_formula_view_node *)
+    |  CF.DataNode dr -> dr
+    | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
+  in
+  let h_vnode1 = CF.h_subst ss2 h_vnode0 in
+  let vnode1 = match h_vnode1 with
+    | CF.ViewNode vl -> vl
+    (* | CF.DataNode dl -> dl.CF.h_formula_data_node *)
+    | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
+  in
+  (*END*)
   (* let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vnode.CF.h_formula_view_name in *)
-  let vself = CP.SpecVar (CP.type_of_spec_var vnode.CF.h_formula_view_node, self, Unprimed) in
-  let ss0 = [(vnode.CF.h_formula_view_node, vself)] in
-  let rhs,n_hp =  C.add_raw_hp_rel prog false false [(vself,I);(dnode.CF.h_formula_data_node,NI)] no_pos in
+  let vself = CP.SpecVar (CP.type_of_spec_var vnode1.CF.h_formula_view_node, self, Unprimed) in
+  let ss0 = [(vnode1.CF.h_formula_view_node, vself)] in
+  let rhs,n_hp =  C.add_raw_hp_rel prog false false [(vself,I);(dnode1.CF.h_formula_data_node,NI)] no_pos in
   (*add ihpdecl*)
   let iprog = I.get_iprog () in
   let hpdclr = C.look_up_hp_def_raw prog.C.prog_hp_decls (CP.name_of_spec_var n_hp) in
   let nihp = add_ihprel iprog [hpdclr] in
   (*lemma infer*)
-  let rhs = CF.mkStarH rhs h_dnode no_pos in
-  let lf1 = CF.formula_of_heap (CF.h_subst ss0 h_vnode) no_pos in
+  let rhs = CF.mkStarH rhs h_dnode1 no_pos in
+  let lf1 = CF.formula_of_heap (CF.h_subst ss0 h_vnode1) no_pos in
   let rf1 = CF.formula_of_heap rhs no_pos in
   let lf2 = formula_rev_fnc lf1 in
   let rf2 = formula_rev_fnc rf1 in

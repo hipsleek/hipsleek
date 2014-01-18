@@ -1,4 +1,3 @@
-true: traverse
 <{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
 <xml/*.*>: not_hygienic
 <omega_modified/omega_lib/obj/*.*>: not_hygienic
@@ -16,4 +15,5 @@ true: traverse
 <sw/*>: not_hygienic
 <lp-ex/*>: not_hygienic
 <cil/obj/x86_LINUX/*.*>: not_hygienic
+<{3234,benchmark,bin,bugs,_build,omega_modified,omega_original,core,cparser,examples,docs}/*.*>: -traverse
 
