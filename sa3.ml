@@ -16,11 +16,6 @@ module IC = Icontext
 module LEM = Lemma
 let step_change = new Gen.change_flag
 
-(* outcome from shape_infer *)
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
-  Cprinter.string_of_hprel_def_short (==)
-
-
 (***************************************************************)
              (*      APPLY TRANS IMPL     *)
 (****************************************************************)
@@ -2205,8 +2200,8 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
   let back_up_state ()=
     (* let cur_ass = ass_stk# get_stk in *)
     (* let _ = ass_stk # reset in *)
-    let cur_hpdefs =  rel_def_stk # get_stk in
-    let _ = rel_def_stk # reset in
+    let cur_hpdefs =  CF.rel_def_stk # get_stk in
+    let _ = CF.rel_def_stk # reset in
     let cur_ihpdcl = iprog.Iast.prog_hp_decls in
     let cur_chpdcl = prog.Cast.prog_hp_decls in
     let cviews =  prog.Cast.prog_view_decls in
@@ -2217,8 +2212,8 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
   let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, gen_sleek_file)=
     (* let _ = ass_stk # reset in *)
     (* let _ = ass_stk # push_list cur_ass in *)
-    let _ = rel_def_stk # reset in
-    let _ = rel_def_stk # push_list cur_hpdefs in
+    let _ = CF.rel_def_stk # reset in
+    let _ = CF.rel_def_stk # push_list cur_hpdefs in
     let idiff = Gen.BList.difference_eq Iast.cmp_hp_def cur_ihpdcl iprog.Iast.prog_hp_decls in
     let _ = iprog.Iast.prog_hp_decls <- (iprog.Iast.prog_hp_decls@idiff) in
     let cdiff = Gen.BList.difference_eq Cast.cmp_hp_def cur_chpdcl prog.Cast.prog_hp_decls in
@@ -2755,7 +2750,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (*split pred*)
   let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
     let n_all_hp_defs0c, split_map =
-      let r = SAC.pred_split_hp iprog prog unk_hps Infer.rel_ass_stk rel_def_stk n_all_hp_defs0b in
+      let r = SAC.pred_split_hp iprog prog unk_hps Infer.rel_ass_stk CF.rel_def_stk n_all_hp_defs0b in
       r
     in
     (*update n_cmb_defs0*)
@@ -2797,7 +2792,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     SAC.check_equiv_wo_libs iprog prog sel_hps post_hps dang_hps n_cmb_defs2 n_all_hp_defs2 []
   else (n_cmb_defs2, n_all_hp_defs2)
   in
-  let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
+  let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
   ([],(* cmb_defs, *) n_all_hp_defs3)
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=

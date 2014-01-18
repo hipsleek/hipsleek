@@ -3038,7 +3038,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") IA.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
-    let rel_fixs,lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Solver.xpure_heap in
+    let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Solver.xpure_heap in
     (* let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
     let valid, n_rhs = match lc_opt with
       | Some lcs -> begin

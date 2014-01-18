@@ -3992,6 +3992,7 @@ and hp_rel_def = {
     def_rhs : formula_guard list;
 }
 
+
 (* to convert to using hp_rel_def_new *)
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
@@ -4007,6 +4008,11 @@ and infer_state = {
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
+
+let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+(* outcome from shape_infer *)
+let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
+  !print_hprel_def_short (==)
 
 (*for drop non-selective subformulas*)
 let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
@@ -6223,9 +6229,9 @@ let drop_views_formula_x (f0:formula) views : formula=
   in
   helper f0
 
-let drop_view_formula (f2_f:formula) views: formula =
+let drop_views_formula (f2_f:formula) views: formula =
   let pr2 x= String.concat ";" x in
-  Debug.no_2 "drop_view_formula" !print_formula pr2
+  Debug.no_2 "drop_views_formula" !print_formula pr2
       !print_formula
       drop_views_formula_x f2_f views
 
@@ -6233,7 +6239,7 @@ let drop_view_struc_formula_x (f0 : struc_formula) views: struc_formula =
   let rec helper f=
     match f with
 	  | ECase b -> report_error no_pos "drop_view_struc_formula: not handle yet"
-	  | EBase b -> EBase {b with  formula_struc_base = drop_view_formula b.formula_struc_base views;
+	  | EBase b -> EBase {b with  formula_struc_base = drop_views_formula b.formula_struc_base views;
 		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
 	  | EAssume _ -> f
 	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}

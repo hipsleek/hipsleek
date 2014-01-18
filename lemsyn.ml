@@ -3,6 +3,7 @@ open Wrapper
 open Gen
 open Others
 open Label_only
+open Exc.GTable
 
 module I  = Iast
 module C  = Cast
@@ -17,6 +18,7 @@ module H  = Hashtbl
 (*
 lem_type = 0: LEFT
 lem_type = 1 :RIGHT
+lem_type = 2: INFER
 *)
 let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       lhs_node lhs_b0 rhs_node rhs_b0 =
@@ -71,9 +73,9 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let rf2 = formula_rev_fnc rf1 in
     (*gen lemma*)
     let lemma_name = "cyc" in
-    let l_coer = if lem_type = 0 then
-      I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2
-    else I.mk_lemma (fresh_any_name lemma_name) I.Right [] rf2 lf2
+    let l_coer = match lem_type with
+      | 0 -> I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2
+      | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) I.Right [] rf2 lf2
     in
     (*add lemma*)
     let iprog = I.get_iprog () in
@@ -92,3 +94,106 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       (fun _ _ _ _ -> gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
           lhs_node lhsb rhs_node rhsb)
       lhs_node lhsb rhs_node rhsb
+
+let add_ihprel iprog chp_dclrs=
+  let rec process_one chps res=
+    match chps with
+      | [] -> res
+      | chp::rest ->
+            try
+              let _ = I.look_up_hp_def_raw res chp.C.hp_name in
+               process_one rest res
+            with Not_found ->
+                let n_ihp = {
+                    I.hp_name = chp.C.hp_name;
+                    I.hp_typed_inst_vars= List.map
+                        (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) chp.C.hp_vars_inst;
+                    I.hp_part_vars = chp.C.hp_part_vars;
+                    I.hp_root_pos = chp.C.hp_root_pos;
+                    I.hp_is_pre = chp.C.hp_is_pre;
+                    I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) top_flow [] no_pos;
+                }
+                in
+                process_one rest (res@[n_ihp])
+  in
+  let nihp_dclr = process_one chp_dclrs iprog.I.prog_hp_decls in
+  let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@nihp_dclr in
+  nihp_dclr
+
+let gen_lemma_infer_x prog ass_stk hpdef_stk
+      formula_rev_fnc manage_unsafe_lemmas_fnc manage_infer_pred_lemmas_fnc trans_hprel_2_cview_fnc trans_formula_hp_2_view_fnc
+      xpure_heap es lem_type h_vnode h_dnode=
+  let vnode = match h_vnode with
+    | CF.ViewNode vl -> vl
+    (* | CF.DataNode dl -> dl.CF.h_formula_data_node *)
+    | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
+  in
+  let dnode = match h_dnode with
+    (* |  CF.ViewNode vr -> vr.CF.h_formula_view_node *)
+    |  CF.DataNode dr -> dr
+    | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
+  in
+  (* let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vnode.CF.h_formula_view_name in *)
+  let vself = CP.SpecVar (CP.type_of_spec_var vnode.CF.h_formula_view_node, self, Unprimed) in
+  let ss0 = [(vnode.CF.h_formula_view_node, vself)] in
+  let rhs,n_hp =  C.add_raw_hp_rel prog false false [(vself,I);(dnode.CF.h_formula_data_node,NI)] no_pos in
+  (*add ihpdecl*)
+  let iprog = I.get_iprog () in
+  let hpdclr = C.look_up_hp_def_raw prog.C.prog_hp_decls (CP.name_of_spec_var n_hp) in
+  let nihp = add_ihprel iprog [hpdclr] in
+  (*lemma infer*)
+  let rhs = CF.mkStarH rhs h_dnode no_pos in
+  let lf1 = CF.formula_of_heap (CF.h_subst ss0 h_vnode) no_pos in
+  let rf1 = CF.formula_of_heap rhs no_pos in
+  let lf2 = formula_rev_fnc lf1 in
+  let rf2 = formula_rev_fnc rf1 in
+  (*gen lemma*)
+  let lemma_name = "cyci" in
+  let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
+  (*backup*)
+  let cur_ass = ass_stk# get_stk in
+  let _ = ass_stk # reset in
+  let cur_hpdefs =  hpdef_stk # get_stk in
+  let _ = hpdef_stk # reset in
+  let r1,hp_defs0,r3 = manage_infer_pred_lemmas_fnc [l_coer] iprog prog xpure_heap in
+  (*transform inferred def*)
+  let hp_defs = (* CF.rel_def_stk # get_stk *) hp_defs0 in
+  let lem_name = if (hp_defs != []) then
+    (*from unknown pred into view*)
+    let proc_name = "lem_infer" in
+    let n_cviews,chprels_decl = trans_hprel_2_cview_fnc iprog prog proc_name hp_defs in
+    let in_hp_names = [n_hp] in
+    (*transform formula*)
+    let rf3 = trans_formula_hp_2_view_fnc iprog prog proc_name
+       chprels_decl hp_defs rf1 in
+    let rf4 = formula_rev_fnc rf3 in
+    let lem_name = fresh_any_name lemma_name in
+    let l_coer = I.mk_lemma (lem_name) I.Left [] lf2 rf4 in
+    (*add lemma*)
+    let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
+    let _ = print_endline "\n*******relational definition ********" in
+    let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def (CF.rel_def_stk # get_stk) else
+      (CF.rel_def_stk # get_stk) in
+    let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+    let _ = print_endline (pr1 defs1) in
+    let _ = print_endline (" \n gen lemma (infer):" ^ (Cprinter.string_of_formula lf1) ^ ( " -> " )
+    ^ (Cprinter.string_of_formula rf3)) in
+    ()
+  else ()
+  in
+  (*restore*)
+  let _ = ass_stk # reset in
+  let _ = ass_stk # push_list cur_ass in
+  let _ = hpdef_stk # reset in
+  let _ = hpdef_stk # push_list cur_hpdefs in
+  n_hp
+
+let gen_lemma_infer prog ass_stk hpdef_stk formula_rev_fnc manage_unsafe_lemmas_fnc manage_infer_lemmas_fnc
+      trans_hprel_2_cview_fnc trans_formula_hp_2_view_fnc xpure_heap
+      es lem_type vnode dnode =
+  let pr1 = Cprinter.prtt_string_of_h_formula  in
+  Debug.no_3 "LEMSYN.gen_lemma_infer" pr1 pr1 string_of_int !CP.print_sv
+      (fun _ _ _ -> gen_lemma_infer_x prog ass_stk hpdef_stk formula_rev_fnc manage_unsafe_lemmas_fnc manage_infer_lemmas_fnc
+          trans_hprel_2_cview_fnc trans_formula_hp_2_view_fnc xpure_heap
+          es lem_type vnode dnode)
+      vnode dnode lem_type

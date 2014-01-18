@@ -2050,7 +2050,7 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
   in
-  let c_p_hprel = PRED.generate_pure_rel chprel in
+  let c_p_hprel = C.generate_pure_rel chprel in
   chprel,c_p_hprel
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =

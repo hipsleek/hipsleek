@@ -17,6 +17,9 @@ module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
 
+(*used in Predicate*)
+let pure_hprel_map = ref ([]: (ident * ident) list)
+
 type typed_ident = (typ * ident)
 
 and prog_decl = { 
@@ -988,6 +991,53 @@ let look_up_hp_decl_data_name decls hp arg_pos=
       hp arg_pos
 
 let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
+let generate_pure_rel hprel=
+  let n_p_hprel ={
+      rel_name = default_prefix_pure_hprel ^ hprel.hp_name;
+      rel_vars = List.map fst hprel.hp_vars_inst;
+      rel_formula = F.get_pure hprel.hp_formula;
+  }
+  in
+  (*add map*)
+  let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
+  let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  n_p_hprel
+
+let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
+  if (List.length unknown_ptrs > 0) then
+    let hp_decl =
+      { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
+        if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
+        ^ (string_of_int (Globals.fresh_int()));
+      hp_part_vars = [];
+      hp_root_pos = 0; (*default, reset when def is inferred*)
+      hp_vars_inst = unknown_ptrs;
+      hp_is_pre = is_pre;
+      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) F.TypeTrue (F.mkTrueFlow()) [] pos;}
+    in
+    let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
+    prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    let p_hp_decl = generate_pure_rel hp_decl in
+    let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
+    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let hf =
+      F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
+               List.map (fun sv -> P.mkVar sv pos) unk_args,
+      pos)
+    in
+    let _ = Debug.tinfo_hprint (add_str "define: " !print_hp_decl) hp_decl pos in
+    Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
+    (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
+  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
+  let pr1 = pr_list (pr_pair !P.print_sv print_arg_kind) in
+  let pr2 = !F.print_h_formula in
+  let pr4 (hf,_) = pr2 hf in
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+      (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in

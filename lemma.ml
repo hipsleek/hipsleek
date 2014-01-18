@@ -427,9 +427,9 @@ let preprocess_fixpoint_computation cprog xpure_fnc lhs oblgs rel_ids post_rel_i
       (*grp_post_rel_flag*)1
 
 let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
-  let rec helper coercs rel_fixs res_so_far=
+  let rec helper coercs rel_fixs hp_rels res_so_far=
     match coercs with
-      | [] -> (rel_fixs, Some res_so_far)
+      | [] -> (rel_fixs, hp_rels, Some res_so_far)
       | coer::rest -> begin
           let lems = process_one_repo [coer] iprog cprog in
           let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
@@ -454,8 +454,8 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                   in
                   let oblgs = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_rel_list_context lc)) [] lcs in
                   (*left*)
-                  let rl =
-                    if left = [] then [] else
+                  let rl, lshapes =
+                    if left = [] then [],[] else
                       (*shape*)
                       let post_hps, post_rel_ids, sel_hps, rel_ids = match left  with
                         | [] -> [],[],[],[]
@@ -466,10 +466,10 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                           )
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
                       in
-                      let _ = if sel_hps = [] || hp_lst_assume = [] then () else
+                      let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
                         let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                           [] [] [] true true in
-                        ()
+                        hp_defs
                       in
                       (*pure fixpoint*)
                       let rl = if rel_ids = [] || oblgs = [] then [] else
@@ -482,11 +482,11 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         let _ = print_endline "" in
                         r
                       in
-                      rl
+                      rl,lshape
                   in
                   (*right*)
                   (*shape*)
-                  let rr = if right = [] then [] else
+                  let rr,rshapes = if right = [] then [],[] else
                     let post_hps, post_rel_ids, sel_hps, rel_ids = match right  with
                       | [] -> [],[],[],[]
                       | [coer] -> (CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_head),
@@ -496,10 +496,10 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         )
                       | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 2"
                     in
-                    let _ = if sel_hps = [] || hp_lst_assume = [] then () else
+                    let hp_defs = if sel_hps = [] || hp_lst_assume = [] then [] else
                       let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                         [] [] [] true true in
-                      ()
+                      hp_defs
                     in
                     (*pure fixpoint*)
                     let rr = if rel_ids = [] || oblgs = [] then [] else
@@ -535,14 +535,14 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                       (* let _ = print_endline "" in *)
                       r
                     in
-                    (rr)
+                    (rr,hp_defs)
                   in
                   (* let _=  print_endline "*************************************" in *)
-                  helper rest (rel_fixs@rl@rr) (res_so_far@lcs)
-            | Some _ -> (rel_fixs, None)
+                   helper rest (rel_fixs@rl@rr) (hp_rels@lshapes@rshapes) (res_so_far@lcs)
+            | Some _ -> (rel_fixs,hp_rels, None)
         end
   in
-  helper repo [] []
+  helper repo [] [] []
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
@@ -789,3 +789,4 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
 let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;
+let _ = Solver.manage_infer_pred_lemmas := manage_infer_pred_lemmas;;

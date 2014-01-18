@@ -9,6 +9,12 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+let get_data_view_name hf=
+  match hf with
+    | CF.ViewNode vn -> ( vn.CF.h_formula_view_name)
+    | CF.DataNode vn -> ( vn.CF.h_formula_data_name)
+    | _ -> ( "")
+
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
   let keep_ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
   CF.drop_data_view_hpargs_nodes f CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode
@@ -454,3 +460,68 @@ let get_shortest_length_base fs view_name=
   Debug.no_2 "get_shortest_length_base" pr1 pr_id string_of_int
       (fun _ _ -> get_shortest_length_base_x fs view_name)
       fs view_name
+
+
+let norm_seg_split_x prog vname0 r other_args unk_hps defs=
+  (**************INTERNAL**********)
+  let look_up_continuous_para non_root_args f=
+    let vns = CF.get_views f in
+    let rec_vns, other_vns = List.partition (fun vn ->
+        (List.exists (fun vn -> String.compare vn.CF.h_formula_view_name vname0=0) vns)
+    ) vns in
+      if other_vns != [] then [] else
+        let ( _,mix_f,_,_,_) = CF.split_components f in
+        let eqs = (MCP.ptr_equations_without_null mix_f) in
+        (*cont paras are para not changed, just forwarded*)
+        let cont_paras = List.fold_left (fun cur_cont_paras vn ->
+            let f_wo_rec_hps = CF.drop_views_formula f [vname0] in
+            let all_svl = CF.fv f_wo_rec_hps in
+            let all_svl1 = CP.diff_svl all_svl (CP.remove_dups_svl (
+                List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs)) in
+            let cont_args = CP.diff_svl vn.CF.h_formula_view_arguments all_svl1 in
+            let closed_rec_args = CF.find_close cont_args eqs in
+            CP.intersect_svl cur_cont_paras closed_rec_args
+        ) non_root_args rec_vns
+        in
+        cont_paras
+  in
+  (********END INTERNAL*************)
+  (*classify base vs. rec*)
+  let rec_fs,base_fs = List.partition (fun f ->
+      let vns = CF.get_views f in
+      (List.exists (fun vn -> String.compare vn.CF.h_formula_view_name vname0=0) vns)
+  ) defs in
+  (*in rec branches, one parameter is continuous*)
+  let cont_args = List.fold_left (look_up_continuous_para) other_args rec_fs in
+  let _ = Debug.info_hprint (add_str "cont_args: " !CP.print_svl) cont_args no_pos in
+  if cont_args = [] then
+    (false, (r::other_args ,[]))
+  else
+    (*in base branches, root is closed and continuos parameter is contant*)
+    (*if there are > segments: need generation. NOW: ASSUME one base case*)
+    let rem_args = r::(CP.diff_svl other_args cont_args) in
+     (true, (rem_args, cont_args))
+
+let norm_seg_split prog vname r other_args unk_hps defs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_pair !CP.print_svl !CP.print_svl in
+  Debug.no_4 "CFU.norm_seg_split" pr_id !CP.print_sv !CP.print_svl pr2 (pr_pair string_of_bool pr3)
+      (fun _ _ _ _ -> norm_seg_split_x prog vname r other_args unk_hps defs)
+      vname r other_args defs
+
+
+let check_seg_split_pred_x prog vdef vnode dnode=
+  let ss0 = List.combine vdef.C.view_vars vnode.CF.h_formula_view_arguments in
+  let cont_args = CP.subst_var_list ss0 vdef.C.view_cont_vars in
+  if CP.mem_svl dnode.CF.h_formula_data_node cont_args then
+    Some (vnode, dnode)
+  else
+    None
+
+let check_seg_split_pred prog vdef vnode dnode=
+  let pr1 vn = Cprinter.prtt_string_of_h_formula (CF.ViewNode vn) in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (CF.DataNode vn) in
+  Debug.no_2 "check_seg_split_pred" pr1 pr2 (pr_option (pr_pair pr1 pr2))
+      (fun _ _ -> check_seg_split_pred_x prog vdef vnode dnode)
+      vnode dnode

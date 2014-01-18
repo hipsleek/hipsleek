@@ -261,40 +261,40 @@ let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
-let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
-  if (List.length unknown_ptrs > 0) then
-    let hp_decl =
-      { Cast.hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
-        if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
-        ^ (string_of_int (Globals.fresh_int()));
-      Cast.hp_part_vars = [];
-      Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
-      Cast.hp_vars_inst = unknown_ptrs;
-      Cast.hp_is_pre = is_pre;
-      Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
-    in
-    let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in
-    prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
-    (* PURE_RELATION_OF_HEAP_PRED *)
-    let p_hp_decl = Predicate.generate_pure_rel hp_decl in
-    let _ = prog.C.prog_rel_decls <- (p_hp_decl::prog.C.prog_rel_decls) in
-    Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula;
-    let hf =
-      CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
-               List.map (fun sv -> CP.mkVar sv pos) unk_args,
-      pos)
-    in
-    let _ = Debug.tinfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in
-    DD.ninfo_zprint (lazy (("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)))) pos;
-    (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed))
-  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+(* let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos= *)
+(*   if (List.length unknown_ptrs > 0) then *)
+(*     let hp_decl = *)
+(*       { Cast.hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else *)
+(*         if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name) *)
+(*         ^ (string_of_int (Globals.fresh_int())); *)
+(*       Cast.hp_part_vars = []; *)
+(*       Cast.hp_root_pos = 0; (\*default, reset when def is inferred*\) *)
+(*       Cast.hp_vars_inst = unknown_ptrs; *)
+(*       Cast.hp_is_pre = is_pre; *)
+(*       Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;} *)
+(*     in *)
+(*     let unk_args = (fst (List.split hp_decl.Cast.hp_vars_inst)) in *)
+(*     prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls); *)
+(*     (\* PURE_RELATION_OF_HEAP_PRED *\) *)
+(*     let p_hp_decl = Predicate.generate_pure_rel hp_decl in *)
+(*     let _ = prog.C.prog_rel_decls <- (p_hp_decl::prog.C.prog_rel_decls) in *)
+(*     Smtsolver.add_hp_relation hp_decl.Cast.hp_name unk_args hp_decl.Cast.hp_formula; *)
+(*     let hf = *)
+(*       CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed),  *)
+(*                List.map (fun sv -> CP.mkVar sv pos) unk_args, *)
+(*       pos) *)
+(*     in *)
+(*     let _ = Debug.tinfo_hprint (add_str "define: " Cprinter.string_of_hp_decl) hp_decl pos in *)
+(*     DD.ninfo_zprint (lazy (("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)))) pos; *)
+(*     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)) *)
+(*   else report_error pos "sau.add_raw_hp_rel: args should be not empty" *)
 
-let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
-  let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in
-  let pr2 = Cprinter.string_of_h_formula in
-  let pr4 (hf,_) = pr2 hf in
-  Debug.no_1 "add_raw_hp_rel" pr1 pr4
-      (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos= Cast.add_raw_hp_rel prog is_pre is_unknown unknown_args pos
+(*   let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in *)
+(*   let pr2 = Cprinter.string_of_h_formula in *)
+(*   let pr4 (hf,_) = pr2 hf in *)
+(*   Debug.no_1 "add_raw_hp_rel" pr1 pr4 *)
+(*       (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args *)
 
 let fresh_raw_hp_rel prog is_pre is_unk hp pos =
   try
@@ -1871,7 +1871,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
               if !Globals.sa_sp_split_base then
                 (*generate new hp decl for pre-preds*)
-                let new_hf, new_hp = add_raw_hp_rel_x prog true true undef_args_inst pos in
+                let new_hf, new_hp = add_raw_hp_rel prog true true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
                 do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
               else
@@ -7001,7 +7001,7 @@ let ann_unk_svl prog par_defs=
     let _ = Debug.ninfo_zprint (lazy (("     partial unk hp: " ^ (!CP.print_sv hp)))) no_pos in
     let unk_args0_w_inst = List.map (fun sv -> (sv, NI)) unk_args0 in
     let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-    let unk_hf, unk_hps = add_raw_hp_rel_x prog is_pre true unk_args0_w_inst no_pos in
+    let unk_hf, unk_hps = add_raw_hp_rel prog is_pre true unk_args0_w_inst no_pos in
     let new_par_def0= (hp,args0,unk_args0,cond0,add_unk_hp_f unk_hf olhs0, add_unk_hp_f unk_hf orhs0) in
     let tl_par_defs = List.map (add_unk_hp_pdef unk_hf unk_args0) (List.tl par_defs) in
     ((unk_hps,unk_args0), new_par_def0::tl_par_defs)

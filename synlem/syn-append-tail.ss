@@ -19,8 +19,8 @@ ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
 	inv self!=null & tx!=null & n>=1;
 
-lemma "lseg2" self::lseg2<p, n> <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
-lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
+//lemma "lseg2" self::lseg2<p, n> <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
+//lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
 
 /*
  work

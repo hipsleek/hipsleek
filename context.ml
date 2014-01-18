@@ -61,7 +61,11 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
-  | M_cyclic of (match_res* int * int * int * h_formula option) (*match * number_of_unfold * unfold_or_fold * type_lemma_syn*)
+        (*match * number_of_unfold * unfold_or_fold * type_lemma_syn*)
+        (* lem_type = 0: LEFT *)
+        (* lem_type = 1 :RIGHT *)
+        (* lem_type = 2: INFER *)
+  | M_cyclic of (match_res* int * int * int * h_formula option)
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -1402,7 +1406,12 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       | View_mater -> (1,M_unfold (c,uf_i))
                       | Coerc_mater s -> (1,M_lemma (c,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
-                  let a1 = 
+                  let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
+                  let lem_infer_opt = CFU.check_seg_split_pred prog vdef vl dr in
+                  let a1 = if !Globals.lemma_syn && lem_infer_opt !=None then
+                    let _ = DD.info_hprint (add_str "lemma_infer" pr_id) "1" no_pos in
+                    (1,M_cyclic (c,uf_i, 0, 2, None))
+                  else
                     if (lhs_case_flag=true && !Globals.lhs_case_flag) then
                       let l1 = [(1,M_lhs_case c)] 
                       in

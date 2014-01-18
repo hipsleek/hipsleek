@@ -540,3 +540,7 @@ let plug_shape_into_specs cprog iprog proc_names hp_defs=
   Debug.no_2 "plug_shape_into_specs" pr1 pr2 pr_none
       (fun _ _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
       hp_defs proc_names
+
+
+let _ = Solver.trans_hprel_2_cview := trans_hprel_2_cview;;
+let _ = Solver.trans_formula_hp_2_view := trans_formula_hp_2_view;;

@@ -16,7 +16,7 @@ module SAU = Sautility
 let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
-    let new_f = CF.drop_view_formula f1 [view_name] in
+    let new_f = CF.drop_views_formula f1 [view_name] in
     (* let _ = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
      (CF.fv new_f)
   in
