@@ -144,49 +144,55 @@ install-native: hip.native sleek.native
 
 FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer
 
-cmi: clean_cmi all create_cmi
+FILES1 := globals
 
-clean_cmi:
+init: clean_mli all create_mli
+
+clean_mli:
 	echo 'Temp' > temp.mli
 	rm *.mli
 	rm -r _build
 
-create_cmi:
+create_mli:
 	cp _build/*.cmi .
 	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4_import.cmi .
 	$(foreach file, $(FILES), \
 		ocamlc -i $(file).ml > $(file).mli; \
 		sed -i 's/type vertex = vertex$$/type vertex = V.t/' $(file).mli; \
 	)
 	rm *.cmi
 	mkdir -p mlold
-	cp *.ml mlold/
+	cp --preserve *.ml mlold/
 
-mli: create_mli all
+mli: change_mli all
 
-create_mli:
+change_mli:
 	cp _build/*.cmi .
 	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4_import.cmi .
 	$(foreach file, $(FILES), \
-		cmp -s $(file).ml mlold/$(file).ml; \
-		RETVAL=$$?; \
-		if [ $$RETVAL -eq 0 ]; then \
-			echo  "SAME" $(file); \
+		TIME1=$(shell stat -c %Y $(file).ml); \
+		TIME2=$(shell stat -c %Y mlold/$(file).ml); \
+		if [ $$TIME1 -eq $$TIME2 ]; then \
+			echo "SAME" $(file); \
 		else \
-			cp $(file).ml mlold/$(file).ml; \
+			cp --preserve $(file).ml mlold/$(file).ml; \
 			ocamlc -i mlold/$(file).ml > mlold/$(file).mli; \
 			sed -i 's/type vertex = vertex$$/type vertex = V.t/' mlold/$(file).mli; \
 			cmp -s $(file).mli mlold/$(file).mli; \
 			RETVAL=$$?; \
 			if [ $$RETVAL -eq 0 ]; then \
-				echo "SAME" $(file); \
+			 	echo "SAME" $(file); \
 			else \
-				echo "DIFF" $(file); \
-				ocamlc mlold/$(file).mli; \
-				mv mlold/$(file).cmi .; \
-				cp mlold/$(file).mli .; \
+			 	echo "DIFF" $(file); \
+			 	ocamlc mlold/$(file).mli; \
+			 	mv mlold/$(file).cmi .; \
+			 	cp mlold/$(file).mli .; \
 			fi; \
 		fi; \
 	)
