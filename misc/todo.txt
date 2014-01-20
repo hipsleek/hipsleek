@@ -16,6 +16,12 @@ static  :EBase exists (Expl)[](Impl)[ys; k](ex)[](exists xs_911,
                     {FLOW,(24,25)=__norm}[]
                     
 ================================================================
+# misc/coind.s --tp z3
+
+without z3, we have an error though
+x*y is not required. Can we have a filter phase
+to avoid formula that are not catered in provers?
+
 ================================================================
 ================================================================
 ================================================================
