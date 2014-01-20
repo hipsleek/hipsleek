@@ -13453,19 +13453,24 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
   let vd = vdef_lemma_fold prog coer in
   match vd with
     | None -> apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
-    | Some vd -> 
-          if not(!Globals.allow_lemma_fold) then
-           apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
-          else
-            let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
-            let rhs_node = ln2 in
-            let rhs_rest = resth2 in
-            let _ = Debug.tinfo_hprint (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
-            let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
-            let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
-            (a,[b])
-                (* why do_fold use proof 
-                   & apply_right_coercion is proof list *)
+    | Some vd ->
+        let can_fold = (
+          if not(!Globals.allow_lemma_fold) then false
+          else match ln2 with
+          | ViewNode _ -> true
+          | _ -> false
+        ) in
+        if not can_fold then
+          apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+        else
+          let (estate,iv,ivr) = Inf.remove_infer_vars_all estate (* rt *)in
+          let rhs_node = ln2 in
+          let rhs_rest = resth2 in
+          let _ = Debug.tinfo_hprint (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+          let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+          let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+          (a,[b])
+          (* why do_fold use proof & apply_right_coercion is proof list *)
 
 and apply_right_coercion_b estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let _,rhs_p,rhs_t,rhs_fl, rhs_a = CF.extr_formula_base rhs_b in
