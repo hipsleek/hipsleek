@@ -21,7 +21,7 @@ ll<n> == self=null & n=0
 
 //lemma self::sll<n, sm, lg> <- self::ll<n>;
 
-lemma self::sll<n, sm, lg> -> self::ll<n>;
+//lemma self::sll<n, sm, lg> -> self::ll<n>;
 
 
 node id2(node xs)
@@ -60,20 +60,20 @@ bool bubble(node xs)
 	bool tmp, flag; 
 
 	if (xs.next == null) {
-		return false;
+          return false;
 	}
-	else {    
-		tmp = bubble(xs.next);
-    int xv = xs.val;
-    int xnv = xs.next.val;
-		if (xv <= xnv) 
-			flag = false;
-		else {
-			xs.val = xnv;
-			xs.next.val = xv; //ERROR: lhs and rhs do not match
-			flag = true; 
-		}
-		return (flag || tmp);	
+	else {
+          tmp = bubble(xs.next);
+          int xv = xs.val;
+          int xnv = xs.next.val;
+          if (xv <= xnv) 
+            flag = false;
+          else {
+            xs.val = xnv;
+            xs.next.val = xv; //ERROR: lhs and rhs do not match
+            flag = true; 
+          }
+          return (flag || tmp);	
 	}
 }
 
