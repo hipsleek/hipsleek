@@ -43,7 +43,10 @@ let webserver = ref false
 let proc_used_names = ref ([]:ident list)
 
 (* global option to switch on/off the simplification of context after symbolic execution *)
-let simplify_context = ref false 
+let simplify_context = ref false
+
+let scc_proc_sel_hps = ref ([]: CP.spec_var list)
+let scc_proc_sel_post_hps = ref ([]: CP.spec_var list)
 
 let parallelize num =
   num_para := num
@@ -2184,7 +2187,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           if (* !Globals.sap *) true then begin
                             print_endline "";
                             print_endline "*************************************";
-                            print_endline "*******relational assumptions ********";
+                            print_endline "*******relational assumptions 2 ********";
                             print_endline "*************************************";
                         end;
                           let ras = Infer.rel_ass_stk # get_stk in
@@ -2541,14 +2544,20 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog scc_procs =
+  (* Debug.info_hprint (add_str "proc_mutual_scc_shape_infer"  pr_id) "1"  no_pos; *)
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
     (* let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in *)
     let scc_hprel_ass = Infer.scc_rel_ass_stk # get_stk in
     let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
-    let scc_sel_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_hps) [] scc_procs in
-    let scc_sel_post_hps = List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs in
+    let scc_sel_hps = !scc_proc_sel_hps(*  List.fold_left (fun r_hps proc -> *)
+        (* let _ = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
+        (* r_hps@proc.Cast.proc_sel_hps) [] scc_procs  *)in
+    let scc_sel_post_hps = !scc_proc_sel_post_hps
+      (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
+    (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in *)
+    (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)
     let scc_hprel, scc_inferred_hps =
       if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
         let res =
@@ -2725,8 +2734,12 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (*store assumption. solve it when we finish analyse its scc*)
                       let _ = proc.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@hp_lst_assume in
                       let _ = proc.Cast.proc_hprel_unkmap <- proc.Cast.proc_hprel_unkmap@hp_rel_unkmap in
+                      (* let _ = Debug.info_hprint (add_str "proc.Cast.proc_sel_hps"  !CP.print_svl) (proc.Cast.proc_sel_hps)  no_pos in *)
+                      (* let _ = Debug.info_hprint (add_str "sel_hp_rels" !CP.print_svl) (sel_hp_rels)  no_pos in *)
                       let _ = proc.Cast.proc_sel_hps <- proc.Cast.proc_sel_hps@sel_hp_rels in
+                      let _ = scc_proc_sel_hps := !scc_proc_sel_hps@sel_hp_rels in
                       let _ = proc.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
+                      let _ = scc_proc_sel_post_hps := !scc_proc_sel_post_hps@sel_post_hp_rels in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
                           if (* !Globals.sap *) true then begin
@@ -3261,6 +3274,8 @@ let check_prog iprog (prog : prog_decl) =
         let _ = proc_mutual_scc_shape_infer iprog prog scc in
         let _ = Infer.rel_ass_stk # reset in
         let _ = Infer.scc_rel_ass_stk # reset in
+        let _ = scc_proc_sel_hps := [] in
+        let _ = scc_proc_sel_post_hps := [] in
         ()
       else ()
       in

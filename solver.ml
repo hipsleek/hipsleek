@@ -10867,7 +10867,7 @@ and do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 
 (* assumes coer is a right lemma *)
 and vdef_fold_right_lemma coer  = 
-  if coer.coercion_case == Simple then (* coer.coercion_fold_def # get *) None
+  if coer.coercion_case == Simple then coer.coercion_fold_def # get
   else None
 
 (* WN/Trung : to revise this into a right lemma with fold operation *)

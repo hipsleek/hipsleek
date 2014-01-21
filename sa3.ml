@@ -1810,7 +1810,9 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: C
   let match_one_fnc = if (!Globals.syntatic_mode) then SAU.match_one_hp_views else
     (match_one_hp_views) in
   let hp_defs1 = List.filter (fun def -> match def.CF.def_cat with
-    | CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp sel_hps
+    | CP.HPRelDefn (hp,r,paras) -> (CP.mem_svl hp sel_hps &&
+          not (List.for_all (fun sv -> not (CP.is_node_typ sv)) (r::paras))
+      )
     | _ -> false
   ) hp_defs in
   let m = List.map (match_one_fnc iprog prog vdcls) hp_defs1 in

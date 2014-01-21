@@ -83,6 +83,8 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
     let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
     match def.CF.def_cat with
 	| CP.HPRelDefn (v,r,paras)->
+              (*pure preds, dont need to transform*)
+              if List.for_all (fun sv -> not (CP.is_node_typ sv)) (r::paras) then acc else
               let _ = Debug.ninfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
               let _ = Debug.ninfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
 	      let vname = sv_name v in

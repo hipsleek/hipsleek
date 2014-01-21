@@ -3,6 +3,10 @@ data node {
 	node next;	
 }
 
+sll<n, sm, lg> ==
+  self::node<sm, null> & sm=lg & n=1 
+  or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+  inv n>=1 & sm<=lg;
 
 /* view for a singly linked list */
 
@@ -19,6 +23,11 @@ HeapPred G2(node a).
 bool bubble(node xs)
   /* requires xs::node<_,p> * p::ll<> */
   /* ensures xs::node<_,p1> * p1::ll<>; */
+/*
+requires xs::ll<n> & n>0
+ensures xs::sll<n, s, l> & !res
+or  xs::ll<n> & res;
+ */
 
   infer[H1,G1]
   requires H1(xs)
