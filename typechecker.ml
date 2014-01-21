@@ -2544,16 +2544,17 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   res (*()*)
 
 let proc_mutual_scc_shape_infer iprog prog scc_procs =
-  (* Debug.info_hprint (add_str "proc_mutual_scc_shape_infer"  pr_id) "1"  no_pos; *)
   if not(!Globals.pred_infer_flag) then ()
   else
     (*solve the set of assumptions for scc*)
     (* let scc_hprel_ass = List.fold_left (fun r_ass proc -> r_ass@proc.Cast.proc_hprel_ass) [] scc_procs in *)
     let scc_hprel_ass = Infer.scc_rel_ass_stk # get_stk in
     let scc_hprel_unkmap =  List.fold_left (fun r_map proc -> r_map@proc.Cast.proc_hprel_unkmap) [] scc_procs in
-    let scc_sel_hps = !scc_proc_sel_hps(*  List.fold_left (fun r_hps proc -> *)
-        (* let _ = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
-        (* r_hps@proc.Cast.proc_sel_hps) [] scc_procs  *)in
+    let scc_sel_hps = !scc_proc_sel_hps
+      (* List.fold_left (fun r_hps proc -> *)
+      (*   let _ = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
+      (*   r_hps@proc.Cast.proc_sel_hps) [] scc_procs *)
+    in
     let scc_sel_post_hps = !scc_proc_sel_post_hps
       (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
     (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in *)
@@ -2632,12 +2633,16 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     ()
 
 (* checking procedure: (PROC p61) *)
-and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
-  Debug.vv_debug ("check_proc:"^proc.proc_name);
-    let unmin_name = unmingle_name proc.proc_name in
+and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+  Debug.vv_debug ("check_proc:"^proc0.proc_name);
+    let unmin_name = unmingle_name proc0.proc_name in
     (* get latest procedure from table *)
+    (*Loc: overlap proc is dangerous: mutable info of proc0 is overlapped and lost after this function return.
+      (i.e: all inferred info updated into proc is lost.)
+      which infor do you want to get from the last proc?
+      get it and update explicitly into proc0*)
     let proc = 
-      find_proc prog proc.proc_name
+      find_proc prog proc0.proc_name
     in
     let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
       && not (List.mem unmin_name !Inliner.inlined_procs)
@@ -2732,13 +2737,13 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
                       (********************SHAPE INFER*****************************)
                       (****************************************************************)
                       (*store assumption. solve it when we finish analyse its scc*)
-                      let _ = proc.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@hp_lst_assume in
-                      let _ = proc.Cast.proc_hprel_unkmap <- proc.Cast.proc_hprel_unkmap@hp_rel_unkmap in
+                      let _ = proc0.Cast.proc_hprel_ass <- proc.Cast.proc_hprel_ass@hp_lst_assume in
+                      let _ = proc0.Cast.proc_hprel_unkmap <- proc.Cast.proc_hprel_unkmap@hp_rel_unkmap in
                       (* let _ = Debug.info_hprint (add_str "proc.Cast.proc_sel_hps"  !CP.print_svl) (proc.Cast.proc_sel_hps)  no_pos in *)
                       (* let _ = Debug.info_hprint (add_str "sel_hp_rels" !CP.print_svl) (sel_hp_rels)  no_pos in *)
-                      let _ = proc.Cast.proc_sel_hps <- proc.Cast.proc_sel_hps@sel_hp_rels in
+                      let _ = proc0.Cast.proc_sel_hps <- proc.Cast.proc_sel_hps@sel_hp_rels in
                       let _ = scc_proc_sel_hps := !scc_proc_sel_hps@sel_hp_rels in
-                      let _ = proc.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
+                      let _ = proc0.Cast.proc_sel_post_hps <- proc.Cast.proc_sel_post_hps@sel_post_hp_rels in
                       let _ = scc_proc_sel_post_hps := !scc_proc_sel_post_hps@sel_post_hp_rels in
                       if not(Infer.rel_ass_stk# is_empty) then
                         begin
@@ -3023,7 +3028,9 @@ and check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_g
 		  let _ = match exc with | Some e -> raise e | None -> () in
                   if pr_flag then
                     begin
-		      if pp then print_string ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+		      if pp then
+                        (* let _ = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
+                        print_string ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
 	              else 
                         let _ = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                         print_string ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
@@ -3052,8 +3059,9 @@ let check_phase_only iprog prog  proc =
 let check_proc_wrapper iprog prog proc cout_option mutual_grp =
 (* check_proc prog proc *)
   try
-	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
+    (* let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
     let res = check_proc iprog prog proc cout_option mutual_grp in 
+    (* let _ = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -3247,6 +3255,7 @@ let check_prog iprog (prog : prog_decl) =
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
             let b= proc_mutual_scc prog scc (fun prog proc ->
+                (* Debug.info_hprint (add_str "MG_new "  ( (fun p -> p.proc_name))) proc no_pos; *)
                  (check_proc iprog prog proc cout_option [])) in
             restore_phase_infer_checks();
             (* the message here should be empty *)
