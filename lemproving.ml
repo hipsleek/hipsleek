@@ -89,10 +89,26 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
-let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)    (exact : bool option) =
+let run_entail_check_x ctx (iante : lem_formula) (iconseq : lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
   if (!Globals.allow_lemma_residue)
   then wrap_classic (Some false) (* inexact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
   else wrap_classic (Some true) (* exact *) (run_entail_check_helper ctx iante iconseq inf_vars) cprog
+
+let run_entail_check ctx (iante : lem_formula) (iconseq : lem_formula) 
+    (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =
+  let pr_ctx = add_str "ctx: " Cprinter.string_of_list_context in
+  let pr_ante = add_str "ante: " string_of_lem_formula in
+  let pr_conseq = add_str "conseq: " string_of_lem_formula in
+  let pr_vars = add_str "inf_vars: " (pr_list Cprinter.string_of_spec_var) in
+  let pr_exact = add_str "exact: " (pr_opt string_of_bool) in
+  let pr_out (res, ctx_lst) = (
+    ((add_str "\nresult: " string_of_bool) res) ^ "\n" ^
+    ((add_str "list context: " Cprinter.string_of_list_context) ctx_lst) 
+  ) in
+  Debug.no_5 "run_entail_check"
+      pr_ctx pr_ante pr_conseq pr_vars pr_exact pr_out
+      (fun _ _ _ _ _ -> run_entail_check_x ctx iante iconseq inf_vars cprog exact) 
+      ctx iante iconseq inf_vars exact
 
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
@@ -301,6 +317,8 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
   let ent_lhs =coer.C.coercion_head_norm in
   let ent_rhs =  coer.C.coercion_body_norm in
+  (* let ent_lhs = coer.C.coercion_head in                                    *)
+  (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
   check_coercion_struc coer ent_lhs ent_rhs cprog
 
 let check_left_coercion coer cprog  =
