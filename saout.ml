@@ -456,8 +456,8 @@ let trans_hp_def_view_2_hp iprog cprog proc_name in_hp_names hp_defs=
 (*******************************)
 (***********REVERIFY************)
 (*******************************)
-let collect_hp_defs cprog= Hashtbl.fold (fun i p acc->
-    (p.C.proc_hpdefs@acc)) cprog.C.new_proc_decls []
+let collect_hp_defs cprog= Hashtbl.fold (fun i p (acc1,acc2)->
+    (p.C.proc_hpdefs@acc1, p.C.proc_sel_post_hps@acc2)) cprog.C.new_proc_decls ([],[])
 
 let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl =
   let plug_views_proc proc =

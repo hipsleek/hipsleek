@@ -198,7 +198,7 @@ let process_lib_file prog =
 let reverify_with_hp_rel old_cprog iprog =
   (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
   (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
-  let hp_defs = Saout.collect_hp_defs old_cprog in
+  let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
   let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
       let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
         match hp_kind with
@@ -218,10 +218,21 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
-  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
-  (*     (a,b,c,new_f) *)
-  (* ) *) need_trans_hprels0 in
+  (* let _ = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
+  let need_trans_hprels1 = (* List.map (fun def -> *)
+  (*     let new_rhs = List.map (fun (f, og) -> *)
+  (*         let nf, esvl= (Cformula.drop_hrel_f f unk_hps) in *)
+  (*         let svl = List.fold_left (fun r eargs -> *)
+  (*             match eargs with *)
+  (*               | [] -> r *)
+  (*               | e::_ -> r@(Cpure.afv e) *)
+  (*         ) [] esvl in *)
+  (*         let nf1 = Cformula.add_quantifiers (Cpure.remove_dups_svl svl) nf in *)
+  (*         (nf1 , og) *)
+  (*     ) def.Cformula.def_rhs in *)
+  (*     {def with Cformula.def_rhs = new_rhs} *)
+  (* ) *) need_trans_hprels0
+  in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in

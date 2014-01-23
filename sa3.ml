@@ -495,7 +495,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
         ) (defined_preds,[]) (rems_hpargs@ls_lhs_non_node_hpargs) in
         let _ = Debug.ninfo_zprint (lazy (("   rem_hpargs1: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl))  rem_hpargs1)))) no_pos in
         let lfb2, guarded_preds0, link_hps2 = List.fold_left (fun (lfb, r1,r2) (hp,args) ->
-            if CP.mem_svl hp r_hps then (lfb, r1,r2) else
+            if CP.mem_svl hp r_hps || CP.mem_svl hp post_hps then (lfb, r1,r2) else
               let pr_lhs_g = SAU.split_guard_constrs prog (cs.CF.hprel_guard!=None) lhds lhvs post_hps ls_rhp_args (hp,args) lfb no_pos in
               match pr_lhs_g with
                 | None -> (lfb, r1, r2)
@@ -1804,7 +1804,7 @@ let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def=
   Debug.no_1 "match_one_hp_views" pr1 (pr_pair !CP.print_sv pr2)
       (fun _ -> match_one_hp_views_x iprog prog vdcls def)
       def
-
+(*to improve: handle nested data structures *)
 let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
   let match_one_fnc = if (!Globals.syntatic_mode) then SAU.match_one_hp_views else
@@ -2212,11 +2212,12 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let cur_ihpdcl = iprog.Iast.prog_hp_decls in
     let cur_chpdcl = prog.Cast.prog_hp_decls in
     let cviews =  prog.Cast.prog_view_decls in
+    let iviews =  iprog.Iast.prog_view_decls in
     let gen_sleek_file = !Globals.sa_gen_slk in
     let _ = Globals.sa_gen_slk := false in
-    (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, gen_sleek_file)
+    (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, iviews, gen_sleek_file)
   in
-  let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, gen_sleek_file)=
+  let restore_state (cur_hpdefs, cur_ihpdcl, cur_chpdcl, cviews, iviews, gen_sleek_file)=
     (* let _ = ass_stk # reset in *)
     (* let _ = ass_stk # push_list cur_ass in *)
     let _ = rel_def_stk # reset in
@@ -2226,6 +2227,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
     let cdiff = Gen.BList.difference_eq Cast.cmp_hp_def cur_chpdcl prog.Cast.prog_hp_decls in
     let _ = prog.Cast.prog_hp_decls <- (prog.Cast.prog_hp_decls@cdiff) in
     let _ = prog.Cast.prog_view_decls <- cviews in
+    let _ = iprog.Iast.prog_view_decls in
     let _ = Globals.sa_gen_slk := gen_sleek_file in
     ()
   in

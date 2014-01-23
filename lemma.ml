@@ -709,6 +709,13 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
       | ((* (k, _,_,_) as *) hpdef)::rest -> begin
           match hpdef.CF.def_cat with
             | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
+                (*to remove after improve the algo with nested*)
+                let _ = List.map (fun (f,_) ->
+                    let hps = CF.get_hp_rel_name_formula f in
+                    if CP.diff_svl hps [hp] != [] then
+                      raise Not_found
+                    else []
+                )  hpdef.CF.def_rhs in
                 (r_unk_hps, r_hpdefs@[hpdef])
               else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
             | _ -> look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
@@ -722,6 +729,7 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   in
   (*************END INTERNAL******************)
   (*for each proving: generate lemma; cyclic proof*)
+  try begin
   let bc = back_up_progs iprog0 cprog0 in
   let hps = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@(CF.get_hp_rel_name_formula f2)) in
   let unk_hps, known_hpdefs = List.fold_left (look_up_hpdef hpdefs) ([],[]) hps in
@@ -760,6 +768,8 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   in
   let _ = reset_progs bc in
   r
+  end
+  with _ -> false
 
 let checkeq_sem iprog cprog f1 f2 hpdefs=
   let pr1 = Cprinter.prtt_string_of_formula in

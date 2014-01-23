@@ -750,7 +750,7 @@ let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
