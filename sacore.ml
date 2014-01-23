@@ -457,6 +457,15 @@ and find_closure_post_hps post_hps ls_unk_hps_args=
 and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
   let lhds, lhvs, lhrels = CF.get_hp_rel_formula cs.CF.hprel_lhs in
   let rhds, rhvs, rhrels = CF.get_hp_rel_formula cs.CF.hprel_rhs in
+  let l_hps = List.map (fun (hp,_,_) -> hp ) lhrels in
+  let r_hps = List.map (fun (hp,_,_) -> hp ) rhrels in
+  (*not rec and post-oblg*)
+  let post_oblg_hps = if CP.intersect_svl l_hps r_hps = [] &&
+    List.exists (fun hp -> CP.mem_svl hp post_hps) l_hps then
+    r_hps
+  else []
+  in
+  let _ = Debug.ninfo_hprint (add_str "  post_oblg_hps: " !CP.print_svl) post_oblg_hps no_pos in
   let cs_hprels = List.map (fun (hp,eargs,_) ->
       (hp, List.fold_left List.append [] (List.map CP.afv eargs))) (lhrels@rhrels) in
   (*return: unk_args*)
@@ -474,7 +483,9 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
             end
           else retrieve_args_one_hp ss (hp,args)
   in
-  let double_check_one_constr unk_hp_args_locs cs_hprels=
+  let double_check_one_constr post_oblg_hps0 unk_hp_args_locs0 cs_hprels=
+    (*post-oblg: should not consider as unknown preds: sll-get-last2.ss*)
+    let unk_hp_args_locs = List.filter (fun (hp, _,_) -> not(CP.mem hp post_oblg_hps0)) unk_hp_args_locs0 in
     let unk_hp_names = List.map (fun (hp, _,_) -> hp) unk_hp_args_locs in
     let cs_hp_args = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq (cs_hprels) in
     let cs_unk_hps,cs_non_unk_hps = List.partition
@@ -505,9 +516,9 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
     let closure_post_hps = find_closure_post_hps post_hps (punk_hpargs) in
     (unk_hps_args_locs, full_unk_hps_args_locs, closure_post_hps)
   in
-   (* let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel cs)))) no_pos in *)
-   let _ = Debug.ninfo_hprint (add_str "  cs: " Cprinter.string_of_hprel) cs no_pos in
-  double_check_one_constr unk_hp_args_locs (cs_hprels)
+  (* let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel cs)))) no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "  cs: " Cprinter.string_of_hprel) cs no_pos in
+  double_check_one_constr post_oblg_hps unk_hp_args_locs (cs_hprels)
 
 (*
   for each constraint:
