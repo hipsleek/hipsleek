@@ -2673,8 +2673,15 @@ fixed_parameter:
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
-        param_name = id }]];
+        param_name = id }
+    | pm=OPT pass_t2; t=typ;  `IDENTIFIER id -> 
+      { param_mod = un_option pm NoMod;
+        param_type = t;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = id }
+]];
 
+pass_t2: [[`PASS_REF2 -> RefMod ]];
 
 pass_t: [[`PASS_REF -> RefMod
        | `PASS_COPY -> CopyMod]];

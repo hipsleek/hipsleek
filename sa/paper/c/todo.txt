@@ -21,6 +21,8 @@ G: should be normalized (--reverify-all should be OK)
   --pred-dis-dangling + reverify-all should work
 
 ============================================================
+# check-cdll5cslls
 
+  add heur: combine ineq for Omega. verification should be sound and efficient
 
 ============================================================
