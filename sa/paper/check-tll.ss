@@ -23,7 +23,7 @@ HeapPred H(node a, node@NI b).
 HeapPred G(node a, node@NI b).
 
 bool check_tll(node x,node t, node@R r)
-   infer [H,G] requires H(x,t) ensures G(x,t) & res;
+  infer [H,G] requires H(x,t) ensures G(x,t) & res;
    //requires x::tll<t,ggg>@L ensures res & r'=ggg;
 {
   if (x.right==null) 
