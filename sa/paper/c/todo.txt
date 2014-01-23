@@ -1,0 +1,26 @@
+improve shape
+
+ sll-insert.c 
+ sll-insertsort: fold operator (G1)
+
+
+============================================================
+# get-last
+
+   check-equiv: - support nested data structures
+                - match_hps_view: transform hp -> views one
+
+============================================================
+#sll-bubble.c 
+
+G: should be normalized (--reverify-all should be OK)
+
+============================================================
+#tll.ss
+
+  --pred-dis-dangling + reverify-all should work
+
+============================================================
+
+
+============================================================
