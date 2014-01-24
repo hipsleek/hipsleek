@@ -6,15 +6,16 @@ node right
 
 relation mark(bag(node) G,int x,bag(node) G1).
 relation mark1(bag(node) G,int x,bag(node) G1).
-relation d(node x,int v,node l,node r,bag(node) G).
+relation update(bag(node) G, node x, int d, node l, node r,bag(node) G1).
 relation reach(bag(node) G, node x, bag(node) R).
 
 dag<G> == self = null
-       or self::node<v,l,r> * l::dag<G> U* r::dag<G> & d(self,v,l,r,G);
+       or self::node<v,l,r> * l::dag<G> U* r::dag<G> & update(G,self,v,l,r,G1) ;
 
-axiom d(x,1,l,r,G1) ==> mark1(G,x,G1).
+axiom update(G,x,1,l,r,G1) ==> mark1(G,x,G1).
 
-axiom mark(G,x,G1) ==> reach(G1,x,R1) & reach(G1,l,R1) & R subset R1.
+axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & R subset R1.
+axiom mark(G,x,G1) ==> !(reach(G,x,R)) & !(reach(G1,x,R)).
 
 axiom mark(G,x,G1) & mark(G1,y,G2) ==> mark(G,y,G1) & mark(G1,x,G2).
 axiom mark(G,l,G1) & mark(G1,r,G2) & mark1(G2,x,G3) ==> mark(G,x,G3).
@@ -22,7 +23,9 @@ axiom mark(G,r,G1) & mark1(G1,x,G2) & mark(G2,l,G3) ==> mark(G,x,G3).
 axiom mark(G,l,G1) & mark1(G1,x,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
 axiom mark1(G,x,G1) & mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
 
-//ramification lemma dag(l,G) --@ (dag(l,G) U* dag(r,G)) * dag(l,G1) -> dag(l,G1) U* dag(r,G1)
+//ramification lemma dag(l,G) --@ (dag(l,G) U* dag(r,G)) * dag(l,G1) 
+//& reach(G,l,R) & reach(G1,l,R1) & R subset R1 & !reach(G,l,R) & !reach(G1,l,R1)
+//-> dag(l,G1) U* dag(r,G1) & mark(G,l,G1) 
 
 void mark(node x)
 requires x::dag<G>
