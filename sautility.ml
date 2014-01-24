@@ -2819,23 +2819,26 @@ swl-i.ss: NO
 *)
 let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
   (************ INTERNAL ***********)
-  let find_pattern hd pure_svl f=
-    let hpargs = CF.get_HRels_f rhs1 in
-    let sel_args = List.fold_left (fun ls (_,args) ->
+  let find_pattern ptr_node ptr_args pure_svl f=
+    let hp_args = List.map (fun (_,args) -> args) (CF.get_HRels_f rhs1) in
+    let v_args = List.map (fun vn -> vn.CF.h_formula_view_node::vn.CF.h_formula_view_arguments) (CF.get_views rhs1) in
+    let sel_args = List.fold_left (fun ls (args) ->
         if CP.intersect_svl args match_svl = [] then ls
         else ls@args
-    ) [] hpargs in
-    let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+    ) [] (hp_args@v_args) in
+    let hd_args = ptr_node::ptr_args in
     let inter = CP.intersect_svl hd_args (sel_args@pure_svl) in
     let locs_pattern = get_all_locs hd_args inter in
-    (inter, locs_pattern, hd.CF.h_formula_data_name)
+    (inter, locs_pattern)
   in
-  let apply_parttern locs hd_name f=
+  let apply_parttern_x locs hd_name f=
     let hds = get_hdnodes f in
     let sel_pats = List.fold_left (fun ls hd ->
         if String.compare hd_name hd.CF.h_formula_data_name = 0 then
           let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
-          if CP.intersect_svl hd_args match_svl <> [] then
+          let _ = DD.info_hprint (add_str " hd_args:"  !CP.print_svl) hd_args no_pos in
+          let _ = DD.info_hprint (add_str " match_svl:"  !CP.print_svl) match_svl no_pos in
+          if CP.intersect_svl hd_args match_svl != [] then
             let sel_args = retrieve_args_from_locs hd_args locs in
             ls@[sel_args]
           else
@@ -2843,10 +2846,17 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         else ls
     ) [] hds
     in
+    let _ = DD.info_hprint (add_str " sel_pats:" (pr_list !CP.print_svl)) sel_pats no_pos in
     match sel_pats with
       | [args] -> args
       | [] -> []
       | _ -> report_error no_pos "sau.pattern_matching_with_guard 1"
+  in
+  let apply_parttern locs hd_name f=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_3 "apply_parttern" (pr_list string_of_int) pr_id pr1 !CP.print_svl
+        (fun _ _ _ -> apply_parttern_x locs hd_name f)
+        locs hd_name f
   in
   let rec combine_remove_eq ls1 ls2 res=
     match ls1,ls2 with
@@ -2860,6 +2870,17 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
             combine_remove_eq rest1 rest2 new_res
       | _ -> report_error no_pos "sau.pattern_matching_with_guard 2"
   in
+  let process_pattern g_pure_svl hf=
+    match hf with
+      | CF.DataNode hd ->
+            let inter_rhs1, hd_locs = find_pattern hd.CF.h_formula_data_node
+              hd.CF.h_formula_data_arguments g_pure_svl rhs1 in
+            let hd_name = hd.CF.h_formula_data_name in
+            let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
+            ( inter_rhs1, inter_rhs2, hd.CF.h_formula_data_node)
+                (* | CF.ViewNode vd -> *)
+      | _ -> report_error no_pos "sau. pattern_matching_with_guard 3"
+  in
   (************END INTERNAL ***********)
   match guard with
     | None -> (false, rhs1, guard)
@@ -2871,12 +2892,14 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         match hf with
           | CF.DataNode hd ->
                 let g_pure_svl = CP.fv (CF.get_pure f) in
-                let inter_rhs1, hd_locs, hd_name = find_pattern hd g_pure_svl rhs1 in
-                let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
+                (* let inter_rhs1, hd_locs, hd_name = find_pattern hd g_pure_svl rhs1 in *)
+                (* let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in *)
+                let inter_rhs1, inter_rhs2, sv_node = process_pattern g_pure_svl hf in
                 if inter_rhs2 = [] then (false,rhs1, guard) else
                   let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
+                  let _ = DD.info_hprint (add_str " ss:" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ss no_pos in
                   let nrhs1 = CF.subst ss rhs1 in
-                  let nf = CF.drop_hnodes_f (CF.subst ss f) [hd.CF.h_formula_data_node] in
+                  let nf = CF.drop_hnodes_f (CF.subst ss f) [sv_node] in
                   let n_lguard = CF.drop_dups nrhs1 nf in
                   if check_pure then
                     let np= CP.subst ss (CF.get_pure f) in
