@@ -5,10 +5,13 @@ improve shape
 
 
 ============================================================
-# get-last
+# get-last: DONE
 
    check-equiv: - support nested data structures
                 - match_hps_view: transform hp -> views one time
+
+ - check-cdllclls.c OK
+ - check-cdllcllsx2.c: OK
 
 ============================================================
 #sll-bubble.c 
@@ -32,6 +35,16 @@ G: should be normalized (--reverify-all should be OK)
   - handle dependent-views: should order and cascade
 
 ============================================================
+# check-tll -tp z3
+
+Context of Verification Failure: 1 File "check-tll.c",Line:30,Col:40
+Last Proving Location: 1 File "check-tll.c",Line:44,Col:6
+
+ERROR: at _0:0_0:0
+Message: sau.find_closure_eq: impossible 1
+
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
 ============================================================
 ============================================================
 ============================================================
