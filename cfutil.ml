@@ -37,6 +37,106 @@ let obtain_reachable_formula prog f roots=
       (fun _ _ -> obtain_reachable_formula prog f roots)
       f roots
 
+let find_dependent_hps_x hp_defs=
+  let get_dep_hps eqs def=
+    let f = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
+    let hps = CF.get_hp_rel_name_formula f in
+    let hp0, _ = CF.extract_HRel def.CF.def_lhs in
+    let n_eqs = List.fold_left  (fun r hp1 -> if CP.eq_spec_var hp0 hp1 then r
+    else r@[(hp0, hp1)]) [] hps in
+    eqs@n_eqs
+  in
+  let hps = List.fold_left (fun r def ->
+      match def.CF.def_cat with
+        | CP.HPRelDefn (hp,_,_) -> r@[hp]
+        | _ -> r
+  ) [] hp_defs in
+  let tpl_aset = CP.EMapSV.mkEmpty in
+  let eqs = List.fold_left (get_dep_hps) [] hp_defs in
+  let tpl_aset1 = List.fold_left (fun tpl (sv1,sv2) -> CP.add_equiv_eq tpl sv1 sv2) tpl_aset eqs in
+  CP.EMapSV.partition tpl_aset1
+
+let find_dependent_hps hp_defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln !CP.print_svl in
+  Debug.no_1 "find_dependent_hps" pr1 pr2
+      (fun _ -> find_dependent_hps_x hp_defs) hp_defs
+
+ (*sort order of nrec_grps to subst*)
+let hp_defs_topo_sort_x hp_defs=
+  (*******INTERNAL********)
+  let ini_order_from_grp def=
+    let hp,_ = CF.extract_HRel def.CF.def_lhs in
+    (def,hp,0) (*called one topo*)
+  in
+  let is_mutrec scc_defs =
+    let rec dfs working trav_hps eqs=
+      match working with
+        | []-> false
+        | hp::rest ->
+              if CP.mem_svl hp trav_hps then true else
+                let child_hps = List.fold_left (fun r (sv1, sv2) ->
+                    if CP.eq_spec_var hp sv1 then r@[sv2] else r
+                ) [] eqs in
+                dfs (rest@(CP.remove_dups_svl child_hps)) (trav_hps@[hp]) eqs
+    in
+    let scc_hps, deps = List.fold_left (fun (r1,r2) (def,hp, _)->
+        let succ_hps = List.fold_left (fun r (f,_) -> r@(CF.get_hp_rel_name_formula f)) [] def.CF.def_rhs in
+        (r1@[hp], r2@(List.map (fun hp1 -> (hp,hp1))
+            (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) (CP.remove_dups_svl succ_hps))))
+    ) ([],[]) scc_defs in
+    ( List.exists (fun hp -> dfs [hp] [] deps) scc_hps)
+  in
+  let rec partition hpdefs scc res=
+    match scc with
+      | [] -> res
+      | hp::rest ->
+            try
+              let hp_defs = List.find (fun ((_,hp1,_) as r) -> CP.eq_spec_var hp hp1) hpdefs in
+              partition hpdefs rest (res@[hp_defs])
+            with _ -> partition hpdefs rest res
+  in
+  let topo_sort scc_defs=
+    (*get name of n_rec_hps, intial its number with 0*)
+    let update_order_from_def updated_hps incr (def,hp, old_n)=
+      if CP.mem_svl hp updated_hps then
+        (def,hp,old_n+incr)
+      else (def,hp,old_n)
+    in
+  (*each grp, find succ_hp, add number of each succ hp + 1*)
+    let process_one_def topo (def,hp,_)=
+      let succ_hps = List.fold_left (fun r (f,_) -> r@(CF.get_hp_rel_name_formula f)) [] def.CF.def_rhs in
+      (*remove dups*)
+      let succ_hps1 = Gen.BList.remove_dups_eq CP.eq_spec_var succ_hps in
+      (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
+      (*remove itself hp and unk_hps*)
+      let succ_hps2 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp))  succ_hps1 in
+      List.map (update_order_from_def succ_hps2 1) topo
+    in
+    (*detect mutrec*)
+    if is_mutrec scc_defs then (true, scc_defs) else
+      let topo1 = List.fold_left process_one_def scc_defs scc_defs in
+      (*sort decreasing and return the topo list*)
+      let topo2 = List.sort (fun (_,_,n1) (_,_,n2) -> n2-n1) topo1 in
+      (false, topo2)
+  in
+  (******END*INTERNAL********)
+  let eqhp_sccs = find_dependent_hps hp_defs in
+  let hp_defs1 = List.map ini_order_from_grp hp_defs in
+  let scc_hp_defs1 = List.map (fun eqs -> partition hp_defs1 eqs []) eqhp_sccs in
+  let scc_hp_defs2 = List.map topo_sort scc_hp_defs1 in
+  let sort_hpdefs, mutrec_hpdefs = List.fold_left (fun (r1,r2) (is_mut, scc) ->
+      let hp_defs = List.map (fun (def,_,_) -> def) scc in
+      if is_mut then (r1,r2@hp_defs) else (r1@[hp_defs], r2)
+  ) ([],[]) scc_hp_defs2 in
+  sort_hpdefs, mutrec_hpdefs
+
+(*for debugging*)
+let hp_defs_topo_sort defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "hp_defs_topo_sort" pr1 (pr_pair (pr_list_ln pr1) pr1)
+      (fun _ -> hp_defs_topo_sort_x defs) defs
+
 (*
 (i) build emap for LHS/RHS 
   - eqnull -> make closure. do not subst

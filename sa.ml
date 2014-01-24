@@ -3561,7 +3561,7 @@ let check_eq_hpdef unk_hpargs post_hps hp_defs =
 (*========= matching=========*)
 let match_hps_views_x iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
-  let m = List.map (SAU.match_one_hp_views iprog prog vdcls) hp_defs in
+  let m = List.map (SAU.match_one_hp_views iprog prog [] vdcls) hp_defs in
     (List.filter (fun (_,l) -> l<>[]) m)
 
 let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):

@@ -6943,7 +6943,7 @@ let match_one_hp_one_view iprog prog hp hp_name args def_fs (vdcl: C.view_decl):
   Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
       (fun _ _ -> match_one_hp_one_view_x iprog prog hp hp_name args def_fs vdcl) def_fs vdcl
 
-let match_one_hp_views iprog prog (vdcls: C.view_decl list) def:(CP.spec_var* CF.h_formula list)=
+let match_one_hp_views iprog prog cur_m (vdcls: C.view_decl list) def:(CP.spec_var* CF.h_formula list)=
   let hf = def.CF.def_lhs in
   let orf = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
   match hf with

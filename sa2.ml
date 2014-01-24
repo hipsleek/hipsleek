@@ -1540,7 +1540,7 @@ let match_hps_views_x iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_d
     | CP.HPRelDefn _ -> true
     | _ -> false
   ) hp_defs in
-  let m = List.map (SAU.match_one_hp_views iprog prog vdcls) (hp_defs1) in
+  let m = List.map (SAU.match_one_hp_views iprog prog [] vdcls) (hp_defs1) in
     (List.filter (fun (_,l) -> l<>[]) m)
 
 let match_hps_views iprog prog (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):

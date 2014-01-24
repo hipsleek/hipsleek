@@ -8,7 +8,7 @@ improve shape
 # get-last
 
    check-equiv: - support nested data structures
-                - match_hps_view: transform hp -> views one
+                - match_hps_view: transform hp -> views one time
 
 ============================================================
 #sll-bubble.c 
@@ -25,4 +25,13 @@ G: should be normalized (--reverify-all should be OK)
 
   add heur: combine ineq for Omega. verification should be sound and efficient
 
+============================================================
+# swl
+ 
+ - pred-en-elim-useless
+  - handle dependent-views: should order and cascade
+
+============================================================
+============================================================
+============================================================
 ============================================================

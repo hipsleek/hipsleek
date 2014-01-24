@@ -7,6 +7,7 @@ module Err = Error
 module CA = Cast
 module CP = Cpure
 module CF = Cformula
+module CFU = Cfutil
 module MCP = Mcpure
 module CEQ = Checkeq
 module TP = Tpdispatcher
@@ -1759,7 +1760,7 @@ let collect_sel_hpdef hpdefs sel_hps unk_hps m=
   Debug.no_3 "sa3.collect_sel_hpdef" pr1 pr2 pr3 pr1
       (fun _ _ _ -> collect_sel_hpdef_x hpdefs sel_hps unk_hps m) hpdefs sel_hps m
 
-let match_one_hp_views_x iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var* CF.h_formula list)=
+let match_one_hp_views_x iprog prog cur_m (vdcls: CA.view_decl list) def:(CP.spec_var* CF.h_formula list)=
   let helper args r paras vdcl=
     let _ = DD.ninfo_hprint (add_str "        vdcl.CA.view_name:" pr_id) vdcl.CA.view_name no_pos in
     if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
@@ -1798,12 +1799,13 @@ let match_one_hp_views_x iprog prog (vdcls: CA.view_decl list) def:(CP.spec_var*
       end
     | _ -> report_error no_pos "SA3.match_one_hp_views: support HPRELDEF only"
 
-let match_one_hp_views iprog prog (vdcls: CA.view_decl list) def=
+let match_one_hp_views iprog prog cur_m (vdcls: CA.view_decl list) def=
   let pr1 = Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list Cprinter.prtt_string_of_h_formula in
   Debug.no_1 "match_one_hp_views" pr1 (pr_pair !CP.print_sv pr2)
-      (fun _ -> match_one_hp_views_x iprog prog vdcls def)
+      (fun _ -> match_one_hp_views_x iprog prog cur_m vdcls def)
       def
+
 (*to improve: handle nested data structures *)
 let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
@@ -1815,8 +1817,16 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: C
       )
     | _ -> false
   ) hp_defs in
-  let m = List.map (match_one_fnc iprog prog vdcls) hp_defs1 in
-    (List.filter (fun (_,l) -> l<>[]) m)
+  (*sort topo*)
+  (* let sorted_scc, mutrec_defs = CFU.hp_defs_topo_sort hp_defs in *)
+  (*process bottom-up*)
+  let m = List.fold_left (fun cur_m def ->
+      let hp,new_ls_m = match_one_fnc iprog prog cur_m vdcls def in
+      if new_ls_m = [] then cur_m else
+        cur_m@[(hp,new_ls_m)]
+  ) [] hp_defs1 in
+  m
+    (* (List.filter (fun (_,l) -> l<>[]) m) *)
 
 let match_hps_views iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
