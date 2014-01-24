@@ -82,6 +82,7 @@ let cprog = ref {
     (*	C.prog_func_decls = [];*)
     C.prog_rel_decls = []; (* An Hoa *)
     C.prog_hp_decls = [];
+    C.prog_view_equiv = [];
     C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
     (*C.old_proc_decls = [];*)
     C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)

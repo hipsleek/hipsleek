@@ -744,8 +744,8 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let proc_name = "eqproving" in
   let n_cview,chprels_decl = SAO.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
   (*trans_hp_view_formula*)
-  let f12 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f11 in
-  let f22 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs f21 in
+  let f12 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
+  let f22 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
   (*iform*)
   let if12 = AS.rev_trans_formula f12 in
   let if22 = AS.rev_trans_formula f22 in

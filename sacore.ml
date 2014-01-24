@@ -2251,9 +2251,9 @@ let norm_elim_useless_paras prog unk_hps sel_hps post_hps hp_defs=
 let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl constrs=
   let process_cs cs=
     let nlhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-       chprels_decl hpdefs cs.CF.hprel_lhs in
+       chprels_decl hpdefs [] cs.CF.hprel_lhs in
     let nrhs = SAO.trans_formula_hp_2_view iprog cprog proc_name
-      chprels_decl hpdefs cs.CF.hprel_rhs in
+      chprels_decl hpdefs [] cs.CF.hprel_rhs in
     {cs with CF.hprel_lhs = nlhs;
     CF.hprel_rhs = nrhs;}
   in
@@ -3038,7 +3038,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     (* ) gen_hp_defs in *)
     (* let rhs1 = CF.do_unfold_hp_def cprog pr_hp_defs rhs in *)
     let n_cviews,chprels_decl = SAO.trans_hprel_2_cview iprog cprog proc_name gen_hp_defs in
-    let rhs2 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs rhs in
+    let rhs2 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs [] rhs in
     (* let (valid, _, _) = SC.sleek_entail_check [] cprog [] rhs2 (CF.struc_formula_of_formula lhs no_pos) in *)
     (*iformula to construct lemma*)
     let ilhs = AS.rev_trans_formula lhs in
@@ -3142,7 +3142,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
   let f12 = CF.formula_of_heap vnode no_pos in
-  let f22_0 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] rhs_f in
+  let f22_0 = SAO.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] [] rhs_f in
   (*need self for lemma*)
   let sst = [(r, self_sv)] in
   let rev_sst = [(self_sv,r)] in (*to revert the result*)

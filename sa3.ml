@@ -1825,6 +1825,18 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: C
       if new_ls_m = [] then cur_m else
         cur_m@[(hp,new_ls_m)]
   ) [] hp_defs1 in
+  (*extract view_equiv*)
+  let view_equivs = List.fold_left (fun r (hp, hfs) ->
+      let hp_name = CP.name_of_spec_var hp in
+      r@(List.fold_left (fun r1 hf ->
+          match hf with
+            | CF.ViewNode vn ->
+                  r1@[(hp_name, vn.CF.h_formula_view_name)]
+            | _ -> r1
+      ) [] hfs )
+  ) [] m in
+  let _ = Debug.tinfo_hprint (add_str "view_equivs: " (pr_list (pr_pair pr_id pr_id))) view_equivs no_pos in
+  let _ = prog.CA.prog_view_equiv <- prog.CA.prog_view_equiv@view_equivs in
   m
     (* (List.filter (fun (_,l) -> l<>[]) m) *)
 

@@ -1429,6 +1429,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
               C.prog_hp_decls = chps;
+              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;

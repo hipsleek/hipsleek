@@ -301,7 +301,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
       hp_rels
 
 
-let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
+let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   (* let rec part_sv_from_pos ls n n_need rem= *)
   (*   match ls with *)
   (*     | [] -> report_error no_pos "sau.get_sv_from_pos" *)
@@ -344,7 +344,11 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   in
   let hn_c_trans hn = match hn with
     | CF.HRel (hp,eargs, pos)-> begin
-        let view_name = (CP.name_of_spec_var hp) in
+        let view_name0 = (CP.name_of_spec_var hp) in
+        (*get equiv view name*)
+        let view_name = try List.assoc view_name0 view_equivs
+        with _ -> view_name0
+        in
         let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
         match look_up_root hpdefs hp args with
           | Some (r,tl) ->
@@ -384,11 +388,11 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f
 
-let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs f=
+let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   let pr1= !CF.print_formula in
   Debug.no_1 "trans_formula_hp_2_view" pr1 pr1
       (fun _ -> trans_formula_hp_2_view_x iprog cprog proc_name
-          chprels_decl hpdefs f)
+          chprels_decl hpdefs view_equivs f)
        f
 
 let trans_formula_view_2_hp_x iprog cprog proc_name view_names f=
@@ -460,11 +464,18 @@ let collect_hp_defs cprog= Hashtbl.fold (fun i p (acc1,acc2)->
     (p.C.proc_hpdefs@acc1, p.C.proc_sel_post_hps@acc2)) cprog.C.new_proc_decls ([],[])
 
 let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl =
+  let view_equivs = cprog.C.prog_view_equiv in
+  let sel_view_equivs = List.fold_left (fun r hpdcl ->
+      try
+        let equiv_view = List.assoc hpdcl.C.hp_name view_equivs in
+        r@[(hpdcl.C.hp_name,equiv_view)]
+      with _ -> r
+  ) [] chprels_decl in
   let plug_views_proc proc =
     if proc.C.proc_hpdefs = [] then proc else
       let name = C.unmingle_name proc.C.proc_name in
       (* let _ = print_endline ("proc_name: "^name) in *)
-      let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs in
+      let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
       let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
       let _ =  Debug.ninfo_pprint ("trans static spec: " ^ (Cprinter.string_of_struc_formula n_static_spec)) no_pos; in
       let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
