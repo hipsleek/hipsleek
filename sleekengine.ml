@@ -420,11 +420,11 @@ let process_list_lemma ldef_lst =
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
       | LEM            -> Lemma.manage_lemmas lst iprog !cprog 
-      | LEM_TEST       -> Lemma.manage_test_lemmas lst iprog !cprog 
-      | LEM_TEST_NEW   -> Lemma.manage_test_new_lemmas lst iprog !cprog 
+      | LEM_TEST       ->  (Lemma.manage_test_lemmas lst iprog !cprog )
+      | LEM_TEST_NEW   ->  (Lemma.manage_test_new_lemmas lst iprog !cprog )
       | LEM_UNSAFE     -> Lemma.manage_unsafe_lemmas lst iprog !cprog 
       | LEM_SAFE       -> Lemma.manage_safe_lemmas lst iprog !cprog 
-      | LEM_INFER      -> Lemma.manage_infer_lemmas lst iprog !cprog 
+      | LEM_INFER      -> snd (Lemma.manage_infer_lemmas lst iprog !cprog)
       | LEM_INFER_PRED      -> let r1,r2 = Lemma.manage_infer_pred_lemmas lst iprog !cprog Solver.xpure_heap in
         let _ =
           begin

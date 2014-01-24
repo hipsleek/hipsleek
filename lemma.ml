@@ -303,10 +303,10 @@ let manage_infer_lemmas str repo iprog cprog =
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
           let _ = print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.") in
-          Some([List.hd(nctx)])
+          false,Some([List.hd(nctx)])
     | None ->
           let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
-          Some nctx
+          true,Some nctx
 
 
 (* verify  a list of lemmas *)
@@ -528,10 +528,13 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
-  manage_infer_lemmas "proved" repo iprog cprog; None
+  manage_infer_lemmas "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
+
+let manage_test_lemmas1 repo iprog cprog = 
+  manage_infer_lemmas "proved" repo iprog cprog
 
 let manage_infer_lemmas repo iprog cprog = 
-  manage_infer_lemmas "inferred" repo iprog cprog
+   (manage_infer_lemmas "inferred" repo iprog cprog)
 
 (* verify given repo in a fresh store. Revert the store back to it's state prior to this method call *)
 (* let manage_test_new_lemmas repo iprog cprog ctx =  *)
@@ -556,6 +559,16 @@ let manage_test_new_lemmas repo iprog cprog =
    let right_lems = Lem_store.all_lemma # get_right_coercion in
    let _ = Lem_store.all_lemma # set_coercion [] [] in
    let res = manage_test_lemmas repo iprog cprog in
+   let _ = Lem_store.all_lemma # set_left_coercion left_lems in
+   let _ = Lem_store.all_lemma # set_right_coercion right_lems in
+   res
+
+let manage_test_new_lemmas1 repo iprog cprog = 
+   let left_lems = Lem_store.all_lemma # get_left_coercion in
+   let right_lems = Lem_store.all_lemma # get_right_coercion in
+   let _ = Lem_store.all_lemma # clear_left_coercion in
+   let _ = Lem_store.all_lemma # clear_right_coercion in
+   let res = manage_test_lemmas1 repo iprog cprog in
    let _ = Lem_store.all_lemma # set_left_coercion left_lems in
    let _ = Lem_store.all_lemma # set_right_coercion right_lems in
    res
@@ -755,21 +768,22 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let r=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if12 if22 in
-    let _ = manage_unsafe_lemmas [l_coer] iprog0 cprog0 in
-    let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> SC.sleek_entail_check [] cprog0 [(* (f12,f22) *)] f1 (CF.struc_formula_of_formula f2 no_pos)) in
+    let r1,_ = manage_test_new_lemmas1 [l_coer] iprog0 cprog0 in
+    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (CF.struc_formula_of_formula f2 no_pos)) in *)
     (* let r1,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
-    let r1,_,_ = fnc f13 f23 in
+    (* let r1,_,_ = fnc f13 f23 in *)
     if not r1 then false else
       let r_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] if22 if12 in
-      let _ = manage_unsafe_lemmas [r_coer] iprog0 cprog0 in
+      let r2,_ = manage_test_new_lemmas1 [r_coer] iprog0 cprog0 in
       (* let r2,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
-      let r2,_,_ = fnc f23 f13 in
+      (* let r2,_,_ = fnc f23 f13 in *)
       r2
   in
   let _ = reset_progs bc in
   r
   end
-  with _ -> false
+  with _ -> let _ = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in
+  false
 
 let checkeq_sem iprog cprog f1 f2 hpdefs=
   let pr1 = Cprinter.prtt_string_of_formula in

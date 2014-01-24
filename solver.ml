@@ -3212,6 +3212,8 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
 	  let uf = old_uf+uf in
 	  let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
           (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
+          (* let _ = Debug.info_hprint (add_str "((self_var vdef.view_data_name)::vdef.view_vars)" Cprinter.string_of_spec_var_list) ((self_var vdef.view_data_name)::vdef.view_vars) pos in *)
+          (* let _ = Debug.info_hprint (add_str "(p::vs)" Cprinter.string_of_spec_var_list) (p::vs) pos in *)
           let vs_vdef = List.combine ((self_var vdef.view_data_name)::vdef.view_vars) (p::vs) in
           let is_in v lst = Gen.BList.mem_eq CP.eq_spec_var v lst in
           let quantif_case_vars = List.exists (fun (vdef_arg,varg) -> is_in varg eqvars && is_in vdef_arg vdef.view_case_vars) vs_vdef in
@@ -3241,11 +3243,15 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
                 | None -> renamed_view_formula
                 | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f)) 
             else renamed_view_formula in
-          let fr_ann = List.map fst vdef.view_ann_params in
-          let anns = List.map fst anns in
-          let to_ann = anns in
-          let mpa = List.combine fr_ann to_ann in
-          let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in
+           let forms = try
+             let fr_ann = List.map fst vdef.view_ann_params in
+             let anns = List.map fst anns in
+             let to_ann = anns in
+             let mpa = List.combine fr_ann to_ann in
+             Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa
+                 (* let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in *)
+           with _ -> renamed_view_formula
+           in
           let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
 	  let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in

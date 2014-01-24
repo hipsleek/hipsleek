@@ -46,5 +46,9 @@ Message: sau.find_closure_eq: impossible 1
  --error:  at:(Program not linked with -g, cannot print stack backtrace)
 
 ============================================================
+#check-cdll5clls.c:
+
+optimization: minimize the number of transformation between inferred hp and views
+
 ============================================================
 ============================================================
