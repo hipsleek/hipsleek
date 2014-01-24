@@ -71,6 +71,64 @@ let check_stricteq_hnodes stricted_eq hns1 hns2=
   Debug.no_3 "check_stricteq_hnodes" string_of_bool pr2 pr2 (pr_pair string_of_bool pr3)
       (fun _ _ _ -> check_stricteq_hnodes_x stricted_eq hns1 hns2)  stricted_eq hns1 hns2
 
+let check_stricteq_vnodes_x stricted_eq vns1 vns2=
+  (*allow dangl ptrs have diff names*)
+  let all_ptrs =
+    if stricted_eq then [] else
+    let ptrs1 = List.map (fun hd -> hd.CF.h_formula_view_node) vns1 in
+    let ptrs2 = List.map (fun hd -> hd.CF.h_formula_view_node) vns2 in
+    CP.remove_dups_svl (ptrs1@ptrs2)
+  in
+  let check_stricteq_vnode hn1 hn2=
+    let arg_ptrs1 = (* List.filter CP.is_node_typ *) hn1.CF.h_formula_view_arguments in
+    let arg_ptrs2 = (* List.filter CP.is_node_typ *)  hn2.CF.h_formula_view_arguments in
+    if (hn1.CF.h_formula_view_name = hn2.CF.h_formula_view_name) &&
+        (CP.eq_spec_var hn1.CF.h_formula_view_node hn2.CF.h_formula_view_node) then
+      let b = CP.eq_spec_var_order_list arg_ptrs1 arg_ptrs2 in
+      (*bt-left2: may false if we check set eq as below*)
+      let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
+      (* (\*for debugging*\) *)
+      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
+      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
+      (* let _ = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+      (*END for debugging*)
+      if stricted_eq then (* (diff1=[]) *)(b,[]) else
+          (*allow dangl ptrs have diff names*)
+        let diff2 = CP.intersect_svl diff1 all_ptrs in
+        let ss = List.combine arg_ptrs1 arg_ptrs2 in
+        (diff2 = [], (* List.filter (fun (sv1, sv2) -> not(CP.eq_spec_var sv1 sv2)) *) ss)
+    else
+      (false,[])
+  in
+  let rec helper vn vns2 rest2=
+    match vns2 with
+      | [] -> (false,[], rest2)
+      | vn1::vss ->
+            let r,ss1 = check_stricteq_vnode vn vn1 in
+          if r then
+            (true, ss1, rest2@vss)
+          else helper vn vss (rest2@[vn1])
+  in
+  let rec helper2 vns1 vns2 ss0=
+    match vns1 with
+      | [] -> if vns2 = [] then (true,ss0) else (false,ss0)
+      | vn1::rest1 ->
+          let r,ss1, rest2 = helper vn1 vns2 [] in
+          if r then
+            let n_rest1 = if ss1 = [] then rest1 else List.map (fun dn -> CF.vn_subst ss1 dn) rest1 in
+            helper2 n_rest1 rest2 (ss0@ss1)
+          else (false,ss0)
+  in
+  if (List.length vns1) <= (List.length vns2) then
+    helper2 vns1 vns2 []
+  else (false,[])
+
+let check_stricteq_vnodes stricted_eq vns1 vns2=
+  let pr1 vn = Cprinter.prtt_string_of_h_formula (CF.ViewNode vn) in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_3 "check_stricteq_vnodes" string_of_bool pr2 pr2 (pr_pair string_of_bool pr3)
+      (fun _ _ _ -> check_stricteq_vnodes_x stricted_eq vns1 vns2)  stricted_eq vns1 vns2
 
 let check_stricteq_hrels hrels1 hrels2=
    let check_stricteq_hr (hp1, eargs1, _) (hp2, eargs2, _)=
@@ -119,26 +177,42 @@ let check_stricteq_hrels hrels1 hrels2=
   else (false,[])
 
 let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
-  let hnodes1, hv1s, hrels1 = CF.get_hp_rel_h_formula hf1 in
-  let hnodes2, hv2s, hrels2 = CF.get_hp_rel_h_formula hf2 in
-  if hv1s <> [] || hv2s <> [] then (false,[]) else
+  let hnodes1, vnodes1, hrels1 = CF.get_hp_rel_h_formula hf1 in
+  let hnodes2, vnodes2, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  (* if vnodes1 <> [] || vnodes2 <> [] then (false,[]) else *)
   let r,ss = check_stricteq_hrels hrels1 hrels2 in
-  let helper hn=
+  let data_helper hn=
     let n_hn = CF.h_subst ss (CF.DataNode hn) in
     match n_hn with
       | CF.DataNode hn -> hn
-      | _ -> report_error no_pos "sau.check_stricteq_h_fomula"
+      | _ -> report_error no_pos "sau.check_stricteq_h_fomula 1"
+  in
+  let view_helper ss0 vn=
+    let n_vn = CF.h_subst ss0 (CF.ViewNode vn) in
+    match n_vn with
+      | CF.ViewNode vn -> vn
+      | _ -> report_error no_pos "sau.check_stricteq_h_fomula 2"
   in
   if r then begin
-      let n_hnodes1 = List.map helper hnodes1 in
-      let n_hnodes2 = List.map helper hnodes2 in
-      let r,ss1 =
+      let n_hnodes1 = List.map data_helper hnodes1 in
+      let n_hnodes2 = List.map data_helper hnodes2 in
+      let r1,ss1 =
         if (List.length n_hnodes1) <= (List.length n_hnodes2) then
           check_stricteq_hnodes stricted_eq n_hnodes1 n_hnodes2
         else
           check_stricteq_hnodes stricted_eq n_hnodes2 n_hnodes1
       in
-      (r,ss@ss1)
+      let ss1a = ss@ss1 in
+      if not r1 then (false,[]) else
+        let n_vnodes1 = List.map (view_helper ss1a) vnodes1 in
+        let n_vnodes2 = List.map (view_helper ss1a) vnodes2 in
+        let r2,ss2 =
+          if (List.length n_vnodes1) <= (List.length n_vnodes2) then
+            check_stricteq_vnodes stricted_eq n_vnodes1 n_vnodes2
+          else
+            check_stricteq_vnodes stricted_eq n_vnodes2 n_vnodes1
+        in
+        (r2,ss@ss1@ss2)
     end
   else (false,[])
 

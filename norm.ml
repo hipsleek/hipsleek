@@ -464,20 +464,26 @@ let cont_para_analysis_view cprog vdef other_vds=
       let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
       (*cont paras are para not changed, just forwarded*)
       let cont_paras = List.fold_left (fun cur_cont_paras vn ->
-          let closed_rec_args = CF.find_close vn.CF.h_formula_view_arguments eqs in
+          let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else
+            CF.find_close vn.CF.h_formula_view_arguments eqs
+          in
           CP.intersect_svl cur_cont_paras closed_rec_args
       ) args rec_vns
       in
+      cont_paras
       (* process other_vns*)
-      try
-        let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
-            let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
-            let closed_rec_args = CF.find_close cont_args eqs in
-            CP.intersect_svl cur_cont_paras closed_rec_args
-        ) cont_paras other_vns
-        in
-        cont_paras1
-      with Not_found -> []
+      (* try *)
+      (*   let cont_paras1 = List.fold_left (fun cur_cont_paras vn -> *)
+      (*       let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in *)
+      (*       let closed_rec_args = *)
+      (*         if eqs = [] then cont_args else *)
+      (*           CP.remove_dups_svl ((CF.find_close cont_args eqs)@cont_args) *)
+      (*       in *)
+      (*       CP.intersect_svl cur_cont_paras closed_rec_args *)
+      (*   ) cont_paras other_vns *)
+      (*   in *)
+      (*   cont_paras1 *)
+      (* with Not_found -> cont_paras *)
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in

@@ -2524,6 +2524,13 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     (*before inlining, we try do inter-unify*)
     let hp_defs2 = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps hp_defs1 else hp_defs1 in
     let hp_defs3 = def_subst_fix prog dang_hps (hp_defs2) in
+    let hp_defs4 = List.map (fun def ->
+        let hp0,args0 = CF.extract_HRel def.CF.def_lhs in
+        if CP.mem_svl hp0 is_post2a.CF.is_sel_hps then
+          let n_rhs = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) -> SAU.check_relaxeq_formula args0 f1 f2) def.CF.def_rhs in
+          {def with CF.def_rhs = n_rhs}
+        else def
+    ) hp_defs3 in
     {is_post2a with CF.is_hp_defs = hp_defs3@tupled_defs}
   in
   (*post-oblg*)

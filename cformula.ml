@@ -2763,6 +2763,12 @@ and dn_subst sst dn=
 	  h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
    })
 
+and vn_subst sst vn=
+  let n_hf = h_subst sst (ViewNode vn) in
+  match n_hf with
+    | ViewNode vn -> vn
+    | _ -> report_error no_pos "CF.vn_subst"
+
 and h_subst sst (f : h_formula) = 
 	match f with
   | Star ({h_formula_star_h1 = f1; 
