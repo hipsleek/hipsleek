@@ -782,7 +782,7 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let _ = reset_progs bc in
   r
   end
-  with _ -> let _ = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in
+  with _ -> (* let _ = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in *)
   false
 
 let checkeq_sem iprog cprog f1 f2 hpdefs=

@@ -7,15 +7,16 @@ data node{
 	node next;
 }
 
+/* predicate for a non-empty tree  */
+tree<> == self::node<_,D1,null,_>
+  or self::node<_,l,r,D2> * l::tree<> * r::tree<> & r!=null
+	inv self!=null;
+
 /* predicate for a non-empty tree with chained leaf list */
 tll<p,ll,lr> == self::node<p,D1,null,lr> & self = ll
     or self::node<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null
 	inv self!=null;
 
-/* predicate for a non-empty tree  */
-tree<> == self::node<_,D1,null,_>
-  or self::node<_,l,r,D2> * l::tree<> * r::tree<> & r!=null
-	inv self!=null;
 
 // initializes the linked list fields
 

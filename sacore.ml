@@ -406,7 +406,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | _ -> svl2
 
 (*analysis unknown information*)
-let rec analize_unk_one_x prog unk_hps constr =
+let rec analize_unk_one_x prog post_hps unk_hps constr =
   (* let _ = Debug.info_zprint (lazy (("   hrel: " ^ (Cprinter.string_of_hprel_short constr)))) no_pos in *)
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
@@ -425,14 +425,27 @@ let rec analize_unk_one_x prog unk_hps constr =
       (build_hp_unk_locs (CP.remove_dups_svl (svl1@svl1a)) unk_hps CP.mem_svl)
       (lhrels@rhrels))
   in
-  (List.concat unk_hp_locs, List.concat unk_hp_args_locs)
+  (*not rec and post-oblg*)
+  let l_hps = List.map fst lhrels in
+  let r_hps = List.map fst rhrels in
+  let post_oblg_hps = if CP.intersect_svl l_hps r_hps = [] &&
+    List.exists (fun hp -> CP.mem_svl hp post_hps) l_hps then
+      r_hps
+  else []
+  in
+  let fnc r (hp,args,pp)= if (CP.mem_svl hp post_oblg_hps) then
+    r@[(hp,[],[-1])]
+  else r@[(hp,args,pp)]
+  in
+  (List.fold_left fnc [] (List.concat unk_hp_locs),
+  List.fold_left fnc [] (List.concat unk_hp_args_locs))
 
-and analize_unk_one prog unk_hps constr =
+and analize_unk_one prog post_hps unk_hps constr =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = !CP.print_svl in
   let pr3 = pr_list (pr_triple !CP.print_sv pr2 (pr_list string_of_int)) in
   Debug.no_2 "analize_unk_one" pr2 pr1 (pr_pair pr3 pr3)
-      (fun _ _ -> analize_unk_one_x prog unk_hps constr)
+      (fun _ _ -> analize_unk_one_x prog post_hps unk_hps constr)
       unk_hps constr
 
 and find_closure_post_hps_x post_hps ls_unk_hps_args =
@@ -465,7 +478,7 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
     r_hps
   else []
   in
-  let _ = Debug.ninfo_hprint (add_str "  post_oblg_hps: " !CP.print_svl) post_oblg_hps no_pos in
+  (* let _ = Debug.info_hprint (add_str "  post_oblg_hps: " !CP.print_svl) post_oblg_hps no_pos in *)
   let cs_hprels = List.map (fun (hp,eargs,_) ->
       (hp, List.fold_left List.append [] (List.map CP.afv eargs))) (lhrels@rhrels) in
   (*return: unk_args*)
@@ -485,7 +498,7 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
   in
   let double_check_one_constr post_oblg_hps0 unk_hp_args_locs0 cs_hprels=
     (*post-oblg: should not consider as unknown preds: sll-get-last2.ss*)
-    let unk_hp_args_locs = List.filter (fun (hp, _,_) -> not(CP.mem hp post_oblg_hps0)) unk_hp_args_locs0 in
+    let unk_hp_args_locs = List.filter (fun (hp, _,_) -> not(CP.mem_svl hp post_oblg_hps0)) unk_hp_args_locs0 in
     let unk_hp_names = List.map (fun (hp, _,_) -> hp) unk_hp_args_locs in
     let cs_hp_args = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq (cs_hprels) in
     let cs_unk_hps,cs_non_unk_hps = List.partition
@@ -502,8 +515,8 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
           (* ) *)
     in
     let poss_unk_svl_hps = CP.remove_dups_svl unk_svl_hps in
-    (* let _ = Debug.ninfo_zprint (lazy (("  poss_unk_svl_hps: " ^ (!CP.print_svl poss_unk_svl_hps)))) no_pos in *)
-    (* let _ = Debug.ninfo_zprint (lazy (("  cs_non_unk_svl1: " ^ (!CP.print_svl cs_non_unk_svl1)))) no_pos in *)
+    let _ = Debug.ninfo_zprint (lazy (("  poss_unk_svl_hps: " ^ (!CP.print_svl poss_unk_svl_hps)))) no_pos in
+    let _ = Debug.ninfo_zprint (lazy (("  cs_non_unk_svl1: " ^ (!CP.print_svl cs_non_unk_svl1)))) no_pos in
     (*actually unk = poss unk - non-unk*)
     let real_unk_svl_hps = Gen.BList.difference_eq CP.eq_spec_var poss_unk_svl_hps cs_non_unk_svl1 in
     let ls_unk_hps_args_locs, ls_full_unk_hps_args_locs = List.split (List.map (build_hp_unk_locs real_unk_svl_hps unk_hps
@@ -516,7 +529,6 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
     let closure_post_hps = find_closure_post_hps post_hps (punk_hpargs) in
     (unk_hps_args_locs, full_unk_hps_args_locs, closure_post_hps)
   in
-  (* let _ = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel cs)))) no_pos in *)
   let _ = Debug.ninfo_hprint (add_str "  cs: " Cprinter.string_of_hprel) cs no_pos in
   double_check_one_constr post_oblg_hps unk_hp_args_locs (cs_hprels)
 
@@ -803,7 +815,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   let unk_hps = List.map fst unk_hpargs in
   let ls_unk_cands,ls_full_unk_cands_w_args = List.fold_left (fun (ls1, ls2) cs ->
-      let r1,r2 = analize_unk_one prog unk_hps cs in
+      let r1,r2 = analize_unk_one prog post_hps unk_hps cs in
       (ls1@r1, ls2@r2)
   ) ([],[]) constrs
   in
