@@ -3181,10 +3181,10 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
     | EInfer b -> EInfer {b with formula_inf_continuation = struc_helper b.formula_inf_continuation;}
     | EBase {
           formula_struc_exists = ee;
-	  formula_struc_explicit_inst = ei;
-	  formula_struc_implicit_inst = ii;
-	  formula_struc_continuation = cont;
-	  formula_struc_base = base;} ->
+          formula_struc_explicit_inst = ei;
+          formula_struc_implicit_inst = ii;
+          formula_struc_continuation = cont;
+          formula_struc_base = base;} ->
           match f_helper ee ei ii base with
 	    | None -> f (* EBase { b with formula_struc_continuation = map_opt struc_helper cont; } *)
 	    | Some s -> match map_opt struc_helper cont with
