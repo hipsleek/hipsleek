@@ -3179,11 +3179,12 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
 	  formula_assume_simpl = fst(unfold_x prog b.formula_assume_simpl v already_unsat uf pos);
 	  formula_assume_struc = struc_helper b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = struc_helper b.formula_inf_continuation;}
-    | EBase { formula_struc_exists = ee;
-	      formula_struc_explicit_inst = ei;
-	       formula_struc_implicit_inst = ii;
-	       formula_struc_continuation = cont;
-	       formula_struc_base = base;} ->
+    | EBase {
+          formula_struc_exists = ee;
+	  formula_struc_explicit_inst = ei;
+	  formula_struc_implicit_inst = ii;
+	  formula_struc_continuation = cont;
+	  formula_struc_base = base;} ->
           match f_helper ee ei ii base with
 	    | None -> f (* EBase { b with formula_struc_continuation = map_opt struc_helper cont; } *)
 	    | Some s -> match map_opt struc_helper cont with
@@ -3442,8 +3443,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                         CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_fl base fl [] no_pos)
                       else formula_of_heap f pos
           )
-          else (print_endline "else";
-            formula_of_heap_fl f fl pos)
+          else
+            formula_of_heap_fl f fl pos
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
