@@ -1891,7 +1891,7 @@ let rec pr_formula_for_spec e =
     (pr_mix_formula p)
   in
   let disjs = Cformula.list_of_disjs e in
-  pr_list_op_none " ||" (print_fun) disjs
+  pr_list_op_none " || " (print_fun) disjs
 
 let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -2474,7 +2474,7 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       fmt_cut();
       wrap_box ("B",0) pr_struc_formula cont;
       fmt_close();
-	| EList b ->  if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
+	| EList b -> if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
 	(*| EOr b -> 
 	      let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
           let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
@@ -2491,11 +2491,11 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
-    fmt_string "requires ";
+    fmt_string "\nrequires ";
     pr_formula_for_spec fb;
     (match cont with 
       | None -> ()
-      | Some l -> pr_struc_formula_for_spec l;
+      | Some l -> pr_struc_formula_for_spec l
     );
   | EAssume  {
 			formula_assume_vars = x;
@@ -2504,9 +2504,9 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 			formula_assume_ensures_type = t;
 			formula_assume_struc = s;}->
     let ensures_str = match t with
-                     | None -> "\n ensures "
-                     | Some true -> "\n ensures_exact "
-                     | Some false -> "\n ensures_inexact " in
+                     | None -> "\nensures "
+                     | Some true -> "\nensures_exact "
+                     | Some false -> "\nensures_inexact " in
     fmt_string ensures_str;
     pr_formula_for_spec b;
     fmt_string ";";
@@ -3550,6 +3550,11 @@ let rec string_of_proc_decl_list l = match l with
 
 let string_of_proc_decl_list l =
   Debug.no_1 " string_of_proc_decl_list" (fun _ -> "?") (fun _ -> "?") string_of_proc_decl_list l
+
+let rec string_of_view_decl_list_short l = match l with
+  | [] -> ""
+  | h::[] -> (string_of_view_decl_short h)
+  | h::t -> (string_of_view_decl_short h) ^ "\n" ^ (string_of_view_decl_list_short t)
 
 (* pretty printing for a list of view_decl *)
 let rec string_of_view_decl_list l = match l with 

@@ -3150,7 +3150,7 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
 	    formula_base_pure = p;
 	    formula_base_and = a;
 	    formula_base_flow = fl;
-	    formula_base_pos = pos;}-> 
+	    formula_base_pos = pos;}->
 	    struc_unfold_baref prog h p a fl v pos []  ee ei ii already_unsat uf
       | Exists _ ->
             let pr = Cprinter.string_of_spec_var_list in
@@ -3171,35 +3171,34 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
             (* WN_all_lemma : are there two programs here? *)
             (* let _ = Debug.tinfo_hprint (add_str "Solver: norm: " Cprinter.string_of_struc_formula) (normalize_struc_formula_w_coers (fst prog) tmp_es s (Lem_store.all_lemma # get_left_coercion) (\*(fst prog).prog_left_coercions*\))  pos in *)
 	    Some (normalize_struc_formula_w_coers (fst prog) tmp_es s (Lem_store.all_lemma # get_left_coercion) (*(fst prog).prog_left_coercions*)) in
-  
+
   let rec struc_helper f = match f with
-    | ECase b -> ECase {b with formula_case_branches = map_l_snd struc_helper b.formula_case_branches}	 
+    | ECase b -> ECase {b with formula_case_branches = map_l_snd struc_helper b.formula_case_branches}
     | EList b -> EList (map_l_snd struc_helper b)
     | EAssume b -> EAssume { b with 
-	  formula_assume_simpl = fst(unfold_x prog b.formula_assume_simpl v already_unsat uf pos); 
+	  formula_assume_simpl = fst(unfold_x prog b.formula_assume_simpl v already_unsat uf pos);
 	  formula_assume_struc = struc_helper b.formula_assume_struc;}
     | EInfer b -> EInfer {b with formula_inf_continuation = struc_helper b.formula_inf_continuation;}
-    | EBase {
-	  formula_struc_exists = ee;
-	  formula_struc_explicit_inst = ei;
-	  formula_struc_implicit_inst = ii;
-	  formula_struc_continuation = cont;
-	  formula_struc_base = base;} -> 
-	  match f_helper ee ei ii base with
-	    | None -> f 
-	    | Some s -> match map_opt struc_helper cont  with 
+    | EBase { formula_struc_exists = ee;
+	      formula_struc_explicit_inst = ei;
+	       formula_struc_implicit_inst = ii;
+	       formula_struc_continuation = cont;
+	       formula_struc_base = base;} ->
+          match f_helper ee ei ii base with
+	    | None -> f (* EBase { b with formula_struc_continuation = map_opt struc_helper cont; } *)
+	    | Some s -> match map_opt struc_helper cont with
 		| None -> s
-		| Some f -> combine_struc f s in
-  struc_helper f		
-      
-      
+		| Some f -> combine_struc f s
+  in
+  struc_helper f
+
 and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) (uf:int) eqvars pos:
       h_formula *(struc_formula option)= 
   let (f,r) = pick_view_node f aset in
   let n_struc = match r with
     | None -> None
     | Some { h_formula_view_node = p;
-      h_formula_view_imm = imm;       
+      h_formula_view_imm = imm;
       h_formula_view_name = lhs_name;
       h_formula_view_origins = origs;
       h_formula_view_unfold_num = old_uf;
@@ -3208,7 +3207,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
       h_formula_view_perm = perm;
       h_formula_view_arguments = vs;
       h_formula_view_annot_arg = anns
-      } -> 
+      } ->
 	  let uf = old_uf+uf in
 	  let vdef = Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
           (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
@@ -3244,8 +3243,14 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           let fr_ann = List.map fst vdef.view_ann_params in
           let anns = List.map fst anns in
           let to_ann = anns in
-          let mpa = List.combine fr_ann to_ann in
-          let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in
+          let forms =
+            try
+              let mpa = List.combine fr_ann to_ann in
+              Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa
+            with _ -> forms
+          in
+          (* let mpa = List.combine fr_ann to_ann in *)
+          (* let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in *)
           let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
           let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
 	  let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
@@ -3366,9 +3371,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
       let vdef = Cast.look_up_view_def pos prog1.prog_view_decls lhs_name in
 (*          let uf = old_uf+uf in
           if CP.mem p aset then ( *)
-      if (vdef.view_is_prim) then
+      if (vdef.view_is_prim) then (
         (* don't unfold primitive predicates *)
-        formula_of_heap_fl f fl pos
+        formula_of_heap_fl f fl pos)
       else if CP.mem p aset then (
               match (snd prog) with
                 | None ->
@@ -3437,8 +3442,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                         CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_fl base fl [] no_pos)
                       else formula_of_heap f pos
           )
-          else 
-            formula_of_heap_fl f fl pos
+          else (print_endline "else";
+            formula_of_heap_fl f fl pos)
     | Star ({h_formula_star_h1 = f1;
       h_formula_star_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in

@@ -114,22 +114,22 @@ and struc_case_formula =
 	{
 		formula_case_branches : (Cpure.formula * struc_formula ) list;
 		(* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
-		formula_case_pos : loc 		
+		formula_case_pos : loc
 	}
 
 and struc_base_formula =
 	{
 		formula_struc_explicit_inst : Cpure.spec_var list;
 		formula_struc_implicit_inst : Cpure.spec_var list;
-        (* 
-           vars_free, vars_linking, vars_astextracted 
+        (*
+           vars_free, vars_linking, vars_astextracted
         *)
 		formula_struc_exists : Cpure.spec_var list;
 		formula_struc_base : formula;
 		formula_struc_continuation : struc_formula option;
 		formula_struc_pos : loc
 	}
-	
+
 and formula =
   | Base of formula_base
   | Or of formula_or
@@ -146,7 +146,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_label : formula_label option;
                       formula_base_pos : loc }
 
-and mem_formula = { 
+and mem_formula = {
   mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)
 }
 
@@ -163,11 +163,11 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_label : formula_label option;
                         formula_exists_pos : loc }
 
-and flow_formula = {  formula_flow_interval : nflow; 
+and flow_formula = {  formula_flow_interval : nflow;
                       formula_flow_link : (ident option)}
 and flow_store = {
 	formula_store_name : ident;
-	formula_store_value : flow_formula;		
+	formula_store_value : flow_formula;
 }
 
 and one_formula = {
@@ -270,14 +270,14 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
                         h_formula_view_pos : loc }
-and approx_disj = 
+and approx_disj =
   | ApproxBase of approx_disj_base
   | ApproxOr of approx_disj_or
 
 and approx_formula =
   | ApproxCon of approx_disj
   | ApproxAnd of approx_formula_and
-	    
+
 and approx_disj_base = { approx_disj_base_vars : CP.spec_var list;
 (* list of variables that _must_ point to objects *)
 approx_disj_base_formula : CP.formula }

@@ -2663,7 +2663,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		  if pr_flag then
                     begin
                       print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-                      (* print_string ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) );*)
+                      (* print_string ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
 		      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		      Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                     end;
