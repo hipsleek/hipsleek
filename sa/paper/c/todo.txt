@@ -14,7 +14,7 @@ improve shape
  - check-cdllcllsx2.c: OK
 
 ============================================================
-#sll-bubble.c 
+#sll-bubble.c : DONE
 
 G: should be normalized (--reverify-all should be OK)
 

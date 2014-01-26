@@ -1356,7 +1356,7 @@ let pardef_subst_fix prog unk_hps groups=
       - depend on non-recursive groups: susbst
       - depend on recusive groups: wait
 *)
-let def_subst_fix_x prog unk_hps hpdefs=
+let def_subst_fix_x prog post_hps unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef d=
@@ -1480,13 +1480,15 @@ let def_subst_fix_x prog unk_hps hpdefs=
     else
       (new_cur@new_rec_indps@new_nrec_indps)
   in
-  if List.length hpdefs <=1 then hpdefs else
+  let hpdefs1 = if List.length hpdefs <=1 then hpdefs else
     helper_fix hpdefs [] []
+  in
+  hpdefs1
 
-let def_subst_fix prog unk_hps hpdefs=
+let def_subst_fix prog post_hps unk_hps hpdefs=
   let pr1 = (pr_list_ln SAU.string_of_hp_rel_def) in
   Debug.no_1 "def_subst_fix" pr1 pr1
-      (fun _ -> def_subst_fix_x prog unk_hps hpdefs) hpdefs
+      (fun _ -> def_subst_fix_x prog post_hps unk_hps hpdefs) hpdefs
 
 
 let is_valid_pardef (_,args,_,_,f,_)=
@@ -2523,7 +2525,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     let hp_defs1,tupled_defs = SAU.partition_tupled is_post2a.CF.is_hp_defs in
     (*before inlining, we try do inter-unify*)
     let hp_defs2 = if !Globals.pred_unify_inter then SAC.pred_unify_inter prog dang_hps hp_defs1 else hp_defs1 in
-    let hp_defs3 = def_subst_fix prog dang_hps (hp_defs2) in
+    let hp_defs3 = def_subst_fix prog is_post2a.CF.is_post_hps dang_hps (hp_defs2) in
     let hp_defs4 = List.map (fun def ->
         let hp0,args0 = CF.extract_HRel def.CF.def_lhs in
         if CP.mem_svl hp0 is_post2a.CF.is_sel_hps then
@@ -2640,13 +2642,31 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
     let is = if !Globals.sa_syn then
       let is1a = infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
       let is1 = {is1a with CF.is_hp_defs = List.map rectify_type_root is1a.CF.is_hp_defs} in
+      let unk_hps = List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs) in
       let is2 = if !Globals.pred_elim_useless then
         (*detect and elim useless paramters*)
         {is1 with CF.is_hp_defs = SAC.norm_elim_useless_paras prog
-                (List.map fst (is1.CF.is_dang_hpargs@is1.CF.is_link_hpargs)) is1.CF.is_sel_hps
+                unk_hps is1.CF.is_sel_hps
                 is1.CF.is_post_hps is1.CF.is_hp_defs}
       else is1
-      in is2
+      in
+      let is3 = if not !Globals.pred_seg_unify then is2 else
+        let hp_defs1 = is2.CF.is_hp_defs in
+        let post_hps = is2.CF.is_post_hps in
+        let hp_defs2 = List.map (fun def ->
+            match def.CF.def_cat with
+              | CP.HPRelDefn (hp, r, args) ->
+                    if CP.mem_svl hp post_hps then
+                      let n_rhs = SAU.norm_fold_seg prog hp_defs1 hp r args unk_hps def.CF.def_rhs in
+                      let n_def = {def with CF.def_rhs = n_rhs} in
+                      n_def
+                    else def
+              | _ -> def
+        ) hp_defs1
+        in
+        {is2 with CF.is_hp_defs = hp_defs2}
+      in
+      is3
     else
       (* let _ =  print_endline (CF.string_of_cond_path is0.CF.is_cond_path) in *)
       is0

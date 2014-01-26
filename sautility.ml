@@ -3383,44 +3383,6 @@ let remove_longer_common_prefix_w_unk_g unk_hps fs=
   in
   helper fs []
 
-(* let remove_equiv_wo_unkhps_x hp args0 unk_hps fs= *)
-(*   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems= *)
-(*     match cur with *)
-(*       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems *)
-(*       | f::ss -> *)
-(*           let newf,b = CF.drop_unk_hrel f unk_hps in *)
-(*           if not b then *)
-(*             partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[f]) *)
-(*           else *)
-(*             begin *)
-(*                 let newf2,_ = CF.drop_hrel_f newf [hp] in *)
-(*                 if is_empty_f newf2 then *)
-(*                   partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems *)
-(*                 else *)
-(*                   partition_helper ss (res_unkhp_fs@[f]) (res_elim_unkhp_fs@[newf]) rems *)
-(*             end *)
-(*   in *)
-(*   let check_dups elim_unkhp_fs non_unkhp_fs= *)
-(*     let rec helper1 fs r= *)
-(*       match fs with *)
-(*         | [] -> r *)
-(*         | f::fss -> *)
-(*             (\*check duplicate or not ll-append5*\) *)
-(*             if List.exists (fun f1 -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then *)
-(*               helper1 fss r *)
-(*             else helper1 fss (r@[f]) *)
-(*     in *)
-(*     helper1 non_unkhp_fs [] *)
-(*   in *)
-(*   let unkhp_fs,elim_unkhp_fs,rems= partition_helper fs [] [] [] in *)
-(*   let rems1 = check_dups elim_unkhp_fs rems in *)
-(*   (unkhp_fs@rems1) *)
-
-(* let remove_equiv_wo_unkhps hp args0 unk_hps fs= *)
-(*   let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-(*   Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr *)
-(*       (fun _ _ -> remove_equiv_wo_unkhps_x hp args0 unk_hps fs) unk_hps fs *)
-
 let remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg=
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
     match cur with
@@ -4700,6 +4662,116 @@ let simplify_set_of_formulas_wg prog is_pre cdefs hp args unk_hps unk_svl defs_w
    Debug.no_3 "simplify_set_of_formulas_wg" !CP.print_sv !CP.print_svl pr1 pr2
        (fun _ _ _ -> simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
 
+let norm_fold_seg_x prog hp_defs hp0 r other_args unk_hps defs_wg=
+  (**********INTERNAL************)
+  let rec extract_def l_hp_defs hp=
+    match l_hp_defs with
+      | [] -> None
+      | def::rest -> begin match def.CF.def_cat with
+            | CP.HPRelDefn (hp1, r1, args1) ->
+                  if List.length (r::other_args) == List.length (r1::args1) && CP.eq_spec_var hp hp1 then
+                    let fs= List.fold_left (fun r (f, _) ->
+                        let dep_hps = CF.get_hp_rel_name_formula f in
+                        if List.length (List.filter (fun hp2 -> CP.eq_spec_var hp2 hp1) dep_hps) == 1 then
+                          (r@[f])
+                        else r
+                    ) [] def.CF.def_rhs
+                    in
+                    if fs = [] then None else (Some (def.CF.def_lhs, r1, args1, fs))
+                  else extract_def rest hp
+            | _ -> extract_def rest hp
+        end
+  in
+  let rec do_fold_compare_x f r2 poss_r poss_args poss_fold_fs=
+     match poss_fold_fs with
+      | [] -> (false)
+      | fold_f::rest ->
+            let ss = List.combine (r2::other_args) (poss_r::poss_args) in
+            if check_relaxeq_formula [poss_r] (CF.subst ss f) fold_f then
+              true
+            else
+              do_fold_compare_x f r2 poss_r poss_args rest
+  in
+  let do_fold_compare f r2 poss_r poss_args poss_fold_fs=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_4 "do_fold_compare" pr1 !CP.print_sv !CP.print_sv (pr_list_ln pr1) string_of_bool
+        (fun _ _ _ _ -> do_fold_compare_x f r2 poss_r poss_args poss_fold_fs)
+        f r2 poss_r poss_fold_fs
+  in
+  let extract_next_root hds hvs r2=
+    let rec extract_data_node rest_hds=
+      match rest_hds with
+        | [] -> None
+        | dn::rest -> begin
+            if CP.eq_spec_var dn.CF.h_formula_data_node r2 then
+              let ptrs = List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in
+              match ptrs with
+                | [nr] -> Some (nr, CF.DataNode dn)
+                | _ -> None
+            else extract_data_node rest
+          end
+    in
+    let rec extract_view_node rest_vds=
+      match rest_vds with
+        | [] -> None
+        | vn::rest -> begin
+            if CP.eq_spec_var vn.CF.h_formula_view_node r2 then
+              let ptrs = List.filter CP.is_node_typ vn.CF.h_formula_view_arguments in
+              match ptrs with
+                | [nr] -> Some (nr, CF.ViewNode vn)
+                | _ -> None
+            else extract_view_node rest
+          end
+    in
+    let dn_opt = extract_data_node hds in
+    if dn_opt = None then extract_view_node hvs else dn_opt
+  in
+  let rec do_fold f r0 (poss_hf, poss_r, poss_args, poss_fold_fs) res_hfs=
+    let _ = Debug.ninfo_hprint (add_str "   f: " Cprinter.prtt_string_of_formula) f no_pos in
+    let reach_f = CFU.obtain_reachable_formula prog f [r0] in
+    let hds, hvs, _ = CF.get_hp_rel_formula reach_f in
+    if hds = [] && hvs = [] then false, reach_f else
+      let is_folded= do_fold_compare reach_f r0 poss_r poss_args poss_fold_fs in
+      if is_folded then
+        let folded_pred = CF.h_subst [( poss_r,r0)] poss_hf in
+        let n_hf = CF.join_star_conjunctions (res_hfs@[folded_pred]) in
+        (true, CF.formula_of_heap n_hf no_pos)
+      else
+        let cur_root_hf_opt = extract_next_root hds hvs r0 in
+        match cur_root_hf_opt with
+          | Some (n_root, n_hf) ->
+                do_fold reach_f n_root (poss_hf, poss_r, poss_args, poss_fold_fs) (res_hfs@[n_hf])
+          | None -> false, reach_f
+  in
+  let process_one_branch (f,og)=
+    let dep_hps = CF.get_hp_rel_name_formula f in
+    match dep_hps with
+      | [hp] -> begin
+            if CP.mem_svl hp (hp0::unk_hps) then
+              (f,og)
+            else
+              let fold_opt = extract_def hp_defs hp in
+              match fold_opt with
+                | Some (poss_hf, poss_r, poss_args, poss_fold_fs) ->
+                  let is_folded, folded_f = do_fold f r (poss_hf, poss_r, poss_args, poss_fold_fs) [] in
+                  if is_folded then
+                    (folded_f,og)
+                  else (f,og)
+                | None -> (f,og)
+        end
+      | _ -> (f,og)
+  in
+  (*********END*INTERNAL************)
+  let defs_wg1 = List.map process_one_branch defs_wg in
+  defs_wg1
+
+let norm_fold_seg prog hp_defs hp r other_args unk_hps defs_wg=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  let pr3 = Cprinter.string_of_hp_rel_def in
+  Debug.no_4 "SAU.norm_fold_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 pr2
+      (fun _ _ _ _ -> norm_fold_seg_x prog  hp_defs hp r other_args unk_hps defs_wg)
+      hp r other_args defs_wg
 
 let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   (**************INTERNAL**********)
