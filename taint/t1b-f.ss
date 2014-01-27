@@ -30,7 +30,7 @@ void writeData (str xs)
 
 
 
-// Main Function to be checked
+// SHOULD FAIL!
 void main()
   requires true
   ensures  true;
@@ -38,5 +38,5 @@ void main()
   str x = readS();    // x <- SOURCE
   str a = prop(x);    // a <- x
   str b = cleanse(a); // b <- sanitized(a)
-  writeData(b);       // SINK should not accept unsanitized data
+  writeData(a);       // SINK should not accept unsanitized data
 }
