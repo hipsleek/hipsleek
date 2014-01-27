@@ -11,6 +11,7 @@ module AS = Astsimp
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
+module CFU = Cfutil
 module MCP = Mcpure
 module CEQ = Checkeq
 module TP = Tpdispatcher
@@ -2413,9 +2414,10 @@ let gfp_iter prog base_fs rec_fs fixn=
   - recursive cases
   - dependent cases
 *)
-let norm args0 (hp1, args1, f1)=
+let norm prog args0 (hp1, args1, f1)=
   let ss =List.combine args1 args0 in
-  (hp1, args0, CF.subst ss f1)
+  let nf1 = CF.subst ss f1 in
+  (hp1, args0, nf1)
 
 let classify hp (r_bases, r_recs, r_deps) f=
   let hps = CF. get_hp_rel_name_formula f in
@@ -2433,7 +2435,7 @@ let compute_gfp_x prog is_pre is pdefs=
   match pdefs with
     | (hp0,args0,f0)::rest ->
           (*normalize*)
-          let norm_pdefs = (hp0,args0,f0)::(List.map (norm args0) rest) in
+          let norm_pdefs = (hp0,args0,f0)::(List.map (norm prog args0) rest) in
           let norm_fs = (List.map (fun (_,_,f) -> f) norm_pdefs) in
           let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
@@ -2532,11 +2534,34 @@ let simpl_widening prog hp args unk_hps fs pos=
       (fun _ _ _ -> simpl_widening_x prog hp args unk_hps fs pos)
       hp args fs
 
-let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
+let lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
+  (* let other_pdefs = *)
+  (*   List.fold_left (fun r def -> *)
+  (*       match def.CF.def_cat with *)
+  (*         | CP.HPRelDefn _ -> *)
+  (*               let hp1,args1 = CF.extract_HRel def.CF.def_lhs in *)
+  (*               r@[(List.fold_left (fun r (f, og) -> *)
+  (*                   r@List.map (fun f1 -> (hp1, args1, og, f1, [])) (CF.list_of_disjs f) *)
+  (*               ) [] def.CF.def_rhs)] *)
+  (*         | _ -> r *)
+  (*   ) [] defs *)
+  (* in *)
+  (* let check_unfold_check_unsat ((hp3, args3, og3, f, svl) as pf)= *)
+  (*   if SAU.is_unsat f then false else *)
+  (*     let succ_hps = CF.get_hp_rel_name_formula f in *)
+  (*     let succ_hps1 = List.filter (fun hp2 -> not (CP.mem_svl hp2 dang_hps) && not(CP.eq_spec_var hp hp2)) succ_hps in *)
+  (*     if succ_hps1 = [] then true else *)
+  (*       let is_substed, fs = SAU.succ_subst prog other_pdefs dang_hps false pf in *)
+  (*       if not is_substed then true else *)
+  (*         List.for_all (fun (_,_,_,f1,_) -> not (SAU.is_unsat f1)) fs *)
+  (* in *)
   let apply_fix fix_i r_fs pdef_f=
     let _, fs = if fix_i = [] then (false, []) else
       SAU.succ_subst prog [fix_i] dang_hps true pdef_f in
-    r_fs@(List.filter (fun (_,_,_,f,_) -> not (SAU.is_unsat f)) fs)
+    r_fs@(List.filter (fun ((_,_,_,f,_) as pf)->
+        not (SAU.is_unsat f)
+        (* check_unfold_check_unsat pf *)
+    ) fs)
   in
   let pdef_rec_fs = List.map (fun f -> (hp,args, None, f, [])) rec_fs in
   let pdef_nonrec_fs = List.map (fun f -> (hp,args, None, f, [])) nonrec_fs in
@@ -2580,10 +2605,10 @@ let lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let r = rec_helper step pdef_fix_0 in
   List.map (fun (_,_, _, f, _) -> f) r
 
-let lfp_iter prog step hp args dang_hps fix_0 nonrec_fs rec_fs=
+let lfp_iter prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_5 "lfp_iter" !CP.print_sv !CP.print_svl pr1 pr1 pr1 pr1
-      (fun _ _ _ _ _ -> lfp_iter_x prog step hp args dang_hps fix_0 nonrec_fs rec_fs)
+      (fun _ _ _ _ _ -> lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs)
       hp args fix_0 nonrec_fs rec_fs
 
 let mk_expl_root_fnc hp ss r hf=
@@ -2641,7 +2666,14 @@ let compute_lfp_x prog dang_hps defs pdefs=
     | (hp0,args0,f0)::rest ->
           let pos = CF.pos_of_formula f0 in
           (*normalize*)
-          let norm_pdefs = (hp0,args0,f0)::(List.map (norm args0) rest) in
+          let norm_pdefs0 = (hp0,args0,f0)::(List.map (norm prog args0) rest) in
+          let norm_pdefs = List.fold_left (fun r (hp1,args1,f1) ->
+              let f12, _ = CF.drop_hrel_f f1 [hp1] in
+              let f13 = CF.remove_neqNulls_f (SAU.elim_irr_eq_exps prog args1 f12) in
+              if SAU.is_empty_f f13 then
+                r
+              else r@[(hp1,args1,f1)]
+          ) [] norm_pdefs0 in
           let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
           let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs0 in
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
@@ -2660,7 +2692,7 @@ let compute_lfp_x prog dang_hps defs pdefs=
           (*init*)
           let fix_0 = (* (base_fs@dep_fs) *) [] in
           (*iterate*)
-          let fixn = lfp_iter prog 0 hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
+          let fixn = lfp_iter prog defs 0 hp0 args0 skip_hps fix_0 (base_fs@dep_fs) rec_fs in
           (* let def = CF.formula_of_disjuncts fixn in *)
           let def = List.map (fun f -> (f,None)) fixn in
           let lhs = CF.HRel (hp0, List.map (fun x -> CP.mkVar x pos) args0, pos) in

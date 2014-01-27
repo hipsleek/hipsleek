@@ -4299,7 +4299,13 @@ let closer_ranking prog unk_hps fs root_cand args0=
                  with _ -> List.hd root_cand)
                 | _ -> List.hd root_cand
             end
-      | r::_ -> if eqNulls = [] then r
+      | r::_ ->
+            if eqNulls = [] then
+              (*swl*)
+              let prmroots =  List.filter (fun sv -> let p = CP.primed_of_spec_var sv in p = Primed) new_cand in
+              if prmroots = [] then
+                r
+              else List.hd prmroots
         else
           let eqNulls,rem =
             List.partition (fun sv -> CP.mem_svl sv eqNulls) new_cand in
@@ -5949,8 +5955,8 @@ let succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
     if allow_rec_subst then succ_hp_args else
       List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args
   in
-  (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
-  (*                                           in pr succ_hp_args)) no_pos; *)
+  DD.ninfo_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl)
+                                            in pr succ_hp_args)) no_pos;
   match succ_hp_args with
     | [] -> (false, simplify_and_empty_test args f)
     | _ -> begin

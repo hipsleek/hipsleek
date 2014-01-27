@@ -15,4 +15,5 @@
 <sw/*>: not_hygienic
 <lp-ex/*>: not_hygienic
 <cil/obj/x86_LINUX/*.*>: not_hygienic
+<{3234,benchmark,bin,bugs,_build,omega_modified,omega_original,core,cparser,examples,docs}/*.*>: -traverse
 

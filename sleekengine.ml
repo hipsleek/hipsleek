@@ -1175,6 +1175,7 @@ let process_shape_lfp sel_hps=
           else (r1,r2@[hp_def])
         | _ -> (r1,r2@[hp_def])
   ) ([],[]) (!sleek_hprel_defns) in
+  let _ = Debug.ninfo_hprint ( add_str "  ls_pdefs (lfp): " (pr_list_ln (pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula)))) ls_pdefs no_pos in
   let unk_hps = List.map (fun (_,(hp,_)) -> hp) (!sleek_hprel_unknown) in
   let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps defs) ls_pdefs in
   let _ = print_endline "" in
