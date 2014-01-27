@@ -2,7 +2,7 @@
 // by a given method; it is specified in the post-condition
 
 pred_prim RSteps<low:int,high:int>
-  inv low<=high & high>=1;
+  inv low<=high & high>=0;
 
 /*
 lemma "R split" self::RSteps<a> & p,r>=0 & a=p+r 
@@ -22,7 +22,7 @@ bool rand()
 
 void p()
   requires rs::RSteps<a,m> & m>=4
-  ensures  rs'::RSteps<b,k> & a-b>=1 & m-k<=4;//' 
+  ensures  rs'::RSteps<b,k> & a-b>=1 & m-k<=4 & b<=0;//' 
   //at least one steps.
   //at most four steps.
 {
