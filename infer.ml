@@ -2055,7 +2055,9 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       in
       let niu_svl_i_ni = List.map (fun (sv,_) -> (sv, NI)) niu_svl_i in
       let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
-      let ls_fwd_svl = (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args11) in
+      (*for view, filter i var that is classified as NI in advance*)
+      let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
+      let ls_fwd_svl = (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12) in
       (*generate extra hp for cll*)
       let extra_clls = if niu_svl_i = [] then []
       else
