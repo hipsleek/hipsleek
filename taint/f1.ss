@@ -3,27 +3,32 @@ data str {
   int val;
 }
 
-int main(int l1, int l2, int h1, int h2)
+void main(int@R l1, int@R l2)
   requires l1=l2
-  ensures res=1;
+  ensures l1'=l2';
 {
   // Original Program
+  int h1 = randInt();
   l1 = l1 + h1;
   if( h1 != 0 ) { l1 = sub(l1,h1); }
   if( l1 > 0 ) { l1 = sub(l1,1); }
 
   // Primed Program
+  int h2 = randInt();
   l2 = l2 + h2;
   if( h2 != 0 ) { l2 = sub(l2,h2); }
   if( l2 > 0 ) { l2 = sub(l2,1); }
 
-  if( l1 == l2 ) { return 1; }
-  else { return 0; }
+  /* if( l1 == l2 ) { return 1; } */
+  /* else { return 0; } */
 }
 
 int sub(int l, int h)
+  /* requires emp */
+  /* ensures res=l-h; */
   requires emp
-  ensures res=l-h;
-{
-  return l-h;
-}
+  ensures res<=l-h;
+
+int randInt()
+  requires emp
+  ensures true;
