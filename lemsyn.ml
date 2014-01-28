@@ -57,7 +57,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lhs_node lhs_b0 r
     let rf2 = formula_rev_fnc rf1 in
     (*gen lemma*)
     let lemma_name = "cyc" in
-    let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2 in
+    let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] lf2 rf2 in
     (*add lemma*)
     let iprog = I.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in

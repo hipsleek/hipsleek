@@ -214,6 +214,7 @@ coercion_head : F.formula;
 coercion_body : F.formula;
 coercion_proof : exp;
 coercion_type_orig: coercion_type option; (* store origin type before transforming *)
+coercion_kind : lemma_kind;
 }
 
 and coercion_decl_list = {
@@ -2660,7 +2661,7 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name coer_type ihps ihead ibody=
+let mk_lemma lemma_name kind coer_type ihps ihead ibody=
   { coercion_type = coer_type;
   coercion_exact = false;
   coercion_infer_vars = ihps;
@@ -2670,7 +2671,9 @@ let mk_lemma lemma_name coer_type ihps ihead ibody=
   coercion_proof = Return ({ exp_return_val = None;
   exp_return_path_id = None ;
   exp_return_pos = no_pos });
-  coercion_type_orig = None}
+  coercion_type_orig = None;
+  coercion_kind = kind;
+  }
 
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
@@ -2688,6 +2691,7 @@ let gen_normalize_lemma_comb ddef =
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
+  coercion_kind = LEM_SAFE; (*default. should improve*)
  }
  
  let gen_normalize_lemma_split ddef = 
@@ -2707,6 +2711,7 @@ let gen_normalize_lemma_comb ddef =
   
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
+  coercion_kind = LEM_SAFE;
  }
 	
 let add_normalize_lemmas prog4 = 

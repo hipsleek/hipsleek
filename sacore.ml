@@ -2286,7 +2286,37 @@ let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl
 (*
 (* List of vars needed for abduction process *)
 *)
-let do_entail_check_x vars cprog cs=
+let do_entail_check_x vars iprog cprog cs=
+  let update_explicit_root_x lhs rhs=
+    let rec lookup_root root_sv vns=
+      match vns with
+        | [] -> []
+        | vn::rest ->
+              let r_sv2 = vn.CF.h_formula_view_node in
+              if CP.eq_spec_var r_sv2 root_sv then
+                let self_sv = CP.SpecVar (CP.type_of_spec_var root_sv,self, Unprimed) in
+                [(root_sv, self_sv)]
+              else lookup_root root_sv rest
+    in
+    let rec lookup_and_subst l_vns r_vns=
+      match l_vns with
+        | vn::rest -> begin
+            let l_r_sv = vn.CF.h_formula_view_node in
+            let ss = lookup_root l_r_sv r_vns in
+            if ss = [] then lookup_and_subst rest r_vns else
+              (CF.subst ss lhs, CF.subst ss rhs)
+          end
+        | _ -> (lhs, rhs)
+    in
+    let l_vns = CF.get_views lhs in
+    let r_vns = CF.get_views rhs in
+    lookup_and_subst l_vns r_vns
+  in
+  let update_explicit_root lhs rhs=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_2 "update_explicit_root" pr1 pr1 (pr_pair pr1 pr1)
+        (fun _ _ -> update_explicit_root_x lhs rhs) lhs rhs
+  in
   let _ = Infer.rel_ass_stk # reset in
   let get_view_def vname=
     let _ = DD.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
@@ -2320,6 +2350,14 @@ let do_entail_check_x vars cprog cs=
   let valid = ((not (CF.isFailCtx rs))) in
   let _ = if not valid then
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
+  else if vars = [] then
+    (*add unsafe lemma (swl)*)
+    let ante1,conseq1 = update_explicit_root ante cs.CF.hprel_rhs in
+    let iante = AS.rev_trans_formula ante1 in
+    let iconseq = AS.rev_trans_formula conseq1 in
+    let l_coer = IA.mk_lemma (fresh_any_name "sa") LEM_UNSAFE IA.Left [] iante iconseq in
+    let _ = LEM.manage_unsafe_lemmas [l_coer] iprog cprog in
+    ()
   else ()
   in
     let hprels = Inf.collect_hp_rel_list_context rs in
@@ -2337,10 +2375,10 @@ let do_entail_check_x vars cprog cs=
     in
     hp_lst_assume
 
-let do_entail_check vars cprog cs=
+let do_entail_check vars iprog cprog cs=
   let pr1 = Cprinter.string_of_hprel_short in
   Debug.no_2 "do_entail_check" pr1 !CP.print_svl (pr_list_ln pr1)
-      (fun _ _-> do_entail_check_x vars cprog cs) cs vars
+      (fun _ _-> do_entail_check_x vars iprog cprog cs) cs vars
 
 
 
@@ -3140,7 +3178,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let _ = Debug.ninfo_hprint (add_str  "ilhs " Iprinter.string_of_formula) ilhs no_pos in
     let _ = Debug.ninfo_hprint (add_str  "irhs " Iprinter.string_of_formula) irhs no_pos in
     (*construct lemma_safe*)
-    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") IA.Right
+    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE IA.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let rel_fixs,lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Solver.xpure_heap in
@@ -3252,7 +3290,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   (*prove*)
   (*construct lemma_infer*)
   let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps) else [] in
-  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") IA.Left
+  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
   let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
   let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in

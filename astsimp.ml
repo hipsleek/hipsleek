@@ -3050,7 +3050,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
-        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs)} in
+        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
+        C.coercion_kind = coer.I.coercion_kind;
+        } in
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
           | v -> 
@@ -7011,7 +7013,9 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;
-  Iast.coercion_proof = cd.Iast.coercion_proof}
+  Iast.coercion_proof = cd.Iast.coercion_proof;
+  I.coercion_kind = cd.I.coercion_kind;
+  }
 
 and case_normalize_coerc_list prog (cdl: Iast.coercion_decl_list): Iast.coercion_decl_list =
   let new_elems = List.map (case_normalize_coerc prog) cdl.Iast.coercion_list_elems in
