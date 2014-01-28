@@ -2642,6 +2642,55 @@ let mk_expl_root_fnc hp ss r hf=
           else hf
     | _ -> hf
 
+let elim_diverg_paras_x prog pdefs=
+  (*******INTERNAL*******)
+  let find_diverg_paras (hp,args,f)=
+    let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
+    let f1, _ = CF.drop_hrel_f f [hp] in
+    let svl = CF.get_ptrs_w_args_f f1 in
+    let ( _,mf,_,_,_) = CF.split_components f in
+    let eqNulls = MCP.get_null_ptrs mf in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let may_reach_ptrs = CP.remove_dups_svl ((svl@eqNulls@args)@(CF.find_close (svl@eqNulls@args) eqs)) in
+    let diverg_pos = List.fold_left (fun acc (_,rec_args) ->
+        let diverg_args = CP.diff_svl rec_args may_reach_ptrs in
+        let pos = SAU.get_all_locs rec_args diverg_args in
+        pos@acc
+    ) [] ls_rec_hpars in
+    diverg_pos
+        (* CF.subst  *)
+  in
+  let elim_diverg_paras_pdef diver_pos (hp,args,f)=
+    let ( _,mf,_,_,_) = CF.split_components f in
+    let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let diverg_svl0 = List.fold_left (fun r (_,args) ->
+        r@(SAU.retrieve_args_from_locs args diver_pos)
+    ) [] ((hp,args)::ls_rec_hpars) in
+    let diverg_svl1 = CP.remove_dups_svl diverg_svl0 in
+    let _ = Debug.ninfo_hprint (add_str  "diverg_svl1 " (!CP.print_svl)) diverg_svl1 no_pos in
+    let diver_eqs = List.fold_left (fun r (sv1,sv2) ->
+        let b1 = CP.mem_svl sv1 diverg_svl1 in
+        let b2 = CP.mem_svl sv2 diverg_svl1 in
+        match b1,b2 with
+          | true,false -> r@[(sv1,sv2)]
+           | false,true -> r@[(sv2,sv1)]
+           | _ -> r
+        ) [] eqs in
+    (hp,args, CF.simplify_pure_f (CF.subst diver_eqs f))
+  in
+  (*******END INTERNAL*******)
+  let diverg_pos = List.fold_left (fun acc pdef -> acc@(find_diverg_paras pdef)) [] pdefs in
+  let diverg_pos1 = Gen.BList.remove_dups_eq (fun i1 i2 -> i1=i2) diverg_pos in
+  let _ = Debug.ninfo_hprint (add_str  "diverg_pos " (pr_list string_of_int)) diverg_pos no_pos in
+  List.map ( elim_diverg_paras_pdef diverg_pos1) pdefs
+
+let elim_diverg_paras prog pdefs=
+  let pr1 (_,_,f) = Cprinter.prtt_string_of_formula f in
+  Debug.no_1 "elim_diverg_paras" (pr_list_ln pr1) (pr_list_ln pr1)
+      (fun _ -> elim_diverg_paras_x prog pdefs) pdefs
+
+
 let compute_lfp_x prog dang_hps defs pdefs=
   (********INTERNAL*******)
   let mk_exp_root_x hp r f =
@@ -2667,13 +2716,14 @@ let compute_lfp_x prog dang_hps defs pdefs=
           let pos = CF.pos_of_formula f0 in
           (*normalize*)
           let norm_pdefs0 = (hp0,args0,f0)::(List.map (norm prog args0) rest) in
+          let norm_pdefs1 = elim_diverg_paras prog  norm_pdefs0 in
           let norm_pdefs = List.fold_left (fun r (hp1,args1,f1) ->
               let f12, _ = CF.drop_hrel_f f1 [hp1] in
               let f13 = CF.remove_neqNulls_f (SAU.elim_irr_eq_exps prog args1 f12) in
               if SAU.is_empty_f f13 then
                 r
               else r@[(hp1,args1,f1)]
-          ) [] norm_pdefs0 in
+          ) [] norm_pdefs1 in
           let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
           let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs0 in
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
