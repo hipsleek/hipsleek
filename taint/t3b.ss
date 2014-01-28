@@ -85,9 +85,12 @@ void print_ll(node xs)
 
 // - Safe Print: Only Print untainted
 void sprint_ll(node xs)
-  requires xs::ll<n,t>@L * xs::node<v,_> & t>=0 & n>0
-  ensures  true ;
-  requires xs=null ensures true ;
+ case {
+   xs=null -> ensures true;
+   xs!=null -> 
+      requires xs::ll<n,t>@L 
+      ensures  true ;
+ }
 {
   if( xs!=null ) {
     if( xs.val!=null ) {
@@ -101,9 +104,8 @@ void sprint_ll(node xs)
 
 // - Clean Print: Sanitize before Printing
 node cprint_ll(node xs)
-  requires xs::ll<n,t> * xs::node<v,_> & t>=0 & t<=n & n>0
-  ensures  res::ll<n,0> * res::node<v,_> &res=xs ;
-  requires xs=null ensures res=xs ;
+  requires xs::ll<n,t> 
+  ensures  res::ll<n,0> & res=xs;
 {
   if( xs!=null ) {
     if( xs.val!=null ) {
