@@ -11826,19 +11826,19 @@ let splitter_wrapper p c nf cvar elim_ex_fn fn_esc =
     | Some cl,None -> ([(p,fn_esc cl)],[])
 	| None, Some c -> ([],[(p,c)])
 	| Some cl,Some c ->  ([(p,fn_esc cl)],[(p,c)])
-								
+
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
-let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
-	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)
+	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context =
    List.map (fun (fl,el,sl)->
 						let r = List.map (fun (p,c)-> splitter_wrapper p c nf cvar elim_ex_fn fn_esc ) sl in
 						let re,rs = List.split r in
-						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl 
+						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl
 
-let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)   
-	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context = 
+let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc:context -> context)
+	(elim_ex_fn: context -> context) (pl :list_failesc_context) : list_failesc_context =
   let pr = !print_list_failesc_context in
   let pr2 = !print_flow in
   Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
@@ -11856,13 +11856,13 @@ Escaped States:
  Try-Block:0::
   State:EXISTS(xv': v_e1_22_548'::e1@M[Orig] * x'::node<xv',b>@M[Orig]&x=x' & y=y' & a=xv_561 & xv'=2 & eres=v_e1_22_548'&{FLOW,(19,20)=e1})[]
 *)
-	
-let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)   
-    (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
-	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
-	
-  let r = List.map (fun (l,c)-> 
-	let r1,r2 = splitter c nf cvar elim_ex_fn in 
+
+let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)
+    (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context)
+	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context =
+
+  let r = List.map (fun (l,c)->
+	let r1,r2 = splitter c nf cvar elim_ex_fn in
 	let r1 = match r1 with
 	  | Some c-> Some (fn l c )  (* CF.SuccCtx[(CF.simplify_context c)] *)
 	  | None -> None in
@@ -11872,18 +11872,17 @@ let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)
 	  | Some cl,None -> cl
 	  | None, Some c -> [mk_partial_context   (fn_esc c) l]
 	  | Some cl,Some c ->  list_partial_context_or cl  [(mk_partial_context (fn_esc c) l)]
-	) sl 
+	) sl
   in
    list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
 
-let add_to_steps (ss:steps) (s:string) = s::ss 
-
-let get_prior_steps (c:context) = 
+let add_to_steps (ss:steps) (s:string) = s::ss
+let get_prior_steps (c:context) =
   match c with
-    | Ctx es -> es.es_prior_steps 
+    | Ctx es -> es.es_prior_steps
     | OCtx _ -> print_string "Warning : OCtx with get_prior_steps \n"; [] ;;
 
-let add_to_context (c:context) (s:string) = 
+let add_to_context (c:context) (s:string) =
   (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)
   match c with
     | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
@@ -11892,23 +11891,23 @@ let add_to_context (c:context) (s:string) =
       (*             Error.error_text = "[add_to_context] unexpected dealing with OCtx." *)
       (*           } in *)
       (* let _ = print_endline (!print_context_short c) in *)
-      set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c 
+      set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c
 ;;
 
-let add_to_context_num i (c:context) (s:string) = 
-  let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in  
+let add_to_context_num i (c:context) (s:string) =
+  let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in
   Debug.no_1_num i "add_to_context" pr pr_no (fun _ -> add_to_context c s) c
 
-let add_to_estate (es:entail_state) (s:string) = 
+let add_to_estate (es:entail_state) (s:string) =
   {es with es_prior_steps = s::es.es_prior_steps; }
 
-let overwrite_estate_with_steps (es:entail_state) (ss:steps) = 
+let overwrite_estate_with_steps (es:entail_state) (ss:steps) =
   {es with es_prior_steps = ss; }
 
-let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
+let add_to_estate_with_steps (es:entail_state) (ss:steps) =
   {es with es_prior_steps = ss@es.es_prior_steps; }
 
-let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
+let add_to_estate_with_steps (es:entail_state) (ss:steps) =
   let pr = !print_entail_state_short in
   Debug.no_1 "add_to_estate_with_steps" pr pr
       (fun _ -> add_to_estate_with_steps es ss) es
@@ -11923,7 +11922,7 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
 (*   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}*)
 (*   | EInfer b ->  EInfer {b with formula_inf_continuation = add_post post b.formula_inf_continuation}*)
 (*   | EList b -> EList (map_l_snd (add_post post) b)*)
-  
+
 (* TODO *)
 let rec string_of_list_of_pair_formula ls =
   match ls with
@@ -11959,7 +11958,7 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 
 let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
-    | Some br -> 
+    | Some br ->
 		(* let rec filter_formula (f:formula):formula list = match f with *)
 		(* 	| Base {formula_base_label = lbl}  *)
 		(* 	| Exists {formula_exists_label = lbl} -> (match lbl with *)
@@ -11969,10 +11968,10 @@ let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :s
 		let rec filter_helper (f:struc_formula):struc_formula = match f with
 			| EBase b -> (match b.formula_struc_continuation with
 				| None -> report_error no_pos "barrier is unlabeled \n"
-				| Some f -> 
+				| Some f ->
 					let l = filter_helper f in
 					if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
-			| ECase b -> 
+			| ECase b ->
 				let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
 				let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
 				if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
@@ -11982,17 +11981,15 @@ let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :s
 			  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
 			| EList b -> mkEList_no_flatten (map_l_snd filter_helper b)  in
 		filter_helper f0
-  
-		
-		
+
 let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
-    | Some br -> 
-		let rec filter_formula (f:formula):formula list = 
+    | Some br ->
+		let rec filter_formula (f:formula):formula list =
                   match f with
-			| Base {formula_base_label = lbl; formula_base_flow = flowt} 
+			| Base {formula_base_label = lbl; formula_base_flow = flowt}
 			| Exists {formula_exists_label = lbl; formula_exists_flow = flowt} -> (match lbl with
-			  | None -> 
+			  | None ->
                                 (* HACK : this assumed that unlabelled disj is false *)
                                 let cf = !print_formula f in
                                 if is_false_flow flowt.formula_flow_interval then []

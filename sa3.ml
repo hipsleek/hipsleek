@@ -2633,6 +2633,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
     [(cond_path, link_hpargs1,  constrs0)]
   in
   (*synthesize for each path*)
+  (* let _ = print_endline ("ls_cond_danghps_constrs: " ^ (string_of_int (List.length ls_cond_danghps_constrs))) in *)
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
   ls_res
 
@@ -2645,6 +2646,100 @@ let infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hp
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang)
       constrs0
 
+let subst_formula formula hprel_def =
+  match formula with
+    | CF.Base b -> (
+          match b.CF.formula_base_heap with
+            | CF.HRel _ -> (
+                  if (CF.get_node_name b.CF.formula_base_heap == CF.get_node_name hprel_def.CF.hprel_def_hrel) then (
+                      match (List.hd hprel_def.CF.hprel_def_body) with
+                        | (_, Some f) -> f
+                        | (_, None) -> formula )
+                  else formula )
+            | _ -> formula )
+    | _ -> raise (Failure "fail formula")
+
+let rec subst_struc struc_formula hprel_def =
+  match struc_formula with
+    | CF.EBase eb -> CF.EBase { eb with
+          CF.formula_struc_base = subst_formula eb.CF.formula_struc_base hprel_def;
+          CF.formula_struc_continuation = match eb.CF.formula_struc_continuation with
+            | None -> None
+            | Some sf -> Some (subst_struc sf hprel_def) }
+    | CF.EAssume ea -> CF.EAssume { ea with
+          CF.formula_assume_simpl = subst_formula ea.CF.formula_assume_simpl hprel_def }
+    | CF.EList el -> CF.EList (List.map (fun (label, sf) -> (label, subst_struc sf hprel_def)) el)
+    | CF.EInfer ei -> subst_struc ei.CF.formula_inf_continuation hprel_def
+    | CF.ECase ec -> struc_formula
+
+let rec get_case struc_formula prog =
+  match struc_formula with
+    | CF.EBase eb ->
+          let pre_cond = eb.CF.formula_struc_base in
+          let (mix_formula, _, _) = Solver.xpure prog pre_cond in
+          Mcpure.pure_of_mix mix_formula
+    | CF.EList el -> let (_, sf) = List.hd el in get_case sf prog
+    | CF.ECase _ | CF.EInfer _ | CF.EAssume _ -> raise (Failure "fail get_case")
+
+let create_spec spec hprel_defs_groups prog =
+  let _ = print_endline "create spec" in
+  let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) spec hprel_defs) hprel_defs_groups in
+  (* let _ = List.map (fun spec -> print_endline (Cprinter.string_of_struc_formula_for_spec spec)) specs in *)
+  let cases = List.map (fun struc_formula -> get_case struc_formula prog) specs in
+  let final_spec = CF.ECase {
+      CF.formula_case_branches = List.combine cases specs;
+      CF.formula_case_pos = no_pos
+  } in
+  final_spec
+
+let group_paths hprel_defs =
+  let rec group grouped_hprel_defs hprel_defs hprel_def =
+    match hprel_defs with
+      | [] -> [grouped_hprel_defs]
+      | hd::tl -> (
+            let (cond_path1, _) = List.hd hd.CF.hprel_def_body in
+            let (cond_path2, _) = List.hd hprel_def.CF.hprel_def_body in
+            if (cond_path1 == cond_path2) then group (grouped_hprel_defs@[hd]) tl hprel_def else group grouped_hprel_defs tl hprel_def
+        )
+  in
+  let rec remove old_hprel_defs hprel_def =
+    match old_hprel_defs with
+      | [] -> []
+      | hd::tl -> (
+            let (cond_path1, _) = List.hd hd.CF.hprel_def_body in
+            let (cond_path2, _) = List.hd hprel_def.CF.hprel_def_body in
+            if (cond_path1 == cond_path2) then remove tl hprel_def else hd::(remove tl hprel_def)
+        )
+  in
+  let rec helper hprel_defs new_hprel_defs =
+    match hprel_defs with
+      | [] -> new_hprel_defs
+      | hd::tl -> (
+            let grouped_hprel_defs = group [] hprel_defs (List.hd hprel_defs) in
+            let removed_hprel_defs = remove hprel_defs (List.hd hprel_defs) in
+            helper removed_hprel_defs new_hprel_defs@grouped_hprel_defs
+        )
+  in
+  helper hprel_defs []
+
+let partition_paths hprel_defs prog =
+  let partition_hprel_defs = List.fold_left (fun all_hprel_defs hprel_def ->
+      let new_hprel_defs = List.map (fun hprel_def_body ->
+          CF.mk_hprel_def hprel_def.CF.hprel_def_kind hprel_def.CF.hprel_def_hrel hprel_def.CF.hprel_def_guard [hprel_def_body] None) hprel_def.CF.hprel_def_body in
+      new_hprel_defs@all_hprel_defs)
+    [] hprel_defs in
+  let grouped_hprel_defs = group_paths partition_hprel_defs in
+  let rec helper proc_list = match proc_list with
+    | [] -> ()
+    | hd::tl -> (match hd.Cast.proc_body with
+        | None -> helper tl
+        | Some _ ->
+              let _ = print_endline hd.Cast.proc_name in
+              let _ = print_endline (Cprinter.string_of_struc_formula_for_spec (create_spec hd.Cast.proc_static_specs grouped_hprel_defs prog)) in helper tl )
+  in
+  let _ = helper (Cast.list_of_procs prog) in
+  ()
+
 let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (***********INTERNAL***************)
   (*globals_ubk_hps are dangling preds in all paths.
@@ -2652,22 +2747,31 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     in non-dangling branches.
   *)
   let process_path_defs_setting globals_unk_hps is =
+    (* let _ = print_endline ("Infer state before: " ^ (Cprinter.string_of_infer_state_short is)) in *)
     let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("dang: " ^ (Cprinter.string_of_spec_var sp))) dang_hpargs in *)
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_link_hpargs in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("link: " ^ (Cprinter.string_of_spec_var sp))) link_hpargs in *)
     let local_unk_hpargs = List.filter (fun (hp,_) -> not (CP.mem_svl hp globals_unk_hps))
       (if !Globals.pred_elim_dangling then dang_hpargs else
         link_hpargs)
     in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("local: " ^ (Cprinter.string_of_spec_var sp))) local_unk_hpargs in *)
     let is = if !Globals.sa_dnc then
+      (* let _ = print_endline "sa_dnc" in *)
       (*for the local_unk_hps, we fresh them and subst/remove them in local branch*)
+      (* let _ = print_endline ("local length: " ^ string_of_int (List.length local_unk_hpargs)) in *)
       let new_unk_hpargs,ss = List.fold_left (fun (r1,r2) (hp,args) ->
           let is_pre = not (CP.mem_svl hp is.CF.is_post_hps) in
+          (* let _ = print_endline ("is_pre: " ^ string_of_bool(is_pre)) in *)
           let nhp = SAU.fresh_raw_hp_rel prog is_pre true hp no_pos in
           (r1@[(nhp,args)], r2@[(hp,nhp)])
       ) ([],[]) local_unk_hpargs in
+      (* let _ = List.map (fun (sp, spl) -> print_endline ("new_unk: " ^ (Cprinter.string_of_spec_var sp))) new_unk_hpargs in *)
       let n_hp_defs = List.map (fun hp_def ->
           {hp_def with CF.def_rhs = List.map (fun (f,og) -> (CF.subst ss f,og)) hp_def.CF.def_rhs}
       ) is.CF.is_hp_defs in
+      (* let _ = List.map (fun hp_def -> print_endline ("hp_rel_def: " ^ (Cprinter.string_of_hp_rel_def hp_def))) n_hp_defs in *)
       let n_dang_hpargs, n_link_hpargs = if !Globals.pred_elim_dangling then
         (dang_hpargs@new_unk_hpargs, link_hpargs)
       else (dang_hpargs, link_hpargs@new_unk_hpargs)
@@ -2679,9 +2783,17 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
       is1
     else is
     in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("before dang: " ^ (Cprinter.string_of_spec_var sp))) is.CF.is_dang_hpargs in *)
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("before link: " ^ (Cprinter.string_of_spec_var sp))) is.CF.is_link_hpargs in *)
+    (* let _ = print_endline "Infer state:" in *)
+    (* let _ = print_endline (Cprinter.string_of_infer_state_short is) in *)
     let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("new dang: " ^ (Cprinter.string_of_spec_var sp))) dang_hpargs in *)
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_link_hpargs in
+    (* let _ = List.map (fun (sp, spl) -> print_endline ("new link: " ^ (Cprinter.string_of_spec_var sp))) link_hpargs in *)
     let hp_defs1,tupled_defs = SAU.partition_tupled is.CF.is_hp_defs in
+    (* let _ = List.map (fun hp_def -> print_endline ("hp_defs1: " ^ (Cprinter.string_of_hp_rel_def hp_def))) hp_defs1 in *)
+    (* let _ = List.map (fun hp_def -> print_endline ("tupled_defs: " ^ (Cprinter.string_of_hp_rel_def hp_def))) tupled_defs in *)
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then
         let cl_sel_hps0 = CP.remove_dups_svl ((List.map fst link_hpargs)@
@@ -2710,9 +2822,11 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     let hpdefs = List.map (fun d ->
         let (k, hf, og, f) = CF.flatten_hp_rel_def d in
         CF.mk_hprel_def k hf og [(is.CF.is_cond_path, Some f)] None) defs in
+    (* let _ = List.map (fun hp_def -> print_endline ("hpdefs: " ^ (Cprinter.string_of_hprel_def hp_def))) hpdefs in *)
     let _ = DD.ninfo_hprint (add_str "   is.CF.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) link_hpargs no_pos in
     let link_hpdefs = SAC.generate_hp_def_from_link_hps prog is.CF.is_cond_path is.CF.is_hp_equivs
       (link_hpargs) in
+    (* let _ = List.map (fun hp_def -> print_endline ("link_hpdefs: " ^ (Cprinter.string_of_hprel_def hp_def))) link_hpdefs in *)
     let link_hp_defs = List.map (fun hpdef ->
         let fs = List.fold_left (fun ls (_, f_opt) ->
             match f_opt with
@@ -2724,10 +2838,18 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         in
         CF.mk_hp_rel_def1 hpdef.CF.hprel_def_kind hpdef.CF.hprel_def_hrel [(f,hpdef.CF.hprel_def_guard)]) link_hpdefs
     in
+    (* let _ = List.map (fun hp_def -> print_endline ("link_hp_defs: " ^ (Cprinter.string_of_hp_rel_def hp_def))) link_hp_defs in *)
     (cl_sel_hps@(List.map fst link_hpargs), hpdefs@link_hpdefs,
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   (***********END INTERNAL***************)
+  let rec helper1 proc_list = match proc_list with
+    | [] -> ()
+    | hd::tl -> (match hd.Cast.proc_body with
+        | None -> helper1 tl
+        | Some _ -> print_endline (Cprinter.string_of_proc_decl 100 hd))
+  in
+  let _ = helper1 (Cast.list_of_procs prog) in
   let post_hps, dang_hps, link_hps = if ls_is = [] then ([],[],[])
   else
     let fst_is =List.hd ls_is in
@@ -2737,6 +2859,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     (fst_is.CF.is_post_hps,(List.map fst fst_is.CF.is_dang_hpargs),(List.map fst fst_is.CF.is_link_hpargs)) (List.tl ls_is)
   in
   let unk_hps = if !Globals.pred_elim_dangling then dang_hps else link_hps in
+  (* let _ = print_endline ("ls_is length: " ^ (string_of_int (List.length ls_is))) in *)
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting unk_hps path_setting in
       let _ = DD.ninfo_hprint (add_str "   r2:" (pr_list_ln Cprinter.string_of_hprel_def)) r2 no_pos in
@@ -2753,7 +2876,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   in
   let n_all_hp_defs0b = SAU.combine_hpdefs n_all_hpdefs0a in
   (*unify-post*)
-  
+
   (*split pred*)
   let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
     let n_all_hp_defs0c, split_map =
@@ -2782,6 +2905,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else
     (n_all_hp_defs0b, n_cmb_defs0)
   in
+  (* let _ = List.map (fun hp -> print_endline ("hp_rel_def: " ^ (Cprinter.string_of_hp_rel_def_short hp))) n_all_hp_defs1 in *)
+  (* let _ = List.map (fun hp -> print_endline ("hprel_def: " ^ (Cprinter.string_of_hprel_def_short hp))) n_cmb_defs in *)
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = (* SAU.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
@@ -2800,6 +2925,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else (n_cmb_defs2, n_all_hp_defs2)
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
+  let _ = if (!Globals.sae) then partition_paths (rel_def_stk # get_stk) prog else () in
   ([],(* cmb_defs, *) n_all_hp_defs3)
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
@@ -2854,11 +2980,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     let r = if !Globals.sa_syn then
       match ls_path_is with
         | [] -> ([],[])
-        | _ -> (*conquer HERE*)
+        | _ -> (*conquer HERE*) (* let _ = print_endline ("ls_path_is: " ^ (string_of_int (List.length ls_path_is))) in *)
               infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
     else ([],[])
     in
     let _ = print_generated_slk_file () in
+    let (hprels, hpreldefs) = r in
     r
   with _ ->
       let _ = print_generated_slk_file () in
