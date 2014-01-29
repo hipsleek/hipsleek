@@ -9,39 +9,51 @@ HeapPred H2(node a, node@NI b).
 HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
 
-  lx<g:node,s> == self=s
+ll<s> == self=null & self!=s 
+  or self::node<_,nxt> * nxt::ll<s> & self!=s 
+inv self!=s ;
+
+lseg<p> == self=p 
+  or self::node<_,nxt> * nxt::lseg<p> & self!=p 
+inv true;
+
+lx7<g:node,s> ==
+    self=null
+  or self::node<_,nxt7> * nxt7::lx7<_,s> & g!=s & g!=null
+inv true ;
+
+lx<g:node,s> == self=s
   or self!=s & self=null
   or self::node<_,nxt> * nxt::lx<_,s> & self!=s 
 inv true ;
 
-/*
-lx7<g:node,s> ==
-   self=null
-  or self::node<_,nxt> * nxt::lx7<_,s> & g!=s & g!=null
-inv true ;
-
-*/
-//lemma_unsafe self::lx7<_,next> & g=null -> self::lx<g,next>;
+lemma_safe self::ll<s> & g=null -> self::lx<g,s>;
 
 void lscan( node@R cur, node@R prev, node sent)
-
-  requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> //& cur!=sent
-// ensures prev'::node<_,p> * p::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
-  ensures prev'::node<_,p> * p::lx<_,sent> & cur'=sent ;//'
 /*
-requires cur::node<_,n> * n::lx<_,sent> * prev::lx7<_,sent>
-// ensures prev'::node<_,p> * p::lx<_,sent>  & cur'=sent &prev'!=sent ;//'
-  ensures prev'::node<_,p> * p::lx7<_,sent> & cur'=sent ;//'
+// OK
+requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
+ensures prev'::ll<sent>  & cur'=sent ;
+requires cur::lseg<sent> * prev::ll<sent> & cur!=sent 
+ensures prev'::ll<sent>  & cur'=sent ;
+ */
+/*
+//OK
+  requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
+  ensures prev'::node<_,p> * p::lx<_,sent> & cur'=sent &prev'!=sent;//'
+*/
+/*EXPECTED
+  requires cur::node<_,n> * n::lx<_,sent> * prev::ll<sent> & cur!=sent
+  ensures prev'::node<_,p> * p::ll<sent> & cur'=sent ;//'
 */
 
 /*
   infer [H,G]
   requires H(cur,prev,sent)
-     infer [H1,H2,G]
-  requires cur::node<_,n> * H1(n,sent) * H2(prev,sent)
+//     infer [H1,H2,G]
+//  requires cur::node<_,n> * H1(n,sent) * H2(prev,sent)
   ensures G(cur,cur',prev,prev',sent);
 */
-
 {
 
   node n;

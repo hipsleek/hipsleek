@@ -2348,7 +2348,7 @@ let do_entail_check_x vars iprog cprog cs=
   in
   let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
   let (valid, rs,v_hp_rel) = SC.sleek_entail_check vars cprog [] ante conseq in
-  let valid = ((not (CF.isFailCtx rs))) in
+  (* let valid = ((not (CF.isFailCtx rs))) in *)
   let _ = if not valid then
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
   else if vars = [] then
