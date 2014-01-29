@@ -2843,13 +2843,6 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     tupled_defs2, is.CF.is_hp_defs@link_hp_defs)
   in
   (***********END INTERNAL***************)
-  let rec helper1 proc_list = match proc_list with
-    | [] -> ()
-    | hd::tl -> (match hd.Cast.proc_body with
-        | None -> helper1 tl
-        | Some _ -> print_endline (Cprinter.string_of_proc_decl 100 hd))
-  in
-  let _ = helper1 (Cast.list_of_procs prog) in
   let post_hps, dang_hps, link_hps = if ls_is = [] then ([],[],[])
   else
     let fst_is =List.hd ls_is in
@@ -2980,12 +2973,11 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     let r = if !Globals.sa_syn then
       match ls_path_is with
         | [] -> ([],[])
-        | _ -> (*conquer HERE*) (* let _ = print_endline ("ls_path_is: " ^ (string_of_int (List.length ls_path_is))) in *)
+        | _ -> (*conquer HERE*)
               infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
     else ([],[])
     in
     let _ = print_generated_slk_file () in
-    let (hprels, hpreldefs) = r in
     r
   with _ ->
       let _ = print_generated_slk_file () in
