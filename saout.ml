@@ -49,9 +49,10 @@ let norm_free_svl f0 args=
           let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
           let nf = CF.add_quantifiers fr_svl1 nf0 in
           let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
-          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
+          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
               let vk = TI.fresh_proc_var_kind ls t in
-              ls@[(sv,vk)]
+              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+              ls@[(svp,vk)]
           ) [] fr_svl1 in
           (nf, tis)
       | CF.Exists _ ->
@@ -68,14 +69,16 @@ let norm_free_svl f0 args=
   in
   let f,tis = helper f0 in
   let def = List.map fst tis in
-  let rem_svl = List.filter (fun sv ->
-       let n = CP.name_of_spec_var sv in
+  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
+      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
       (List.for_all (fun n2 -> String.compare n n2 != 0) def)
   ) args in
+  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
   (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
-  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
       let vk = TI.fresh_proc_var_kind ls t in
-        ls@[(sv,vk)]
+      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      ls@[(svp,vk)]
   ) [] (rem_svl) in
   (f, tis@tis1)
 in

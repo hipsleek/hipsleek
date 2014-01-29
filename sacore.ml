@@ -2231,6 +2231,7 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
     (* in *)
     (* (snd (List.split new_defs1), elim_ss) *)
   in
+  let hp_defs1 = (* CFU.hp_defs_topo_sort *) hp_defs in
   let sel_pre_defs, sel_post_defs, rem = List.fold_left ( fun (r1,r2,r3) def ->
       match def.CF.def_cat with
         | CP.HPRelDefn (hp, r, others) ->
@@ -2238,7 +2239,7 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
                 (r1,r2@[(hp, r, others, def)],r3)
               else (r1@[(hp, r, others, def)],r2,r3)
         | _ -> (r1,r2,r3@[def])
-  ) ([],[],[]) hp_defs in
+  ) ([],[],[]) hp_defs1 in
   let n_pre_defs, ss1 = List.fold_left (fun (r1,r2) ((hp, r, non_r_args, def) as tuple_def) ->
       let ndefs, ss = check_and_elim true [] tuple_def in
       (r1@ndefs, r2@ss)

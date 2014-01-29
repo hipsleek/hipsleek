@@ -11926,7 +11926,9 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     let updated_view_arg,_ = List.split updated_in_orig_pos in (* get rid of orig pos *)
     updated_view_arg
   with Invalid_argument s -> 
-      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") )
+      (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") ) *)
+      (* let _ = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
+      List.map fst map
 
 let combine_labels_w_view_arg  lbl view_arg =
   let no_lst = Gen.range 1 (List.length view_arg) in
