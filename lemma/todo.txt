@@ -96,6 +96,10 @@ to check why examples/working/sleek/lemma/sll_tailL.slk and lseg_case
 need --en-lem-rhs-unfold to pass lemma proving phase. 
 
 ====================================================================
+# lem-lseg.slk
+
+Total number of errors: 1 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid},{L3#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================

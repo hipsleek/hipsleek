@@ -7004,8 +7004,13 @@ and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*pr
 	else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
 	
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
-  let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
-  let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
+  let i_lhs = cd.Iast.coercion_head in
+  let lhs_vars = IF.all_fv i_lhs in
+  let nch = case_normalize_formula prog [] i_lhs in
+  let ncb = (* case_normalize_formula prog lhs_vars *) cd.Iast.coercion_body in
+  let ncb = 
+    if !Globals.allow_lemma_norm then case_normalize_formula prog lhs_vars ncb 
+    else case_normalize_formula_not_rename prog lhs_vars ncb in
   { Iast.coercion_type = cd.Iast.coercion_type;
   Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
   Iast.coercion_exact = cd.Iast.coercion_exact;
