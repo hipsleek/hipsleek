@@ -238,6 +238,12 @@ let reverify_with_hp_rel old_cprog iprog =
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
+let hip_epilogue () = 
+  (* ------------------ lemma dumping ------------------ *)
+  if (!Globals.dump_lemmas) then 
+    Lem_store.all_lemma # dump
+  else ()
+
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
@@ -343,7 +349,12 @@ let process_source_full source =
     (*to improve: annotate field*)
     let _ = I.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
-    let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+
+    (* ========= lemma process (normalize, translate, verify) ========= *)
+    let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+    (* ========= end - lemma process (normalize, translate, verify) ========= *)
+
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
@@ -456,7 +467,7 @@ let process_source_full source =
     (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-    
+    hip_epilogue ();
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -560,7 +571,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (**************************************)
   (*annotate field*)
   let _ = I.annotate_field_pure_ext intermediate_prog in
-  let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
@@ -729,12 +740,6 @@ let old_main () =
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError3(s) detected at main \n");
   end
-
-let hip_epilogue () = 
-  (* ------------------ lemma dumping ------------------ *)
-  if (!Globals.dump_lemmas) then 
-    Lem_store.all_lemma # dump
-  else ()
 
 let _ = 
   if not(!Globals.do_infer_inc) then old_main ()
