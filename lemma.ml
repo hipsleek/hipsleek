@@ -193,7 +193,7 @@ let generate_lemma_4_views iprog cprog=
       (fun _ -> generate_lemma_4_views_x iprog cprog)
       cprog
 
-
+(* ============================ lemma translation and store update================================= *)
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
 
@@ -307,7 +307,6 @@ let manage_infer_lemmas str repo iprog cprog =
     | None ->
           let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
           true,Some nctx
-
 
 (* verify  a list of lemmas *)
 (* if one of them fails, return failure *)
@@ -572,6 +571,36 @@ let manage_test_new_lemmas1 repo iprog cprog =
    let _ = Lem_store.all_lemma # set_left_coercion left_lems in
    let _ = Lem_store.all_lemma # set_right_coercion right_lems in
    res
+
+(* ==================================== *)
+let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
+  let lst = ldef_lst.Iast.coercion_list_elems in
+  (* why do we check residue for ctx? do we really need a previous context? *)
+  let ctx = match !CF.residues with
+    | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
+    | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
+    | Some (CF.FailCtx ctx, _) -> CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in 
+  (* andreeac: to check if it should skip lemma proving *)
+  let res = 
+    match ldef_lst.Iast.coercion_list_kind with
+      | LEM            -> manage_lemmas lst iprog cprog 
+      | LEM_TEST       -> (manage_test_lemmas lst iprog cprog )
+      | LEM_TEST_NEW   -> (manage_test_new_lemmas lst iprog cprog )
+      | LEM_UNSAFE     -> manage_unsafe_lemmas lst iprog cprog 
+      | LEM_SAFE       -> manage_safe_lemmas lst iprog cprog 
+      | LEM_INFER      -> snd (manage_infer_lemmas lst iprog cprog)
+      | LEM_INFER_PRED      -> let r1,r2 = manage_infer_pred_lemmas lst iprog cprog Solver.xpure_heap in 
+        let _ = lem_infer_fnct r1 r2 in
+        r2
+  in
+  match res with
+    | None | Some [] -> CF.clear_residue ()
+    | Some(c::_) -> CF.set_residue true c
+
+let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct  =
+  Debug.no_1 "process_list_lemma" pr_none pr_none (fun _ -> process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
+
+(* ============================ END --- lemma translation and store update================================= *)
 
 
 let do_unfold_view_hf cprog hf0 =

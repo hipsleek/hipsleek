@@ -1265,7 +1265,7 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
   Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
   
 (*HIP*)
-let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
+let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   print_string "trans_prog\n";
   let _ = (exlist # add_edge "Object" "") in
@@ -1418,8 +1418,9 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
-	  let (l2r_coers, r2l_coers) = trans_coercions prog in
-          let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in
+	  (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
+          (* let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
+          (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -1443,7 +1444,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
-      let cprog2 = sat_warnings cprog1 in   
+          let cprog2 = sat_warnings cprog1 in   
 	  
 	  let cprog2 = Solver.normalize_perm_prog cprog2 in
 	  let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
@@ -1462,16 +1463,15 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
             else c 
           in
           let c = (add_pre_to_cprog c) in
-	  
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-	  c)))
+	  (c,prog))))
     end)
   else failwith "Error detected at trans_prog"
 
-(* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
-(*   Debug.loop_1_no "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
+and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
+  Debug.no_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog
 
 (* Replaced to use new_proc_decls *)
 (*  
@@ -7003,7 +7003,7 @@ and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*pr
 		r2
 	else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
 	
-and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
+and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let i_lhs = cd.Iast.coercion_head in
   let lhs_vars = IF.all_fv i_lhs in
   let nch = case_normalize_formula prog [] i_lhs in
@@ -7021,6 +7021,9 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   Iast.coercion_proof = cd.Iast.coercion_proof;
   I.coercion_kind = cd.I.coercion_kind;
   }
+
+and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
+  Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd
 
 and case_normalize_coerc_list prog (cdl: Iast.coercion_decl_list): Iast.coercion_decl_list =
   let new_elems = List.map (case_normalize_coerc prog) cdl.Iast.coercion_list_elems in
@@ -7590,12 +7593,12 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
     v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
-  let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in  
+  (* let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in   *)
   { prog with 
       Iast.prog_data_decls = cdata;
       Iast.prog_view_decls = tmp_views;
       Iast.prog_proc_decls = procs1;
-      Iast.prog_coercion_decls = coer1;
+      (* Iast.prog_coercion_decls = coer1; *)
       Iast.prog_barrier_decls = List.map (case_normalize_barrier prog) prog.Iast.prog_barrier_decls;
   }
 
