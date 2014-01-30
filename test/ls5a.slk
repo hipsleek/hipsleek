@@ -1,0 +1,45 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+
+// why contradictory lemma proving below..
+
+/*
+lemma_unsafe
+  self::lseg<q,a>*q::lseg<p,b> & n=a+b
+  -> self::lseg<p,n>.//failed?
+*/
+
+lemma_safe self::lseg<p,n> & n=a+b 
+   <- self::lseg<q,a>*q::lseg<p,b> .
+
+/*
+It should fail, but currently succeeds for the
+2nd case. This is unsound.
+*/
+
+infer[] sf::lseg<q,a>*q::lseg<p,b> 
+   |- sf::lseg<p,n> & n=a+b.
+
+
+checkentail
+ q::lseg<p,b> & sf=q & a=0 
+ or sf::node<q1>*q1::lseg<q,a-1>*q::lseg<p,b> & sf!=q1 
+   |- sf::lseg<p,n> & n=a+b.
+
+checkentail
+ q::lseg<p,b> & sf=q & a=0 
+   |- sf::lseg<p,n> & n=a+b.
+
+checkentail
+ sf::node<q1>*q1::lseg<q,a-1>*q::lseg<p,b> & sf!=q1 
+   |- sf::lseg<p,n> & n=a+b.
+
+checkentail
+ sf::node<q1>*q1::lseg<q,a-1>*q::lseg<p,b> & sf!=q1 & sf!=p
+   |- sf::lseg<p,n> & n=a+b.

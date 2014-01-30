@@ -1,0 +1,58 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd2<n> == 
+ case {
+   n=0 -> [] self=null;
+   n>0 -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd2<m> & m=n+1.
+print residue.
+
+/*
+# bug-cll-8.slk -debug zd1.dd
+
+--eci fail here
+
+How come 
+ & Anon_14=Anon_86 & r_87=tmp' // ??
+became:
+ & Anon=Anon1 & r1=tmp' // WHY?
+
+heap_entail_conjunct_lhs_struc@12@11@10@9@8@5@4@3@2@1
+heap_entail_conjunct_lhs_struc inp1 :Ctx  r::cll<self,flted>@M 
+* tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n 
+& v=v' & x=x' & next=r 
+& Anon=Anon1 & r1=tmp' // WHY?
+& {FLOW,(21,22)=__norm}[]
+ es_trace:  SEARCH ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>
+ 
+heap_entail_conjunct_lhs_struc inp2 : ECase case {
+        r_87=x -> EBase {1}->emp&r_87=x & flted_14_126=0&
+
+
+heap_entail_one_context_struc@11@10@9@8@5@4@3@2@1
+heap_entail_one_context_struc inp1 : es_formula: 
+  r::cll<self,flted>@M 
+* tmp'::node<v',r>@M&0<m & n=1+flted & self=x' &  0<n 
+& v=v' & x=x' & next=r 
+& Anon_14=Anon_86 & r_87=tmp' // ??
+&  {FLOW,(21,22)=__norm}[]
+
+
+
+
+
+*/

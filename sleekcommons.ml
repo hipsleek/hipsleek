@@ -47,7 +47,7 @@ type command =
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
-  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula)
+  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
   | Validate of ( (ident list * meta_formula * (meta_formula * meta_formula) list) list)
   | ShapeDivide of (ident list * ident list)
@@ -62,6 +62,9 @@ type command =
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
+  | PredSplit of (ident list)
+  | PredNormDisj of (ident list)
+  | RelInfer of (ident list * ident list)
   | ShapeSAnte of (ident list * ident list)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
@@ -127,6 +130,9 @@ let string_of_command c = match c with
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
+  | PredSplit _ -> "PredSplit"
+  | PredNormDisj _ -> "Pred Normal Disj"
+  | RelInfer _ -> "RelInfer"
   | EqCheck _ -> "EqCheck"
   | BarrierCheck _ -> "BarrierCheck"
   | InferCmd _ -> "Infer"

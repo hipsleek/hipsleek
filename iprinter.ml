@@ -787,11 +787,11 @@ and
 
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann ann= String.concat "@" ann
+  (* match ann with *)
+  (*   | VAL -> "@VAL" *)
+  (*   | REC -> "@REC" *)
+  (*   | F_NO_ANN -> "" *)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
@@ -912,6 +912,7 @@ let string_of_lem_kind l =
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
+    | LEM_INFER_PRED    -> "infer lemmas + pred"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)
@@ -973,8 +974,11 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  let args = String.concat ";" (List.map (fun (_,n,_) -> n) hpdecl.Iast.hp_typed_inst_vars) in
-  name^"("^args^")"
+  let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
+      ^ " " ^ n
+  ) hpdecl.Iast.hp_typed_inst_vars) in
+  let parts = if hpdecl.Iast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Iast.hp_part_vars) in
+  name^"("^args^")"^parts
 
 
 (* An Hoa : print axioms *)
@@ -1021,7 +1025,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
   (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
-;;                                                                                                                         
+;;
 
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;

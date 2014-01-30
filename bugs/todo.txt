@@ -1089,8 +1089,35 @@ inv q!=null.
 
 // (9) Fail
 checkentail x::l6<_> * x::l6<_> |- false.
-
 ===================================================================
+# err-pure-inf.slk
+
+Old branch (term-si) supports both inference below.
+However, sa_logging fails for the second one. Why?
+It seems pure inference is now somewhat broken here.
+
+infer [a,b]   b=c |- a>b.
+print residue.
+
+infer [a,c]   b=c |- a>b.
+print residue.
+
+Old branch @ term_si give correct result:
+
+Entail (1) : Valid. 
+ <1>Base emp&b=c & b<a&{FLOW,(19,20)=__norm}[]
+ inferred pure: [b<a]
+
+
+Entail (2) : Valid. 
+ <1>Base emp&b=c & c<a&{FLOW,(19,20)=__norm}[]
+ inferred pure: [c<a]
+
+# run-fast-test
+
+Total number of errors: 5 in files:
+  infer/infer5.slk({E3#Fail}) infer/infer12.slk({E14#Fail},{E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E14#Valid},{E16#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
+T
 ===================================================================
 ===================================================================
 ===================================================================

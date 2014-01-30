@@ -242,6 +242,630 @@ wrong result
 lemma with annotation vars
 
 ===================================================================
+# split-2.slk
+  - to add pred_split for known pred (DONE)
+  -  to support views also
+
+
+===================================================================
+# ll.slk: DONE
+
+ - support pure extension for pred (relDefn)
+
+===================================================================
+# zip-1b.slk DONE
+
+ - support pure extension for pred (relDefn) for the second pointer
+
+===================================================================
+# zip-1a.slk: DONE
+
+ - support pure extension for pred (relDefn) for 2 pointers
+
+===================================================================
+===================================================================
+# zip-1c.slk:
+
+ - pred_split zipNM
+
+===================================================================
+# zip-1.slk
+  - add --> possible lemma if fail to split: DONE
+  - pred-en-pure: do split with pure extension
+  - (may) cause:OrR[ q=null |-  q!=null. LOCS:[0;10] (must-bug),valid]
+          ===> (how to know which properties to extend?)
+
+
+===================================================================
+#zip-2b.slk: DONE (lemma_infer_pred)
+
+ inferred hprel: [emp&self_lem_15=null --> H(self_lem_15); 
+                  H(p_341) * self_lem_15::node<_,p_341>@M --> H(self_lem_15); 
+                  H(q_338) * y::node<_,q_338>@M --> H(y)]
+
+Can ll predicate be directly synthesized by lemma_infer?
+===================================================================
+# zip-2c.slk: FIXED
+
+relation R(int a, int b).
+
+lemma_infer[R] self::zipNM<y> <- self::zipN<n> * y::zipN<m> & R(n,m).
+
+
+Why error below?
+
+ Temp Lemma(s) inferred as valid in current context.
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")
+ Formula: exists(m_433:exists(n_432:R(n_432,m_433) & (((1<=n_432 & p_378>0) | 
+(n_432=0 & p_378=0)))) & (((1<=m_433 & q_408>0) | (m_433=0 & q_408=0))))
+
+
+lemma_infer[n,m] self::zipNM<y> <- self::zipN<n> * y::zipN<m> .
+print residue.
+
+why failure?
+
+ntailing lemma lem_17: Fail. (may) cause:OrR[ y=null |-  y!=null. LOCS:[11;8] (must-bug),valid]
+
+Failed to inferred for lem_17:<== ==> invalid lemma encountered.
+===================================================================
+# zip-2b1.slk: FIXED
+
+How come below not normalized? This can be done at
+either relational assumption or pred normalization.
+Did we not have disjunctive unification?
+
+[ H(self) ::= 
+ self::node<_,p>@M * H(p)
+ or self::node<_,q>@M * H(q)
+ or emp&self=null
+ ]
+
+===================================================================
+# zip-1e2.slk --en-pred-equiv: FIXED (lemma_infer_pred: print the final result instead of the inter. one)
+
+How come --en-pred-equiv is not working here?
+Is it because both P1 and P2 are post-pred?
+
+[ P1(self_one2_81) ::=  [
+  P1(p_73) * self_one2_81::node<_,p_73>@M
+  or emp&self_one2_81=null
+  ],
+ P2(y_82) ::=  [
+  P2(q_70) * y_82::node<_,q_70>@M
+  or emp&y_82=null
+  ]]
+===================================================================
+# zip-1e3v.slk
+
+Can we infer [n,m] or must we derive pre-relation?
+How to do this with fixpoint? greatest or least?
+
+lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
+// we need to allow residue here
+// need --lem-en-residue
+// need to infer weakest pre-relation
+===================================================================
+# zip-1e3v1.slk
+
+More testing with sleek
+
+// dynamically add option in sleek
+add_option "--lem-en-residue".
+lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
+test_assert "Valid".
+test_assert "Fail(may)".
+test_assert "Fail(must)".
+test_assert "x+y>4".
+// on last command
+//IF failure, print
+// - last command
+// - current answer
+// - expected answer
+===================================================================
+# zip-fix-eq-2.slk: FIXED 
+(but zip_paper_eq-2.ss has not been fixed because of wrong invs)
+// WN : FIXED by using assert-assume.
+
+This requires gfp to be computed for pre-relation.
+
+relAssume
+   P3(n,m) -->  (n!=0 | m<1).
+
+relAssume
+   P3(n,m) -->  (m!=0 | n<1).
+
+relAssume
+   P3(n,m) & 1<=n 
+     & 1<=m & m2=m-1 & n2=n-1
+   -->  P3(n2,m2).
+
+relation_infer [P3][].
+
+We first form two things:
+
+  check: P3(n,m) --> (n!=0 | m<1) & (m!=0 | n<1)
+  recurrence: P3(n,m) & 1<=n & 1<=m & m2=m-1 & n2=n-1
+              -->  P3(n2,m2).
+
+Steps for computing pre-relations are
+in topd-zip.fc and topd-zip.oc.
+
+# fixcalc topd-zip.fc 
+
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+wh:={[n,m]->[pn,pm]->[]:
+  (exists (m2,n2:n>=1 && m>=1 && m2=m-1 && n2=n-1 && wh(n2,m2,pn,pm)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
+
+# derive top-down fix-point:
+#(((RECn >= 0 
+&& n >= 1 + RECn) 
+&& RECn + m >= n) 
+&& RECn + m = RECm + n)
+
+# we also need to satisfy the CHECK initially & recursively
+# P3(n,m) --> 
+(n!=0 | m<1) 
+& (m!=0 | n<1)
+
+# oc topd-zip.oc
+
+# Form a recursive check using top-down fixpoint
+RecChecks := {[n,m]:forall(RECn,RECm: 
+   not(RECn >= 0 
+      & n >= 1 + RECn & RECn + m >= n & RECn + m = RECm + n
+      ) 
+    | ((RECn!=0 | RECm<1) & (RECm!=0 | RECn<1))
+    )
+  };
+
+# Form initial check.
+InitChecks := {[n,m]:(n!=0 | m<1) & (m!=0 | n<1)};
+
+Pre:=RecChecks intersection InitChecks;
+Inv := {[n,m]:n>=0 & m>=0};
+
+# Form pre-condition given invariant
+D:=gist Pre given Inv;
+PairWiseCheck D;
+
+===================================================================
+# zp-1a.slk
+
+infer [m,n] 
+   x=0 & y!=0
+   & (x=0 & n=0 | x!=0 & n>0)
+   & (y=0 & m=0 | y!=0 & m>0)
+ |-  false.
+
+Below is incorrect. We are selectively inferring m,n.
+However, x & y are also present!
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [((x=0 & n=0) | (x!=0 & 1<=n)); ((y=0 & m=0) | (y!=0 & 
+                 1<=m))]
+
+Through zp-1a.oc, we should obtain:
+  m=0 & 0<=n | 1<=m & 1<=n
+
+===================================================================
+# zip-fix-eq-2.slk (FIXED)
+
+Is below correct?
+
+!!! fixpoint for pre-rels:( P3(n_38,m_39), forall(RECm_39:forall(RECn_38:(!((RECn_38>=0 & n_38>=(1+RECn_38) & (RECn_38+
+m_39)>=n_38 & RECn_38+m_39=RECm_39+n_38)) | (((true | RECm_39<1)) & ((true | 
+RECn_38<1)))))) & ((true | m_39<1)) & ((true | n_38<1)))Stop Omega... 8 invocations 
+
+===================================================================
+# zp-1b.slk (FIXED by Loc)
+
+infer [m,n] x=0 & y!=0 & (x=0 & n=0) & (y!=0 & m>0)
+ |-  false.
+print residue.
+
+infer [P] 
+   x=0 & y!=0 & (x=0 & n=0) & (y!=0 & m>0) 
+   & P(m,n)
+ |-  false.
+print residue.
+
+Why does the above yield different results?
+They should be the same. The second one
+is good.
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [n=0; 1<=m]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+===================================================================
+ ../../sleek zp-1b.slk -debug z-debug.log > 2
+../../sleek zp-1c.slk -debug z-debug.log > 1
+===================================================================
+# zp-1a.slk (FIXED)
+
+Why did we have such different answer
+when null is replaced by 0?
+
+infer [m,n] 
+   x=0 & y!=0
+   & (x=0 & n=0 | x!=0 & n>0)
+   & (y=0 & m=0 | y!=0 & m>0)
+ |-  false.
+print residue.
+
+infer [m,n] 
+   x=null & y!=null
+   & (x=null & n=0 | x!=null & n>0)
+   & (y=null & m=0 | y!=null & m>0)
+ |-  false.
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [(n!=0 | m<=0)]
+[
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [(m<=-1 | n<=-1)]
+[[empty]]
+===================================================================
+# zip_paper_eq-1.ss (FIXED)
+
+# Need to use assert/assume to capture pure property more permanently
+
+One pure relational assumption was lost...
+
+Sleek log captured:
+   es_infer_rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+   es_infer_rel: [RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n)]
+
+However, only the following were printed:
+
+[RELDEFN P: ( P(m,n) & 1<=m & 1<=n & n_1027=n-1 & m_1028=m-1) -->  P(m_1028,n_1027),
+RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n),
+RELDEFN Q: ( n=0 & m=0 & k=0 & P(m,n)) -->  Q(m,n,k),
+RELDEFN Q: ( n=0 & k=0 & 1<=m & P(m,n)) -->  Q(m,n,k),
+RELDEFN Q: ( Q(m_1028,n_1027,k_1049) & 0<=k_1049 & n_1027=n-1 & m_1028=m-1 & k=k_1049+
+1 & 1<=m & 1<=n & P(m,n)) -->  Q(m,n,k)]
+===================================================================
+# zip_paper_eq-1.ss --esl (FIXED)
+
+
+id: 9 src:2; caller: []; line: 27; classic: false; kind: UNKNOWN; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+
+Can we support ASSERT and ASSERT/ASSUME..
+
+===================================================================
+# zip-fix-eq-2.slk: FIXED
+
+not giving correct answer:
+
+!!! fixpoint for post-rels:[]
+!!! fixpoint for pre-rels:( P3(n_38,m_39), forall(RECm_39:forall(RECn_38:(!((RECn_38>=0 & n_38>=(1+RECn_38) & (RECn_38+
+m_39)>=n_38 & RECn_38+m_39=RECm_39+n_38)) | (((true | RECm_39<1)) & ((true | RECn_38<1)))))) & ((true | m_39<1)) & ((true | n_38<1)))Stop Omega... 8 invocations 
+S
+
+However, zip_paper_eq-1.ss is working correctly.
+Time to fix relation_infer!
+
+Correctly inferred pre/post pure relation:
+
+!!! pure pre: m=n & 0<=m
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( Q(m,n,k), k=m & k=n & 0<=k, P(m,n), m=n)]
+*************************************
+
+!!!REL POST :  Q(m,n,k)
+!!!POST:  k=m & k=n & 0<=k
+!!!REL PRE :  P(m,n)
+!!!PRE :  m=n
+
+===================================================================
+# zip_paper_eq-1.ss: DONE (why the output is diff??)
+
+Please provide an option --gsf that will output the
+sleek file for inferred pure unknown relations.
+
+===================================================================
+#hip zip_paper_eq-2.ss -debug zd-bug.log
+ 
+Must remember that untracked child calls always belong
+to current the current traced parent.
+
+pre_rel_fixpoint
+update_with_td_fp,Trace
+# why not tracing when more than one lines?
+===================================================================
+#hip zip_paper_eq-2.ss -debug zd-bug.log: 
+  FIXED bug in tp.cnv_int_to_ptr
+
+bug with pairwisecheck?
+(see pw.oc)
+
+K :=
+pairwisecheck@11@10
+pairwisecheck inp1 : forall(RECm:forall(RECn:(!((RECm>=0 & m>=(1+RECm) & (RECm+n)>=m & RECm+
+n=RECn+m)) | (((RECn!=0 | 1>RECm)) & ((RECm!=0 | 1>RECn)))))) & ((n!=0 | 
+1>m)) & ((m!=0 | 1>n))
+pairwisecheck@11 EXIT: forall(RECm:forall(RECn:(!((RECm>=0 & m>=(1+RECm) & (RECm+n)>=m & RECm+
+n=RECn+m)) | (((true | 1>RECm)) & ((true | 1>RECn)))))) & ((true | 1>m)) & 
+((true | 1>n))
+
+
+K :=
+{[n,n]: n <= 0} union
+ {[n,m]: n <= m-1, -1} union
+ {[n,m]: m <= n-1, -1} union
+ {[n,n]: 1 <= n}
+
+
+PairWiseCheck K :=
+{[n,m]: n <= m-1, -1} union
+ {[n,m]: m <= n-1, -1} union
+ {[n,n]}
+
+===================================================================
+#zip-1e-fix-2a.slk vs. zip-1e-fix-2b.slk
+
+Why is fixcalc.compute_fixpoint sensitive with the order of input?
+
+===================================================================
+#hip zip_paper_eq-2.ss: FIXED
+
+to extract proper invs from pre_fmls
+
+!!!REL POST :  true
+!!!POST:  true
+!!!REL PRE :  P(m,n)
+!!!PRE :  ((m<=(n-1) & m<=(0-1)) | (n<=(m-1) & n<=(0-1)) | m=n)
+
+===================================================================
+#zip-1e.slk: FIXED
+ (lhs_rhs_contra: xpure lhs should consider the rhs (pairwaisecheck + neg produces imprecise result))
+
+
+inferred rel: [RELASS [P3]: ( P3(n_90,m_91)) -->  (n_90!=0 | 0>m_91);
+                RELASS [P3]: ( P3(n_133,m_134)) -->  (m_134!=0 | 1>n_133);
+                RELDEFN P3: ( P3(n_133,m_134) & 1<=n_133 & 1<=m_134 & n1_152=m_134-1 & n1_132=n_133-1) -->  P3(n1_132,n1_152)]
+
+
+====>
+[( true, true, P3(n_90,m_91), ((n_90<=(m_91-1) & n_90<=(0-1)) | (m_91<=n_90 & m_91<=(0-1))))]
+===================================================================
+# fix-2.fc
+
+TODO : pairwisecheck on base cases..
+
+# fixpoint at BU2 seems incomparable with BU3
+# fixpoint at BU3 seems worse than BU2
+# likely due to bad SimHeuristic
+# form a recurrence betweem n,m and arbitrary rec calls pn,pm
+# Ideal fix-point below:
+Best :={[m,n,k]:
+  (m>=n && n>=0 && k=n) || (n>=m && m>=0 && k=m)};
+===================================================================
+# fix-2.fc
+
+Why these fix-point all gave the same result?
+  #(k >= 0 && m >= k && n >= k)
+
+E1:=bottomup(Q,1,SimHeur);
+E2:=bottomup(Q,2,SimHeur);
+E3:=bottomup(Q,3,SimHeur);
+E1;E2;E3;
+===================================================================
+# zip-2a.slk
+  - gen ext_pred size on-the-fly
+  - each field of each data ==> unique label (DONE)
+  
+ ===================================================================
+# zip-le-2.ss: DONE
+
+ !!!PRE :  (n<=0 | (n<=m & 1<=m))
+
+We obtained this because we did GIST before PairWiseCheck.
+
+I like to suggest the following step instead:
+
+   /\ Inv
+   PairWiseCheck
+   Gist given Inv
+
+This would allow us to derive (see zip-le-2.oc):
+
+  n<=m 
+===================================================================
+# zip-2.slk: DONE
+  - provide ext_pred for size
+  -split + pure extn : OK
+
+===================================================================
+# zip-norm.ss (FIXED)
+
+derived:
+!!!POST:  ((k=n & 0<=n & n<=m) | (k=m & 0<=k & k<n))
+
+which included Invariant info. We can simplify the
+presentation by performing gist POST given INV
+
+This would then yield a simpler:
+ {[n,m,n]: n <= m} union
+  {[n,m,m]: m < n}
+
+Below is an equivalent information:
+!!!POST:  ((k=n & k<=m) | (k=m & k<n))
+
+===================================================================
+#zip-2-norm.ss: DONE
+
+add preprocess to reduce the number of disjs before fixpoint computation
+
+===================================================================
+#fix-3.slk
+
+!!! fixpoint:[( true, true, P3(n_80,m_81,k_82), ((m_81=n_80 & k_82=n_80) | (n_80<=0 & k_82<=0 & 1<=m_81) | (k_82=n_80 &
+n_80<m_81 & 1<=n_80) | (m_81<=0 & k_82<=0 & 1<=n_80) | (n_80<=0 & m_81<=0 &
+1<=k_82) | (m_81=n_80 & 1<=n_80 & n_80<k_82) | (k_82=m_81 & 1<=m_81 &
+m_81<n_80)))]
+
+===================================================================
+#zip-3.slk, #zip-3a.slk
+
+pre-rel fixpoint for 3 parameters
+
+!!! fixpoint:[( true, true, P3(n_80,m_81,k_82), ((k_82=m_81 & 1<=k_82 & k_82<n_80) | (k_82<=0 & m_81<=0 & 1<=n_80) |
+(k_82=m_81 & k_82=n_80) | (k_82=n_80 & k_82<m_81 & 1<=m_81) | (m_81=n_80 &
+m_81<k_82 & 1<=k_82)))]
+ <1>(exists k_162,m_161,n_160,n1_159,n1_184,n1_201: emp&k_162=1+n1_201 & m_161=1+n1_184 & n_160=1+n1_159 & P3(n_160,m_161,k_162)&{FLOW,(21,22)=__norm})[]
+ inferred rel: [RELASS [P3]: ( P3(n_80,m_81,k_82)) -->  (n_80!=0 | 1>k_82 | 1>m_81);
+                RELASS [P3]: ( P3(n_160,m_161,k_162)) -->  (m_161!=0 | 1>k_162 | 1>n_160);
+                RELASS [P3]: ( P3(n_160,m_161,k_162)) -->  (k_162!=0 | 1>m_161 | 1>n_160);
+                RELDEFN P3: ( P3(n_160,m_161,k_162) & 1<=k_162 & 1<=n_160 & 1<=m_161 & n1_201=k_162-1 &
+n1_184=m_161-1 & n1_159=n_160-1) -->  P3(n1_159,n1_184,n1_201)]
+
+===================================================================
+# ls-lem-1a.slk --dis-lem-rhs-unfold
+
+Why proving ls-lem-1a fail though it succeeds in ls-lem-1a1.slk?
+
+process_coercion_check inp1 : 
+ (exists flted_19_50,_: self_two::node<_,flted_19_50>@M&flted_19_50=null&
+ {FLOW,(21,22)=__norm})[]
+ or (exists _,p_53: self_two::node<_,p_53>@M * p_53::HP<>@M&p_53!=null&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists flted_34_36,pp,_: self_two::lseg<pp>@M * 
+       pp::node<_,flted_34_36>@M&flted_34_36=null&{FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :[]
+process_coercion_check@1 EXIT:(false, Error Context: 1[
+                  emp&p_64=null&{FLOW,(3,4)=__Error}[]
+                  ])
+===================================================================
+# ls-lem-1a2b: FIXED
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+
+Why did classic fail when we have no residue?
+It seems to be caused by folding...
+
+checkentail self_two::node<_,flted_19_41>@M&flted_19_41=null&{FLOW,(21,22)=__norm}[]
+ |-  (exists flted_20_42,pp_43: self_two::lseg<pp_43>@M * 
+pp_43::node<_,flted_20_42>@M&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  p_45=null |-  pp_43!=null & p_45=pp_43. LOCS
+*/
+===================================================================
+# ls-lem-1a2c.slk: FIXED
+
+The first entail succeed without residue:
+
+Entail 1: Valid. 
+ <1>(exists flted_34_41: emp&flted_34_41=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+
+
+Why did classic fail when we have no residue?
+
+Entail 2: Fail.(must) cause: p_76=null |-  pp_74!=null & p_76=pp_74. LOCS:[39;8;40;7] (must-bug)
+
+*/
+===================================================================
+zip-le-2.ss --gff
+
+For pre-cond, it generated:
+
+P:={[m,n] -> [pm,pn] -> []:  (exists (n_990:(( (exists (m_991:((m=1+m_991 && 0<=m_991) && P(m_991,n_990,pm,pn))))  && n=1+n_990) && 0<=n_990))) 
+};
+TD:=topdown(P, 2, SimHeur);
+TD;
+
+zip-norm-2.ss --gff
+
+No file generated. I presume it is cos there
+are no checks to perform?
+===================================================================
+classic-bug-1a.ss (without)
+classic-bug-1b.ss (with classic) : FIXED
+
+-debgug lem.log
+
+Need to investigate point of difference
+at heap_entail_conjunct_helper.
+
+
+                              if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                                  (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
+                                  let r, new_es = Inf.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
+                                  if not r then
+                                    let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+
+heap_entail_empty_rhs_heap#1@23@22@1
+heap_entail_empty_rhs_heap#1 inp1 : es_formula: emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+ es_heap: self_two::node<_,flted_12_39>@M
+ es_evars: [flted_13_40; pp_41]
+ es_ante_evars: [flted_12_39; flted_13_40; pp_41]
+ es_rhs_eqset: [self_two:pp_41]
+ es_subst (from): [flted_13_40]
+ es_subst (to): [flted_12_39]
+ es_aux_conseq: pp_41=self_two
+ es_trace:  SEARCH ==>  Fold ==>  Match ==> 
+heap_entail_empty_rhs_heap#1 inp2 : emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+heap_entail_empty_rhs_heap#1 inp3 : flted_12_39=null & pp_41=self_two
+heap_entail_empty_rhs_heap#1@23 EXIT: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+
+@22! l_inst: true
+@22! p2: flted_12_39=null & pp_41=self_two
+@22! new_ctx: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+heap_entail_conjunct_helper#3@22@1
+heap_entail_conjunct_helper#3 inp1 : es_formula: emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+ es_heap: self_two::node<_,flted_12_39>@M
+ es_evars: [flted_13_40; pp_41]
+ es_ante_evars: [flted_12_39; flted_13_40; pp_41]
+ es_rhs_eqset: [self_two:pp_41]
+ es_subst (from): [flted_13_40]
+ es_subst (to): [flted_12_39]
+ es_aux_conseq: pp_41=self_two
+ es_trace:  SEARCH ==>  Fold ==>  Match ==> 
+heap_entail_conjunct_helper#3 inp2 : emp&flted_12_39=null & pp_41=self_two&{FLOW,(21,22)=__norm}[]
+heap_entail_conjunct_helper#3@22 EXIT: 
+Good Context: 1[
+                emp&flted_12_39=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm}[]
+                ]
+
+
+===================================================================
+# split-seg.slk, udisj-2.slk: FIXED
+
+
+===================================================================
+lemma syn
+
+
+
+
 ===================================================================
 ===================================================================
 ===================================================================

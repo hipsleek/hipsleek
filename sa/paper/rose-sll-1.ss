@@ -39,7 +39,7 @@ bool check_child (node l, tree par)
  requires l::dll<par, prev> 
   ensures  res;
  */
-  infer [H1,H2,G2,G2]
+  infer [H1,H2,G1,G2]
   requires H2(l,par) //l::sll<par>@L 
   ensures  G2(l,par) & res;
 {

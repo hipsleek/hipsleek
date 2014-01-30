@@ -1,0 +1,39 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+//lemma_test "one-b" self::node<_,p1>*p1::rlseg<p> <- self::rlseg<p>.
+// fail
+
+lemma_test "two" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+
+lemma_test "three" self::rlseg<p> <-> self::rlseg<q>*q::rlseg<p>.
+
+// why below two goes into loop!
+//lemma_safe "one-a" self::node<_,p1>*p1::rlseg<p> <-> self::rlseg<p>.
+
+//lemma_test "four-a" self::rlseg<p1>*p1::node<_,p> -> self::rlseg<p>.
+
+/*
+
+ntailing lemma one: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+
+Failed to prove one:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entailing lemma two: Valid.
+
+Valid Lemmas : [two:<==>] added to lemma store.
+
+Entailing lemma three: Valid.
+
+Valid Lemmas : [three:<==>] added to lemma store.
+
+*/

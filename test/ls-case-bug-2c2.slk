@@ -1,0 +1,24 @@
+data node {
+  node next;
+}.
+
+pred ls3<n> == case {
+   n=0 -> [] self=null; 
+   n!=0 -> case {
+             n>0 -> [] self::node<q>*q::ls3<n-1> & n<(-2);
+             n<0 -> [] false;
+        };
+  } inv n>=0.
+
+
+/*
+# ls-case-bug-2c1.slk -debug case.log
+
+No warning if explicit false.
+What happen to 0,0 flow type?
+
+                          n<0 -> EBase {3}->hfalse&false&
+                                       {FLOW,(0,0)=## cannot find flow type#P}[]
+
+*/
+

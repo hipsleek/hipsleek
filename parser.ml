@@ -30,6 +30,7 @@ let parser_name = ref "unknown"
 let set_parser name =
   parser_name := name
 
+let pred_root_id = ref ""
 
 (* type definitions *)
 
@@ -85,6 +86,7 @@ let convert_lem_kind (l: lemma_kind_t) =
       | TLEM_UNSAFE    -> LEM_UNSAFE
       | TLEM_SAFE      -> LEM_SAFE
       | TLEM_INFER     -> LEM_INFER
+      | TLEM_INFER_PRED   -> LEM_INFER_PRED
 
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
@@ -746,6 +748,34 @@ let set_slicing_utils_pure_double f il =
                           f
   else f
 
+let pred_get_root_pos root_id args=
+  let rec look_up rest_args n=
+    match rest_args with
+      | [] -> 0
+      | (_,id,_)::rest -> if String.compare id root_id = 0 then n else
+          look_up rest (n+1)
+  in
+  if String.compare root_id "" = 0 then 0 else look_up args 0
+
+let pred_get_args_partition args_ann=
+  let rec helper rem_args_ann parts=
+    match rem_args_ann with
+      | [] -> parts
+      | (i,dep_i)::rest ->
+            let part,rest1 = List.partition (fun (i1,dep_i1) -> i=dep_i1 || i1 =dep_i) rest in
+            if part = [] then
+              helper rest parts
+            else
+              let new_part = i::(List.map (fun (i,_) -> i) part) in
+              helper rest1 (parts@[new_part])
+  in
+  (*ann the order*)
+  let _, tripl_args_ann, args = List.fold_left (fun (n, r1,r2) (t,(id,i), p) ->
+      (n+1, r1@[(n, i)], r2@[(t,id,p)])
+  ) (0,[],[]) args_ann in
+  let parts = helper tripl_args_ann [] in
+  (args, parts)
+
 let rec get_heap_ann annl : P.ann = 
   match annl with
     | (Some a) :: r -> a
@@ -792,7 +822,7 @@ non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
-	    | `PRED_PRIM;t=prim_view_decl     -> PredDef t
+      | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -819,6 +849,9 @@ non_empty_command:
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t=pred_split_cmd     -> PredSplit t
+      | t=pred_norm_disj_cmd     -> PredNormDisj t
+      | t = rel_infer_cmd -> RelInfer t
       | t=simplify_cmd        -> Simplify t
       | t=hull_cmd        -> Slk_Hull t
       | t=pairwise_cmd        -> Slk_PairWise t
@@ -865,45 +898,54 @@ data_body:
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
 
+(* field_ann: [[ *)
+(*      `REC -> Iast.REC *)
+(*   |  `VAL -> Iast.VAL *)
+(* ]]; *)
+
 field_ann: [[
-     `REC -> Iast.REC
-  |  `VAL -> Iast.VAL
+     `HASH;`IDENTIFIER id -> id
+]];
+
+field_anns: [[
+     anns = LIST0 field_ann -> anns
 ]];
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, F_NO_ANN)]
-  | t = typ; `IDENTIFIER n ; ann=field_ann -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, F_NO_ANN)]
-  |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
-	  if List.mem n (List.map get_field_name fl) then
-		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-	  else
-		((t, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
-  |  t=typ; `IDENTIFIER n; ann=field_ann ; peek_try; `SEMICOLON; fl = SELF ->(  
-	  if List.mem n (List.map get_field_name fl) then
-		report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-	  else
-		((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, [(gen_field_ann t)] (* F_NO_ANN *))]
+  | t = typ; `IDENTIFIER n ; ann=field_anns -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, [(gen_field_ann t)](* F_NO_ANN *))]
+  |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
+	 if List.mem n (List.map get_field_name fl) then
+	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	 else
+	   ((t, n), get_pos_camlp4 _loc 3, false, [(gen_field_ann t)] (* F_NO_ANN *)) :: fl )
+  |  t=typ; `IDENTIFIER n; ann=field_anns ; peek_try; `SEMICOLON; fl = SELF ->(  
+	 if List.mem n (List.map get_field_name fl) then
+	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	 else
+           let ann = if ann=[] then [gen_field_ann t] else ann in
+	   ((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t1, n), get_pos_camlp4 _loc 3, false,F_NO_ANN) :: fl )
-   ]
-	(* An Hoa [22/08/2011] Inline fields extension*)
-	| "inline fields" [
-	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true,F_NO_ANN)]
- 	| `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true,F_NO_ANN)]
-	| `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
-			if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )
-	| `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
-			(if List.mem n (List.map get_field_name fl) then
-				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
-			else
-				((t1, n), get_pos_camlp4 _loc 3, true,F_NO_ANN) :: fl )]];
+	(if List.mem n (List.map get_field_name fl) then
+	  report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	else
+	  ((t1, n), get_pos_camlp4 _loc 3, false, [(gen_field_ann t1)](*F_NO_ANN*)) :: fl )
+]
+    (* An Hoa [22/08/2011] Inline fields extension*)
+  | "inline fields" [
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true, [gen_field_ann t] (*F_NO_ANN*))]
+      | `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true, [] (*F_NO_ANN*))]
+      | `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
+	    if List.mem n (List.map get_field_name fl) then
+	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	    else
+	      ((t, n), get_pos_camlp4 _loc 3, true, [gen_field_ann t] (*F_NO_ANN*)) :: fl )
+      | `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
+	    (if List.mem n (List.map get_field_name fl) then
+	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
+	    else
+	      ((t1, n), get_pos_camlp4 _loc 3, true, [gen_field_ann t1] (*F_NO_ANN*)) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -921,7 +963,17 @@ barrier_decl:
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
- 
+
+derv_view:
+[[
+   `IDENTIFIER vn;`LT;sl= id_list_opt; `GT -> (vn,sl)
+]];
+
+prop_extn:
+[[
+  `IDENTIFIER vn;`OSQUARE;props= id_list_opt;`CSQUARE;`LT;sl= id_list_opt;`GT -> (vn,props,sl)
+]];
+
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
@@ -1236,12 +1288,16 @@ extended_constr_grp:
    [[ c=extended_constr -> [(Lbl.empty_spec_label_def,c)]
     | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (LO2.singleton id,c)) t]];
 
+(* then_extended : [[ `THEN; il = extended_l -> il ]]; *)
+
+then_extended : [[ il = extended_l -> il ]];
+
 extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT then_extended -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -1832,8 +1888,15 @@ relassume_cmd:
            (un_option il2 [], l, Some guard,  r)
    ]];
 
+derv_pred:
+[[
+   `IDENTIFIER vn;`OPAREN;sl= id_list_opt; `CPAREN -> (vn,sl)
+]];
+
 reldefn_cmd:
-   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV;r=meta_constr -> (un_option il2 [], l, r)
+   [[ `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV ;r=meta_constr -> (un_option il2 [], l, r, [])
+     | `RELDEFN; il2 = OPT cond_path; l=meta_constr; `EQUIV; `EXTENDS;orig_pred = derv_pred; `ATPOS; extn_pos=integer_literal; `WITH ; extn = prop_extn->
+           (un_option il2 [], l, MetaForm (F.mkTrue n_flow (get_pos_camlp4 _loc 1)) , [(orig_pred, extn, [extn_pos])])
    ]];
 
 decl_dang_cmd:
@@ -1849,6 +1912,13 @@ shapeinfer_cmd:
    let il1 = un_option il1 [] in
    let il2 = un_option il2 [] in
    (il1,il2)
+   ]];
+
+rel_infer_cmd:
+   [[ `REL_INFER; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1, il2)
    ]];
 
 shapedivide_cmd:
@@ -1876,6 +1946,7 @@ shaperec_cmd:
    il1
    ]];
 
+
 shapepost_obl_cmd:
    [[ `SHAPE_POST_OBL; `OSQUARE;il1=OPT id_list;`CSQUARE; `OSQUARE; il2=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
@@ -1896,6 +1967,19 @@ shape_sante_cmd:
    let il2 = un_option il2 [] in
    (il1,il2)
    ]];
+
+pred_split_cmd:
+   [[ `PRED_SPLIT; `OSQUARE;il1=OPT id_list;`CSQUARE->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
+pred_norm_disj_cmd:
+   [[ `PRED_NORM_DISJ; `OSQUARE;il1=OPT id_list;`CSQUARE->
+   let il1 = un_option il1 [] in
+   (il1)
+   ]];
+
 
 simplify_cmd:
   [[ `SIMPLIFY; t=meta_constr -> t]];
@@ -2020,6 +2104,9 @@ coerc_decl_aux:
       `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
           { coercion_list_elems = [t];
             coercion_list_kind  = LEM_INFER }
+      | `LEMMA TLEM_INFER_PRED; t = infer_coercion_decl -> 
+          { coercion_list_elems = [t];
+          coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
       | `LEMMA kind;t = coercion_decl -> 
@@ -2165,9 +2252,26 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
-typed_id_inst_list:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
+id_part_ann: [[
+    `IDENTIFIER id-> (id,-1)
+  | `IDENTIFIER id; `COLON; t=integer_literal-> (id, t)
+]]
+;
+
+typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
+  | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
+  |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
+  |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
  ]];
+
+typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
+  |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
+  | t = typ; `RO; (id,n) = id_part_ann -> let _ = pred_root_id := id in (t,(id,n), Globals.I)
+  |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
+  |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let _ = pred_root_id := id in (t,(id,n), Globals.NI)
+ ]];
+
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
@@ -2218,19 +2322,29 @@ axiom_decl:[[
 ]];
 
 hp_decl:[[
-`HP; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`HP; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let tl, parts = pred_get_args_partition tl0 in
+    let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
+        hp_root_pos = root_pos;
+        hp_part_vars = parts;
         hp_is_pre = true;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }
-  | `HPPOST; `IDENTIFIER id; `OPAREN; tl= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let _ = hp_names # push id in
+    let tl, parts = pred_get_args_partition tl0 in
+    let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let _ = pred_root_id := "" in
     {
         hp_name = id;
         hp_typed_inst_vars = tl;
+        hp_part_vars = parts;
+        hp_root_pos = root_pos;
         hp_is_pre = false;
         hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) top_flow [] (get_pos_camlp4 _loc 1);
     }
@@ -2355,6 +2469,7 @@ type_decl:
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
+   | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
@@ -2373,7 +2488,7 @@ class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
-		let t1 = List.map (fun (t, p) -> (t, p, false,F_NO_ANN)) t1 in
+		let t1 = List.map (fun ((t,id), p) -> ((t,id), p, false, [gen_field_ann t] (* F_NO_ANN *))) t1 in
       let cdef = { data_name = id;
                    data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
@@ -2521,7 +2636,9 @@ flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
-  [[ h=proc_header; flgs=opt_flag_list;b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+  [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
+      let n_h = genESpec_wNI h (Some b) h.proc_args h.proc_return h.proc_loc in
+      { n_h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header; _=opt_flag_list-> h]];
   
 proc_header:

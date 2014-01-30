@@ -1,0 +1,36 @@
+data node {
+  node next;
+}.
+
+pred ls<n> == self=null & n=0
+  or self::node<q>*q::ls<n-1> //& n>0 //n!=0
+  inv n>=0.
+
+/*
+# ls-case-bug-1b.slk -debug case.log
+
+line_split@6@2@1
+line_split inp1 : n=0
+line_split inp2 :[(0, n=0,[n]),(1, 1<=n,[n])]
+line_split@6 EXIT:( n=0,[],[])
+
+line_split@7@2@1
+line_split inp1 : 1<=n
+line_split inp2 :[(0, n=0,[n]),(1, 1<=n,[n])]
+line_split@7 EXIT:( 1<=n,[],[])
+
+# ls-case-bug-1c.slk -debug case.log
+line_split@3@2@1
+line_split inp1 : self=null
+line_split inp2 :[(0, self=null,[self]),(1, self!=null,[self])]
+line_split@3 EXIT:( self!=null,[0],[1])
+
+line_split@4@2@1
+line_split inp1 : self!=null
+line_split inp2 :[(0, self=null,[self]),(1, self!=null,[self])]
+line_split@4 EXIT:( self=null,[1],[0])
+
+
+
+*/
+

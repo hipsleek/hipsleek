@@ -1,0 +1,25 @@
+data node {
+  node next;
+}.
+
+pred H<p> == self=null
+  or self::node<q>*q::H<p>
+inv true.
+
+pred ll<> == self=null
+  or self::node<q>*q::ll<>
+inv true.
+
+pred lseg<p> == self=p
+  or self::node<q>*q::lseg<p>
+inv true.
+
+// why useless G failing
+HeapPred G(node s).
+lemma_infer_pred [G] self::H<p> -> G(self).
+//print residue.
+
+
+HeapPred K(node s).
+lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+print residue.

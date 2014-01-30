@@ -1,0 +1,13 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+#cnv_ptr_to_int,Loop
+trans_one_coercion
+process_coercion_check,Trace
+check_coercion_struc
+#look_up_reachable_ptrs_f
+#look_up_reachable_ptrs_sf
+#unfold
+#unfold_struc_nth
+#struc_unfold_heap
+#infer_collect_hp_rel,Trace
+#INFER.update_es

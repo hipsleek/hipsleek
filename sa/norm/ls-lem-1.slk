@@ -1,0 +1,41 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+/*
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,pp>*pp::HP<> & pp!=null
+ inv self!=null.
+*/
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+/*
+# ls-lem-1.slk --dis-lem-rhs-unfold
+
+Why is it added even though lemmna proving has failed?
+
+Entailing lemma two: Fail. (must) cause:lor[ p_68=null |-  p_65!=null & p_65=p_68. LOCS:[19;8;35;7] (must-bug),UnionR[residue is forbidden.,residue is forbidden.]]
+
+Valid Lemmas : [two:==>] added to lemma store.
+*/
+
+lemma_safe "two" self::HP<> <-> self::lseg<p> * p::node<_,null>.
+
+/*
+checkentail
+  self::node<_,null> |- self::lseg<p> * p::node<_,null>.
+
+checkentail 
+  self::node<_,p1>*p1::HP<> & p1!=null |- self::lseg<p> * p::node<_,null>.
+*/

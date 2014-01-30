@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == self:node=p
+  or self::rlseg<q> * q::node<_,p>.
+
+lemma_safe "one" self::node<_,p1>*p1::rlseg<p> -> self::rlseg<p>.
+/* provable with rhs_unfold
+
+// <-- provable with both
+lemma_safe "two" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+*/

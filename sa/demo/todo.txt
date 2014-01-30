@@ -6250,6 +6250,17 @@ Total verification time: 18.83 second(s)
 !!!    fix: 1 HP_946(prev,prev',cur') * cur::node<val_49_943,prev>@M&cur=prev' & cur'=sent
  --error:  at:(Program not linked with -g, cannot print stack backtrace)
 =====================================================================
+chinwn@loris-7:~/hg/sl_default/sa/demo$ ../../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode^C
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x1,x) ::= 
+ x1::node<val,next>@M * G2(next,n)&x=null
+ or emp&x1=null & x=null
+ ]
+
+It seems that only the syntactic equiv mode is working.
+Also, I wonder what command will split G2(x1,x)?
+
 =====================================================================
 =====================================================================
 =====================================================================

@@ -1,0 +1,47 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+
+//lemma_safe "one" self::HP<> <-> self::node<_,p> * p::ll<>.
+
+//lemma_safe "oneb"  self::node<_,p> * p::ll<> <-> self::HP<>.
+
+lemma_safe "two" self::HP<> <-> self::lseg<p> * p::node<_,null>.
+
+/*
+#ls3.slk --dis-lem-rhs-unfold
+
+Why add lemma when there was a failure??
+
+Entailing lemma two: Fail. Details below:
+	 "->" implication: : Fail. (must) cause:lor[ p_72=null |-  p_69!=null & p_69=p_72. LOCS:[18;14;27;13] (must-bug),UnionR[residue is forbidden.,residue is forbidden.]]
+	 "<-" implication: : Valid.
+Valid Lemmas : [two:<==>] added to lemma store.
+
+# ls3.slk 
+
+Entailing lemma two: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[residue is forbidden.,valid]
+	 "<-" implication: : Valid.
+Failed to prove two:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+*/

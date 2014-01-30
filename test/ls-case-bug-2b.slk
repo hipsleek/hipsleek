@@ -1,0 +1,23 @@
+data node {
+  node next;
+}.
+
+pred ls2<n> == case {
+   n=0 -> [] self=null; 
+   n>=0 -> []  self::node<q>*q::ls2<n-1>;
+  } inv n>=0.
+
+
+/*
+# ls-case-bug-2a.slk -debug case.log
+
+Should test disjointness first..
+
+ Fatal error: exception Failure("the guards don't cover the whole domain for :  :ECase case {
+         n=0 -> :EBase emp&self=null&{FLOW,(1,24)=__flow}[] ;
+         0<=n -> :EBase exists (Expl)[](Impl)[q](ex)[](exists flted_7_13: 
+                        self::node<q>@M * q::ls2
+
+
+*/
+

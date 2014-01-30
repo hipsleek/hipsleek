@@ -1,0 +1,44 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last> //& self!=last
+ inv true.
+
+/*
+checkentail self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+print residue.
+
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp:   pp::node<_,null> & self_two=pp)
+   or (exists pp,p: self_two::node<_,p>*p::lseg<pp> * pp::node<_,null>).
+print residue.
+*/
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+
+
+
+
+/*
+# ls-lem-1a2c.slk
+
+The first entail succeed without residue:
+
+Entail 1: Valid. 
+ <1>(exists flted_34_41: emp&flted_34_41=null & Anon_13=Anon_14&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+
+
+Why did classic fail when we have no residue?
+
+Entail 2: Fail.(must) cause: p_76=null |-  pp_74!=null & p_76=pp_74. LOCS:[39;8;40;7] (must-bug)
+
+*/
+

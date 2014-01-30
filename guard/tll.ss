@@ -8,7 +8,7 @@ data node{
 
 /* predicate for a non-empty tree with chained leaf list */
  tll<ll,lr> == self::node<_,null,lr> & self = ll
-	or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr>
+  or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr> //& r!=null
 	inv self!=null;
 
 /* predicate for a non-empty tree  */
@@ -16,6 +16,14 @@ data node{
 	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 
+/*
+ GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
+   or self::node<left,right,DP> * left::GG<rr,l>
+         * right::GG<l,t> & right!=null
+   inv true;
+*/
+
+//lemma_safe self::tll<a,b> <-> self::GG<a,b>;
 
 // initializes the linked list fields
 
@@ -24,25 +32,55 @@ HeapPred G(node a, node@NI b, node c).
 
 node set_right (node x, node t)
 infer [H,G] requires H(x,t) ensures G(x,res,t);
-                            //requires x::tree<> ensures x::tll<res,t>;
+//requires x::tree<> ensures x::tll<res,t>;
 {
   //node xr = x.right;
   //node xl = x.left;
   if (x.right==null) 
   	{
 //		assert xl'=null;
-  	  	x.next = t;
+                x.next = t;
   	  	return x;
   	}
   else 
   	{
 //		assert xr'!=null & xl'!=null;
-  		node l_most = set_right(x.right, t);
+                node l_most = set_right(x.right, t);
                 return set_right(x.left, l_most);
   	}
 }
 
 /*
+# tll.ss
+
+Why isn't -dre "check_.*coercion" below called?
+
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]==> self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+check_right_coercion@3
+check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]<== self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+
+# tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+
+Why isn't predicate reuse working at all?
+
+[ H(x,t) ::= HP_1123(x),
+ G(x,res,t) ::= 
+ x::node&lt;DP1,right,t&gt;@M&right=null & res=x
+ or x::node&lt;left,right,DP&gt;@M * G(left,res,l) * G(right,l,t)&right!=null
+ ,
+ HP_1123(x) ::= 
+ x::node&lt;left,right,DP&gt;@M * HP_1123(left) * HP_1123(right)&right!=null
+ or x::node&lt;DP1,right,DP&gt;@M&right=null
+ ]
+
+
 # tll.ss 
 
 hip produced:
@@ -99,6 +137,37 @@ look odd (seems incorrect).
 
 
 
+ tll<res,tt> == self::node<_,null,tt> & self = res
+	or self::node<l,r,_> * l::tll<res,z> * r::tll<z,tt>
+	inv self!=null;
+
+[ H(x,t) ::=x::tree<>@M,
+ G(x,res,t) ::= 
+ x::node<DP1,right,t>@M&right=null & res=x
+ or x::node<left,right,DP>@M * G(left,res,l) * G(right,l,t)&right!=null
+ ]
+
+================================
+
+This spurious message came from below. They don't look
+correct, and should also be omitted.
+
+../sleek logs/mod_tll.slk
+
+ HP_956(left,t1) |#| 
+                     res::node<left_31_90,right_31_954,t_91>@M&
+                     right_31_954=null
+                     or x::node<left_31_90,right_31_954,next_31_955>@M&
+                        right_31_954!=null
+                      ::= 
+ DP_89(left1,t)
+ or H(left,l'),
+ HP_957(right,t) ::= 
+ H(right,t)&right!=null
+ or emp&right=null
+
+
+=============================
 RELASSUME
 =========
 [ H_8(left_29_845,r@NI) * H_9(right_29_846,r@NI) * 

@@ -5,6 +5,8 @@ open Cprinter
 open Gen.Basic
 open Immutable
 
+module CF = Cformula
+
 type match_res = {
     match_res_lhs_node : h_formula; (* node from the extracted formula *)    
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
@@ -58,13 +60,35 @@ and action =
   | Seq_action of action_wt list 
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
-  | M_cyclic of match_res
+  | M_cyclic of (match_res* int)
   (* | Un *)
   (* | M *)
   (* | Opt int *)
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
+let get_rhs_rest_emp_flag act old_is_rhs_emp =
+  match act with
+    | M_match m
+    | M_split_match m
+    | M_fold m
+    | M_unfold  (m,_)
+    | M_base_case_unfold m
+    | M_base_case_fold m
+    | M_rd_lemma m
+    | M_lemma  (m, _)
+    | Undefined_action m
+    | M_lhs_case m
+    | M_cyclic (m,_) ->
+          if m.match_res_rhs_rest = HEmp then true else false
+    | M_Nothing_to_do _ -> old_is_rhs_emp
+    | M_infer_heap _ -> old_is_rhs_emp
+    | M_unmatched_rhs_data_node _ -> old_is_rhs_emp
+          (* perform a list of actions until there is one succeed*)
+    | Cond_action _ -> old_is_rhs_emp
+          (*not handle yet*)
+    | Seq_action _ -> old_is_rhs_emp
+    | Search_action _ -> old_is_rhs_emp
 
 let is_complex_action a = match a with
   | Search_action _ 
@@ -157,7 +181,7 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "SEARCH =>" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis =>"; pr_mr e
-  | M_cyclic e -> fmt_string "Match cyclic =>"; pr_mr e
+  | M_cyclic (e,_) -> fmt_string "Match cyclic =>"; pr_mr e
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -192,7 +216,7 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
-  | M_cyclic e
+  | M_cyclic (e,_)
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
@@ -571,7 +595,7 @@ and get_data_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   List.filter (fun node ->
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_data_node) !unlinked_nodes then false
       else
-        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
+        let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [node.h_formula_data_node] in
         if (empty_inters view_sv ptrs) then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
@@ -584,7 +608,7 @@ and get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
   List.filter (fun node ->
       if Gen.BList.mem_eq CP.eq_spec_var (node.h_formula_view_node) !unlinked_nodes then false
       else
-        let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
+        let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [node.h_formula_view_node] in
         if (empty_inters view_sv ptrs)then begin
           unlinked_nodes := !unlinked_nodes @ ptrs;
           false
@@ -596,7 +620,7 @@ and get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv =
   (List.filter (fun (hp0, e0,_) ->  
       let args0 = CP.diff_svl (get_all_sv (HRel(hp0, e0,no_pos))) [hp0] in
       let root0, _  = Sautility.find_root prog [hp0] args0  [] in
-      let ptrs = Sautility.look_up_closed_ptr_args prog hd_nodes hv_nodes [root0] in
+      let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [root0] in
       (* replace root with aset *)
       not(empty_inters view_sv ptrs)
   ) hrels)
@@ -1120,8 +1144,27 @@ and process_one_match_x prog estate lhs_h is_normalizing (c:match_res) (rhs_node
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
                               (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                              let lst=[(1,M_base_case_unfold c)(* ;(1,M_cyclic c) *)] in
+                              let _ = Debug.ninfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
+                              let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                              let uf_i = if new_orig then 0 else 1 in
+                              (*cyclic: add lemma_unsafe then unfold lhs*)
+                              (*L2: change here for cyclic*)
+                              let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple) (Lem_store.all_lemma # get_left_coercion)) vl_name vr_name in
+                              let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Simple) (Lem_store.all_lemma # get_right_coercion) ) vr_name vl_name in
+                              (* let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in *)
+                              (* let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in *)
+                              (* let b_left = if (not(!ann_derv) || vl_new_orig) then if left_ls = [] then false else true *)
+                              (* else false in *)
+                              (* let b_right = if (not(!ann_derv) || vr_new_orig) then if right_ls=[] then false else true *)
+                              (* else false in *)
+                              let lst=
+                                if (* b_left && b_right *)!Globals.lemma_syn && (left_ls@right_ls)=[] then [(1,M_cyclic (c,uf_i))(* ;(1,M_unfold (c, uf_i)) *)]
+                                else
+                                  [(1,M_base_case_unfold c) (* ;(1,M_cyclic c) *)]
+                              in
                               (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
+                              (*L2: change here for cyclic*)
                               [(1,Cond_action lst)]
                   in
                   (* using || results in some repeated answers but still terminates *)

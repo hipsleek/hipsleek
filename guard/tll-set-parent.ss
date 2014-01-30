@@ -14,7 +14,7 @@ tll<p,ll,lr> == self::node<p,D1,null,lr> & self = ll
 
 /* predicate for a non-empty tree  */
 tree<> == self::node<_,D1,null,_>
-  or self::node<_,l,r,D2> * l::tree<> * r::tree<>
+  or self::node<_,l,r,D2> * l::tree<> * r::tree<> & r!=null
 	inv self!=null;
 
 // initializes the linked list fields

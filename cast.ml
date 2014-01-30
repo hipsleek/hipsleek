@@ -44,7 +44,7 @@ and data_field_ann =
 and data_decl = { 
     data_name : ident;
     data_pos : loc;
-    data_fields : (typed_ident * data_field_ann) list;
+    data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -86,6 +86,7 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
+    view_prop_extns:  P.spec_var list;
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;
@@ -123,6 +124,7 @@ and rel_decl = {
 and hp_decl = { 
     hp_name : ident;
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
     mutable hp_root_pos: int;
     hp_is_pre: bool;
     hp_formula : F.formula;}
@@ -915,6 +917,38 @@ let look_up_view_def_raw i (defs : view_decl list) (name : ident) =
   let pr_out = !print_view_decl in
   Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
+let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
+  let ext_views = List.filter (fun v ->
+      let b1 = v.view_kind=View_EXTN && List.length v.view_prop_extns = 1 in
+      let num_base = match v.view_base_case with
+        | None -> 0
+        | Some _ -> 1
+      in
+      let num_rec_br = List.length v.view_un_struc_formula - num_base in
+      b1 && (num_rec_br0 = num_rec_br) && (num_base0 = num_base)
+  ) defs in
+  ext_views
+
+let look_up_view_inv defs act_args name inv_compute_fnc =
+  let vdcl = look_up_view_def_raw 46 defs name in
+  let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
+  let inv =
+    let p1 = MP.pure_of_mix vdcl.view_user_inv in
+    if P.isConstTrue p1 then
+      (*make sure inv is not computed*)
+      if !Globals.do_infer_inv then
+        MP.pure_of_mix vdcl.view_x_formula
+      else
+        try
+          (*case Globals.do_infer_inv = false*)
+          let _ = Globals.do_infer_inv := true in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula p1 in
+          let _ = Globals.do_infer_inv := false in
+          new_pf
+        with _ -> p1
+    else p1
+  in
+  P.subst ss inv
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
@@ -929,6 +963,29 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let look_up_hp_parts decls hp=
+  let hp_dc = look_up_hp_def_raw decls hp in
+  hp_dc.hp_part_vars
+
+let look_up_hp_decl_data_name_x decls hp arg_pos=
+  let rec look_up_data_name args n=
+    match args with
+      | [] -> report_error no_pos "Cast.look_up_hp_decl_data_name 1"
+      | (sv,_)::rest ->( if n = arg_pos then
+          match Cpure.type_of_spec_var sv with
+            | Named id -> id
+            | _ -> report_error no_pos "Cast.look_up_hp_decl_data_name: only pure-extend for pointer"
+          else look_up_data_name rest (n+1)
+        )
+  in
+  let hp_dcl = look_up_hp_def_raw decls hp in
+  look_up_data_name hp_dcl.hp_vars_inst 0
+
+let look_up_hp_decl_data_name decls hp arg_pos=
+  Debug.no_2 "look_up_hp_decl_data_name" pr_id string_of_int pr_id
+      (fun _ _ -> look_up_hp_decl_data_name_x decls hp arg_pos)
+      hp arg_pos
 
 let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
 
@@ -1047,6 +1104,32 @@ let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match dd
 	  else look_up_data_def pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a data/class declaration"}
+
+let look_up_extn_info_rec_field_x ddefs dname=
+  let rec look_up_helper fields=
+    match fields with
+      | ((t,_), extns)::rest -> begin
+          match t with
+            | Named id1 -> if String.compare id1 dname = 0 then
+                extns
+              else look_up_helper rest
+            | _ -> look_up_helper rest
+        end
+      | [] -> raise Not_found
+  in
+  let dd = look_up_data_def no_pos ddefs dname in
+  let _ = Debug.ninfo_hprint (add_str "    dd.data_fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id))))
+      dd.data_fields no_pos in
+  try
+    look_up_helper dd.data_fields
+  with _ ->
+      let (_, extns) = List.hd dd.data_fields in
+      extns
+
+let look_up_extn_info_rec_field ddefs dname=
+  Debug.no_1 "look_up_extn_info_rec_field" pr_id (pr_list pr_id)
+      (fun _ -> look_up_extn_info_rec_field_x ddefs dname)
+      dname
 
 let rec look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def pos ddefs name in

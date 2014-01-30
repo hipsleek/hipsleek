@@ -36,9 +36,9 @@ let ho_print flag (pr:'a->string) (m:'a) : unit =
       | None -> ("\n!!!" ^ s)
       | Some cid -> ("\n@"^(string_of_int cid)^"!"^ s) 
     in
-    if !log_devel_debug then 
-      Buffer.add_string debug_log msg
-    else
+    (* if !log_devel_debug then  *)
+    (*   Buffer.add_string debug_log msg *)
+    (* else *)
       (print_string msg; flush stdout)
   else ()
 
@@ -711,6 +711,7 @@ let no_7 s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 =
   let code_gen fn = fn s p1 p2 p3 p4 p5 p6 p7 p0 f e1 e2 e3 e4 e5 e6 in
   let code_none = ho_aux_no (f e1 e2 e3 e4 e5 e6) in
   splitter s code_none code_gen go_7
+
 
 let ho_1_opt tr_flag lp_flag f = ho_1_opt_aux tr_flag [] lp_flag f None
 let ho_2_opt tr_flag lp_flag f = ho_2_opt_aux tr_flag [] lp_flag f None

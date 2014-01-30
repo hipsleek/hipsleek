@@ -1,0 +1,17 @@
+
+data node2 {
+    int val; 
+    node2 left;
+    node2 right;
+}.
+
+HeapPred HP(node2 x).
+
+pred lbt<> == self=null
+  or self::node2<_, l, r> * l::lbt<>.
+
+pred bt<> == self=null
+  or self::node2<_, l, r> * l::bt<> * r::bt<>.
+
+lemma_safe "sthn" self::bt<> -> self::lbt<>.
+
