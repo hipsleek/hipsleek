@@ -5013,19 +5013,145 @@ module ZInfinity =
              | ZE_Fin z2 -> if z_le_dec z1 z2 then true else false
              | ZE_Inf -> true
              | ZE_NegInf -> if coq_ZE_eq_dec x ZE_NegInf then true else false)
-          | None -> false)
+          | None -> true)
        | ZE_Inf ->
          (match ze2 with
           | Some x0 ->
             (match x0 with
              | ZE_Inf -> true
              | _ -> if coq_ZE_eq_dec x0 ZE_Inf then true else false)
-          | None -> false)
+          | None -> true)
+       | ZE_NegInf -> true)
+    | None -> true
+ end
+
+module ZInfinityTop = 
+ struct 
+  type coq_ZE =
+  | ZE_Fin of z
+  | ZE_Inf
+  | ZE_NegInf
+  
+  (** val coq_ZE_rect : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
+  
+  let coq_ZE_rect f f0 f1 = function
+  | ZE_Fin x -> f x
+  | ZE_Inf -> f0
+  | ZE_NegInf -> f1
+  
+  (** val coq_ZE_rec : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1 **)
+  
+  let coq_ZE_rec f f0 f1 = function
+  | ZE_Fin x -> f x
+  | ZE_Inf -> f0
+  | ZE_NegInf -> f1
+  
+  (** val coq_ZE_eq_dec : coq_ZE -> coq_ZE -> bool **)
+  
+  let coq_ZE_eq_dec ze1 ze2 =
+    match ze1 with
+    | ZE_Fin z0 ->
+      (match ze2 with
+       | ZE_Fin z1 -> Z.eq_dec z0 z1
+       | _ -> false)
+    | ZE_Inf ->
+      (match ze2 with
+       | ZE_Inf -> true
+       | _ -> false)
+    | ZE_NegInf ->
+      (match ze2 with
+       | ZE_NegInf -> true
+       | _ -> false)
+  
+  (** val coq_ZEneg : coq_ZE -> coq_ZE **)
+  
+  let coq_ZEneg = function
+  | ZE_Fin z0 -> ZE_Fin (Z.opp z0)
+  | ZE_Inf -> ZE_NegInf
+  | ZE_NegInf -> ZE_Inf
+  
+  type coq_A = coq_ZE option
+  
+  (** val coq_Const0 : coq_ZE option **)
+  
+  let coq_Const0 =
+    Some (ZE_Fin Z0)
+  
+  (** val coq_Const1 : coq_ZE option **)
+  
+  let coq_Const1 =
+    Some (ZE_Fin (Zpos XH))
+  
+  (** val num_eq_dec : coq_A -> coq_A -> bool **)
+  
+  let num_eq_dec n1 n2 =
+    match n1 with
+    | Some z0 ->
+      (match n2 with
+       | Some z1 -> coq_ZE_eq_dec z0 z1
+       | None -> false)
+    | None ->
+      (match n2 with
+       | Some z0 -> false
+       | None -> true)
+  
+  (** val num_neg : coq_ZE option -> coq_ZE option **)
+  
+  let num_neg =
+    option_map coq_ZEneg
+  
+  (** val num_plus : coq_ZE option -> coq_ZE option -> coq_ZE option **)
+  
+  let num_plus ze1 ze2 =
+    match ze1 with
+    | Some z0 ->
+      (match z0 with
+       | ZE_Fin z1 ->
+         (match ze2 with
+          | Some z2 ->
+            (match z2 with
+             | ZE_Fin z3 -> Some (ZE_Fin (Z.add z1 z3))
+             | x -> Some x)
+          | None -> None)
+       | ZE_Inf ->
+         (match ze2 with
+          | Some z1 ->
+            (match z1 with
+             | ZE_NegInf -> None
+             | _ -> Some ZE_Inf)
+          | None -> None)
        | ZE_NegInf ->
          (match ze2 with
-          | Some z0 -> true
-          | None -> false))
-    | None -> false
+          | Some z1 ->
+            (match z1 with
+             | ZE_Inf -> None
+             | _ -> Some ZE_NegInf)
+          | None -> None))
+    | None -> None
+  
+  (** val num_leq : coq_ZE option -> coq_ZE option -> bool **)
+  
+  let num_leq ze1 ze2 =
+    match ze1 with
+    | Some x ->
+      (match x with
+       | ZE_Fin z1 ->
+         (match ze2 with
+          | Some z0 ->
+            (match z0 with
+             | ZE_Fin z2 -> if z_le_dec z1 z2 then true else false
+             | ZE_Inf -> true
+             | ZE_NegInf -> if coq_ZE_eq_dec x ZE_NegInf then true else false)
+          | None -> true)
+       | ZE_Inf ->
+         (match ze2 with
+          | Some x0 ->
+            (match x0 with
+             | ZE_Inf -> true
+             | _ -> if coq_ZE_eq_dec x0 ZE_Inf then true else false)
+          | None -> true)
+       | ZE_NegInf -> true)
+    | None -> true
  end
 
 module ZNumLattice = 
@@ -5079,6 +5205,56 @@ module type SEMANTICS_INPUT =
   val coeff : coq_Q -> nat
   
   val add_term : coq_Q -> nat
+ end
+
+module PureInfinityTop = 
+ struct 
+  module N = ZInfinityTop
+  
+  type coq_AQ =
+  | Q_Z
+  | Q_ZE
+  
+  (** val coq_AQ_rect : 'a1 -> 'a1 -> coq_AQ -> 'a1 **)
+  
+  let coq_AQ_rect f f0 = function
+  | Q_Z -> f
+  | Q_ZE -> f0
+  
+  (** val coq_AQ_rec : 'a1 -> 'a1 -> coq_AQ -> 'a1 **)
+  
+  let coq_AQ_rec f f0 = function
+  | Q_Z -> f
+  | Q_ZE -> f0
+  
+  type coq_Q = coq_AQ
+  
+  type coq_QT = __
+  
+  (** val conv : coq_Q -> coq_QT -> N.coq_A **)
+  
+  let conv q x =
+    match q with
+    | Q_Z -> Some (N.ZE_Fin (Obj.magic x))
+    | Q_ZE -> Some (Obj.magic x)
+  
+  (** val constQT : coq_Q -> coq_QT **)
+  
+  let constQT = function
+  | Q_Z -> Obj.magic Z0
+  | Q_ZE -> Obj.magic (N.ZE_Fin Z0)
+  
+  (** val coeff : coq_Q -> nat **)
+  
+  let coeff = function
+  | Q_Z -> S O
+  | Q_ZE -> S (S (S O))
+  
+  (** val add_term : coq_Q -> nat **)
+  
+  let add_term = function
+  | Q_Z -> O
+  | Q_ZE -> S (S (S O))
  end
 
 module PureInfinity = 
@@ -5498,247 +5674,983 @@ module ArithSemantics =
         | ZF_BF z0 ->
           (match z0 with
            | ZBF_Const b -> if b then x else ZF_BF (ZBF_Const false)
-           | x0 -> ZF_And (x, (ZF_BF x0)))
-        | x0 -> ZF_And (x, x0)))
-  | ZF_Or (f1, f2) ->
-    (match simplifyZF f1 with
+           | x0 ->
+             ZF_And
+               (x,
+               (ZF_BF
+               x0)))
+        | x0 ->
+          ZF_And
+            (x,
+            x0)))
+  | ZF_Or (f1,
+           f2) ->
+    (match simplifyZF
+             f1 with
      | ZF_BF z0 ->
        (match z0 with
-        | ZBF_Const b -> if b then ZF_BF (ZBF_Const true) else simplifyZF f2
+        | ZBF_Const b ->
+          if b
+          then ZF_BF
+                 (ZBF_Const
+                 true)
+          else simplifyZF
+                 f2
         | x ->
-          let e1 = ZF_BF x in
-          (match simplifyZF f2 with
-           | ZF_BF z1 ->
-             (match z1 with
-              | ZBF_Const b -> if b then ZF_BF (ZBF_Const true) else e1
-              | x0 -> ZF_Or (e1, (ZF_BF x0)))
-           | x0 -> ZF_Or (e1, x0)))
-     | x ->
-       (match simplifyZF f2 with
-        | ZF_BF z0 ->
-          (match z0 with
-           | ZBF_Const b -> if b then ZF_BF (ZBF_Const true) else x
-           | x0 -> ZF_Or (x, (ZF_BF x0)))
-        | x0 -> ZF_Or (x, x0)))
-  | ZF_Imp (f1, f2) ->
-    (match simplifyZF f1 with
-     | ZF_BF z0 ->
-       (match z0 with
-        | ZBF_Const b -> if b then simplifyZF f2 else ZF_BF (ZBF_Const true)
-        | x ->
-          let e1 = ZF_BF x in
-          (match simplifyZF f2 with
+          let e1 =
+            ZF_BF
+            x
+          in
+          (match simplifyZF
+                   f2 with
            | ZF_BF z1 ->
              (match z1 with
               | ZBF_Const b ->
                 if b
-                then ZF_BF (ZBF_Const true)
+                then ZF_BF
+                       (ZBF_Const
+                       true)
+                else e1
+              | x0 ->
+                ZF_Or
+                  (e1,
+                  (ZF_BF
+                  x0)))
+           | x0 ->
+             ZF_Or
+               (e1,
+               x0)))
+     | x ->
+       (match simplifyZF
+                f2 with
+        | ZF_BF z0 ->
+          (match z0 with
+           | ZBF_Const b ->
+             if b
+             then ZF_BF
+                    (ZBF_Const
+                    true)
+             else x
+           | x0 ->
+             ZF_Or
+               (x,
+               (ZF_BF
+               x0)))
+        | x0 ->
+          ZF_Or
+            (x,
+            x0)))
+  | ZF_Imp (f1,
+            f2) ->
+    (match simplifyZF
+             f1 with
+     | ZF_BF z0 ->
+       (match z0 with
+        | ZBF_Const b ->
+          if b
+          then simplifyZF
+                 f2
+          else ZF_BF
+                 (ZBF_Const
+                 true)
+        | x ->
+          let e1 =
+            ZF_BF
+            x
+          in
+          (match simplifyZF
+                   f2 with
+           | ZF_BF z1 ->
+             (match z1 with
+              | ZBF_Const b ->
+                if b
+                then ZF_BF
+                       (ZBF_Const
+                       true)
                 else (match e1 with
                       | ZF_BF z2 ->
                         (match z2 with
                          | ZBF_Const b0 ->
                            if b0
-                           then ZF_BF (ZBF_Const false)
-                           else ZF_BF (ZBF_Const true)
-                         | _ -> ZF_Not e1)
-                      | _ -> ZF_Not e1)
-              | x0 -> ZF_Imp (e1, (ZF_BF x0)))
-           | x0 -> ZF_Imp (e1, x0)))
+                           then ZF_BF
+                                  (ZBF_Const
+                                  false)
+                           else ZF_BF
+                                  (ZBF_Const
+                                  true)
+                         | _ ->
+                           ZF_Not
+                             e1)
+                      | _ ->
+                        ZF_Not
+                          e1)
+              | x0 ->
+                ZF_Imp
+                  (e1,
+                  (ZF_BF
+                  x0)))
+           | x0 ->
+             ZF_Imp
+               (e1,
+               x0)))
      | x ->
-       (match simplifyZF f2 with
+       (match simplifyZF
+                f2 with
         | ZF_BF z0 ->
           (match z0 with
            | ZBF_Const b ->
              if b
-             then ZF_BF (ZBF_Const true)
+             then ZF_BF
+                    (ZBF_Const
+                    true)
              else (match x with
                    | ZF_BF z1 ->
                      (match z1 with
                       | ZBF_Const b0 ->
                         if b0
-                        then ZF_BF (ZBF_Const false)
-                        else ZF_BF (ZBF_Const true)
-                      | _ -> ZF_Not x)
-                   | _ -> ZF_Not x)
-           | x0 -> ZF_Imp (x, (ZF_BF x0)))
-        | x0 -> ZF_Imp (x, x0)))
+                        then ZF_BF
+                               (ZBF_Const
+                               false)
+                        else ZF_BF
+                               (ZBF_Const
+                               true)
+                      | _ ->
+                        ZF_Not
+                          x)
+                   | _ ->
+                     ZF_Not
+                       x)
+           | x0 ->
+             ZF_Imp
+               (x,
+               (ZF_BF
+               x0)))
+        | x0 ->
+          ZF_Imp
+            (x,
+            x0)))
   | ZF_Not f ->
-    (match simplifyZF f with
+    (match simplifyZF
+             f with
      | ZF_BF z0 ->
        (match z0 with
         | ZBF_Const b ->
-          if b then ZF_BF (ZBF_Const false) else ZF_BF (ZBF_Const true)
-        | x -> ZF_Not (ZF_BF x))
-     | x -> ZF_Not x)
-  | ZF_Forall (v, q, f) -> ZF_Forall (v, q, (simplifyZF f))
-  | ZF_Exists (v, q, f) -> ZF_Exists (v, q, (simplifyZF f))
+          if b
+          then ZF_BF
+                 (ZBF_Const
+                 false)
+          else ZF_BF
+                 (ZBF_Const
+                 true)
+        | x ->
+          ZF_Not
+            (ZF_BF
+            x))
+     | x ->
+       ZF_Not
+         x)
+  | ZF_Forall (v,
+               q,
+               f) ->
+    ZF_Forall
+      (v,
+      q,
+      (simplifyZF
+        f))
+  | ZF_Exists (v,
+               q,
+               f) ->
+    ZF_Exists
+      (v,
+      q,
+      (simplifyZF
+        f))
  end
 
 module type STRVAR = 
  sig 
   type var 
   
-  val var_eq_dec : var -> var -> bool
+  val var_eq_dec :
+    var
+    ->
+    var
+    ->
+    bool
   
-  val var2string : var -> char list
+  val var2string :
+    var
+    ->
+    char list
   
-  val string2var : char list -> var
+  val string2var :
+    char list
+    ->
+    var
  end
 
 module InfSolver = 
  functor (Coq_sv:STRVAR) ->
  struct 
+  module TA = ArithSemantics(PureInfinityTop)(Coq_sv)
+  
   module IA = ArithSemantics(PureInfinity)(Coq_sv)
   
   module FA = ArithSemantics(PureInt)(Coq_sv)
   
   module I2F = ArithSemantics(IntToInfinity)(Coq_sv)
   
-  (** val inf_trans_exp : IA.coq_ZExp -> I2F.coq_ZExp **)
+  (** val coq_TATrue :
+      TA.coq_ZBF **)
+  
+  let coq_TATrue =
+    TA.ZBF_Const
+      true
+  
+  (** val coq_TAFalse :
+      TA.coq_ZBF **)
+  
+  let coq_TAFalse =
+    TA.ZBF_Const
+      false
+  
+  (** val top_trans_bf :
+      TA.coq_ZBF
+      ->
+      TA.coq_ZBF **)
+  
+  let top_trans_bf = function
+  | TA.ZBF_Lt (e1,
+               e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Lt
+            (e1,
+            e2)
+        | None ->
+          coq_TAFalse)
+     | None ->
+       coq_TAFalse)
+  | TA.ZBF_Lte (e1,
+                e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Lte
+            (e1,
+            e2)
+        | None ->
+          coq_TATrue)
+     | None ->
+       coq_TATrue)
+  | TA.ZBF_Gt (e1,
+               e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Gt
+            (e1,
+            e2)
+        | None ->
+          coq_TAFalse)
+     | None ->
+       coq_TAFalse)
+  | TA.ZBF_Gte (e1,
+                e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Gte
+            (e1,
+            e2)
+        | None ->
+          coq_TATrue)
+     | None ->
+       coq_TATrue)
+  | TA.ZBF_Eq (e1,
+               e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Eq
+            (e1,
+            e2)
+        | None ->
+          coq_TATrue)
+     | None ->
+       coq_TATrue)
+  | TA.ZBF_Neq (e1,
+                e2) ->
+    (match TA.dexp2ZE
+             e1 with
+     | Some z0 ->
+       (match TA.dexp2ZE
+                e2 with
+        | Some z1 ->
+          TA.ZBF_Neq
+            (e1,
+            e2)
+        | None ->
+          coq_TAFalse)
+     | None ->
+       coq_TAFalse)
+  | x ->
+    x
+  
+  (** val top_trans :
+      TA.coq_ZF
+      ->
+      TA.coq_ZF **)
+  
+  let rec top_trans = function
+  | TA.ZF_BF bf ->
+    TA.ZF_BF
+      (top_trans_bf
+        bf)
+  | TA.ZF_And (f1,
+               f2) ->
+    TA.ZF_And
+      ((top_trans
+         f1),
+      (top_trans
+        f2))
+  | TA.ZF_Or (f1,
+              f2) ->
+    TA.ZF_Or
+      ((top_trans
+         f1),
+      (top_trans
+        f2))
+  | TA.ZF_Imp (f1,
+               f2) ->
+    TA.ZF_Imp
+      ((top_trans
+         f1),
+      (top_trans
+        f2))
+  | TA.ZF_Not f ->
+    TA.ZF_Not
+      (top_trans
+        f)
+  | TA.ZF_Forall (v,
+                  q,
+                  f) ->
+    TA.ZF_Forall
+      (v,
+      q,
+      (top_trans
+        f))
+  | TA.ZF_Exists (v,
+                  q,
+                  f) ->
+    TA.ZF_Exists
+      (v,
+      q,
+      (top_trans
+        f))
+  
+  (** val proj_inf :
+      PureInfinityTop.N.coq_A
+      ->
+      PureInfinity.N.coq_A **)
+  
+  let proj_inf = function
+  | Some z1 ->
+    (match z1 with
+     | PureInfinityTop.N.ZE_Fin x ->
+       Some
+         (PureInfinity.N.ZE_Fin
+         x)
+     | PureInfinityTop.N.ZE_Inf ->
+       Some
+         PureInfinity.N.ZE_Inf
+     | PureInfinityTop.N.ZE_NegInf ->
+       Some
+         PureInfinity.N.ZE_NegInf)
+  | None ->
+    None
+  
+  (** val top_inf_trans_exp :
+      TA.coq_ZExp
+      ->
+      IA.coq_ZExp **)
+  
+  let rec top_inf_trans_exp = function
+  | TA.ZExp_Var v ->
+    IA.ZExp_Var
+      v
+  | TA.ZExp_Const a ->
+    IA.ZExp_Const
+      (proj_inf
+        a)
+  | TA.ZExp_Add (e1,
+                 e2) ->
+    IA.ZExp_Add
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZExp_Inv e ->
+    IA.ZExp_Inv
+      (top_inf_trans_exp
+        e)
+  | TA.ZExp_Sub (e1,
+                 e2) ->
+    IA.ZExp_Sub
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZExp_Mult (z0,
+                  e) ->
+    IA.ZExp_Mult
+      (z0,
+      (top_inf_trans_exp
+        e))
+  
+  (** val top_inf_trans_bf :
+      TA.coq_ZBF
+      ->
+      IA.coq_ZBF **)
+  
+  let top_inf_trans_bf = function
+  | TA.ZBF_Const f ->
+    IA.ZBF_Const
+      f
+  | TA.ZBF_Lt (e1,
+               e2) ->
+    IA.ZBF_Lt
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZBF_Lte (e1,
+                e2) ->
+    IA.ZBF_Lte
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZBF_Gt (e1,
+               e2) ->
+    IA.ZBF_Gt
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZBF_Gte (e1,
+                e2) ->
+    IA.ZBF_Gte
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZBF_Eq (e1,
+               e2) ->
+    IA.ZBF_Eq
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  | TA.ZBF_Eq_Max (e1,
+                   e2,
+                   e3) ->
+    IA.ZBF_Eq_Max
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2),
+      (top_inf_trans_exp
+        e3))
+  | TA.ZBF_Eq_Min (e1,
+                   e2,
+                   e3) ->
+    IA.ZBF_Eq_Min
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2),
+      (top_inf_trans_exp
+        e3))
+  | TA.ZBF_Neq (e1,
+                e2) ->
+    IA.ZBF_Neq
+      ((top_inf_trans_exp
+         e1),
+      (top_inf_trans_exp
+        e2))
+  
+  (** val top_inf_trans_q :
+      PureInfinityTop.coq_AQ
+      ->
+      PureInfinity.coq_AQ **)
+  
+  let top_inf_trans_q = function
+  | PureInfinityTop.Q_Z ->
+    PureInfinity.Q_Z
+  | PureInfinityTop.Q_ZE ->
+    PureInfinity.Q_ZE
+  
+  (** val top_inf_trans :
+      TA.coq_ZF
+      ->
+      IA.coq_ZF **)
+  
+  let rec top_inf_trans = function
+  | TA.ZF_BF bf ->
+    IA.ZF_BF
+      (top_inf_trans_bf
+        bf)
+  | TA.ZF_And (f1,
+               f2) ->
+    IA.ZF_And
+      ((top_inf_trans
+         f1),
+      (top_inf_trans
+        f2))
+  | TA.ZF_Or (f1,
+              f2) ->
+    IA.ZF_Or
+      ((top_inf_trans
+         f1),
+      (top_inf_trans
+        f2))
+  | TA.ZF_Imp (f1,
+               f2) ->
+    IA.ZF_Imp
+      ((top_inf_trans
+         f1),
+      (top_inf_trans
+        f2))
+  | TA.ZF_Not f ->
+    IA.ZF_Not
+      (top_inf_trans
+        f)
+  | TA.ZF_Forall (v,
+                  q,
+                  f) ->
+    IA.ZF_Forall
+      (v,
+      (top_inf_trans_q
+        q),
+      (top_inf_trans
+        f))
+  | TA.ZF_Exists (v,
+                  q,
+                  f) ->
+    IA.ZF_Exists
+      (v,
+      (top_inf_trans_q
+        q),
+      (top_inf_trans
+        f))
+  
+  (** val inf_trans_exp :
+      IA.coq_ZExp
+      ->
+      I2F.coq_ZExp **)
   
   let rec inf_trans_exp = function
-  | IA.ZExp_Var v -> I2F.ZExp_Var v
-  | IA.ZExp_Const a -> I2F.ZExp_Const (Obj.magic a)
-  | IA.ZExp_Add (e1, e2) ->
-    I2F.ZExp_Add ((inf_trans_exp e1), (inf_trans_exp e2))
-  | IA.ZExp_Inv e -> I2F.ZExp_Inv (inf_trans_exp e)
-  | IA.ZExp_Sub (e1, e2) ->
-    I2F.ZExp_Sub ((inf_trans_exp e1), (inf_trans_exp e2))
-  | IA.ZExp_Mult (z0, e) -> I2F.ZExp_Mult (z0, (inf_trans_exp e))
+  | IA.ZExp_Var v ->
+    I2F.ZExp_Var
+      v
+  | IA.ZExp_Const a ->
+    I2F.ZExp_Const
+      (Obj.magic
+        a)
+  | IA.ZExp_Add (e1,
+                 e2) ->
+    I2F.ZExp_Add
+      ((inf_trans_exp
+         e1),
+      (inf_trans_exp
+        e2))
+  | IA.ZExp_Inv e ->
+    I2F.ZExp_Inv
+      (inf_trans_exp
+        e)
+  | IA.ZExp_Sub (e1,
+                 e2) ->
+    I2F.ZExp_Sub
+      ((inf_trans_exp
+         e1),
+      (inf_trans_exp
+        e2))
+  | IA.ZExp_Mult (z0,
+                  e) ->
+    I2F.ZExp_Mult
+      (z0,
+      (inf_trans_exp
+        e))
   
-  (** val inf_trans_bf : IA.coq_ZBF -> I2F.coq_ZBF **)
+  (** val inf_trans_bf :
+      IA.coq_ZBF
+      ->
+      I2F.coq_ZBF **)
   
   let inf_trans_bf = function
-  | IA.ZBF_Const b -> I2F.ZBF_Const b
-  | IA.ZBF_Lt (f1, f2) -> I2F.ZBF_Lt ((inf_trans_exp f1), (inf_trans_exp f2))
-  | IA.ZBF_Lte (f1, f2) ->
-    I2F.ZBF_Lte ((inf_trans_exp f1), (inf_trans_exp f2))
-  | IA.ZBF_Gt (f1, f2) -> I2F.ZBF_Gt ((inf_trans_exp f1), (inf_trans_exp f2))
-  | IA.ZBF_Gte (f1, f2) ->
-    I2F.ZBF_Gte ((inf_trans_exp f1), (inf_trans_exp f2))
-  | IA.ZBF_Eq (f1, f2) -> I2F.ZBF_Eq ((inf_trans_exp f1), (inf_trans_exp f2))
-  | IA.ZBF_Eq_Max (f1, f2, f3) ->
-    I2F.ZBF_Eq_Max ((inf_trans_exp f1), (inf_trans_exp f2),
-      (inf_trans_exp f3))
-  | IA.ZBF_Eq_Min (f1, f2, f3) ->
-    I2F.ZBF_Eq_Min ((inf_trans_exp f1), (inf_trans_exp f2),
-      (inf_trans_exp f3))
-  | IA.ZBF_Neq (f1, f2) ->
-    I2F.ZBF_Neq ((inf_trans_exp f1), (inf_trans_exp f2))
+  | IA.ZBF_Const b ->
+    I2F.ZBF_Const
+      b
+  | IA.ZBF_Lt (f1,
+               f2) ->
+    I2F.ZBF_Lt
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Lte (f1,
+                f2) ->
+    I2F.ZBF_Lte
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Gt (f1,
+               f2) ->
+    I2F.ZBF_Gt
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Gte (f1,
+                f2) ->
+    I2F.ZBF_Gte
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Eq (f1,
+               f2) ->
+    I2F.ZBF_Eq
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
+  | IA.ZBF_Eq_Max (f1,
+                   f2,
+                   f3) ->
+    I2F.ZBF_Eq_Max
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2),
+      (inf_trans_exp
+        f3))
+  | IA.ZBF_Eq_Min (f1,
+                   f2,
+                   f3) ->
+    I2F.ZBF_Eq_Min
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2),
+      (inf_trans_exp
+        f3))
+  | IA.ZBF_Neq (f1,
+                f2) ->
+    I2F.ZBF_Neq
+      ((inf_trans_exp
+         f1),
+      (inf_trans_exp
+        f2))
   
-  (** val inf_trans' : IA.coq_ZF -> nat -> I2F.coq_ZF **)
+  (** val inf_trans' :
+      IA.coq_ZF
+      ->
+      nat
+      ->
+      I2F.coq_ZF **)
   
   let rec inf_trans' form = function
-  | O -> I2F.ZF_BF (I2F.ZBF_Const false)
+  | O ->
+    I2F.ZF_BF
+      (I2F.ZBF_Const
+      false)
   | S c' ->
     (match form with
-     | IA.ZF_BF bf -> I2F.ZF_BF (inf_trans_bf bf)
-     | IA.ZF_And (f1, f2) ->
-       I2F.ZF_And ((inf_trans' f1 c'), (inf_trans' f2 c'))
-     | IA.ZF_Or (f1, f2) ->
-       I2F.ZF_Or ((inf_trans' f1 c'), (inf_trans' f2 c'))
-     | IA.ZF_Imp (f1, f2) ->
-       I2F.ZF_Imp ((inf_trans' f1 c'), (inf_trans' f2 c'))
-     | IA.ZF_Not f -> I2F.ZF_Not (inf_trans' f c')
-     | IA.ZF_Forall (v, q, f) ->
+     | IA.ZF_BF bf ->
+       I2F.ZF_BF
+         (inf_trans_bf
+           bf)
+     | IA.ZF_And (f1,
+                  f2) ->
+       I2F.ZF_And
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Or (f1,
+                 f2) ->
+       I2F.ZF_Or
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Imp (f1,
+                  f2) ->
+       I2F.ZF_Imp
+         ((inf_trans'
+            f1
+            c'),
+         (inf_trans'
+           f2
+           c'))
+     | IA.ZF_Not f ->
+       I2F.ZF_Not
+         (inf_trans'
+           f
+           c')
+     | IA.ZF_Forall (v,
+                     q,
+                     f) ->
        (match q with
-        | PureInfinity.Q_Z -> I2F.ZF_Forall (v, Tt, (inf_trans' f c'))
-        | PureInfinity.Q_ZE ->
-          I2F.ZF_And ((I2F.ZF_Forall (v, Tt, (inf_trans' f c'))), (I2F.ZF_And
-            ((inf_trans'
-               (IA.substitute (Pair (v, (Some (Obj.magic ZInfinity.ZE_Inf))))
-                 f) c'),
+        | PureInfinity.Q_Z ->
+          I2F.ZF_Forall
+            (v,
+            Tt,
             (inf_trans'
-              (IA.substitute (Pair (v, (Some
-                (Obj.magic ZInfinity.ZE_NegInf)))) f) c')))))
-     | IA.ZF_Exists (v, q, f) ->
+              f
+              c'))
+        | PureInfinity.Q_ZE ->
+          I2F.ZF_And
+            ((I2F.ZF_Forall
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))),
+            (I2F.ZF_And
+            ((inf_trans'
+               (IA.substitute
+                 (Pair
+                 (v,
+                 (Some
+                 (Obj.magic
+                   ZInfinity.ZE_Inf))))
+                 f)
+               c'),
+            (inf_trans'
+              (IA.substitute
+                (Pair
+                (v,
+                (Some
+                (Obj.magic
+                  ZInfinity.ZE_NegInf))))
+                f)
+              c')))))
+     | IA.ZF_Exists (v,
+                     q,
+                     f) ->
        (match q with
-        | PureInfinity.Q_Z -> I2F.ZF_Exists (v, Tt, (inf_trans' f c'))
-        | PureInfinity.Q_ZE ->
-          I2F.ZF_Or ((I2F.ZF_Exists (v, Tt, (inf_trans' f c'))), (I2F.ZF_Or
-            ((inf_trans'
-               (IA.substitute (Pair (v, (Some (Obj.magic ZInfinity.ZE_Inf))))
-                 f) c'),
+        | PureInfinity.Q_Z ->
+          I2F.ZF_Exists
+            (v,
+            Tt,
             (inf_trans'
-              (IA.substitute (Pair (v, (Some
-                (Obj.magic ZInfinity.ZE_NegInf)))) f) c'))))))
+              f
+              c'))
+        | PureInfinity.Q_ZE ->
+          I2F.ZF_Or
+            ((I2F.ZF_Exists
+            (v,
+            Tt,
+            (inf_trans'
+              f
+              c'))),
+            (I2F.ZF_Or
+            ((inf_trans'
+               (IA.substitute
+                 (Pair
+                 (v,
+                 (Some
+                 (Obj.magic
+                   ZInfinity.ZE_Inf))))
+                 f)
+               c'),
+            (inf_trans'
+              (IA.substitute
+                (Pair
+                (v,
+                (Some
+                (Obj.magic
+                  ZInfinity.ZE_NegInf))))
+                f)
+              c'))))))
   
-  (** val inf_trans : IA.coq_ZF -> I2F.coq_ZF **)
+  (** val inf_trans :
+      IA.coq_ZF
+      ->
+      I2F.coq_ZF **)
   
   let inf_trans form =
-    inf_trans' form (IA.length_zform form)
+    inf_trans'
+      form
+      (IA.length_zform
+        form)
   
-  (** val coq_FATrue : FA.coq_ZF **)
+  (** val coq_FATrue :
+      FA.coq_ZF **)
   
   let coq_FATrue =
-    FA.ZF_BF (FA.ZBF_Const true)
+    FA.ZF_BF
+      (FA.ZBF_Const
+      true)
   
-  (** val coq_FAFalse : FA.coq_ZF **)
+  (** val coq_FAFalse :
+      FA.coq_ZF **)
   
   let coq_FAFalse =
-    FA.ZF_BF (FA.ZBF_Const false)
+    FA.ZF_BF
+      (FA.ZBF_Const
+      false)
   
-  (** val proj : IntToInfinity.N.coq_A -> z **)
+  (** val proj :
+      IntToInfinity.N.coq_A
+      ->
+      z **)
   
   let proj = function
   | Some z1 ->
     (match z1 with
-     | IntToInfinity.N.ZE_Fin x -> x
-     | _ -> Z0)
-  | None -> Z0
+     | IntToInfinity.N.ZE_Fin x ->
+       x
+     | _ ->
+       Z0)
+  | None ->
+    Z0
   
-  (** val int_trans_exp : I2F.coq_ZExp -> FA.coq_ZExp **)
+  (** val int_trans_exp :
+      I2F.coq_ZExp
+      ->
+      FA.coq_ZExp **)
   
   let rec int_trans_exp = function
-  | I2F.ZExp_Var v -> FA.ZExp_Var v
-  | I2F.ZExp_Const a -> FA.ZExp_Const (proj a)
-  | I2F.ZExp_Add (e1, e2) ->
-    FA.ZExp_Add ((int_trans_exp e1), (int_trans_exp e2))
-  | I2F.ZExp_Inv e -> FA.ZExp_Inv (int_trans_exp e)
-  | I2F.ZExp_Sub (e1, e2) ->
-    FA.ZExp_Sub ((int_trans_exp e1), (int_trans_exp e2))
-  | I2F.ZExp_Mult (z0, e) -> FA.ZExp_Mult (z0, (int_trans_exp e))
+  | I2F.ZExp_Var v ->
+    FA.ZExp_Var
+      v
+  | I2F.ZExp_Const a ->
+    FA.ZExp_Const
+      (proj
+        a)
+  | I2F.ZExp_Add (e1,
+                  e2) ->
+    FA.ZExp_Add
+      ((int_trans_exp
+         e1),
+      (int_trans_exp
+        e2))
+  | I2F.ZExp_Inv e ->
+    FA.ZExp_Inv
+      (int_trans_exp
+        e)
+  | I2F.ZExp_Sub (e1,
+                  e2) ->
+    FA.ZExp_Sub
+      ((int_trans_exp
+         e1),
+      (int_trans_exp
+        e2))
+  | I2F.ZExp_Mult (z0,
+                   e) ->
+    FA.ZExp_Mult
+      (z0,
+      (int_trans_exp
+        e))
   
-  (** val int_trans_bf : I2F.coq_ZBF -> FA.coq_ZF **)
+  (** val int_trans_bf :
+      I2F.coq_ZBF
+      ->
+      FA.coq_ZF **)
   
   let int_trans_bf = function
-  | I2F.ZBF_Const f -> FA.ZF_BF (FA.ZBF_Const f)
-  | I2F.ZBF_Lt (e1, e2) ->
-    (match I2F.dexp2ZE e1 with
+  | I2F.ZBF_Const f ->
+    FA.ZF_BF
+      (FA.ZBF_Const
+      f)
+  | I2F.ZBF_Lt (e1,
+                e2) ->
+    (match I2F.dexp2ZE
+             e1 with
      | Some x ->
        (match x with
         | IntToInfinity.N.ZE_Fin z0 ->
-          (match I2F.dexp2ZE e2 with
+          (match I2F.dexp2ZE
+                   e2 with
            | Some z1 ->
              (match z1 with
               | IntToInfinity.N.ZE_Fin z2 ->
-                FA.ZF_BF (FA.ZBF_Lt ((int_trans_exp e1), (int_trans_exp e2)))
+                FA.ZF_BF
+                  (FA.ZBF_Lt
+                  ((int_trans_exp
+                     e1),
+                  (int_trans_exp
+                    e2)))
               | IntToInfinity.N.ZE_Inf ->
-                if ZInfinity.coq_ZE_eq_dec (Obj.magic x) ZInfinity.ZE_Inf
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
                 then coq_FAFalse
                 else coq_FATrue
-              | IntToInfinity.N.ZE_NegInf -> coq_FAFalse)
-           | None -> coq_FAFalse)
+              | IntToInfinity.N.ZE_NegInf ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse)
         | IntToInfinity.N.ZE_Inf ->
-          (match I2F.dexp2ZE e2 with
+          (match I2F.dexp2ZE
+                   e2 with
            | Some z0 ->
              (match z0 with
               | IntToInfinity.N.ZE_Inf ->
-                if ZInfinity.coq_ZE_eq_dec (Obj.magic x) ZInfinity.ZE_Inf
+                if ZInfinity.coq_ZE_eq_dec
+                     (Obj.magic
+                       x)
+                     ZInfinity.ZE_Inf
                 then coq_FAFalse
                 else coq_FATrue
-              | _ -> coq_FAFalse)
-           | None -> coq_FAFalse)
+              | _ ->
+                coq_FAFalse)
+           | None ->
+             coq_FAFalse)
         | IntToInfinity.N.ZE_NegInf ->
-          (match I2F.dexp2ZE e2 with
+          (match I2F.dexp2ZE
+                   e2 with
            | Some x0 ->
-             if ZInfinity.coq_ZE_eq_dec (Obj.magic x0) ZInfinity.ZE_NegInf
+             if ZInfinity.coq_ZE_eq_dec
+                  (Obj.magic
+                    x0)
+                  ZInfinity.ZE_NegInf
              then coq_FAFalse
              else coq_FATrue
-           | None -> coq_FAFalse))
-     | None -> coq_FAFalse)
-  | I2F.ZBF_Lte (e1, e2) ->
-    (match I2F.dexp2ZE e1 with
+           | None ->
+             coq_FAFalse))
+     | None ->
+       coq_FAFalse)
+  | I2F.ZBF_Lte (e1,
+                 e2) ->
+    (match I2F.dexp2ZE
+             e1 with
      | Some x ->
        (match x with
         | IntToInfinity.N.ZE_Fin z0 ->
@@ -5763,7 +6675,7 @@ module InfSolver =
                 then coq_FATrue
                 else coq_FAFalse)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_Inf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -5779,16 +6691,11 @@ module InfSolver =
                 then coq_FATrue
                 else coq_FAFalse)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_NegInf ->
-          (match I2F.dexp2ZE
-                   e2 with
-           | Some z0 ->
-             coq_FATrue
-           | None ->
-             coq_FAFalse))
+          coq_FATrue)
      | None ->
-       coq_FAFalse)
+       coq_FATrue)
   | I2F.ZBF_Gt (e1,
                 e2) ->
     (match I2F.dexp2ZE
@@ -5876,14 +6783,9 @@ module InfSolver =
               | IntToInfinity.N.ZE_NegInf ->
                 coq_FATrue)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_Inf ->
-          (match I2F.dexp2ZE
-                   e2 with
-           | Some z0 ->
-             coq_FATrue
-           | None ->
-             coq_FAFalse)
+          coq_FATrue
         | IntToInfinity.N.ZE_NegInf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -5899,9 +6801,9 @@ module InfSolver =
                 then coq_FATrue
                 else coq_FAFalse)
            | None ->
-             coq_FAFalse))
+             coq_FATrue))
      | None ->
-       coq_FAFalse)
+       coq_FATrue)
   | I2F.ZBF_Eq (e1,
                 e2) ->
     (match I2F.dexp2ZE
@@ -5935,7 +6837,7 @@ module InfSolver =
                 then coq_FATrue
                 else coq_FAFalse)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_Inf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -5956,7 +6858,7 @@ module InfSolver =
                 then coq_FATrue
                 else coq_FAFalse)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_NegInf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -5968,9 +6870,9 @@ module InfSolver =
              then coq_FATrue
              else coq_FAFalse
            | None ->
-             coq_FAFalse))
+             coq_FATrue))
      | None ->
-       coq_FAFalse)
+       coq_FATrue)
   | I2F.ZBF_Eq_Max (e1,
                     e2,
                     e3) ->
@@ -6011,7 +6913,7 @@ module InfSolver =
                        | _ ->
                          coq_FAFalse))
                  | None ->
-                   coq_FAFalse)
+                   coq_FATrue)
               | IntToInfinity.N.ZE_Inf ->
                 (match I2F.dexp2ZE
                          e3 with
@@ -6031,7 +6933,7 @@ module InfSolver =
                     | _ ->
                       coq_FAFalse)
                  | None ->
-                   coq_FAFalse)
+                   coq_FATrue)
               | IntToInfinity.N.ZE_NegInf ->
                 (match I2F.dexp2ZE
                          e3 with
@@ -6047,9 +6949,9 @@ module InfSolver =
                     | _ ->
                       coq_FAFalse)
                  | None ->
-                   coq_FAFalse))
+                   coq_FATrue))
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_Inf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6069,9 +6971,9 @@ module InfSolver =
                      then coq_FATrue
                      else coq_FAFalse
               | None ->
-                coq_FAFalse)
+                coq_FATrue)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_NegInf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6091,11 +6993,11 @@ module InfSolver =
                      else coq_FAFalse
                 else coq_FAFalse
               | None ->
-                coq_FAFalse)
+                coq_FATrue)
            | None ->
-             coq_FAFalse))
+             coq_FATrue))
      | None ->
-       coq_FAFalse)
+       coq_FATrue)
   | I2F.ZBF_Eq_Min (e1,
                     e2,
                     e3) ->
@@ -6136,7 +7038,7 @@ module InfSolver =
                     | IntToInfinity.N.ZE_NegInf ->
                       coq_FAFalse)
                  | None ->
-                   coq_FAFalse)
+                   coq_FATrue)
               | IntToInfinity.N.ZE_Inf ->
                 (match I2F.dexp2ZE
                          e3 with
@@ -6156,11 +7058,16 @@ module InfSolver =
                        | _ ->
                          coq_FAFalse))
                  | None ->
-                   coq_FAFalse)
+                   coq_FATrue)
               | IntToInfinity.N.ZE_NegInf ->
-                coq_FAFalse)
+                (match I2F.dexp2ZE
+                         e3 with
+                 | Some y0 ->
+                   coq_FAFalse
+                 | None ->
+                   coq_FATrue))
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_Inf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6180,9 +7087,9 @@ module InfSolver =
                      else coq_FAFalse
                 else coq_FAFalse
               | None ->
-                coq_FAFalse)
+                coq_FATrue)
            | None ->
-             coq_FAFalse)
+             coq_FATrue)
         | IntToInfinity.N.ZE_NegInf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6202,11 +7109,11 @@ module InfSolver =
                      then coq_FATrue
                      else coq_FAFalse
               | None ->
-                coq_FAFalse)
+                coq_FATrue)
            | None ->
-             coq_FAFalse))
+             coq_FATrue))
      | None ->
-       coq_FAFalse)
+       coq_FATrue)
   | I2F.ZBF_Neq (e1,
                  e2) ->
     (match I2F.dexp2ZE
@@ -6240,7 +7147,7 @@ module InfSolver =
                 then coq_FAFalse
                 else coq_FATrue)
            | None ->
-             coq_FATrue)
+             coq_FAFalse)
         | IntToInfinity.N.ZE_Inf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6261,7 +7168,7 @@ module InfSolver =
                 then coq_FAFalse
                 else coq_FATrue)
            | None ->
-             coq_FATrue)
+             coq_FAFalse)
         | IntToInfinity.N.ZE_NegInf ->
           (match I2F.dexp2ZE
                    e2 with
@@ -6273,9 +7180,9 @@ module InfSolver =
              then coq_FAFalse
              else coq_FATrue
            | None ->
-             coq_FATrue))
+             coq_FAFalse))
      | None ->
-       coq_FATrue)
+       coq_FAFalse)
   
   (** val int_trans :
       I2F.coq_ZF

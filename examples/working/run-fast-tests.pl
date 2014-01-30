@@ -229,7 +229,7 @@ $output_file = "log";
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
-#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --eps --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
 	["merge-inf.ss",1,"--en-inf --en-disj-compute","merge","SUCCESS"],
 	],
     "imm" =>[ 
