@@ -2729,7 +2729,9 @@ let partition_paths hprel_defs prog =
       [] hprel_defs
 
 let create_specs hprel_defs prog proc_name =
-  let _ = print_endline "create specs" in
+  let _ = print_endline "\n*************************************" in
+  let _ = print_endline "**************case specs*************" in
+  let _ = print_endline "*************************************" in
   let rec helper proc_list = match proc_list with
     | [] -> ()
     | hd::tl -> (
@@ -2741,8 +2743,6 @@ let create_specs hprel_defs prog proc_name =
             else
               let partition_hprel_defs = partition_paths hprel_defs prog in
               group_paths partition_hprel_defs
-              (* let grouped_hprel_defs = group_paths partition_hprel_defs in *)
-              (* let grouped_hprel_defs1 = if (hd.Cast.proc_is_recursive) then group_paths1 grouped_hprel_defs else grouped_hprel_defs in *)
           in
           let proc_static_specs = hd.Cast.proc_static_specs in
           let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs in
@@ -2751,7 +2751,9 @@ let create_specs hprel_defs prog proc_name =
               CF.formula_case_branches = List.combine cases specs;
               CF.formula_case_pos = no_pos
           } in
-          let _ = print_endline (Cprinter.string_of_struc_formula_for_spec final_spec) in ()
+          let _ = print_endline (Cprinter.string_of_struc_formula_for_spec1 final_spec) in
+          let _ = print_endline "*************************************" in
+          ()
         else
           helper tl
       )

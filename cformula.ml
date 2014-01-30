@@ -756,7 +756,7 @@ and isStrictConstHTrue f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
-and isEmpFormula f = 
+and isEmpFormula f =
   match f with
   | Base ({formula_base_heap = HEmp}) -> true
   | Exists ({formula_exists_heap = HEmp}) -> true
@@ -1426,34 +1426,33 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
-  | Or b-> false		
-  | Base _					
-  | Exists _-> 
-		let _, pl, _,_, _ = split_components f in	
+  | Or b-> false
+  | Base _
+  | Exists _->
+		let _, pl, _,_, _ = split_components f in
 		(MCP.memo_is_member_pure p pl)
 
-and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   Debug.no_2 "mkstar_combine"
       (!print_formula)
       (!print_formula)
       (!print_formula)
-      (fun f1 f2 -> mkStar_combine_x f1 f2 flow_tr pos) f1 f2 
+      (fun f1 f2 -> mkStar_combine_x f1 f2 flow_tr pos) f1 f2
 
-and mkStar_combine_heap (f1 : formula) (f2 : h_formula) 
-      flow_tr (pos : loc) 
+and mkStar_combine_heap (f1 : formula) (f2 : h_formula)
+      flow_tr (pos : loc)
       =  mkStar_combine f1 (formula_of_heap f2 pos) flow_tr pos
 
-	  
-and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+and mkStar_combine_x (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, t1, a1 = split_components f1 in
   let h2, p2, fl2, t2, a2 = split_components f2 in
 
   (* i assume that at least one of the two formulae has only 1 phase *)
-  let h = 
+  let h =
     if not(contains_phase h1) then
       mkStarH h1 h2 pos
     else
@@ -3376,7 +3375,7 @@ and all_components (f:formula) = (*the above misses some *)
 	 | Exists e -> (e.formula_exists_qvars, e.formula_exists_heap, e.formula_exists_pure, e.formula_exists_type,
 						e.formula_exists_flow, e.formula_exists_label, e.formula_exists_and, e.formula_exists_pos)
 	 | Or ({formula_or_pos = pos}) ->  Err.report_error {Err.error_loc = pos;Err.error_text = "all_components: don't expect OR"}
-			 
+
 and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
 	formula_exists_heap =  h; 
