@@ -2681,16 +2681,8 @@ let rec get_case struc_formula prog =
     | CF.EList el -> let (_, sf) = List.hd el in get_case sf prog
     | CF.ECase _ | CF.EInfer _ | CF.EAssume _ -> raise (Failure "fail get_case")
 
-let create_spec spec hprel_defs_groups prog =
-  let _ = print_endline "create spec" in
-  let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) spec hprel_defs) hprel_defs_groups in
-  (* let _ = List.map (fun spec -> print_endline (Cprinter.string_of_struc_formula_for_spec spec)) specs in *)
-  let cases = List.map (fun struc_formula -> get_case struc_formula prog) specs in
-  let final_spec = CF.ECase {
-      CF.formula_case_branches = List.combine cases specs;
-      CF.formula_case_pos = no_pos
-  } in
-  final_spec
+let group_paths1 grouped_hprel_defs prog =
+  grouped_hprel_defs
 
 let group_paths hprel_defs =
   let rec group grouped_hprel_defs hprel_defs hprel_def =
@@ -2723,22 +2715,33 @@ let group_paths hprel_defs =
   helper hprel_defs []
 
 let partition_paths hprel_defs prog =
-  let partition_hprel_defs = List.fold_left (fun all_hprel_defs hprel_def ->
+  List.fold_left (fun all_hprel_defs hprel_def ->
       let new_hprel_defs = List.map (fun hprel_def_body ->
           CF.mk_hprel_def hprel_def.CF.hprel_def_kind hprel_def.CF.hprel_def_hrel hprel_def.CF.hprel_def_guard [hprel_def_body] None) hprel_def.CF.hprel_def_body in
       new_hprel_defs@all_hprel_defs)
-    [] hprel_defs in
+      [] hprel_defs
+
+let create_specs hprel_defs prog proc_name =
+  let _ = print_endline "create specs" in
+  let partition_hprel_defs = partition_paths hprel_defs prog in
   let grouped_hprel_defs = group_paths partition_hprel_defs in
   let rec helper proc_list = match proc_list with
     | [] -> ()
-    | hd::tl -> (match hd.Cast.proc_body with
-        | None -> helper tl
-        | Some _ ->
-              let _ = print_endline hd.Cast.proc_name in
-              let _ = print_endline (Cprinter.string_of_struc_formula_for_spec (create_spec hd.Cast.proc_static_specs grouped_hprel_defs prog)) in helper tl )
+    | hd::tl -> (
+        if (proc_name == hd.Cast.proc_name) then
+          let proc_static_specs = hd.Cast.proc_static_specs in
+          let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs in
+          let cases = List.map (fun struc_formula -> get_case struc_formula prog) specs in
+          let final_spec = CF.ECase {
+              CF.formula_case_branches = List.combine cases specs;
+              CF.formula_case_pos = no_pos
+          } in
+          let _ = print_endline (Cprinter.string_of_struc_formula_for_spec final_spec) in ()
+        else
+          helper tl
+      )
   in
-  let _ = helper (Cast.list_of_procs prog) in
-  ()
+  helper (Cast.list_of_procs prog)
 
 let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (***********INTERNAL***************)
@@ -2918,7 +2921,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else (n_cmb_defs2, n_all_hp_defs2)
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
-  let _ = if (!Globals.sae) then partition_paths (rel_def_stk # get_stk) prog else () in
+  let _ = if (!Globals.sae) then create_specs (rel_def_stk # get_stk) prog proc_name else () in
   ([],(* cmb_defs, *) n_all_hp_defs3)
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
