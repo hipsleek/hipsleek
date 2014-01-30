@@ -2651,10 +2651,17 @@ let subst_formula formula hprel_def =
     | CF.Base b -> (
           match b.CF.formula_base_heap with
             | CF.HRel _ -> (
-                  if (CF.get_node_name b.CF.formula_base_heap == CF.get_node_name hprel_def.CF.hprel_def_hrel) then (
-                      match (List.hd hprel_def.CF.hprel_def_body) with
+                  if (CF.get_node_name b.CF.formula_base_heap == CF.get_node_name hprel_def.CF.hprel_def_hrel)
+                  then (
+                      let first_formula = match (List.hd hprel_def.CF.hprel_def_body) with
+                        | (_, None) -> formula
                         | (_, Some f) -> f
-                        | (_, None) -> formula )
+                      in
+                      List.fold_left (fun all_formula (_, formula) ->
+                          match formula with
+                            | None -> all_formula
+                            | Some f -> CF.mkOr all_formula f no_pos)
+                          first_formula (List.tl hprel_def.CF.hprel_def_body) )
                   else formula )
             | _ -> formula )
     | _ -> raise (Failure "fail formula")
@@ -2681,8 +2688,8 @@ let rec get_case struc_formula prog =
     | CF.EList el -> let (_, sf) = List.hd el in get_case sf prog
     | CF.ECase _ | CF.EInfer _ | CF.EAssume _ -> raise (Failure "fail get_case")
 
-let group_paths1 grouped_hprel_defs prog =
-  grouped_hprel_defs
+let group_paths1 grouped_hprel_defs =
+  let _ = print_endline "group_paths1" in grouped_hprel_defs
 
 let group_paths hprel_defs =
   let rec group grouped_hprel_defs hprel_defs hprel_def =
@@ -2723,12 +2730,20 @@ let partition_paths hprel_defs prog =
 
 let create_specs hprel_defs prog proc_name =
   let _ = print_endline "create specs" in
-  let partition_hprel_defs = partition_paths hprel_defs prog in
-  let grouped_hprel_defs = group_paths partition_hprel_defs in
   let rec helper proc_list = match proc_list with
     | [] -> ()
     | hd::tl -> (
         if (proc_name == hd.Cast.proc_name) then
+          let grouped_hprel_defs =
+            if (hd.Cast.proc_is_recursive)
+            then
+              [hprel_defs]
+            else
+              let partition_hprel_defs = partition_paths hprel_defs prog in
+              group_paths partition_hprel_defs
+              (* let grouped_hprel_defs = group_paths partition_hprel_defs in *)
+              (* let grouped_hprel_defs1 = if (hd.Cast.proc_is_recursive) then group_paths1 grouped_hprel_defs else grouped_hprel_defs in *)
+          in
           let proc_static_specs = hd.Cast.proc_static_specs in
           let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs in
           let cases = List.map (fun struc_formula -> get_case struc_formula prog) specs in
