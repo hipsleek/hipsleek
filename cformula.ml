@@ -4008,12 +4008,14 @@ and hp_rel_def = {
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
 and infer_state = {
-    is_constrs : hprel list;
+    is_constrs : hprel list; (*current processing*)
+    is_all_constrs : hprel list;
     is_link_hpargs : (CP.spec_var * CP.spec_var list) list;
     is_dang_hpargs : (CP.spec_var * CP.spec_var list) list; (*dangling hps = link hps = unknown. to remove one of them*)
     is_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
     is_sel_hps: CP.spec_var list;
     is_post_hps: CP.spec_var list;
+    is_prefix_hps: CP.spec_var list;
     is_cond_path: cond_path_type;
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;

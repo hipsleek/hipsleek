@@ -22,12 +22,20 @@ lx7<g:node,s> ==
   or self::node<_,nxt7> * nxt7::lx7<_,s> & g!=s & g!=null
 inv true ;
 
+lx8<g:node,s> == self!=s & self=null
+  or self::node<_,nxt> * nxt::lx<self,s> & self!=s & self!=null ;
+
 lx<g:node,s> == self=s
   or self!=s & self=null
   or self::node<_,nxt> * nxt::lx<_,s> & self!=s 
 inv true ;
 
-lemma_safe self::ll<s> & g=null -> self::lx<g,s>;
+lx1<g:node,s> == self=s
+  or self!=s & self=null
+  or self::node<_,nxt> * nxt::lx1<self,s> & self!=s 
+inv true ;
+
+//lemma_safe self::ll<s> & g=null -> self::lx<g,s>;
 
 void lscan( node@R cur, node@R prev, node sent)
 /*
@@ -42,18 +50,28 @@ ensures prev'::ll<sent>  & cur'=sent ;
   requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
   ensures prev'::node<_,p> * p::lx<_,sent> & cur'=sent &prev'!=sent;//'
 */
-/*EXPECTED
+/*
+//EXPECTED 1
   requires cur::node<_,n> * n::lx<_,sent> * prev::ll<sent> & cur!=sent
   ensures prev'::node<_,p> * p::ll<sent> & cur'=sent ;//'
 */
-
 /*
+//EXPECTED 2
+  requires cur::node<_,n> * n::lx<_,sent> * prev::lx8<_,sent> & cur!=sent
+  ensures prev'::node<_,p> * p::lx8<_,sent> & cur'=sent ;//'
+*/
+/*
+//EXPECTED 3 (FAIL)
+  requires cur::node<_,n> * n::lx1<_,sent> * prev::lx8<_,sent> & cur!=sent
+  ensures prev'::node<_,p> * p::lx8<_,sent> & cur'=sent ;//'
+*/
+
   infer [H,G]
   requires H(cur,prev,sent)
 //     infer [H1,H2,G]
 //  requires cur::node<_,n> * H1(n,sent) * H2(prev,sent)
   ensures G(cur,cur',prev,prev',sent);
-*/
+
 {
 
   node n;

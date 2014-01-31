@@ -196,11 +196,17 @@ let rec is_only_xpure_f f=
                      CF.is_unknown_f base1
     | _ -> report_error no_pos "SAU.is_only_xpure_f: not handle yet"
 
-let rec get_pos ls n sv=
+let rec get_pos_x ls n sv=
   match ls with
-    | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
+    | [] -> report_error no_pos "sau.get_pos: impossible 1"
     | sv1::rest -> if CP.eq_spec_var sv sv1 then n
-      else get_pos rest (n+1) sv
+      else get_pos_x rest (n+1) sv
+
+let get_pos ls n sv=
+  let pr1 = !CP.print_svl in
+  Debug.no_3 "sau.get_pos" pr1 string_of_int !CP.print_sv string_of_int
+      (fun _ _ _ -> get_pos_x ls n sv)
+      ls n sv
 
 let rec get_all_locs_helper ls n svl res=
   match ls with
@@ -4880,7 +4886,7 @@ let norm_unfold_seg prog hp r other_args unk_hps defs_wg=
 (*
 args = {r} \union paras
 *)
-let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+let mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
       defs_wg (*ogs*) pos=
   match defs_wg with
     | [] -> []
@@ -4907,6 +4913,15 @@ let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) 
           let def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras)) (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos))  defs_wg) in
           [def]
       end
+
+let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+      defs_wg (*ogs*) pos=
+  let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
+  let pr2 = pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def in
+  Debug.no_3 "mk_hprel_def_wprocess" !CP.print_sv !CP.print_svl (pr_list_ln pr1)
+      (pr_list_ln pr2) (fun _ _ _ -> mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+      defs_wg (*ogs*) pos)
+      hp args defs_wg
 
 let mk_unk_hprel_def hp args defs pos=
   let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
@@ -5085,8 +5100,12 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       let new_fs_wg = List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) fs_wg in
       (true, List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) orig_fs_wg, new_fs_wg,subst,[link_def],n_hp)
   in
-  let n_paras = (List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args) in
-  elimed, n_orig_fs_wg,(new_args, r, n_paras),new_fs_wg,ss,link_defs, n_hp
+  let n_r, n_paras = if (CP.mem_svl r new_args) then r,(List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args)
+  else
+    let n_r,non_r_args = find_root prog drop_hps new_args (List.map fst new_fs_wg) in
+    n_r,non_r_args
+  in
+  elimed, n_orig_fs_wg,(new_args, n_r, n_paras),new_fs_wg,ss,link_defs, n_hp
 
 (*
   args = {r} \union paras
@@ -5348,7 +5367,7 @@ let find_closure_eq_wg_x hp args fs_wg=
 let find_closure_eq_wg hp args fs_wg=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
-  Debug.no_3 "find_closure_eq_null_wg" !CP.print_sv !CP.print_svl pr2 pr2
+  Debug.no_3 "find_closure_eq_wg" !CP.print_sv !CP.print_svl pr2 pr2
       (fun _ _ _ -> find_closure_eq_wg_x hp args fs_wg)
       hp args fs_wg
 

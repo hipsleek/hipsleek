@@ -117,7 +117,7 @@ let hp_defs_topo_sort_x hp_defs=
     if is_mutrec scc_defs then (true, scc_defs) else
       let topo1 = List.fold_left process_one_def scc_defs scc_defs in
       (*sort decreasing and return the topo list*)
-      let topo2 = List.sort (fun (_,_,n1) (_,_,n2) -> n2-n1) topo1 in
+      let topo2 = List.sort (fun (_,_,n1) (_,_,n2) -> n1-n2) topo1 in
       (false, topo2)
   in
   (******END*INTERNAL********)

@@ -2212,8 +2212,9 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
   let unk_svl = [] in
   let check_and_elim is_pre cdefs (hp, r, non_r_args, def)=
     let _,args = CF.extract_HRel def.CF.def_lhs in
+    let fs_wg = List.fold_left (fun r (f,og) -> r@(List.map (fun f1 -> (f1, og)) (CF.list_of_disjs f))) [] def.CF.def_rhs in
     let elimed,_, (n_args, r, n_paras), n_fs_wg,elim_ss,link_defs,n_hp = SAU.elim_not_in_used_args prog unk_hps
-        [((CF.mkHTrue_nf no_pos), None)] def.CF.def_rhs hp (args, r, non_r_args) in
+        [((CF.mkHTrue_nf no_pos), None)] fs_wg hp (args, r, non_r_args) in
     if elimed then
       let hpdef = SAU.mk_hprel_def_wprocess prog is_pre cdefs unk_hps unk_svl n_hp (n_args, r, n_paras) n_fs_wg no_pos in
       let new_defs1 = List.map (fun (hp,def) ->
@@ -2231,7 +2232,72 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
     (* in *)
     (* (snd (List.split new_defs1), elim_ss) *)
   in
-  let hp_defs1 = (* CFU.hp_defs_topo_sort *) hp_defs in
+  let rec lookup_hpdef hpdefs hp0 args0 =
+    match hpdefs with
+      | def::rest ->let hp1,args1= CF.extract_HRel def.CF.def_lhs in
+        if CP.eq_spec_var hp1 hp0 then
+          (* not subst recurisve *)
+          let succ_hps = List.fold_left (fun r (f, _) -> r@(CF.get_hp_rel_name_formula f)) [] def.CF.def_rhs in
+          if CP.mem_svl hp1 succ_hps then [] else
+            let ss = List.combine args1 args0 in
+            List.map (fun (f, og) -> (CF.subst ss f, CF.subst_opt ss og)) def.CF.def_rhs
+        else lookup_hpdef rest hp0 args0
+      | [] -> []
+  in
+  let rec apply_syntax_lemma hpdefs sel_hps syn_lemmas res=
+    match hpdefs with
+      | def::rest ->
+            let hp,args= CF.extract_HRel def.CF.def_lhs in
+            if CP.mem_svl hp sel_hps then
+              (*** has quiv lemma**)
+              try
+                let (hp1,args1,hp2,args2) = List.find (fun (hp12,_,_,_) -> CP.eq_spec_var hp hp12) syn_lemmas in
+                let n_rhs = lookup_hpdef hpdefs hp2 args2 in
+                if n_rhs = [] then apply_syntax_lemma rest sel_hps syn_lemmas (res@[def]) else
+                  let ss = List.combine args1 args in
+                  let n_rhs1 = List.map (fun (f, og) -> (CF.subst ss f, CF.subst_opt ss og)) n_rhs in
+                  let new_def = {def with CF.def_rhs = n_rhs1} in
+                  apply_syntax_lemma rest sel_hps syn_lemmas (res@[new_def])
+              with _ ->
+                  apply_syntax_lemma rest sel_hps syn_lemmas (res@[def])
+            else
+              apply_syntax_lemma rest sel_hps syn_lemmas (res@[def])
+      | [] -> res
+  in
+  let hn_trans_formula syn_lemmas hf=
+     match hf with
+    | CF.HRel (hp,eargs, pos)-> begin
+        try
+          let (hp1,args1,hp2,args2) = List.find (fun (hp12,_,_,_) -> CP.eq_spec_var hp hp12) syn_lemmas in
+          let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+          (*subst*)
+          let ss = List.combine args1 args in
+          let args21 = CP.subst_var_list ss args2 in
+          let n_eargs = List.map (fun sv -> CP.mkVar sv pos) args21 in
+          CF.HRel (hp2,n_eargs, pos)
+        with _ -> hf
+      end
+    | _ -> hf
+  in
+  let rec subst_syntax_lemma hpdefs sel_hps syn_lemmas res=
+    match hpdefs with
+      | def::rest ->
+            let hp,args= CF.extract_HRel def.CF.def_lhs in
+            (* let _ = DD.info_hprint (add_str "hp 1" !CP.print_sv) hp no_pos in *)
+            (* if CP.mem_svl hp sel_hps then *)
+              let syn_lemmas1 = List.filter (fun (hp1,_,_,_) -> not (CP.eq_spec_var hp hp1)) syn_lemmas in
+              (* let _ = DD.info_hprint (add_str "hp" !CP.print_sv) hp no_pos in *)
+              let n_rhs1 = List.map (fun (f, og) -> (CF.formula_trans_heap_node (hn_trans_formula syn_lemmas1) f, og)) def.CF.def_rhs in
+              let new_def = {def with CF.def_rhs = n_rhs1} in
+              subst_syntax_lemma rest sel_hps syn_lemmas (res@[new_def])
+            (* else *)
+            (*   subst_syntax_lemma rest sel_hps syn_lemmas (res@[def]) *)
+      | [] -> res
+  in
+  (******************END************************)
+  (* let hp_defs1_scc, mutrec_defs = CFU.hp_defs_topo_sort hp_defs in *)
+  (* let hp_defs1 = List.concat hp_defs1_scc in *)
+  let hp_defs1 = hp_defs in let mutrec_defs = [] in
   let sel_pre_defs, sel_post_defs, rem = List.fold_left ( fun (r1,r2,r3) def ->
       match def.CF.def_cat with
         | CP.HPRelDefn (hp, r, others) ->
@@ -2249,7 +2315,17 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
       (r1@ndefs, r2@ss)
   ) ([],[]) sel_post_defs in
   (*may need subst ss1@ss2 into n defs if apcl.*)
-  (n_pre_defs@n_post_defs@rem)
+  let equiv_lemmas = List.map (fun (hf1, hf2) ->
+      let hp1,args1= CF.extract_HRel hf1 in
+      let hp2,args2= CF.extract_HRel hf2 in
+      (hp1,args1,hp2,args2)
+  ) (ss1@ss2) in
+  let _ = DD.ninfo_hprint (add_str "sel_hps" !CP.print_svl) sel_hps no_pos in
+  let _ = DD.ninfo_hprint (add_str "equiv_lemmas" (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl !CP.print_sv !CP.print_svl))) equiv_lemmas no_pos in
+  let n_pre_post_defs1 = apply_syntax_lemma (n_pre_defs@n_post_defs) sel_hps equiv_lemmas [] in
+  let n_pre_post_defs2 = subst_syntax_lemma n_pre_post_defs1 sel_hps equiv_lemmas [] in
+  (* let n_pre_post_defs1 = (n_pre_defs@n_post_defs) in *)
+  (n_pre_post_defs2@rem@mutrec_defs)
 
 let norm_elim_useless_paras prog unk_hps sel_hps post_hps hp_defs=
   let pr1 = !CP.print_svl in
@@ -2287,6 +2363,37 @@ let trans_constr_hp_2_view iprog cprog proc_name hpdefs in_hp_names chprels_decl
 (*
 (* List of vars needed for abduction process *)
 *)
+
+(*check whether lhs of pre-obligation is inferred and LHS is pre-fix-hps
+  if it is the case, move the constrs to examined in lfp computation
+*)
+let reclassify_pre_obligation_x prog is pre_fix_hps constrs=
+  (*******INtERNAL*******)
+  let post_hps = is.CF.is_post_hps in
+  let def_hps = List.fold_left (fun ls d ->
+      match d.CF.def_cat with
+        |  CP.HPRelDefn (hp,_,_) -> ls@[hp]
+        | CP.HPRelLDefn hps -> ls@hps
+        | _ -> ls
+  ) [] is.CF.is_hp_defs in
+  let examine_one (res_oblgs,res_pre_fix) cs=
+    let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
+    let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+    if CP.intersect_svl pre_fix_hps lhs_hps != [] && CP.diff_svl rhs_hps def_hps = [] then
+      (res_oblgs,res_pre_fix@[cs])
+    else
+    (res_oblgs@[cs],res_pre_fix)
+  in
+  (*******INtERNAL*******)
+  List.fold_left examine_one ([],[]) constrs
+
+let reclassify_pre_obligation prog is pre_fix_hps constrs=
+  let pr1 = Cprinter.string_of_infer_state_short in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_short in
+  Debug.no_3 "reclassify_pre_obligation" pr1 !CP.print_svl pr2 (pr_pair pr2 pr2)
+      (fun _ _ _ -> reclassify_pre_obligation_x prog is pre_fix_hps constrs)
+      is pre_fix_hps constrs
+
 let do_entail_check_x vars iprog cprog cs=
   let update_explicit_root_x lhs rhs=
     let rec lookup_root root_sv vns=
@@ -2404,6 +2511,95 @@ let partition_constrs_4_paths link_hpargs0 constrs0 =
 (*=============**************************================*)
        (*=============FIXPOINT================*)
 (*=============**************************================*)
+(*
+  matching weaker_fs with stronger_fs:
+   - match: get strongest
+   - otherwise: drop
+*)
+let shape_gist_x prog hp args unk_hps defined_fs required_stronger_fs=
+  (************INTERNAL************)
+  (*check whether d_f ==> s_f*)
+  let do_gist s_f d_f=
+    let fs = [s_f; d_f] in
+    let lldns_vns = List.fold_left (fun r2 f ->
+        let hds,hvs,_ = CF.get_hp_rel_formula f in
+        (r2@[hds,hvs,f])
+    ) [] fs in
+    let min,sh_ldns,sh_lvns,eqNulls,eqPures,hprels = SAU.get_min_common prog args unk_hps lldns_vns in
+    if min = 0  && eqNulls = [] && eqPures= [] && hprels=[] then
+    false, s_f
+    else true,d_f
+  in
+  let rec do_gist_helper d_f s_fs done_s_fs=
+    match s_fs with
+      | [] -> false,d_f,done_s_fs
+      | s_f::s_rest ->
+            (*check whether s_f ==> d_f*)
+            let is_gist, gist_f = do_gist s_f d_f in
+            if is_gist then true,gist_f, (done_s_fs@s_rest)
+            else do_gist_helper d_f s_rest (done_s_fs@[s_f])
+  in
+  let rec match_helper d_fs s_fs res=
+    match d_fs with
+      | [] -> res@s_fs
+      | f::d_rest -> let is_match,gist_f,s_rest = do_gist_helper f s_fs [] in
+        let new_res = if is_match then (res@[gist_f]) else res in
+        match_helper d_rest s_rest new_res
+  in
+  (************END INTERNAL************)
+  match_helper defined_fs required_stronger_fs []
+
+let shape_gist prog hp args unk_hps defined_fs required_stronger_fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_4 "shape_gist" !CP.print_sv !CP.print_svl pr1 pr1 pr1
+      (fun _ _ _ _ -> shape_gist_x prog hp args unk_hps defined_fs required_stronger_fs)
+      hp args defined_fs required_stronger_fs
+
+let shape_widening_x prog hp args unk_hps pdefs pos=
+  let shape_widen f1 f2=
+    let is_common, sharing_f, n_fs ,next_roots = SAU.partition_common_diff prog hp args unk_hps [] f1 f2 pos in
+    if not is_common then (false, f1) else
+      match n_fs with
+        | [f21;f22] -> (*after reaarange + subst*)
+              let hpargs1 = CF.get_HRels_f f21 in
+              let hpargs2 = CF.get_HRels_f f22 in
+              let ( _,mix_lf2,_,_,_) = CF.split_components f22 in
+              let sst2 = MCP.ptr_equations_without_null mix_lf2 in
+              let hpargs22 = List.map (fun (hp, args) ->
+                  (hp, List.fold_left SAU.close_def args sst2)
+              ) hpargs2 in
+              let inter = Gen.BList.intersect_eq SAU.check_hp_args_imply hpargs1 hpargs22 in
+              let n_sharing =
+                if inter = [] then sharing_f else
+                  let hp_fs = List.map (fun (hp,args) -> SAU.mkHRel_f hp args pos) inter in
+                List.fold_left (fun f1 f2 -> CF.mkStar f1 f2 CF.Flow_combine pos) sharing_f hp_fs
+              in
+              (is_common, n_sharing)
+        | _ -> (is_common, sharing_f)
+  in
+  let rec helper sharing rest=
+    match rest with
+      | [] -> [sharing]
+      | f::rest1 -> let is_common, sharing_f = shape_widen sharing f in
+        if not is_common then [] else
+          helper sharing_f rest1
+  in
+  match pdefs with
+    | [] -> []
+    | [pdef] -> [pdef]
+    | (hp,args, c, f, d)::rest ->
+          let rest_fs = List.map (fun (_,_, _, f, _) -> f) rest in
+          let sharing_f = helper f rest_fs in
+          match sharing_f with
+            | [f1] -> [(hp,args, c, f1, d)]
+            | _ -> pdefs
+
+let shape_widening prog hp args unk_hps fs pos=
+  let pr1 = pr_list (fun (_,_, _, f, _) -> Cprinter.prtt_string_of_formula f) in
+  Debug.no_3 "shape_widening" !CP.print_sv !CP.print_svl pr1 pr1
+      (fun _ _ _ -> shape_widening_x prog hp args unk_hps fs pos)
+      hp args fs
+
 let gfp_gen_init prog is_pre r base_fs rec_fs=
   let is_complete r fs=
     let ps = List.map CF.xpure_for_hnodes_f fs in
@@ -2466,7 +2662,7 @@ let classify hp (r_bases, r_recs, r_deps) f=
     (r_bases, r_recs@[f], r_deps)
   else (r_bases, r_recs, r_deps@[f])
 
-let compute_gfp_x prog is_pre is pdefs=
+let compute_gfp_x prog is_pre is predefs pdefs=
   (********INTERNAL*******)
   let skip_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (********END INTERNAL*******)
@@ -2475,13 +2671,15 @@ let compute_gfp_x prog is_pre is pdefs=
     | (hp0,args0,f0)::rest ->
           (*normalize*)
           let norm_pdefs = (hp0,args0,f0)::(List.map (norm prog args0) rest) in
-          let norm_fs = (List.map (fun (_,_,f) -> f) norm_pdefs) in
+          let norm_predefs = List.map (norm prog args0) predefs in
+          let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
+          let norm_fs = shape_gist prog hp0 args0 skip_hps (List.map (fun (_,_,f) -> f) norm_predefs) norm_fs0 in
           let r,non_r_args = SAU.find_root prog (hp0::skip_hps) args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
           (* if (\* base_fs =[] && *\) dep_fs = [] then *)
             (*init*)
-            let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r base_fs rec_fs in
+            let fix0, n_unk_hpargs = gfp_gen_init prog is_pre r (base_fs@dep_fs) rec_fs in
             (*iterate*)
             let fixn = gfp_iter prog base_fs rec_fs fix0 in
             (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn (CF.pos_of_formula f0), n_unk_hpargs)
@@ -2494,13 +2692,13 @@ let compute_gfp_x prog is_pre is pdefs=
   let _ = Debug.info_ihprint (add_str "" Cprinter.string_of_hp_rel_def_short) def no_pos in
   (def,n_unk_hpargs)
 
-let compute_gfp prog is_pre is pdefs=
+let compute_gfp prog is_pre is predefined_pdefs pdefs=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
   let pr3 = pr_list_ln (pr_triple !CP.print_sv pr1 pr2) in
   let pr4 = pr_pair Cprinter.string_of_hp_rel_def (pr_list (pr_pair !CP.print_sv pr1)) in
-  Debug.no_1 "compute_gfp" pr3 pr4
-      (fun _ -> compute_gfp_x prog is_pre is pdefs) pdefs
+  Debug.no_2 "compute_gfp" pr3 pr3 pr4
+      (fun _ _ -> compute_gfp_x prog is_pre is predefined_pdefs pdefs) predefined_pdefs pdefs
 
 let lfp_gen_init_x nonrec_fs=
   nonrec_fs
@@ -2528,50 +2726,6 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
   in
   helper2 pdefs []
 
-let simpl_widening_x prog hp args unk_hps pdefs pos=
-  let shape_widen f1 f2=
-    let is_common, sharing_f, n_fs ,next_roots = SAU.partition_common_diff prog hp args unk_hps [] f1 f2 pos in
-    if not is_common then (false, f1) else
-      match n_fs with
-        | [f21;f22] -> (*after reaarange + subst*)
-              let hpargs1 = CF.get_HRels_f f21 in
-              let hpargs2 = CF.get_HRels_f f22 in
-              let ( _,mix_lf2,_,_,_) = CF.split_components f22 in
-              let sst2 = MCP.ptr_equations_without_null mix_lf2 in
-              let hpargs22 = List.map (fun (hp, args) ->
-                  (hp, List.fold_left SAU.close_def args sst2)
-              ) hpargs2 in
-              let inter = Gen.BList.intersect_eq SAU.check_hp_args_imply hpargs1 hpargs22 in
-              let n_sharing =
-                if inter = [] then sharing_f else
-                  let hp_fs = List.map (fun (hp,args) -> SAU.mkHRel_f hp args pos) inter in
-                List.fold_left (fun f1 f2 -> CF.mkStar f1 f2 CF.Flow_combine pos) sharing_f hp_fs
-              in
-              (is_common, n_sharing)
-        | _ -> (is_common, sharing_f)
-  in
-  let rec helper sharing rest=
-    match rest with
-      | [] -> [sharing]
-      | f::rest1 -> let is_common, sharing_f = shape_widen sharing f in
-        if not is_common then [] else
-          helper sharing_f rest1
-  in
-  match pdefs with
-    | [] -> []
-    | [pdef] -> [pdef]
-    | (hp,args, c, f, d)::rest ->
-          let rest_fs = List.map (fun (_,_, _, f, _) -> f) rest in
-          let sharing_f = helper f rest_fs in
-          match sharing_f with
-            | [f1] -> [(hp,args, c, f1, d)]
-            | _ -> pdefs
-
-let simpl_widening prog hp args unk_hps fs pos=
-  let pr1 = pr_list (fun (_,_, _, f, _) -> Cprinter.prtt_string_of_formula f) in
-  Debug.no_3 "simpl_widening" !CP.print_sv !CP.print_svl pr1 pr1
-      (fun _ _ _ -> simpl_widening_x prog hp args unk_hps fs pos)
-      hp args fs
 
 let lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
   (* let other_pdefs = *)
@@ -2622,7 +2776,7 @@ let lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
         SAU.check_relaxeq_formula args2 (CF.subst ss f1) f2
     ) n_pdefs in
     let fix_i_plus0 = pdef_nonrec_fs@n_pdefs1 in
-    let fix_i_plus = simpl_widening prog hp args dang_hps fix_i_plus0 no_pos in
+    let fix_i_plus = shape_widening prog hp args dang_hps fix_i_plus0 no_pos in
     (*check whether it reaches the fixpoint*)
     (* let fix_i_plus1 = Gen.BList.remove_dups_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) -> *)
     (*     SAU.check_relaxeq_formula args f1 f2) fix_i_plus in *)
