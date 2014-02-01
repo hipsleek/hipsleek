@@ -2679,14 +2679,69 @@ let rec subst_struc struc_formula hprel_def =
     | CF.EInfer ei -> subst_struc ei.CF.formula_inf_continuation hprel_def
     | CF.ECase ec -> struc_formula
 
-let rec get_case struc_formula prog =
-  match struc_formula with
-    | CF.EBase eb ->
-          let pre_cond = eb.CF.formula_struc_base in
-          let (mix_formula, _, _) = Solver.xpure prog pre_cond in
-          Mcpure.pure_of_mix mix_formula
-    | CF.EList el -> let (_, sf) = List.hd el in get_case sf prog
-    | CF.ECase _ | CF.EInfer _ | CF.EAssume _ -> raise (Failure "fail get_case")
+let get_case struc_formula prog args =
+  let rec helper struc_formula prog =
+    match struc_formula with
+      | CF.EBase eb ->
+            let pre_cond = eb.CF.formula_struc_base in
+            let (mix_formula, _, _) = Solver.xpure prog pre_cond in
+            Mcpure.pure_of_mix mix_formula
+      | CF.EList el -> let (_, sf) = List.hd el in helper sf prog
+      | CF.ECase _ | CF.EInfer _ | CF.EAssume _ -> raise (Failure "fail get_case")
+  in
+  let rec split_case case =
+    match case with
+      | Cpure.And(f1, f2, _) -> (Cpure.break_formula1 f1) :: (split_case f2)
+      | Cpure.Or(f1, f2, _, pos) -> [Cpure.break_formula1 case]
+      | Cpure.BForm _ -> [[case]]
+      | _ -> raise (Failure "fail split_case")
+  in
+  let filter_case case_list_list args =
+    let rec helper case_list args =
+      match case_list with
+        | [] -> []
+        | hd::tl -> (List.filter (fun f ->
+              match f with
+                | Cpure.BForm(bf, label) ->
+                      let vars = Cpure.fv f in
+                      let is_contains = List.fold_left (fun res arg -> res or (Cpure.mem_svl1 arg vars)) false args in
+                      is_contains
+                | _ -> false
+          ) hd)::(helper tl args)
+       in
+    let case_list_list1 = helper case_list_list args in
+    List.filter (fun fl ->
+        match fl with
+          | [] -> false
+          | _ -> true
+    ) case_list_list1
+  in
+  (* let rec filter case args = *)
+  (*   match case with *)
+  (*     | Cpure.And(f1, f2, pos) -> Cpure.mkAnd (filter f1 args) (filter f2 args) pos *)
+  (*     | Cpure.Or(f1, f2, label, pos) -> Cpure.mkOr (filter f1 args) (filter f2 args) label pos *)
+  (*     | Cpure.BForm(bf, label) -> ( *)
+  (*           let vars = Cpure.fv case in *)
+  (*           let is_contains = List.fold_left (fun res arg -> res or (Cpure.mem_svl1 arg vars)) false args in *)
+  (*           if is_contains then case else Cpure.mkPure (Cpure.mkEq (Cpure.mkIConst 0 no_pos) (Cpure.mkIConst 0 no_pos) no_pos) *)
+  (*       ) *)
+  (*     | _ -> raise (Failure "fail filter") *)
+  (* in *)
+  let case0 = helper struc_formula prog in
+  let case1 = Solver.normalize_to_CNF case0 no_pos in
+  let case_list_list = split_case case1 in
+  let filtered_case_list_list = filter_case case_list_list args in
+  let case2 = match filtered_case_list_list with
+    | [] -> Cpure.mkTrue no_pos
+    | hd::tl -> (
+          let first_or = List.fold_left (fun f1 f2 -> Cpure.mkOr f1 f2 None no_pos) (List.hd hd) (List.tl hd) in
+          List.fold_left (fun f1 fl ->
+              let f2 = List.fold_left (fun f11 f12 -> Cpure.mkOr f11 f12 None no_pos) (List.hd fl) (List.tl fl) in
+              Cpure.mkAnd f1 f2 no_pos) first_or tl
+      )
+  in
+  (* let case10 = filter case1 args in *)
+  case2
 
 let group_paths1 grouped_hprel_defs =
   let _ = print_endline "group_paths1" in grouped_hprel_defs
@@ -2746,7 +2801,8 @@ let create_specs hprel_defs prog proc_name =
           in
           let proc_static_specs = hd.Cast.proc_static_specs in
           let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs in
-          let cases = List.map (fun struc_formula -> get_case struc_formula prog) specs in
+          let args = CF.h_fv (List.hd (List.hd grouped_hprel_defs)).CF.hprel_def_hrel in
+          let cases = List.map (fun struc_formula -> get_case struc_formula prog args) specs in
           let final_spec = CF.ECase {
               CF.formula_case_branches = List.combine cases specs;
               CF.formula_case_pos = no_pos
