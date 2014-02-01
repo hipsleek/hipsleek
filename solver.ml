@@ -6318,11 +6318,11 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let rhs_xpure,_,_ = xpure prog conseq in
                 let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
                 (*check the contra is in LHS or between LHS and RHS*)
-                (* let _ = Debug.info_hprint (add_str "pf : " ( (!CP.print_formula))) pf pos in *)
-                (* let _ = Debug.info_hprint (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in *)
+                let _ = Debug.ninfo_hprint (add_str "pf : " ( (!CP.print_formula))) pf pos in
+                let _ = Debug.ninfo_hprint (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
                 (* let _ = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
                 let pf,rele_p_rhs_xpure =
-                  if (CP.isConstFalse p_rhs_xpure) || TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))) then
+                  if (CP.isConstFalse p_rhs_xpure) ||  TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf])))  then
                     (pf,p_rhs_xpure)
                   else
                     let rele_svl = CP.fv pf in
@@ -11214,7 +11214,6 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
         let lhs_xpure,_,_ = xpure prog temp_estate.es_formula in
         (* let lhs_xpure = MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq)) in *)
         (* let _ = Debug.tinfo_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in  *)
-        (* let _ =  Debug.tinfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in *)
         let r_inf_contr,relass = Inf.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with
@@ -11226,14 +11225,14 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
                       | []   ->  (false, [], [])
                   end
         in
-        
         if (contra) then (c,r)
         else
           (* contra with  HP args *)
           let contr_lst, rel = solver_infer_lhs_contra_list prog estate lhs_xpure pos msg in
           (contr_lst, rel)
       end
-  in ((r_inf_contr,lhs_rhs_contra_flag),relass)
+  in
+  ((r_inf_contr,lhs_rhs_contra_flag),relass)
 
 and solver_detect_lhs_rhs_contra_all i prog estate conseq pos msg =
   let pr_estate = Cprinter.string_of_entail_state_short in
@@ -11403,7 +11402,10 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let diff = CP.diff_svl fv h_inf_args1 in
               let p = CP.mkForall diff f None pos in
               let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
-              if TP.is_sat_raw (MCP.mix_of_pure p) then
+              let _ = DD.ninfo_hprint (add_str "h_inf_args1: " (!CP.print_svl)) h_inf_args1 pos in
+              let _ = DD.ninfo_hprint (add_str "f: " (!CP.print_formula)) f pos in
+              if (CP.is_eq_exp f) || TP.is_sat_raw (MCP.mix_of_pure p) then
+                let _ = DD.ninfo_hprint (add_str "p1: " (!CP.print_formula)) p pos in
                 let np = (TP.simplify (CP.arith_simplify_new p)) in
                 let _ = DD.ninfo_hprint (add_str "lhs_xpure" !CP.print_formula) (MCP.pure_of_mix lhs_xpure) no_pos in
                 let _ = DD.ninfo_hprint (add_str "np" !CP.print_formula) np no_pos in
