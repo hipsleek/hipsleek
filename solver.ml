@@ -2869,50 +2869,60 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
   let l = sln_helper h in
   List.filter (fun (c1,_)-> Cformula.is_complex_heap c1) l 
 
-and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list) = match f with
-  | CP.And (f1, f2, pos) -> 
-        let l1 = get_equations_sets f1 interest_vars in
-        let l2 = get_equations_sets f2 interest_vars in
-        l1@l2
-  | CP.BForm (bf,_) -> begin
-      let (pf,il) = bf in
-      match pf with
-        | Cpure.BVar (v,l)-> [bf]
-        | Cpure.Lt (e1,e2,l)-> 
-	      if (Cpure.of_interest e1 e2 interest_vars) then [(Cpure.Lt(e1,e2,l), il)]
-	      else []
-        | Cpure.Lte (e1,e2,l) -> 
-	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e1,e2,l), il)]
-	      else []
-        | Cpure.Gt (e1,e2,l) -> 
-	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lt(e2,e1,l), il)]
-	      else []
-        | Cpure.Gte(e1,e2,l)-> 
-	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e2,e1,l), il)]
-	      else []
-        | Cpure.Eq (e1,e2,l) -> 
-	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Eq(e1,e2,l), il)]
-	      else []
-        | Cpure.Neq (e1,e2,l)-> 
-	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Neq(e1,e2,l), il)]
-	      else []
-        | _ -> []
-    end	
-  | CP.Not (f1,_,_) -> List.map (fun c ->
-	let (pf,il) = c in 
-	match pf with
-          | Cpure.BVar (v,l)-> c
-          | Cpure.Lt (e1,e2,l)-> (Cpure.Lt (e2,e1,l), il)
-          | Cpure.Lte (e1,e2,l) -> (Cpure.Lte (e2,e1,l), il)
-          | Cpure.Eq (e1,e2,l) -> (Cpure.Neq (e1,e2,l) , il)
-          | Cpure.Neq (e1,e2,l)-> (Cpure.Eq (e1,e2,l), il)
-          |_ ->Error.report_error { 
-	         Error.error_loc = no_pos; 
-	         Error.error_text ="malfunction:get_equations_sets must return only bvars, inequalities and equalities"}
-    ) (get_equations_sets f1 interest_vars)
-  | _ ->Error.report_error { 
-        Error.error_loc = no_pos; 
-        Error.error_text ="malfunction:get_equations_sets can be called only with conjuncts and without quantifiers"}
+(* and get_equations_sets_x (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list) = match f with *)
+(*   | CP.And (f1, f2, pos) ->  *)
+(*         let l1 = get_equations_sets_x f1 interest_vars in *)
+(*         let l2 = get_equations_sets_x f2 interest_vars in *)
+(*         l1@l2 *)
+(*   | CP.AndList lfs -> List.fold_left (fun r (_,f) -> r@(get_equations_sets_x f interest_vars)) [] lfs *)
+(*   | CP.BForm (bf,_) -> begin *)
+(*       let (pf,il) = bf in *)
+(*       match pf with *)
+(*         | Cpure.BVar (v,l)-> [bf] *)
+(*         | Cpure.Lt (e1,e2,l)->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars) then [(Cpure.Lt(e1,e2,l), il)] *)
+(* 	      else [] *)
+(*         | Cpure.Lte (e1,e2,l) ->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e1,e2,l), il)] *)
+(* 	      else [] *)
+(*         | Cpure.Gt (e1,e2,l) ->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lt(e2,e1,l), il)] *)
+(* 	      else [] *)
+(*         | Cpure.Gte(e1,e2,l)->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Lte(e2,e1,l), il)] *)
+(* 	      else [] *)
+(*         | Cpure.Eq (e1,e2,l) ->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Eq(e1,e2,l), il)] *)
+(* 	      else [] *)
+(*         | Cpure.Neq (e1,e2,l)->  *)
+(* 	      if (Cpure.of_interest e1 e2 interest_vars)  then [(Cpure.Neq(e1,e2,l), il)] *)
+(* 	      else [] *)
+(*         | _ -> [] *)
+(*     end	 *)
+(*   | CP.Not (f1,_,_) -> List.fold_left (fun r c -> *)
+(* 	let (pf,il) = c in  *)
+(* 	let ps = match pf with *)
+(*           | Cpure.BVar (v,l)-> [c] *)
+(*           | Cpure.Lt (e1,e2,l)-> [(Cpure.Lt (e2,e1,l), il)] *)
+(*           | Cpure.Lte (e1,e2,l) -> [(Cpure.Lte (e2,e1,l), il)] *)
+(*           | Cpure.Eq (e1,e2,l) -> [(Cpure.Neq (e1,e2,l) , il)] *)
+(*           | Cpure.Neq (e1,e2,l)-> [(Cpure.Eq (e1,e2,l), il)] *)
+(*           |_ -> (\* [] *\) *)
+(*                Error.report_error { *)
+(* 	           Error.error_loc = no_pos; *)
+(* 	           Error.error_text ="malfunction:get_equations_sets must return only bvars, inequalities and equalities"} *)
+(*         in *)
+(*         r@ps *)
+(*     ) [] (get_equations_sets f1 interest_vars) *)
+(*   | _ -> (\* [] *\) *)
+(*         Error.report_error { *)
+(*         Error.error_loc = no_pos; *)
+(*         Error.error_text ="malfunction:get_equations_sets can be called only with conjuncts and without quantifiers"} *)
+
+(* and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list)= *)
+(*   let pr1 = !CP.print_formula in *)
+(*   Debug.no_2 "Solver.get_equations_sets" pr1 !CP.print_svl pr_none *)
+(*       (fun _ _ -> get_equations_sets_x f interest_vars) f interest_vars *)
 
 and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_state) : context = 
   let r1,r2 = combine_and es.es_formula f in  
@@ -11403,8 +11413,9 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
               let p = CP.mkForall diff f None pos in
               let _ = DD.ninfo_hprint (add_str "p: " (!CP.print_formula)) p pos in
               let _ = DD.ninfo_hprint (add_str "h_inf_args1: " (!CP.print_svl)) h_inf_args1 pos in
+              let _ = DD.ninfo_hprint (add_str "diff: " (!CP.print_svl)) diff pos in
               let _ = DD.ninfo_hprint (add_str "f: " (!CP.print_formula)) f pos in
-              if (CP.is_eq_exp f) || TP.is_sat_raw (MCP.mix_of_pure p) then
+              if (CP.is_cmp_form f (* && List.length diff = List.length fv *)) || TP.is_sat_raw (MCP.mix_of_pure p) then
                 let _ = DD.ninfo_hprint (add_str "p1: " (!CP.print_formula)) p pos in
                 let np = (TP.simplify (CP.arith_simplify_new p)) in
                 let _ = DD.ninfo_hprint (add_str "lhs_xpure" !CP.print_formula) (MCP.pure_of_mix lhs_xpure) no_pos in
@@ -13665,30 +13676,30 @@ and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.
   let resform = push_struc_exists rs new_f in
   resform	
       
-and transform_null (eqs) :(CP.b_formula list) = List.map (fun c ->
-    let (pf,il) = c in
-    match pf with
-      | Cpure.BVar _ 
-      | Cpure.Lt _
-      | Cpure.Lte _ -> c
-      | Cpure.Eq (e1,e2,l) -> 
-	    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-	      if (Cpure.is_zero_int e2) then (Cpure.Eq (e1,(Cpure.Null l),l), il)
-	      else (Cpure.Neq (e1,(Cpure.Null l),l), il)
-	    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-	      if (Cpure.is_zero_int e1) then (Cpure.Eq (e2,(Cpure.Null l),l), il)
-	      else (Cpure.Neq (e2,(Cpure.Null l),l), il)
-	    else c
-      | Cpure.Neq (e1,e2,l)-> 
-	    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-	      if (Cpure.is_zero_int e2) then (Cpure.Neq (e1,(Cpure.Null l),l), il)
-	      else c
-	    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-	      if (Cpure.is_zero_int e1) then (Cpure.Neq (e2,(Cpure.Null l),l), il)
-	      else c
-	    else c
-      | _ -> c
-) eqs
+(* and transform_null (eqs) :(CP.b_formula list) = List.map (fun c -> *)
+(*     let (pf,il) = c in *)
+(*     match pf with *)
+(*       | Cpure.BVar _  *)
+(*       | Cpure.Lt _ *)
+(*       | Cpure.Lte _ -> c *)
+(*       | Cpure.Eq (e1,e2,l) ->  *)
+(* 	    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then *)
+(* 	      if (Cpure.is_zero_int e2) then (Cpure.Eq (e1,(Cpure.Null l),l), il) *)
+(* 	      else (Cpure.Neq (e1,(Cpure.Null l),l), il) *)
+(* 	    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then *)
+(* 	      if (Cpure.is_zero_int e1) then (Cpure.Eq (e2,(Cpure.Null l),l), il) *)
+(* 	      else (Cpure.Neq (e2,(Cpure.Null l),l), il) *)
+(* 	    else c *)
+(*       | Cpure.Neq (e1,e2,l)->  *)
+(* 	    if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then *)
+(* 	      if (Cpure.is_zero_int e2) then (Cpure.Neq (e1,(Cpure.Null l),l), il) *)
+(* 	      else c *)
+(* 	    else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then *)
+(* 	      if (Cpure.is_zero_int e1) then (Cpure.Neq (e2,(Cpure.Null l),l), il) *)
+(* 	      else c *)
+(* 	    else c *)
+(*       | _ -> c *)
+(* ) eqs *)
 
 (* Merging fractional heap nodes when possible using normalization lemmas *)
 and normalize_entail_state_w_lemma prog (es:CF.entail_state) =

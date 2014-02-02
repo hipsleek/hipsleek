@@ -19,6 +19,8 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module CFU = Cfutil
+module CFS = Cfsolver
 (* module GV = Globalvars*)
 module CP = Cpure
 module MCP = Mcpure
@@ -1068,8 +1070,8 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	  let f_list = List.map (fun (c1,c2)-> 
 	      let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
 	      let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
-	      let eqs = (Solver.get_equations_sets c1 aset)in
-	      let eqs = (Solver.transform_null eqs) in
+	      let eqs = (CFS.get_equations_sets c1 aset)in
+	      let eqs = (CFS.transform_null eqs) in
 	      (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
 		let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
 	      (c1,c2,aset,eqs)) f_list_init in
