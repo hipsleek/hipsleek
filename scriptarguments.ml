@@ -371,6 +371,7 @@ let common_arguments = [
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
+  ("--dbc", Arg.Set Globals.dis_base_case_unfold, "explicitly disable base case unfold");
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
 	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,

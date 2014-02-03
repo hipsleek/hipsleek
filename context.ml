@@ -1141,7 +1141,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       let a3 =
                         (*Do not fold/unfold LOCKs, only match*)
                         if (is_l_lock || is_r_lock) then Some a2 else 
-                          if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
+                          if (String.compare vl_name vr_name)==0 then Some (if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]))
                           else None in
                       let a4 = 
                         (*Do not fold/unfold LOCKs*)
@@ -1342,7 +1342,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                     | Coerc_mater s -> 
                           (* let _ = print_string "\n selected lemma XX" in *)
                           M_lemma (c,Some s)) in
-                  let l1 = [(1,M_base_case_unfold c)] in
+                  let l1 = if !dis_base_case_unfold then  [] else [(1,M_base_case_unfold c)] in
                   (-1, (Search_action ((1,a1)::l1)))
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
@@ -1382,7 +1382,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                       then (-1, (Search_action (a2::l1)))
                       else (-1, (Cond_action (a2::l1)))
                     else
-                      let l1 = [(1,M_base_case_unfold c)] in
+                      let l1 = if !dis_base_case_unfold then [] else [(1,M_base_case_unfold c)] in
                       (* (-1, (Search_action (a2::l1))) *)
                       (-1, (Cond_action (a2::l1)))
                   in a1
