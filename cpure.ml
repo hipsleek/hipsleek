@@ -146,7 +146,7 @@ and bf_annot = (bool * int * (exp list))
 
 (* Boolean constraints *)
 and b_formula = p_formula * (bf_annot option)
-	
+
 and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
 
 (* should migrate to form below *)
@@ -245,7 +245,7 @@ and rounding_func =
 and infer_rel_type =  (rel_cat * formula * formula)
 
 let is_False cp = match cp with
-  | BForm (p,_) -> 
+  | BForm (p,_) ->
         begin
         match p with
           | (BConst (b,_),_) -> not(b)
@@ -257,7 +257,7 @@ let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false
 
-let exp_to_spec_var e = 
+let exp_to_spec_var e =
   match e with
     | Var (sv, _) -> sv
     | _ -> report_error no_pos ("Not a spec var\n")
@@ -272,7 +272,7 @@ let rec set_il_formula f il =
   else match f with
     | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
     | _ -> f
-      
+
 and set_il_b_formula bf il =
   let (pf, o_il) = bf in
   match o_il with
@@ -456,7 +456,7 @@ let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 let string_of_spec_var_arg l = "<"^(string_of_spec_var_list_noparen l)^">" ;;
 
 let string_of_xpure_view xp = match xp with
-    { 
+    {
         xpure_view_node = root ;
         xpure_view_name = vname;
         xpure_view_arguments = args;
@@ -473,7 +473,7 @@ let get_int_const (s:string) : int option =
   let n=String.length s in
   if (is_int_str_aux n s) then
     let c = String.sub s const_prefix_len (n-const_prefix_len) in
-    try Some (int_of_string c) 
+    try Some (int_of_string c)
     with _ -> None (* should not be possible *)
   else None
 
@@ -487,14 +487,14 @@ let is_null_str (s:string) : bool = (s="null")
 
 
 (* is string a constant?  *)
-let is_const (s:spec_var) : bool = 
+let is_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
   (is_null_str n) || (is_int_str n)
 
 (* is string a constant?  *)
-let is_null_const (s:spec_var) : bool = 
+let is_null_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
-  (is_null_str n) 
+  (is_null_str n)
 
 (* is string a constant?  *)
 let is_null_const_exp (e:exp) : bool = match e with
@@ -502,7 +502,7 @@ let is_null_const_exp (e:exp) : bool = match e with
   | _ -> false
 
 (* is string an int constant?  *)
-let is_int_const (s:spec_var) : bool = 
+let is_int_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
      (is_int_str n)
 
@@ -525,19 +525,19 @@ let is_const_or_var (f:exp) = match f with
   | Var _ -> true
   | IConst _ -> true
   | FConst _ -> true
-  | _ -> false 
+  | _ -> false
 
 (* is exp a const *)
 let is_const_exp (f:exp) = match f with
   | IConst _ -> true
   | FConst _ -> true
-  | _ -> false 
+  | _ -> false
 
 let is_const_or_tmp (f:exp) = match f with
   | IConst _ -> true
   | FConst _ -> true
   | Var(sv,_) -> is_tmp_int sv
-  | _ -> false 
+  | _ -> false
 
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
@@ -548,51 +548,51 @@ let is_inf (f:exp) = match f with
 let rec contains_inf (f:exp) = match f with
   | InfConst  _ -> true
   | Var(sv,_) -> is_inf_sv sv
-  | Add (e1, e2, _) 
-  | Subtract (e1, e2, _) 
+  | Add (e1, e2, _)
+  | Subtract (e1, e2, _)
   | Mult (e1, e2, _)
-  | Max (e1, e2, _) 
-  | Min (e1, e2, _) 
-  | Div (e1, e2, _) 
-  | ListCons (e1, e2, _) 
+  | Max (e1, e2, _)
+  | Min (e1, e2, _)
+  | Div (e1, e2, _)
+  | ListCons (e1, e2, _)
   | BagDiff (e1, e2, _) -> (contains_inf e1) || (contains_inf e2)
-  | ListHead (e, _) 
-  | ListLength (e, _) 
+  | ListHead (e, _)
+  | ListLength (e, _)
   | ListTail (e, _)
-  | ListReverse (e, _) -> (contains_inf  e)    
+  | ListReverse (e, _) -> (contains_inf  e)
   | _ -> false
 
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
-    | Or (f1,f2,_,_)  
-    | And (f1,f2, _) -> (contains_exists f1) || (contains_exists f2) 
+    | Or (f1,f2,_,_)
+    | And (f1,f2, _) -> (contains_exists f1) || (contains_exists f2)
     | Not(f1,_,_)
-    | Forall (_ ,f1,_,_) -> (contains_exists f1)  
+    | Forall (_ ,f1,_,_) -> (contains_exists f1)
 	| AndList l -> exists_l_snd contains_exists l
     | Exists _ -> true
 
 let get_var_opt (e:exp) =
-  match e with 
+  match e with
     | Var (v,_) -> Some v
     | _ -> None
 
 let get_var (e:exp) =
-  match e with 
+  match e with
     | Var (v,_) -> v
     | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
 
-let filter_vars lv = 
-	List.fold_left (fun a c -> match c with 
+let filter_vars lv =
+	List.fold_left (fun a c -> match c with
 		| Var (v,_)-> v::a
 		| _ -> a) [] lv
 
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true
-  | Add (e1, e2, _) 
-  | Subtract (e1, e2, _) 
+  | Add (e1, e2, _)
+  | Subtract (e1, e2, _)
   | Mult (e1, e2, _)
-  | Max (e1, e2, _) 
+  | Max (e1, e2, _)
   | Min (e1, e2, _)
   | Div (e1, e2, _)
   | ListCons (e1, e2, _)
@@ -644,13 +644,13 @@ let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* translation has ensured well-typedness.
 		   We need only to compare names and primedness *)
-	    v1 = v2 
+	    v1 = v2
 
-let eq_spec_var_x (sv1 : spec_var) (sv2 : spec_var) = 
+let eq_spec_var_x (sv1 : spec_var) (sv2 : spec_var) =
   (* ignore primedness *)
   match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> t1 = t2 && v1 = v2
-  
+
 let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* We need only to compare names  of permission variables*)
@@ -689,9 +689,9 @@ let mem_svl v rl = Gen.BList.mem_eq eq_spec_var v rl
 let rec is_true_conj_eq (f1:formula) : bool = match f1 with
     | BForm (b1,_) ->
         (match b1 with
-          | Eq (e1,e2,_) , _ -> 
+          | Eq (e1,e2,_) , _ ->
               (match e1,e2 with
-                | Var (v1,_), Var (v2,_)-> 
+                | Var (v1,_), Var (v2,_)->
                     let b1 = eq_spec_var v1 v2 in
                     b1
                 | _ -> false)
@@ -1468,12 +1468,12 @@ and name_of_exp (e: exp): string =
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (Named _, _, _) -> true
   | _ -> false
-        
+
 and exp_is_object_var (e : exp) =
   match e with
     | Var(SpecVar (Named _, _, _),_) -> true
     | _ -> false
-          
+
 and is_bag (e : exp) : bool =
   match e with
     | Bag _

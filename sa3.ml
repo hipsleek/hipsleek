@@ -2783,6 +2783,29 @@ let partition_paths hprel_defs prog =
       new_hprel_defs@all_hprel_defs)
       [] hprel_defs
 
+let rec group_cases pf_sf_l =
+  let is_eq pf1 pf2 =
+    let not_pf1 = Cpure.mkNot pf1 None no_pos in
+    let not_pf2 = Cpure.mkNot pf2 None no_pos in
+    let formula = Cpure.mkAnd (Cpure.mkOr not_pf1 pf2 None no_pos) (Cpure.mkOr not_pf2 pf1 None no_pos) no_pos in
+    not (Tpdispatcher.is_sat 100 (Cpure.mkNot formula None no_pos) "check eq" "")
+  in
+  let rec helper pf1 tl1 =
+    match tl1 with
+      | [] -> []
+      | (pf,sf)::tl -> if (is_eq pf pf1) then (helper pf1 tl) else (pf,sf)::(helper pf1 tl)
+  in
+  match pf_sf_l with
+    | [] -> []
+    | (pf1,sf1)::tl -> (
+          let sfl = List.fold_left (fun sfs (pf, sf) -> if (is_eq pf pf1) then sf::sfs else sfs) [sf1] tl in
+          (pf1, CF.mkEList_flatten sfl)::(group_cases (helper pf1 tl))
+      )
+
+let check_cases cases =
+  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None no_pos) (List.hd cases) (List.tl cases) in
+  not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None no_pos) "check universe" "")
+
 let create_specs hprel_defs prog proc_name =
   let _ = print_endline "\n*************************************" in
   let _ = print_endline "**************case specs*************" in
@@ -2803,10 +2826,15 @@ let create_specs hprel_defs prog proc_name =
           let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs in
           let args = CF.h_fv (List.hd (List.hd grouped_hprel_defs)).CF.hprel_def_hrel in
           let cases = List.map (fun struc_formula -> get_case struc_formula prog args) specs in
-          let final_spec = CF.ECase {
-              CF.formula_case_branches = List.combine cases specs;
+          let final_spec =
+          if (check_cases cases)
+          then CF.ECase {
+              CF.formula_case_branches = group_cases (List.combine cases specs);
               CF.formula_case_pos = no_pos
-          } in
+          }
+          else
+          CF.mkEList_flatten specs
+          in
           let _ = print_endline (Cprinter.string_of_struc_formula_for_spec1 final_spec) in
           let _ = print_endline "*************************************" in
           ()

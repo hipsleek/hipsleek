@@ -416,14 +416,14 @@ let rec isConstDFalse f =
     | EList x-> List.for_all (fun (_,c)-> isConstDFalse c) x
 	| _ -> false
 
-let rec isConstDTrue f = 
+let rec isConstDTrue f =
   match f with
 	| EBase b -> (isStrictConstTrue b.formula_struc_base) &&(b.formula_struc_continuation==None)
     | EList x -> List.exists (fun (_,c)-> isConstDTrue c) x
 	| _ -> false
 
 let isConstETrue f = (*List.exists*) isConstDTrue f
-          
+
 let isConstEFalse f = (*List.for_all*) isConstDFalse f
 
 let chg_assume_forms b f1 f2 = { b with
@@ -431,23 +431,23 @@ let chg_assume_forms b f1 f2 = { b with
 	formula_assume_struc = f2;}
 
 let mkEList_no_flatten l =
-	if isConstETrue (EList l) then mkETrue (mkTrueFlow ()) no_pos 
+	if isConstETrue (EList l) then mkETrue (mkTrueFlow ()) no_pos
 	else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
-	else 
+	else
 	  let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
 	  if l=[] then mkEFalse (mkFalseFlow) no_pos
 	  else EList l
-	
-let mkSingle f = (empty_spec_label_def,f)
-	
-let mkEList_flatten l = 
-	let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
-	mkEList_no_flatten (List.concat l)	
 
-let is_or_formula f = match f with 
+let mkSingle f = (empty_spec_label_def,f)
+
+let mkEList_flatten l =
+	let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
+	mkEList_no_flatten (List.concat l)
+
+let is_or_formula f = match f with
 | Or _ -> true
 | _ -> false
-	
+
 module Exp_Heap =
 struct 
   type e = h_formula

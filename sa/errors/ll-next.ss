@@ -15,6 +15,7 @@ node get_next(node x)
 
 {
   if (x==null) return null;
+  /* else if (x.next==null) return null; */
   else return x.next;
 }
 
