@@ -35,6 +35,23 @@ lx1<g:node,s> == self=s
   or self::node<_,nxt> * nxt::lx1<self,s> & self!=s 
 inv true ;
 
+
+HH<prev,sent>==
+  self::node<val,next>@M * next::HP0<sent> 
+  * prev::HP7<sent>&self!=sent
+inv self!=null;
+
+G(cur,cur',prev,prev',sent) ::= HP_1227(prev,cur') * prev'::node<val,prev>@M&cur'=sent,
+ HP_1220(cur,sent) ::= 
+ emp&cur=null & cur!=sent
+ or cur::node<val,next>@M * HP_1220(next,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_1227(prev,sent) ::= 
+ prev::node<val,next>@M * HP_1220(next,sent)&prev!=sent
+ or emp&prev!=sent & prev=null
+ ]
+
 //lemma_safe self::ll<s> & g=null -> self::lx<g,s>;
 
 void lscan( node@R cur, node@R prev, node sent)
