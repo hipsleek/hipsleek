@@ -4,7 +4,7 @@ open Gen
 open Others
 open Label_only
 
-module AS = Astsimp
+(* module AS = Astsimp *)
 module C  = Cast
 module IF = Iformula
 module IP = Ipure
@@ -13,10 +13,10 @@ module CP = Cpure
 module MCP = Mcpure
 module H  = Hashtbl
 module I  = Iast
-module SC = Sleekcore
-module LP = Lemproving
-module SAO = Saout
-module FP = Fixpoint
+(* module SC = Sleekcore *)
+(* module LP = Lemproving *)
+(* module SAO = Saout *)
+(* module FP = Fixpoint *)
 
 let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name: ident)
   (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
@@ -32,15 +32,15 @@ let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
     let ilemma = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE coer_type ihps ihead ibody in
     (*transfrom ilemma to clemma*)
-    let ldef = AS.case_normalize_coerc iprog ilemma in
-    let l2r, r2l = AS.trans_one_coercion iprog ldef in
+    let ldef = Astsimp.case_normalize_coerc iprog ilemma in
+    let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
     l2r, r2l
 
 let generate_lemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
   (*check entailment*)
   let (res,_,_) =  if coer_type = I.Left then
-    SC.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
-  else SC.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
+    Sleekcore.sleek_entail_check [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+  else Sleekcore.sleek_entail_check [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   in
   if res then
     let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
@@ -199,10 +199,10 @@ let generate_lemma_4_views iprog cprog=
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma iprog cprog ldef = 
-  let ldef = AS.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-  let l2r = List.concat (List.map (fun c-> AS.coerc_spec cprog c) l2r) in
-  let r2l = List.concat (List.map (fun c-> AS.coerc_spec cprog c) r2l) in
+  let ldef = Astsimp.case_normalize_coerc iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in
+  let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) r2l) in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then 
     let _ = print_string (Iprinter.string_of_coerc_decl ldef) in 
     let _ = print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") in
@@ -221,7 +221,7 @@ let verify_one_repo lems cprog =
   let res = List.fold_left (fun ((fail_ans,res_so_far) as res) (l2r,r2l,typ,name) ->
       match fail_ans with
         | None ->
-            let res = LP.verify_lemma 3 l2r r2l cprog name typ in 
+            let res = Lemproving.verify_lemma 3 l2r r2l cprog name typ in 
             let chk_for_fail =  if !Globals.disable_failure_explaining then CF.isFailCtx else CF.isFailCtx_gen in
             let res_so_far = res::res_so_far in
             let fail = if chk_for_fail res then Some (name^":"^(Cprinter.string_of_coercion_type typ)) else None in
@@ -316,7 +316,7 @@ let sa_verify_one_repo cprog l2r r2l =
   let res = List.fold_left (fun ((valid_ans,res_so_far) as res) coer ->
       match valid_ans with
         | true ->
-              let (flag,lc) = LP.sa_verify_lemma cprog coer in 
+              let (flag,lc) = Lemproving.sa_verify_lemma cprog coer in 
               (flag, lc::res_so_far)
         | false -> res
   ) (true,[]) (l2r@r2l) in
@@ -398,13 +398,13 @@ let preprocess_fixpoint_computation cprog xpure_fnc lhs oblgs rel_ids post_rel_i
   let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
   else r
   ) [] ls_rel_args in
-  let invs = List.map (FP.get_inv cprog pre_rel_args) pre_vnodes in
+  let invs = List.map (Fixpoint.get_inv cprog pre_rel_args) pre_vnodes in
   let rel_fm = CP.filter_var (CF.get_pure bare) pre_rel_args in
-  (* let invs = CF.get_pre_invs pre_rel_ids (FP.get_inv cprog) *)
+  (* let invs = CF.get_pre_invs pre_rel_ids (Fixpoint.get_inv cprog) *)
   (*   (CF.struc_formula_of_formula coer.C.coercion_body no_pos) in *)
   let inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) rel_fm (pre_invs@invs) in
   let pre_inv_ext = [inv] in
-  FP.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec
+  Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec
       (*grp_post_rel_flag*)1
 
 let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
@@ -457,7 +457,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
                         let proc_spec = CF.mkETrue_nf no_pos in
                         let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in
-                        let r = FP.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in
+                        let r = Fixpoint.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in
                         let _ = Debug.info_hprint (add_str "fixpoint"
                             (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
                         let _ = print_endline "" in
@@ -504,13 +504,13 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                               let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
                               else r
                               ) [] ls_rel_args in
-                              let invs = List.map (FP.get_inv cprog pre_rel_args) pre_vnodes in
+                              let invs = List.map (Fixpoint.get_inv cprog pre_rel_args) pre_vnodes in
                               let rel_fm = CP.filter_var (CF.get_pure bare) pre_rel_args in
                               let inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) rel_fm (pre_invs@invs) in
                               [inv],pre_fmls,grp_post_rel_flag
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                       in
-                      let r = FP.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
+                      let r = Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
                       (* let _ = Debug.info_hprint (add_str "fixpoint" *)
                       (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
                       (* let _ = print_endline "" in *)
@@ -784,13 +784,13 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
     if preds are unknown -> HTRUE
   *)
   let proc_name = "eqproving" in
-  let n_cview,chprels_decl = SAO.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
+  let n_cview,chprels_decl = Saout.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
   (*trans_hp_view_formula*)
-  let f12 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
-  let f22 = SAO.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
+  let f12 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
+  let f22 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
   (*iform*)
-  let if12 = AS.rev_trans_formula f12 in
-  let if22 = AS.rev_trans_formula f22 in
+  let if12 = Astsimp.rev_trans_formula f12 in
+  let if22 = Astsimp.rev_trans_formula f22 in
   (*unfold lhs - rhs*)
   let f13 = do_unfold_view cprog0 f12 in
   let f23 = do_unfold_view cprog0 f22 in
@@ -798,13 +798,13 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if12 if22 in
     let r1,_ = manage_test_new_lemmas1 [l_coer] iprog0 cprog0 in
-    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (CF.struc_formula_of_formula f2 no_pos)) in *)
-    (* let r1,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
+    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (CF.struc_formula_of_formula f2 no_pos)) in *)
+    (* let r1,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
     (* let r1,_,_ = fnc f13 f23 in *)
     if not r1 then false else
       let r_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if22 if12 in
       let r2,_ = manage_test_new_lemmas1 [r_coer] iprog0 cprog0 in
-      (* let r2,_,_ = SC.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
+      (* let r2,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
       (* let r2,_,_ = fnc f23 f13 in *)
       r2
   in

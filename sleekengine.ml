@@ -20,7 +20,7 @@ module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
-module LP = Lemproving
+(* module LP = Lemproving *)
 (* module AS = Astsimp *)
 module DD = Debug
 module XF = Xmlfront
@@ -388,7 +388,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
   (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
-  let res = LP.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)
   (*   | None -> None; *)

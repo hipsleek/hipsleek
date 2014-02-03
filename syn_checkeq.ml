@@ -1,7 +1,7 @@
 open Globals
 open Gen
 
-module DD = Debug
+(* module DD = Debug *)
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
@@ -251,8 +251,8 @@ let rec check_relaxeq_formula_x args f10 f20=
     let qvars2, base_f2 = CF.split_quantifiers f2 in
     let hf1,mf1,_,_,_ = CF.split_components base_f1 in
     let hf2,mf2,_,_,_ = CF.split_components base_f2 in
-    DD.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
-    DD.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
+    Debug.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
+    Debug.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
     (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
     let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
     if r1 then
@@ -265,23 +265,23 @@ let rec check_relaxeq_formula_x args f10 f20=
       (* let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in *)
       let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
       let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
-      (* DD.info_zprint  (lazy  ("   f1: " ^(!CP.print_formula np1))) no_pos; *)
-      (* DD.info_zprint  (lazy  ("   f2: " ^ (!CP.print_formula np2))) no_pos; *)
+      (* Debug.info_zprint  (lazy  ("   f1: " ^(!CP.print_formula np1))) no_pos; *)
+      (* Debug.info_zprint  (lazy  ("   f2: " ^ (!CP.print_formula np2))) no_pos; *)
       (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
       let diff2 = List.map snd ss in
-      let _ = DD.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
+      let _ = Debug.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
       let np11 = (* CP.mkExists qvars1 np1 None no_pos *) np1 in
       let np21 = (* CP.mkExists qvars2 np2 None no_pos *) np2 in
       let np12 = CP.subst ss np11 in
       (* let _, bare_f2 = CP.split_ex_quantifiers np2 in *)
       let svl1 = CP.fv np12 in
       let svl2 = CP.fv np21 in
-      DD.ninfo_zprint  (lazy  ("   np12: " ^(!CP.print_formula np12))) no_pos;
-      DD.ninfo_zprint  (lazy  ("   np21: " ^ (!CP.print_formula np21))) no_pos;
+      Debug.ninfo_zprint  (lazy  ("   np12: " ^(!CP.print_formula np12))) no_pos;
+      Debug.ninfo_zprint  (lazy  ("   np21: " ^ (!CP.print_formula np21))) no_pos;
       let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args@diff2))) in
       let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args@diff2))) in
       let r2 = checkeq_pure qvars1 qvars2 np12 np21 in
-      let _ = DD.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
+      let _ = Debug.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
       r2
     else
       false

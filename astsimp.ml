@@ -897,15 +897,15 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
             let needs_ret = needs_ret b.I.exp_while_body in 
             if needs_ret then
               (*new class extend __Exc*)
-              let new_exc = {I.data_name = "rExp" ;
-                             I.data_fields =[];
-                             I.data_parent_name = raisable_class;
-                             I.data_invs = [];
-                             I.data_pos = no_pos;
-                             I.data_is_template = false;
-                             I.data_methods = []
-                            }
-              in
+              (* let new_exc = {I.data_name = "rExp" ; *)
+              (*                I.data_fields =[]; *)
+              (*                I.data_parent_name = raisable_class; *)
+              (*                I.data_invs = []; *)
+              (*                I.data_pos = no_pos; *)
+              (*                I.data_is_template = false; *)
+              (*                I.data_methods = [] *)
+              (*               } *)
+              (* in *)
                 let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
                     Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
                 let b = {b with I.exp_while_body = new_body} in
@@ -2859,7 +2859,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
     let  coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
-    let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
+    (* let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in *)
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
         let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in

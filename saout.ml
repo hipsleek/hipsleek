@@ -10,7 +10,7 @@ open Exc.GTable
 module C = Cast
 module Err = Error
 module I = Iast
-module AS = Astsimp
+(* module AS = Astsimp *)
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
@@ -121,7 +121,7 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      let new_body0 = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
               
               let new_body = CF.subst [] new_body0 in
-	      let i_body = AS.rev_trans_formula new_body in
+	      let i_body = Astsimp.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
               let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
@@ -279,10 +279,10 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
   let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
   (* let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
-  let _ = List.iter (AS.process_pred_def_4_iast iprog false) iviews in
+  let _ = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview. new_views: view with annotated types*)
-  let cviews = (AS.convert_pred_to_cast new_views false iprog cprog) in
+  let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog) in
   let _ = cprog.C.prog_hp_decls <- crem_hprels in
   (*put back*)
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
@@ -381,13 +381,13 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
   in
   (*to improve*)
   (*revert to iformula*)
-  (* let if1 = AS.rev_trans_formula f in *)
+  (* let if1 = Astsimp.rev_trans_formula f in *)
   (* (\*trans hp -> view*\) *)
   (* let if2 = IF.formula_trans_heap_node hn_trans if1 in *)
   (* (\*trans iformula to cformula*\) *)
-  (* let if3 = AS.case_normalize_formula iprog [] if2 None in *)
+  (* let if3 = Astsimp.case_normalize_formula iprog [] if2 None in *)
   (* let n_tl = TI.gather_type_info_formula iprog if3 [] false in *)
-  (* let _, f2 = AS.trans_formula iprog false [] false if3 n_tl false in *)
+  (* let _, f2 = Astsimp.trans_formula iprog false [] false if3 n_tl false in *)
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f
 
@@ -493,7 +493,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
           (* C.proc_stk_of_static_specs = proc_stk_of_static_specs; *)
       }
       in
-      AS.add_pre_to_cprog_one cprog proc1
+      Astsimp.add_pre_to_cprog_one cprog proc1
   in
   (* let _ = print_endline ("unk_hps: "^ (!CP.print_svl unk_hps)) in *)
   let old_procs = cprog.C.new_proc_decls in

@@ -932,7 +932,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
             (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
             let old_disj = !Globals.pred_disj_unify in
             let disj_opt = !Globals.pred_elim_useless || !Globals.pred_disj_unify in
-            let defs5,_ = List.split defs5_wg in
+            (* let defs5,_ = List.split defs5_wg in *)
             let defs,elim_ss = if disj_opt then
               SAU.get_longest_common_hnodes_list prog is_pre hpdefs (skip_hps) unk_svl hp r non_r_args args0 defs5_wg
             else
@@ -2146,7 +2146,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (CF.hprel list * CF.hp_rel_def list) =
-  let pr0 = pr_list !CP.print_exp in
+  (* let pr0 = pr_list !CP.print_exp in *)
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   (* let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in *)
@@ -2181,7 +2181,7 @@ let infer_shapes_new iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rel
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang: CF.hprel_def list=
       (* (CF.cond_path_type * CF.hp_reldef list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
   (* (CF.hprel list * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
-  let pr0 = pr_list !CP.print_exp in
+  (* let pr0 = pr_list !CP.print_exp in *)
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hprel_def_short in
   (* let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in *)

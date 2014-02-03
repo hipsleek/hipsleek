@@ -45,6 +45,7 @@ let collect_ho_ass iprog cprog is_pre def_hps (acc_constrs, post_no_def) cs=
     let _ = Globals.do_classic_frame_rule := tmp in
     (acc_constrs@new_constrs, post_no_def@linfer_hps)
 
+
 (*input in fb
  output: true,subst: can subst
 *)
@@ -171,24 +172,24 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
              in
              (helper_new_only (new_don@[cs1]) new_rest is_changed2 (unfrozen_hps@n_unfrozen_hps1@n_unfrozen_hps2))
   in
-  let rec subst_w_frozen_old frozen_constrs non_frozen is_changed unfrozen_hps=
-    match frozen_constrs with
-      | [] -> is_changed,non_frozen,unfrozen_hps
-      | cs1::rest ->
-            let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in
-            if Sacore.cs_rhs_is_only_neqNull cs1 then
-              (subst_w_frozen_old rest non_frozen is_changed unfrozen_hps)
-            else
-              let is_changed1, n_non_frozen, n_unfrozen_hps1 =
-                List.fold_left ( fun (b,res, r_unfroz_hps) cs2->
-                    let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in
-                    if List.length new_constrs > 0 then
-                      (true,res@new_constrs, r_unfroz_hps@unfroz_hps)
-                    else (b,res@[cs2], r_unfroz_hps)
-                ) (is_changed, [], []) non_frozen
-              in
-              subst_w_frozen_old rest n_non_frozen is_changed1 n_unfrozen_hps1
-  in
+  (* let rec subst_w_frozen_old frozen_constrs non_frozen is_changed unfrozen_hps= *)
+  (*   match frozen_constrs with *)
+  (*     | [] -> is_changed,non_frozen,unfrozen_hps *)
+  (*     | cs1::rest -> *)
+  (*           let _ = Debug.info_zprint (lazy (("    lhs: " ^ (Cprinter.string_of_hprel_short cs1)))) no_pos in *)
+  (*           if Sacore.cs_rhs_is_only_neqNull cs1 then *)
+  (*             (subst_w_frozen_old rest non_frozen is_changed unfrozen_hps) *)
+  (*           else *)
+  (*             let is_changed1, n_non_frozen, n_unfrozen_hps1 = *)
+  (*               List.fold_left ( fun (b,res, r_unfroz_hps) cs2-> *)
+  (*                   let new_constrs, unfroz_hps = find_imply_one cs1 cs2 in *)
+  (*                   if List.length new_constrs > 0 then *)
+  (*                     (true,res@new_constrs, r_unfroz_hps@unfroz_hps) *)
+  (*                   else (b,res@[cs2], r_unfroz_hps) *)
+  (*               ) (is_changed, [], []) non_frozen *)
+  (*             in *)
+  (*             subst_w_frozen_old rest n_non_frozen is_changed1 n_unfrozen_hps1 *)
+  (* in *)
   let neg_pure f0=
     let rec helper f=
       match f with
@@ -319,7 +320,7 @@ and is_non_recursive_non_post_cs post_hps dang_hps constr=
 and subst_cs_w_other_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs0 complex_hps constrs=
   (*remove recursive cs and post-preds based to preserve soundness*)
   (* let constrs1 = List.filter (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)) constrs in *)
-  let ignore_hps = dang_hps@link_hps in
+  (* let ignore_hps = dang_hps@link_hps in *)
   let constrs1,rem = List.partition (fun cs -> (is_non_recursive_non_post_cs post_hps dang_hps cs) && not (is_trivial cs)
   ) constrs in
   (* let top_guard_hps = List.fold_left (fun r cs -> r@(get_top_guard ignore_hps cs)) [] frozen_constrs0 in *)
@@ -365,21 +366,21 @@ let subst_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs c
 
 let unfold_def_LHS_x prog link_hps constrs to_unfold_hps hp_defs=
   let _ = if !Globals.sap then DD.info_ihprint (add_str ">>>>>> Syn-Norm-Ante (UNFOLD IN LHS)<<<<<<" pr_id) "" no_pos else () in
-  let pr_hp_defs = List.fold_left (fun r def -> match def.CF.def_cat with
-    | CP.HPRelDefn (hp, root, args) -> r@[(hp, def, root::args, SAU.is_top_guard_hp_def link_hps def)]
-    | _ -> r
-  ) [] hp_defs in
+  (* let pr_hp_defs = List.fold_left (fun r def -> match def.CF.def_cat with *)
+  (*   | CP.HPRelDefn (hp, root, args) -> r@[(hp, def, root::args, SAU.is_top_guard_hp_def link_hps def)] *)
+  (*   | _ -> r *)
+  (* ) [] hp_defs in *)
   let unfold_lhs_one (b, r) cs=
     let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
     let rhps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
     let l_inter = CP.intersect_svl lhps to_unfold_hps in
     let r_inter = CP.intersect_svl rhps to_unfold_hps in
     if l_inter == [] && r_inter == [] then (b, r@[cs]) else
-      let pr_hp_defs0, rhs_pr_hp_defs0 = List.fold_left (fun (r1,r2) (hp,def,args,is_top) ->
-          let nr1 = if CP.mem_svl hp l_inter then (r1@[(hp,def,args)]) else r1 in
-          let nr2 = if CP.mem_svl hp r_inter && not is_top then r2@[(hp,def,args)] else r2 in
-          (nr1,nr2)
-      ) ([],[]) pr_hp_defs in
+      (* let pr_hp_defs0, rhs_pr_hp_defs0 = List.fold_left (fun (r1,r2) (hp,def,args,is_top) -> *)
+      (*     let nr1 = if CP.mem_svl hp l_inter then (r1@[(hp,def,args)]) else r1 in *)
+      (*     let nr2 = if CP.mem_svl hp r_inter && not is_top then r2@[(hp,def,args)] else r2 in *)
+      (*     (nr1,nr2) *)
+      (* ) ([],[]) pr_hp_defs in *)
       (*tll does not allow do unfold*)
       let nlhs = (* CF.do_unfold_hp_def prog pr_hp_defs0 *) cs.CF.hprel_lhs in
       let nrhs = (* CF.do_unfold_hp_def prog rhs_pr_hp_defs0 *) cs.CF.hprel_rhs in
@@ -2096,12 +2097,12 @@ let infer_pre_synthesize prog proc_name callee_hps is pre_constrs need_preproces
 (*compute greatest fixpoint for each set of constraints*)
 let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess detect_dang pre_fix_hps=
   (***********INTENAL*************)
-  let get_pre_fwd post_hps pre_fix_pdefs=
-    let pre_fix_pdefs_ext = List.map (fun (hp,args,f) ->
-        (hp,args, [], CP.mkTrue no_pos, Some f, None, None)
-    ) pre_fix_pdefs in
-    SAU.get_pre_fwd post_hps pre_fix_pdefs_ext
-  in
+  (* let get_pre_fwd post_hps pre_fix_pdefs= *)
+  (*   let pre_fix_pdefs_ext = List.map (fun (hp,args,f) -> *)
+  (*       (hp,args, [], CP.mkTrue no_pos, Some f, None, None) *)
+  (*   ) pre_fix_pdefs in *)
+  (*   SAU.get_pre_fwd post_hps pre_fix_pdefs_ext *)
+  (* in *)
   let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   let do_subst_pre pre_fix_pdefs_grp pre_def_grps=
     let groups0 = List.map  (fun (hp, args, f) -> (hp,args, None, f, [])) pre_fix_pdefs_grp in
