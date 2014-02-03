@@ -14,12 +14,12 @@ module CF = Cformula
 module CFU = Cfutil
 module MCP = Mcpure
 module CEQ = Checkeq
-module TP = Tpdispatcher
+(* module TP = Tpdispatcher *)
 module SAU = Sautility
 module SAO = Saout
 module Inf = Infer
 module SC = Sleekcore
-module LEM = Lemma
+(* module LEM = Lemma *)
 
 (* let infer_shapes = ref (fun (iprog: IA.prog_decl) (cprog: CA.prog_decl) (proc_name: ident) *)
 (*   (hp_constrs: CF.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list) *)
@@ -1453,7 +1453,7 @@ let check_imply prog lhs_b rhs_b=
             let _ = Debug.ninfo_zprint (lazy (("    n_rhs_b: " ^ (Cprinter.string_of_formula_base n_rhs_b)))) no_pos in
             (* let _ = Debug.info_zprint (lazy (("    lmf: " ^ (!CP.print_formula lmf)))) no_pos in *)
             (* let _ = Debug.info_zprint (lazy (("    rmf: " ^ (!CP.print_formula rmf)))) no_pos in *)
-            let b,_,_ = TP.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
+            let b,_,_ = Tpdispatcher.imply_one 20 lmf rmf "sa:check_hrels_imply" true None in
             if b then
               (* let r_res = {n_rhs_b with *)
               (*     CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf *)
@@ -2464,7 +2464,7 @@ let do_entail_check_x vars iprog cprog cs=
     let iante = AS.rev_trans_formula ante1 in
     let iconseq = AS.rev_trans_formula conseq1 in
     let l_coer = IA.mk_lemma (fresh_any_name "sa") LEM_UNSAFE IA.Left [] iante iconseq in
-    let _ = LEM.manage_unsafe_lemmas [l_coer] iprog cprog in
+    let _ = Lemma.manage_unsafe_lemmas [l_coer] iprog cprog in
     ()
   else ()
   in
@@ -3337,12 +3337,12 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let rel_fixs,lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Solver.xpure_heap in
-    (* let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
+    (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
     let valid, n_rhs = match lc_opt with
       | Some lcs -> begin
             if infer_rel_svl = [] then (true, rhs) else
               (* let oblgs = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_rel_list_context lc)) [] lcs in *)
-              (* let r = LEM.preprocess_fixpoint_computation cprog Solver.xpure_heap rhs oblgs infer_rel_svl [] in *)
+              (* let r = Lemma.preprocess_fixpoint_computation cprog Solver.xpure_heap rhs oblgs infer_rel_svl [] in *)
               let ls_rel_args = CF.get_list_rel_args rhs in
               let rel_p = List.fold_left (fun p (post_rel, post_p, pre_rel, pre_p) ->
                   (*normalize the paras (convert back to the orig)*)
@@ -3448,7 +3448,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
   let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
-  let lc_opt = LEM.sa_infer_lemmas iprog cprog [ilemma_inf] in
+  let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in
   let r =
     match lc_opt with
       | Some lcs ->
@@ -3467,7 +3467,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
                       | _ -> false
                 ) hp_rest
                 in
-                let _, hp_defs = !LEM.infer_shapes iprog cprog "temp" hp_lst_assume infer_hps infer_hps
+                let _, hp_defs = !Lemma.infer_shapes iprog cprog "temp" hp_lst_assume infer_hps infer_hps
                 [] [] [] true true in
                 (*normalize args of hp_defs for next rounds (with pure)*)
                 normalize_hp_defs rhs_f hp_defs
