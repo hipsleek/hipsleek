@@ -14,8 +14,8 @@ open Label_only
 
 module H = Hashtbl
 module I = Iast
-module Inf = Infer
-module C = Cast
+(* module Inf = Infer *)
+(* module C = Cast *)
 module CF = Cformula
 module CP = Cpure
 module IF = Iformula
@@ -26,7 +26,7 @@ module IP = Ipure
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
-module TI = Typeinfer
+(* module TI = Typeinfer *)
 (* module SAU = Sautility *)
 (* module SAC = Sacore *)
 module MCP = Mcpure
@@ -68,27 +68,27 @@ I.prog_hopred_decls = [];
 I. prog_barrier_decls = [];
 }
 
-let cobj_def = { C.data_name = "Object";
-				 C.data_fields = [];
-				 C.data_pos = no_pos;
-				 C.data_parent_name = "";
-				 C.data_invs = [];
-				 C.data_methods = [] }
+let cobj_def = { Cast.data_name = "Object";
+				 Cast.data_fields = [];
+				 Cast.data_pos = no_pos;
+				 Cast.data_parent_name = "";
+				 Cast.data_invs = [];
+				 Cast.data_methods = [] }
 
 let cprog = ref { 
-    C.prog_data_decls = [];
-    C.prog_view_decls = [];
-    C.prog_logical_vars = [];
-    (*	C.prog_func_decls = [];*)
-    C.prog_rel_decls = []; (* An Hoa *)
-    C.prog_hp_decls = [];
-    C.prog_view_equiv = [];
-    C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-    (*C.old_proc_decls = [];*)
-    C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
-    (*C.prog_left_coercions = [];
-    C.prog_right_coercions = [];*)
-    C. prog_barrier_decls = []}
+    Cast.prog_data_decls = [];
+    Cast.prog_view_decls = [];
+    Cast.prog_logical_vars = [];
+    (*	Cast.prog_func_decls = [];*)
+    Cast.prog_rel_decls = []; (* An Hoa *)
+    Cast.prog_hp_decls = [];
+    Cast.prog_view_equiv = [];
+    Cast.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+    (*Cast.old_proc_decls = [];*)
+    Cast.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
+    (*Cast.prog_left_coercions = [];
+    Cast.prog_right_coercions = [];*)
+    Cast. prog_barrier_decls = []}
 	
 let _ = 
 	Lem_store.all_lemma # clear_right_coercion;
@@ -111,12 +111,12 @@ let clear_iprog () =
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
-  !cprog.C.prog_data_decls <- [];
-  !cprog.C.prog_view_decls <- [];
-  !cprog.C.prog_rel_decls <- [];
-  !cprog.C.prog_hp_decls <- [];
-  (*!cprog.C.prog_left_coercions <- [];*)
-  (*!cprog.C.prog_right_coercions <- []*)
+  !cprog.Cast.prog_data_decls <- [];
+  !cprog.Cast.prog_view_decls <- [];
+  !cprog.Cast.prog_rel_decls <- [];
+  !cprog.Cast.prog_hp_decls <- [];
+  (*!cprog.Cast.prog_left_coercions <- [];*)
+  (*!cprog.Cast.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
   Lem_store.all_lemma # clear_left_coercion
 
@@ -192,8 +192,8 @@ let silenced_print f s = if !Globals.silence_output then () else f s
 (* (\* ( new_pdef :: iprog.I.prog_view_decls); *\) *)
 (* 		(\*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*\) *)
 (* 		let cpdef = Astsimp.trans_view iprog [] new_pdef in  *)
-(* 		let old_vdec = !cprog.C.prog_view_decls in *)
-(* 		!cprog.C.prog_view_decls <- (cpdef :: !cprog.C.prog_view_decls); *)
+(* 		let old_vdec = !cprog.Cast.prog_view_decls in *)
+(* 		!cprog.Cast.prog_view_decls <- (cpdef :: !cprog.Cast.prog_view_decls); *)
 (* (\* added 07.04.2008	*\)	 *)
 (* 		(\*ignore (print_string ("init: "^(Iprinter.string_of_struc_formula "" pdef.Iast.view_formula )^"\n normalized: "^ *)
 (* 							 (Iprinter.string_of_struc_formula "" wf )^"\n translated: "^ *)
@@ -202,18 +202,18 @@ let silenced_print f s = if !Globals.silence_output then () else f s
 (* 							 ) *)
 (* 				)*\) *)
 (* 		(\* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all:  *)
-(* 		ignore (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*\) *)
+(* 		ignore (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.Cast.prog_view_decls);*\) *)
 (* 		ignore (Astsimp.compute_view_x_formula !cprog cpdef !Globals.n_xpure); *)
 (*         ignore (Astsimp.set_materialized_prop cpdef); *)
 (* 	let cpdef = Astsimp.fill_one_base_case !cprog cpdef in  *)
 (*     (\*let cpdef =  if !Globals.enable_case_inference then Astsimp.view_case_inference !cprog iprog.I.prog_view_decls cpdef else cpdef in*\) *)
 (* 	let n_cpdef = Astsimp.view_prune_inv_inference !cprog cpdef in *)
-(*     !cprog.C.prog_view_decls <- (n_cpdef :: old_vdec); *)
+(*     !cprog.Cast.prog_view_decls <- (n_cpdef :: old_vdec); *)
 (*     let n_cpdef = {n_cpdef with  *)
-(*         C.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.C.view_formula ; *)
-(*         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in *)
+(*         Cast.view_formula =  Solver.prune_pred_struc !cprog true n_cpdef.Cast.view_formula ; *)
+(*         Cast.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds !cprog true c1,c2)) n_cpdef.Cast.view_un_struc_formula;}in *)
 (* 		let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in *)
-(* 		!cprog.C.prog_view_decls <- (n_cpdef :: old_vdec) *)
+(* 		!cprog.Cast.prog_view_decls <- (n_cpdef :: old_vdec) *)
 (* 		(\*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*\) *)
 (* (\* added 07.04.2008	*\)									   *)
 (* 	  with *)
@@ -258,13 +258,13 @@ It is replaced by convert_data_and_pred_to_cast
 (*   Debug.tinfo_pprint "after trans_view" no_pos; *)
 (*   let cviews = *)
 (*     if !Globals.pred_elim_useless then *)
-(*       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews) *)
+(*       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews) *)
 (*     else cviews *)
 (*   in *)
-(*   let _ = !cprog.C.prog_view_decls <- cviews in *)
+(*   let _ = !cprog.Cast.prog_view_decls <- cviews in *)
 (*   let cviews1 = *)
 (*     if !Globals.norm_extract then *)
-(*       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews) *)
+(*       Norm.norm_extract_common !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews) *)
 (*     else cviews *)
 (*   in *)
 (*   let cviews2 = *)
@@ -273,10 +273,10 @@ It is replaced by convert_data_and_pred_to_cast
 (*     else *)
 (*       cviews1 *)
 (*   in *)
-(*   let _ = !cprog.C.prog_view_decls <- cviews2 in *)
+(*   let _ = !cprog.Cast.prog_view_decls <- cviews2 in *)
 (*   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in *)
 (*   Debug.tinfo_pprint "after compute_view" no_pos; *)
-(*   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) !cprog.C.prog_view_decls) in *)
+(*   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) !cprog.Cast.prog_view_decls) in *)
 (*   Debug.tinfo_pprint "after materialzed_prop" no_pos; *)
 (*   let cprog1 = Astsimp.fill_base_case !cprog in *)
 (*   let cprog2 = Astsimp.sat_warnings cprog1 in         *)
@@ -297,8 +297,8 @@ let process_func_def fdef =
 	let tmp = iprog.I.prog_func_decls in
 	  try
 			iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
-			(*let cfdef = Astsimp.trans_func iprog fdef in !cprog.C.prog_func_decls <- (cfdef :: !cprog.C.prog_func_decls);*)
-			(*Smtsolver.add_function cfdef.C.func_name cfdef.C.func_vars cfdef.C.func_formula;*)
+			(*let cfdef = Astsimp.trans_func iprog fdef in !cprog.Cast.prog_func_decls <- (cfdef :: !cprog.Cast.prog_func_decls);*)
+			(*Smtsolver.add_function cfdef.Cast.func_name cfdef.Cast.func_vars cfdef.Cast.func_formula;*)
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_func_decls <- tmp
   else
@@ -315,23 +315,23 @@ let process_rel_def rdef =
 		let new_rdef = {rdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_rdef :: iprog.I.prog_view_decls);
 		let crdef = Astsimp.trans_view iprog new_rdef in
-		let old_vdec = cprog.C.prog_view_decls in
-		cprog.C.prog_view_decls <- (crdef :: cprog.C.prog_view_decls);
+		let old_vdec = cprog.Cast.prog_view_decls in
+		cprog.Cast.prog_view_decls <- (crdef :: cprog.Cast.prog_view_decls);
 		ignore (Astsimp.compute_view_x_formula cprog crdef !Globals.n_xpure);
     let crdef = 
       if !Globals.enable_case_inference then 
         Astsimp.view_case_inference cprog iprog.I.prog_view_decls crdef else crdef in
 		let n_crdef = Astsimp.view_prune_inv_inference cprog crdef in
-    cprog.C.prog_view_decls <- (n_crdef :: old_vdec);
+    cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec);
     let n_crdef = {n_crdef with 
-        C.view_formula =  Solver.prune_pred_struc cprog true n_crdef.C.view_formula ;
-        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.C.view_un_struc_formula;}in
+        Cast.view_formula =  Solver.prune_pred_struc cprog true n_crdef.Cast.view_formula ;
+        Cast.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.Cast.view_un_struc_formula;}in
 		let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
-		cprog.C.prog_view_decls <- (n_crdef :: old_vdec) *)
+		cprog.Cast.prog_view_decls <- (n_crdef :: old_vdec) *)
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
-			let crdef = Astsimp.trans_rel iprog rdef in !cprog.C.prog_rel_decls <- (crdef :: !cprog.C.prog_rel_decls);
+			let crdef = Astsimp.trans_rel iprog rdef in !cprog.Cast.prog_rel_decls <- (crdef :: !cprog.Cast.prog_rel_decls);
 			(* Forward the relation to the smt solver. *)
-			Smtsolver.add_relation crdef.C.rel_name crdef.C.rel_vars crdef.C.rel_formula;
+			Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula;
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
@@ -346,11 +346,11 @@ let process_hp_def hpdef =
             (* are these a newly added hp_pred? *)
             iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
 	      let chpdef, p_chpdef = Astsimp.trans_hp iprog hpdef in
-              let _ = !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls) in
-              let _ = !cprog.C.prog_rel_decls <- (p_chpdef::!cprog.C.prog_rel_decls) in
+              let _ = !cprog.Cast.prog_hp_decls <- (chpdef :: !cprog.Cast.prog_hp_decls) in
+              let _ = !cprog.Cast.prog_rel_decls <- (p_chpdef::!cprog.Cast.prog_rel_decls) in
 	      (* Forward the relation to the smt solver. *)
-              let args = fst (List.split chpdef.C.hp_vars_inst) in
-	      Smtsolver.add_hp_relation chpdef.C.hp_name args chpdef.C.hp_formula;
+              let args = fst (List.split chpdef.Cast.hp_vars_inst) in
+	      Smtsolver.add_hp_relation chpdef.Cast.hp_name args chpdef.Cast.hp_formula;
 	  with
 	    | _ ->  
                   begin
@@ -366,9 +366,9 @@ let process_hp_def hpdef =
 let process_axiom_def adef = begin
 	iprog.I.prog_axiom_decls <- adef :: iprog.I.prog_axiom_decls;
 	let cadef = Astsimp.trans_axiom iprog adef in
-		!cprog.C.prog_axiom_decls <- (cadef :: !cprog.C.prog_axiom_decls);
+		!cprog.Cast.prog_axiom_decls <- (cadef :: !cprog.Cast.prog_axiom_decls);
 	(* Forward the axiom to the smt solver. *)
-	Smtsolver.add_axiom cadef.C.axiom_hypothesis Smtsolver.IMPLIES cadef.C.axiom_conclusion;
+	Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion;
 end
 
 (*this function is never called. it is replaced by process_list_lemma
@@ -386,8 +386,8 @@ let process_lemma ldef =
   (* WN_all_lemma - should we remove the cprog updating *)
   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
-  (*!cprog.C.prog_left_coercions <- l2r @ !cprog.C.prog_left_coercions;*)
-  (*!cprog.C.prog_right_coercions <- r2l @ !cprog.C.prog_right_coercions;*)
+  (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
+  (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
   let res = Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
   (* CF.residues := (match res with *)
@@ -525,7 +525,7 @@ let convert_data_and_pred_to_cast_x () =
   (* convert data *)
   List.iter (fun ddef ->
     let cddef = Astsimp.trans_data iprog ddef in
-    !cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
+    !cprog.Cast.prog_data_decls <- cddef :: !cprog.Cast.prog_data_decls;
     if !perm=NoPerm || not !enable_split_lemma_gen then () 
     else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef)) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
   ) iprog.I.prog_data_decls;
@@ -558,13 +558,13 @@ let convert_data_and_pred_to_cast_x () =
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =
     if !Globals.pred_elim_useless then
-      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
-  let _ = !cprog.C.prog_view_decls <- cviews in
+  let _ = !cprog.Cast.prog_view_decls <- cviews in
   let cviews1 =
     if !Globals.norm_extract then
-      Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+      Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in
   let cviews2 =
@@ -573,7 +573,7 @@ let convert_data_and_pred_to_cast_x () =
     else
       cviews1
   in
-  let _ = !cprog.C.prog_view_decls <- cviews2 in
+  let _ = !cprog.Cast.prog_view_decls <- cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
   Debug.tinfo_pprint "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
@@ -589,8 +589,8 @@ let convert_data_and_pred_to_cast_x () =
   let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else *) [],[] in
   let _ = Lem_store.all_lemma # add_left_coercion l2r in
   let _ = Lem_store.all_lemma # add_right_coercion r2l in
-  (* let _ = cprog5.C.prog_left_coercions <- l2r @ cprog5.C.prog_left_coercions in *)
-  (* let _ = cprog5.C.prog_right_coercions <- r2l @ cprog5.C.prog_right_coercions in *)
+  (* let _ = cprog5.Cast.prog_left_coercions <- l2r @ cprog5.Cast.prog_left_coercions in *)
+  (* let _ = cprog5.Cast.prog_right_coercions <- r2l @ cprog5.Cast.prog_right_coercions in *)
   cprog := cprog5
 
 let convert_data_and_pred_to_cast () = 
@@ -618,11 +618,11 @@ let perform_second_parsing_stage () =
   (*annotate field*)
   let _ = I.annotate_field_pure_ext iprog in
   let cddefs = List.map (Astsimp.trans_data iprog) iprog.I.prog_data_decls in
-  !cprog.C.prog_data_decls <- cddefs
+  !cprog.Cast.prog_data_decls <- cddefs
 
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
-	: (TI.spec_var_type_list*CF.struc_formula) = 
-  let rec helper (mf0 : meta_formula) quant fv_idents tl : (TI.spec_var_type_list*CF.struc_formula) = 
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
+	: (Typeinfer.spec_var_type_list*CF.struc_formula) = 
+  let rec helper (mf0 : meta_formula) quant fv_idents tl : (Typeinfer.spec_var_type_list*CF.struc_formula) = 
     match mf0 with
     | MetaFormCF mf -> 
         (tl,(Cformula.formula_to_struc_formula mf))
@@ -649,7 +649,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
         begin
         let (n_tl,cf1) = helper mf1 quant fv_idents tl in
         let (n_tl,cf2) = helper mf2 quant fv_idents n_tl in
-        let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
+        let svs = List.map (fun v -> Typeinfer.get_spec_var_type_list v n_tl no_pos) vs in
         let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
         (n_tl,res)
       end
@@ -668,13 +668,13 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spe
   in helper mf0 quant fv_idents tlist 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
-	: (TI.spec_var_type_list*CF.struc_formula) 
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
+	: (Typeinfer.spec_var_type_list*CF.struc_formula) 
 	= Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
-  TI.string_of_tlist
+  Typeinfer.string_of_tlist
   (pr_pair pr_none Cprinter.string_of_struc_formula)
   (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents tlist )mf0 quant fv_idents tlist
 
@@ -685,8 +685,8 @@ Astsimp.trans_formula iprog quant
 IN THE FUNCTION GIVE AN EXCEPTION
 TODO Check the 3 functions above!!!
 *)
-let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) 
-  : (TI.spec_var_type_list*CF.formula) = 
+let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
+  : (Typeinfer.spec_var_type_list*CF.formula) = 
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
@@ -694,7 +694,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
       let wf = Astsimp.case_normalize_formula iprog h mf in
-      let n_tl = TI.gather_type_info_formula iprog wf tlist false in
+      let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -712,21 +712,21 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_
   | MetaCompose (vs, mf1, mf2) -> begin
     let (n_tl,cf1) = meta_to_formula mf1 quant fv_idents tlist in
     let (n_tl,cf2) = meta_to_formula mf2 quant fv_idents n_tl in
-    let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
+    let svs = List.map (fun v -> Typeinfer.get_spec_var_type_list v n_tl no_pos) vs in
     let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
     (n_tl,res)
     end
   | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
 
-let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list) : (TI.spec_var_type_list*CF.formula) = 
+let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) : (Typeinfer.spec_var_type_list*CF.formula) = 
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr2 (_,f) = pr_f f in
   Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr2
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
-let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:TI.spec_var_type_list)
-	: (TI.spec_var_type_list*CF.formula) = 
+let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
+	: (Typeinfer.spec_var_type_list*CF.formula) = 
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf -> (tlist,(List.hd mf))
@@ -734,7 +734,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
      
-      let n_tl = TI.gather_type_info_formula iprog wf tlist false in
+      let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
       (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -753,7 +753,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaCompose (vs, mf1, mf2) -> begin
       let (n_tl,cf1) = meta_to_formula_not_rename mf1 quant fv_idents tlist in
       let (n_tl,cf2) = meta_to_formula_not_rename mf2 quant fv_idents n_tl in
-      let svs = List.map (fun v -> TI.get_spec_var_type_list v n_tl no_pos) vs in
+      let svs = List.map (fun v -> Typeinfer.get_spec_var_type_list v n_tl no_pos) vs in
       let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 			(n_tl,res)
     end
@@ -820,7 +820,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                               ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.C.prog_left_coercions in*)
+  (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Solver.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
@@ -830,8 +830,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     else ante
   in
   (* let ante = Astsimp.add_param_ann_constraints_formula ante in *)
-  let vk = TI.fresh_proc_var_kind n_tl Float in
-  let n_tl = TI.type_list_add  (full_perm_name ()) vk n_tl in
+  let vk = Typeinfer.fresh_proc_var_kind n_tl Float in
+  let n_tl = Typeinfer.type_list_add  (full_perm_name ()) vk n_tl in
 (*  let _ = flush stdout in*)
   (* let csq_extra = meta_to_formula iconseq0 false [] stab in *)
   (* let conseq_fvs = CF.fv csq_extra in *)
@@ -863,7 +863,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
   (* let left_co = Lem_store.all_lemma # get_left_coercion in *)
   (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante left_co in *)
-  (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.C.prog_left_coercions in *)
+  (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.Cast.prog_left_coercions in *)
   (* let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in *)
   (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization" *)
   (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
@@ -875,7 +875,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* (\* List of vars appearing in original formula *\) *)
   (* let orig_vars = CF.fv ante @ CF.struc_fv conseq in *)
   (* (\* List of vars needed for abduction process *\) *)
-  (* let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
+  (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
   (* (\* Init context with infer_vars and orig_vars *\) *)
   (* let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(\*  ||  *\) *)
   (*             (\* CP.type_of_spec_var v == FuncT *\)) vars in *)
@@ -884,7 +884,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* (\* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *\) *)
   (* (\* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *\) *)
   (* (\* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *\) *)
-  (* let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in *)
+  (* let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in *)
   (* (\* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *\) *)
   (* let _ = if !Globals.print_core || !Globals.print_core_all *)
   (*   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante) *)
@@ -922,7 +922,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
         let _ = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls v in
         CP.SpecVar (HpT, v, Unprimed)
       with _ ->
-          TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
+          Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
@@ -1018,7 +1018,7 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
     let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
     let r, others = Sautil.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
     let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
-    let _ = C.set_proot_hp_def_raw (Sautil.get_pos args 0 r) (!cprog).C.prog_hp_decls (CP.name_of_spec_var hp) in
+    let _ = Cast.set_proot_hp_def_raw (Sautil.get_pos args 0 r) (!cprog).Cast.prog_hp_decls (CP.name_of_spec_var hp) in
     let pr_new_rel_defn =  (cond_path, exted_pred) in
     let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
     let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
@@ -1055,8 +1055,8 @@ let shape_infer_pre_process constrs pre_hps post_hps=
   let link_hpargs = !sleek_hprel_unknown in
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1129,8 +1129,8 @@ let process_shape_infer pre_hps post_hps=
 let relation_pre_process constrs pre_hps post_hps=
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
-  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1170,7 +1170,7 @@ let process_rel_infer pre_rels post_rels=
   (* let compute_fixpoint_pre_rel rel_name rel_args pre_oblgs proc_spec= *)
   (*   let pre_rel = CP.mkRel rel_name (List.map (fun sv -> CP.mkVar sv no_pos) rel_args) no_pos in *)
   (*   let rec_oblgs,ini_oblgs = normalize_pre_oblgs rel_args rel_name pre_oblgs in *)
-  (*   let pre_fixs = Fixpoint.pre_rel_fixpoint pre_rel [] [] Fixcalc.compute_fixpoint_td *)
+  (*   let pre_fixs = Fixpoint.pre_rel_fixpoint pre_rel [] [] FixcalCast.compute_fixpoint_td *)
   (*     ini_oblgs rel_args proc_spec rec_oblgs in *)
   (*   let _ = List.map (fun ( _,_, pre_rel,pre_def) -> *)
   (*       let _ = Debug.info_hprint (add_str "fixpoint for pre-rels" ( (pr_pair pr pr))) (pre_rel, pre_def) no_pos in *)
@@ -1282,12 +1282,12 @@ let process_validate ils_es=
   let preprocess_iestate act_vars (iguide_vars, ief, iconstrs)=
     let act_idents = (List.map CP.name_of_spec_var act_vars) in
     let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
-              let vk = TI.fresh_proc_var_kind ls t in
+              let vk = Typeinfer.fresh_proc_var_kind ls t in
               ls@[(sv,vk)]
     ) [] act_vars in
     let (n_tl,es_formula) = meta_to_formula ief false (act_idents) act_ti in
     let orig_vars = CF.fv es_formula in
-    let guide_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
+    let guide_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) (orig_vars@act_vars) no_pos)
       iguide_vars in
     let constrs = List.map (preprocess_constr act_idents act_ti) iconstrs in
     (guide_vars, es_formula, constrs)
@@ -1317,16 +1317,16 @@ let process_validate ils_es=
   let _ = match a_r,ex_r with
     | false,true
     | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()
-    | false,false -> let _ = print_endline (validate_id ^ "SUCC.") in ()
+    | false,false -> let _ = print_endline (validate_id ^ "SUCCast.") in ()
     | true, true ->
           (*syn new unknown preds generated between cprog and iprog*)
-          let inew_hprels = Saout.syn_hprel !cprog.C.prog_hp_decls iprog.I.prog_hp_decls in
+          let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in
           let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
           (*for each succ context: validate residue + inferred results*)
           let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
           let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
           let _ = if b then
-            print_endline (validate_id ^ "SUCC.")
+            print_endline (validate_id ^ "SUCCast.")
           else
             print_endline (validate_id ^ "FAIL.")
           in ()
@@ -1380,7 +1380,7 @@ let process_shape_conquer sel_ids cond_paths=
   let defs =
     (* if not (!Globals.pred_syn_modular) then *)
       let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
-      let sel_hps = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
+      let sel_hps = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
       let sel_hps  = List.filter (fun sv ->
           let t = CP.type_of_spec_var sv in
           ((* is_RelT t || *) is_HpT t )) sel_hps in
@@ -1553,8 +1553,8 @@ let process_shape_split pre_hps post_hps=
   (* let _, sel_post_hps = Sautil.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
   (*get infer_vars*)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
-  let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
-  let post_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
+  let pre_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
+  let post_vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (post_hps) in
   let pre_vars1 = (CP.remove_dups_svl pre_vars) in
   let post_vars1 = (CP.remove_dups_svl post_vars) in
   let infer_pre_vars,pre_hp_rels  = List.partition (fun sv ->
@@ -1722,7 +1722,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
 
 let print_exception_result s (num_id: string) =
           Log.last_cmd # dumping "sleek_dump(exception)";
-          silenced_print print_string (num_id^": EXC. "^s^"\n")
+          silenced_print print_string (num_id^": EXCast. "^s^"\n")
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in

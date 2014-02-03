@@ -21,13 +21,13 @@ module IP = Ipure
 module CF = Cformula
 module CFU = Cfutil
 module CFS = Cfsolver
-(* module GV = Globalvars*)
+(* module GV = Globalvars *)
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
-module PRED = Predicate
+(* module PRED = Predicate *)
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
 
@@ -2062,7 +2062,7 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
   in
-  let c_p_hprel = PRED.generate_pure_rel chprel in
+  let c_p_hprel = Predicate.generate_pure_rel chprel in
   chprel,c_p_hprel
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
