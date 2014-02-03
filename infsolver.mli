@@ -878,36 +878,6 @@ module ZInfinity :
   val num_leq : coq_ZE option -> coq_ZE option -> bool
  end
 
-module ZInfinityTop : 
- sig 
-  type coq_ZE =
-  | ZE_Fin of z
-  | ZE_Inf
-  | ZE_NegInf
-  
-  val coq_ZE_rect : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
-  
-  val coq_ZE_rec : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
-  
-  val coq_ZE_eq_dec : coq_ZE -> coq_ZE -> bool
-  
-  val coq_ZEneg : coq_ZE -> coq_ZE
-  
-  type coq_A = coq_ZE option
-  
-  val coq_Const0 : coq_ZE option
-  
-  val coq_Const1 : coq_ZE option
-  
-  val num_eq_dec : coq_A -> coq_A -> bool
-  
-  val num_neg : coq_ZE option -> coq_ZE option
-  
-  val num_plus : coq_ZE option -> coq_ZE option -> coq_ZE option
-  
-  val num_leq : coq_ZE option -> coq_ZE option -> bool
- end
-
 module ZNumLattice : 
  sig 
   type coq_A = z
@@ -935,65 +905,6 @@ module type SEMANTICS_INPUT =
   type coq_QT 
   
   val conv : coq_Q -> coq_QT -> N.coq_A
-  
-  val constQT : coq_Q -> coq_QT
-  
-  val coeff : coq_Q -> nat
-  
-  val add_term : coq_Q -> nat
- end
-
-module PureInfinityTop : 
- sig 
-  module N : 
-   sig 
-    type coq_ZE = ZInfinityTop.coq_ZE =
-    | ZE_Fin of z
-    | ZE_Inf
-    | ZE_NegInf
-    
-    val coq_ZE_rect : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
-    
-    val coq_ZE_rec : (z -> 'a1) -> 'a1 -> 'a1 -> coq_ZE -> 'a1
-    
-    val coq_ZE_eq_dec : coq_ZE -> coq_ZE -> bool
-    
-    val coq_ZEneg : coq_ZE -> coq_ZE
-    
-    type coq_A = coq_ZE option
-    
-    val coq_Const0 : coq_ZE option
-    
-    val coq_Const1 : coq_ZE option
-    
-    val num_eq_dec : coq_A -> coq_A -> bool
-    
-    val num_neg : coq_ZE option -> coq_ZE option
-    
-    val num_plus : coq_ZE option -> coq_ZE option -> coq_ZE option
-    
-    val num_leq : coq_ZE option -> coq_ZE option -> bool
-   end
-  
-  type coq_AQ =
-  | Q_Z
-  | Q_ZE
-  
-  val coq_AQ_rect : 'a1 -> 'a1 -> coq_AQ -> 'a1
-  
-  val coq_AQ_rec : 'a1 -> 'a1 -> coq_AQ -> 'a1
-  
-  type coq_Q = coq_AQ
-  
-  type coq_QT = __
-  
-  val conv : coq_Q -> coq_QT -> N.coq_A
-  
-  val constQT : coq_Q -> coq_QT
-  
-  val coeff : coq_Q -> nat
-  
-  val add_term : coq_Q -> nat
  end
 
 module PureInfinity : 
@@ -1041,12 +952,6 @@ module PureInfinity :
   type coq_QT = __
   
   val conv : coq_Q -> coq_QT -> N.coq_A
-  
-  val constQT : coq_Q -> coq_QT
-  
-  val coeff : coq_Q -> nat
-  
-  val add_term : coq_Q -> nat
  end
 
 module PureInt : 
@@ -1073,12 +978,6 @@ module PureInt :
   type coq_QT = z
   
   val conv : coq_Q -> coq_QT -> coq_QT
-  
-  val constQT : coq_Q -> coq_QT
-  
-  val coeff : coq_Q -> nat
-  
-  val add_term : coq_Q -> nat
  end
 
 module IntToInfinity : 
@@ -1110,46 +1009,14 @@ module IntToInfinity :
     
     val num_plus : coq_ZE option -> coq_ZE option -> coq_ZE option
     
-    val num_leq :
-      coq_ZE
-      option
-      ->
-      coq_ZE
-      option
-      ->
-      bool
+    val num_leq : coq_ZE option -> coq_ZE option -> bool
    end
   
-  type coq_Q
-    =
-    unit0
+  type coq_Q = unit0
   
-  type coq_QT
-    =
-    z
+  type coq_QT = z
   
-  val conv :
-    coq_Q
-    ->
-    coq_QT
-    ->
-    N.coq_ZE
-    option
-  
-  val constQT :
-    coq_Q
-    ->
-    coq_QT
-  
-  val coeff :
-    coq_Q
-    ->
-    nat
-  
-  val add_term :
-    coq_Q
-    ->
-    nat
+  val conv : coq_Q -> coq_QT -> N.coq_ZE option
  end
 
 module ArithSemantics : 
@@ -1159,1021 +1026,117 @@ module ArithSemantics :
   type coq_ZExp =
   | ZExp_Var of V.var
   | ZExp_Const of I.N.coq_A
-  | ZExp_Add of coq_ZExp
-     * coq_ZExp
+  | ZExp_Add of coq_ZExp * coq_ZExp
   | ZExp_Inv of coq_ZExp
-  | ZExp_Sub of coq_ZExp
-     * coq_ZExp
-  | ZExp_Mult of z
-     * coq_ZExp
+  | ZExp_Sub of coq_ZExp * coq_ZExp
+  | ZExp_Mult of z * coq_ZExp
   
   val coq_ZExp_rect :
-    (V.var
-    ->
-    'a1)
-    ->
-    (I.N.coq_A
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (z
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    coq_ZExp
-    ->
-    'a1
+    (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp ->
+    'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp
+    -> 'a1 -> 'a1) -> (z -> coq_ZExp -> 'a1 -> 'a1) -> coq_ZExp -> 'a1
   
   val coq_ZExp_rec :
-    (V.var
-    ->
-    'a1)
-    ->
-    (I.N.coq_A
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    'a1
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (z
-    ->
-    coq_ZExp
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    coq_ZExp
-    ->
-    'a1
+    (V.var -> 'a1) -> (I.N.coq_A -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp ->
+    'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> coq_ZExp
+    -> 'a1 -> 'a1) -> (z -> coq_ZExp -> 'a1 -> 'a1) -> coq_ZExp -> 'a1
   
   type coq_ZBF =
   | ZBF_Const of bool
-  | ZBF_Lt of coq_ZExp
-     * coq_ZExp
-  | ZBF_Lte of coq_ZExp
-     * coq_ZExp
-  | ZBF_Gt of coq_ZExp
-     * coq_ZExp
-  | ZBF_Gte of coq_ZExp
-     * coq_ZExp
-  | ZBF_Eq of coq_ZExp
-     * coq_ZExp
-  | ZBF_Eq_Max of coq_ZExp
-     * coq_ZExp
-     * coq_ZExp
-  | ZBF_Eq_Min of coq_ZExp
-     * coq_ZExp
-     * coq_ZExp
-  | ZBF_Neq of coq_ZExp
-     * coq_ZExp
+  | ZBF_Lt of coq_ZExp * coq_ZExp
+  | ZBF_Lte of coq_ZExp * coq_ZExp
+  | ZBF_Gt of coq_ZExp * coq_ZExp
+  | ZBF_Gte of coq_ZExp * coq_ZExp
+  | ZBF_Eq of coq_ZExp * coq_ZExp
+  | ZBF_Eq_Max of coq_ZExp * coq_ZExp * coq_ZExp
+  | ZBF_Eq_Min of coq_ZExp * coq_ZExp * coq_ZExp
+  | ZBF_Neq of coq_ZExp * coq_ZExp
   
   val coq_ZBF_rect :
-    (bool
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    coq_ZBF
-    ->
-    'a1
+    (bool -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp
+    -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1)
+    -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> coq_ZExp ->
+    'a1) -> (coq_ZExp -> coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp ->
+    coq_ZExp -> 'a1) -> coq_ZBF -> 'a1
   
   val coq_ZBF_rec :
-    (bool
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    (coq_ZExp
-    ->
-    coq_ZExp
-    ->
-    'a1)
-    ->
-    coq_ZBF
-    ->
-    'a1
+    (bool -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp
+    -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> 'a1)
+    -> (coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp -> coq_ZExp -> coq_ZExp ->
+    'a1) -> (coq_ZExp -> coq_ZExp -> coq_ZExp -> 'a1) -> (coq_ZExp ->
+    coq_ZExp -> 'a1) -> coq_ZBF -> 'a1
   
   type coq_ZF =
   | ZF_BF of coq_ZBF
-  | ZF_And of coq_ZF
-     * coq_ZF
-  | ZF_Or of coq_ZF
-     * coq_ZF
-  | ZF_Imp of coq_ZF
-     * coq_ZF
+  | ZF_And of coq_ZF * coq_ZF
+  | ZF_Or of coq_ZF * coq_ZF
+  | ZF_Imp of coq_ZF * coq_ZF
   | ZF_Not of coq_ZF
-  | ZF_Forall of V.var
-     * I.coq_Q
-     * coq_ZF
-  | ZF_Exists of V.var
-     * I.coq_Q
-     * coq_ZF
+  | ZF_Forall of V.var * I.coq_Q * coq_ZF
+  | ZF_Exists of V.var * I.coq_Q * coq_ZF
   
   val coq_ZF_rect :
-    (coq_ZBF
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (V.var
-    ->
-    I.coq_Q
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (V.var
-    ->
-    I.coq_Q
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    coq_ZF
-    ->
-    'a1
+    (coq_ZBF -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF ->
+    'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1)
+    -> (coq_ZF -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1)
+    -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1) -> coq_ZF -> 'a1
   
   val coq_ZF_rec :
-    (coq_ZBF
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (V.var
-    ->
-    I.coq_Q
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    (V.var
-    ->
-    I.coq_Q
-    ->
-    coq_ZF
-    ->
-    'a1
-    ->
-    'a1)
-    ->
-    coq_ZF
-    ->
-    'a1
+    (coq_ZBF -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF ->
+    'a1 -> coq_ZF -> 'a1 -> 'a1) -> (coq_ZF -> 'a1 -> coq_ZF -> 'a1 -> 'a1)
+    -> (coq_ZF -> 'a1 -> 'a1) -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1)
+    -> (V.var -> I.coq_Q -> coq_ZF -> 'a1 -> 'a1) -> coq_ZF -> 'a1
   
-  val num_mult_nat :
-    nat
-    ->
-    I.N.coq_A
-    ->
-    I.N.coq_A
+  val num_mult_nat : nat -> I.N.coq_A -> I.N.coq_A
   
-  val num_mult :
-    z
-    ->
-    I.N.coq_A
-    ->
-    I.N.coq_A
+  val num_mult : z -> I.N.coq_A -> I.N.coq_A
   
-  val subst_exp :
-    (V.var,
-    I.N.coq_A)
-    prod
-    ->
-    coq_ZExp
-    ->
-    coq_ZExp
+  val subst_exp : (V.var, I.N.coq_A) prod -> coq_ZExp -> coq_ZExp
   
-  val subst_bf :
-    (V.var,
-    I.N.coq_A)
-    prod
-    ->
-    coq_ZBF
-    ->
-    coq_ZBF
+  val subst_bf : (V.var, I.N.coq_A) prod -> coq_ZBF -> coq_ZBF
   
-  val substitute :
-    (V.var,
-    I.N.coq_A)
-    prod
-    ->
-    coq_ZF
-    ->
-    coq_ZF
+  val substitute : (V.var, I.N.coq_A) prod -> coq_ZF -> coq_ZF
   
-  val dexp2ZE :
-    coq_ZExp
-    ->
-    I.N.coq_A
+  val dexp2ZE : coq_ZExp -> I.N.coq_A
   
-  val dzbf2bool :
-    coq_ZBF
-    ->
-    bool
+  val dzbf2bool : coq_ZBF -> bool
   
-  val length_zform :
-    coq_ZF
-    ->
-    nat
+  val length_zform : coq_ZF -> nat
   
-  val length_exp :
-    coq_ZExp
-    ->
-    nat
+  val eliminateMinMax : coq_ZBF -> coq_ZF
   
-  val eliminateMinMax :
-    coq_ZBF
-    ->
-    coq_ZF
-  
-  val simplifyZF :
-    coq_ZF
-    ->
-    coq_ZF
+  val simplifyZF : coq_ZF -> coq_ZF
  end
 
 module type STRVAR = 
  sig 
   type var 
   
-  val var_eq_dec :
-    var
-    ->
-    var
-    ->
-    bool
+  val var_eq_dec : var -> var -> bool
   
-  val var2string :
-    var
-    ->
-    char list
+  val var2string : var -> char list
   
-  val string2var :
-    char list
-    ->
-    var
+  val string2var : char list -> var
  end
 
 module InfSolver : 
  functor (Coq_sv:STRVAR) ->
  sig 
-  module TA : 
-   sig 
-    type coq_ZExp =
-    | ZExp_Var of Coq_sv.var
-    | ZExp_Const of PureInfinityTop.N.coq_A
-    | ZExp_Add of coq_ZExp
-       * coq_ZExp
-    | ZExp_Inv of coq_ZExp
-    | ZExp_Sub of coq_ZExp
-       * coq_ZExp
-    | ZExp_Mult of z
-       * coq_ZExp
-    
-    val coq_ZExp_rect :
-      (Coq_sv.var
-      ->
-      'a1)
-      ->
-      (PureInfinityTop.N.coq_A
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (z
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      coq_ZExp
-      ->
-      'a1
-    
-    val coq_ZExp_rec :
-      (Coq_sv.var
-      ->
-      'a1)
-      ->
-      (PureInfinityTop.N.coq_A
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (z
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      coq_ZExp
-      ->
-      'a1
-    
-    type coq_ZBF =
-    | ZBF_Const of bool
-    | ZBF_Lt of coq_ZExp
-       * coq_ZExp
-    | ZBF_Lte of coq_ZExp
-       * coq_ZExp
-    | ZBF_Gt of coq_ZExp
-       * coq_ZExp
-    | ZBF_Gte of coq_ZExp
-       * coq_ZExp
-    | ZBF_Eq of coq_ZExp
-       * coq_ZExp
-    | ZBF_Eq_Max of coq_ZExp
-       * coq_ZExp
-       * coq_ZExp
-    | ZBF_Eq_Min of coq_ZExp
-       * coq_ZExp
-       * coq_ZExp
-    | ZBF_Neq of coq_ZExp
-       * coq_ZExp
-    
-    val coq_ZBF_rect :
-      (bool
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      coq_ZBF
-      ->
-      'a1
-    
-    val coq_ZBF_rec :
-      (bool
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      coq_ZExp
-      ->
-      'a1)
-      ->
-      coq_ZBF
-      ->
-      'a1
-    
-    type coq_ZF =
-    | ZF_BF of coq_ZBF
-    | ZF_And of coq_ZF
-       * coq_ZF
-    | ZF_Or of coq_ZF
-       * coq_ZF
-    | ZF_Imp of coq_ZF
-       * coq_ZF
-    | ZF_Not of coq_ZF
-    | ZF_Forall of Coq_sv.var
-       * PureInfinityTop.coq_Q
-       * coq_ZF
-    | ZF_Exists of Coq_sv.var
-       * PureInfinityTop.coq_Q
-       * coq_ZF
-    
-    val coq_ZF_rect :
-      (coq_ZBF
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (Coq_sv.var
-      ->
-      PureInfinityTop.coq_Q
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (Coq_sv.var
-      ->
-      PureInfinityTop.coq_Q
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      coq_ZF
-      ->
-      'a1
-    
-    val coq_ZF_rec :
-      (coq_ZBF
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (Coq_sv.var
-      ->
-      PureInfinityTop.coq_Q
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (Coq_sv.var
-      ->
-      PureInfinityTop.coq_Q
-      ->
-      coq_ZF
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      coq_ZF
-      ->
-      'a1
-    
-    val num_mult_nat :
-      nat
-      ->
-      PureInfinityTop.N.coq_A
-      ->
-      PureInfinityTop.N.coq_A
-    
-    val num_mult :
-      z
-      ->
-      PureInfinityTop.N.coq_A
-      ->
-      PureInfinityTop.N.coq_A
-    
-    val subst_exp :
-      (Coq_sv.var,
-      PureInfinityTop.N.coq_A)
-      prod
-      ->
-      coq_ZExp
-      ->
-      coq_ZExp
-    
-    val subst_bf :
-      (Coq_sv.var,
-      PureInfinityTop.N.coq_A)
-      prod
-      ->
-      coq_ZBF
-      ->
-      coq_ZBF
-    
-    val substitute :
-      (Coq_sv.var,
-      PureInfinityTop.N.coq_A)
-      prod
-      ->
-      coq_ZF
-      ->
-      coq_ZF
-    
-    val dexp2ZE :
-      coq_ZExp
-      ->
-      PureInfinityTop.N.coq_A
-    
-    val dzbf2bool :
-      coq_ZBF
-      ->
-      bool
-    
-    val length_zform :
-      coq_ZF
-      ->
-      nat
-    
-    val length_exp :
-      coq_ZExp
-      ->
-      nat
-    
-    val eliminateMinMax :
-      coq_ZBF
-      ->
-      coq_ZF
-    
-    val simplifyZF :
-      coq_ZF
-      ->
-      coq_ZF
-   end
-  
   module IA : 
    sig 
     type coq_ZExp =
     | ZExp_Var of Coq_sv.var
     | ZExp_Const of PureInfinity.N.coq_A
-    | ZExp_Add of coq_ZExp
-       * coq_ZExp
+    | ZExp_Add of coq_ZExp * coq_ZExp
     | ZExp_Inv of coq_ZExp
-    | ZExp_Sub of coq_ZExp
-       * coq_ZExp
-    | ZExp_Mult of z
-       * coq_ZExp
+    | ZExp_Sub of coq_ZExp * coq_ZExp
+    | ZExp_Mult of z * coq_ZExp
     
     val coq_ZExp_rect :
-      (Coq_sv.var
-      ->
-      'a1)
-      ->
-      (PureInfinity.N.coq_A
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (coq_ZExp
-      ->
-      'a1
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      (z
-      ->
-      coq_ZExp
-      ->
-      'a1
-      ->
-      'a1)
-      ->
-      coq_ZExp
-      ->
-      'a1
+      (Coq_sv.var -> 'a1) -> (PureInfinity.N.coq_A -> 'a1) -> (coq_ZExp ->
+      'a1 -> coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp -> 'a1 -> 'a1) -> (coq_ZExp
+      -> 'a1 -> coq_ZExp -> 'a1 -> 'a1) -> (z -> coq_ZExp -> 'a1 -> 'a1) ->
+      coq_ZExp -> 'a1
     
     val coq_ZExp_rec :
       (Coq_sv.var
@@ -2564,11 +1527,6 @@ module InfSolver :
     
     val length_zform :
       coq_ZF
-      ->
-      nat
-    
-    val length_exp :
-      coq_ZExp
       ->
       nat
     
@@ -3035,11 +1993,6 @@ module InfSolver :
       ->
       nat
     
-    val length_exp :
-      coq_ZExp
-      ->
-      nat
-    
     val eliminateMinMax :
       coq_ZBF
       ->
@@ -3503,11 +2456,6 @@ module InfSolver :
       ->
       nat
     
-    val length_exp :
-      coq_ZExp
-      ->
-      nat
-    
     val eliminateMinMax :
       coq_ZBF
       ->
@@ -3518,47 +2466,6 @@ module InfSolver :
       ->
       coq_ZF
    end
-  
-  val coq_TATrue :
-    TA.coq_ZBF
-  
-  val coq_TAFalse :
-    TA.coq_ZBF
-  
-  val top_trans_bf :
-    TA.coq_ZBF
-    ->
-    TA.coq_ZBF
-  
-  val top_trans :
-    TA.coq_ZF
-    ->
-    TA.coq_ZF
-  
-  val proj_inf :
-    PureInfinityTop.N.coq_A
-    ->
-    PureInfinity.N.coq_A
-  
-  val top_inf_trans_exp :
-    TA.coq_ZExp
-    ->
-    IA.coq_ZExp
-  
-  val top_inf_trans_bf :
-    TA.coq_ZBF
-    ->
-    IA.coq_ZBF
-  
-  val top_inf_trans_q :
-    PureInfinityTop.coq_AQ
-    ->
-    PureInfinity.coq_AQ
-  
-  val top_inf_trans :
-    TA.coq_ZF
-    ->
-    IA.coq_ZF
   
   val inf_trans_exp :
     IA.coq_ZExp
