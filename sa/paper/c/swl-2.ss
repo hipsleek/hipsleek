@@ -40,8 +40,15 @@ HH<prev,sent> ==
   * prev::HP0<sent>&self!=sent & self!=null
 inv self!=null & self!=sent;
 
-GG<cur':node,prev,sent> == prev::HP0<cur'> * self::node<_,prev>@M&cur'=sent
+GG<cur':node,prev,sent> == (exists p: self::node<_,p>@M * p::HP0<cur'> & p=prev
+     &cur'=sent)
 inv self!=null;
+
+
+GG0<cur':node,sent> == self::node<_,p>@M * p::HP0<cur'> & cur'=sent
+inv self!=null;
+
+
 
 HP0<sent> ==
                        next::lx1<sent>@M * self::node<val,next>@M&self!=sent
@@ -67,7 +74,8 @@ void lscan( node@R cur, node@R prev, node sent)
 
 
   requires cur::HH<prev,sent>
-  ensures prev'::GG<cur',prev,sent>;
+//ensures prev'::GG<cur',prev,sent>;
+  ensures prev'::GG0<cur',sent>;
 
 /*
 requires cur::ll<sent> * prev::lseg<sent> & cur!=null 

@@ -24,7 +24,7 @@ ull<n, c,sm> ==
 		self::node<sm, null> & n=1  & c=0
   or	self::node<sm, q> * q::ull<n-1, c1, qs> 
               & (sm<=qs & c=c1 | sm>qs & c=1+c1)
-  	or	self::node<sm, q> * q::ull<n-1, qs> & sm>qs
+  /* or	self::node<sm, q> * q::ull<n-1,c, qs> & sm>qs */
 	inv self!=null & n>=1 & 0<=c<n ;
 
 
