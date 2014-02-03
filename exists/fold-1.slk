@@ -1,0 +1,29 @@
+data node {
+  node next;
+}.
+
+pred ls<p,n> == self=null & n=0
+ or self::node<q>*q::ls<p,n-1>
+ inv n>=0.
+
+//(1)
+checkentail x::node<q>*q::ls<p,n>  |- (exists m: x::ls<p,m> & m=2).
+print residue.
+
+//(2)
+checkentail x::node<q>*q::ls<p,n>  |- x::ls<p,m> & m=2.
+print residue.
+
+//(2)
+//checkentail x::node<x>*q::ls<p,n>  |- (exists m: x::ls<p,m> & m=2).
+//print residue.
+
+lemma_unsafe self::ls<p,n> <- self::ls<q,n-1> * q::node<p>.
+
+//(3)
+checkentail x::ls<q,n>*q::node<p>  |- (exists m: x::ls<p,m> & m=n+1).
+print residue.
+
+//(4)
+checkentail x::ls<q,n>*q::node<p>  |- x::ls<p,m> & m=2.
+print residue.

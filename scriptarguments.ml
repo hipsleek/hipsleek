@@ -152,6 +152,15 @@ let common_arguments = [
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
+  ("--dump-lemmas-short", Arg.Unit 
+      (fun _ -> Globals.dump_lemmas := true;
+          Globals.dump_lemmas_med := true;),
+   "enable lemma printing (short version)");
+  ("--dls", Arg.Unit
+      (fun _ -> 
+          Globals.dump_lemmas_med := true;
+          Globals.dump_lemmas := true;),
+   "enable lemma printing (short version)");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
@@ -525,6 +534,12 @@ let common_arguments = [
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
+  ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
+  ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
+  ("--lem-dis-fold", Arg.Clear Globals.allow_lemma_fold, "Disable do_fold with right lemma");
+  ("--lem-en-switch", Arg.Set Globals.allow_lemma_switch, "Allow lhs/lhs switching for Lemma Proving");
+  ("--lem-dis-switch", Arg.Clear Globals.allow_lemma_switch, "Disallow lhs/lhs switching for Lemma Proving");
   ("--lem-en-deep-unfold", Arg.Set Globals.allow_lemma_deep_unfold, "Allow deep unfold for Lemma Proving");
   ("--lem-dis-deep-unfold", Arg.Clear Globals.allow_lemma_deep_unfold, "Disallow deep unfold for Lemma Proving");
   ("--lem-en-residue", Arg.Set Globals.allow_lemma_residue, "Allow residue for Lemma Proving");
@@ -586,7 +601,8 @@ let common_arguments = [
   ("--pred-en-split", Arg.Set Globals.pred_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
-   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
+  ("--pred-seg-unify", Arg.Set Globals.pred_seg_unify, "attempt to segmentation pred defs");
+  ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");

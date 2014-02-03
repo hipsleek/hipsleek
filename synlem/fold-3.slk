@@ -1,0 +1,57 @@
+data node { int val ; node next }.
+
+pred lseg<n> == self:node=null & n=0
+  or self::node<_,null> & n>=0
+         inv n >= 0.
+
+//lemma_unsafe self::lseg<n> <- self::node<_,null> & n=1.
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=2).
+print residue.
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk> & kkk=2.
+print residue.
+
+/*
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk>.
+print residue.
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=5).
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk> & kkk=5.
+print residue.
+*/
+
+/*
+# fold-3.slk
+
+why this fails? when fold-1.slk succeeds
+How come right lemma is not being triggered?
+
+Entail 3: Fail.(must) cause: self!=null |-  self=null. LOCS:[19;0] (must-bug)
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=1).
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk> & kkk=1.
+print residue.
+
+Entail 1: Fail.(must) cause:AndR[ true |-  exists(kkk_47:kkk_47=1 & kkk_47=0). LOCS:[0] (RHS: contradiction), self!=null |-  self=null. LOCS:[10;0] (must-bug)]
+
+Entail 2: Fail.(must) cause:AndR[ true |-  kkk=0 & kkk=1. LOCS:[0;15] (RHS: contradiction), self!=null |-  self=null. LOCS:[14;0] (must-bug)]
+
+*/
+

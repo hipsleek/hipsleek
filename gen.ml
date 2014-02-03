@@ -433,6 +433,24 @@ end;;
 
 exception Stack_Error
 
+class ['a] mut_option =
+  object (self)
+     val mutable init_flag = false
+     val mutable value = (None:'a option)
+     method is_init  = init_flag
+     method get = value
+     method set (i:'a option) = 
+       begin
+         if init_flag then ()
+         else (init_flag = true; value <- i)
+       end
+     method set_fn f =
+       begin
+         if (init_flag)  then ()
+         else (init_flag = true; value <- f ())
+       end
+   end;;
+
 class change_flag =
    object 
      val mutable cnt = 0

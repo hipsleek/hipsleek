@@ -8,6 +8,10 @@ let total_entailments = ref 0
 
 let debug_precise_trace = ref false
 
+type formula_type =
+  | Simple
+  | Complex
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -691,6 +695,9 @@ let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
+let allow_lemma_switch = ref true
+let allow_lemma_fold = ref true
+let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
 
@@ -740,12 +747,12 @@ let pred_split = ref false
 
 let sa_refine_dang = ref false
 
-let pred_elim_useless = ref false
+let pred_elim_useless = ref true
 let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
@@ -766,7 +773,11 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref true
+let pred_seg_unify = ref false
+
+let pred_equiv = ref false
+
+let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
 
@@ -950,6 +961,7 @@ let pre_residue_lvl = ref 0
 
 let check_coercions = ref false
 let dump_lemmas = ref false
+let dump_lemmas_med = ref false
 
 let num_self_fold_search = ref 0
 
