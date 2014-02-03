@@ -327,7 +327,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
             | ViewNode{h_formula_view_node=p;h_formula_view_imm=imm} -> (imm, [], p)
             | HRel (hp,e,_) ->
                   let args = CP.diff_svl (get_all_sv  rhs_node) [hp] in
-                  let root, _  = Sautility.find_root prog [hp] args  [] in
+                  let root, _  = Sautil.find_root prog [hp] args  [] in
                   let _ = Debug.tinfo_hprint (add_str "root" Cprinter.string_of_spec_var) root pos in
                   (CP.ConstAnn(Mutable), [], root)
             | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
@@ -619,7 +619,7 @@ and get_view_nodes_ptrs_to_view prog hd_nodes hv_nodes view_sv =
 and get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels view_sv =
   (List.filter (fun (hp0, e0,_) ->  
       let args0 = CP.diff_svl (get_all_sv (HRel(hp0, e0,no_pos))) [hp0] in
-      let root0, _  = Sautility.find_root prog [hp0] args0  [] in
+      let root0, _  = Sautil.find_root prog [hp0] args0  [] in
       let ptrs = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes [root0] in
       (* replace root with aset *)
       not(empty_inters view_sv ptrs)
@@ -647,7 +647,7 @@ and check_pred_reachability prog (must_contain: P.spec_var list) (target_f: Cfor
     if (empty_inters ptrs0 must_contain) then
       let ptrs0 = (List.map (fun (hp0,e0,_) -> 
           let args0 = CP.diff_svl (get_all_sv (HRel(hp0, e0,no_pos))) [hp0] in
-          let root0, _  = Sautility.find_root prog [hp0] args0  [] in
+          let root0, _  = Sautil.find_root prog [hp0] args0  [] in
           root0) (get_hrels_ptrs_to_view prog hd_nodes hv_nodes hrels target_aset)) in
       if (empty_inters ptrs0 must_contain) then false
       else true
@@ -695,7 +695,7 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
           let args = CP.diff_svl (get_all_sv lhs_node) [hp] in
            (* let _ = DD.info_zprint (lazy (("  args: " ^ (!CP.print_svl args)))) no_pos in *)
           if args = [] then [] else
-            let root, _  = Sautility.find_root prog [hp] args  [] in
+            let root, _  = Sautil.find_root prog [hp] args  [] in
             let root_aset = CP.EMapSV.find_equiv_all root emap in
             let root_aset = root::root_aset in
             (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)

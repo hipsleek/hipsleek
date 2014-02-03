@@ -5508,7 +5508,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                   else
                                   (*formula_ext_complete = pre_c;*)
                                   let rel_args = CF.get_rel_args formula_base in
-                                  (* let rel_args1 = Sautility.find_close_f rel_args formula_base in *)
+                                  (* let rel_args1 = Sautil.find_close_f rel_args formula_base in *)
                                   (* let _ = DD.info_zprint  (lazy  ("  formula_base: " ^ (Cprinter.string_of_formula formula_base))) pos in *)
                                   (* let _ = DD.info_zprint  (lazy  ("  rel_args: " ^ (!CP.print_svl rel_args))) pos in *)
                                   (* let _ = DD.info_zprint  (lazy  ("  rel_args1: " ^ (!CP.print_svl rel_args1))) pos in *)
@@ -10739,7 +10739,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let var_to_fold = 
     match ln2 with 
       | HRel (hp, e, _) ->  let args = CP.diff_svl (get_all_sv  ln2) [hp] in
-        let root, _  = Sautility.find_root prog [hp] args  [] in
+        let root, _  = Sautil.find_root prog [hp] args  [] in
         root
       | _ ->  get_node_var ln2 in
   let ctx0 = Ctx estate in

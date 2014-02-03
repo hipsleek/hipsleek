@@ -8,7 +8,7 @@ module CP=Cpure
 module MCP=Mcpure
 module C = Cast
 module TP = Tpdispatcher
-module SAU = Sautility
+(* module SAU = Sautility *)
 
 
 (***********************************************)
@@ -383,7 +383,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
   (***views to hprels*******)
   let fs1 = List.map CF.elim_exists fs in
   let fs2,map = List.split (List.map view_to_hprel fs1) in
-  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
+  let defs,elim_ss = Sautil.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
     hp self_var vdecl.C.view_vars args (List.map (fun f-> (f,None)) fs2) in
   match defs with
     | [a] -> [vdecl]
@@ -400,7 +400,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
         (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
-        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cur_m cviews def2 in
+        let (_, eq_hfs) = Sautil.match_one_hp_views iprog cprog cur_m cviews def2 in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
              let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 

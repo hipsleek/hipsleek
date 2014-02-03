@@ -15,7 +15,7 @@ module CFU = Cfutil
 module MCP = Mcpure
 module CEQ = Checkeq
 (* module TP = Tpdispatcher *)
-(* module SAU = Sautility *)
+(* module SAU = Sautil *)
 (* module SAO = Saout *)
 (* module Inf = Infer *)
 (* module SC = Sleekcore *)
@@ -149,7 +149,7 @@ let generate_xpure_view_hp_x drop_hpargs total_unk_map=
           (*     | None -> None, xp.CP.xpure_view_arguments *)
           (*     |Some _ -> Some (List.hd args), (List.tl args) *)
           (* in *)
-          let new_args = Sautility.retrieve_args_from_locs args locs in
+          let new_args = Sautil.retrieve_args_from_locs args locs in
           let new_xpv = {xp with (* CP.xpure_view_node =  List.hd new_args; *)
               CP.xpure_view_arguments =  new_args
           }
@@ -279,7 +279,7 @@ let generate_linking unk_map lhs_hpargs rhs_hpargs post_hps pos=
   (*   let post_hpargs1 = List.map (fun (hp,args) -> (hp, CP.subst_var_list ss args)) post_hpargs in *)
     let unk_hps_args = List.fold_left (fun ls (hp1, args1) ->
         let m_post_hpargs =  List.filter (fun (hp2,args2) ->
-             Sautility.eq_spec_var_order_list args1 args2
+             Sautil.eq_spec_var_order_list args1 args2
         ) post_hpargs
         in
         if m_post_hpargs = [] then ls else
@@ -294,7 +294,7 @@ let generate_linking unk_map lhs_hpargs rhs_hpargs post_hps pos=
     (CP.remove_dups_svl unk_svl, CP.conj_of_list ps pos, ls_unk_map)
   else
     let unk_hpargs = List.filter (fun hpargs1 ->
-        List.exists (fun hpargs2 -> Sautility.check_hp_arg_eq hpargs1 hpargs2) rhs_hpargs
+        List.exists (fun hpargs2 -> Sautil.check_hp_arg_eq hpargs1 hpargs2) rhs_hpargs
     ) lhs_hpargs1
     in
     generate_map_unk_hp unk_hpargs unk_hpargs unk_map pos
@@ -397,9 +397,9 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | [(_,args)] ->
             (* let _ = Debug.info_zprint (lazy (("   lhs_f_rem: " ^ (!CF.print_formula lhs_f_rem)))) no_pos in *)
             (* let _ = Debug.info_zprint (lazy (("   rhs: " ^ (!CF.print_formula rhs)))) no_pos in *)
-            if Sautility.is_empty_heap_f lhs_f_rem then
+            if Sautil.is_empty_heap_f lhs_f_rem then
               let svl = helper args lhs_f_rem in
-              if svl == [] && Sautility.is_empty_heap_f rhs then
+              if svl == [] && Sautil.is_empty_heap_f rhs then
                 helper args rhs
               else svl
             else
@@ -411,15 +411,15 @@ let rec analize_unk_one_x prog post_hps unk_hps constr =
   (* let _ = Debug.info_zprint (lazy (("   hrel: " ^ (Cprinter.string_of_hprel_short constr)))) no_pos in *)
  (*elim hrel in the formula and returns hprel_args*)
   (*lhs*)
-  let lhs1,lhrels = Sautility.drop_get_hrel constr.CF.hprel_lhs in
+  let lhs1,lhrels = Sautil.drop_get_hrel constr.CF.hprel_lhs in
   (*rhs*)
-  let rhs1,rhrels = Sautility.drop_get_hrel constr.CF.hprel_rhs in
+  let rhs1,rhrels = Sautil.drop_get_hrel constr.CF.hprel_rhs in
 (*find fv of lhs + rhs wo hrels*)
-  (* let lsvl = Sautility.get_raw_defined_w_pure prog lhs1 in *)
-  (* let rsvl = Sautility.get_raw_defined_w_pure prog rhs1 in *)
-  let svl = Sautility.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
+  (* let lsvl = Sautil.get_raw_defined_w_pure prog lhs1 in *)
+  (* let rsvl = Sautil.get_raw_defined_w_pure prog rhs1 in *)
+  let svl = Sautil.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
   (*handle equality*)
-  let svl1a = Sautility.get_defined_eqs constr.CF.hprel_lhs in
+  let svl1a = Sautil.get_defined_eqs constr.CF.hprel_lhs in
   let svl1 = check_equality_constr lhrels lhs1 constr.CF.hprel_rhs svl in
   (*return*)
   let unk_hp_locs,unk_hp_args_locs = List.split (List.map
@@ -492,7 +492,7 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
                 if (List.length args) = (List.length locs) then
                   (args,[])
                 else
-                  let unk_svl = CP.remove_dups_svl (Sautility.retrieve_args_from_locs args locs) in
+                  let unk_svl = CP.remove_dups_svl (Sautil.retrieve_args_from_locs args locs) in
                   (unk_svl, CP.diff_svl args unk_svl)
             end
           else retrieve_args_one_hp ss (hp,args)
@@ -501,7 +501,7 @@ and double_check_unk prog post_hps unk_hp_args_locs unk_hps cs=
     (*post-oblg: should not consider as unknown preds: sll-get-last2.ss*)
     let unk_hp_args_locs = List.filter (fun (hp, _,_) -> not(CP.mem_svl hp post_oblg_hps0)) unk_hp_args_locs0 in
     let unk_hp_names = List.map (fun (hp, _,_) -> hp) unk_hp_args_locs in
-    let cs_hp_args = Gen.BList.remove_dups_eq Sautility.check_hp_arg_eq (cs_hprels) in
+    let cs_hp_args = Gen.BList.remove_dups_eq Sautil.check_hp_arg_eq (cs_hprels) in
     let cs_unk_hps,cs_non_unk_hps = List.partition
       (fun (hp,_) -> CP.mem_svl hp unk_hp_names) cs_hp_args in
     (* definitely non unk*)
@@ -550,7 +550,7 @@ and update_unk_one_constr_old_x prog unk_hp_locs unk_map cs=
       | (hp,args)::rest ->
             try
               let locs = List.assoc hp ls_unk_hp_locs in
-              let unk_svl = Sautility.retrieve_args_from_locs args locs in
+              let unk_svl = Sautil.retrieve_args_from_locs args locs in
               get_unk_svl rest ls_unk_hp_locs (res@unk_svl)
             with Not_found -> get_unk_svl rest ls_unk_hp_locs res
   in
@@ -562,7 +562,7 @@ and update_unk_one_constr_old_x prog unk_hp_locs unk_map cs=
     (CF.get_hprel cs.CF.hprel_lhs) in
   let r_hpargs = List.map(fun (hp,eargs,_) -> (hp, (List.fold_left List.append [] (List.map CP.afv eargs))))
     (CF.get_hprel cs.CF.hprel_rhs) in
-  let hp_args = Gen.BList.remove_dups_eq Sautility.check_hp_arg_eq (l_hpargs@r_hpargs) in
+  let hp_args = Gen.BList.remove_dups_eq Sautil.check_hp_arg_eq (l_hpargs@r_hpargs) in
 
   (*get unk svl*)
   let unk_svl0 = get_unk_svl hp_args unk_hp_locs [] in
@@ -583,7 +583,7 @@ and update_unk_one_constr_old_x prog unk_hp_locs unk_map cs=
 
       (*find unk_hps: postpone the split: split new constraints*)
       let unk_hps = List.filter (fun (hp,args) -> CP.diff_svl args unk_svl2 = []) hp_args in
-      let unk_hps1 = Gen.BList.difference_eq Sautility.check_hp_arg_eq unk_hps cs.CF.unk_hps in
+      let unk_hps1 = Gen.BList.difference_eq Sautil.check_hp_arg_eq unk_hps cs.CF.unk_hps in
 
       let new_constr = {cs with CF.unk_svl = unk_svl1;
           CF.unk_hps = unk_hps1@cs.CF.unk_hps;
@@ -628,7 +628,7 @@ and update_unk_one_constr_x prog unk_hp_locs link_hps unk_map cs=
     match lookup_locs unk_hp_locs hp with
       | None -> res
       | Some locs ->
-            res@[(hp, Sautility.retrieve_args_from_locs args locs, locs)]
+            res@[(hp, Sautil.retrieve_args_from_locs args locs, locs)]
   in
   let rec lookup_lhs ls r_args=
     match ls with
@@ -641,7 +641,7 @@ and update_unk_one_constr_x prog unk_hp_locs link_hps unk_map cs=
     match lookup_locs unk_hp_locs hp with
       | None -> (ls0,ls1,ls2,ls3)
       | Some locs -> begin
-          let unk_args = Sautility.retrieve_args_from_locs args locs in
+          let unk_args = Sautil.retrieve_args_from_locs args locs in
           match lookup_lhs lhs_unkargs unk_args with
             | None -> (ls0@[(hp,unk_args)] ,ls1@[(hp,unk_args,locs)],ls2,ls3)
             | Some l_hp -> if CP.eq_spec_var l_hp hp then
@@ -716,7 +716,7 @@ and update_unk_one_constr_x prog unk_hp_locs link_hps unk_map cs=
   let rhs_unk_hpargs, nrhs, new_map2 = update_rhs cs.CF.hprel_rhs r_hpargs new_map1 lhs_unk_hpargs pos in
   let unk_hpargs = lhs_unk_hpargs@rhs_unk_hpargs in
   let new_constrs=
-    if Sautility.is_only_xpure_f nlhs && Sautility.is_only_xpure_f nrhs then ([]) else
+    if Sautil.is_only_xpure_f nlhs && Sautil.is_only_xpure_f nrhs then ([]) else
       let unk_svl = List.fold_left (fun ls2 (_,svl) -> (ls2@svl)) [] unk_hpargs in
       let new_cs = {cs with CF.unk_svl = CP.remove_dups_svl (cs.CF.unk_svl@unk_svl);
           CF.unk_hps = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2)
@@ -747,7 +747,7 @@ and update_unk_one_constr prog unk_hp_locs link_hps unk_map constr=
 
 let find_full_unk_hps_x prog post_hps full_hps unk_hp_args_locs=
   let is_full_unk_process (hp, locs)=
-    let locs_i = Sautility.get_pos_of_hp_args_inst prog hp in
+    let locs_i = Sautil.get_pos_of_hp_args_inst prog hp in
     List.length locs_i <= List.length locs && Gen.BList.difference_eq (=) locs_i locs = []
   in
   let full_unk_locs,part_hpargs1 = List.fold_left (fun (ls1,ls2) (hp,args,locs) ->
@@ -838,7 +838,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
     in
     let unk_hp_args02,full_unk_hp_args2_locs = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
     let ls_unk_cands1 = Gen.BList.remove_dups_eq (fun (hp1,_,locs1) (hp2,_,locs2) ->
-        Sautility.check_hp_locs_eq (hp1,locs1) (hp2,locs2))
+        Sautil.check_hp_locs_eq (hp1,locs1) (hp2,locs2))
       unk_hp_args02
     in
     (* let _ = Debug.info_pprint ("  ls_unk_cands1: " ^ *)
@@ -847,7 +847,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
     (* in *)
     if ls_unk_cands1 = [] then ([],[],n_closure_post_hps) else
       let diff = Gen.BList.difference_eq (fun (hp1,_,locs1) (hp2,_,locs2) ->
-        Sautility.check_hp_locs_eq (hp1,locs1) (hp2,locs2)) unk_hp_locs0 ls_unk_cands1
+        Sautil.check_hp_locs_eq (hp1,locs1) (hp2,locs2)) unk_hp_locs0 ls_unk_cands1
       in
       if diff =[] then
         (ls_unk_cands1, full_unk_hp_args2_locs,n_closure_post_hps)
@@ -858,7 +858,7 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   let unk_hp_args02,full_unk_hp_args2_locs, closure_post_hps = if unk_hp_args01 = [] then ([], [], post_hps)
   else loop_helper post_hps unk_hp_args01 in
   (*********END double check ****************)
-  let full_unk_hp_args2_locs = Sautility.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
+  let full_unk_hp_args2_locs = Sautil.refine_full_unk unk_hp_args02 full_unk_hp_args2_locs in
   (*for debugging*)
   let _ = Debug.ninfo_hprint (add_str "  unks 2: " (pr_list (pr_triple !CP.print_sv !CP.print_svl (pr_list string_of_int)))) unk_hp_args02 no_pos
   in
@@ -976,7 +976,7 @@ let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs defined_hps post_hps
       | [] -> report_error no_pos "sac.obtain_xpure"
       | ((hp1, locs), xp)::rest -> begin
           if CP.eq_spec_var hp hp1 then
-            let unk_args = Sautility.retrieve_args_from_locs args locs in
+            let unk_args = Sautil.retrieve_args_from_locs args locs in
             let new_xpv = {xp with CP.xpure_view_arguments = unk_args;} in
                 let p = CP.mkFormulaFromXP new_xpv in
                 p
@@ -1046,7 +1046,7 @@ let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
   CP.mem_svl hp1 link_hps) equivs in
   let equiv_link_hpdefs, define_link_hps = List.fold_left (generate_equiv_unkdef link_hpargs) ([],[]) link_equivs in
   let link_hpargs1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp define_link_hps)) link_hpargs in
-  let link_hpdefs =List.map (Sautility.mk_link_hprel_def prog cond_path) link_hpargs1 in
+  let link_hpdefs =List.map (Sautil.mk_link_hprel_def prog cond_path) link_hpargs1 in
   ((List.map trans_link_hpdef equiv_link_hpdefs)@link_hpdefs)
 
 let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
@@ -1165,7 +1165,7 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
         | None -> xp.CP.xpure_view_arguments
         | Some sv -> sv::xp.CP.xpure_view_arguments
       in
-      let args_inst = Sautility.get_hp_args_inst prog hp args in
+      let args_inst = Sautil.get_hp_args_inst prog hp args in
       let (CP.SpecVar (t, _, p)) = hp in
       (CP.SpecVar(t, xp.CP.xpure_view_name, p),
       let dang_name = dang_hp_default_prefix_name ^ "_" ^ xp.CP.xpure_view_name (* ^ "_" ^dang_hp_default_prefix_name *)  in
@@ -1174,8 +1174,8 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
   ) unk_map
   in
   let link_fr_map = List.map (fun ((hp,args)) ->
-      let locs_i = Sautility.get_pos_of_hp_args_inst prog hp in
-      let args_inst = Sautility.retrieve_args_from_locs args locs_i in
+      let locs_i = Sautil.get_pos_of_hp_args_inst prog hp in
+      let args_inst = Sautil.retrieve_args_from_locs args locs_i in
       (* let (CP.SpecVar (_, _, p)) = hp in *)
       let (CP.SpecVar (t, _, p)) = List.hd args_inst in
       (hp,
@@ -1183,7 +1183,7 @@ let transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs=
       [CP.SpecVar (t, dang_name, p)])
   ) link_hpargs
   in
-  let tupled_defs,hp_defs1 = List.partition Sautility.is_tupled_hpdef hp_defs in
+  let tupled_defs,hp_defs1 = List.partition Sautil.is_tupled_hpdef hp_defs in
   let hp_defs2 = transform_unk_hps_to_pure hp_defs1 (fr_map@link_fr_map) in
   (hp_defs2@tupled_defs)
 
@@ -1436,7 +1436,7 @@ let check_imply prog lhs_b rhs_b=
             if CP.mem_svl sv1 cur_rnode_match then (ls@[sv]) else ls
           ) [] lhns1
         in
-        let is_node_match,all_matched_svl1,subst1 = Sautility.get_closed_matched_ptrs rhns1 lhns1 cur_node_match subst in
+        let is_node_match,all_matched_svl1,subst1 = Sautil.get_closed_matched_ptrs rhns1 lhns1 cur_node_match subst in
         if not is_node_match then None else
           let all_matched_svl2 = all_matched_svl1 @ m_args2 in
           (* let _ = Debug.ninfo_zprint (lazy (("    all matched: " ^ (!CP.print_svl all_matched_svl2)))) no_pos in *)
@@ -1457,19 +1457,19 @@ let check_imply prog lhs_b rhs_b=
             if b then
               (* let r_res = {n_rhs_b with *)
               (*     CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf *)
-              (*         n_rhs_b.CF.formula_base_heap Sautility.select_dnode *)
-              (*         Sautility.select_vnode Sautility.select_hrel all_matched_svl2  all_matched_svl2 matched_hps} *)
+              (*         n_rhs_b.CF.formula_base_heap Sautil.select_dnode *)
+              (*         Sautil.select_vnode Sautil.select_hrel all_matched_svl2  all_matched_svl2 matched_hps} *)
               (* in *)
               (*drop hps and matched svl in n_rhs2*)
               let l_res = {lhs_b with
                   CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                       lhs_b.CF.formula_base_heap CF.select_dnode
-                      CF.select_vnode Sautility.select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
+                      CF.select_vnode Sautil.select_hrel all_matched_svl1 all_matched_svl1 matched_hps;
                   CF.formula_base_pure = MCP.mix_of_pure
                       (CP.filter_var_new
                           (MCP.pure_of_mix lhs_b.CF.formula_base_pure) all_matched_svl2)}
               in
-              (* if not (Sautility.is_empty_base r_res) then *)
+              (* if not (Sautil.is_empty_base r_res) then *)
                 Some (l_res, subst1)
               (* else None *)
             else
@@ -1530,7 +1530,7 @@ let check_apply_strengthen_conseq prog cs1 cs2=
                         CF.unk_svl = CP.remove_dups_svl
                             ((CP.subst_var_list ss1 cs1.CF.unk_svl)@
                                 (CP.subst_var_list ss2 cs2.CF.unk_svl));
-                        CF.unk_hps = Gen.BList.remove_dups_eq Sautility.check_hp_arg_eq
+                        CF.unk_hps = Gen.BList.remove_dups_eq Sautil.check_hp_arg_eq
                             ((List.map (fun (hp,args) -> (hp,CP.subst_var_list ss1 args)) cs1.CF.unk_hps)@
                                 (List.map (fun (hp,args) -> (hp,CP.subst_var_list ss2 args)) cs2.CF.unk_hps));
                         CF.hprel_lhs = l;
@@ -1550,7 +1550,7 @@ let do_strengthen prog constrs new_cs check_apply_fnc=
   (* let rec check_constr_duplicate (lhs,rhs) constrs= *)
   (*   match constrs with *)
   (*     | [] -> false *)
-  (*     | cs::ss -> if Sautility.checkeq_pair_formula (lhs,rhs) *)
+  (*     | cs::ss -> if Sautil.checkeq_pair_formula (lhs,rhs) *)
   (*           (cs.CF.hprel_lhs,cs.CF.hprel_rhs) then *)
   (*           true *)
   (*         else check_constr_duplicate (lhs,rhs) ss *)
@@ -1626,7 +1626,7 @@ let check_apply_strengthen_ante prog cs1 cs2=
                         CF.unk_svl = CP.remove_dups_svl
                             ((CP.subst_var_list ss1 cs1.CF.unk_svl)@
                                 (CP.subst_var_list ss2 cs2.CF.unk_svl));
-                        CF.unk_hps = Gen.BList.remove_dups_eq Sautility.check_hp_arg_eq
+                        CF.unk_hps = Gen.BList.remove_dups_eq Sautil.check_hp_arg_eq
                             ((List.map (fun (hp,args) -> (hp,CP.subst_var_list ss1 args)) cs1.CF.unk_hps)@
                                 (List.map (fun (hp,args) -> (hp,CP.subst_var_list ss2 args)) cs2.CF.unk_hps));
                         CF.hprel_lhs = l;
@@ -1702,7 +1702,7 @@ let cmp_formula_opt args of1 of2=
           let p1 = CF.get_pure f1 in
           let p2 = CF.get_pure f2 in
           CP.equalFormula p1 p2
-          (* Sautility.check_relaxeq_formula args f1 f2 *)
+          (* Sautil.check_relaxeq_formula args f1 f2 *)
     | None, None -> true
     | _ -> false
 
@@ -1717,8 +1717,8 @@ let unify_consj_pre_x prog unk_hps link_hps equivs0 pdefs=
                 | Some f1, Some f2 -> begin
                       (* let ss = List.combine args1 args2 in *)
                       (* let nf1 = (\* CF.subst ss *\) f1 in *)
-                      (* let nf2= Sautility.mkConjH_and_norm prog args2 unk_hps [] nf1 f2 no_pos in *)
-                      let ores = Sautility.norm_formula prog hp args2 unk_hps [] f1 f2 equivs in
+                      (* let nf2= Sautil.mkConjH_and_norm prog args2 unk_hps [] nf1 f2 no_pos in *)
+                      let ores = Sautil.norm_formula prog hp args2 unk_hps [] f1 f2 equivs in
                       match ores with
                         | Some (new_f2, n_equivs) ->
                               (rest@done_pdefs,[((hp,args2,unk_svl2, cond2, olhs2, og2, Some new_f2), cs2)],n_equivs)
@@ -1772,7 +1772,7 @@ let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
       | [] -> done_fs,[f],[]
       | f1::tl ->
           (* let b,m = CEQ.checkeq_formulas args f f1 in *)
-          let ores = Sautility.norm_formula prog hp args unk_hps [] f f1 [] in
+          let ores = Sautil.norm_formula prog hp args unk_hps [] f f1 [] in
           match ores with
             | Some (new_f, n_equivs) ->
                   (tl@done_fs,[new_f],n_equivs)
@@ -1781,7 +1781,7 @@ let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
           (* if b then *)
           (*   let ss0 = swap_map unk_hps (List.fold_left (@) [] m) [] in *)
           (*   let ss = List.map (fun (sv1,sv2) -> if CP.eq_spec_var sv1 hp then (sv2,sv1) else (sv1,sv2)) ss0 in *)
-          (*   let parts = Sautility.partition_subst_hprel ss [] in *)
+          (*   let parts = Sautil.partition_subst_hprel ss [] in *)
           (*   let pr = pr_list (pr_pair !CP.print_svl !CP.print_sv) in *)
           (*   let _ = DD.info_zprint (lazy (("  parts: " ^ (pr parts)))) no_pos in *)
           (*   let new_f = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts in *)
@@ -1808,7 +1808,7 @@ let unify_branches_hpdef_x prog unk_hps link_hps post_hps hp_defs =
         let fs1,ss = check_eq hp (args) fs [] [] in
         let ss1 = List.map (fun (sv1, sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) ss in
         let fs2 =
-          let parts = Sautility.partition_subst_hprel ss1 [] in
+          let parts = Sautil.partition_subst_hprel ss1 [] in
           List.map (fun f ->
           List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts
           ) fs1
@@ -1858,12 +1858,12 @@ let lookup_equiv_hpdef hpdefs0 transform_fnc unk_hps eq_pairs hp args f=
             (* let ss = List.combine args1 args in *)
             (* let f10 = CF.subst ss f1 in *)
             let f10 = transform_fnc (hp1,args1) (hp,args) f1 in
-            if Sautility.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f10) then
+            if Sautil.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f10) then
               if List.exists (fun (hp2,hp3) -> equiv_cmp1 (hp1,hp) (hp2,hp3)) eq_pairs then
                 let new_f = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) f10 (eq_pairs) in
                 (new_f,eq_pairs)
               else
-                let new_f = Sautility.mkHRel_f hp1 args p1 in
+                let new_f = Sautil.mkHRel_f hp1 args p1 in
                 let n_eq_pairs = if List.exists (fun (hp2,hp3) -> equiv_cmp1 (hp,hp1) (hp2,hp3)) eq_pairs then
                   eq_pairs
                 else (eq_pairs@[(hp,hp1)])
@@ -1986,7 +1986,7 @@ let check_equiv_wo_libs_x iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqm
   ) ([],[],[]) hp_defs in
   let hp_defs1a = post_hp_defs@hp_defs1 in
   let hp_defs2, eqmap2=unify_pred prog [] unk_hps hp_defs1a eqmap1 in
-  let rem_hpdefs1 = Sautility.pred_split_update_hpdefs (List.map fst eqmap2) rem_hpdefs hp_defs2 in
+  let rem_hpdefs1 = Sautil.pred_split_update_hpdefs (List.map fst eqmap2) rem_hpdefs hp_defs2 in
   (rem_hpdefs1@lib_hpdefs, hp_defs2@lib_hp_defs)
 
 let check_equiv_wo_libs iprog prog sel_hps post_hps unk_hps hpdefs hp_defs eqmap1=
@@ -2013,7 +2013,7 @@ let do_unify_x prog do_conj_unify unk_hps link_hps post_hps defs0=
       let _,args = CF.extract_HRel hp_def.CF.def_lhs in
       let fs, ogs = List.split hp_def.CF.def_rhs in
       let f = CF.disj_of_list fs no_pos in
-      let nf, equivs1 = Sautility.norm_heap_consj_formula prog args unk_hps [] f equivs0 in
+      let nf, equivs1 = Sautil.norm_heap_consj_formula prog args unk_hps [] f equivs0 in
       (r_hp_defs@[{hp_def with CF.def_rhs = [(nf,CF.combine_guard ogs)]}], equivs1)
     with _ -> (r_hp_defs@[hp_def], equivs0)
   in
@@ -2028,7 +2028,7 @@ let do_unify_x prog do_conj_unify unk_hps link_hps post_hps defs0=
   (*unify syntax*)
   let defs, equivs =  unify_syntax_equiv_hpdef prog unk_hps link_hps defs2 (equivs) in
   let equivs3a = List.map (fun (sv1,sv2) -> if CP.mem_svl sv2 post_hps then (sv2,sv1) else (sv1,sv2)) equivs in
-  let parts = Sautility.partition_subst_hprel equivs3a [] in
+  let parts = Sautil.partition_subst_hprel equivs3a [] in
   let defs1 = List.map (subst_equiv parts) defs in
   (defs1, equivs)
 
@@ -2128,7 +2128,7 @@ let pred_unify_inter_x prog dang_hps hp_defs=
             (*check whether p contradict with counterpart in dep_p*)
             let r_p = (CP.join_conjunctions r_ps) in
             let dep_f_wpure = CF.mkAnd_pure dep_f (MCP.mix_of_pure r_p) no_pos in
-            if not (Sautility.is_unsat dep_f_wpure) then (false,hp_def) else
+            if not (Sautil.is_unsat dep_f_wpure) then (false,hp_def) else
               begin
                 try
                   (*check whether p is exsit in one branch of dep_hp*)
@@ -2157,7 +2157,7 @@ let pred_unify_inter_x prog dang_hps hp_defs=
           match fs0 with
             | [(f1,og1);(f2,og2)] -> begin
                 (*extract common*)
-                let is_common, sharing_f0, n_fs, new_roots = Sautility.partition_common_diff prog hp (r::other_args) dang_hps [] f1 f2 no_pos in
+                let is_common, sharing_f0, n_fs, new_roots = Sautil.partition_common_diff prog hp (r::other_args) dang_hps [] f1 f2 no_pos in
                 let fs, n_r, sharing_f = if is_common && List.length new_roots = 1 then
                   n_fs, List.hd new_roots, sharing_f0
                 else ([f1;f2], r, CF.mkTrue_nf no_pos)
@@ -2213,10 +2213,10 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
   let check_and_elim is_pre cdefs (hp, r, non_r_args, def)=
     let _,args = CF.extract_HRel def.CF.def_lhs in
     let fs_wg = List.fold_left (fun r (f,og) -> r@(List.map (fun f1 -> (f1, og)) (CF.list_of_disjs f))) [] def.CF.def_rhs in
-    let elimed,_, (n_args, r, n_paras), n_fs_wg,elim_ss,link_defs,n_hp = Sautility.elim_not_in_used_args prog unk_hps
+    let elimed,_, (n_args, r, n_paras), n_fs_wg,elim_ss,link_defs,n_hp = Sautil.elim_not_in_used_args prog unk_hps
         [((CF.mkHTrue_nf no_pos), None)] fs_wg hp (args, r, non_r_args) in
     if elimed then
-      let hpdef = Sautility.mk_hprel_def_wprocess prog is_pre cdefs unk_hps unk_svl n_hp (n_args, r, n_paras) n_fs_wg no_pos in
+      let hpdef = Sautil.mk_hprel_def_wprocess prog is_pre cdefs unk_hps unk_svl n_hp (n_args, r, n_paras) n_fs_wg no_pos in
       let new_defs1 = List.map (fun (hp,def) ->
           (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs})
       ) (link_defs@hpdef)
@@ -2224,7 +2224,7 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
       (snd (List.split new_defs1), elim_ss)
     else ([def],[])
     (*second way*)
-    (* let new_defs, elim_ss = Sautility.check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl *)
+    (* let new_defs, elim_ss = Sautil.check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl *)
     (*             def.CF.def_rhs hp (args, r, non_r_args) in *)
     (* let new_defs1 = List.map (fun (hp,def) -> *)
     (*     (hp, {def with CF.def_rhs = List.map (fun (f,og) ->( CF.subst_hrel_f f elim_ss, og)) def.CF.def_rhs}) *)
@@ -2498,10 +2498,10 @@ let do_entail_check vars iprog cprog cs=
        (*=============DNC================*)
 (*=============**************************================*)
 let partition_constrs_4_paths link_hpargs0 constrs0 =
-  let ls_link_hpargs = Sautility.dang_partition link_hpargs0 in
-  let ls_constrs_path = Sautility.assumption_partition constrs0 in
+  let ls_link_hpargs = Sautil.dang_partition link_hpargs0 in
+  let ls_constrs_path = Sautil.assumption_partition constrs0 in
   (* matching constrs_path with dang_path*)
-  let ls_cond_danghps_constrs = Sautility.pair_dang_constr_path ls_constrs_path ls_link_hpargs (pr_list_ln Cprinter.string_of_hprel_short) in
+  let ls_cond_danghps_constrs = Sautil.pair_dang_constr_path ls_constrs_path ls_link_hpargs (pr_list_ln Cprinter.string_of_hprel_short) in
   ls_cond_danghps_constrs
 
 (*=============**************************================*)
@@ -2525,7 +2525,7 @@ let shape_gist_x prog hp args unk_hps defined_fs required_stronger_fs=
         let hds,hvs,_ = CF.get_hp_rel_formula f in
         (r2@[hds,hvs,f])
     ) [] fs in
-    let min,sh_ldns,sh_lvns,eqNulls,eqPures,hprels = Sautility.get_min_common prog args unk_hps lldns_vns in
+    let min,sh_ldns,sh_lvns,eqNulls,eqPures,hprels = Sautil.get_min_common prog args unk_hps lldns_vns in
     if min = 0  && eqNulls = [] && eqPures= [] && hprels=[] then
     false, s_f
     else true,d_f
@@ -2557,7 +2557,7 @@ let shape_gist prog hp args unk_hps defined_fs required_stronger_fs=
 
 let shape_widening_x prog hp args unk_hps pdefs pos=
   let shape_widen f1 f2=
-    let is_common, sharing_f, n_fs ,next_roots = Sautility.partition_common_diff prog hp args unk_hps [] f1 f2 pos in
+    let is_common, sharing_f, n_fs ,next_roots = Sautil.partition_common_diff prog hp args unk_hps [] f1 f2 pos in
     if not is_common then (false, f1) else
       match n_fs with
         | [f21;f22] -> (*after reaarange + subst*)
@@ -2566,12 +2566,12 @@ let shape_widening_x prog hp args unk_hps pdefs pos=
               let ( _,mix_lf2,_,_,_) = CF.split_components f22 in
               let sst2 = MCP.ptr_equations_without_null mix_lf2 in
               let hpargs22 = List.map (fun (hp, args) ->
-                  (hp, List.fold_left Sautility.close_def args sst2)
+                  (hp, List.fold_left Sautil.close_def args sst2)
               ) hpargs2 in
-              let inter = Gen.BList.intersect_eq Sautility.check_hp_args_imply hpargs1 hpargs22 in
+              let inter = Gen.BList.intersect_eq Sautil.check_hp_args_imply hpargs1 hpargs22 in
               let n_sharing =
                 if inter = [] then sharing_f else
-                  let hp_fs = List.map (fun (hp,args) -> Sautility.mkHRel_f hp args pos) inter in
+                  let hp_fs = List.map (fun (hp,args) -> Sautil.mkHRel_f hp args pos) inter in
                 List.fold_left (fun f1 f2 -> CF.mkStar f1 f2 CF.Flow_combine pos) sharing_f hp_fs
               in
               (is_common, n_sharing)
@@ -2614,7 +2614,7 @@ let gfp_gen_init prog is_pre r base_fs rec_fs=
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
       if not rcomplete then
-        let (hf, n_hp) = Sautility.add_raw_hp_rel prog is_pre true [(r, I)] pos in
+        let (hf, n_hp) = Sautil.add_raw_hp_rel prog is_pre true [(r, I)] pos in
       let f = CF.formula_of_heap_w_normal_flow hf pos in
       (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
       else
@@ -2674,7 +2674,7 @@ let compute_gfp_x prog is_pre is predefs pdefs=
           let norm_predefs = List.map (norm prog args0) predefs in
           let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
           let norm_fs = shape_gist prog hp0 args0 skip_hps (List.map (fun (_,_,f) -> f) norm_predefs) norm_fs0 in
-          let r,non_r_args = Sautility.find_root prog (hp0::skip_hps) args0 norm_fs in
+          let r,non_r_args = Sautil.find_root prog (hp0::skip_hps) args0 norm_fs in
           let base_fs, rec_fs, dep_fs = List.fold_left (classify hp0) ([],[],[]) norm_fs in
           (*now assume base_fs =[] and dep_fs = [] and rec_fs != [] *)
           (* if (\* base_fs =[] && *\) dep_fs = [] then *)
@@ -2714,7 +2714,7 @@ let simplify_disj_set prog args unk_hps unk_svl pdefs pos=
       | [] -> res
       | [pdef] -> res@[pdef]
       | (hp1,args1, g1, f1, svl1)::((hp2,args2, g2, f2, svl2)::rest) -> begin
-          let b, nfs = Sautility.simplify_disj prog hp1 args unk_hps unk_svl f1 f2 pos in
+          let b, nfs = Sautil.simplify_disj prog hp1 args unk_hps unk_svl f1 f2 pos in
           if b then
             let npdefs=
               [(hp2,args2, g2, List.hd nfs, svl2)]
@@ -2740,19 +2740,19 @@ let lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
   (*   ) [] defs *)
   (* in *)
   (* let check_unfold_check_unsat ((hp3, args3, og3, f, svl) as pf)= *)
-  (*   if Sautility.is_unsat f then false else *)
+  (*   if Sautil.is_unsat f then false else *)
   (*     let succ_hps = CF.get_hp_rel_name_formula f in *)
   (*     let succ_hps1 = List.filter (fun hp2 -> not (CP.mem_svl hp2 dang_hps) && not(CP.eq_spec_var hp hp2)) succ_hps in *)
   (*     if succ_hps1 = [] then true else *)
-  (*       let is_substed, fs = Sautility.succ_subst prog other_pdefs dang_hps false pf in *)
+  (*       let is_substed, fs = Sautil.succ_subst prog other_pdefs dang_hps false pf in *)
   (*       if not is_substed then true else *)
-  (*         List.for_all (fun (_,_,_,f1,_) -> not (Sautility.is_unsat f1)) fs *)
+  (*         List.for_all (fun (_,_,_,f1,_) -> not (Sautil.is_unsat f1)) fs *)
   (* in *)
   let apply_fix fix_i r_fs pdef_f=
     let _, fs = if fix_i = [] then (false, []) else
-      Sautility.succ_subst prog [fix_i] dang_hps true pdef_f in
+      Sautil.succ_subst prog [fix_i] dang_hps true pdef_f in
     r_fs@(List.filter (fun ((_,_,_,f,_) )->
-        not (Sautility.is_unsat f)
+        not (Sautil.is_unsat f)
         (* check_unfold_check_unsat pf *)
     ) fs)
   in
@@ -2773,16 +2773,16 @@ let lfp_iter_x prog defs step hp args dang_hps fix_0 nonrec_fs rec_fs=
     let n_pdefs = (List.fold_left (apply_fix pdef_fix_i) [] pdef_rec_fs) in
     let n_pdefs1 = Gen.BList.remove_dups_eq (fun (_, args1, _, f1, _) (_, args2, _, f2,_) ->
         let ss = List.combine args1 args2 in
-        Sautility.check_relaxeq_formula args2 (CF.subst ss f1) f2
+        Sautil.check_relaxeq_formula args2 (CF.subst ss f1) f2
     ) n_pdefs in
     let fix_i_plus0 = pdef_nonrec_fs@n_pdefs1 in
     let fix_i_plus = shape_widening prog hp args dang_hps fix_i_plus0 no_pos in
     (*check whether it reaches the fixpoint*)
     (* let fix_i_plus1 = Gen.BList.remove_dups_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) -> *)
-    (*     Sautility.check_relaxeq_formula args f1 f2) fix_i_plus in *)
+    (*     Sautil.check_relaxeq_formula args f1 f2) fix_i_plus in *)
     let fix_i_plus1 = simplify_disj_set prog args dang_hps [] fix_i_plus no_pos in
     let diff = Gen.BList.difference_eq (fun (_,_, _, f1, _) (_,_, _, f2, _) ->
-        Sautility.check_relaxeq_formula args f1 f2) fix_i_plus1 pdef_fix_i in
+        Sautil.check_relaxeq_formula args f1 f2) fix_i_plus1 pdef_fix_i in
     (* let rec_helper pdef_fix_i= *)
     (*   let pr1 (_,_, _, f, _) = Cprinter.prtt_string_of_formula f in *)
     (*   let pr2 = pr_list_ln pr1 in *)
@@ -2847,7 +2847,7 @@ let elim_diverg_paras_x prog pdefs=
     let may_reach_ptrs = CP.remove_dups_svl ((svl@eqNulls@args)@(CF.find_close (svl@eqNulls@args) eqs)) in
     let diverg_pos = List.fold_left (fun acc (_,rec_args) ->
         let diverg_args = CP.diff_svl rec_args may_reach_ptrs in
-        let pos = Sautility.get_all_locs rec_args diverg_args in
+        let pos = Sautil.get_all_locs rec_args diverg_args in
         pos@acc
     ) [] ls_rec_hpars in
     diverg_pos
@@ -2858,7 +2858,7 @@ let elim_diverg_paras_x prog pdefs=
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let diverg_svl0 = List.fold_left (fun r (_,args) ->
-        r@(Sautility.retrieve_args_from_locs args diver_pos)
+        r@(Sautil.retrieve_args_from_locs args diver_pos)
     ) [] ((hp,args)::ls_rec_hpars) in
     let diverg_svl1 = CP.remove_dups_svl diverg_svl0 in
     let _ = Debug.ninfo_hprint (add_str  "diverg_svl1 " (!CP.print_svl)) diverg_svl1 no_pos in
@@ -2903,7 +2903,7 @@ let compute_lfp_x prog dang_hps defs pdefs=
   let hp,def=
   match pdefs with
     | [(hp0,args0,f0)] ->
-          let r,non_r_args = Sautility.find_root prog (hp0::skip_hps) args0 [f0] in
+          let r,non_r_args = Sautil.find_root prog (hp0::skip_hps) args0 [f0] in
           (hp0, CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None f0 (CF.pos_of_formula f0))
     | (hp0,args0,f0)::rest ->
           let pos = CF.pos_of_formula f0 in
@@ -2912,13 +2912,13 @@ let compute_lfp_x prog dang_hps defs pdefs=
           let norm_pdefs1 = elim_diverg_paras prog  norm_pdefs0 in
           let norm_pdefs = List.fold_left (fun r (hp1,args1,f1) ->
               let f12, _ = CF.drop_hrel_f f1 [hp1] in
-              let f13 = CF.remove_neqNulls_f (Sautility.elim_irr_eq_exps prog args1 f12) in
-              if Sautility.is_empty_f f13 then
+              let f13 = CF.remove_neqNulls_f (Sautil.elim_irr_eq_exps prog args1 f12) in
+              if Sautil.is_empty_f f13 then
                 r
               else r@[(hp1,args1,f1)]
           ) [] norm_pdefs1 in
           let norm_fs0 = (List.map (fun (_,_,f) -> f) norm_pdefs) in
-          let r,non_r_args = Sautility.find_root prog (hp0::skip_hps) args0 norm_fs0 in
+          let r,non_r_args = Sautil.find_root prog (hp0::skip_hps) args0 norm_fs0 in
           let norm_fs = List.map (mk_exp_root hp0 r) norm_fs0 in
           (* let _ =  DD.info_pprint ("   r: " ^(!CP.print_sv r)) no_pos in *)
           (**********PRINTING***********)
@@ -2965,7 +2965,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
       List.exists (fun (hp1, eargs,_) ->
           if CP.eq_spec_var hp hp1 then
             let args1 = List.fold_left List.append [] (List.map CP.afv eargs) in
-            not (Sautility.eq_spec_var_order_list args args1)
+            not (Sautil.eq_spec_var_order_list args args1)
           else false
       ) hrels
   in
@@ -3036,7 +3036,7 @@ let compute_lfp_def_x prog post_hps dang_hps hp_defs hpdefs=
                       let _, args1 = CF.extract_HRel def1.CF.def_lhs in
                       let _, args2 = CF.extract_HRel def2.CF.def_lhs in
                       let ss = List.combine args1 args2 in
-                       Sautility.check_relaxeq_formula args2
+                       Sautil.check_relaxeq_formula args2
                            (CF.subst ss (CF.disj_of_list (List.map fst def1.CF.def_rhs) no_pos))
                            (CF.disj_of_list (List.map fst def2.CF.def_rhs) no_pos)
                   ) grp in
@@ -3167,7 +3167,7 @@ let pred_split_cands_x prog unk_hps hp_defs=
       | f::rest ->
             let n_cands = pred_split_cands_one_branch prog unk_hps hrel f in
             let is_split = List.fold_left (fun b (hp1, args1, parts, _) ->
-                if CP.eq_spec_var hp hp1 && Sautility.eq_spec_var_order_list args args1 then
+                if CP.eq_spec_var hp hp1 && Sautil.eq_spec_var_order_list args args1 then
                   (b && parts <> [])
                 else b
             ) true n_cands in
@@ -3181,7 +3181,7 @@ let pred_split_cands_x prog unk_hps hp_defs=
       | (hp1, args1,c,d)::rest -> begin
           let part,rest1 = List.partition (fun (hp2, _,_,_) -> CP.eq_spec_var hp2 hp1 ) rest in
           let split_kepts = try
-            let kept =List.find (fun (_,args2,_,_) -> Sautility.eq_spec_var_order_list args args2) ((hp1, args1,c,d)::part) in
+            let kept =List.find (fun (_,args2,_,_) -> Sautil.eq_spec_var_order_list args args2) ((hp1, args1,c,d)::part) in
             [kept]
           with _ -> [(hp1, args1,c,d)]
           in
@@ -3210,7 +3210,7 @@ let pred_split_cands_x prog unk_hps hp_defs=
   let non_split_hps1 = non_split_hps@unk_hps in
   let cands1 = List.filter (fun (hp, _,_,_) -> not (CP.mem_svl hp non_split_hps1)) cands in
   let cands2 = Gen.BList.remove_dups_eq (fun (hp1, args1,_,_) (hp2, args2, _,_) ->
-      CP.eq_spec_var hp2 hp1 && Sautility.eq_spec_var_order_list args2 args1
+      CP.eq_spec_var hp2 hp1 && Sautil.eq_spec_var_order_list args2 args1
   ) cands1 in
   cands2
 
@@ -3234,7 +3234,7 @@ let check_split_global_x prog cands =
   (*each partition, create new hp and its corresponding HRel formula*)
   let helper1 pos args =
     let args1 = List.map (fun sv -> (sv,I)) args in
-    let hf,new_hp_sv = Sautility.add_raw_hp_rel prog true false args1 pos in
+    let hf,new_hp_sv = Sautil.add_raw_hp_rel prog true false args1 pos in
     ((new_hp_sv,args), hf)
   in
   (*for each grp*)
@@ -3251,7 +3251,7 @@ let check_split_global_x prog cands =
       match ls_args1,ls_args2 with
         | [],[] -> true
         | args1::tl1,args2::tl2 ->
-            if Sautility.eq_spec_var_order_list args1 args2 then
+            if Sautil.eq_spec_var_order_list args1 args2 then
               cmp_two_list_args tl1 tl2
             else false
         | _ -> false
@@ -3275,7 +3275,7 @@ let check_split_global_x prog cands =
     let new_hp_args,new_hrel_fs = List.split hps in
     let new_hrels_comb = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 p0)
       (List.hd new_hrel_fs) (List.tl new_hrel_fs) in
-    let hrel0 = Sautility.mkHRel hp args0 p0 in
+    let hrel0 = Sautil.mkHRel hp args0 p0 in
     (hp, args0, new_hp_args, hrel0,new_hrels_comb)
   in
   let grps = partition_cands_by_hp_name cands [] in
@@ -3424,7 +3424,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   (*transform to view*)
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in
   (*trans_hp_view_formula*)
-  (* let f12 = Sautility.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
+  (* let f12 = Sautil.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
   (*lemma need self for root*)
   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
@@ -3520,7 +3520,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
             let _ =  Debug.ninfo_hprint (add_str "  args: " !CP.print_svl) args no_pos in
             (* let n_hp = CP.fresh_spec_var hp in *)
             let n_args = args@[ext_sv] in
-            let n_lhs, n_hp = Sautility.add_raw_hp_rel cprog true false (List.map (fun sv ->
+            let n_lhs, n_hp = Sautil.add_raw_hp_rel cprog true false (List.map (fun sv ->
                 if CP.is_node_typ sv then (sv,I) else (sv,NI)) n_args) no_pos in
             (*new declaration for cprog*)
             let n_hpcl = CA.look_up_hp_def_raw cprog.CA.prog_hp_decls (CP.name_of_spec_var n_hp) in
@@ -3539,7 +3539,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
             let n_rhs = Predicate.extend_pred_dervs iprog cprog [hpdef] n_hp n_args extn_info in
             (* let n_lhs = CF.HRel (n_hp, List.map (fun x -> CP.mkVar x no_pos) n_args, no_pos) in *)
             let n_de_cat = match hpdef.CF.def_cat with
-              | CP.HPRelDefn _ ->  let r, others = Sautility.find_root cprog [n_hp] n_args (CF.list_of_disjs n_rhs) in
+              | CP.HPRelDefn _ ->  let r, others = Sautil.find_root cprog [n_hp] n_args (CF.list_of_disjs n_rhs) in
                 CP.HPRelDefn (n_hp, r, others)
               | _ -> report_error no_pos "sac.size_ext_hpdef: support HPDEF only"
             in
@@ -3631,7 +3631,7 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       | [] -> res
       | (hp,args)::rest ->
             let f_comp = CF.drop_data_view_hrel_nodes f CF.check_nbelongsto_dnode
-              CF.check_nbelongsto_vnode Sautility.check_neq_hrelnode
+              CF.check_nbelongsto_vnode Sautil.check_neq_hrelnode
               args args [hp]
             in
             let _ = Debug.ninfo_hprint (add_str  "f_comp " Cprinter.prtt_string_of_formula) f_comp no_pos in
@@ -3648,13 +3648,13 @@ let prove_split_cand_x iprog cprog proving_fnc ass_stk hpdef_stk unk_hps ss_pred
       | [],[] -> res
       | (hp, args)::rest1, fs_wg::rest2 ->
             let _ = Debug.ninfo_hprint (add_str  "fs " (pr_list_ln Cprinter.prtt_string_of_formula)) (List.map fst fs_wg) no_pos in
-            let fs1a_wg = Sautility.elim_useless_rec_preds cprog hp args fs_wg in
+            let fs1a_wg = Sautil.elim_useless_rec_preds cprog hp args fs_wg in
             let fs1_wg = Gen.BList.remove_dups_eq (fun (f1,_) (f2,_) ->
-                Sautility.check_relaxeq_formula args f1 f2) fs1a_wg
+                Sautil.check_relaxeq_formula args f1 f2) fs1a_wg
             in
-            let fs2_wg = List.filter (fun (f,_) -> not (Sautility.is_trivial f (hp,args))) fs1_wg in
-            let r,paras = Sautility.find_root cprog (hp::unk_hps) args (List.map fst fs2_wg) in
-            let n_hp_defs = Sautility.mk_hprel_def_wprocess cprog false [] unk_hps [] hp (args, r, paras) fs2_wg  pos in
+            let fs2_wg = List.filter (fun (f,_) -> not (Sautil.is_trivial f (hp,args))) fs1_wg in
+            let r,paras = Sautil.find_root cprog (hp::unk_hps) args (List.map fst fs2_wg) in
+            let n_hp_defs = Sautil.mk_hprel_def_wprocess cprog false [] unk_hps [] hp (args, r, paras) fs2_wg  pos in
             combine_comp rest1 rest2 pos (res@(List.map snd n_hp_defs))
       | _ -> report_error no_pos "sac.prove_split_cand: should be the same length 2"
   in
@@ -3735,7 +3735,7 @@ let seg_split prog unk_hps ass_stk hpdef_stk hp_def=
   if List.length args = 2 then
     match hp_def.CF.def_cat with
       | CP.HPRelDefn (hp,r, others) ->begin
-          let split_seg_opt = Sautility.norm_unfold_seg prog hp r others unk_hps
+          let split_seg_opt = Sautil.norm_unfold_seg prog hp r others unk_hps
             (List.fold_left (fun r (f,og) ->
                 r@(List.map (fun f1 -> (f1,og)) (CF.split_conjuncts f))) [] hp_def.CF.def_rhs) in
           match split_seg_opt with

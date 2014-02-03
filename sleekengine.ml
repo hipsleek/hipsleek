@@ -22,19 +22,19 @@ module IF = Iformula
 module IP = Ipure
 (* module LP = Lemproving *)
 (* module AS = Astsimp *)
-module DD = Debug
+(* module DD = Debug *)
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
 module TI = Typeinfer
-module SAU = Sautility
-module SAC = Sacore
+(* module SAU = Sautility *)
+(* module SAC = Sacore *)
 module MCP = Mcpure
-module SC = Sleekcore
+(* module SC = Sleekcore *)
 (* module LEM = Lemma *)
 module LO2 = Label_only.Lab2_List
 module TP = Tpdispatcher
-module FP = Fixpoint
+(* module FP = Fixpoint *)
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -847,13 +847,13 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let pr = Cprinter.string_of_struc_formula in
-  let _ = DD.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
+  let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
   (* let conseq = Solver.prune_pred_struc !cprog true conseq in *)
-  (* let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in  *)
-  (* (\* let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *\) *)
-  (* (\* let _ = DD.info_pprint "=============================================================" no_pos in *\) *)
+  (* let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in  *)
+  (* (\* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *\) *)
+  (* (\* let _ = Debug.info_pprint "=============================================================" no_pos in *\) *)
   (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in *)
-  (* let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in  *)
+  (* let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in  *)
   (* (\* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *\) *)
   (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:" *)
   (*                       ^"\n ### ivars = "^(pr_list pr_id ivars) *)
@@ -924,7 +924,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       with _ ->
           TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
-  let (res, rs,v_hp_rel) = SC.sleek_entail_check vars !cprog [] ante conseq in
+  let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   (res, rs,v_hp_rel)
 
@@ -937,7 +937,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
-  (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
+  (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
   let (stab,lhs) = meta_to_formula ilhs false [] stab in
@@ -989,7 +989,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   ()
 
 let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
-  (* let _ = DD.info_pprint "process_rel_assume" no_pos in *)
+  (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
   (* let stab = H.create 103 in *)
   let stab = [] in
   let (stab,lhs) = meta_to_formula ilhs false [] stab in
@@ -1016,9 +1016,9 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
     ()
   else
     let rhs = Predicate. extend_pred_dervs iprog !cprog (List.map snd !sleek_hprel_defns) hp args extn_info in
-    let r, others = SAU.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
+    let r, others = Sautil.find_root (!cprog) [hp] args (CF.list_of_disjs rhs) in
     let exted_pred = CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, others))  hf [(rhs, None)] in
-    let _ = C.set_proot_hp_def_raw (SAU.get_pos args 0 r) (!cprog).C.prog_hp_decls (CP.name_of_spec_var hp) in
+    let _ = C.set_proot_hp_def_raw (Sautil.get_pos args 0 r) (!cprog).C.prog_hp_decls (CP.name_of_spec_var hp) in
     let pr_new_rel_defn =  (cond_path, exted_pred) in
     let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
     let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
@@ -1068,20 +1068,20 @@ let shape_infer_pre_process constrs pre_hps post_hps=
   (*END*)
   let infer_vars = infer_pre_vars@infer_post_vars in
   let sel_hps = pre_hp_rels@post_hp_rels in
-  (* let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps constrs in *)
+  (* let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps constrs in *)
   (***END PRE/POST***)
-  (* let constrs2, unk_map, unk_hpargs = SAC.detect_dangling_pred hp_lst_assume sel_hps [] in *)
+  (* let constrs2, unk_map, unk_hpargs = Sacore.detect_dangling_pred hp_lst_assume sel_hps [] in *)
   let constrs2,unk_map = if unk_hpargs = [] then (constrs ,[]) else
     let unk_hps = List.map fst unk_hpargs in
     List.fold_left (fun (ls_cs,map) cs ->
-      let new_cs, n_map,_ = SAC.do_elim_unused cs unk_hps map in
+      let new_cs, n_map,_ = Sacore.do_elim_unused cs unk_hps map in
       (ls_cs@[new_cs], n_map)
   ) ([], []) constrs
   in
   (constrs2, sel_hps, post_hp_rels, unk_map, unk_hpargs, link_hpargs)
 
 let process_shape_infer pre_hps post_hps=
-  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  (* let _ = Debug.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
@@ -1164,13 +1164,13 @@ let relation_pre_process constrs pre_hps post_hps=
   (pre_invs, pre_constrs, post_constrs,  pre_hp_rels, post_hp_rels)
 
 let process_rel_infer pre_rels post_rels=
-  (* let _ = DD.info_pprint "process_rel_infer" no_pos in *)
+  (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
   (*************INTERNAL*****************)
   let pr = !CP.print_formula in
   (* let compute_fixpoint_pre_rel rel_name rel_args pre_oblgs proc_spec= *)
   (*   let pre_rel = CP.mkRel rel_name (List.map (fun sv -> CP.mkVar sv no_pos) rel_args) no_pos in *)
   (*   let rec_oblgs,ini_oblgs = normalize_pre_oblgs rel_args rel_name pre_oblgs in *)
-  (*   let pre_fixs = FP.pre_rel_fixpoint pre_rel [] [] Fixcalc.compute_fixpoint_td *)
+  (*   let pre_fixs = Fixpoint.pre_rel_fixpoint pre_rel [] [] Fixcalc.compute_fixpoint_td *)
   (*     ini_oblgs rel_args proc_spec rec_oblgs in *)
   (*   let _ = List.map (fun ( _,_, pre_rel,pre_def) -> *)
   (*       let _ = Debug.info_hprint (add_str "fixpoint for pre-rels" ( (pr_pair pr pr))) (pre_rel, pre_def) no_pos in *)
@@ -1182,7 +1182,7 @@ let process_rel_infer pre_rels post_rels=
   let hp_lst_assume = !sleek_hprel_assumes in
   let proc_spec = CF.mkETrue_nf no_pos in
   let pre_invs0, pre_rel_constrs, post_rel_constrs, pre_rel_ids, post_rels= relation_pre_process hp_lst_assume pre_rels post_rels in
-  let r = FP.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
+  let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in
   let _ = Debug.info_hprint (add_str "fixpoint"
       (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
   let _ = print_endline "" in
@@ -1211,7 +1211,7 @@ let process_shape_lfp sel_hps=
   ) ([],[]) (!sleek_hprel_defns) in
   let _ = Debug.ninfo_hprint ( add_str "  ls_pdefs (lfp): " (pr_list_ln (pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula)))) ls_pdefs no_pos in
   let unk_hps = List.map (fun (_,(hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let hp_defs = List.map (SAC.compute_lfp !cprog unk_hps defs) ls_pdefs in
+  let hp_defs = List.map (Sacore.compute_lfp !cprog unk_hps defs) ls_pdefs in
   let _ = print_endline "" in
   let _ = print_endline "\n*************************************" in
   let _ = print_endline "*******lfp definition ********" in
@@ -1249,7 +1249,7 @@ let process_shape_rec sel_hps=
             }
   in
   (*******END INTERNAL ********)
-  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_lfp\n" no_pos in
+  let _ = Debug.info_hprint (add_str  "  sleekengine " pr_id) "process_lfp\n" no_pos in
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, _, _, _, link_hpargs=
     shape_infer_pre_process hp_lst_assume sel_hps []
@@ -1293,7 +1293,7 @@ let process_validate ils_es=
     (guide_vars, es_formula, constrs)
   in
   (*******END INTERNAL ********)
-  let _ = DD.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in
+  let _ = Debug.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in
   let nn = (sleek_proof_counter#get) in
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   (*get current residue -> FAIL? VALID*)
@@ -1324,7 +1324,7 @@ let process_validate ils_es=
           let _ = iprog.I.prog_hp_decls <- (iprog.I.prog_hp_decls@inew_hprels) in
           (*for each succ context: validate residue + inferred results*)
           let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
-          let b, es_opt, ls_fail_ass = SC.validate ls_expect_es ls_a_es in
+          let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
           let _ = if b then
             print_endline (validate_id ^ "SUCC.")
           else
@@ -1335,7 +1335,7 @@ let process_validate ils_es=
   ()
 
 let process_shape_divide pre_hps post_hps=
-   (* let _ = DD.info_pprint "process_shape_divide" no_pos in *)
+   (* let _ = Debug.info_pprint "process_shape_divide" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
@@ -1362,7 +1362,7 @@ let process_shape_divide pre_hps post_hps=
   (*   end *)
   (* in *)
   (* let _ = List.iter pr_one ls_cond_defs_drops in *)
-  let ls_cond_danghps_constrs = SAC.partition_constrs_4_paths link_hpargs hp_lst_assume in
+  let ls_cond_danghps_constrs = Sacore.partition_constrs_4_paths link_hpargs hp_lst_assume in
   let pr_one (cond, _,constrs)=
     begin
       if constrs <> [] then
@@ -1374,7 +1374,7 @@ let process_shape_divide pre_hps post_hps=
   ()
 
 let process_shape_conquer sel_ids cond_paths=
-  let _ = DD.ninfo_pprint "process_shape_conquer\n" no_pos in
+  let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
   let link_hpargs = !sleek_hprel_unknown in
   let defs =
@@ -1384,10 +1384,10 @@ let process_shape_conquer sel_ids cond_paths=
       let sel_hps  = List.filter (fun sv ->
           let t = CP.type_of_spec_var sv in
           ((* is_RelT t || *) is_HpT t )) sel_hps in
-      let ls_path_link = SAU.dang_partition link_hpargs in
-      let ls_path_defs = SAU.defn_partition ls_pr_defs in
+      let ls_path_link = Sautil.dang_partition link_hpargs in
+      let ls_path_defs = Sautil.defn_partition ls_pr_defs in
       (*pairing*)
-      let ls_path_link_defs = SAU.pair_dang_constr_path ls_path_defs ls_path_link
+      let ls_path_link_defs = Sautil.pair_dang_constr_path ls_path_defs ls_path_link
         (pr_list_ln Cprinter.string_of_hp_rel_def_short) in
       let ls_path_defs_settings = List.map (fun (path,link_hpargs, defs) ->
           (path, defs, [],link_hpargs,[])) ls_path_link_defs in
@@ -1418,7 +1418,7 @@ let process_shape_postObl pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let grp_link_hpargs = SAU.dang_partition link_hpargs in
+  let grp_link_hpargs = Sautil.dang_partition link_hpargs in
   let cond_path = [] in
    let link_hpargs = match grp_link_hpargs with
     | [] -> []
@@ -1446,10 +1446,10 @@ let process_shape_postObl pre_hps post_hps=
   ()
 
 let process_shape_sconseq pre_hps post_hps=
-  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  (* let _ = Debug.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  let constrs1 = SAC.do_strengthen_conseq !cprog [] hp_lst_assume in
+  let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
+  let constrs1 = Sacore.do_strengthen_conseq !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin
@@ -1466,10 +1466,10 @@ let process_shape_sconseq pre_hps post_hps=
   ()
 
 let process_shape_sante pre_hps post_hps=
-  (* let _ = DD.info_pprint "process_shape_infer" no_pos in *)
+  (* let _ = Debug.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = SAU.get_pre_post pre_hps post_hps hp_lst_assume in
-  let constrs1 = SAC.do_strengthen_ante !cprog [] hp_lst_assume in
+  let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
+  let constrs1 = Sacore.do_strengthen_ante !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
   begin
@@ -1486,7 +1486,7 @@ let process_shape_sante pre_hps post_hps=
   ()
 
 let process_pred_split ids=
-  let _ = DD.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
+  let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
   let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
   (*find all sel pred def*)
@@ -1496,7 +1496,7 @@ let process_pred_split ids=
           if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
         | _ -> r
   ) [] !sleek_hprel_defns in
-  let hp_defs1, split_map = SAC.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Sa3.rel_def_stk sel_hp_defs in
+  let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Sa3.rel_def_stk sel_hp_defs in
   let _ = if split_map = [] then () else
     (*print*)
     let _ = print_endline ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
@@ -1505,7 +1505,7 @@ let process_pred_split ids=
   ()
 
 let process_pred_norm_disj ids=
-  let _ = DD.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
+  let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
   let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
   let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
   (*find all sel pred def*)
@@ -1518,7 +1518,7 @@ let process_pred_norm_disj ids=
   ()
 
 let process_shape_infer_prop pre_hps post_hps=
-  (* let _ = DD.info_pprint "process_shape_infer_prop" no_pos in *)
+  (* let _ = Debug.info_pprint "process_shape_infer_prop" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
   (*get_dangling_pred constrs*)
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
@@ -1550,7 +1550,7 @@ let process_shape_infer_prop pre_hps post_hps=
   ()
 
 let process_shape_split pre_hps post_hps=
-  (* let _, sel_post_hps = SAU.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
+  (* let _, sel_post_hps = Sautil.get_pre_post pre_hps post_hps !sleek_hprel_assumes in *)
   (*get infer_vars*)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] !sleek_hprel_assumes in
   let pre_vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (pre_hps) in
@@ -1567,9 +1567,9 @@ let process_shape_split pre_hps post_hps=
   let infer_vars = infer_pre_vars@infer_post_vars in
   let sel_hp_rels = pre_hp_rels@post_hp_rels in
   (*sleek level: depend on user annotation. with hip, this information is detected automatically*)
-  let constrs1, unk_map, unk_hpargs = SAC.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
+  let constrs1, unk_map, unk_hpargs = Sacore.detect_dangling_pred !sleek_hprel_assumes sel_hp_rels [] in
    let link_hpargs = !sleek_hprel_unknown in
-   let grp_link_hpargs = SAU.dang_partition link_hpargs in
+   let grp_link_hpargs = Sautil.dang_partition link_hpargs in
     let link_hpargs = match grp_link_hpargs with
     | [] -> []
     | (_, a)::_ -> a
@@ -1622,7 +1622,7 @@ let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: ent
   Debug.no_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
-  DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
@@ -1727,7 +1727,7 @@ let print_exception_result s (num_id: string) =
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
-  DD.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
+  Debug.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
     (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
 
 

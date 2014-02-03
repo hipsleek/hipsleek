@@ -14,7 +14,7 @@ open Label_only
 
 module H = Hashtbl
 module I = Iast
-module Inf = Infer
+(* module Inf = Infer *)
 module C = Cast
 module CF = Cformula
 module CP = Cpure
@@ -72,7 +72,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
   (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
-  let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
+  let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
