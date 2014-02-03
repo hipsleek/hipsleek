@@ -1,0 +1,68 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred lx1<s> == self=s
+  or self!=s & self=null
+  or self::node<_,nxt> * nxt::lx1<s> & self!=s 
+inv true .
+
+pred HH<prev,sent> ==
+  self::node<_,next> * next::lx1<sent> 
+  * prev::HP0<sent>&self!=sent & self!=null
+inv self!=null & self!=sent.
+
+pred GG<cur':node,prev,sent> == (exists p: self::node<_,p>@M * p::HP0<cur'> & p=prev
+     &cur'=sent)
+inv self!=null.
+
+
+pred GG1<cur':node,p,sent> == self::node<_,p>@M * p::HP0<cur'> &cur'=sent
+inv self!=null.
+
+
+/*
+GG0<cur':node,sent> == self::node<_,p>@M * p::HP0<cur'> & cur'=sent
+inv self!=null;
+
+
+*/
+
+pred HP0<sent> ==
+                       next::lx1<sent>@M * self::node<val,next>@M&self!=sent
+                       or emp&self!=sent & self=null
+inv self!=sent.
+
+checkentail x::node<_,pp>@M * pp::HP0<c> |- x::GG<aa,bb,cc>.
+print residue.
+  /*
+  
+   <1>emp&Anon_15=Anon_78 & c=cur_79 & cc=cur_79&{FLOW,(21,22)=__norm}[]
+
+  Why aa,bb not instantiated?
+
+*/
+
+checkentail x::node<_,pp>@M * pp::HP0<c> |- x::GG1<aa,bb,cc> .
+print residue.
+  // should instantiate
+
+checkentail x::node<_,pp>@M * pp::HP0<c> |- (exists bb: x::GG1<aa,bb,cc> & bb=null).
+print residue.
+// should fail
+
+  checkentail x::node<_,pp>@M * pp::HP0<c> |- x::GG1<aa,bb,cc> & bb=null.
+print residue.
+
+/*
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+ checkentail x::node<_,q>*q::ll<p> |- x::ll<n> & n=p+1.
+  checkentail x::node<_,q>*q::ll<p> |- (exists n: x::ll<n> & n=p+2).
+print residue.
+*/

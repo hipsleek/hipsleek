@@ -74,8 +74,8 @@ void lscan( node@R cur, node@R prev, node sent)
 
 
   requires cur::HH<prev,sent>
-//ensures prev'::GG<cur',prev,sent>;
-  ensures prev'::GG0<cur',sent>;
+  ensures prev'::GG<cur',prev,sent>;
+//ensures prev'::GG0<cur',sent>;
 
 /*
 requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
