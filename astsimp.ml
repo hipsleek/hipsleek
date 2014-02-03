@@ -1199,13 +1199,21 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
   (*let _ = print_string (" case inference, this feature needs to be revisited \n") in*)
   match f_ext with 
     | CF.EList l -> 
+		let rec norm_list a l = match l with 
+			  [] -> a 
+			  | h:: t -> (match (snd h) with 
+							| CF.EList ll ->  norm_list a (ll@t)
+							| _ -> norm_list (a@[h]) t) in 
+	    let l = norm_list [] l in
 	  (try 
             let f_list = List.map (fun (_,c)->
 		let d = match c with
 		  | CF.EBase b-> if b.CF.formula_struc_continuation <> None then
 		      Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 		    else b.CF.formula_struc_base 
-		  | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+		  | _ -> 
+			(print_string ("Found: "^(Cprinter.string_of_struc_formula c)^"n");
+			Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"})
 		in
 		let f_aux = !force_verbose_xpure in
 		force_verbose_xpure:=true;
