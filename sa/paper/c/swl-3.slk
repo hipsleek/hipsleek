@@ -1,0 +1,52 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred KK<p,t> == self::node<_,p>*p::node<_,t>
+ inv self!=null.
+/* 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]{1}->(exists p_30,
+        t_31: self::node<_,p_30>@M * p::node<_,t_31>@M&p=p_30 & t=t_31&
+        {FLOW,(1,24)=__flow})[]
+*/
+
+pred K2<p,t,s> == self::node<_,p>*p::KK<t,_> & t=s
+ inv self!=null.
+/*
+view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]self::node<_,p>@M * 
+        p::KK<t,Anon_15>@M&s=t&{FLOW,(1,24)=__flow}[]
+*/
+
+pred K3<p,t> == self::node<_,p>*p::KK<t,_> 
+ inv self!=null.
+/*
+ EBase exists (Expl)[](Impl)[_; _](ex)[]{4}->(exists p_26,
+        t_27: self::node<_,p_26>@M * p::KK<t_27,Anon_17>@M&p=p_26 & t=t_27&
+        {FLOW,(1,24)=__flow})[]
+ */
+
+pred HP0<sent> ==
+                       self::node<val,next>@M&self!=sent
+                       or emp&self!=sent & self=null
+inv self!=sent.
+
+pred GG1<cur':node,p,sent> == self::node<_,p>@M * p::HP0<cur'> &cur'=sent
+inv self!=null.
+
+
+checkentail x::node<_,b>*b::node<_,c> |- x::KK<bb,cc>.
+print residue.
+
+checkentail x::node<_,b>*b::KK<c,d> |- x::K3<bb,cc>.
+print residue.
+
+checkentail x::node<_,b>*b::KK<c,d> |- x::K2<bb,cc,dd>.
+print residue.
+// why bb not instantiated?
+
+checkentail x::node<_,pp> * pp::HP0<c> |- x::GG1<aa,bb,cc> .
+print residue.
+
