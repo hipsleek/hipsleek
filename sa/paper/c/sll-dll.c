@@ -10,7 +10,7 @@ dll<p> == self = null or self::node< p , q> * q::dll<self>;   // p stores the pr
 */
 /*@
 HeapPred H1(node a, node@NI b).
-PostPred G1(node a, node b).
+PostPred G1(node a, node@NI b).
 */
 void paper_fix (struct node* x, struct node* p)
 //@ infer[H1,G1] requires H1(x,p) ensures G1(x,p);
