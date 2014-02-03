@@ -30,39 +30,51 @@ lx<g:node,s> == self=s
   or self::node<_,nxt> * nxt::lx<_,s> & self!=s 
 inv true ;
 
-lx1<g:node,s> == self=s
+lx1<s> == self=s
   or self!=s & self=null
-  or self::node<_,nxt> * nxt::lx1<self,s> & self!=s 
+  or self::node<_,nxt> * nxt::lx1<s> & self!=s 
 inv true ;
 
+HH<prev,sent> ==
+  self::node<_,next> * next::lx1<sent> 
+  * prev::HP0<sent>&self!=sent & self!=null
+inv self!=null & self!=sent;
 
-HH<prev,sent>==
-  self::node<val,next>@M * next::HP0<sent> 
-  * prev::HP7<sent>&self!=sent
+GG<cur':node,prev,sent> == prev::HP0<cur'> * self::node<_,prev>@M&cur'=sent
 inv self!=null;
 
-G(cur,cur',prev,prev',sent) ::= HP_1227(prev,cur') * prev'::node<val,prev>@M&cur'=sent,
- HP_1220(cur,sent) ::= 
- emp&cur=null & cur!=sent
- or cur::node<val,next>@M * HP_1220(next,sent)&cur!=sent
- or emp&cur=sent
- ,
- HP_1227(prev,sent) ::= 
- prev::node<val,next>@M * HP_1220(next,sent)&prev!=sent
- or emp&prev!=sent & prev=null
- ]
+HP0<sent> ==
+                       next::lx1<sent>@M * self::node<val,next>@M&self!=sent
+                       or emp&self!=sent & self=null
+inv self!=sent;
+
 
 //lemma_safe self::ll<s> & g=null -> self::lx<g,s>;
 
+/*
+
+[ H(cur,prev,sent) ::=cur::node<val,next>@M * next::lx1<sent>@M * 
+  HP_1213(prev,sent)&cur!=sent & cur!=null,
+
+ G(cur,cur',prev,prev',sent) ::= HP_1213(prev,cur') * prev'::node<val,prev>@M&cur'=sent,
+ HP_1213(prev,sent) ::=
+                       next::lx1<sent>@M * prev::node<val,next>@M&prev!=sent
+                       or emp&prev!=sent & prev=null
+                       ]
+*/
+
 void lscan( node@R cur, node@R prev, node sent)
 
-/* OK
+
+  requires cur::HH<prev,sent>
+  ensures prev'::GG<cur',prev,sent>;
+
+/*
 requires cur::ll<sent> * prev::lseg<sent> & cur!=null 
 ensures prev'::ll<sent>  & cur'=sent ;
 requires cur::lseg<sent> * prev::ll<sent> & cur!=sent 
 ensures prev'::ll<sent>  & cur'=sent ;
 */
-
 /* FAIL
   requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
   ensures prev'::node<_,p> * p::lx<_,sent> & cur'=sent &prev'!=sent;//'
@@ -83,10 +95,11 @@ ensures prev'::ll<sent>  & cur'=sent ;
   ensures prev'::node<_,p> * p::lx8<_,sent> & cur'=sent ;//'
 */
 
-
+/*
   infer [H,G]
   requires H(cur,prev,sent)
   ensures G(cur,cur',prev,prev',sent);
+*/
 
 //     infer [H1,H2,G]
 //  requires cur::node<_,n> * H1(n,sent) * H2(prev,sent)
