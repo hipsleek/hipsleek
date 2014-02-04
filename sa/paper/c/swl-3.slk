@@ -43,7 +43,7 @@ pred K3<p,t> == self::node<_,p>*p::KK<t,_>
 
 
  */
-
+/*
 pred HP0<sent> ==
                        self::node<val,next>@M&self!=sent
                        or emp&self!=sent & self=null
@@ -51,7 +51,7 @@ inv self!=sent.
 
 pred GG1<cur':node,p,sent> == self::node<_,p>@M * p::HP0<cur'> &cur'=sent
 inv self!=null.
-
+*/
 
 
 /*

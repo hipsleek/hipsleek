@@ -449,7 +449,9 @@ let norm_extract_common iprog cprog cviews sel_vns=
           in
           process_helper rest (done_vs@n_vdecls)
   in
-  process_helper cviews []
+  (*not sure it is necessary*)
+  (* process_helper cviews [] *)
+  cviews
 
 
 (*****************************************************************)
@@ -508,8 +510,9 @@ let cont_para_analysis_x cprog cviews=
 let cont_para_analysis cprog cviews=
   (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
   let pr1 = pr_pair pr_id !CP.print_svl in
+  let pr2a = Cprinter.string_of_view_decl in
   let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
-  let pr3 = pr_list pr2 in
+  let pr3 = pr_list pr2a in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews
 

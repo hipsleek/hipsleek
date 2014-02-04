@@ -56,7 +56,7 @@ let view_rec : (ident list) ref = ref []
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
       (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-      true)
+      false)
   else List.mem n !view_rec 
 
 (** An Hoa : List of undefined data types **)
@@ -1403,7 +1403,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             (*todo: after elim useless, update methos specs. tmp: do not elim*)
-            if (* !Globals.pred_elim_useless *) false then
+            if !Globals.pred_elim_useless then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in
