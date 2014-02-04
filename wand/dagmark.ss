@@ -10,7 +10,7 @@ relation update(bag(node) G, node x, int d, node l, node r,bag(node) G1).
 relation reach(bag(node) G, node x, bag(node) R).
 
 dag<G> == self = null
-       or exists G1: self::node<v,l,r> * l::dag<G> U* r::dag<G> & update(G,self,v,l,r,G1);
+       or self::node<v,l,r> * l::dag<G> U* r::dag<G> & update(G,self,v,l,r,G1);
 
 axiom update(G,x,1,l,r,G1) ==> mark1(G,x,G1).
 
