@@ -1,0 +1,69 @@
+/*
+@M - mutable   
+@L - lending   
+@A - no access 
+*/
+
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, a1, a2> == self = null & n = 0 
+	or self::node<a@a1, q@a2> * 
+    q::ll<n-1, a1, a2>
+  inv n >= 0.
+
+
+// (1) Valid 
+checkentail x::ll<n,@M,@M> |- x::ll<n,@M,@M>.
+print residue.
+
+// (2) Valid 
+checkentail x::ll<n,@M,@M> |- x::ll<n,@L,@A>.
+print residue.
+
+// (3) Fail 
+checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M>.
+print residue.
+
+// (4) Valid 
+checkentail x::ll<n,@L,@M> |- x::ll<n,@A,@L>.
+print residue.
+
+// (5) Fail
+checkentail x::ll<n,@A,@L> |- x::ll<n,@A,@M> .
+print residue.
+
+// (6) Valid
+checkentail x::node<p@L,q> * q::ll<n,@L,@L> & n > 2 |- x::ll<n+1,@L,@L> & n > 2.
+print residue.
+
+// (7) Valid
+checkentail x::node<p@A,q> * q::ll<n,@A,@M> & n > 2 |- x::ll<n+1,@A,@M> & n > 2.
+print residue.
+
+// (8) Valid
+checkentail x::node<a@M, r@M> * r::ll<n, @M, @M> |-   x::node<a@L, q@A> * q::ll<n, @M, @M>. 
+print residue.
+
+// (9) Valid
+checkentail x::node<a@M, r@M> * r::node<b@M, r2@M> * r2::ll<n, @M, @M> |- x::ll<n + 2, @M, @M>.
+print residue.
+
+// (10) Valid
+checkentail x::ll<n+1,@M,@M> & n > 2 |-  x::node<p@M,q@M> * q::ll<n,@M,@M> & n > 2.
+print residue.
+
+// (11) Valid
+checkentail x::ll<n+1,@M,@M> & n > 2 |-  x::node<p@L,q@M> * q::ll<n,@M,@M> & n > 2.
+print residue.
+
+// (12) Valid
+checkentail x::ll<n+1,@M,@M> & n > 2 |-  x::node<p@A,q@A> * q::ll<n,@M,@M> & n > 2.
+print residue.
+
+// (13) Valid
+checkentail x::ll<n+1,@M,@M> & n > 2 |-  x::node<p@A,q@A> * q::ll<n,@M,@L> & n > 2.
+print residue.

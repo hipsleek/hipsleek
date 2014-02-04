@@ -1,4 +1,4 @@
-//Valid.Fail.Fail.Valid.Fail.Fail.
+//Valid.Valid.Valid.Valid.Valid.Valid.
 data node { int val ; node next }.
 
 pred lseg<n, p> == case {
@@ -8,14 +8,18 @@ pred lseg<n, p> == case {
      inv n >= 0.
 
 
-lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  self::lseg<a, r> * r::lseg<b, p>.
+lemma_safe "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  self::lseg<a, r> * r::lseg<b, p>.
 
-lemma "V2" self::lseg<n, p> &  n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+lemma_safe "V2" self::lseg<n, p> &  n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
 
-lemma "V3" self::lseg<n, p> &  n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+lemma_safe "V3" self::lseg<n, p> &  n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
 
-lemma "V4" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 -> self::lseg<n, p>.
+lemma_safe "V4" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 -> self::lseg<n, p>.
 
-lemma "V5" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <- self::lseg<n, p>.
+lemma_safe "V5" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <- self::lseg<n, p>.
+/* 
+  forall a,b. self::lseg<n, p> & n = a + b & a,b >=0 
+   -->  self::lseg<a, r> * r::lseg<b, p>
+*/
 
-lemma "V6" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <-> self::lseg<n, p>.
+lemma_safe "V6" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <-> self::lseg<n, p>.

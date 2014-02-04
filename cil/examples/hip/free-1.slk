@@ -1,0 +1,15 @@
+data int__star {
+ int pdata;
+}.
+
+pred_prim memLoc<heap:bool,size:int>
+  inv size>0.
+
+checkentail x::int__star<_> * x::int__star<_> |- false.
+
+print residue.
+
+checkentail x::memLoc<_,_> * x::memLoc<_,_> |- false.
+
+print residue.
+

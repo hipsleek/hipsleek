@@ -1,0 +1,52 @@
+//Valid.Fail
+data node { int val ; node next }.
+
+
+pred lseg2<q,S> == 
+  self::node<_,w> * w::lseg2<q,S1> & 
+    S=union({self},S1) & self notin S1 
+  or S={} & self=q.
+
+/*
+lemma_safe "ls1" self::lseg2<q, S> 
+  -> self::lseg2<y, Sx> * y::lseg2<q, Sy> & S=union(Sx,Sy).
+*/
+
+
+/*
+lemma_safe "ls3" self::lseg2<y, Sx> * y::lseg2<q, Sy> & intersect (Sx,Sy)
+= {} & Sy!={} -> self::lseg2<q, union(Sx,Sy)> .
+
+lemma_safe "ls4" self::lseg2<y, Sx> * y::lseg2<q, Sy> & intersect (Sx,Sy)
+= {} & Sy={} -> self::lseg2<q, union(Sx,Sy)> .
+*/
+
+/*
+checkentail
+ self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} or
+ self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy!={}
+ |- self::lseg2<q, union(Sx,Sy)> .
+*/
+
+lemma_safe "ls2" self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {}  -> self::lseg2<q, union(Sx,Sy)> .
+
+/*
+checkentail
+ y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} 
+ & Sx={} & self=y
+ |- self::lseg2<q, union(Sx,Sy)> .
+
+checkentail
+ self::node<_,w> * w::lseg2<y,S1>  * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} & Sx=union({self},S1) & self notin S1
+ |- self::lseg2<q, union(Sx,Sy)> .
+*/
+
+/*
+checkentail
+ self::lseg2<y, Sx> * y::lseg2<q, Sy>  & intersect (Sx,Sy) = {} & Sy={} 
+ |- self::lseg2<q, union(Sx,Sy)> .
+
+  self::node<_,w> * w::lseg2<q,S1> & 
+    S=union({self},S1) & self notin S1 
+  or S={} & self=q.
+*/

@@ -1,0 +1,11 @@
+Q := {[n,m,k]: (k=n & 0<=n & n<=m) | (k=m & 0<=k & k<n)};
+Inv := {[n,m,k]: n>=0 & m>=0 & k>=0};
+QI := Q intersection Inv;
+Q; QI;
+B := {[n,m,k]: (k=n & 0<=n & n<=m) | (k=m & m<=n & 0<=m)};
+B subset Q;
+Q subset B;
+B; gist B given Inv;
+Q1 := PairWiseCheck Q;
+gist Q given Inv;
+gist Q1 given Inv;

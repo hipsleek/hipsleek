@@ -1,0 +1,27 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+PostPred G(node ra, node rb,node a, node b, node@NI c).
+
+relDefn
+  HP_946 (prev1_160,cur_157,sent_156) <->
+  emp&prev1_160=null
+  or prev1_160::node<val_161,prev_163>@M *
+     HP_946(prev_163,prev1_160,sent_156)&cur_157!=sent_156 & cur_157!=null.
+
+relAssume
+ HP_946(prev,prev1',next) * cur::node<val,prev>@M&cur=prev1' & next=sent --> G(cur,next,prev,prev1',sent).
+
+relAssume
+ G(cur,next,prev,prev1',sent) --> G(cur,next,prev,prev1',sent)&prev=null & cur!=null.
+
+relAssume
+ G(next_52_944,cur',cur,prev',sent)&cur!=null & next_52_944!=null & 
+    next_52_944!=sent -->  G(cur,next,prev,prev1',sent) .
+
+
+shape_lfp [G].

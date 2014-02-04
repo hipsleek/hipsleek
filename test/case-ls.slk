@@ -1,0 +1,20 @@
+
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> //& self!=p
+  inv n>=0.
+
+
+pred ll<p,n> == self=null & n=0
+  or self::node<q>*q::ll<p,n-1> 
+  inv n>=0.
+
+/*
+# case-1s.slk
+
+--eci did not give case spec ...
+
+ */

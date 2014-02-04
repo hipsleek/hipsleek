@@ -1,0 +1,26 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a,cell b).
+HeapPred HP_907(cell a,cell@NI b).
+PostPred G(cell a,cell b).
+
+relAssume 
+ HP_907(q,p) * p::cell<val>@M --> G(p,q).
+
+shape_split_base [H,HP_907][G].
+
+/*
+# err3-split.slk
+
+For above we did not obtain a splitting.
+
+I think we should get one. Just that it should not
+have a heap guard.
+
+  HP_907(q,p) |#| p::cell<val>@M --> DG_3(q,p)
+  DG_3(q,p) := htrue
+
+
+*/

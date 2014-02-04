@@ -1,0 +1,13 @@
+#process_fold_result
+#do_fold_w_ctx
+#do_full_fold
+#do_fold
+#do_base_fold
+#apply_right_coercion,Loop
+#fold_op,Loop,Trace
+vdef_lemma_fold
+#heap_entail_one_context_struc,Loop
+#compute_actions
+#process_action
+#trans_I2C_struc_formula
+case_normalize_formula

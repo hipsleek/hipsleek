@@ -1,0 +1,54 @@
+data node{
+	node parent;
+	node next;
+}.
+
+pred tree<> == self::node<_,null>
+        or self::node<l,r> * l::tree<> * r::tree<>
+	inv self!=null.
+
+pred tree<> == self::node<_,null>
+        or self::node<l,r> * l::tree<> * r::h8<>
+	inv self!=null.
+
+ P(p,n) |#| x::node<_,n> --> Q(n,x)
+ P(p,n) & n=null --> emp
+
+ P(p,n) * x::node<z,n> --> Q(n,x) * x::node<z,n> 
+
+
+pred h8<> == emp |#| _::node<self,r> & r=null
+        or self::tree<> |#| _::node<self,r> & r!=null
+	inv self!=null.
+
+  n::node<_,null> |#| x::node<_,n> |- Q(n,x)
+
+
+dll<p> = self::node<p,n>*n::dll<x>
+         or self=null
+
+P<> = self::Q<x> |*| x::node<_,self>
+
+Q<x> = self::node<x,n>*n::P<>
+       or self=null
+
+   
+Q<x> = self::node<x,n>*( n::Q<x> |*| x::node<_,n>)
+      or self=null
+
+
+
+ x::node<p,null> |- x::Q<r> 
+
+ x::node<p,q>*q::node<_,null> |- x::Q<r> //fail
+
+
+ x::node<p,q>*q::node<_,null> |- q::P<>
+
+ q::node<_,null> |- q::P<>
+ q::node<_,null> |- q::Q<x> |*| x::node<_,q> 
+
+
+ infer [P,Q]  x::node<p,q>*P(q) |- q::Q(x)  --> x::node<p,q>
+
+    P(q) |*| x::node<_,q> --> Q(q,x)

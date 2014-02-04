@@ -364,6 +364,14 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "get_next", "SUCCESS"
         ]],
+    "imm-field" => [
+        ["imspd.ss",2,"-tp oc --field-ann --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
+        ["getset.ss",5,"-tp oc --field-ann --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
+        ["bigint.ss",15,"-tp redlog --field-ann --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
+        ["insertion_simple.ss",1,"-tp oc --field-ann --etcsu1 ","insert","SUCCESS"],
+        ["schorr-waite-list.ss",1,"-tp om --field-ann --etcsu1 ","lscan","SUCCESS"],
+        ["sll.ss",4,"-tp oc --field-ann --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
+    ],
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["dag_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
@@ -1463,8 +1471,9 @@ $output_file = "log";
                       ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
                       ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Fail.Fail."],
+                      ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
               ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
+		      ["xpure3nodes.slk","","","Valid.Valid."],
                       ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
                       ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
                       ["infer/infer4.slk", "", "", "Fail."],
@@ -1483,30 +1492,37 @@ $output_file = "log";
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer16.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
-                      ["ann1.slk", " --imm --en-imm-inv", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
-                      ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["ann1.slk", " --imm --en-imm-inv --etcsu1 ", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["ann2.slk", " --imm --en-imm-inv --etcsu1 ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/imm1.slk", " --imm --etcsu1 ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-                      ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
-                      ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
-                      ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
+                      ["imm/imm2.slk", " --imm --etcsu1 ", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", " --imm --etcsu1 ", "", "Fail.Fail.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", " --imm --etcsu1 ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek03.slk", " --field-ann ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek01.slk", " --field-ann --etcsu1 ", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-ann --etcsu1 ", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek03.slk", " --field-ann --etcsu1 ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek05.slk", " --field-ann --etcsu1 ", "", "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid"],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", " --elp ", "Valid.Valid.", "Valid.Valid."],
-        ["ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
-        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
-        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
-        ["ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
-        ["sll_tailL.slk", "", "Valid.Valid", ""]
+        ["inflem.slk", "--en-inf --elp ", "Valid.", "Fail.Valid."],
+#        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
+        ["lemmas/lseg.slk", " --elp ", "Valid.Valid.Valid.Valid.", ""],
+        ["lemmas/lseg1.slk", " --elp ", "Valid.", ""],
+        ["lemmas/rlseg.slk", " --elp ", "Valid.Valid.Valid.", ""],
+        ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
+        ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
+        ["lemmas/sll_tailL.slk", " --elp --en-lem-rhs-unfold ", "Valid.Valid", ""],
+        ["lemmas/dseg-new.slk", " --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
+        ["lemmas/dseg1.slk", " --elp ", "Valid.Fail.", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -1763,7 +1779,7 @@ sub grep_failures {
     my ($res,$exp,$prefix) = @_;
     @results = split (/\./, $res);
     @expected = split (/\./, $exp);
-    my %mark_failures = map {if ($results[$_] !~ $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#results;
+    my %mark_failures = map {if ($results[$_] ne $expected[$_]) {$_+1 =>"$expected[$_]"} else {(0 => "same")}} 0 .. $#expected; #results
     my @failures = grep {  $_ > 0 } keys  %mark_failures;
     my @failures_e = map {  "\{"."$prefix".$_ ."#". $mark_failures{$_}."\}" } @failures;
     @failures_e = sort  @failures_e;
@@ -1775,7 +1791,7 @@ sub grep_failures {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
 	  my $barr = 0;
       if ("$param" =~ "musterr") {
@@ -1783,7 +1799,8 @@ sub sleek_process_file  {
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
-      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+      $lem = index($script_arguments, "--elp");
+      if (("$param" =~ "lemmas") ) {  $lem = 1; }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
@@ -1798,6 +1815,7 @@ sub sleek_process_file  {
       foreach $test (@{$t_list})
       {
           my $extra_options = $test->[1];
+          my $leme = index($extra_options, "--elp") + $lem;
           if ("$extra_options" eq "") {
               print "Checking $test->[0]\n";
           } else {
@@ -1807,7 +1825,7 @@ sub sleek_process_file  {
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
           print LOGFILE "\n======================================\n";
           print LOGFILE "$output";
-          #print "$output";
+          #print "\n!!!output: $output";
           my $lemmas_results = "";
           my $entail_results = "";
           my $barrier_results = "";
@@ -1838,13 +1856,16 @@ sub sleek_process_file  {
                   }
               }
           }
+          #print "\n!!!!!Ent Res: $entail_results \n";
+          #print "\n!!!!!Exp Res: $test->[3] $leme\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)){
+          if  (($leme >= 0 )  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
-          if ((($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+          if ((($barr==0) && ($entail_results ne $test->[3])) || 
               # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
               ($barr==1 && ($barrier_results ne $test->[2]))){
+              #print "\n !!!!!!!!!!! bef grep for failures: \n";
               @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
           }
           if ($#failures >= 0 ){

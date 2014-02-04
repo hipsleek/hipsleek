@@ -1,0 +1,28 @@
+#   P3(n,m) & 1<=n 
+#     & 1<=m & m2=m-1 & n2=n-1
+#   -->  P3(n2,m2).
+
+# oc topd-zip.oc
+
+# Form a recursive check using top-down fixpoint
+RecChecks := {[n,m]:forall(RECn,RECm: 
+   not(RECn >= 0 
+      & n >= 1 + RECn & RECn + m >= n & RECn + m = RECm + n
+      ) 
+    | ((RECn<0 | RECm<0) & (RECm!=0 | RECn<1))
+    )
+  };
+
+
+# Form initial check.
+InitChecks := {[n,m]:(n<0 | m<0) & (m!=0 | n<1)};
+
+Pre:=RecChecks intersection InitChecks;
+Inv := {[n,m]:n>=0 & m>=0};
+
+# Form pre-condition given invariant
+D:=gist Pre given Inv;
+
+RecChecks;Pre;
+D;
+PairWiseCheck D;

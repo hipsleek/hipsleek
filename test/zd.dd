@@ -1,0 +1,15 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+#cnv_ptr_to_int,Loop
+#process_action
+#heap_entail_conjunct_helper
+#,Trace
+fold_op
+#heap_entail_empty_rhs
+heap_entail_conjunct_lhs_struc
+heap_entail_one_context_struc
+#heap_entail_struc
+#heap_entail_struc_init
+#do_match
+#subst_avoid_capture
+#subst_eqset

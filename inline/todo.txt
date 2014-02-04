@@ -1,0 +1,249 @@
+*******************************************************
+# data-in3.slk --field-ann  (FIXED)
+
+//(1)
+checkentail p::pair<#,a> * q::pair<b,_@A> |- true.
+print residue.
+/*
+ <1>p::pair<-@M,a@M>@M([0]) * q::pair<b@M,Anon_13@A>@M&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+Can we make p::pair<#,a> generate _@A at the parser/astsimpl.ml?
+I start by changing #n --> #
+*******************************************************
+# data-in3b.slk (FIXED)
+
+//(2)
+checkentail v.quad.p1.x::<a> |- true.
+print residue.
+Entail 1: Valid. 
+Fatal error: exception Invalid_argument("List.combine")
+
+There seems to be a printing problem. Can we fix it
+and try to make this equivalent to:
+checkentail v::quad<a,_@A,#> |- true.
+==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+Need to change from:
+ <1>v::quad<a,-,->@M([1,2])&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+to:
+==>  <1>v::quad<a@M,Anon_11@A,Anon_12@A>@M&{FLOW,(21,22)=__norm}[]
+
+
+
+*******************************************************
+# quad.ss   (FIXED)
+
+Why is there a big time-out?
+
+!!! log(small):(0.03,165)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(SAT:158<1:TIMEOUT:OMEGA CALCULATOR,10.)])
+*******************************************************
+# quad-2.ss  (FIXED by excluding absent vars from fv_h_node)
+
+There is a warning for specs:
+
+!!!WARNING : uninterpreted free variables [Anon_898,Anon_902] in specification.Checking lemmas... DONE.
+
+which was translated from:
+  requires q.x::<a>
+  ensures q.x::<a> & res=a;
+
+static  :EBase exists (Expl)[](Impl)[a](ex)[]q::pair<a@M,_@A>@M&
+        {FLOW,(24,25)=__norm}[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists a_32: q::pair<a_32@M,_@A>@M&a=res & a=a_32&
+                    {FLOW,(24,25)=__norm})[]
+
+It should be OK to give @A fields from quantification.
+
+*******************************************************
+# ll-new.ss
+
+Starting Omega...oc
+Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Invalid_argument("List.combine")
+Error3(s) detected at main 
+
+*******************************************************
+# pair3.c
+
+pair3.ss is the hand-translation of pair3.c
+
+pair3.ss works fine.
+
+However, pair3.c has quite a few timeouts:
+
+Procedure main$ SUCCESS.
+Stop Omega... 43 invocations 
+0 false contexts at: ()
+!!! log(small):(0.28,232)
+!!! 
+ log(bigger)(>4s)(1):(10.,[(imply:191<25:TIMEOUT:OMEGA CALCULATOR,10.)])
+
+There seems some problems..
+
+
+
+*******************************************************
+# pair-2.c --pip
+
+{local: pair p,pair pp,pair_star ppp,pair_star addr_pp
+pair p = new pair(0, 0);
+pair pp = new pair(0, 0);
+^^^^^^^^^^^^^^^^^^^^^^^^^ redundant since addr_pp already present
+pair_star ppp = new pair_star(null);
+pair_star addr_pp = new pair_star(null);
+{member access p~~>x = 1;
+member access addr_pp~~>deref = p;
+ppp = addr_pp;
+member access member access ppp~~>deref~~>x = (int)member access member access ppp~~>deref~~>x + 1;
+(82, ):return member access member access addr_pp~~>deref~~>x}}
+
+*******************************************************
+# pair-3.c
+
+/*
+{
+{local: pair p,pair pp
+pair p = new pair(0, 0);
+pair pp = new pair(0, 0);
+          ^^^^^^^^^^^^^^ redundant
+{member access p~~>x = 1;
+pp = p;
+member access pp~~>x = (int)member access pp~~>x + 1;
+(78, ):return member access p~~>x}}
+}
+*/
+*******************************************************
+# quad-8-weird.c (default allocation and returns)
+
+Currently, no return is translated to:
+  return 0;
+
+Stack and heap allocation is made using:
+  quad p = new quad(0, 0, null);
+
+However, I think C is silent on what values
+these should take. Thus, for safety, we should
+give random values to these system.
+
+I suggest proving a constructor:
+  new quad();
+which will be silent in the values;
+and also adding 
+  int tmp;
+  return tmp;
+
+*******************************************************
+# quad-8a.c
+
+int main()
+/*@
+ requires true
+  ensures res=6;
+*/
+{
+  struct quad p;
+  struct pair pp;
+  pp.x = 4;
+  p.p2 = &pp;
+  p.p1.x = 3;
+  int r=foo(&p);
+  //printf("p.p1.x = %i\n",p.p2->x); // 4
+  //printf("r = %i\n",r); //6
+  return r;
+}
+/*
+{local: quad p,pair pp,int r,int tmp
+quad p = new quad(0, 0, null);
+pair pp = new pair(0, 0);
+int r;
+int tmp;
+{member access pp~~>x = 4;
+member access p~~>p2 = pp;
+member access p~~>p1~~>x = 3;
+tmp = (84, ):foo(p);
+r = tmp;
+(86, ):return r}}
+
+// why is there an intermdiate tmp introduced?
+}
+*/
+*******************************************************
+# ret1.c: FIXED
+
+Last Proving Location: 1 File "ret1.c",Line:6,Col:0
+
+ERROR: at ret1.c_6:0_13:1
+Message: return type doesn't match
+
+=======================
+GOT:
+node_star main(node l)
+     ^^^^
+......
+
+
+===> EXPECT: node main(node l)
+.........
+
+*******************************************************
+#loop/w3a.c
+
+Last Proving Location: 1 File "w3a.c",Line:12,Col:6
+
+ERROR: at w3a.c_7:0_17:1
+Message: return type doesn't match
+
+
+*******************************************************
+#n1.c
+
+conditional stmt has not been transformed properly.
+
+the second dprint
+
+GOT:
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:rest::node<_@M,_@M>@M&h=rest & h=h' & rest=rest' & rest'!=null & v_int_13_951!=0 & rest'!=null & h'!=null &
+                                                                                          ^^^^^^^^^^^^^^^^^^^^^^
+ v_int_13_952!=0 & h'!=null & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_885'=0 & v_int_13_885'=0 & !(v_bool_13_891') & v_int_13_885'=0 & !(v_bool_13_891')&{FLOW,(24,25)=__norm}[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
+
+ ]
+
+EXPECTED
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:rest::node<_@M,_@M>@M&h=rest & h=h' & rest=rest' & rest'!=null & v_int_13_951!=0 & rest'!= h' &
+                                                                                          ^^^^^^^^^^^^^^^^^^^^^^
+ v_int_13_952!=0 & h'!=null & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_951!=v_int_13_952 & !(v_bool_13_888') & v_int_13_885'=0 & v_int_13_885'=0 & !(v_bool_13_891') & v_int_13_885'=0 & !(v_bool_13_891')&{FLOW,(24,25)=__norm}[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 2; 0]
+
+ ]
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************
+*******************************************************

@@ -1,0 +1,13 @@
+//Valid.Valid.Valid.
+
+data cell {
+  int val;
+}.
+
+
+
+//10
+infer [] y::cell<_>@v & v=@L |- y::cell<b>@L.
+print residue.
+
+

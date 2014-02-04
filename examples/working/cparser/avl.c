@@ -11,7 +11,7 @@ struct node {
 /* view for avl trees */
 /*@
 avl<size, height> == self = null & size = 0 & height = 0 
-  or self::node^<_, height, p, q> * p::avl<size1, height1> * q::avl<size2, height2> & size = 1+size1+size2 & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
+  or self::node<_, height, p, q> * p::avl<size1, height1> * q::avl<size2, height2> & size = 1+size1+size2 & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 
   inv size >= 0 & height >= 0;
 */
 
@@ -199,7 +199,7 @@ struct node* build_avl1(struct node* x, struct node* y)
 
 void build_avl2(struct node* x, struct node* y, struct node* z)
 /*@
-  requires y::avl<my, ny> * z::avl<mz, ny> * x::node^<_, _, _, _> & y != null
+  requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null
   ensures  x::avl<1 + my + mz, 1 + ny>;
 */
 {

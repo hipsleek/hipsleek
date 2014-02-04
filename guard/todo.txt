@@ -1,0 +1,1652 @@
+ tll
+After discussing with Cristian, it seems we
+need rel assumption of the form below.
+
+  H0(lf8) |#| x::node<lf8,q> & q!=null--> H(p)
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+
+This seems critical to obtain a sound solution for
+guard/tree-1.ss. We thought also about putting guards
+into formula, but could not really find a use for it in
+verification. It seems we mainly need it in shape
+analysis. Hence, I think we will leave the guard 
+feature for just sa-core for now.
+
+# tree-1.slk
+
+infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
+print residue.
+
+This inference is too weak.
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [P(p) --> Q(p)]
+
+Can we obtain instead:
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+
+   P(p) |#| x::node<p,q> & q!=null--> Q(p)
+
+This gives relational information that q!=null is required.
+
+==========================================================
+# tree-1b.slk
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+
+shape_split_base [H0,H1][G].
+
+/*
+# tree-1b.slk
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M&r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+# guard/tree-2.ss  (try tree-2.slk): FIXED
+
+GOT
+===
+ // PRE_REC
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M --> H(x@NI,left_27_952),
+
+EXPECT
+======
+
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M
+  & &right_27_953!=null  --> H(x@NI,left_27_952),
+==========================================================
+# tree-2.ss FIXED
+
+Got:
+
+ H(p_1004,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null & p_1004=p7
+    or H(x_1005,l8) * x_1005::node<p7,l8,r9>@M&
+        r9=null & p_1004=p7
+
+EXPECT:
+ H(p7,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null 
+    or x_1005::node<p7,l8,r9>@M & r9=null 
+
+==========================================================
+# tll-2.slk
+
+infer[H,G,HP_964,HP_965,HP_966]
+  HP_964(left_31_961,t) * HP_966(next_31_963,t) * 
+x::node<left_31_961,right_31_962,next_31_963>@M * G(right_31_962,l_47',t')&
+t=t' & x=x' & right_31_962!=null & !(v_bool_31_942') & right_31_962!=null & 
+!(v_bool_31_942') & left_31_961=v_node_41_940'
+ |-  H(v_node_41_940',l_47').
+print residue.
+
+GOT
+ inferred [HP_964(left_31_961,t@NI) --> H(left_31_961,l_47'@NI)]
+
+EXPECT:
+ HP_964(left_31_961,t@NI) | x::node<left_31_961,r,_>@M & r=null  
+     --> H(left_31_961,l_47'@NI)]
+==========================================================
+# parent-2.slk (see also parent.ss) FIXED
+
+Two issues
+ (i) do we still use _pure_of_H3(..)
+ (ii) can we narrow to single predicate?
+
+infer [H0,H3] H0(parent_32_966,p) * H3(next_32_969,p) * 
+x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & 
+parent_32_966=pp_47'
+ |-  emp&p=pp_47'. 
+print residue.
+
+ <1>H0(parent_32_966,p) * H3(next_32_969,p) * x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & parent_32_966=pp_47' & p=parent_32_966&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [_pure_of_H0,_pure_of_H3]: ( _pure_of_H0(parent_32_966,p) & _pure_of_H3(next_32_969,p)) -->  p=parent_32_966]
+[[empty]]
+
+Expecting:
+  H0(pp,p) --> p=pp
+==========================================================
+# parent.ss (see parent-2.slk) FIXED
+
+How come rel ass from ASSERT not present here?
+
+[ // BIND
+(0)H(x,p@NI) --> x::node<parent_20_900,next_20_901>@M * 
+HP_902(parent_20_900,p@NI) * 
+HP_903(next_20_901,p@NI),
+ // POST
+(0)HP_902(parent_20_900,p@NI) * HP_903(next_20_901,p@NI) * 
+x::node<p,next_20_901>@M&
+p=parent_20_900 --> G(x,p@NI)]
+
+*/
+==========================================================
+# tll-parent.ss : FIXED
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&res_1092=x_1090 & right_34_995=null
+                                 ^^^^^^^^^^^^^^^
+ ,
+
+New version: (missing res=x)
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&right_34_995=null
+ 
+How come HP_1000 is missing in pre-predicate?
+We cannot form dangling in this scenario.
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1072,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M * 
+ H(right_34_1073,x_1084,t_1086)&right_34_1073!=null & p_1085=parent_34_1074
+ or H(left_34_1072,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M&
+    right_34_1073=null & p_1085=parent_34_1074
+ ,
+
+OK
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1071,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+ HP_1000(next_34_1073,p_1085,t_1086) * H(right_34_1072,x_1084,t_1086)&
+ right_34_1072!=null & p_1085=parent_34_1074
+ or H(left_34_1071,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+    HP_1000(next_34_1073,p_1085,t_1086)&right_34_1072=null & 
+    p_1085=parent_34_1074
+
+==========================================================
+# split-1.slk: FIXED
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+shape_split_base [H0,H1][G].
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M * H0(lf8) & r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> htrue,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+@ check-mcf: FIXED
+
+- dangling pred has not been included
+ - back-pointer in pre-pred
+=================================================
+
+(time-out problem when --pred-en-dangling )
+
+!!!  views: [G,H]Timeout when checking #simplify  Restarting Omega after ... 112 invocations Stop Omega... 112 invocations Starting Omega...oc
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 116 invocations Stop Omega... 116 invocations Starting Omega...oc
+
+!!!  transform: [H,G]
+Stop Omega... 117 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.1,334)
+!!! 
+ log(bigger)(>4s)(2):(20.,[(simplify:282<34:TIMEOUT:OM,10.);(SAT:294<34:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+ Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
+
+==========================================================
+# tll.ss --sa-dp --reverify-all: DONE
+
+(1) You should at least print relational assumption and synthesized
+predicates.
+(2) Both examples below fail, and for different reasons.
+ Not sure why we have two kind of --reverify.
+ Is one done by Thai? Can't you use the same option?
+
+WN
+
+--reverify-all
+
+!!!Full processing file "tll.ss"
+Parsing file "tll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Procedure set_right$node~node SUCCESS.
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,t)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null]]
+!!! re-verify
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (must) cause: Cannot infer heap and pure 2
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+Procedure set_right$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop Omega... 128 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.21,375)
+Total verification time: 0.46 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.07 second(s)
+
+--reverify
+
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+( []) :tll.ss:31: 6: bind: node  x'::node<left_31_914',right_31_915',next_31_916'>@L cannot be derived from context
+
+
+(Cause of Bind Failure):tll.ss:31: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+ ]
+
+Procedure set_right$node~node result FAIL.(1)
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null]]Stop Omega... 114 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.14,335)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+==========================================================
+ tll: INFO
+
+After discussing with Cristian, it seems we
+need rel assumption of the form below.
+
+  H0(lf8) |#| x::node<lf8,q> & q!=null--> H(p)
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+
+This seems critical to obtain a sound solution for
+guard/tree-1.ss. We thought also about putting guards
+into formula, but could not really find a use for it in
+verification. It seems we mainly need it in shape
+analysis. Hence, I think we will leave the guard 
+feature for just sa-core for now.
+
+==========================================================
+# tree-1.slk
+
+infer [P,Q]  x::node<p,q>*P(p) & q!=null |- Q(p).
+print residue.
+
+This inference is too weak.
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [P(p) --> Q(p)]
+
+Can we obtain instead:
+
+ <1>x::node<p,q>@M&q!=null&{FLOW,(21,22)=__norm}[]
+
+   P(p) |#| x::node<p,q> & q!=null--> Q(p)
+
+This gives relational information that q!=null is required.
+
+==========================================================
+# tree-1b.slk: DONE
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+
+shape_split_base [H0,H1][G].
+
+/*
+# tree-1b.slk
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M&r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> emp,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+# guard/tree-2.ss  (try tree-2.slk): DONE
+
+GOT
+===
+ // PRE_REC
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M --> H(x@NI,left_27_952),
+
+EXPECT
+======
+
+(1;0)HP_955(left_27_952,p@NI)&
+p=parent_27_951 |#| x::node<p,left_27_952,right_27_953>@M
+  & &right_27_953!=null  --> H(x@NI,left_27_952),
+==========================================================
+# tree-2.ss: DONE
+
+Got:
+
+ H(p_1004,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null & p_1004=p7
+    or H(x_1005,l8) * x_1005::node<p7,l8,r9>@M&
+        r9=null & p_1004=p7
+
+EXPECT:
+ H(p7,x_1005) ::=  H(x_1005,l8) * x_1005::node<p7,l8,r9>@M * 
+    H(x_1005,r9)&r9!=null 
+    or x_1005::node<p7,l8,r9>@M & r9=null 
+
+==========================================================
+# tll-2.slk: FIXED
+
+infer[H,G,HP_964,HP_965,HP_966]
+  HP_964(left_31_961,t) * HP_966(next_31_963,t) * 
+x::node<left_31_961,right_31_962,next_31_963>@M * G(right_31_962,l_47',t')&
+t=t' & x=x' & right_31_962!=null & !(v_bool_31_942') & right_31_962!=null & 
+!(v_bool_31_942') & left_31_961=v_node_41_940'
+ |-  H(v_node_41_940',l_47').
+print residue.
+
+GOT
+ inferred [HP_964(left_31_961,t@NI) --> H(left_31_961,l_47'@NI)]
+
+EXPECT:
+ HP_964(left_31_961,t@NI) | x::node<left_31_961,r,_>@M & r=null  
+     --> H(left_31_961,l_47'@NI)]
+==========================================================
+# parent-2.slk (see also parent.ss) FIXED
+
+Two issues
+ (i) do we still use _pure_of_H3(..)
+ (ii) can we narrow to single predicate?
+
+infer [H0,H3] H0(parent_32_966,p) * H3(next_32_969,p) * 
+x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & 
+parent_32_966=pp_47'
+ |-  emp&p=pp_47'. 
+print residue.
+
+ <1>H0(parent_32_966,p) * H3(next_32_969,p) * x::node<parent_32_966,next_32_969>@M&x=x' & p=p' & parent_32_966=pp_47' & p=parent_32_966&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [_pure_of_H0,_pure_of_H3]: ( _pure_of_H0(parent_32_966,p) & _pure_of_H3(next_32_969,p)) -->  p=parent_32_966]
+[[empty]]
+
+Expecting:
+  H0(pp,p) --> p=pp
+==========================================================
+# parent.ss (see parent-2.slk) FIXED
+
+How come rel ass from ASSERT not present here?
+
+[ // BIND
+(0)H(x,p@NI) --> x::node<parent_20_900,next_20_901>@M * 
+HP_902(parent_20_900,p@NI) * 
+HP_903(next_20_901,p@NI),
+ // POST
+(0)HP_902(parent_20_900,p@NI) * HP_903(next_20_901,p@NI) * 
+x::node<p,next_20_901>@M&
+p=parent_20_900 --> G(x,p@NI)]
+
+*/
+==========================================================
+# tll-parent.ss : OK
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&res_1092=x_1090 & right_34_995=null
+                                 ^^^^^^^^^^^^^^^
+ ,
+
+New version: (missing res=x)
+
+[ G(x_1090,p_1091,res_1092,t_1093) ::= 
+ HP_1000(next_34_996,p_1091,t_1093) * 
+ x_1090::node<p_1091,left_34_994,right_34_995,next_34_996>@M * 
+ G(right_34_995,x_1090,l_1037,t_1093) * 
+ G(left_34_994,x_1090,res_1092,l_1037)&right_34_995!=null
+ or x_1090::node<p_1091,left_34_994,right_34_995,t_1093>@M * 
+    H(left_34_994,x_1088,l_1089)&right_34_995=null
+ 
+How come HP_1000 is missing in pre-predicate?
+We cannot form dangling in this scenario.
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1072,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M * 
+ H(right_34_1073,x_1084,t_1086)&right_34_1073!=null & p_1085=parent_34_1074
+ or H(left_34_1072,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1072,right_34_1073,next_34_1071>@M&
+    right_34_1073=null & p_1085=parent_34_1074
+ ,
+
+OK
+
+ H(x_1084,p_1085,t_1086) ::= 
+ H(left_34_1071,x_1084,l_48') * 
+ x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+ HP_1000(next_34_1073,p_1085,t_1086) * H(right_34_1072,x_1084,t_1086)&
+ right_34_1072!=null & p_1085=parent_34_1074
+ or H(left_34_1071,x_1084,l_48') * 
+    x_1084::node<parent_34_1074,left_34_1071,right_34_1072,next_34_1073>@M * 
+    HP_1000(next_34_1073,p_1085,t_1086)&right_34_1072=null & 
+    p_1085=parent_34_1074
+
+==========================================================
+# split-1.slk: FIXED
+
+relAssume 
+   H0(lf8) * H1(r9) * x::node<lf8,r9> &r9=null  --> G(x).
+shape_split_base [H0,H1][G].
+
+  Obtained: 
+ [ H0(lf8) * x::node<lf8,r9>@M&r9=null --> G(x),
+  H1(r9)&r9=null --> emp]
+
+This split is not clean. Can we obtain instead:
+
+  x::node<lf8,r9>@M * H0(lf8) & r9=null --> G(x),
+  H0(lf8) |#| x::node<lf8,r9>@M&r9=null --> htrue,
+  H1(r9)&r9=null --> emp]
+
+==========================================================
+@ check-mcf: FIXED
+
+- dangling pred has not been included
+ - back-pointer in pre-pred
+=================================================
+
+(time-out problem when --pred-en-dangling )
+
+!!!  views: [G,H]Timeout when checking #simplify  Restarting Omega after ... 112 invocations Stop Omega... 112 invocations Starting Omega...oc
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 116 invocations Stop Omega... 116 invocations Starting Omega...oc
+
+!!!  transform: [H,G]
+Stop Omega... 117 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.1,334)
+!!! 
+ log(bigger)(>4s)(2):(20.,[(simplify:282<34:TIMEOUT:OM,10.);(SAT:294<34:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.33 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+ Timeout after 10. secschinwn@loris-7:~/hg/sl_default/guard$ 
+
+==========================================================
+# tll.ss --sa-dp --reverify-all: DONE
+
+(1) You should at least print relational assumption and synthesized
+predicates.
+(2) Both examples below fail, and for different reasons.
+ Not sure why we have two kind of --reverify.
+ Is one done by Thai? Can't you use the same option?
+
+WN
+
+--reverify-all
+
+!!!Full processing file "tll.ss"
+Parsing file "tll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Procedure set_right$node~node SUCCESS.
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_985,t_986) ::=  [H(left_31_985,l_39')|#|x::node<left_31_985,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_984(left_31_949,t)|#|res::node<left_31_985,right_31_950,t_986>@M&
+right_31_950=null]]
+!!! re-verify
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (must) cause: Cannot infer heap and pure 2
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+Procedure set_right$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop Omega... 128 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.21,375)
+Total verification time: 0.46 second(s)
+	Time spent in main process: 0.39 second(s)
+	Time spent in child processes: 0.07 second(s)
+
+--reverify
+
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+trans_prog
+Checking lemmas... DONE.
+
+Checking procedure set_right$node~node... 
+( []) :tll.ss:31: 6: bind: node  x'::node<left_31_914',right_31_915',next_31_916'>@L cannot be derived from context
+
+
+(Cause of Bind Failure):tll.ss:31: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(24,25)=__norm}}
+ ]
+
+Procedure set_right$node~node result FAIL.(1)
+
+!!! inter_hp_defs:[HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null],
+HP_RELDEFN HP_952:  HP_952(left_31_993,t_994) ::=  [H(left_31_993,l_39')|#|x::node<left_31_993,right_31_950,next_31_951>@M&
+right_31_950!=null; 
+HP_992(left_31_949,t)|#|res::node<left_31_993,right_31_950,t_994>@M&
+right_31_950=null]]Stop Omega... 114 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.14,335)
+Total verification time: 0.4 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.06 second(s)
+
+==========================================================
+# guard/parent.ss  (tidying up): DONE by Long
+
+  H(x_906,p_907) ::= x_906::node<parent_20_900,next_20_901>@M 
+       * HP_903(next_20_901,p_907)&p_907=parent_20_900,
+  G(x_912,p_913) ::= HP_903(next_20_901,p_913) 
+       * x_912::node<p_913,next_20_901>@M&
+       p_913=parent_20_900,
+ HP_903(next_20_901,p) ::= NONE]
+
+
+Tidying up names
+================
+  H(x,p) ::= x::node<parent,next>@M 
+       * HP_903(next,p)&p=parent,
+
+  G(x,p) ::= HP_903(next,p) 
+       * x::node<p,next>@M & p=parent,
+ HP_903(next,p) ::= NONE]
+
+Removing intermediates
+======================
+  H(x,p) ::= x::node<p,next>@M * HP_903(next,p),
+  G(x,p) ::= HP_903(next,p) * x::node<p,next>@M 
+  HP_903(next,p) ::= NONE]
+
+Re-ordering
+============
+  H(x,p) ::= x::node<p,next>@M * HP_903(next,p),
+  G(x,p) ::= x::node<p,next>@M * HP_903(next,p)
+  HP_903(next,p) ::= NONE]
+
+==========================================================
+tll.ss --reverify-all: FIXED
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (may) cause: OrR[Cannot infer heap and pure 2,valid]
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:40,Col:18
+
+tll-2.ss by hand:
+
+Checking procedure set_right$node~node... 
+Proving precondition in method set_right$node~node Failed.
+  (may) cause:  true |-  l_52'=ll_1055. LOCS:[0;67] (may-bug)
+
+
+==========================================================
+# tll.ss --pred-en-useless-para: FIXED
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ 
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ Stop Omega... 87 invocations 
+0 false contexts at: ()
+==========================================================
+# ../hip tll.ss --pred-en-dangling --pred-en-useless-para: FIXED
+
+why error below?
+
+Procedure set_right$node~node SUCCESS.
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.add_raw_hp_rel: args should be not empty
+ Stop Omega... 92 invocations 
+0 false contexts at: ()
+
+For dangling, can we below:
+  instead of g__DP_HP_XXX, please use DP_HP_XXX
+
+
+[ H(x_1025,t_1026) ::= 
+ H(left_31_997,l_39') * 
+ x_1025::node<left_31_997,right_31_998,g__DP_HP_954>@M * 
+ H(right_31_998,t_1026)&right_31_998!=null
+ or x_1025::node<g__DP_HP_984,right_31_998,g__DP_HP_954>@M&right_31_998=null
+ ,
+ 
+!==========================================================
+# err.ss:
+
+Why is there an UNKNOWN?
+
+id: 4 src:2; caller: []; line: 14; classic: false; kind: UNKNOWN; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail H(p)&p=p' & p'=null & v_bool_13_876' & p'=null & v_bool_13_876'&
+{FLOW,(24,25)=__norm}[]
+ |-  p'::cell<val_14_872'>@L&{FLOW,(1,27)=__flow}[]. 
+res:  [
+  hfalse&false&{FLOW,(24,25)=__norm}[]
+  es_infer_pure: [true]
+  ]
+
+==========================================================
+# err.slk: FIXED
+
+infer [H]  H(p) & p=null |- p::cell<_>.
+print residue.
+
+ Why did we not have an infer false?
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+
+==========================================================
+# err2.ss : The message here is not very good.
+  Should we perhaps infer a false here?
+
+Context of Verification Failure: 1 File "err2.ss",Line:11,Col:10
+Last Proving Location: 1 File "err2.ss",Line:14,Col:4
+
+Procedure foo$cell FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure foo$cell
+Stop Omega... 34 invocations 
+0 false contexts at: ()
+==========================================================
+# err-3.slk: FIXED
+
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a, cell b).
+HeapPred G(cell a).
+
+infer [H]  H(p,q) & p=null |- q::cell<_>.
+print residue.
+
+/*
+
+Inferred: FIXED
+
+ <1>HP_21(p,q)&p=null & Anon_11=Anon_20&{FLOW,(21,22)=__norm}[]
+
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M * HP_21(p,q@NI)]
+
+Since p=null, should be:
+ inferred hprel: [H(p,q)&p=null --> q::cell<_>@M ]
+
+
+*/
+
+infer [G]  G(p) & p=null |- p::cell<_>.
+print residue.
+
+infer [G]  G(p) & p=null |- p!=null.
+print residue.
+
+/* 
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+[[empty]]
+
+ both contradiction should 
+ provide 
+   G(p) ==> false
+
+Now: G(p) & p=null ==> false
+*/
+
+infer [G]  G(p) & p!=null |- p=null.
+print residue.
+/*
+
+shEntail (4) : Valid. 
+
+How come we get G(p) & p=null --> emo
+This is cleary wrong.
+It should be:
+     G(p) & p!=null ==> false
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [G(p)&p=null --> emp]
+[[empty]]
+*
+==========================================================
+# err3a.slk FIXED by Long
+
+Why isn't --print-en-tidy invoked for sleek.
+Can we do that to?
+
+[ H(p_28,q_29) ::= 
+ p_28::cell<val>@M * HP_907(q_29,p_28)
+ or q_29::cell<val>@M&p_28=null
+ ]
+
+==========================================================
+# err3.slk: INFO (Delcare_Unknown)
+
+Why did  Declare_Dangling [HP_907].
+causes XPURE to be used; and what does the
+recursive equation below means?
+ HP_907(q,p) ::= emp& XPURE(HP_907(q,p))]
+
+==========================
+
+[ G(p_39,q_40) ::= 
+ q_40::cell<val>@M&p_39=null
+ or p_39::cell<val>@M& XPURE(HP_907(q_40,p_39))
+ ,
+ H(p_37,q_38) ::= 
+ q_38::cell<val>@M&p_37=null
+ or p_37::cell<val>@M& XPURE(HP_907(q_38,p_37))
+ ,
+ HP_907(q,p) ::= emp& XPURE(HP_907(q,p))]
+
+==========================================================
+# err3.slk --pred-en-danling: INFO
+
+GOT:
+[ G(p_39,q_40) ::=
+ q_40::cell<val>@M&p_39=null
+ or p_39::cell<val>@M
+ ,
+ H(p_37,q_38) ::=
+ q_38::cell<val>@M&p_37=null
+ or p_37::cell<val>@M
+ ,
+ HP_907(q,p) ::= emp]
+
+===
+EXPECTED:
+
+[ G(p_39,q_40) ::=
+ q_40::cell<val>@M&p_39=null
+ or p_39::cell<val>@M & q=DP
+ ,
+ H(p_37,q_38) ::=
+ q_38::cell<val>@M&p_37=null
+ or p_37::cell<val>@M & q =DP
+ ,
+ HP_907(q,p) ::= htrue]
+
+
+What happen to defn of HP_907? Isn't it
+classified as dangling?
+==========================================================
+# err3.ss: FIXED
+
+WHY HP_907 became HP_934???
+ ==> HP_907 is not classified as UNK because it is accessed in then branch.
+HP_934 is generated at split_step to show that HP_907 is not accessed in else branch.
+
+
+[ H(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val1>@M * HP_934(q,p)
+ ,
+ G(p,q) ::= 
+ p::cell<val>@M * (htrue)
+ or q::cell<val1>@M&p=null
+ ,
+ HP_934(q,p) ::= NONE]
+
+==========================================================
+# err.ss: FIXED
+
+Obtain:
+[ // BIND
+ H(p)&p=null --> hfalse& false,
+  // POST
+ (2;0)H(p)& p!=null --> G(p)]
+
+I think we still need to split to first obtain:
+(see err-1b-split.slk)
+
+ H(p)&p=null --> hfalse& false,
+ H(p)& p!=null --> H_3(p)
+
+ H_3(p) & p!=null --> G(p)
+ H_3(p) := htrue
+
+After that, we can derive:
+
+ H(p) ::= H_3(p) & p!=null
+ G(p) ::= H_3(p) * p!=null
+ H_3(p) ::= htrue
+
+where H_3(p) is a dangling reference
+
+==========================================================
+# err-1b-split.slk: FIXED
+
+relAssume
+ H(p)& p!=null --> G(p).
+shape_split_base [H][G].
+
+No splitting
+However, I think we need to
+still split, by using:
+
+ H(p) & p!=null --> DG_3(p)
+ DG_3(p) & p!=null --> G(p)
+
+*/
+==========================================================
+# err2a.ss and err2b.ss : FIXED
+  gives two kinds of failures.
+
+  I think it should print relational
+  assumption without any shape analysis
+  since this would be incomplete.
+  unless we were to infer false pre-condition
+  where needed.
+==========================================================
+# err2b.ss : FIXED
+
+This example has a bind failure but it still proceeds
+to shape analysis. Perhaps, we should avoid this
+to be consistent with err2a.ss
+
+*************************************
+*******relational assumptions (4) ********
+*************************************
+[ // BIND
+(1;0)H(p)&
+p!=null --> p::cell<val>@M]
+
+Procedure foo$cell result FAIL.(1)
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(p) ::= p::cell<val>@M]
+*************************************
+Stop Omega... 45 invocations 
+0
+==========================================================
+# swl-i-sa.ss -sa-gen-sleek-file:
+
+Why were 2 files generated?
+Can we put this in logs/.. and can
+we use a prefix e.g logs/gen1_swl-i-sa.slk
+rather than random number. DONE
+
+ swl-i-sa_1048.slk  swl-i-sa_1149.slk
+
+The first one seems to produce some result:
+
+
+[ DP_195(prev) ::= NONE,
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M * HP_946(prev,prev1',next)&cur=prev1' & next=sent,
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+ emp&cur!=sent & cur=null
+ or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_195(prev1)
+ ]
+
+Why is this different from hip which failed?
+==========================================================
+# err.ss --sa-gen-sleek-file: FIXED
+
+This produced err_911.slk. However, it seems that
+cell object of form below was not added:
+
+data cell {
+ int val;
+}.
+
+==========================================================
+# tll.ss --sa-gen-sleek-file: FIXED (bugs from guard w vs. w/o pure)
+
+It produced a working file. However, the 
+sa result is different from that generated by hip.
+It seems that hip/sleek now uses different paths.
+
+==========================================================
+# parent.ss -sa-gen-sleek-file
+
+[ H(x,p) ::= x::node<parent,next>@M * HP_903(next,p)&p=parent,
+ G(x,p) ::= x::node<p,next>@M * HP_903(next,p)&p=parent,
+ HP_903(next,p) ::= NONE]
+
+However, the sleek file generated:
+
+[ G(x,p) ::= x::node<p,next>@M * HP_903(next,p)&p=parent,
+ H(x,p) ::= x::node<parent,next>@M * HP_903(next,p)&p=parent,
+ HP_902(parent,p) ::= emp&p=parent,
+ HP_903(next,p) ::= NONE]
+
+From hip:
+
+(0)H(x,p@NI) --> x::node<parent,next>@M * HP_902(parent,p@NI) 
+   * HP_903(next,p@NI),
+ // Assert
+(0)HP_902(parent,p@NI) --> emp&p=parent,
+ // POST
+(0)x::node<p,next>@M * HP_903(next,p@NI) * HP_902(parent,p@NI)
+   &p=parent --> G(x,p@NI)]
+
+Generated sleek looks similar:
+
+relAssume 
+ (0)H(x,p) --> x::node<parent_20_900,next_20_901>@M * 
+  HP_902(parent_20_900,p) * HP_903(next_20_901,p).
+
+relAssume 
+ (0)HP_902(parent_20_900,p) --> emp&p=parent_20_900.
+
+relAssume 
+ (0)HP_902(parent_20_900,p) * HP_903(next_20_901,p) * 
+  x::node<p,next_20_901>@M&p=parent_20_900 --> G(x,p).
+
+==========================================================
+
+# tree-1.ss -gen-sa-sleek-file
+
+Why did we have /&\? --reverify-all fails
+
+[ H(x) ::= x::node<left,right>@M * (DP_961(left)/&\H(left))&right=null,
+
+ G(x) ::= x::node<left,right>@M * H(left)&right=null
+ or x::node<left,right>@M * DP_961(left)&right=null
+ or x::node<left,right>@M * G(left) * G(right)&right!=null
+ ,
+ DP_961(left) ::= NONE]
+
+sleek file has more stuff...
+
+[ DP_41(left) ::= NONE,
+
+ G(x) ::= x::node<left,right>@M * H(left)&right=null
+ or x::node<left,right>@M * DP_41(left)&right=null
+ or x::node<left,right>@M * G(left) * G(right)&right!=null,
+ H(x) ::= x::node<left,right>@M * (DP_41(left)/&\H(left))&right=null,
+ HP_914(left1) |#| x::node<left_24_42,right_24_913>@M&
+  right_24_913=null ::= DP_41(left) or H(left1),
+ HP_915(right) ::=  H(right)&right!=null or emp&right=null
+ ]
+
+relational assumptions..
+
+[ // BIND
+(0)H(x) --> x::node<left,right>@M * HP_914(left) * HP_915(right),
+ // PRE_REC
+(1;0)HP_915(right)&right!=null --> H(right),
+ // PRE_REC
+(1;0)HP_914(left) --> H(left),
+ // POST
+(1;0)x::node<left,right>@M * G(left) * G(right)&right!=null --> G(x),
+ // POST
+(2;0)x::node<left,right>@M * HP_914(left) * HP_915(right)&right=null --> G(x)]
+
+// sleek file
+relAssume 
+ (0)H(x) --> x::node<left_24_912,right_24_913>@M * HP_914(left_24_912) * 
+  HP_915(right_24_913).
+relAssume 
+ (1;0)HP_915(right_24_913)&right_24_913!=null --> H(right_24_913).
+relAssume 
+ (1;0)HP_914(left_24_912) --> H(left_24_912).
+relAssume 
+ (1;0)x::node<left_24_912,right_24_913>@M * G(right_24_913) * G(left_24_912)&
+  right_24_913!=null --> G(x).
+relAssume 
+ (2;0)HP_914(left_24_912) * HP_915(right_24_913) * 
+  x::node<left_24_912,right_24_913>@M&right_24_913=null --> G(x).
+
+==========================================================
+# swl-h2.ss : FIXED (infer type when parse assumption for sleek)
+
+  - able to infer
+  - however -sa-gen-sleek-file generates
+    # gen_swl-h2.slk
+
+which fails with error below...
+
+!!! >>>>>> gfp computation for pre-preds <<<<<
+!!!     synthesize (gfp): H2
+!!!  H2(prev',sent) ::=  [
+  emp&prev'=null
+  or H2(prev,sent) * prev'::node<val_76_951,prev>@M
+  or DP_95(prev')
+  ]
+ERROR: at _0:0_0:0 
+Message: self has invalid type: null
+
+Also:
+ HeapPred HP_953(node next_76_952, node@NI sent).
+
+is missing below:
+ shape_infer [H1,H2][G1].
+==========================================================
+# mod_swl-h2.slk: FIXED
+
+Derived:
+
+ H1(cur,sent) ::= cur::node<val,next>@M * HP_953(next,sent),
+ H2(prev,sent) ::= prev::HP_953<sent>@M,
+ HP_953(cur,sent) ::= 
+  emp&cur=sent
+  or cur::node<val,next>@M * HP_953(next,sent)&cur!=sent
+  or emp&cur!=sent & cur=null,
+
+ G1(next,prev,sent) ::= prev::node<val,prev1>@M 
+   * prev1::HP_953<next>@M&next=sent
+
+ Why is HP_953 presented in 2-ways? as x::HP_953<s> and HP_953(x,s)?
+
+ This could be correct shape but seems not strong enough
+ for re-verification.
+
+==========================================================
+# hip swl-i-sa.slk -sa-gen-sleek-file: DONE
+  generate two files:
+    mod_...: before split_base
+    gen_...: after split_base
+
+Above produced a sleek file which seems to be after
+base case splitting. Can we have the one prior to base-case
+splitting? This is because your base-case split seem to
+have lost post-pred. 
+
+Expected sleek file is in mod-swl-i-sa.slk
+
+==========================================================
+# mod-swl-i-sa.slk: FIXED
+
+  expected sleek file from swl-i-sa.slk
+
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) 
+  * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+  emp&cur!=sent & cur=null
+  or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+  or emp&cur=sent,
+
+ HP_946(prev1,cur,sent) ::= 
+  emp&prev1=null
+  or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+  or DP_233(prev1),
+
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
+  * HP_946(prev,prev1',next)&cur=prev1' & next=sent,DP_233(prev1) ::= NONE]
+==========================================================
+# tll.ss -sa-gen-sleek-file: FIXED
+
+generated 
+ [ H(x,t) |#| emp&
+  left_31_102=left_31_102 ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_89(left,t) * HP_958(next,t)&right=null
+ ,
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_89(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_89(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
+This seems slightly different with spurious  
+  |#| emp& left_31_102=left_31_102
+when compared to the output from hip. Can fix?
+
+[ H(x,t) ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_1044(left,t) * HP_958(next,t)&right=null
+ ,
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_1044(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_1044(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
+==========================================================
+# tll.c : FIXED
+
+verification using -tp z3 fail with tll.c but not
+with tll.ss. How come?
+
+Checking procedure set_right$node~node... 
+!!! WARNING logtime exception:0.
+Procedure set_right$node~node FAIL.(2)
+
+Exception Globals.Illegal_Prover_Format("z3.smt_of_exp: TypeCast should not appear here") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure set_right$node~node
+Stop z3... 47 invocations 
+0 false contexts at: ()
+
+==========================================================
+# zip_paper_eq.c: FIXED at cilparser. create_void_pointer_casting_proc
+
+
+why tmp_41'::node<_,_>@M * tmp_41'::memLoc<h,s>??
+
+=============================
+dprint: zip_paper_eq.c:43: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:(exists _,_: H(x,y) * tmp_41'::node<_,_>@M * tmp_41'::memLoc<h,s>@M&y=y' & x=x' & x'!=null & !(v_bool_32_981') & x'!=null & !(v_bool_32_981') & 0<1 & tmp___42'!=null & h_1050 & 0<1 & h=h_1050 & s=s_1051 & 0<s_1051 & h & tmp___42'!=null & 0<s&{FLOW,(24,25)=__norm})[]
+       es_var_measures 2: MayLoop[]
+       es_trace: empty
+       es_cond_path: [2; 0]
+
+ ]
+
+==========================================================
+# swl-i-sa.ss -sa-gen-sleek-file: FIXED
+
+generated mods_swl-i-sa.slk which when run produced.
+
+ H(cur,prev,sent) ::= cur::node<val,next>@M 
+    * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+
+ HP_945(cur,prev,sent) ::= 
+     emp&cur!=sent & cur=null
+  or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+  or emp&cur=sent,
+
+ HP_946(prev1,cur,sent) ::= 
+    emp&prev1=null
+    or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+    or DP_204(prev1),
+ G(cur,next,prev,prev1',sent) ::= cur::node<val,prev>@M 
+   * HP_946(prev,prev1',next)&cur=prev1' & next=sent,
+ DP_204(prev) ::= NONE]
+
+However, this is quite different from what is produced by HIP.
+It seems the post-pred is more complex from hip. I guess
+both sleek and hip should produce the same result.
+
+[ 
+ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ 
+ G(cur1,cur',prev,prev3',sent) ::= 
+  cur1::node<val,prev>@M * HP_946(prev,prev3',cur')&cur1=prev3' & cur'=sent
+ or cur1::node<val,prev1>@M * HP_946(prev1,prev3',cur')&cur'=sent & 
+    cur1=prev3' & cur1!=null & prev1=null
+ or HP_946(cur1,prev3',cur') * prev3'::node<val,cur1>@M&cur'=sent & 
+    prev3'!=sent & prev3'!=null & cur1!=null
+ or HP_946(prev2,prev3',cur') * prev3'::node<val,prev2>@M&prev3'!=sent & 
+    cur'=sent & prev3'!=null & prev2=null & cur1!=null
+ or HP_946(next,prev3',cur') * prev3'::node<val,next>@M&next!=sent & 
+    cur'=sent & prev3'!=sent & prev3'!=null & next!=null & cur1!=null,
+
+ DP_1140(prev) ::= NONE,
+
+ DP_1140(prev) ::= NONE,
+ HP_945(cur,prev,sent) ::= 
+ emp&cur!=sent & cur=null
+ or cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur=sent
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_1140(prev1)
+ ]
+==========================================================
+# logs/mod_swl-i-sa.slk: FIXED
+ if complete in root pointers,
+do not introduce unk-pred. otherwise, do it (see ll-back.ss)
+
+For this version, we obtain below:
+
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_1140(prev1)
+
+Can see where below came from, as it does not
+makes much sense without a heap context.
+It would correspond to htrue which is too weak for 
+our derived predicates.
+
+ or DP_1140(prev1)
+==========================================================
+#hip swl-i-sa.ss (FIXED)
+
+In --print-en-tidy, we got below. However, since
+cur' and cur are already two distinct variables, think
+there is no necessity to change cur to cur1. Can this
+be fixed?
+
+ // PRE_REC
+(2;2;0)cur1::node<val,prev>@M * HP_946(prev,cur1@NI,sent@NI) 
+  * HP_945(cur',prev@NI,sent@NI)&cur'!=sent 
+  & cur'!=null --> H(cur',cur1,sent@NI),
+
+==========================================================
+swl-i-sa.ss: FIXED
+mod_swl-i-sa2.slk
+logs/mod_swl-i-sa.slk
+
+Gave different results. I think it has to do with
+variable renaming and existential quantification.
+
+(1) mod_swl-i-sa2.slk
+ HP_946(prev,prev',next) * cur::node<val,prev>@M&cur=prev' & next=sent
+ or G(cur,next,prev,prev',sent)&prev=null & cur!=null
+ or G(next,next,cur,prev',sent)&cur!=null & next!=null & next!=sent
+
+(2) logs/mod_swl-i-sa.slk
+ HP_946(prev,prev',next) * cur::node<val,prev>@M&cur=prev' & 
+ next=sent
+ or G(cur,next,prev,prev',sent)&prev=null & cur!=null
+ or G(next,next,cur,prev',sent)&cur!=null & 
+    next!=null & next!=sent
+
+(3)  HIP
+ HP_946(prev,prev',cur') * cur::node<val,prev>@M&cur=prev' 
+    & cur'=sent
+ or G(cur,cur',prev,prev',sent)&prev=null & cur!=null
+ or G(next,cur',cur,prev',sent)&cur!=null & next!=null & 
+    next!=sent
+==========================================================
+#swl-lfp-3.slk: Can not reproduce
+
+has a clash when building the initial recurrence
+
+relAssume
+ G(cur,nn,prev,prev1',sent) --> G(next_52,nn,cur,prev1',sent)&cur!=null & next_52!=null & next_52!=sent.
+
+===>
+
+!!!    Initial recurrence: G([cur,next_52,prev,prev1',sent]) ==> 
+ EXISTS(prev_34: HP_946(prev,prev1',next_52) * cur::node<val,prev_34>@M&
+ cur=prev1' & next_52=sent & prev=prev_34)[]
+ or G(cur,next_52,prev,prev1',sent)&prev=null & cur!=null
+ or G(next_52,next_52,cur,prev1',sent)&cur!=null & next_52!=null & 
+    next_52!=sent
+==========================================================
+# swl-i-sa.ss (similarly for swl-lfp-4.ss)  FIXED
+
+Obtained:
+!!!  G(cur,cur',prev,prev',sent) ::=  [prev'::node<val_55_947,prev>@M
+           &cur'=sent]
+
+EXPECT
+======
+ G(cur,next,prev,prev',sent) ::= prev'::node<val,prev>@M * HP_950(prev,prev',next)&next=sent & cur=prev']
+
+
+!! >>>>>> lfp computation for post-preds <<<<<
+!!!    Initial recurrence: G([cur,cur',prev,prev',sent]) ==> 
+ HP_950(prev,prev',cur') * prev'::node<val_55_947,prev>@M&cur=prev' & 
+ cur'=sent
+ or G(cur,cur',prev_981,prev',sent)&prev_981=null & cur!=null
+ or G(next_55_948,cur',cur,prev',sent)&cur!=null & next_55_948!=null & 
+    next_55_948!=sent
+ 
+!!!    fix: 0 hfalse&false
+!!!    fix: 1 HP_950(prev,prev',cur') * prev'::node<val_55_947,prev>@M&cur=prev' & 
+cur'=sent
+!!!    fix: 2 prev'::node<val_55_947,prev>@M&cur'=sent
+!!!     synthesize (lfp): G
+
+==========================================================
+# tll.ss 
+
+hip produced:
+
+[ H(x,t) ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_1044(left,t) * HP_958(next,t)&right=null
+ ,
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_1044(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_1044(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
+However, 
+ generating sleek file : logs/mod_tll.slk
+produced:
+
+
+[ H(x,t) ::= 
+ x::node<left,right,next>@M * H(left,l') * H(right,t) * HP_958(next,t)&
+ right!=null
+ or x::node<left,right,next>@M * DP_89(left,t) * HP_958(next,t)&right=null,
+
+ G(x,res,t1) ::= 
+ x::node<left,right,t1>@M * DP_89(left,t)&right=null & res=x
+ or x::node<left,right,next>@M * G(left,res,l) * G(right,l,t1) * 
+    HP_958(next,t1)&right!=null
+ ,
+ DP_89(left,t) ::= NONE,
+ HP_958(next,t) ::= NONE]
+
+
+Why do we print these intermediates? their definitions
+look odd (seems incorrect).
+
+ HP_956(left1,t) |#| 
+                     res::node<left_31_90,right_31_954,t_91>@M&
+                     right_31_954=null
+                     or x::node<left_31_90,right_31_954,next_31_955>@M&
+                        right_31_954!=null
+                      ::= 
+ DP_89(left,t1)
+ or H(left1,l'),
+
+ HP_957(right,t) ::= 
+ H(right,t)&right!=null
+ or emp&right=null,
+
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+# tll.ss --gsf: FIXED
+
+This spurious message came from below. They don't look
+correct, and should also be omitted.
+
+../sleek logs/mod_tll.slk
+
+ HP_956(left,t1) |#| 
+                     res::node<left_31_90,right_31_954,t_91>@M&
+                     right_31_954=null
+                     or x::node<left_31_90,right_31_954,next_31_955>@M&
+                        right_31_954!=null
+                      ::= 
+ DP_89(left1,t)
+ or H(left,l'),
+ HP_957(right,t) ::= 
+ H(right,t)&right!=null
+ or emp&right=null
+
+==========================================================
+## all your examples on web should provide predicates so that users
+   can test the re-use feature.
+
+Is it true we are still using syntactic equivalence?
+since we did not replace G by tll.
+
+# tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+
+
+ tll<res,tt> == self::node<_,null,tt> & self = res
+	or self::node<l,r,_> * l::tll<res,z> * r::tll<z,tt>
+	inv self!=null;
+
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+[ H(x,t) ::=x::tree<>@M,
+ G(x,res,t) ::= 
+ x::node<DP1,right,t>@M&right=null & res=x
+ or x::node<left,right,DP>@M * G(left,res,l) * G(right,l,t)&right!=null
+ ]
+
+# tll-lemma.ss -tp z3
+
+Entailing lemma lem_16: Valid.
+
+ tll<ll,lr> == self::node<_,null,lr> & self = ll
+  or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr> //& r!=null
+	inv self!=null;
+
+ GG<rr,t> == self::node<DP1,right,t> & right=null & rr=self
+   or self::node<left,right,DP> * left::GG<rr,l> 
+         * right::GG<l,t> & right!=null
+   inv true;
+==========================================================
+# tll.ss --pred-en-equiv --pred-en-useless-para --pred-en-dangling
+- semantics: FIXED
+- syn: 
+
+Why isn't predicate reuse working at all?
+
+[ H(x,t) ::= HP_1123(x),
+ G(x,res,t) ::= 
+ x::node&lt;DP1,right,t&gt;@M&right=null & res=x
+ or x::node&lt;left,right,DP&gt;@M * G(left,res,l) * G(right,l,t)&right!=null
+ ,
+ HP_1123(x) ::= 
+ x::node&lt;left,right,DP&gt;@M * HP_1123(left) * HP_1123(right)&right!=null
+ or x::node&lt;DP1,right,DP&gt;@M&right=null
+ ]
+==========================================================
+../hip ll-append5.ss --pred-en-equiv --pred-en-dangling --pred-en-useless-para --en-syn-mode FIXED
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x1,x) ::= 
+ x1::node<val,next>@M * G2(next,n)&x=null
+ or emp&x1=null & x=null
+ ]
+
+It seems that only the syntactic equiv mode is working.
+
+However, I wonder what command will split G2(x1,x)?
+Adding: --pred-en-split results in incorrect splitting
+with unknown predicates. This seems to be buggy!
+
+!!!  pred_split (syn):G2([next_54_1022,n_1031]) :==  HP_1062(next_54_1022) * HP_1063(n_1031)
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::= HP_1062(next) * HP_1063(n)]
+*************************************
+
+chinwn@loris-7:~/hg/sl_default/guard$ ../hip ll-append5.ss --pred-en-equiv --pred-en-split
+
+[ H1(x) ::=x::ll<>@M,
+ G2(x,x1) ::=x::G2<x1>@M,
+ HP_994(self) ::= 
+ self::node<val,next>@M * HP_994(next)
+ or emp&self=null
+ ,
+ HP_995(n) ::= emp&n=null]
+==========================================================
+../hip tll.ss --pred-en-split: FIXED
+rocedure set_right$node~node SUCCESS.
+
+Context of Verification Failure: 1 File "tll.ss",Line:32,Col:36
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at _0:0_0:0 
+Message: should not have prime vars
+==========================================================
+# tll.ss
+
+./hip tll.ss --pred-en-useless-para --pred-en-dangling --pred-en-equiv -dre "check.*coercion"
+
+Why isn't -dre "check_.*coercion" below called?
+
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]==> self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+
+check_right_coercion@3
+check_right_coercion inp1 :Lemma "lem_16":  self::tll<a,b>@M&{FLOW,(24,25)=__norm}[]<== self::GG<a,b>@M&{FLOW,(24,25)=__norm}[]
+ head match:tll
+ body view:GG
+==========================================================
+# tll.ss --pred-en-split leads to incorrect result:
+
+   H(x,t) ::=x::H<t>@M,
+
+Not sure why..
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv 
+
+[ H(x,t) ::= 
+ x::node<left,right,DP>@M * H(left,l') * H(right,t)&right!=null
+ or x::node<DP1,right,DP>@M&right=null
+ ,
+ G(x,res,t) ::=x::tll<ll,lr>@M]
+
+../hip tll.ss --pred-en-dangling --pred-en-equiv --pred-en-split
+
+[ H(x,t) ::=x::H<t>@M,
+ G(x,res,t) ::=x::tll<ll,lr>@M,
+ HP_1093(self) ::= 
+ self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null
+ or self::node<left,right,DP>@M&right=null
+ or self::node<left,right,DP>@M * HP_1093(left) * HP_1093(right)&right!=null,
+ HP_1094(t) ::= emp]
+
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================

@@ -1,0 +1,12 @@
+infer [m,n] 
+   x=null & y!=null
+   & (x=null & n=0 | x!=null & n>0)
+   & (y=null & m=0 | y!=null & m>0)
+ |-  false.
+print residue.
+/*
+ inferred pure: [(m<=-1 | n<=-1)]
+@2! non_ptr_f: : ((1<=m & n=0) | (m=0 & n=0) | (m=0 & 1<=n) | (1<=m & 1<=n))
+@2! e_ptr_vars: :[y,x]
+@2! exists_vars: :[y,x]
+*/

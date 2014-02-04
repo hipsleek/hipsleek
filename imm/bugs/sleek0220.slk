@@ -1,0 +1,23 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v> == self = null & n = 0 
+	or self::node<v, q> * 
+    q::ll<n-1, v>
+  inv n >= 0.
+
+//(7)
+checkentail x::node<3,q> * q::ll<n,3> & n > 2 |- x::ll<n+1,3> & n > 2.
+print residue.
+

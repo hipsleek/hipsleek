@@ -1,0 +1,39 @@
+//Valid.Valid.Fail
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+
+lemma "V2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+// Valid
+
+/*
+lost n=b+a in body
+
+trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]<== (exists r_61,a,b: self::lseg<a,r_61>@M * r_61::lseg<b,p>@M&n=b+a & 0<=a & 
+0<=b&{FLOW,(21,22)=__norm})[]
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head_norm:  (exists n_55,p_56: self::lseg<n_55,p_56>@M&n=n_55 & p=p_56&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[r](ex)[](exists a_46,b_47,
+       p_48: self::lseg<a_46,r>@M * r::lseg<b_47,p_48>@M&a=a_46 & b=b_47 & 
+       p=p_48&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
+
+*/

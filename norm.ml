@@ -8,7 +8,7 @@ module CP=Cpure
 module MCP=Mcpure
 module C = Cast
 module TP = Tpdispatcher
-module SAU = Sautility
+(* module SAU = Sautility *)
 
 
 (***********************************************)
@@ -104,7 +104,9 @@ let norm_elim_useless_x vdefs sel_vns=
       | vdef::rest -> let new_defs,new_rest = process_one_view vdef rest in
         interate_helper new_rest (done_vdefs@new_defs)
   in
-  interate_helper vdefs []
+  let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = Cast.View_NORM) vdefs in
+  let n_normal_view = interate_helper normal_view [] in
+  (rest_views@n_normal_view)
 
 let norm_elim_useless vdefs sel_vns=
   let pr1 = pr_list pr_id in
@@ -366,7 +368,7 @@ let recover_view_decl old_vdecl vname vvars ir f=
       (fun _ _ _ _ -> recover_view_decl_x old_vdecl vname vvars ir f) old_vdecl vname vvars f
 
 
-let norm_extract_common_one_view_x iprog cprog cviews vdecl=
+let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
   let extract_view_name hf=
     match hf with
       | CF.ViewNode hv -> hv.CF.h_formula_view_name
@@ -381,12 +383,14 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
   (***views to hprels*******)
   let fs1 = List.map CF.elim_exists fs in
   let fs2,map = List.split (List.map view_to_hprel fs1) in
-  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
-    hp self_var vdecl.C.view_vars args fs2 [] in
+  let defs,elim_ss = Sautil.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
+    hp self_var vdecl.C.view_vars args (List.map (fun f-> (f,None)) fs2) in
   match defs with
     | [a] -> [vdecl]
-    | [(hp1,(_,hrel1,_,f1));(hp2,(a,hrel2,_,f2))] ->
-        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in 
+    | [(hp1,(* (_,hrel1,_,f1) *) def1);(hp2,(* (a,hrel2,_,f2) *) def2)] ->
+        let _ = Debug.info_zprint  (lazy  ("  DO EXTRACT on view: "^ (!CP.print_sv hp1) ^ "\n")) no_pos in
+        let f1 = CF.disj_of_list (List.map fst def1.CF.def_rhs) no_pos in
+        let f2 = CF.disj_of_list (List.map fst def2.CF.def_rhs) no_pos in
         let n_f1 =
           if !Globals.pred_elim_useless then
             CF.subst_hrel_f f1 elim_ss
@@ -396,11 +400,11 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
         (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
-        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews (a,hrel2,None,f2) in
+        let (_, eq_hfs) = Sautil.match_one_hp_views iprog cprog cur_m cviews def2 in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
              let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
-            let _,args2 = CF.extract_HRel hrel2 in
+            let _,args2 = CF.extract_HRel def2.CF.def_lhs in
             let vname2 = (CP.name_of_spec_var hp2) in
             let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
             let ss = [(List.hd args2, self_var2)] in
@@ -428,10 +432,10 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
         n_vdecl2@[n_vdecl1]
     | _ -> report_error no_pos "norm:norm_extract_common_one_view: sth wrong"
 
-let norm_extract_common_one_view iprog cprog cviews vdecl=
+let norm_extract_common_one_view iprog cprog cur_m cviews vdecl=
   let pr1 = Cprinter.string_of_view_decl in
   Debug.no_1 "norm_extract_common_one_view" pr1 (pr_list_ln pr1)
-      (fun _ -> norm_extract_common_one_view_x iprog cprog cviews vdecl) vdecl
+      (fun _ -> norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl) vdecl
 
 let norm_extract_common iprog cprog cviews sel_vns=
   let rec process_helper rem_vs done_vs=
@@ -440,7 +444,7 @@ let norm_extract_common iprog cprog cviews sel_vns=
       | vdecl::rest ->
           let n_vdecls =
             if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
-              norm_extract_common_one_view iprog cprog (done_vs@rest) vdecl
+              norm_extract_common_one_view iprog cprog [] (done_vs@rest) vdecl
             else [vdecl]
           in
           process_helper rest (done_vs@n_vdecls)
@@ -460,25 +464,31 @@ let cont_para_analysis_view cprog vdef other_vds=
       let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
       (*cont paras are para not changed, just forwarded*)
       let cont_paras = List.fold_left (fun cur_cont_paras vn ->
-          let closed_rec_args = CF.find_close vn.CF.h_formula_view_arguments eqs in
+          let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else
+            CF.find_close vn.CF.h_formula_view_arguments eqs
+          in
           CP.intersect_svl cur_cont_paras closed_rec_args
       ) args rec_vns
       in
+      cont_paras
       (* process other_vns*)
-      try
-        let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
-            let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
-            let closed_rec_args = CF.find_close cont_args eqs in
-            CP.intersect_svl cur_cont_paras closed_rec_args
-        ) cont_paras other_vns
-        in
-        cont_paras1
-      with Not_found -> []
+      (* try *)
+      (*   let cont_paras1 = List.fold_left (fun cur_cont_paras vn -> *)
+      (*       let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in *)
+      (*       let closed_rec_args = *)
+      (*         if eqs = [] then cont_args else *)
+      (*           CP.remove_dups_svl ((CF.find_close cont_args eqs)@cont_args) *)
+      (*       in *)
+      (*       CP.intersect_svl cur_cont_paras closed_rec_args *)
+      (*   ) cont_paras other_vns *)
+      (*   in *)
+      (*   cont_paras1 *)
+      (* with Not_found -> cont_paras *)
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
   let cont_paras = List.fold_left (fun cur_cont_paras (f,_) ->
-      let br_cont_paras = process_branch vname args f in
+      let br_cont_paras = (process_branch vname args f) in
           CP.intersect_svl cur_cont_paras br_cont_paras
       ) args vdef.Cast.view_un_struc_formula
   in
@@ -502,6 +512,12 @@ let cont_para_analysis cprog cviews=
   let pr3 = pr_list pr2 in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews
+
+
+let norm_split_args iprog cprog cview=
+  cview
+
+
 (*****************************************************************)
    (********END PARA CONTINUATION ANALYSIS **********)
 (*****************************************************************)

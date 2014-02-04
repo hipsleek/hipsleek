@@ -1,0 +1,48 @@
+// bugs after the introduction of some new features
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<n> == self = null & n = 0 
+	or self::node<a, q> * 
+    q::ll<n-1>
+  inv n >= 0.
+
+/*
+pred cell<v,a,b> == self::node<v,q>@a * q::node<_,_>@b
+   inv self!=null.
+*/
+/*
+checkentail x::cell<_,@M,_> |- x::cell<_,@L,_>.
+print residue.
+*/
+//
+// (2) fails but should be valid
+//checkentail x::node<_@A,_@M> |- x::node<_@A,_@L>.
+//checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@M>.
+//print residue.
+
+checkentail x::node<_,y> * y::ll<1> |- x::ll<n> & n=2.
+print residue.
+
+
+// (6) valid
+//checkentail y::node<p@A,q@L>  *  x::node<p@A,q@L>  |- x != y.
+//print residue.
+
+// (6) fails but should be valid as above
+//checkentail y::node<p@A,q@L>  * z::node<_@A,_@A> *  x::node<p@A,q@L>  |- x != y.
+//print residue.
+
+
+
+
+//fails but should be valid
+/*
+checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  
+  |- (x::ll<n>@L); y::ll<m> * t::ll<a>@L.
+print residue.
+*/

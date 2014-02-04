@@ -1,0 +1,75 @@
+//Valid.Valid.Valid.
+
+data cell {
+  int val;
+}.
+
+
+
+//1
+infer [] y::cell<_>@M |- y::cell<b>@v & v=@M.
+print residue.
+
+//2
+infer [] y::cell<_>@M |- y::cell<b>@v & v<:@M.
+print residue.
+
+//3
+infer [] y::cell<_>@M |- y::cell<b>@v & v=@L.
+print residue.
+
+//4
+infer [] y::cell<_>@M |- y::cell<b>@v & v<:@L.
+print residue.
+
+//5
+infer [] y::cell<_>@L |- y::cell<b>@v & v=@M.
+print residue.
+
+//6
+infer [] y::cell<_>@L |- y::cell<b>@v & v<:@M.
+print residue.
+
+//7
+infer [] y::cell<_>@L |- y::cell<b>@v & v<:@L.
+print residue.
+
+
+
+
+//8
+infer [] y::cell<_>@v & v=@M |- y::cell<b>@M.
+print residue.
+
+//9
+infer [] y::cell<_>@v & v<:@M |- y::cell<b>@M.
+print residue.
+
+//10
+infer [] y::cell<_>@v & v=@L |- y::cell<b>@L.
+print residue.
+
+//11
+infer [] y::cell<_>@v & @M<:v |- y::cell<b>@L.
+print residue.
+
+//12
+infer [] y::cell<_>@v & v=@L|- y::cell<b>@M.
+print residue.
+
+//13
+infer [] y::cell<_>@v & v<:L |- y::cell<b>@M.
+print residue.
+
+//14
+infer [] y::cell<_>@v & @L<:v |- y::cell<b>@L.
+print residue.
+
+//15
+infer [] y::cell<_>@v & v<:@L |- y::cell<b>@L.
+print residue.
+
+//16
+infer [] y::cell<_>@v & v=@M |- y::cell<b>@L.
+print residue.
+

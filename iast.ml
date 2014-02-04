@@ -44,13 +44,15 @@ and data_field_ann =
   | REC
   | F_NO_ANN
 
-and data_decl = { data_name : ident;
-data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
-data_parent_name : ident;
-data_invs : F.formula list;
-data_pos : loc;
-data_is_template: bool;
-data_methods : proc_decl list }
+and data_decl = { 
+    data_name : ident;
+    data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
+    (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+    data_parent_name : ident;
+    data_invs : F.formula list;
+    data_pos : loc;
+    data_is_template: bool;
+    data_methods : proc_decl list }
 
 (*
   and global_var_decl = { global_var_decl_type : typ;
@@ -68,6 +70,7 @@ and view_decl =
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_vars : ident list;
+    mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;
     view_labels : LO.t list * bool;
     view_modes : mode list;
@@ -108,6 +111,8 @@ and hp_decl = { hp_name : ident;
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
 hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
+mutable hp_root_pos: int;
 hp_is_pre: bool;
 hp_formula : Iformula.formula ;
 (* try_case_inference: bool *)}
@@ -136,8 +141,9 @@ enum_fields : (ident * int option) list }
 and param_modifier =
   | NoMod
   | RefMod
-          
-          
+  | CopyMod (* WN : this signify pass-by-copy semantics *)
+    (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
+
 and jump_label_type =
   | NoJumpLabel 
   | JumpLabel of ident
@@ -184,6 +190,7 @@ param_loc : loc }
 and proc_decl = { proc_name : ident;
 mutable proc_mingled_name : ident;
 mutable proc_data_decl : data_decl option; (* the class containing the method *)
+mutable proc_hp_decls : hp_decl list; (* add hp decl list for proc *)
 proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
@@ -205,7 +212,10 @@ coercion_name : ident;
 coercion_infer_vars : ident list;
 coercion_head : F.formula;
 coercion_body : F.formula;
-coercion_proof : exp }
+coercion_proof : exp;
+coercion_type_orig: coercion_type option; (* store origin type before transforming *)
+coercion_kind : lemma_kind;
+}
 
 and coercion_decl_list = {
     coercion_list_elems : coercion_decl list;
@@ -234,6 +244,7 @@ and expected_comp =
 
 and ass = {
     ass_lhs: F.formula;
+    ass_guard: F.formula option;
     ass_rhs: F.formula }
 
 (********end parse compare file************)
@@ -343,11 +354,11 @@ exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
 exp_catch_flow_type : constant_flow;
-exp_catch_alt_var_type : typ option; 
+exp_catch_alt_var_type : typ option;
 exp_catch_flow_var : ident option;
-exp_catch_body : exp;											   
+exp_catch_body : exp;
 exp_catch_pos : loc }
-    
+
 and exp_cast = { exp_cast_target_type : typ;
 exp_cast_body : exp;
 exp_cast_pos : loc }
@@ -508,12 +519,24 @@ let bool_type = Bool
 let bag_type = BagT Int
 
 (* utility functions *)
+let iprog = ref (None: prog_decl option)
+
+let set_iprog ip=
+  let _ = iprog := (Some ip) in
+  ()
+
+let get_iprog ()=
+  match !iprog with
+    | Some ip -> ip
+    | None -> raise Not_found
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
+let print_param_list = ref (fun (x: param list) -> "Uninitialised printer")
+let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -570,6 +593,201 @@ let fold_proc (prog:prog_decl)
 let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
+
+let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
+  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
+    match (f in_arg e) with
+	  | Some e1 -> e1
+	  | None  ->
+		let n_arg = f_args in_arg e in 
+                let comb_f = comb_f e in
+                let zero = comb_f [] in  
+		match e with	
+                  | Assert _ 
+                  | BoolLit _ 
+                  | Break _
+                  | Continue _ 
+                  | Debug _ 
+                  | Dprint _ 
+                  | Empty _ 
+                  | FloatLit _ 
+                  | IntLit _
+                  | Java _ 
+                  | Null _ 
+                  | This _ 
+                  | Time _ 
+                  | Unfold _ 
+                  | Var _ -> (e,zero)
+	          | ArrayAt b -> (* An Hoa *)
+		        let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+		        (ArrayAt {b with exp_arrayat_index = el},comb_f rl)
+                  | Assign b ->
+                        let e1,r1 = helper n_arg b.exp_assign_lhs  in
+                        let e2,r2 = helper n_arg b.exp_assign_rhs  in
+                        (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
+                  | Binary b -> 
+                        let e1,r1 = helper n_arg b.exp_binary_oper1  in
+                        let e2,r2 = helper n_arg b.exp_binary_oper2  in
+                        (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
+                  | Bind b -> 
+                        let e1,r1 = helper n_arg b.exp_bind_body  in
+                        (Bind {b with exp_bind_body = e1; },r1)
+		  | Barrier _ -> (e,zero)
+			(*let e,r = helper n_arg b.exp_barrier_recv  in     
+                          (Barrier {b with exp_barrier_recv = e},r)*)
+                  | Block b -> 
+                        let e1,r1 = helper n_arg b.exp_block_body  in     
+                        (Block {b with exp_block_body = e1;},r1)
+                  | CallRecv b -> 
+                        let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
+                        let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
+                        let e2l,r2l = List.split ler in
+                        let r = comb_f (r1::r2l) in
+                        (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
+                  | CallNRecv b -> 
+                        let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
+                        let e2l,r2l = List.split ler in
+                        let r = comb_f r2l in
+                        (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
+                  | Cast b -> 
+                        let e1,r1 = helper n_arg b.exp_cast_body  in  
+                        (Cast {b with exp_cast_body = e1},r1)
+	          | Catch b -> 
+		        let e1,r1 = helper n_arg b.exp_catch_body in
+		        (Catch {b with exp_catch_body = e1},r1)
+                  | Cond b -> 
+                        let e1,r1 = helper n_arg b.exp_cond_condition in
+                        let e2,r2 = helper n_arg b.exp_cond_then_arm in
+                        let e3,r3 = helper n_arg b.exp_cond_else_arm in
+                        let r = comb_f [r1;r2;r3] in
+                        (Cond {b with
+                            exp_cond_condition = e1;
+                            exp_cond_then_arm = e2;
+                            exp_cond_else_arm = e3;},r)
+	          | Finally b ->
+		        let e1,r1 = helper n_arg b.exp_finally_body in
+		        (Finally {b with exp_finally_body=e1},r1)
+                  | Label (l,b) -> 
+                        let e1,r1 = helper n_arg b in
+                        (Label (l,e1),r1)
+                  | Member b -> 
+                        let e1,r1 = helper n_arg b.exp_member_base in
+                        (Member {b with exp_member_base = e1;},r1)
+			    (* An Hoa *)
+		  | ArrayAlloc b -> 
+                        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+                        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
+                  | New b -> 
+                        let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
+                        (New {b with exp_new_arguments = el},(comb_f rl))
+                  | Raise b -> (match b.exp_raise_val with
+                      | None -> (e,zero)
+                      | Some body -> 
+                            let e1,r1 = helper n_arg body in
+                            (Raise {b with exp_raise_val = Some e1},r1))
+                  | Return b->(match b.exp_return_val with
+                      | None -> (e,zero)
+                      | Some body -> 
+                            let e1,r1 = helper n_arg body in
+                            (Return {b with exp_return_val = Some e1},r1))
+                  | Seq b -> 
+                        let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
+                        let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
+                        let r = comb_f [r1;r2] in
+                        (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+                  | Try b -> 
+                        let ecl = List.map (helper n_arg) b.exp_catch_clauses in
+                        let fcl = List.map (helper n_arg) b.exp_finally_clause in
+                        let tb,r1 = helper n_arg b.exp_try_block in
+                        let catc, rc = List.split ecl in
+                        let fin, rf = List.split fcl in
+                        let r = comb_f (r1::(rc@rf)) in
+                        (Try {b with
+                            exp_try_block = tb;
+                            exp_catch_clauses = catc;
+                            exp_finally_clause = fin;},r)
+                  | Unary b -> 
+                        let e1,r1 = helper n_arg b.exp_unary_exp in
+                        (Unary {b with exp_unary_exp = e1},r1)
+                  | ConstDecl b -> 
+                        let l = List.map (fun (c1,c2,c3)-> 
+                            let e1,r1 = helper n_arg c2 in
+                            ((c1,e1,c3),r1))b.exp_const_decl_decls in
+                        let el,rl = List.split l in
+                        let r = comb_f rl in
+                        (ConstDecl {b with exp_const_decl_decls=el},r) 
+                  | VarDecl b -> 
+                        let ll = List.map (fun (c1,c2,c3)-> match c2 with
+                          | None -> ((c1,None,c3),zero)
+                          | Some s -> 
+                                let e1,r1 = helper n_arg s in
+                                ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
+                        let dl,rl =List.split ll in
+                        let r = comb_f rl in
+                        (VarDecl {b with exp_var_decl_decls = dl},r)
+                  | While b -> 
+                        let wrp,r = match b.exp_while_wrappings with
+                          | None -> (None,zero)
+                          | Some (s,l) -> 
+                                let wrp,r = helper n_arg s in
+                                (Some (wrp,l),r) in
+                        let ce,cr = helper n_arg b.exp_while_condition in
+                        let be,br = helper n_arg b.exp_while_body in
+                        let r = comb_f [r;cr;br] in
+                        (While {b with
+                            exp_while_condition = ce;
+                            exp_while_body = be;
+                            exp_while_wrappings = wrp},r) in
+  helper init_arg e
+
+let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
+  let f_c e lst = match lst with
+    | [] -> zero
+    | _ -> comb_f lst in
+  trans_exp e init_arg f f_args f_c
+
+  (*this maps an expression by passing an argument*)
+let map_exp_args (e:exp) (arg:'a) (f:'a -> exp -> exp option) (f_args: 'a -> exp -> 'a) : exp =
+  let f1 ac e = push_opt_void_pair (f ac e) in
+  fst (transform_exp e arg f1 f_args voidf ())
+
+  (*this maps an expression without passing an argument*)
+let map_exp (e:exp) (f:exp->exp option) : exp = 
+  (* fst (transform_exp e () (fun _ e -> push_opt_void_pair (f e)) idf2  voidf ()) *)
+  map_exp_args e () (fun _ e -> f e) idf2 
+
+  (*this computes a result from expression passing an argument*)
+let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  let f1 ac e = match (f ac e) with
+    | Some r -> Some (e,r)
+    | None ->  None in
+  snd(transform_exp e init_a f1 f_args comb_f zero)
+ 
+  (*this computes a result from expression without passing an argument*)
+let fold_exp (e:exp) (f:exp-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  fold_exp_args e () (fun _ e-> f e) voidf2 comb_f zero
+
+  (*this iterates over the expression and passing an argument*)
+let iter_exp_args (e:exp) (init_arg:'a) (f:'a -> exp-> unit option) (f_args: 'a -> exp -> 'a) : unit =
+  fold_exp_args  e init_arg f f_args voidf ()
+
+  (*this iterates over the expression without passing an argument*)
+let iter_exp (e:exp) (f:exp-> unit option)  : unit =  iter_exp_args e () (fun _ e-> f e) voidf2
+
+  (*this computes a result from expression passing an argument with side-effects*)
+let fold_exp_args_imp (e:exp)  (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp-> 'b option)
+  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) (f_comb:'b list->'b) (zero:'b) : 'b =
+  let fn (arg,imp) e = match (f arg imp e) with
+    | Some r -> Some (e,r)
+    | None -> None in
+  let fnargs (arg,imp) e = ((f_args arg imp e), (f_imp imp e)) in
+  snd(transform_exp e (arg,imp) fn fnargs f_comb zero)
+
+  (*this iterates over the expression and passing an argument*)
+let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit option)
+  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
+  fold_exp_args_imp e arg imp f f_args f_imp voidf ()
+
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
 
 let are_same_type (t1 : typ) (t2 : typ) = t1 = t2 (*TODO: this function should be removed, use the one in Cast instead *)
@@ -613,7 +831,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | IntLit e -> e.exp_int_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
-	| ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
+  | ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
   | New e -> e.exp_new_pos
   | Null p -> p
   | Return e -> e.exp_return_pos
@@ -627,8 +845,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
-	  
-	  
+
 let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting catch clause"}
@@ -702,7 +919,7 @@ let rec type_of_exp e = match e with
   | Try _ -> Some void_type
   | Unary {
       exp_unary_op = op;
-      exp_unary_exp = e1;
+      exp_unary_ = e1;
       exp_unary_pos = _
     } -> type_of_exp e1
   | Unfold _ -> None
@@ -722,9 +939,7 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 			}];
 		srequires_pos = pos
 		}]	*)
-		
-    
-    
+
 and mkHoPred  n m mh tv ta fa s i=
       {   hopred_name = n;
           hopred_mode = m;
@@ -734,32 +949,334 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_fct_args = fa;
           hopred_shape    = s;
           hopred_invariant = i}
-	
+
+let mkhp_decl iprog hp_id vars parts rpos is_pre body=
+  let nhp_dclr = { hp_name = hp_id;
+  hp_typed_inst_vars = vars;
+  hp_part_vars = [];
+  hp_root_pos = rpos;
+  hp_is_pre = is_pre;
+  hp_formula =  body;
+  } in
+  let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
+  nhp_dclr
+
+let rec get_mut_vars_x e0 =
+  (* let comb_f = List.concat in *)
+  let f e=
+    match e with
+      | Var { exp_var_name = id} -> Some [id]
+      | _ -> None
+  in
+  let get_vars e= fold_exp e f (List.concat) [] in
+  (* let rec helper (e:exp) = *)
+  (*   match e with *)
+  (*     | Assert _ *)
+  (*     | BoolLit _ *)
+  (*     | Break _ *)
+  (*     | Continue _ *)
+  (*     | Debug _ *)
+  (*     | Dprint _ *)
+  (*     | Empty _ *)
+  (*     | FloatLit _ *)
+  (*     | IntLit _ *)
+  (*     | Java _ *)
+  (*     | Null _ *)
+  (*     | This _ *)
+  (*     | Time _ *)
+  (*     | Unfold _ *)
+  (*     | Var _ -> [] *)
+  (*     | ArrayAt b -> (\* An Hoa *\) *)
+  (*           let rl = (List.map helper b.exp_arrayat_index) in *)
+  (*           comb_f rl *)
+  (*     | Assign b -> begin *)
+  (*           let r1 = helper b.exp_assign_lhs  in *)
+  (*           let r2 = helper  b.exp_assign_rhs  in *)
+  (*           match b.exp_assign_lhs with *)
+  (*             | Var {exp_var_name = id} -> id::r1@r2 *)
+  (*             | _ -> r1@r2 *)
+  (*       end *)
+  (*     | Binary b -> *)
+  (*           let r1 = helper  b.exp_binary_oper1  in *)
+  (*           let r2 = helper  b.exp_binary_oper2  in *)
+  (*           (comb_f [r1;r2]) *)
+  (*     | Bind b -> *)
+  (*           let r1 = helper  b.exp_bind_body  in *)
+  (*           b.exp_bind_bound_var::r1 *)
+  (*     | Barrier _ -> [] *)
+  (*     | Block b -> *)
+  (*            helper  b.exp_block_body *)
+  (*     | CallRecv b -> *)
+  (*           let r1 = helper  b.exp_call_recv_receiver in *)
+  (*           let ler = List.map (helper ) b.exp_call_recv_arguments in *)
+  (*            comb_f (r1::ler) *)
+  (*     | CallNRecv b -> *)
+  (*           let ler = List.map (helper ) b.exp_call_nrecv_arguments in *)
+  (*           let r = comb_f ler in *)
+  (*           r *)
+  (*     | Cast b -> *)
+  (*           let r1 = helper b.exp_cast_body in *)
+  (*           r1 *)
+  (*     | Catch b -> *)
+  (*           helper b.exp_catch_body *)
+  (*     | Cond b -> *)
+  (*           let r1 = helper  b.exp_cond_condition in *)
+  (*           let r2 = helper  b.exp_cond_then_arm in *)
+  (*           let r3 = helper  b.exp_cond_else_arm in *)
+  (*           let r = comb_f [r1;r2;r3] in *)
+  (*           r *)
+  (*     | Finally b -> *)
+  (*           let r1 = helper b.exp_finally_body in *)
+  (*           r1 *)
+  (*     | Label (l,b) -> *)
+  (*           helper  b *)
+  (*     | Member b -> (\* begin let _ =  print_endline (!print_exp b.exp_member_base) in *\) *)
+  (*            get_vars b.exp_member_base *)
+  (*       (\* with *\) *)
+  (*       (\*       | Var { exp_var_name = id} -> [id] *\) *)
+  (*       (\*       | _ -> [] *\) *)
+  (*       (\* end *\) *)
+  (*     | ArrayAlloc b -> *)
+  (*           let rl= (List.map helper b.exp_aalloc_dimensions) in *)
+  (*           comb_f rl *)
+  (*     | New b -> *)
+  (*           let rl = (List.map helper b.exp_new_arguments) in *)
+  (*           (comb_f rl) *)
+  (*     | Raise b -> (match b.exp_raise_val with *)
+  (*         | None -> [] *)
+  (*         | Some body -> *)
+  (*               helper  body *)
+  (*       ) *)
+  (*     | Return b->(match b.exp_return_val with *)
+  (*         | None -> [] *)
+  (*         | Some body -> *)
+  (*               helper body *)
+  (*       ) *)
+  (*     | Seq b -> *)
+  (*           let r1 = helper b.exp_seq_exp1 in *)
+  (*           let r2 = helper b.exp_seq_exp2 in *)
+  (*           let r = comb_f [r1;r2] in *)
+  (*           r *)
+  (*     | Try b -> *)
+  (*           let ecl = List.map helper b.exp_catch_clauses in *)
+  (*           let fcl = List.map helper b.exp_finally_clause in *)
+  (*           let r1 = helper b.exp_try_block in *)
+  (*           let r = comb_f (r1::(ecl@fcl)) in r *)
+  (*     | Unary b -> *)
+  (*           let r1 = helper b.exp_unary_exp in *)
+  (*           r1 *)
+  (*     | ConstDecl b -> *)
+  (*           let l = List.map (fun (c1,c2,c3)-> *)
+  (*               let r1 = helper  c2 in *)
+  (*               r1 *)
+  (*           ) b.exp_const_decl_decls *)
+  (*           in *)
+  (*           let r = comb_f l in *)
+  (*           r *)
+  (*     | VarDecl b -> *)
+  (*           let ll = List.map (fun (c1,c2,c3)-> match c2 with *)
+  (*             | None -> [] *)
+  (*             | Some s -> *)
+  (*                   let r1 = helper s in *)
+  (*                   r1 *)
+  (*           ) b.exp_var_decl_decls in *)
+  (*           let r = comb_f ll in *)
+  (*           r *)
+  (*     | While b -> *)
+  (*           let r = match b.exp_while_wrappings with *)
+  (*             | None -> [] *)
+  (*             | Some (s,l) -> *)
+  (*                   let r = helper s in *)
+  (*                   r *)
+  (*           in *)
+  (*           let cr = helper b.exp_while_condition in *)
+  (*           let br = helper b.exp_while_body in *)
+  (*           let r = comb_f [r;cr;br] in *)
+  (*           r *)
+  (* in *)
+  (**************************END****************)
+  let rec collect_lhs_ass_vars e=
+    match e with
+      | Assign {exp_assign_lhs = lhs} -> begin
+          match lhs with
+            | Var {exp_var_name = id} -> Some [id]
+            |  _ -> begin
+                 collect_lhs_ass_vars lhs
+               end
+        end
+      | _ -> None
+  in
+  let rec collect_bind_vars e=
+    match e with
+      | Bind {exp_bind_bound_var = id;
+        exp_bind_body = b;
+        } -> begin let b_opt = collect_bind_vars b in
+        match b_opt with
+          | None -> Some [id]
+          | Some ids -> Some (id::ids)
+        end
+      | Member b -> Some (get_vars b.exp_member_base)
+      | _ -> None
+  in
+  let lhs_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
+  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) (lhs_vars@bind_vars)
+  (* let mut_vars = helper e0 in *)
+  (* Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars *)
+
+let rec get_mut_vars e0 =
+  let pr1 = !print_exp in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "get_mut_vars" pr1 pr2
+      (fun _ -> get_mut_vars_x e0) e0
+
+let genESpec_x body_opt args ret pos=
+  (*generate one HeapPred for args and one HeapPred for ret*)
+  if args = [] && ret = Void then
+    F.mkETrueTrueF (),[]
+  else
+    let mut_vars = match body_opt with
+      | Some body_exp -> get_mut_vars body_exp
+      | None -> []
+    in
+    let hp_pre_decl = {
+        hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+        hp_typed_inst_vars = List.map (fun arg ->
+            let in_info =
+              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
+                  arg.param_name mut_vars then Globals.I else Globals.NI
+            in
+            (arg.param_type, arg.param_name, in_info)
+        ) args;
+        hp_part_vars = [];
+        hp_root_pos = 0;
+        hp_is_pre = true;
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
+    }
+    in
+    let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+    let hp_post_decl = {
+        hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+        hp_typed_inst_vars = (List.fold_left (fun r arg ->
+            let in_info =
+              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
+                  arg.param_name mut_vars then Globals.I else Globals.NI
+            in
+            let hp_arg = (arg.param_type, arg.param_name, in_info) in
+            let ref_args = if arg.param_mod = RefMod then
+              [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
+            else [hp_arg]
+            in
+            r@ref_args
+        ) [] args)@
+	    (match ret with
+	      | Globals.Void -> []
+	      | _ -> [(ret, res_name, Globals.I)]
+	    );
+        hp_part_vars = [];
+        hp_root_pos = 0;
+        hp_is_pre = false;
+        hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
+    in
+    let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+    let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
+    (*todo: care ref args*)
+    let post_eargs0 = List.fold_left (fun r p ->
+        let up_arg = P.Var ((p.param_name, Unprimed),pos) in
+        let hp_args =
+          if p.param_mod = RefMod then [up_arg; (P.Var ((p.param_name, Primed),pos))]
+        else [up_arg]
+        in
+        r@hp_args
+    ) [] args in
+    let post_eargs = match ret with
+      | Void -> post_eargs0
+      | _ -> post_eargs0@[P.Var ((res_name, Unprimed),pos)]
+    in
+    let _ = Debug.ninfo_hprint (add_str "post_eargs" (pr_list !Ipure.print_formula_exp)) post_eargs no_pos in
+    let ipost_simpl = (F.formula_of_heap_with_flow (F.HRel (hp_post_decl.hp_name, post_eargs, pos)) n_flow pos) in
+    let ipost = F.mkEAssume ipost_simpl ( F.mkEBase [] [] [] ipost_simpl None pos) (fresh_formula_label "") None in
+    let ipre = F.mkEBase [] [] [] (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) (Some ipost) pos in
+    (* generate Iformula.struc_infer_formula*)
+    (F.EInfer {
+        F.formula_inf_post = true;
+        F.formula_inf_xpost = None;
+        F.formula_inf_transpec = None;
+        F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
+        F.formula_inf_continuation = ipre;
+        F.formula_inf_pos = pos;
+    }, [hp_pre_decl;hp_post_decl])
+
+let genESpec body_opt args ret pos=
+  let pr1 = !print_param_list in
+  let pr2 = string_of_typ in
+  Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
+      (fun _ _ -> genESpec_x body_opt args ret pos) args ret
+
+
+let genESpec_wNI body_header body_opt args ret pos=
+  let print_gen_spec ss unk_hps=
+    let _ = print_endline "\nHeap Predicate Declarations" in
+    let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
+    let _ = Debug.info_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
+    ()
+  in
+  let ss, n_hp_dcls =
+    match body_header.proc_static_specs with
+      | F.EList [] ->
+          let ss, hps = genESpec body_opt args ret pos in
+          let _ = print_gen_spec ss hps in
+          let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
+          (ss,hps)
+      | _ ->
+            let _ = if !Globals.sags then
+              let ss, hps = genESpec body_opt args ret pos in
+              let _ = print_gen_spec ss hps in
+              ()
+            else ()
+            in
+            (body_header.proc_static_specs,[])
+  in
+  {body_header with
+      proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
+      proc_static_specs = ss;
+  }
+
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
-  let ss = match ss with 
-    | F.EList [] -> 
-          (* Debug.info_pprint "EList" pos; *)
-          F.mkETrueTrueF () 
-    | _ -> ss 
-          in
+  (* let ni_name = match bd with *)
+  (*   | None -> [] *)
+  (*   | Some bd -> get_ni_name bd *)
+  (* in *)
+  (*move this to body parsing step. we know which parameter is mut or imm*)
+  (* let ss, n_hp_dcls = match ss with *)
+  (*   | F.EList [] -> *)
+  (*         let ss, hps = genESpec bd ags r pos in *)
+  (*         let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
+  (*         (ss,hps) *)
+  (*             (\* F.mkETrueTrueF ()  *\) *)
+  (*   | _ -> *)
+  (*         (\* let _ = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
+  (*         ss,[] *)
+  (* in *)
   { proc_name = id;
   proc_source =sfile;
   proc_flags = flgs;
-      proc_mingled_name = n; 
-      proc_data_decl = dd;
-      proc_constructor = c;
-      proc_exceptions = ot;
-      proc_args = ags;
-      proc_return = r;
-      (*  proc_important_vars = [];*)
-      proc_static_specs = ss;
-      proc_dynamic_specs = ds;
-      proc_loc = pos;
-      proc_is_main = true;
-      proc_file = !input_file_name;
-      proc_body = bd;
-      proc_test_comps = None}
+  proc_hp_decls = (* n_hp_dcls *)[];
+  proc_mingled_name = n; 
+  proc_data_decl = dd;
+  proc_constructor = c;
+  proc_exceptions = ot;
+  proc_args = ags;
+  proc_return = r;
+  (*  proc_important_vars = [];*)
+  proc_static_specs = ss;
+  proc_dynamic_specs = ds;
+  proc_loc = pos;
+  proc_is_main = true;
+  proc_file = !input_file_name;
+  proc_body = bd;
+  proc_test_comps = None}
 
 let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
@@ -767,200 +1284,6 @@ let mkAssert asrtf assmf pid atype pos =
                exp_assert_path_id = pid;
                exp_assert_type = atype;
                exp_assert_pos = pos }
-      
-let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
-  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
-    match (f in_arg e) with
-	  | Some e1 -> e1
-	  | None  ->
-		let n_arg = f_args in_arg e in 
-        let comb_f = comb_f e in
-        let zero = comb_f [] in  
-		match e with	
-          | Assert _ 
-          | BoolLit _ 
-          | Break _
-          | Continue _ 
-          | Debug _ 
-          | Dprint _ 
-          | Empty _ 
-          | FloatLit _ 
-          | IntLit _
-          | Java _ 
-          | Null _ 
-          | This _ 
-          | Time _ 
-          | Unfold _ 
-          | Var _ -> (e,zero)
-					| ArrayAt b -> (* An Hoa *)
-					 			let el,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
-								(ArrayAt {b with exp_arrayat_index = el},comb_f rl)
-          | Assign b ->
-                let e1,r1 = helper n_arg b.exp_assign_lhs  in
-                let e2,r2 = helper n_arg b.exp_assign_rhs  in
-                (Assign { b with exp_assign_lhs = e1; exp_assign_rhs = e2;},(comb_f [r1;r2]))
-          | Binary b -> 
-                let e1,r1 = helper n_arg b.exp_binary_oper1  in
-                let e2,r2 = helper n_arg b.exp_binary_oper2  in
-                (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
-          | Bind b -> 
-                let e1,r1 = helper n_arg b.exp_bind_body  in
-                (Bind {b with exp_bind_body = e1; },r1)
-		  | Barrier _ -> (e,zero)
-				(*let e,r = helper n_arg b.exp_barrier_recv  in     
-                (Barrier {b with exp_barrier_recv = e},r)*)
-          | Block b -> 
-                let e1,r1 = helper n_arg b.exp_block_body  in     
-                (Block {b with exp_block_body = e1;},r1)
-          | CallRecv b -> 
-                let e1,r1 = helper n_arg b.exp_call_recv_receiver  in     
-                let ler = List.map (helper n_arg) b.exp_call_recv_arguments in    
-                let e2l,r2l = List.split ler in
-                let r = comb_f (r1::r2l) in
-                (CallRecv {b with exp_call_recv_receiver = e1;exp_call_recv_arguments = e2l;},r)
-          | CallNRecv b -> 
-                let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in    
-                let e2l,r2l = List.split ler in
-                let r = comb_f r2l in
-                (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
-          | Cast b -> 
-                let e1,r1 = helper n_arg b.exp_cast_body  in  
-                (Cast {b with exp_cast_body = e1},r1)
-	      | Catch b -> 
-		        let e1,r1 = helper n_arg b.exp_catch_body in
-		        (Catch {b with exp_catch_body = e1},r1)
-          | Cond b -> 
-                let e1,r1 = helper n_arg b.exp_cond_condition in
-                let e2,r2 = helper n_arg b.exp_cond_then_arm in
-                let e3,r3 = helper n_arg b.exp_cond_else_arm in
-                let r = comb_f [r1;r2;r3] in
-                (Cond {b with
-                    exp_cond_condition = e1;
-                    exp_cond_then_arm = e2;
-                    exp_cond_else_arm = e3;},r)
-	      | Finally b ->
-		        let e1,r1 = helper n_arg b.exp_finally_body in
-		        (Finally {b with exp_finally_body=e1},r1)
-          | Label (l,b) -> 
-                let e1,r1 = helper n_arg b in
-                (Label (l,e1),r1)
-          | Member b -> 
-                let e1,r1 = helper n_arg b.exp_member_base in
-                (Member {b with exp_member_base = e1;},r1)
-					(* An Hoa *)
-					| ArrayAlloc b -> 
-                let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
-                (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
-          | New b -> 
-                let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
-                (New {b with exp_new_arguments = el},(comb_f rl))
-          | Raise b -> (match b.exp_raise_val with
-              | None -> (e,zero)
-              | Some body -> 
-                    let e1,r1 = helper n_arg body in
-                    (Raise {b with exp_raise_val = Some e1},r1))
-          | Return b->(match b.exp_return_val with
-              | None -> (e,zero)
-              | Some body -> 
-                    let e1,r1 = helper n_arg body in
-                    (Return {b with exp_return_val = Some e1},r1))
-          | Seq b -> 
-                let e1,r1 = helper n_arg  b.exp_seq_exp1 in 
-                let e2,r2 = helper n_arg  b.exp_seq_exp2 in 
-                let r = comb_f [r1;r2] in
-                (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
-          | Try b -> 
-                let ecl = List.map (helper n_arg) b.exp_catch_clauses in
-                let fcl = List.map (helper n_arg) b.exp_finally_clause in
-                let tb,r1 = helper n_arg b.exp_try_block in
-                let catc, rc = List.split ecl in
-                let fin, rf = List.split fcl in
-                let r = comb_f (r1::(rc@rf)) in
-                (Try {b with
-                    exp_try_block = tb;
-                    exp_catch_clauses = catc;
-                    exp_finally_clause = fin;},r)
-          | Unary b -> 
-                let e1,r1 = helper n_arg b.exp_unary_exp in
-                (Unary {b with exp_unary_exp = e1},r1)
-          | ConstDecl b -> 
-                let l = List.map (fun (c1,c2,c3)-> 
-                    let e1,r1 = helper n_arg c2 in
-                    ((c1,e1,c3),r1))b.exp_const_decl_decls in
-                let el,rl = List.split l in
-                let r = comb_f rl in
-                (ConstDecl {b with exp_const_decl_decls=el},r) 
-          | VarDecl b -> 
-                let ll = List.map (fun (c1,c2,c3)-> match c2 with
-                  | None -> ((c1,None,c3),zero)
-                  | Some s -> 
-                        let e1,r1 = helper n_arg s in
-                        ((c1,Some e1, c3),r1)) b.exp_var_decl_decls in 
-                let dl,rl =List.split ll in
-                let r = comb_f rl in
-                (VarDecl {b with exp_var_decl_decls = dl},r)
-          | While b -> 
-                let wrp,r = match b.exp_while_wrappings with
-                  | None -> (None,zero)
-                  | Some (s,l) -> 
-                        let wrp,r = helper n_arg s in
-                        (Some (wrp,l),r) in
-                let ce,cr = helper n_arg b.exp_while_condition in
-                let be,br = helper n_arg b.exp_while_body in
-                let r = comb_f [r;cr;br] in
-                (While {b with
-                    exp_while_condition = ce;
-                    exp_while_body = be;
-                    exp_while_wrappings = wrp},r) in
-  helper init_arg e
-
-let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
-  let f_c e lst = match lst with
-    | [] -> zero
-    | _ -> comb_f lst in
-  trans_exp e init_arg f f_args f_c
-
-  (*this maps an expression by passing an argument*)
-let map_exp_args (e:exp) (arg:'a) (f:'a -> exp -> exp option) (f_args: 'a -> exp -> 'a) : exp =
-  let f1 ac e = push_opt_void_pair (f ac e) in
-  fst (transform_exp e arg f1 f_args voidf ())
-
-  (*this maps an expression without passing an argument*)
-let map_exp (e:exp) (f:exp->exp option) : exp = 
-  (* fst (transform_exp e () (fun _ e -> push_opt_void_pair (f e)) idf2  voidf ()) *)
-  map_exp_args e () (fun _ e -> f e) idf2 
-
-  (*this computes a result from expression passing an argument*)
-let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
-  let f1 ac e = match (f ac e) with
-    | Some r -> Some (e,r)
-    | None ->  None in
-  snd(transform_exp e init_a f1 f_args comb_f zero)
- 
-  (*this computes a result from expression without passing an argument*)
-let fold_exp (e:exp) (f:exp-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
-  fold_exp_args e () (fun _ e-> f e) voidf2 comb_f zero
-
-  (*this iterates over the expression and passing an argument*)
-let iter_exp_args (e:exp) (init_arg:'a) (f:'a -> exp-> unit option) (f_args: 'a -> exp -> 'a) : unit =
-  fold_exp_args  e init_arg f f_args voidf ()
-
-  (*this iterates over the expression without passing an argument*)
-let iter_exp (e:exp) (f:exp-> unit option)  : unit =  iter_exp_args e () (fun _ e-> f e) voidf2
-
-  (*this computes a result from expression passing an argument with side-effects*)
-let fold_exp_args_imp (e:exp)  (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp-> 'b option)
-  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) (f_comb:'b list->'b) (zero:'b) : 'b =
-  let fn (arg,imp) e = match (f arg imp e) with
-    | Some r -> Some (e,r)
-    | None -> None in
-  let fnargs (arg,imp) e = ((f_args arg imp e), (f_imp imp e)) in
-  snd(transform_exp e (arg,imp) fn fnargs f_comb zero)
-
-  (*this iterates over the expression and passing an argument*)
-let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit option)
-  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
-  fold_exp_args_imp e arg imp f f_args f_imp voidf ()
 
 (** An Hoa [22/08/2011] Extract information from a field declaration of data **)
 
@@ -1052,6 +1375,8 @@ and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
 and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs with
   | d :: rest -> if d.enum_name = name then d else look_up_enum_def pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no enum declaration named " ^ name ^ " is found"}
@@ -1108,7 +1433,7 @@ and expand_inline_fields ddefs fls =
 	  let ft = get_field_typ fld in
 	  try
 		let ddef = look_up_data_def_raw ddefs (string_of_typ ft) in
-		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ ".")) ddef.data_fields in
+		let fld_fs = List.map (fun y -> augment_field_with_prefix y (fn ^ Globals.inline_field_expand)) ddef.data_fields in
 		fld_fs
 	  with
 		| Not_found -> failwith "[expand_inline_fields] type not found!"
@@ -1135,6 +1460,11 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
   Find view_data_name. Look at each branch, find the data self points to.
   If there are conflicts, report as errors.
 *)
+
+and look_up_all_fields_cname (prog : prog_decl) (c : ident) = 
+  let ddef = look_up_data_def_raw prog.prog_data_decls c
+  in look_up_all_fields prog ddef
+
 
 and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (ident list) * (ident list) =
   match f with
@@ -1166,7 +1496,7 @@ and collect_data_view_from_struc (data_names: ident list) (f:F.struc_formula): (
       let vl = Gen.Basic.remove_dups (List.concat vll) in
       (dl, vl)
   
-and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
+and collect_data_view_from_formula_x (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
   let rec helper (h0 : F.h_formula) = (
     match h0 with
     | F.HeapNode h -> 
@@ -1174,7 +1504,7 @@ and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (
         if v = self then (
           let deref_str = ref "" in
           for i = 1 to h.F.h_formula_heap_deref do
-            deref_str := !deref_str ^ "__star"
+            deref_str := !deref_str ^ "_star"
           done;
           let view_data_name = c ^ !deref_str in
           let dl, vl = (
@@ -1191,7 +1521,8 @@ and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (
         let d1 = List.length (dl1 @ vl1) in
         let d2 = List.length (dl2 @ vl2) in
         if d1>0 & d2>0 then
-          report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
+          let _ = report_warning pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed") in
+          ([],[])
         else (
           let dl = Gen.Basic.remove_dups (dl1 @ dl2) in
           let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
@@ -1245,7 +1576,14 @@ and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (
         let vl = Gen.Basic.remove_dups (vl1 @ vl2) in
         (dl, vl)
 
-and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+and collect_data_view_from_formula (data_names: ident list) (f0 : F.formula) : (ident list) * (ident list) = 
+  let pr1 = !F.print_formula in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_formula" pr1 pr3
+      (fun _ -> collect_data_view_from_formula_x data_names f0) f0
+
+and collect_data_view_from_pure_formula_x (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
   match f0 with
   | P.BForm (bf, _) -> collect_data_view_from_pure_bformula data_names bf
   | P.And (f1, f2, _) ->
@@ -1269,6 +1607,14 @@ and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula
   | P.Not (f1, _, _) -> collect_data_view_from_pure_formula data_names f1
   | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
   | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula data_names f1
+
+
+and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula) : (ident list) * (ident list) =
+  let pr1 = !P.print_formula in
+  let pr2 = pr_list pr_id in
+  let pr3 = pr_pair pr2 pr2 in
+  Debug.no_1 "collect_data_view_from_pure_formula" pr1 pr3
+      (fun _ -> collect_data_view_from_pure_formula_x data_names f0) f0
 
 and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
   let pf, _ = bf in
@@ -1391,7 +1737,9 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
-        else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+        else if String.length v.view_data_name = 0 then
+          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+        else ()
       else v.view_data_name <- List.hd a) vl
 
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
@@ -1661,6 +2009,11 @@ and mkContinue jump_label path_id pos =
   Continue { exp_continue_jump_label = jump_label;
              exp_continue_path_id = path_id;
              exp_continue_pos = pos }
+
+and mkCast target_typ body pos =
+  Cast { exp_cast_target_type = target_typ;
+         exp_cast_body = body;
+         exp_cast_pos = pos }
 
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
@@ -2257,13 +2610,13 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
-		{ data_name = bn;
-                data_pos = no_pos;
-		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
-		  data_parent_name = if bn = b_datan then "Object" else b_datan;
-		  data_invs =[];
+	  { data_name = bn;
+          data_pos = no_pos;
+	  data_fields = List.map (fun c-> c,no_pos,false,[] (*F_NO_ANN *)) larg ;
+	  data_parent_name = if bn = b_datan then "Object" else b_datan;
+	  data_invs =[];
           data_is_template = false;
-		  data_methods =[]; }
+	  data_methods =[]; }
 	else report_error no_pos ("the first field of barrier "^bn^" is not state")
 	
 	
@@ -2276,10 +2629,10 @@ let add_bar_inits prog =
 			(*print_string (n^"\n"); *)
 			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan 0 false (F.ConstAnn(Mutable)) false false false None [] [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan 0 false (P.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (F.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name 0 false (P.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  
 				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
 				let str = F.mkEBase [] [] [] simp None no_pos in
@@ -2290,6 +2643,7 @@ let add_bar_inits prog =
 			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
+			  proc_hp_decls = [];
 			  proc_constructor = false;
 			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
@@ -2307,7 +2661,7 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name coer_type ihps ihead ibody=
+let mk_lemma lemma_name kind coer_type ihps ihead ibody=
   { coercion_type = coer_type;
   coercion_exact = false;
   coercion_infer_vars = ihps;
@@ -2316,12 +2670,15 @@ let mk_lemma lemma_name coer_type ihps ihead ibody=
   coercion_body = (F.subst_stub_flow F.top_flow ibody);
   coercion_proof = Return ({ exp_return_val = None;
   exp_return_path_id = None ;
-  exp_return_pos = no_pos })}
+  exp_return_pos = no_pos });
+  coercion_type_orig = None;
+  coercion_kind = kind;
+  }
 
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2332,13 +2689,15 @@ let gen_normalize_lemma_comb ddef =
   coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
+  coercion_type_orig = None;
+  coercion_kind = LEM_SAFE; (*default. should improve*)
  }
  
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name 0 false (P.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in
@@ -2350,7 +2709,9 @@ let gen_normalize_lemma_comb ddef =
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
+  coercion_type_orig = None;
+  coercion_kind = LEM_SAFE;
  }
 	
 let add_normalize_lemmas prog4 = 
@@ -2377,6 +2738,33 @@ let rec get_breaks e =
 				Some (List.concat (lb::lbc))
 		| _ -> None in
 	fold_exp e f (List.concat) [] 
+
+let look_up_field_ann_x prog data_name sel_anns=
+  let rec ann_w_pos ls_anns n res=
+    match ls_anns with
+      | [] -> res
+      | anns::rest -> if Gen.BList.intersect_eq (fun s1 s2 -> String.compare s1 s2 = 0) anns sel_anns <> [] then
+             ann_w_pos rest (n+1) (res@[((data_name,n),anns)])
+          else ann_w_pos rest (n+1) res
+  in
+  let dd = look_up_data_def_raw prog.prog_data_decls data_name in
+  let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
+  let ann_w_pos,ls_anns_only = List.split (ann_w_pos ls_anns 0 []) in
+  let anns_only = List.concat ls_anns_only in
+  let not_delcared_anns = Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) sel_anns anns_only in
+  if not_delcared_anns <> [] then
+    let prr = if List.length not_delcared_anns > 1 then " are " else " is " in
+    report_error no_pos ( (String.concat ", " not_delcared_anns) ^ prr ^
+                                "not specified in the data structure " ^ data_name)
+  else
+    ann_w_pos
+
+let look_up_field_ann prog view_data_name sel_anns=
+  let pr1 = pr_id in
+  let pr2 =  pr_list pr_id in
+  let pr3 = pr_list (pr_pair pr_id string_of_int) in
+  Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
+      (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
 
 let exists_return_x e0=
   let rec helper e=
@@ -2527,3 +2915,25 @@ let lbl_getter prog vn id =
 let eq_coercion c1 c2 = (String.compare c1.coercion_name c2.coercion_name) == 0
 
 let eq_coercion_list = (==)             (* to be modified *)
+
+let annot_args_getter_all prog vn: (P.ann * int) list =
+  try 
+    let vd = look_up_view_def_raw 18 prog.prog_view_decls vn in
+    vd.view_imm_map
+  with 
+    | Not_found -> [] 
+
+let annot_args_getter prog vn =
+  List.filter (fun (_,p) -> (p != 0) ) (annot_args_getter_all prog vn)
+
+(*todo: for REC, same type should have the same ann (e.g. size of tree)*)
+let annotate_field_pure_ext iprog=
+  let idatas = List.map (fun ddef ->
+      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
+          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          ((t, c), pos, il, n_ann)
+      ) ddef.data_fields in
+      {ddef with data_fields = ndfields}
+  ) iprog.prog_data_decls in
+  let _ = iprog.prog_data_decls <- idatas in
+  ()

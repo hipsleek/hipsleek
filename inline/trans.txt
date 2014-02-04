@@ -1,0 +1,152 @@
+Translation for struct
+======================
+
+For any struct type t p, we translate
+it into a stack allocation, as follows:
+
+   struct t p;  ===> t addr_p = new t(...)
+
+After that, we can use:
+   &p  ==> addr_p
+   p.f ==> addr_p.f
+   p   ==> addr_p (inline)
+   v = p  ==> v.f1=addr_p.f1;...;v,fn=addr_p.fn
+
+
+Translation for struct t*
+=========================
+For any struct t* pp, we can translate it into
+a stack allocation if we need to support &pp.
+or a pointer for simplicity (if &pp is never used)
+
+
+Translation to support &pp
+   struct t* pp ==> t_star addr_pp = new t_star(..);
+   pp->f   ==> addr_pp.deref.f
+   pp      ==> addr_pp.deref
+   &pp     ==> addr_pp
+   *pp     ==> addr_pp.deref(inline)
+   //v = *pp ==> v.f1=addr_pp.deref.f1;...;v.fn=addr_pp.deref.fn
+
+
+Optimization: (without &pp)
+   struct t* pp ==> t pp;
+   pp->f   ==> pp.f
+   pp      ==> pp
+   *pp     ==> pp(inline)
+   //v = *pp ==> v.f1=pp.f1;...;v.fn=pp.fn
+
+
+Translation for struct t parameter
+==================================
+Consider:
+
+  foo(struct t v) ==> foo(t@c v)  
+  v.f  ==> v.f
+  w = v   ==>  w.f1=v.f1;..;w.fn=v.fn
+  &v   ==> ..
+
+  foo(struct t v) ==> foo(t@c v)  {
+                         t_star addr_v = new t_star(v);..
+   v->f  ==> addr_v.deref.f
+   w = v    ==> w.f1=addr_v.deref.f1; .. ;  w.fn=addr_v.deref.fn (inline)
+   &v   ==> addr_v
+
+Translate each call struct parameter:
+====================
+  foo(e)  ==> foo(addr[v])
+
+v ==> addr_v
+
+
+addr[v] ==> &v
+addr[
+inline
+      // foo(v) --> foo(foo(addr_v.deref)
+      // foo(*v) --> foo(v.deref)
+
+Translation for struct t* parameter 
+===================================
+Consider: (see para-2d)
+
+  foo(struct t* v) ==> foo(t v_ptr)  
+  v->f  ==> v_ptr.f
+   v    ==> v_ptr
+  *v    ==> v_ptr(block)  // struct ???
+
+If &v was used: (see para-2d1)
+  foo(struct t* v) ==> foo(t v_ptr)  {
+                         t_star addr_v = new t_star(v_ptr);..
+   v->f  ==> addr_v.deref.f
+   *v   ==> addr_v.deref
+   v    ==> addr_v.deref (block)
+   &v   ==> addr_v
+
+Translate each call:
+====================
+  foo(e)  ==> ...  
+      // foo(&v) --> foo(addr_v)
+      // foo(*v) --> foo(v.deref)
+      // foo(v)  --> foo(v)
+
+===================================================================
+
+Translation for primitive t (e.g. int)
+=====================================
+
+If there is no & operator:
+   t v; ==> t v
+   v    ==> v
+
+If there is & operator:
+   t v; ==> t_star addr_v = t_star(..)
+   v    ==> addr_v.deref
+   &v   ==> addr_v
+
+Translation for primitive t* (e.g. int*)
+=====================================
+
+If there is no & operator:
+
+   t* v; ==> t_star v
+   v    ==> v
+   *v   ==> v.deref
+
+If there was an & operator:
+
+   t* v; ==> t_star_star addr_v = new t_star_star(..) // stack allocate
+   v    ==> addr_v.deref
+   &v   ==> addr_v
+   *v   ==> addr_v.deref.deref
+
+Translation for primitive t parameter
+===================================
+ Consider:
+  foo(t v) ==> foo(t v)  
+   v    ==> v
+
+ If &v was used:
+  foo(t v) ==> 
+    foo(t v) {
+     t_star addr_v = new t_star(v);
+     
+   v    ==> addr_v.deref
+   &v   ==> addr_v
+
+
+Translation for primitive t* parameter
+===================================
+Consider:
+
+  foo(t* v) ==> foo(t_star v)  
+   v    ==> v
+   *v   ==> v.deref
+
+If &v is present:
+
+  foo(t* v) ==> foo(t_star v) {
+      t_star_star addr_v = new t_star_star(v)  
+
+   v    ==> addr_v.deref
+   *v   ==> addr_v.deref.deref
+   &v   ==> addr_v

@@ -1,0 +1,30 @@
+
+relation P(int a, int b).
+
+relation Q(int a, int b, int c).
+
+//pre
+relAssume
+   P(m,n) & (((1<=n & x!=null) | (n=0 & x=null))) & (((1<=m & y!=null) | 
+(m=0 & y=null))) -->  true.
+
+relAssume
+   P(m,n) & 1<=n & 1<=m & m2=m-1 & n2=n-1 -->  P(m2,n2).
+
+//post
+
+relAssume
+  Q(m_1035,n_1034,k_1059) & 0<=k_1059 & n_1034=n-1 & m_1035=m-1 & k=k_1059+1 & 1<=m & 1<=n & P(m,n) -->  Q(m,n,k).
+
+relAssume
+  m=0 & k=0 & 1<=n & P(m,n) -->  Q(m,n,k).
+
+relAssume
+  n=0 & k=0 & 1<=m & P(m,n) -->  Q(m,n,k).
+
+relAssume
+  n=0 & m=0 & k=0 & P(m,n) -->  Q(m,n,k).
+
+relation_infer [P][Q].
+
+

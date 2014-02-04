@@ -1,0 +1,69 @@
+//Valid.Valid.Valid.
+
+data cell {
+  int val;
+}.
+
+
+// (1) Valid
+infer [] y::cell<_>@M |- y::cell<a>@v & v=@M.
+print residue.
+
+//2 Valid
+infer [] y::cell<_>@M |- [v] y::cell<a>@v & v=@M.
+print residue.
+
+//3 Valid
+infer [] y::cell<_>@M |- (exists v: y::cell<a>@v & v=@M).
+print residue.
+
+//4 fail?
+infer [] y::cell<_>@I |-  y::cell<a>@v & v=@M.
+print residue.
+
+// (11) Fail (due to incompleteness)
+infer [] y::cell<_>@M |- y::cell<b>@v & v<:@M.
+print residue.
+
+infer [] v=@M |- v<:M.
+infer [] v=@M |- v<:L.
+
+// infer [] y::cell<_>@I |-  y::cell<a>@v & v=@M.
+// print residue.
+
+//5
+infer [] y::cell<_>@I |- [v] y::cell<a>@v & v=@M.
+print residue.
+
+//6
+infer [] y::cell<_>@I |- (exists v: y::cell<a>@v & v=@M).
+print residue.
+
+/*
+// 3
+infer [] y::cell<_,_>@M |- [v] y::cell<a,b>@v & v=@I.
+print residue.
+
+//4
+infer [] y::cell<_,_>@M |- (exists v: y::cell<a,b>@v & v=@I).
+print residue.
+
+
+// 5
+infer [] y::cell<_,_>@M |- [v] y::cell<a,b>@v & v=@A.
+print residue.
+
+//6
+infer [] y::cell<_,_>@L |- (exists v: y::cell<a,b>@v & v=@A).
+print residue.
+*/
+
+
+
+
+
+
+
+// (30) FAIL
+/* infer [] y::cell<_,_>@I |- [v] y::cell<a,b>@v & v<:@M.
+ print residue.*/

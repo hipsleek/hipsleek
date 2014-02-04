@@ -1,0 +1,15 @@
+data int_star {
+  int deref;
+}.
+
+data int_star_star {
+  int_star deref;
+}.
+
+checkentail x::int_star_star<p>*p::int_star<4> |-
+  x::int_star_star<p1>*p1::int_star<m>.
+print residue.
+
+checkentail x::int_star_star<p>*p::int_star<4> |-
+  (exists p1: x::int_star_star<p1>*p1::int_star<m>).
+print residue.

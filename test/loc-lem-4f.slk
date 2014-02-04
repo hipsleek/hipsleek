@@ -1,0 +1,42 @@
+data node{
+     int val;
+     node next;
+}.
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p,k: k::node<_,lst>*p::node<_,null> & lst=p & k=self).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+
+/*
+# loc-lem-4f.slk 
+
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(lst_43,p_44),(k_45,self)]
+compute_actions inp2 :LHS heap: self::node<_,last>@M * last::node<_,flted_7_41>@M
+compute_actions inp3 :LHS pure: flted_7_41=null
+compute_actions inp4 :RHS cand:[ k_45::node<_,lst_43>@M, p_44::node<_,flted_8_42>@M]
+compute_actions inp5 :right alias:[flted_8_42,lst_43,p_44,k_45,Anon_14,Anon_15]
+compute_actions@1 EXIT: Match =>
+          LHS: self::node<_,last>@M
+          RHS: k_45::node<_,lst_43>@M
+
+compute_actions@2
+compute_actions inp1 :EQ ptr:[(lst_43,p_44),(k_45,self)]
+compute_actions inp2 :LHS heap: last::node<_,flted_7_41>@M
+compute_actions inp3 :LHS pure: flted_7_41=null & Anon_12=Anon_14
+compute_actions inp4 :RHS cand:[ p_44::node<_,flted_8_42>@M]
+compute_actions inp5 :right alias:[flted_8_42,lst_43,p_44,k_45,Anon_15]
+compute_actions@2 EXIT: COND =>[Prio:2UnmatchedRHSData =>  p_44::node<_,flted_8_42>@M]
+
+Remedy : for imm, when we strip pure away, we should put equality
+into a field:
+ (* INPUT : this is an alias set for the RHS conseq *)
+ (* to be used by matching strategy for imm *)
+  es_rhs_eqset : (CP.spec_var * CP.spec_var) list;
+
+However, this field is not being instantiated by existential substitution.
+We should apply subs to keep this field upto date.
+
+*/

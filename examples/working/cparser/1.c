@@ -7,7 +7,7 @@ struct node {
 
 /*@
 avl<size, height, S> == self = null & size = 0 & height = 0 & S = {}
-  or self::node^<v, height, p, q> * p::avl<size1, height1, S1> * q::avl<size2, height2, S2> & S = union(S1, S2, {v})
+  or self::node<v, height, p, q> * p::avl<size1, height1, S1> * q::avl<size2, height2, S2> & S = union(S1, S2, {v})
   inv size >= 0 & height >= 0;
 */
 //  or self::node^<v, height, p, q> * p::avl<size1, height1, S1> * q::avl<size2, height2, S2> & size = 1+size1+size2 & height2<=height1+1 & height1<=height2+1 & height = max(height1, height2) + 1 & S = union(S1, S2, {v})

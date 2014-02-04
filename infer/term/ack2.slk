@@ -19,7 +19,7 @@ infer [term_r] n1=n & m1=m-1 & m>=0 & d>n & Term[term_r(m,n)] |- Term[term_r(m1,
 
 //infer [term_r] n=0 & m1=m-1 & m1>=0 |- term_r(m,n) >= 0.
 
-//infer [term_r] n=0 & m1=m-1 |- term_r(m,n) > term_r(m1,1).
+infer [term_r] n=0 & m1=m-1 |- term_r(m,n) > term_r(m1,1).
 
 //infer [term_r] n1=n-1 & m1=m-1 |- term_r(m,n) > term_r(m,n1).
 
