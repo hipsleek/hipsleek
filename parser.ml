@@ -2077,7 +2077,8 @@ coercion_decl:
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 });
-        coercion_type_orig = None};]];
+        coercion_type_orig = None;
+      coercion_kind = LEM_SAFE;};]];
 
 coercion_decl_list:
     [[
@@ -2103,18 +2104,24 @@ infer_coercion_decl_list:
 coerc_decl_aux:
     [[
       `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
+          let t = {t with coercion_kind = LEM_INFER;} in
           { coercion_list_elems = [t];
             coercion_list_kind  = LEM_INFER }
       | `LEMMA TLEM_INFER_PRED; t = infer_coercion_decl -> 
+            let t = {t with coercion_kind = LEM_INFER_PRED;} in
           { coercion_list_elems = [t];
           coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
       | `LEMMA kind;t = coercion_decl -> 
+            let k = convert_lem_kind kind in
+            let t = {t with coercion_kind = k;} in
           { coercion_list_elems = [t];
-            coercion_list_kind  = convert_lem_kind kind }
+            coercion_list_kind  = k }
       | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> 
-          { t with coercion_list_kind = convert_lem_kind kind }
+            let k = convert_lem_kind kind in
+            let t = {t with coercion_list_elems= List.map (fun l -> {l with coercion_kind = k;}) t.coercion_list_elems} in
+          { t with coercion_list_kind = k }
     ]];
 
 coercion_direction:
@@ -2673,8 +2680,15 @@ fixed_parameter:
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
-        param_name = id }]];
+        param_name = id }
+    | pm=OPT pass_t2; t=typ;  `IDENTIFIER id -> 
+      { param_mod = un_option pm NoMod;
+        param_type = t;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = id }
+]];
 
+pass_t2: [[`PASS_REF2 -> RefMod ]];
 
 pass_t: [[`PASS_REF -> RefMod
        | `PASS_COPY -> CopyMod]];

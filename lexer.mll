@@ -340,6 +340,7 @@ rule tokenizer file_name = parse
   (* | "@VAL" {VAL} *)
   | "@C" {PASS_COPY}
   | "@R" {PASS_REF}
+  | "ref" {PASS_REF2}
   (* | "@REC" {REC} *)
   | "@NI" {NI}
   | "@RO" {RO}

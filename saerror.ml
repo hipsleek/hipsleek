@@ -1,22 +1,31 @@
 let subst_formula formula hprel_def =
+  let helper formula h_formula hprel_def =
+    if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
+    then (
+        let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
+          | (_, None) -> formula
+          | (_, Some f) -> f
+        in
+        List.fold_left (fun all_formula (_, formula) ->
+            match formula with
+              | None -> all_formula
+              | Some f -> Cformula.mkOr all_formula f Globals.no_pos)
+            first_formula (List.tl hprel_def.Cformula.hprel_def_body)
+    )
+    else formula
+  in
   match formula with
     | Cformula.Base b -> (
           match b.Cformula.formula_base_heap with
-            | Cformula.HRel _ -> (
-                  if (Cformula.get_node_name b.Cformula.formula_base_heap == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
-                  then (
-                      let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
-                        | (_, None) -> formula
-                        | (_, Some f) -> f
-                      in
-                      List.fold_left (fun all_formula (_, formula) ->
-                          match formula with
-                            | None -> all_formula
-                            | Some f -> Cformula.mkOr all_formula f Globals.no_pos)
-                          first_formula (List.tl hprel_def.Cformula.hprel_def_body) )
-                  else formula )
-            | _ -> formula )
-    | _ -> raise (Failure "fail formula")
+            | Cformula.HRel _ as h_formula -> helper formula h_formula hprel_def
+            | _ -> formula
+      )
+    | Cformula.Exists e -> (
+          match e.Cformula.formula_exists_heap with
+            | Cformula.HRel _ as h_formula -> helper formula h_formula hprel_def
+            | _ -> formula
+      )
+    | _ -> formula (* raise (Failure "fail formula") *)
 
 let rec subst_struc struc_formula hprel_def =
   match struc_formula with
@@ -155,8 +164,12 @@ let rec group_cases pf_sf_l =
       )
 
 let check_cases cases =
-  let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None Globals.no_pos) (List.hd cases) (List.tl cases) in
-  not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None Globals.no_pos) "check universe" "")
+  if ((List.length cases) == 1) 
+  then false
+  else (
+      let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None Globals.no_pos) (List.hd cases) (List.tl cases) in
+      not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None Globals.no_pos) "check universe" "")
+  )
 
 let create_specs hprel_defs prog proc_name =
   let _ = print_endline "\n*************************************" in

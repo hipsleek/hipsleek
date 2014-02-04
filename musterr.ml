@@ -23,10 +23,10 @@ open Mcpure_D
 open Mcpure
 open Stat_global
 
-module Inf = Infer
+(* module Inf = Infer *)
 module CP = Cpure
 module CF = Cformula
-module PR = Cprinter
+(* module PR = Cprinter *)
 module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher

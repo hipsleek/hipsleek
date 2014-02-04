@@ -688,6 +688,8 @@ let use_split_match = ref false
 
 let consume_all = ref false
 
+let dis_base_case_unfold = ref false
+
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
@@ -746,12 +748,12 @@ let pred_split = ref false
 
 let sa_refine_dang = ref false
 
-let pred_elim_useless = ref false
+let pred_elim_useless = ref true
 let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
@@ -772,7 +774,11 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref true
+let pred_seg_unify = ref false
+
+let pred_equiv = ref false
+
+let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
 

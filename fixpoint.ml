@@ -16,9 +16,9 @@ module MCP = Mcpure
 module TP = Tpdispatcher
 module I = Iast
 module C = Cast
-module AS = Astsimp
-module Inf = Infer
-module SO = Solver
+(* module AS = Astsimp *)
+(* module Inf = Infer *)
+(* module SO = Solver *)
 
 let get_inv_x prog sel_vars vnode=
   let inv = C.look_up_view_inv prog.C.prog_view_decls (vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments)
@@ -198,8 +198,8 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
   | _ ->
     let h, p, fl, t, a = CF.split_components pre_fml in
     let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = if !do_infer_inc then TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))
-      else CP.mkAnd (TP.pairwisecheck_raw (Inf.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
+    let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
+      else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
     in
     let p = if lst_assume = [] then p
       else
@@ -240,7 +240,7 @@ let rec simplify_relation_x (sp:CF.struc_formula) subst_fml pre_vars post_vars p
       if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
       else
       let pre = CP.conj_of_list pres no_pos in 
-          let xpure_base,_,_ = SO.xpure prog b.CF.formula_struc_base in
+          let xpure_base,_,_ = Solver.xpure prog b.CF.formula_struc_base in
       let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
       if TP.is_sat_raw check_fml then
         simplify_pre (CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume

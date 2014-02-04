@@ -552,7 +552,9 @@ let stop_prover () =
       Smtsolver.stop();
     )
   | DP -> Smtsolver.stop()
-  | Z3 -> Smtsolver.stop();
+  | Z3 -> (Smtsolver.stop();
+    (*in the website, use z3, oc keeps running although hip is stopped*)
+    if !Omega.is_omega_running then Omega.stop ();)
   | SPASS -> Spass.stop();
   | MINISAT -> Minisat.stop ();
   | _ -> Omega.stop();;
@@ -1794,6 +1796,10 @@ let simplify (f : CP.formula) : CP.formula =
         (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
+      let z3_simplify f =
+        let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
+        CP.arith_simplify 13 f
+      in
       if !external_prover then 
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
@@ -1832,7 +1838,8 @@ let simplify (f : CP.formula) : CP.formula =
                   | CM ->
                         if is_bag_constraint f then Mona.simplify f
                         else omega_simplify f
-                  | Z3 -> Smtsolver.simplify f
+                  | Z3 -> z3_simplify f
+                        (* Smtsolver.simplify f *)
                   | Redlog -> Redlog.simplify f
                   | OCRed -> Redlog.simplify f
                   | RM ->
@@ -1910,6 +1917,7 @@ let rec simplify_raw (f: CP.formula) =
   else
     let is_bag_cnt = is_bag_constraint f in
     if is_bag_cnt then
+      let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in
       let _,new_f = trans_dnf f in
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 

@@ -36,8 +36,8 @@ INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
+GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
 #GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
@@ -142,7 +142,7 @@ install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
 
-FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer
+FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer 
 
 init: clean_mli all create_mli
 

@@ -19,13 +19,15 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
-(* module GV = Globalvars*)
+module CFU = Cfutil
+module CFS = Cfsolver
+(* module GV = Globalvars *)
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
 module TP = Tpdispatcher
 module Chk = Checks
-module PRED = Predicate
+(* module PRED = Predicate *)
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
 
@@ -895,15 +897,15 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
             let needs_ret = needs_ret b.I.exp_while_body in 
             if needs_ret then
               (*new class extend __Exc*)
-              let new_exc = {I.data_name = "rExp" ;
-                             I.data_fields =[];
-                             I.data_parent_name = raisable_class;
-                             I.data_invs = [];
-                             I.data_pos = no_pos;
-                             I.data_is_template = false;
-                             I.data_methods = []
-                            }
-              in
+              (* let new_exc = {I.data_name = "rExp" ; *)
+              (*                I.data_fields =[]; *)
+              (*                I.data_parent_name = raisable_class; *)
+              (*                I.data_invs = []; *)
+              (*                I.data_pos = no_pos; *)
+              (*                I.data_is_template = false; *)
+              (*                I.data_methods = [] *)
+              (*               } *)
+              (* in *)
                 let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
                     Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
                 let b = {b with I.exp_while_body = new_body} in
@@ -1068,8 +1070,8 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
 	  let f_list = List.map (fun (c1,c2)-> 
 	      let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
 	      let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
-	      let eqs = (Solver.get_equations_sets c1 aset)in
-	      let eqs = (Solver.transform_null eqs) in
+	      let eqs = (CFS.get_equations_sets c1 aset)in
+	      let eqs = (CFS.transform_null eqs) in
 	      (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
 		let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
 	      (c1,c2,aset,eqs)) f_list_init in
@@ -1199,13 +1201,21 @@ and formula_case_inference_x cp (f_ext:CF.struc_formula)(v1:Cpure.spec_var list)
   (*let _ = print_string (" case inference, this feature needs to be revisited \n") in*)
   match f_ext with 
     | CF.EList l -> 
+		let rec norm_list a l = match l with 
+			  [] -> a 
+			  | h:: t -> (match (snd h) with 
+							| CF.EList ll ->  norm_list a (ll@t)
+							| _ -> norm_list (a@[h]) t) in 
+	    let l = norm_list [] l in
 	  (try 
             let f_list = List.map (fun (_,c)->
 		let d = match c with
 		  | CF.EBase b-> if b.CF.formula_struc_continuation <> None then
 		      Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 		    else b.CF.formula_struc_base 
-		  | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+		  | _ -> 
+			(print_string ("Found: "^(Cprinter.string_of_struc_formula c)^"n");
+			Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"})
 		in
 		let f_aux = !force_verbose_xpure in
 		force_verbose_xpure:=true;
@@ -1265,7 +1275,7 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
   Debug.no_1 "case_inference" pr_none pr_none (fun _ -> case_inference_x ip cp) ip
   
 (*HIP*)
-let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
+let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   print_string "trans_prog\n";
   let _ = (exlist # add_edge "Object" "") in
@@ -1392,7 +1402,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
-            if !Globals.pred_elim_useless then
+            (*todo: after elim useless, update methos specs. tmp: do not elim*)
+            if (* !Globals.pred_elim_useless *) false then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in
@@ -1418,8 +1429,9 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
-	  let (l2r_coers, r2l_coers) = trans_coercions prog in
-          let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in
+	  (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
+          (* let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
+          (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -1429,6 +1441,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
               C.prog_hp_decls = chps;
+              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1442,7 +1455,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
-      let cprog2 = sat_warnings cprog1 in   
+          let cprog2 = sat_warnings cprog1 in   
 	  
 	  let cprog2 = Solver.normalize_perm_prog cprog2 in
 	  let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
@@ -1461,16 +1474,15 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
             else c 
           in
           let c = (add_pre_to_cprog c) in
-	  
           (* let _ = print_endline (exlist # string_of) in *)
           (* let _ = exlist # sort in *)
 	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-	  c)))
+	  (c,prog))))
     end)
   else failwith "Error detected at trans_prog"
 
-(* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
-(*   Debug.loop_1_no "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
+and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
+  Debug.no_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog
 
 (* Replaced to use new_proc_decls *)
 (*  
@@ -2050,7 +2062,7 @@ and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl)
   C.hp_is_pre = hpdef.I.hp_is_pre;
   C.hp_formula = crf; }
   in
-  let c_p_hprel = PRED.generate_pure_rel chprel in
+  let c_p_hprel = Predicate.generate_pure_rel chprel in
   chprel,c_p_hprel
 
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
@@ -2855,7 +2867,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
     let  coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
-    let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
+    (* let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in *)
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
         let _ = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
@@ -2901,10 +2913,13 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let n_tl = gather_type_info_formula prog i_lhs (* coer.I.coercion_head *) [] false in
   let n_tl = gather_type_info_formula prog i_rhs (* coer.I.coercion_body *) n_tl false in
   let (n_tl,c_lhs) = trans_formula prog false [ self ] false i_lhs (* coer.I.coercion_head *) n_tl false in
+  let _ = Debug.tinfo_hprint (add_str "c_lhs 1 " Cprinter.string_of_formula) c_lhs no_pos in
   (*translate TrueFlow to NormalFlow*)
   (* let c_lhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int  c_lhs in *)
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
+  let _ = Debug.tinfo_hprint (add_str "c_lhs 2 " Cprinter.string_of_formula) c_lhs no_pos in
   let c_lhs = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula c_lhs else c_lhs in
+  let _ = Debug.tinfo_hprint (add_str "c_lhs 3 " Cprinter.string_of_formula) c_lhs no_pos in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
     let h, p, _, _,_ = CF.split_components c_lhs in
@@ -3046,7 +3061,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
         C.coercion_body_view = rhs_name;
         C.coercion_mater_vars = m_vars;
-        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs)} in
+        C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
+        C.coercion_kind = coer.I.coercion_kind;
+        } in
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
           | v -> 
@@ -6997,7 +7014,7 @@ and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*pr
 		r2
 	else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
 	
-and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
+and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
   { Iast.coercion_type = cd.Iast.coercion_type;
@@ -7007,7 +7024,12 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;
-  Iast.coercion_proof = cd.Iast.coercion_proof}
+  Iast.coercion_proof = cd.Iast.coercion_proof;
+  I.coercion_kind = cd.I.coercion_kind;
+  }
+
+and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
+  Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd
 
 and case_normalize_coerc_list prog (cdl: Iast.coercion_decl_list): Iast.coercion_decl_list =
   let new_elems = List.map (case_normalize_coerc prog) cdl.Iast.coercion_list_elems in
@@ -7577,12 +7599,12 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
     v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
-  let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in  
+  (* let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in   *)
   { prog with 
       Iast.prog_data_decls = cdata;
       Iast.prog_view_decls = tmp_views;
       Iast.prog_proc_decls = procs1;
-      Iast.prog_coercion_decls = coer1;
+      (* Iast.prog_coercion_decls = coer1; *)
       Iast.prog_barrier_decls = List.map (case_normalize_barrier prog) prog.Iast.prog_barrier_decls;
   }
 

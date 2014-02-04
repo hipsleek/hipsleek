@@ -10,7 +10,7 @@ module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
 module TP = Tpdispatcher
-module SAU = Sautility
+(* module SAU = Sautility *)
 
 
 type iaction =
@@ -44,15 +44,17 @@ let rec string_of_iaction act=
     | I_post_oblg -> "post-oblg"
     | I_seq ls_act -> "seq:" ^ (String.concat ";" (List.map (pr_pair string_of_int string_of_iaction) ls_act))
 
-let mk_is constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path
+let mk_is constrs all_constrs link_hpargs dang_hpargs unk_map sel_hps post_hps cond_path
       hp_equivs hpdefs=
   {
-      is_constrs = constrs;
+      is_constrs = constrs; (*current process constraints*)
+      is_all_constrs = all_constrs; (* constraints*)
       is_link_hpargs = link_hpargs;
       is_dang_hpargs = dang_hpargs; (*dangling hps == link hps = unknown. to remove one of them*)
       is_sel_hps = sel_hps;
       is_unk_map = unk_map;
       is_post_hps = post_hps;
+      is_prefix_hps = [];
       is_cond_path = cond_path;
       is_hp_equivs = hp_equivs;
       is_hp_defs = hpdefs;
@@ -87,7 +89,7 @@ let ranking_frozen_mutrec_preds_x pr_hp_cs=
       let is_rhs_emp = (CF.extract_hrel_head cs.CF.hprel_rhs <> None) in
       let is_pure = try
         let _ = CF.extract_HRel_f cs.CF.hprel_lhs in
-        SAU.is_empty_f cs.CF.hprel_rhs
+        Sautil.is_empty_f cs.CF.hprel_rhs
       with _ -> false
       in
       let is_empty_both = is_lhs_emp && is_rhs_emp (*&& (deps=[]) *) in
@@ -152,7 +154,7 @@ let icompute_action_pre_x constrs post_hps frozen_hps pre_fix_hps=
          (pre_preds@[(hp,cs, CP.diff_svl rhps (ignored_hps))],rem_constrs,tupled_hps)
       | _ -> let linter = List.fold_left (fun ls (hp,args) ->
             if not (CP.mem_svl hp ignored_hps) && List.exists (fun (_,args1) ->
-                SAU.eq_spec_var_order_list args args1
+                Sautil.eq_spec_var_order_list args args1
             ) r_hpargs then
               ls@[hp]
             else ls
