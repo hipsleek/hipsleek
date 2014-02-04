@@ -223,20 +223,160 @@ absent in rlseg-new-b4a.slk
 =================================================================
 lemma syn: --lem-en-syn
 
-1. simp-syn.slk: OK
-2. lseg-syn(1|2).slk
-3. ls-syn.slk
-4. lseg-s-syn.slk
+1. syn-mix-1.slk: OK
+
+2. syn-mix-2.slk: with null: ll vs lseg. OK
+
+3. syn-ls.slk (run-fast-test): w/wo size
+
+4. syn-lseg-(1|2).slk: OK
+
+5. syn-ls.slk
+
+6. syn-lseg-s.slk
 
 =================================================================
+#yn-mix-2.slk: FIXED
+
+rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
+
+solution: es_conseq_pure_lemma to keep
 =================================================================
+# equiv-1.slk and equiv-2.slk --lem-en-switch (FIXED)
+# bug-lemma_check01.slk
+
+should generate two left lemmas 
+
 =================================================================
+# bug-lemma_check01.slk
+lost n=b+a in body
+
+trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]<== (exists r_61,a,b: self::lseg<a,r_61>@M * r_61::lseg<b,p>@M&n=b+a & 0<=a & 
+0<=b&{FLOW,(21,22)=__norm})[]
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head_norm:  (exists n_55,p_56: self::lseg<n_55,p_56>@M&n=n_55 & p=p_56&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[r](ex)[](exists a_46,b_47,
+       p_48: self::lseg<a_46,r>@M * r::lseg<b_47,p_48>@M&a=a_46 & b=b_47 & 
+       p=p_48&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
+
+
+
 =================================================================
+# equiv-1.slk
+
+Did we manage to prove two --> lemmas from <-> ?
+
 =================================================================
+# equiv-3a1.slk --ulhs (FIXED)
+
+why lemma proving fail but the steps in equiv-3a.slk succeeds?
+
+ - due to not using normalized form for conseq
+
 =================================================================
+# run-fast-test
+
+
+Total number of errors: 2 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L2#Valid}).
+
+
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+
+--ulhs
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+--dci
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+
+
+
+
 =================================================================
+# ll-1.slk fails but ll-1a.slk --dl succeeds
+
+SOLUTION : use __flow rather than __norm for lemmas..
+
+[Lemma "V2":  self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]<== self::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+
+ emp&self=null&{FLOW,(21,22)=__norm}[]
+ or self::node<_,r>@M * r::ll<>@M&{FLOW,(21,22)=__norm}[]
+  [] |-  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]
+
+# ll-1.slk fails but ll-1a.slk succeeds
+
+process_coercion_check@3@2@1
+process_coercion_check inp1 : 
+ emp&self_V2=null&{FLOW,(1,24)=__flow}[]
+ or (exists _,r_37: self_V2::node<_,r_37>@M * r_37::ll<>@M&
+    {FLOW,(1,24)=__flow})[]
+ 
+process_coercion_check inp2 : ECase case {
+        self_V2=null -> EBase (exists n_38: emp&self_V2=null & n_38=0&
+                              {FLOW,(1,24)=__flow})[]
+        ;
+        self_V2!=null -> EBase exists (Expl)[](Impl)[_; 
+                               r_40](ex)[](exists flted_5_46,
+                               n_38: self_V2::node<_,r_40>@M * 
+
+context:
+  r_53::ll<>@M&self_V2!=null & Anon_39=Anon_52 & r_40=r_53&
+  {FLOW,(1,24)=__flow}[]
+conseq:
+ r_40::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+# ll-1a.slk --dl
+
+[Lemma "V2":  self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]<== self::ll<>@M&{FLOW,(21,22)=__norm}[]
+ head match:ll_s
+ body view:ll
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll])]
+ coercion_case: Simple
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase self::ll<>@M&{FLOW,(1,24)=__flow}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
 =================================================================
+# unsound-2b-n.slk
+
+How come lemma did not use folding mechanism
+used by fold-2b-n.slk?
+
+do_full_fold@4
+do_full_fold inp1 : es_formula: self::node<_,q>@M * q::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]
+ es_evars: [p_43; kkk_44]
+ es_rhs_eqset: [p_43:p]
+ es_trace:  SEARCH ==>  Fold ==> 
+ es_unsat_flag: false
+do_full_fold inp2 : self::lseg<kkk_44,p_43>@M
+do_full_fold@4 EXIT: 2[
+   self::node<_,q>@M * q::lseg<n,p>@M&exists(kkk_44:kkk_44=0) & exists(p_43:p_43=self)&{FLOW,(21,22)=__norm}[];
+   emp&Anon_12=Anon_47 & q=r_48 & exists(kkk_44:kkk_44=n+1 & 1<=kkk_44) & exists(p_43:p=p_43)&{FLOW,(21,22)=__norm}[]
+   ]
 =================================================================
+# fold-3a.slk
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=2).
+print residue.
+// valid : seems unsound for folding
+
+above seems unsound for folding
+
 =================================================================
 =================================================================
 =================================================================

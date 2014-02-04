@@ -15,4 +15,5 @@
 <sw/*>: not_hygienic
 <lp-ex/*>: not_hygienic
 <cil/obj/x86_LINUX/*.*>: not_hygienic
+<{3234,benchmark,bin,bugs,_build,core,cparser,demo,docs,errors,examples,exists,field,guard,hoaegs,_hoaegs,hoaegs-new,html_resources,imm,infer,infinity,inline,label,LDK,lemma,list,misc,mlold,mona-1.4,omega_modified,omega_original,printing,problems,sa,sh_solver,slice,term,synlem,term,test,testing,test_proof,test_proof_backup,tests,tp-mona,tp-redlog,validate,vscomp2010,vsttecomp2012,xml,z3}/*.*>: -traverse
 

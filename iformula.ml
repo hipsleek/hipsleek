@@ -2577,3 +2577,31 @@ let struc_formula_drop_heap_node f hns =
 	let pr = !print_struc_formula in
 	Debug.no_1 "struc_formula_drop_heap_node" pr pr (fun _ -> struc_formula_drop_heap_node f hns) f
 
+let split_star_conjunctions (f:h_formula): (h_formula list) =
+  let rec helper f = 
+  match f with
+  | Star({h_formula_star_h1 = h1;
+	h_formula_star_h2 = h2;
+	h_formula_star_pos = pos;}) ->
+        let res1 = helper h1 in
+        let res2 = helper h2 in
+        (res1@res2)
+    | _ -> [f]
+  in
+  helper f
+
+let type_of_formula (f: formula) : formula_type =
+  (* if (isAnyConstFalse f) then Simple *)
+  (* else  *)
+    match f with
+    | Base b  ->
+        let h = b.formula_base_heap in
+        let hs = split_star_conjunctions h in
+        if ((List.length hs)>1) then Complex 
+        else Simple 
+    | Exists e ->
+        let h = e.formula_exists_heap in
+        let hs = split_star_conjunctions h in
+        if ((List.length hs)>1) then Complex 
+        else Simple
+    | _ -> Complex

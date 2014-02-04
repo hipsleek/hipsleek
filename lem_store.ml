@@ -2,6 +2,7 @@ open Gen.Basic
 open Gen.BList
 
 let lem_pr = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
+let lem_pr_med = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
 let ilem_pr = ref (fun (c:Iast.coercion_decl) -> "COERC printer has not been initialized") 
 let ilem_lst_pr = ref (fun (c:Iast.coercion_decl_list) -> "COERC_LIST printer has not been initialized") 
 let lem_eq = (==) 
@@ -111,11 +112,13 @@ object (self)
 
   method dump_left =
     let lems = left_lem # reverse_of in
-    print_endline ("\n===========\nLEFT LEMMAS\n===========\n"^(pr_list !lem_pr lems))
+    let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
+    print_endline ("\n===========\nLEFT LEMMAS\n===========\n" ^ (pr_list_ln pr lems))
 
   method dump_right =
     let lems = right_lem # reverse_of in
-    print_endline ("\n============\nRIGHT LEMMAS\n============\n"^(pr_list !lem_pr lems))
+    let pr = if not (!Globals.dump_lemmas_med) then !lem_pr else !lem_pr_med in
+    print_endline ("\n============\nRIGHT LEMMAS\n============\n" ^ (pr_list_ln pr lems))
 
   method dump =
     print_endline "\nLemma store dump:";

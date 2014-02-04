@@ -10,18 +10,18 @@ open Exc.GTable
 module C = Cast
 module Err = Error
 module I = Iast
-module AS = Astsimp
+(* module AS = Astsimp *)
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
-module TI = Typeinfer
+(* module TI = Typeinfer *)
 module LO = Label_only.LOne
 
 let sv_name = CP.name_of_spec_var
 
-let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((ident *TI.spec_var_type_list )*I.view_decl) list =
+let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((ident *Typeinfer.spec_var_type_list )*I.view_decl) list =
 (*CP.rel_cat * h_formula * formula*)
 let norm_free_svl f0 args=
   let rec helper f=
@@ -49,9 +49,10 @@ let norm_free_svl f0 args=
           let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
           let nf = CF.add_quantifiers fr_svl1 nf0 in
           let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
-          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
-              let vk = TI.fresh_proc_var_kind ls t in
-              ls@[(sv,vk)]
+          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+              let vk = Typeinfer.fresh_proc_var_kind ls t in
+              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+              ls@[(svp,vk)]
           ) [] fr_svl1 in
           (nf, tis)
       | CF.Exists _ ->
@@ -68,14 +69,16 @@ let norm_free_svl f0 args=
   in
   let f,tis = helper f0 in
   let def = List.map fst tis in
-  let rem_svl = List.filter (fun sv ->
-       let n = CP.name_of_spec_var sv in
+  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
+      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
       (List.for_all (fun n2 -> String.compare n n2 != 0) def)
   ) args in
+  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
   (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
-  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
-      let vk = TI.fresh_proc_var_kind ls t in
-        ls@[(sv,vk)]
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+      let vk = Typeinfer.fresh_proc_var_kind ls t in
+      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      ls@[(svp,vk)]
   ) [] (rem_svl) in
   (f, tis@tis1)
 in
@@ -83,6 +86,8 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
     let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
     match def.CF.def_cat with
 	| CP.HPRelDefn (v,r,paras)->
+              (*pure preds, dont need to transform*)
+              if List.for_all (fun sv -> not (CP.is_node_typ sv)) (r::paras) then acc else
               let _ = Debug.ninfo_hprint (add_str "hp: " !CP.print_sv) v no_pos in
               let _ = Debug.ninfo_hprint (add_str "r: " !CP.print_sv) r no_pos in
 	      let vname = sv_name v in
@@ -116,7 +121,7 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      let new_body0 = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
               
               let new_body = CF.subst [] new_body0 in
-	      let i_body = AS.rev_trans_formula new_body in
+	      let i_body = Astsimp.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
               let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
@@ -146,7 +151,7 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 
 let transform_hp_rels_to_iviews iprog cprog hp_rels =
   let pr1 = pr_list ( Cprinter.string_of_hp_rel_def) in
-  let pr2 = pr_list (pr_pair (pr_pair pr_id TI.string_of_tlist) Iprinter.string_of_view_decl) in
+  let pr2 = pr_list (pr_pair (pr_pair pr_id Typeinfer.string_of_tlist) Iprinter.string_of_view_decl) in
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2
       (fun _ -> transform_hp_rels_to_iviews iprog cprog hp_rels) hp_rels
 
@@ -274,10 +279,10 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
   let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
   (* let _ = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
-  let _ = List.iter (AS.process_pred_def_4_iast iprog false) iviews in
+  let _ = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview. new_views: view with annotated types*)
-  let cviews = (AS.convert_pred_to_cast new_views false iprog cprog) in
+  let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog) in
   let _ = cprog.C.prog_hp_decls <- crem_hprels in
   (*put back*)
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
@@ -299,7 +304,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
       hp_rels
 
 
-let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
+let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   (* let rec part_sv_from_pos ls n n_need rem= *)
   (*   match ls with *)
   (*     | [] -> report_error no_pos "sau.get_sv_from_pos" *)
@@ -314,7 +319,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   (* in *)
   let rec get_pos ls n sv=
     match ls with
-      | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
+      | [] -> report_error no_pos "sao.get_pos: impossible 1"
       | sv1::rest -> if CP.eq_spec_var sv sv1 then n
         else get_pos rest (n+1) sv
   in
@@ -342,7 +347,11 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   in
   let hn_c_trans hn = match hn with
     | CF.HRel (hp,eargs, pos)-> begin
-        let view_name = (CP.name_of_spec_var hp) in
+        let view_name0 = (CP.name_of_spec_var hp) in
+        (*get equiv view name*)
+        let view_name = try List.assoc view_name0 view_equivs
+        with _ -> view_name0
+        in
         let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
         match look_up_root hpdefs hp args with
           | Some (r,tl) ->
@@ -372,21 +381,21 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs f=
   in
   (*to improve*)
   (*revert to iformula*)
-  (* let if1 = AS.rev_trans_formula f in *)
+  (* let if1 = Astsimp.rev_trans_formula f in *)
   (* (\*trans hp -> view*\) *)
   (* let if2 = IF.formula_trans_heap_node hn_trans if1 in *)
   (* (\*trans iformula to cformula*\) *)
-  (* let if3 = AS.case_normalize_formula iprog [] if2 None in *)
-  (* let n_tl = TI.gather_type_info_formula iprog if3 [] false in *)
-  (* let _, f2 = AS.trans_formula iprog false [] false if3 n_tl false in *)
+  (* let if3 = Astsimp.case_normalize_formula iprog [] if2 None in *)
+  (* let n_tl = Typeinfer.gather_type_info_formula iprog if3 [] false in *)
+  (* let _, f2 = Astsimp.trans_formula iprog false [] false if3 n_tl false in *)
   (* CF.elim_exists f2 *)
   CF.formula_trans_heap_node hn_c_trans f
 
-let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs f=
+let trans_formula_hp_2_view iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   let pr1= !CF.print_formula in
   Debug.no_1 "trans_formula_hp_2_view" pr1 pr1
       (fun _ -> trans_formula_hp_2_view_x iprog cprog proc_name
-          chprels_decl hpdefs f)
+          chprels_decl hpdefs view_equivs f)
        f
 
 let trans_formula_view_2_hp_x iprog cprog proc_name view_names f=
@@ -454,17 +463,24 @@ let trans_hp_def_view_2_hp iprog cprog proc_name in_hp_names hp_defs=
 (*******************************)
 (***********REVERIFY************)
 (*******************************)
-let collect_hp_defs cprog= Hashtbl.fold (fun i p acc->
-    (p.C.proc_hpdefs@acc)) cprog.C.new_proc_decls []
+let collect_hp_defs cprog= Hashtbl.fold (fun i p (acc1,acc2)->
+    (p.C.proc_hpdefs@acc1, p.C.proc_sel_post_hps@acc2)) cprog.C.new_proc_decls ([],[])
 
 let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl =
+  let view_equivs = cprog.C.prog_view_equiv in
+  let sel_view_equivs = List.fold_left (fun r hpdcl ->
+      try
+        let equiv_view = List.assoc hpdcl.C.hp_name view_equivs in
+        r@[(hpdcl.C.hp_name,equiv_view)]
+      with _ -> r
+  ) [] chprels_decl in
   let plug_views_proc proc =
     if proc.C.proc_hpdefs = [] then proc else
       let name = C.unmingle_name proc.C.proc_name in
       (* let _ = print_endline ("proc_name: "^name) in *)
-      let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs in
+      let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
       let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
-      let _ =  Debug.ninfo_pprint ("trans static spec: " ^ (Cprinter.string_of_struc_formula n_static_spec)) no_pos; in
+      let _ =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos; in
       let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
       (* let n_proc_stk_of_static_specs = List.map (fun s -> *)
@@ -477,7 +493,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
           (* C.proc_stk_of_static_specs = proc_stk_of_static_specs; *)
       }
       in
-      AS.add_pre_to_cprog_one cprog proc1
+      Astsimp.add_pre_to_cprog_one cprog proc1
   in
   (* let _ = print_endline ("unk_hps: "^ (!CP.print_svl unk_hps)) in *)
   let old_procs = cprog.C.new_proc_decls in
