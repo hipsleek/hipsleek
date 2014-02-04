@@ -8,7 +8,7 @@ module CF = Cformula
 module C = Cast
 module TP = Tpdispatcher
 module TU = Tlutils
-module DD = Debug
+(* module DD = Debug *)
 
 let find_eq_subst_exp svl (f: formula): (spec_var * exp) option =
   match f with
@@ -79,7 +79,7 @@ let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
   let pr1 = !print_formula in
   let pr2 = pr_list (pr_pair !print_sv !print_exp) in
   let pr3 = pr_pair pr1 pr2 in
-  DD.no_1 "find_eq_subst_formula" pr1 pr3 
+  Debug.no_1 "find_eq_subst_formula" pr1 pr3 
   (fun _ -> find_eq_subst_formula svl f) f
 
 (*********************************************)
@@ -122,7 +122,7 @@ let gen_templ_constr_farkas (ante_tl: term list list) (cons_t: term list) pos: f
   let pr1 = print_term_list in
   let pr2 = pr_list pr1 in
   let pr3 = pr_list !print_formula in
-  DD.no_2 "gen_templ_constr_farkas" pr2 pr1 pr3 
+  Debug.no_2 "gen_templ_constr_farkas" pr2 pr1 pr3 
   (fun _ _ -> gen_templ_constr_farkas ante_tl cons_t pos)
   ante_tl cons_t
 
@@ -169,7 +169,7 @@ let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formul
 let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formula) pos = 
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
-  DD.no_3 "collect_templ_assume_rhs" pr1 pr2 pr2 pr1
+  Debug.no_3 "collect_templ_assume_rhs" pr1 pr2 pr2 pr1
     (fun _ _ _ -> collect_templ_assume_rhs es ante cons pos) es ante cons
 
 let exp_of_templ_decl (tdef: C.templ_decl): exp =
@@ -195,7 +195,7 @@ let replace_eq_conseq (cons: formula): formula =
 
 let replace_eq_conseq (cons: formula): formula =
   let pr = !print_formula in
-  DD.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
+  Debug.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
 
 let simplify_templ_conseq (should_simpl_untempl: bool) (cons: formula) =
   let cons = replace_eq_conseq cons in
@@ -215,7 +215,7 @@ let collect_templ_assume_conj_rhs (es: CF.entail_state) (ante: formula) (cons: f
 let collect_templ_assume_conj_rhs (es: CF.entail_state) (ante: formula) (cons: formula) pos =  
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
-  DD.no_3 "collect_templ_assume_conj_rhs" pr1 pr2 pr2 pr1
+  Debug.no_3 "collect_templ_assume_conj_rhs" pr1 pr2 pr2 pr1
     (fun _ _ _ -> collect_templ_assume_conj_rhs es ante cons pos) es ante cons
 
 let simplify_templ_ante (ante: formula) =
@@ -224,7 +224,7 @@ let simplify_templ_ante (ante: formula) =
 
 let simplify_templ_ante (ante: formula) =
   let pr = !print_formula in
-  DD.no_1 "simplify_templ_ante" pr (pr_list pr)
+  Debug.no_1 "simplify_templ_ante" pr (pr_list pr)
   simplify_templ_ante ante
   
 let collect_templ_assume_disj_lhs (es: CF.entail_state) (ante: formula) (cons: formula) pos = 
@@ -237,7 +237,7 @@ let collect_templ_assume_disj_lhs (es: CF.entail_state) (ante: formula) (cons: f
 let collect_templ_assume_disj_lhs (es: CF.entail_state) (ante: formula) (cons: formula) pos =  
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
-  DD.no_3 "collect_templ_assume_disj_lhs" pr1 pr2 pr2 pr1
+  Debug.no_3 "collect_templ_assume_disj_lhs" pr1 pr2 pr2 pr1
     (fun _ _ _ -> collect_templ_assume_disj_lhs es ante cons pos) es ante cons
 
 let collect_templ_assume_init (es: CF.entail_state) (ante: formula) (cons: formula) pos =
@@ -255,7 +255,7 @@ let collect_templ_assume (es: CF.entail_state) (ante: MCP.mix_formula) (cons: fo
   let pr1 = !MCP.print_mix_formula in
   let pr2 = !print_formula in
   let pr3 = string_of_loc in
-  DD.no_3 "collect_template" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
+  Debug.no_3 "collect_template" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
     (fun _ _ _ -> collect_templ_assume_init es (MCP.pure_of_mix ante) cons pos) ante cons pos 
 
 let gen_slk_infer_templ_scc () =
@@ -377,7 +377,7 @@ let find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs una
   let pr2 = pr_list (fun (i, ta) -> (string_of_int i) ^ "@" ^ (string_of_loc ta.ass_pos)) in
   let pr3 = pr_pair string_of_int (pr_list string_of_int) in
   let pr4 = pr_opt (pr_pair (pr_list !print_exp) pr3) in
-  DD.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
+  Debug.no_2 "find_potential_lex_single_rank" pr1 pr2 pr4
   (fun _ _ -> find_potential_lex_single_rank prog inf_templs templ_unks i rank_constrs unaff_constrs)
   rank_constrs unaff_constrs
 
@@ -514,7 +514,7 @@ let infer_loop_status ctx loop_cond =
 
 let infer_loop_status ctx loop_cond =
   let pr = !print_formula in
-  DD.no_2 "infer_loop_status" pr pr print_reach_status
+  Debug.no_2 "infer_loop_status" pr pr print_reach_status
   infer_loop_status ctx loop_cond
 
 let infer_loop_trans_status loop_cond_list trans =
@@ -559,11 +559,11 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     match st with Reach_Both -> true | _ -> false) reach_status_trans in
 
   let _ = 
-    DD.tinfo_pprint ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
-    List.iter (fun (r, t) -> DD.tinfo_hprint (add_str "loop trans: "
+    Debug.tinfo_pprint ">>>>>>> infer_pre_cond_iter <<<<<<<" no_pos;
+    List.iter (fun (r, t) -> Debug.tinfo_hprint (add_str "loop trans: "
       (fun (r, t) -> (print_rec_trans t) ^ "(" ^ (print_reach_status r) ^ ")")) (r, t) no_pos)
       reach_status_trans;
-    List.iter (fun c -> DD.tinfo_hprint (add_str "loop cond: " 
+    List.iter (fun c -> Debug.tinfo_hprint (add_str "loop cond: " 
       (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   in
   
@@ -571,7 +571,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
    * by strengthening the context of loop transitions 
    * and loop conditions with unknown templates *)
   if reach_both_trans = [] then
-    List.iter (fun c -> DD.tinfo_hprint (add_str "Non-Termination Condition: " 
+    List.iter (fun c -> Debug.tinfo_hprint (add_str "Non-Termination Condition: " 
       (fun c -> print_rec_cond c)) c no_pos) loop_cond_list
   else
     let templ_reach_both_trans, templ_loop_cond, templ_id_list = List.fold_left (
@@ -581,9 +581,9 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       ([], loop_cond_list, []) reach_both_trans in
 
     let _ = 
-      List.iter (fun t -> DD.tinfo_hprint (add_str "templ loop trans: " 
+      List.iter (fun t -> Debug.tinfo_hprint (add_str "templ loop trans: " 
         print_rec_trans) t no_pos) templ_reach_both_trans;
-      List.iter (fun c -> DD.tinfo_hprint (add_str "templ loop cond: " 
+      List.iter (fun c -> Debug.tinfo_hprint (add_str "templ loop cond: " 
         (fun c -> print_rec_cond c)) c no_pos) templ_loop_cond
     in
 
@@ -599,7 +599,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
       let rec_cond = apply_par_term (List.combine rec_cond_fv trans.trans_dst_args) rec_cond in
 
       let _ = 
-        DD.tinfo_hprint (add_str "templ entail: " (fun (ctx, rc) -> 
+        Debug.tinfo_hprint (add_str "templ entail: " (fun (ctx, rc) -> 
           (!print_formula ctx) ^ " --> " ^ (!print_formula rc))) 
           (trans.trans_ctx, rec_cond) no_pos
       in
@@ -611,7 +611,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     (* Solve the template constraints *)
     let _, templ_unks, res = solve_templ_assume () in
     let _ = 
-      DD.tinfo_hprint (add_str "templ res: " print_solver_res) res no_pos
+      Debug.tinfo_hprint (add_str "templ res: " print_solver_res) res no_pos
     in
 
     match res with
@@ -626,9 +626,9 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
           { t with trans_ctx = subst_model_to_formula model t.trans_ctx}) 
         templ_reach_both_trans) in 
       let _ =
-        List.iter (fun t -> DD.tinfo_hprint (add_str "sst loop trans: " 
+        List.iter (fun t -> Debug.tinfo_hprint (add_str "sst loop trans: " 
           print_rec_trans) t no_pos) sst_loop_trans;
-        List.iter (fun c -> DD.tinfo_hprint (add_str "sst loop cond: " 
+        List.iter (fun c -> Debug.tinfo_hprint (add_str "sst loop cond: " 
           (fun c -> print_rec_cond c)) c no_pos) sst_loop_cond
       in infer_pre_cond_iter sst_loop_trans sst_loop_cond
     | _ -> ()
@@ -637,7 +637,7 @@ let infer_pre_cond_iter loop_trans_list loop_cond_list =
   let pr1 = pr_list print_rec_trans in
   let pr2 = pr_list print_rec_cond in
   let pr3 _ = "" in
-  DD.no_2 "infer_pre_cond_iter" pr1 pr2 pr3
+  Debug.no_2 "infer_pre_cond_iter" pr1 pr2 pr3
   infer_pre_cond_iter loop_trans_list loop_cond_list
 
 (* This method is invoked when the ranking function synthesis fails *)

@@ -13203,8 +13203,8 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
-      if !en_term_inf && not is_primitive then struc_f
-      else
+      (* if !en_term_inf && not is_primitive then struc_f *)
+      (* else *)
         let lexvar = 
           if is_primitive then CP.mkLexVar Term [] [] no_pos 
           else CP.mkLexVar MayLoop [] [] no_pos 
