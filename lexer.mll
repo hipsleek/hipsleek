@@ -262,6 +262,9 @@ module Make (Token : SleekTokenS)
 	 ("while", WHILE);
    ("with", WITH);
    ("XPURE",XPURE);
+   (* Template *)
+   ("template", TEMPLATE);
+   ("template_solve", TEMPL_SOLVE);
 	 (flow, FLOW flow);]
 }
   

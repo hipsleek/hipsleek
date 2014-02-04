@@ -28,6 +28,7 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
+    mutable prog_templ_decls: templ_decl list;
     mutable prog_hp_decls : hp_decl list; 
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
@@ -105,6 +106,14 @@ and axiom_decl = {
     axiom_id : int;
     axiom_hypothesis : P.formula ;
     axiom_conclusion : P.formula ;
+}
+
+and templ_decl = {
+  templ_name: ident;
+  templ_ret_typ: typ;
+  templ_typed_params: (typ * ident) list;
+  templ_body: P.exp option;
+  templ_pos: loc;
 }
 
 and hp_decl = { hp_name : ident; 
@@ -1371,6 +1380,9 @@ and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
       if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
+and look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
+
 and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
@@ -1654,7 +1666,7 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
   | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])
   | P.List _ | P.ListCons _ | P.ListHead _ | P.ListTail _ -> ([], [])
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])
-  | P.ArrayAt _ | P.Func _ -> ([], [])
+  | P.ArrayAt _ | P.Func _ | P.Template _ -> ([], [])
 
 and collect_data_view_from_pure_exp (data_names: ident list) (e0 : P.exp) : (ident list) * (ident list) =
   let pr1 = !P.print_formula_exp in
@@ -2434,6 +2446,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
                 prog_func_decls = hd.prog_func_decls @ iprims.prog_func_decls;
                 prog_rel_decls = hd.prog_rel_decls @ iprims.prog_rel_decls; (* An Hoa *)
                 prog_rel_ids = hd.prog_rel_ids @ iprims.prog_rel_ids; (* An Hoa *)
+                prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
                 prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
                 prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids; 
                 prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2457,6 +2470,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
                 prog_func_decls = [];
                 prog_rel_decls = [];
                 prog_rel_ids = [];
+                prog_templ_decls = [];
                 prog_hp_decls = [];
                 prog_hp_ids = [];
                 prog_axiom_decls = [];

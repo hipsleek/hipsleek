@@ -225,6 +225,17 @@ and exp =
   | ListReverse of (exp * loc)
   | ArrayAt of (spec_var * (exp list) * loc)      (* An Hoa : array access *)
   | Func of (spec_var * (exp list) * loc)
+  (* Template exp *)
+  | Template of template
+
+and template = {
+                        (* a + bx + cy + dz *)
+  templ_id: spec_var;
+  templ_args: exp list; (*    [x, y, z] *)
+  templ_unks: exp list; (* [a, b, c, d] *)
+  templ_body: exp option;
+  templ_pos: loc;
+}
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here *)
   | ConstRel of bool
@@ -362,6 +373,8 @@ let type_of_spec_var (sv : spec_var) : typ =
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
+
+let is_func_var (sv: spec_var): bool = is_FuncT (type_of_spec_var sv)
 
 let is_hp_rel_var (sv : spec_var) : bool = is_HpT (type_of_spec_var sv)
 
@@ -928,11 +941,13 @@ let rec get_exp_type (e : exp) : typ =
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
   | Func _ -> Int
-  | ArrayAt (SpecVar (t, a, _), _, _) ->
+  | ArrayAt (SpecVar (t, a, _), _, _) -> begin
           (* Type of a[i] is the type of the element of array a *)
           match t with
           | Array (et,_) -> et
           | _ -> let _ = failwith "Cpure.get_exp_type : " ^ a ^ " is not an array variable" in Named "" 
+    end
+  | Template _ -> Int
 
 (* *GLOBAL_VAR* substitutions list, used by omega.ml and ocparser.mly
  * moved here from ocparser.mly *)
@@ -1001,6 +1016,11 @@ let is_void_type t = match t with | Void -> true | _ -> false
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Gen.BList.remove_dups_eq eq_spec_var tmp in
+  res
+
+and fv_preserved_order (f : formula) : spec_var list =
+  let tmp = fv_helper f in
+  let res = Gen.BList.remove_dups_eq_reserved_order eq_spec_var tmp in
   res
       
 and check_dups_svl ls = 
@@ -1176,6 +1196,10 @@ and afv (af : exp) : spec_var list =
   	  let ifv = List.map afv i in
   	  let ifv = List.flatten ifv in
   	  remove_dups_svl (a :: ifv) (* An Hoa *)
+    | Template t ->
+        t.templ_id::
+        (List.concat (List.map afv t.templ_args)) 
+        (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
@@ -1199,6 +1223,11 @@ and isConstTrue_debug (p:formula) =
 
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
+  | _ -> false
+
+and is_Gt_formula (f: formula) = 
+  match f with
+  | BForm ((Gt _, _), _) -> true
   | _ -> false
         
 and isConstBTrue (p:b_formula) =
@@ -1253,6 +1282,12 @@ and is_zero_float (e : exp) : bool = match e with
   | FConst (0.0, _) -> true
   | _ -> false
 
+and is_zero (e: exp): bool = 
+  match e with
+  | IConst (0, _) -> true
+  | FConst (0.0, _) -> true
+  | _ -> false
+
 and is_var (e : exp) : bool =
   match e with
     | Var _ -> true
@@ -1278,6 +1313,11 @@ and to_int_const e t =
 and is_int (e : exp) : bool =
   match e with
     | IConst _ -> true
+    | _ -> false
+
+and is_nat (e: exp): bool =
+  match e with
+    | IConst (i, _) -> i >= 0
     | _ -> false
 
 and is_float (e : exp) : bool =
@@ -1533,6 +1573,8 @@ and is_float_type (t : typ) = match t with
 
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+and is_int_var (sv : spec_var) : bool = is_int_type (type_of_spec_var sv)
+
 and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
 
 and is_float_exp exp = 
@@ -1762,6 +1804,7 @@ and is_exp_arith (e:exp) : bool=
     | Bptriple _ -> false
   | Func _ -> true
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
+  | Template _ -> true
           
 and is_formula_arith_x (f:formula) :bool = match f with
   | BForm (b,_) -> is_b_form_arith b 
@@ -1842,6 +1885,29 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkVar sv pos = Var (sv, pos)
+
+and exp_of_template t = match t.templ_body with
+  | None ->
+      let pos = t.templ_pos in
+      List.fold_left (fun a (c, e) -> mkAdd a (mkMult c e pos) pos) 
+        (List.hd t.templ_unks) (List.combine (List.tl t.templ_unks) t.templ_args)
+  | Some b -> b
+
+and mkTemplate id (args: exp list) pos =
+  let mkUnk i pos = mkVar (SpecVar (Int, id ^ "_" ^ (string_of_int i), Unprimed)) pos in
+  let t_unks = List.fold_left (fun (a, i) _ -> a @ [mkUnk i pos], i+1) ([], 1) args in 
+  let t_unks = (mkUnk 0 pos)::(fst t_unks) in
+  let t_typ = mkFuncT (List.map (fun e -> if is_float_exp e then Float else Int) args) Int in
+  let t = {
+    templ_id = SpecVar(t_typ, id, Unprimed);
+    templ_args = args;
+    templ_unks = t_unks;
+    templ_body = None;
+    templ_pos = pos; } in 
+  { t with templ_body = Some (exp_of_template t); }
+
+and mkTemplateExp id (args: exp list) pos =
+  Template (mkTemplate id args pos)
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
@@ -2717,6 +2783,7 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) 
   | Func (_,_,p)
   | ArrayAt (_, _, p) -> p (* An Hoa *)
+  | Template t -> t.templ_pos
 
 and pos_of_b_formula (b: b_formula) = 
   let (p, _) = b in
@@ -3193,6 +3260,10 @@ and e_apply_subs sst e = match e with
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
+  (* Template: Do not substitute into unknowns *)
+  | Template t -> Template { t with 
+      templ_args = List.map (e_apply_subs sst) t.templ_args; 
+      templ_body = map_opt (e_apply_subs sst) t.templ_body; }
 
 and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
 
@@ -3245,6 +3316,9 @@ and e_apply_one (fr, t) e = match e with
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
   | Func (a, i, pos) -> Func ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
+  | Template tp -> Template { tp with 
+      templ_args = List.map (e_apply_one (fr, t)) tp.templ_args; 
+      templ_body = map_opt (e_apply_one (fr, t)) tp.templ_body; }
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -3368,7 +3442,10 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
       let a1 = subs_one_term sst a (Var (a,pos)) in
       (match a1 with
         | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
-        | _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
+        | _ -> failwith "Cannot substitute an array variable by a non variable!\n") 
+  | Template t -> Template { t with 
+      templ_args = List.map (a_apply_par_term sst) t.templ_args;
+      templ_body = map_opt (a_apply_par_term sst) t.templ_body; }
 
 and a_apply_par_term_list sst alist = match alist with
   |[] -> []
@@ -3480,7 +3557,10 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
             | Var (a2, _) -> a2
             | _ -> failwith "Cannot apply a non-variable term to an array variable.")
         else a in
-      ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *) 
+      ArrayAt (a1, a_apply_one_term_list (fr, t) i, pos) (* An Hoa *)
+  | Template tp -> Template { tp with 
+      templ_args = List.map (a_apply_one_term (fr, t)) tp.templ_args; 
+      templ_body = map_opt (a_apply_one_term (fr, t)) tp.templ_body; }
 
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
@@ -3568,8 +3648,13 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
         (b1,Func (a, i1, pos))
     | ArrayAt (a, i, pos) -> (* An Hoa CHECK THIS! *)
         let b1,i1 = (a_apply_one_term_list crt_var i) in
-        (b1,ArrayAt (a, i1, pos)) in
-  (helper true e)
+        (b1,ArrayAt (a, i1, pos)) 
+    | Template t -> 
+        let b1, args = a_apply_one_term_list crt_var t.templ_args in
+        let b2, body = map_opt_def (false, None) (fun e ->
+          let b, e = helper crt_var e in b, Some e) t.templ_body in 
+        (b1||b2, Template { t with templ_args = args; templ_body = body; })
+  in (helper true e)
 
 and a_apply_one_term_list (fr, t) alist = match alist with
   |[] -> []
@@ -4748,6 +4833,9 @@ and e_apply_one_exp (fr, t) e = match e with
          | Var (s,_) -> s
          | _ -> failwith "Can only substitute array variable by array variable\n")  else a in
       ArrayAt (a1, e_apply_one_list_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
+  | Template tp -> Template { tp with 
+      templ_args = e_apply_one_list_exp (fr, t) tp.templ_args;
+      templ_body = map_opt (e_apply_one_exp (fr, t)) tp.templ_body; }
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -4961,6 +5049,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | ListHead _
     | ListLength _ 
     | Func _
+    | Template _ 
     | ArrayAt _ -> false (* An Hoa *) in
     ((is_simple e1)&& match e2 with
     | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
@@ -5141,6 +5230,7 @@ and simp_mult_x (e : exp) :  exp =
       |  ListHead (_, l)
       |  ListLength (_, l) 
       |  Func (_, _, l)
+      | Template { templ_pos = l; }
       |  ArrayAt (_, _, l) -> 
                match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
@@ -5251,6 +5341,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  ListLength (e1, l) -> ((Some e), None)
     |  ListReverse (e1, l) -> ((Some e), None)
     |  Func (id, es, l) -> ((Some e), None)
+    | Template _ -> ((Some e), None)
 		|  ArrayAt (a, i, l) -> ((Some e), None) (* An Hoa *)
 
 (* 
@@ -5430,6 +5521,9 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
   |  Func (id, es, l) -> Func (id, List.map purge_mult es, l)
+  | Template t -> Template { t with 
+      templ_args = List.map purge_mult t.templ_args;
+      templ_body = map_opt purge_mult t.templ_body; }
 	|  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
 and b_form_simplify (pf : b_formula) :  b_formula =   
@@ -5585,6 +5679,7 @@ and arith_simplify_x (pf : formula) :  formula =
   convert proofs into normal form such as those of Mona (e.g. Mona
   does not allow subtraction*)
   (* if (not !Globals.allow_norm) then pf else *)
+  if !Globals.dis_norm then pf else
   let rec helper pf = match pf with
     |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
     |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
@@ -5699,6 +5794,11 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         | Func (id, es, l) ->
             let il,rl = List.split (List.map (fun c-> helper new_arg c) es) in
             (Func (id,il,l), f_comb rl)
+        | Template t -> 
+            let il1, rl1 = List.split (List.map (helper new_arg) t.templ_args) in
+            let il2, rl2 = map_opt_def (None, []) (fun e -> 
+              let i, r = helper new_arg e in Some i, [r]) t.templ_body in
+            (Template { t with templ_args = il1; templ_body = il2}, f_comb (rl1@rl2))
         | ArrayAt (a, i, l) -> (* An Hoa *)
             let il = List.map (fun c-> helper new_arg c) i in
             let (il, rl) = List.split il in 
@@ -5775,6 +5875,9 @@ let rec transform_exp f e  =
       | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
+      | Template t -> Template { t with 
+          templ_args = List.map (transform_exp f) t.templ_args; 
+          templ_body = map_opt (transform_exp f) t.templ_body; }
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
       | InfConst _ -> Error.report_no_pattern ()
 
@@ -5892,6 +5995,12 @@ let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
   let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
   let new_f = trans_func f_bf, trans_func f_e in
   fst (trans_b_formula bf arg new_f f_arg voidf)
+
+let fold_b_formula (e: b_formula) (f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
+  let trans_func func = (fun _ e -> push_opt_val_rev (func e) e) in
+  let new_f = trans_func f_bf, trans_func f_e in
+  let f_arg = voidf2, voidf2 in
+  snd (trans_b_formula e () new_f f_arg f_comb)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
   let (f_b_formula, f_exp) = f in
@@ -6174,6 +6283,7 @@ let rec get_head e = match e with
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
         if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func _ -> ""
+    | Template _ -> ""
     | ArrayAt (a, i, _) -> "" (* An Hoa *) 
 
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
@@ -6249,6 +6359,9 @@ and norm_exp (e:exp) =
     | ListReverse (e,l)-> ListReverse(helper e, l) 
 		| ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) 
     | Func (id, es, l) -> Func (id, List.map helper es, l)
+    | Template t -> Template { t with 
+        templ_args = List.map helper t.templ_args; 
+        templ_body = map_opt helper t.templ_body; }
   in helper e
 
 (* if v->c, replace v by the constant whenever encountered 
@@ -8638,7 +8751,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       (* expressions that can not be transformed *)
       | TypeCast _
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
-      | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ -> raise Not_found in
+      | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ | Template _ -> raise Not_found in
     helper e rhs_e in
 
   let prep_eq (acc:(spec_var*exp) list) v e1 e2 = 
@@ -9259,6 +9372,22 @@ let rec has_lexvar (f: formula) : bool =
   | Forall (_, f, _, _)
   | Exists (_, f, _, _) -> has_lexvar f
 
+let has_template_formula (f: formula): bool =
+  let f_e e = match e with
+  | Template _ -> Some true
+  | _ -> None
+  in
+  let f_comb bl = List.exists (fun b -> b) bl in
+  fold_formula f (nonef, nonef, f_e) f_comb
+
+let has_template_b_formula (f: b_formula): bool =
+  let f_e e = match e with
+  | Template _ -> Some true
+  | _ -> None
+  in
+  let f_comb bl = List.exists (fun b -> b) bl in
+  fold_b_formula f (nonef, f_e) f_comb
+
 let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formula =
   let rec helper f = match f with
         | BForm ((b,_),_) -> 
@@ -9299,23 +9428,27 @@ let drop_complex_ops =
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkTrue p)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
         | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
             else Some (mkFalse p)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkFalse (pos_of_b_formula (b, None))) else None in
   (pr_weak,pr_strong)
 
 let drop_lexvar_ops =
   let pr_weak b = match b with
-        | LexVar t_info -> ((*print_string "dropping strong2\n";*)Some (mkTrue t_info.lex_loc))
-        | _ -> None in
+        | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-        | _ -> None in
+        | _ -> if has_template_b_formula (b, None) 
+               then Some (mkFalse (pos_of_b_formula (b, None))) else None in
   (pr_weak,pr_strong)
 
 let drop_complex_ops_z3 = drop_lexvar_ops
@@ -9375,7 +9508,15 @@ let memoise_rel_formula ivs (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
     | RelForm (i,_,p) -> mem i ivs
-    | _ -> false
+    | _ ->
+      (* Template: For soundness, do not remove 
+       * templates which contains bound variables *)
+      let bf = (b, None) in
+      if has_template_b_formula bf then 
+        Gen.BList.subset_eq eq_spec_var 
+          (List.filter (fun v -> not (is_FuncT (type_of_spec_var v))) (bfv bf)) 
+          (fv f)
+      else false
   in memoise_formula_ho pr f
 
 let memoise_rel_formula ivs (f:formula) : 
@@ -9388,7 +9529,7 @@ let memoise_all_rel_formula (f:formula) :
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let pr b = match b with
     | RelForm (i,_,p) -> true
-    | _ -> false
+    | _ -> if has_template_b_formula (b, None) then true else false
   in memoise_formula_ho pr f
 
 let mk_bvar_subs v subs =
@@ -11658,6 +11799,44 @@ let simpl_equalities_x ante conseq =
 let simpl_equalities ante conseq  = 
 	let pr = !print_formula in
 	Debug.no_2 "simpl_equalities" pr pr (pr_pair pr pr) simpl_equalities_x ante conseq
+  
+(* For template *)
+(* Return transformed formula and list of templates, which need to be inferred *)
+let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spec_var list =
+  let f_arg arg _ = arg in 
+  let f_e _ e = match e with
+  | Template t ->
+      if t.templ_unks = [] then 
+        match t.templ_body with
+        | None -> Some (mkIConst 0 t.templ_pos, ([], true))
+        | Some b -> Some (b, ([], false))
+      else if mem_svl t.templ_id i_templ_ids then
+        let templ_unks = List.concat (List.map afv t.templ_unks) in
+        Some (exp_of_template t, (templ_unks, false))
+      else Some (mkIConst 0 t.templ_pos, ([], true))
+  | _ -> None
+  in
+  let f_comb c = 
+    let vl, is_only_zero = List.split c in
+    (List.concat vl, 
+    is_only_zero != [] && (List.for_all (fun i -> i) is_only_zero))
+  in
+  let f_b _ b = 
+    let nb, (templ_unks, is_only_zero) = trans_b_formula b () 
+      (nonef2, f_e) (f_arg, f_arg) f_comb in
+    if is_only_zero then Some (mkTrue_b (pos_of_b_formula b), ([], false))
+    else Some (nb, (templ_unks, false))
+  in
+  let nf, (templ_unks, _) = trans_formula f ()
+    (nonef2, f_b, f_e) (f_arg, f_arg, f_arg) f_comb
+  in (nf, templ_unks)
+
+let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spec_var list =
+  let pr1 = !print_svl in
+  let pr2 = !print_formula in
+  Debug.no_2 "trans_formula_templ" pr1 pr2 (pr_pair pr2 pr1)
+    trans_formula_templ i_templ_ids f
+
 
 (* imm utilities *)
 
@@ -12036,3 +12215,29 @@ let prune_relative_unsat_disj p0 base_p=
   Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
       (fun _ _ -> prune_relative_unsat_disj p0 base_p)
       p0 base_p
+
+let rec nonlinear_var_list_exp (e: exp) =
+  let f_e e = 
+    match e with
+    | Mult (e1, e2, _) ->
+      let p1 = nonlinear_var_list_exp e1 in
+      let p2 = nonlinear_var_list_exp e2 in
+      let p = match p1, p2 with
+      | [], _ -> p2
+      | _, [] -> p1
+      | _ -> List.concat (List.map (fun v1 -> List.map (fun v2 -> v1 @ v2) p2) p1)
+      in Some p
+    | Var (v, _) -> Some ([[v]])
+    | _ -> None
+  in fold_exp e f_e List.concat 
+
+let nonlinear_var_list_formula (f: formula) =
+  let f_e e = Some (nonlinear_var_list_exp e) in
+  let r = fold_formula f (nonef, nonef, f_e) List.concat in
+  List.filter (fun l -> (List.length l) >= 2) r
+
+let nonlinear_var_list_formula (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list !print_svl in
+  Debug.no_1 "nonlinear_var_list_formula" pr1 pr2 
+  nonlinear_var_list_formula f

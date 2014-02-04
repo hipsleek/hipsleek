@@ -416,9 +416,9 @@ let strip_lexvar_mix_formula mf =
   let pr0 = !CP.print_formula in
   let pr = !MCP.print_mix_formula in
   Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
-  
-(* Termination: The boundedness checking for HIP has been done before *)  
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+
+(* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -484,7 +484,15 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           (*let (estate,_,rank_formula,_) = Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
           let rank_formula = MCP.pure_of_mix rank_formula in*)
-          let entail_res, _, _ = TP.imply_one 30 lhs rank_formula "" false None in 
+          let estate, entail_dec_res = 
+            if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+              let _ = Globals.templ_term_inf := true in
+              let es = Template.collect_templ_assume estate lhs_p rank_formula pos in 
+              (match es with Some es -> es | None -> estate), true
+            else
+              let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
+              in estate, res
+          in 
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
@@ -493,17 +501,49 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
             DD.devel_zprint (lazy ("LHS (lhs_p): " ^ (Cprinter.string_of_mix_formula lhs_p))) pos;
             DD.devel_zprint (lazy ("LHS (xpure 0): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h0))) pos;
             DD.devel_zprint (lazy ("LHS (xpure 1): " ^ (Cprinter.string_of_mix_formula xpure_lhs_h1))) pos;
-            DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_res))) pos;
+            DD.devel_zprint (lazy ("Wellfoundedness checking: " ^ (string_of_bool entail_dec_res))) pos;
           end;
+
+          (* Do boundedness check at recursive calls *)
+          let estate =
+            if !Globals.term_bnd_pre_flag || !Globals.dis_term_chk || !Globals.dis_bnd_chk
+            then estate
+            else
+              let m = List.filter (fun e -> not (CP.is_nat e) && 
+                not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.Cast.prog_logical_vars)) src_lv in
+              if m = [] then estate
+              else
+                let bnd_formula_l = List.map (fun e -> CP.mkPure (CP.mkGte e (CP.mkIConst 0 pos) pos)) m in
+                let bnd_formula = CP.join_conjunctions bnd_formula_l in
+                let estate, entail_bnd_res = 
+                  if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+                    let es = Template.collect_templ_assume estate lhs_p bnd_formula pos
+                    in (match es with Some es -> es | None -> estate), true
+                  else
+                    let res, _, _ = TP.imply_one 31 lhs bnd_formula "" false None 
+                    in estate, res
+                in 
+                if not entail_bnd_res then
+                  let tr = (term_pos, None, Some orig_ante, MayTerm_S (Not_Bounded_Measure m)) in
+                  let err_msg = string_of_term_res tr in
+                  let _ = add_term_err_stk err_msg in
+                  let _ = add_term_res_stk tr in
+                  { estate with es_term_err = Some err_msg }
+                else
+                  let tr = (term_pos, None, Some orig_ante, Term_S Bounded_Measure) in
+                  let _ = add_term_res_stk tr in
+                  estate
+          in
+
           let t_ann, ml, il = find_lexvar_es estate in
           let term_measures, term_res, term_err_msg, rank_formula =
-            if entail_res then (* Decreasing *) 
+            if entail_dec_res then (* Decreasing *) 
               Some (t_ann, ml, il), 
               (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
               None, 
               None
             else
-              if Infer.no_infer_pure estate then (* No inference at all*)
+              if Infer.no_infer_pure estate then (* No inference at all *)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
@@ -532,7 +572,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           add_term_res_stk term_res;
           (n_estate, lhs_p, rhs_p, rank_formula)
 
-let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let pr = !print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -547,23 +587,23 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
       (add_str "rhs" pr) 
       (add_str "rank_fml" (pr_option pr1)) 
       (es, lhs, rhs, rank_fml))  
-      (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
+      (fun _ _ _ _ _ -> check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 
 (* To handle LexVar formula *)
 (* Remember to remove LexVar in RHS *)
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let conseq = MCP.pure_of_mix rhs_p in
-      let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
+      let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
+      (* TODO: THIS MAY CAUSE THE LOST --eps information*)
       let rhs_p = MCP.mix_of_pure rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
@@ -572,7 +612,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
           (* Check wellfoundedness of the transition *)
-          check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
+          check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
             src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
@@ -612,7 +652,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
     end
   with _ -> (*print_string ("got exception\n "^(!MCP.print_mix_formula rhs_p)^"\n");*)(estate, lhs_p, rhs_p, None)
 
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
   (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos   *)
   (* else                                                                *)
@@ -622,18 +662,18 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   (estate, lhs_p, rhs_p, None)                                      *)
   if !Globals.dis_term_chk or estate.es_term_err != None then
     (* Remove LexVar in RHS *)
-    (*TODO: THIS MAY CAUSE THE LOST --eps information*)
+    (* TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
     let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
   else
-    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+    check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
-(*TODO: consider --eps *)
-let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+(* TODO: consider --eps *)
+let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
-  let f = wrap_proving_kind PK_Term_Dec (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
+  let f = wrap_proving_kind PK_Term_Dec (check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
    Debug.no_3(* _loop *) "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
     (fun _ _ _ -> f pos) estate lhs_p rhs_p
@@ -1318,7 +1358,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
       Debug.devel_hprint (add_str "loop es" (pr_list Cprinter.string_of_entail_state_short)) loop_es pos;
       (* TODO: must check that each entail_state from loop_es implies false *)
       (* let unsound_ctx = List.find_all (fun es -> not (isAnyConstFalse es.es_formula)) loop_es in *)
-      let unsound_ctx = List.find_all (fun es -> is_Loop_es es) loop_es in
+      let unsound_ctx = List.find_all (fun es -> (is_Loop_es es) && not (isAnyConstFalse es.es_formula)) loop_es in
       if unsound_ctx == [] then true
       else
         begin

@@ -50,6 +50,7 @@ let rec mona_of_typ = function
   | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT _        -> "RelT"
+  | FuncT _       -> "FuncT"
   | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"

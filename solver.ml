@@ -274,8 +274,11 @@ let clear_entailment_history_es (es :entail_state) :context =
 	(* es_var_ctx_lhs = es.es_var_ctx_lhs; *)
     es_infer_vars = es.es_infer_vars;
     es_infer_heap = es.es_infer_heap;
+    es_infer_templ = es.es_infer_templ;
+    es_infer_templ_assume = es.es_infer_templ_assume;
     es_infer_pure = es.es_infer_pure;
     es_infer_vars_rel = es.es_infer_vars_rel;
+    es_infer_vars_templ = es.es_infer_vars_templ;
     es_infer_rel = es.es_infer_rel;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
@@ -3992,12 +3995,15 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_orig_ante = fold_es.es_orig_ante;
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
+              es_infer_vars_templ = fold_es.es_infer_vars_templ;
               es_infer_vars_hp_rel = fold_es.es_infer_vars_hp_rel;
               es_infer_vars_sel_hp_rel = fold_es.es_infer_vars_sel_hp_rel;
               es_infer_vars_sel_post_hp_rel = fold_es.es_infer_vars_sel_post_hp_rel;
               es_infer_hp_unk_map = fold_es.es_infer_hp_unk_map;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
+              es_infer_templ = fold_es.es_infer_templ;
+              es_infer_templ_assume = fold_es.es_infer_templ_assume;
               es_infer_pure = fold_es.es_infer_pure;
               es_infer_pure_thus = fold_es.es_infer_pure_thus;
               es_infer_rel = fold_es.es_infer_rel;
@@ -5792,7 +5798,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                         (tmp_lctx ,TrueConseq)
                                                       else (SuccCtx [rs4] ,TrueConseq)
                                             end)
-                            | EInfer e -> helper_inner 22 ctx11 e.Cformula.formula_inf_continuation
+                            | EInfer e -> 
+                                let inf_vars = e.CF.formula_inf_vars in
+                                let templ_inf_vars = List.filter (fun (CP.SpecVar (t, _, _)) -> is_FuncT t) inf_vars in
+                                let ctx11 = CF.add_infer_vars_templ_ctx ctx11 templ_inf_vars in
+                                helper_inner 22 ctx11 e.Cformula.formula_inf_continuation
                                   
                             (* ignores any EInfer on the RHS *) 
                             (* assumes each EInfer contains exactly one continuation *)
@@ -8001,7 +8011,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
           CF.HEmp, [],[])
         | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars,
-          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel))
+          (estate.es_infer_vars@estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel@estate.es_infer_vars_templ))
     in
     (* WN : what if evars not used in the conseq? *)
     (* let _ = DD.info_zprint  (lazy  ("  ctx0: " ^ (Cprinter.string_of_context ctx0))) pos in *)
@@ -8886,7 +8896,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*   (List.map (fun es -> es.es_formula) (stk_estate # get_stk)) no_pos in *)
   let (estate,_,rhs_p,rhs_wf) =
     if not !Globals.dis_term_chk then
-      Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+      Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     else
       (estate, lhs_p, rhs_p, None)
   in
@@ -9720,11 +9730,14 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars = estate.es_infer_vars;
         es_infer_vars_dead = estate.es_infer_vars_dead;
         es_infer_vars_rel = estate.es_infer_vars_rel;
+        es_infer_vars_templ = estate.es_infer_vars_templ;
         es_infer_vars_hp_rel = estate.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = estate.es_infer_vars_sel_hp_rel;
         es_infer_vars_sel_post_hp_rel = estate.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = estate.es_infer_hp_unk_map;
         es_infer_heap = estate.es_infer_heap;
+        es_infer_templ = estate.es_infer_templ;
+        es_infer_templ_assume = estate.es_infer_templ_assume;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;
         es_infer_rel = estate.es_infer_rel;
@@ -9903,6 +9916,8 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
                  es_orig_ante = estate.es_orig_ante;
                  es_infer_vars = estate.es_infer_vars;
                  es_infer_heap = estate.es_infer_heap;
+                 es_infer_templ = estate.es_infer_templ;
+                 es_infer_templ_assume = estate.es_infer_templ_assume;
                  es_infer_pure = estate.es_infer_pure;
                  es_var_zero_perm = estate.es_var_zero_perm;
                  es_infer_pure_thus = estate.es_infer_pure_thus;
@@ -10670,10 +10685,11 @@ and inst_before_fold_x estate rhs_p case_vars =
               | CP.Bptriple _ (*TOCHECK*)
               | CP.Level _ (*TOCHECK*) -> true
 	          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
-            | CP.TypeCast (_, e1, _) -> prop_e e1
+              | CP.TypeCast (_, e1, _) -> prop_e e1
 	          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 	          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
-	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ -> false in
+	          | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _	| CP.ListReverse _ | CP.ArrayAt _ | CP.Func _ 
+              | CP.Template _ -> false in
 	        ((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&& 
 		        ((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||
 		            (Gen.BList.list_subset_eq CP.eq_spec_var rfv lhs_fv && List.length l_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var lfv (l_inter@lhs_fv)&& prop_e lhs_e)) in

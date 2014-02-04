@@ -1394,6 +1394,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           (***************************************************)
 	  (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
+    let ctempls = List.map (trans_templ prog) prog.I.prog_templ_decls in
 	  let tmp_views = order_views prog.I.prog_view_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
@@ -1440,8 +1441,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
-              C.prog_hp_decls = chps;
-              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
+	      C.prog_templ_decls = ctempls;
+	      C.prog_hp_decls = chps;
+	      C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1449,7 +1451,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      (*C.prog_right_coercions = r2l_coers;*)} in
 	  let cprog1 = { cprog with			
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
-              C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
+	      C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
           (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
@@ -1727,8 +1729,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           (MCP.mix_of_pure r)
         else xform
       in
+      let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (MCP.mfv xform1) in
       let formula1 = CF.formula_of_mix_formula xform1 pos in
       let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+      let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
       let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
       let _ = 
@@ -1889,7 +1893,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         | Some a -> 
               let _ = Mem.check_mem_formula vdef prog.I.prog_data_decls in 
               let (new_typ_mem,n_tl) = fresh_tvar n_tl in 
-              let (n_tl,_) = gather_type_info_exp a.IF.mem_formula_exp n_tl new_typ_mem in 
+              let (n_tl,_) = gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in 
               (n_tl,trans_view_mem vdef.I.view_mem n_tl)
         | None -> (n_tl,None)
   ) in 
@@ -1922,7 +1926,8 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
-	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+	    let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+        let ffv = List.filter (fun v -> not (is_FuncT (CP.type_of_spec_var v))) ffv in
         let ffv = CP.diff_svl ffv view_prop_extns in
         (* filter out intermediate dereference vars and update them to view vars *)
         
@@ -1976,7 +1981,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
       let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars vdef in 
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
-      let cvdef ={
+      let cvdef = {
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
@@ -2041,6 +2046,35 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+
+and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
+  let pos = tdef.I.templ_pos in
+  let c_ret_typ = trans_type prog tdef.I.templ_ret_typ pos in
+  let c_params = List.map (fun (t, n) -> 
+    CP.SpecVar (trans_type prog t pos, n, Unprimed)) tdef.I.templ_typed_params in 
+  let n_tl = List.map (fun (t, n) -> 
+    (n, { sv_info_kind = (trans_type prog t pos); id = fresh_int (); })) tdef.I.templ_typed_params in
+  let c_body = match tdef.I.templ_body with
+  | None -> 
+    let unk_coes = List.map 
+      (fun (t, n) -> CP.SpecVar (trans_type prog t pos, tdef.I.templ_name ^ "_" ^ n, Unprimed)) 
+      tdef.I.templ_typed_params in 
+    let unk_const = CP.SpecVar (Int, tdef.I.templ_name ^ "_" ^ (string_of_int 0), Unprimed) in
+    let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
+    let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
+      (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
+    Some body
+  | Some bd -> 
+    let n_tl = gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
+    Some (trans_pure_exp bd (fst n_tl))
+  in
+  let c_templ = {
+    C.templ_name = tdef.I.templ_name;
+    C.templ_ret_typ = c_ret_typ;
+    C.templ_params = c_params;
+    C.templ_body = c_body;
+    C.templ_pos = pos; } in
+  C.templ_decls # push c_templ; c_templ
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -2815,23 +2849,28 @@ and collect_important_vars_in_spec (spec : CF.struc_formula) : (CP.spec_var list
 (** An Hoa : end collect_important_vars_in_spec **)
 
 and ident_to_spec_var id n_tl p prog =
-  let v= get_spec_var_ident n_tl id p (* Unprimed  *)in
+  let v = get_spec_var_ident n_tl id p (* Unprimed  *)in
   match v with
-    | CP.SpecVar(t,id,pr) ->
-          if t==UNK then
+  | CP.SpecVar(t,id,pr) ->
+    if t == UNK then
+      try
+        let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
+        CP.SpecVar(RelT[],id,pr)
+      with _ ->
+        try
+          let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
+          CP.SpecVar(RelT[],id,pr)
+        with _ ->
+          try
+            let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+            CP.SpecVar(HpT,id,pr)
+          with _ -> 
             try
-              let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-              CP.SpecVar(RelT[],id,pr)
-            with _ ->
-                try
-                  let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                  CP.SpecVar(RelT[],id,pr)
-                with _ ->
-                    try
-                      let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
-                      CP.SpecVar(HpT,id,pr)
-                    with _ -> v
-          else v
+              let tdef = I.look_up_templ_def_raw prog.I.prog_templ_decls id in
+              let ftyp = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) tdef.I.templ_ret_typ in
+              CP.SpecVar (ftyp, id, pr)
+            with _ -> v
+    else v
 
 and ident_list_to_spec_var_list ivs n_tl prog =
   let new_ivs = List.map (fun (i,p) -> ident_to_spec_var i n_tl p prog ) ivs in
@@ -4749,6 +4788,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: INFInt can only be used for constraints"
     | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
+    | FuncT _ ->
+          failwith "default_value: FuncT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
@@ -6361,6 +6402,29 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     | IP.Func (id, es, pos) ->
           let es = List.map (fun e -> trans_pure_exp e tlist) es in
           CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
+    | IP.Template t ->
+        let pos = t.IP.templ_pos in
+        let tid = t.IP.templ_id in
+        let tdef = C.look_up_templ_def_raw (C.templ_decls # get_stk) tid in
+        let tparams = tdef.C.templ_params in
+        let tbody = tdef.C.templ_body in
+
+        let templ_args = List.map (fun a -> trans_pure_exp a tlist) t.IP.templ_args in
+        let sst = List.combine tparams templ_args in
+        let templ_unks, templ_body = match tbody with
+          | Some cb -> 
+            let inst_cb = CP.a_apply_par_term sst cb in
+            let unk_svs = Gen.BList.difference_eq CP.eq_spec_var 
+              (CP.afv inst_cb) (List.concat (List.map CP.afv templ_args)) in
+            let unk_exps = List.map (fun v -> CP.mkVar v no_pos) unk_svs in
+            (unk_exps, Some inst_cb)
+          | None -> ([], None)
+        in CP.Template {
+          CP.templ_id = trans_var (t.IP.templ_id, Unprimed) tlist pos;
+          CP.templ_args = templ_args;
+          CP.templ_unks = templ_unks;
+          CP.templ_body = templ_body;
+          CP.templ_pos = pos; }
     | IP.ArrayAt ((a, p), ind, pos) ->
           let cpind = List.map (fun i -> trans_pure_exp i tlist) ind in
           let dim = List.length ind in (* currently only support int type array *)
@@ -8729,6 +8793,15 @@ let rec rev_trans_exp e = match e with
   | CP.ListReverse (e,p)  -> IP.ListReverse (rev_trans_exp e, p)
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
+  | CP.Template t -> IP.Template {
+      IP.templ_id = fst (rev_trans_spec_var t.CP.templ_id);
+      IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
+      IP.templ_unks = List.map rev_trans_exp t.CP.templ_unks;
+      IP.templ_body = begin match t.CP.templ_body with
+        | None -> None
+        | Some b -> Some (rev_trans_exp b) end;
+      IP.templ_pos = t.CP.templ_pos;
+    } 
   | CP.Level _| CP.InfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
 
 let rec rev_trans_pf f = match f with
@@ -8909,30 +8982,27 @@ let transform_hp_rels_to_iviews hp_rels =
 let check_data_pred_name iprog name : bool =
   try
     let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in false
-  with
-    | Not_found -> begin
- 	try
-	  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
-	with
-	  | Not_found -> (*true*) begin
-	      try
-		let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in
-		false
-	      with
-		| Not_found -> begin
-		    try
-		      let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
-		      false
-		    with
-		      | Not_found -> begin
-			  try
-			    let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in	false
-			  with
-			    | Not_found -> true
+  with | Not_found -> begin
+ 	  try
+	    let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
+	  with | Not_found -> begin
+      try
+        let _ = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false
+      with | Not_found -> begin
+        try
+		      let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in false
+		    with | Not_found -> begin
+          try
+			      let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in false
+          with | Not_found -> begin
+            try
+              let _ = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false 
+            with | Not_found -> true
 		        end
-		  end
-	    end
+          end
+        end
       end
+    end
 
 (* let check_data_pred_name iprog name : bool = *)
 (*   let pr1 x = x in *)

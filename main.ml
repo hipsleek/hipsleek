@@ -4,7 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
-module I = Iast
+(* module I = Iast *)
 
 module M = Lexer.Make(Token.Token)
 
@@ -347,7 +347,7 @@ let process_source_full source =
     in
     (**************************************)
     (*to improve: annotate field*)
-    let _ = I.annotate_field_pure_ext intermediate_prog in
+    let _ = Iast.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
@@ -570,7 +570,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   in
   (**************************************)
   (*annotate field*)
-  let _ = I.annotate_field_pure_ext intermediate_prog in
+  let _ = Iast.annotate_field_pure_ext intermediate_prog in
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 

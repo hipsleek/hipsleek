@@ -292,6 +292,9 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 	| Func _ -> failwith ("Functions are not supported in Mona") 
 	| ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
 	| InfConst _ -> Error.report_no_pattern()
+  | Template t -> 
+      let e = exp_of_template t in
+      compute_fo_exp e order var_map
 
 (* 
    Transformations: 

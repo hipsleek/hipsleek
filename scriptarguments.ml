@@ -457,6 +457,11 @@ let common_arguments = [
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* Template *)
+  ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
+  ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
+    Tlutils.set_solver), "Choose LP solver");
+
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,
@@ -465,11 +470,19 @@ let common_arguments = [
   ("--dis-phase-num", Arg.Set Globals.dis_phase_num, "turn off the automatic phase numbering");
   ("--term-reverify", Arg.Set Globals.term_reverify,
    "enable re-verification for inferred termination specifications");
+  ("--term-en-bnd-pre", Arg.Set Globals.term_bnd_pre_flag,
+   "enable boundedness check at pre-condition");
+  ("--term-dis-bnd-pre", Arg.Clear Globals.term_bnd_pre_flag,
+   "disable boundedness check at pre-condition (boundedness check at recursive call)");
   ("--dis-bnd-check", Arg.Set Globals.dis_bnd_chk, "turn off the boundedness checking");
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
+
+  (* TermInf: Options for Termination Inference *)
+  ("--en-gen-templ-slk", Arg.Set Globals.gen_templ_slk, "Generate sleek file for template inference");
+  ("--gts", Arg.Set Globals.gen_templ_slk, "shorthand for --en-gen-templ-slk");
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");

@@ -71,7 +71,7 @@ let rec compute f n b =
 let rec smt_of_typ t =
   match t with
   | Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
-  | Float -> "Int" (* Currently, do not support real arithmetic! *)
+  | Float -> "Real" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
   | AnnT -> "Int"
@@ -83,16 +83,16 @@ let rec smt_of_typ t =
   | List _ -> illegal_format ("z3.smt_of_typ: List not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+  | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
   (* TODO *)
   | RelT _ -> "Int"
   | HpT -> "Int"
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
-    | Bptyp -> "int-triple"
+  | Bptyp -> "int-triple"
 
 let smt_of_typ t =
-  Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
-  smt_of_typ t
+  Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
 
 let smt_of_spec_var sv =
   (CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
@@ -113,8 +113,8 @@ let rec smt_of_exp a =
   | CP.FConst (f, _) -> string_of_float f 
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-  | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
   | CP.Bag ([], _) -> "0"
   | CP.Max _
@@ -137,6 +137,7 @@ let rec smt_of_exp a =
   | CP.ArrayAt (a, idx, l) -> 
       List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> smt_of_exp (CP.exp_of_template t)
 
 let rec smt_of_b_formula b =
   let (pf,_) = b in
@@ -226,7 +227,7 @@ let rec smt_of_formula pr_w pr_s f =
 
 let smt_of_formula pr_w pr_s f =
   let _ = set_prover_type () in
-  Debug.no_1 "smt_of_formula"  !CP.print_formula (fun s -> s)
+  Debug.no_1 "smt_of_formula"  !CP.print_formula idf
     (fun _ -> smt_of_formula pr_w pr_s f) f
 
 
@@ -442,7 +443,7 @@ let rec collect_output chn accumulated_output : string list =
       | End_of_file -> accumulated_output in
   output
 
-let sat_type_from_string r input=
+let sat_type_from_string r input =
   if (r = "sat") then Sat
   else if (r = "unsat") then UnSat
   else
@@ -453,7 +454,7 @@ let sat_type_from_string r input=
     with
       | Not_found -> Unknown
 
-let iget_answer chn input=
+let iget_answer chn input =
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
@@ -551,7 +552,7 @@ and start() =
       if !smtsolver_name = "z3-2.19" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
       else
-           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
@@ -640,7 +641,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   let smt_var_decls = List.map (fun v ->
     let tp = (CP.type_of_spec_var v)in
     let t = smt_of_typ tp in
-    "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+    match tp with
+    | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
   ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
@@ -1086,3 +1089,64 @@ let simplify (pe : CP.formula) : CP.formula =
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f
 
+(* Template Solving by Z3 *)
+open Z3m
+
+let get_model is_linear vars assertions =
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+    let typ = (CP.type_of_spec_var v)in
+    let t = smt_of_typ typ in
+    "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+  ) vars in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let smt_asserts = List.map (fun a ->
+    "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+  let smt_asserts = String.concat "" smt_asserts in
+  let smt_inp = 
+    ";Variables Declarations\n" ^ smt_var_decls ^
+    ";Assertion Declations\n" ^ smt_asserts ^
+    (if is_linear then "(check-sat)\n" else "(check-sat-using qfnra-nlsat)\n") ^
+    (* "(check-sat)\n" ^ *)
+    "(get-model)" in
+  let model = (run "" "z3" smt_inp 5.0).original_output_text in
+
+  let _ = 
+    Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;
+    Debug.tinfo_hprint (add_str "z3m input:\n " idf) smt_inp no_pos;
+    Debug.tinfo_hprint (add_str "z3m output: " (pr_list idf)) model no_pos 
+  in
+
+  let m = 
+    try
+      if not ((List.hd model) = "unsat") then
+        let inp = String.concat "\n" (List.tl model) in
+        let lexbuf = Lexing.from_string inp in
+        let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
+        Sat_or_Unk sol
+      else Unsat
+    with _ -> Sat_or_Unk []
+  in m 
+
+let get_model is_linear vars assertions =
+  let pr1 = pr_list !CP.print_formula in
+  let pr2 = string_of_z3m_res in
+  Debug.no_1 "z3_get_model" pr1 pr2
+  (fun _ -> get_model is_linear vars assertions) assertions
+
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let vl, il = List.split m in
+  let il = z3m_val_to_int il in
+  let m = List.combine vl il in
+
+  let mi = List.map (fun (_, i) -> i) m in
+  let gcd_mi = abs (gcd_l mi) in
+  List.map (fun (v, i) -> (v, i / gcd_mi)) m
+
+let norm_model (m: (string * z3m_val) list): (string * int) list =
+  let pr1 = pr_list (pr_pair idf string_of_z3m_val) in
+  let pr2 = pr_list (pr_pair idf string_of_int) in
+  Debug.no_1 "z3_norm_model" pr1 pr2
+  norm_model m

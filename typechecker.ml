@@ -352,8 +352,10 @@ and check_bounded_term_x prog ctx post_pos =
         (pr_list !CP.print_exp) (fun _ -> "")
         (fun _ -> check_bounded_one_measures m es) m
   in 
-  
-  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk) then (ctx, [])
+
+  (* need to perform boundedness check at recursive call *)
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk 
+      || not (!Globals.term_bnd_pre_flag)) then (ctx, [])
   else 
     let ctx = Term.strip_lexvar_lhs ctx in
     match ctx with
@@ -519,7 +521,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             in
             let _ = proc.proc_stk_of_static_specs # push einfer in
             let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
-            let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
+            (* let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in *)
+            (* let (vars_templ, vars_inf) = List.partition (fun v -> is_FuncT (CP.type_of_spec_var v)) vars_inf in *)
+            let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
+              let typ = CP.type_of_spec_var v in
+              if is_RelT typ then (vr@[v], vt, vi)
+              else if is_FuncT typ then (vr, vt@[v], vi)
+              else (vr, vt, vi@[v])) ([], [], []) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
             let _ = 
 (*              if old_vars=[] then *)
@@ -573,6 +581,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
                     CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
+                    CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
                     CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                     CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
@@ -619,6 +628,13 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       CF.formula_struc_continuation = Some c;
                       CF.formula_struc_pos = pos_spec;}
                 | _ -> c in
+            (* Template: Restore template vars in specs *)
+            let new_c =
+              if vars_templ = [] then new_c 
+              else CF.EInfer { b with 
+                CF.formula_inf_vars = vars_templ;
+                CF.formula_inf_continuation = new_c; } 
+            in
             (new_c,[],rel,hprel,vars_hp_rel,post_hps,unk_map,f)
       | CF.EList b -> 
 	        let (sl,pl,rl,hprl,selhps,sel_posthps,unk_map,bl) = List.fold_left (fun (a1,a2,a3,a4,a5,a6,a7,a8) (l,c) ->
@@ -3289,9 +3305,18 @@ let check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
+      let _ = 
+        let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
+        Template.collect_and_solve_templ_assumes prog inf_templs 
+      in
       prog
   ) prog proc_scc 
   in 
+
+  let _ = 
+    if !Globals.gen_templ_slk then Template.gen_slk_file prog
+    else ()
+  in
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)

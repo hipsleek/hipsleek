@@ -133,9 +133,14 @@ type typ =
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
+  | FuncT of typ * typ
   | Bptyp
-  (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
+
+let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
+  match param_typ with
+  | [] -> FuncT (Void, ret_typ)
+  | _ -> List.fold_right (fun p_typ r_typ -> FuncT (p_typ, r_typ)) param_typ ret_typ
 
 let rec cmp_typ t1 t2=
   match t1,t2 with
@@ -459,6 +464,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -471,6 +477,11 @@ let is_RelT x =
     | RelT _ -> true
     | _ -> false
 ;;
+
+let is_FuncT = function
+  | FuncT _ -> true
+  | _ -> false
+
 let is_HpT x =
   match x with
     | HpT -> true
@@ -495,6 +506,7 @@ let rec string_of_typ_alpha = function
   | List t        -> "list_"^(string_of_typ t)
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -568,6 +580,7 @@ let is_dont_care_var id =
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
+let nonef2 e f = None
 let voidf e = ()
 let voidf2 e f = ()
 let somef v = Some v
@@ -887,6 +900,8 @@ let allow_lsmu_infer = ref false
 
 let allow_norm = ref true
 
+let dis_norm = ref false
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
@@ -1083,11 +1098,20 @@ let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
 let term_reverify = ref false
+let term_bnd_pre_flag = ref true
 let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true
+let phase_infer_ind = ref false
+
+(* TermInf: Option for Termination Inference *)
+let en_term_inf = ref false
+let templ_term_inf = ref false
+let ti_reverify_flag = ref false
+let ti_gen_slk = ref false
+let gen_templ_slk = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false
@@ -1521,3 +1545,25 @@ let gen_field_ann t=
   match t with
     | Named _ -> fresh_any_name field_rec_ann
     | _ -> fresh_any_name field_val_ann
+
+let rec gcd (a: int) (b: int): int = 
+  if b == 0 then a
+  else gcd b (a mod b)
+
+let gcd_l (l: int list): int =
+  let l = List.filter (fun x -> x != 0) l in
+  match l with
+  | [] -> 1
+  | x::[] -> 1
+  | x::xs -> List.fold_left (fun a x -> gcd a x) x xs
+
+let abs (x: int) = if x < 0 then -x else x
+
+let lcm (a: int) (b: int): int = (a * b) / (gcd a b)
+
+let lcm_l (l: int list): int =
+  if List.exists (fun x -> x == 0) l then 0
+  else match l with
+  | [] -> 1
+  | x::[] -> x
+  | x::xs -> List.fold_left (fun a x -> lcm a x) x xs

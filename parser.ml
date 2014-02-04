@@ -54,6 +54,7 @@ type decl =
   (* | Coercion of coercion_decl *)
   | Coercion_list of coercion_decl_list
   | Include of string
+  | Template of templ_decl
 		
 
 type member = 
@@ -110,6 +111,7 @@ let hash_count = ref 0
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
+let templ_names = new Gen.stack (* List of declared templates' names *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
@@ -860,6 +862,9 @@ non_empty_command:
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
+      (* TermInf: Command for Termination Inference *)
+      | t = templ_decl -> TemplDef t
+      | t = templ_solve_cmd -> TemplSolv t
 	  | t=macro				  -> EmptyCmd]];
   
 data_decl:
@@ -1749,9 +1754,11 @@ cexp_w:
        * in our formula.
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-            report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
-          else
+       else if templ_names # mem id then
+          Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
+        else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+          report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+        else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
               Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
@@ -1856,6 +1863,9 @@ checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
    | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
    | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
+
+templ_solve_cmd: 
+  [[ `TEMPL_SOLVE; il = OPT id_list_w_brace -> un_option il [] ]];
 
 ls_rel_ass: [[`OSQUARE; t = LIST0 rel_ass SEP `SEMICOLON ;`CSQUARE-> t]];
 
@@ -2178,6 +2188,8 @@ list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
+id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
+
 id:[[`IDENTIFIER id-> id]];
 
 (********** Higher Order Preds *******)
@@ -2322,6 +2334,19 @@ rel_body:[[ (* formulas {
 	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
 ]];
 
+(* Template Definition *)
+templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN; b = OPT templ_body -> 
+  let _ = templ_names # push id in 
+  let tdef = { 
+    templ_name = id;
+    templ_ret_typ = t;
+    templ_typed_params = tl;
+    templ_body = b; 
+    templ_pos = get_pos_camlp4 _loc 1; } in 
+  tdef ]];
+
+templ_body: [[ `EQEQ; pc = cexp -> pc ]];
+
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
 		{ axiom_id = fresh_int ();
@@ -2372,6 +2397,7 @@ hprogn:
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
+      let templ_defs = new Gen.stack in (* List of template definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
@@ -2388,7 +2414,8 @@ hprogn:
           end
 				| Include incl -> include_defs := incl :: !include_defs  	
         | Func fdef -> func_defs # push fdef 
-        | Rel rdef -> rel_defs # push rdef 
+        | Rel rdef -> rel_defs # push rdef
+        | Template tdef -> templ_defs # push tdef
         | Hp hpdef -> hp_defs # push hpdef 
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
@@ -2414,6 +2441,7 @@ hprogn:
                        data_methods = [] } in
     (* let g_rel_lst = g_rel_defs # get_stk in *)
     let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
+    let templ_lst = templ_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -2430,6 +2458,7 @@ hprogn:
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
         (RelT tl,x.rel_name)) (rel_lst); (* WN *)
+    prog_templ_decls = templ_lst;
     prog_hp_decls = hp_lst ;
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
@@ -2449,6 +2478,7 @@ decl:
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+  |  r=templ_decl; `DOT -> Template r
   |  r=hp_decl; `DOT -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g

@@ -637,6 +637,7 @@ let rec is_array_exp e = match e with
                       | _ -> is_array_exp exp) (Some false) el
     )
   | CP.ArrayAt (_,_,_) -> Some true
+  | CP.Template _ -> Some false
   | CP.Func _ -> Some false
   | CP.TypeCast (_, e1, _) -> is_array_exp e1
   | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
@@ -672,7 +673,7 @@ let rec is_list_exp e = match e with
                       | _ -> is_list_exp exp) (Some false) el
     )
   | CP.TypeCast (_, e1, _) -> is_list_exp e1
-  | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
+  | CP.ArrayAt (_,_,_) | CP.Func _ | CP.Template _ -> Some false
   | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
     | CP.Bptriple _
   | CP.Level _
@@ -1932,8 +1933,10 @@ let rec simplify_raw (f: CP.formula) =
       let rels = CP.get_RelForm f in
       let ids = List.concat (List.map get_rel_id_list rels) in
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-      let res_memo = simplify f_memo in
-      CP.restore_memo_formula subs bvars res_memo
+      if CP.has_template_formula f_memo then f
+      else
+        let res_memo = simplify f_memo in
+        CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
@@ -2138,9 +2141,11 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
   (* Debug.info_hprint (add_str "f_memo" pr) f_memo no_pos; *)
   (* Debug.info_hprint (add_str "bvars" !CP.print_svl) bvars no_pos; *)
   (* Debug.info_hprint (add_str "subs" (pr_list_ln (pr_pair !CP.print_sv pr))) subs no_pos; *)
-  let res_memo = pairwisecheck f_memo in
-  (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
-  CP.restore_memo_formula subs bvars res_memo
+  if CP.has_template_formula f_memo then f
+  else
+    let res_memo = pairwisecheck f_memo in
+    (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
+    CP.restore_memo_formula subs bvars res_memo
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in

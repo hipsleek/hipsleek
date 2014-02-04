@@ -12,7 +12,7 @@ type n
 
 
 module F = Cformula
-module CF = Cformula
+(* module CF = Cformula *)
 module P = Cpure
 module MP = Mcpure
 module Err = Error
@@ -25,6 +25,7 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+    mutable prog_templ_decls: templ_decl list;
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -122,6 +123,14 @@ and rel_decl = {
     rel_name : ident; 
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
+
+and templ_decl = {
+  templ_name: ident;
+  templ_ret_typ: typ;
+  templ_params: P.spec_var list;
+  templ_body: P.exp option;
+  templ_pos: loc;
+}
 
 and hp_decl = { 
     hp_name : ident;
@@ -454,6 +463,8 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+(* Stack of Template Declarations *)
+let templ_decls: templ_decl Gen.stack = new Gen.stack
 
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
@@ -475,12 +486,19 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
+
+let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
+let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
@@ -964,6 +982,9 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_templ_def_raw (defs: templ_decl list) (name : ident) = 
+  List.find (fun d -> d.templ_name = name) defs
 
 let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
@@ -1845,25 +1866,25 @@ let vdef_lemma_fold prog coer  =
   let cfd = coer.coercion_fold_def in
   let lhs = coer.coercion_head in
   (* body contains orig=false but not body_norm*)
-  let rhs = CF.formula_to_struc_formula coer.coercion_body in
+  let rhs = F.formula_to_struc_formula coer.coercion_body in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
   (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
   if cfd # is_init then cfd # get
   else
     let vd2 = match lhs with
-      | CF.Base bf ->
+      | F.Base bf ->
             begin
-              match bf.CF.formula_base_heap with
-                | CF.ViewNode vn -> 
+              match bf.F.formula_base_heap with
+                | F.ViewNode vn -> 
                       (try 
                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
                         let to_vars = vd.view_vars in
-                        let from_vars = vn.CF.h_formula_view_arguments in
+                        let from_vars = vn.F.h_formula_view_arguments in
                         let subs = List.combine from_vars to_vars in
                         (* let pr = Cprinter.string_of_spec_var_list in *)
                         (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
-                        let rhs = CF.subst_struc subs rhs in
+                        let rhs = F.subst_struc subs rhs in
                         Some {vd with view_formula = rhs}
                       with  
                         | Not_found -> None

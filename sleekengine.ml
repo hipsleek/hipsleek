@@ -59,6 +59,7 @@ I.prog_view_decls = [];
 I.prog_func_decls = [];
 I.prog_rel_decls = [];
 I.prog_rel_ids = [];
+I.prog_templ_decls = [];
 I.prog_hp_decls = [];
 I.prog_hp_ids = [];
 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -81,6 +82,7 @@ let cprog = ref {
     Cast.prog_logical_vars = [];
     (*	Cast.prog_func_decls = [];*)
     Cast.prog_rel_decls = []; (* An Hoa *)
+    Cast.prog_templ_decls = [];
     Cast.prog_hp_decls = [];
     Cast.prog_view_equiv = [];
     Cast.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
@@ -108,6 +110,7 @@ let clear_iprog () =
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];
+  iprog.I.prog_templ_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
@@ -115,6 +118,7 @@ let clear_cprog () =
   !cprog.Cast.prog_view_decls <- [];
   !cprog.Cast.prog_rel_decls <- [];
   !cprog.Cast.prog_hp_decls <- [];
+  !cprog.Cast.prog_templ_decls <- [];
   (*!cprog.Cast.prog_left_coercions <- [];*)
   (*!cprog.Cast.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
@@ -336,6 +340,15 @@ let process_rel_def rdef =
 		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
+
+let process_templ_def tdef =
+  if Astsimp.check_data_pred_name iprog tdef.I.templ_name then
+	  let tmp = iprog.I.prog_templ_decls in
+	  try
+      iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
+      !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
+    with _ -> dummy_exception (); iprog.I.prog_templ_decls <- tmp 
+  else print_endline (tdef.I.templ_name ^ " is already defined.")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
@@ -1764,6 +1777,9 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
 let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
+
+let process_templ_solve (idl: ident list) = 
+  Template.collect_and_solve_templ_assumes !cprog idl
 
 let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
   (*let _ = print_endline ("\n Compare Check") in*)

@@ -80,6 +80,7 @@ let rec omega_of_exp e0 = match e0 with
                 (* } *)
             in rr
       in r
+  | Template t -> omega_of_exp (exp_of_template t)
   | Div (_, _, l) -> illegal_format "[omega.ml] Divide is not supported."
       (* Error.report_error { *)
       (*   Error.error_loc = l; *)
@@ -198,7 +199,7 @@ let omega_of_formula i pr_w pr_s f  =
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =
-  let (pr_w,pr_s) = no_drop_ops in
+  let (pr_w, pr_s) = no_drop_ops in
   try 
     Some(omega_of_formula i pr_w pr_s f)
   with | _ -> None
@@ -819,8 +820,13 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   end
 
 let simplify (pe : formula) : formula =
-  let pr x = None in 
-  simplify_ops pr pr pe
+  let pr_w, pr_s = no_drop_ops in
+  (* simplify_ops pr_w pr_s pe *)
+  let f_memo, subs, bvars = memoise_rel_formula [] pe in
+  if has_template_formula f_memo then pe
+  else
+    let res_memo = simplify_ops pr_w pr_s f_memo in
+    restore_memo_formula subs bvars res_memo
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
@@ -1006,5 +1012,9 @@ let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
     flush log_all;
-  end;
+  end
+
+let get_model bnd_vars assertions =
+  let inp_f = mkExists bnd_vars (join_conjunctions assertions) None no_pos in
+  simplify inp_f
 

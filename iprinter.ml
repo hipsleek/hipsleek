@@ -235,6 +235,7 @@ let rec string_of_formula_exp = function
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.Func (a, i, _)     ->  
         a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"
+  | P.Template t -> t.P.templ_id ^ "(" ^ (string_of_formula_exp_list t.P.templ_args) ^ ")"
   | P.ArrayAt ((a, p), i, _)     ->  
         (* An Hoa : print the array access *)
         a ^ (match p with 

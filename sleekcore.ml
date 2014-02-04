@@ -65,14 +65,20 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* (\* List of vars needed for abduction process *\) *)
   (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
   (* Init context with infer_vars and orig_vars *)
-  let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
+  (* let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) isvl in
-  let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v (*  ||  *)
-              (* CP.type_of_spec_var v == FuncT *)) iv in
+  let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v (*  ||  *) 
+              (* CP.type_of_spec_var v == FuncT *)) iv in *)
+  let (vrel, vtempl, v_hp_rel, iv) = List.fold_left (fun (vr, vt, vh, iv) v ->
+    let typ = CP.type_of_spec_var v in
+    if is_RelT typ then (vr@[v], vt, vh, iv)
+    else if CP.is_hprel_typ v then (vr, vt, vh@[v], iv)
+    else if is_FuncT typ then (vr, vt@[v], vh, iv)
+    else (vr, vt, vh, iv@[v])) ([], [], [], []) isvl in
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
   (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
-  let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in
+  let ctx = Infer.init_vars ctx iv vrel vtempl v_hp_rel orig_vars in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)

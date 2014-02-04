@@ -7971,7 +7971,11 @@ think it is used to instantiate when folding.
   (*  es_infer_init : bool; (* input : true : init, false : non-init *)                *)
   (*  es_infer_pre : (formula_label option * formula) list;  (* output heap inferred *)*)
   (* output : pre heap inferred *)
-  es_infer_heap : h_formula list; 
+  es_infer_heap : h_formula list;
+  (* Template: For template inference *)
+  es_infer_vars_templ: CP.spec_var list;
+  es_infer_templ_assume: (CP.formula * CP.formula) list;
+  es_infer_templ: CP.exp list;
   (* output : pre pure inferred *)
   es_infer_pure : CP.formula list; 
   (* output : post inferred relation lhs --> rhs *)
@@ -8141,6 +8145,13 @@ let get_infer_vars_sel_post_hp_partial_ctx_list ls=
 if List.length ls == 0  then [] else 
   get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
+let rec add_infer_vars_templ_ctx ctx inf_vars_templ =
+  match ctx with
+  | Ctx es -> Ctx { es with es_infer_vars_templ = es.es_infer_vars_templ @ inf_vars_templ; }
+  | OCtx (ctx1, ctx2) -> 
+      OCtx (add_infer_vars_templ_ctx ctx1 inf_vars_templ,
+      add_infer_vars_templ_ctx ctx2 inf_vars_templ)
+
 let es_fv (es:entail_state) : CP.spec_var list =
   (fv es.es_formula)@(h_fv es.es_heap)
 
@@ -8204,7 +8215,10 @@ let empty_es flowt grp_lbl pos =
   (* es_subst_ref = []; *)
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
+  es_infer_vars_templ = [];
   es_infer_heap = []; (* HTrue; *)
+  es_infer_templ = [];
+  es_infer_templ_assume = [];
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
   es_infer_rel = [] ;
   es_infer_hp_rel = [] ;
@@ -8224,7 +8238,7 @@ let flatten_context ctx0=
   helper ctx0
 
 let es_fv es=
-  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@
+  CP.remove_dups_svl ((fv es.es_formula)@(es.es_infer_vars_rel)@es.es_infer_vars_hp_rel@es.es_infer_vars_templ@
       (List.fold_left (fun ls (_,p1,p2) -> ls@(CP.fv p1)@(CP.fv p2)) [] es.es_infer_rel)@
       (List.fold_left (fun ls hprel -> ls@(fv hprel.hprel_lhs)@(fv hprel.hprel_rhs)) [] es.es_infer_hp_rel))
 
@@ -8958,6 +8972,16 @@ let rec collect_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+let rec collect_templ ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_templ 
+  | OCtx (ctx1, ctx2) -> (collect_templ ctx1) @ (collect_templ ctx2)
+
+let rec collect_templ_assume ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_infer_templ_assume
+  | OCtx (ctx1, ctx2) -> (collect_templ_assume ctx1) @ (collect_templ_assume ctx2) 
+
 let rec collect_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_rel 
@@ -9278,12 +9302,15 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
+        es_infer_vars_templ = es.es_infer_vars_templ;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
         es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
+        es_infer_templ = es.es_infer_templ;
+        es_infer_templ_assume = es.es_infer_templ_assume;
         es_infer_pure = es.es_infer_pure;
         es_infer_rel = es.es_infer_rel;
         es_infer_hp_rel = es.es_infer_hp_rel;
@@ -11263,6 +11290,38 @@ let trans_context (c: context) (arg: 'a)
   in
   trans_c c arg
 
+let trans_list_context (c: list_context) (arg: 'a) f_c f_c_arg f_comb: (list_context * 'b) =
+  match c with
+  | FailCtx fc -> (c, f_comb [])
+  | SuccCtx sc -> 
+      let n_sc, acc = List.split (List.map (fun c -> trans_context c arg f_c f_c_arg f_comb) sc) in
+      (SuccCtx sc, f_comb acc)
+
+let trans_branch_ctx (c: branch_ctx) (arg: 'a) f_c f_c_arg f_comb : (branch_ctx * 'b) = 
+  let trace, ctx = c in
+  let n_ctx, acc = trans_context ctx arg f_c f_c_arg f_comb in
+  ((trace, n_ctx), acc)
+
+let trans_failesc_context (c: failesc_context) (arg: 'a) f_c f_c_arg f_comb : (failesc_context * 'b) =
+  let bf, es, bc = c in
+  let n_bc, acc = List.split (List.map (fun c -> trans_branch_ctx c arg f_c f_c_arg f_comb) bc) in 
+  ((bf, es, n_bc), f_comb acc)
+
+let trans_list_failesc_context (c: list_failesc_context)
+  (arg: 'a) f_c f_c_arg f_comb : (list_failesc_context * 'b) =
+  let n_c, acc = List.split (List.map (fun ctx -> trans_failesc_context ctx arg f_c f_c_arg f_comb) c) in
+  (n_c, f_comb acc)
+
+let trans_partial_context (c: partial_context) (arg: 'a) f_c f_c_arg f_comb: (partial_context * 'b) =
+  let bf, bc = c in
+  let n_bc, acc = List.split (List.map (fun c -> trans_branch_ctx c arg f_c f_c_arg f_comb) bc) in 
+  ((bf, n_bc), f_comb acc)
+
+let trans_list_partial_context (c: list_partial_context)
+  (arg: 'a) f_c f_c_arg f_comb : (list_partial_context * 'b) =
+  let n_c, acc = List.split (List.map (fun ctx -> trans_partial_context ctx arg f_c f_c_arg f_comb) c) in
+  (n_c, f_comb acc)
+
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason _ -> c
@@ -11664,6 +11723,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
       es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_templ = es.es_infer_vars_templ;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
           es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
@@ -11671,6 +11731,7 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
+          es_infer_templ_assume = es.es_infer_templ_assume;
           es_infer_hp_rel = es.es_infer_hp_rel;
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;
@@ -11706,13 +11767,16 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_templ = es.es_infer_vars_templ;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
           es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
           es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
+          es_infer_templ = es.es_infer_templ;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
+          es_infer_templ_assume = es.es_infer_templ_assume;
           es_infer_hp_rel = es.es_infer_hp_rel;
           es_group_lbl = es.es_group_lbl;
           es_term_err = es.es_term_err;
@@ -12635,7 +12699,13 @@ let rec norm_specs (sp:struc_formula) : struc_formula = match sp with
 		  then match b.formula_struc_continuation with | None -> mkETrue  (mkTrueFlow ()) no_pos |Some l -> norm_specs l
           else  EBase {b with formula_struc_continuation = map_opt norm_specs b.formula_struc_continuation}
     | EAssume _ -> sp
-    | EInfer b -> norm_specs b.formula_inf_continuation (* eliminate EInfer where possible *)
+    | EInfer b ->
+        (* Template: Keep the infer vars of template for other methods in SCC *)
+        let templ_vars = List.filter (fun (CP.SpecVar (t, _, _)) -> is_FuncT t) b.formula_inf_vars in
+        if templ_vars = [] then norm_specs b.formula_inf_continuation (* eliminate EInfer where possible *)
+        else EInfer { b with
+          formula_inf_vars = templ_vars;
+          formula_inf_continuation = norm_specs b.formula_inf_continuation }
 	| EList b -> mkEList_no_flatten (map_l_snd norm_specs b)
 
 let rec simplify_post post_fml post_vars = match post_fml with
@@ -12734,7 +12804,9 @@ let rec simplify_ann (sp:struc_formula) : struc_formula = match sp with
     | EAssume b -> EAssume {b with
 		formula_assume_simpl = remove_lend (simplify_fml_ann b.formula_assume_simpl);
 		formula_assume_struc = simplify_ann b.formula_assume_struc;}
-    | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
+    | EInfer b -> 
+        (* report_error no_pos "Do not expect EInfer at this level" *)
+        EInfer { b with formula_inf_continuation = simplify_ann b.formula_inf_continuation; }
 	| EList b -> mkEList_no_flatten (map_l_snd simplify_ann b)
 
 let rec get_vars_without_rel pre_vars f = match f with
@@ -13131,10 +13203,13 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
-      let lexvar = 
-        if is_primitive then  CP.mkLexVar Term [] [] no_pos
-        else CP.mkLexVar MayLoop [] [] no_pos in 
-      mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
+      if !en_term_inf && not is_primitive then struc_f
+      else
+        let lexvar = 
+          if is_primitive then CP.mkLexVar Term [] [] no_pos 
+          else CP.mkLexVar MayLoop [] [] no_pos 
+        in
+        mkEBase_with_cont (CP.mkPure lexvar) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList_no_flatten (map_l_snd (norm_struc_with_lexvar is_primitive) b)
 
@@ -14673,6 +14748,7 @@ let elim_prm e =
     | CP.Tsconst _
     | CP.FConst _ 
     | CP.Func _
+    | CP.Template _
     | CP.ArrayAt _ -> Some e 
     | CP.Var (v,p)-> Some (CP.Var (nv v, p))
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))

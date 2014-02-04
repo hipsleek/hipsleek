@@ -32,7 +32,7 @@ let rec coq_of_typ = function
   | Pointer _
   | Tree_sh 	  -> "int"
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
-  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | HpT->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -134,6 +134,8 @@ and coq_of_exp e0 =
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
     | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Template t -> coq_of_exp (CP.exp_of_template t)
+
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""
