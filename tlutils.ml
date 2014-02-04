@@ -2,9 +2,9 @@ open Globals
 open Gen
 open Cpure
 
-module C = Cast
-module TP = Tpdispatcher
-module DD = Debug 
+(* module C = Cast *)
+(* module TP = Tpdispatcher *)
+(* module DD = Debug *)
 
 let diff = Gen.BList.difference_eq eq_spec_var
 let mem = Gen.BList.mem_eq eq_spec_var
@@ -12,13 +12,13 @@ let subset = Gen.BList.subset_eq eq_spec_var
 let intersect = Gen.BList.intersect_eq eq_spec_var
 let overlap = Gen.BList.overlap_eq eq_spec_var
 
-let is_sat f = TP.is_sat_sub_no 0 f (ref 0) 
+let is_sat f = Tpdispatcher.is_sat_sub_no 0 f (ref 0) 
 
 (***********************************)
 (* PREPROCESSING FOR PURE FORMULAE *)
 (***********************************)
 
-(* Functions for normalizing constraints *)
+(* Functions for normalizing integral constraints *)
 let normalize_ineq (b: b_formula): b_formula =
   let (pf, il) = b in
   let pf = match pf with
@@ -79,17 +79,15 @@ let normalize_mult (e: exp): exp =
     let f_a arg _ = arg in
     let f_c cl = List.fold_left (fun a c -> a || c) false cl in
     trans_exp e () f_e f_a f_c 
-  (* 
-  and helper (e: exp): exp * bool =
-    let pr = !print_exp in
-    DD.no_1 "normalize_mult_helper" pr (pr_pair pr string_of_bool)
-    helper_x e
-  *)
+  (* and helper (e: exp): exp * bool = *)
+  (*   let pr = !print_exp in *)
+  (*   Debug.no_1 "normalize_mult_helper" pr (pr_pair pr string_of_bool) *)
+  (*   helper_x e *)
   in fst (helper e)
 
 let normalize_mult (e: exp): exp =
   let pr = !print_exp in
-  DD.no_1 "tl_normalize_mult" pr pr normalize_mult e
+  Debug.no_1 "tl_normalize_mult" pr pr normalize_mult e
 
 (* 2*z*3 --> 6*z *) 
 let normalize_const_mult (el: exp list) pos: exp list =
@@ -99,7 +97,7 @@ let normalize_const_mult (el: exp list) pos: exp list =
 
 let normalize_const_mult (el: exp list) pos: exp list =
   let pr = pr_list !print_exp in
-  DD.no_1 "tl_normalize_const_mult" pr pr 
+  Debug.no_1 "tl_normalize_const_mult" pr pr 
   (fun _ -> normalize_const_mult el pos) el
 
 let normalize_const_add (el: exp list) pos: exp list =
@@ -199,7 +197,7 @@ let is_same_degree (t1: term) (t2: term): bool =
 
 let is_same_degree (t1: term) (t2: term): bool =
   let pr = print_term in
-  DD.no_2 "tl_is_same_degree" pr pr string_of_bool
+  Debug.no_2 "tl_is_same_degree" pr pr string_of_bool
     is_same_degree t1 t2
 
 let merge_term_list (tl: term list) deg pos: term =
@@ -298,7 +296,7 @@ let normalize_b_formula (b: b_formula): b_formula =
 
 let normalize_b_formula (b: b_formula): b_formula =
   let pr = !print_b_formula in
-  DD.no_1 "tl_normalize_b_formula" pr pr normalize_b_formula b
+  Debug.no_1 "tl_normalize_b_formula" pr pr normalize_b_formula b
 
 let normalize_formula (f: formula): formula =
   let f_b b = Some (normalize_b_formula b) in
@@ -390,7 +388,7 @@ let rec most_common_nonlinear_vars nl =
 let most_common_nonlinear_vars nl = 
   let pr1 = !print_svl in
   let pr2 = pr_list pr1 in
-  DD.no_1 "most_common_nonlinear_vars" pr2 pr1
+  Debug.no_1 "most_common_nonlinear_vars" pr2 pr1
   most_common_nonlinear_vars nl
 
 let get_model_z3 is_linear templ_unks vars assertions =
@@ -522,8 +520,8 @@ let split ls =
   in 
   List.sort (fun (p1, _) (p2, _) -> (List.length p1) - (List.length p2)) (helper ls)
 
-(* Determine the constraint on nonlinear lambda variable x 
- * x >= 0 or x = 0 or x > 0 *)
+(* Determine the constraint on nonlinear lambda variable lbd 
+ * lbd >= 0 or lbd = 0 or lbd > 0 *)
 let partition_nln_vars nln_vars sst asserts =
   let must_be_positive_var v sst asserts =
     (* If v = 0 causes UNSAT *)
@@ -551,7 +549,7 @@ let norm_sst_pos vl sst =
 let norm_sst_pos vl sst =
   let pr1 = !print_svl in
   let pr2 = pr_list (pr_pair !print_sv !print_exp) in
-  DD.no_2 "norm_sst_pos" pr1 pr2 (pr_pair pr1 pr2)
+  Debug.no_2 "norm_sst_pos" pr1 pr2 (pr_pair pr1 pr2)
   norm_sst_pos vl sst
 
 let norm_sst_zero vl sst =
@@ -657,9 +655,9 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
     let ln_r = Omega.get_model bnd_vars n_asserts in
 
     let _ = 
-      DD.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
-      DD.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
-      DD.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
+      Debug.tinfo_pprint ">>>>>>> search_model_ln <<<<<<<" no_pos;
+      Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) n_asserts no_pos;
+      Debug.tinfo_hprint (add_str "linear constrs: " !print_formula) ln_r no_pos 
     in
 
     if is_False ln_r then
@@ -674,9 +672,9 @@ and search_model_ln_x pos_zero_vars bnd_vars nln_vars templ_unks sst asserts =
       let r = Omega.get_model bnd_vars templ_unk_constrs in
 
       let _ = 
-        DD.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
-        DD.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
-        DD.tinfo_hprint (add_str "simpl unk constrs: " !print_formula) r no_pos 
+        Debug.tinfo_hprint (add_str "nonlinear constrs: " !print_formula) ln_r no_pos;
+        Debug.tinfo_hprint (add_str "unk constrs: " (pr_list !print_formula)) templ_unk_constrs no_pos;
+        Debug.tinfo_hprint (add_str "simpl unk constrs: " !print_formula) r no_pos 
       in
 
       if is_False r then
@@ -707,11 +705,11 @@ let get_model_ln is_linear templ_unks vars assertions =
   let pos_vars = lcm::pos_vars in
 
   let _ = 
-    DD.tinfo_pprint ">>>>>>> get_model_ln <<<<<<<" no_pos;
-    DD.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) assertions no_pos; 
-    DD.tinfo_hprint (add_str "linearized asserts: " (pr_list !print_formula)) ln_asserts no_pos;
-    DD.tinfo_hprint (add_str "pos vars: " !print_svl) pos_vars no_pos;
-    DD.tinfo_hprint (add_str "nneg: " !print_svl) nneg_vars
+    Debug.tinfo_pprint ">>>>>>> get_model_ln <<<<<<<" no_pos;
+    Debug.tinfo_hprint (add_str "asserts: " (pr_list !print_formula)) assertions no_pos; 
+    Debug.tinfo_hprint (add_str "linearized asserts: " (pr_list !print_formula)) ln_asserts no_pos;
+    Debug.tinfo_hprint (add_str "pos vars: " !print_svl) pos_vars no_pos;
+    Debug.tinfo_hprint (add_str "nneg: " !print_svl) nneg_vars
   in
 
   let ln_asserts = 
@@ -725,7 +723,7 @@ let get_model_ln is_linear templ_unks vars assertions =
   
 let get_model_ln is_linear templ_unks vars assertions =
   let pr = pr_list !print_formula in
-  DD.no_1 "get_model_ln" pr print_solver_res
+  Debug.no_1 "get_model_ln" pr print_solver_res
   (fun _ -> get_model_ln is_linear templ_unks vars assertions) assertions
 
 let get_model is_linear templ_unks vars assertions =
@@ -737,7 +735,7 @@ let get_model is_linear templ_unks vars assertions =
 let get_model is_linear templ_unks vars assertions =
   let pr1 = !print_svl in
   let pr2 = pr_list !print_formula in
-  DD.no_3 "tl_get_model" pr1 pr1 pr2 print_solver_res
+  Debug.no_3 "tl_get_model" pr1 pr1 pr2 print_solver_res
   (fun _ _ _ -> get_model is_linear templ_unks vars assertions)
     templ_unks vars assertions
   
@@ -758,10 +756,10 @@ let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
   let inf_templ_decls = match inf_templs with
   | [] -> templ_decls
   | _ -> List.find_all (fun tdef -> List.exists (fun id -> 
-      id = tdef.C.templ_name) inf_templs) templ_decls
+      id = tdef.Cast.templ_name) inf_templs) templ_decls
   in
   let res_templ_decls = List.map (fun tdef -> { tdef with
-    C.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.C.templ_body; 
+    Cast.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.Cast.templ_body; 
   }) inf_templ_decls in
   res_templ_decls
 
