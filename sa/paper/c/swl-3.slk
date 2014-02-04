@@ -2,8 +2,10 @@ data node{
 	int val;
 	node next;
 }.
-
-
+/*
+pred lseg<p> == self=p or self::node<_,q>*q::lseg<p>
+ inv true.
+*/
 pred KK<p,t> == self::node<_,p>*p::node<_,t>
  inv self!=null.
 /* 
@@ -43,7 +45,7 @@ pred K3<p,t> == self::node<_,p>*p::KK<t,_>
 
 
  */
-/*
+
 pred HP0<sent> ==
                        self::node<val,next>@M&self!=sent
                        or emp&self!=sent & self=null
@@ -51,11 +53,10 @@ inv self!=sent.
 
 pred GG1<cur':node,p,sent> == self::node<_,p>@M * p::HP0<cur'> &cur'=sent
 inv self!=null.
-*/
+
 
 
 /*
-
  view HP0[]<sent:node>= view HP0<sent:node>= 
   ECase case {
          self!=null -> EBase exists (Expl)[](Impl)[val; 
@@ -67,11 +68,9 @@ inv self!=null.
          
          }
 
-
 view GG1[]<cur':node,p:node,sent:node>= view GG1<cur':node,p:node,
                                          sent:node>= 
   EBase self::GG1_64<p,sent>@M&{FLOW,(1,24)=__flow}[]
- 
 */
 
 checkentail x::node<_,b>*b::KK<c,d> |- x::K2<bb,cc,dd>.

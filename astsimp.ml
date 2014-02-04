@@ -1403,7 +1403,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let cviews = List.map (trans_view prog []) tmp_views in
           let cviews1 =
             (*todo: after elim useless, update methos specs. tmp: do not elim*)
-            if !Globals.pred_elim_useless then
+            if !Globals.norm_elim_useless (* !Globals.pred_elim_useless  *)then
               Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
             else cviews
           in
@@ -9004,7 +9004,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
   let cviews0 = List.map (fun (vdecl,tis) -> trans_view iprog tis vdecl) tmp_new_views in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let cviews =
-    if !Globals.pred_elim_useless then
+    if !Globals.norm_elim_useless (* !Globals.pred_elim_useless  *)then
       Norm.norm_elim_useless cviews0 (List.map (fun vdef -> vdef.C.view_name) cviews0)
     else cviews0
   in

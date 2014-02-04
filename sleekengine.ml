@@ -557,7 +557,7 @@ let convert_data_and_pred_to_cast_x () =
   let cviews = List.map (Astsimp.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let cviews =
-    if !Globals.pred_elim_useless then
+    if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
     else cviews
   in

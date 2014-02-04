@@ -502,7 +502,11 @@ let cont_para_analysis_x cprog cviews=
     match rem_cviews with
       | [] -> done_cviews
       | vdef::rest ->
-            let new_vdef = cont_para_analysis_view cprog vdef done_cviews in
+            (*if non recursive then not check*)
+            let new_vdef = if vdef.Cast.view_is_rec then
+              cont_para_analysis_view cprog vdef done_cviews
+            else vdef
+            in
             loop_helper rest (done_cviews@[new_vdef])
   in
   loop_helper cviews []
