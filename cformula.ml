@@ -2251,7 +2251,7 @@ and mk_Conj f1 f2 p =
   else Conj ({h_formula_conj_h1 = f1; 
               h_formula_conj_h2 = f2; 
               h_formula_conj_pos = p})
-              
+
 and mk_ConjStar f1 f2 p =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
@@ -2397,17 +2397,17 @@ and h_fv_node_x v perm ann param_ann vs =
   let pvars = fv_cperm perm in
   let avars = (CP.fv_ann ann) in
   let avars = if (!Globals.allow_field_ann) then avars @ (CP.fv_ann_lst param_ann)  else avars in
-  let pvars = 
-    if pvars==[] then 
-      pvars 
-    else 
+  let pvars =
+    if pvars==[] then
+      pvars
+    else
       let var = List.hd pvars in
       if (List.mem var vs) then [] else pvars
   in
   let vs=avars@pvars@vs in
   if List.mem v vs then vs else v :: vs
 
-and f_h_fv (f : formula) : CP.spec_var list = 
+and f_h_fv (f : formula) : CP.spec_var list =
 	(* let rec helper h = match h with *)
 	(*   | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2) *)
 	(*   | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2) *)
@@ -2420,7 +2420,7 @@ and f_h_fv (f : formula) : CP.spec_var list =
 	  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
 	  | Base b -> h_fv b.formula_base_heap
 	  | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars 
-	
+
 and h_fv (h : h_formula) : CP.spec_var list = 
   Debug.no_1 "h_fv" !print_h_formula !print_svl h_fv_x h
 
@@ -2459,7 +2459,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
-  
+
 and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list =
   let pr1 = !print_struc_formula in
   let pr2 = !print_svl in
@@ -2471,7 +2471,7 @@ and f_top_level_vars_struc_x (f:struc_formula) : CP.spec_var list = match f with
   | EAssume _ -> []
   | EInfer b -> f_top_level_vars_struc_x b.formula_inf_continuation
   | EList b -> fold_l_snd f_top_level_vars_struc_x b
-        
+
 and f_top_level_vars_x (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h}) -> (top_level_vars h)
   | Or ({ formula_or_f1 = f1;

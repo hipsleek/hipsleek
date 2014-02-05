@@ -5,14 +5,15 @@ data node {
 
 HeapPred H(node a).
 HeapPred G(node a).
+HeapPred G1(node a, int r).
 
 
 
 /* return the tail of a singly linked list */
 int get_size(node x)
-  infer[H,G]
+  infer[H,G1]
   requires H(x)
-  ensures G(x);
+     ensures G1(x,res);
 {
 	if(x==null) 
 		return 0;

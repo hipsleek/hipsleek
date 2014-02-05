@@ -11,6 +11,53 @@ requires x::node<val,next>@M * HP_907(next) or emp&x=null
 ensures  x::node<val,res>@M * HP_907(res) or emp&x=null & res=null;
 
 =====================================================================
+
+--sa-dnc --sa-error
+
+#ll-next.ss
+
+case {
+  x=null ->
+    ensures emp & x1=null & res=null & res=x1;
+  x!=null ->
+    requires x::node<val,DP>@M & true
+    ensures  x1::node<val,res>@M & true;;
+}
+
+#ll-insert.ss
+
+case {
+  x!=null & x.next=null ->
+    requires x::node<val,next>@M & next=null
+    ensures  x::node<val,v>@M * v::node<a',tmp>@M & tmp=null;
+  x!=null & x.next!=null ->
+    requires x::node<val,next>@M * H(next) & next!=null & x!=null
+    ensures  x::node<val,next>@M * G(next) & next!=null;
+  x=null -> error
+}
+
+#ll-get-size.ss
+
+case {
+  x=null ->
+    ensures  emp & res=0 & x=null;
+  x!=null ->
+    requires x::node<val,next>@M * H(next)
+    ensures  x::node<val,next>@M * G(next,a) & res=1+a;;
+}
+
+#ll-traverse.ss
+
+case {
+  x!=null & x.next=null ->
+    requires x::node<val,next>@M & next=null
+    ensures  x1:;node<val,x>@M & x = null;
+  x!=null & x.next!=null ->
+    requires x::node<val,next>@M * H(next) & next!=null & x!=null
+    ensures  x::node<val,next>@M * HP_949(next) & next!=null;
+  x=null -> error
+}
+
 =====================================================================
 =====================================================================
 =====================================================================

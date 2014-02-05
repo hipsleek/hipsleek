@@ -445,7 +445,7 @@ let pr_fn_args op f xs = match xs with
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
-  
+
   (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox sep f xs = 
   pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
@@ -2487,7 +2487,7 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
   | ECase {formula_case_branches = case_list} ->
     pr_args (Some("V",2)) (Some "A") "case " "{" "}" ""
     (
-      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+      fun (c1,c2) -> wrap_box ("H",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
         (fun () -> pr_struc_formula_for_spec1 c2; fmt_string ";")
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
