@@ -22,10 +22,10 @@ let is_sat f = Tpdispatcher.is_sat_sub_no 0 f (ref 0)
 let normalize_ineq (b: b_formula): b_formula =
   let (pf, il) = b in
   let pf = match pf with
-  | Lt (e1, e2, pos) -> 
+  | Lt (e1, e2, pos) ->
       (* e1 < e2 --> e1 - e2 + 1 <= 0 *)
       mkLte (mkAdd (mkSubtract e1 e2 pos) (mkIConst 1 pos) pos) (mkIConst 0 pos) pos
-  | Lte (e1, e2, pos) -> 
+  | Lte (e1, e2, pos) ->
       (* e1 <= e2 --> e1 - e2 <= 0 *)
       mkLte (mkSubtract e1 e2 pos) (mkIConst 0 pos) pos
   | Gt (e1, e2, pos) ->
@@ -79,10 +79,10 @@ let normalize_mult (e: exp): exp =
     let f_a arg _ = arg in
     let f_c cl = List.fold_left (fun a c -> a || c) false cl in
     trans_exp e () f_e f_a f_c 
-  (* and helper (e: exp): exp * bool = *)
-  (*   let pr = !print_exp in *)
+  (* and helper (e: exp): exp * bool =                                   *)
+  (*   let pr = !print_exp in                                            *)
   (*   Debug.no_1 "normalize_mult_helper" pr (pr_pair pr string_of_bool) *)
-  (*   helper_x e *)
+  (*   helper_x e                                                        *)
   in fst (helper e)
 
 let normalize_mult (e: exp): exp =
@@ -223,8 +223,6 @@ let rec partition_term_list (tl: term list) pos: term list =
 (* svl is the list of variables, it is used 
  * to distinguish the list of unknowns *)
 let term_list_of_exp svl (e: exp): term list =
-  let pos = pos_of_exp e in
-
   let e = normalize_sub e in
   let e = normalize_mult e in
   
@@ -459,7 +457,7 @@ let get_opt_model is_linear templ_unks vars assertions =
 let get_model is_linear templ_unks vars assertions =
   get_opt_model is_linear templ_unks vars assertions
 
-(* a*b*c -> ab*c -> a_b_c *)
+(* a*b*c -> a_b*c -> a_b_c *)
 let linearize_nonlinear_formula f = 
   let f_arg arg _ = arg in
   let rec helper (e: exp): exp * (spec_var * exp) list =
@@ -574,6 +572,7 @@ let norm_rational_asserts asserts =
   in 
   lcm_denom, List.map (transform_formula (nonef, nonef, nonef, f_b, nonef)) asserts
 
+(* If v = vp - vm then |v| = vp + vm *)
 let get_abs_model is_linear templ_unks vars assertions = 
   let pos = no_pos in
   let abs_obj_vars = List.map (fun v ->
@@ -772,6 +771,78 @@ let subst_model_to_formula sst f =
     | _ -> None
   in
   transform_formula (nonef, nonef, nonef, nonef, f_e) f
+  
+let find_eq_subst_exp svl (f: formula): (spec_var * exp) option =
+  match f with
+  | BForm (bf, _) -> (match bf with
+    | Eq (e1, e2, pos), _ -> 
+      if (is_arith_exp e1) && (is_arith_exp e2) then
+        let tl = term_list_of_exp svl (mkSubtract e1 e2 pos) in
+        let eq_vars, eq_exp = List.fold_left (fun (a1, a2) t ->
+          match t.term_var with
+          | (v, 1)::[] -> begin match t.term_coe with
+            | IConst (1, _) -> (a1 @ [(v, true, t)], a2)
+            | IConst (-1, _) -> (a1 @ [(v, false, t)], a2)
+            | _ -> (a1, a2 @ [t])
+            end
+          | _ -> (a1, a2 @ [t])
+        ) ([], []) tl in
+        match eq_vars with
+        | [] -> None
+        | (v, sign, _)::vs -> 
+          let eq_v_term = (List.map (fun (_, _, t) -> t) vs) @ eq_exp in
+          let eq_v_exp = exp_of_term_list eq_v_term pos in
+          if not sign then Some (v, eq_v_exp)
+          else Some (v, mkSubtract (mkIConst 0 pos) eq_v_exp pos) 
+      else None
+    | _ -> None)
+  | _ -> None
+
+let norm_subst svl subst =
+  let rec helper subst = 
+    let grouped_subst = partition_by_assoc eq_spec_var subst in
+    if (List.length grouped_subst) == (List.length subst) then subst
+    else
+      (* (x, e1), (x, e2) --> (e1 = e2) *)
+      helper (List.fold_left (fun a s -> match s with
+      | [] -> a
+      | x::[] -> a @ [x]
+      | (v, e)::xs -> 
+        let pos = pos_of_exp e in
+        let n_xs = List.concat (List.map (fun (vs, es) -> 
+          let f = mkPure (mkEq e es pos)  in
+          let s = find_eq_subst_exp svl f in
+          match s with
+          | None -> []
+          | Some s -> [s]) xs) in
+        a @ ((v, e)::n_xs)) [] grouped_subst) 
+  in
+  let normalized_subst = helper subst in
+  (* We assume that trivial and cyclic substs like 
+   * (x1, x2) and (x2, x1) have been remove by simplify *)
+  let sorted_subst = List.sort (fun (v1, e1) (v2, e2) -> 
+    if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1
+    else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1
+    else 0) normalized_subst in
+  List.fold_left (fun subst (v, e) -> 
+    (v, a_apply_par_term subst e)::(List.remove_assoc v subst)) sorted_subst sorted_subst
+
+let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
+  let fl = split_conjunctions f in
+  let fl, subst = List.fold_left (fun (fa, sa) f ->
+    match find_eq_subst_exp svl f with
+    | None -> (fa @ [f], sa)
+    | Some s -> (fa, sa @ [s])) ([], []) fl in
+  (* let subst = List.map (fun (v, e) -> (v, a_apply_par_term subst e)) subst in *)
+  let subst = norm_subst svl subst in
+  (apply_par_term subst (join_conjunctions fl), subst)
+
+let find_eq_subst_formula svl (f: formula): formula * (spec_var * exp) list =
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !print_sv !print_exp) in
+  let pr3 = pr_pair pr1 pr2 in
+  Debug.no_1 "find_eq_subst_formula" pr1 pr3 
+  (fun _ -> find_eq_subst_formula svl f) f
 
 (* Stack for SLEEK generation per scc *)
 let templ_sleek_scc_stk: (spec_var list * formula * formula) Gen.stack = new Gen.stack
