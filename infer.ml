@@ -91,7 +91,7 @@ let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == [])
 
 let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
 
-let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate)
+let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
 
 
 let remove_infer_vars_all estate =
@@ -875,7 +875,7 @@ let rec infer_pure_m_x unk_heaps estate lhs_rels lhs_xpure_orig lhs_xpure0
       let hps = CF.get_hp_rel_name_h_formula hf in
       CP.diff_svl hps iv_orig = []
   ) unk_heaps in
-  if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate && no_infer_templ estate) || (lhs_rels==None)) 
+  if (iv_orig)==[] && unk_heaps==[] && ((no_infer_all_all estate) || (lhs_rels==None)) 
   then 
     (* let _ = Debug.info_pprint "exit" no_pos in *)
     (None,None,[])
@@ -1501,7 +1501,7 @@ let infer_pure_m i unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure p
     (add_str "rhs xpure " pr1)
     (add_str "(new es,inf pure,rel_ass) " pr_res)
   (fun _ _ _ _ -> infer_pure_m unk_heaps estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
-    estate lhs_xpure lhs_xpure0 rhs_xpure   
+    estate lhs_xpure lhs_xpure0 rhs_xpure
 
 let infer_pure_top_level_aux estate unk_heaps
   ante1 ante0 m_lhs split_conseq pos =
@@ -1517,7 +1517,7 @@ let infer_pure_top_level_aux estate unk_heaps
 
 let infer_pure_top_level estate unk_heaps
   ante1 ante0 m_lhs split_conseq pos = 
-  if no_infer_all_all estate && no_infer_templ estate then [(None,None,[],[],false,ante1)]
+  if no_infer_all_all estate then [(None,None,[],[],false,ante1)]
   else
     let ante0_pure = MCP.pure_of_mix ante0 in
     (* TODO: filter_var with relations *)

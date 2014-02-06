@@ -72,19 +72,19 @@ let replace_eq_conseq (cons: formula): formula =
   let pr = !print_formula in
   Debug.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
 
-let simplify_templ_conseq (should_simpl_untempl: bool) (cons: formula) =
+let simplify_templ_conseq (should_simpl_no_templ: bool) (cons: formula) =
   let cons = replace_eq_conseq cons in
   let cons_l = split_conjunctions cons in
   let cons_l =
     (* If there is no unknowns template in the LHS *)
     (* then we can remove non-template formulas in *)
     (* RHS as they have been already proved        *)
-    if not (should_simpl_untempl) then List.filter has_template_formula cons_l 
+    if (should_simpl_no_templ) then List.filter has_template_formula cons_l 
     else cons_l
   in cons_l
 
 let collect_templ_assume_conj_rhs (es: CF.entail_state) (ante: formula) (cons: formula) pos =
-  let cons_l = simplify_templ_conseq (has_template_formula ante) cons in
+  let cons_l = simplify_templ_conseq (not (has_template_formula ante)) cons in
   let es = List.fold_left (fun es cons ->
     let es = collect_templ_assume_rhs es ante cons pos in
     es) es cons_l in
@@ -230,7 +230,7 @@ let solve_templ_assume _ =
   let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
 
   let _ = 
-    if !gen_templ_slk then gen_slk_infer_templ_scc () 
+    if !gen_templ_slk then gen_slk_infer_templ_scc ()
     else ()
   in
     

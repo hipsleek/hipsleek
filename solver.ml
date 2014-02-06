@@ -8975,36 +8975,35 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
       (* what exactly is split_a_opt??? *)
-      let (i_res1,i_res2,i_res3),_ = 
-        if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
-	    else 
-		let _ = Debug.devel_pprint ("astaq?") no_pos in
-		let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-        (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+      let (i_res1, i_res2, i_res3), _ = 
+        if (MCP.isConstMTrue rhs_p) then ((true, [], None), None)
+        else 
+          let _ = Debug.devel_pprint ("astaq?") no_pos in
+          let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
+          (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
-      let i_res1,i_res2,i_res3 =
+      let i_res1, i_res2, i_res3 =
         if not(stk_estate # is_empty) 
-        then 
-          (true,[],None)
+        then (true, [], None)
         else
-          if i_res1==true 
-          then (i_res1,i_res2,i_res3)
+          if i_res1 == true 
+          then (i_res1, i_res2, i_res3)
           else
-            let finish_flag = 
+            let finish_flag =
               if (!Globals.delay_proving_sat && !smart_unsat_estate==None) then
                 if (!Globals.filtering_flag || (not !Globals.dis_ps))
                   (* !Globals.allow_pred_spec || !Globals.do_slicing *)
                 then 
-		  let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
+                  let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
                   let n_es = elim_unsat_es 11 prog (ref 1) estate in
                   if CF.isAnyFalseCtx n_es then  
-                    (smart_unsat_estate := Some (estate_of_context n_es no_pos);true)
+                    (smart_unsat_estate := Some (estate_of_context n_es no_pos); true)
                   else false
                 else false
               else false  in
             let _ = Debug.tinfo_hprint (add_str "finish_flag:" string_of_bool) finish_flag no_pos in
             if finish_flag 
-            then (true,[],None)
+            then (true, [], None)
             else
               let estate = Gen.unsome_safe !smart_unsat_estate estate in
               let res = 
