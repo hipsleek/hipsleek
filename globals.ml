@@ -743,6 +743,8 @@ let sa_en_split = ref false
 
 let pred_split = ref false
 
+let pred_seg_split = ref true
+
 (* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
@@ -792,7 +794,7 @@ let norm_elim_useless = ref false
 let norm_extract = ref false
 let allow_norm_disj = ref true
 
-let sa_fix_bound = ref 4
+let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 

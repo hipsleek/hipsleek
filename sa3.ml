@@ -2854,7 +2854,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
       is1
     else is
     in
-    let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in
+    (* let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in *)
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_link_hpargs in
     let hp_defs1,tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
     let cl_sel_hps, defs, tupled_defs2=
@@ -2930,7 +2930,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (*unify-post*)
   
   (*split pred*)
-  let n_all_hp_defs1, n_cmb_defs  = if !Globals.pred_split then
+  let n_all_hp_defs1a, n_cmb_defs  = if !Globals.pred_split then
     let n_all_hp_defs0c, split_map =
       let r = Sacore.pred_split_hp iprog prog unk_hps Infer.rel_ass_stk rel_def_stk n_all_hp_defs0b in
       r
@@ -2957,6 +2957,9 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else
     (n_all_hp_defs0b, n_cmb_defs0)
   in
+  let n_all_hp_defs1 = if !Globals.pred_seg_split then
+      Sacore.pred_seg_split_hp iprog prog unk_hps Infer.rel_ass_stk rel_def_stk n_all_hp_defs1a
+    else n_all_hp_defs1a in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = (* Sautil.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
@@ -2993,18 +2996,18 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
       (*   with _ -> [] *)
       (* in *)
       (* let callee_hps = List.map (fun (hpname,_,_) -> CF.get_hpdef_name hpname) callee_hpdefs in *)
-  let print_generated_slk_file ()=
-    let _ = if !Globals.sa_gen_slk then
-      let reg = Str.regexp "\.ss" in
-      let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
-      let file_name2 = "logs/mod_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in
-      (* WN : no file printing here, so misleading messages *)
-      (* let _ = print_endline ("\n generate: " ^ file_name1) in *)
-      (* let _ = print_endline ("\n generate: " ^ file_name2) in *)
-      ()
-    else ()
-    in ()
-  in
+  (* let print_generated_slk_file ()= *)
+  (*   let _ = if !Globals.sa_gen_slk then *)
+  (*     let reg = Str.regexp "\.ss" in *)
+  (*     let file_name1 = "logs/gen_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in *)
+  (*     let file_name2 = "logs/mod_" ^ (Str.global_replace reg ".slk" (List.hd !Globals.source_files)) in *)
+  (*     (\* WN : no file printing here, so misleading messages *\) *)
+  (*     (\* let _ = print_endline ("\n generate: " ^ file_name1) in *\) *)
+  (*     (\* let _ = print_endline ("\n generate: " ^ file_name2) in *\) *)
+  (*     () *)
+  (*   else () *)
+  (*   in () *)
+  (* in *)
   try 
     let callee_hps = [] in
     let _ = if !Globals.sap then
@@ -3033,10 +3036,10 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
               infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
     else ([],[])
     in
-    let _ = print_generated_slk_file () in
+    (* let _ = print_generated_slk_file () in *)
     r
   with _ ->
-      let _ = print_generated_slk_file () in
+      (* let _ = print_generated_slk_file () in *)
       let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
       ([],[])
 

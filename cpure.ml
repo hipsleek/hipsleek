@@ -11370,6 +11370,8 @@ let get_cmp_form_exp e1 e2=
 
 let get_cmp_form_p p=
   match p with
+    (* | Eq (e1,e2,_) *)
+    (* | Neq (e1,e2,_) *)
     | Lte (e1,e2,_)
     | Gte (e1,e2,_)
     | Gt (e1,e2,_)
@@ -11398,11 +11400,19 @@ let get_cmp_form p =
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
 
+let is_cmp_form_p p=
+  match p with
+    | Eq (e1,e2,_)
+    | Neq (e1,e2,_)
+    | Lte (e1,e2,_)
+    | Gte (e1,e2,_)
+    | Gt (e1,e2,_)
+    | Lt (e1,e2,_) -> (get_cmp_form_exp e1 e2) != []
+    | _ -> false
+
 let is_cmp_form p =
   match p with
-    | (BForm ((pf,_),_)) ->
-          let cmp_ps =  get_cmp_form_p pf in
-          cmp_ps != []
+    | (BForm ((pf,_),_)) -> is_cmp_form_p pf
     | _ -> false
 
 let rhs_needs_or_split f = 	match f with

@@ -1,0 +1,62 @@
+sll-delete
+Total verification time: 0.29 second(s)
+sll-reverse
+Total verification time: 0.19 second(s)
+sll-insert
+Total verification time: 0.21 second(s)
+sll-last
+Total verification time: 0.75 second(s)
+zip_paper_eq
+Total verification time: 0.32 second(s)
+zip_paper_leq
+Total verification time: 0.27 second(s)
+ sll-bubble.c
+Total verification time: 0.36 second(s)
+sll-insertsort.c
+Total verification time: 0.3 second(s)
+sll+head
+Total verification time: 0.71 second(s)
+sll+tail
+Total verification time: 0.72 second(s)
+skip-list2.ss
+Total verification time: 0.32 second(s)
+skip-list3.ss
+Total verification time: 0.46 second(s)
+check-sorted
+Total verification time: 0.27 second(s)
+check-CSll
+Total verification time: 0.23 second(s)
+CSll
+Total verification time: 0.23 second(s)
+check-CSllclls
+Total verification time: 0.32 second(s)
+ 0/1 SLLs
+Total verification time: 0.26 second(s)
+sll2dll
+Total verification time: 0.2 second(s)
+check-dll
+Total verification time: 0.23 second(s)
+dll-app
+Total verification time: 0.2 second(s)
+check-cdll
+Total verification time: 0.26 second(s)
+check-cdll5clls
+Total verification time: 0.66 second(s)
+check-cdllcllsx2
+Total verification time: 0.44 second(s)
+bt-search-2.ss
+Total verification time: 0.24 second(s)
+tree-parent.ss
+Total verification time: 0.29 second(s)
+rose-tree
+Total verification time: 0.3 second(s)
+swl
+Total verification time: 0.27 second(s)
+check mcf
+Total verification time: 0.28 second(s)
+tll
+Total verification time: 0.25 second(s)
+check tll
+Total verification time: 0.32 second(s)
+check tll-parent
+Total verification time: 0.35 second(s)

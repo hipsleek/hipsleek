@@ -385,6 +385,17 @@ let equal_flow_interval t1 t2 : bool =   is_eq_flow t1 t2
 
 let is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
 
+let isStrictConstTrue_wo_flow f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        (h==HEmp or h==HTrue) && MCP.isConstMTrue p
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+
 let isStrictConstTrue_x f = match f with
   | Exists ({ formula_exists_heap = h;
     formula_exists_pure = p;

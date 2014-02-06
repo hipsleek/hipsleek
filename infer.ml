@@ -2264,7 +2264,7 @@ let find_undefined_selective_pointers_x prog lfb lmix_f unmatched rhs_rest rhs_h
       (true (*TODO*), svl,[(rhs_hp, rhs_args)],selected_hpargs0,  ass_guard0)
     else
       let h_node, h_args = Sautil.get_h_node_cont_args_hf prog n_unmatched in
-      (* let _ = DD.info_zprint (lazy  (" h_args: " ^ (!CP.print_svl) h_args)) pos in *)
+      let _ = DD.ninfo_zprint (lazy  (" h_args: " ^ (!CP.print_svl) h_args)) pos in
       (* let h_args1 = if List.filter CP.is_node_typ h_args in *)
       let hrel_args1 = List.concat hrel_args in
       (*should include their closed ptrs*)
@@ -2884,6 +2884,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     eqset
   in
   (**********END INTERNAL***********)
+  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, rhs0, None) else
   let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
   (*for debugging*)
   (* DD.info_hprint (add_str  ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
@@ -2902,7 +2903,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     if CP.intersect ivs (lhrs@rhrs) = [] then
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
-        let _ = DD.info_pprint " no hp_rel found" pos in
+        let _ = DD.tinfo_pprint " no hp_rel found" pos in
         constant_checking prog rhs0 lhs_b0 rhs_b0 es0
             (* (false,es) *)
       end
@@ -3104,12 +3105,13 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
 
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
+  let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_quad string_of_bool pr4 Cprinter.string_of_h_formula
      (pr_option Cprinter.string_of_h_formula) in
-  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
-( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
+  Debug.no_3_num i "infer_collect_hp_rel" pr2 pr1 pr1 pr5
+( fun _ _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) es lhs_b rhs_b
 
 (*******************************************************)
 (*******************************************************)
@@ -3122,6 +3124,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
     let eqset = CP.EMapSV.build_eset subs in
     eqset
   in
+  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, []) else
   let es_cond_path = CF.get_es_cond_path es0 in
   let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
     let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhras []

@@ -2299,12 +2299,16 @@ let norm_elim_useless_paras_x prog unk_hps sel_hps post_hps hp_defs=
   (* let hp_defs1 = List.concat hp_defs1_scc in *)
   let hp_defs1 = hp_defs in let mutrec_defs = [] in
   let sel_pre_defs, sel_post_defs, rem = List.fold_left ( fun (r1,r2,r3) def ->
-      match def.CF.def_cat with
-        | CP.HPRelDefn (hp, r, others) ->
-              if CP.mem_svl hp post_hps then
-                (r1,r2@[(hp, r, others, def)],r3)
-              else (r1@[(hp, r, others, def)],r2,r3)
-        | _ -> (r1,r2,r3@[def])
+      if List.for_all (fun (f,_) -> Sautil.is_empty_f f || Cformula.isAnyConstFalse f) def.CF.def_rhs then
+        (r1,r2, r3@[def])
+      else
+        match def.CF.def_cat with
+          | CP.HPRelDefn (hp, r, others) ->
+                if CP.mem_svl hp unk_hps then (r1,r2,r3@[def]) else
+                  if CP.mem_svl hp post_hps then
+                    (r1,r2@[(hp, r, others, def)],r3)
+                  else (r1@[(hp, r, others, def)],r2,r3)
+          | _ -> (r1,r2,r3@[def])
   ) ([],[],[]) hp_defs1 in
   let n_pre_defs, ss1 = List.fold_left (fun (r1,r2) ((hp, r, non_r_args, def) as tuple_def) ->
       let ndefs, ss = check_and_elim true [] tuple_def in
@@ -2460,11 +2464,11 @@ let do_entail_check_x vars iprog cprog cs=
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
   else if vars = [] then
     (*add unsafe lemma (swl)*)
-    let ante1,conseq1 = update_explicit_root ante cs.CF.hprel_rhs in
-    let iante = Astsimp.rev_trans_formula ante1 in
-    let iconseq = Astsimp.rev_trans_formula conseq1 in
-    let l_coer = IA.mk_lemma (fresh_any_name "sa") LEM_UNSAFE IA.Left [] iante iconseq in
-    let _ = Lemma.manage_unsafe_lemmas [l_coer] iprog cprog in
+    (* let ante1,conseq1 = update_explicit_root ante cs.CF.hprel_rhs in *)
+    (* let iante = Astsimp.rev_trans_formula ante1 in *)
+    (* let iconseq = Astsimp.rev_trans_formula conseq1 in *)
+    (* let l_coer = IA.mk_lemma (fresh_any_name "sa") LEM_UNSAFE IA.Left [] iante iconseq in *)
+    (* let _ = Lemma.manage_unsafe_lemmas [l_coer] iprog cprog in *)
     ()
   else ()
   in
@@ -3795,8 +3799,11 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   in
   (*do seg split*)
   let _ = DD.ninfo_hprint (add_str "sing_hp_defs2: " ( pr_list_ln Cprinter.string_of_hp_rel_def)) sing_hp_defs2 no_pos in
-  let sing_hp_defs3 = List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def)
-  ) [] sing_hp_defs2 in
+  let sing_hp_defs3 = if not !Globals.pred_seg_split then
+    List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def)
+  ) [] sing_hp_defs2
+  else  sing_hp_defs2
+  in
   let tupled_hp_defs2 = List.map (fun def ->
       let fs,ogs = List.split def.CF.def_rhs in
       let f = CF.disj_of_list fs no_pos in
@@ -3816,6 +3823,34 @@ let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def l
   in
   Debug.no_2 "pred_split_hp" !CP.print_svl pr1 pr4
       (fun _ _ -> pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk hp_defs)  unk_hps hp_defs
+
+
+let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list) =
+  let sing_hp_defs, tupled_hp_defs, tupled_hps = List.fold_left (fun (s_hpdefs, t_hpdefs, t_hps)  hp_def->
+      match hp_def.CF.def_cat with
+        | CP.HPRelDefn _ -> (s_hpdefs@[hp_def], t_hpdefs, t_hps)
+        | CP.HPRelLDefn hps -> (s_hpdefs, t_hpdefs@[hp_def], t_hps@hps)
+        | _ -> (s_hpdefs, t_hpdefs@[hp_def], t_hps)
+  ) ([],[],[]) hp_defs
+  in
+  let closure_tupled_hps = find_closure_tuplep_hps tupled_hps sing_hp_defs in
+  let sing_hp_defs1a, tupled_hp_defs1  = if List.length closure_tupled_hps > List.length tupled_hps then
+    let sing_hp_defs2, tupled_hp_defs2 = List.partition (fun def ->
+        match def.CF.def_cat with
+            | CP.HPRelDefn (hp,_,_) -> not (CP.mem_svl hp closure_tupled_hps)
+            | _ -> false
+    ) sing_hp_defs
+    in
+    (sing_hp_defs2, tupled_hp_defs2@tupled_hp_defs)
+  else
+    sing_hp_defs,tupled_hp_defs
+  in
+  let sing_hp_defs1, sing_hp_def1b = List.partition (fun def ->
+      let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] def.CF.def_rhs in
+      if List.length fs < 1 then false else true) sing_hp_defs1a in
+  let sing_hp_defs2 = List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def)
+  ) [] sing_hp_defs1 in
+  (sing_hp_defs2@sing_hp_def1b@tupled_hp_defs1)
 
 (*=============**************************================*)
        (*=============END PRED SPLIT================*)

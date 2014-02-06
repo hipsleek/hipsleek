@@ -160,7 +160,7 @@ let rec is_empty_f f0=
                 (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
       | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in
         is_empty_f base_f
-      | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
   in
   helper f0
 
@@ -5100,7 +5100,8 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       let new_fs_wg = List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) fs_wg in
       (true, List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) orig_fs_wg, new_fs_wg,subst,[link_def],n_hp)
   in
-  let n_r, n_paras = if (CP.mem_svl r new_args) then r,(List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args)
+  let n_r, n_paras = if List.length args = List.length new_args || new_args = [] ||
+    (CP.mem_svl r new_args) then r,(List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args)
   else
     let n_r,non_r_args = find_root prog drop_hps new_args (List.map fst new_fs_wg) in
     n_r,non_r_args

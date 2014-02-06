@@ -3362,12 +3362,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       (match lhs with
                         | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
                               let (ce1, te1) = trans_exp prog proc lhs in
-                              (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
+                              let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in
                               let (ce2, te2) = trans_exp prog proc rhs in
-                              (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
+                              let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in
+                              let _ = print_string ("trans_exp :: te2 = " ^  Typeinfer.string_of_spec_var_kind te2 ^ "\n") in
+                              let _ = print_string ("trans_exp :: te1 = " ^  Typeinfer.string_of_spec_var_kind te1 ^ "\n") in
                               if not (sub_type te2 te1) then  Err.report_error {
                                   Err.error_loc = pos;
-                                  Err.error_text = "OpAssign : lhs and rhs do not match";  }
+                                  Err.error_text = "OpAssign : lhs and rhs do not match 2";  }
                               else
                                 (let v = C.get_var ce1 in
                                 let assign_e = C.Assign{
@@ -4880,7 +4882,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                           C.exp_assign_pos = pos;}), C.void_type)
                     else Err.report_error {
                         Err.error_loc = pos;
-                        Err.error_text = "lhs and rhs do not match"; } in
+                        Err.error_text = "lhs and rhs do not match 1"; } in
             (* let _ = print_string ("\n(andreeac)astsimp.ml flatten_to_bind_x, vs to become lent ann: " ^ (List.fold_left (fun x y -> x ^ " " ^ y) "" fresh_names) ^ ("\n   annf: " ^ (List.fold_left (fun x y -> x ^ (Cprinter.string_of_imm y)  ) ""  ann_list))) in *)
             let bind_fields =  List.combine field_types fresh_names in
             (* let bind_e = create_bind_exp bind_type ((Named dname), fn)  bind_fields  bind_body read_only pos pid_s in *)
