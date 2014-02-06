@@ -3,8 +3,9 @@ data node {
   node next;
 }
 
-HeapPred G2(node a, node b).
-HeapPred H1(node a).
+HeapPred H(node a, int v).
+HeapPred G(node a, node b).
+
 
 
 /*
@@ -26,9 +27,9 @@ node delete(node x, int a)
   /* ensures x::ll1<>; */
 
 //G1 can not be a lseg because y!=null
-  infer[H1,G2]
-  requires H1(x)
-     ensures G2(res,x) ;
+  infer[H,G]
+  requires H(x,a)
+     ensures G(x,res) ;
 	//requires x::H1_delete<> ensures res::G2_delete<x>;
 
 
