@@ -97,6 +97,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
   | Iast.ArrayAt e -> e.Iast.exp_arrayat_pos
   | Iast.ArrayAlloc e -> e.Iast.exp_aalloc_pos
   | Iast.Assert e -> e.Iast.exp_assert_pos
+  | Iast.MustAssert e -> e.Iast.exp_must_assert_pos (* ADI: MustAssert *)
   | Iast.Assign e -> e.Iast.exp_assign_pos
   | Iast.Binary e -> e.Iast.exp_binary_pos
   | Iast.Bind e -> e.Iast.exp_bind_pos
@@ -1277,6 +1278,17 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   }
             | None -> exp
       )
+
+      (* ADI: MustAssert *)
+    | Iast.MustAssert a -> (
+        match a.Iast.exp_must_assert_asserted_formula with
+          | Some (f, b) ->
+              Iast.MustAssert { a with
+                  Iast.exp_must_assert_asserted_formula = Some ((helper_struc_formula f), b);
+              }
+          | None -> exp
+      )
+
     | _ -> exp
 
 (* and h_formula_heap = { h_formula_heap_node : (ident * primed);                              *)

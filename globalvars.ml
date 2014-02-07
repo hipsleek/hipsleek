@@ -134,6 +134,7 @@ let rec find_read_write_global_var
     | I.ArrayAt _ (*to be modified*)
 	(* |I.ArrayAlloc _ (\*TODO WN : correct? *\) *)
 	|I.Assert _ 
+    |I.MustAssert _ (* ADI: MustAssert *)
   | I.BoolLit _ 
   | I.Break _ 
   | I.Continue _ 
@@ -612,6 +613,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
     | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     |I.ArrayAt _ (*to be modified*)
 	|I.Assert _
+    |I.MustAssert _ (* ADI: MustAssert *)
   | I.BoolLit _
   | I.Break _
   | I.Continue _
@@ -824,6 +826,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
     | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     |I.ArrayAt _ (*to be modified*)
 	|I.Assert _
+    |I.MustAssert _ (* ADI: MustAssert *)
   | I.BoolLit _
   | I.Break _
   | I.ConstDecl _

@@ -11398,7 +11398,13 @@ let get_cmp_form p =
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
 
-	  
+let is_cmp_form p =
+  match p with
+    | (BForm ((pf,_),_)) ->
+          let cmp_ps =  get_cmp_form_p pf in
+          cmp_ps != []
+    | _ -> false
+
 let rhs_needs_or_split f = 	match f with
 	| Or _ -> not(no_andl f)
 	| _-> false
@@ -11926,7 +11932,9 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     let updated_view_arg,_ = List.split updated_in_orig_pos in (* get rid of orig pos *)
     updated_view_arg
   with Invalid_argument s -> 
-      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") )
+      (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") ) *)
+      (* let _ = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
+      List.map fst map
 
 let combine_labels_w_view_arg  lbl view_arg =
   let no_lst = Gen.range 1 (List.length view_arg) in

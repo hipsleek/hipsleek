@@ -30,6 +30,8 @@ type proving_kind =
 	| PK_Assign_Stmt
 	| PK_Assert
 	| PK_Assert_Assume
+    | PK_Must_Assert        (* ADI: MustAssert *)
+    | PK_Must_Assert_Assume (* ADI: MustAssert *)
 	| PK_BIND
 	| PK_PRE
 	| PK_PRE_REC
@@ -57,6 +59,8 @@ let string_of_proving_kind pk =
     | PK_Assign_Stmt -> "Assign_Stmt"
     | PK_Assert -> "Assert"
     | PK_Assert_Assume -> "Assert/Assume"
+    | PK_Must_Assert ->"Must_Assert" (* ADI: MustAssert *)
+    | PK_Must_Assert_Assume -> "Must_Assert/Assume" (* ADI: MustAssert *)
     | PK_BIND -> "BIND"
     | PK_PRE -> "PRE"
     | PK_PRE_REC -> "PRE_REC"
@@ -78,6 +82,7 @@ let find_impt ls =
     | x::xs -> (match x with
         | PK_Sleek_Entail(_)
         | PK_Assert | PK_Assert_Assume | PK_BIND 
+        | PK_Must_Assert | PK_Must_Assert_Assume (* ADI: MustAssert *)
         | PK_PRE | PK_PRE_REC | PK_POST -> x
         | _ -> aux xs
       ) 

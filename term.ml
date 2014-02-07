@@ -2,7 +2,7 @@ module CP = Cpure
 module MCP = Mcpure
 module DD = Debug
 module TP = Tpdispatcher
-module Inf = Infer
+(* module Inf = Infer *)
 
 open Gen.Basic
 open Globals
@@ -481,7 +481,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
           DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
           (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check 5 pos & rank_formula(I,O) *)
-          (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
+          (*let (estate,_,rank_formula,_) = Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
           let rank_formula = MCP.pure_of_mix rank_formula in*)
           let entail_res, _, _ = TP.imply_one 30 lhs rank_formula "" false None in 
@@ -503,7 +503,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
               None, 
               None
             else
-              if Inf.no_infer_pure estate then (* No inference at all*)
+              if Infer.no_infer_pure estate then (* No inference at all*)
                 Some (Fail TermErr_May, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
                 Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),

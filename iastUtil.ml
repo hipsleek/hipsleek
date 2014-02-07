@@ -25,6 +25,7 @@ let transform_exp
       let n_arg = f_args in_arg e in 
       match e with	
       | Assert _ 
+      | MustAssert _ (* ADI: MustAssert *)
       | BoolLit _ 
       | Break _
       | Continue _ 

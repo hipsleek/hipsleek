@@ -1559,6 +1559,13 @@ let read_write_exp_analysis (ex: C.exp)  (field_ann_lst: (ident * CP.ann) list) 
             C.exp_assert_assumed_formula = assume_f_o } ->
             (* check assert_f_o and assume_f_o *)
             field_ann_lst
+
+        (* ADI: MustAssert *)
+      | C.MustAssert {
+          C.exp_must_assert_asserted_formula = must_assert_f_o;
+          C.exp_must_assert_assumed_formula = assume_f_o } ->
+          field_ann_lst
+
       | C.Assign  {
             C.exp_assign_lhs = lhs;
             C.exp_assign_rhs = rhs  } ->

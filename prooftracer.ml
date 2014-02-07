@@ -471,6 +471,22 @@ let push_assert_assume ae = match ae with
 		html_output := !html_output ^ "<li class=\"Collapsed assert\">\n" ^ assert_str ^ " at " ^ line_loc ^ " holds\n<ul>"
 	| _ -> failwith "push_assert_assume: unexpected expr"
 
+(* ADI: MustAssert *)
+let push_must_assert_assume mae = match mae with
+  | Cast.MustAssert {
+      Cast.exp_must_assert_asserted_formula = mfa;
+      Cast.exp_must_assert_assumed_formula = fas;
+      Cast.exp_must_assert_path_id = pid;
+      Cast.exp_must_assert_type = atype;
+      Cast.exp_must_assert_pos = pos } ->
+      let line_loc = "<a href-\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+      let must_assert_str = match atype with
+        | None -> "Must_Assertion"
+        | Some true -> "Must_Assertion_exact"
+        | Some false -> "Must_Assertion_inexact" in
+      html_output := !html_output ^ "<li class=\"Collapsed assert\">\n" ^ must_assert_str ^ " at " ^ line_loc ^ " holds\n<ul>"
+  | _ -> failwith "push_must_assert_assume: unexpected expr"
+
 let push_post () = html_output := 
 	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
 
@@ -611,7 +627,23 @@ let add_assert_assume ae = match ae with
         | Some true -> "Assertion_exact"
         | Some false -> "Assertion_inexact" in
 		jsonproof := !jsonproof ^ "], type : \"" ^ assert_str ^ "\", line : " ^ (strquote lineloc) ^ "},\n"
-	| _ -> failwith "push_assert_assume: unexpected expr"
+	| _ -> failwith "add_assert_assume: unexpected expr" (* ADI: Change push_assert_assume to add_assert_assume (assuming it is an unexpected mistake..., pun intended) *)
+
+(* ADI: MustAssert *)
+let add_must_assert_assume mae = match mae with
+  | Cast.MustAssert {
+      Cast.exp_must_assert_asserted_formula = mfa;
+      Cast.exp_must_assert_assumed_formula = fas;
+      Cast.exp_must_assert_path_id = pid;
+      Cast.exp_must_assert_type = atype;
+      Cast.exp_must_assert_pos = pos } ->
+      let lineloc = line_number_of_pos pos in
+      let must_assert_str = match atype with
+        | None -> "Must_Assertion"
+        | Some true -> "Must_Assertion_exact"
+        | Some false -> "Must_Assertion_inexact" in
+      jsonproof := !jsonproof ^ "], type : \"" ^ must_assert_str ^ "\", line : " ^ (strquote lineloc) ^ "},\n"
+  | _ -> failwith "add_must_assert_assume: unexpected expr"
 
 let add_post () = 
 	jsonproof := !jsonproof ^ "], type : \"post\"},\n"

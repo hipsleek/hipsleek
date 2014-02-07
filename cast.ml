@@ -26,6 +26,7 @@ and prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
+    mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -217,6 +218,7 @@ and coercion_decl = {
     (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
     coercion_case : coercion_case; (*Simple or Complex*)
     coercion_type_orig: coercion_type option; 
+    coercion_kind: lemma_kind;
 }
 
 and coercion_type = Iast.coercion_type
