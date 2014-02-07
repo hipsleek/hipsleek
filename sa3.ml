@@ -2415,17 +2415,27 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
       is
     else
       (* let _ = DD.info_pprint ("dep_def_hps: " ^ (!CP.print_svl dep_def_hps)) no_pos in *)
-      let need_trans_hprels = List.filter (fun d ->
+      let need_trans_hprels, over_hpdefs = List.fold_left (fun (r1,r2) d ->
         match d.CF.def_cat with
-          |  CP.HPRelDefn (hp,_,_) -> CP.mem_svl hp dep_def_hps
-          | _ -> false
-    ) is.CF.is_hp_defs in
+          |  CP.HPRelDefn (hp,_,_) ->
+                 if CP.mem_svl hp dep_def_hps then
+                   if List.exists (fun (f,_) -> Cfutil.is_heap_conjs f) d.CF.def_rhs then
+                     (r1, r2@[hp])
+                   else (r1@[d], r2)
+                 else (r1,r2)
+          | _ -> r1,r2
+    ) ([],[]) is.CF.is_hp_defs in
+      let _ = DD.ninfo_hprint (add_str "over_hpdefs: " !CP.print_svl) over_hpdefs no_pos in
+      let oblg_constrs1, overlap_oblg = List.partition (fun cs ->
+          let hps = (CF.get_hp_rel_name_formula cs.CF.hprel_lhs)@(CF.get_hp_rel_name_formula cs.CF.hprel_rhs) in
+          (CP.intersect_svl hps over_hpdefs) = []
+      ) oblg_constrs in
     (*transform defs to cviews*)
     let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog prog proc_name need_trans_hprels in
     let in_hp_names = List.map CP.name_of_spec_var dep_def_hps in
     (*for each oblg, subst + simplify*)
     let constrs2 = Sacore.trans_constr_hp_2_view iprog prog proc_name is.CF.is_hp_defs
-      in_hp_names chprels_decl oblg_constrs in
+      in_hp_names chprels_decl oblg_constrs1 in
     (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
     let is1 = {is with CF.is_constrs = constrs2;} in
@@ -2774,9 +2784,9 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
                 all_post_hps is1.CF.is_hp_defs}
       else is1
       in
+      let post_hps = is2.CF.is_post_hps in
       let is3 = if not !Globals.pred_seg_unify then is2 else
         let hp_defs1 = is2.CF.is_hp_defs in
-        let post_hps = is2.CF.is_post_hps in
         let hp_defs2 = List.map (fun def ->
             match def.CF.def_cat with
               | CP.HPRelDefn (hp, r, args) ->
@@ -2790,7 +2800,22 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
         in
         {is2 with CF.is_hp_defs = hp_defs2}
       in
-      is3
+      (*unfold view, if it is not rec*)
+      let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in
+      let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in
+      let hp_defs4 = List.map (fun def ->
+            match def.CF.def_cat with
+              | CP.HPRelDefn (hp, r, args) ->
+                    if CP.mem_svl hp post_hps then
+                    let n_rhs = List.map (fun (f, og) ->
+                        helper f, og) def.CF.def_rhs in
+                    let n_def = {def with CF.def_rhs = n_rhs} in
+                    n_def
+                    else def
+              | _ -> def
+        ) is3.CF.is_hp_defs
+      in
+      {is3 with CF.is_hp_defs = hp_defs4 }
     else
       (* let _ =  print_endline (CF.string_of_cond_path is0.CF.is_cond_path) in *)
       is0
@@ -3026,7 +3051,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     ) [] hp_rel_unkmap
     in
     let unk_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (unk_hpargs0a@unk_hpargs0b) in
-    let ls_path_is = infer_shapes_divide iprog prog proc_name constrs0
+    let constrs1, quans_constrs = List.fold_left (fun (r1,r2) cs ->
+        if Cfutil.contain_folall_pure cs.CF.hprel_lhs || Cfutil.contain_folall_pure cs.CF.hprel_rhs then
+          (r1, r2@[cs])
+        else (r1@[cs], r2)
+    ) ([],[]) constrs0 in
+    let ls_path_is = infer_shapes_divide iprog prog proc_name constrs1
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
     in
     let r = if !Globals.sa_syn then

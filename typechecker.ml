@@ -2623,7 +2623,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let _ = if !Globals.pred_trans_view then
       let _ = match scc_procs with
         | [] -> ()
-        | [p] -> if p.Cast.proc_is_invoked && p.Cast.proc_sel_hps != [] then
+        | [p] -> if (!Globals.reverify_all_flag || p.Cast.proc_is_invoked) && p.Cast.proc_sel_hps != [] then
             let _ = Saout.plug_shape_into_specs prog iprog
               (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
               scc_inferred_hps

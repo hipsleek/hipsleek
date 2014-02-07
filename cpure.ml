@@ -257,6 +257,12 @@ let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false
 
+let rec is_forall p= match p with
+  | Forall _ -> true
+  | And (p1,p2,_) -> is_forall p1 || is_forall p2
+  | AndList ps -> List.exists (fun (_, p1) -> is_forall p1) ps
+  | _ -> false
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv

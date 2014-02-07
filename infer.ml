@@ -2739,14 +2739,14 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
       else
         (before_lhs,before_rhs)
       in
-      let lhs =  CF.remove_neqNull_svl matched_svl lhs0 in
+      let vnodes = (* CF.get_views (CF.Base lhs_b) *) [] in
+      let lhs =  CF.remove_neqNull_svl (CP.diff_svl matched_svl (List.map (fun vn -> vn.h_formula_view_node) vnodes)) lhs0 in
       (* let _ = DD.ninfo_hprint (add_str  "   lhs_b" Cprinter.prtt_string_of_formula) (CF.Base lhs_b) pos in *)
       (* let _ = DD.ninfo_hprint (add_str  "   new_lhs_b" Cprinter.prtt_string_of_formula) (CF.Base new_lhs_b) pos in *)
       let grd = check_guard ass_guard lhs_b new_lhs_b new_rhs_b in
       (* let rhs = CF.Base new_rhs_b in *)
       let _ = Debug.tinfo_hprint (add_str "before_lhs"  Cprinter.prtt_string_of_formula) before_lhs no_pos in
       let _ = Debug.tinfo_hprint (add_str "before_rhs"  Cprinter.prtt_string_of_formula) before_rhs no_pos in
-      let _ = Debug.tinfo_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
       let _ = Debug.tinfo_hprint (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
       let _ = Debug.tinfo_hprint (add_str "rhs"  Cprinter.prtt_string_of_formula) rhs no_pos in
       let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
@@ -2884,7 +2884,9 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
     eqset
   in
   (**********END INTERNAL***********)
-  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, rhs0, None) else
+  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula ||
+    (CF.get_hp_rel_name_formula es0.CF.es_formula = [] && CF.get_hp_rel_name_h_formula rhs0 = [])
+  then (false, es0, rhs0, None) else
   let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
   (*for debugging*)
   (* DD.info_hprint (add_str  ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)

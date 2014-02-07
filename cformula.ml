@@ -6651,14 +6651,16 @@ let remove_neqNull_redundant_andNOT_opt f0 p=
 let remove_neqNull_svl svl f0=
   let rec helper f=
     match f with
-      | Base fb -> let np = remove_neqNull_redundant_hnodes svl
+      | Base fb ->
+            let np = remove_neqNull_redundant_hnodes svl
                      (MCP.pure_of_mix fb.formula_base_pure) in
                    (Base {fb with formula_base_pure = MCP.mix_of_pure np})
       | Or orf -> let nf1 = helper orf.formula_or_f1 in
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let np = remove_neqNull_redundant_hnodes svl
+      | Exists fe ->
+            let np = remove_neqNull_redundant_hnodes svl
           (MCP.pure_of_mix fe.formula_exists_pure) in
         (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in

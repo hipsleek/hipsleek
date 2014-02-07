@@ -445,3 +445,48 @@ let rec elim_dangling_conj_star struc_trav f =
     | Exists b-> Exists{b with  formula_exists_heap =  struc_trav b.formula_exists_heap}
     | Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
 
+let is_heap_conjs_hf hf0=
+  let rec helper hf=
+    match hf with
+      | Conj _ -> true
+      | Star b -> (helper b.h_formula_star_h2) || (helper b.h_formula_star_h1)
+      | _ -> false
+  in
+  helper hf0
+
+let rec is_heap_conjs f=
+  match f with
+    | Base b-> is_heap_conjs_hf b.formula_base_heap
+    | Exists b->  is_heap_conjs_hf b.formula_exists_heap
+    | Or b-> is_heap_conjs b.formula_or_f1 || is_heap_conjs b.formula_or_f2
+
+let contain_folall_pure f=
+  let p = get_pure f in
+  CP.is_forall p
+
+
+let unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f=
+  let vnodes = get_views f in
+  if vnodes = [] then
+    f
+  else
+    (*filter non_rec vnodes*)
+    let nrec_vnodes = List.filter (fun vn ->
+        try
+          not (is_view_rec_fnc vn.h_formula_view_name)
+        with _ -> false
+    ) vnodes in
+    if nrec_vnodes = [] then f else
+      let nf, _ = List.fold_left (fun (f,ss) sv0 ->
+          let sv = CP.subst_var_par ss sv0 in
+          (* let _ = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
+          let nf,ss1 = unfold_fnc f sv in
+          (nf, ss@ss1)
+      ) (f, []) (List.map (fun vn -> vn.h_formula_view_node) nrec_vnodes)
+      in nf
+
+let unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f=
+  let pr1 = !print_formula in
+  Debug.no_1 "unfold_non_rec_views" pr1 pr1
+      (fun _ -> unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f)
+      f

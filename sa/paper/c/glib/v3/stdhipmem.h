@@ -12,10 +12,6 @@ void* malloc(int size) __attribute__ ((noreturn))
     size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
   }
 */;
-struct GSList {
-  int val;
-  struct GSList* next;
-};
 
 struct GList {
   int key;
@@ -23,10 +19,9 @@ struct GList {
   struct GList* next;
 };
 
-/*@
-lseg<p> == self=p
-  or self::GSList<_,n> * n::lseg<p> & self!=null;
-*/
+
+/* lseg<p> == self=p */
+/*   or self::GSList<_,n> * n::lseg<p> & self!=null; */
 
 /*@
 dlseg<y> == self=y
@@ -34,45 +29,45 @@ dlseg<y> == self=y
 */
 
 
-struct GSList*
-g_slist_last (struct GSList* list)
-/*@
- case { list=null -> ensures res=null;
-   list!=null ->
-     requires list::lseg<l> * l::GSList<a,null>
-  ensures list::lseg<res> * res::GSList<a,null>;
-}
-*/
-;
+/* struct GSList* */
+/* g_slist_last (struct GSList* list) */
+/* /\*@ */
+/*  case { list=null -> ensures res=null; */
+/*    list!=null -> */
+/*      requires list::lseg<l> * l::GSList<a,null> */
+/*   ensures list::lseg<res> * res::GSList<a,null>; */
+/* } */
+/* *\/ */
+/* ; */
 
-struct GSList*
-g_slist_append (struct GSList* list,
-                int val)
-/*@
- case {
-  list=null -> ensures res::GSList<key, null>;
-  list!=null -> requires list::lseg<null>
-    ensures list::lseg<q>*q::GSList<key, null>;
-}
-*/;
+/* struct GSList* */
+/* g_slist_append (struct GSList* list, */
+/*                 int val) */
+/* /\*@ */
+/*  case { */
+/*   list=null -> ensures res::GSList<key, null>; */
+/*   list!=null -> requires list::lseg<null> */
+/*     ensures list::lseg<q>*q::GSList<key, null>; */
+/* } */
+/* *\/; */
 
-struct GSList*
-g_slist_prepend (struct GSList* list,
-                 int val)
-/*@
-  requires list::lseg<p>
-  ensures res::GSList<key,list> * list::lseg<p>;
-*/;
+/* struct GSList* */
+/* g_slist_prepend (struct GSList* list, */
+/*                  int val) */
+/* /\*@ */
+/*   requires list::lseg<p> */
+/*   ensures res::GSList<key,list> * list::lseg<p>; */
+/* *\/; */
 
-struct GSList*
-g_slist_nth (struct GSList *list,
-             int n)
-/*@
-   case {
-  list=null -> ensures res=null;
-  list!=null -> requires list::lseg<null> ensures res::lseg<null> & res!=null;
-}
-*/;
+/* struct GSList* */
+/* g_slist_nth (struct GSList *list, */
+/*              int n) */
+/* /\*@ */
+/*    case { */
+/*   list=null -> ensures res=null; */
+/*   list!=null -> requires list::lseg<null> ensures res::lseg<null> & res!=null; */
+/* } */
+/* *\/; */
 
 struct GList*
 g_list_last (struct GList* list)
