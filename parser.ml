@@ -681,14 +681,6 @@ let peek_array_type =
              (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
-(* let peek_array_type1 = *)
-(*    SHGram.Entry.of_parser "peek_array_type1" *)
-(*        (fun strm -> *)
-(*            match Stream.npeek 3 strm with *)
-(*              |[_;OSQUARE,_;IDENTIFIER id,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
-(*              |[_;OSQUARE,_;INT,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
-(*              | _ -> raise Stream.Failure) *)
-
 let peek_pointer_type = 
    SHGram.Entry.of_parser "peek_pointer_type"
        (fun strm ->
@@ -2172,7 +2164,7 @@ star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
-  | *) t=non_array_type; r=rank_specifier -> (* print_endline "array"; *) Array (t, r)]];
+  | *) t=non_array_type; r=rank_specifier -> Array (t, r)]];
 
 rank_specifier:
   [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
@@ -3208,7 +3200,7 @@ primary_expression_no_array_no_parenthesis :
  [[ t= literal -> t
   (*| t= member_access -> t*)
   (*| t= member_name -> t*) 
-  | t=SELF; `DOT; `IDENTIFIER id -> print_endline "abc";
+  | t=SELF; `DOT; `IDENTIFIER id ->
 	Member { exp_member_base = t;
            exp_member_fields = [id];
            exp_member_path_id = None ;
