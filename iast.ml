@@ -202,6 +202,7 @@ proc_dynamic_specs : Iformula.struc_formula;
 proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
+mutable proc_is_invoked : bool;
 proc_file : string;
 proc_loc : loc;
 proc_test_comps: test_comps option}
@@ -961,6 +962,24 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
+(*
+  trav body of proc to look for ICall(proc_name, ...) and SCall (proc_name, ...)
+   - look up proc_name from prog
+   - set proc_is_invoked = true;
+output: list of procs called by this function
+*)
+let detect_invoke prog proc=
+  let _ = Debug.info_hprint (add_str "Long: to implement" pr_id) "start" no_pos in
+
+  let _ = Debug.info_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in
+  []
+
+let detect_invoke prog proc=
+  let pr1 p = pr_id p.proc_mingled_name in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "detect_invoke" pr1 pr2
+      (fun _ -> detect_invoke prog proc) proc
+
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
   let f e=
@@ -1274,6 +1293,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_dynamic_specs = ds;
   proc_loc = pos;
   proc_is_main = true;
+  proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
   proc_test_comps = None}
@@ -2654,6 +2674,7 @@ let add_bar_inits prog =
 			  proc_exceptions = [];
 			  proc_body = None;
 			  proc_is_main = false;
+                          proc_is_invoked = false;
 			  proc_file = "";
 			  proc_loc = no_pos;
 			proc_test_comps = None}) prog.prog_barrier_decls in

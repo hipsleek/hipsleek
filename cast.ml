@@ -166,6 +166,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_invoked : bool;
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;

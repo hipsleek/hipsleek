@@ -1425,6 +1425,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 	  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
+          let _ = List.map (I.detect_invoke prog) prog.I.prog_proc_decls in
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
@@ -2789,6 +2790,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_logical_vars = [];
           C.proc_call_order = 0;
           C.proc_is_main = proc.I.proc_is_main;
+          C.proc_is_invoked = proc.I.proc_is_invoked;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;
@@ -4476,6 +4478,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.proc_dynamic_specs = IF.mkEFalseF ();
                 I.proc_body = Some w_body;
                 I.proc_is_main = proc.I.proc_is_main;
+                I.proc_is_invoked = true;
                 I.proc_file = proc.I.proc_file;
                 I.proc_loc = pos; 
                 I.proc_test_comps = proc.I.proc_test_comps} in
