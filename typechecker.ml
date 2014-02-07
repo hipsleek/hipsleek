@@ -1401,9 +1401,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                 let xp = get_xpure_of_formula c1_o in
                                   (rs,Some xp)
                                 end
-			                  else (Debug.print_info "must_assert/assume" (s ^" : failed\n") pos ; (rs,None));
+			                  else (Debug.print_info "must_assert/assume" (s ^" : failed\n") pos ; (rs,None);
                                    (* ADI: Failing MustAssert using Exception Failure (2) *)
-                                   failwith ("must_assert/assume: " ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ":" ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": failed") in 
+                                   failwith ("must_assert/assume: " ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ":" ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": failed")) in 
 		                      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                                 begin
           	                      Prooftracer.add_must_assert_assume e0;
