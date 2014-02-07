@@ -367,7 +367,7 @@ HP_891(right_31_889),
  or emp&right_31_930=null
  ]
 ==================================================================
-# check-cll.ss
+# check-cll.ss: FIXED
 
 [ H1(l_904,p_905) ::=  H1(next_20_901,p_905) 
    * l_904::node<val_20_900,next_20_901>@M&l_904!=p_905
@@ -388,12 +388,171 @@ Why is sa-dnc missing on a base-case equation?
    \/  H1(l_906,l_906)&l_906=p_907]
 
 ==================================================================
+to support:
+ - # glib/glist.ss
+https://git.gnome.org/browse/glib/tree/glib/gslist.c
+https://git.gnome.org/browse/glib/tree/glib/gslist.c
+https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+https://git.gnome.org/browse/glib/tree/glib/gqueue.c
+https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+ - xisa:
+    dll-create.ss
+    dll-copy.ss
+    dll-findnback.ss
+    dll-rev.ss
+ - linux
+   - pci_driver (2532)
+   - t1394Diag.c (CancelIrp.c, CancelIrpFix.c, PnpRemoveDevice.c,
+     BusResetRoutine.c, GetAddressData,  GetAddressDataFix,
+     IsochDetachCompletionRoutine, SetAddressData,  SetAddressDataFix)
+   - scull.c (1010)
+   - class.c (1983)
+   - ll_rw_blk (5469)
+   - cdrom (6218)
+   - md (6653)
+ -slayer
+   - fw (attach_buffer_insert_head_list.c, callback_remove_entry_list.c,
+     cleanup_isochresourcedata.c, cleanup_isochresourcedata_unsafe.c,
+     cromdata_add_remove, is_on_list_flat, is_on_list_via_devext)
+   - sll (append.c, copy, copy_unsafe, create.c, create_kernel.c, destroy.c,
+    filter.c, find.c, reverse.c, traverse.c)
+ - slayer + refine
+
 ==================================================================
+# check-mcf
+
+   --sa-dnc causes
+!! rem_constr:
+[]
+ExceptionNot_foundOccurred!
+
+--pred-en-equiv 
+   (base case null lost?)
+   G2(..) := G2(...)
+
+[ G1(t_1186) ::=
+               t_1186::tree<val_42_1076,children_42_1077>@M&
+               children_42_1077=null
+               or t_1186::tree<val_42_1076,children_42_1077>@M * 
+                  children_42_1077::G2<n_1099,t_1186>@M&
+                  children_42_1077!=null
+               ,
+ G2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M,
+ H1(t_1161) ::= 
+ t_1161::tree<val_42_1076,children_42_1077>@M * 
+ H2(children_42_1077,n_38',t_1161)&children_42_1077!=null
+ or t_1161::tree<val_42_1076,children_42_1077>@M&children_42_1077=null
+
+
+--pred-disj-unify
+  same as without
+
 ==================================================================
+# check-mcf-2a.ss
+
+  dll4 is similar to inferred result but it cannot be re-verified!
+
 ==================================================================
+check-mcf.ss --pred-en-equiv
+
+Why are post-conditions printed before precondition?
+Where is the definition of G2? Why is it circular?
+Why aren't G1 & H1 made equal. 
+
+[ G1(t_1189) ::=children_48_1077::G2<n_1099,t_1189>@M * 
+  t_1189::tree<val_48_1076,children_48_1077>@M&n_1099=null,
+ G2(l_1186,prv_1187,par_1188) ::=l_1186::G2<prv_1187,par_1188>@M,
+ H1(t_1161) ::=t_1161::tree<val_48_1076,children_48_1077>@M * 
+  children_48_1077::G2<n_38',t_1161>@M&n_38'=null,
+ H2(l_1183,prv_1184,par_1185) ::=l_1183::G2<prv_1184,par_1185>@M]
 ==================================================================
+# zip_paper_eq.ss --pred-en-split
+
+This split is unsound since it considered only -->,
+rather than <-->. In case of -->, you can only apply to
+pre-condition. We should also match with existing predicates.
+
+You should print pre-pred before post-pred.
+You should also re-use predicate by default.
+
+What are the 2 other kinds of split below:
+
+  ("--sa-en-sp-split", Arg.Set Globals.sa_sp_split_base, "enable special base case split at entailment");
+  ("--sa-dis-sp-split", Arg.Clear Globals.sa_sp_split_base, "disable special base case split at entailment");
+  ("--sa-en-split", Arg.Set Globals.sa_infer_split_base, "enable base case splitting of relational assumption at shape infer");
+  ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
+
+[ G(x_1035,y_1036,res_1037) ::= HP_1040(x_1035) * HP_1041(y_1036) * HP_1042(res_1037),
+ H(x_1033,y_1034) ::= HP_1038(x_1033) * HP_1039(y_1034),
+ HP_1038(x_1033) ::= 
+ emp&x_1033=null
+ or HP_1038(next_30_1020) * x_1033::node<val_30_1019,next_30_1020>@M
+ ,
+ HP_1039(y_1034) ::= 
+ emp&y_1034=null
+ or HP_1039(next_30_1018) * y_1034::node<val_30_1017,next_30_1018>@M
+ ,
+ HP_1040(x_1035) ::= 
+ emp&x_1035=null
+ or x_1035::node<val_30_959,next_30_960>@M * HP_1040(next_30_960)
+ ,
+ HP_1041(y_1036) ::= 
+ emp&y_1036=null
+ or y_1036::node<val_30_967,next_30_968>@M * HP_1041(next_30_968)
+ ,
+ HP_1042(res_1037) ::= 
+ emp&res_1037=null
+ or HP_1042(v_node_30_994) * res_1037::node<v_int_30_993,v_node_30_994>@M
+ ]
+
+
 ==================================================================
+# rose-sll-1.ss 
+
+[ H1(t) ::= 
+ t::tree<val,children>@M * H2(children,t)&children!=null
+ or t::tree<val,children>@M&children=null
+ ,
+ H2(l,par) ::= 
+ l::node<child,next,parent>@M * child::tree<val,children>@M * H2(next,par)&
+ par=parent & children=null
+ or l::node<child,next,parent>@M * child::tree<val,children>@M * 
+    H2(next,par) * H2(children,child)&par=parent & children!=null
+ or emp&l=null
+ ,
+ G1(t) ::= t::tree<val,children>@M * G2(children,t),
+ G2(l,par) ::= 
+ l::node<child,next,par>@M * G2(next,par)
+ or emp&l=null
+
+C program online:
+
+[ H1(t) ::= t::tree<val,children>@M&children=null, 
+G1(t) ::= 
+DP_1086(children,t)&children!=null & t!=null 
+or t::tree<val,children>@M&children=null 
+, 
+G2(l,par) ::= 
+l::node<child,next,par>@M * G2(next,par) 
+or emp&l=null 
+] 
 ==================================================================
+# sa/papers/check-cdll.ss --pred-en-equiv (FIXED)
+
+Why isn't en-equiv working?
+
+cdll<prev, p> ==  self= p
+  or self::node<prev,n>* n::cdll<self, p> & self!=p;
+
+[ H1(l,prv,p) ::= 
+ l::node<prev,next>@M * H1(next,l,p)&l!=p & prev=prv
+ or emp&l=p
+ ,
+ G1(l,prv,p) ::= 
+ l::node<prv,next>@M * G1(next,l,p)&l!=p
+ or emp&l=p
+ ]
+*/
 ==================================================================
 ==================================================================
 ==================================================================

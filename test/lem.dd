@@ -1,0 +1,8 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+#cnv_ptr_to_int,Loop
+process_coercion_check
+check_coercion_struc
+#unfold
+unfold_struc_nth
+#struc_unfold_heap

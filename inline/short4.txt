@@ -1,0 +1,33 @@
+For this function:
+=================
+int foo(int** q)
+/*@
+ requires q::int_star_star<r>*r::int_star<a>
+ ensures q::int_star_star<null>*r::int_star<a> & res=0;
+*/
+{
+ q = 0;
+ return 0;
+};
+
+A naive translation gives: (this requires @C)
+=========================
+int foo(int_star_star@C q)
+ requires q::int_star_star<r>*r::int_star<a>
+ ensures q::int_star_star<null>*r::int_star<a> & res=0;
+{
+ q.deref = null;
+ return 0;
+}
+
+A smarter translation using --c-para-deref gives:
+================================================
+
+int foo(int_star q_deref)
+ requires q_deref::int_star<a>
+ ensures q_deref::int_star<a> & res=0;
+{
+ q_deref = null;
+ return 0;
+}
+

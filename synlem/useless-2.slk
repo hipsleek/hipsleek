@@ -1,0 +1,48 @@
+data node {
+  node next;
+}.
+
+pred ll<> == self=null
+  or self::node<q>*q::ll<>
+inv true.
+
+pred lseg<p> == self=p
+  or self::node<q>*q::lseg<p>
+inv true.
+
+HeapPred K(node s).
+
+lemma_infer_pred [K] self::ll<> -> self::lseg<p> * K(p).
+//print residue.
+
+
+/*
+lemma_safe self::ll<> <-> self::lseg<p> & p=null.
+
+lemma_safe self::ll<> -> self::lseg<p> *p::ll<>.
+
+lemma_safe self::ll<> <- self::lseg<p> * p::ll<>.
+*/
+
+/*
+
+process_coercion_check@2@1
+process_coercion_check inp1 : 
+ emp&self_lem_11=null&{FLOW,(21,22)=__norm}[]
+ or (exists q_29: self_lem_11::node<q_29>@M * q_29::ll<>@M&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : :EBase (exists p_30: K(p_30)&p_30=self_lem_11&{FLOW,(21,22)=__norm})[]
+|| :EBase exists (Expl)[](Impl)[q_31](ex)[](exists p_37,p_30: K(p_30) * 
+          self_lem_11::node<q_31>@M * q_31::lseg<p_37>@M&p_30=p_37&
+          {FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :inf_vars:[K]
+
+infer [K] 
+  self=null
+  or self::node<q>*q::ll<>
+|- (exists p: K(p) & self=p)
+  or self::node<q>*q::lseg<p> * K(p)
+
+
+*/

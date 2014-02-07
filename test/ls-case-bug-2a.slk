@@ -1,0 +1,31 @@
+data node {
+  node next;
+}.
+
+pred ls3<n> == case {
+   n=0 -> [] self=null; 
+   n!=0 -> []  self::node<q>*q::ls3<n-1>;
+  } inv n>=0.
+
+pred ls<n> == case {
+   n=0 -> [] self=null; 
+   n>0 -> []  self::node<q>*q::ls<n-1>;
+  } inv n>=0.
+
+
+/*
+# ls-case-bug-2a.slk -debug case.log
+
+Can we change add n<0 --> false to the case-spec?
+
+ERROR: at ls-case-bug-2.slk_5:14_8:3 
+Message: the guards don't cover the whole domain for :  :ECase case {
+         n=0 -> :EBase emp&self=null&{FLOW,(1,24)=__flow}[] ;
+         0<n -> :EBase exists (Expl)[](Impl)[q](ex)[](exists flted_7_13: 
+                       self::node<q>@M * q::ls<flted_7_13>@M&n=flted_7_13+1&
+                       {FLOW,(1,24)=__flow})[]
+         }
+
+
+*/
+

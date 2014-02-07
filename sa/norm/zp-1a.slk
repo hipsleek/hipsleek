@@ -1,0 +1,32 @@
+infer [m,n] 
+   x=0 & y!=0
+   & (x=0 & n=0 | x!=0 & n>0)
+   & (y=0 & m=0 | y!=0 & m>0)
+ |-  false.
+print residue.
+
+infer [m,n] 
+   x=null & y!=null
+   & (x=null & n=0 | x!=null & n>0)
+   & (y=null & m=0 | y!=null & m>0)
+ |-  false.
+print residue.
+
+infer [m,n] 
+   x<=0 & y>0
+   & (x<=0 & n=0 | x>0 & n>0)
+   & (y<=0 & m=0 | y>0 & m>0)
+ |-  false.
+print residue.
+
+/*
+# zp-1a.slk
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [(n!=0 | m<=0)]
+[
+
+<1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [(m<=-1 | n<=-1)]
+[[empty]]
+*/

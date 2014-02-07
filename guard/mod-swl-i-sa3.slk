@@ -1,0 +1,81 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+HeapPred H(node a, node b, node@NI c).
+PostPred G1(node ra, node rb, node@NI c).
+HeapPred HP_946(node prev, node@NI cur, node@NI sent).
+HeapPred HP_945(node next_50_944, node@NI prev, node@NI sent).
+
+// BIND
+relAssume
+ H(cur,prev,sent) --> cur::node<val,next>@M *  
+    HP_945(next,prev,sent) * HP_946(prev,cur,sent).
+ 
+// PRE_REC
+relAssume
+  HP_946(prev,cur,sent) * cur::node<val,prev>@M
+    & prev1'=null --> H(cur,prev1',sent).
+
+/*
+  HP_946(prev,cur,sent) * cur::node<val,prev>@M & prev1'=null 
+  --> H(cur,null,sent).
+  HP_946(prev,cur,sent) * cur::node<val,prev>@M & prev1'=null 
+  -->  cur::node<val,next>@M *  
+       HP_945(next,null,sent) * HP_946(null,cur,sent).
+
+  HP_946(prev,cur,sent) --> HP_946(p,cur,sent) & p=null
+  emp --> HP_946(p,cur,sent) & p=null
+
+*/
+
+// PRE_REC
+relAssume
+ cur1::node<val,prev>@M * HP_946(prev,cur1,sent) 
+  * HP_945(cur',prev,sent)&cur'!=sent 
+  & cur'!=null --> H(cur',cur1,sent).
+
+// base-case split
+relAssume
+ HP_945(next,prev1,sent)&next!=sent & next=null --> emp.
+
+
+shape_infer [H,HP_945,HP_946][].
+
+
+/*
+# mod-swl-i-sa.slk
+
+Why did we generate a DP_163?
+
+[ H(cur,prev,sent) ::= cur::node<val,next>@M * HP_945(next,prev,sent) * HP_946(prev,cur,sent),
+ HP_945(cur,prev,sent) ::= 
+ cur::node<val,next>@M * HP_945(next,cur,sent)&cur!=sent
+ or emp&cur!=sent & cur=null
+ ,
+ HP_946(prev1,cur,sent) ::= 
+ emp&prev1=null
+ or prev1::node<val,prev>@M * HP_946(prev,prev1,sent)&cur!=sent & cur!=null
+ or DP_163(prev1)
+ ,
+ DP_163(prev1) ::= NONE]
+*/
+
+/*
+ // POST
+relAssume
+(1;0)HP_945(next,prev,sent) * HP_946(prev,cur,cur1') * 
+cur::node<val,prev>@M&next=sent & cur1'=sent & cur1'=next & 
+cur=prev1' --> G(cur,cur1',prev,prev1',sent).
+ // POST
+relAssume
+ (1;2;0)HP_945(next,prev1,sent) * G(cur,cur1',prev,prev2',sent)&
+ next!=sent & next=null & prev=null & 
+ cur!=null --> G(cur,cur1',prev1,prev2',sent).
+ // POST
+relAssume
+ (2;2;0)G(next,cur1',cur,prev1',sent)&next!=sent & next!=null & 
+ cur!=null --> G(cur,cur1',prev,prev1',sent).
+*/

@@ -1,0 +1,36 @@
+data node {
+  node next;
+}.
+
+HeapPred HP4(node a).
+HeapPred G2(node a).
+
+pred  H1<> ==
+ n::H1<> * self::node<n>@M
+ or HP4(self).
+
+pred  H2<> ==
+ n::H2<> * self::node<n>@M
+ or self=null.
+
+pred  G1<> == self::H1<>.
+
+//1.
+//infer [HP4,G2] HP4(x) or n::H1<> * x::node<n> |- G2(x).
+//print residue.
+
+//2a.
+//infer [HP4,G2] HP4(x) |- G2(x).
+//print residue.
+
+//2b
+//infer [HP4,G2]  n::H1<> * x::node<n> |- G2(x).
+//print residue.
+
+//3.
+//infer [HP4,G2] x::H1<> |- G2(x).
+//print residue.
+
+//4.
+infer [HP4,G2] x::G1<> |- G2(x).
+print residue.

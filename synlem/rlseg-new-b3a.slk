@@ -1,0 +1,64 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+lemma_unsafe "3a" self::node<_,q>*q::rlseg<p> 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+//self::node<_,q>*q::rlseg<p>
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+    |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+print residue.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::node<_,q2>*q2::rlseg<p1>* p1::node<_,p>.
+
+print residue.
+
+/*
+process_coercion_check@1
+process_coercion_check inp1 : 
+ self_3a::node<_,q>@M&p=q&{FLOW,(21,22)=__norm}[]
+ or (exists p_44,_,q_46: self_3a::node<_,q>@M * q::node<_,q_46>@M * 
+    q_46::rlseg<p_44>@M&p=p_44&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists p1,_: 
+     self_3a::rlseg<p1>@M * p1::node<_,p>@M&
+       {FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :inf_vars:[]
+process_coercion_check@1 EXIT:(false, failctx
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- (exists p1: self::rlseg<p1>* p1::node<_,p>).
+
+
+checkentail_exact 
+ self_3a::node<_,q>@M&p=q
+ or (exists p_44,q_46,b,c: self_3a::node<c,q>@M * q::node<b,q_46>@M * 
+    q_46::rlseg<p_44>@M&p=p_44)
+    |- (exists p1,a: self_3a::rlseg<p1>* p1::node<a,p>).
+
+*/
+

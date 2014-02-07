@@ -1,0 +1,41 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * x::l6<_> |- false.
+
+//checkentail x::l6<_> * y::l6<_> & x=y |- false.
+
+checkentail x::l6<q> * y::l6<q>  |- false.
+
+checkentail x::l6<_> * y::l6<_> |- x::l6<a>.
+
+checkentail x::l6<_> * y::l6<_> |- y::l6<a>.
+
+checkentail x::l6<_> * x::l6<_> |- x::l6<a>.
+// currently fails; what should this answer be?
+
+// hg bisect
+// 9875 - valid (bad)
+// 9814 - valid (bad)
+// 9805 - bad
+// 9801 - bad
+// 9799 - bad
+// 9798 - don't compile
+// 9797 - fail (good)
+/*
+pred l7<q:node> == 
+  self=null & q=null
+  or self::node<r>*r::node<_> & r=q
+inv true.
+
+// (12) Fail
+checkentail x::l7<q> * x::l7<q> |- false.
+*/

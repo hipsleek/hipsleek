@@ -1,0 +1,41 @@
+data node {
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+ or self::node<q>*q::ll<n-1>
+ inv n>=0.
+
+checkentail x::ll<n> |- (exists m: x::ll<m> & m=2).
+print residue.
+
+pred pp<n> == self=null & n=0
+  or self::node<_> & n>0
+  inv n>=0.
+
+checkentail x::node<_> |- (exists m: x::pp<m> & m=2).
+print residue.
+
+checkentail x::node<_> |- x::pp<m> & m=2.
+print residue.
+
+
+checkentail x::node<_> |- [m] x::pp<m> & m=2.
+print residue.
+/*
+ <1>emp&x!=null & Anon_14=Anon_67 & 0<m & m=2 & 0<m&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+
+ explicit instantiation seems wrong...
+
+ as folding result in at most:
+    x::pp<m> & m>0
+
+ while explicit instantiation gives:
+    x::pp<m> & m=2
+ that cannot be guaranteed
+
+
+
+
+*/

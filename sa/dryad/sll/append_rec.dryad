@@ -1,0 +1,43 @@
+define pred sll^(x): 
+  ( 
+	((x l= nil) & emp) | 
+          ((x |-> loc next: nxt) * sll^(nxt))  
+  ) ;
+  
+define set-fun keys^(x):
+  (case (x l= nil): emptyset;
+   case ((x |-> loc next: nxt; int key: ky) * true): 
+   	((singleton ky) union keys^(nxt));
+   default: emptyset
+  ) ;
+
+method list-append(loc x1, loc x2)
+requires: ((sll^(x1) & (keys^(x1) s= x1ks)) * (sll^(x2) & (keys^(x2) s= x2ks))) ;
+ensures: (sll^(ret) & (keys^(ret) s= (x1ks union x2ks))) ;
+
+bb merge-op1-nil:
+pre: ((sll^(x1) & (keys^(x1) s= x1ks)) * (sll^(x2) & (keys^(x2) s= x2ks))) ;
+post: (sll^(ret) & (keys^(ret) s= (x1ks union x2ks))) ;
+{
+	assume (x1 l== nil);
+	loc ret := x2; 
+}
+
+bb merge-recursive:
+pre: ((sll^(x1) & (keys^(x1) s= x1ks)) * (sll^(x2) & (keys^(x2) s= x2ks))) ;
+post: (sll^(ret) & (keys^(ret) s= (x1ks union x2ks))) ;
+{
+	assume (! (x1 l== nil));
+	loc y := x1.next;
+	loc t := list-append(y, x2);
+	loc x1.next := t; 
+	loc ret := x1; 
+}
+
+bb merge-recursive-pre:
+pre: ((sll^(x1) & (keys^(x1) s= x1ks)) * (sll^(x2) & (keys^(x2) s= x2ks))) ;
+post:  ((sll^(y)  * sll^(x2)) * true) ;
+{
+	assume (! (x1 l== nil));
+	loc y := x1.next;
+}

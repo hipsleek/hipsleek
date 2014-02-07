@@ -158,7 +158,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
 		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
-		let fld = ((t, CP.name_of_spec_var var), pos, false,F_NO_ANN) in (* An Hoa : Add [false] for inline record. TODO revise *)
+		let fld = ((t, CP.name_of_spec_var var), pos, false, [gen_field_ann t](* F_NO_ANN *)) in (* An Hoa : Add [false] for inline record. TODO revise *)
 		fld :: rest_result
 	end
 	| [] -> [] in
@@ -166,7 +166,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   let rec helper2 (CP.SpecVar (t, v, p)) =
 	let cls_name = aug_class_name t in
 	let atype = Named cls_name in
-	((atype, v), pos, false,F_NO_ANN)  (* An Hoa : Add [false] for inline record. TODO revise *) in 
+	((atype, v), pos, false,[gen_field_ann atype] (* F_NO_ANN *))  (* An Hoa : Add [false] for inline record. TODO revise *) in 
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
@@ -1715,7 +1715,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let disj_proc = 
     { proc_name = dproc_name;
     proc_source = "source_file";
-	proc_flags = [];
+    proc_flags = [];
+    proc_hp_decls = [];
     proc_mingled_name = dproc_name;
     proc_data_decl = None; (* the class containing the method *)
     proc_constructor = false;
@@ -1830,13 +1831,14 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let combined_exp, disj_procs, pbvars = 
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos, false,F_NO_ANN) (* An Hoa : add [false] for inline record. TODO revise *) 
+  let fields = ((Named vdef.C.view_data_name, self), pos, false, [gen_field_ann (Named vdef.C.view_data_name)](* F_NO_ANN *)) (* An Hoa : add [false] for inline record. TODO revise *) 
     :: (gen_fields vdef.C.view_vars pbvars pos) in
   (* parameters for traverse *)
   let check_proc = 
     { proc_name = "traverse";
     proc_source = "source_file";
-	proc_flags = [];
+    proc_flags = [];
+    proc_hp_decls = [];
     proc_mingled_name = "traverse";
     proc_data_decl = None;
     proc_constructor = false;
@@ -1958,7 +1960,7 @@ and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_d
   | Named c ->
 	let cls_aug = c ^ "Aug" in
 	(* An Hoa : Add [false] for inline record. TODO revise *)
-	let fields = [((Bool, "bound"), pos, false,F_NO_ANN); ((Named (string_of_typ t), "val"), pos, false,F_NO_ANN)] in
+	let fields = [((Bool, "bound"), pos, false, [gen_field_ann Bool] (*F_NO_ANN*)); ((Named (string_of_typ t), "val"), pos, false,[] (* F_NO_ANN *))] in
 	let ddef = { data_name = cls_aug;
 	data_fields = fields;
 	data_pos = no_pos;

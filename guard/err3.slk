@@ -1,0 +1,57 @@
+data cell {
+  int val;
+}.
+
+HeapPred H(cell a,cell b).
+PostPred G(cell a,cell b).
+PostPred HP_907(cell a,cell@NI b).
+
+Declare_Unknown [HP_907].
+
+relAssume 
+ // BIND
+H(p,q) & p=null --> q::cell<val>@M.
+
+relAssume 
+ // BIND
+H(p,q) & p!=null --> p::cell<val>@M * HP_907(q,p).
+
+ // POST
+relAssume 
+q::cell<val>@M & p=null --> G(p,q).
+
+// POST
+relAssume 
+HP_907(q,p) * p::cell<val>@M --> G(p,q).
+
+shape_infer [H,HP_907][G].
+
+
+/*
+# err3.slk
+
+[ G(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M * HP_907(q,p)
+ ,
+ H(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M * HP_907(q,p)
+ ,
+ HP_907(a,b) ::= NONE]
+
+--pred-en-dangling
+Is below the best way to handle conditional dangling?
+
+[ G(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M
+ ,
+ H(p,q) ::= 
+ q::cell<val>@M&p=null
+ or p::cell<val>@M
+ ]
+
+
+*/
+

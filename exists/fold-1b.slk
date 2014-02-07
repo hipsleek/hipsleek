@@ -1,0 +1,48 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+lemma_unsafe self::ls<uu,ll> <- self::ls<vv,ll-1> * vv::node<uu>.
+
+checkentail x::ls<zz,hh>*zz::node<tt>  |- (exists kk: x::ls<tt,kk> & kk=2).
+print residue.
+
+/*
+# fold-1b.slk -debug fold.dd
+
+This is unsound. For such examples, it may be best to use
+folding libraries as seen in do_full_fold to cater for it.
+We can generalize these methods to include a the use of right-lemma,
+and to call it when using right-lemma with a simple lhs,
+and without universal vars.
+
+
+Starting Omega...oc
+
+// rename uu,ll --> pp,nn; 
+
+!!! head: self::ls<uu,ll>@M&{FLOW,(1,24)=__flow}[]
+!!! body: EBase exists (Expl)[](Impl)[vv](ex)[](exists uu_36,
+       flted_9_35: self::ls<vv,flted_9_35>@M * vv::node<uu_36>@M&
+       ll=flted_9_35+1 & uu=uu_36&{FLOW,(1,24)=__flow})[]
+vdef_lemma_fold@2@1
+vdef_lemma_fold inp1 :None
+vdef_lemma_fold@2 EXIT:Some( viewls<pp:TVar[26],nn:int>= 
+  EBase exists (Expl)[](Impl)[vv](ex)[](exists uu_36,
+        flted_9_35: self::ls<vv,flted_9_35>@M * vv::node<uu_36>@M&
+        ll=flted_9_35+1 & uu=uu_36&{FLOW,(1,24)=__flow})[]
+  cont vars: pp
+  inv: 0<=nn
+  unstructured formula: 
+   {1}->emp&self=null & nn=0&{FLOW,(1,24)=__flow}[]
+   || {2}->(exists pp_15,flted_6_14,qq: self::node<qq>@M * 
+      qq::ls<pp_15,flted_6_14>@M&nn=flted_6_14+1 & pp=pp_15&
+      {FLOW,(1,24)=__flow})[]
+  xform: ((1<=nn & self!=null) | (nn=0 & self=null))
+  is_recursive?: true
+  view_data_name: node)
+*/

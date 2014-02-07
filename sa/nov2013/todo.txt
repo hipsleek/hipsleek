@@ -1,0 +1,142 @@
+reverify:
+ - sll-del: OK
+ - sll-rev: OK
+ - sll-ins : OK
+ - sll-setTail
+ - sll-last-2: OK
+ - sll-check-sorted: OK
+ - sll-bub ( --pred-en-dangling) OK
+ - sll-inssort: OK
+ - zip-eq : OK
+ - zip-leq: OK
+ - sll+head: OK
+ - sll-tail: OK
+ - skip2-list: OK
+ - skip3-list: OK
+ - sll-01-lists: OK
+ - check-csll: OK
+ - csll: OK
+ - check-csllcslls: OK
+ - slldll: OK
+ - check-dll: OK
+ - dll-app ( --pred-en-dangling) OK
+ - check-cdll: OK
+ - check-cdll5cslls
+ - check-cdllcsllsx2: OK
+ - bt-search (OK with pred-unify-post) verification fails
+ - tree-par: OK
+ - rose-tree ( --pred-en-dangling) OK
+ - check-mcf: OK
+ - swl
+ - tll: --pred-en-dangling (--pred-en-useless-para): OK
+ - check-tll:
+ - tll-par: --pred-en-dangling (--pred-en-useless-para) OK
+
+=====================================================================
+reverify with reuse:
+ - sll-del
+ - sll-rev
+ - sll-ins
+ - sll-setTail
+ - sll-get-last-2
+ - sll-check-sorted
+ - sll-bub
+ - sll-inssort
+ - zip-eq
+ -zip-leq
+ - sll+head
+ - sll-tail
+ - skip2-list
+ - skip3-list
+ - sll-01-lists
+ - check-csll
+ - csll
+ - check-csllcslls
+ - slldll
+ - check-dll
+ - dll-app
+ - check-cdll
+ - check-cdll5cslls
+ - check-cdllcsllsx2
+ - bt-tree
+ - tree-par
+ - rose-tree
+ - check-mcf
+ - swl
+ - tll
+ -check-tll
+ - tll-par
+
+=====================================================================
+
+cparser:  return list ? list->val : -1
+
+int
+g_slist_nth_data (struct GSList *list,
+                  int n)
+{
+  while (n-- > 0 && list)
+    /*@
+      infer [H_nthd, G_nthd]
+      requires H_nthd(list)
+      ensures G_nthd(list, list');
+    */
+    {
+      list = list->next;
+    }
+
+  // assume list'::GSList<_,_>;
+  //if (list!=NULL) return list->val;
+  //else return -1;
+    return list ? list->val : -1;
+}
+
+
+=====================================================================
+@guard/fail-2.ss:
+
+
+
+=====================================================================
+# dryad:
+- glib/glist.ss
+- https://git.gnome.org/browse/glib/tree/glib/gslist.c
+- https://git.gnome.org/browse/glib/tree/glib/glist.c
+- https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+- https://git.gnome.org/browse/glib/tree/glib/gqueue.c
+- https://git.gnome.org/browse/glib/tree/glib/gqsort.c
+
+=====================================================================
+#sll-bubble.ss
+
+[ // BIND
+(0)H1(xs) --> xs::node<val,next>@M * HP_935(val@NI) * 
+                                     ^^^^^^^^^^^^^
+HP_936(next),
+ // PRE_REC
+(2;0)HP_936(next)&
+next!=null --> H1(next),
+ // BIND
+(2;0)G1(next)&next!=null --> next::node<val,next1>@M * HP_963(val@NI) * 
+                                                       ^^^^^^^^^^^^^
+HP_964(next1),
+ // POST
+(1;0)xs::node<val,next>@M * HP_935(val@NI) * HP_936(next)&
+                            ^^^^^^^^^^^
+next=null --> G1(xs),
+ // POST
+(1;2;0)xs::node<val,next>@M * HP_935(val@NI) * next::node<val1,next1>@M * 
+                              ^^^^^^^^^^^^^
+HP_963(val1@NI) * HP_964(next1)&
+^^^^^^^^^^^^
+val<=val1 --> G1(xs),
+ // POST
+(2;2;0)xs::node<val,next>@M * HP_963(val@NI) * next::node<val1,next1>@M * 
+HP_935(val1@NI) * HP_964(next1)&
+val<val1 --> G1(xs)]
+
+
+=====================================================================
+
+
+=====================================================================

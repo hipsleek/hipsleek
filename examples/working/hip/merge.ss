@@ -36,7 +36,7 @@ int count(node x)
 }
 
 /* function to divide a list into 2 lists, the first one containing a elements and the second the rest */
-node split_func(ref node x, int a)
+node split_func(node@R x, int a)
 	requires x::bnd<n, sm, bg> & a > 0 & n > a 
         ensures x'::bnd<n1, sm, bg> * res::bnd<n2, sm, bg> & n = n1 + n2 & n1 > 0 & n2 > 0 & n1 = a; 
 

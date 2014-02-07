@@ -168,11 +168,13 @@ let rec string_of_typed_var_list l = match l with
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
 let string_of_imm imm = match imm with
-  | Iformula.ConstAnn(Accs) -> "@A"
-  | Iformula.ConstAnn(Imm) -> "@I"
-  | Iformula.ConstAnn(Lend) -> "@L"
-  | Iformula.ConstAnn(Mutable) -> "@M"
-  | Iformula.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+  | P.ConstAnn(Accs) -> "@A"
+  | P.ConstAnn(Imm) -> "@I"
+  | P.ConstAnn(Lend) -> "@L"
+  | P.ConstAnn(Mutable) -> "@M"
+  | P.PolyAnn(v, _) -> "@" ^ (string_of_var v)
+
+let string_of_imm_lst imm_lst = pr_list string_of_imm imm_lst
 
 let string_of_imm_opt imm = match imm with
   | Some ann -> string_of_imm ann
@@ -785,11 +787,11 @@ and
 
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann ann= String.concat "@" ann
+  (* match ann with *)
+  (*   | VAL -> "@VAL" *)
+  (*   | REC -> "@REC" *)
+  (*   | F_NO_ANN -> "" *)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
@@ -821,15 +823,16 @@ let string_of_barrier_decl b =
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
+^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
 let string_of_coerc_type c = match c with 
-  | Left -> "<="
+  | Left -> "=>"
   | Equiv -> "<=>"
-  | Right -> "=>"
+  | Right -> "<="
 
 let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
@@ -837,7 +840,9 @@ let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.c
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
  | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
- | RefMod         -> "ref " ^ (string_of_typ par.param_type) ^ " " ^ par.param_name
+ | RefMod         -> (* "ref " ^  *)(string_of_typ par.param_type) ^ "@R " ^ par.param_name
+ | CopyMod         -> (string_of_typ par.param_type) ^ "@C " ^ par.param_name
+
 ;;
 
 (* pretty printing for a list of parameters *)
@@ -907,6 +912,7 @@ let string_of_lem_kind l =
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
+    | LEM_INFER_PRED    -> "infer lemmas + pred"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)
@@ -968,7 +974,11 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  name
+  let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
+      ^ " " ^ n
+  ) hpdecl.Iast.hp_typed_inst_vars) in
+  let parts = if hpdecl.Iast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Iast.hp_part_vars) in
+  name^"("^args^")"^parts
 
 
 (* An Hoa : print axioms *)
@@ -1015,13 +1025,14 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
   (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
-;;                                                                                                                         
-
+;;
 
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
+Iast.print_param_list := string_of_param_list;;
+Iast.print_hp_decl := string_of_hp_decl;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;

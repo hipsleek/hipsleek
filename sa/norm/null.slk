@@ -1,0 +1,19 @@
+
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H2(node a).
+
+
+//1
+infer [H2] H2(r)   |- r::node<_,null> .
+print residue.
+
+/*
+<1>H2(r)&flted_17_37=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(r) --> r::node<Anon_36,flted_17_37>@M * 
+                   HP_38(flted_17_37); 
+                  HP_38(flted_17_37) --> emp&flted_17_37=0]
+*/

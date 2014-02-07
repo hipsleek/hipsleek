@@ -1,0 +1,23 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred ll<n> == self = null & n= 0
+  or self::node<_,x> * x::ll<n-1>
+  inv n >= 0.
+
+  pred llinf<> == //self = null or
+  self::node<_,x> * x::llinf<>.
+
+lemma_safe "i1" self::llinf<> <-> self::ll<\inf>.
+print residue.
+
+
+checkentail x::llinf<> |- false.
+
+  checkentail x = null & n=0 & n= \inf 
+               or x::node<_,r> * r::ll<n-1> & n= \inf 
+ |- x::node<_,z> * z::llinf<>.

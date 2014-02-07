@@ -1,0 +1,162 @@
+data node {
+	int val; 
+}.
+
+
+// Implicit
+
+// 1. Valid
+checkentail x::node<_@M>|-  x::node<_@M>.
+print residue.
+
+// 2. Valid
+checkentail x::node<_@M>|-  x::node<_@w> & w=@M.
+print residue.
+
+// 3. Valid
+checkentail x::node<_@M>|-  x::node<_@w> & w<:@M.
+print residue.
+
+// 4. Valid
+checkentail x::node<_@M>|-  x::node<_@I>.
+print residue.
+
+// 5. Fail (due to incompleteness)
+checkentail x::node<_@M>|-  x::node<_@w> & w=@I.
+print residue.
+
+// 6. Valid
+checkentail x::node<_@M>|-  x::node<_@w> & w<:@I.
+print residue.
+
+//7. Valid 
+checkentail x::node<_@M>|-  x::node<_@L>.
+print residue.
+
+//8. Fail (due to incompleteness)
+checkentail x::node<_@M>|-  x::node<_@w> & w=@L.
+print residue.
+
+//9. Valid
+checkentail x::node<_@M>|-  x::node<_@w> & w<:@L.
+print residue.
+
+//10. Valid
+checkentail x::node<_@M>|-  x::node<_@A>.
+print residue.
+
+// 11. Fail (due to incompleteness)
+checkentail x::node<_@M>|-  x::node<_@w> & w=@A.
+print residue.
+
+// 12. Valid
+checkentail x::node<_@M>|-  x::node<_@w> & w<:@A.
+print residue.
+
+//-------------------------------------------
+
+
+checkentail x::node<_@I>|-  x::node<_@M>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@M.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@I>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@I.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@L>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@A>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@A.
+
+
+//-------------------------------------------
+
+
+checkentail x::node<_@I>|-  x::node<_@M>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@M.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@I>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@I.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@L>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@A>.
+print residue.
+
+checkentail x::node<_@I>|-  x::node<_@w> & w=@A.
+
+
+//-------------------------------------------
+
+checkentail x::node<_@L>|-  x::node<_@M>.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@w> & w=@M.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@I>.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@w> & w=@I.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@L>.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@A>.
+print residue.
+
+checkentail x::node<_@L>|-  x::node<_@w> & w=@A.
+
+
+//-------------------------------------------
+
+checkentail x::node<_@A>|-  x::node<_@M>.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@w> & w=@M.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@I>.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@w> & w=@I.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@L>.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@A>.
+print residue.
+
+checkentail x::node<_@A>|-  x::node<_@w> & w=@A.
+print residue.
+
+//-------------------------------------------

@@ -1,0 +1,197 @@
+data node {
+	int val; 
+}.
+
+/*
+checkentail x::node<_@A>|- (exists w:  x::node<_@w> & w=@L) .
+print residue.
+*/
+
+
+//9 
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@A.
+print residue. 
+
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@I.
+print residue. 
+
+//Residue: emp&Anon_11=Anon_12 & w=@A & @M<:w
+//Should be: x::node<Anon_11>@M&Anon_11=Anon_12 & w=@A & @M<:w
+
+/*
+checkentail x::node<_>@M |-  x::node<_>@w & w=@M.
+print residue.
+
+checkentail x::node<_>@I |-  x::node<_>@w & w=@I.
+print residue. 
+
+checkentail x::node<_>@L |-  x::node<_>@w & w=@L.
+print residue.
+
+checkentail x::node<_>@A |-  x::node<_>@w & w=@A.
+print residue.
+
+//5
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@M.
+print residue.
+
+checkentail x::node<_>@I |-  [w] x::node<_>@w & w=@I.
+print residue.
+
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@L.
+print residue.
+
+//8
+checkentail x::node<_>@A |-  [w] x::node<_>@w & w=@A.
+print residue.
+
+//9
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@A.
+print residue. 
+
+//10
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@L.
+print residue.
+
+//11
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@A.
+print residue.
+*/
+/*
+checkentail x::node<_>@M |-  x::node<_>@w & w=@L.
+print residue.
+*/
+/*
+checkentail x::node<_@A>|- (exists w:  x::node<_@w> & w=@L) .
+print residue.
+
+checkentail x::node<_@A>|- [w]  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@M> |-  x::node<_@w> & w=@L.
+print residue.*/
+
+/*
+checkentail x::node<_@M>|- [w]  x::node<_@w> & w=@M.
+print residue.
+
+checkentail x::node<_@M>|- [w]  x::node<_@w> & w=@L.
+print residue.
+*/
+/*
+checkentail true |- (exists w: @M<:w & w=@L).
+
+checkentail x::node<_@M> |-  x::node<_@w> & w=@L.
+
+checkentail x::node<_@M> & w=@L |-  x::node<_@w> & w=@L.
+
+
+checkentail x::node<2> |-  x::node<w> & w=3.
+
+checkentail x::node<2> & w=3 |-  x::node<w> & w=3.
+
+
+
+// 1 Fail
+// checkentail x::node<_@M> & w=@L|-  x::node<_@w> & w=@L.
+// print residue.
+// implicit quantif => early instantiation
+// How should it behave?
+// (i)  Fail because w=@M |- w=@L is invalid
+//       or
+// (ii) Valid because @M<:w |- w=@L is valid ?
+//   I think the last time we discussed we agreed that (i) is the right behaviour for our system
+
+checkentail x::node<_>@M |-  x::node<_>@w.
+ print residue.
+
+checkentail x::node<_@M> |-  x::node<_@M>.
+ print residue.
+
+
+checkentail x::node<_@M> & w=@M|-  x::node<_@w> & w=@M.
+ print residue.
+
+checkentail x::node<_@M>|-  x::node<_@L>.
+checkentail x::node<_@v> & v=@M|-  x::node<_@M>.
+ print residue.
+
+ checkentail x::node<_@M>|-  x::node<_@w> & w=@M.
+ print residue.
+
+
+ checkentail @M<:w|- w=@L.
+
+ checkentail @M<:w|- w=@L.
+
+ checkentail true |- (exists w: @M<:w & w=@L).
+
+ checkentail true |- (exists w: @M=w & w=@L).
+
+*/
+
+/*
+
+ print residue.
+*/
+
+// checkentail x::node<_@M>|- (exists w: x::node<_@w> & w=@M).
+ print residue.
+// wrong residue: <1>x::node<Anon_11@M>@M[Orig]&@M<:@M & Anon_11=Anon_12&{FLOW,(19,20)=__norm}[]
+
+//checkentail x::node<_@L>|-  x::node<_@w> & w=@M.
+//print residue.
+
+// 2 Fail
+// checkentail x::node<_@L>|- (exists w: x::node<_@w> & w=@M).
+// This entailment used to be valid regadless of the ann on the rhs. 
+// I changed it's behaviour so that it follows (more or less) the one
+// for simple existential:
+// Now it fails because:
+// w_21=@L |-  w_21=@M (after match)
+// ---------------------------------------------
+// x::node<_@L> & w_21=@L |- x::node<_@w_21> & w_21=@M) (subst)
+// ---------------------------------------------
+// x::node<_@L>|- (exists w: x::node<_@w> & w=@M).
+
+
+// 3 Fail
+// checkentail x::node<_@v> & v=@M |- (exists w: x::node<_@w> & w=@L).
+// Fail.(must) cause: v=@M & @M<:v |-  v=@L. LOCS:[0;64] (must-bug)
+
+
+//checkentail x::node<_@L>|-  x::node<_@w> & w=@M.
+//print residue.
+
+
+//checkentail x::node<_@v> & v=@L |- (exists w: x::node<_@w> & w=@M).
+//Fail becasue: v=@L & @M<:v |-  v=@M is not valid
+
+
+
+
+
+
+//6 Fail (but it says valid)
+//checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@L).
+//print residue.
+
+//checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@A).
+//print residue.
+
+
+/*
+checkentail x::node<_@v> & v=@A|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@v> & v=@A|-  x::node<_@L>.
+print residue.
+
+
+checkentail x::node<_@v> & v=@M|-  x::node<_@w> & w=@L.
+print residue.
+
+checkentail x::node<_@v> & v=@M|-  x::node<_@L>.
+print residue.
+*/
+

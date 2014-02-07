@@ -109,6 +109,7 @@ module Make (Token : SleekTokenS)
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
    ("assert_exact", ASSERT_EXACT);
+   ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
@@ -136,6 +137,8 @@ module Make (Token : SleekTokenS)
    ( "shape_post_obligation", SHAPE_POST_OBL);
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
+   ("shape_lfp" , SHAPE_LFP);
+   ("shape_rec" , SHAPE_REC);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
@@ -147,6 +150,7 @@ module Make (Token : SleekTokenS)
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("infer_exact", INFER_EXACT);
    ("infer_inexact", INFER_INEXACT);
+   ("relation_infer", REL_INFER);
    ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
@@ -197,6 +201,7 @@ module Make (Token : SleekTokenS)
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
          ("lemma_safe", LEMMA TLEM_SAFE);
 	 ("lemma_infer", LEMMA TLEM_INFER);
+         ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
 	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);
@@ -213,9 +218,11 @@ module Make (Token : SleekTokenS)
 	 ("macro",PMACRO);
      ("perm",PERM);
      ("pred", PRED);
-	 ("pred_prim", PRED_PRIM);
+     ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
-	 ("hip_include", HIP_INCLUDE);
+     ("hip_include", HIP_INCLUDE);
+     ("pred_split", PRED_SPLIT);
+     ("pred_norm_disj", PRED_NORM_DISJ);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);
@@ -223,7 +230,6 @@ module Make (Token : SleekTokenS)
 	 ("dprint", DPRINT);
 	 ("sleek_compare", CMP);
    ("raise", RAISE);
-	 ("ref", REF);
 ("relation", REL);
 	 ("requires", REQUIRES);
    ("refines", REFINES);
@@ -250,6 +256,7 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
+         ("validate", VALIDATE);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);
@@ -329,11 +336,14 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
-  | "@R" { MAT }
   | "@S" { SAT }
-  | "@VAL" {VAL}
-  | "@REC" {REC}
+  (* | "@VAL" {VAL} *)
+  | "@C" {PASS_COPY}
+  | "@R" {PASS_REF}
+  | "ref" {PASS_REF2}
+  (* | "@REC" {REC} *)
   | "@NI" {NI}
+  | "@RO" {RO}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
@@ -399,6 +409,7 @@ rule tokenizer file_name = parse
 	  {
 		if idstr = "_" then
 		  IDENTIFIER ("Anon" ^ fresh_trailer ())
+		  (* IDENTIFIER ("Anon" ^ fresh_trailer ()) *)
 		else if idstr = "java" then begin
       store file_name; JAVA (parse_nested java file_name)
 		end else

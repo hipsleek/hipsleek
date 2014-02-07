@@ -1,0 +1,30 @@
+data node {
+  node next;
+}.
+
+HeapPred K(node s).
+
+infer [K]  self::node<q> * y::node<_>
+|- (exists p: K(p) & self=p)
+.
+print residue.
+
+
+
+/*
+# useless-3b.slk
+
+Unsound to have node appearing twice in infer & residue.
+
+ <1>self::node<q>@M&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [p_23::node<q>@M * q::ll<>@M --> K(p_23)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+infer [K]  self::node<q>
+|- K(self)
+.
+print residue.
+
+
+*/

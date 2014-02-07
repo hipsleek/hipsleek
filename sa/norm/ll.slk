@@ -1,0 +1,22 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred_extn size[R]<n> ==
+   n=0 // base case
+   or R::size<m> & n=1+m // recursive case
+   inv n>=0.
+// infer/sort/der-2.slk
+//pred llN<n> == extend ll<> with size[REC]<n> .
+
+HeapPred ll(node@RO a).
+HeapPred llN(node@RO a, int n).
+
+
+relDefn ll(x) <->
+  x=null or x::node<_,p>*ll(p).
+
+relDefn llN(a,n) <-> extends ll(a) at 0 with size[REC]<n> .
+
+ 

@@ -1,0 +1,58 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <-> self::lseg<q,a>*q::lseg<p,b>.
+
+checkentail x::lseg<p,a>*p::lseg<q,b> |- x::lseg<q,m>.
+print residue.
+/*
+ <1>emp&m=b+a & 0<=a & 0<=b&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== lem_11) ==> (right: lem_11) ==>  Match ==>  SEARCH ==>
+*/
+
+checkentail x::lseg<p,n> & n>0 |- x::node<q1>*q1::lseg<q,m>.
+print residue.
+/*
+ <1>emp&n=m+1 & p!=x & 0<n & p=q&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Unfold 0 ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>(exists flted_6_746: q::lseg<p,b_749>@M&n=flted_6_746+1 & p!=x & 0<n & 0<=b_749 & b_749<=flted_6_746 & flted_6_746=b_749+m & 0<=m & 0<=b_749 & 0<=b_749 & b_749<=flted_6_746 & flted_6_746=b_749+m & 0<=m & 0<=b_749&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Unfold 0 ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
+*/
+
+checkentail x::lseg<p,n> & n>0 |- x::node<q1>*q1::lseg<p,m>.
+print residue.
+/*
+ <1>emp&n=m+1 & p!=x & 0<n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Unfold 0 ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+*/
+
+checkentail x::lseg<p,n> |- x::node<q1>*q1::lseg<q,m>.
+print residue.
+// expect fail
+
+checkentail x::lseg<p,n> |- x::lseg<q1,a>*q1::lseg<q,b>.
+print residue.
+/*
+ <1>emp&p=q1 & a=n & q=q1 & b=0&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==>  COND ==>  BaseCaseFold ==> ]]
+
+should have multiple solutions
+
+
+*/
+checkentail x::lseg<p,n> |- x::lseg<q1,a>*q1::lseg<p,b>.
+print residue.
+/*
+why is b=0?
+ <1>emp&p=q1 & a=n & exists(p_1034:p_1034=q1) & b=0&{FLOW,(21,22)=__norm}[]
+
+*/
+
+checkentail x::lseg<p,n> |- x::lseg<q1,a>.
+print residue.

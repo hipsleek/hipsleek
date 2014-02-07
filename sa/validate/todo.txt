@@ -1,0 +1,63 @@
+ll-parent.ss --sa-dnc
+
+Why isn't HP_925 dropped?
+Why isn't p_951=parent_22_923 in H(..)?
+
+[ G(p_953,x_954) ::=(1;0) 
+ HP_925(parent_22_923,p_953) * x_954::node<p_953,right_22_924>@M * 
+  G(x_954,right_22_924)&right_22_924!=null & p_953=parent_22_923
+   \/ (2;0) HP_925(parent_22_923,p_953) * x_954::node<p_953,right_22_924>@M&
+p_953=parent_22_923 & right_22_924=null,
+
+ H(p_951,x_952) ::=(1;0) x_952::node<parent_22_923,right_22_924>@M 
+      * HP_925(parent_22_923,p_951) * H(x_952,right_22_924)
+        &right_22_924!=null
+   \/ (2;0) x_952::node<parent_22_923,right_22_924>@M 
+       * HP_925(parent_22_923,p_951) & right_22_924=null,
+
+==========================================================
+# tll-3.ss
+
+// why below cause time-out?
+
+HP5<> == self::node<a,b,c>;
+HP8<> == self::node<a,b,c>;
+
+!!! log(small):(0.43,539)
+!!! 
+ log(bigger)(>4s)(4):(40.,[(SAT:436<47:TIMEOUT:OMEGA CALCULATOR,10.);(imply:454<57:TIMEOUT:OMEGA CALCULATOR,10.);(imply:455<57:TIMEOUT:OMEGA CALCULATOR,10.);(SAT:459<57:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 42.57 second(s)
+	Time spent in main process: 0.43 second(s)
+	Time spent in child processes: 42.14 second(s)
+
+==========================================================
+# tll.ss --pred-en-useless-para
+
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ 
+Context of Verification Failure: 1 File "tll.ss",Line:26,Col:36
+Last Proving Location: 1 File "tll.ss",Line:41,Col:11
+
+ERROR: at _0:0_0:0 
+Message: sau.generalize_one_hp: sth wrong 2
+ Stop Omega... 87 invocations 
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================

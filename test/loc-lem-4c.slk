@@ -1,0 +1,50 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+
+/*
+// (4)
+checkentail
+ self::lseg<last>*last::node<_,null>
+|-
+ (exists lst,p: self::lseg<lst>*p::node<_,null> & lst=p)
+.
+*/
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
+
+
+/*
+# loc-lem-4c.slk 
+
+
+why it failed for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+but succeeds for:
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
+
+
+*/

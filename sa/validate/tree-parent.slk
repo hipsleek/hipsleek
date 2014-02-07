@@ -1,0 +1,54 @@
+data node{
+	node parent;
+	node left;
+	node right;
+}.
+
+HeapPred H(node@NI p, node a).
+HeapPred H6(node p_953, node@NI p).
+HeapPred H7(node lf4, node@NI p).
+HeapPred H8(node r5, node@NI p).
+
+
+relAssume 
+ H6(p_953,p) & p=p_953 --> true.
+relAssume 
+ H7(lf4,p) &  lf4=null --> true.
+relAssume 
+ H8(r5,p) & r5=null --> true.
+
+relAssume
+  H6(p_953,p) & p=p_953 --> true.
+
+relAssume
+  H(p,x) --> x::node<p_953,lf4,r5>@M * H6(p_953,p) * H7(lf4,p) * H8(r5,p).
+
+relAssume
+  H8(r5,p)&r5!=null & p=p_953 |#| x::node<p,lf4,r5>@M --> H(x,r5).
+
+relAssume
+  H7(lf4,p)&lf4!=null & p=p_953 |#| x::node<p,lf4,r5>@M --> H(x,lf4).
+
+shape_infer [H,H6,H7,H8][].
+
+/*
+
+[ H(p_96,x_97) ::= 
+ x_97::node<p_953,lf4,r5>@M * H(x_97,r5)&r5!=null & lf4=null & p_953=p_96
+ or x_97::node<p_953,lf4,r5>@M * H(x_97,lf4)&r5=null & lf4!=null & p_953=p_96
+ or x_97::node<p_953,lf4,r5>@M * H(x_97,lf4)&r5!=null & lf4!=null & 
+    p_953=p_96
+ or x_97::node<p_953,lf4,r5>@M&r5=null & lf4=null & p_953=p_96
+ ,
+ H6(p_98,p_99) ::= emp&p_98=p_99,
+ H7(lf4_72,p_73) |#| x::node<p_73,lf4_72,r5>@M ::= emp&lf4_72=null
+           or lf4_72::node<p_953,lf4,r5>@M * H7(lf4,p_953) * H8(r5,p_953)&lf4_72!=null
+ ,
+ H8(r5_74,p_75) |#| x::node<p_75,lf4,r5_74>@M ::= 
+   emp&r5_74=null
+   or r5_74::node<p_953,lf4,r5>@M * H7(lf4,p_953) * H8(r5,p_953)&r5_74!=null
+ ]
+
+*/
+
+

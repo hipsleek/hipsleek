@@ -14,34 +14,34 @@ open Label_only
 
 module H = Hashtbl
 module I = Iast
-module Inf = Infer
+(* module Inf = Infer *)
 module C = Cast
 module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
-module LP = Lemproving
-module AS = Astsimp
-module DD = Debug
+(* module LP = Lemproving *)
+(* module AS = Astsimp *)
+(* module DD = Debug *)
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
-module TI = Typeinfer
+(* module TI = Typeinfer *)
 module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref(fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
+let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
   let conseq = Solver.prune_pred_struc cprog true conseq in
-  let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
-  (* let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
-  (* let _ = DD.info_pprint "=============================================================" no_pos in *)
-  let conseq = AS.add_param_ann_constraints_struc conseq in
-  let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
-  (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
+  let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
+  (* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
+  (* let _ = Debug.info_pprint "=============================================================" no_pos in *)
+  let conseq = Astsimp.add_param_ann_constraints_struc conseq in
+  let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
+  (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
                         ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -63,16 +63,16 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* (\* List of vars needed for abduction process *\) *)
-  (* let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
+  (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) isvl in
-  let (v_hp_rel,iv) = List.partition (fun v -> CP.type_of_spec_var v == HpT(*  ||  *)
+  let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v (*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) iv in
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
   (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
-  let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
+  let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -189,3 +189,87 @@ and check_equiv_list iprog prog guiding_svl proof_traces need_lemma fs1 fs2: boo
 (* let _ = Sautility.check_equiv := check_equiv *)
 (* let _ = Sautility.check_equiv_list := check_equiv_list *)
 
+let checkeq gvars=
+  (* SY_CEQ.check_relaxeq_formula gvars *)
+  CEQ.checkeq_formulas (List.map CP.name_of_spec_var gvars)
+
+let checkeq_ass gvars ls_ex_ass0 ls_act_ass0=
+  let rec look_up_eq ((ex_lhs,ex_rhs) as ex) ls_act_ass done_act_ass=
+    match ls_act_ass with
+      | [] -> (false, [])
+      | (act_lhs, act_rhs)::rest ->
+            let b1, _ = (checkeq gvars) ex_lhs act_lhs in
+            if b1 then
+              let b2, _ = (checkeq gvars) ex_rhs act_rhs in
+              if b2 then (true, done_act_ass@rest)
+              else look_up_eq ex rest (done_act_ass@[(act_lhs, act_rhs)])
+            else
+              look_up_eq ex rest (done_act_ass@[(act_lhs, act_rhs)])
+  in
+  let rec loop_helper ls_ex_ass ls_act_ass =
+    match ls_ex_ass with
+      | [] -> true, None
+      | ex::ex_rest ->
+            let b, ls_act_rem = look_up_eq ex ls_act_ass ls_act_ass in
+            if not b then
+              false, Some ex
+            else loop_helper ex_rest ls_act_rem
+  in
+  loop_helper ls_ex_ass0 ls_act_ass0
+
+let validate_x ls_ex_es0 ls_act_es0=
+  (*********INTERNAL********)
+  let validate_one (guide_vars, es_f, ls_ex_ass) es=
+    (*compare es_formula*)
+    (* let b1 = SY_CEQ.check_relaxeq_formula guide_vars es_f es.CF.es_formula in *)
+    let b1,_ = (checkeq guide_vars) es_f es.CF.es_formula in
+    (*compare constrs*)
+    if b1 then
+      let b2= if ls_ex_ass = [] then true else
+        let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel)@
+          (List.map (fun (_,lhs,rhs) ->
+              (CF.formula_of_pure_P lhs no_pos,
+              CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel) in
+        let b2a,_ = checkeq_ass guide_vars ls_ex_ass ls_act_ass in
+        b2a
+      in
+      b2
+    else
+      b1
+  in
+  let rec find_2_validate_helper ls_act_es ex_es done_act_es=
+    match ls_act_es with
+      | [] -> (false,[])
+      | act_es::rest ->
+            let b= validate_one ex_es act_es in
+            if b then (true,done_act_es@rest) else
+              find_2_validate_helper rest ex_es (done_act_es@[act_es])
+  in
+  let rec find_2_validate ls_ex_es ls_act_es=
+    match ls_ex_es with
+      | [] -> true
+      | ex_es::exp_rest ->
+            let b, act_rest = find_2_validate_helper ls_act_es ex_es [] in
+            if not b then
+              (*diff*)
+              false
+            else
+              find_2_validate exp_rest act_rest
+  in
+  (*********END INTERNAL********)
+  let b = find_2_validate ls_ex_es0 ls_act_es0 in
+  (b, None, [])
+
+let validate ls_ex_es ls_act_es=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.prtt_string_of_formula in
+  let pr2a = (pr_list_ln (pr_pair pr2 pr2)) in
+  let pr3 = pr_list_ln (pr_triple pr1 pr2 pr2a) in
+  let pr4 = pr_list_ln Cprinter.string_of_entail_state_short in
+  let pr5 f_opt = match f_opt with
+    | None -> "None"
+    | Some f -> pr2 f
+  in
+  Debug.no_2 "SC.validate" pr3 pr4 (pr_triple string_of_bool pr5 pr2a)
+      (fun _ _ -> validate_x ls_ex_es ls_act_es)
+      ls_ex_es ls_act_es

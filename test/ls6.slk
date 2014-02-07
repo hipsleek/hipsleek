@@ -1,0 +1,16 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+lemma_test
+  self::lseg<p,n> 
+   <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.
+
+lemma_test
+   self::lseg<q,a>*q::lseg<p,b> & n=a+b
+   -> self::lseg<p,n>.

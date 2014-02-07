@@ -1,0 +1,79 @@
+data tree { node children; }.
+    
+data node {  tree child; }.
+
+pred treep4<> ==  self::tree<c> & c=null or  self::tree<c>* c::dll4<> & c!=null .
+
+pred treep3<> ==  self::tree<c>* c::dll4<> & c!=null .
+
+pred treep2<> ==  self::tree<c> & c=null.
+
+data node2 {  node2 ch;}.
+
+
+pred treep1<> ==  self::node2<c>* c::dll5<> .
+pred dll5<> == self::node2<_>.
+
+checkentail c::node2<cc>@L* cc::dll5<>@L  |-  c::treep1<>@L.
+
+pred dll4<> == self=null 
+  or self::node<c> * c::tree<cc> & cc=null
+  or self::node<c> * c::tree<cc>* cc::dll4<> & cc!=null.
+
+checkentail c::tree<cc>@L* cc::dll4<>@L & cc!=null  |-  c::treep3<>@L.
+
+checkentail c::tree<null>@L  |-  c::treep2<>@L.
+
+checkentail c::tree<cc>@L* cc::dll4<>@L & cc!=null  |-  c::treep4<>@L.
+
+checkentail p::dll4<>@L & p!=null|- p::node<c>@L* c::treep4<>@L. 
+
+//checkentail c::tree<cc>@L* cc::dll4<>@L & cc!=null  |-  c::tree<c1>@L & c1=null or  c::tree<c1>@L* c1::dll4<>@L & c1!=null.
+
+
+
+  
+  /*
+
+  
+checkentail p::dll4<> & p!=null|- p::node<c>* c::treep4<>. 
+
+
+
+
+checkentail p::dll4<> & p!=null|- p::node<c>@L* c::treep4<>@L. 
+
+
+data node1 {  
+  node1 next; }.
+
+pred ll<> == self=null
+  or self::node1<null>
+  or self::node1<n>*n::ll<> & n!=null .
+
+checkentail x::ll<>@L & x!=null |- x::node1<n>@L * n::ll<>@L.
+print residue.
+
+checkentail x::ll<> & x!=null |- x::node1<n>@L * n::ll<>@L.
+print residue.
+
+
+checkentail p::dll4<>@L & p!=null|- p::node<c>@L* c::treep4<>@L. 
+
+checkentail p::node<c>@L * c::tree<cc>@L & cc=null & p!=null
+  or p::node<c>@L * c::tree<cc>@L* cc::dll4<>@L & cc!=null  & p!=null
+  |-  p::node<c>@L* c::treep4<>@L.
+
+
+checkentail p::node<c>@L * c::tree<cc>@L & cc=null & p!=null
+  |-  p::node<c>@L* c::treep4<>@L.
+
+
+checkentail p::node<c> * c::tree<cc>* cc::dll4<> & cc!=null  
+  |-  p::node<c>@L* c::treep4<>@L.
+
+
+checkentail c::tree<cc>* cc::dll4<> & cc!=null  
+  |-  c::treep4<>@L.
+
+*/

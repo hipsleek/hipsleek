@@ -542,7 +542,9 @@ let stop_prover () =
   | Mona -> Mona.stop();
   | Mathematica -> Mathematica.stop();
   | OM -> (
+    if !Mona.is_mona_running then
       Mona.stop();
+   if !Omega.is_omega_running then
       Omega.stop();
     )
   | ZM -> (
@@ -550,7 +552,9 @@ let stop_prover () =
       Smtsolver.stop();
     )
   | DP -> Smtsolver.stop()
-  | Z3 -> Smtsolver.stop();
+  | Z3 -> (Smtsolver.stop();
+    (*in the website, use z3, oc keeps running although hip is stopped*)
+    if !Omega.is_omega_running then Omega.stop ();)
   | SPASS -> Spass.stop();
   | MINISAT -> Minisat.stop ();
   | _ -> Omega.stop();;
@@ -991,11 +995,15 @@ let cnv_int_to_ptr f =
             let (is_null_flag,a1,a2) = comm_is_null a1 a2 in
             if is_null_flag then
               Some(Neq(a1,Null ll,ll),l)
-            else let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
-              if is_valid_ann i then
-                if is_ann_flag then Some(Neq(a1,int_to_ann i,ll),l)
-                else  Some(BConst (true,ll),l) (* of course *)
-            else Some bf
+            else
+              let (is_ann_flag,a1,i) = comm_is_ann a1 a2 in
+              if is_ann_flag then
+                if is_valid_ann i then
+                  Some(Neq(a1,int_to_ann i,ll),l)
+                else
+                  (*let _ = print_endline "xxxxxx" in*)
+                  Some(BConst (true,ll),l) (* of course *)
+              else Some bf
       | Gt(a2,a1,ll) | Lt(a1,a2,ll) ->
             let ptr_flag,ann_flag = is_ptr_ctr a1 a2 in
             if ptr_flag || ann_flag then Some(to_ptr ptr_flag pf,l)
@@ -1038,7 +1046,7 @@ let cnv_int_to_ptr f =
 let norm_pure_result f =
   let f = cnv_int_to_ptr f in
   let f = if !Globals.allow_inf
-    then let f =  CP.arith_simplify 13 (Infinity.convert_var_to_inf f) in
+    then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
          let drop_inf_constr f =   
            let f_f e = None in
            let f_bf bf = 
@@ -1095,8 +1103,8 @@ let add_imm_inv f1 f2 =
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
   let f1_inv = join_conjunctions (f1::inv) in
-  let _ = Debug.ninfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
-  let _ = Debug.ninfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Ann Vars" Cprinter.string_of_spec_var_list) vs no_pos in
+  let _ = Debug.tinfo_hprint (add_str "Inv" Cprinter.string_of_pure_formula) f1_inv no_pos in
   f1_inv
 
 let cnv_ptr_to_int_weak f =
@@ -1788,6 +1796,10 @@ let simplify (f : CP.formula) : CP.formula =
         (* Omega.simplify f  *)in
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
+      let z3_simplify f =
+        let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
+        CP.arith_simplify 13 f
+      in
       if !external_prover then 
         match Netprover.call_prover (Simplify f) with
           | Some res -> res
@@ -1826,7 +1838,8 @@ let simplify (f : CP.formula) : CP.formula =
                   | CM ->
                         if is_bag_constraint f then Mona.simplify f
                         else omega_simplify f
-                  | Z3 -> Smtsolver.simplify f
+                  | Z3 -> z3_simplify f
+                        (* Smtsolver.simplify f *)
                   | Redlog -> Redlog.simplify f
                   | OCRed -> Redlog.simplify f
                   | RM ->
@@ -1900,24 +1913,27 @@ let simplify_tp (f:CP.formula):CP.formula =
   Debug.no_1 "TP.simplify" pr pr simplify f
 	  
 let rec simplify_raw (f: CP.formula) = 
-  let is_bag_cnt = is_bag_constraint f in
-  if is_bag_cnt then
-    let _,new_f = trans_dnf f in
-    let disjs = list_of_disjs new_f in
-    let disjs = List.map (fun disj -> 
-        let rels = CP.get_RelForm disj in
-        let disj = CP.drop_rel_formula disj in
-        let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
-        let others = simplify_raw (conj_of_list others no_pos) in
-        conj_of_list ([others]@bag_cnts@rels) no_pos
-      ) disjs in
-    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+  if not(!Globals.infer_raw_flag) then simplify f
   else
-    let rels = CP.get_RelForm f in
-    let ids = List.concat (List.map get_rel_id_list rels) in
-    let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
-    let res_memo = simplify f_memo in
-    CP.restore_memo_formula subs bvars res_memo
+    let is_bag_cnt = is_bag_constraint f in
+    if is_bag_cnt then
+      let _ = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in
+      let _,new_f = trans_dnf f in
+      let disjs = list_of_disjs new_f in
+      let disjs = List.map (fun disj -> 
+          let rels = CP.get_RelForm disj in
+          let disj = CP.drop_rel_formula disj in
+          let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
+          let others = simplify_raw (conj_of_list others no_pos) in
+          conj_of_list ([others]@bag_cnts@rels) no_pos
+      ) disjs in
+      List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
+    else
+      let rels = CP.get_RelForm f in
+      let ids = List.concat (List.map get_rel_id_list rels) in
+      let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+      let res_memo = simplify f_memo in
+      CP.restore_memo_formula subs bvars res_memo
 
 let simplify_raw_w_rel (f: CP.formula) = 
   let is_bag_cnt = is_bag_constraint f in
@@ -1973,7 +1989,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
 
 let om_hull f =
   wrap_pre_post norm_pure_input norm_pure_result
-      Omega.hull f 
+      Omega.hull f
 
 let hull (f : CP.formula) : CP.formula =
   let _ = if no_andl f then () else report_warning no_pos "trying to do hull over labels!" in
@@ -2024,9 +2040,24 @@ let hull (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then stop_prover ();
   res
 
+(* this extracts basic conjunct prior to hulling the disj form remainder *)
+let clever_hull f =
+  let x = CP.split_conjunctions f in
+  let (others,basic) = List.partition (CP.is_disjunct) x in
+  if others==[] then f
+  else
+    (* let x = []@[] in *)
+    (* let z = [] in *)
+    (* let z = [] in *)
+    let others = hull(CP.join_conjunctions others) in
+     CP.join_conjunctions (others::basic)
+
+(* let k f = [] *)
+
 let hull (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "hull" pr pr hull f
+  Debug.no_1 "hull" pr pr clever_hull f
+
 
 let om_pairwisecheck f =
   wrap_pre_post norm_pure_input norm_pure_result
@@ -2085,14 +2116,13 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
   
 let rec pairwisecheck_x (f : CP.formula) : CP.formula = 
   if no_andl f then  tp_pairwisecheck f 
-  else 
-	  let rec helper f =  match f with 
-	  | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
-	  | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
-	  | _ ->  tp_pairwisecheck f in
-	  helper f
-	  
-  
+  else
+    let rec helper f =  match f with 
+      | Or (p1, p2, lbl , pos) -> Or (pairwisecheck_x p1, pairwisecheck_x p2, lbl, pos)
+      | AndList l -> AndList (map_l_snd tp_pairwisecheck l)
+      | _ ->  tp_pairwisecheck f in
+    helper f
+
 let pairwisecheck (f : CP.formula) : CP.formula = 
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "pairwisecheck" pr pr pairwisecheck_x f
@@ -2102,8 +2132,14 @@ let pairwisecheck (f : CP.formula) : CP.formula =
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let rels = CP.get_RelForm f in
   let ids = List.concat (List.map get_rel_id_list rels) in
+  (* let pr = Cprinter.string_of_pure_formula in *)
+  (* Debug.info_hprint (add_str "f" pr) f no_pos; *)
   let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
+  (* Debug.info_hprint (add_str "f_memo" pr) f_memo no_pos; *)
+  (* Debug.info_hprint (add_str "bvars" !CP.print_svl) bvars no_pos; *)
+  (* Debug.info_hprint (add_str "subs" (pr_list_ln (pr_pair !CP.print_sv pr))) subs no_pos; *)
   let res_memo = pairwisecheck f_memo in
+  (* Debug.info_hprint (add_str "res_memo" pr) res_memo no_pos; *)
   CP.restore_memo_formula subs bvars res_memo
 
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
@@ -2123,6 +2159,10 @@ let simplify_with_pairwise (f : CP.formula) : CP.formula =
 let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
+
+let om_gist f1 f2 =
+  wrap_pre_post norm_pure_input norm_pure_result
+      (fun f1 -> Omega.gist f1 f2) f1
 
 
 let should_output () = !print_proof && not !suppress_imply_out
@@ -3485,3 +3525,6 @@ let check_diff xp0 xp1 =
 let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
+
+
+let _ = CP.simplify := simplify

@@ -1,0 +1,25 @@
+-------------------------------------
+imm and lemmas?
+-------------------------------------
+RW phase at field level
+------------------------------------
+hybrid reasoning: node + field reasoning
+-----------------------------------
+!!!! for normalization, add constraints about imm vars to the pure part bef normalizing
+
+------------------------------------
+check why there are more false contexts for ./run-fast-test.pl hip 
+ann_1:
+All test results were as expected.
+Total verification time: 321.68 second
+        Time spent in main process: 275.66 second
+        Time spent in child processes: 46.02 second
+        Number of false contexts: 455
+
+default:
+All test results were as expected.
+Total verification time: 335.63 second
+        Time spent in main process: 288.14 second
+        Time spent in child processes: 47.49 second
+        Number of false contexts: 423
+

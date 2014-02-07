@@ -119,7 +119,7 @@ let rec smt_of_exp a =
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
-  | CP.TypeCast _ -> illegal_format ("z3.smt_of_exp: TypeCast should not appear here")
+  | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
@@ -142,6 +142,7 @@ let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
+  | CP.XPure _ -> "true"
   | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
   | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -201,7 +202,7 @@ let rec smt_of_b_formula b =
         "(= " ^ new_array ^ " " ^ result ^ ")"
       else
         "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
-  | CP.XPure _ -> Error.report_no_pattern ()
+  (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in

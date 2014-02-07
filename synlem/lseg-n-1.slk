@@ -1,0 +1,10 @@
+//Valid.Valid
+data node { int val ; node next }.
+
+
+pred lseg<p> == self = p 
+         or self::node<next = r> * r::lseg< p>
+         inv true.
+
+lemma_safe "V1" self::lseg<p> <-> self::lseg<r> * r::lseg<p>.
+

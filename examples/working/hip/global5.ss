@@ -1,7 +1,7 @@
 
 global int n,k;
 
-void increase(ref int k)
+void increase(int@R k)
    requires k > 0
    ensures k' = n;
 {

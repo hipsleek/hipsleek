@@ -1,0 +1,56 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+checkentail_exact
+ x::node<_,r> * r::cll<p,n>@M  & x!=p
+ |- x::cll<p,m>.
+print residue.
+
+/*
+# bug-cll-8a.slk
+
+why --eci fail here
+
+heap_entail_conjunct_lhs_struc@20@19@18@17@16@15@14@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_lhs_struc inp1 :Ctx  r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon=Anon1 & r1=tmp'&{FLOW,(21,22)=__norm}[]
+ es_trace:  SEARCH ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==> 
+
+heap_entail_conjunct_lhs_struc inp2 : ECase case {
+        r_87=x -> EBase {1}->emp&r_87=x & flted_14_126=0&
+                        {FLOW,(1,24)=__flow}[]
+        ;
+        r_87!=x -> EBase exists (Expl)[](Impl)[_; 
+                         r_128](ex)[]{2}->(exists p_129,
+                         flted_8_130: r_87::node<_,r_128>@M * 
+                         r_128::cll<p_129,flted_8_130>@M&
+                         flted_14_126=flted_8_130+1 & r_87!=x & p_129=x&
+                         {FLOW,(1,24)=__flow})[]
+        
+        }
+
+
+but --dci works with
+
+heap_entail_conjunct_lhs_struc@20@19@18@17@16@15@14@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_lhs_struc inp1 :Ctx  r::cll<self,flted>@M * tmp'::node<v',r>@M&0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon=Anon1 & r1=tmp'&{FLOW,(21,22)=__norm}[]
+ es_trace:  SEARCH ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==> 
+
+heap_entail_conjunct_lhs_struc inp2 : :EBase {1}->emp&r_83=self_121 & flted_14_122=0&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[_; r_124](ex)[]{2}->(exists p_125,
+          flted_8_126: r_83::node<_,r_124>@M * 
+          r_124::cll<p_125,flted_8_126>@M&flted_14_122=flted_8_126+1 & 
+          r_83!=self_121 & p_125=self_121&{FLOW,(1,24)=__flow})[]
+heap_entail_conjunct_lhs_struc@20 EXIT: 1[
+   emp&0<m & 0<m & n=1+flted & self=x' & 0<n & v=v' & x=x' & next=r & Anon_14=Anon_82 & r_83=tmp' & Anon_123=v' & r=r_124&{FLOW,(21,22)=__norm}[]
+   ]
+
+
+
+*/

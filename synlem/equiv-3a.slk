@@ -1,0 +1,68 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+lemma_unsafe "yy"
+    self::node<_,q>*q::rlseg<p> ->  self::rlseg<p1>* p1::node<_,p>.
+// fail
+
+checkentail_exact
+    self_yy::node<_,q> & q=p 
+ or self_yy::node<_,q>*q::node<_,q_46>*q_46::rlseg<p_44> & p=p_44
+ |- (exists p1: self_yy::rlseg<p1>* p1::node<_,p> )
+ .
+
+
+
+/*
+===========
+LEFT LEMMAS
+===========
+[Lemma "yy":  self::node<_,q>@M * q::rlseg<p>@M&{FLOW,(21,22)=__norm}[]==> (exists p1,_: self::rlseg<p1>@M * p1::node<_,p>@M&{FLOW,(21,22)=__norm})[]
+ head match:node
+ body view:rlseg
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head_norm:  (exists p_33,_,q: self::node<_,q>@M * q::rlseg<p_33>@M&p=p_33&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[p1](ex)[](exists p_47,_: self::rlseg<p1>@M * 
+       p1::node<_,p_47>@M&p=p_47&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Complex
+*/
+
+/*
+checkentail_exact
+   self::node<_,q>*q::rlseg<p> 
+ |- self::rlseg<p1>* p1::node<_,p>
+ .
+*/
+
+
+/*
+checkentail_exact
+    self::node<_,q> & q=p 
+ |- self::rlseg<p1>* p1::node<_,p>.
+
+checkentail_exact
+ self::node<_,q>*q::node<_,r>*r::rlseg<p> 
+ |- self::rlseg<p1>* p1::node<_,p>
+ .
+
+checkentail_exact
+ self::node<_,q>*q::node<_,r>*r::rlseg<p> 
+ |- self::node<_,q1>*q1::rlseg<p1>* p1::node<_,p>
+.
+
+checkentail_exact
+ q::node<_,r>*r::rlseg<p> 
+ |- q::rlseg<p1>* p1::node<_,p>
+.
+*/

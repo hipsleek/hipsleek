@@ -1,0 +1,49 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+pred ns<p,n> == self=p & n=0
+  or self::node<q>*q::ns<p,n-1> & self!=p 
+  inv n>=0.
+
+lemma_unsafe
+  self::ns<p,n> <- self::lseg<p,n>.
+
+checkentail
+  self=p & n=0
+  or self::node<q>*q::lseg<p,n-1>
+  |- self::ns<p,n>.
+// current unsound test..
+
+checkentail
+  self=p & n=0
+  or self::node<q>*q::lseg<p,n-1>
+  |- 
+  self=p & n=0
+  or self::node<q1>*q1::ns<p,n-1> & self!=p
+  .
+// correct test..
+
+lemma_test
+  self::ns<p,n> <- self::lseg<p,n>.
+// unsound
+
+/*
+# lab6b3.slk -dre ".*coercion_check"
+
+Need to unfold RHS (inp2)
+
+process_coercion_check inp1 : 
+ emp&p=self_lem_12 & n=0&{FLOW,(21,22)=__norm}[]
+ or (exists p_80,flted_7_81,q_82: self_lem_12::node<q_82>@M * 
+    q_82::lseg<p_80,flted_7_81>@M&n=flted_7_81+1 & p=p_80&
+    {FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase self_lem_12::ns<p,n>@M&{FLOW,(21,22)=__norm}[]
+*/
+

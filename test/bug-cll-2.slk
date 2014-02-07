@@ -1,0 +1,34 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+checkentail r_972::cll<self_969,flted_15_970>@M * tmp_992::node<v',r_972>@M * 
+x'::node<_,tmp_992>@M&n=flted_15_970+1 & self_969=x' & 0<n & v=v' & x=x' & 
+next_26_979=r_972 
+ |-  (exists flted_21_993: x::hd<flted_21_993>@M).
+
+print residue.
+
+/*
+    r_972::cll<self_969,flted_15_970>@M * tmp_992::node<v',r_972>@M&n=1+
+    flted_15_970 & self_969=x' & 0<n & v=v' & x=x' & next_26_979=r_972 & 
+    x!=null & Anon_14=Anon_67 & r_68=tmp_992 & r_68=x&{FLOW,(21,22)=__norm}[]
+    or emp&n=1+flted_15_970 & self_969=x' & 0<n & v=v' & x=x' & 
+       next_26_979=r_972 & x!=null & Anon_14=Anon_67 & r_68=tmp_992 & 
+       r_68!=x & Anon_75=v' & r_76=r_972&{FLOW,(21,22)=__norm}[]
+*/
+
+checkentail r::cll<x,flted_15_970>@M * tmp::node<v,r>@M * 
+x::node<_,tmp>@M & n=flted_15_970+1 & 0<n  
+ |-  x::hd<f21>@M.
+print residue.

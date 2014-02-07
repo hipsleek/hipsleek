@@ -1,0 +1,27 @@
+
+data node {
+  node next;
+}.
+
+pred lseg<p> == self=p 
+  or self::node<q>*q::lseg<p> & self!=p
+  inv true.
+
+/*
+# case-ls-3.slk --eci -debug case.log
+
+How come f_list did not contain self!=p?
+
+!!! f_list:[ p=self & n=0, self!=null & 1<=n]
+compute_constraint_relation@3@2@1
+compute_constraint_relation inp1 :(1, self!=null,[self])
+compute_constraint_relation inp2 :(0, p=self,[p,self])
+compute_constraint_relation@3 EXIT:Unk
+
+compute_constraint_relation@4@2@1
+compute_constraint_relation inp1 :(1, 1<=n,[n])
+compute_constraint_relation inp2 :(0, n=0,[n])
+compute_constraint_relation@4 EXIT:Contr
+
+
+ */

@@ -1,0 +1,51 @@
+data node {
+  node next;
+}.
+
+pred ls<y> == 
+ case {
+  self=y -> [] true;
+  self!=y -> [] self::node<q>*q::ls<y>; 
+ }
+inv true.
+
+checkentail
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+print residue.
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+.
+print residue.
+
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+.
+print residue.
+
+checkentail
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+print residue.

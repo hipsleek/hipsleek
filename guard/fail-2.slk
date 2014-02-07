@@ -1,0 +1,16 @@
+data node {
+  node next;
+}.
+
+pred ls<p,n> == self=p & n=0
+  or self::node<q>*q::ls<p,n-1> & self!=p
+  inv n>=0.
+
+checkentail l1::node<l2>*l2::ls<null,n> & n>0 
+  |- l2::ls<null,m> & m>0.
+
+lemma_safe self::ls<p,n> & a+b=n & a>=0 & b>=0 <-> self::ls<r,a>*r::ls<p,b>.
+
+checkentail l1::node<l2>*l2::ls<null,n> & n>0 
+  |- (l2::ls<null,m>@L & l1::ls<q,m-1>@L) & m>0.
+

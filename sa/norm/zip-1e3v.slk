@@ -1,0 +1,59 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zipNM<y> ==
+  self=null & y=null 
+or self::node<_,p>*y::node<_,q>*p::zipNM<q>.
+
+pred zip2<y> ==
+  self=null  
+or self::node<_,p>*y::node<_,q>*p::zip2<q>.
+
+pred zipN<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipN<n1> & n=n1+1 
+ inv n>=0.
+
+relation R(int a, int b).
+
+pred zip<> ==
+  self=null  
+ or self::node<_,p>*p::zip<>  
+ inv true.
+
+//lemma_safe self::zipNM<y,m,n> -> self::zipN<n> * y::zipM<m>.
+
+//lemma_safe "both" self::zipNM<y> & n=m <-> self::zipN<n> * y::zipN<m> .
+
+lemma_test "one" self::zipNM<y>  <- self::zipN<n> * y::zipN<m> & n=m 
+   .
+
+lemma_test  self::zip2<y>  <- self::zipN<n> * y::zipN<m> & n<=m .
+// we need to allow residue here
+// need --lem-en-residue
+// need to infer weakest pre-relation
+
+print residue.
+
+/*
+# zip-1e3.slk
+
+Inferred below:
+
+ inferred rel: [RELASS [R]: ( R(n,m)) -->  (n!=0 | 0>m); 
+                RELASS [R]: ( R(n,m)) -->  (m!=0 | 1>n); 
+                RELDEFN R: 
+   R(n,m) & 1<=n & 1<=m & m2=m-1 & n2=n-1 -->  R(n2,m2)
+
+
+How do we perform fix-point?
+
+Is case-analysis required? Base-case result seems wrong..
+
+
+
+
+*/
+

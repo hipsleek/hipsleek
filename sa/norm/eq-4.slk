@@ -1,0 +1,33 @@
+//check smart_subst: eq null
+
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a, node b).
+HeapPred H2a(node a, node@NI b).
+HeapPred G2(node a,node b).
+HeapPred G3(node a,node b, node c).
+
+/*
+//0
+infer_exact [H2a,G3]  H2a(x,y) & x=y & y=null & res=x |- G3(x,y,res).
+print residue.
+*/
+/*
+emp&y=null &  x=null & res=null --> G3(x,y,res); 
+ H2a(x,y@NI)&res=null & x=null & y=null --> emp
+*/
+
+/*
+//1
+infer [H2,G2] H2(p,y) & y=null  & p=y    |- G2(p,y) .
+print residue.
+*/
+/*
+<1>emp&y=null & p=y&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [H2(p,y) & y=null & p=null --> G2(p,y)]
+*/
+

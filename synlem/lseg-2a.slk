@@ -1,0 +1,61 @@
+//Valid.Valid
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+/*
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+*/
+
+lemma_unsafe "V2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+process_coercion_check inp1 : 
+ (exists a_54,b_55,p_56,r_57: r_57::lseg<b_55,p_56>@M&r_57=self_V2 & 
+ a_54=0 & a=a_54 & b=b_55 & p=p_56&{FLOW,(1,24)=__flow})[]
+ or (exists p_69,flted_6_70,_,r_72,a_54,b_55,p_56,
+    r_57: self_V2::node<_,r_72>@M * r_72::lseg<flted_6_70,p_69>@M * 
+    r_57::lseg<b_55,p_56>@M&a_54=flted_6_70+1 & p_69=r_57 & a=a_54 & 
+    b=b_55 & p=p_56&{FLOW,(1,24)=__flow})[]
+ 
+process_coercion_check inp2 : EBase (exists n_47,p_48: self_V2::lseg<n_47,p_48>@M&n=n_47 & p=p_48&
+       {FLOW,(1,24)=__flow})[]
+*/
+
+/*
+checkentail_exact 
+  self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 
+ |- self::lseg<n, p> .
+
+
+checkentail_exact 
+   r::lseg<b, p> & n = a + b & a,b >=0 & a=0 & self=r
+ |- self::lseg<n, p>.
+
+*/
+
+checkentail_exact 
+ self::node<_,q>*q::lseg<a-1, r> * r::lseg<b, p> & n = a + b & a,b >=0 
+ |- self::node<_,k>*k::lseg<6, p>.
+
+/*
+checkentail_exact 
+ self::node<_,q>*q::lseg<a-1, r> * r::lseg<b, p> & n = a + b & a,b >=0 
+ |- self::lseg<n, p>.
+
+//loop
+*/
+
+/*
+ |- self::lseg<n, p> .
+
+checkentail_exact 
+   r::lseg<b, p> & n = a + b & a,b >=0 & a=0 & self=r
+or self::node<_,q>*q::lseg<a-1, r> * r::lseg<b, p> & n = a + b & a,b >=0 
+ |- self::lseg<n, p> .
+
+
+*/

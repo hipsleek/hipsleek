@@ -1,0 +1,30 @@
+data node {
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+   or self::node<q>*q::ll<n-1>
+ inv n>=0.
+
+
+checkentail x::ll<n> |- case {
+                          x=null -> [] emp;
+                          x!=null -> [] x::ll<m> ; }.
+print residue.
+
+checkentail x::ll<n> |- x=null or x::ll<m> & x!=null.
+print residue.
+
+/*
+Entail 2: Valid. 
+
+ <1>
+    emp&x!=null & m=n&{FLOW,(21,22)=__norm}[]
+    or x::ll<n>@M&x=null&{FLOW,(21,22)=__norm}[]
+    
+[[||OR|| ==>  COND ==>  Match ==> ]]
+
+
+Entail 3: Fail.(may) cause:UnionR[ ((1<=n & x!=null) | (n=0 & x=null)) |-  x=null. LOCS:[1;0;17] (may-bug), ((1<=n & x!=null) | (n=0 & x=null)) |-  x!=null. LOCS:[1;0;17] (may-bug)]
+
+*/

@@ -1,0 +1,8 @@
+data pair{
+ int fst;
+ int snd;
+}.
+
+checkentail p::pair<f,s> |- p::pair<v@L,_@A>.
+
+print residue.

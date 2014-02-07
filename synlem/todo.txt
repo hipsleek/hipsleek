@@ -1,0 +1,383 @@
+# useless-3a.slk: FIXED
+
+Why is residue present in (1) but not (2)
+
+
+ <1>self::node<q>@M&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [p_23::node<q>@M * q::ll<>@M --> K(p_23)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [self::node<q>@M * q::ll<>@M --> K(self)]
+[[ COND ==>  InferHeap ==> ]]
+ 
+=================================================================
+#bt-left.slk
+
+Entailing lemma sthn: Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+
+bt-left-1.slk --lem-en-residue: OK
+=================================================================
+# rlseg.slk
+---------------------------
+one:
+
+Entailing lemma lem_14: Fail. Details below:
+         "->" implication: : Fail. (may) cause: q_75!=null & q_75!=self_lem_14 & self_lem_14!=null |-  p=self_lem_14. LOCS:[0;10;8;7] (may-bug)
+         "<-" implication: : Fail. (may) cause:UnionR[Nothing_to_do?matching data with deriv self-rec LHS node
+  Type: Root
+  LHS: self_lem_14::rlseg<q_190>@M
+  RHS: self_lem_14::node<_,p1_168>@M
+ lhs_rest: q_190::node<_,p_189>@M *
+  q_165::node<_,p_164>@M
+ rhs_rest: emp,Nothing_to_do?matching data with deriv self-rec LHS node
+  Type: Root
+  LHS: self_lem_14::rlseg<q_220>@M
+  RHS: self_lem_14::node<_,p1_200>@M
+ lhs_rest: q_220::node<_,p_219>@M *
+  q_196::node<_,p_195>@M
+ rhs_rest: p1_200::rlseg<q_144>@M *
+  q_144::node<_,p_198>@M]
+---------------------
+two: should be proved when one is proved
+
+Entailing lemma two: Fail. Details below:
+         "->" implication: : Fail. (may) cause:OrR[ true |-  p=self_two. LOCS:[7] (may-bug), true |-  p=self_two. LOCS:[0;7] (may-bug)]
+         "<-" implication: : Valid.
+
+=================================================================
+# dseg.slk
+
+three:
+
+Entailing lemma two: Fail. Details below:
+         "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+         "<-" implication: : Valid.
+
+-------------------
+=================================================================
+# useless.slk
+
+print_residue seems to print the last residue of 
+lemma_infer. It seems lemma_infer is processed completely first.
+
+GOT two outcomes:
+
+
+!! fixpoint:[]
+ <1>
+    emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+    or emp&{FLOW,(21,22)=__norm}[]
+    
+ inferred hprel: [emp&p_74=null --> K(p_74); 
+                  p_77::node<q_76>@M * q_76::ll<>@M --> K(p_77)]
+[[ COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap ==> ]]
+<2>
+   emp&self_lem_12=null&{FLOW,(21,22)=__norm}[]
+   or emp&{FLOW,(21,22)=__norm}[]
+   
+inferred hprel: [emp&p_74=null --> K(p_74); K(p_81) --> K(p_81)]
+
+However, only one fix point. What happens to the other? Dropped?
+
+[ G(self) ::= 
+ self::node<q>@M * G(q)
+ or emp&self=null
+ ,
+ K(p) ::= 
+ p::node<q>@M * q::ll<>@M
+ or emp&p=null
+ ]
+
+=================================================================
+# dseg-1a.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+lemma_safe "three" 
+  self::dseg<pr,p,last> <->
+      self::dseg<pr,p1,last2>*p1::dseg<last2,p,last>.
+
+Why proving <- fails?
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[AndR[ (p1_702!=null | (last=pr & p=p1_702)) |-  last=pr. LOCS:[12;1;0;7];  (self_three!=null | (last=last2_701 & p=self_three)) |-  p=self_three. LOCS:[12;1;0;7] (may-bug).],OrR[Cannot infer heap and pure 2,valid]]
+
+=================================================================
+# dseg-1b.slk
+
+lemma_safe "last"
+  self::dseg<pr,p,last> <-> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+-> seems invalid, in general.
+
+Entailing lemma last: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+	 "<-" implication: : Valid.
+=================================================================
+# lseg.slk
+
+resolvable by --dis-lem-rhs-unfold
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+lemma_safe "three" 
+  self::lseg<p> <-  self::lseg<p1>*p1::lseg<p>.
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[ (self_three!=null | p=self_three) |-  p=self_three. LOCS:[1;0;6] (may-bug),OrR[Cannot infer heap and pure 2,valid]]
+=================================================================
+../sleek rlseg-2.slk -debug lem.dd > 1
+
+This example goes into TIMEOUT due to bug Omega file.
+BUG caused by our use of "-" as name..
+Revise code to avoid adding the user supplied string as name of variables
+Just use unique extra numbers.
+
+process_coercion_check@1 ENTRY : 
+ emp&p=self_four-a&{FLOW,(21,22)=__norm}[]
+ or (exists p_38,_,q_40: self_four-a::node<_,q_40>@M * q_40::rlseg<p_38>@M&
+    p=p_38&{FLOW,(21,22)=__norm})[]v
+
+ 
+@1! hargs: 1
+@1! f:#VN# self_four-a::rlseg<p1>@M
+@1! f:#DN# p1::node<_,p>@MTimeout when checking #simplify  Restarting Omega after ... 19 invocations Stop Omega... 19 invocations Starting Omega...oc
+
+=============================
+../sleek rlseg-new-a.slk --urhs
+Starting Omega...oc
+
+Why is a invalid lemma added???
+
+Entailing lemma one: Fail. (must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
+
+Valid Lemmas : [one:==>] added to lemma store.
+====================================
+
+# rlseg-new-b1.slk
+
+lemma_safe "2" self::rlseg<p> & self!=p 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+
+Why failure? Why invalid lemma added..
+ 
+Entailing lemma 2: Fail. (must) cause:residue is forbidden.(2)
+
+Valid Lemmas : [2:==>] added to lemma store.
+
+
+=================================================================
+# rlseg-new-b3a1.slk
+
+lemma_safe "3a" self::node<_,q>*q::rlseg<p> 
+    -> self::rlseg<p1>* p1::node<_,p>.
+
+Cannot be proven automatically, but manual
+version in rlseg-new-b3a.slk went thru!
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+
+=================================================================
+# rlseg-new-b4a.slk  vs rlseg-new-b4b.slk
+
+../sleek rlseg-new-b4a.slk -debug lem.dd > 1
+ 2174  ../sleek rlseg-new-b4b.slk -debug lem.dd > 2
+
+--> seems easier to prove than <--
+Could it be due to the way complex lemmas are being
+handled. Can we use a single way for consistency.
+
+rlseg-new-b4b.slk has an extra lemma step that is
+absent in rlseg-new-b4a.slk
+
+!!!rlseg-new-b4b.slk:13: 38: process_action :
+ ### action =  (Lemma ==> xx) =>
+                   Type: Root
+                   LHS: q_64::rlseg<p_62>@M
+                   RHS: q_64::rlseg<p>@M
+ lhs_rest: p1::node<_,p>@M
+ rhs_rest: emp
+ ### estate =  q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+  es_heap:self_xx::node<_,q_64>@M
+ ### conseq =  q_64::rlseg<p>@M&{FLOW,(21,22)=__norm}[]
+
+
+!!!rlseg-new-b4b.slk:13: 38: do_coercion: estate : es_formula: q_64::rlseg<p_62>@M * p1::node<_,p>@M&p1=p_62&{FLOW,(21,22)=__norm}[]
+ es_heap: self_xx::node<_,q_64>@M
+ es_evars: [_; q_66]
+ es_ante_evars: [p_62; _; q_64]
+ es_trace:  Match ==>  SEARCH ==>  (Lemma ==> xx) ==> 
+ es_unsat_flag: false
+
+=================================================================
+lemma syn: --lem-en-syn
+
+1. syn-mix-1.slk: OK
+
+2. syn-mix-2.slk: with null: ll vs lseg. OK
+
+3. syn-ls.slk (run-fast-test): w/wo size
+
+4. syn-lseg-(1|2).slk: OK
+
+5. syn-ls.slk
+
+6. syn-lseg-s.slk
+
+=================================================================
+#yn-mix-2.slk: FIXED
+
+rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
+
+solution: es_conseq_pure_lemma to keep
+=================================================================
+# equiv-1.slk and equiv-2.slk --lem-en-switch (FIXED)
+# bug-lemma_check01.slk
+
+should generate two left lemmas 
+
+=================================================================
+# bug-lemma_check01.slk
+lost n=b+a in body
+
+trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]<== (exists r_61,a,b: self::lseg<a,r_61>@M * r_61::lseg<b,p>@M&n=b+a & 0<=a & 
+0<=b&{FLOW,(21,22)=__norm})[]
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head_norm:  (exists n_55,p_56: self::lseg<n_55,p_56>@M&n=n_55 & p=p_56&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[r](ex)[](exists a_46,b_47,
+       p_48: self::lseg<a_46,r>@M * r::lseg<b_47,p_48>@M&a=a_46 & b=b_47 & 
+       p=p_48&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
+
+
+
+=================================================================
+# equiv-1.slk
+
+Did we manage to prove two --> lemmas from <-> ?
+
+=================================================================
+# equiv-3a1.slk --ulhs (FIXED)
+
+why lemma proving fail but the steps in equiv-3a.slk succeeds?
+
+ - due to not using normalized form for conseq
+
+=================================================================
+# run-fast-test
+
+
+Total number of errors: 2 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L2#Valid}).
+
+
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+
+--ulhs
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+--dci
+Total number of errors: 6 in files:
+  inflem.slk({E2#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L2#Valid}) lemmas/ll.slk({L2#Valid},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+
+
+
+
+=================================================================
+# ll-1.slk fails but ll-1a.slk --dl succeeds
+
+SOLUTION : use __flow rather than __norm for lemmas..
+
+[Lemma "V2":  self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]<== self::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+
+ emp&self=null&{FLOW,(21,22)=__norm}[]
+ or self::node<_,r>@M * r::ll<>@M&{FLOW,(21,22)=__norm}[]
+  [] |-  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]
+
+# ll-1.slk fails but ll-1a.slk succeeds
+
+process_coercion_check@3@2@1
+process_coercion_check inp1 : 
+ emp&self_V2=null&{FLOW,(1,24)=__flow}[]
+ or (exists _,r_37: self_V2::node<_,r_37>@M * r_37::ll<>@M&
+    {FLOW,(1,24)=__flow})[]
+ 
+process_coercion_check inp2 : ECase case {
+        self_V2=null -> EBase (exists n_38: emp&self_V2=null & n_38=0&
+                              {FLOW,(1,24)=__flow})[]
+        ;
+        self_V2!=null -> EBase exists (Expl)[](Impl)[_; 
+                               r_40](ex)[](exists flted_5_46,
+                               n_38: self_V2::node<_,r_40>@M * 
+
+context:
+  r_53::ll<>@M&self_V2!=null & Anon_39=Anon_52 & r_40=r_53&
+  {FLOW,(1,24)=__flow}[]
+conseq:
+ r_40::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+# ll-1a.slk --dl
+
+[Lemma "V2":  self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]<== self::ll<>@M&{FLOW,(21,22)=__norm}[]
+ head match:ll_s
+ body view:ll
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll])]
+ coercion_case: Simple
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase self::ll<>@M&{FLOW,(1,24)=__flow}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+]
+=================================================================
+# unsound-2b-n.slk
+
+How come lemma did not use folding mechanism
+used by fold-2b-n.slk?
+
+do_full_fold@4
+do_full_fold inp1 : es_formula: self::node<_,q>@M * q::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]
+ es_evars: [p_43; kkk_44]
+ es_rhs_eqset: [p_43:p]
+ es_trace:  SEARCH ==>  Fold ==> 
+ es_unsat_flag: false
+do_full_fold inp2 : self::lseg<kkk_44,p_43>@M
+do_full_fold@4 EXIT: 2[
+   self::node<_,q>@M * q::lseg<n,p>@M&exists(kkk_44:kkk_44=0) & exists(p_43:p_43=self)&{FLOW,(21,22)=__norm}[];
+   emp&Anon_12=Anon_47 & q=r_48 & exists(kkk_44:kkk_44=n+1 & 1<=kkk_44) & exists(p_43:p=p_43)&{FLOW,(21,22)=__norm}[]
+   ]
+=================================================================
+# fold-3a.slk
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=2).
+print residue.
+// valid : seems unsound for folding
+
+above seems unsound for folding
+
+=================================================================
+=================================================================
+=================================================================
+=================================================================
