@@ -3306,6 +3306,27 @@ let rec string_of_exp = function
     a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
 (*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
     (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+
+  (* ADI: MustAssert *)
+  | MustAssert ({exp_must_assert_asserted_formula = f1o; exp_must_assert_assumed_formula = f2o; exp_must_assert_pos = l; exp_must_assert_type = t; exp_must_assert_path_id = pid}) -> 
+      let s = ( 
+        let str1 = match (f1o, t) with
+          | None, _ -> ""
+          | Some f1, None -> "must_assert " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
+              (* ADI: I believe Some true is NOT needed (need to check later) *)
+          | Some f1, Some true -> "must_assert_exact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
+          | Some f1, Some false -> "must_assert_inexact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
+        let str2 = match f2o with
+          | None -> ""
+          | Some f2 -> "assume " ^ (string_of_formula f2) in
+        str1 ^ " " ^ str2
+      ) in
+      string_of_formula_label pid s 
+(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+    a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+    (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 

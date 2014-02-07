@@ -1118,6 +1118,7 @@ let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 (*        Some false --> always perform intutitive rule, regardless of --classic option              *)
 type ensures_type = bool option
 type assert_type = bool option
+type must_assert_type = bool option (* ADI *)
 type entail_type = bool option
 
 (* Options for abduction *)

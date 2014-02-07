@@ -701,6 +701,21 @@ let rec string_of_exp = function
           (match l.exp_assert_assumed_formula with
             | None -> ""
             | Some f -> (string_of_formula f))^"\n"
+
+    (* ADI: MustAssert *)
+  | MustAssert l                       ->
+        snd(l.exp_must_assert_path_id) ^
+          (match l.exp_must_assert_type with
+            | None -> " :must_assert "
+            | Some true -> " :must_assert_exact "
+            | Some false -> " :must_assert_inexact ") ^ 
+          (match l.exp_must_assert_asserted_formula with
+            | None -> (" assume: ")
+            | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
+          (match l.exp_must_assert_assumed_formula with
+            | None -> ""
+            | Some f -> (string_of_formula f))^"\n"
+
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"

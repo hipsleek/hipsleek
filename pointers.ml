@@ -176,6 +176,7 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
           let a = a.exp_aalloc_etype_name in
           (bvars,a::fvars)
       | Assert _ -> (bvars,[])
+      | MustAssert _ -> (bvars,[]) (* ADI: MustAssert *)
       | Assign a ->
           let _,fvars1 = helper a.exp_assign_lhs bvars in
           let _,fvars2 = helper a.exp_assign_rhs bvars in
@@ -335,6 +336,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
           let new_e = ArrayAlloc {a with exp_aalloc_dimensions = es;} in
           (new_e)
       | Assert _ -> (e) (*TO CHECK: need to rename formula after assert*)
+      | MustAssert _ -> (e) (* ADI: MustAssert, also, same as above TO CHECK... *)
       | Assign a ->
           let new_lhs = helper a.exp_assign_lhs subst in
           let new_rhs = helper a.exp_assign_rhs subst in
@@ -609,6 +611,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
           let new_e = ArrayAlloc {a with exp_aalloc_dimensions = es;} in
           (new_e,vars)
       | Assert _ -> (e,vars) (*TO CHECK: need to translate vars in the assertion*)
+      | MustAssert _ -> (e,vars) (* ADI: Must Assert, also, same TO CHECK as above... *)
       | Assign a ->
           let new_lhs,_ = helper a.exp_assign_lhs vars in
           let new_rhs,_ = helper a.exp_assign_rhs vars in
@@ -1203,6 +1206,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           let new_e = ArrayAlloc {a with exp_aalloc_dimensions = es;} in
           (new_e)
       | Assert _ -> (e)
+      | MustAssert _ -> (e) (* ADI: MustAssert *)
       | Assign a ->
           let new_lhs = helper a.exp_assign_lhs vars in
           let new_rhs = helper a.exp_assign_rhs vars in
@@ -1600,6 +1604,7 @@ and find_addr (e:exp) : ident list =
           let vars = List.concat (List.map helper a.exp_aalloc_dimensions) in
           vars
       | Assert _ -> []
+      | MustAssert _ -> [] (* ADI: MustAssert *)
       | Assign a ->
           let vs1 = helper a.exp_assign_lhs in
           let vs2 = helper a.exp_assign_rhs in
@@ -2096,6 +2101,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
           let vars = List.concat (List.map (fun e -> helper e vs) a.exp_aalloc_dimensions) in
           vars
       | Assert _ -> []
+      | MustAssert _ -> [] (* ADI: MustAssert *)
       | Assign a ->
           let vs1 = helper a.exp_assign_lhs vs in
           let vs2 = helper a.exp_assign_rhs vs in

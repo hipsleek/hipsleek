@@ -253,6 +253,14 @@ and exp_assert = {
     exp_assert_type : assert_type;
     exp_assert_pos : loc }
 
+(* ADI: MustAssert: similar to Assert but will cause program failure when not met *)
+and exp_must_assert = {
+    exp_must_assert_asserted_formula : F.struc_formula option;
+    exp_must_assert_assumed_formula : F.formula option;
+    exp_must_assert_path_id : formula_label;
+    exp_must_assert_type : must_assert_type;
+    exp_must_assert_pos : loc }
+
 and exp_assign = 
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
@@ -415,6 +423,8 @@ and exp = (* expressions keep their types *)
 	(* | ArrayAt of exp_arrayat (* An Hoa *) *)
 	(* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
+  | MustAssert of exp_must_assert
+          (* ADI: MustAssert is similar to Assert but will cause program failure when not met *)
   | Assign of exp_assign
   | BConst of exp_bconst
   | Bind of exp_bind
@@ -646,6 +656,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	        let n_arg = f_args in_arg e in
 	        match e with
 	          | Assert _
+              | MustAssert _ (* ADI: MustAssert *)
 	          | Java _
 	          | CheckRef _ 
 	          | BConst _
@@ -830,6 +841,7 @@ let rec type_of_exp (e : exp) = match e with
   | CheckRef _ -> None
   | Java _ -> None
   | Assert _ -> None
+  | MustAssert _ -> None (* ADI: MustAssert *)
 	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
 	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
   | Assign _ -> Some void_type
@@ -1394,6 +1406,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | CheckRef _ -> []
   | Java _ -> []
   | Assert _ -> []
+  | MustAssert _ -> [] (* ADI: MustAssert *)
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
 			 exp_arrayat_array_base = _;
@@ -1681,13 +1694,14 @@ and exp_to_check (e:exp) :bool = match e with
   | Catch _
   | Block _
   | FConst _
-  | Assert _ 
+  | Assert _
+  | MustAssert _ (* ADI: MustAssert *)
   | Cond _
-  | Try _ 
-  | Time _ 
+  | Try _
+  | Time _
   | Java _ -> false
   
-  | Barrier _ 
+  | Barrier _
   | BConst _
 	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
 	      (*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
@@ -1736,6 +1750,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | Barrier b -> b.exp_barrier_pos
   | Java b  -> b.exp_java_pos
   | Assert b -> b.exp_assert_pos
+  | MustAssert b -> b.exp_must_assert_pos (* ADI: MustAssert *)
   | New b -> b.exp_new_pos
   | Sharp b -> b.exp_sharp_pos
   | SCall b -> b.exp_scall_pos
@@ -2216,6 +2231,9 @@ let exp_fv (e:exp) =
 			  | Assert b -> 
 				let l = (Gen.fold_opt F.struc_fv b.exp_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_assert_assumed_formula)in
 				Some (ac@ List.map P.name_of_spec_var l)
+              | MustAssert b ->  (* ADI: MustAssert *)
+                let l = (Gen.fold_opt F.struc_fv b.exp_must_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_must_assert_assumed_formula) in
+                Some (ac@ List.map P.name_of_spec_var l)
 	          | Java _ -> Some ac
 	          | CheckRef b-> Some (b.exp_check_ref_var::ac)
 	          | BConst _ -> Some ac

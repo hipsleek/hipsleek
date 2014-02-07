@@ -307,6 +307,12 @@ exp_assert_path_id : formula_label;
 exp_assert_type : assert_type;
 exp_assert_pos : loc }
 
+and exp_must_assert = { exp_must_assert_asserted_formula : (F.struc_formula*bool) option;
+exp_must_assert_assumed_formula : F.formula option;
+exp_must_assert_path_id : formula_label;
+exp_must_assert_type : must_assert_type;
+exp_must_assert_pos : loc }
+
 and exp_assign = { exp_assign_op : assign_op;
 exp_assign_lhs : exp;
 exp_assign_rhs : exp;
@@ -464,6 +470,7 @@ and exp =
   | ArrayAt of exp_arrayat (* An Hoa *)
   | ArrayAlloc of exp_aalloc (* An Hoa *)
   | Assert of exp_assert
+  | MustAssert of exp_must_assert (* ADI: MustAssert *)
   | Assign of exp_assign
   | Binary of exp_binary
   | Bind of exp_bind
@@ -603,6 +610,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
                 let zero = comb_f [] in  
 		match e with	
                   | Assert _ 
+                  | MustAssert _ (* ADI: MustAssert *)
                   | BoolLit _ 
                   | Break _
                   | Continue _ 
@@ -808,6 +816,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
+  | MustAssert e -> e.exp_must_assert_pos (* ADI: MustAssert *)
   | Assign e -> e.exp_assign_pos
   | Binary e -> e.exp_binary_pos
   | Bind e -> e.exp_bind_pos
@@ -855,6 +864,7 @@ let get_finally_of_exp e = match e with
 	(*
 let rec type_of_exp e = match e with
   | Assert _ -> None
+  | MustAssert _ -> None (* ADI: MustAssert *)
   | Assign _ -> Some void_type
   | Binary { 
       exp_binary_op = op;
@@ -971,6 +981,7 @@ let rec get_mut_vars_x e0 =
   (* let rec helper (e:exp) = *)
   (*   match e with *)
   (*     | Assert _ *)
+  (*     | MustAssert _ (* ADI: Must Assert *) *)
   (*     | BoolLit _ *)
   (*     | Break _ *)
   (*     | Continue _ *)
@@ -1283,6 +1294,14 @@ let mkAssert asrtf assmf pid atype pos =
                exp_assert_path_id = pid;
                exp_assert_type = atype;
                exp_assert_pos = pos }
+
+(* ADI: MustAssert *)
+let mkMustAssert masrtf assmf pid atype pos =
+      MustAssert { exp_must_assert_asserted_formula = masrtf;
+                   exp_must_assert_assumed_formula = assmf;
+                   exp_must_assert_path_id = pid;
+                   exp_must_assert_type = atype;
+                   exp_must_assert_pos = pos }
 
 (** An Hoa [22/08/2011] Extract information from a field declaration of data **)
 
@@ -2153,6 +2172,13 @@ let rec label_e e =
 		  let nl = fresh_formula_label (snd e.exp_assert_path_id) in
 		  iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
 		  Assert {e with exp_assert_path_id = nl }
+
+      (* ADI: MustAssert *)
+    | MustAssert e ->
+          let nl = fresh_formula_label (snd e.exp_must_assert_path_id) in
+          iast_label_table := (Some nl, "must_assert", [], e.exp_must_assert_pos) :: !iast_label_table;
+          MustAssert { e with exp_must_assert_path_id = nl }
+
     | Assign e -> 
 		  let nl = fresh_branch_point_id "" in
 		  iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;

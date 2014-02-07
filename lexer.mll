@@ -108,6 +108,7 @@ module Make (Token : SleekTokenS)
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
+     ("must_assert", MUST_ASSERT); (* ADI *)
    ("assert_exact", ASSERT_EXACT);
    ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);

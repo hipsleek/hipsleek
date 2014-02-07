@@ -509,6 +509,7 @@ let loop_procs : (C.proc_decl list) ref = ref []
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
   | C.Assert _ -> e
+  | C.MustAssert _ -> e (* ADI *)
     (*| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)*)
     (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*) 
   | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
@@ -2390,6 +2391,7 @@ and all_paths_return (e0 : I.exp) : bool =
   match e0 with
     | I.ArrayAt _ -> false (* An Hoa *)
     | I.Assert _ -> false
+    | I.MustAssert _ -> false (* ADI: MustAssert *)
     | I.Assign _ -> false
     | I.Barrier _ -> false
     | I.Binary _ -> false
@@ -3267,6 +3269,34 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             C.exp_assert_type = atype;
             C.exp_assert_pos = pos; } in 
             (assert_e, C.void_type)
+      
+      (* ADI: MustAssert: Similar to Assert but cause program failure when condition not met *)
+      | I.MustAssert { I.exp_must_assert_asserted_formula = must_assert_f_o;
+        I.exp_must_assert_assumed_formula = assume_f_o;
+        I.exp_must_assert_path_id = pi;
+        I.exp_must_assert_type = atype;
+        I.exp_must_assert_pos = pos } ->
+            let tmp_names = E.visible_names () in
+            let all_names = List.map (fun (t, n) -> ((trans_type prog t pos), n)) tmp_names in
+            let free_vars = List.map snd all_names in
+            let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
+            let (n_tl,must_assert_cf_o) = match must_assert_f_o with
+              | Some f -> 
+                    let (n_tl,cf) = trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false true in  
+                    (n_tl,Some cf)
+              | None -> (n_tl,None) in
+            let (n_tl,assume_cf_o) = match assume_f_o with
+              | None -> (n_tl,None)
+              | Some f ->
+                    let (n_tl,cf) = trans_formula prog false free_vars true f n_tl false in  
+                    (n_tl,Some cf) in
+            let must_assert_e = C.MustAssert { C.exp_must_assert_asserted_formula = must_assert_cf_o;
+            C.exp_must_assert_assumed_formula = assume_cf_o;
+            C.exp_must_assert_path_id = pi;
+            C.exp_must_assert_type = atype;
+            C.exp_must_assert_pos = pos; } in 
+            (must_assert_e, C.void_type)
+
       | I.Assign  {
             I.exp_assign_op = aop;
             I.exp_assign_lhs = lhs;
@@ -7044,6 +7074,24 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                                                                      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
                                                                      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
                                                                      r*)
+
+      (* ADI: MustAssert *)
+    | I.MustAssert b ->
+        let subst_list = 
+          List.fold_left (fun a (c1,c2) -> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
+        let must_assert_formula = match b.I.exp_must_assert_asserted_formula with
+          | None -> None
+          | Some (f1,f2) -> Some (IF.subst_struc subst_list f1, f2) in
+        let assume_formula = match b.I.exp_must_assert_assumed_formula with
+          | None -> None
+          | Some f -> Some (IF.subst subst_list f) in
+        I.MustAssert {
+            I.exp_must_assert_asserted_formula = must_assert_formula;
+            I.exp_must_assert_assumed_formula = assume_formula;
+            I.exp_must_assert_pos = b.I.exp_must_assert_pos;
+            I.exp_must_assert_type = b.I.exp_must_assert_type;
+            I.exp_must_assert_path_id = b.I.exp_must_assert_path_id }
+
     | Iast.ArrayAt b->
           Iast.ArrayAt  {  Iast.exp_arrayat_array_base = helper ren b.Iast.exp_arrayat_array_base; (* substitute the new name for array name if it is in ren *)
           Iast.exp_arrayat_index = List.map (helper ren) b.Iast.exp_arrayat_index;
@@ -7151,6 +7199,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
+  | Iast.MustAssert _ -> (f,[]) (* ADI: MustAssert *)
   | Iast.Assign b -> 
         (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
         Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
@@ -7314,6 +7363,28 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               Iast.exp_assert_type = b.I.exp_assert_type;
               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
               (rez_assert, h, p)
+
+          (* ADI: MustAssert *)
+        | Iast.MustAssert b ->
+            let masrt_nf, nh = match b.I.exp_must_assert_asserted_formula with
+              | None -> (None,h)
+              | Some must_asserted_f ->
+                  let r, _ = case_normalize_struc_formula 3 prog h p (fst must_asserted_f) true false false [] in
+                  let _ = check_eprim_in_struc_formula " is not a valid program variable " r in
+                  (Some (r, (snd must_asserted_f)), h) in
+            let assm_nf = match b.I.exp_must_assert_assumed_formula with
+              | None -> None
+              | Some f ->
+                  let r = case_normalize_formula prog nh f in
+                  let _ = check_eprim_in_formula " is not a valid program variable " r in
+                  Some r in
+            let rez_must_assert = I.MustAssert { I.exp_must_assert_asserted_formula = masrt_nf;
+            I.exp_must_assert_assumed_formula = assm_nf;
+            I.exp_must_assert_pos = b.I.exp_must_assert_pos;
+            I.exp_must_assert_type = b.I.exp_must_assert_type;
+            I.exp_must_assert_path_id = b.I.exp_must_assert_path_id; } in
+            (rez_must_assert, h, p)
+
         | Iast.Assign b-> 
               let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
               let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
@@ -8171,6 +8242,7 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
     | C.CheckRef _ 
     | C.Java _
     | C.Assert _ -> (exp, [])
+    | C.MustAssert _ -> (exp, []) (* ADI: MustAssert *)
     | C.Assign e -> 
           let ex, il = irf_traverse_exp cp e.C.exp_assign_rhs scc in
           (C.Assign {e with C.exp_assign_rhs = ex}, il)

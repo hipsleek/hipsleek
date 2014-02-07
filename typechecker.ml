@@ -1340,6 +1340,103 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (wrap_proving_kind 
                   (match c2 with None -> PK_Assert | _ -> PK_Assert_Assume)
                   (wrap_classic atype assert_op)) ()
+
+          (* ADI: MustAssert *)
+        | MustAssert ({ exp_must_assert_asserted_formula = c1_o;
+          exp_must_assert_assumed_formula = c2;
+          exp_must_assert_path_id = (pidi,s);
+          exp_must_assert_type = atype;
+          exp_must_assert_pos = pos}) -> 
+	      let must_assert_op ()=
+		      let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
+                  begin
+                    Prooftracer.push_must_assert_assume e0;
+                    Prooftracer.add_must_assert_assume e0;
+                    Prooftracer.start_compound_object ();
+	                Tpdispatcher.push_suppress_imply_output_state ();
+	                Tpdispatcher.unsuppress_imply_output ();
+                  end in
+                      begin
+                        if !Globals.dis_ass_chk then ctx else
+                          let _ = proving_loc#set pos in
+	                      let s1 = snd post_start_label in
+                          (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
+	                        if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx else
+                              let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
+	                          let new_ctx,pure_info = match c1_o with
+                                | None -> ts,None
+                                | Some c1 ->
+                                    let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                                    let c1 = match c2 with
+                                      | None -> 
+                                      (* WN_2_Loc: clear c1 of inferred info first *)
+                                        let pr2 = Cprinter.string_of_struc_formula in
+                                        let c1a = CF.clear_infer_from_context c1 in
+                                        let _ = DD.binfo_hprint (add_str "c1(before clear)" pr2) c1 no_pos in
+                                        let _ = DD.binfo_hprint (add_str "c1(after clear)" pr2) c1a no_pos in
+                                          c1a
+                                | Some _ -> c1
+                              in
+                              let to_print = "Proving must assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
+                              Debug.devel_pprint(*print_info "must assert"*) to_print pos;
+                              (* let _ = Log.update_sleek_proving_kind Log.ASSERTION in *)
+                              let rs,prf = heap_entail_struc_list_failesc_context_init 4 prog false false ts c1 None None None pos None in
+                              let _ = PTracer.log_proof prf in
+
+                              (*do not display the context if deploy in website*)
+                              if not !Globals.web_compile_flag then
+                                begin
+                                  Debug.pprint(*print_info "must assert"*) ("must_assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                                  Debug.info_hprint (add_str "must_assert(inp-formula)" Cprinter.string_of_struc_formula) c1 pos;
+                                  Debug.info_hprint (add_str "must_assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos
+                                end;
+                              if CF.isSuccessListFailescCtx rs then 
+                                begin
+			                      Debug.print_info "must assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+			                      Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
+                                (* WN_2_Loc: put xpure of asserted by fn below  *)
+                                let xp = get_xpure_of_formula c1_o in
+                                  (rs,Some xp)
+                                end
+			                  else (Debug.print_info "must assert/assume" (s ^" : failed\n") pos ; (rs,None)) in 
+		                      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+                                begin
+          	                      Prooftracer.add_must_assert_assume e0;
+                                  (* Prooftracer.end_object (); *)
+                                  Prooftracer.pop_div ();
+                                  Prooftracer.pop_div ();
+		                          Tpdispatcher.restore_suppress_imply_output_state ();
+                                end in
+                                let res = match c2 with
+                                  | None -> 
+                                    begin
+                                      match pure_info with
+                                        | None -> ts
+                                        | Some p ->
+                                           (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
+                                           CF.add_pure_and_infer_from_asserted p new_ctx ts
+                                    end
+                                  | Some c ->
+                                      let c = if (!Globals.allow_locklevel) then
+                                        (*Some assumption may contain waitlevel,
+                                        translate before adding them into current state*)
+                                        CF.translate_waitlevel_formula c
+                                      else c in
+                                      let c = prune_preds prog false c in (* specialise assumed formula *)
+                                      let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
+                                      let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
+			                            else 
+				                        CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
+                                        List.map CF.remove_dupl_false_fe r
+                                        in
+                                        (ps@res)
+	                  end
+	                  in
+                        (* why is wrap classic needed for assert/assume? *)
+                        (wrap_proving_kind 
+                          (match c2 with None -> PK_Must_Assert | _ -> PK_Must_Assert_Assume)
+                          (wrap_classic atype assert_op)) ()
+
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) ->

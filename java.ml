@@ -340,6 +340,7 @@ and java_of_exp = function
                                    -> string_of_float f
   | Null l                         -> "null"
   | Assert _                       -> ""
+  | MustAssert _                   -> ""
   | Dprint l                       -> ""
   | Time _                         -> ""
   | Debug ({exp_debug_flag = f})   -> ""
