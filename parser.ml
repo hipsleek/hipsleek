@@ -677,8 +677,17 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (* let _ = print_endline "Array found!" in *) ()
+             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
+
+(* let peek_array_type1 = *)
+(*    SHGram.Entry.of_parser "peek_array_type1" *)
+(*        (fun strm -> *)
+(*            match Stream.npeek 3 strm with *)
+(*              |[_;OSQUARE,_;IDENTIFIER id,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
+(*              |[_;OSQUARE,_;INT,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
+(*              | _ -> raise Stream.Failure) *)
 
 let peek_pointer_type = 
    SHGram.Entry.of_parser "peek_pointer_type"
@@ -1102,7 +1111,7 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
+(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
 one_string: [[`STRING (_,id)-> id]];
 
@@ -1367,7 +1376,7 @@ opt_label: [[t= OPT label->un_option t ""]];
 
 label : [[  `STRING (_,id);  `COLON -> id ]];
 
-label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
+(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -2093,13 +2102,13 @@ infer_coercion_decl:
         `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
     ]];
 
-infer_coercion_decl_list:
-    [[
-        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
-            coercion_list_elems = coerc;
-            coercion_list_kind  = LEM;
-        }
-    ]];
+(* infer_coercion_decl_list: *)
+(*     [[ *)
+(*         coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> { *)
+(*             coercion_list_elems = coerc; *)
+(*             coercion_list_kind  = LEM; *)
+(*         } *)
+(*     ]]; *)
 
 coerc_decl_aux:
     [[
@@ -2134,7 +2143,7 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
@@ -2163,7 +2172,7 @@ star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
-  | *) t=non_array_type; r=rank_specifier -> Array (t, r)]];
+  | *) t=non_array_type; r=rank_specifier -> (* print_endline "array"; *) Array (t, r)]];
 
 rank_specifier:
   [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
@@ -3199,7 +3208,7 @@ primary_expression_no_array_no_parenthesis :
  [[ t= literal -> t
   (*| t= member_access -> t*)
   (*| t= member_name -> t*) 
-  | t=SELF; `DOT; `IDENTIFIER id ->
+  | t=SELF; `DOT; `IDENTIFIER id -> print_endline "abc";
 	Member { exp_member_base = t;
            exp_member_fields = [id];
            exp_member_path_id = None ;

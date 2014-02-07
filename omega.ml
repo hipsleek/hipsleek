@@ -157,7 +157,7 @@ and omega_of_b_formula b =
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
-  | RelForm _ -> "1=1"(* illegal_format ("Omega.omega_of_exp: RelForm") *)
+  | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
@@ -175,7 +175,7 @@ and omega_of_formula_x pr_w pr_s f  =
           let _ = print_endline ("AndList:?"^(!print_formula f)) in
           report_error no_pos "omega.ml: encountered AndList, should have been already handled"
         end
-  | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
+  | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "

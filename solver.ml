@@ -174,7 +174,6 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   		else f
  	| _ -> f
 
-
 let rec filter_formula_memo f (simp_b:bool)=
   match f with
     | Or c -> mkOr (filter_formula_memo c.formula_or_f1 simp_b) (filter_formula_memo c.formula_or_f2 simp_b) no_pos
