@@ -3362,11 +3362,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       (match lhs with
                         | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
                               let (ce1, te1) = trans_exp prog proc lhs in
-                              let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in
+                              (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
                               let (ce2, te2) = trans_exp prog proc rhs in
-                              let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in
-                              let _ = print_string ("trans_exp :: te2 = " ^  Typeinfer.string_of_spec_var_kind te2 ^ "\n") in
-                              let _ = print_string ("trans_exp :: te1 = " ^  Typeinfer.string_of_spec_var_kind te1 ^ "\n") in
+                              (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
+                              (* let _ = print_string ("trans_exp :: te2 = " ^  Typeinfer.string_of_spec_var_kind te2 ^ "\n") in *)
+                              (* let _ = print_string ("trans_exp :: te1 = " ^  Typeinfer.string_of_spec_var_kind te1 ^ "\n") in *)
                               if not (sub_type te2 te1) then  Err.report_error {
                                   Err.error_loc = pos;
                                   Err.error_text = "OpAssign : lhs and rhs do not match 2";  }

@@ -2193,6 +2193,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let ras = Infer.rel_ass_stk # get_stk in
                           let _ = Infer.scc_rel_ass_stk # push_list ras in
                           let _ = Infer.rel_ass_stk # reset in
+                          let _ = Infer.scc_rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
                           let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
@@ -2619,9 +2620,13 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     (*
       scc_inferred_hps
     *)
-    let _ = Saout.plug_shape_into_specs prog iprog
-     (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
-     scc_inferred_hps in
+    let _ = if !Globals.pred_trans_view then
+      let _ = Saout.plug_shape_into_specs prog iprog
+          (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs))
+          scc_inferred_hps
+      in ()
+    else ()
+    in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
@@ -3087,6 +3092,7 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
   with _ as e ->
     if !Globals.check_all then begin
       (* dummy_exception(); *)
+      let _ = Infer.rel_ass_stk # reset in
       print_string ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
       print_string ("\nException "^(Printexc.to_string e)^" Occurred!\n");
       Printexc.print_backtrace(stdout);

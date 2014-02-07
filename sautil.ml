@@ -5628,7 +5628,38 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
        (pure_f1, CF.formula_of_disjuncts fs1)
      else (pure_f1, f2)
   in
+  (* let is_top_heap_x f= *)
+  (*   let hpargs = CF.get_HRels_f f in *)
+  (*   match hpargs with *)
+  (*     | [(hp,_args)] -> *)
+  (*           if CP.mem_svl hp unk_hps then *)
+  (*             let p = CF.get_pure f in *)
+  (*             if CP.is_eq_exp p then *)
+  (*               let svl = CP.fv p in *)
+  (*               CP.diff_svl svl args != [] *)
+  (*             else false *)
+  (*           else false *)
+  (*     | _ -> false *)
+  (* in *)
+  (* let is_top_heap f= *)
+  (*   let pr1 = !CF.print_formula in *)
+  (*   Debug.no_1 "is_top_heap" pr1 string_of_bool *)
+  (*       (fun _ -> is_top_heap_x f) f *)
+  (* in *)
   (*******END*********)
+  (* if is_top_heap f2 then f1 else *)
+  (*   if is_top_heap f1 then f2 else *)
+  (* let f1,f2= *)
+  (*   let hpargs1 = CF.get_HRels_f f1 in *)
+  (*   let hpargs2 = CF.get_HRels_f f2 in *)
+  (*   let hp11 = List.fold_left (fun r (hp,_) -> if CP.mem_svl hp unk_hps then r@[hp] else r) [] hpargs1 in *)
+  (*   let hp21 = List.fold_left (fun r (hp,_) -> if CP.mem_svl hp unk_hps then r@[hp] else r) [] hpargs2 in *)
+  (*   match hp11,hp21 with *)
+  (*     | [],[] -> f1,f2 *)
+  (*     | _,[] -> f1, fst (CF.drop_hrel_f f2 hp21) *)
+  (*     | [], _ -> fst (CF.drop_hrel_f f1 hp11), f2 *)
+  (*     | _ -> f1,f2 *)
+  (* in *)
   let is_common, sharing_f, n_fs,_ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
   if not is_common then
     let b1 = is_empty_heap_f f1 in
@@ -5668,8 +5699,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
 
 let mkConjH_and_norm prog hp args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
-      (fun _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2
+  Debug.no_3 "mkConjH_and_norm" pr1 pr1 !CP.print_svl pr1
+      (fun _ _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2 unk_hps
 
 let simplify_disj_x prog hp args unk_hps unk_svl f1 f2 pos=
   (*todo: revise partition_common_diff*)

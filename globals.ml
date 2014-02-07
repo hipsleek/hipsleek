@@ -726,6 +726,8 @@ let sa_dnc = ref false
 
 let pred_reuse = ref false
 
+let pred_trans_view = ref true
+
 (*temp: should be improve*)
 let pred_en_oblg = ref true
 

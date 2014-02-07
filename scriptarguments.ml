@@ -585,6 +585,7 @@ let common_arguments = [
   ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
   ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
   ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dtv", Arg.Clear Globals.pred_trans_view, "disable trans HP defns to view after synthesis");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
