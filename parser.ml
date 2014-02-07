@@ -969,10 +969,10 @@ barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
 
-derv_view:
-[[
-   `IDENTIFIER vn;`LT;sl= id_list_opt; `GT -> (vn,sl)
-]];
+(* derv_view:                                            *)
+(* [[                                                    *)
+(*    `IDENTIFIER vn;`LT;sl= id_list_opt; `GT -> (vn,sl) *)
+(* ]];                                                   *)
 
 prop_extn:
 [[
@@ -1107,7 +1107,7 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
+(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
 one_string: [[`STRING (_,id)-> id]];
 
@@ -1372,7 +1372,7 @@ opt_label: [[t= OPT label->un_option t ""]];
 
 label : [[  `STRING (_,id);  `COLON -> id ]];
 
-label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
+(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -2103,13 +2103,13 @@ infer_coercion_decl:
         `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
     ]];
 
-infer_coercion_decl_list:
-    [[
-        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
-            coercion_list_elems = coerc;
-            coercion_list_kind  = LEM;
-        }
-    ]];
+(* infer_coercion_decl_list:                                     *)
+(*     [[                                                        *)
+(*         coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> { *)
+(*             coercion_list_elems = coerc;                      *)
+(*             coercion_list_kind  = LEM;                        *)
+(*         }                                                     *)
+(*     ]];                                                       *)
 
 coerc_decl_aux:
     [[
@@ -2278,12 +2278,12 @@ id_part_ann: [[
 ]]
 ;
 
-typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)
-  |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)
-  | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)
-  |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
-  |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI)
- ]];
+(* typed_id_inst_list_old:[[ t = typ; `IDENTIFIER id ->  (t,id, Globals.I)                    *)
+(*   |  t = typ; `NI; `IDENTIFIER id->  (t,id, Globals.NI)                                    *)
+(*   | t = typ; `RO; `IDENTIFIER id -> let _ = pred_root_id := id in (t,id, Globals.I)        *)
+(*   |  t = typ; `NI; `RO; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*   |  t = typ; `RO; `NI; `IDENTIFIER id->  let _ = pred_root_id := id in (t,id, Globals.NI) *)
+(*  ]];                                                                                       *)
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
