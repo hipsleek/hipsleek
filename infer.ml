@@ -1951,7 +1951,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
            (*=****************INFER REL HP ASS****************=*)
 (*=*****************************************************************=*)
 
-let generate_linking_svl_x drop_hpargs total_unk_map=
+let generate_linking_svl_x drop_hpargs total_unk_map =
   let generate_linking_svl_one_hp pos (hp,args)=
     let hp_name = CP.name_of_spec_var hp in
     let ps,fr_svl,unk_map =

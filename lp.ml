@@ -23,7 +23,8 @@ let string_of_lp_res = function
 
 let rec lp_of_typ solver t =
   match t with
-  | Int -> begin match solver with
+  | Int -> 
+    begin match solver with
     | LPSolve -> "int"
     | Clp | Glpk -> "Integer"
     end
