@@ -1194,6 +1194,24 @@ let transform_xpure_to_pure prog hp_defs (unk_map:((CP.spec_var * int list) * CP
       (fun _ _ -> transform_xpure_to_pure_x prog hp_defs unk_map link_hpargs)
       hp_defs link_hpargs
 
+let elim_dangling_conj_heap prog hp_defs unk_hps =
+  if unk_hps = [] then hp_defs
+  else
+    (*Cfutil.formula_trans_heap_node (elim_dangling_conj_star unk_hps)*)
+    List.map (fun def ->
+        let n_rhs = List.map (fun (f, og) ->
+            (Cfutil.elim_dangling_conj_star (Cfutil.elim_dangling_conj_star_hf unk_hps) f,og)
+        ) def.CF.def_rhs in
+        {def with CF.def_rhs = n_rhs;}
+    )
+    hp_defs
+
+let elim_dangling_conj_heap prog hp_defs unk_hps =
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_2 "elim_dangling_conj_heap" pr1 !CP.print_svl pr1
+      (fun _ _ -> elim_dangling_conj_heap prog hp_defs unk_hps)
+      hp_defs unk_hps
+
 let rec gen_full_pos args n res=
   match args with
     | [] -> res

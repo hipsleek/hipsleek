@@ -1425,7 +1425,13 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 	  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
-          let _ = List.map (I.detect_invoke prog) (List.filter (fun p -> p.I.proc_is_main) prog.I.prog_proc_decls) in
+          let _ = List.map (fun p ->
+              if p.I.proc_is_main then
+              I.detect_invoke prog p
+              else
+                let _ = p.I.proc_is_invoked <- false in
+                []
+          ) (prog.I.prog_proc_decls) in
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)

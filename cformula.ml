@@ -4916,7 +4916,15 @@ let rec heap_trans_heap_node fct f0 =
       | ViewNode _ -> fct f
       | HTrue | HFalse | HEmp | Hole _-> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
-      | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
+      | Conj b -> begin
+           let hf2 = recf b.h_formula_conj_h2 in
+           let hf1 = recf b.h_formula_conj_h1 in
+           match hf1,hf2 with
+             | HEmp,HEmp -> HEmp
+             | HEmp,_ -> hf2
+             | _ , HEmp -> hf1
+             | _ -> Conj {b with h_formula_conj_h2 = hf2; h_formula_conj_h1 = hf1}
+        end
       | Star b -> begin let hf2 = recf b.h_formula_star_h2 in
         let hf1 = recf b.h_formula_star_h1 in
         match hf1,hf2 with

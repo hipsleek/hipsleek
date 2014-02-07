@@ -2672,7 +2672,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
     (*we have already transformed link/unk preds into pure form.
       Now return [] so that we do not need generate another unk preds*)
     (defs3a, [])
-  else (defs2,is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
+  else (Sacore.elim_dangling_conj_heap prog defs2 (List.map fst (is_post_oblg1.CF.is_link_hpargs@is_post_oblg1.CF.is_dang_hpargs@htrue_hpargs)),is_post_oblg1.CF.is_link_hpargs@htrue_hpargs)
   in
   {is_post_oblg1 with CF.is_link_hpargs = link_hpargs3;
       CF.is_prefix_hps = pre_fix_hps;

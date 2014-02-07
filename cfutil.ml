@@ -400,3 +400,48 @@ let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
       (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
       lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
+
+let elim_dangling_conj_star_hf unk_hps f0 =
+  let rec helper f=
+    match f with
+      | HRel _
+      | DataNode _ | ViewNode _ 
+      | HTrue | HFalse | HEmp | Hole _-> f
+      | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
+            h_formula_phase_rw = helper b.h_formula_phase_rw}
+      | Conj b -> begin
+           let hpargs1_opt = get_HRel b.h_formula_conj_h1 in
+           let hpargs2_opt = get_HRel b.h_formula_conj_h2 in
+           match hpargs1_opt,hpargs2_opt with
+             | Some (hp1,_), Some (hp2, _) -> begin
+                 let b1 = CP.mem_svl hp1 unk_hps in
+                 let b2 = CP.mem_svl hp2 unk_hps in
+                 match b1,b2 with
+                   | false,false -> f
+                   | true,false -> b.h_formula_conj_h2
+                   | _ -> b.h_formula_conj_h1
+               end
+             | Some (hp1, _),_ -> if CP.mem_svl hp1 unk_hps then b.h_formula_conj_h2 else f
+             | _ , Some (hp2, _) -> if CP.mem_svl hp2 unk_hps then b.h_formula_conj_h1 else f
+             | _ -> f
+        end
+      | Star b -> begin let hf2 = helper b.h_formula_star_h2 in
+        let hf1 = helper b.h_formula_star_h1 in
+        match hf1,hf2 with
+          | HEmp,HEmp -> HEmp
+          | HEmp,_ -> hf2
+          | _ , HEmp -> hf1
+          | _ ->
+            Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+        end
+      | ConjStar _|ConjConj _|StarMinus _ -> f
+  in
+  helper f0
+
+let rec elim_dangling_conj_star struc_trav f =
+  let recf = elim_dangling_conj_star struc_trav in
+  match f with
+    | Base b-> Base{b with  formula_base_heap = struc_trav b.formula_base_heap}
+    | Exists b-> Exists{b with  formula_exists_heap =  struc_trav b.formula_exists_heap}
+    | Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
+
