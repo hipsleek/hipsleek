@@ -80,25 +80,25 @@ case {
 }
 */;
 
-struct GList*
-g_list_append (struct GList* list,
-               int key)
-/*@
-case {
-  list=null -> ensures res::GList<key, null, null>;
-  list!=null ->
-    requires list::dlseg<null>
-    ensures res::dlseg<q> * q::GList<key,_,null>;
-}
-*/;
+/* struct GList* */
+/* g_list_append (struct GList* list, */
+/*                int key) */
+/* /\*@ */
+/* case { */
+/*   list=null -> ensures res::GList<key, null, null>; */
+/*   list!=null -> */
+/*     requires list::dlseg<null> */
+/*     ensures res::dlseg<q> * q::GList<key,_,null>; */
+/* } */
+/* *\/; */
 
-struct GList*
-g_list_prepend (struct GList* list,
-                int key)
-/*@
-  requires list::dlseg<p>
-  ensures res::GList<key,null,list> * list::dlseg<p>;
-*/;
+/* struct GList* */
+/* g_list_prepend (struct GList* list, */
+/*                 int key) */
+/* /\*@ */
+/*   requires list::dlseg<p> */
+/*   ensures res::GList<key,null,list> * list::dlseg<p>; */
+/* *\/; */
 
 struct GList*
 g_list_nth (struct GList* list,
