@@ -202,6 +202,7 @@ proc_dynamic_specs : Iformula.struc_formula;
 proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
+mutable proc_is_invoked : bool;
 proc_file : string;
 proc_loc : loc;
 proc_test_comps: test_comps option}
@@ -212,7 +213,10 @@ coercion_name : ident;
 coercion_infer_vars : ident list;
 coercion_head : F.formula;
 coercion_body : F.formula;
-coercion_proof : exp }
+coercion_proof : exp;
+coercion_type_orig: coercion_type option; (* store origin type before transforming *)
+coercion_kind : lemma_kind;
+}
 
 and coercion_decl_list = {
     coercion_list_elems : coercion_decl list;
@@ -1271,6 +1275,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_dynamic_specs = ds;
   proc_loc = pos;
   proc_is_main = true;
+  proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
   proc_test_comps = None}
@@ -2651,6 +2656,7 @@ let add_bar_inits prog =
 			  proc_exceptions = [];
 			  proc_body = None;
 			  proc_is_main = false;
+                          proc_is_invoked = false;
 			  proc_file = "";
 			  proc_loc = no_pos;
 			proc_test_comps = None}) prog.prog_barrier_decls in
@@ -2658,7 +2664,7 @@ let add_bar_inits prog =
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name coer_type ihps ihead ibody=
+let mk_lemma lemma_name kind coer_type ihps ihead ibody=
   { coercion_type = coer_type;
   coercion_exact = false;
   coercion_infer_vars = ihps;
@@ -2667,7 +2673,10 @@ let mk_lemma lemma_name coer_type ihps ihead ibody=
   coercion_body = (F.subst_stub_flow F.top_flow ibody);
   coercion_proof = Return ({ exp_return_val = None;
   exp_return_path_id = None ;
-  exp_return_pos = no_pos })}
+  exp_return_pos = no_pos });
+  coercion_type_orig = None;
+  coercion_kind = kind;
+  }
 
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
@@ -2683,7 +2692,9 @@ let gen_normalize_lemma_comb ddef =
   coercion_infer_vars = [];
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
+  coercion_type_orig = None;
+  coercion_kind = LEM_SAFE; (*default. should improve*)
  }
  
  let gen_normalize_lemma_split ddef = 
@@ -2700,10 +2711,12 @@ let gen_normalize_lemma_comb ddef =
   coercion_infer_vars = [];
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
-  
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
+  coercion_type_orig = None;
+  coercion_kind = LEM_SAFE;
  }
-	
+
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
 	else {prog4 with prog_coercion_decls =
@@ -2927,3 +2940,45 @@ let annotate_field_pure_ext iprog=
   ) iprog.prog_data_decls in
   let _ = iprog.prog_data_decls <- idatas in
   ()
+
+(*
+  trav body of proc to look for ICall(proc_name, ...) and SCall (proc_name, ...)
+   - look up proc_name from prog
+   - set proc_is_invoked = true;
+output: list of procs called by this function
+*)
+let detect_invoke_x prog proc =
+  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
+  let collect_called_proc e =
+    match e with
+      (* | CallRecv cr -> *)
+      (*       let _ = print_endline "rec" in *)
+      (*       let called_proc_name = cr.exp_call_recv_method in *)
+      (*       let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in *)
+      (*       if (called_proc.proc_is_main && (not called_proc.proc_is_invoked)) *)
+      (*       then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
+      (*       else None *)
+      | CallNRecv cnr ->
+            let called_proc_name = cnr.exp_call_nrecv_method in
+            let cmp = String.compare called_proc_name proc.proc_name in
+            if (cmp == 0)
+            then None
+            else (
+                let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in
+	        if (called_proc.proc_is_main && (not called_proc.proc_is_invoked))
+	        then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name]
+	        else None
+            )
+      | _ -> None
+  in
+  match proc.proc_body with
+    | None -> []
+    | Some e -> fold_exp e collect_called_proc (List.concat) []
+  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
+  (* [] *)
+
+let detect_invoke prog proc=
+  let pr1 p = pr_id p.proc_mingled_name in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "detect_invoke" pr1 pr2
+      (fun _ -> detect_invoke_x prog proc) proc

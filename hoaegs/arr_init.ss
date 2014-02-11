@@ -7,7 +7,7 @@ relation zeros(int[] a, int i, int j) == (i > j | forall ( k : (k < i | k > j | 
 /* a and b are identical except a[k] = 0 for all i <= k <= j */ 
 relation identicalzeroes(int[] a, int[] b, int i, int j) == forall ( k : (k < i & a[k] = b[k] | k > j & a[k] = b[k] | i <= k & k <= j & a[k] = 0)).
 
-void initright(ref int[] a, int i, int j) 
+void initright(int[]@R a, int i, int j) 
 	requires true
 	ensures identicalzeroes(a',a,i,j); /* zeros(a', i, j); ==> missing condition: a'[k] = a[k] for k < i | k > j */
 {
@@ -18,7 +18,7 @@ void initright(ref int[] a, int i, int j)
 	}
 }
 
-void initloop(ref int[] a, int i, int j) 
+void initloop(int[]@R a, int i, int j) 
 	requires 0 <= i & 0 <= j & i <= j
 	ensures zeros(a', i, j);
 {
@@ -32,7 +32,7 @@ void initloop(ref int[] a, int i, int j)
 	}
 }
 
-void initleft(ref int[] a, int i, int j) 
+void initleft(int[]@R a, int i, int j) 
 	requires true
 	ensures identicalzeroes(a',a,i,j);
 {

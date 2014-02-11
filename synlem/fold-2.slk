@@ -1,0 +1,56 @@
+data node { int val ; node next }.
+
+pred lseg<n> == self:node=null & n=0
+   or self::node<_,_> & n>=0
+         inv n >= 0.
+
+lemma_unsafe self::lseg<n> <- self::node<_,null> & n=1.
+
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=2).
+print residue.
+
+/*
+why fold succeeds for two cases?
+
+ <1>emp&Anon_59=null & self!=null & Anon_16=Anon_58&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>(exists flted_11_56: emp&flted_11_56=null&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  RD_Lemma ==> (right: lem_15) ==>  Match ==> ]]
+
+*/
+
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk>.
+print residue.
+
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk> & kkk=2.
+print residue.
+
+/*
+# fold-2.slk
+
+Why 2nd example did not use folding mechanism for lemma?
+
+Entail 1: Valid. 
+
+ <1>emp&Anon_56=null & self!=null & Anon_16=Anon_55 & 0<=kkk&{FLOW,(21,22)=__norm}
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>(exists flted_11_54: emp&flted_11_54=null & kkk=1&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  RD_Lemma ==> (right: lem_15) ==>  Match ==> ]]
+
+
+
+
+Entail 3: Fail.(may) cause: 0<=kkk |-  kkk=2. LOCS:[4;21] (may-bug)
+
+
+*/
+

@@ -56,10 +56,10 @@ and mem_perm_formula = {mem_formula_exp : CP.exp;
 			mem_formula_guards : CP.formula list; 
 }
 
-and formula_type =
-  | Simple
-  | Complex
-(*later, type of formula, based on #nodes ....*)
+(* and formula_type = *)
+(*   | Simple *)
+(*   | Complex *)
+(* (\*later, type of formula, based on #nodes ....*\) *)
 
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
@@ -290,6 +290,7 @@ approx_formula_and_a2 : approx_formula }
 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
 let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
@@ -383,6 +384,17 @@ let isAllConstFalse f = match f with
 let equal_flow_interval t1 t2 : bool =   is_eq_flow t1 t2
 
 let is_top_flow p :bool = (equal_flow_interval !top_flow_int p)
+
+let isStrictConstTrue_wo_flow f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        (h==HEmp or h==HTrue) && MCP.isConstMTrue p
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
 
 let isStrictConstTrue_x f = match f with
   | Exists ({ formula_exists_heap = h;
@@ -2060,7 +2072,7 @@ and add_struc_original original (f : struc_formula) = match f with
 	  (*| EVariance b -> EVariance {b with formula_var_continuation = ext_f b.formula_var_continuation}*)
    | EInfer b -> EInfer {b with formula_inf_continuation = add_struc_original original b.formula_inf_continuation}
 
-and set_lhs_case (f : formula) flag = 
+and set_lhs_case_x (f : formula) flag = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
@@ -2071,6 +2083,10 @@ and set_lhs_case (f : formula) flag =
     | Base b -> Base ({b with formula_base_heap = h_set_lhs_case b.formula_base_heap flag})
     | Exists e -> Exists ({e with formula_exists_heap = h_set_lhs_case e.formula_exists_heap flag})
   in helper f
+
+and set_lhs_case (f : formula) flag = 
+  let pr = !print_formula in
+  Debug.no_2 "set_lhs_case" pr string_of_bool pr set_lhs_case_x f flag
 
 and set_lhs_case_of_a_view (f : formula) (v_name:ident) flag : formula = 
   let rec helper f = match f with
@@ -2757,6 +2773,12 @@ and dn_subst sst dn=
 	  (* h_formula_data_param_ann =  *)
 	  h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
    })
+
+and vn_subst sst vn=
+  let n_hf = h_subst sst (ViewNode vn) in
+  match n_hf with
+    | ViewNode vn -> vn
+    | _ -> report_error no_pos "CF.vn_subst"
 
 and h_subst sst (f : h_formula) = 
 	match f with
@@ -3998,12 +4020,14 @@ and hp_rel_def = {
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
 and infer_state = {
-    is_constrs : hprel list;
+    is_constrs : hprel list; (*current processing*)
+    is_all_constrs : hprel list;
     is_link_hpargs : (CP.spec_var * CP.spec_var list) list;
     is_dang_hpargs : (CP.spec_var * CP.spec_var list) list; (*dangling hps = link hps = unknown. to remove one of them*)
     is_unk_map: ((CP.spec_var * int list)  * CP.xpure_view) list ;
     is_sel_hps: CP.spec_var list;
     is_post_hps: CP.spec_var list;
+    is_prefix_hps: CP.spec_var list;
     is_cond_path: cond_path_type;
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
@@ -4898,7 +4922,15 @@ let rec heap_trans_heap_node fct f0 =
       | ViewNode _ -> fct f
       | HTrue | HFalse | HEmp | Hole _-> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
-      | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
+      | Conj b -> begin
+           let hf2 = recf b.h_formula_conj_h2 in
+           let hf1 = recf b.h_formula_conj_h1 in
+           match hf1,hf2 with
+             | HEmp,HEmp -> HEmp
+             | HEmp,_ -> hf2
+             | _ , HEmp -> hf1
+             | _ -> Conj {b with h_formula_conj_h2 = hf2; h_formula_conj_h1 = hf1}
+        end
       | Star b -> begin let hf2 = recf b.h_formula_star_h2 in
         let hf1 = recf b.h_formula_star_h1 in
         match hf1,hf2 with
@@ -6638,14 +6670,16 @@ let remove_neqNull_redundant_andNOT_opt f0 p=
 let remove_neqNull_svl svl f0=
   let rec helper f=
     match f with
-      | Base fb -> let np = remove_neqNull_redundant_hnodes svl
+      | Base fb ->
+            let np = remove_neqNull_redundant_hnodes svl
                      (MCP.pure_of_mix fb.formula_base_pure) in
                    (Base {fb with formula_base_pure = MCP.mix_of_pure np})
       | Or orf -> let nf1 = helper orf.formula_or_f1 in
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let np = remove_neqNull_redundant_hnodes svl
+      | Exists fe ->
+            let np = remove_neqNull_redundant_hnodes svl
           (MCP.pure_of_mix fe.formula_exists_pure) in
         (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
@@ -10471,7 +10505,7 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   join_star_conjunctions_opt_x hs
 
 
-let split_star_conjunctions_x (f:h_formula): (h_formula list) =
+let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
@@ -10491,7 +10525,7 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
       | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
   in
   Debug.no_1 "split_star_conjunctions" !print_h_formula pr
-  split_star_conjunctions_x f
+  split_star_conjunctions f
 
 let type_of_formula (f: formula) : formula_type =
   if (isAnyConstFalse f) then Simple
@@ -10508,6 +10542,11 @@ let type_of_formula (f: formula) : formula_type =
         else Simple
     | _ -> Complex
 
+
+let type_of_formula (f: formula) : formula_type =
+  let pr1 = !print_formula in
+  let pr2 = !print_formula_type in
+  Debug.no_1 "type_of_formula" pr1 pr2 type_of_formula f
 
 let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
   let ifo = (struc_to_formula_gen f0) in

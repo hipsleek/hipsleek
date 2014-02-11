@@ -677,7 +677,8 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (* let _ = print_endline "Array found!" in *) ()
+             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
 let peek_pointer_type = 
@@ -1102,7 +1103,7 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
+(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
 one_string: [[`STRING (_,id)-> id]];
 
@@ -1367,7 +1368,7 @@ opt_label: [[t= OPT label->un_option t ""]];
 
 label : [[  `STRING (_,id);  `COLON -> id ]];
 
-label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
+(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -2076,7 +2077,9 @@ coercion_decl:
         (* coercion_body = (F.subst_stub_flow n_flow dc2); *)
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
-                     exp_return_pos = get_pos_camlp4 _loc 1 })}]];
+                     exp_return_pos = get_pos_camlp4 _loc 1 });
+        coercion_type_orig = None;
+      coercion_kind = LEM_SAFE;};]];
 
 coercion_decl_list:
     [[
@@ -2091,29 +2094,35 @@ infer_coercion_decl:
         `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
     ]];
 
-infer_coercion_decl_list:
-    [[
-        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
-            coercion_list_elems = coerc;
-            coercion_list_kind  = LEM;
-        }
-    ]];
+(* infer_coercion_decl_list: *)
+(*     [[ *)
+(*         coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> { *)
+(*             coercion_list_elems = coerc; *)
+(*             coercion_list_kind  = LEM; *)
+(*         } *)
+(*     ]]; *)
 
 coerc_decl_aux:
     [[
       `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
+          let t = {t with coercion_kind = LEM_INFER;} in
           { coercion_list_elems = [t];
             coercion_list_kind  = LEM_INFER }
       | `LEMMA TLEM_INFER_PRED; t = infer_coercion_decl -> 
+            let t = {t with coercion_kind = LEM_INFER_PRED;} in
           { coercion_list_elems = [t];
           coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
       | `LEMMA kind;t = coercion_decl -> 
+            let k = convert_lem_kind kind in
+            let t = {t with coercion_kind = k;} in
           { coercion_list_elems = [t];
-            coercion_list_kind  = convert_lem_kind kind }
+            coercion_list_kind  = k }
       | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> 
-          { t with coercion_list_kind = convert_lem_kind kind }
+            let k = convert_lem_kind kind in
+            let t = {t with coercion_list_elems= List.map (fun l -> {l with coercion_kind = k;}) t.coercion_list_elems} in
+          { t with coercion_list_kind = k }
     ]];
 
 coercion_direction:
@@ -2126,7 +2135,7 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
@@ -2672,8 +2681,15 @@ fixed_parameter:
       { param_mod = un_option pm NoMod;
         param_type = t;
         param_loc = get_pos_camlp4 _loc 3;
-        param_name = id }]];
+        param_name = id }
+    | pm=OPT pass_t2; t=typ;  `IDENTIFIER id -> 
+      { param_mod = un_option pm NoMod;
+        param_type = t;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = id }
+]];
 
+pass_t2: [[`PASS_REF2 -> RefMod ]];
 
 pass_t: [[`PASS_REF -> RefMod
        | `PASS_COPY -> CopyMod]];

@@ -257,6 +257,12 @@ let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false
 
+let rec is_forall p= match p with
+  | Forall _ -> true
+  | And (p1,p2,_) -> is_forall p1 || is_forall p2
+  | AndList ps -> List.exists (fun (_, p1) -> is_forall p1) ps
+  | _ -> false
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv
@@ -11370,6 +11376,8 @@ let get_cmp_form_exp e1 e2=
 
 let get_cmp_form_p p=
   match p with
+    (* | Eq (e1,e2,_) *)
+    (* | Neq (e1,e2,_) *)
     | Lte (e1,e2,_)
     | Gte (e1,e2,_)
     | Gt (e1,e2,_)
@@ -11398,7 +11406,21 @@ let get_cmp_form p =
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
 
-	  
+let is_cmp_form_p p=
+  match p with
+    | Eq (e1,e2,_)
+    | Neq (e1,e2,_)
+    | Lte (e1,e2,_)
+    | Gte (e1,e2,_)
+    | Gt (e1,e2,_)
+    | Lt (e1,e2,_) -> (get_cmp_form_exp e1 e2) != []
+    | _ -> false
+
+let is_cmp_form p =
+  match p with
+    | (BForm ((pf,_),_)) -> is_cmp_form_p pf
+    | _ -> false
+
 let rhs_needs_or_split f = 	match f with
 	| Or _ -> not(no_andl f)
 	| _-> false
@@ -11926,7 +11948,9 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     let updated_view_arg,_ = List.split updated_in_orig_pos in (* get rid of orig pos *)
     updated_view_arg
   with Invalid_argument s -> 
-      raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") )
+      (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") ) *)
+      (* let _ = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
+      List.map fst map
 
 let combine_labels_w_view_arg  lbl view_arg =
   let no_lst = Gen.range 1 (List.length view_arg) in

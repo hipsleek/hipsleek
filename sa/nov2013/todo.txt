@@ -107,6 +107,33 @@ g_slist_nth_data (struct GSList *list,
 - https://git.gnome.org/browse/glib/tree/glib/gqsort.c
 
 =====================================================================
+#sll-bubble.ss
+
+[ // BIND
+(0)H1(xs) --> xs::node<val,next>@M * HP_935(val@NI) * 
+                                     ^^^^^^^^^^^^^
+HP_936(next),
+ // PRE_REC
+(2;0)HP_936(next)&
+next!=null --> H1(next),
+ // BIND
+(2;0)G1(next)&next!=null --> next::node<val,next1>@M * HP_963(val@NI) * 
+                                                       ^^^^^^^^^^^^^
+HP_964(next1),
+ // POST
+(1;0)xs::node<val,next>@M * HP_935(val@NI) * HP_936(next)&
+                            ^^^^^^^^^^^
+next=null --> G1(xs),
+ // POST
+(1;2;0)xs::node<val,next>@M * HP_935(val@NI) * next::node<val1,next1>@M * 
+                              ^^^^^^^^^^^^^
+HP_963(val1@NI) * HP_964(next1)&
+^^^^^^^^^^^^
+val<=val1 --> G1(xs),
+ // POST
+(2;2;0)xs::node<val,next>@M * HP_963(val@NI) * next::node<val1,next1>@M * 
+HP_935(val1@NI) * HP_964(next1)&
+val<val1 --> G1(xs)]
 
 
 =====================================================================

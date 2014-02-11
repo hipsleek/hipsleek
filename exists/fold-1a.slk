@@ -1,0 +1,12 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+checkentail x::node<zz>*zz::ls<tt,hh>  |- (exists kk: x::ls<tt,kk> & kk=2).
+print residue.
+
+

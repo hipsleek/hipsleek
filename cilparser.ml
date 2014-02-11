@@ -806,6 +806,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           ) in
           let input_typ = (
               let ity = typ_of_cil_exp exp in
+              (* let _ = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
               match ity with
                 | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
                 | _ -> translate_typ ity pos
@@ -815,6 +816,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
             | _ -> translate_typ ty pos
           ) in
           let input_exp = translate_exp exp in
+          (* let _ = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+          (* let _ = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
           if (input_typ = output_typ) then
             (* no need casting *)
             input_exp
@@ -1483,6 +1486,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_exceptions = [];
         Iast.proc_body = funbody;
         Iast.proc_is_main = true;
+        Iast.proc_is_invoked = false;
         Iast.proc_file = filename;
         Iast.proc_loc = pos;
         Iast.proc_test_comps = None;

@@ -50,7 +50,7 @@ bool check_cdll_out1 ( node1 l,  node1 prv, node1 p)
   else {
     bool r1 = check_cdll_out1(l.next,l,p);
     //int e1 = (l->prev==prv);
-    return r1 && (l.prev==prv) && check_csll (l.dd1, l.dd1) && check_csll(l.dd2, l.dd2)
+    return r1 && (l.prev==prv) && check_csll (l.dd1, l.dd1) && check_csll(l.dd2, l.dd2) && check_csll (l.dd3, l.dd3)
       && check_csll (l.dd4, l.dd4) && check_csll (l.dd5, l.dd5)  ;
              }
 }

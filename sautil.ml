@@ -160,7 +160,7 @@ let rec is_empty_f f0=
                 (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
       | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in
         is_empty_f base_f
-      | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
   in
   helper f0
 
@@ -196,11 +196,17 @@ let rec is_only_xpure_f f=
                      CF.is_unknown_f base1
     | _ -> report_error no_pos "SAU.is_only_xpure_f: not handle yet"
 
-let rec get_pos ls n sv=
+let rec get_pos_x ls n sv=
   match ls with
-    | [] -> report_error no_pos "sau.find_closure_eq: impossible 1"
+    | [] -> report_error no_pos "sau.get_pos: impossible 1"
     | sv1::rest -> if CP.eq_spec_var sv sv1 then n
-      else get_pos rest (n+1) sv
+      else get_pos_x rest (n+1) sv
+
+let get_pos ls n sv=
+  let pr1 = !CP.print_svl in
+  Debug.no_3 "sau.get_pos" pr1 string_of_int !CP.print_sv string_of_int
+      (fun _ _ _ -> get_pos_x ls n sv)
+      ls n sv
 
 let rec get_all_locs_helper ls n svl res=
   match ls with
@@ -2819,23 +2825,26 @@ swl-i.ss: NO
 *)
 let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
   (************ INTERNAL ***********)
-  let find_pattern hd pure_svl f=
-    let hpargs = CF.get_HRels_f rhs1 in
-    let sel_args = List.fold_left (fun ls (_,args) ->
+  let find_pattern ptr_node ptr_args pure_svl f=
+    let hp_args = List.map (fun (_,args) -> args) (CF.get_HRels_f rhs1) in
+    let v_args = List.map (fun vn -> vn.CF.h_formula_view_node::vn.CF.h_formula_view_arguments) (CF.get_views rhs1) in
+    let sel_args = List.fold_left (fun ls (args) ->
         if CP.intersect_svl args match_svl = [] then ls
         else ls@args
-    ) [] hpargs in
-    let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+    ) [] (hp_args@v_args) in
+    let hd_args = ptr_node::ptr_args in
     let inter = CP.intersect_svl hd_args (sel_args@pure_svl) in
     let locs_pattern = get_all_locs hd_args inter in
-    (inter, locs_pattern, hd.CF.h_formula_data_name)
+    (inter, locs_pattern)
   in
-  let apply_parttern locs hd_name f=
+  let apply_parttern_x locs hd_name f=
     let hds = get_hdnodes f in
     let sel_pats = List.fold_left (fun ls hd ->
         if String.compare hd_name hd.CF.h_formula_data_name = 0 then
           let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
-          if CP.intersect_svl hd_args match_svl <> [] then
+          let _ = DD.tinfo_hprint (add_str " hd_args:"  !CP.print_svl) hd_args no_pos in
+          let _ = DD.tinfo_hprint (add_str " match_svl:"  !CP.print_svl) match_svl no_pos in
+          if CP.intersect_svl hd_args match_svl != [] then
             let sel_args = retrieve_args_from_locs hd_args locs in
             ls@[sel_args]
           else
@@ -2843,10 +2852,17 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         else ls
     ) [] hds
     in
+    let _ = DD.tinfo_hprint (add_str " sel_pats:" (pr_list !CP.print_svl)) sel_pats no_pos in
     match sel_pats with
       | [args] -> args
       | [] -> []
       | _ -> report_error no_pos "sau.pattern_matching_with_guard 1"
+  in
+  let apply_parttern locs hd_name f=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_3 "apply_parttern" (pr_list string_of_int) pr_id pr1 !CP.print_svl
+        (fun _ _ _ -> apply_parttern_x locs hd_name f)
+        locs hd_name f
   in
   let rec combine_remove_eq ls1 ls2 res=
     match ls1,ls2 with
@@ -2860,6 +2876,17 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
             combine_remove_eq rest1 rest2 new_res
       | _ -> report_error no_pos "sau.pattern_matching_with_guard 2"
   in
+  let process_pattern g_pure_svl hf=
+    match hf with
+      | CF.DataNode hd ->
+            let inter_rhs1, hd_locs = find_pattern hd.CF.h_formula_data_node
+              hd.CF.h_formula_data_arguments g_pure_svl rhs1 in
+            let hd_name = hd.CF.h_formula_data_name in
+            let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
+            ( inter_rhs1, inter_rhs2, hd.CF.h_formula_data_node)
+                (* | CF.ViewNode vd -> *)
+      | _ -> report_error no_pos "sau. pattern_matching_with_guard 3"
+  in
   (************END INTERNAL ***********)
   match guard with
     | None -> (false, rhs1, guard)
@@ -2871,12 +2898,14 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         match hf with
           | CF.DataNode hd ->
                 let g_pure_svl = CP.fv (CF.get_pure f) in
-                let inter_rhs1, hd_locs, hd_name = find_pattern hd g_pure_svl rhs1 in
-                let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in
+                (* let inter_rhs1, hd_locs, hd_name = find_pattern hd g_pure_svl rhs1 in *)
+                (* let inter_rhs2 =  apply_parttern hd_locs hd_name rhs2 in *)
+                let inter_rhs1, inter_rhs2, sv_node = process_pattern g_pure_svl hf in
                 if inter_rhs2 = [] then (false,rhs1, guard) else
                   let ss = combine_remove_eq inter_rhs1 inter_rhs2 [] in
+                  let _ = DD.ninfo_hprint (add_str " ss:" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ss no_pos in
                   let nrhs1 = CF.subst ss rhs1 in
-                  let nf = CF.drop_hnodes_f (CF.subst ss f) [hd.CF.h_formula_data_node] in
+                  let nf = CF.drop_hnodes_f (CF.subst ss f) [sv_node] in
                   let n_lguard = CF.drop_dups nrhs1 nf in
                   if check_pure then
                     let np= CP.subst ss (CF.get_pure f) in
@@ -3359,44 +3388,6 @@ let remove_longer_common_prefix_w_unk_g unk_hps fs=
           else helper ss (res@[(f,g)])
   in
   helper fs []
-
-(* let remove_equiv_wo_unkhps_x hp args0 unk_hps fs= *)
-(*   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems= *)
-(*     match cur with *)
-(*       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems *)
-(*       | f::ss -> *)
-(*           let newf,b = CF.drop_unk_hrel f unk_hps in *)
-(*           if not b then *)
-(*             partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[f]) *)
-(*           else *)
-(*             begin *)
-(*                 let newf2,_ = CF.drop_hrel_f newf [hp] in *)
-(*                 if is_empty_f newf2 then *)
-(*                   partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems *)
-(*                 else *)
-(*                   partition_helper ss (res_unkhp_fs@[f]) (res_elim_unkhp_fs@[newf]) rems *)
-(*             end *)
-(*   in *)
-(*   let check_dups elim_unkhp_fs non_unkhp_fs= *)
-(*     let rec helper1 fs r= *)
-(*       match fs with *)
-(*         | [] -> r *)
-(*         | f::fss -> *)
-(*             (\*check duplicate or not ll-append5*\) *)
-(*             if List.exists (fun f1 -> check_relaxeq_formula args0 f f1) elim_unkhp_fs then *)
-(*               helper1 fss r *)
-(*             else helper1 fss (r@[f]) *)
-(*     in *)
-(*     helper1 non_unkhp_fs [] *)
-(*   in *)
-(*   let unkhp_fs,elim_unkhp_fs,rems= partition_helper fs [] [] [] in *)
-(*   let rems1 = check_dups elim_unkhp_fs rems in *)
-(*   (unkhp_fs@rems1) *)
-
-(* let remove_equiv_wo_unkhps hp args0 unk_hps fs= *)
-(*   let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-(*   Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr *)
-(*       (fun _ _ -> remove_equiv_wo_unkhps_x hp args0 unk_hps fs) unk_hps fs *)
 
 let remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg=
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
@@ -4314,7 +4305,13 @@ let closer_ranking prog unk_hps fs root_cand args0=
                  with _ -> List.hd root_cand)
                 | _ -> List.hd root_cand
             end
-      | r::_ -> if eqNulls = [] then r
+      | r::_ ->
+            if eqNulls = [] then
+              (*swl*)
+              let prmroots =  List.filter (fun sv -> let p = CP.primed_of_spec_var sv in p = Primed) new_cand in
+              if prmroots = [] then
+                r
+              else List.hd prmroots
         else
           let eqNulls,rem =
             List.partition (fun sv -> CP.mem_svl sv eqNulls) new_cand in
@@ -4677,6 +4674,116 @@ let simplify_set_of_formulas_wg prog is_pre cdefs hp args unk_hps unk_svl defs_w
    Debug.no_3 "simplify_set_of_formulas_wg" !CP.print_sv !CP.print_svl pr1 pr2
        (fun _ _ _ -> simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs_wg) hp args defs_wg
 
+let norm_fold_seg_x prog hp_defs hp0 r other_args unk_hps defs_wg=
+  (**********INTERNAL************)
+  let rec extract_def l_hp_defs hp=
+    match l_hp_defs with
+      | [] -> None
+      | def::rest -> begin match def.CF.def_cat with
+            | CP.HPRelDefn (hp1, r1, args1) ->
+                  if List.length (r::other_args) == List.length (r1::args1) && CP.eq_spec_var hp hp1 then
+                    let fs= List.fold_left (fun r (f, _) ->
+                        let dep_hps = CF.get_hp_rel_name_formula f in
+                        if List.length (List.filter (fun hp2 -> CP.eq_spec_var hp2 hp1) dep_hps) == 1 then
+                          (r@[f])
+                        else r
+                    ) [] def.CF.def_rhs
+                    in
+                    if fs = [] then None else (Some (def.CF.def_lhs, r1, args1, fs))
+                  else extract_def rest hp
+            | _ -> extract_def rest hp
+        end
+  in
+  let rec do_fold_compare_x f r2 poss_r poss_args poss_fold_fs=
+     match poss_fold_fs with
+      | [] -> (false)
+      | fold_f::rest ->
+            let ss = List.combine (r2::other_args) (poss_r::poss_args) in
+            if check_relaxeq_formula [poss_r] (CF.subst ss f) fold_f then
+              true
+            else
+              do_fold_compare_x f r2 poss_r poss_args rest
+  in
+  let do_fold_compare f r2 poss_r poss_args poss_fold_fs=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    Debug.no_4 "do_fold_compare" pr1 !CP.print_sv !CP.print_sv (pr_list_ln pr1) string_of_bool
+        (fun _ _ _ _ -> do_fold_compare_x f r2 poss_r poss_args poss_fold_fs)
+        f r2 poss_r poss_fold_fs
+  in
+  let extract_next_root hds hvs r2=
+    let rec extract_data_node rest_hds=
+      match rest_hds with
+        | [] -> None
+        | dn::rest -> begin
+            if CP.eq_spec_var dn.CF.h_formula_data_node r2 then
+              let ptrs = List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in
+              match ptrs with
+                | [nr] -> Some (nr, CF.DataNode dn)
+                | _ -> None
+            else extract_data_node rest
+          end
+    in
+    let rec extract_view_node rest_vds=
+      match rest_vds with
+        | [] -> None
+        | vn::rest -> begin
+            if CP.eq_spec_var vn.CF.h_formula_view_node r2 then
+              let ptrs = List.filter CP.is_node_typ vn.CF.h_formula_view_arguments in
+              match ptrs with
+                | [nr] -> Some (nr, CF.ViewNode vn)
+                | _ -> None
+            else extract_view_node rest
+          end
+    in
+    let dn_opt = extract_data_node hds in
+    if dn_opt = None then extract_view_node hvs else dn_opt
+  in
+  let rec do_fold f r0 (poss_hf, poss_r, poss_args, poss_fold_fs) res_hfs=
+    let _ = Debug.ninfo_hprint (add_str "   f: " Cprinter.prtt_string_of_formula) f no_pos in
+    let reach_f = CFU.obtain_reachable_formula prog f [r0] in
+    let hds, hvs, _ = CF.get_hp_rel_formula reach_f in
+    if hds = [] && hvs = [] then false, reach_f else
+      let is_folded= do_fold_compare reach_f r0 poss_r poss_args poss_fold_fs in
+      if is_folded then
+        let folded_pred = CF.h_subst [( poss_r,r0)] poss_hf in
+        let n_hf = CF.join_star_conjunctions (res_hfs@[folded_pred]) in
+        (true, CF.formula_of_heap n_hf no_pos)
+      else
+        let cur_root_hf_opt = extract_next_root hds hvs r0 in
+        match cur_root_hf_opt with
+          | Some (n_root, n_hf) ->
+                do_fold reach_f n_root (poss_hf, poss_r, poss_args, poss_fold_fs) (res_hfs@[n_hf])
+          | None -> false, reach_f
+  in
+  let process_one_branch (f,og)=
+    let dep_hps = CF.get_hp_rel_name_formula f in
+    match dep_hps with
+      | [hp] -> begin
+            if CP.mem_svl hp (hp0::unk_hps) then
+              (f,og)
+            else
+              let fold_opt = extract_def hp_defs hp in
+              match fold_opt with
+                | Some (poss_hf, poss_r, poss_args, poss_fold_fs) ->
+                  let is_folded, folded_f = do_fold f r (poss_hf, poss_r, poss_args, poss_fold_fs) [] in
+                  if is_folded then
+                    (folded_f,og)
+                  else (f,og)
+                | None -> (f,og)
+        end
+      | _ -> (f,og)
+  in
+  (*********END*INTERNAL************)
+  let defs_wg1 = List.map process_one_branch defs_wg in
+  defs_wg1
+
+let norm_fold_seg prog hp_defs hp r other_args unk_hps defs_wg=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
+  let pr3 = Cprinter.string_of_hp_rel_def in
+  Debug.no_4 "SAU.norm_fold_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 pr2
+      (fun _ _ _ _ -> norm_fold_seg_x prog  hp_defs hp r other_args unk_hps defs_wg)
+      hp r other_args defs_wg
 
 let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   (**************INTERNAL**********)
@@ -4757,8 +4864,9 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
         (*generate another pred*)
         let n_lhs,n_hp =  add_raw_hp_rel prog false false ((r,I)::(List.map (fun sv -> (sv,NI)) cont_args)) no_pos in
-        let ss = [(hp0,n_hp)] in
-        let rec_fs_wg1 = List.map (fun (f,og) -> (CF.subst ss f,og)) rec_fs_wg in
+        (*subst hp -> new_hp*)
+        let hp_ss = [(hp0, n_hp)] in
+        let rec_fs_wg1 = List.map (fun (f,og) -> CF.subst hp_ss f, og) rec_fs_wg in
         let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
         ) ([],[]) (seg_fs_wg@rec_fs_wg1) in
         let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
@@ -4781,7 +4889,7 @@ let norm_unfold_seg prog hp r other_args unk_hps defs_wg=
 (*
 args = {r} \union paras
 *)
-let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+let mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
       defs_wg (*ogs*) pos=
   match defs_wg with
     | [] -> []
@@ -4808,6 +4916,15 @@ let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) 
           let def = (hp, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp, r, paras)) (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) new_args, pos))  defs_wg) in
           [def]
       end
+
+let mk_hprel_def_wprocess prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+      defs_wg (*ogs*) pos=
+  let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
+  let pr2 = pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def in
+  Debug.no_3 "mk_hprel_def_wprocess" !CP.print_sv !CP.print_svl (pr_list_ln pr1)
+      (pr_list_ln pr2) (fun _ _ _ -> mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list) unk_hps unk_svl hp (args, r, paras)
+      defs_wg (*ogs*) pos)
+      hp args defs_wg
 
 let mk_unk_hprel_def hp args defs pos=
   let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
@@ -4986,8 +5103,13 @@ let elim_not_in_used_args_x prog unk_hps orig_fs_wg fs_wg hp (args, r, paras)=
       let new_fs_wg = List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) fs_wg in
       (true, List.map (fun (f,og) -> (CF.subst_hrel_f f subst, og)) orig_fs_wg, new_fs_wg,subst,[link_def],n_hp)
   in
-  let n_paras = (List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args) in
-  elimed, n_orig_fs_wg,(new_args, r, n_paras),new_fs_wg,ss,link_defs, n_hp
+  let n_r, n_paras = if List.length args = List.length new_args || new_args = [] ||
+    (CP.mem_svl r new_args) then r,(List.filter (fun sv -> not (CP.eq_spec_var sv r)) new_args)
+  else
+    let n_r,non_r_args = find_root prog drop_hps new_args (List.map fst new_fs_wg) in
+    n_r,non_r_args
+  in
+  elimed, n_orig_fs_wg,(new_args, n_r, n_paras),new_fs_wg,ss,link_defs, n_hp
 
 (*
   args = {r} \union paras
@@ -5249,7 +5371,7 @@ let find_closure_eq_wg_x hp args fs_wg=
 let find_closure_eq_wg hp args fs_wg=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
-  Debug.no_3 "find_closure_eq_null_wg" !CP.print_sv !CP.print_svl pr2 pr2
+  Debug.no_3 "find_closure_eq_wg" !CP.print_sv !CP.print_svl pr2 pr2
       (fun _ _ _ -> find_closure_eq_wg_x hp args fs_wg)
       hp args fs_wg
 
@@ -5509,7 +5631,13 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
        (pure_f1, CF.formula_of_disjuncts fs1)
      else (pure_f1, f2)
   in
-  (*******END*********)
+  let is_unsat f=
+    CF.isAnyConstFalse f1 || is_unsat f
+  in
+  let b1 = is_unsat f1 in
+  let b2 = is_unsat f2 in
+  if b1 then f2 else
+    if b2 then f1 else
   let is_common, sharing_f, n_fs,_ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
   if not is_common then
     let b1 = is_empty_heap_f f1 in
@@ -5549,8 +5677,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
 
 let mkConjH_and_norm prog hp args unk_hps unk_svl f1 f2 pos=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "mkConjH_and_norm" pr1 pr1 pr1
-      (fun _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2
+  Debug.no_3 "mkConjH_and_norm" pr1 pr1 !CP.print_svl pr1
+      (fun _ _ _ -> mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos) f1 f2 unk_hps
 
 let simplify_disj_x prog hp args unk_hps unk_svl f1 f2 pos=
   (*todo: revise partition_common_diff*)
@@ -5856,8 +5984,8 @@ let succ_subst_x prog nrec_grps unk_hps allow_rec_subst (hp,args,og,f,unk_svl)=
     if allow_rec_subst then succ_hp_args else
       List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args
   in
-  (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
-  (*                                           in pr succ_hp_args)) no_pos; *)
+  DD.ninfo_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl)
+                                            in pr succ_hp_args)) no_pos;
   match succ_hp_args with
     | [] -> (false, simplify_and_empty_test args f)
     | _ -> begin
@@ -6945,7 +7073,7 @@ let match_one_hp_one_view iprog prog hp hp_name args def_fs (vdcl: C.view_decl):
   Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
       (fun _ _ -> match_one_hp_one_view_x iprog prog hp hp_name args def_fs vdcl) def_fs vdcl
 
-let match_one_hp_views iprog prog (vdcls: C.view_decl list) def:(CP.spec_var* CF.h_formula list)=
+let match_one_hp_views iprog prog cur_m (vdcls: C.view_decl list) def:(CP.spec_var* CF.h_formula list)=
   let hf = def.CF.def_lhs in
   let orf = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
   match hf with

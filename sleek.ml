@@ -28,7 +28,7 @@ module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
-module AS = Astsimp
+(* module AS = Astsimp *)
 
 module XF = Xmlfront
 module NF = Nativefront
@@ -120,7 +120,7 @@ let proc_gen_cmd cmd =
     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
     | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
-    | LemmaDef ldef ->   process_list_lemma ldef
+    | LemmaDef ldef -> process_list_lemma ldef 
     | PrintCmd pcmd -> process_print_command pcmd
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -170,12 +170,13 @@ let parse_file (parse) (source_file : string) =
   let proc_one_lemma c =
     match c with
       | LemmaDef ldef -> process_list_lemma ldef
-      | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
-      | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _
-      | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _
-      | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
-      | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _
-      | CmpCmd _| Time _ | _ -> () in
+      | _             -> () in
+      (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
+      (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)
+      (* | RelAssume _ | RelDefn _ | ShapeInfer _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _ *)
+      (* | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _ *)
+      (* | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormDisj _ | RelInfer _ *)
+      (* | CmpCmd _| Time _ | _ -> () in *)
   let proc_one_cmd c = 
     match c with
       | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())

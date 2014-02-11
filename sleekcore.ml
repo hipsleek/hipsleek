@@ -14,19 +14,19 @@ open Label_only
 
 module H = Hashtbl
 module I = Iast
-module Inf = Infer
+(* module Inf = Infer *)
 module C = Cast
 module CF = Cformula
 module CP = Cpure
 module IF = Iformula
 module IP = Ipure
-module LP = Lemproving
-module AS = Astsimp
-module DD = Debug
+(* module LP = Lemproving *)
+(* module AS = Astsimp *)
+(* module DD = Debug *)
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
-module TI = Typeinfer
+(* module TI = Typeinfer *)
 module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
@@ -36,12 +36,12 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
   let conseq = Solver.prune_pred_struc cprog true conseq in
-  let _ = DD.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
-  (* let _ = DD.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
-  (* let _ = DD.info_pprint "=============================================================" no_pos in *)
-  let conseq = AS.add_param_ann_constraints_struc conseq in
-  let _ = DD.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
-  (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
+  let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
+  (* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
+  (* let _ = Debug.info_pprint "=============================================================" no_pos in *)
+  let conseq = Astsimp.add_param_ann_constraints_struc conseq in
+  let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
+  (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
                         ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -63,7 +63,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* (\* List of vars needed for abduction process *\) *)
-  (* let vars = List.map (fun v -> TI.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
+  (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) isvl in
@@ -72,7 +72,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
   (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
-  let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
+  let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)

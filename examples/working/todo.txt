@@ -346,6 +346,14 @@ bug from lemma proving?
 Total number of errors: 1 in files:
  error at: cll.ss insert.
 ====================================================================
+--dd-trace
+
+Total verification time: 275.33 second
+	Time spent in main process: 193.21 second
+	Time spent in child processes: 82.12 second
+	Number of false contexts: 425
+
+--dd-dis-trace
 
 ====================================================================
 ====================================================================

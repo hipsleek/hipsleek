@@ -371,6 +371,7 @@ let common_arguments = [
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
+  ("--dbc", Arg.Set Globals.dis_base_case_unfold, "explicitly disable base case unfold");
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
 	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
@@ -533,6 +534,12 @@ let common_arguments = [
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
+  ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
+  ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
+  ("--lem-dis-fold", Arg.Clear Globals.allow_lemma_fold, "Disable do_fold with right lemma");
+  ("--lem-en-switch", Arg.Set Globals.allow_lemma_switch, "Allow lhs/lhs switching for Lemma Proving");
+  ("--lem-dis-switch", Arg.Clear Globals.allow_lemma_switch, "Disallow lhs/lhs switching for Lemma Proving");
   ("--lem-en-deep-unfold", Arg.Set Globals.allow_lemma_deep_unfold, "Allow deep unfold for Lemma Proving");
   ("--lem-dis-deep-unfold", Arg.Clear Globals.allow_lemma_deep_unfold, "Disallow deep unfold for Lemma Proving");
   ("--lem-en-residue", Arg.Set Globals.allow_lemma_residue, "Allow residue for Lemma Proving");
@@ -578,6 +585,7 @@ let common_arguments = [
   ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
   ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
   ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dtv", Arg.Clear Globals.pred_trans_view, "disable trans HP defns to view after synthesis");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
@@ -594,7 +602,8 @@ let common_arguments = [
   ("--pred-en-split", Arg.Set Globals.pred_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
-   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
+  ("--pred-seg-unify", Arg.Set Globals.pred_seg_unify, "attempt to segmentation pred defs");
+  ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");

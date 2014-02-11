@@ -1,0 +1,80 @@
+improve shape
+
+ sll-insert.c 
+ sll-insertsort: fold operator (G1)
+
+
+============================================================
+# get-last: DONE
+
+   check-equiv: - support nested data structures
+                - match_hps_view: transform hp -> views one time
+
+ - check-cdllclls.c OK
+ - check-cdllcllsx2.c: OK
+
+============================================================
+#sll-bubble.c : DONE
+
+G: should be normalized (--reverify-all should be OK)
+
+============================================================
+#tll.ss
+
+  --pred-dis-dangling + reverify-all should work
+
+============================================================
+# check-cdll5cslls
+
+  add heur: combine ineq for Omega. verification should be sound and efficient
+
+============================================================
+# swl
+ 
+ - pred-en-elim-useless
+  - handle dependent-views: should order and cascade
+
+============================================================
+# check-tll -tp z3
+
+Context of Verification Failure: 1 File "check-tll.c",Line:30,Col:40
+Last Proving Location: 1 File "check-tll.c",Line:44,Col:6
+
+ERROR: at _0:0_0:0
+Message: sau.find_closure_eq: impossible 1
+
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+============================================================
+#check-cdll5clls.c:
+
+optimization: minimize the number of transformation between inferred hp and views
+
+============================================================
+# swl-3.slk
+
+Why isn't K2 linearlised esp in presence of GG1 which had
+a parameter eliminated. If you remove GG1, the linearlization
+works just fine.
+
+view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]self::node<_,p>@M * 
+        p::KK<t,Anon_15>@M&s=t&{FLOW,(1,24)=__flow}[]
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================
+============================================================

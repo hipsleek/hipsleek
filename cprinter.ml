@@ -928,7 +928,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
-let string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
+let string_of_formula_type (t:formula_type):string = match t with | Globals.Simple -> "Simple" | _ -> "Complex"
 let string_of_formula_label (i,s) s2:string = s2 (*((string_of_int i)^":#"^s^":#"^s2)*)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
@@ -2276,6 +2276,7 @@ let pr_infer_state_short is =
   fmt_string (string_of_spec_var_list (List.map fst is.is_link_hpargs));
   fmt_string (pr_list_round string_of_int is.is_cond_path);
   fmt_string (pr_list_ln string_of_hprel_short is.is_constrs);
+  fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs);
   fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs);
   fmt_close()
 
@@ -2870,7 +2871,7 @@ let pr_list_context (ctx:list_context) =
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
-      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list_short sc; fmt_cut ()
+      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
@@ -2880,8 +2881,8 @@ let string_of_context_list_short (ctx:context list): string
       =  poly_string_of_pr pr_context_list_short ctx
 
 let string_of_list_context (ctx:list_context): string 
-      =  poly_string_of_pr pr_list_context_short ctx
-      (* =  poly_string_of_pr pr_list_context ctx *)
+      (* =  poly_string_of_pr pr_list_context_short ctx *)
+      =  poly_string_of_pr pr_list_context ctx
 
 let string_of_list_context_list (ctxl:list_context list): string 
       =  List.fold_right (fun lctx str -> (string_of_list_context lctx) ^ str ^"\n") ctxl ""
@@ -4119,6 +4120,7 @@ Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_formula_type := string_of_formula_type;;
 Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_formula_base := string_of_formula_base;;
 Cformula.print_pure_f := string_of_pure_formula;;
@@ -4160,7 +4162,8 @@ Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_prog_exp := string_of_exp;;
-Cast.print_formula := string_of_pure_formula;;
+Cast.print_formula := string_of_formula;;
+Cast.print_pure_formula := string_of_pure_formula;;
 (* Cast.print_pure_formula := string_of_pure_formula;; *)
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
@@ -4168,6 +4171,7 @@ Cast.print_sv := string_of_spec_var;;
 Cast.print_mater_prop := string_of_mater_property;;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_view_decl := string_of_view_decl;
+Cast.print_view_decl_short := string_of_view_decl_short;
 Cast.print_hp_decl := string_of_hp_decl;
 Cast.print_mater_prop_list := string_of_mater_prop_list;;
 Cast.print_coercion := string_of_coerc_long;;

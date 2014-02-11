@@ -22,7 +22,7 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 
 relation matchinp(int x, int y) == true.
 
-void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
+void arraypart(int[]@R a, int i, int j, int x, int@R k, int@R t)
 	case {
 		i > j  -> ensures k' = i - 1 & t' = j + 1 & a' = a;
 		i <= j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v 
@@ -55,7 +55,7 @@ void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	}
 }
 
-void qsort(ref int[] a, int i, int j)
+void qsort(int[]@R a, int i, int j)
 	case {
 		i >= j -> ensures a=a';
         i < j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v & bnd(a,i,j,l,h)

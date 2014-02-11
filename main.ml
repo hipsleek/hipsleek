@@ -198,7 +198,7 @@ let process_lib_file prog =
 let reverify_with_hp_rel old_cprog iprog =
   (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
   (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
-  let hp_defs = Saout.collect_hp_defs old_cprog in
+  let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
   let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
       let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
         match hp_kind with
@@ -218,16 +218,33 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
-  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
-  (*     (a,b,c,new_f) *)
-  (* ) *) need_trans_hprels0 in
+  (* let _ = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
+  let need_trans_hprels1 = (* List.map (fun def -> *)
+  (*     let new_rhs = List.map (fun (f, og) -> *)
+  (*         let nf, esvl= (Cformula.drop_hrel_f f unk_hps) in *)
+  (*         let svl = List.fold_left (fun r eargs -> *)
+  (*             match eargs with *)
+  (*               | [] -> r *)
+  (*               | e::_ -> r@(Cpure.afv e) *)
+  (*         ) [] esvl in *)
+  (*         let nf1 = Cformula.add_quantifiers (Cpure.remove_dups_svl svl) nf in *)
+  (*         (nf1 , og) *)
+  (*     ) def.Cformula.def_rhs in *)
+  (*     {def with Cformula.def_rhs = new_rhs} *)
+  (* ) *) need_trans_hprels0
+  in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
   (* let _ =  Debug.info_zprint (lazy  ("XXXX 4: ")) no_pos in *)
   (* let _ = I.set_iprog iprog in *)
   ignore (Typechecker.check_prog iprog cprog)
+
+let hip_epilogue () = 
+  (* ------------------ lemma dumping ------------------ *)
+  if (!Globals.dump_lemmas) then 
+    Lem_store.all_lemma # dump
+  else ()
 
 (***************end process compare file*****************)
 (*Working*)
@@ -337,7 +354,12 @@ let process_source_full source =
     (*used in lemma*)
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
     (* let _ = I.set_iprog intermediate_prog in *)
-    let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+
+    (* ========= lemma process (normalize, translate, verify) ========= *)
+    let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+    (* ========= end - lemma process (normalize, translate, verify) ========= *)
+
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
@@ -452,7 +474,7 @@ let process_source_full source =
     (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-    
+    hip_epilogue ();
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -730,12 +752,6 @@ let old_main () =
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError3(s) detected at main \n");
   end
-
-let hip_epilogue () = 
-  (* ------------------ lemma dumping ------------------ *)
-  if (!Globals.dump_lemmas) then 
-    Lem_store.all_lemma # dump
-  else ()
 
 let _ = 
   if not(!Globals.do_infer_inc) then old_main ()

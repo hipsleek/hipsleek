@@ -12,6 +12,7 @@ type n
 
 
 module F = Cformula
+module CF = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
@@ -28,6 +29,7 @@ and prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
+    mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -167,6 +169,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_invoked : bool;
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;
@@ -207,6 +210,10 @@ and coercion_decl = {
     coercion_infer_vars :  P.spec_var list;
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
+ 
+    (* this used to build a defn for folding right lemma *)
+    coercion_fold_def : view_decl Gen.mut_option;
+ 
     (* same as head except for annotation to self node? *)
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
@@ -214,6 +221,8 @@ and coercion_decl = {
     coercion_mater_vars : mater_property list;
     (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
     coercion_case : coercion_case; (*Simple or Complex*)
+    coercion_type_orig: coercion_type option; 
+    coercion_kind: lemma_kind;
 }
 
 and coercion_type = Iast.coercion_type
@@ -459,7 +468,8 @@ let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been in
 let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
-let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:F.formula) -> "cform printer has not been initialized")
+let print_pure_formula = ref (fun (c:P.formula) -> "cform printer has not been initialized")
 let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
@@ -470,6 +480,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
@@ -1328,8 +1339,9 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers
   
-let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
-	let pr1 l = string_of_int (List.length l) in
+let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
+  let pr1 = !print_coerc_decl_list in
+	(* let pr1 l = string_of_int (List.length l) in *)
 	Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "") look_up_coercion_def_raw coers c
   (* match coers with *)
   (* | p :: rest -> begin *)
@@ -1879,6 +1891,70 @@ let vdef_fold_use_bc prog ln2  =
     | Some f -> !print_struc_formula f.view_formula in
   Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
+(* WN : this helps build a vdef to perform right lemma folding *)
+let vdef_lemma_fold prog coer  = 
+  let cfd = coer.coercion_fold_def in
+  let lhs = coer.coercion_head in
+  (* body contains orig=false but not body_norm*)
+  let rhs = CF.formula_to_struc_formula coer.coercion_body in
+  (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
+  if cfd # is_init then cfd # get
+  else
+    let vd2 = match lhs with
+      | CF.Base bf ->
+            begin
+              match bf.CF.formula_base_heap with
+                | CF.ViewNode vn -> 
+                      (try 
+                        let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+                        let to_vars = vd.view_vars in
+                        let from_vars = vn.CF.h_formula_view_arguments in
+                        let subs = List.combine from_vars to_vars in
+                        (* let pr = Cprinter.string_of_spec_var_list in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
+                        let rhs = CF.subst_struc subs rhs in
+                        Some {vd with view_formula = rhs}
+                      with  
+                        | Not_found -> None
+                      )
+                | _ -> None 
+            end
+      | _ -> None in
+    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
+    let _ = cfd # set vd2 in
+    vd2
+
+(* let vdef_lemma_fold prog coer  =  *)
+(*   let cfd = coer.coercion_fold_def in *)
+(*   let lhs = coer.coercion_head in *)
+(*   let rhs = coer.coercion_body_norm in *)
+(*   let _ = Debug.info_hprint (add_str "head" !print_formula) lhs no_pos in *)
+(*   let _ = Debug.info_hprint (add_str "body" !print_struc_formula) rhs no_pos in *)
+(*   if cfd # is_init then cfd # get *)
+(*   else *)
+(*     let vd2 = match lhs with *)
+(*       | F.Base bf -> *)
+(*             begin *)
+(*               match bf.F.formula_base_heap with *)
+(*                 | F.ViewNode vn ->  *)
+(*                       (try  *)
+(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         Some {vd with view_formula = rhs} *)
+(*                       with   *)
+(*                         | Not_found -> None *)
+(*                       ) *)
+(*                 | _ -> None  *)
+(*             end *)
+(*       | _ -> None in *)
+(*     let _ = cfd # set vd2 in *)
+(*     vd2 *)
+
+let vdef_lemma_fold prog coer  = 
+  let op = coer.coercion_fold_def in
+  let pr _ = pr_option !print_view_decl_short (op # get) in
+   Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
   match rm_br with

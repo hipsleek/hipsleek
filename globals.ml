@@ -8,6 +8,10 @@ let total_entailments = ref 0
 
 let debug_precise_trace = ref false
 
+type formula_type =
+  | Simple
+  | Complex
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -685,11 +689,16 @@ let use_split_match = ref false
 
 let consume_all = ref false
 
+let dis_base_case_unfold = ref false
+
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
+let allow_lemma_switch = ref true
+let allow_lemma_fold = ref true
+let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
 
@@ -718,6 +727,8 @@ let sa_dnc = ref false
 
 let pred_reuse = ref false
 
+let pred_trans_view = ref true
+
 (*temp: should be improve*)
 let pred_en_oblg = ref true
 
@@ -735,16 +746,18 @@ let sa_en_split = ref false
 
 let pred_split = ref false
 
+let pred_seg_split = ref true
+
 (* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
 
-let pred_elim_useless = ref false
+let pred_elim_useless = ref true
 let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
@@ -765,7 +778,11 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref true
+let pred_seg_unify = ref false
+
+let pred_equiv = ref false
+
+let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
 
@@ -775,12 +792,12 @@ let sa_tree_simp = ref false
 
 let sa_subsume = ref false
 
-(* let norm_elim_useless = ref false *)
+let norm_elim_useless = ref false
 
 let norm_extract = ref false
 let allow_norm_disj = ref true
 
-let sa_fix_bound = ref 4
+let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
