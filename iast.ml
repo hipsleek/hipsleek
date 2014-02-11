@@ -1155,14 +1155,16 @@ let genESpec_x body_opt args ret pos=
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
     in
-    let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+    let _ = Debug.info_hprint (add_str "generate unknown predicate for Pre synthesis" !print_hp_decl) hp_pre_decl no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
-            let in_info =
-              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
-                  arg.param_name mut_vars then Globals.I else Globals.NI
-            in
+            (*post-preds are all I*)
+            (* let in_info = *)
+            (*   if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) *)
+            (*       arg.param_name mut_vars then Globals.I else Globals.NI *)
+            (* in *)
+            let in_info = Globals.I in
             let hp_arg = (arg.param_type, arg.param_name, in_info) in
             let ref_args = if arg.param_mod = RefMod then
               [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
@@ -1179,7 +1181,7 @@ let genESpec_x body_opt args ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+    let _ = Debug.info_hprint (add_str "generate unknown predicate for Post Synthesis" !print_hp_decl) hp_post_decl no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
