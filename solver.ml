@@ -13474,15 +13474,21 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) resth2 ln2 (*rhs_p
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let vd = vdef_lemma_fold prog coer in
   match vd with
-    | None -> apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+    | None ->
+        apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
     | Some vd ->
         let can_fold = (
+          if (Perm.allow_perm ()) then false else
           if not(!Globals.allow_lemma_fold) then false
           else match ln2 with
           | ViewNode _ -> true
           | _ -> false
         ) in
         if not can_fold then
+          (* 11/02/2014: Why allow FOLD when doing right coercion?
+             Currently, the vdef_lemma_fold above may be too strong
+             in the presence of permissions
+          *)
           apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
         else
           let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
