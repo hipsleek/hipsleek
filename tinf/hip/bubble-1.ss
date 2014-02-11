@@ -23,7 +23,7 @@ ll<n> == self=null & n=0
 
 
 lls<n,k,sm> == self=null & n=0 & k=0 & sm=\inf
-  or self::node<_, r> * r::lls<n-1,k,sm> & n>k
+  or self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm
   or self::node<sm, r> * r::lls<n-1,k-1,sm1> & n=k & sm<=sm1
 	inv n>=k & k>=0;
 
@@ -59,6 +59,8 @@ bool bubble(node xs)
             xs.val = xnv;
             xs.next.val = xv; //ERROR: lhs and rhs do not match
             flag = true; 
+            dprint;
+            assume false;
           }
           return (flag || tmp);	
 	}
