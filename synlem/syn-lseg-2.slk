@@ -12,7 +12,7 @@ pred lseg<p> == self=p
 
 //1. FAIL. need cyclic->
 checkentail x::lseg<p1>*p1::lseg<p> |- x::lseg<p>.
-
+print residue.
 
 //2. VALID <-
 checkentail  x::lseg<p> |- x::lseg<p1>*p1::lseg<p>.
