@@ -1841,6 +1841,14 @@ let vdef_fold_use_bc prog ln2  =
   Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
 (* WN : this helps build a vdef to perform right lemma folding *)
+(* This will make sure that the variables in coer
+coincide with the variables in the corresponding
+view definition
+   In the present of permissions, this may not hold
+   as the LHS of a view definition does not have permissions
+   while the LHS of a coer does.
+*)
+
 let vdef_lemma_fold prog coer  = 
   let cfd = coer.coercion_fold_def in
   let lhs = coer.coercion_head in
