@@ -196,7 +196,6 @@ let pr_sleek_log_entry e=
   if (!Globals.print_en_tidy)
   then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_conseq))
   else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq);
-  fmt_string  (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_conseq));
   fmt_string ". \n";
   (if !print_clean_flag then 
 	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
