@@ -50,8 +50,9 @@ bool bubble(node xs)
     n1 = 0 -> requires n2 > 0 ensures xs::sll<n2, sm2> & !res;
     n1 != 0 -> case {
       srt = 1 -> ensures xs::sll<n1+n2, sm1> & !res;
-      srt != 1 ->
-        ensures xs::ls<n1-n, _, _, _, q> * q::sll<n2+n, _> & 0 < n <= n1 & res
+      srt != 1 -> ensures 
+        //xs::ls<n1-n, _, _, _, q> * q::sll<n2+n, _> & 0 < n <= n1 & res
+        xs::ls<n1-1, _, _, _, q> * q::sll<n2+1, _> & res
         /* & lg1r <= lg1 */ /* & lg1r <= lg1 & sm2r <= sm2 & sm2r <= lg1 */;
     }
   }
@@ -88,6 +89,7 @@ bool bubble(node xs)
   }
 }
 
+/*
 void bsort(node xs)
   requires xs::ls<n1, sm1, lg1, srt, p> * p::sll<n2, sm2> & n1 + n2 > 0 & lg1 <= sm2  
   ensures xs::sll<n1+n2, _>;
@@ -99,3 +101,4 @@ void bsort(node xs)
     bsort(xs);
   }
 }
+*/
