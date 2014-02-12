@@ -13363,7 +13363,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
               (* let br = b.formula_base_branches in *)
               let nh,np,nfl = normalize_w_coers prog estate coers h p (* t *) fl (* br *) in
               let np = remove_dupl_conj_mix_formula np in
-              Base {b with formula_base_heap=nh;formula_base_pure=np;formula_base_flow=fl} (*should use the original flow*)
+              Base {b with formula_base_heap=nh;formula_base_pure=np;formula_base_flow=nfl}
         | Exists e ->
               let h = e.formula_exists_heap in
               let p = e.formula_exists_pure in
@@ -13372,7 +13372,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
               (* let br = e.formula_exists_branches in *)
               let nh,np,nfl = normalize_w_coers prog estate coers h p (* t *) fl (* br *) in
               let np = remove_dupl_conj_mix_formula np in
-              Exists {e with formula_exists_heap=nh; formula_exists_pure=np;formula_exists_flow=fl } (*should use the original flow*)
+              Exists {e with formula_exists_heap=nh; formula_exists_pure=np;formula_exists_flow=nfl }
         | Or o ->
 	      let f1 = helper o.formula_or_f1 in
 	      let f2 = helper o.formula_or_f2 in
