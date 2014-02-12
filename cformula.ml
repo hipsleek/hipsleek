@@ -15236,11 +15236,14 @@ let rearrange_rel (rel: hprel) =
   }
 
 let shorten_formula f = 
-  let fv = CP.remove_dups_svl (fv f) in
+  let fvars = fv f in
+  let qvars,_ = split_quantifiers f in
   (* let _ = print_endline ((pr_list !print_sv) fv) in *)
-  let new_svl = shorten_svl fv in
+  let vars = CP.remove_dups_svl (fvars@qvars) in
+  let new_svl = shorten_svl vars in
   (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
-  subst_avoid_capture fv new_svl f
+  (* subst_avoid_capture vars new_svl f *)
+  subst_all (List.combine vars new_svl) f
 
 (* let rearrange_context bc = *)
 (*   let rec helper ctx = *)
