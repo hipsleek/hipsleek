@@ -315,6 +315,39 @@ let filter_match_res_list lst rhs_node =
   match rhs_node with
     | HRel _ ->    List.filter (fun m -> is_match_res_from_coerc_or_root m) lst
     | _      ->  lst
+
+let convert_starminus ls = 
+        List.map (fun m ->
+          let lhs_rest = m.match_res_lhs_rest in
+          let () = print_string ("lhs_res:"^(Cprinter.string_of_h_formula lhs_rest)^"\n") in
+          let rec helper  hrest  = 
+          (match hrest with
+            | StarMinus ({h_formula_starminus_h1 = h1;
+                          h_formula_starminus_h2 = h2;
+                          h_formula_starminus_aliasing = al;
+                          h_formula_starminus_pos = pos}) ->
+                (let h1 =  match al with
+                  | Not_Aliased -> mkStarH h2 h1 pos 
+                  | May_Aliased -> mkConjH h2 h1 pos
+                  | Must_Aliased -> mkConjConjH h2 h1 pos
+                  | Partial_Aliased -> mkConjStarH h2 h1 pos in 
+                (mkStarMinusH h1 h2 al pos 111))
+            | Star({h_formula_star_h1 = h1;
+                    h_formula_star_h2 = h2;
+                    h_formula_star_pos = pos}) ->
+                mkStarH (helper h1) (helper h2) no_pos 
+            | _ -> hrest)
+          in 
+          let h = helper lhs_rest in
+          let () = print_string ("new_lhs_res:"^(Cprinter.string_of_h_formula h)^"\n") 
+          in { match_res_lhs_node = m.match_res_lhs_node;
+               match_res_lhs_rest = h;
+               match_res_holes = m.match_res_holes;
+               match_res_type = m.match_res_type;
+               match_res_rhs_node = m.match_res_rhs_node;
+               match_res_rhs_rest = m.match_res_rhs_rest}
+        ) ls
+
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
@@ -357,6 +390,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
             (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
           else 
             let res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
+           (*let res = convert_starminus res in *)
             filter_match_res_list res rhs_node
     | HTrue -> (
           if (rhs_rest = HEmp) then (
@@ -788,27 +822,39 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_starminus_h2 = f2;
       h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos}) ->
-          let l1 = helper f1 in
+        let f = (let f1 =  match al with
+                  | Not_Aliased -> mkStarH f2 f1 pos 
+                  | May_Aliased -> mkConjH f2 f1 pos
+                  | Must_Aliased -> mkConjConjH f2 f1 pos
+                  | Partial_Aliased -> mkConjStarH f2 f1 pos in 
+                (mkStarMinusH f1 f2 al pos 111)) in
+	    let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_h_formula f) ^ "\n") in
+        failwith("[context.ml]: There should be no wand in the lhs at this level\n")
+          (*let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)) l2 in
-          res1 @ res2
+          res1 @ res2*)
     | Conj({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2;
-      h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 
+      h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem || !Globals.allow_ramify) then 
+        if CF.contains_starminus f1 || CF.contains_starminus f2 then
+          let _ = print_string("[context.ml]:Use ramification lemmas lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          failwith("[context.ml]: There should be no wand in the lhs at this level\n")
+        else 
         let l1 = helper f1 in
         let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
             if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
               let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
-              (mkConjH lhs1 ramify_f2 pos , node1, hole1, match1)
-            else (mkConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
+              (mkStarH lhs1 ramify_f2 pos , node1, hole1, match1)
+            else (mkStarH lhs1 f2 pos , node1, hole1, match1)) l1 in  
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
               let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
-              (mkConjH ramify_f1 lhs2 pos , node2, hole2, match2)
+              (mkStarH ramify_f1 lhs2 pos , node2, hole2, match2)
             else
-              (mkConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
+              (mkStarH f1 lhs2 pos , node2, hole2, match2)) l2 in
         (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
       	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
 	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)

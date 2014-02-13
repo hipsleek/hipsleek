@@ -15243,3 +15243,26 @@ let shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let rec contains_starminus (f:h_formula) : bool = 
+(*let _ = print_string ("Checking StarMinus = "^ (string_of_h_formula f) ^ "\n") in *)
+match f with
+| DataNode (h1) -> false
+| ViewNode (h1) -> false
+| Star ({h_formula_star_h1 = h1;
+		   h_formula_star_h2 = h2;
+		   h_formula_star_pos = pos}) 
+| Phase ({h_formula_phase_rd = h1;
+		    h_formula_phase_rw = h2;
+		    h_formula_phase_pos = pos})
+| Conj({h_formula_conj_h1 = h1;
+		  h_formula_conj_h2 = h2;
+		  h_formula_conj_pos = pos})
+| ConjStar({h_formula_conjstar_h1 = h1;
+		   h_formula_conjstar_h2 = h2;
+		  h_formula_conjstar_pos = pos})
+| ConjConj({h_formula_conjconj_h1 = h1;
+		   h_formula_conjconj_h2 = h2;
+		  h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
+| StarMinus _ -> true
+| _ -> false

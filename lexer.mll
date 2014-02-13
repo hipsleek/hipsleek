@@ -195,6 +195,7 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
+   ( "rlemma",RLEMMA);
 	 ("lemma", LEMMA TLEM);
 	 ("lemma_test", LEMMA TLEM_TEST);
 	 ("lemma_test_new", LEMMA TLEM_TEST_NEW);
@@ -327,7 +328,7 @@ rule tokenizer file_name = parse
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
   | "U*" { UNIONSTAR }
-  | "-*" { STARMINUS }
+  | "--@" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }

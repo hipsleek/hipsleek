@@ -913,6 +913,7 @@ let string_of_lem_kind l =
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
     | LEM_INFER_PRED    -> "infer lemmas + pred"
+    | RLEM -> "Ramification Lemmas"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)

@@ -1518,9 +1518,10 @@ simple_heap_constr:
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-         (* if hp_names # mem id then *)
+        if hp_names # mem id then
            F.HRel(id, cl, (get_pos_camlp4 _loc 2))
-         (* else report_error (get_pos 1) ("should be a heap pred, not pure a relation here") *)
+             (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+         else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -2454,7 +2455,8 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  (* | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]]; *)
+  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> Coercion_list { coercion_list_elems = [c];
+                                                               coercion_list_kind = RLEM}
   | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = (convert_lem_kind kind)}

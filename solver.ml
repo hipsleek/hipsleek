@@ -3462,10 +3462,11 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           normalize_combine_star uf1 uf2 pos
     | StarMinus ({h_formula_starminus_h1 = f1;
       h_formula_starminus_aliasing = al;
-      h_formula_starminus_h2 = f2}) ->
+      h_formula_starminus_h2 = f2}) -> formula_of_heap_fl f fl pos
+    (*
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
-          normalize_combine_starminus uf1 uf2 al pos (*TO CHECK*)
+          normalize_combine_starminus uf1 uf2 al pos (*TO CHECK*)*)
     | Conj ({h_formula_conj_h1 = f1;
       h_formula_conj_h2 = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in

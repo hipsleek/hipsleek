@@ -1277,7 +1277,7 @@ and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl =
 (*HIP*)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
-  print_string "trans_prog\n";
+  (*print_string "trans_prog\n";*)
   let _ = (exlist # add_edge "Object" "") in
   let _ = (exlist # add_edge "String" "Object") in
   let _ = (exlist # add_edge raisable_class "Object") in
@@ -1923,6 +1923,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
         (* filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
 	let ffv = List.filter (fun v -> not (CP.is_hprel_typ v)) ffv in
+	let ffv = List.filter (fun v -> not (CP.is_rel_typ v)) ffv in
         let ffv = CP.diff_svl ffv view_prop_extns in
         (* filter out intermediate dereference vars and update them to view vars *)
         
@@ -2953,7 +2954,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                   | CF.ViewNode vn -> vn.CF.h_formula_view_name
                   | CF.DataNode dn -> dn.CF.h_formula_data_name
                   | _ -> let _ = 
-                      print_string "[astimp] Warning: head node of ramification is neither a view node nor a data node\n" in "")
+                      print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
               | _ -> 
                     let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
                     ""
