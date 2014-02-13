@@ -1,0 +1,26 @@
+/*
+checkentail true |- x>0 or x<=0.
+// fail due to incompleteness
+
+checkentail x>0 |- case {x>0 -> [] x>0; x<=0 -> [] x<=0;}.
+// succeed
+*/
+
+checkentail b=1 |- case {x>0 -> [] b>0 ; x<=0 -> [] b>0;}.
+/*
+all: x
+instant: b' b
+
+ERROR: at case-1.slk_9:19_9:57 
+Message: all guard free vars must be instantiated
+ 
+Entail 1: EXCast. Failure("all guard free vars must be instantiated")
+Stop Omega... 0 invocations 
+
+PROBLEMS
+(i) Why is there b'?
+(ii) Why can't we succeed and return b=1 as residue?
+
+
+*/
+
