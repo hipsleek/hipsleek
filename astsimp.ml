@@ -5138,12 +5138,13 @@ and trans_case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): CF.
           let all = List.fold_left (fun a c->(Cpure.mkStupid_Or a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
           (** An Hoa Temporary Printing **)
           (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
-          let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
-            let _ = print_string (
-                (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^
-                    (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "instant:" instant)^"\n")in            
-            Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
-            Err.error_text = "all guard free vars must be instantiated";} in
+          (* WN : syntactic check for case not strictly needed *)
+          (* let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then  *)
+          (*   let _ = print_string ( *)
+          (*       (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^ *)
+          (*           (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "instant:" instant)^"\n")in             *)
+          (*   Error.report_error {  Err.error_loc = b.CF.formula_case_pos; *)
+          (*   Err.error_text = "all guard free vars must be instantiated";} in *)
           let rec p_check (p:Cpure.formula list):bool = match p with
             | [] -> false 
             | p1i::p2 -> 
@@ -5416,6 +5417,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
   ) in
   let n_tl =gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in
+  let _ = Debug.tinfo_hprint (add_str "fvars" (pr_list pr_id)) fvars no_pos in
   let cfvhp1 = List.map (fun c-> trans_var_safe (c,Primed) UNK n_tl (IF.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun sv -> match sv with | CP.SpecVar (t,v,_) -> CP.SpecVar(t,v,Unprimed)) cfvhp1 in
   let cfvhp = cfvhp1@cfvhp2 in

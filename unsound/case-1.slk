@@ -1,32 +1,14 @@
-/*
-checkentail true |- x>0 or x<=0.
-// fail due to incompleteness
 
-checkentail x>0 |- case {x>0 -> [] x>0; x<=0 -> [] x<=0;}.
-// succeed
-*/
-
-/*
-checkentail x>=0 |- x>0  or x<=0 & x=0.
-
-checkentail x>=0 |- case {x>0 -> [] x>0 ; x<=0 -> [] x=0;}.
-*/
-
-checkentail b=1 |- case {x>0 -> [] b>0 ; x<=0 -> [] b>0;}.
+checkentail b'=1 |- case {x>0 -> [] b'>0 & x>0 ; x<=0 -> [] b'>0;}.
 print residue.
 
 /*
-all: x
-instant: b' b
+    emp&b'=1 & x<=0&{FLOW,(21,22)=__norm}[]
+    or emp&b'=1 & 0<x&{FLOW,(21,22)=__norm}[]
 
-ERROR: at case-1.slk_9:19_9:57 
-Message: all guard free vars must be instantiated
- 
-Entail 1: EXCast. Failure("all guard free vars must be instantiated")
-Stop Omega... 0 invocations 
+I guess the above is OK. But we need to be careful with
+things we instantiate from pred definition to make sure they are
+unique?
 
-PROBLEMS
-(i) Why is there b'?
-(ii) Why can't we succeed and return b=1 as residue?
 */
 
