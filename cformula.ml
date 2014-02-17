@@ -10747,21 +10747,23 @@ and case_to_disjunct f  =
   Debug.no_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
 
 and case_to_disjunct_x (f:struc_formula):struc_formula  =
-  let rec push_pure c (f:struc_formula):struc_formula =  match f with
+  let rec push_pure_x c (f:struc_formula):struc_formula =  match f with
     | ECase _ -> f (*this should never occur*) 
     | EBase b-> EBase {b with formula_struc_base = 
       normalize_combine 
         b.formula_struc_base 
           (formula_of_pure_N c no_pos) 
           no_pos}
-    | _ -> EBase {
+   | EList b -> EList (map_l_snd (push_pure_x c) b) 
+   | _ ->  EBase {
        formula_struc_explicit_inst = [];
        formula_struc_implicit_inst = [];
        formula_struc_exists = [];
        formula_struc_base = formula_of_pure_N c no_pos;
        formula_struc_continuation = Some f;
-       formula_struc_pos = no_pos;
-    }	 in
+       formula_struc_pos = no_pos;}
+    	 in
+  let push_pure c f = Debug.no_2 "push_pure" !print_pure_f !print_struc_formula !print_struc_formula push_pure_x c f in
   match f with
     | ECase b-> 
 		let l = List.map (fun (c1,c2)-> push_pure c1 (case_to_disjunct_x c2)) b.formula_case_branches in
@@ -10770,7 +10772,7 @@ and case_to_disjunct_x (f:struc_formula):struc_formula  =
 		  | _ -> mkEList_flatten l)
     | EBase b-> EBase {b with formula_struc_continuation = map_opt case_to_disjunct_x b.formula_struc_continuation}
 	| EList b -> EList (map_l_snd case_to_disjunct_x b)
-	| _ -> f
+	| _ -> f	
 
 (* start label - can be simplified *)	
 let get_start_label ctx = match ctx with
