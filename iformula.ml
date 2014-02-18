@@ -482,6 +482,14 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
+and mkThreadNode c id rsr perm ofl l =
+  ThreadNode { h_formula_thread_node = c;
+             h_formula_thread_name = id;
+             h_formula_thread_resource = rsr;
+             h_formula_thread_perm = perm;
+             h_formula_thread_label = ofl;
+             h_formula_thread_pos = l }
+
 and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;

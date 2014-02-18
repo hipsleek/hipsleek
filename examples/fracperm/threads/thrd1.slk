@@ -1,0 +1,7 @@
+data node{ int val;}.
+
+//checkentail x::node<1> |- x::node<1> .
+//print residue.
+
+checkentail t::thrd< x::node<1> & true > |- t::thrd<x::node<1> & true > .
+//print residue.
