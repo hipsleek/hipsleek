@@ -165,6 +165,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 
 and h_formula_thread = { h_formula_thread_node : (ident * primed);
                        h_formula_thread_name : ident;
+                       h_formula_thread_delayed : P.formula; (* for delayed lockset checking *)
                        h_formula_thread_resource : formula;
                        h_formula_thread_perm : iperm; (*LDK: optional fractional permission*)
                        h_formula_thread_label : formula_label option;
@@ -482,11 +483,12 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkThreadNode c id rsr perm ofl l =
+and mkThreadNode c id rsr dl perm ofl l =
   ThreadNode { h_formula_thread_node = c;
              h_formula_thread_name = id;
              h_formula_thread_resource = rsr;
              h_formula_thread_perm = perm;
+             h_formula_thread_delayed = dl;
              h_formula_thread_label = ofl;
              h_formula_thread_pos = l }
 
@@ -683,10 +685,12 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
  | ThreadNode {h_formula_thread_node = name ;
               h_formula_thread_perm = perm;
+              h_formula_thread_delayed = dl;
               h_formula_thread_resource = rsr} ->
      let perm_vars = (fv_iperm ()) perm in
      let rsr_vars = all_fv rsr in (*TOCHECK*)
-     Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
+     let dl_vars = Ipure.fv dl in
+     Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@dl_vars@([extract_var_from_id name]))
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
@@ -1140,7 +1144,7 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
                   (node,[])
             | _ ->
                 (node,[]))
-    | ThreadNode _
+    | ThreadNode _ (*TOCHECK: _delayed*)
     | HeapNode2 _
     | Phase _
     | HRel _ (*TO CHECK*)
@@ -1256,12 +1260,15 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   | ThreadNode ({ h_formula_thread_node = x;
                   h_formula_thread_name = c;
                   h_formula_thread_resource = rsr;
+                  h_formula_thread_delayed = dl;
                   h_formula_thread_perm = perm;} as t) ->
       let rsr1 = apply_one s rsr in
+      let dl1 = Ipure.apply_one s dl in
       let perm1 = ( match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None)
       in ThreadNode {t with h_formula_thread_resource = rsr1;
+                            h_formula_thread_delayed = dl1;
                             h_formula_thread_perm = perm1;}
   | HTrue -> f
   | HFalse -> f
@@ -1482,12 +1489,15 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
   | ThreadNode ({ h_formula_thread_node = x;
                   h_formula_thread_name = c;
                   h_formula_thread_resource = rsr;
+                  h_formula_thread_delayed = dl;
                   h_formula_thread_perm = perm;} as t) ->
       let rsr1 = apply_one_w_data_name s rsr in
+      let dl1 =  Ipure.apply_one s dl in
       let perm1 = ( match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None)
       in ThreadNode {t with h_formula_thread_resource = rsr1;
+                            h_formula_thread_delayed = dl1;
                             h_formula_thread_perm = perm1;}
     | HTrue -> f
     | HFalse -> f
@@ -1695,6 +1705,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         let perm = b.h_formula_thread_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_thread_pos in
         let rsr1 = float_out_exps_from_heap lbl_getter annot_getter b.h_formula_thread_resource in (*TOCHECK*)
+        (*TOCHECK: need to float our _delayed??? *)
         (ThreadNode ({b with h_formula_thread_resource = rsr1; h_formula_thread_perm = na_perm}),ls_perm )
     | HRel (r, args, l) ->
         	(* let nargs = List.map Ipure.float_out_exp_min_max args in *)
@@ -2063,8 +2074,9 @@ and float_out_heap_min_max (h :  h_formula) :
 	    let l = h1.h_formula_thread_pos in
         let rsr = float_out_min_max h1.h_formula_thread_resource in
 	    let perm = h1.h_formula_thread_perm in
+        let dl = Ipure.float_out_pure_min_max h1.h_formula_thread_delayed in
 	    let nl_perm, new_p_perm = float_out_min_max_iperm () perm l in
-        ((ThreadNode { h1 with  h_formula_thread_resource = rsr; h_formula_thread_perm = nl_perm}), new_p_perm)
+        ((ThreadNode { h1 with  h_formula_thread_resource = rsr; h_formula_thread_perm = nl_perm; h_formula_thread_delayed = dl;}), new_p_perm)
 
     | HRel (r, args, l) ->
         	let nargs = List.map Ipure.float_out_exp_min_max args in

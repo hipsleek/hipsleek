@@ -464,13 +464,14 @@ let rec string_of_h_formula = function
   | F.ThreadNode ({F.h_formula_thread_node = x;
                  F.h_formula_thread_name = id;
                  F.h_formula_thread_resource = rsr;
+                 F.h_formula_thread_delayed = dl;
                  F.h_formula_thread_label = pi;
                   F.h_formula_thread_perm = perm;
                  F.h_formula_thread_pos = l}) ->
       let perm_str = string_of_iperm perm in
       let rsr_str = string_of_formula rsr in
       ((string_of_id x) ^ "::" ^ id ^ perm_str 
-      ^ "<" ^ rsr_str ^ ">" ^ "[ThreadNode]")
+      ^ "<" ^ (string_of_pure_formula dl) ^ " --> " ^ rsr_str ^ ">" ^ "[ThreadNode]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"

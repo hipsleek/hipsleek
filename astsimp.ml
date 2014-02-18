@@ -5774,12 +5774,16 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.ThreadNode {IF.h_formula_thread_node = (v, p);
                      IF.h_formula_thread_name = c;
                      IF.h_formula_thread_resource = rsr;
+                     IF.h_formula_thread_delayed = dl;
                      IF.h_formula_thread_perm = perm; (*LDK*)
                      IF.h_formula_thread_pos = pos;
                      IF.h_formula_thread_label = pi;} ->
           let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
           let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
           dataNode2, t_f, n_tl1, sv1
+          (* let new_dl = trans_pure_formula dl tlist in *)
+          (* let new_dl = Cpure.arith_simplify 5 new_dl in *)
+          (* let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in *)
           (*TO IMPLEMENT THE BELOW*)
           (* let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in *)
           (* let newNode = CF.ThreadNode {CF.h_formula_thread_name = CF.get_node_name dataNode2; *)
