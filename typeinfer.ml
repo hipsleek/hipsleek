@@ -1226,6 +1226,94 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
               Err.error_text = c ^ " is neither 2 a data nor view name";
             }))
         in n_tl
+  | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
+                  IF.h_formula_thread_perm = perm;
+                  IF.h_formula_thread_name = c; (* data/pred name *)
+                  IF.h_formula_thread_resource = rsr;
+                  IF.h_formula_thread_pos = pos } ->
+      (* Follow IF.DataNode. May need TOCHECK *)
+      Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+      let ft = cperm_typ () in
+      let gather_type_info_ann c tlist = (
+        match c with
+        | IP.ConstAnn _ -> tlist
+        | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
+      ) in
+      let rec gather_type_info_param_ann lst tl = (
+        match lst with
+        | [] -> tl
+        | (Some h)::t -> 
+            let n_tl = gather_type_info_ann h tl in
+            let n_tl = gather_type_info_param_ann t n_tl in
+            n_tl
+        | (None)::t -> gather_type_info_param_ann t tl 
+      ) in
+      let gather_type_info_perm p tl = (
+        match p with
+        | None -> tl
+        | Some e -> let (n_tl,_) = gather_type_info_exp e tl ft in n_tl 
+      ) in
+      let n_tl = gather_type_info_perm perm tlist in
+      (*Deal with the generic pointer! *)
+      if (c = Parser.generic_pointer_type_name) then 
+        (* Assumptions:
+         * (i)  ies to contain a single argument, namely the value of the pointer
+         * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
+         *      where [.TypeOfV] is optional type of V. If it is present, it is
+         *      the type of V pointer. Otherwise, we try to find this information
+         *      based on its fields.
+         * (iii) Temporarily assume that only one field; the case of inline fields
+         *      will be dealt with later.
+         *)
+        (* Step 1: Extract the main variable i.e. the root of the pointer *)
+        (* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
+        let tokens = Str.split (Str.regexp "\\.") v in
+        (* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
+        let rootptr = List.hd tokens in
+        (* Step 2: Determine the type of [rootptr] and the field by looking 
+         * up the current state of tlist & information supplied by the user.
+         *)
+        let s = List.nth tokens 1 in
+        let type_found,type_rootptr = try (* looking up in the list of data types *)
+          (* Good user provides type for [rootptr] ==> done! *)
+          let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
+          (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
+          (true, Named ddef.I.data_name)
+          with 
+          | Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
+          (* After this, if type_found = false then we know that 
+           * s is a name of field of some data type
+           *)
+        let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+          else try (* looking up in the collected types table for [rootptr] *)
+            let vi = snd(List.find (fun (v,en) -> v = rootptr) n_tl) in
+            match vi.sv_info_kind with
+            | UNK -> (false,UNK)
+            | _ -> (true,vi.sv_info_kind) (* type of [rootptr] is known ==> done! *)
+          with
+          | Not_found -> (false,UNK) in
+        let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+          else (* inferring the type from the name of the field *)
+            let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
+            if (List.length dts = 1) then
+              (* the field uniquely determines the data type ==> done! *)
+              (* let _ = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
+              (true,Named (List.hd dts))
+            else
+              (false,UNK) in
+        (* Step 3: Collect the remaining type information *)
+        if type_found then
+          (* Know the type of rootptr ==> Know the type of the field *)
+          let n_tl = ([(rootptr, { sv_info_kind = type_rootptr; id = 0 })]@n_tl) in
+          (* Filter out user type indication, List.tl to remove the root as well *)
+          let field_access_seq = List.tl (List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens) in
+          (* Get the type of the field which is the type of the pointer *)
+          let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
+          (* let _ = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
+          n_tl
+        else n_tl
+      else (* End dealing with generic ptr, continue what the original system did *)
+        n_tl
     | IF.HRel (r, args, pos) ->
       (try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in

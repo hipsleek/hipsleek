@@ -108,7 +108,7 @@ module type PERM =
     val mkPermWrite : Cpure.exp -> Cpure.formula
     val mkPermWrite_var : cperm_var -> Cpure.formula
     val float_out_iperm : iperm -> loc -> (iperm * ( ( (ident*primed) * Ipure.formula )list) )
-    val float_out_mix_max_iperm : iperm -> loc -> (iperm * Ipure.formula option)
+    val float_out_min_max_iperm : iperm -> loc -> (iperm * Ipure.formula option)
     val fv_cperm : cperm -> cperm_var list
     val get_cperm : cperm -> Cpure.exp list
     val get_cperm_var : cperm -> cperm_var list
@@ -223,7 +223,7 @@ struct
                 (* (Some nv_perm,ec_ls@et_ls@ea_ls@perm) *)
             | _ -> failwith ("bounded permission is undefined")
 
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -250,7 +250,7 @@ struct
                             | Some f2 -> Some (Ipure.mkAnd f1 f2 no_pos)))
                 ) ec_f [et_f;ea_f] in
                 (Some new_triple,p_f)
-            | _ -> failwith ("float_out_mix_max_iperm: expecting bperm triple")
+            | _ -> failwith ("float_out_min_max_iperm: expecting bperm triple")
 
   let fv_cperm perm : Cpure.spec_var list =
     match perm with
@@ -319,7 +319,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos = match perm with
+  let float_out_min_max_iperm perm pos = match perm with
       | None -> (None, None)
       | Some f ->  match f with
 		    | Ipure.Var _ -> (Some f, None)
@@ -421,7 +421,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -530,7 +530,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -692,12 +692,12 @@ let float_out_iperm () =   match !perm with
     | Frac -> FPERM.float_out_iperm
     | NoPerm -> FPERM.float_out_iperm
 
-let float_out_mix_max_iperm () =   match !perm with
-    | Count -> CPERM.float_out_mix_max_iperm
-	| Dperm -> DPERM.float_out_mix_max_iperm
-	| Bperm -> BPERM.float_out_mix_max_iperm
-    | Frac -> FPERM.float_out_mix_max_iperm
-    | NoPerm -> FPERM.float_out_mix_max_iperm
+let float_out_min_max_iperm () =   match !perm with
+    | Count -> CPERM.float_out_min_max_iperm
+	| Dperm -> DPERM.float_out_min_max_iperm
+	| Bperm -> BPERM.float_out_min_max_iperm
+    | Frac -> FPERM.float_out_min_max_iperm
+    | NoPerm -> FPERM.float_out_min_max_iperm
 
 let fv_cperm p = match !perm with
     | Count -> CPERM.fv_cperm p

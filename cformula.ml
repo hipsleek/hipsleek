@@ -1708,7 +1708,7 @@ and get_node_var (h : h_formula) = match h with
   | ViewNode ({h_formula_view_node = c}) 
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
-  
+
 and set_node_var newc (h : h_formula) = match h with
   | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
   | DataNode w -> DataNode {w with h_formula_data_node = newc;}

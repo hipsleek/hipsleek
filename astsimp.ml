@@ -378,6 +378,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
             IF.h_formula_phase_rw = tmp2; }
     | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node 1 prog h2)
     | IF.HRel _
+    | IF.ThreadNode _
     | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
@@ -1286,27 +1287,27 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
   let prog4 = if (!Globals.perm = Globals.Dperm)
-  then I.add_bar_inits prog4 
-  else prog4
+      then I.add_bar_inits prog4 
+      else prog4
   in
   (*let _ = print_string (Iprinter.string_of_program prog4) in*)
   let prog4 = if not (!do_infer_inc) then prog4 else
-    try
-      let id_spec_from_file = Infer.get_spec_from_file prog4 in
-      let ids, specs = List.split id_spec_from_file in
-      {prog4 with I.prog_proc_decls =
-              let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
-              let new_proc = 
-                List.map (fun proc ->
-                    try 
-                      let spec = List.assoc proc.I.proc_name id_spec_from_file in
-                      {proc with I.proc_static_specs = spec}
-                    with Not_found -> proc
-                ) new_proc
-              in
-              others @ new_proc
-      }
-    with _ -> prog4
+        try
+            let id_spec_from_file = Infer.get_spec_from_file prog4 in
+            let ids, specs = List.split id_spec_from_file in
+            {prog4 with I.prog_proc_decls =
+                    let new_proc, others = List.partition (fun x -> List.mem x.I.proc_name ids) prog4.I.prog_proc_decls in
+                    let new_proc = 
+                      List.map (fun proc ->
+                          try 
+                              let spec = List.assoc proc.I.proc_name id_spec_from_file in
+                              {proc with I.proc_static_specs = spec}
+                          with Not_found -> proc
+                      ) new_proc
+                    in
+                    others @ new_proc
+            }
+        with _ -> prog4
   in
   let _ = I.build_exc_hierarchy true prog4 in  (* Exceptions - defined by users *)
   (* let prog3 = *)
@@ -1319,9 +1320,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-          ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-          :: prog3.I.prog_data_decls;} in
+                      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                      ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                      :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
   let prog2 = I.add_normalize_lemmas prog2 in
@@ -1347,81 +1348,81 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-      (* let _ = print_flush (Exc.string_of_exc_list (10)) in *)
-      (* exlist # compute_hierarchy; *)
-      (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
-      let prims,prim_rels = gen_primitives prog0 in
-      (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
-      let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
-      (* let prims,prim_rels = ([],[]) in *)
-      let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
-	  (* AN HOA : adjoint the program with primitive relations *)
-	  I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
-	  (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
-      } in
-      (set_mingled_name prog;
-      let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
-        (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
-        (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
-			                                                   (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
-      let dups = Gen.BList.find_dups_eq (=) all_names in
-      (* let _ = I.find_empty_static_specs prog in *)
-      if not (Gen.is_empty dups) then
-	(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
-      else (
+        (* let _ = print_flush (Exc.string_of_exc_list (10)) in *)
+        (* exlist # compute_hierarchy; *)
+        (* let _ = print_endline (Exc.string_of_exc_list (11)) in *)
+        let prims,prim_rels = gen_primitives prog0 in
+        (* let prim_rel_ids = List.map (fun rd -> (RelT,rd.I.rel_name)) prim_rels in *)
+        let prims = List.map (fun p -> {p with I.proc_is_main = false}) prims in 
+        (* let prims,prim_rels = ([],[]) in *)
+        let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
+	        (* AN HOA : adjoint the program with primitive relations *)
+	        I.prog_rel_decls = prim_rels @ prog0.I.prog_rel_decls;
+	               (* I.prog_rel_ids = prim_rel_ids @ prog0.I.prog_rel_ids; *)
+                   } in
+        (set_mingled_name prog;
+         let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
+           (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
+           (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
+			                                                                  (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
+         let dups = Gen.BList.find_dups_eq (=) all_names in
+         (* let _ = I.find_empty_static_specs prog in *)
+         if not (Gen.is_empty dups) then
+	       (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
+         else (
 	  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: before case_normalize" ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 	  let prog = case_normalize_program prog in
 
 	  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
 	  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
-          (***************************************************)
-          let prog =
-            if (!Globals.allow_ptr) then 
-              let _ = print_string ("Eliminating variable aliasing...\n"); flush stdout in
-              let new_prog = Pointers.trans_pointers prog in
-              let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
-              let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
-              new_prog
-            else prog
-          in 
-          let prog = 
-            if (!Globals.infer_mem) then 
-              let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
-              {prog with I.prog_view_decls = infer_views}
-            else prog 
-          in 
-          (***************************************************)
+      (***************************************************)
+      let prog =
+        if (!Globals.allow_ptr) then 
+          let _ = print_string ("Eliminating variable aliasing...\n"); flush stdout in
+          let new_prog = Pointers.trans_pointers prog in
+          let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program new_prog) else () in
+          let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
+          new_prog
+        else prog
+      in 
+      let prog = 
+        if (!Globals.infer_mem) then 
+          let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
+          {prog with I.prog_view_decls = infer_views}
+        else prog 
+      in 
+      (***************************************************)
 	  (* let _ =  print_endline " after case normalize" in *)
-          (* let _ = I.find_empty_static_specs prog in *)
+      (* let _ = I.find_empty_static_specs prog in *)
 	  let tmp_views = order_views prog.I.prog_view_decls in
 	  (* let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
 	  (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
-          Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
-          let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
-          Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
+      Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
+      let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
+      Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
 	  let cviews = List.map (trans_view prog []) tmp_views in
-          let cviews1 =
-            (*todo: after elim useless, update methos specs. tmp: do not elim*)
-            if (* !Globals.pred_elim_useless *) false then
-              Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
-            else cviews
-          in
-          let cviews2 =
-            if !Globals.norm_cont_analysis then
-              Norm.cont_para_analysis prog cviews1
-            else
-              cviews1
-          in
+      let cviews1 =
+        (*todo: after elim useless, update methos specs. tmp: do not elim*)
+        if (* !Globals.pred_elim_useless *) false then
+          Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.C.view_name) cviews)
+        else cviews
+      in
+      let cviews2 =
+        if !Globals.norm_cont_analysis then
+          Norm.cont_para_analysis prog cviews1
+        else
+          cviews1
+      in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
-          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
-          let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps, pure_chps = List.split pr_chps in
-          let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
-          let crels = crels0@pure_chps in
+      let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
+      let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+      let chps, pure_chps = List.split pr_chps in
+      let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
+      let crels = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
-          (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
+      (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
 	  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
@@ -1430,8 +1431,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
 	  (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
-          (* let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
-          (* let _ = List.iter proc_one_lemma cmds; *)
+      (* let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
+      (* let _ = List.iter proc_one_lemma cmds; *)
 	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
 	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
 	  let cprog = {
@@ -1440,8 +1441,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
-              C.prog_hp_decls = chps;
-              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
+          C.prog_hp_decls = chps;
+          C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1449,36 +1450,36 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      (*C.prog_right_coercions = r2l_coers;*)} in
 	  let cprog1 = { cprog with			
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
-              C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
+          C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
-          (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
-          ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
-          ignore (C.build_hierarchy cprog1);
-	  let cprog1 = fill_base_case cprog1 in
-          let cprog2 = sat_warnings cprog1 in   
-	  
-	  let cprog2 = Solver.normalize_perm_prog cprog2 in
-	  let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
-          let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
-          then pred_prune_inference cprog2 else cprog2 in
-	  (*let cprog3 = normalize_fracs cprog3 in*)
-          let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in   
-          (*let cprog4 = (add_pre_to_cprog cprog3) in*)
-          (* Termination: Mark recursive calls and call order of function
-           * Normalize the term specification with call number and implicit
-           * phase variable *)
-	  let c = (mark_rec_and_call_order cprog3) in
-          let c = 
-            if not !Globals.dis_term_chk 
-            then Cast.add_term_nums_prog c 
-            else c 
-          in
-          let c = (add_pre_to_cprog c) in
-          (* let _ = print_endline (exlist # string_of) in *)
-          (* let _ = exlist # sort in *)
-	  (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-	  (c,prog))))
-    end)
+      (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
+       ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
+       ignore (C.build_hierarchy cprog1);
+	   let cprog1 = fill_base_case cprog1 in
+       let cprog2 = sat_warnings cprog1 in   
+	   
+	   let cprog2 = Solver.normalize_perm_prog cprog2 in
+	   let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
+       let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
+           then pred_prune_inference cprog2 else cprog2 in
+	   (*let cprog3 = normalize_fracs cprog3 in*)
+       let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in   
+       (*let cprog4 = (add_pre_to_cprog cprog3) in*)
+       (* Termination: Mark recursive calls and call order of function
+        * Normalize the term specification with call number and implicit
+        * phase variable *)
+	   let c = (mark_rec_and_call_order cprog3) in
+       let c = 
+         if not !Globals.dis_term_chk 
+         then Cast.add_term_nums_prog c 
+         else c 
+       in
+       let c = (add_pre_to_cprog c) in
+       (* let _ = print_endline (exlist # string_of) in *)
+       (* let _ = exlist # sort in *)
+	   (* let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
+	   (c,prog))))
+         end)
   else failwith "Error detected at trans_prog"
 
 and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
@@ -5770,6 +5771,25 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let res = ( (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
       | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
+      | IF.ThreadNode {IF.h_formula_thread_node = (v, p);
+                     IF.h_formula_thread_name = c;
+                     IF.h_formula_thread_resource = rsr;
+                     IF.h_formula_thread_perm = perm; (*LDK*)
+                     IF.h_formula_thread_pos = pos;
+                     IF.h_formula_thread_label = pi;} ->
+          let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+          let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
+          dataNode2, t_f, n_tl1, sv1
+          (*TO IMPLEMENT THE BELOW*)
+          (* let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in *)
+          (* let newNode = CF.ThreadNode {CF.h_formula_thread_name = CF.get_node_name dataNode2; *)
+          (*            CF.h_formula_thread_node = CF.get_node_var dataNode2; *)
+          (*            CF.h_formula_thread_resource = rsr2; *)
+          (*            CF.h_formula_thread_perm = CF.get_node_perm dataNode2; *)
+          (*            CF.h_formula_thread_pos = CF.get_node_pos dataNode2; *)
+          (*            CF.h_formula_thread_label = CF.get_node_label dataNode2;} *)
+          (* in *)
+          (* (newNode,t_f,n_tl2,sv1@sv2) *)
       | IF.HeapNode {IF.h_formula_heap_node = (v, p);
                      IF.h_formula_heap_name = c;
                      IF.h_formula_heap_deref = deref;
@@ -6551,6 +6571,17 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   let rec linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula): ((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula =
     match f with
       | IF.HeapNode2 b -> report_error b.IF.h_formula_heap2_pos "malfunction: heap node 2 still present"
+      | IF.ThreadNode {IF.h_formula_thread_node = (v, p);
+                     IF.h_formula_thread_name = c;
+                     IF.h_formula_thread_resource = rsr;
+                     IF.h_formula_thread_perm = perm; (*LDK*)
+                     IF.h_formula_thread_pos = pos;
+                     IF.h_formula_thread_label = pi;} ->
+          let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+          let res = linearize_heap used_names dataNode in
+          res
+      (*TODO: implement the above*)
+
       | IF.HeapNode b ->
             let pos = b.IF.h_formula_heap_pos in
             (*flag to check whether the heap node representing an invariant or not*)

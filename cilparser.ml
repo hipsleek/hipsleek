@@ -1123,6 +1123,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                     IF.h_formula_heap2_name = H
                     }*)
         | IF.HeapNode _ | IF.HeapNode2 _
+        | IF.ThreadNode _ 
         | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
