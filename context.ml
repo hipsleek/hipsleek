@@ -723,6 +723,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
         begin
             match rhs_node with
               | HRel _ -> []
+              | ThreadNode _ -> (*TOCHECK*)
+                  [(HEmp, f, [], Root)]
               | _      ->
                   if ((CP.mem p1 aset) (* && (subtyp) *)) then 
                     if (not !Globals.allow_field_ann) then (* not consuming the node *)

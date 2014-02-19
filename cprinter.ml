@@ -416,6 +416,12 @@ let pr_angle op f xs =
   else
     pr_args None (Some "A") op  "<" ">" "," f xs
 
+let pr_sharp_angle op f xs =
+  if !print_html then
+    pr_args None (Some "A") op  "&lt&#9839;" "&gt&#9839;" "," f xs
+  else
+    pr_args None (Some "A") op  "<#" "#>" "," f xs
+
 (** print a sequence with cut after separator*)  
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
 
@@ -1265,7 +1271,7 @@ let rec pr_h_formula h =
 	    else
 	      begin
               pr_spec_var sv; fmt_string "::";
-              pr_angle (c^perm_str) fmt_string [arg_str];
+              pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 	          pr_derv dr;
               (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
               if !print_derv then
@@ -1412,7 +1418,7 @@ and prtt_pr_h_formula h =
               (* pr_formula_label_opt pid; *)
 			  (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
 			  pr_spec_var sv; fmt_string "::";
-              pr_angle (c^perm_str) fmt_string [arg_str];
+              pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1572,7 +1578,7 @@ and prtt_pr_h_formula_inst prog h =
 			  (* pr_formula_label_opt pid; *)
 			  (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
 			  pr_spec_var sv; fmt_string "::";
-              pr_angle (c^perm_str) fmt_string [arg_str];
+              pr_sharp_angle (c^perm_str) fmt_string [arg_str];
 			  pr_derv dr;
 			  (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
 			  if origs!=[] && !print_derv then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1723,7 +1729,7 @@ and pr_h_formula_for_spec h =
     (* pr_formula_label_opt pid; *)
     (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
     pr_spec_var sv; fmt_string "::";
-    pr_angle (c^perm_str) fmt_string [arg_str];
+    pr_sharp_angle (c^perm_str) fmt_string [arg_str];
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)

@@ -10158,6 +10158,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* Debug.tinfo_hprint (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
               (* Debug.tinfo_hprint (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
     let l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = match l_node with
+      | ThreadNode {h_formula_thread_name = l_node_name;
+        h_formula_thread_perm = perm;} -> ([], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
@@ -10172,6 +10174,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
+      | ThreadNode {h_formula_thread_name = r_node_name;
+                    h_formula_thread_node = r_var;
+        h_formula_thread_perm = perm;} -> ([], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
@@ -11514,7 +11519,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) 
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing || (CF.is_thread lhs_node)) 
                   (* || (!Globals.perm=Bperm && (not !Globals.use_split_match)) *)
                 then
                   (*If not using permissions or is in normalization process --> MATCH ONLY*)
