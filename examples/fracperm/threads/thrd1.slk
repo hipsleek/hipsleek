@@ -10,5 +10,9 @@ data node{ int val;}.
 //print residue.
 
 //thread node with resource and delayed constraint
-checkentail t::thrd<# b=1 --> x::node<1> & true #> |- true.
+//checkentail t::thrd<# b=1 --> x::node<1> & true #> |- true.
+//print residue.
+
+checkentail t::thrd<# x::node<1> & true #> |- t::thrd<# x::node<1> & true #>.
 print residue.
+

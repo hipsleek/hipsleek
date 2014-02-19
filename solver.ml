@@ -196,6 +196,7 @@ let filter_formula_memo f (simp_b:bool) =
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) option)= match lhs_node,rhs_node with
+  | ThreadNode dn1, ThreadNode dn2-> (true, None) (*No branches for ThreadNode*)
   | HRel h1, HRel h2->  (true, None)    (* what decision should be taken abt unk pred? *)
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
@@ -11467,7 +11468,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
 and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
       lhs_node lhs_rest rhs_node rhs_rest holes=
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches 1" sl_error)), NoAlias)
   else
     let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
     (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
@@ -11691,7 +11692,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      (CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error)), NoAlias)
 	    else
 	      let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches 2" sl_error)), NoAlias)
 	      else
 		let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
 		let n_rhs_pure =
