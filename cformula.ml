@@ -1666,31 +1666,54 @@ and is_formula_contain_htrue (h: formula) : bool =
   | Or { formula_or_f1 = f1; 
          formula_or_f2 = f2 } -> (is_formula_contain_htrue f1) || (is_formula_contain_htrue f2)
 
+and get_node_derv (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_derv = c}) 
+  | ViewNode ({h_formula_view_derv = c}) 
+  | DataNode ({h_formula_data_derv = c}) -> c
+  | _ -> failwith ("get_node_derv: invalid argument")
+
+and get_node_pos (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_pos = c}) 
+  | ViewNode ({h_formula_view_pos = c}) 
+  | DataNode ({h_formula_data_pos = c}) -> c
+  | _ -> failwith ("get_node_pos: invalid argument")
+
 and get_node_name (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_name = c}) 
   | ViewNode ({h_formula_view_name = c}) 
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
   | _ -> failwith ("get_node_name: invalid argument")
 
 and get_node_perm (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_perm = c}) 
   | ViewNode ({h_formula_view_perm = c}) 
   | DataNode ({h_formula_data_perm = c}) -> c
-  | _ -> failwith ("get_node_perm: invalid argument. Expected ViewNode/DataNode")
+  | _ -> failwith ("get_node_perm: invalid argument. Expected ViewNode/DataNode/ThreadNode")
 
 and get_node_original (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_original = c}) 
   | ViewNode ({h_formula_view_original = c}) 
   | DataNode ({h_formula_data_original = c}) -> c
-  | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode")
+  | _ -> failwith ("get_node_original: invalid argument. Expected ViewNode/DataNode/ThreadNode")
+
+and get_node_origins (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_origins = c}) 
+  | ViewNode ({h_formula_view_origins = c}) 
+  | DataNode ({h_formula_data_origins = c}) -> c
+  | _ -> failwith ("get_node_origins: invalid argument. Expected ViewNode/DataNode/ThreadNode")
 
 and set_node_perm (h : h_formula) p= match h with
+  | ThreadNode b -> ThreadNode {b with h_formula_thread_perm = p} 
   | ViewNode b -> ViewNode {b with h_formula_view_perm = p}
   | DataNode b -> DataNode {b with h_formula_data_perm = p}
   | _ -> failwith ("set_node_perm: invalid argument")
   
 and get_node_args (h : h_formula) = match h with
-  | ViewNode ({h_formula_view_arguments = c}) 
+  | ViewNode ({h_formula_view_arguments = c})
   | DataNode ({h_formula_data_arguments = c}) -> c
-  | _ -> failwith ("get_node_args: invalid argument")
+  | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
+  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
 
 and get_node_annot_args_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_annot_arg = c}) -> List.map fst c
@@ -1716,16 +1739,19 @@ and get_node_args_orig_w_pos (h : h_formula) = match h with
   | _ -> failwith ("get_node_args: invalid argument")
   
 and get_node_label (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_label = c}) 
   | ViewNode ({h_formula_view_label = c}) 
   | DataNode ({h_formula_data_label = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument")
   
 and get_node_var (h : h_formula) = match h with
+  | ThreadNode ({h_formula_thread_node = c}) 
   | ViewNode ({h_formula_view_node = c}) 
   | DataNode ({h_formula_data_node = c}) -> c
   | _ -> failwith ("get_node_var: invalid argument")
 
 and set_node_var newc (h : h_formula) = match h with
+  | ThreadNode w -> ThreadNode {w with h_formula_thread_node = newc;}
   | ViewNode w -> ViewNode {w with h_formula_view_node = newc;}
   | DataNode w -> DataNode {w with h_formula_data_node = newc;}
   | _ -> failwith ("set_node_var: invalid argument")

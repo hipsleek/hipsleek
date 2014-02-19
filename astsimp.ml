@@ -5805,20 +5805,22 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_thread_label = pi;} ->
           let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
           let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
-          dataNode2, t_f, n_tl1, sv1
-          (* let new_dl = trans_pure_formula dl tlist in *)
-          (* let new_dl = Cpure.arith_simplify 5 new_dl in *)
-          (* let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in *)
-          (*TO IMPLEMENT THE BELOW*)
-          (* let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in *)
-          (* let newNode = CF.ThreadNode {CF.h_formula_thread_name = CF.get_node_name dataNode2; *)
-          (*            CF.h_formula_thread_node = CF.get_node_var dataNode2; *)
-          (*            CF.h_formula_thread_resource = rsr2; *)
-          (*            CF.h_formula_thread_perm = CF.get_node_perm dataNode2; *)
-          (*            CF.h_formula_thread_pos = CF.get_node_pos dataNode2; *)
-          (*            CF.h_formula_thread_label = CF.get_node_label dataNode2;} *)
-          (* in *)
-          (* (newNode,t_f,n_tl2,sv1@sv2) *)
+          let new_dl = trans_pure_formula dl tl in
+          let new_dl = Cpure.arith_simplify 5 new_dl in
+          let sv2, rsr2, n_tl2 = linearize_formula prog rsr tlist in
+          let newNode = CF.ThreadNode {
+              CF.h_formula_thread_name = CF.get_node_name dataNode2;
+              CF.h_formula_thread_node = CF.get_node_var dataNode2;
+              CF.h_formula_thread_resource = rsr2;
+              CF.h_formula_thread_delayed = new_dl;
+              CF.h_formula_thread_perm = CF.get_node_perm dataNode2;
+              CF.h_formula_thread_derv = CF.get_node_derv dataNode2;
+              CF.h_formula_thread_origins = CF.get_node_origins dataNode2;
+              CF.h_formula_thread_original = CF.get_node_original dataNode2;
+              CF.h_formula_thread_pos = CF.get_node_pos dataNode2;
+              CF.h_formula_thread_label = CF.get_node_label dataNode2;}
+          in
+          (newNode,t_f,n_tl2,sv1@sv2)
       | IF.HeapNode {IF.h_formula_heap_node = (v, p);
                      IF.h_formula_heap_name = c;
                      IF.h_formula_heap_deref = deref;
@@ -6482,7 +6484,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
-        ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula = 
+        ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
+
     match hargs with
       | ((e,rel_flag), label) :: rest ->
             let new_used_names, e_hvars, e_evars, e_link = match e with
@@ -6603,14 +6606,25 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.ThreadNode {IF.h_formula_thread_node = (v, p);
                      IF.h_formula_thread_name = c;
                      IF.h_formula_thread_resource = rsr;
+                     IF.h_formula_thread_delayed = dl;
                      IF.h_formula_thread_perm = perm; (*LDK*)
                      IF.h_formula_thread_pos = pos;
                      IF.h_formula_thread_label = pi;} ->
           let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
-          let res = linearize_heap used_names dataNode in
-          res
-      (*LDK:TODO: implement the above*)
-
+          let new_used_names1, evars1, datanode2, pf = linearize_heap used_names dataNode in
+          let rsr2, new_used_names2, evars2 = case_normalize_renamed_formula prog avail_vars posib_expl rsr ann_vars in
+          let node3 = match datanode2 with
+            | IF.HeapNode { IF.h_formula_heap_node = c1; IF.h_formula_heap_name = id1;} ->
+                IF.ThreadNode {IF.h_formula_thread_node = c1;
+                     IF.h_formula_thread_name = id1;
+                     IF.h_formula_thread_resource = rsr2;
+                     IF.h_formula_thread_delayed = dl;
+                     IF.h_formula_thread_perm = perm; (*LDK*)
+                     IF.h_formula_thread_pos = pos;
+                     IF.h_formula_thread_label = pi;}
+            | _ -> Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expecting a ThreadNode"} 
+          in
+          (new_used_names1@new_used_names2,evars1@evars2,node3,pf)
       | IF.HeapNode b ->
             let pos = b.IF.h_formula_heap_pos in
             (*flag to check whether the heap node representing an invariant or not*)

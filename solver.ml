@@ -651,7 +651,7 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	    let m2 = helper h2 in
 	    let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	    {mem_formula_mset = m;}
-      | ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*MUSTDO*)
+      | ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*LDK:MUSTDO*)
       | DataNode ({h_formula_data_node = p;
 	h_formula_data_perm = perm;
 	h_formula_data_pos = pos}) ->
@@ -755,7 +755,7 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	      let m1 = helper_simpl h1  in
 	      let m2 = helper_simpl h2 in
 	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
-	| ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*MUSTDO*)
+	| ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*LDK:MUSTDO*)
 	| DataNode ({h_formula_data_node = p;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* if List.mem p evars || perm<> None then *)
@@ -1611,7 +1611,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                       in
                       MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv () f) no_pos)
               )
-      | ThreadNode _  -> MCP.mkMTrue no_pos (*MUSTDO*)
+      | ThreadNode _  -> MCP.mkMTrue no_pos (*LDK:MUSTDO*)
       | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
 	h_formula_view_arguments = vs;
@@ -2227,7 +2227,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula)  xp_no: (MCP.mix_f
 
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula *  CP.spec_var list) = 
   let rec helper h0 : (MCP.mix_formula *  CP.spec_var list) = match h0 with
-    | ThreadNode _  -> (mkMTrue no_pos, []) (*MUSTDO*)
+    | ThreadNode _  -> (mkMTrue no_pos, []) (*LDK:MUSTDO*)
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_perm = perm;
       h_formula_data_label = lbl;

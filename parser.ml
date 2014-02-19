@@ -1464,7 +1464,7 @@ simple_heap_constr:
   [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; simple2; frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
      (*For threads as resource*)
      let (c, hid, deref) = get_heap_id_info c hid in
-     F.mkThreadNode c hid rsr dl frac ofl (get_pos_camlp4 _loc 2)
+     F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in

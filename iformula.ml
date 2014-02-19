@@ -1705,8 +1705,16 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         let perm = b.h_formula_thread_perm in
         let na_perm, ls_perm = float_out_iperm () perm b.h_formula_thread_pos in
         let rsr1 = float_out_exps_from_heap lbl_getter annot_getter b.h_formula_thread_resource in (*TOCHECK*)
+        let qvars, rsr2 = split_quantifiers rsr1 in
+        let rl = if (List.length qvars) == 0 then
+              ls_perm
+            else
+              let rl = List.map (fun v -> (v,P.mkTrue b.h_formula_thread_pos)) qvars in
+              rl@ls_perm
+        in
         (*TOCHECK: need to float our _delayed??? *)
-        (ThreadNode ({b with h_formula_thread_resource = rsr1; h_formula_thread_perm = na_perm}),ls_perm )
+        let new_node = ThreadNode ({b with h_formula_thread_resource = rsr2; h_formula_thread_perm = na_perm}) in
+        (new_node,rl)
     | HRel (r, args, l) ->
         	(* let nargs = List.map Ipure.float_out_exp_min_max args in *)
 			(* let nargse = List.map fst nargs in *)
