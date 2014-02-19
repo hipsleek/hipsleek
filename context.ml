@@ -1872,6 +1872,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
 	  h_formula_phase_pos = pos})  
     | DataNode _ 
     | ViewNode _
+    | ThreadNode _
     | HEmp
     | HRel _
     | HTrue | HFalse | StarMinus _ -> frame

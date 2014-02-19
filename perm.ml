@@ -16,6 +16,11 @@ type cperm_var = Cpure.spec_var (*permission variable in cformula*)
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:Cpure.exp) -> "cpure printer has not been initialized")
 
+(* ================================= *)
+(* UTILITIES for Permissions*)
+let rev_trans_spec_var v = match v with Cpure.SpecVar (t,v,p)-> (v,p) 
+(* ================================ *)
+
 let string_of_perm_type t =
   match t with
     | Frac -> "Frac"
@@ -115,6 +120,7 @@ module type PERM =
     val subst_var_perm : (cperm_var * cperm_var) -> cperm -> cperm
     val fresh_cperm_var : cperm_var -> cperm_var
     val mkEq_cperm : cperm_var -> cperm_var -> loc -> Cpure.b_formula
+    val rev_trans_perm : cperm -> iperm   (*revert from cperm to iperm*)
    end;;
 
 (*==============================*)
@@ -276,6 +282,18 @@ struct
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+  (*revert from cperm to iperm*)
+  let rev_trans_perm perm =
+    (match perm with
+      | Some e ->
+          (match e with
+            | (Cpure.Bptriple ((c,t,a),p)) ->
+                let nc = Ipure.Var (rev_trans_spec_var c, p) in
+                let nt = Ipure.Var (rev_trans_spec_var t, p) in
+                let na = Ipure.Var (rev_trans_spec_var a, p) in
+                Some (Ipure.Bptriple ((nc,nt,na),p))
+            | _ -> failwith ("rev_trans_perm: expecting Bptriple"))
+      | None -> None)
 end;;
 
 
@@ -346,6 +364,13 @@ struct
   let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
 end;;
 
 (*==============================*)
@@ -456,6 +481,13 @@ struct
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
 end;;
 
 (*==============================*)
@@ -560,12 +592,27 @@ struct
   let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
 end;;
 
 
 (*==============================*)
 (*===dispacher for permissions==*)
 (*==============================*)
+let rev_trans_perm cperm = 
+  match !perm with
+    | Count -> CPERM.rev_trans_perm cperm
+	| Dperm -> DPERM.rev_trans_perm cperm
+	| Bperm -> BPERM.rev_trans_perm cperm
+    | Frac -> FPERM.rev_trans_perm cperm
+    | NoPerm -> None
+
 let cperm_typ () = 
   match !perm with
     | Count -> CPERM.cperm_typ

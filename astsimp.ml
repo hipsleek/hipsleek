@@ -2163,6 +2163,11 @@ and find_m_prop_heap params eq_f h =
 and find_m_prop_heap_x params eq_f h = 
   let rec helper h =
     match h with
+      | CF.ThreadNode h ->
+            let l = eq_f h.CF.h_formula_thread_node in
+            Debug.tinfo_hprint (add_str "thread:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+            let res = List.map (fun v -> C.mk_mater_prop v true []) l in
+            res (*TOCHECK: currently ignore resource*)
       | CF.DataNode h ->
             let l = eq_f h.CF.h_formula_data_node in
             Debug.tinfo_hprint (add_str "data:l" (Cprinter.string_of_spec_var_list)) l no_pos;
@@ -2245,6 +2250,11 @@ and find_node_vars_x eq_f h =
           Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
           if l==[] then ([],[])
           else ([],[h.CF.h_formula_view_name])
+    | CF.ThreadNode h ->
+          let l = eq_f h.CF.h_formula_thread_node in
+          Debug.tinfo_hprint (add_str "thread:l" (Cprinter.string_of_spec_var_list)) l no_pos;
+          if l==[] then ([],[])
+          else ([],[h.CF.h_formula_thread_name])
     | CF.HRel (hp, e, _) ->        
           let l = List.fold_left (fun lst exp ->  
               match exp with
@@ -3177,6 +3187,21 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                                   Err.error_loc = pos;
                                   Err.error_text = v ^ " must point to only one view";
                               }
+              | CF.ThreadNode
+                      {
+                          CF.h_formula_thread_node = p;
+                          CF.h_formula_thread_name = c;
+                          CF.h_formula_thread_perm = _; (*LDK*)
+                          CF.h_formula_thread_pos = _
+                      } ->
+                    if (CP.name_of_spec_var p) = v
+                    then c
+                      (*Err.report_error
+                        {
+                        Err.error_loc = pos;
+                        Err.error_text = v ^ " must point to a view";
+                        }*)
+                    else ""
               | CF.DataNode
                       {
                           CF.h_formula_data_node = p;
@@ -8811,22 +8836,35 @@ let rec rev_trans_mix f = rev_trans_pure(MCP.pure_of_mix f)
 let rec rev_trans_heap f = match f with 
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
-  | CF.HEmp   -> IF.HEmp  
+  | CF.HEmp   -> IF.HEmp
+  | CF.ThreadNode b ->
+      IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
+                    b.CF.h_formula_thread_name
+                    (rev_trans_formula b.CF.h_formula_thread_resource)
+                    (rev_trans_pure b.CF.h_formula_thread_delayed)
+                    (Perm.rev_trans_perm b.CF.h_formula_thread_perm)
+                    None
+                    b.CF.h_formula_thread_pos
   | CF.DataNode b ->
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
                     b.CF.h_formula_data_name
                     0
                     b.CF.h_formula_data_derv 
                     (IP.ConstAnn(Mutable))
-                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
-                    None b.CF.h_formula_data_pos         
+                    true false false
+                    (Perm.rev_trans_perm b.CF.h_formula_data_perm)
+                    (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
+                    None b.CF.h_formula_data_pos
+
   | CF.ViewNode b ->
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
                     b.CF.h_formula_view_name
                     0
                     b.CF.h_formula_view_derv 
                     (IP.ConstAnn(Mutable))
-                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
+                    true false false
+                    (Perm.rev_trans_perm b.CF.h_formula_view_perm)
+                    (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
                     None b.CF.h_formula_view_pos
   | CF.Hole _ -> failwith "holes should not have been here"
   | CF.HRel  (sv,el,p)  -> IF.HRel (sv_n sv, List.map rev_trans_exp el, p)
@@ -8835,7 +8873,7 @@ let rec rev_trans_heap f = match f with
   | CF.Star  b  -> IF.mkStar  (rev_trans_heap b.CF.h_formula_star_h1) (rev_trans_heap b.CF.h_formula_star_h2) b.CF.h_formula_star_pos
   | CF.StarMinus _| CF.ConjStar _|CF.ConjConj _ -> report_error no_pos "AS.rev_trans_heap: not handle yet"
  
-let rec rev_trans_formula f = match f with 
+and rev_trans_formula f = match f with 
 	| CF.Base b-> IF.Base  { 
 					 IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
                      IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;

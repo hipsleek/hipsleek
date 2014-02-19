@@ -651,6 +651,7 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	    let m2 = helper h2 in
 	    let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	    {mem_formula_mset = m;}
+      | ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*MUSTDO*)
       | DataNode ({h_formula_data_node = p;
 	h_formula_data_perm = perm;
 	h_formula_data_pos = pos}) ->
@@ -754,6 +755,7 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	      let m1 = helper_simpl h1  in
 	      let m2 = helper_simpl h2 in
 	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
+	| ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;} (*MUSTDO*)
 	| DataNode ({h_formula_data_node = p;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* if List.mem p evars || perm<> None then *)
@@ -1609,6 +1611,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                       in
                       MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv () f) no_pos)
               )
+      | ThreadNode _  -> MCP.mkMTrue no_pos (*MUSTDO*)
       | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
 	h_formula_view_arguments = vs;
@@ -2187,6 +2190,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 
 and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
   let rec helper h0 = match h0 with
+    | ThreadNode ({ h_formula_thread_node = p;}) ->[p] (*TOCHECK*)
     | DataNode ({ h_formula_data_node = p;}) ->[p]
     | ViewNode ({ h_formula_view_node = p;
       h_formula_view_name = c;
@@ -2223,6 +2227,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula)  xp_no: (MCP.mix_f
 
 and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula *  CP.spec_var list) = 
   let rec helper h0 : (MCP.mix_formula *  CP.spec_var list) = match h0 with
+    | ThreadNode _  -> (mkMTrue no_pos, []) (*MUSTDO*)
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_perm = perm;
       h_formula_data_label = lbl;
@@ -2398,6 +2403,7 @@ and xpure_consumed_pre (prog : prog_decl) (f0 : formula) : CP.formula = match f0
         CP.mkExists qvars (xpure_consumed_pre_heap prog qh) None no_pos
 
 and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
+  | ThreadNode t -> CP.mkTrue t.h_formula_thread_pos (*TOCHECK*)
   | DataNode b -> CP.mkTrue b.h_formula_data_pos
   | ViewNode ({ h_formula_view_node = p;
     h_formula_view_name = c;
@@ -2615,7 +2621,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
     | HRel _
     | HTrue
     | HFalse 
-    | HEmp -> (hp, old_mem, false) 
+    | HEmp -> (hp, old_mem, false)
+    | ThreadNode _ -> (hp, old_mem, false)  (*TOCHECK*)
     | DataNode d -> 
 	  (try 
 	    let bd = List.find (fun c-> (String.compare c.barrier_name d.h_formula_data_name) = 0) prog.prog_barrier_decls in
@@ -2857,6 +2864,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | HEmp -> [(HEmp,HEmp)]
     | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
     | HRel _
+    | ThreadNode _
     | DataNode _ 
     | ViewNode _ -> [(h,HEmp)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
@@ -3063,6 +3071,7 @@ and find_pred_roots_heap h0 =
         tmp
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
+    | ThreadNode _
     | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ -> []
 
 (* unfold then unsat *)
@@ -6500,6 +6509,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
       | Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
 	    List.append (collect_data_view h1) (collect_data_view h2) 
       | DataNode _ | ViewNode _ -> [f]
+      | ThreadNode _ -> [f]
       | Hole _ | HTrue | HFalse | HEmp | HRel _ -> []
     in (* End of function collect_data_view *)
 
@@ -9840,6 +9850,7 @@ and do_unfold_for_classic_reasoning_x prog (f: CF.formula) (pos : loc) =
         CP.remove_dups_svl (r1 @ r2)
     | CF.ViewNode { CF.h_formula_view_node = c } -> [c]
     | CF.DataNode _ -> []
+    | CF.ThreadNode _ -> [] (*TOCHECK*)
     | CF.Hole _ -> []
     | CF.HRel _ -> []
     | CF.HTrue -> []

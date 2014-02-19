@@ -166,6 +166,11 @@ let rec fixcalc_of_h_formula f = match f with
   | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 
   | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_or ^ fixcalc_of_h_formula h2 ^ ")"
+  | ThreadNode {h_formula_thread_node = sv; h_formula_thread_name = c;} -> 
+    (*TOCHECK: currently ignore delayed and resource*)
+    if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
+    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
+                   (string_of_elems [] fixcalc_of_spec_var ",") ^ ")"
   | DataNode {h_formula_data_node = sv; h_formula_data_name = c; 
               h_formula_data_arguments = svs} -> 
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"

@@ -477,6 +477,7 @@ and get_data_view_hrel_vars_h_formula hf=
       | CF.DataNode hd -> [hd.CF.h_formula_data_node]
       | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
       | CF.HRel (hp,_,_) -> [hp]
+      | CF.ThreadNode ht -> [ht.CF.h_formula_thread_node] (*TOCHECK*)
       | CF.Hole _
       | CF.HTrue
       | CF.HFalse
@@ -542,6 +543,7 @@ and drop_get_hrel_h_formula hf=
           hrels1@hrels2)
       | CF.DataNode hd -> (hf0,[])
       | CF.ViewNode hv -> (hf0,[])
+      | CF.ThreadNode ht -> (hf0,[])
       | CF.HRel (sv, eargs, _) -> (CF.HEmp,
                                    [(sv,List.concat (List.map CP.afv eargs))])
       | CF.Hole _
@@ -604,6 +606,8 @@ and drop_data_hrel_except_hf dn_names hpargs hf=
       | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node dn_names then
             hf0 else CF.HEmp
       | CF.ViewNode hv -> hf0
+      | CF.ThreadNode ht -> if CP.mem_svl ht.CF.h_formula_thread_node dn_names then
+            hf0 else CF.HEmp
       | CF.HRel (_, eargs, _) ->
           let args1 = List.concat (List.map CP.afv eargs) in
           if CP.diff_svl args1 hpargs = [] then hf0 else CF.HEmp
@@ -759,6 +763,7 @@ and drop_hrel_match_args_hf hf0 args=
                    CF.h_formula_phase_pos = pos})
       | CF.DataNode hd -> (hf)
       | CF.ViewNode hv -> (hf)
+      | CF.ThreadNode ht -> (hf)
       | CF.HRel (_,eargs1,_) ->
           let args1 = List.fold_left List.append [] (List.map CP.afv eargs1) in
           if eq_spec_var_order_list args args1 then (CF.HEmp)

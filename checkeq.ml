@@ -255,6 +255,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	)
 	| CF.DataNode n -> match_equiv_node hvars n hf2 mtl
 	| CF.ViewNode n ->  match_equiv_view_node hvars n hf2 mtl
+	| CF.ThreadNode n -> (false,[]) (*TODO: compare two thread nodes*)
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
@@ -301,6 +302,7 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.HFalse -> true
     | CF.DataNode _ 
     | CF.ViewNode _ 
+    | CF.ThreadNode _ 
     | CF.Hole _ 
     | CF.HRel _ 
     | CF.HTrue  
@@ -326,6 +328,7 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
       let (res, mt2) = check_node_equiv hvars n n2 mt in 
       (res, [mt2])
     )
+    | CF.ThreadNode _ (*TOCHECK*)
     | CF.ViewNode _
     | CF.Hole _
     | CF.HRel _ 
@@ -420,6 +423,7 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
       else if(ph1) then (true, mtl1) 
       else if(ph2) then (true, mtl2)
       else (false, [mt]) 
+    | CF.ThreadNode n2 -> (false,[mt]) 
     | CF.DataNode n2 -> (false,[mt]) 
     | CF.ViewNode n2 -> let (res, mt2) = check_view_node_equiv hvars n n2 mt in (res, [mt2])
     | CF.Hole _
@@ -482,6 +486,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * lo
       else (false, [mt]) 
     | CF.DataNode _ 
     | CF.ViewNode _  
+    | CF.ThreadNode _ 
     | CF.Hole _ -> (false,[mt]) 
     | CF.HRel r2  ->  (
       let _ = Debug.ninfo_zprint (lazy  ("Find 2nd relation  " )) no_pos in
@@ -568,6 +573,7 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
       if(not ph1) then  match_equiv_emp h2 else true
     | CF.DataNode _ 
     | CF.ViewNode _
+    | CF.ThreadNode _
     | CF.Hole _
     | CF.HRel _ 
     | CF.HTrue 
@@ -1217,6 +1223,7 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	    | _ ->   (false, modify_mtl mtl CF.HTrue))
 	| CF.HFalse ->  report_error no_pos "not a case"
 	| CF.HEmp   ->  (true, modify_mtl mtl CF.HEmp) (*TODO: plz check*)
+	| CF.ThreadNode _ (*TOCHECK*)
 	| CF.ConjConj _ | CF.StarMinus _ | CF.ConjStar _ -> Error.report_no_pattern()
     )
 

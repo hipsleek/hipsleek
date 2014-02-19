@@ -4076,7 +4076,7 @@ let rec html_of_h_formula h = match h with
       h_formula_thread_label = pid;}) ->
 			let html_delayed = html_of_pure_formula dl in
             let html_rsr = html_of_formula rsr in
-			(html_of_spec_var sv) ^ html_mapsto ^ c ^  html_left_angle_bracket ^ html_rsr ^ html_arrow ^ html_rsr ^ html_right_angle_bracket 
+			(html_of_spec_var sv) ^ html_mapsto ^ c ^  html_left_angle_bracket ^ html_delayed ^ html_arrow ^ html_rsr ^ html_right_angle_bracket 
 	| ViewNode ({h_formula_view_node = sv; 
 				h_formula_view_name = c; 
 				h_formula_view_derv = dr;
