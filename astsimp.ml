@@ -6609,7 +6609,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
           let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
           let res = linearize_heap used_names dataNode in
           res
-      (*TODO: implement the above*)
+      (*LDK:TODO: implement the above*)
 
       | IF.HeapNode b ->
             let pos = b.IF.h_formula_heap_pos in

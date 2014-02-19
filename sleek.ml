@@ -257,7 +257,7 @@ let main () =
   let _ = Globals.is_sleek_running := true in
   let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_include_decls =[];
-		            I.prog_data_decls = [iobj_def];
+		            I.prog_data_decls = [iobj_def;ithrd_def];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];
                 I.prog_enum_decls = [];

@@ -1234,6 +1234,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_thread_pos = pos } ->
       (* Follow IF.DataNode. May need TOCHECK *)
       let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+      let _ = print_endline ("dataNode = " ^ (Iprinter.string_of_h_formula dataNode)) in
       let n_tl = gather_type_info_heap prog dataNode tlist in
       let n_tl2 = gather_type_info_formula prog rsr n_tl false in
       n_tl2

@@ -255,7 +255,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	)
 	| CF.DataNode n -> match_equiv_node hvars n hf2 mtl
 	| CF.ViewNode n ->  match_equiv_view_node hvars n hf2 mtl
-	| CF.ThreadNode n -> (false,[]) (*TODO: compare two thread nodes*)
+	| CF.ThreadNode n -> (false,[]) (*LDK:TODO: compare two thread nodes*)
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
