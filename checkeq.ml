@@ -38,6 +38,11 @@ let string_of_map_table_list (mtl: map_table list): string =
   in 
   "[" ^ (helper mtl) ^ "]"
 
+let remove_dupl_mt (mtl: map_table) : map_table =
+  let is_dupl (x1,x2) (y1,y2) =
+    (eq_spec_var x1 y1) & (eq_spec_var x2 y2)
+  in Gen.BList.remove_dups_eq is_dupl mtl
+
 let rec simplify_f f hvars rvars1 = 
   let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in
   let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
@@ -255,7 +260,14 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	)
 	| CF.DataNode n -> match_equiv_node hvars n hf2 mtl
 	| CF.ViewNode n ->  match_equiv_view_node hvars n hf2 mtl
-	| CF.ThreadNode n -> (false,[]) (*LDK:TODO: compare two thread nodes*)
+	| CF.ThreadNode n1 ->
+        (match hf2 with
+          | CF.ThreadNode n2 ->
+              let eq_rsr,mt_rsr = checkeq_formulas hvars n1.CF.h_formula_thread_resource n2.CF.h_formula_thread_resource in
+              let eq_dl,mt_dl = checkeq_p_formula hvars n1.CF.h_formula_thread_delayed n2.CF.h_formula_thread_delayed mt_rsr in
+              if (eq_rsr && eq_dl) then (true,mt_dl)
+              else (false,[])
+          | _ -> (false,[]))
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
@@ -630,8 +642,8 @@ and checkeq_p_formula  hvars pf1 pf2 mtl =
   let pr1 = Cprinter.string_of_pure_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
-  Debug.no_2 "checkeq_p_formula" pr1 pr1 (pr_pair pr2 pr3)
-    (fun _ _ ->  checkeq_p_formula_x hvars pf1 pf2 mtl) pf1 pf2
+  Debug.no_3 "checkeq_p_formula" pr1 pr1 pr3 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  checkeq_p_formula_x hvars pf1 pf2 mtl) pf1 pf2 mtl
 
 and match_equiv_bform  hvars b1 pf2 mtl = 
 	let pr1 = Cprinter.string_of_pure_formula in
@@ -674,8 +686,9 @@ and check_equiv_bform  hvars b1 b2 mtl =
   let pr1 = Cprinter.string_of_b_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
-  Debug.no_2 "check_equiv_bform" pr1 pr1 (pr_pair pr2 pr3)
-    (fun _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2
+  let pr4 = string_of_map_table in
+  Debug.no_3 "check_equiv_bform" pr1 pr1 pr4 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2 mtl
 
 and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(mt: map_table): (bool * (map_table list)) =
   let rec check_eq_order_spec_var_list svl1 svl2 mt0=

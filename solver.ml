@@ -10327,7 +10327,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
                 else (rem_l_node,rem_r_node,l_args,r_args,l_param_ann,r_param_ann)
 	          (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
-	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
+	  | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
       in
       match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
 	    | DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -10342,7 +10342,42 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   begin
                     List.map (fun _ -> LO.unlabelled) l_args 
                   end
-            in     
+            in
+            (****************************)
+            (*Handle Threads as Resource:
+
+                      checkeq(l_dl,r_dl)       checkeq(l_rsr,r_rsr)
+              --------------------------------------------------------[MATCH]
+                         t1::thread<l_rsr> |- t1::thread<r_rsr>
+
+
+                      checkeq(l_dl,r_dl)         !checkeq(l_rsr,r_rsr)
+                                  l_rsr |- rs32 * rsr3
+              --------------------------------------------------------[SPLIT]
+              t1::thread<l_rsr> |- t1::thread<r_rsr> * t1::thread<rsr3>
+
+
+                       !checkeq(l_dl,r_dl) or l_rsr |/- rs32 * rsr3
+              --------------------------------------------------------[FAIL]
+                          t1::thread<l_rsr> |/- t1::thread<r_rsr>
+
+            *)
+            let is_thread,eq_dl,eq_rsr,mt =
+            match (l_node,r_node) with
+              | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
+                            CF.h_formula_thread_resource = l_rsr;} as l_t),
+                ThreadNode ({CF.h_formula_thread_delayed = r_dl;
+                            CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+                  (*Whether the delayed constraints are syntatically eq*)
+                  let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
+                  (*Whether the resources are syntatically eq*)
+                  let (eq_rsr,mt_rsr) = Checkeq.checkeq_formulas [] l_rsr r_rsr in
+                  let mt = List.concat (mt_dl@mt_rsr) in
+                  true,eq_dl,eq_rsr,mt
+              | _ -> false,false,false,[]
+            in
+            (****************************)
+
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
             (*renamed and instantiate perm var*)
             let evars = estate.es_evars in
