@@ -10497,12 +10497,26 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     List.map (fun _ -> LO.unlabelled) l_args 
                   end
             in
+
+            (*** BEGIN threads as resource *****)
             let label_list, l_args, r_args, (is_thread, is_matched, rs_matched, remained_rsr) = do_match_thread_nodes l_node r_node l_args r_args label_list estate pos in
             if (is_thread && (not is_matched)) then
-              match rs_matched with
+              match rs_matched with (*EXIT points of do_match*)
                 | None -> report_error no_pos "[solver.ml] do_match: expecting some result"
                 | Some rs -> rs
             else
+            let remained_thread_node = 
+              if(is_thread && is_matched) then
+                (match remained_rsr with
+                  | None -> CF.HTrue
+                  | Some f ->
+                      (match l_node with
+                        | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}
+                        | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
+                      ))
+              else CF.HTrue
+            in
+            (*** END threads as resource *****)
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
             (*renamed and instantiate perm var*)
             let evars = estate.es_evars in
@@ -10630,6 +10644,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          let l_h = match rem_l_node with
 		        | HRel _ | HTrue | HFalse | HEmp-> l_h
 		        | _ -> mkStarH rem_l_node l_h pos in
+              (*Add remained resource*)
+              let l_h = if (is_thread && is_matched) then
+                    mkStarH remained_thread_node l_h pos
+                  else l_h in
               (* Debug.tinfo_hprint (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
               Debug.tinfo_hprint (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
