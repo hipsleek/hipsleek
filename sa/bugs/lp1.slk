@@ -1,0 +1,19 @@
+data node{
+     int val;
+     node next;
+}.
+
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>.
+
+
+pred zipM<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipM<n1> & n=n1+1 
+ inv n>=0.
+
+
+lemma_safe self::zipM<n> * y::zipM<m> & m=n -> self::zip<y>.
+print residue.

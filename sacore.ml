@@ -3357,7 +3357,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     (*construct lemma_safe*)
     let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE IA.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
-    let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+    let _ = Debug.info_hprint (add_str "\nRight. ilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let rel_fixs,lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Solver.xpure_heap in
     (* let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in *)
     let valid, n_rhs = match lc_opt with
@@ -3444,14 +3444,14 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
     | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
   in
   (*transform to view*)
-  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name (cur_hpdef::cur_split_hpdefs) in
   (*trans_hp_view_formula*)
   (* let f12 = Sautil.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
   (*lemma need self for root*)
   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
   let f12 = CF.formula_of_heap vnode no_pos in
-  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] [] rhs_f in
+  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl (cur_hpdef::cur_split_hpdefs) [] rhs_f in
   (*need self for lemma*)
   let sst = [(r, self_sv)] in
   let rev_sst = [(self_sv,r)] in (*to revert the result*)
@@ -3466,10 +3466,15 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
   (*prove*)
   (*construct lemma_infer*)
-  let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps) else [] in
-  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE IA.Left
+  let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps)
+  else ((List.map CP.name_of_spec_var infer_rel_svl))
+  in
+  let _ = Debug.info_hprint (add_str  "infer_vars " (pr_list pr_id)) infer_vars no_pos in
+  let _ = Debug.info_hprint (add_str  "need_find_new_split " (string_of_bool)) need_find_new_split no_pos in
+  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE
+    IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
-  let _ = Debug.ninfo_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
+  let _ = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
   let lc_opt = Lemma.sa_infer_lemmas iprog cprog [ilemma_inf] in
   let r =
     match lc_opt with
@@ -3568,7 +3573,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
             let exted_pred = CF.mk_hp_rel_def1 n_de_cat n_lhs [(n_rhs, None)] in
             (n_hp,n_lhs, [ext_sv], exted_pred)
   in
-  let pure_ext hpdefs=
+  let pure_ext_x hpdefs=
     (*from the failure ==> kind of extension*)
     let ext_kind = analyse_error () in
     let n_setting=
@@ -3603,6 +3608,12 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
     in
     (*new rhs, new rels need to be inferred*)
     n_setting
+  in
+  let pure_ext hpdefs=
+    let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+    let pr2 = pr_quad !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl pr1 in
+    Debug.no_1 "SAC.pure_ext" pr1 (pr_option pr2)
+        (fun _ -> pure_ext_x hpdefs) hpdefs
   in
   let rec prove_sem_ext infer_hps infer_rel_svl rhs_f cur_hpdef cur_split_hpdefs old_ext_num=
     let i,n_split_defs = prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args

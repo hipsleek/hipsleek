@@ -233,6 +233,7 @@ let verify_one_repo lems cprog =
   res
 
 
+
 (* update the lemma store with the lemmas in repo and check for their validity *)
 let update_store_with_repo_x repo iprog cprog =
   let lems = process_one_repo repo iprog cprog in
@@ -482,6 +483,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         [] [] [] true true in
                       ()
                     in
+                    let _ = print_endline ("\nxxxxxx " ^ ((pr_list_ln Cprinter.string_of_list_context) lcs)) in
                     (*pure fixpoint*)
                     let rr = if rel_ids = [] || oblgs = [] then [] else
                       let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
@@ -494,12 +496,12 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                               let _,bare = CF.split_quantifiers coer.C.coercion_body in
                               let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
                                 CF.get_pre_post_vars [] xpure_fnc (CF.struc_formula_of_formula bare no_pos) cprog in
-                              let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
+                              let _ = Debug.info_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                               let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
                               let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                               let pre_vnodes = CF.get_views coer.C.coercion_body in
                               let ls_rel_args = CP.get_list_rel_args (CF.get_pure bare) in
-                              let _ = Debug.ninfo_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
+                              let _ = Debug.info_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
                               (* let _ = Debug.info_hprint (add_str "pre_rel_ids" !CP.print_svl) pre_rel_ids no_pos in *)
                               let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
                               else r
@@ -511,9 +513,9 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                       in
                       let r = Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
-                      (* let _ = Debug.info_hprint (add_str "fixpoint" *)
-                      (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
-                      (* let _ = print_endline "" in *)
+                      let _ = Debug.info_hprint (add_str "fixpoint"
+                          (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+                      let _ = print_endline "" in
                       r
                     in
                     (rr)
