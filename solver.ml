@@ -10135,6 +10135,160 @@ and generate_rels_formulas prog rels pos=
    in
    helper (CP.mkTrue pos) (CP.mkTrue pos) rels
 
+(* Compute syntactic matching number of two resources eq_rsr: l_rsr |- r_rsr
+   0 : completely matched -> MATCH
+   1 : possibly matched with some substitution -> (try)MATCH
+   2 : unmatched, lhs>rhs -> SPLIT
+   3 : unmatched, lhs>rhs or lhs!=rhs -> FAIL
+   -1 : not care
+
+   l_idents: root vars to guide the syntatic comparision
+   RETURN (matching number, mapping table , remained_rsr)
+      - Matching number (above)
+      - mapping table: [(from,to)] -> possible substitutions
+        so that the delayed/resource are equal.
+      - remained_rsr: resource left after split
+*)
+and compute_matching_thread_nodes l_idents l_rsr r_rsr =
+  let pr i = match i with
+    | 0 -> "MATCH"
+    | 1 -> "(may)MATCH"
+    | 2 -> "SPLIT"
+    | 3 -> "FAIL"
+    | _ -> "UNKNOWN"
+  in
+  let pr_out = pr_triple pr Cprinter.string_of_subst (pr_option Cprinter.string_of_formula) in
+  Debug.no_3 "compute_matching_thread_nodes"
+      string_of_ident_list
+      Cprinter.string_of_formula
+      Cprinter.string_of_formula
+      pr_out
+      compute_matching_thread_nodes_x l_idents l_rsr r_rsr
+
+and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
+  let (eq_rsr,mtl_rsr) = Checkeq.checkeq_formulas_with_diff l_idents l_rsr r_rsr in
+  if eq_rsr then
+    (*possibly matched*)
+    if (mtl_rsr==[]) then (0,[],None) (*exacly match*)
+    else
+      (*TOCHECK: pick the first one only*)
+      let (mt_rsr,_,_) = List.hd mtl_rsr in
+      let mt_rsr = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt mt_rsr) in
+      if (mt_rsr==[]) then (0,[],None) (*exactly matched*)
+      else (1,mt_rsr,None) (*possibly matched, with some subsitition mt_rsr*)
+  else
+    (*UNMATCH: see whether it is a split or a failure*)
+    if (mtl_rsr==[]) then report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected"
+    else
+      (*TOCHECK: pick the first one only*)
+      let (mt_rsr, l_residue , r_residue) = List.hd mtl_rsr in
+      if not (CF.isEmpFormula r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
+      else (2,mt_rsr,Some l_residue) (*SPLIT*)
+
+(***********begin-of do_match_thread_nodes*****************)
+(*Handle Threads as Resource:
+
+  checkeq(l_dl,r_dl)       checkeq(l_rsr,r_rsr)
+  --------------------------------------------------------[MATCH]
+  t1::thread<l_rsr> |- t1::thread<r_rsr>
+
+
+  checkeq(l_dl,r_dl)         !checkeq(l_rsr,r_rsr)
+  l_rsr |- r_rsr * remained_rsr
+  --------------------------------------------------------[SPLIT]
+  t1::thread<l_rsr> |- t1::thread<r_rsr> * t1::thread<rsr3>
+
+
+  !checkeq(l_dl,r_dl) or l_rsr |/- r_rsr
+  --------------------------------------------------------[FAIL]
+  t1::thread<l_rsr> |/- t1::thread<r_rsr>
+
+*)
+(* RETURN:
+   new label_list
+   new l_args
+   new r_args
+   (is_thread, is_matched, rs_matched, rs_split)
+   is_threads=true -> matching two ThreadNodes
+   eq_dl=true -> two delayed formulas are eq
+   is_matched -> whether a matching happened
+
+*)
+(*Only care about this if you are matching two HeapNode*)
+and do_match_thread_nodes l_node r_node l_args r_args label_list estate pos =
+  let is_thread,eq_dl,match_number,subst, remained_rsr =
+    (match (l_node,r_node) with
+      | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
+                     CF.h_formula_thread_resource = l_rsr;} as l_t),
+    ThreadNode ({CF.h_formula_thread_delayed = r_dl;
+                 CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+          (*Whether the delayed constraints are syntatically eq*)
+          let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
+          let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in
+          (* non-empty mt_dl means l_dl and r_dl are not exactly match
+             This may be too strict, will re-consider later *)
+          let eq_dl = if mt1!=[] then false else eq_dl in
+          (*Whether the resources are syntatically eq*)
+          let l_idents = List.map CP.name_of_spec_var (CF.collect_node_var_formula l_rsr) in
+          let match_number, mt_rsr, remained_rsr = compute_matching_thread_nodes l_idents l_rsr r_rsr in
+
+          let mt = (List.concat mt_dl)@mt_rsr in
+          let subst = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt mt) in
+          true,eq_dl,match_number,subst, remained_rsr
+      | _ -> false,false,-1,[],None)
+  in
+  (match is_thread, eq_dl, match_number with
+    | false, _ , _ -> label_list, l_args, r_args, (is_thread,true,None,None)
+    | true, false, _ ->
+        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "delayed formulas unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "101 : delayed formulas unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
+        label_list, l_args, r_args, (is_thread,false,Some rs,None)
+    | true, true, 0
+    | true, true, 1 ->
+        (*For matching two thread nodes*)
+        let label_list = if ((List.length subst) ==0 ) then label_list
+            else
+              (*Create a list of empty labels*)
+              let rec helper i =
+                if (i==0) then []
+                else
+                  let res = helper (i-1) in
+                  (LO.unlabelled)::res
+              in
+              let lbs = helper (List.length subst) in
+              lbs@label_list
+        in
+        let l_subst,r_subst = List.split subst in
+        let l_args = l_subst@l_args in
+        let r_args = r_subst@r_args in
+        let is_matched = true in
+        label_list, l_args, r_args, (is_thread,is_matched,None,None)
+    | true, true, 3 ->
+        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
+        label_list, l_args, r_args, (is_thread,false,None, None)
+    | true, true, 2 ->
+        (*For SPLIT *)
+        let label_list = if ((List.length subst) ==0 ) then label_list
+            else
+              (*Create a list of empty labels*)
+              let rec helper i =
+                if (i==0) then []
+                else
+                  let res = helper (i-1) in
+                  (LO.unlabelled)::res
+              in
+              let lbs = helper (List.length subst) in
+              lbs@label_list
+        in
+        let l_subst,r_subst = List.split subst in
+        let l_args = l_subst@l_args in
+        let r_args = r_subst@r_args in
+        let is_matched = true in
+        label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr)
+    | true, true, _ ->
+        report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
+(***********END-of do_match_thread_nodes*****************)
+
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -10343,41 +10497,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     List.map (fun _ -> LO.unlabelled) l_args 
                   end
             in
-            (****************************)
-            (*Handle Threads as Resource:
-
-                      checkeq(l_dl,r_dl)       checkeq(l_rsr,r_rsr)
-              --------------------------------------------------------[MATCH]
-                         t1::thread<l_rsr> |- t1::thread<r_rsr>
-
-
-                      checkeq(l_dl,r_dl)         !checkeq(l_rsr,r_rsr)
-                                  l_rsr |- rs32 * rsr3
-              --------------------------------------------------------[SPLIT]
-              t1::thread<l_rsr> |- t1::thread<r_rsr> * t1::thread<rsr3>
-
-
-                       !checkeq(l_dl,r_dl) or l_rsr |/- rs32 * rsr3
-              --------------------------------------------------------[FAIL]
-                          t1::thread<l_rsr> |/- t1::thread<r_rsr>
-
-            *)
-            let is_thread,eq_dl,eq_rsr,mt =
-            match (l_node,r_node) with
-              | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
-                            CF.h_formula_thread_resource = l_rsr;} as l_t),
-                ThreadNode ({CF.h_formula_thread_delayed = r_dl;
-                            CF.h_formula_thread_resource = r_rsr;} as r_t) ->
-                  (*Whether the delayed constraints are syntatically eq*)
-                  let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
-                  (*Whether the resources are syntatically eq*)
-                  let (eq_rsr,mt_rsr) = Checkeq.checkeq_formulas [] l_rsr r_rsr in
-                  let mt = List.concat (mt_dl@mt_rsr) in
-                  true,eq_dl,eq_rsr,mt
-              | _ -> false,false,false,[]
-            in
-            (****************************)
-
+            let label_list, l_args, r_args, (is_thread, is_matched, rs_matched, remained_rsr) = do_match_thread_nodes l_node r_node l_args r_args label_list estate pos in
+            if (is_thread && (not is_matched)) then
+              match rs_matched with
+                | None -> report_error no_pos "[solver.ml] do_match: expecting some result"
+                | Some rs -> rs
+            else
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
             (*renamed and instantiate perm var*)
             let evars = estate.es_evars in

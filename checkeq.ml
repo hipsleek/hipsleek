@@ -38,10 +38,15 @@ let string_of_map_table_list (mtl: map_table list): string =
   in 
   "[" ^ (helper mtl) ^ "]"
 
+(*Remove duplicatated pairs in mtl*)
 let remove_dupl_mt (mtl: map_table) : map_table =
   let is_dupl (x1,x2) (y1,y2) =
     (eq_spec_var x1 y1) & (eq_spec_var x2 y2)
   in Gen.BList.remove_dups_eq is_dupl mtl
+
+(*Remove trivial pairs, e.g. (x,x)*)
+let remove_trivial_mt (mtl: map_table) : map_table =
+  List.filter (fun (x,y) -> not(eq_spec_var x y)) mtl
 
 let rec simplify_f f hvars rvars1 = 
   let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in
@@ -986,7 +991,13 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
     if(not !Globals.dis_show_diff) then showdiff r fs
   in
   (r,fs)
-    
+
+(* ivars: set of roots (otherwise, all permutations)
+   return (mt*formula1*formula2) list
+     where for each element
+       mt: mapping table
+       formula1: remaining formula of f1
+       formula2: renaming formula of f2*)
 and checkeq_formulas_with_diff ivars f1 f2 = 
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in

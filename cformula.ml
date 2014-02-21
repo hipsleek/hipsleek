@@ -14408,6 +14408,29 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
          (head_args,head_id)
      with Not_found -> ([],""))
 
+let collect_node_var_formula (f:formula) =
+  let rec helper (f:formula) =
+    match f with
+  | Exists ({ formula_exists_heap = h;})
+  | Base ({formula_base_heap = h;}) ->
+      let heaps = split_star_conjunctions h in
+      let heaps = List.filter (fun h ->
+          match h with
+            | HEmp
+            | HTrue -> false
+            | DataNode _
+            | ViewNode _
+            | ThreadNode _ -> true
+            | _ -> report_error no_pos "collect_node_var_formula: expected"
+      ) heaps
+      in
+      let vars = List.map (fun h -> get_node_var h) heaps in
+      vars
+  | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+      (helper f1)@(helper f2)
+  in
+  helper f
+
 let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
   { h_formula_view_node = view_node;
   h_formula_view_name = view_name;

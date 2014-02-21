@@ -2,8 +2,8 @@ data node{ int val;}.
 
 
 //normal heap node
-//checkentail x::node<2> |- x::node<2> .
-//print residue.
+checkentail x::node<2> |- x::node<2> .
+print residue.
 
 //thread node with resource
 //checkentail t::thrd<# x::node<1> & true #> |- true.
@@ -16,6 +16,32 @@ data node{ int val;}.
 //checkentail t::thrd<# x::node<1> & true #> |- t::thrd<# x::node<1> & true #>.
 //print residue.
 
-checkentail t::thrd<# a=1 --> x::node<1> & true #> |- t::thrd<# b=1 --> x::node<1> & true #>.
-print residue.
+//FAIL: delayed formulas unmatched
+//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# b=1 --> x::node<v1> & true #> .
+//print residue.
 
+//VALID: exact matching
+//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v1> & true #> .
+//print residue.
+
+//VALID: (may)match (if instantiate v1=v2)
+//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v2> & true #> .
+//print residue.
+
+//FAIL: lhs's resource is unmatched with rhs' resource
+//checkentail t::thrd<# a=1 --> x::node<v1> * y::node<v1> * z::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v2> * u::node<v3> & true #> & v1=v2.
+//print residue.
+
+//Currently FAIL because lhs's resource is unmatched with rhs' resource
+//Restrictive, re-consider later
+//checkentail t::thrd<# a=1 --> x::node<v1> & true #> & x=y |- t::thrd<# a=1 --> y::node<v1> & true #> & v1=v2.
+//print residue.
+
+//Currently FAIL because lhs's resource is unmatched with rhs' resource
+//Restrictive, re-consider later
+//checkentail t::thrd<# a=1 --> x1::node<v1> * x2::node<v2> & true #> & x1=y1 & x2=y2 |- t::thrd<# a=1 --> y1::node<v1> * y2::node<v2> & true #>.
+//print residue.
+
+//SPLIT
+checkentail t::thrd<# a=1 --> x::node<v1> * y::node<v2> & true #> |- t::thrd<# a=1 --> x::node<v1> & true #>.
+//print residue
