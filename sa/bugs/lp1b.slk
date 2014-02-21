@@ -1,0 +1,18 @@
+data node{
+     int val;
+     node next;
+}.
+
+
+pred ll<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::ll<n1> & n=n1+1 
+ inv n>=0.
+
+
+lemma_safe self::ll<n> & n=0 -> self=null.
+print residue.
+
+
+//checkentail self::ll<n> & n=0 |- self=null.
+
