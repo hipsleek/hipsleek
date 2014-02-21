@@ -11821,12 +11821,66 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* let _ = print_string ("!!!do_coercion: M_rd_lemma \n") in *)
             let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
-      | Context.M_lemma  ({
+      | Context.M_ramify_lemma {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-        },ln) ->
+        } -> 
+            (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
+            let r1,r2 =
+            let ctx0 = Ctx estate in
+            (* let ((coer_l,coer_r),univ_coers) = 
+              find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
+            let coer_l = Lem_store.all_lemma # get_left_coercion in 
+            let coer = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
+              else List.hd coer_l in 
+           (* let () = print_endline (Cprinter.string_of_coercion coer) in*)
+            if coer.coercion_kind = RLEM then
+              (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
+              let rest_heap = split_star_conjunctions lhs_rest in
+              let filter_starminus = List.filter (fun h -> Mem.contains_starminus h) rest_heap in
+              let rest_heap = List.filter (fun h -> not (Mem.contains_starminus h)) rest_heap in
+              let lhs_wand = 
+              if not (List.length filter_starminus > 0) 
+              then failwith "Ramification Lemma has more than one wand"
+              else List.hd filter_starminus in
+              let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = extr_formula_base lhs_b in
+              let h,p,fl,t,a = split_components coer.coercion_body in
+              let vl = Cformula.h_fv h in
+              let gvl = Cformula.h_fv lhs_wand in
+              let rho = if List.length vl = List.length gvl then List.combine vl gvl
+                else failwith "Ramification Lemma with different variables" in
+              let new_lhs_h = Cformula.h_subst rho h in
+              let new_lhs_h = Cformula.join_star_conjunctions (new_lhs_h::rest_heap) in
+              let new_lhs = Cformula.mkBase new_lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
+              (*let () = print_endline(Cprinter.string_of_formula new_lhs) in*)
+              let old_trace = estate.es_trace in
+              let estate = {estate with es_trace=(("(ramify: " ^ coer.coercion_name ^ ")")::old_trace)} in
+              let new_ctx1 = Ctx{estate with es_formula = new_lhs } in
+              (* let new_ctx = set_context_formula ctx0 new_lhs in *)
+              let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+              let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
+              let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
+	            coer.coercion_body tmp_prf coer.coercion_name
+              in
+              (res, [prf])
+            else (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "112" Globals.sl_error)), [])
+            in
+            (r1,Search r2)
+      | Context.M_lemma  ({
+        Context.match_res_lhs_node = lhs_node;
+        Context.match_res_lhs_rest = lhs_rest;
+            Context.match_res_rhs_node = rhs_node;
+            Context.match_res_rhs_rest = rhs_rest;
+      },ln) ->
             (* let _ = print_string ("!!!do_coercion: M_lemma \n") in *)
             (* let _ = match ln with *)
             (*   | None -> () *)

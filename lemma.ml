@@ -592,7 +592,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
       | LEM_INFER_PRED      -> let r1,r2 = manage_infer_pred_lemmas lst iprog cprog Solver.xpure_heap in 
         let _ = lem_infer_fnct r1 r2 in
         r2
-      | RLEM           -> manage_lemmas lst iprog cprog
+      | RLEM           -> manage_unsafe_lemmas lst iprog cprog
   in
   match res with
     | None | Some [] -> CF.clear_residue ()

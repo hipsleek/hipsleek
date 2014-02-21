@@ -40,6 +40,7 @@ and match_type =
   | Root
   | MaterializedArg of (mater_property*mater_source) 
   | WArg
+  | Wand
   
 and action = 
   | M_match of match_res
@@ -61,6 +62,7 @@ and action =
   | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   | M_lhs_case of match_res
   | M_cyclic of (match_res* int)
+  | M_ramify_lemma of match_res
   (* | Un *)
   (* | M *)
   (* | Opt int *)
@@ -77,6 +79,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_base_case_fold m
     | M_rd_lemma m
     | M_lemma  (m, _)
+    | M_ramify_lemma m
     | Undefined_action m
     | M_lhs_case m
     | M_cyclic (m,_) ->
@@ -116,6 +119,7 @@ let pr_match_type (e:match_type):unit =
           pr_mater_source ms;
           fmt_close_box();
     | WArg -> fmt_string "WArg"
+    | Wand -> fmt_string "Wand"
 
 
 let pr_match_res (c:match_res):unit =
@@ -148,6 +152,7 @@ let rec pr_action_name a = match a with
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
+  | M_ramify_lemma e -> fmt_string "Ramify Lemma"
   | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
@@ -168,6 +173,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
+  | M_ramify_lemma e -> fmt_string "Ramify_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
   | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
@@ -214,6 +220,7 @@ let action_get_holes a = match a with
   | M_fold e
   | M_unfold (e,_)
   | M_rd_lemma e
+  | M_ramify_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
   | M_cyclic (e,_)
@@ -746,7 +753,9 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformu
 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
-  let rec helper f = match f with
+  let rec helper f = 
+(*let () = print_endline (Cprinter.string_of_h_formula f) in*)
+match f with
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
@@ -822,14 +831,16 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       h_formula_starminus_h2 = f2;
       h_formula_starminus_aliasing = al;
       h_formula_starminus_pos = pos}) ->
-        let f = (let f1 =  match al with
+      let f = (let f1 =  match al with
                   | Not_Aliased -> mkStarH f2 f1 pos 
                   | May_Aliased -> mkConjH f2 f1 pos
                   | Must_Aliased -> mkConjConjH f2 f1 pos
                   | Partial_Aliased -> mkConjStarH f2 f1 pos in 
                 (mkStarMinusH f1 f2 al pos 111)) in
+      [f,rhs_node,[],Wand]
+      (*
 	    let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_h_formula f) ^ "\n") in
-        failwith("[context.ml]: There should be no wand in the lhs at this level\n")
+        failwith("[context.ml]: There should be no wand in the lhs at this level\n")*)
           (*let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
@@ -1005,6 +1016,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
           (1,M_Nothing_to_do (string_of_match_res c))
     | WArg ->
           (1,M_Nothing_to_do (string_of_match_res c))
+    | Wand ->  (1,M_Nothing_to_do (string_of_match_res c))
   in
   act
 
@@ -1438,6 +1450,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
     | WArg -> 
           let _ = DD.tinfo_pprint "WArg  analysis here!\n" no_pos in  
           (1,M_Nothing_to_do (string_of_match_res c)) 
+    | Wand -> (*let _ = (print_endline"eliminate wand") in *)
+               if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma c)
+               else (1,M_Nothing_to_do (string_of_match_res c))
   in
 
   let r1 = match c.match_res_type with 
@@ -1462,7 +1477,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
           (* let _ = print_string ("\n [context.ml] Warning: process_one_match not support Materialized Arg when normalizing\n") in *)
           (1,M_Nothing_to_do (string_of_match_res c))
-    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) 
+    | Wand -> (1,M_Nothing_to_do (string_of_match_res c)) in
   (*if in normalizing process => choose r1, otherwise, r*)
   if (is_normalizing) then r1
   else r
@@ -1599,6 +1615,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_base_case_fold _
     | M_rd_lemma _
     | M_lemma  _
+    | M_ramify_lemma _
     | M_base_case_unfold _ 
     | M_unfold _
     | M_fold _
@@ -1611,7 +1628,8 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_unmatched_rhs_data_node _ -> true
     | Search_action l
     | Seq_action l
-    | Cond_action l -> List.exists uncertain l  in	
+    | Cond_action l ->
+        List.exists uncertain l  in	
   
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->

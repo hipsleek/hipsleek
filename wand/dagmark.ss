@@ -1,16 +1,24 @@
+//============== dag.v ==================//
 data node{
 int val;
 node left;
 node right
 }
 
-relation mark(bag(node) G,node x,bag(node) G1).
-relation mark1(bag(node) G,node x,bag(node) G1).
 relation update(bag(node) G, node x, int d, node l, node r,bag(node) G1).
 relation reach(bag(node) G, node x, bag(node) R).
 
 dag<G> == self = null
        or exists G1: self::node<v,l,r> * (l::dag<G> U* r::dag<G>) & update(G,self,v,l,r,G1);
+
+rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
+      & reach(G,x,R) & reach(G1,x,R1) & R subset R1 & !(reach(G,x,R)) & !(reach(G1,x,R1))
+      -> x::dag<G1> U* y::dag<G1>;
+
+//=======================================//
+
+relation mark(bag(node) G,node x,bag(node) G1).
+relation mark1(bag(node) G,node x,bag(node) G1).
 
 axiom update(G,x,1,l,r,G1) ==> mark1(G,x,G1).
 
@@ -22,10 +30,6 @@ axiom mark(G,l,G1) & mark(G1,r,G2) & mark1(G2,x,G3) ==> mark(G,x,G3).
 axiom mark(G,r,G1) & mark1(G1,x,G2) & mark(G2,l,G3) ==> mark(G,x,G3).
 axiom mark(G,l,G1) & mark1(G1,x,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
 axiom mark1(G,x,G1) & mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3).
-
-//rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
-//      & reach(G,x,R) & reach(G1,x,R1) & R subset R1 & !(reach(G,x,R)) & !(reach(G1,x,R1))
-//      -> x::dag<G1> U* y::dag<G1> & mark(G,x,G1);
 
 void mark(node x)
 requires x::dag<G>

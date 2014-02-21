@@ -2405,4 +2405,3 @@ let infer_mem_specs (vdef:I.view_decl) (prog:I.prog_decl) : I.view_decl =
               {vdef with I.view_formula = iform;
               I.view_mem = Some(new_mf);}
   | None -> vdef
-

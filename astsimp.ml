@@ -2942,7 +2942,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     | CF.DataNode dn -> dn.CF.h_formula_data_name
     | _ -> 
           (*LDK: expecting complex LHS*)
-          let hs = CF.split_star_conjunctions lhs_heap in
+          let hs = CF.split_star_conjunctions lhs_heap in 
           if ( (List.length hs) > 0) then
             let head = List.hd hs in
             match head with
@@ -2953,8 +2953,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 CF.h_formula_starminus_pos = pos} -> (match h1 with
                   | CF.ViewNode vn -> vn.CF.h_formula_view_name
                   | CF.DataNode dn -> dn.CF.h_formula_data_name
-                  | _ -> let _ = 
-                      print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
+                  | _ -> let _ = let b = 
+                                   match coer.I.coercion_kind with
+                                     | RLEM -> true | _ -> false in 
+                    if b
+                    then () 
+                    else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
               | _ -> 
                     let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
                     ""
@@ -3036,7 +3040,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       try (List.hd xx)
         (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
       with | _ -> "" in
-  if lhs_name = "" then
+  if lhs_name = "" && not (coer.I.coercion_kind = RLEM) then
     Error.report_error
         {
             Err.error_loc = IF.pos_of_formula i_lhs (* coer.I.coercion_head *);

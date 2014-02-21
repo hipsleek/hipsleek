@@ -2455,8 +2455,9 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> Coercion_list { coercion_list_elems = [c];
-                                                               coercion_list_kind = RLEM}
+  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> let c =  {c with coercion_kind = RLEM} in
+                                                 Coercion_list { coercion_list_elems = [c];
+                                                                 coercion_list_kind = RLEM}
   | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = (convert_lem_kind kind)}
