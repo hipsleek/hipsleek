@@ -483,7 +483,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         [] [] [] true true in
                       ()
                     in
-                    let _ = print_endline ("\nxxxxxx " ^ ((pr_list_ln Cprinter.string_of_list_context) lcs)) in
+                    (* let _ = print_endline ("\nxxxxxx " ^ ((pr_list_ln Cprinter.string_of_list_context) lcs)) in *)
                     (*pure fixpoint*)
                     let rr = if rel_ids = [] || oblgs = [] then [] else
                       let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
@@ -496,12 +496,12 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                               let _,bare = CF.split_quantifiers coer.C.coercion_body in
                               let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
                                 CF.get_pre_post_vars [] xpure_fnc (CF.struc_formula_of_formula bare no_pos) cprog in
-                              let _ = Debug.info_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                               let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
                               let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                               let pre_vnodes = CF.get_views coer.C.coercion_body in
                               let ls_rel_args = CP.get_list_rel_args (CF.get_pure bare) in
-                              let _ = Debug.info_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
+                              let _ = Debug.ninfo_hprint (add_str "coercion_body" !CF.print_formula) bare no_pos in
                               (* let _ = Debug.info_hprint (add_str "pre_rel_ids" !CP.print_svl) pre_rel_ids no_pos in *)
                               let pre_rel_args = List.fold_left (fun r (rel_id,args)-> if CP.mem_svl rel_id pre_rel_ids then r@args
                               else r

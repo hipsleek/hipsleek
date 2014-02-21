@@ -3444,14 +3444,14 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
     | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
   in
   (*transform to view*)
-  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name (cur_hpdef::cur_split_hpdefs) in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] (*(cur_hpdef::cur_split_hpdefs)*) in
   (*trans_hp_view_formula*)
   (* let f12 = Sautil.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
   (*lemma need self for root*)
   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
   let f12 = CF.formula_of_heap vnode no_pos in
-  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl (cur_hpdef::cur_split_hpdefs) [] rhs_f in
+  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef](* (cur_hpdef::cur_split_hpdefs) *) [] rhs_f in
   (*need self for lemma*)
   let sst = [(r, self_sv)] in
   let rev_sst = [(self_sv,r)] in (*to revert the result*)
@@ -3469,8 +3469,8 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let infer_vars = if need_find_new_split then (List.map CP.name_of_spec_var infer_hps)
   else ((List.map CP.name_of_spec_var infer_rel_svl))
   in
-  let _ = Debug.info_hprint (add_str  "infer_vars " (pr_list pr_id)) infer_vars no_pos in
-  let _ = Debug.info_hprint (add_str  "need_find_new_split " (string_of_bool)) need_find_new_split no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "infer_vars " (pr_list pr_id)) infer_vars no_pos in
+  let _ = Debug.ninfo_hprint (add_str  "need_find_new_split " (string_of_bool)) need_find_new_split no_pos in
   let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE
     IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
