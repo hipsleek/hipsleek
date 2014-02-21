@@ -43,5 +43,9 @@ print residue.
 //print residue.
 
 //SPLIT
-checkentail t::thrd<# a=1 --> x::node<1> * y::node<2> & true #> |- t::thrd<# a=1 --> x::node<1> & true #>.
+//checkentail t::thrd<# a=1 --> x::node<1> * y::node<2> & true #> |- t::thrd<# a=1 --> x::node<1> & true #>.
+//print residue.
+
+//SPLIT
+checkentail t::thrd<# a=1 --> x::node(0.5)<1> * x::node(0.5)<1> & true #> |- t::thrd<# a=1 --> x::node(0.5)<1> & true #>.
 print residue.
