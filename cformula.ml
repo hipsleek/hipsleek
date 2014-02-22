@@ -3534,6 +3534,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+
 and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -3648,6 +3649,10 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 	| EInfer b -> EInfer { b with formula_inf_continuation = rename_struc_bound_vars b.formula_inf_continuation;}
 	| EList b -> EList (map_l_snd rename_struc_bound_vars b)
 
+(* and rename_struc_bound_vars (f:struc_formula):struc_formula = *)
+(*   let pr1 = !print_struc_formula in *)
+(*   Debug.no_1 "rename_struc_bound_vars" pr1 pr1 *)
+(*       (fun _ -> rename_struc_bound_vars_x f) f *)
 
 and rename_bound_vars (f : formula) = fst (rename_bound_vars_x f)
   (* let pr= !print_formula in *)
@@ -4235,6 +4240,27 @@ let is_HRel_f (f0:formula) =
        (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
   in
   helper f0
+
+
+let struc_elim_exist_x (f0 : struc_formula): struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> let r1 = List.map (fun (c1,c2) -> (c1, helper c2)) b.formula_case_branches in
+            ECase {b with formula_case_branches = r1}
+	  | EBase b -> EBase {b with  formula_struc_base = elim_exists b.formula_struc_base;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume b -> EAssume {b with formula_assume_simpl = elim_exists b.formula_assume_simpl;
+                formula_assume_struc = helper b.formula_assume_struc
+            }
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let struc_elim_exist (f0 : struc_formula): struc_formula =
+  let pr1 = !print_struc_formula in
+  Debug.no_1 "struc_elim_exist" pr1 pr1
+      (fun _ -> struc_elim_exist_x f0) f0
 
 let map_heap_hf_1 fn hf0=
   let rec helper hf=

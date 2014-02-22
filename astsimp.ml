@@ -3022,7 +3022,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
-  let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 [] no_pos in
+  let head_pure = if  coer_type = I.Left then c_guard0 else (IP.mkTrue no_pos) in
+  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure  c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
@@ -3084,11 +3085,16 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 let c_hd, c_guard ,c_fl ,c_t, c_a = CF.split_components c.C.coercion_head in
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
+                let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
+                (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
+                (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
+                (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
                 {c with
                     C.coercion_type = Iast.Right;
                     C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_t c_fl c_a no_pos;
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
+                    C.coercion_body_norm = new_body_norm;
                     C.coercion_univ_vars = [];} in
         match coer_type with
           | I.Left -> 

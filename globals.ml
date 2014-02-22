@@ -696,7 +696,7 @@ let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
-let allow_lemma_fold = ref true
+let allow_lemma_fold = ref false
 let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
@@ -995,7 +995,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref true
+let enable_case_inference = ref false
 
 let print_core = ref false
 let print_core_all = ref false

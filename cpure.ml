@@ -12043,9 +12043,9 @@ let prune_relative_unsat_disj p0 (*lhs*) base_p (*rhs*)=
     ) ps in
     disj_of_list ps1 (pos_of_formula p)
   in
-  let ps0 = list_of_conjs p0 in
+  let ps0,ps0a = List.partition (is_disjunct) (list_of_conjs p0) in
   let ps1 = List.map prune_cons ps0 in
-  conj_of_list ps1 (pos_of_formula p0)
+  conj_of_list (ps0a@ps1) (pos_of_formula p0)
 
 let prune_relative_unsat_disj p0 base_p=
   let pr1 = !print_formula in
