@@ -3384,7 +3384,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
               ) (CP.mkTrue no_pos) rel_fixs in
               let rhs1 = CF.drop_sel_rel infer_rel_svl rhs in
               let rhs2 = CF.mkAnd_pure rhs1 (MCP.mix_of_pure rel_p) no_pos in
-              true,rhs2
+              (true, rhs2)
         end
       | None -> false, rhs
     in
@@ -3444,14 +3444,14 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
     | _ -> report_error no_pos "SAC.prove_sem: support single hpdef only"
   in
   (*transform to view*)
-  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name [cur_hpdef] (*(cur_hpdef::cur_split_hpdefs)*) in
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name (* [cur_hpdef] *) (cur_hpdef::cur_split_hpdefs) in
   (*trans_hp_view_formula*)
   (* let f12 = Sautil.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef] f in *)
   (*lemma need self for root*)
   let self_sv = CP.SpecVar (CP.type_of_spec_var r,self, Unprimed) in
   let vnode = CF.mkViewNode self_sv (CP.name_of_spec_var hp) paras no_pos in
   let f12 = CF.formula_of_heap vnode no_pos in
-  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl [cur_hpdef](* (cur_hpdef::cur_split_hpdefs) *) [] rhs_f in
+  let f22_0 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl (* [cur_hpdef] *)(cur_hpdef::cur_split_hpdefs) [] rhs_f in
   (*need self for lemma*)
   let sst = [(r, self_sv)] in
   let rev_sst = [(self_sv,r)] in (*to revert the result*)
@@ -3507,7 +3507,8 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
                 (1, hp_defs)
               else
                 (*susbt self to the orginal*)
-                let n_rhs1 = CF.subst rev_sst n_rhs in
+                let n_rhs1 = CF.subst rev_sst (Saout.trans_formula_view_2_hp iprog cprog proc_name
+                    (List.map (fun sv -> CP.name_of_spec_var sv) infer_hps) n_rhs) in
                 let ogs = List.map snd cur_hpdef.CF.def_rhs in
                 let n_hp_def = {cur_hpdef with CF.def_rhs = [(n_rhs1 , CF.combine_guard ogs)]} in
                 let _ = print_endline (" pred_split (sem):" ^ (!CP.print_sv hp) ^ "(" ^ (!CP.print_svl args) ^ ") :== " ^
