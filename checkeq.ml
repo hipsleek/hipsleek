@@ -371,11 +371,13 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   let name1 = n1.CF.h_formula_data_name in
   (* let ann1 = n1.CF.h_formula_data_imm in *)
   let args1 = n1.CF.h_formula_data_arguments in
+  let permvars1 = Perm.get_cperm_var n1.CF.h_formula_data_perm in
   let is_hard_n1 = (List.mem (CP.name_of_spec_var n1.CF.h_formula_data_node) hvars) in
   let var2 = n2.CF.h_formula_data_node in
   let name2 = n2.CF.h_formula_data_name in
   (* let ann2 = n2.CF.h_formula_data_imm in *)
   let args2 = n2.CF.h_formula_data_arguments in
+  let permvars2 = Perm.get_cperm_var n2.CF.h_formula_data_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_data_node) hvars) in
   (* let rec str hvars  = match hvars with *)
   (*   | [] -> "" *)
@@ -393,7 +395,7 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
     let _ = Debug.ninfo_zprint (lazy  ("match node: " ^ string_of_map_table mt)) no_pos in
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
       else add_map_rel mt (var1) (var2) in
-    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    if(res) then check_spec_var_list_equiv hvars (permvars1@args1) (permvars2@args2) mt1
     else (false, mt1)
   )
 (*translation has ensured well-typedness. *)
@@ -467,11 +469,13 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   let name1 = n1.CF.h_formula_view_name in
   let ann1 = n1.CF.h_formula_view_imm in
   let args1 = n1.CF.h_formula_view_arguments in
+  let permvars1 = Perm.get_cperm_var n1.CF.h_formula_view_perm in
   let is_hard_n1 = (List.mem (CP.name_of_spec_var n1.CF.h_formula_view_node) hvars) in
   let var2 = n2.CF.h_formula_view_node in
   let name2 = n2.CF.h_formula_view_name in
   let ann2 = n2.CF.h_formula_view_imm in
   let args2 = n2.CF.h_formula_view_arguments in
+  let permvars2= Perm.get_cperm_var n2.CF.h_formula_view_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_view_node) hvars) in
   let is_hard = is_hard_n1 || is_hard_n2 in
   if(List.length args1 != List.length args2 ||
@@ -483,7 +487,7 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   else  (
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
       else add_map_rel mt (var1) (var2) in
-    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    if(res) then check_spec_var_list_equiv hvars (permvars1@args1) (permvars2@args2) mt1
     else (false, mt1)
   )
 
