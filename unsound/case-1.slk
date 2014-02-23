@@ -1,0 +1,14 @@
+
+checkentail b'=1 |- case {x>0 -> [] b'>0 & x>0 ; x<=0 -> [] b'>0;}.
+print residue.
+
+/*
+    emp&b'=1 & x<=0&{FLOW,(21,22)=__norm}[]
+    or emp&b'=1 & 0<x&{FLOW,(21,22)=__norm}[]
+
+I guess the above is OK. But we need to be careful with
+things we instantiate from pred definition to make sure they are
+unique?
+
+*/
+

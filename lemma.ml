@@ -233,6 +233,7 @@ let verify_one_repo lems cprog =
   res
 
 
+
 (* update the lemma store with the lemmas in repo and check for their validity *)
 let update_store_with_repo_x repo iprog cprog =
   let lems = process_one_repo repo iprog cprog in
@@ -482,6 +483,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         [] [] [] true true in
                       hp_defs
                     in
+                    (* let _ = print_endline ("\nxxxxxx " ^ ((pr_list_ln Cprinter.string_of_list_context) lcs)) in *)
                     (*pure fixpoint*)
                     let rr = if rel_ids = [] || oblgs = [] then [] else
                       let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in
@@ -511,9 +513,9 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 3"
                       in
                       let r = Fixpoint.rel_fixpoint_wrapper pre_inv_ext pre_fmls pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec grp_post_rel_flag in
-                      (* let _ = Debug.info_hprint (add_str "fixpoint" *)
-                      (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
-                      (* let _ = print_endline "" in *)
+                      let _ = Debug.info_hprint (add_str "fixpoint"
+                          (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in
+                      let _ = print_endline "" in
                       r
                     in
                     (rr,hp_defs)
@@ -589,7 +591,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
       | LEM_UNSAFE     -> manage_unsafe_lemmas lst iprog cprog 
       | LEM_SAFE       -> manage_safe_lemmas lst iprog cprog 
       | LEM_INFER      -> snd (manage_infer_lemmas lst iprog cprog)
-      | LEM_INFER_PRED      -> let r1,r2 = manage_infer_pred_lemmas lst iprog cprog Solver.xpure_heap in 
+      | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Solver.xpure_heap in 
         let _ = lem_infer_fnct r1 r2 in
         r2
   in

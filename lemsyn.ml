@@ -10,7 +10,7 @@ module C  = Cast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
-module CFU = Cfutil
+(* module CFU = Cfutil *)
 module CP = Cpure
 module MCP = Mcpure
 module H  = Hashtbl
@@ -58,7 +58,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let (_,mix_rf0,_,_,_) = CF.split_components (CF.Base rhs_b0) in
     let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf0) in
     let r_eqsetmap0 = CP.EMapSV.build_eset es.CF.es_rhs_eqset in
-    let lhs_b1, rhs_b1, _ = CFU.smart_subst_new lhs_b0 rhs_b0 []
+    let lhs_b1, rhs_b1, _ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
            l_emap0 r_emap0 r_eqsetmap0 [] ([lr;rr])
     in
      (*left*)
@@ -76,8 +76,8 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (*LHS: find reachable heap + pure*)
     let lf1a = CF.subst_b lss lhs_b1 in
     let rf1a = CF.subst_b lss rhs_b1 in
-    let lf1 = CFU.obtain_reachable_formula prog (CF.Base lf1a) [lselfr] in
-    let rf1 = CFU.obtain_reachable_formula prog (CF.Base rf1a) [rselfr] in
+    let lf1 = Cfutil.obtain_reachable_formula prog (CF.Base lf1a) [lselfr] in
+    let rf1 = Cfutil.obtain_reachable_formula prog (CF.Base rf1a) [rselfr] in
     (* let lf1 = CF.subst lss  *)
     (*RHS: find reachable heap + pure*)
     let lf2 = formula_rev_fnc lf1 in
@@ -85,8 +85,8 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (*gen lemma*)
     let lemma_name = "cyc" in
     let l_coer = match lem_type with
-      | 0 -> I.mk_lemma (fresh_any_name lemma_name) I.Left [] lf2 rf2
-      | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) I.Right [] rf2 lf2
+      | 0 -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] lf2 rf2
+      | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Right [] rf2 lf2
     in
     (*add lemma*)
     let iprog = I.get_iprog () in
@@ -186,7 +186,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   let rf2 = formula_rev_fnc rf1 in
   (*gen lemma*)
   let lemma_name = "cyci" in
-  let l_coer = I.mk_lemma (fresh_any_name lemma_name) I.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
+  let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
   (*backup*)
   let cur_ass = ass_stk# get_stk in
   let _ = ass_stk # reset in
@@ -202,10 +202,10 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     let in_hp_names = [n_hp] in
     (*transform formula*)
     let rf3 = trans_formula_hp_2_view_fnc iprog prog proc_name
-       chprels_decl hp_defs rf1 in
+       chprels_decl hp_defs [] rf1 in
     let rf4 = formula_rev_fnc rf3 in
     let lem_name = fresh_any_name lemma_name in
-    let l_coer = I.mk_lemma (lem_name) I.Left [] lf2 rf4 in
+    let l_coer = I.mk_lemma (lem_name) LEM_UNSAFE I.Left [] lf2 rf4 in
     (*add lemma*)
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ = print_endline "\n*******relational definition ********" in

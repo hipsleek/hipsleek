@@ -2952,7 +2952,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   (*split pred*)
   let n_all_hp_defs1a, n_cmb_defs  = if !Globals.pred_split then
     let n_all_hp_defs0c, split_map =
-      let r = Sacore.pred_split_hp iprog prog unk_hps Infer.rel_ass_stk rel_def_stk n_all_hp_defs0b in
+      let r = Sacore.pred_split_hp iprog prog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk n_all_hp_defs0b in
       r
     in
     (*update n_cmb_defs0*)
@@ -2978,7 +2978,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     (n_all_hp_defs0b, n_cmb_defs0)
   in
   let n_all_hp_defs1 = if !Globals.pred_seg_split then
-      Sacore.pred_seg_split_hp iprog prog unk_hps Infer.rel_ass_stk rel_def_stk n_all_hp_defs1a
+      Sacore.pred_seg_split_hp iprog prog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk n_all_hp_defs1a
     else n_all_hp_defs1a in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = (* Sautil.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
