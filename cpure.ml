@@ -9351,6 +9351,19 @@ let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
 
+let drop_sel_rel_formula (f:formula) sel_svs : formula =
+  let ps = list_of_conjs f in
+  let ps1 = List.fold_left (fun r p ->
+      match p with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(rel,_,_),_) ->
+                      if mem_svl rel sel_svs then r else r@[p]
+                | _ -> r@[p])
+  | _ -> r@[p]
+  ) [] ps in
+  conj_of_list ps1 (pos_of_formula f)
+
 let memoise_formula_ho is_complex (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let stk = new Gen.stack in

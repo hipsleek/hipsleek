@@ -722,3 +722,45 @@ let check_seg_split_pred prog es_formula vdef vnode dnode=
   Debug.no_3 "check_seg_split_pred" Cprinter.prtt_string_of_formula pr1 pr2 (pr_option (pr_pair pr1 pr2))
       (fun _ _ _ -> check_seg_split_pred_x prog es_formula vdef vnode dnode)
       es_formula vnode dnode
+
+
+let subst_rel_def_x f rel_defs=
+  let ls_rel_args = get_list_rel_args f in
+  if ls_rel_args = [] || rel_defs = [] then f else
+    let rel_p, substed_rels = List.fold_left (fun (p, acc_rels) (rel_sv, rel_def) ->
+        (*normalize the paras (convert back to the orig)*)
+        let rel_args_opt = CP.get_relargs_opt rel_sv in
+        let rel_def1,n_acc_rels =
+          match rel_args_opt with
+            | Some (rel,args) -> begin
+                try
+                  let _,args0 = List.find (fun (rel1,_) -> CP.eq_spec_var rel rel1) ls_rel_args in
+                  let ss0 = List.combine args args0 in
+                  (CP.subst ss0 rel_def, acc_rels@[rel])
+                with _ -> rel_def,acc_rels
+              end
+            | None -> rel_def,acc_rels
+      in
+        let _ = Debug.ninfo_hprint (add_str "rel_def1:\n " (!CP.print_formula)) rel_def1 no_pos in
+        (CP.mkAnd p rel_def1 no_pos, n_acc_rels)
+    ) ((CP.mkTrue no_pos),[]) rel_defs in
+    let f1 = drop_sel_rel substed_rels f in
+    let f2 = mkAnd_pure f1 (MCP.mix_of_pure rel_p) no_pos in
+    f2
+
+let subst_rel_def f rel_defs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair !CP.print_formula !CP.print_formula) in
+  Debug.no_2 "subst_rel_def" pr1 pr2 pr1
+      (fun _ _ -> subst_rel_def_x f rel_defs)
+      f rel_defs
+
+let subst_rel_def_4_hpdef hp_def rel_defs=
+  {hp_def with def_rhs = List.map (fun (f, og) ->
+      let nf = subst_rel_def f rel_defs in
+      let nog = match og with
+        | None -> None
+        | Some f -> Some (subst_rel_def f rel_defs)
+      in
+      (nf, nog)
+  ) hp_def.def_rhs}

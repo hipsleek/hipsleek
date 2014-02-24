@@ -24,14 +24,14 @@ HeapPred P2(node a).
 HeapPred P1(node a).
 relation P4(node a, node b).
 
-
+/*
 lemma_infer_pred [P1,P2,P4] "one3" self::zip<y,r>  ->  P1(self) * P2(y) & P4(r,self) .
 print residue.
-
+*/
 /*
 lemma_safe "one3b" self::zip<y,r>  <-  self::ll<> * y::ll<> & r=self.
 */
-/*
+
 lemma_infer_pred [P3] "one3" self::zip<y,r>  <-  self::zipM<n> * y::zipM<m> & r=self & P3(m,n) .
 print residue.
-*/
+

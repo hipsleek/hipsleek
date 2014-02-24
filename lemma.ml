@@ -525,7 +525,29 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
             | Some _ -> (rel_fixs,hp_rels, None)
         end
   in
-  helper repo [] [] []
+  let rec_fixs, hp_defs, ls_opt = helper repo [] [] [] in
+  let rel_defs = List.fold_left (fun r (post_rel, post_f, pre_rel, pre_f) ->
+      let r1 = if not (CP.isConstFalse post_f || CP.isConstTrue post_f) then
+        r@[(post_rel, post_f)]
+      else r
+      in
+      let r2 = if not (CP.isConstFalse pre_f || CP.isConstTrue pre_f) then
+        r1@[(pre_rel, pre_f)]
+      else r1
+      in
+      r2
+  ) [] rec_fixs in
+  (*update for Z3*)
+  let _ = List.map (fun (rel_name, rel_f) ->
+      let rel_args_opt = CP.get_relargs_opt rel_name in
+      match rel_args_opt with
+        | Some (rel, args) ->
+              let _= Smtsolver.add_relation (CP.name_of_spec_var rel) args rel_f in
+              ()
+        | None -> report_error no_pos "Lemma.manage_infer_pred_lemmas: should rel name"
+  ) rel_defs in
+  let n_hp_defs = List.map (fun hp_def -> Cfutil.subst_rel_def_4_hpdef hp_def rel_defs) hp_defs in
+  (rec_fixs, n_hp_defs, ls_opt)
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 

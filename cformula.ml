@@ -12982,7 +12982,7 @@ let get_pre_post_invs (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn 
 let drop_sel_rel sel_rel_vars f0=
   let rec drop_helper f=
     match f with
-      | Base fb -> let np = CP.drop_rel_formula (MCP.pure_of_mix fb.formula_base_pure) in
+      | Base fb -> let np = CP.drop_sel_rel_formula (MCP.pure_of_mix fb.formula_base_pure) sel_rel_vars in
         Base {fb with formula_base_pure = (MCP.mix_of_pure np)}
       | Exists fe ->
             let qvars, base1 = split_quantifiers f in
