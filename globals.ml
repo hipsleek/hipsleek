@@ -898,7 +898,7 @@ let allow_locklevel = ref false (*enable locklevel during verification*)
   true -> threads as resource
   false -> threads as AND-conjunctions
 *)
-let allow_threads_as_resource = ref true
+let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
