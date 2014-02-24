@@ -3699,7 +3699,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               applicable to concurrency as these invocations (except join())
               are generic to the number of arguments *)
             let cts = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts
-            else
+                else if (mn=Globals.join_name) then
+                  (if (!Globals.allow_threads) then [Globals.thrd_typ] else [Globals.thread_typ])
+                else
               (
                   List.map2 (fun p1 t2 ->
                       let t1 = p1.I.param_type in
@@ -3750,7 +3752,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 2"; }
                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
                       else 
-                        (let ret_ct  = Globals.thread_typ in (*return a thread _type*) 
+                        (let ret_ct  = if (!Globals.allow_threads) then Globals.thrd_typ else Globals.thread_typ in (*return a thread _type*) 
                         let positions = List.map I.get_exp_pos method_args in
                         let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
                         let call_e = C.SCall {
@@ -3819,19 +3821,31 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     (*======== <<<<INIT ==========*)
             else (
                 try (
-                    let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
-                    if ( != ) (List.length args) (List.length pdef.I.proc_args) then
+                    let pdef = if (mn=Globals.join_name) then proc_decl else I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
+                    let proc_args = if (mn=Globals.join_name) then
+                          if (!Globals.allow_threads) then
+                            (*threads as resource -> thrd type*)
+                            let param = {Iast.param_type = Globals.thrd_typ;
+                                         Iast.param_name = "id";
+                                         Iast.param_mod = Iast.NoMod;
+                                         Iast.param_loc = pos;}
+                            in [param]
+                          else
+                            (*Threads as AND-conj*)
+                            let param = {Iast.param_type = Globals.thread_typ;
+                                         Iast.param_name = "id";
+                                         Iast.param_mod = Iast.NoMod;
+                                         Iast.param_loc = pos;}
+                            in [param]
+                        else pdef.I.proc_args
+                    in
+                    if ( != ) (List.length args) (List.length proc_args) then
                       Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
                     else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
-                      (*This check may be redundant*)
-                      (*============================*)
-                      (*========== JOIN >>>=========*)
-                      (*===========================*)
-                      (*join is a special function. Its arguments are fixed to only 1*)
-                      Err.report_error { Err.error_loc = pos; Err.error_text = "join has other than one argument"; }
-                          (*======== <<<<JOIN ==========*)
+
+                    Err.report_error { Err.error_loc = pos; Err.error_text = "join has other than one argument"; }
                     else
-                      (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
+                      (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) proc_args in
                       if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                         Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)

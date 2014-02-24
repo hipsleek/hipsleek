@@ -894,6 +894,12 @@ let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
+(*
+  true -> threads as resource
+  false -> threads as AND-conjunctions
+*)
+let allow_threads = ref true
+
 (* let has_locklevel = ref false *)
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)

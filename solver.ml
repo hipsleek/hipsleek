@@ -10216,13 +10216,13 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
 *)
 (*Only care about this if you are matching two HeapNode*)
 and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list =
-  let _ = print_endline ("Matching ThreadNodes") in
   let is_thread,eq_dl,match_number,subst, remained_rsr =
     (match (l_node,r_node) with
       | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
                      CF.h_formula_thread_resource = l_rsr;} as l_t),
     ThreadNode ({CF.h_formula_thread_delayed = r_dl;
                  CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+          let _ = print_endline ("Matching ThreadNodes") in
           (*Whether the delayed constraints are syntatically eq*)
           let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
           let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in

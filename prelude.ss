@@ -306,7 +306,7 @@ int fork()
   requires true
   ensures true;
 
-void join(int id)
+void join()
   requires true
   ensures true;
 
