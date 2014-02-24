@@ -1648,16 +1648,27 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
                       (* let _ = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-	              if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
+                      if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
                         begin
-		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
-                              ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+		          (* Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ")  *)
+                          (*     ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (\* add branch info *\) *)
+                          (* (\* add branch info *\) *)
+		          (* Debug.print_info ("(Cause of Bind Failure)") *)
+                          (*     (Cprinter.string_of_failure_list_failesc_context rs) pos; *)
+                          (* rs *)
+                          (*delay pritinting to check post*)
+                          let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
+                              ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                                  " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
                           (* add branch info *)
-		          Debug.print_info ("(Cause of Bind Failure)")
-                              (Cprinter.string_of_failure_list_failesc_context rs) pos;
-		          rs
-                	end
-                      else 
+		          ^ ("(Cause of Bind Failure)") ^
+                              (Cprinter.string_of_failure_list_failesc_context rs ) ^ (string_of_loc pos) in
+                          raise (Err.Ppf ({
+                              Err.error_loc = pos;
+                              Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
+                          }, (*Failure_Must*) 1))
+                        end
+                      else
                         begin
                           stk_vars # push_list lsv;
                           let tmp_res1 = check_exp prog proc rs body post_start_label in
