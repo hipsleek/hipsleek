@@ -5624,9 +5624,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             (* in *)
                                             (* let ctx11 = CF.transform_context add_es_pure ctx11 in *)
                                             (* let _ = print_endline ("### ctx11 (after) = " ^ (Cprinter.string_of_context ctx11)) in *)
-                                            let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
-	                                    let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
-                                            (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
                                             let df = match delayed_f with
                                               | None -> (MCP.mkMTrue pos)
                                               | Some mf -> mf
@@ -5637,8 +5634,23 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 let vname = CP.name_of_spec_var v in
                                                 vname <> Globals.ls_name && vname <> Globals.lsmu_name
                                             ) ref_vars in
-                                            let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
-				            let rs3 = add_path_id rs2 (pid,i) (-1) in
+                                            let rs2 = if (!Globals.allow_threads_as_resource) then
+                                                  (*Threas as resource*)
+                                                  let dl = CP.remove_redundant (MCP.pure_of_mix df) in
+                                                  let ht = CF.mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true new_post dl None pos in
+                                                  let f = CF.formula_of_heap ht no_pos in
+	                                              let rs1 = compose_context_formula ctx11 f new_ref_vars true Flow_replace pos in
+                                                  rs1
+                                                else
+                                                  (*Threads as AND-conj*)
+                                                  let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
+	                                              let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
+                                                  (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
+                                                  let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
+                                                  rs2
+                                            in
+
+				                            let rs3 = add_path_id rs2 (pid,i) (-1) in
                                             let rs4 = prune_ctx prog rs3 in
 	                                    ((SuccCtx [rs4]),TrueConseq)
                                       | None ->

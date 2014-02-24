@@ -3700,7 +3700,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               are generic to the number of arguments *)
             let cts = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts
                 else if (mn=Globals.join_name) then
-                  (if (!Globals.allow_threads) then [Globals.thrd_typ] else [Globals.thread_typ])
+                  (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
                 else
               (
                   List.map2 (fun p1 t2 ->
@@ -3752,7 +3752,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 2"; }
                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
                       else 
-                        (let ret_ct  = if (!Globals.allow_threads) then Globals.thrd_typ else Globals.thread_typ in (*return a thread _type*) 
+                        (let ret_ct  = if (!Globals.allow_threads_as_resource) then Globals.thrd_typ else Globals.thread_typ in (*return a thread _type*) 
                         let positions = List.map I.get_exp_pos method_args in
                         let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
                         let call_e = C.SCall {
@@ -3823,7 +3823,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 try (
                     let pdef = if (mn=Globals.join_name) then proc_decl else I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
                     let proc_args = if (mn=Globals.join_name) then
-                          if (!Globals.allow_threads) then
+                          if (!Globals.allow_threads_as_resource) then
                             (*threads as resource -> thrd type*)
                             let param = {Iast.param_type = Globals.thrd_typ;
                                          Iast.param_name = "id";

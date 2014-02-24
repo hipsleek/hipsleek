@@ -328,6 +328,18 @@ let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
 
 (* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
+let mkThreadNode c n derv perm origins original rsr dl lbl pos = 
+  ThreadNode { h_formula_thread_node = c;
+               h_formula_thread_name = n;
+			   h_formula_thread_derv = derv;
+               h_formula_thread_perm = perm;
+               h_formula_thread_origins = origins;
+               h_formula_thread_original = original;
+               h_formula_thread_resource = rsr;
+               h_formula_thread_delayed = dl;
+               h_formula_thread_label = lbl;
+               h_formula_thread_pos = pos }
+
 let mkFalseLbl (flowt: flow_formula) lbl pos = Base ({
 		formula_base_heap = HFalse; 
 		formula_base_pure = MCP.mkMFalse pos; 
