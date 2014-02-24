@@ -302,6 +302,16 @@ let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
 
+let add_raw_rel prog args pos=
+  let rel_decl =
+    { Cast.rel_name = Globals.rel_default_prefix_name  ^ (string_of_int (Globals.fresh_int()));
+    Cast.rel_vars = args;
+    Cast.rel_formula =(CP.mkTrue pos);}
+  in
+  let _ = prog.Cast.prog_rel_decls <- (rel_decl :: prog.Cast.prog_rel_decls) in
+  let _= Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
+  CP.mkRel_sv rel_decl.Cast.rel_name
+
 let fresh_raw_hp_rel prog is_pre is_unk hp pos =
   try
     let hp_decl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in

@@ -2962,7 +2962,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     in
     (*update n_cmb_defs0*)
     let n_cmb_defs0a = if split_map = [] then n_cmb_defs0 else
-      let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_) ->
+      let split_hps, split_comp_hps = List.fold_left (fun (r1, r2) (hp,_,comps,_,_) ->
           let comps_hps = List.map fst comps in
           (r1@[hp], r2@comps_hps)
       ) ([],[]) split_map in
