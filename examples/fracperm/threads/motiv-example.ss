@@ -23,9 +23,11 @@ void main()
 
   cell x = new cell(0);
   cell y = new cell(0);
-  thrd id = fork(thread1,x,y);
+  thrd id;
+  id = fork(thread1,x,y);
   dprint;
-  int id1;
-  join(id1);
+  //int id1;
+  join(id);
+  dprint;
   assert x'::cell<1> * y'::cell<2>;
 }

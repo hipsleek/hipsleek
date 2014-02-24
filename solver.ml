@@ -5212,6 +5212,201 @@ and count_octx x = match x with
   | OCtx (c1,c2) -> (count_octx c1) + (count_octx c2)
   | _ -> 1
 
+(*
+  es_f : entail state formula
+  id : thread id / thread node
+
+  RETURN:
+  (delayed formula, resource, AND-conj, new_es) option
+  Ctx option
+*)
+and find_thread_delayed_resource es es_f id pos =
+  (*TO CHECK: asssume no disjuntive form in f*)
+  let h, p, ft, t,a = CF.split_components es_f in (*pickup pure constraints and threads*)
+  let ids = MCP.find_closure_mix_formula id p in
+  if (!Globals.allow_threads_as_resource) then
+    begin
+        let heaps =  (CF.split_star_conjunctions h) in (*TOCHECK: complex heaps might throw errors*)
+        let t_heaps, r_heaps = List.partition (fun h -> Gen.BList.mem_eq CP.eq_spec_var (CF.get_node_var h) ids) heaps in
+        let _ = if (List.length t_heaps) > 1 then
+              print_endline ("[Warning] helper_inner: multiple ThreadNode, might need to normalize")
+        in
+        (if ((List.length t_heaps) == 0) then
+              let error_msg = "Thrd node " ^ (Cprinter.string_of_spec_var id) ^ "not found when join" in
+              let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext error_msg es (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must ("101 : "^ error_msg)  Globals.sl_error)), NoAlias) in
+              (None, Some rs)
+         else 
+              let tn = List.hd t_heaps in
+              let dl,rsr =
+                match tn with
+                  | ThreadNode t -> (t.CF.h_formula_thread_delayed, t.CF.h_formula_thread_resource)
+                  | _ -> report_error pos ("helper_inner: expecting ThreadNode")
+              in
+              let new_h = CF.join_star_conjunctions r_heaps in
+              let new_es_f = CF.mkBase new_h p t ft a pos in
+              (Some (dl,rsr,[],new_es_f),None))
+    end
+  else
+    begin
+        (*select the thread with id.*)
+        let rec helper (ls:CF.one_formula list) vars : CF.one_formula option * (CF.one_formula list) =
+          (match ls with
+            | [] -> (None,[])
+            | x::xs ->
+                let id = x.CF.formula_thread in
+                if (List.mem id vars) then
+                  (Some x),xs
+                else
+                  let res1,res2 = helper xs vars in
+                  (match res1 with
+                    | None -> None,[]
+                    | Some f -> Some f, x::res2))
+        in
+        let res1,res2 = helper a ids in (*res1 is the thread, res2 is the rest*)
+        (match res1 with
+          | None ->
+              (*FAIL to find the thread with id*)
+              (*TO CHECK: become FALSE, which may not good enough*)
+              let error_msg = ("Join: thread with id = " ^ (Cprinter.string_of_spec_var id) ^ " not found") in
+              let ctx = (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure) in
+              (None, Some ctx)
+          | Some one_f ->
+              let base = CF.formula_of_one_formula one_f in
+              (******Checking the delayed constraints at join point >>> *******)
+              (* Some variables in delayed constraints could be exist vars
+                 in estate. Therefore, need to rename them appropriately.
+                 The renaming is only used in proving delayed constraints.
+                 After proving, nothing changed
+              *)
+              let delayed_f = MCP.pure_of_mix one_f.CF.formula_delayed in
+              (Some (delayed_f,base,res2,es_f), None))
+    end
+
+(*permfom delayed lockset before join(tid)
+  es: old entail state
+  new_es_f : new formula
+  delayed_f: delayed lockset constraints
+  base : resource/post condition of the thread tid
+  res2 : AND-conj if not(!Globals.allow_threads_as_resource)
+*)
+and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
+  let evars = CF.get_exists_context (CF.Ctx es) in
+  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
+                              ^ "\n### es = " ^ (Cprinter.string_of_estate es)
+                              ^ "\n### delayed_f = " ^ (Cprinter.string_of_pure_formula delayed_f)
+                              ^"\n") pos in
+  (*Those exist vars that are free var in delayed constraints*)
+  let devars =  Gen.BList.intersect_eq CP.eq_spec_var evars (CP.fv delayed_f) in
+  (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
+  (* let _ = print_endline ("MCP.mfv delayed_f = " ^ (Cprinter.string_of_spec_var_list (MCP.mfv delayed_f))) in *)
+  (* let _ = print_endline ("devars = " ^ (Cprinter.string_of_spec_var_list devars)) in *)
+  let delayed_f,new_es_f =
+    if (devars = []) then (delayed_f,new_es_f)
+    else
+      (******helper>*****)
+      let rec helper delayed_f (f:formula) =
+        (match f with
+          |  Exists {formula_exists_qvars = qvars;
+                     formula_exists_heap = qh;
+                     formula_exists_pure = qp;
+                     formula_exists_type = qt;
+                     formula_exists_flow = qfl;
+                     formula_exists_and = qa;
+                     formula_exists_pos = pos} ->
+              (*Only renamed those variables that are related to
+                delayed constraints. Then, remove them from the evars*)
+              let renamed_vars = Gen.BList.intersect_eq CP.eq_spec_var qvars devars in
+              let remained_vars = Gen.BList.difference_eq CP.eq_spec_var qvars devars in
+              let fresh_vars = CP.fresh_spec_vars renamed_vars in
+              let st = List.combine renamed_vars fresh_vars in
+              let new_f = if remained_vars=[] then
+                    mkBase qh qp qt qfl qa pos
+                  else
+                    mkExists remained_vars qh qp qt qfl qa pos
+              in
+              let new_f2 = subst st new_f in
+              let new_delayed_f = CP.subst st delayed_f in
+              (new_delayed_f,new_f2)
+          | Base b -> (delayed_f,Base b)
+          | Or {formula_or_f1 = f1;
+                formula_or_f2 = f2;
+                formula_or_pos = p} ->
+              let delayed_f1,new_f1 = helper delayed_f f1 in
+              let delayed_f2,new_f2 = helper delayed_f1 f2 in
+              let new_f = Or {formula_or_f1 = new_f1;
+                              formula_or_f2 = new_f2;
+                              formula_or_pos = p}
+              in
+              (delayed_f2,new_f))
+      in
+      (******<helper*****)
+      let new_es_f,new_delayed_f = helper delayed_f new_es_f in
+      new_es_f,new_delayed_f
+  in
+  let new_es = {es with es_formula = new_es_f; es_evars = Gen.BList.difference_eq CP.eq_spec_var es.es_evars devars} in
+  let ls_var_uprimed = CP.mkLsVar Unprimed in
+  let ls_var_primed = CP.mkLsVar Primed in
+  let ndf = CP.apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
+  let new_f = CF.formula_of_pure_formula ndf no_pos in
+  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: after elim exists:  \n "
+                              ^ "\n### es = " ^ (Cprinter.string_of_estate new_es)
+                              ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
+                              ^"\n") pos in
+  let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
+  rs, prf
+
+and compose_thread_post_condition prog es new_es_f post res2 pos =
+  (**********Compose variable permissions >>> *******)
+  (* let ps,new_post = CF.filter_varperm_formula post in *)
+  (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
+  let full_vars = CF.get_varperm_formula post VP_Full in
+  let new_post = CF.drop_varperm_formula post in
+  let zero_vars = es.CF.es_var_zero_perm in
+  let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+  if (tmp!=[]) then
+    begin
+        (*all @full in the conseq should be in @zero in the ante*)
+        let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
+        (mkFailCtx_simple msg es (CF.mkTrue_nf pos) pos, Failure)
+    end
+  else
+    begin
+        let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
+        let es = {es with CF.es_var_zero_perm=vars1} in
+        (**********<<< Compose @full variable permissions *******)
+        let new_es_f = if (!Globals.allow_threads_as_resource) then new_es_f else CF.replace_formula_and res2 new_es_f 
+        in
+        let primed_full_vars = List.map (fun var -> match var with
+          | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+        (* let _ = print_endline ("check_exp: SCall : join : \n ### new_es_f = " ^ (Cprinter.string_of_formula new_es_f) ^ " \n new_post = " ^ (Cprinter.string_of_formula new_post)) in *)
+        (**** DO NOT COMPOSE lockset because they are thread-local*****)
+        let new_f = CF.compose_formula_join new_es_f new_post (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
+        let new_es = {es with CF.es_formula = new_f;
+            es_unsat_flag = true;} in
+        let nctx = CF.Ctx new_es in
+        let rs = CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) nctx in
+        let rs2 = prune_ctx prog rs in
+        (*********CHECK db-consistency***********)
+        let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs2 in
+        let res = (if (!Globals.perm = Bperm) then
+              let hfv = (CF.fv_heap_of new_post) in
+              let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
+              (*Only check for consistency when there are barrier variables inside the post-condition*)
+              if (bfv == []) then None
+              else
+                (*normalize until a fixpoint is reached*)
+                (* check_barrier_inconsistency_context prog res1 *)
+                let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
+                if (isFailCtx res) then Some (res,prf)
+                else None
+            else None)
+        in
+        (match res with
+          | Some res -> res
+          | None -> (SuccCtx [rs_norm] ,TrueConseq))
+    end
+
+
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) = 
   let slk_entail ctx conseq = heap_entail_conjunct_lhs_struc_x p is_folding has_post ctx conseq tid delayed_f join_id pos pid in
   (* WN : to log sleek commands here *)
@@ -5244,161 +5439,26 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                   (****************************************************)
                   (match join_id with
                     | Some id ->
-                          let es_f = es.CF.es_formula in
-                          (*TO CHECK: asssume no disjuntive form in f*)
-                          let _, p, _, _,a = CF.split_components es_f in (*pickup pure constraints and threads*)
-                          let ids = MCP.find_closure_mix_formula id p in
-                          (*select the thread with id.*)
-                          let rec helper (ls:CF.one_formula list) vars : CF.one_formula option * (CF.one_formula list) =
-                            (match ls with
-                              | [] -> (None,[])
-                              | x::xs ->
-                                    let id = x.CF.formula_thread in
-                                    if (List.mem id vars) then
-                                      (Some x),xs
-                                    else
-                                      let res1,res2 = helper xs vars in
-                                      (match res1 with
-                                        | None -> None,[]
-                                        | Some f -> Some f, x::res2))
-                          in
-                          let res1,res2 = helper a ids in (*res1 is the thread, res2 is the rest*)
-                          (match res1 with
-                            | None ->
-                                  (*FAIL to find the thread with id*)
-                                  (*TO CHECK: become FALSE, which may not good enough*)
-                                  let error_msg = ("Join: thread with id = " ^ (Cprinter.string_of_spec_var id) ^ " not found") in
-                                  (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
-                            | Some one_f ->
-                                  let base = CF.formula_of_one_formula one_f in
-                                  (******Checking the delayed constraints at join point >>> *******)
-                                  (* Some variables in delayed constraints could be exist vars
-                                     in estate. Therefore, need to rename them appropriately.
-                                     The renaming is only used in proving delayed constraints.
-                                     After proving, nothing changed
-                                  *)
-                                  let evars = CF.get_exists_context (CF.Ctx es) in
-                                  let delayed_f = one_f.CF.formula_delayed in
-                                  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
-                                  ^ "\n### es = " ^ (Cprinter.string_of_estate es)
-                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_mix_formula delayed_f)
-                                  ^"\n") pos in
-                                  (*Those exist vars that are free var in delayed constraints*)
-                                  let devars =  Gen.BList.intersect_eq CP.eq_spec_var evars (MCP.mfv delayed_f) in
-                                  (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
-                                  (* let _ = print_endline ("MCP.mfv delayed_f = " ^ (Cprinter.string_of_spec_var_list (MCP.mfv delayed_f))) in *)
-                                  (* let _ = print_endline ("devars = " ^ (Cprinter.string_of_spec_var_list devars)) in *)
-                                  let delayed_f,new_es_f =
-                                    if (devars = []) then (delayed_f,es_f)
-                                    else
-                                      (******helper>*****)
-                                      let rec helper delayed_f (f:formula) =
-                                        match f with
-                                          |  Exists {formula_exists_qvars = qvars;
-                                             formula_exists_heap = qh;
-                                             formula_exists_pure = qp;
-                                             formula_exists_type = qt;
-                                             formula_exists_flow = qfl;
-                                             formula_exists_and = qa;
-                                             formula_exists_pos = pos} ->
-                                                 (*Only renamed those variables that are related to
-                                                   delayed constraints. Then, remove them from the evars*)
-                                                 let renamed_vars = Gen.BList.intersect_eq CP.eq_spec_var qvars devars in
-                                                 let remained_vars = Gen.BList.difference_eq CP.eq_spec_var qvars devars in
-                                                 let fresh_vars = CP.fresh_spec_vars renamed_vars in
-                                                 let st = List.combine renamed_vars fresh_vars in
-                                                 let new_f = if remained_vars=[] then
-                                                   mkBase qh qp qt qfl qa pos
-                                                 else
-                                                   mkExists remained_vars qh qp qt qfl qa pos
-                                                 in
-                                                 let new_f2 = subst st new_f in
-                                                 let new_delayed_f = memo_subst st delayed_f in
-                                                 (new_delayed_f,new_f2)
-                                          | Base b -> (delayed_f,Base b)
-                                          | Or {formula_or_f1 = f1;
-                                            formula_or_f2 = f2;
-                                            formula_or_pos = p} ->
-                                                let delayed_f1,new_f1 = helper delayed_f f1 in
-                                                let delayed_f2,new_f2 = helper delayed_f1 f2 in
-                                                let new_f = Or {formula_or_f1 = new_f1;
-                                                formula_or_f2 = new_f2;
-                                                formula_or_pos = p}
-                                                in
-                                                (delayed_f2,new_f)
-                                      in
-                                      (******<helper*****)
-                                      let new_es_f,new_delayed_f = helper delayed_f es_f in
-                                      new_es_f,new_delayed_f
-                                  in
-                                  let new_es = {es with es_formula = new_es_f; es_evars = Gen.BList.difference_eq CP.eq_spec_var es.es_evars devars} in
-                                  let ls_var_uprimed = CP.mkLsVar Unprimed in
-                                  let ls_var_primed = CP.mkLsVar Primed in
-                                  let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
-                                  let new_f = CF.formula_of_mix_formula ndf no_pos in
-                                  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: after elim exists:  \n "
-                                  ^ "\n### es = " ^ (Cprinter.string_of_estate new_es)
-                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
-                                  ^"\n") pos in
-                                  let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
-                                  (if (CF.isFailCtx rs) then
+                        let res,ctx_option = find_thread_delayed_resource es es.CF.es_formula id pos in
+                        (match res, ctx_option with
+                          | _ , Some ctx -> ctx
+                          | Some (delayed_f,post,res2,new_es_f), _ ->
+                              let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
+                              (if (CF.isFailCtx rs) then
                                     (*FAIL to satisfy the delayed constraints*)
                                     (*TO CHECK: become FALSE, which may not good enough*)
                                     let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
                                     rs,prf
-                                  else
+                               else
                                     let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
                                     (*******<<<Checking the delayed constraints at join point*****)
                                     (*if checking succeeds --> proceed as normal*)
-                                    (**********Compose variable permissions >>> *******)
-                                    (* let ps,new_base = CF.filter_varperm_formula base in *)
-                                    (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
-
-                                    let full_vars = CF.get_varperm_formula base VP_Full in
-                                    let new_base = CF.drop_varperm_formula base in
-                                    let zero_vars = es.CF.es_var_zero_perm in
-                                    let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
-                                    (if (tmp!=[]) then
-                                      (*all @full in the conseq should be in @zero in the ante*)
-                                      let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
-                                      (mkFailCtx_simple msg es (CF.mkTrue_nf pos) pos, Failure)
-                                    else
-                                      let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
-                                      let es = {es with CF.es_var_zero_perm=vars1} in
-                                      (**********<<< Compose @full variable permissions *******)
-                                      let es_f = CF.replace_formula_and res2 es_f in
-                                      let primed_full_vars = List.map (fun var -> match var with
-                                        | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
-                                      (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
-                                      (**** DO NOT COMPOSE lockset because they are thread-local*****)
-                                      let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
-                                      let new_es = {es with CF.es_formula = new_f;
-                                          es_unsat_flag = true;} in
-                                      let nctx = CF.Ctx new_es in
-                                      let rs = CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) nctx in
-                                      let rs2 = prune_ctx prog rs in
-                                      (*********CHECK db-consistency***********)
-                                      let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs2 in
-                                      let res = if (!Globals.perm = Bperm) then
-                                        let hfv = (CF.fv_heap_of new_base) in
-                                        let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
-                                        (*Only check for consistency when there are barrier variables inside the post-condition*)
-                                        if (bfv == []) then None
-                                        else
-                                          (*normalize until a fixpoint is reached*)
-                                          (* check_barrier_inconsistency_context prog res1 *)
-                                          let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
-                                          if (isFailCtx res) then Some (res,prf)
-                                          else None
-                                      else None
-                                      in
-                                      match res with
-                                        | Some res -> res
-                                        | None -> (SuccCtx [rs_norm] ,TrueConseq)
-                                              (****************************************)
-                                    ) (*END IF*)
-                                  ) (*END IF*)
-                          ) (* END match res1 with *)
+                                    compose_thread_post_condition prog es new_es_f post res2 pos
+                              ) (*END (if (CF.isFailCtx rs) then*)
+                          | _ ->
+                              let error_msg = ("Join with thread with id = " ^ (Cprinter.string_of_spec_var id) ^" : unexpected ") in
+                              (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
+                        ) (*END match res, ctx_option with *)
                     | None ->
                           (****************************************************)
                           (**************** <<< Perform check when join *******)
