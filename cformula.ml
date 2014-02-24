@@ -4019,6 +4019,7 @@ and hp_rel_def = {
     def_rhs : formula_guard list;
 }
 
+
 (* to convert to using hp_rel_def_new *)
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
@@ -4036,6 +4037,11 @@ and infer_state = {
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
+
+let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+(* outcome from shape_infer *)
+let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
+  !print_hprel_def_short (==)
 
 (*for drop non-selective subformulas*)
 let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
@@ -5189,10 +5195,23 @@ let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
   let pr2 = !print_spec_var_list in
   let pr_data_node dn= !print_h_formula (DataNode dn) in
   let pr_view_node dn= !print_h_formula (ViewNode dn) in
-  Debug.no_3 "look_up_reachable_data_node_w_alias" pr1 pr2 string_of_int
+  Debug.no_3 "look_up_reachable_ptrs_w_alias" pr1 pr2 string_of_int
       (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )
              (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
       f roots output_ctr
+
+let look_up_reachable_first_reachable_view prog f roots=
+  let ptrs = look_up_reachable_ptrs_f prog f roots true true in
+  if ptrs = [] then [] else
+    let _, hvs, _ = get_hp_rel_formula f in
+    List.filter (fun hv -> CP.mem_svl hv.h_formula_view_node ptrs) hvs
+
+let look_up_reachable_first_reachable_view prog f roots=
+  let pr1 = !print_formula in
+  let pr_view_node dn= !print_h_formula (ViewNode dn) in
+  Debug.no_2 "look_up_reachable_first_reachable_view" pr1 !CP.print_svl (pr_list pr_view_node)
+      (fun _ _ -> look_up_reachable_first_reachable_view prog f roots)
+      f roots
 
 let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
@@ -6268,9 +6287,9 @@ let drop_views_formula_x (f0:formula) views : formula=
   in
   helper f0
 
-let drop_view_formula (f2_f:formula) views: formula =
+let drop_views_formula (f2_f:formula) views: formula =
   let pr2 x= String.concat ";" x in
-  Debug.no_2 "drop_view_formula" !print_formula pr2
+  Debug.no_2 "drop_views_formula" !print_formula pr2
       !print_formula
       drop_views_formula_x f2_f views
 
@@ -6278,7 +6297,7 @@ let drop_view_struc_formula_x (f0 : struc_formula) views: struc_formula =
   let rec helper f=
     match f with
 	  | ECase b -> report_error no_pos "drop_view_struc_formula: not handle yet"
-	  | EBase b -> EBase {b with  formula_struc_base = drop_view_formula b.formula_struc_base views;
+	  | EBase b -> EBase {b with  formula_struc_base = drop_views_formula b.formula_struc_base views;
 		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
 	  | EAssume _ -> f
 	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
@@ -6408,7 +6427,7 @@ let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula
 (*******************************************)
 
 let xpure_for_hnodes hf=
-let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
+  let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   (*currently we just work with data nodes*)
   let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in

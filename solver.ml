@@ -38,10 +38,34 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 (*used for classic*)
 let rhs_rest_emp = ref true
 
-(*cyclic: should improve the desgim. why AS call solver??*)
+(*cyclic: should improve the design. why AS call solver??*)
 let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
 let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
+    let _ = print_endline ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))
+
+(*
+: (fun int ->
+  Sautility.C.prog_decl ->
+  Lemma.CF.h_formula ->
+  Lemma.CF.MCP.mix_formula ->
+  int ->
+  Lemma.CF.MCP.mix_formula * Solver.CP.spec_var list * Solver.CF.mem_formula)
+*)
+let manage_infer_pred_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl)
+  (fnc)->
+      let _ = print_endline ("Solver.manage_infer_lemmas: not int " ) in
+      (([],[],None): ((CP.formula * CP.formula * CP.formula * CP.formula) list) * (CF.hp_rel_def list) * CF.list_context list option))
+
+let trans_hprel_2_cview = ref (fun (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) (proc_name:string) (hpdefs:CF.hp_rel_def list)->
+    let _ = print_endline ("Solver.trans_hprel_2_cview: not int " ) in
+    (([], []): (view_decl list * hp_decl list)))
+
+let trans_formula_hp_2_view = ref (fun (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) (proc_name:string)
+  (chprels_decl: hp_decl list) (hpdefs:CF.hp_rel_def list) (view_equivs: (Globals.ident * Globals.ident) list)
+  (f:CF.formula) ->
+    let _ = print_endline ("Solver.trans_formula_hp_2_view: not int " ) in
+    (f:CF.formula))
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
@@ -11641,7 +11665,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
-            Context.match_res_holes = holes;} as m_res, unfold_num)->
+            Context.match_res_holes = holes;} as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
             Debug.tinfo_hprint (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
@@ -11660,10 +11684,37 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let orig_rhs_b = if CP.isConstTrue estate.CF.es_conseq_pure_lemma then rhs_b
               else CF.mkAnd_base_pure rhs_b (MCP.mix_of_pure estate.CF.es_conseq_pure_lemma) no_pos
             in
-            let _ = if !Globals.lemma_syn then let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
-              estate lhs_node lhs_b rhs_node orig_rhs_b in () else () in
+            let new_view_opt = if !Globals.lemma_syn then
+              let nview_opt = if lem_type =2 then
+                let nview = Lemsyn.gen_lemma_infer prog Infer.rel_ass_stk CF.rel_def_stk (!rev_trans_formula)
+              (!manage_unsafe_lemmas) (!manage_infer_pred_lemmas) (!trans_hprel_2_cview)
+                    (!trans_formula_hp_2_view) xpure_heap estate lem_type lhs_node rhs_node
+                in
+                (Some nview)
+              else
+                let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
+                    estate lem_type lhs_node lhs_b rhs_node orig_rhs_b
+                in
+                None
+              in
+               nview_opt
+            else None
+            in
             (*unfold*)
-            let n_act = Context.M_unfold (m_res, unfold_num) in
+            let new_m_res = match unfold_opt with
+              | None -> m_res
+              | Some lv -> {m_res with Context.match_res_lhs_node = lv}
+            in
+            let n_act =  if lem_type = 2 then
+              let left_ls = Cast.look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (Cfutil.get_data_view_name lhs_node)
+                (match new_view_opt with
+                  | Some v -> CP.name_of_spec_var v
+                  | _ -> "")
+              in
+              let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l))) left_ls in
+              (Context.Search_action left_acts)
+            else Context.M_unfold (new_m_res, unfold_num)
+            in
             let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
             let new_trace = str::(List.tl estate.es_trace) in
             let new_estate = {estate with CF.es_trace = new_trace;
@@ -11678,7 +11729,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let l_perm = get_node_perm lhs_node in
 	    let r_perm = get_node_perm rhs_node in
 	    let v_rest, v_consumed = 
-	      let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> (Cpure.get_var v) in			
+	      let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> (Cpure.get_var v) in
 	      Perm.fresh_cperm_var () l_var , Perm.fresh_cperm_var () l_var in
 	    if not (test_frac_subsume prog estate rhs_b.formula_base_pure l_perm r_perm) then 
 	      (CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error)), NoAlias)

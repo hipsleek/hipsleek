@@ -235,6 +235,7 @@ let convert_prim_to_obj (t:typ) : typ =
   )
 
 (*for heap predicate*)
+let default_prefix_pure_hprel = "_pure_of_"
 let hp_default_prefix_name = "HP_"
 let rel_default_prefix_name = "P_"
 let hppost_default_prefix_name = "GP_"

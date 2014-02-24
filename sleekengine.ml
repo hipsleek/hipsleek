@@ -414,7 +414,7 @@ let process_list_lemma ldef_lst  =
     let _ = begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
-      else Sa3.rel_def_stk
+      else Cformula.rel_def_stk
       in
       if not(rel_defs# is_empty) then
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
@@ -812,7 +812,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let _ = CF.residues := None in
   let _ = Infer.rel_ass_stk # reset in
   let _ = Sa2.rel_def_stk # reset in
-  let _ = Sa3.rel_def_stk # reset in
+  let _ = CF.rel_def_stk # reset in
   let _ = Iast.set_iprog iprog in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check 1:"
@@ -1100,7 +1100,7 @@ let process_shape_infer pre_hps post_hps=
     begin
       let rel_defs = if not (!Globals.pred_syn_modular) then
         Sa2.rel_def_stk
-      else Sa3.rel_def_stk
+      else CF.rel_def_stk
       in
       if not(rel_defs# is_empty) then
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
@@ -1377,7 +1377,7 @@ let process_shape_conquer sel_ids cond_paths=
   let _ = Debug.ninfo_pprint "process_shape_conquer\n" no_pos in
   let ls_pr_defs = !sleek_hprel_defns in
   let link_hpargs = !sleek_hprel_unknown in
-  let defs =
+  let (* defs *) _ =
     (* if not (!Globals.pred_syn_modular) then *)
       let orig_vars = List.fold_left (fun ls (_,d)-> ls@(CF.h_fv d.CF.def_lhs)) [] ls_pr_defs in
       let sel_hps = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) (sel_ids) in
@@ -1448,7 +1448,7 @@ let process_shape_postObl pre_hps post_hps=
 let process_shape_sconseq pre_hps post_hps=
   (* let _ = Debug.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
+  let (* sel_hps *)_ , (* sel_post_hps *) _ = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
   let constrs1 = Sacore.do_strengthen_conseq !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
@@ -1468,7 +1468,7 @@ let process_shape_sconseq pre_hps post_hps=
 let process_shape_sante pre_hps post_hps=
   (* let _ = Debug.info_pprint "process_shape_infer" no_pos in *)
   let hp_lst_assume = !sleek_hprel_assumes in
-  let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
+  let (* sel_hps *) _ , (* sel_post_hps *) _ = Sautil.get_pre_post pre_hps post_hps hp_lst_assume in
   let constrs1 = Sacore.do_strengthen_ante !cprog [] hp_lst_assume in
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let _ =
@@ -1496,7 +1496,7 @@ let process_pred_split ids=
           if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
         | _ -> r
   ) [] !sleek_hprel_defns in
-  let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Sa3.rel_def_stk sel_hp_defs in
+  let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
   let _ = if split_map = [] then () else
     (*print*)
     let _ = print_endline ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
@@ -1534,13 +1534,13 @@ let process_shape_infer_prop pre_hps post_hps=
   in
   let _ = if not (!Globals.pred_syn_modular) then
     begin
-      let rel_defs =  Sa3.rel_def_stk in
+      let rel_defs =  Cformula.rel_def_stk in
       if not(rel_defs# is_empty) then
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";
       print_endline "*************************************";
-      print_endline (Sa3.rel_def_stk # string_of_reverse);
+      print_endline (Cformula.rel_def_stk # string_of_reverse);
       print_endline "*************************************"
     end
   in

@@ -2589,7 +2589,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         ()) scc_procs
     in
     let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
-    else Sa3.rel_def_stk
+    else CF.rel_def_stk
     in
     if not(rel_defs# is_empty) (* && !Globals.sap *) then
       begin
@@ -2613,7 +2613,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
         print_endline (pr1 defs);
         if !Globals.testing_flag then print_endline "<dstop>"; 
         print_endline "*************************************";
-        let _ = Sa3.rel_def_stk # reset in
+        let _ = CF.rel_def_stk # reset in
         ()
       end;
     (*transform the result: hpdef --> views and transform specs*)
@@ -3231,6 +3231,7 @@ let check_prog iprog (prog : prog_decl) =
   )
     else  None
   in
+  let _ = I.set_iprog iprog in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
   (* if true (\* !Globals.check_coercions *\) then  *)

@@ -1,0 +1,55 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred sll<n, sm, lg> ==
+		self::node<sm, null> & sm=lg & n=1 
+	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+	inv n>=1 & sm<=lg.
+
+
+pred ll<n> == self=null & n=0
+	or self::node<_, r> * r::ll<n-1>
+	inv n>=0.
+
+
+//1.
+checkentail xs::node<sm_1099,r_1012>@M * r_1012::node<_,q_1102> * q_1102::sll<flted_10_1101,qs_1103,lg_1100>@M & q_1102!=null
+ |-  (exists n_1345: xs::ll<n_1345>).
+
+/*
+//2.
+checkentail xs'::node<sm_1099,r_1012>@M * r_1012::node<_,q_1102> * q_1102::sll<flted_10_1101,qs_1103,lg_1100>@M & xs=xs'
+ |-  (exists n_1345: xs::ll<n_1345>).
+
+
+//3.
+ checkentail q_1102::sll<flted_10_1101,qs_1103,lg_1100>@M *
+xs'::node<xnv_54',r_1012>@M * r_1012::node<xv_53',q_1102>@M&0<n_1024 &
+0<n_1024 & 0<n_1024 & 0<n_1024 & 0<n_1024 & n_1024=flted_10_1101+1 &
+q_1102!=null & s_1039<=qs_1103 & s_1039=sm_1099 & l_1040=lg_1100 &
+0<n_1024 & 0<n_1024 & n=flted_15_1010+1 & 0<n & xs=xs' & r_1012!=null &
+!(v_bool_30_962') & r_1012!=null & !(v_bool_30_962') &
+flted_15_1010=n_1024 & 0<=flted_15_1010 & !(tmp_51') & 0<=n_1024 &
+Anon_1011=xv_53' & sm_1099=xnv_54' & xnv_54'<xv_53' & !(v_bool_37_960') &
+xnv_54'<xv_53' & !(v_bool_37_960') & Anon_1011=val_40_1131 &
+sm_1099=val_41_1141 & flag_52' & v_boolean_44_961' & flag_52' &
+res=v_boolean_44_961'
+ |-  (exists n_1291: xs::ll<n_1291>@M).
+
+
+//3.
+ checkentail q_1102::sll<flted_10_1101,qs_1103,lg_1100>@M *
+xs'::node<xnv_54',r_1012>@M * r_1012::node<xv_53',q_1102>@M&0<n_1024 &
+0<n_1024 & 0<n_1024 & 0<n_1024 & 0<n_1024 & n_1024=flted_10_1101+1 &
+q_1102!=null & s_1039<=qs_1103 & s_1039=sm_1099 & l_1040=lg_1100 &
+0<n_1024 & 0<n_1024 & n=flted_15_1010+1 & 0<n & xs=xs' & r_1012!=null &
+!(v_bool_30_962') & r_1012!=null & !(v_bool_30_962') &
+flted_15_1010=n_1024 & 0<=flted_15_1010 & !(tmp_51') & 0<=n_1024 &
+Anon_1011=xv_53' & sm_1099=xnv_54' & xnv_54'<xv_53' & !(v_bool_37_960') &
+xnv_54'<xv_53' & !(v_bool_37_960') & Anon_1011=val_40_1131 &
+sm_1099=val_41_1141 & flag_52' & v_boolean_44_961' & flag_52' &
+res=v_boolean_44_961'
+ |-  (exists n_1291: xs::ll<n_1291>@M).
+*/
