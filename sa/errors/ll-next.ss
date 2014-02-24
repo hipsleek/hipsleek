@@ -1,20 +1,25 @@
 data node {
-	int val;
-	node next
+  int val;
+  node next;
 }
 
 HeapPred H(node a).
   HeapPred G(node a, node b).
-
-
+ 
 /* return the tail of a singly linked list */
-node get_next(node x)
+  node get_next(node x)
   infer[H,G]
   requires H(x)
-  ensures G(x,res);//'
-
+     ensures G(x,res);//'
 {
   if (x==null) return null;
   else return x.next;
 }
 
+/*
+case x == null =>
+  ensures res = null;
+case x != null =>
+  requires x::node(val,next)
+  ensures x::node(val,next) * res = next;
+*/

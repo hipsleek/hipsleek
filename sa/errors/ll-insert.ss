@@ -1,28 +1,37 @@
 data node {
-	int val; 
-	node next;	
+  int val;
+  node next;
 }
 
+HeapPred H(node a, int b).
+  HeapPred G(node a, int b, node c).
 
-/* view for a singly linked list */
-/*
-ll<> == self = null
-	or self::node<_, q> * q::ll<>
-  inv true;
-*/
-HeapPred H1(node a).
-HeapPred G1(node a).
-void insert(node x, int a)
-  /* requires x::node<_,p> * p::ll<> */
-  /* ensures x::node<_,p1> * p1::ll<>; */
-  infer[H1,G1]
-  requires H1(x)
-  ensures G1(x);
+  node insert(node x, int a)
+  infer[H,G]
+  requires H(x,a)
+     ensures G(x,a,res);
 {
-			//dprint;
-      node tmp = null;
-	if (x.next == null)
-		x.next = new node(a, tmp);
-	else 
-		insert(x.next, a);
-} 
+  if (x == null)
+    return new node(a, null);
+  else if (x.next == null)
+    {
+      x.next = new node(a, null);
+      return x;
+    }
+  else
+    {
+      x.next = insert(x.next, a);
+      return x;
+    }
+}
+
+/*
+H'(x) := x::node(val,next) & next = null \/ x::node(val,next) * H'(next) & next != null
+G'(x,a,res) := x::node(val,next) * next::node(a,null) & res = x \/ x::node(val,v) * G'(next,a,v) & res = x & next != null
+
+case x == null =>
+  ensures res::node(a,null);
+case x != null =>
+  requires H'(x)
+  ensures G'(x,a,res);
+*/
