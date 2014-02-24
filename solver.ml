@@ -10215,7 +10215,7 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
 
 *)
 (*Only care about this if you are matching two HeapNode*)
-and do_match_thread_nodes l_node r_node l_args r_args label_list estate pos =
+and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list =
   let is_thread,eq_dl,match_number,subst, remained_rsr =
     (match (l_node,r_node) with
       | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
@@ -10263,27 +10263,58 @@ and do_match_thread_nodes l_node r_node l_args r_args label_list estate pos =
         let is_matched = true in
         label_list, l_args, r_args, (is_thread,is_matched,None,None)
     | true, true, 3 ->
-        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
-        label_list, l_args, r_args, (is_thread,false,None, None)
+        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources syntatically unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources syntatically unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
+        label_list, l_args, r_args, (is_thread,false,Some rs, None)
     | true, true, 2 ->
         (*For SPLIT *)
-        let label_list = if ((List.length subst) ==0 ) then label_list
-            else
-              (*Create a list of empty labels*)
-              let rec helper i =
-                if (i==0) then []
-                else
-                  let res = helper (i-1) in
-                  (LO.unlabelled)::res
-              in
-              let lbs = helper (List.length subst) in
-              lbs@label_list
-        in
-        let l_subst,r_subst = List.split subst in
-        let l_args = l_subst@l_args in
-        let r_args = r_subst@r_args in
-        let is_matched = true in
-        label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr)
+        (*If NOT syntatic MATCH, try to permform semantic MATCH/SPLIT*)
+        (*This will invoke provers, hence, is often slow.
+          Therefore, we do a syntatic check above first,
+          before going with this option *)
+        (match (l_node,r_node) with
+          | ThreadNode ({CF.h_formula_thread_resource = l_rsr;} as l_t),
+            ThreadNode ({CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+              let new_estate = {estate with es_formula = l_rsr;} in
+              let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
+              let new_conseq = r_rsr in
+              let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
+      		  (match res_ctx with
+	            | SuccCtx(cl) ->
+                    let formulas = List.map (fun c -> match c with
+                      | Ctx es ->
+                          let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in
+                          let f = CF. push_exists evars es.es_formula in
+                          (*Simplify the remained resources*)
+                          let f = CF.elim_exists f in
+                          (CF.simplify_pure_f f)
+                      | OCtx _ -> report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected Octx. Not yet handled"
+                    ) cl
+                    in
+                    let is_matched = true in
+                    label_list, l_args, r_args, (is_thread,is_matched, None, Some formulas)
+                | FailCtx _ ->
+                    let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources semantically unmatched between LHS node and RHS node" new_estate new_conseq None pos, CF.mk_failure_must "103 : resources semantically unmatched between LHS and RHS thread nodes" Globals.sl_error)), NoAlias) in
+                    label_list, l_args, r_args, (is_thread,false,Some rs,None))
+          | _ ->
+              report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
+
+        (* let label_list = if ((List.length subst) ==0 ) then label_list *)
+        (*     else *)
+        (*       (\*Create a list of empty labels*\) *)
+        (*       let rec helper i = *)
+        (*         if (i==0) then [] *)
+        (*         else *)
+        (*           let res = helper (i-1) in *)
+        (*           (LO.unlabelled)::res *)
+        (*       in *)
+        (*       let lbs = helper (List.length subst) in *)
+        (*       lbs@label_list *)
+        (* in *)
+        (* let l_subst,r_subst = List.split subst in *)
+        (* let l_args = l_subst@l_args in *)
+        (* let r_args = r_subst@r_args in *)
+        (* let is_matched = true in *)
+        (* label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr) *)
     | true, true, _ ->
         report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
@@ -10499,7 +10530,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             in
 
             (*** BEGIN threads as resource *****)
-            let label_list, l_args, r_args, (is_thread, is_matched, rs_matched, remained_rsr) = do_match_thread_nodes l_node r_node l_args r_args label_list estate pos in
+            let label_list, l_args, r_args, (is_thread, is_matched, rs_matched, remained_rsr) = do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list in
             if (is_thread && (not is_matched)) then
               match rs_matched with (*EXIT points of do_match*)
                 | None -> report_error no_pos "[solver.ml] do_match: expecting some result"
@@ -10510,6 +10541,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (match remained_rsr with
                   | None -> CF.HTrue
                   | Some f ->
+                      (*LDKTODO: currently try the first only*)
+                      let f = List.hd f in
                       (match l_node with
                         | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}
                         | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
@@ -12317,27 +12350,28 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (add_str "rhs_b" pr3) pr2
       (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) a estate conseq (Base lhs_b) (Base rhs_b) 
       
-      
-and do_universal_perms (perm1:cperm) (perm2:cperm) =
-  (match perm1,perm2 with
-    | Some _, Some _ ->
-        let ls1 = Perm.get_cperm_var perm1 in
-        let ls2 = Perm.get_cperm_var perm2 in
-        (ls1,ls2)
-    | Some f1, None ->
-        (match !Globals.perm with
-          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
-          | _ ->
-              let f1 = Cpure.get_var f1 in
-              ([f1],[full_perm_var()]))
-    | None, Some f2 ->
-        (match !Globals.perm with
-          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
-          | _ ->
-              let f2 = Cpure.get_var f2 in
-              ([full_perm_var()],[f2]))
-    | None, None ->
-        ([],[]))
+
+(*2014-02-24: replaced by Perm.get_perm_var_lists *)
+(* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
+(*   (match perm1,perm2 with *)
+(*     | Some _, Some _ -> *)
+(*         let ls1 = Perm.get_cperm_var perm1 in *)
+(*         let ls2 = Perm.get_cperm_var perm2 in *)
+(*         (ls1,ls2) *)
+(*     | Some f1, None -> *)
+(*         (match !Globals.perm with *)
+(*           | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm" *)
+(*           | _ -> *)
+(*               let f1 = Cpure.get_var f1 in *)
+(*               ([f1],[full_perm_var()])) *)
+(*     | None, Some f2 -> *)
+(*         (match !Globals.perm with *)
+(*           | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm" *)
+(*           | _ -> *)
+(*               let f2 = Cpure.get_var f2 in *)
+(*               ([full_perm_var()],[f2])) *)
+(*     | None, None -> *)
+(*         ([],[])) *)
 
 (*******************************************************************************************************************************************************************************************)
 (*
@@ -12462,7 +12496,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 (*subst perm variable when applicable*)
                 let perms1,perms2 =
                   if (Perm.allow_perm ()) then
-                    do_universal_perms perm1 perm2
+                    Perm.get_perm_var_lists perm1 perm2
                   else
                     ([],[])
                 in
@@ -12661,7 +12695,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		  (* apply \rho (G)	and \rho(B) *)
                   let perms1,perms2 =
                     if (Perm.allow_perm ()) then
-                      do_universal_perms perm1 perm2
+                      Perm.get_perm_var_lists perm1 perm2
                     else ([],[])
                   in
                   let fr_vars = perms2@(p2 :: ps2)in
@@ -13353,7 +13387,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
           when CF.is_eq_node_name c1 c2 ->
             let perms1, perms2 = 
               if (Perm.allow_perm ()) then
-                do_universal_perms perm1 perm2
+                Perm.get_perm_var_lists perm1 perm2
               else ([],[]) in
             let fr_vars = perms2@(p2 :: ps2) in
             let to_vars = perms1@(p1 :: ps1) in
@@ -13428,6 +13462,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
               let name = match anode with
                 | ViewNode vn -> vn.h_formula_view_name
                 | DataNode dn -> dn.h_formula_data_name
+                | ThreadNode tn -> tn.h_formula_thread_name
                 | HTrue -> "htrue"
                 | _ -> let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
                   ""

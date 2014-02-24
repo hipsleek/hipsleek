@@ -121,6 +121,7 @@ module type PERM =
     val fresh_cperm_var : cperm_var -> cperm_var
     val mkEq_cperm : cperm_var -> cperm_var -> loc -> Cpure.b_formula
     val rev_trans_perm : cperm -> iperm   (*revert from cperm to iperm*)
+    val get_perm_var_lists : cperm -> cperm -> (cperm_var list) * (cperm_var list) (*get two equal-size lists of varperms*)
    end;;
 
 (*==============================*)
@@ -294,7 +295,21 @@ struct
                 Some (Ipure.Bptriple ((nc,nt,na),p))
             | _ -> failwith ("rev_trans_perm: expecting Bptriple"))
       | None -> None)
-end;;
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some _, None
+      | None, Some _ ->
+          report_error no_pos "[BPERM] get_perm_var_lists : unexpected for bperm"
+      | None, None ->
+          ([],[]))
+
+end;; (*BPERM*)
 
 
 (*=======================================*)
@@ -371,7 +386,20 @@ struct
             | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
             | _ -> failwith ("rev_trans_perm: expecting Var"))
       | None -> None)
-end;;
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some _, None
+      | None, Some _ ->
+          report_error no_pos "[DPERM] get_perm_var_lists : unexpected for Dperm"
+      | None, None ->
+          ([],[]))
+end;; (*DPERM*)
 
 (*==============================*)
 (*====fractional permissions====*)
@@ -488,7 +516,24 @@ struct
             | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
             | _ -> failwith ("rev_trans_perm: expecting Var"))
       | None -> None)
-end;;
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some f1, None ->
+          let f1 = Cpure.get_var f1 in
+          ([f1],[full_perm_var])
+      | None, Some f2 ->
+          let f2 = Cpure.get_var f2 in
+          ([full_perm_var],[f2])
+      | None, None ->
+          ([],[]))
+
+end;; (*FPERM*)
 
 (*==============================*)
 (*=====counting permissions=====*)
@@ -599,12 +644,39 @@ struct
             | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
             | _ -> failwith ("rev_trans_perm: expecting Var"))
       | None -> None)
-end;;
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some f1, None ->
+          let f1 = Cpure.get_var f1 in
+          ([f1],[full_perm_var])
+      | None, Some f2 ->
+          let f2 = Cpure.get_var f2 in
+          ([full_perm_var],[f2])
+      | None, None ->
+          ([],[]))
+
+end;; (*CPERM*)
 
 
 (*==============================*)
 (*===dispacher for permissions==*)
 (*==============================*)
+
+(*get two equal-size lists of varperms*)
+let get_perm_var_lists cperm1 cperm2 = 
+  match !perm with
+    | Count -> CPERM.get_perm_var_lists cperm1 cperm2
+	| Dperm -> DPERM.get_perm_var_lists cperm1 cperm2
+	| Bperm -> BPERM.get_perm_var_lists cperm1 cperm2
+    | Frac -> FPERM.get_perm_var_lists cperm1 cperm2
+    | NoPerm -> FPERM.get_perm_var_lists cperm1 cperm2
+
 let rev_trans_perm cperm = 
   match !perm with
     | Count -> CPERM.rev_trans_perm cperm

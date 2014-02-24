@@ -371,13 +371,12 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   let name1 = n1.CF.h_formula_data_name in
   (* let ann1 = n1.CF.h_formula_data_imm in *)
   let args1 = n1.CF.h_formula_data_arguments in
-  let permvars1 = Perm.get_cperm_var n1.CF.h_formula_data_perm in
   let is_hard_n1 = (List.mem (CP.name_of_spec_var n1.CF.h_formula_data_node) hvars) in
   let var2 = n2.CF.h_formula_data_node in
   let name2 = n2.CF.h_formula_data_name in
   (* let ann2 = n2.CF.h_formula_data_imm in *)
   let args2 = n2.CF.h_formula_data_arguments in
-  let permvars2 = Perm.get_cperm_var n2.CF.h_formula_data_perm in
+  let permvars1,permvars2 = Perm.get_perm_var_lists n1.CF.h_formula_data_perm n2.CF.h_formula_data_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_data_node) hvars) in
   (* let rec str hvars  = match hvars with *)
   (*   | [] -> "" *)
@@ -469,13 +468,12 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   let name1 = n1.CF.h_formula_view_name in
   let ann1 = n1.CF.h_formula_view_imm in
   let args1 = n1.CF.h_formula_view_arguments in
-  let permvars1 = Perm.get_cperm_var n1.CF.h_formula_view_perm in
   let is_hard_n1 = (List.mem (CP.name_of_spec_var n1.CF.h_formula_view_node) hvars) in
   let var2 = n2.CF.h_formula_view_node in
   let name2 = n2.CF.h_formula_view_name in
   let ann2 = n2.CF.h_formula_view_imm in
   let args2 = n2.CF.h_formula_view_arguments in
-  let permvars2= Perm.get_cperm_var n2.CF.h_formula_view_perm in
+  let permvars1,permvars2 = Perm.get_perm_var_lists n1.CF.h_formula_view_perm n2.CF.h_formula_view_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_view_node) hvars) in
   let is_hard = is_hard_n1 || is_hard_n2 in
   if(List.length args1 != List.length args2 ||
@@ -979,13 +977,13 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
 		   ^ "DIFF F2: " ^ Cprinter.prtt_string_of_formula f2 ^ "\n"
 		   ^ "CURRENT MT: " ^ string_of_map_table mt)
 	in
-	Debug.info_pprint  (str) no_pos 
+	Debug.ninfo_pprint  (str) no_pos 
       in 
       if(List.length fs > 0) then (
 	let _ = List.map (fun (a,b,c) -> print_triple a b c) fs in
 	()
       )
-      else 	Debug.info_pprint ("no diff info") no_pos 
+      else 	Debug.ninfo_pprint ("no diff info") no_pos 
     )
   )
   in

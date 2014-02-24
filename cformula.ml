@@ -12482,7 +12482,10 @@ and simplify_context (ctx : context) (bv : CP.spec_var list) =
 		| OCtx (ctx1, ctx2) -> 
 					OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
 
-and simplify_formula (f : formula) (bv : CP.spec_var list) = 
+and simplify_formula (f : formula) (bv : CP.spec_var list) =
+  Debug.no_2 "simplify_formula " !print_formula !print_svl !print_formula simplify_formula_x f bv
+
+and simplify_formula_x (f : formula) (bv : CP.spec_var list) = 
 	match f with
 		| Base ({formula_base_heap = heap;
 						formula_base_pure = pure;} as fb) -> 

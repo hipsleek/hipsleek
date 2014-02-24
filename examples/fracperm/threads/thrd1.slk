@@ -1,51 +1,76 @@
-data node{ int val;}.
+data cell{ int val;}.
 
+//permission split
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0.
 
-//normal heap node
-checkentail x::node<2> |- x::node<2> .
+//permission combine
+lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v>.
+
+//normal heap cell
+checkentail x::cell(0.6)<2> |- x::cell(0.4)<2> .
 print residue.
 
 //thread node with resource
-//checkentail t::thrd<# x::node<1> & true #> |- true.
+//checkentail t::thrd<# x::cell<1> & true #> |- true.
 //print residue.
 
 //thread node with resource and delayed constraint
-//checkentail t::thrd<# b=1 --> x::node<1> & true #> |- true.
+//checkentail t::thrd<# b=1 --> x::cell<1> & true #> |- true.
 //print residue.
 
-//checkentail t::thrd<# x::node<1> & true #> |- t::thrd<# x::node<1> & true #>.
+//checkentail t::thrd<# x::cell<1> & true #> |- t::thrd<# x::cell<1> & true #>.
 //print residue.
 
 //FAIL: delayed formulas unmatched
-//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# b=1 --> x::node<v1> & true #> .
+//checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# b=1 --> x::cell<v1> & true #> .
 //print residue.
 
 //VALID: exact matching
-//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v1> & true #> .
+//checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# a=1 --> x::cell<v1> & true #> .
+//print residue.
+
+//VALID: exact matching with fractional permissions
+//checkentail t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> .
+//print residue.
+
+//FAIL: fail exact matching with fractional permissions
+//checkentail t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> |- t::thrd<# a=1 --> x::cell(0.6)<v1> & true #> .
 //print residue.
 
 //VALID: (may)match (if instantiate v1=v2)
-//checkentail t::thrd<# a=1 --> x::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v2> & true #> .
+//checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# a=1 --> x::cell<v2> & true #> .
 //print residue.
 
 //FAIL: lhs's resource is unmatched with rhs' resource
-//checkentail t::thrd<# a=1 --> x::node<v1> * y::node<v1> * z::node<v1> & true #> |- t::thrd<# a=1 --> x::node<v2> * u::node<v3> & true #> & v1=v2.
+//checkentail t::thrd<# a=1 --> x::cell<v1> * y::cell<v1> * z::cell<v1> & true #> |- t::thrd<# a=1 --> x::cell<v2> * u::cell<v3> & true #> & v1=v2.
 //print residue.
 
 //Currently FAIL because lhs's resource is unmatched with rhs' resource
 //Restrictive, re-consider later
-//checkentail t::thrd<# a=1 --> x::node<v1> & true #> & x=y |- t::thrd<# a=1 --> y::node<v1> & true #> & v1=v2.
+//checkentail t::thrd<# a=1 --> x::cell<v1> & true #> & x=y |- t::thrd<# a=1 --> y::cell<v1> & true #> & v1=v2.
 //print residue.
 
 //Currently FAIL because lhs's resource is unmatched with rhs' resource
 //Restrictive, re-consider later
-//checkentail t::thrd<# a=1 --> x1::node<v1> * x2::node<v2> & true #> & x1=y1 & x2=y2 |- t::thrd<# a=1 --> y1::node<v1> * y2::node<v2> & true #>.
+//checkentail t::thrd<# a=1 --> x1::cell<v1> * x2::cell<v2> & true #> & x1=y1 & x2=y2 |- t::thrd<# a=1 --> y1::cell<v1> * y2::cell<v2> & true #>.
 //print residue.
 
 //SPLIT
-//checkentail t::thrd<# a=1 --> x::node<1> * y::node<2> & true #> |- t::thrd<# a=1 --> x::node<1> & true #>.
-//print residue.
+//checkentail t::thrd<# a=1 --> x::cell<1> * y::cell<2> & true #> |- t::thrd<# a=1 --> x::cell<1> & true #>.
+print residue.
 
 //SPLIT
-checkentail t::thrd<# a=1 --> x::node(0.5)<1> * x::node(0.5)<1> & true #> |- t::thrd<# a=1 --> x::node(0.5)<1> & true #>.
+//checkentail t::thrd<# a=1 --> x::cell(0.5)<1> * x::cell(0.5)<1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> & true #>.
+//print residue.
+
+//TODO: for this, may need to float all None to become
+// Anon_full_perm in order to prove that the two resources
+// are syntatically equal
+//checkentail t::thrd<# a=1 --> x::cell(1.0)<1> & true #> |- t::thrd<# a=1 --> x::cell<1> & true #>.
+//print residue.
+
+checkentail t::thrd<# a=1 --> x::cell(0.6)<1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> & true #>.
+print residue.
+
+checkentail t::thrd<# a=1 --> x::cell(0.6)<1> *  y::cell(0.6)<2> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> * y::cell(0.4)<2> & true #>.
 print residue.
