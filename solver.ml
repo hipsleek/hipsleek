@@ -10138,8 +10138,8 @@ and generate_rels_formulas prog rels pos=
 (* Compute syntactic matching number of two resources eq_rsr: l_rsr |- r_rsr
    0 : completely matched -> MATCH
    1 : possibly matched with some substitution -> (try)MATCH
-   2 : unmatched, lhs>rhs -> SPLIT
-   3 : unmatched, lhs>rhs or lhs!=rhs -> FAIL
+   2 : unmatched, lhs>rhs -> (syntatic) SPLIT
+   3 : unmatched, lhs>rhs or lhs!=rhs -> FAIL (will try semantic MATCH/SPLIT)
    -1 : not care
 
    l_idents: root vars to guide the syntatic comparision
@@ -10153,11 +10153,11 @@ and compute_matching_thread_nodes l_idents l_rsr r_rsr =
   let pr i = match i with
     | 0 -> "MATCH"
     | 1 -> "(may)MATCH"
-    | 2 -> "SPLIT"
+    | 2 -> "(syn)SPLIT"
     | 3 -> "FAIL"
     | _ -> "UNKNOWN"
   in
-  let pr_out = pr_triple pr Cprinter.string_of_subst (pr_option Cprinter.string_of_formula) in
+  let pr_out = pr_triple pr Cprinter.string_of_subst (pr_option (pr_list Cprinter.string_of_formula)) in
   Debug.no_3 "compute_matching_thread_nodes"
       string_of_ident_list
       Cprinter.string_of_formula
@@ -10182,8 +10182,8 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
     else
       (*TOCHECK: pick the first one only*)
       let (mt_rsr, l_residue , r_residue) = List.hd mtl_rsr in
-      if not (CF.isEmpFormula r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
-      else (2,mt_rsr,Some l_residue) (*SPLIT*)
+      if not (CF.isStrictConstEmp r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
+      else (2,mt_rsr,Some [l_residue]) (*SPLIT*)
 
 (***********begin-of do_match_thread_nodes*****************)
 (*Handle Threads as Resource:
@@ -10216,6 +10216,7 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
 *)
 (*Only care about this if you are matching two HeapNode*)
 and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list =
+  let _ = print_endline ("Matching ThreadNodes") in
   let is_thread,eq_dl,match_number,subst, remained_rsr =
     (match (l_node,r_node) with
       | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
@@ -10262,21 +10263,44 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
         let r_args = r_subst@r_args in
         let is_matched = true in
         label_list, l_args, r_args, (is_thread,is_matched,None,None)
-    | true, true, 3 ->
-        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources syntatically unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources syntatically unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
-        label_list, l_args, r_args, (is_thread,false,Some rs, None)
     | true, true, 2 ->
-        (*For SPLIT *)
-        (*If NOT syntatic MATCH, try to permform semantic MATCH/SPLIT*)
+        (*For Syntatic SPLIT 
+          TOCHECK: currently ignore pure constraints for the resource*)
+        let label_list = if ((List.length subst) ==0 ) then label_list
+            else
+              (*Create a list of empty labels*)
+              let rec helper i =
+                if (i==0) then []
+                else
+                  let res = helper (i-1) in
+                  (LO.unlabelled)::res
+              in
+              let lbs = helper (List.length subst) in
+              lbs@label_list
+        in
+        let l_subst,r_subst = List.split subst in
+        let l_args = l_subst@l_args in
+        let r_args = r_subst@r_args in
+        let is_matched = true in
+        label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr)
+    | true, true, 3 (*EVEN if syntatically failed, try to prove semantically*)
+        (* -> let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources syntatically unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources syntatically unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in *)
+        (* label_list, l_args, r_args, (is_thread,false,Some rs, None) *)
+
+        ->
+
+        (*If NOT syntatic MATCH/SPLIT, try to permform semantic MATCH/SPLIT*)
         (*This will invoke provers, hence, is often slow.
           Therefore, we do a syntatic check above first,
           before going with this option *)
         (match (l_node,r_node) with
           | ThreadNode ({CF.h_formula_thread_resource = l_rsr;} as l_t),
             ThreadNode ({CF.h_formula_thread_resource = r_rsr;} as r_t) ->
-              let new_estate = {estate with es_formula = l_rsr;} in
+              let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) l_rsr else l_rsr in
+              let new_estate = {estate with es_formula = es_f;} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
               let new_conseq = r_rsr in
+              let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in
               let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
 	            | SuccCtx(cl) ->
@@ -10297,24 +10321,6 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
                     label_list, l_args, r_args, (is_thread,false,Some rs,None))
           | _ ->
               report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
-
-        (* let label_list = if ((List.length subst) ==0 ) then label_list *)
-        (*     else *)
-        (*       (\*Create a list of empty labels*\) *)
-        (*       let rec helper i = *)
-        (*         if (i==0) then [] *)
-        (*         else *)
-        (*           let res = helper (i-1) in *)
-        (*           (LO.unlabelled)::res *)
-        (*       in *)
-        (*       let lbs = helper (List.length subst) in *)
-        (*       lbs@label_list *)
-        (* in *)
-        (* let l_subst,r_subst = List.split subst in *)
-        (* let l_args = l_subst@l_args in *)
-        (* let r_args = r_subst@r_args in *)
-        (* let is_matched = true in *)
-        (* label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr) *)
     | true, true, _ ->
         report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
