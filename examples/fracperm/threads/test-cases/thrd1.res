@@ -21,3 +21,4 @@ Entail 20: Valid.
 Entail 21: Valid. 
 Entail 22: Valid. 
 Entail 23: Valid. 
+Entail 24: Valid. 

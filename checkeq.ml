@@ -689,6 +689,29 @@ and match_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (pf2: CP.formula)(
     let _, mtls =  List.split false_part in
     (b, List.concat mtls)
 
+and check_equiv_exp  hvars e1 e2 mtl = 
+  let pr1 = Cprinter.string_of_formula_exp in
+  let pr2 b = if(b) then "VALID" else "INVALID" in
+  let pr3 = string_of_map_table in
+  let pr4 = string_of_map_table in
+  Debug.no_3 "check_equiv_bform" pr1 pr1 pr4 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  check_equiv_exp_x hvars e1 e2 mtl) e1 e2 mtl
+
+and check_equiv_exp_x hvars (e1:CP.exp) (e2:CP.exp) mt = 
+  match e1,e2 with
+    | CP.Null _ , CP.Null _ -> (true, mt)
+    | Var (v1,_) , Var (v2,_) -> check_spec_var_equiv hvars v1 v2 mt
+    | Level (v1,_) , Level (v2,_) -> check_spec_var_equiv hvars v1 v2 mt
+    | IConst (i1,_), IConst (i2,_) -> (i1=i2,mt)
+    | FConst (i1,_), FConst (i2,_) -> (i1=i2,mt)
+    | Bptriple ((v11,v12,v13),_), Bptriple ((v21,v22,v23),_) ->
+        let res1,mt1 = check_spec_var_equiv hvars v11 v21 mt in
+        let res2,mt2 = check_spec_var_equiv hvars v12 v22 mt1 in
+        let res3,mt3 = check_spec_var_equiv hvars v13 v23 mt2 in
+        (res1&res2&res3,mt3)
+    (*TODO: implement for your need*)
+    | _ -> (false, mt)
+
 and check_equiv_bform  hvars b1 b2 mtl = 
   let pr1 = Cprinter.string_of_b_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
@@ -711,6 +734,11 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
   match b1,b2 with
     | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
+    | (BagNotIn (v1,e1,_),_),  (BagNotIn (v2,e2,_),_)
+    | (BagIn (v1,e1,_),_),  (BagIn (v2,e2,_),_) -> (*MUSTDO*)
+        let res1,mt1 = check_spec_var_equiv hvars v1 v2 mt in
+        let res2,mt2 = check_equiv_exp hvars e1 e2 mt1 in
+        (res1&res2,[mt2])
     | (XPure xp1,_),  (XPure xp2,_) ->
      
         if xp1.xpure_view_name = xp1.xpure_view_name then

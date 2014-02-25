@@ -139,3 +139,8 @@ print residue.
 checkentail t::thrd<# a=1 --> x::cell(0.6)<1> *  y::cell(0.6)<2> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> * y::cell(0.4)<2> & true #>.
 print residue.
 //VALID. Semantic SPLIT
+
+//(24)
+checkentail t::thrd<# a in B --> x::cell(0.5)<v1> & true #> |- t::thrd<# a in B --> x::cell(0.5)<v1> & true #> .
+print residue.
+//VALID: exact matching with fractional permissions, bag constraints
