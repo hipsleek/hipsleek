@@ -5443,18 +5443,23 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                         (match res, ctx_option with
                           | _ , Some ctx -> ctx (*often error ctx*)
                           | Some (delayed_f,post,res2,new_es_f), _ ->
-                              let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
-                              (if (CF.isFailCtx rs) then
-                                    (*FAIL to satisfy the delayed constraints*)
-                                    (*TO CHECK: become FALSE, which may not good enough*)
-                                    let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
-                                    rs,prf
-                               else
-                                    let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
-                                    (*******<<<Checking the delayed constraints at join point*****)
-                                    (*if checking succeeds --> proceed as normal*)
-                                    compose_thread_post_condition prog es new_es_f post res2 pos
-                              ) (*END (if (CF.isFailCtx rs) then*)
+                              if (CP.isConstTrue delayed_f) then
+                                (*if delayed_f is trivial -> no need to check*)
+                                let _ = Debug.devel_pprint ("Delayed lockset constraints trivially satisfiable\n " ^ "\n") pos in
+                                compose_thread_post_condition prog es new_es_f post res2 pos
+                              else
+                                let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
+                                (if (CF.isFailCtx rs) then
+                                      (*FAIL to satisfy the delayed constraints*)
+                                      (*TO CHECK: become FALSE, which may not good enough*)
+                                      let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
+                                      rs,prf
+                                 else
+                                      let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
+                                      (*******<<<Checking the delayed constraints at join point*****)
+                                      (*if checking succeeds --> proceed as normal*)
+                                      compose_thread_post_condition prog es new_es_f post res2 pos
+                                ) (*END (if (CF.isFailCtx rs) then*)
                           | _ ->
                               let error_msg = ("Join with thread with id = " ^ (Cprinter.string_of_spec_var id) ^" : unexpected ") in
                               (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
