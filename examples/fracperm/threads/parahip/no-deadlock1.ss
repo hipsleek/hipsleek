@@ -26,8 +26,10 @@ void main()
    init[LOCK](l1); //initialize l1 with invariant LOCK
    release(l1);
    acquire(l1);
-   int id = fork(func,l1);
+   thrd id = fork(func,l1);
+   dprint;
    release(l1);
+   dprint;
    join(id);
    
 }

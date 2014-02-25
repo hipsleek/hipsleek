@@ -41,7 +41,7 @@ void main()
 
   release(l);
 
-  int id;
+  thrd id;
   id = fork(inc,l,x); // there is an automatic split here
 
   acquire(l);

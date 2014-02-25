@@ -2936,12 +2936,17 @@ and h_subst sst (f : h_formula) =
 							h_formula_thread_origins = orgs;
 							h_formula_thread_original = original;
 							h_formula_thread_label = lbl;
-							h_formula_thread_pos = pos} as t) -> 
+							h_formula_thread_pos = pos} as t) ->
+        let new_sst = List.filter (fun (fr,t) -> 
+            if ((CP.name_of_spec_var fr)=Globals.ls_name || (CP.name_of_spec_var fr)=Globals.lsmu_name) then false
+            else true
+        ) sst in (*donot rename ghost LOCKSET name*)
+        let ndl = CP.apply_subs new_sst dl in
 		ThreadNode ({h_formula_thread_node = CP.subst_var_par sst x; 
 							h_formula_thread_name = c; 
 							h_formula_thread_derv = dr; 
 							h_formula_thread_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
-							h_formula_thread_delayed = CP.apply_subs sst dl;
+							h_formula_thread_delayed = ndl;
 							h_formula_thread_resource = subst sst rsr;
 							h_formula_thread_origins = orgs;
 							h_formula_thread_original = original;

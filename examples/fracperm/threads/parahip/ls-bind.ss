@@ -32,7 +32,7 @@ void main()
   init[LOCK](l1);
   release(l1);
   //
-  int id = fork(func,l1);
+  thrd id = fork(func,l1);
   acquire(l1);
   int i = x.val;
   x.val = i+1;

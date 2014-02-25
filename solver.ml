@@ -5227,7 +5227,13 @@ and find_thread_delayed_resource es es_f id pos =
   if (!Globals.allow_threads_as_resource) then
     begin
         let heaps =  (CF.split_star_conjunctions h) in (*TOCHECK: complex heaps might throw errors*)
-        let t_heaps, r_heaps = List.partition (fun h -> Gen.BList.mem_eq CP.eq_spec_var (CF.get_node_var h) ids) heaps in
+        let t_heaps, r_heaps = List.partition (fun h ->
+            match h with
+              | ThreadNode _
+              | ViewNode _
+              | DataNode _ -> Gen.BList.mem_eq CP.eq_spec_var (CF.get_node_var h) ids
+              | _ -> false) heaps
+        in
         let _ = if (List.length t_heaps) > 1 then
               print_endline ("[Warning] helper_inner: multiple ThreadNode, might need to normalize")
         in
@@ -5670,7 +5676,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                          else
                                     (match tid with
-			              | Some id ->
+			                          | Some id ->
                                             (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                                             (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
                                             (* let _ = print_endline ("### ctx11 (before) = " ^ (Cprinter.string_of_context ctx11)) in *)
@@ -5759,7 +5765,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 CF.transform_context add_vperm_full rs 
                                               else rs
                                               in
-                                              (* let _ = print_endline ("\n### rs = "^(Cprinter.string_of_context rs)) in *)
+                                              let _ = print_endline ("\n### rs = "^(Cprinter.string_of_context rs)) in
 
                                               (************* <<< Compose variable permissions******************)
                                               (* TOCHECK : why compose_context fail to set unsat_flag? *)
@@ -5770,25 +5776,25 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 of each spec*)
                                               let post_fv = CF.fv new_post in
                                               let new_ref_vars,new_post = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv
-                                              then (*if LOCKSET ghost var is in the post-condition*)
-                                                let waitlevel_var = CP.mkWaitlevelVar Primed in
-                                                let new_post =
-                                                  if !Globals.allow_locklevel then
-                                                    CF.translate_waitlevel_formula new_post
-                                                  else
-                                                    CF.drop_svl new_post [waitlevel_var]
-                                                in
-                                                (ls_var::lsmu_var::ref_vars),new_post
-                                              else (*if not -> do not consider ls_var as a ref-vars*)
-                                                ref_vars,new_post
+                                                  then (*if LOCKSET ghost var is in the post-condition*)
+                                                    let waitlevel_var = CP.mkWaitlevelVar Primed in
+                                                    let new_post =
+                                                      if !Globals.allow_locklevel then
+                                                        CF.translate_waitlevel_formula new_post
+                                                      else
+                                                        CF.drop_svl new_post [waitlevel_var]
+                                                    in
+                                                    (ls_var::lsmu_var::ref_vars),new_post
+                                                  else (*if not -> do not consider ls_var as a ref-vars*)
+                                                    ref_vars,new_post
                                               in
-	                                      let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
-					      let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
+	                                          let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+					                          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
                                               let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
-	                                      let rs3 = add_path_id rs2 (pid,i) (-1) in
-                                              (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
+	                                          let rs3 = add_path_id rs2 (pid,i) (-1) in
+                                              let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in
                                               let rs4 = prune_ctx prog rs3 in
                                               (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
                                               (*********CHECK db-consistency***********)
