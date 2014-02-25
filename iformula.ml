@@ -688,9 +688,9 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
               h_formula_thread_delayed = dl;
               h_formula_thread_resource = rsr} ->
      let perm_vars = (fv_iperm ()) perm in
-     let rsr_vars = all_fv rsr in (*TOCHECK*)
-     let dl_vars = Ipure.fv dl in
-     Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@dl_vars@([extract_var_from_id name]))
+     let rsr_vars = heap_fv rsr in (*TOCHECK: currently recursively look into resource*)
+     (*This is h_fv, hence, dl is not included*)
+     Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv

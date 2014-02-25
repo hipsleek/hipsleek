@@ -14054,9 +14054,11 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
   let rec helper f =
     match f with
       | Base{formula_base_pure = p} ->
-          let p_delayed = MCP.extractLS_mix_formula p in
+          let p_delayed = MCP.simplify_mix_formula (MCP.extractLS_mix_formula p) in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to lock level *)
+          let p_pure = MCP.remove_level_mix_formula p_pure in
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* get variables with full permission*)
@@ -14071,9 +14073,11 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           MCP.merge_mems p_delayed p_pure true
       | Exists{formula_exists_pure = p;
                formula_exists_qvars =qvars} ->
-          let p_delayed = MCP.extractLS_mix_formula p in
+          let p_delayed = MCP.simplify_mix_formula (MCP.extractLS_mix_formula p) in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to lock level *)
+          let p_pure = MCP.remove_level_mix_formula p_pure in
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* get variables with full permission*)
