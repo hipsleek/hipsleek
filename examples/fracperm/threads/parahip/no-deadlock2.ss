@@ -26,7 +26,7 @@ void main()
    init[LOCK](l1);//initialize l1 with invariant LOCK
    release(l1);
    //
-   int id = fork(func,l1); //DELAY
+   thrd id = fork(func,l1); //DELAY
    //
    acquire(l1);
    release(l1);

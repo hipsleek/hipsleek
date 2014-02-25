@@ -52,7 +52,7 @@ void main()
    bool b; //b got unknown value
    
    //LS-{}
-   int id = fork(func,b,l1,l2);
+   thrd id = fork(func,b,l1,l2);
    //DELAYED: l1 notin LS & b | l2 notin LS & !b
    
 

@@ -28,7 +28,7 @@ void main()
    release(l1);
    //
    acquire(l1);
-   int id = fork(func,l1); //DELAYED
+   thrd id = fork(func,l1); //DELAYED
    join(id); // CHECK, Delayed checking failure
    release(l1);
    

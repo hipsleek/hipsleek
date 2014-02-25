@@ -5765,7 +5765,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 CF.transform_context add_vperm_full rs 
                                               else rs
                                               in
-                                              let _ = print_endline ("\n### rs = "^(Cprinter.string_of_context rs)) in
+                                              (* let _ = print_endline ("\n### rs = "^(Cprinter.string_of_context rs)) in *)
 
                                               (************* <<< Compose variable permissions******************)
                                               (* TOCHECK : why compose_context fail to set unsat_flag? *)
@@ -5794,7 +5794,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                                          let rs3 = add_path_id rs2 (pid,i) (-1) in
-                                              let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in
+                                              (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
                                               let rs4 = prune_ctx prog rs3 in
                                               (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
                                               (*********CHECK db-consistency***********)

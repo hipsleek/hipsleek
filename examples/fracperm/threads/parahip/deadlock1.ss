@@ -28,7 +28,7 @@ void main()
    init[LOCK](l1); //initialize l1 with invariant LOCK
    release(l1);
    //
-   int id = fork(func,l1); //DELAYED
+   thrd id = fork(func,l1); //DELAYED
    //
    acquire(l1);
    join(id); // CHECK, Delayed checking failure

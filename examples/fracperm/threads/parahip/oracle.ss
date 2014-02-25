@@ -45,7 +45,7 @@ void main()
 
   x.val1=1;
   x.val2=1;
-  int id;
+  thrd id;
   id = fork(thread,l,x);
   x.val3=1;
 

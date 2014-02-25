@@ -29,7 +29,7 @@ void main()
    //
    acquire(l1);
    //LS={l1}
-   int id = fork(func,l1); //DELAYED
+   thrd id = fork(func,l1); //DELAYED
    release(l1);
    //LS={}
 

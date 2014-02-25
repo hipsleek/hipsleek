@@ -27,9 +27,9 @@ void main()
    release(l1);
    acquire(l1);
    thrd id = fork(func,l1);
-   dprint;
+
    release(l1);
-   dprint;
+
    join(id);
    
 }

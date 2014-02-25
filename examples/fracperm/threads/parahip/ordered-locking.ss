@@ -33,7 +33,7 @@ void main()
   init[LOCK](l2);
   release(l2);
   //
-  int id = fork(func,l1,l2); //DELAYED
+  thrd id = fork(func,l1,l2); //DELAYED
   //
   acquire(l1);
   acquire(l2);

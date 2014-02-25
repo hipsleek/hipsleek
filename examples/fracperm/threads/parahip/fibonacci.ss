@@ -37,7 +37,7 @@ void para_fib(int n, ref int result)
     seq_fib(n,result);
   }else{
     int result1,result2;
-    int id1,id2;
+    thrd id1,id2;
     id1 = fork(para_fib,n-1,result1); //FORK a recursive procedure
     id2 = fork(para_fib,n-2,result2); //FORK a recursive procedure
 

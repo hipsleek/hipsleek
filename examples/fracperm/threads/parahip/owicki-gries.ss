@@ -37,7 +37,7 @@ void main()
   init[LOCK](l,xCell,yCell,zCell); //initialize l with invariant LOCK and args
 
   release(l);
-  int id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
+  thrd id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
   incrementor2(l,xCell,yCell,zCell);
   join(id);
 }
