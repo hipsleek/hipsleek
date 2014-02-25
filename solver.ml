@@ -5441,7 +5441,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                     | Some id ->
                         let res,ctx_option = find_thread_delayed_resource es es.CF.es_formula id pos in
                         (match res, ctx_option with
-                          | _ , Some ctx -> ctx
+                          | _ , Some ctx -> ctx (*often error ctx*)
                           | Some (delayed_f,post,res2,new_es_f), _ ->
                               let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
                               (if (CF.isFailCtx rs) then
