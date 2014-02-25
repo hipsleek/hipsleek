@@ -10,6 +10,10 @@ echo "======= motiv-example.ss  ======"
 diff test-cases/motiv-example.res test-cases/motiv-example.n
 echo "======= motiv-example2.ss  ======"
 diff test-cases/motiv-example2.res test-cases/motiv-example2.n
+echo "======= no-deadlock-nonlexical.ss ======"
+diff test-cases/no-deadlock-nonlexical.res test-cases/no-deadlock-nonlexical.n
+echo "======= no-deadlock-nonlexical2.ss ======"
+diff test-cases/no-deadlock-nonlexical2.res test-cases/no-deadlock-nonlexical2.n
 
 #================PARAHIP==========================
 #================PARAHIP==========================
