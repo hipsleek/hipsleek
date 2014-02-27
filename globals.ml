@@ -765,6 +765,8 @@ let pred_elim_dangling = ref true
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
+let sa_pure = ref false
+
 let sa_ex = ref false
 
 let sa_infer_split_base = ref true

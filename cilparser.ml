@@ -1464,10 +1464,14 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
     let static_specs1, hp_decls = match static_specs with
-      | Iformula.EList [] ->
-	    let ss, hps = Iast.genESpec funbody funargs return_typ pos in
-	    (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-	    (ss, hps)
+      | Iformula.EList [] -> begin
+          match funbody with
+            | Some _ ->
+	          let ss, hps = Iast.genESpec funbody funargs return_typ pos in
+	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+	          (ss, hps)
+            | None -> static_specs, []
+        end
       | _ ->
 	    static_specs, []
     in

@@ -1417,9 +1417,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
           let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps, pure_chps = List.split pr_chps in
+          let chps1, pure_chps = List.split pr_chps in
           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
-          let crels = crels0@pure_chps in
+          let crels1 = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
           (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -1432,7 +1432,16 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                 let _ = p.I.proc_is_invoked <- false in
                 []
           ) (prog.I.prog_proc_decls) in
+          let old_i_hp_decls = prog.I.prog_hp_decls in
 	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+          let iloop_hp_decls = List.filter (fun hpdecl ->
+              not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0)
+                  old_i_hp_decls)
+          ) prog.I.prog_hp_decls in
+          let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
+          let c_loophps, loop_pure_chps = List.split pr_loop_chps in
+          let chps = chps1@c_loophps in
+          let crels = crels1@loop_pure_chps in
 	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
 	  (* Start calling is_sat,imply,simplify from trans_proc *)
 	  let cprocs = !loop_procs @ cprocs1 in
@@ -4416,7 +4425,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-            (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
+            let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             (*ONLY NEED THOSE that are modified in the body and condition*)
@@ -4473,52 +4482,61 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 I.exp_block_pos = pos;} in
 	    let prepost = match wrap with 
               | None -> prepost
-              | Some _ -> IF.add_post_for_flow (I.get_breaks w_body) prepost in
+              | Some _ -> IF.add_post_for_flow (I.get_breaks w_body) prepost
+            in
             let w_formal_args = List.map (fun tv ->{
-                I.param_type = fst tv;
-                I.param_name = snd tv;
-                I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
-                              else I.NoMod; (* other vars from specification, declared with NoMod *)
-                I.param_loc = pos; }) tvars in
+                  I.param_type = fst tv;
+                  I.param_name = snd tv;
+                  I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
+                  else I.NoMod; (* other vars from specification, declared with NoMod *)
+                  I.param_loc = pos; }) tvars in
             let w_proc ={
-		I.proc_hp_decls = [];
-                I.proc_name = w_name;
-                I.proc_source = "source_file";
-		I.proc_flags = [];
-                I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
-                I.proc_data_decl = proc.I.proc_data_decl;
-                I.proc_constructor = false;
-                I.proc_args = w_formal_args;
-                I.proc_return = I.void_type;
-                (* I.proc_important_vars= [];*)
-                I.proc_static_specs = prepost;
-                I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
-                I.proc_dynamic_specs = IF.mkEFalseF ();
-                I.proc_body = Some w_body;
-                I.proc_is_main = proc.I.proc_is_main;
-                I.proc_is_invoked = true;
-                I.proc_file = proc.I.proc_file;
-                I.proc_loc = pos; 
-                I.proc_test_comps = proc.I.proc_test_comps} in
-            let temp_call =  I.CallNRecv {
-                I.exp_call_nrecv_method = w_name;
-                I.exp_call_nrecv_lock = None;
-                I.exp_call_nrecv_arguments = w_args;
-                I.exp_call_nrecv_pos = pos;
-                I.exp_call_nrecv_path_id = pi; } in
-            let w_call = temp_call (*match wrap with
-                                     | None -> temp_call
-                                     | Some (e,_) -> (*let e,et = helper e in*)
-                                     match e with
-                                     | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
-                                     | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";}*) in
-            let w_proc = case_normalize_proc prog w_proc in
-            let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
-            (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
-            (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
-            let (iw_call, _) = trans_exp new_prog w_proc w_call in
-            let cw_proc = trans_loop_proc new_prog w_proc addr_vars in
-            (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
+		  I.proc_hp_decls = [];
+                  I.proc_name = w_name;
+                  I.proc_source = "source_file";
+		  I.proc_flags = [];
+                  I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
+                  I.proc_data_decl = proc.I.proc_data_decl;
+                  I.proc_constructor = false;
+                  I.proc_args = w_formal_args;
+                  I.proc_return = I.void_type;
+                  (* I.proc_important_vars= [];*)
+                  I.proc_static_specs = prepost;
+                  I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
+                  I.proc_dynamic_specs = IF.mkEFalseF ();
+                  I.proc_body = Some w_body;
+                  I.proc_is_main = proc.I.proc_is_main;
+                  I.proc_is_invoked = true;
+                  I.proc_file = proc.I.proc_file;
+                  I.proc_loc = pos; 
+                  I.proc_test_comps = proc.I.proc_test_comps} in
+            let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in
+            let w_proc = match w_proc.I.proc_static_specs with
+              |  IF.EList [] -> let new_prepost, hp_decls = I.genESpec w_proc.I.proc_body w_formal_args I.void_type pos in
+                 let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
+                 {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
+                     I.proc_static_specs = new_prepost;}
+              | _ ->  w_proc
+            in
+              let temp_call =  I.CallNRecv {
+                  I.exp_call_nrecv_method = w_name;
+                  I.exp_call_nrecv_lock = None;
+                  I.exp_call_nrecv_arguments = w_args;
+                  I.exp_call_nrecv_pos = pos;
+                  I.exp_call_nrecv_path_id = pi; } in
+              let w_call = temp_call (*match wrap with
+                                       | None -> temp_call
+                                       | Some (e,_) -> (*let e,et = helper e in*)
+                                       match e with
+                                       | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
+                                       | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";}*) in
+              let w_proc = case_normalize_proc prog w_proc in
+              let new_prog = { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
+              (* let _ = print_endline ("while : " ^ (Iprinter.string_of_struc_formula prepost)) in *)
+              (* let _ = print_endline ("w_proc : " ^ (Iprinter.string_of_proc_decl w_proc)) in *)
+              let (iw_call, _) = trans_exp new_prog w_proc w_call in
+              let cw_proc = trans_loop_proc new_prog w_proc addr_vars in
+              (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
       | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
             (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
       | Iast.Cast {I.exp_cast_target_type = ty;

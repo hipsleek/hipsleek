@@ -2872,7 +2872,8 @@ while_statement:
         While { exp_while_condition = bc;
             exp_while_body = es;
             exp_while_addr_vars = [];
-            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
+            (* exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1); *)
+            exp_while_specs = (Iformula.EList []); (*set to generate. if do not want to infer requires true ensures false;*)
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
             exp_while_f_name = "";

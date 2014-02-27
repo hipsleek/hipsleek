@@ -1303,7 +1303,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                 let xp = get_xpure_of_formula c1_o in
                                 (rs,Some xp)
                                 end
-			      else (Debug.print_info "assert/assume" (s ^" : failed\n") pos ; (rs,None))
+			      else
+                                (*L2: todo: should not warning if post is must error*)
+                                (Debug.print_info "assert/assume" (s ^" : failed\n") pos ; (rs,None))
                       in 
 		      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                         begin

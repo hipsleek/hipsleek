@@ -566,7 +566,7 @@ let check_separation_unsat f0=
 *)
 let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
   if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    (*check root has unfold information information??*)
+    (*check root has unfold information??*)
     let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
       let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
