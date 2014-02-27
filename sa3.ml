@@ -20,9 +20,10 @@ let step_change = new Gen.change_flag
 (***************************************************************)
              (*      APPLY TRANS IMPL     *)
 (****************************************************************)
-let collect_ho_ass iprog cprog is_pre def_hps (acc_constrs, post_no_def) cs=
+let collect_ho_ass iprog cprog is_pre def_hps unk_hps (acc_constrs, post_no_def) cs=
   let lhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
   let rhs_hps = CF.get_hp_rel_name_formula cs.CF.hprel_rhs in
+  (* let _ = Debug.info_zprint (lazy (("    rhs_hps: " ^ (!CP.print_svl rhs_hps)))) no_pos in *)
   let linfer_hps = CP.remove_dups_svl (CP.diff_svl (lhs_hps) def_hps) in
   let rinfer_hps =  (CP.diff_svl (rhs_hps) def_hps) in
   let infer_hps = CP.remove_dups_svl (linfer_hps@rinfer_hps) in
@@ -35,7 +36,7 @@ let collect_ho_ass iprog cprog is_pre def_hps (acc_constrs, post_no_def) cs=
     in
     let tmp = !Globals.do_classic_frame_rule in
     let _ = Globals.do_classic_frame_rule := true in
-    let f = wrap_proving_kind log_str (Sacore.do_entail_check infer_hps iprog cprog) in
+    let f = wrap_proving_kind log_str (Sacore.do_entail_check (infer_hps@unk_hps) iprog cprog) in
     let new_constrs = f cs in
     let _ = Globals.do_classic_frame_rule := tmp in
     (acc_constrs@new_constrs, post_no_def@linfer_hps)
@@ -1403,7 +1404,11 @@ let def_subst_fix_x prog post_hps unk_hps prefix_hps hpdefs=
     if (CP.diff_svl succ_hps1 rec_hps) <> [] then
       (*not depends on any recursive hps, susbt it*)
       let args = Sautil.get_ptrs hprel in
-      let ters,new_fs_wg = List.split (List.map (fun (f1,g1) -> Sautil.succ_subst_hpdef prog unk_hps nrec_hpdefs succ_hps1 (hp,args,g1,f1)) hpdef.CF.def_rhs) in
+      let ters,new_fs_wg = List.split (List.concat (List.map (fun (f0,g1) ->
+          List.map (fun f1 ->
+              Sautil.succ_subst_hpdef prog unk_hps nrec_hpdefs succ_hps1 (hp,args,g1,f1)
+          ) (CF.list_of_disjs f0)
+      ) hpdef.CF.def_rhs)) in
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_zprint (lazy (("       bool: " ^ (pr ters)))) no_pos; *)
@@ -2176,6 +2181,7 @@ let infer_pre_fix_x iprog prog proc_name callee_hps is_pre is need_preprocess de
   else (is.CF.is_dang_hpargs, is.CF.is_link_hpargs@n_unk_hpargs)
   in
   let _ = DD.ninfo_hprint (add_str "  n_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_link_hpargs no_pos in
+  let _ = DD.ninfo_hprint (add_str "  n_dang_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) n_dang_hpargs no_pos in
   {is with CF.is_constrs = [];
       CF.is_dang_hpargs = n_dang_hpargs;
       CF.is_link_hpargs = n_link_hpargs;
@@ -2280,9 +2286,10 @@ let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_da
 (*for each oblg generate new constrs with new hp post in rhs*)
     (*call to infer_shape? proper? or post?*)
 let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is_pre is sel_lhps sel_rhps need_preprocess detect_dang def_hps=
+  let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (*if rhs is emp heap, should retain the constraint*)
   let pre_constrs, pre_oblg = List.partition (fun cs -> Sautil.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
-  let ho_constrs0, nondef_post_hps  = List.fold_left (collect_ho_ass iprog cprog is_pre def_hps) ([],[]) pre_oblg in
+  let ho_constrs0, nondef_post_hps  = List.fold_left (collect_ho_ass iprog cprog is_pre def_hps unk_hps) ([],[]) pre_oblg in
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else
     (***************  PRINTING*********************)
@@ -2377,6 +2384,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
   in
   (****************END INTERNAL********************)
   let constrs0 = is.CF.is_constrs in
+  let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (* let _ = DD.info_hprint (add_str "  obligation is.CF.is_link_hpargs:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) is.CF.is_link_hpargs no_pos in *)
   if constrs0 = [] then is else
     let settings = back_up_state () in
@@ -2401,7 +2409,7 @@ and infer_shapes_from_obligation_x iprog prog proc_name callee_hps is_pre is nee
         let rem_constr2 = Sacore.trans_constr_hp_2_view iprog prog proc_name is.CF.is_hp_defs
           in_hp_names chprels_decl rem_constr in
         let _ = List.fold_left (fun (r1,r2) cs ->
-            collect_ho_ass iprog prog is_pre def_hps (r1,r2) cs
+            collect_ho_ass iprog prog is_pre def_hps unk_hps (r1,r2) cs
         ) ([],[]) rem_constr2 in
         ()
       in

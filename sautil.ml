@@ -3403,18 +3403,21 @@ let remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg=
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
     match cur with
       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems
-      | (f,og)::ss ->
-          let newf,b = CF.drop_unk_hrel f unk_hps in
-          if not b then
-            partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[(f,og)])
-          else
-            begin
-                let newf2,_ = CF.drop_hrel_f newf [hp] in
-                if is_empty_f newf2 then
-                  partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems
+      | (f,og)::ss -> begin
+            match CF.extract_hrel_head f with
+              | Some _ -> partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[(f,og)])
+              | None -> let newf,b = CF.drop_unk_hrel f unk_hps in
+                if not b then
+                  partition_helper ss res_unkhp_fs res_elim_unkhp_fs (rems@[(f,og)])
                 else
-                  partition_helper ss (res_unkhp_fs@[(f,og)]) (res_elim_unkhp_fs@[(newf,og)]) rems
-            end
+                  begin
+                    let newf2,_ = CF.drop_hrel_f newf [hp] in
+                    if is_empty_f newf2 then
+                      partition_helper ss res_unkhp_fs res_elim_unkhp_fs rems
+                    else
+                      partition_helper ss (res_unkhp_fs@[(f,og)]) (res_elim_unkhp_fs@[(newf,og)]) rems
+                  end
+        end
   in
   let check_dups elim_unkhp_fs non_unkhp_fs=
     let rec helper1 fs r=
@@ -3434,7 +3437,7 @@ let remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg=
 
 let remove_equiv_wo_unkhps_wg hp args0 unk_hps fs_wg=
   let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula (pr_option Cprinter.prtt_string_of_formula)) in
-  Debug.no_2 "remove_equiv_wo_unkhps" !CP.print_svl pr pr
+  Debug.no_2 "remove_equiv_wo_unkhps_wg" !CP.print_svl pr pr
       (fun _ _ -> remove_equiv_wo_unkhps_wg_x hp args0 unk_hps fs_wg)
       unk_hps fs_wg
 

@@ -4425,7 +4425,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-            let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
+            (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             (*ONLY NEED THOSE that are modified in the body and condition*)
@@ -4510,7 +4510,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
                   I.proc_test_comps = proc.I.proc_test_comps} in
-            let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in
+            (* let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in *)
             let w_proc = match w_proc.I.proc_static_specs with
               |  IF.EList [] -> let new_prepost, hp_decls = I.genESpec w_proc.I.proc_body w_formal_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in

@@ -2882,8 +2882,10 @@ let elim_diverg_paras_x prog pdefs=
     let diverg_svl0 = List.fold_left (fun r (_,args) ->
         r@(Sautil.retrieve_args_from_locs args diver_pos)
     ) [] ((hp,args)::ls_rec_hpars) in
-    let diverg_svl1 = CP.remove_dups_svl diverg_svl0 in
-    let _ = Debug.ninfo_hprint (add_str  "diverg_svl1 " (!CP.print_svl)) diverg_svl1 no_pos in
+    let diverg_svl1a = CP.remove_dups_svl diverg_svl0 in
+    let _ = Debug.ninfo_hprint (add_str  "diverg_svl1a " (!CP.print_svl)) diverg_svl1a no_pos in
+    let non_diverg_svl = CP.diff_svl args diverg_svl1a in
+    let diverg_svl1 = CP.diff_svl diverg_svl1a (CF.find_close non_diverg_svl eqs) in
     let diver_eqs = List.fold_left (fun r (sv1,sv2) ->
         let b1 = CP.mem_svl sv1 diverg_svl1 in
         let b2 = CP.mem_svl sv2 diverg_svl1 in
