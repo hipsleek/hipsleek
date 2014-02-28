@@ -3029,7 +3029,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: Cformula.hprel list) sel_hps 
     else ()
     in ()
   in
-  try 
+  try
     let callee_hps = [] in
     let _ = if !Globals.sap then
       DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
@@ -3050,6 +3050,12 @@ let infer_shapes_x iprog prog proc_name (constrs0: Cformula.hprel list) sel_hps 
     let ls_path_is = infer_shapes_divide iprog prog proc_name constrs0
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
     in
+    (* let _ = if !Globals.sae then *)
+    (* let (_, hp_rel_def) = infer_shapes_conquer iprog prog proc_name [List.hd ls_path_is] sel_hps in *)
+    (* let _ = List.map (fun hp_rel_def -> print_endline (Cprinter.string_of_hp_rel_def hp_rel_def)) hp_rel_def in *)
+    (* let (_, hp_rel_def) = infer_shapes_conquer iprog prog proc_name (List.tl ls_path_is) sel_hps in *)
+    (* let _ = List.map (fun hp_rel_def -> print_endline (Cprinter.string_of_hp_rel_def hp_rel_def)) hp_rel_def in () *)
+    (* else () in *)
     let r = if !Globals.sa_syn then
       match ls_path_is with
         | [] -> ([],[])
