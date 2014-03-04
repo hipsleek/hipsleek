@@ -6365,6 +6365,9 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
 	  in wrap_trace es.es_path_label exec ()
 
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
+  (*11/02/2014: not sure what it supposed to do.
+    Temporarily always returns (true,false, None) for permissions*)
+  if (Perm.allow_perm ()) then (true,false, None) else
   (* if there is no hp inf, post pone contra detection *)
   (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   if (Infer.no_infer_all_all estate) && not (!Globals.early_contra_flag) 
@@ -13580,15 +13583,21 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) resth2 ln2 (*rhs_p
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let vd = vdef_lemma_fold prog coer in
   match vd with
-    | None -> apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+    | None ->
+        apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
     | Some vd ->
         let can_fold = (
+          if (Perm.allow_perm ()) then false else
           if not(!Globals.allow_lemma_fold) then false
           else match ln2 with
           | ViewNode _ -> true
           | _ -> false
         ) in
         if not can_fold then
+          (* 11/02/2014: Why allow FOLD when doing right coercion?
+             Currently, the vdef_lemma_fold above may be too strong
+             in the presence of permissions
+          *)
           apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
         else
           let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in

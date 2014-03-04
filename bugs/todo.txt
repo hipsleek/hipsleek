@@ -1145,6 +1145,11 @@ res=v_boolean_76_1174'&{FLOW,(26,27)=__norm}[]
 {FLOW,(26,27)=__norm})[]. 
 
 ===================================================================
+ ./run-fast-tests.pl sleek_fracperm
+
+Total number of errors: 7 in files:
+  fracperm/norm1.slk({E4#Valid}) fracperm/norm3.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) fracperm/norm4.slk({E2#Valid},{E3#Valid}) fracperm/combine_data.slk({E1#Valid},{E11#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) fracperm/combine_simple.slk({E1#Valid},{E2#Valid},{E4#Valid},{E7#Valid}) fracperm/split-combine.slk({E14#Valid},{E15#Valid}) fracperm/combine2.slk({E1#Valid},{E2#Valid},{E4#Valid}).
+
 ===================================================================
 ===================================================================
 ===================================================================

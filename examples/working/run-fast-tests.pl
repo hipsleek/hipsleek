@@ -730,100 +730,100 @@ $output_file = "log";
              ],
 	"parahip" =>[
         ### GENERAL TESTS
-				["parahip/simple.ss",2,  "--en-para -tp parahip", 
+				["parahip/simple.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/forkjoin.ss",2,  "--en-para -tp parahip", 
+				["parahip/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "test","SUCCESS",
                                 "test1","FAIL"
 								],
-				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "inc","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "testCell","SUCCESS",
                                 "testVar","FAIL"
 								],
-				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "test","FAIL",
                                 "test2","FAIL",
                                 "test3","FAIL",
                                 "test4","FAIL"
 								],
-				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
+				["parahip/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip", 
+				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func2","SUCCESS",
                                 "func3","SUCCESS",
                                 "func4","SUCCESS"
 								],
         ### DEADLOCKED and DEADLOCK-FREE scenarios
-				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
+				["parahip/double-acquire.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "func","FAIL",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
-				["parahip/multicast.ss",2,  "--en-para -tp parahip", 
+				["parahip/multicast.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "initialize","SUCCESS",
                                 "thread","SUCCESS"
 								],
-				["parahip/oracle.ss",2,  "--en-para -tp parahip", 
+				["parahip/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "thread","SUCCESS",
                  #NOTE: loop calls' naming could be varied
 #                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
@@ -831,12 +831,12 @@ $output_file = "log";
                                 "main","SUCCESS"
 								],
 # slow in parahip/owicki-gries.ss due to search. Could modify search heuristics.
-				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip", 
+				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "incrementor2","SUCCESS",
                                 "incrementor1","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/fibonacci.ss",2,  "--en-para -tp parahip", 
+				["parahip/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer", 
                                 "seq_fib","SUCCESS",
                                 "para_fib","SUCCESS"
 								],
@@ -1501,7 +1501,8 @@ $output_file = "log";
 #        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
-        ["lemmas/lseg.slk", " --elp ", "Valid.Valid.Valid.Valid.", ""],
+        # ["lemmas/lseg.slk", " --elp ", "Valid.Valid.Valid.Valid.", ""],
+        ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp ", "Valid.", ""],
         ["lemmas/rlseg.slk", " --elp ", "Valid.Valid.Valid.", ""],
         ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],

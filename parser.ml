@@ -2073,10 +2073,10 @@ coercion_decl:
         (* coercion_head = dc1; *)
         (* coercion_body = dc2; *)
         (* must remove stub flow from formula - replace with top_flow *)
-        coercion_head = (F.subst_stub_flow top_flow dc1);
-        coercion_body = (F.subst_stub_flow top_flow dc2);
-        (* coercion_head = (F.subst_stub_flow n_flow dc1); *)
-        (* coercion_body = (F.subst_stub_flow n_flow dc2); *)
+        (* coercion_head = (F.subst_stub_flow top_flow dc1); *)
+        (* coercion_body = (F.subst_stub_flow top_flow dc2); *)
+        coercion_head = (F.subst_stub_flow n_flow dc1);
+        coercion_body = (F.subst_stub_flow n_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 });

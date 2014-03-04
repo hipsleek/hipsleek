@@ -50,7 +50,7 @@ let print_version () =
   print_endline ("Copyright @ PLS2 @ NUS")
 
 let process_cmd_line () = 
-  Perm.disable_para();
+  if not (Perm.allow_perm ()) then Perm.disable_para();
   Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
 let inter = Scriptarguments.inter_hoa
