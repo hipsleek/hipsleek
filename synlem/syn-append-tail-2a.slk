@@ -1,0 +1,40 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p> == self=p
+	or self::node<_, r> * r::lseg2<p>
+	inv true.
+
+pred ll_tail2<tx> == self::node<_, null> & tx=self
+	or self::node<_, r> * r::ll_tail2<tx> & r!=null
+	inv true.
+
+//lemma_safe "lseg2" self::lseg2<p> <- self::lseg2<q>@D * q::lseg2<p>.
+//lemma_safe "ll_tail2" self::ll_tail2<t> <-> self::lseg2<t> * t::node<_, null>.
+
+HeapPred H(node a, node b).
+
+//0.
+checkentail x::ll_tail2<tx>  |-  tx::node<_,_>.
+
+/*
+//1.
+infer [H] x::ll_tail2<tx>  |- H(x,tx) * tx::node<_,_>.
+*/
+
+/*
+//1a.
+infer [H] x::node<_, null> & tx=x  |- H(x,tx) * tx::node<_,_>.
+print residue.
+
+//1b.
+infer [H] x::node<_, r> * r::ll_tail2<tx> & r!=null  |- H(x,tx) * tx::node<_,_>.
+print residue.
+*/
+
+/*
+lemma_infer_pred [H] self::ll_tail2<tx>   -> H(self,tx) * tx::node<_,_>.
+print residue.
+*/

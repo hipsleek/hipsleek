@@ -28,7 +28,7 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
-    mutable prog_hp_decls : hp_decl list; 
+    mutable prog_hp_decls : hp_decl list;
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
     mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -77,6 +77,7 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
     view_prop_extns:  ident list;
+    view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
     view_mem : F.mem_formula option; 
@@ -1131,7 +1132,12 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x body_opt args ret pos=
+let genESpec_x body_opt args0 ret pos=
+  (*keep pointers only*)
+  let args = List.filter (fun p -> match p.param_type with
+    | Named _ -> true
+    | _ -> false
+  ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
   if args = [] && ret = Void then
     F.mkETrueTrueF (),[]
@@ -2648,7 +2654,7 @@ let add_bar_inits prog =
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_hp_decls = [];
-			  proc_constructor = false;
+                          proc_constructor = false;
 			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars);

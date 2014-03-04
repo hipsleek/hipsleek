@@ -137,6 +137,7 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      I.view_typed_vars =  tvars;
               I.view_kind = I.View_NORM;
               I.view_prop_extns = [];
+              I.view_derv_info = [];
 	      I.view_pt_by_self  = [];
 	      I.view_formula = struc_body;
 	      I.view_inv_lock = None;
@@ -408,8 +409,9 @@ let trans_formula_view_2_hp_x iprog cprog proc_name view_names f=
                 do_put_root rest (n+1) rp r (res@[a])
     in
     try
-      let rp = C.get_proot_hp_def_raw cprog.C.prog_hp_decls hp_name in
-      do_put_root args0 0 rp r0 []
+      if args0 = [] then [r0] else
+        let rp = C.get_proot_hp_def_raw cprog.C.prog_hp_decls hp_name in
+        do_put_root args0 0 rp r0 []
     with _ -> r0::args0
   in
   let hn_rev_trans hn = match hn with
@@ -556,3 +558,7 @@ let plug_shape_into_specs cprog iprog proc_names hp_defs=
   Debug.no_2 "plug_shape_into_specs" pr1 pr2 pr_none
       (fun _ _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
       hp_defs proc_names
+
+
+let _ = Solver.trans_hprel_2_cview := trans_hprel_2_cview;;
+let _ = Solver.trans_formula_hp_2_view := trans_formula_hp_2_view;;

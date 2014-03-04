@@ -3393,7 +3393,7 @@ and all_components (f:formula) = (*the above misses some *)
 	 | Exists e -> (e.formula_exists_qvars, e.formula_exists_heap, e.formula_exists_pure, e.formula_exists_type,
 						e.formula_exists_flow, e.formula_exists_label, e.formula_exists_and, e.formula_exists_pos)
 	 | Or ({formula_or_pos = pos}) ->  Err.report_error {Err.error_loc = pos;Err.error_text = "all_components: don't expect OR"}
-			 
+
 and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
 	formula_exists_heap =  h; 
@@ -3534,6 +3534,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+
 and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -3648,6 +3649,10 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 	| EInfer b -> EInfer { b with formula_inf_continuation = rename_struc_bound_vars b.formula_inf_continuation;}
 	| EList b -> EList (map_l_snd rename_struc_bound_vars b)
 
+(* and rename_struc_bound_vars (f:struc_formula):struc_formula = *)
+(*   let pr1 = !print_struc_formula in *)
+(*   Debug.no_1 "rename_struc_bound_vars" pr1 pr1 *)
+(*       (fun _ -> rename_struc_bound_vars_x f) f *)
 
 and rename_bound_vars (f : formula) = fst (rename_bound_vars_x f)
   (* let pr= !print_formula in *)
@@ -4014,6 +4019,7 @@ and hp_rel_def = {
     def_rhs : formula_guard list;
 }
 
+
 (* to convert to using hp_rel_def_new *)
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
@@ -4031,6 +4037,11 @@ and infer_state = {
     is_hp_equivs: (CP.spec_var*CP.spec_var) list;
     is_hp_defs: hp_rel_def list;
 }
+
+let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+(* outcome from shape_infer *)
+let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr
+  !print_hprel_def_short (==)
 
 (*for drop non-selective subformulas*)
 let check_hp_arg_eq (hp1, args1) (hp2, args2)= 
@@ -4235,6 +4246,27 @@ let is_HRel_f (f0:formula) =
        (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
   in
   helper f0
+
+
+let struc_elim_exist_x (f0 : struc_formula): struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> let r1 = List.map (fun (c1,c2) -> (c1, helper c2)) b.formula_case_branches in
+            ECase {b with formula_case_branches = r1}
+	  | EBase b -> EBase {b with  formula_struc_base = elim_exists b.formula_struc_base;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume b -> EAssume {b with formula_assume_simpl = elim_exists b.formula_assume_simpl;
+                formula_assume_struc = helper b.formula_assume_struc
+            }
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let struc_elim_exist (f0 : struc_formula): struc_formula =
+  let pr1 = !print_struc_formula in
+  Debug.no_1 "struc_elim_exist" pr1 pr1
+      (fun _ -> struc_elim_exist_x f0) f0
 
 let map_heap_hf_1 fn hf0=
   let rec helper hf=
@@ -5163,10 +5195,23 @@ let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
   let pr2 = !print_spec_var_list in
   let pr_data_node dn= !print_h_formula (DataNode dn) in
   let pr_view_node dn= !print_h_formula (ViewNode dn) in
-  Debug.no_3 "look_up_reachable_data_node_w_alias" pr1 pr2 string_of_int
+  Debug.no_3 "look_up_reachable_ptrs_w_alias" pr1 pr2 string_of_int
       (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )
              (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
       f roots output_ctr
+
+let look_up_reachable_first_reachable_view prog f roots=
+  let ptrs = look_up_reachable_ptrs_f prog f roots true true in
+  if ptrs = [] then [] else
+    let _, hvs, _ = get_hp_rel_formula f in
+    List.filter (fun hv -> CP.mem_svl hv.h_formula_view_node ptrs) hvs
+
+let look_up_reachable_first_reachable_view prog f roots=
+  let pr1 = !print_formula in
+  let pr_view_node dn= !print_h_formula (ViewNode dn) in
+  Debug.no_2 "look_up_reachable_first_reachable_view" pr1 !CP.print_svl (pr_list pr_view_node)
+      (fun _ _ -> look_up_reachable_first_reachable_view prog f roots)
+      f roots
 
 let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
   let look_up_reachable_ptrs_sf_list prog sfs roots = (
@@ -6242,9 +6287,9 @@ let drop_views_formula_x (f0:formula) views : formula=
   in
   helper f0
 
-let drop_view_formula (f2_f:formula) views: formula =
+let drop_views_formula (f2_f:formula) views: formula =
   let pr2 x= String.concat ";" x in
-  Debug.no_2 "drop_view_formula" !print_formula pr2
+  Debug.no_2 "drop_views_formula" !print_formula pr2
       !print_formula
       drop_views_formula_x f2_f views
 
@@ -6252,7 +6297,7 @@ let drop_view_struc_formula_x (f0 : struc_formula) views: struc_formula =
   let rec helper f=
     match f with
 	  | ECase b -> report_error no_pos "drop_view_struc_formula: not handle yet"
-	  | EBase b -> EBase {b with  formula_struc_base = drop_view_formula b.formula_struc_base views;
+	  | EBase b -> EBase {b with  formula_struc_base = drop_views_formula b.formula_struc_base views;
 		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
 	  | EAssume _ -> f
 	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
@@ -6382,7 +6427,7 @@ let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula
 (*******************************************)
 
 let xpure_for_hnodes hf=
-let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
+  let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   (*currently we just work with data nodes*)
   let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
@@ -7788,7 +7833,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let all_sel_pos = List.fold_left (fun ls1 ls2 -> ls1@ls2) []
       (List.map (fun (dname, pos) -> if String.compare dname dn.h_formula_data_name =0 &&
         (* pointers are to be pure-extended*)
-        Gen.BList.mem_eq CP.eq_spec_var dn.h_formula_data_node pure_extn_svl
+       (is_view || Gen.BList.mem_eq CP.eq_spec_var dn.h_formula_data_node pure_extn_svl)
           then [pos] else []) ls_ann_infos) in
     (* let all_sel_pos1 = List.sort (fun a b -> a - b) all_sel_pos in *)
     (* let pr = pr_list string_of_int in *)
@@ -8415,6 +8460,7 @@ let list_context_is_eq_flow (f:list_context) (ff)  : bool=
   match f with
     | FailCtx _ -> false
     | SuccCtx ls -> List.for_all (fun f -> context_is_eq_flow f ff) ls
+
 
 (* let rec get_must_failure_ft (ft:fail_type) = *)
 (*   match ft with *)
@@ -10747,21 +10793,23 @@ and case_to_disjunct f  =
   Debug.no_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
 
 and case_to_disjunct_x (f:struc_formula):struc_formula  =
-  let rec push_pure c (f:struc_formula):struc_formula =  match f with
+  let rec push_pure_x c (f:struc_formula):struc_formula =  match f with
     | ECase _ -> f (*this should never occur*) 
     | EBase b-> EBase {b with formula_struc_base = 
       normalize_combine 
         b.formula_struc_base 
           (formula_of_pure_N c no_pos) 
           no_pos}
-    | _ -> EBase {
+   | EList b -> EList (map_l_snd (push_pure_x c) b) 
+   | _ ->  EBase {
        formula_struc_explicit_inst = [];
        formula_struc_implicit_inst = [];
        formula_struc_exists = [];
        formula_struc_base = formula_of_pure_N c no_pos;
        formula_struc_continuation = Some f;
-       formula_struc_pos = no_pos;
-    }	 in
+       formula_struc_pos = no_pos;}
+    	 in
+  let push_pure c f = Debug.no_2 "push_pure" !print_pure_f !print_struc_formula !print_struc_formula push_pure_x c f in
   match f with
     | ECase b-> 
 		let l = List.map (fun (c1,c2)-> push_pure c1 (case_to_disjunct_x c2)) b.formula_case_branches in
@@ -10770,7 +10818,7 @@ and case_to_disjunct_x (f:struc_formula):struc_formula  =
 		  | _ -> mkEList_flatten l)
     | EBase b-> EBase {b with formula_struc_continuation = map_opt case_to_disjunct_x b.formula_struc_continuation}
 	| EList b -> EList (map_l_snd case_to_disjunct_x b)
-	| _ -> f
+	| _ -> f	
 
 (* start label - can be simplified *)	
 let get_start_label ctx = match ctx with
@@ -12935,7 +12983,7 @@ let get_pre_post_invs (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn 
 let drop_sel_rel sel_rel_vars f0=
   let rec drop_helper f=
     match f with
-      | Base fb -> let np = CP.drop_rel_formula (MCP.pure_of_mix fb.formula_base_pure) in
+      | Base fb -> let np = CP.drop_sel_rel_formula (MCP.pure_of_mix fb.formula_base_pure) sel_rel_vars in
         Base {fb with formula_base_pure = (MCP.mix_of_pure np)}
       | Exists fe ->
             let qvars, base1 = split_quantifiers f in
@@ -15033,7 +15081,7 @@ let elim_e_var to_keep (f0 : formula) : formula =
 (*Long: todo here*)
 let shorten_svl fv =
   let n_tbl = Hashtbl.create 1 in
-  let reg = Str.regexp "_.*" in 
+  let reg = Str.regexp "[0-9]*_.*" in 
   List.map (fun sv ->
       match sv with
           CP.SpecVar(t,id,pr) ->
@@ -15235,12 +15283,16 @@ let rearrange_rel (rel: hprel) =
       hprel_rhs = subst_avoid_capture fv new_svl (rearrange_formula rfv rel.hprel_rhs) ;
   }
 
-let shorten_formula f = 
-  let fv = CP.remove_dups_svl (fv f) in
+let shorten_formula f =
+  let f0 = simplify_pure_f f in
+  let fvars = fv f0 in
+  let qvars,_ = split_quantifiers f0 in
   (* let _ = print_endline ((pr_list !print_sv) fv) in *)
-  let new_svl = shorten_svl fv in
+  let vars = CP.remove_dups_svl (fvars@qvars) in
+  let new_svl = shorten_svl vars in
   (* let _ = print_endline ((pr_list !print_sv) new_svl) in *)
-  subst_avoid_capture fv new_svl f
+  (* subst_avoid_capture vars new_svl f *)
+  subst_all (List.combine vars new_svl) f0
 
 (* let rearrange_context bc = *)
 (*   let rec helper ctx = *)

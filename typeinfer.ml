@@ -949,7 +949,8 @@ and try_unify_data_type_args prog c v deref ies tlist pos =
 
 (* TODO WN : this is not doing anything *)
 and fill_view_param_types (vdef : I.view_decl) =
-  if (String.length vdef.I.view_data_name) = 0 then report_error no_pos ("fill_view_param_types error!")
+  if (String.length vdef.I.view_data_name) = 0 then
+    report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty")
   else ()
 
 (* ident, args, table *)

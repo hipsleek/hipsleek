@@ -1149,6 +1149,7 @@ view_header:
           view_is_prim = false;
           view_kind = View_NORM;
           view_prop_extns = [];
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -1182,6 +1183,7 @@ view_header_ext:
           view_is_prim = false;
           view_kind = View_EXTN;
           view_prop_extns = sl;
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -2872,7 +2874,8 @@ while_statement:
         While { exp_while_condition = bc;
             exp_while_body = es;
             exp_while_addr_vars = [];
-            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
+            (* exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1); *)
+            exp_while_specs = (Iformula.EList []); (*set to generate. if do not want to infer requires true ensures false;*)
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
             exp_while_f_name = "";

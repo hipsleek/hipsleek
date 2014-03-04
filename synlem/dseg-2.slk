@@ -1,0 +1,27 @@
+data node{
+  int val;
+  node prev;
+  node next;
+}.
+
+pred dseg0<pr> == self = null
+      or self::node<_,pr, n> * n::dseg0<self>.
+
+pred dseg<lm, rm:node> == self=lm & lm=rm
+  or self::node<_,lm, p> * p::dseg<self,rm>.
+
+HeapPred HP(node a, node b, node c).
+
+lemma_unsafe "one" self::dseg<null,r> & self!=null  -> (exists r,q: r::dseg<lm,rm> * self::node<_,r,q>).
+
+/*
+lemma_infer [HP] "one" self::dseg<p> & self!=null -> (exists r,q: HP(r,self,p) * self::node<_,r,q>).
+print residue.
+*/
+
+//checkentail x::dseg<p> & x!=null |- (exists r: p::dseg<r>).
+
+//checkentail x::dseg<p> & x!=null |- (exists r,q: r::dseg<p> * x::node<_,r,q>).
+
+checkentail x::dseg<p> & x!=null |- (exists pr,r,q: r::node<_,pr, n> * n::dseg<r>  * x::node<_,r,q>).
+
