@@ -5,7 +5,7 @@ struct node2 {
 };
 /*@
 bst0<> == self = null
-	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
+	or self::node2<_, p, q> * p::bst0<> * q::bst0<> & self != null
 	inv true;
 */
 /*@

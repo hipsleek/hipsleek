@@ -1,12 +1,18 @@
-relation dom(int[] a, int x, int y) == true.
+data node {
+  int val;
+  node next;
+}
 
-int main()
-	requires true
-	ensures res = 1;
+//relation dom(int[] a, int x, int y) == true.
+//relation dom(int[] b, int x, int y) == true.
+
+int main(node n)
+  requires n::node<a,b>
+  ensures res=1;
 {
-	int[] a;
-	assume dom(a', 0, 5);
-	a[0] = 1;
-	int x = a[0];
-	return x;
+  dprint;
+  n.val = 1;
+  dprint;
+  return n.val;
+  dprint;
 }

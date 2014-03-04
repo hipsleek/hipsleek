@@ -257,6 +257,12 @@ let is_Prim cp = match cp with
   | BForm (p,_) -> true
   | _ -> false
 
+let rec is_forall p= match p with
+  | Forall _ -> true
+  | And (p1,p2,_) -> is_forall p1 || is_forall p2
+  | AndList ps -> List.exists (fun (_, p1) -> is_forall p1) ps
+  | _ -> false
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv
@@ -9345,6 +9351,19 @@ let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
 
+let drop_sel_rel_formula (f:formula) sel_svs : formula =
+  let ps = list_of_conjs f in
+  let ps1 = List.fold_left (fun r p ->
+      match p with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(rel,_,_),_) ->
+                      if mem_svl rel sel_svs then r else r@[p]
+                | _ -> r@[p])
+  | _ -> r@[p]
+  ) [] ps in
+  conj_of_list ps1 (pos_of_formula f)
+
 let memoise_formula_ho is_complex (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
   let stk = new Gen.stack in
@@ -11370,6 +11389,8 @@ let get_cmp_form_exp e1 e2=
 
 let get_cmp_form_p p=
   match p with
+    (* | Eq (e1,e2,_) *)
+    (* | Neq (e1,e2,_) *)
     | Lte (e1,e2,_)
     | Gte (e1,e2,_)
     | Gt (e1,e2,_)
@@ -11398,11 +11419,19 @@ let get_cmp_form p =
   Debug.no_1 "get_cmp_form" pr1 pr3
       (fun _ -> get_cmp_form_x p) p
 
+let is_cmp_form_p p=
+  match p with
+    | Eq (e1,e2,_)
+    | Neq (e1,e2,_)
+    | Lte (e1,e2,_)
+    | Gte (e1,e2,_)
+    | Gt (e1,e2,_)
+    | Lt (e1,e2,_) -> (get_cmp_form_exp e1 e2) != []
+    | _ -> false
+
 let is_cmp_form p =
   match p with
-    | (BForm ((pf,_),_)) ->
-          let cmp_ps =  get_cmp_form_p pf in
-          cmp_ps != []
+    | (BForm ((pf,_),_)) -> is_cmp_form_p pf
     | _ -> false
 
 let rhs_needs_or_split f = 	match f with
@@ -12027,9 +12056,9 @@ let prune_relative_unsat_disj p0 (*lhs*) base_p (*rhs*)=
     ) ps in
     disj_of_list ps1 (pos_of_formula p)
   in
-  let ps0 = list_of_conjs p0 in
+  let ps0,ps0a = List.partition (is_disjunct) (list_of_conjs p0) in
   let ps1 = List.map prune_cons ps0 in
-  conj_of_list ps1 (pos_of_formula p0)
+  conj_of_list (ps0a@ps1) (pos_of_formula p0)
 
 let prune_relative_unsat_disj p0 base_p=
   let pr1 = !print_formula in

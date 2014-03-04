@@ -677,7 +677,8 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (* let _ = print_endline "Array found!" in *) ()
+             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
 let peek_pointer_type = 
@@ -1102,7 +1103,7 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
+(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
 one_string: [[`STRING (_,id)-> id]];
 
@@ -1148,6 +1149,7 @@ view_header:
           view_is_prim = false;
           view_kind = View_NORM;
           view_prop_extns = [];
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -1181,6 +1183,7 @@ view_header_ext:
           view_is_prim = false;
           view_kind = View_EXTN;
           view_prop_extns = sl;
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -1367,7 +1370,7 @@ opt_label: [[t= OPT label->un_option t ""]];
 
 label : [[  `STRING (_,id);  `COLON -> id ]];
 
-label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
+(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -2093,13 +2096,13 @@ infer_coercion_decl:
         `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
     ]];
 
-infer_coercion_decl_list:
-    [[
-        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
-            coercion_list_elems = coerc;
-            coercion_list_kind  = LEM;
-        }
-    ]];
+(* infer_coercion_decl_list: *)
+(*     [[ *)
+(*         coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> { *)
+(*             coercion_list_elems = coerc; *)
+(*             coercion_list_kind  = LEM; *)
+(*         } *)
+(*     ]]; *)
 
 coerc_decl_aux:
     [[
@@ -2134,7 +2137,7 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
@@ -2871,7 +2874,8 @@ while_statement:
         While { exp_while_condition = bc;
             exp_while_body = es;
             exp_while_addr_vars = [];
-            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
+            (* exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1); *)
+            exp_while_specs = (Iformula.EList []); (*set to generate. if do not want to infer requires true ensures false;*)
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
             exp_while_f_name = "";

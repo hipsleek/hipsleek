@@ -1,0 +1,22 @@
+data node2 {
+	int val;
+}.
+
+pred lls<n> == case {
+ n=1 -> [] self::node2<v> & v>0;
+ n!=1 -> [] self::node2<v> & v<=0;}.
+
+/*
+pred lls<n> == 
+   self::node2<v> & n=1 & v>0
+or self::node2<v> & n!=1 & v<=0
+.
+*/
+
+checkentail r1::node2<a> & a>0 |- r1::lls<a1>.
+print residue.
+
+checkentail r1::node2<a> & a<=0 |- r1::lls<a1>.
+print residue.
+
+

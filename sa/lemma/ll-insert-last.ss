@@ -11,15 +11,15 @@ HeapPred H1(node x). // non-ptrs are @NI by default
 HeapPred H2(node x). // non-ptrs are @NI by default
   PostPred G2(node x, node y). // non-ptrs are @NI by default
 
-HP<r> == self::node<_, null> & r=self
-  or self::node<_, q> * q::HP<r>;
+/* HP<r> == self::node<_, null> & r=self */
+/*   or self::node<_, q> * q::HP<r>; */
 
 
-lseg<p> == self= p
-  or self::node<_, q> * q::lseg<p> ;
+/* lseg<p> == self= p */
+/*   or self::node<_, q> * q::lseg<p> ; */
 
 
-lemma self::HP<p1> <-> self::lseg<p1> * p1::node<_,null>;
+//lemma self::HP<p1> <-> self::lseg<p1> * p1::node<_,null>;
 
 node get_last(node x)
   infer [H1,G1]  requires  H1(x)  ensures G1(x,res);//'

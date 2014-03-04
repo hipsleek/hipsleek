@@ -18,7 +18,7 @@ relation partial_sum(int[] c, int[] a, int i, int j) == (i > j | forall ( k : (k
 
 relation differfrom(int[] a, int[] b, int i, int j, int d) == (i > j | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] - b[k] = d))).
 
-void vecsum(int[] a, int[] b, int n, ref int[] c)
+void vecsum(int[] a, int[] b, int n, int[]@R c)
 	requires true
 	ensures sumarrayvector(c',a,b,0,n-1) & identicalout(c',c,0,n-1);
 {
@@ -29,7 +29,7 @@ void vecsum(int[] a, int[] b, int n, ref int[] c)
 	}
 }
 
-void vecprod(int[] a, int[] b, int n, ref int[] c)
+void vecprod(int[] a, int[] b, int n, int[]@R c)
 	requires true
 	ensures prodarrayvector(c',a,b,0,n-1) & identicalout(c',c,0,n-1);
 {
@@ -40,7 +40,7 @@ void vecprod(int[] a, int[] b, int n, ref int[] c)
 	}
 }
 
-void increaseall(ref int[] a, int i, int j, int d)
+void increaseall(int[]@R a, int i, int j, int d)
 	requires true
 	ensures differfrom(a',a,i,j,d) & identicalout(a',a,i,j);
 {
@@ -51,7 +51,7 @@ void increaseall(ref int[] a, int i, int j, int d)
 	}
 }
 
-void vecpartialsum(int[] a, int i, int j, ref int[] c)
+void vecpartialsum(int[] a, int i, int j, int[]@R c)
 	requires true
 	ensures partial_sum(c',a,i,j) & identicalout(c',c,i,j);
 {

@@ -16,7 +16,7 @@ module TP = Tpdispatcher
 let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
-    let new_f = CF.drop_view_formula f1 [view_name] in
+    let new_f = CF.drop_views_formula f1 [view_name] in
     (* let _ = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
      (CF.fv new_f)
   in
@@ -449,7 +449,9 @@ let norm_extract_common iprog cprog cviews sel_vns=
           in
           process_helper rest (done_vs@n_vdecls)
   in
-  process_helper cviews []
+  (*not sure it is necessary*)
+  (* process_helper cviews [] *)
+  cviews
 
 
 (*****************************************************************)
@@ -500,7 +502,11 @@ let cont_para_analysis_x cprog cviews=
     match rem_cviews with
       | [] -> done_cviews
       | vdef::rest ->
-            let new_vdef = cont_para_analysis_view cprog vdef done_cviews in
+            (*if non recursive then not check*)
+            let new_vdef = if vdef.Cast.view_is_rec then
+              cont_para_analysis_view cprog vdef done_cviews
+            else vdef
+            in
             loop_helper rest (done_cviews@[new_vdef])
   in
   loop_helper cviews []
@@ -508,8 +514,9 @@ let cont_para_analysis_x cprog cviews=
 let cont_para_analysis cprog cviews=
   (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
   let pr1 = pr_pair pr_id !CP.print_svl in
+  let pr2a = Cprinter.string_of_view_decl in
   let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
-  let pr3 = pr_list pr2 in
+  let pr3 = pr_list pr2a in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews
 

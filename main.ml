@@ -236,6 +236,8 @@ let reverify_with_hp_rel old_cprog iprog =
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
+  (* let _ =  Debug.info_zprint (lazy  ("XXXX 4: ")) no_pos in *)
+  (* let _ = I.set_iprog iprog in *)
   ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
@@ -349,6 +351,9 @@ let process_source_full source =
     (*to improve: annotate field*)
     let _ = I.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
+    (*used in lemma*)
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
     (* ========= lemma process (normalize, translate, verify) ========= *)
@@ -410,7 +415,9 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog intermediate_prog cprog);
+      (* let _ =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
+      (* let _ = I.set_iprog intermediate_prog in *)
+      ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError1(s) detected at main "^"\n");
@@ -571,12 +578,16 @@ let process_source_full_after_parser source (prog, prims_list) =
   (**************************************)
   (*annotate field*)
   let _ = I.annotate_field_pure_ext intermediate_prog in
+  (*used in lemma*)
+  (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
+  (* let _ = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
-      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula)
+    (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
   let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
@@ -626,6 +637,8 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
