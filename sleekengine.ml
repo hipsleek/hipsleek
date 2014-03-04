@@ -761,7 +761,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 
 let run_simplify (iante0 : meta_formula) =
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -777,7 +777,7 @@ let run_simplify (iante0 : meta_formula) =
 
 let run_hull (iante0 : meta_formula) = 
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -794,7 +794,7 @@ let run_hull (iante0 : meta_formula) =
 
 let run_pairwise (iante0 : meta_formula) = 
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -821,7 +821,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                               ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
   (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -1066,7 +1066,7 @@ let shape_infer_pre_process constrs pre_hps post_hps=
       let t = CP.type_of_spec_var sv in
       not ((* is_RelT t || *) is_HpT t )) post_vars1 in
   (*END*)
-  let infer_vars = infer_pre_vars@infer_post_vars in
+  (* let infer_vars = infer_pre_vars@infer_post_vars in *)
   let sel_hps = pre_hp_rels@post_hp_rels in
   (* let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps constrs in *)
   (***END PRE/POST***)

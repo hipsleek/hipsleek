@@ -613,7 +613,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
       | LEM_UNSAFE     -> manage_unsafe_lemmas lst iprog cprog 
       | LEM_SAFE       -> manage_safe_lemmas lst iprog cprog 
       | LEM_INFER      -> snd (manage_infer_lemmas lst iprog cprog)
-      | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Solver.xpure_heap in 
+      | LEM_INFER_PRED      -> let r1,_,r2 = manage_infer_pred_lemmas lst iprog cprog Cvutil.xpure_heap in 
         let _ = lem_infer_fnct r1 r2 in
         r2
   in

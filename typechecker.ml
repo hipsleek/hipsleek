@@ -1160,7 +1160,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
           (***generating spec for init***)
           CF.prepost_of_init lock_var lock_sort new_args post_start_label pos
       in
-      let prepost = prune_pred_struc prog true prepost in (* specialise --eps *)
+      let prepost = Cvutil.prune_pred_struc prog true prepost in (* specialise --eps *)
       let ctx = 
         if (mn_str=Globals.finalize_name) then
           (*try to combine fractional permission before finalize*)
@@ -1271,7 +1271,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              let new_ctx,pure_info = match c1_o with
                         | None -> ts,None
                         | Some c1 ->
-                              let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                              let c1 = Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
                               let c1 = match c2 with
                                 | None -> 
                                       (* WN_2_Loc: clear c1 of inferred info first *)
@@ -1331,7 +1331,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                     CF.translate_waitlevel_formula c
                                   else c
                               in
-                              let c = prune_preds prog false c in (* specialise assumed formula *)
+                              let c = Cvutil.prune_preds prog false c in (* specialise assumed formula *)
                               let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                               let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
 			      else 
@@ -1622,7 +1622,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     in
                     let _ = DD.tinfo_hprint (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
                     let vheap = Immutable.normalize_field_ann_formula vheap in
-	            let vheap = prune_preds prog false vheap in
+	            let vheap = Cvutil.prune_preds prog false vheap in
                     let _ = DD.tinfo_hprint (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
@@ -1957,7 +1957,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   CF.mkBase heap_node aux_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos
             in
             (* let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
-            let heap_form = prune_preds prog false heap_form in
+            let heap_form = Cvutil.prune_preds prog false heap_form in
 	    let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
             (* let _ = print_endline ("res = " ^ (Cprinter.string_of_list_failesc_context res)) in *)
 	    res
@@ -2861,7 +2861,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             let inf_post_flag = post_ctr # get > 0 in
                             Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
                             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
-                              CF.get_pre_post_vars [] Solver.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
+                              CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
                             let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                             let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
                             let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
