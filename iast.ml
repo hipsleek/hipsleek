@@ -77,6 +77,7 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
     view_prop_extns:  ident list;
+    view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
     view_mem : F.mem_formula option; 

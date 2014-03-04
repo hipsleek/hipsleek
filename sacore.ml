@@ -3232,19 +3232,19 @@ let pred_split_cands_x prog unk_hps hp_defs=
             else
               process_one_pred hrel hp args (cands@n_cands) rest
   in
-  let rec remove_dups_cand args cands res=
-    match cands with
-      | [] -> res
-      | (hp1, args1,c,d,e)::rest -> begin
-          let part,rest1 = List.partition (fun (hp2, _,_,_,_) -> CP.eq_spec_var hp2 hp1 ) rest in
-          let split_kepts = try
-            let kept =List.find (fun (_,args2,_,_,_) -> Sautil.eq_spec_var_order_list args args2) ((hp1, args1,c,d,e)::part) in
-            [kept]
-          with _ -> [(hp1, args1,c,d,e)]
-          in
-          remove_dups_cand args rest1 (res@split_kepts)
-        end
-  in
+  (* let rec remove_dups_cand args cands res= *)
+  (*   match cands with *)
+  (*     | [] -> res *)
+  (*     | (hp1, args1,c,d,e)::rest -> begin *)
+  (*         let part,rest1 = List.partition (fun (hp2, _,_,_,_) -> CP.eq_spec_var hp2 hp1 ) rest in *)
+  (*         let split_kepts = try *)
+  (*           let kept =List.find (fun (_,args2,_,_,_) -> Sautil.eq_spec_var_order_list args args2) ((hp1, args1,c,d,e)::part) in *)
+  (*           [kept] *)
+  (*         with _ -> [(hp1, args1,c,d,e)] *)
+  (*         in *)
+  (*         remove_dups_cand args rest1 (res@split_kepts) *)
+  (*       end *)
+  (* in *)
   (*******END INTERNAL*******)
   let cands, non_split_hps = List.fold_left (fun (r, non_split_hps) def ->
       let hrel, hp, args = match def.CF.def_lhs with
@@ -3642,10 +3642,6 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
   (****************************************************************)
        (*************************INTERNAL*********************)
   (****************************************************************)
-  let analyse_error () =
-    (*size*)
-    0
-  in
   let size_ext_hpdef hpdef=
     (*look up the view size extn*)
     let view_exts = CA.look_up_view_def_ext_size cprog.CA.prog_view_decls 1 1 in
@@ -3687,7 +3683,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
   in
   let pure_ext_x hpdefs=
     (*from the failure ==> kind of extension*)
-    let ext_kind = analyse_error () in
+    let ext_kind = Cfutil.analyse_error () in
     let n_setting=
       match ext_kind with
         | 0 ->

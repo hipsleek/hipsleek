@@ -7833,7 +7833,7 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let all_sel_pos = List.fold_left (fun ls1 ls2 -> ls1@ls2) []
       (List.map (fun (dname, pos) -> if String.compare dname dn.h_formula_data_name =0 &&
         (* pointers are to be pure-extended*)
-        Gen.BList.mem_eq CP.eq_spec_var dn.h_formula_data_node pure_extn_svl
+       (is_view || Gen.BList.mem_eq CP.eq_spec_var dn.h_formula_data_node pure_extn_svl)
           then [pos] else []) ls_ann_infos) in
     (* let all_sel_pos1 = List.sort (fun a b -> a - b) all_sel_pos in *)
     (* let pr = pr_list string_of_int in *)

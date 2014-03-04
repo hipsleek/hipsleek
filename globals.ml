@@ -767,6 +767,10 @@ let sa_pure_field = ref false
 
 let sa_pure = ref false
 
+(* let iSIZE_PROP = 0 *)
+(* let iBAG_VAL_PROP = 1 *)
+
+
 let sa_ex = ref false
 
 let sa_infer_split_base = ref true

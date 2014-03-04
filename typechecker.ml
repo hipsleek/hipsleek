@@ -2401,7 +2401,7 @@ and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label): CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
   (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
@@ -2548,6 +2548,10 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
             let nres =
               try
                 let cur_r = (fn prog p) in
+                let _ = if not cur_r then
+                  let _ = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name)  no_pos in
+                  ()
+                else () in
                 tot_r && cur_r
               with _ -> false
             in
@@ -3238,6 +3242,31 @@ let restore_phase_infer_checks() =
   dis_term_msg := stk_tmp_checks # pop_top;
   dis_bnd_chk := stk_tmp_checks # pop_top
 
+let lookup_called_procs_x iprog prog root_scc verified_sccs=
+  let called_procs = List.fold_left (fun r p ->
+      let procs = Cast.callees_of_proc prog (Cast.unmingle_name p.Cast.proc_name) in
+      r@procs
+  ) [] root_scc in
+  let _ = Debug.info_hprint (add_str "called_procs" (pr_list pr_id)) called_procs no_pos in
+  List.fold_left (fun r scc ->
+          let called_scc = List.filter (fun p ->
+              let pn = Cast.unmingle_name p.proc_name in
+              List.exists (fun called_proc -> String.compare pn called_proc =0 ) called_procs) scc
+          in
+          if called_scc = [] then r else r@[called_scc]
+  ) [] verified_sccs
+
+let lookup_called_procs iprog prog root_scc verified_sccs=
+  let pr1 p = pr_id p.proc_name in
+  let pr2 = pr_list pr1 in
+  Debug.no_2 "lookup_called_procs" pr2 (pr_list_ln pr2) (pr_list_ln pr2)
+      (fun _ _ -> lookup_called_procs_x iprog prog root_scc verified_sccs)
+      root_scc verified_sccs
+
+let ext_pure_check_procs iprog prog proc_names error_traces=
+  let _ = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
+  ()
+
 let check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
     Some (open_out (!Globals.cpfile))
@@ -3275,7 +3304,7 @@ let check_prog iprog (prog : prog_decl) =
   let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
-  let prog = List.fold_left (fun prog scc -> 
+  let prog, _ = List.fold_left (fun (prog, verified_sccs) scc -> 
       let is_all_verified1, prog =
         let call_order = (List.hd scc).proc_call_order in
         (* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *)
@@ -3307,6 +3336,16 @@ let check_prog iprog (prog : prog_decl) =
           r
         end
       ) in
+      let n_verified_sccs = if is_all_verified2 then verified_sccs@[scc]
+      else
+        let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
+        (*extn rele views and specs*)
+        let error_traces = [] in
+         (* let n_scc = ext_pure_check_procs iprog prog (scc::rele_sccs) error_traces in *)
+        (*do analysis on the new domain*)
+        (*if fail, give up; if succ, move fwd*)
+        verified_sccs
+      in
       (* let _ = Debug.info_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in *)
       let _ = if (* is_all_verified1 && *) is_all_verified2 then
         let _ = Infer.scc_rel_ass_stk # reverse in
@@ -3318,8 +3357,8 @@ let check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
-      prog
-  ) prog proc_scc 
+      (prog,n_verified_sccs)
+  ) (prog,[]) proc_scc 
   in 
 
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));

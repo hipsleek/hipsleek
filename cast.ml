@@ -80,6 +80,7 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
+  | View_SPEC
 
 and view_decl = { 
     view_name : ident; 
@@ -89,9 +90,13 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : LO.t list;
     view_modes : mode list;
+    view_domains: ident list; (*View_EXT have been applied in this view*)
     view_is_prim : bool;
     view_kind : view_kind;
-    view_prop_extns:  P.spec_var list;
+    view_prop_extns:  P.spec_var list; (*for extn views*)
+    view_parent_name: ident option;
+    (*a map of shape <-> pure properties*)
+    view_extns: (ident * int * int) list;(* (view_extn_name, r_pos , extn_arg_pos) list;*)
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;
@@ -462,6 +467,7 @@ and exp = (* expressions keep their types *)
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
   | Sharp_id id -> exlist # get_hash id
+
 
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")

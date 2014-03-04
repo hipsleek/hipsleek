@@ -3099,9 +3099,13 @@ let pr_view_decl v =
   let s = match v.view_kind with 
     | View_NORM -> " "
     | View_PRIM -> "_prim "
-    | View_EXTN -> "_extn " in
+    | View_EXTN -> "_extn "
+    | View_SPEC -> "_spec "
+  in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+   pr_vwrap  "view_extns: "  fmt_string (String.concat ";" (List.map (fun (v,p1,p2) ->
+     "(" ^ v ^ "," ^ (string_of_int p1) ^ "," ^ (string_of_int p2) ^ ")" ) v.view_extns));
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl 

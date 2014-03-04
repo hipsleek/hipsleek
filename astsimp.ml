@@ -2004,11 +2004,14 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           C.view_is_prim = is_prim_v;
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
+          C.view_parent_name = None;
+          C.view_extns = [];
           C.view_vars = view_sv;
           C.view_cont_vars = [];
           C.view_uni_vars = [];
           C.view_labels = labels;
           C.view_modes = vdef.I.view_modes;
+          C.view_domains = [];
           C.view_contains_L_ann = false;
           C.view_ann_params  = ann_params;
           C.view_params_orig = view_vars_gen;      (* andreeac: TODO annot *)
@@ -8915,6 +8918,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		I.view_typed_vars =  tvars;
                 I.view_kind = I.View_NORM;
                 I.view_prop_extns = [];
+                I.view_derv_info = [];
 		I.view_pt_by_self  = [];
 		I.view_formula = struc_body;
 		I.view_inv_lock = None;

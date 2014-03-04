@@ -3169,7 +3169,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
       end
     else
       begin
-        let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+        (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
         let _ = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
         (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
           | Base fb -> fb

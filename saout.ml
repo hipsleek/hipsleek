@@ -137,6 +137,7 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      I.view_typed_vars =  tvars;
               I.view_kind = I.View_NORM;
               I.view_prop_extns = [];
+              I.view_derv_info = [];
 	      I.view_pt_by_self  = [];
 	      I.view_formula = struc_body;
 	      I.view_inv_lock = None;
@@ -409,8 +410,8 @@ let trans_formula_view_2_hp_x iprog cprog proc_name view_names f=
     in
     try
       if args0 = [] then [r0] else
-      let rp = C.get_proot_hp_def_raw cprog.C.prog_hp_decls hp_name in
-      do_put_root args0 0 rp r0 []
+        let rp = C.get_proot_hp_def_raw cprog.C.prog_hp_decls hp_name in
+        do_put_root args0 0 rp r0 []
     with _ -> r0::args0
   in
   let hn_rev_trans hn = match hn with
