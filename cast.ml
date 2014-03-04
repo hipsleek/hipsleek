@@ -1314,7 +1314,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 	      | F.StarMinus _ -> true
 	      | _ -> false)
 	  else false in
-  if(flag) then Ramify
+  if(flag || !Globals.allow_ramify) then Ramify
   else
     let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}

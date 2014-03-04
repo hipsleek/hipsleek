@@ -5,25 +5,40 @@ node left;
 node right
 }
 
-relation update(bag(node) G, node x, int d, node l, node r,bag(node) G1).
+relation updG(bag(node) G, node x, int d, node l, node r, bag(node) G1).
+relation lookup(bag(node) G, node x, int d, node l, node r).
+relation sub(bag(node) R, bag(node) R1).
 relation reach(bag(node) G, node x, bag(node) R).
+relation notreach(bag(node) G, node x, bag(node) NR).
 
 dag<G> == self = null
-       or exists G1: self::node<v,l,r> * (l::dag<G> U* r::dag<G>) & update(G,self,v,l,r,G1);
+       or self::node<v,l,r> * (l::dag<G> U* r::dag<G>)
+	& lookup(G,self,v,l,r);
 
 rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
-      & reach(G,x,R) & reach(G1,x,R1) & R subset R1 & !(reach(G,x,R)) & !(reach(G1,x,R1))
+      & reach(G,x,R) & reach(G1,x,R1) 
+      & sub(R,R1) 
+      & notreach(G,x,NR) & notreach(G1,x,NR)
       -> x::dag<G1> U* y::dag<G1>;
 
-//=======================================//
+//rlemma x::node<v,l,r> * (l::dag<G> U* r::dag<G>)
+//	& lookup(G,self,v,l,r) -> x::dag<G1> & updG(G,x,v,l,r,G1);
+ 
+//========================================//
 
 relation mark(bag(node) G,node x,bag(node) G1).
 relation mark1(bag(node) G,node x,bag(node) G1).
 
-axiom update(G,x,1,l,r,G1) ==> mark1(G,x,G1).
+axiom lookup(G,x,1,l,r) ==> mark(G,x,G1).
 
-axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & R subset R1.
-axiom mark(G,x,G1) ==> !(reach(G,x,R)) & !(reach(G1,x,R)).
+axiom lookup(G,x,_,l,r) & mark(G,l,G1) & mark(G1,r,G2) ==> lookup(G2,x,_,l,r).
+
+//axiom lookup(G,x,v,l,r) ==> updG(G,x,v,l,r,_).
+
+//axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
+
+axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & sub(R,R1).
+axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
 
 axiom mark(G,x,G1) & mark(G1,y,G2) ==> mark(G,y,G1) & mark(G1,x,G2).
 axiom mark(G,l,G1) & mark(G1,r,G2) & mark1(G2,x,G3) ==> mark(G,x,G3).

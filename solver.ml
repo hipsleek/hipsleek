@@ -11827,7 +11827,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
         } -> 
-            (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
+            let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in 
             let r1,r2 =
             let ctx0 = Ctx estate in
             (* let ((coer_l,coer_r),univ_coers) = 
@@ -11835,26 +11835,46 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let coer_l = Lem_store.all_lemma # get_left_coercion in 
             let coer = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
               else List.hd coer_l in 
-           (* let () = print_endline (Cprinter.string_of_coercion coer) in*)
+            (* let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
               (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
               let rest_heap = split_star_conjunctions lhs_rest in
               let filter_starminus = List.filter (fun h -> Mem.contains_starminus h) rest_heap in
-              let rest_heap = List.filter (fun h -> not (Mem.contains_starminus h)) rest_heap in
+              (*let _ = List.map (fun c -> print_endline(Cprinter.string_of_h_formula c)) rest_heap in*)
+              let rest_heap = List.filter 
+                (fun h -> if (Mem.contains_starminus h) then false
+                  else if (is_view h) then false else true) rest_heap in
               let lhs_wand = 
               if not (List.length filter_starminus > 0) 
               then failwith "Ramification Lemma has more than one wand"
               else List.hd filter_starminus in
               let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = extr_formula_base lhs_b in
+              let filter_sm = List.filter (fun h -> if (Mem.contains_starminus h) then false
+                  else if (is_data h) then false else true) (split_star_conjunctions lhs_h) in
+              let rhs = List.hd filter_sm in
+              let fvl = Cformula.h_fv rhs in
               let h,p,fl,t,a = split_components coer.coercion_body in
+              let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in
+              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in
               let vl = Cformula.h_fv h in
+              let fresh_vl = CP.fresh_spec_vars vl in
+              let h = Cformula.h_subst (List.combine vl fresh_vl) h in
+              let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in
               let gvl = Cformula.h_fv lhs_wand in
-              let rho = if List.length vl = List.length gvl then List.combine vl gvl
+              let rl = List.hd gvl in
+              let rl2 = List.hd (List.tl gvl) in
+              let fl2 = List.hd (List.tl fvl) in
+              let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in
+              let gvl = [rl]@[rl2]@fvl in
+              let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else failwith "Ramification Lemma with different variables" in
               let new_lhs_h = Cformula.h_subst rho h in
+              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in
               let new_lhs_h = Cformula.join_star_conjunctions (new_lhs_h::rest_heap) in
-              let new_lhs = Cformula.mkBase new_lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
-              (*let () = print_endline(Cprinter.string_of_formula new_lhs) in*)
+              let new_lhs = Cformula.mkBase new_lhs_h new_lhs_p lhs_t lhs_fl lhs_a no_pos in
+              let () = print_endline("LHS :"^Cprinter.string_of_formula_base lhs_b) in
+              let () = print_endline("NEW LHS : " ^Cprinter.string_of_formula new_lhs) in
               let old_trace = estate.es_trace in
               let estate = {estate with es_trace=(("(ramify: " ^ coer.coercion_name ^ ")")::old_trace)} in
               let new_ctx1 = Ctx{estate with es_formula = new_lhs } in

@@ -1450,7 +1450,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
     | WArg -> 
           let _ = DD.tinfo_pprint "WArg  analysis here!\n" no_pos in  
           (1,M_Nothing_to_do (string_of_match_res c)) 
-    | Wand -> (*let _ = (print_endline"eliminate wand") in *)
+    | Wand -> let _ = (print_endline"eliminate wand") in 
                if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma c)
                else (1,M_Nothing_to_do (string_of_match_res c))
   in
