@@ -218,14 +218,19 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
         | Some f1  -> Some (CF.mkOr f1 fc no_pos)
         | None -> Some fc) None new_un_struc_formulas
   in
+  let view_sv_vars = orig_view.Cast.view_vars@n_args in
     (* let orig_user_inv = (MCP.pure_of_mix orig_view.Cast.view_user_inv) in *)
   (* let _ =  Debug.info_pprint ("   extn_inv: "^ (!CP.print_formula extn_user_inv)) no_pos in *)
   (* let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in *)
   (* let _ =  Debug.info_pprint ("   n_user_inv: "^ (!CP.print_formula (MCP.pure_of_mix n_user_inv))) no_pos in *)
+  let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars view_derv in 
   let der_view = {orig_view with
       Cast.view_name = view_derv.Iast.view_name;
         (* Cast.view_kind = Cast.View_DERV; *)
-      Cast.view_vars = orig_view.Cast.view_vars@n_args;
+      Cast.view_vars = view_sv ;
+      Cast.view_labels = labels;
+      Cast.view_ann_params  = ann_params;
+      Cast.view_params_orig = view_vars_gen; 
       Cast.view_formula = new_struct_f;
       Cast.view_un_struc_formula = new_un_struc_formulas;
       Cast.view_raw_base_case = rbc;
@@ -430,3 +435,45 @@ let leverage_self_info xform formulas anns data_name=
   let pr2 = !CF.print_formula in
   Debug.no_3 "leverage_self_info" pr1 pr2 (!CP.print_svl) pr1
       (fun _ _ _ -> leverage_self_info_x xform formulas anns data_name) xform formulas anns
+
+(*****************************************************************************************)
+(*     BUILD PURE EXTN MAP  *)
+(*****************************************************************************************)
+
+let expose_pure_extn_one_view_x iprog cprog view extn_view=
+  []
+
+let expose_pure_extn_one_view iprog cprog view extn_view=
+  let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
+  let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
+    ^ (pr1 v.Cast.view_extns) in
+  let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
+  Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr1
+      (fun _ _ -> expose_pure_extn_one_view_x iprog cprog view extn_view)
+      view extn_view
+(*
+  build extn map.
+  pair extn prop in views with view_extn
+*)
+let expose_pure_extn_x iprog cprog views extn_views=
+  List.map (fun v ->
+      let map = List.fold_left (fun r extn_view ->
+          let pairs =  expose_pure_extn_one_view iprog cprog v extn_view in
+          r@pairs
+      ) [] extn_views in
+      {v with Cast.view_extns = v.Cast.view_extns@map}
+  ) views
+
+let expose_pure_extn iprog cprog views extn_views=
+  let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
+  let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
+    ^ (pr1 v.Cast.view_extns) in
+  let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
+  Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr3)
+      (pr_list_ln pr2)
+      (fun _ _ -> expose_pure_extn_x iprog cprog views extn_views)
+      views extn_views
+
+(*****************************************************************************************)
+(*    END BUILD PURE EXTN MAP  *)
+(*****************************************************************************************)

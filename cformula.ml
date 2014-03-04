@@ -7771,8 +7771,17 @@ let extend_view_nodes_h hf0 old_v_name new_v_name extra_args =
           Phase { h_formula_phase_rd = helper hf1; h_formula_phase_rw = helper hf2; h_formula_phase_pos = pos}
       | ViewNode vn -> if String.compare vn.h_formula_view_name old_v_name = 0 then
             let fr_extra_args = CP.fresh_spec_vars extra_args in
+            let ext_anns = List.map (fun _ -> (CP.ImmAnn (CP.ConstAnn Mutable),0)) fr_extra_args in
+            let ext_map,_ = List.fold_left (fun (r, i) sv ->
+                let i = i +1 in
+                (r@[(CP.SVArg sv, i)], i)
+            )  ([],(List.length vn.h_formula_view_arguments-1)) fr_extra_args in
+            let _ =  Debug.info_pprint ("  fr_extra_args: "^ (!CP.print_svl fr_extra_args)) no_pos in
             ViewNode {vn with h_formula_view_name = new_v_name;
-                     h_formula_view_arguments = vn.h_formula_view_arguments@ fr_extra_args}
+                     h_formula_view_arguments = (vn.h_formula_view_arguments@ fr_extra_args);
+                     h_formula_view_annot_arg = vn.h_formula_view_annot_arg@ext_anns;
+                     h_formula_view_args_orig = vn.h_formula_view_args_orig@ext_map;
+            }
           else hf
       | HRel (CP.SpecVar (t, id, p), eargs, pos) ->
             if String.compare id old_v_name = 0 then

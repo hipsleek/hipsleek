@@ -64,6 +64,8 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
+  | View_DERV
+  | View_SPEC
 
 and view_decl = 
     { view_name : ident; 
@@ -75,8 +77,10 @@ and view_decl =
     view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
+    view_parent_name: (ident) option;
+    view_derv: bool;
     view_kind : view_kind;
-    view_prop_extns:  ident list;
+    view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
@@ -1746,7 +1750,8 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_is_prim || v.view_kind = View_EXTN || v.view_kind = View_DERV then
+          v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else if String.length v.view_data_name = 0 then
           report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
@@ -2776,6 +2781,40 @@ let look_up_field_ann prog view_data_name sel_anns=
   let pr3 = pr_list (pr_pair pr_id string_of_int) in
   Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
       (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
+
+
+(************************************************************
+Building the derive graph for view hierarchy based on Iast
+*************************************************************)
+module IdentComp = struct
+  type t = ident
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = ( = )
+end
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
+
+let ex_args f a b = f b a
+
+let ngs_union gs =
+  List.fold_left IGO.union IG.empty gs
+
+let addin_derivegraph_of_views cg der_v : IG.t =
+  let gs = List.map (fun ((orig_v ,_),_) ->  IG.add_edge cg der_v.view_name orig_v) der_v.view_derv_info in 
+  ngs_union gs
+
+let derivegraph_of_views der_views : IG.t =
+  let cg = IG.empty in
+  let pn v = v.view_name in
+  let mns = List.map pn der_views in
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  List.fold_left (fun a b -> ex_args addin_derivegraph_of_views b a) cg der_views
+
 
 let exists_return_x e0=
   let rec helper e=

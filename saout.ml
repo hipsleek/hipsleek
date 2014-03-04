@@ -136,6 +136,8 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
 	      I.view_modes = List.map (fun _ -> ModeOut) vars ;
 	      I.view_typed_vars =  tvars;
               I.view_kind = I.View_NORM;
+              I.view_derv = false;
+              I.view_parent_name = None;
               I.view_prop_extns = [];
               I.view_derv_info = [];
 	      I.view_pt_by_self  = [];

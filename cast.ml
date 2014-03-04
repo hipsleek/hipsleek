@@ -81,6 +81,7 @@ and view_kind =
   | View_NORM
   | View_EXTN
   | View_SPEC
+  | View_DERV
 
 and view_decl = { 
     view_name : ident; 
@@ -94,9 +95,9 @@ and view_decl = {
     view_is_prim : bool;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
-    view_parent_name: ident option;
+    view_parent_name: ident option; (*for view_spec*)
     (*a map of shape <-> pure properties*)
-    view_extns: (ident * int * int) list;(* (view_extn_name, r_pos , extn_arg_pos) list;*)
+    view_extns: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;

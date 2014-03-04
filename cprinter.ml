@@ -3101,6 +3101,7 @@ let pr_view_decl v =
     | View_PRIM -> "_prim "
     | View_EXTN -> "_extn "
     | View_SPEC -> "_spec "
+    | View_DERV -> "_derv "
   in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
