@@ -9,17 +9,17 @@
 #HOME=.
 HIP=../../../../hip
 
-#EXAMPLE=~/hg/para5-threads2/sleekex/examples/fracperm/threads
+#EXAMPLE=~/hg/para5-threads/sleekex/examples/fracperm/threads
 
 # Threads as resource
-PARAHIP_RSR=~/hg/para5-threads2/sleekex/examples/fracperm/threads/parahip-rsr
+PARAHIP_RSR=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip-rsr
 FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
 
 # Threads as resource
-EXAMPLE=~/hg/para5-threads2/sleekex/examples/fracperm/threads
+EXAMPLE=~/hg/para5-threads/sleekex/examples/fracperm/threads
 
 # Threads as AND-conjunction
-PARAHIP_ORG=~/hg/para5-threads2/sleekex/examples/fracperm/threads/parahip-org
+PARAHIP_ORG=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip-org
 FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
 
 ITERATIONS=10
