@@ -46,7 +46,7 @@ checkentail x::ls<n1,p1> * p2::ls<n2,p> * p::node<_,_> & p1=p2 |- x::ls<n,p>.
 // valid with only one answer? YEAP
 print residue.
 
-
-//checkentail x::ls<n1,p1> * p1::ls<n2,p2> * p2::ls<n3,p3> * p3::node<a,b> |- x::ls<n1+n2+n3,r>.
-//print residue.
+//(7)
+checkentail x::ls<n1,p1> * p1::ls<n2,p2> * p2::ls<n3,p3> * p3::node<a,b> |- x::ls<n1+n2+n3,r>.
+print residue.
 
