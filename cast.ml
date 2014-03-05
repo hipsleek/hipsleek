@@ -91,13 +91,13 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : LO.t list;
     view_modes : mode list;
-    view_domains: ident list; (*View_EXT have been applied in this view*)
     view_is_prim : bool;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
     (*a map of shape <-> pure properties*)
-    view_extns: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
+    (*View_EXT have been applied in this view*)
+    view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;

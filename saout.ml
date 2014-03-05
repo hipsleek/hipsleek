@@ -285,7 +285,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
   let _ = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
   (* let _ = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
   (*convert to cview. new_views: view with annotated types*)
-  let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog) in
+  let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog false) in
   let _ = cprog.C.prog_hp_decls <- crem_hprels in
   (*put back*)
   (* let _ = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)

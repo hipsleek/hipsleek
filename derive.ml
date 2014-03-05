@@ -83,46 +83,52 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       new_p
     else p
   in
-  let mk_ho_ind args val_extns p rec_ls=
+  let mk_ho_ind args val_extns p0 rec_ls=
     (* let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) in *)
     (* let _ =  CP.extract_outer_inner p args val_extns rec_args in [] *)
     fun svl val_extns1 rec_ls1->
       (* let svl1 = List.concat (snd (List.split rec_ls)) in *)
       (*find subformula has svl1*)
-      (* let _ =  Debug.info_pprint ("   p: "^ (!CP.print_formula p)) no_pos in *)
-      (* let _ =  Debug.info_pprint ("   svl: "^ (!CP.print_svl svl)) no_pos in *)
-      let p_extn, p_non_extn = partition_extn_svl p svl in
-      (* let _ =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
-      let from_rec_args =  List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
-      let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
-      let ((is_bag_constr,(outer, root_e), (inner_e, first_e)), exquans, irr_ps) =  Cpure_pred.extract_outer_inner p_extn args val_extns from_rec_args in
-      (*combine bag or non-bag constrs*)
-      let comb_fn= if is_bag_constr then Cpure_pred.mk_exp_from_bag_tmpl else Cpure_pred.mk_exp_from_non_bag_tmpl in
-      (*cmb inner most exp*)
-      (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
-      (* let _ =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
-      (* let ss1 = List.combine val_extns val_extns1 in *)
-      (* let n_first_e = CP.e_apply_subs ss1 first_e in *)
-      let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
-        first_e (List.map (fun sv -> CP.Var (sv,no_pos)) (val_extns1@rec_args)) in
-      (*outer most pformula*)
-      let ss2 = List.combine args svl in
-      let n_root_e = CP.e_apply_subs ss2 root_e in
-      (* let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in *)
-      (* let n_p = (CP.BForm ((n_outer, None), None)) in *)
-      (* let n_p1,quans = CP.norm_exp_min_max n_p in *)
-      let n_p2,quans = Cpure_pred.mk_formula_from_tmp outer n_root_e n_inner_e exquans irr_ps no_pos in
-      (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
-      (*other constraints*)
-      let n_p3= if CP.isConstTrue p_non_extn then n_p2 else
-      (*assume we extend one property each*)
+      let _ =  Debug.ninfo_hprint (add_str "   p0: " (!CP.print_formula )) p0 no_pos in
+      let _ =  Debug.ninfo_hprint (add_str "   svl: "  (!CP.print_svl )) svl no_pos in
+        (* let ss = if List.length val_extns = List.length val_extns1 then *)
+        (*   List.combine (args@val_extns) (svl@val_extns1) *)
+        (* else List.combine (args) (svl) *)
+        (* in *)
+        let p = (* CP.subst ss *) p0 in
+        let _ =  Debug.ninfo_hprint (add_str "   p: " (!CP.print_formula )) p no_pos in
+        let p_extn, p_non_extn = partition_extn_svl p0 args in
+        (* let _ =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
+        let from_rec_args =  List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
+        let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
+        let ((is_bag_constr,(outer, root_e), (inner_e, first_e)), exquans, irr_ps) =  Cpure_pred.extract_outer_inner p_extn args val_extns from_rec_args in
+        (*combine bag or non-bag constrs*)
+        let comb_fn= if is_bag_constr then Cpure_pred.mk_exp_from_bag_tmpl else Cpure_pred.mk_exp_from_non_bag_tmpl in
+        (*cmb inner most exp*)
+        (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+        (* let _ =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
+        (* let ss1 = List.combine val_extns val_extns1 in *)
+        (* let n_first_e = CP.e_apply_subs ss1 first_e in *)
+        let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
+          first_e (List.map (fun sv -> CP.Var (sv,no_pos)) (val_extns1@rec_args)) in
+        (*outer most pformula*)
+        let ss2 = List.combine args svl in
+        let n_root_e = CP.e_apply_subs ss2 root_e in
+        (* let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in *)
+        (* let n_p = (CP.BForm ((n_outer, None), None)) in *)
+        (* let n_p1,quans = CP.norm_exp_min_max n_p in *)
+        let n_p2,quans = Cpure_pred.mk_formula_from_tmp outer n_root_e n_inner_e exquans irr_ps no_pos in
+        (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
+        (*other constraints*)
+        let n_p3= if CP.isConstTrue p_non_extn then n_p2 else
+          (*assume we extend one property each*)
             let ls_to_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
             (*this step is necessary for tree like*)
             let new_ps = List.map (fun to_arg -> process_other_const (from_rec_args@val_extns) ([to_arg]@val_extns1) p_non_extn) ls_to_args in
             let pos = CP.pos_of_formula n_p2 in
             let n_p4 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p2 new_ps in
             n_p4
-      in
+        in
       (n_p3,quans)
   in
   let extn_v = Cast.look_up_view_def_raw 47  cviews extn_view_name in
@@ -146,9 +152,9 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
       | [] -> f
       | ho_fn::_ -> (*now, we just care the first one*)
           let extn_p = ho_fn extn_args val_svl in
-          let _ =  Debug.info_pprint ("  np: "^ (!CP.print_formula extn_p)) no_pos in
+          (* let _ =  Debug.ninfo_pprint ("  np: "^ (!CP.print_formula extn_p)) no_pos in *)
           let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
-          let _ =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in
+          (* let _ =  Debug.ninfo_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
           nf
   in
   let do_extend_ind_case ho_inds extn_args (f,val_extns,rec_extns)=
@@ -161,7 +167,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
           (*add rec_extns into exists*)
           let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
           let nf1 = CF.add_quantifiers (new_extn_args@quans) nf in
-          let _ =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in
+          (* let _ =  Debug.ninfo_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
           nf1
   in
  (**********************************)
@@ -171,6 +177,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
  *)
  (**********************************)
   let extn_view = Cast.look_up_view_def_raw 48 cviews extn_view_name in
+  (*subst args of extn and extn_args*)
+  let ss = List.combine extn_args extn_view.Cast.view_vars in
   let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name in
  (**********************************)
  (*
@@ -178,7 +186,6 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
  *)
  (**********************************)
   (*new args*)
-  let ss = List.combine extn_args extn_view.Cast.view_vars in
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
   let orig_view = Cast.look_up_view_def_raw 49 cviews orig_view_name in
     (*find data fields anns*)
@@ -186,7 +193,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
     (*formula: extend with new args*)
   let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
   let fs = List.map Cformula.elim_exists fs in
-  let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
+  let _ =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name no_pos in
+  let pure_extn_svl = [ (CP.SpecVar (Named (orig_view.Cast.view_data_name),self, Unprimed))] in
   let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.Cast.view_name view_derv.Iast.view_name n_args ls_dname_pos  pure_extn_svl false true in
     (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
@@ -219,11 +227,17 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
         | None -> Some fc) None new_un_struc_formulas
   in
   let view_sv_vars = orig_view.Cast.view_vars@n_args in
-    (* let orig_user_inv = (MCP.pure_of_mix orig_view.Cast.view_user_inv) in *)
+  let orig_user_inv = (MCP.pure_of_mix orig_view.Cast.view_user_inv) in
   (* let _ =  Debug.info_pprint ("   extn_inv: "^ (!CP.print_formula extn_user_inv)) no_pos in *)
-  (* let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in *)
-  (* let _ =  Debug.info_pprint ("   n_user_inv: "^ (!CP.print_formula (MCP.pure_of_mix n_user_inv))) no_pos in *)
-  let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars view_derv in 
+  let extn_user_inv = try
+    let ss = List.combine extn_view.Cast.view_vars n_args in
+    CP.subst ss (MCP.pure_of_mix extn_view.Cast.view_user_inv)
+  with _ -> CP.mkTrue no_pos
+  in
+  let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in
+  let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars view_derv in
+  (*always generate the new arg to the end, root is 0*)
+  let n_pure_domains = [(extn_view_name, 0, List.length view_sv)] in
   let der_view = {orig_view with
       Cast.view_name = view_derv.Iast.view_name;
         (* Cast.view_kind = Cast.View_DERV; *)
@@ -235,7 +249,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
       Cast.view_un_struc_formula = new_un_struc_formulas;
       Cast.view_raw_base_case = rbc;
       Cast.view_is_rec = extn_ind_brs <> [];
-    (* Cast.view_user_inv = n_user_inv; *)
+      Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains;
+      Cast.view_user_inv = n_user_inv;
   }
   in
   der_view
@@ -394,8 +409,18 @@ let trans_view_dervs_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.vie
             let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
            (der_view(*,("************VIEW_SPECIFIED*************")*))
           else
-             let der_view = trans_view_one_derv prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
-             (der_view(*,("************VIEW_DERIVED*************")*))
+            let orig_view = Cast.look_up_view_def_raw 52 cviews orig_view_name in
+            if List.for_all (fun (l_extn_view,_,_) ->
+                String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
+              let der_view = trans_view_one_derv prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
+              let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name) no_pos in
+              let iderv_view = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls derv.Iast.view_name in
+              let _ = iderv_view.Iast.view_data_name <- der_view.Cast.view_data_name in
+              let _ = iderv_view.Iast.view_derv <- false in
+              (der_view(*,("************VIEW_DERIVED*************")*))
+            else
+              let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already") no_pos in
+              orig_view
         in
         (* let _ = *)
         (*      if !debug_derive_flag then *)
@@ -446,7 +471,7 @@ let expose_pure_extn_one_view_x iprog cprog view extn_view=
 let expose_pure_extn_one_view iprog cprog view extn_view=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
-    ^ (pr1 v.Cast.view_extns) in
+    ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr1
       (fun _ _ -> expose_pure_extn_one_view_x iprog cprog view extn_view)
@@ -461,13 +486,13 @@ let expose_pure_extn_x iprog cprog views extn_views=
           let pairs =  expose_pure_extn_one_view iprog cprog v extn_view in
           r@pairs
       ) [] extn_views in
-      {v with Cast.view_extns = v.Cast.view_extns@map}
+      {v with Cast.view_domains = v.Cast.view_domains@map}
   ) views
 
 let expose_pure_extn iprog cprog views extn_views=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
   let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
-    ^ (pr1 v.Cast.view_extns) in
+    ^ (pr1 v.Cast.view_domains) in
   let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr3)
       (pr_list_ln pr2)

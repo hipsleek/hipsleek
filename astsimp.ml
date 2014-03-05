@@ -1400,7 +1400,14 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
           let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
           Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
-	  let cviews = List.map (trans_view prog []) tmp_views in
+          let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
+          let cviewsa = List.map (trans_view prog []) tmp_views in
+           let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
+           let cviews_derv = List.fold_left (fun norm_views v ->
+               let der_view = Derive.trans_view_dervs prog norm_views v in
+               (norm_views@[der_view])
+           ) cviewsa tmp_views_derv1 in
+          let cviews = (* cviews_orig@ *)cviews_derv in
           let cviews1 =
             (*todo: after elim useless, update methos specs. tmp: do not elim*)
             if !Globals.norm_elim_useless (* !Globals.pred_elim_useless  *)then
@@ -1472,13 +1479,12 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let cprog1 = { cprog with			
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
-	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
+	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
           (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
 	  let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in   
-	  
 	  let cprog2 = Solver.normalize_perm_prog cprog2 in
 	  let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
           let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
@@ -1685,7 +1691,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (     
 	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in	
 	  let addr_vars = CP.remove_dups_svl addr_vars' in
-	  let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+	  let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
           let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           let ls_disj = CP.list_of_disjs xform1 in
@@ -1741,7 +1747,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     if not(vdef.C.view_is_prim) then
       let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in	
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
-      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+      let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
       let xform1 =
         if vdef.C.view_kind = C.View_EXTN then
           let r = Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
@@ -1879,7 +1885,8 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   let view_formula1 = vdef.I.view_formula in
   let _ = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
-  let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
+  let data_name = if (String.length vdef.I.view_data_name) = 0  then
+    I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
   else vdef.I.view_data_name in
   (vdef.I.view_data_name <- data_name;
   let vtv = vdef.I.view_typed_vars in
@@ -2007,13 +2014,12 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
-          C.view_extns = [];
+          C.view_domains = [];
           C.view_vars = view_sv;
           C.view_cont_vars = [];
           C.view_uni_vars = [];
           C.view_labels = labels;
           C.view_modes = vdef.I.view_modes;
-          C.view_domains = [];
           C.view_contains_L_ann = false;
           C.view_ann_params  = ann_params;
           C.view_params_orig = view_vars_gen;      (* andreeac: TODO annot *)
@@ -2135,7 +2141,7 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
     let xpuring f = 
       let (xform', _ , _) = Cvutil.xpure_symbolic 3 prog f in
-      let xform = simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+      let xform = simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
       ([],[fold_mem_lst (CP.mkTrue no_pos) true true xform]) in
     let rec part f = match f with
       | CF.Or b -> 
@@ -7645,7 +7651,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   Debug.tinfo_hprint (add_str "trans_prog 2 (prog views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
   Debug.tinfo_hprint (add_str "trans_prog 2 (temp views)" (pr_list Iprinter.string_of_view_decl))  tmp_views  no_pos;
   (* andreeac: to check if moving Iast.set_check_fixpt at this point (earlier than previously) influences subsequent computions *)
-  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
+  let _ = Iast.set_check_fixpt prog  prog.I.prog_data_decls tmp_views in
   let _ = List.map (fun v -> (* if v.I.view_kind = I.View_NORM then *)
     v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
@@ -9069,7 +9075,7 @@ let process_pred_def_4_iast iprog check_exists pdef=
       (fun _ -> process_pred_def_4_iast_x iprog check_exists pdef) pdef
 
 (*L2: todo: merge with SLEEKEN.convert_data_and_pred_to_cast*)
-let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
+let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_extn=
   let rec look_up_view ls_pair_view_name_tis vn0=
     match ls_pair_view_name_tis with
       | [] -> None
@@ -9078,7 +9084,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
   in
   let new_views = List.map fst ls_pr_new_view_tis in
   let tmp_views = (order_views (iprog.I.prog_view_decls)) in
-  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
   (* let tmp_new_views = List.filter (fun vdcl -> *)
@@ -9092,12 +9098,16 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
   ) [] tmp_views in
   let cviews0a = List.map (fun (vdecl,tis) -> trans_view iprog tis vdecl) tmp_new_views in
   (*derv and spec views*)
-  let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
-  let cviews_derv = List.fold_left (fun norm_views v ->
-              let der_view = Derive.trans_view_dervs iprog norm_views v in
-              (cviews0a@[der_view])
-          ) cviews0a tmp_views_derv1 in
-  let cviews0 = (* cviews0a@ *)cviews_derv in
+  let cviews0 = if do_pure_extn then
+    let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
+    let cviews_derv = List.fold_left (fun norm_views v ->
+        let der_view = Derive.trans_view_dervs iprog norm_views v in
+        (cviews0a@[der_view])
+    ) cviews0a tmp_views_derv1 in
+    let cviews0 = (* cviews0a@ *)cviews_derv in
+    cviews0
+  else cviews0a
+  in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let cviews =
     if !Globals.norm_elim_useless (* !Globals.pred_elim_useless  *)then
@@ -9125,11 +9135,11 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog =
           String.compare vdcl.C.view_name vn1 = 0) new_views
   ) cprog.C.prog_view_decls
 
-let convert_pred_to_cast new_views is_add_pre iprog cprog =
+let convert_pred_to_cast new_views is_add_pre iprog cprog do_pure_extn=
   let pr1 = pr_list (pr_pair pr_id string_of_tlist) in
   let pr2 = pr_list_ln ( Cprinter.string_of_view_decl) in
   Debug.no_1 "convert_pred_to_cast" pr1 pr2
-      ( fun _ -> convert_pred_to_cast_x new_views is_add_pre iprog cprog) new_views
+      ( fun _ -> convert_pred_to_cast_x new_views is_add_pre iprog cprog do_pure_extn) new_views
 
 (*LOC: this transformation is not quite correct. please improve*)
 let plugin_inferred_iviews views iprog cprog=

@@ -11,7 +11,11 @@ data node2 {
 }.
 
 pred ll<> == self=null
-  or self::node<_,p> * p::ll<>
+  or self::node<_,p> * p::ll<> & self!=null
+inv true.
+
+pred ll1<n> == self=null & n>0
+  or self::node<_,p> * p::ll1<n1> & self!=null & n=n1+1
 inv true.
 
 pred tree<> == self=null
@@ -30,6 +34,8 @@ pred_extn pos_sum[R,V]<s> ==
 
 pred llN<n:int> == extends ll<> with size[REC]<n> .
 
+pred llN1<n:int> == extends llN<> with size[REC]<n> .
+
 /*
 pred treeN<n> == extends tree<> with size[REC]<n> .
 
@@ -42,7 +48,11 @@ pred llNPSum<n,s> == extends llN<n> with pos_sum[VAL,REC]<s> .
 
 
 
+pred lseg<p> == self=p
+  or self::node<v,q>*q::lseg<p>& self!=null
+ inv true.
 
+pred lsegN<p,n:int> == extends lseg<p> with size[REC]<n> .
 
 
 

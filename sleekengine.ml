@@ -549,7 +549,7 @@ let convert_data_and_pred_to_cast_x () =
   ) iprog.I.prog_view_decls in
   let tmp_views = (Astsimp.order_views tmp_views) in
   Debug.tinfo_pprint "after order_views" no_pos;
-  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   (* collect immutable info for splitting view params *)

@@ -78,7 +78,7 @@ and view_decl =
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
-    view_derv: bool;
+    mutable view_derv: bool;
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -1733,7 +1733,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
   if change then fixpt_data_name_x r
   else r
 
-and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  = 
+and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let create n = if n="" then [] else [n] in
   match view_decls with
     | [] -> ""
@@ -1741,38 +1741,47 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
 	  (* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
-      let _ = update_fixpt vl in
+      let _ = update_fixpt iprog vl in
       (List.hd view_decls).view_data_name
 
-and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  = 
+and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) ->
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_is_prim || v.view_kind = View_EXTN || v.view_kind = View_DERV then
+        if v.view_is_prim || v.view_kind = View_EXTN then
           v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        else if v.view_kind = View_DERV  then
+          match v.view_derv_info with
+            | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
+                  let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+                   v.view_data_name <- orig_vdecl.view_data_name
+            | [] ->
+                  let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+                   v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else v.view_data_name <- List.hd a) vl
 
-and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
+and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
   let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
+  Debug.no_1 "update_fixpt" pr pr_none (fun _ -> update_fixpt_x iprog vl) vl
 
-and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
+and set_check_fixpt (iprog:prog_decl) (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list_ln !print_data_decl in 
   let pr2 = pr_list_ln !print_view_decl in 
-  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
+  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
+      data_decls view_decls
 
-and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
+and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
   (* An Hoa *)
   (* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
-  update_fixpt vl
+  update_fixpt iprog vl
 
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
