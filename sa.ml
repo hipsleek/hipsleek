@@ -186,6 +186,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
 		             CF.h_formula_phase_pos = pos}),m1@m2
       | CF.DataNode hd -> hf0,[]
       | CF.ViewNode hv -> hf0,[]
+      | CF.ThreadNode ht -> hf0,[] (*TOCHECK*)
       | CF.HRel (sv, args, l) ->
 	            let locs =  look_up_drop_hp sv drlocs in
                 if locs = [] then hf0,[]

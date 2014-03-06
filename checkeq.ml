@@ -38,6 +38,16 @@ let string_of_map_table_list (mtl: map_table list): string =
   in 
   "[" ^ (helper mtl) ^ "]"
 
+(*Remove duplicatated pairs in mtl*)
+let remove_dupl_mt (mtl: map_table) : map_table =
+  let is_dupl (x1,x2) (y1,y2) =
+    (eq_spec_var x1 y1) & (eq_spec_var x2 y2)
+  in Gen.BList.remove_dups_eq is_dupl mtl
+
+(*Remove trivial pairs, e.g. (x,x)*)
+let remove_trivial_mt (mtl: map_table) : map_table =
+  List.filter (fun (x,y) -> not(eq_spec_var x y)) mtl
+
 let rec simplify_f f hvars rvars1 = 
   let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in
   let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
@@ -255,6 +265,14 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	)
 	| CF.DataNode n -> match_equiv_node hvars n hf2 mtl
 	| CF.ViewNode n ->  match_equiv_view_node hvars n hf2 mtl
+	| CF.ThreadNode n1 ->
+        (match hf2 with
+          | CF.ThreadNode n2 ->
+              let eq_rsr,mt_rsr = checkeq_formulas hvars n1.CF.h_formula_thread_resource n2.CF.h_formula_thread_resource in
+              let eq_dl,mt_dl = checkeq_p_formula hvars n1.CF.h_formula_thread_delayed n2.CF.h_formula_thread_delayed mt_rsr in
+              if (eq_rsr && eq_dl) then (true,mt_dl)
+              else (false,[])
+          | _ -> (false,[]))
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
@@ -301,6 +319,7 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.HFalse -> true
     | CF.DataNode _ 
     | CF.ViewNode _ 
+    | CF.ThreadNode _ 
     | CF.Hole _ 
     | CF.HRel _ 
     | CF.HTrue  
@@ -326,6 +345,7 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
       let (res, mt2) = check_node_equiv hvars n n2 mt in 
       (res, [mt2])
     )
+    | CF.ThreadNode _ (*TOCHECK*)
     | CF.ViewNode _
     | CF.Hole _
     | CF.HRel _ 
@@ -356,6 +376,7 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   let name2 = n2.CF.h_formula_data_name in
   (* let ann2 = n2.CF.h_formula_data_imm in *)
   let args2 = n2.CF.h_formula_data_arguments in
+  let permvars1,permvars2 = Perm.get_perm_var_lists n1.CF.h_formula_data_perm n2.CF.h_formula_data_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_data_node) hvars) in
   (* let rec str hvars  = match hvars with *)
   (*   | [] -> "" *)
@@ -373,7 +394,7 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
     let _ = Debug.ninfo_zprint (lazy  ("match node: " ^ string_of_map_table mt)) no_pos in
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
       else add_map_rel mt (var1) (var2) in
-    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    if(res) then check_spec_var_list_equiv hvars (permvars1@args1) (permvars2@args2) mt1
     else (false, mt1)
   )
 (*translation has ensured well-typedness. *)
@@ -420,6 +441,7 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
       else if(ph1) then (true, mtl1) 
       else if(ph2) then (true, mtl2)
       else (false, [mt]) 
+    | CF.ThreadNode n2 -> (false,[mt]) 
     | CF.DataNode n2 -> (false,[mt]) 
     | CF.ViewNode n2 -> let (res, mt2) = check_view_node_equiv hvars n n2 mt in (res, [mt2])
     | CF.Hole _
@@ -451,6 +473,7 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   let name2 = n2.CF.h_formula_view_name in
   let ann2 = n2.CF.h_formula_view_imm in
   let args2 = n2.CF.h_formula_view_arguments in
+  let permvars1,permvars2 = Perm.get_perm_var_lists n1.CF.h_formula_view_perm n2.CF.h_formula_view_perm in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_view_node) hvars) in
   let is_hard = is_hard_n1 || is_hard_n2 in
   if(List.length args1 != List.length args2 ||
@@ -462,7 +485,7 @@ and check_view_node_equiv (hvars: ident list)(n1: CF.h_formula_view) (n2:  CF.h_
   else  (
     let (res, mt1) = if(is_hard && (CP.eq_spec_var var1 var2)) then (true, mt)  
       else add_map_rel mt (var1) (var2) in
-    if(res) then check_spec_var_list_equiv hvars args1 args2 mt1
+    if(res) then check_spec_var_list_equiv hvars (permvars1@args1) (permvars2@args2) mt1
     else (false, mt1)
   )
 
@@ -482,6 +505,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * lo
       else (false, [mt]) 
     | CF.DataNode _ 
     | CF.ViewNode _  
+    | CF.ThreadNode _ 
     | CF.Hole _ -> (false,[mt]) 
     | CF.HRel r2  ->  (
       let _ = Debug.ninfo_zprint (lazy  ("Find 2nd relation  " )) no_pos in
@@ -568,6 +592,7 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
       if(not ph1) then  match_equiv_emp h2 else true
     | CF.DataNode _ 
     | CF.ViewNode _
+    | CF.ThreadNode _
     | CF.Hole _
     | CF.HRel _ 
     | CF.HTrue 
@@ -624,8 +649,8 @@ and checkeq_p_formula  hvars pf1 pf2 mtl =
   let pr1 = Cprinter.string_of_pure_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
-  Debug.no_2 "checkeq_p_formula" pr1 pr1 (pr_pair pr2 pr3)
-    (fun _ _ ->  checkeq_p_formula_x hvars pf1 pf2 mtl) pf1 pf2
+  Debug.no_3 "checkeq_p_formula" pr1 pr1 pr3 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  checkeq_p_formula_x hvars pf1 pf2 mtl) pf1 pf2 mtl
 
 and match_equiv_bform  hvars b1 pf2 mtl = 
 	let pr1 = Cprinter.string_of_pure_formula in
@@ -664,12 +689,36 @@ and match_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (pf2: CP.formula)(
     let _, mtls =  List.split false_part in
     (b, List.concat mtls)
 
+and check_equiv_exp  hvars e1 e2 mtl = 
+  let pr1 = Cprinter.string_of_formula_exp in
+  let pr2 b = if(b) then "VALID" else "INVALID" in
+  let pr3 = string_of_map_table in
+  let pr4 = string_of_map_table in
+  Debug.no_3 "check_equiv_bform" pr1 pr1 pr4 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  check_equiv_exp_x hvars e1 e2 mtl) e1 e2 mtl
+
+and check_equiv_exp_x hvars (e1:CP.exp) (e2:CP.exp) mt = 
+  match e1,e2 with
+    | CP.Null _ , CP.Null _ -> (true, mt)
+    | Var (v1,_) , Var (v2,_) -> check_spec_var_equiv hvars v1 v2 mt
+    | Level (v1,_) , Level (v2,_) -> check_spec_var_equiv hvars v1 v2 mt
+    | IConst (i1,_), IConst (i2,_) -> (i1=i2,mt)
+    | FConst (i1,_), FConst (i2,_) -> (i1=i2,mt)
+    | Bptriple ((v11,v12,v13),_), Bptriple ((v21,v22,v23),_) ->
+        let res1,mt1 = check_spec_var_equiv hvars v11 v21 mt in
+        let res2,mt2 = check_spec_var_equiv hvars v12 v22 mt1 in
+        let res3,mt3 = check_spec_var_equiv hvars v13 v23 mt2 in
+        (res1&res2&res3,mt3)
+    (*TODO: implement for your need*)
+    | _ -> (false, mt)
+
 and check_equiv_bform  hvars b1 b2 mtl = 
   let pr1 = Cprinter.string_of_b_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
-  Debug.no_2 "check_equiv_bform" pr1 pr1 (pr_pair pr2 pr3)
-    (fun _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2
+  let pr4 = string_of_map_table in
+  Debug.no_3 "check_equiv_bform" pr1 pr1 pr4 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2 mtl
 
 and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(mt: map_table): (bool * (map_table list)) =
   let rec check_eq_order_spec_var_list svl1 svl2 mt0=
@@ -685,6 +734,11 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
   match b1,b2 with
     | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
+    | (BagNotIn (v1,e1,_),_),  (BagNotIn (v2,e2,_),_)
+    | (BagIn (v1,e1,_),_),  (BagIn (v2,e2,_),_) -> (*MUSTDO*)
+        let res1,mt1 = check_spec_var_equiv hvars v1 v2 mt in
+        let res2,mt2 = check_equiv_exp hvars e1 e2 mt1 in
+        (res1&res2,[mt2])
     | (XPure xp1,_),  (XPure xp2,_) ->
      
         if xp1.xpure_view_name = xp1.xpure_view_name then
@@ -951,13 +1005,13 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
 		   ^ "DIFF F2: " ^ Cprinter.prtt_string_of_formula f2 ^ "\n"
 		   ^ "CURRENT MT: " ^ string_of_map_table mt)
 	in
-	Debug.info_pprint  (str) no_pos 
+	Debug.ninfo_pprint  (str) no_pos 
       in 
       if(List.length fs > 0) then (
 	let _ = List.map (fun (a,b,c) -> print_triple a b c) fs in
 	()
       )
-      else 	Debug.info_pprint ("no diff info") no_pos 
+      else 	Debug.ninfo_pprint ("no diff info") no_pos 
     )
   )
   in
@@ -967,7 +1021,13 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
     if(not !Globals.dis_show_diff) then showdiff r fs
   in
   (r,fs)
-    
+
+(* ivars: set of roots (otherwise, all permutations)
+   return (mt*formula1*formula2) list
+     where for each element
+       mt: mapping table
+       formula1: remaining formula of f1
+       formula2: renaming formula of f2*)
 and checkeq_formulas_with_diff ivars f1 f2 = 
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
@@ -1217,6 +1277,7 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	    | _ ->   (false, modify_mtl mtl CF.HTrue))
 	| CF.HFalse ->  report_error no_pos "not a case"
 	| CF.HEmp   ->  (true, modify_mtl mtl CF.HEmp) (*TODO: plz check*)
+	| CF.ThreadNode _ (*TOCHECK*)
 	| CF.ConjConj _ | CF.StarMinus _ | CF.ConjStar _ -> Error.report_no_pattern()
     )
 

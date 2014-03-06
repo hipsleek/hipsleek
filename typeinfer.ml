@@ -1226,6 +1226,19 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
               Err.error_text = c ^ " is neither 2 a data nor view name";
             }))
         in n_tl
+  | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
+                  IF.h_formula_thread_perm = perm;
+                  IF.h_formula_thread_name = c; (* data/pred name *)
+                  IF.h_formula_thread_resource = rsr;
+                  IF.h_formula_thread_delayed = dl;
+                  IF.h_formula_thread_label = pi;
+                  IF.h_formula_thread_pos = pos } ->
+      (* Follow IF.DataNode. May need TOCHECK *)
+      let dataNode = IF.mkHeapNode (v,p) c 0 false (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
+      let n_tl = gather_type_info_heap prog dataNode tlist in
+      let n_tl2 = gather_type_info_formula prog rsr n_tl false in
+      let n_tl3 = gather_type_info_pure prog dl n_tl2 in
+      n_tl3
     | IF.HRel (r, args, pos) ->
       (try
         let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in

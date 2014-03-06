@@ -7820,6 +7820,36 @@ and has_level_constraint (f: formula) : bool =
       !print_formula string_of_bool
       has_level_constraint_x f
 
+and has_level_constraint_exp (e: exp) : bool =
+  let rec helper e =
+    match e with
+      | Level _ -> true
+      | BagDiff (e1,e2,_)
+      | ListCons(e1,e2,_)
+      | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+      | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) ->
+          let res1 = helper e1 in
+          let res2 = helper e2 in
+          (res1||res2)
+      | TypeCast (_, e1, _) -> helper e1
+      | List (exps,_)
+      | ListAppend (exps,_)
+      | ArrayAt (_,exps,_)
+      | Func (_,exps,_)
+      | Bag (exps,_)
+      | BagUnion (exps,_)
+      | BagIntersect (exps,_) ->
+          let ress = List.map helper exps in
+          (List.exists (fun v -> v) ress)
+      | ListHead (e,_)
+      | ListTail (e,_) 
+      | ListLength (e,_)
+      | ListReverse (e,_) ->
+          helper e
+      | _ -> false
+  in
+  helper e
+
 (* result of xpure with baga and memset/diffset *)
 type xp_res_type = (BagaSV.baga * DisjSetSV.dpart * formula)
 

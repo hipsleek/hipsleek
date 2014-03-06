@@ -695,7 +695,8 @@ let do_unfold_view_hf cprog hf0 =
               List.map (fun f -> (List.hd (CF.heap_of f), MCP.mix_of_pure (CF.get_pure f))) fs1
             with _ -> let _ = report_warning no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.CF.h_formula_view_name) in
             [(CF.HTrue, MCP.mix_of_pure (CP.mkTrue no_pos))]
-        end
+      end
+      | CF.ThreadNode _
       | CF.DataNode _  | CF.HRel _ | CF.Hole _
       | CF.HTrue  | CF.HFalse | CF.HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in

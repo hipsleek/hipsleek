@@ -2103,6 +2103,9 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
+    | PARAHIP -> (*TOCHECK: what is it for? *)
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Redlog.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
