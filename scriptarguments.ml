@@ -233,6 +233,8 @@ let common_arguments = [
 	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
+  ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");

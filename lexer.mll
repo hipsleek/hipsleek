@@ -397,6 +397,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
+  | "<#" { TOPAREN }
+  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }
