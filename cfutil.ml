@@ -10,6 +10,66 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+(*arg is global vars*)
+let norm_free_vars f0 args=
+  let rec helper f=
+    match f with
+      | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
+            (* (CF.h_fv fb.CF.formula_base_heap) *)
+            (fv f)
+        ) args) in
+        if fr_svl = [] then (f,[])
+        else
+          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
+          (*rename primed quantifiers*)
+          let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
+              if p = Unprimed then
+                (r_svl@[sv], r_ss)
+              else
+                (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
+                let fr_sv = CP.fresh_spec_var sv in
+                (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
+          ) ([],[]) fr_svl
+          in
+          let nf0 = if ss = [] then (Base fb) else
+            subst ss (Base fb)
+          in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
+          let nf = add_quantifiers fr_svl1 nf0 in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
+          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+              let vk = Typeinfer.fresh_proc_var_kind ls t in
+              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+              ls@[(svp,vk)]
+          ) [] fr_svl1 in
+          (nf, tis)
+      | Exists _ ->
+            let qvars1, base1 = split_quantifiers f in
+            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
+            let base2,tis = helper base1 in
+             (add_quantifiers qvars1 base2, tis)
+      | Or orf ->
+            let nf1, tis1 = helper orf.formula_or_f1 in
+            let nf2, tis2 = helper orf.formula_or_f2 in
+           (Or {orf with formula_or_f1 = nf1;
+               formula_or_f2 = nf2;
+           }, tis1@tis2)
+  in
+  let f,tis = helper f0 in
+  let def = List.map fst tis in
+  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
+      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      (List.for_all (fun n2 -> String.compare n n2 != 0) def)
+  ) args in
+  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
+  (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+      let vk = Typeinfer.fresh_proc_var_kind ls t in
+      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      ls@[(svp,vk)]
+  ) [] (rem_svl) in
+  (f, tis@tis1)
+
 let get_data_view_name hf=
   match hf with
     | ViewNode vn -> ( vn.h_formula_view_name)

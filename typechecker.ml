@@ -3265,7 +3265,7 @@ let lookup_called_procs iprog prog root_scc verified_sccs=
 
 let ext_pure_check_procs iprog prog proc_names error_traces=
   let _ = Sap.extend_specs_views_pure_ext iprog prog proc_names error_traces in
-  ()
+  []
 
 let check_prog iprog (prog : prog_decl) =
   let cout_option = if(!Globals.gen_cpfile) then (
@@ -3336,15 +3336,15 @@ let check_prog iprog (prog : prog_decl) =
           r
         end
       ) in
-      let n_verified_sccs = if is_all_verified2 then verified_sccs@[scc]
+      let scc = if is_all_verified2 then scc
       else
         let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
         (*extn rele views and specs*)
         let error_traces = [] in
-         (* let n_scc = ext_pure_check_procs iprog prog (scc::rele_sccs) error_traces in *)
+         let n_scc = ext_pure_check_procs iprog prog (scc::rele_sccs) error_traces in
         (*do analysis on the new domain*)
         (*if fail, give up; if succ, move fwd*)
-        verified_sccs
+        n_scc
       in
       (* let _ = Debug.info_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in *)
       let _ = if (* is_all_verified1 && *) is_all_verified2 then
@@ -3357,6 +3357,14 @@ let check_prog iprog (prog : prog_decl) =
         ()
       else ()
       in
+      let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
+      let updated_scc = List.fold_left (fun r proc_id ->
+          try
+            let proc = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_id in
+            r@[proc]
+          with _ -> r
+      ) [] scc_ids in
+      let n_verified_sccs = verified_sccs@[updated_scc] in
       (prog,n_verified_sccs)
   ) (prog,[]) proc_scc 
   in 

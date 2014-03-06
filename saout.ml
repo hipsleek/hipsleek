@@ -23,65 +23,6 @@ let sv_name = CP.name_of_spec_var
 
 let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((ident *Typeinfer.spec_var_type_list )*I.view_decl) list =
 (*CP.rel_cat * h_formula * formula*)
-let norm_free_svl f0 args=
-  let rec helper f=
-    match f with
-      | CF.Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
-            (* (CF.h_fv fb.CF.formula_base_heap) *)
-            (CF.fv f)
-        ) args) in
-        if fr_svl = [] then (CF.Base fb),[]
-        else
-          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
-          (*rename primed quantifiers*)
-          let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
-              if p = Unprimed then
-                (r_svl@[sv], r_ss)
-              else
-                (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
-                let fr_sv = CP.fresh_spec_var sv in
-                (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
-          ) ([],[]) fr_svl
-          in
-          let nf0 = if ss = [] then (CF.Base fb) else
-            CF.subst ss (CF.Base fb)
-          in
-          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
-          let nf = CF.add_quantifiers fr_svl1 nf0 in
-          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
-          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
-              let vk = Typeinfer.fresh_proc_var_kind ls t in
-              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
-              ls@[(svp,vk)]
-          ) [] fr_svl1 in
-          (nf, tis)
-      | CF.Exists _ ->
-            let qvars1, base1 = CF.split_quantifiers f in
-            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
-            let base2,tis = helper base1 in
-             (CF.add_quantifiers qvars1 base2, tis)
-      | CF.Or orf ->
-            let nf1, tis1 = helper orf.CF.formula_or_f1 in
-            let nf2, tis2 = helper orf.CF.formula_or_f2 in
-           (CF.Or {orf with CF.formula_or_f1 = nf1;
-           CF.formula_or_f2 = nf2;
-           }, tis1@tis2)
-  in
-  let f,tis = helper f0 in
-  let def = List.map fst tis in
-  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
-      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
-      (List.for_all (fun n2 -> String.compare n n2 != 0) def)
-  ) args in
-  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
-  (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
-  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
-      let vk = Typeinfer.fresh_proc_var_kind ls t in
-      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
-      ls@[(svp,vk)]
-  ) [] (rem_svl) in
-  (f, tis@tis1)
-in
 List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
     let f_body = CF.disj_of_list (List.map fst def.CF.def_rhs) no_pos in
     match def.CF.def_cat with
@@ -115,13 +56,12 @@ List.fold_left (fun acc (* (rel_cat, hf,_,f_body) *) def ->
                     id,r
                 | _ -> report_error no_pos "should be a data name"
               in
-              let f_body1,tis = norm_free_svl f_body (r::paras) in
+              let f_body1,tis = Cfutil.norm_free_vars f_body (r::paras) in
               let _ = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
               let no_prm_body = CF.elim_prm f_body1 in
-	      let new_body0 = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
-              
-              let new_body = CF.subst [] new_body0 in
-	      let i_body = Astsimp.rev_trans_formula new_body in
+	      let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
+              (* let new_body = CF.subst [] new_body0 in *)
+	      let i_body = Rev_ast.rev_trans_formula new_body in
 	      let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
               let _ = Debug.ninfo_hprint (add_str "i_body1: " Iprinter.string_of_formula) i_body no_pos in
 	      let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in

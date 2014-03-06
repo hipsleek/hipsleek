@@ -1057,25 +1057,40 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       let xp_ps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) eqs in
       CP.conj_of_list xp_ps no_pos
     in
-    let process_p_helper p=
-      let xp_ps = (List.map process_one_sv xp_hpargs) in
+    let process_p_helper p xp_hpargs1=
+      let xp_ps = (List.map process_one_sv xp_hpargs1) in
       (* let filtered_xp_ps = CP.filter_disj xp_ps rem_ps in *)
       let new_p = CP.conj_of_list (CP.remove_redundant_helper ((CP.list_of_conjs p)@ xp_ps) []) no_pos in
       new_p
     in
+    let fst_inter svl ptrs=
+      match svl with
+        | sv::_ -> CP.mem_svl sv ptrs
+        | [] -> false
+    in
     let rec helper f=
       match f with
         | CF.Base fb ->
-            let new_p =  process_p_helper (MCP.pure_of_mix fb.CF.formula_base_pure) in
-            CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)}
+              let ptrs = Cformula.get_ptrs fb.CF.formula_base_heap in
+              let xp_hpargs1 = List.filter (fun (_,svl) ->
+                  not(fst_inter svl ptrs)) xp_hpargs in
+              let p = (MCP.pure_of_mix fb.CF.formula_base_pure) in
+              let new_p =  if xp_hpargs1 =[] then p else 
+                process_p_helper p xp_hpargs1 in
+              CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)}
         | CF.Exists fe ->
-            let new_p =  process_p_helper (MCP.pure_of_mix fe.CF.formula_exists_pure) in
+              let ptrs = Cformula.get_ptrs fe.CF.formula_exists_heap in
+              let xp_hpargs1 = List.filter (fun (_,svl) -> not (fst_inter svl ptrs)) xp_hpargs in
+              let p = (MCP.pure_of_mix fe.CF.formula_exists_pure) in
+              let new_p =  if xp_hpargs1 =[] then p else
+                process_p_helper p xp_hpargs1 in
             CF.Exists{fe with CF.formula_exists_pure = (MCP.mix_of_pure new_p)}
         | CF.Or orf -> CF.Or {orf with
             CF.formula_or_f1 = helper orf.CF.formula_or_f1;
             CF.formula_or_f2 = helper orf.CF.formula_or_f2;
         }
     in
+    let _ = DD.ninfo_zprint (lazy (("xp_hpargs: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) xp_hpargs)))) no_pos in
     helper f0
   in
   (*not in used*)
@@ -1095,7 +1110,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   in
   (*not in used*)
   let subst_pure_hp_unk args0 ls_unk_hpargs_fr (f,g)=
-    (* let _ = DD.info_zprint (lazy (("       f: " ^ (!CF.print_formula f)))) no_pos in *)
+    let _ = DD.ninfo_zprint (lazy (("       f: " ^ (!CF.print_formula f)))) no_pos in
     let ls_used_hp_args = CF.get_HRels_f f in
     let ls_xpures =  CF.get_xpure_view f in
     (*look up*)
@@ -1104,14 +1119,15 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let ls_used_unk_hps,ls_eqs, ls_ss = split3 (r1@r2) in
     let used_unk_hps = List.concat ls_used_unk_hps in
     let unk_need_subst, eqs = List.fold_left (fun (ls1,ls2) (a1,a2) -> (ls1@a1,ls2@a2)) ([],[]) (List.concat ls_eqs) in
-    (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-    (* let _ = DD.info_zprint (lazy (("       eqs: " ^ (pr1 eqs)))) no_pos in *)
+    let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+    let _ = DD.ninfo_zprint (lazy (("       eqs: " ^ (pr1 eqs)))) no_pos in
     let ss = List.concat ls_ss in
     (*remove unkhps*)
     let f1,_ =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
     (*subst*)
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)
+    let _ = DD.ninfo_zprint (lazy (("       f2: " ^ (!CF.print_formula f2)))) no_pos in
     let pos = CF.pos_of_formula f2 in
     (****************************************)
     (*LOC: now we dont need eqs for pred parameters
@@ -3428,8 +3444,8 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let rhs2 = Saout.trans_formula_hp_2_view iprog cprog proc_name chprels_decl gen_hp_defs [] rhs in
     (* let (valid, _, _) = Sleekcore.sleek_entail_check [] cprog [] rhs2 (CF.struc_formula_of_formula lhs no_pos) in *)
     (*iformula to construct lemma*)
-    let ilhs = Astsimp.rev_trans_formula lhs in
-    let irhs = Astsimp.rev_trans_formula rhs2 in
+    let ilhs = Rev_ast.rev_trans_formula lhs in
+    let irhs = Rev_ast.rev_trans_formula rhs2 in
     let _ = Debug.ninfo_hprint (add_str  "ilhs " Iprinter.string_of_formula) ilhs no_pos in
     let _ = Debug.ninfo_hprint (add_str  "irhs " Iprinter.string_of_formula) irhs no_pos in
     (*construct lemma_safe*)
@@ -3539,8 +3555,8 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   let _ = Debug.ninfo_hprint (add_str  "f12 " Cprinter.prtt_string_of_formula) f12 no_pos in
   let _ = Debug.ninfo_hprint (add_str  "f22 " Cprinter.prtt_string_of_formula) f22 no_pos in
   (*iformula to construct lemma*)
-  let if12 = Astsimp.rev_trans_formula f12 in
-  let if22 = Astsimp.rev_trans_formula f22 in
+  let if12 = Rev_ast.rev_trans_formula f12 in
+  let if22 = Rev_ast.rev_trans_formula f22 in
   let _ = Debug.ninfo_hprint (add_str  "if12 " Iprinter.string_of_formula) if12 no_pos in
   let _ = Debug.ninfo_hprint (add_str  "if22 " Iprinter.string_of_formula) if22 no_pos in
   (*prove*)

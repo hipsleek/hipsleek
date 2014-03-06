@@ -7775,8 +7775,12 @@ let extend_view_nodes_h hf0 old_v_name new_v_name extra_args =
             let ext_map,_ = List.fold_left (fun (r, i) sv ->
                 let i = i +1 in
                 (r@[(CP.SVArg sv, i)], i)
-            )  ([],(List.length vn.h_formula_view_arguments-1)) fr_extra_args in
+            )  ([],(List.length vn.h_formula_view_arguments)) fr_extra_args in
             (* let _ =  Debug.info_pprint ("  fr_extra_args: "^ (!CP.print_svl fr_extra_args)) no_pos in *)
+            (* let _ =  Debug.info_pprint ("  vn.h_formula_view_annot_arg: "^ ( *)
+            (*     (pr_list (pr_pair !CP.print_annot_arg string_of_int)) vn.h_formula_view_annot_arg)) no_pos in *)
+            (* let _ =  Debug.info_pprint ("  vn.h_formula_view_args_orig: "^ ( *)
+            (*     (pr_list (pr_pair CP.print_view_arg string_of_int)) (vn.h_formula_view_args_orig@ext_map))) no_pos in *)
             ViewNode {vn with h_formula_view_name = new_v_name;
                      h_formula_view_arguments = (vn.h_formula_view_arguments@ fr_extra_args);
                      h_formula_view_annot_arg = vn.h_formula_view_annot_arg@ext_anns;

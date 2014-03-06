@@ -2758,7 +2758,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
                 if r_svl = [] then hp_def else
                   let nr = (CP.SpecVar (CP.type_of_spec_var (List.hd r_svl), r_id, rp)) in
                   let ss = [(r,nr)] in
-                  {hp_def with CF.def_cat = CP.HPRelDefn (hp,nr,paras);
+                  { CF.def_cat = CP.HPRelDefn (hp,nr,paras);
                       CF.def_lhs = CF.h_subst ss hp_def.CF.def_lhs;
                       CF.def_rhs = List.map (fun (f,og) -> (CF.subst ss f, og)) hp_def.CF.def_rhs;
                   }

@@ -813,11 +813,11 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let f12 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
   let f22 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
   (*iform*)
-  let if12 = Astsimp.rev_trans_formula f12 in
-  let if22 = Astsimp.rev_trans_formula f22 in
+  let if12 = Rev_ast.rev_trans_formula f12 in
+  let if22 = Rev_ast.rev_trans_formula f22 in
   (*unfold lhs - rhs*)
-  let f13 = do_unfold_view cprog0 f12 in
-  let f23 = do_unfold_view cprog0 f22 in
+  (* let f13 = do_unfold_view cprog0 f12 in *)
+  (* let f23 = do_unfold_view cprog0 f22 in *)
   let r=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if12 if22 in

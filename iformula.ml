@@ -699,6 +699,38 @@ let get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   helper f0
 ;;
 
+let get_heap_nodes (f0:h_formula) =
+  let rec helper f =match f with
+    | Conj ({h_formula_conj_h1 = h1; 
+      h_formula_conj_h2 = h2; 
+      h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+      h_formula_conjstar_h2 = h2; 
+      h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+      h_formula_starminus_h2 = h2; 
+      h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+      h_formula_star_h2 = h2; 
+      h_formula_star_pos = pos}) ->
+          let r11, r12 = (helper h1) in
+          let r21, r22 = (helper h2) in
+          (r11@r21, r12@r22)
+    | HeapNode hn -> [hn],[]
+    | HeapNode2 hn2 -> [],[hn2]
+    | HRel _
+    | HTrue
+    | HFalse
+    | HEmp -> [],[]
+  in
+  helper f0
+
 let heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap);;
 
 (*TO CHECK: how about formula_and*)
@@ -2605,3 +2637,71 @@ let type_of_formula (f: formula) : formula_type =
         if ((List.length hs)>1) then Complex 
         else Simple
     | _ -> Complex
+
+
+let normal_formula view_nodes data_nodes f0=
+  let sv_cmp (s1,p1) (s2,p2) = p1=p2 && String.compare s1 s2 = 0 in
+  let extract_qvars hns hn2s=
+    let ei1 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap_node data_nodes then
+      r@hn.h_formula_heap_arguments else r) [] (hns) in
+    let ei2 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap2_node data_nodes then
+      r@hn.h_formula_heap2_arguments else r) [] (hn2s) in
+    let ei = ei1@(snd (List.split ei2)) in
+    List.fold_left (fun r e -> r@(Ipure.afv e)) [] ei
+  in
+  let extract_iis hns hn2s=
+    let qvars1 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap_node view_nodes then
+      r@hn.h_formula_heap_arguments else r) [] (hns) in
+    let qvars2 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap2_node view_nodes then
+      r@hn.h_formula_heap2_arguments else r) [] (hn2s) in
+    let qvars = qvars1@(snd (List.split qvars2)) in
+    List.fold_left (fun r e -> r@(Ipure.afv e)) [] qvars
+  in
+  let fresh_qvars qvars f=
+    let fr_qvars = Ipure.fresh_vars qvars in
+    let ss0 = List.combine qvars fr_qvars in
+    let eq_ps = List.map (fun (sv1, sv2) -> Ipure.mkEqVarExp sv1 sv2 no_pos) ss0 in
+    let p = Ipure.conj_of_list eq_ps in
+    let f1 = subst ss0 f in
+    (fr_qvars,add_pure_formula_to_formula p f1)
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+            let hns, hn2s = get_heap_nodes fb.formula_base_heap in
+            (*data nodes*)
+            let qvars0 = extract_qvars hns hn2s in
+            (*view nodes*)
+            let ii = extract_iis hns hn2s in
+            let qvars = Gen.BList.difference_eq sv_cmp qvars0 ii in
+            let nb = if qvars = [] then f else
+              let fr_qvars, f1 = (fresh_qvars qvars f) in
+              add_quantifiers fr_qvars f1 in
+            mkEBase [] ii [] nb None fb.formula_base_pos
+      | Exists fe ->
+            let hns, hn2s = get_heap_nodes fe.formula_exists_heap in
+            (*data nodes*)
+            let qvars = extract_qvars hns hn2s in
+            (*view nodes*)
+            let ii = extract_iis hns hn2s in
+            let qvars0, basef = split_quantifiers f in
+            let qvars0a = Gen.BList.difference_eq sv_cmp qvars0 ii in
+            let qvars1 = Gen.BList.difference_eq sv_cmp qvars (ii@qvars0) in
+            let nb = if qvars1 = [] then add_quantifiers qvars0a basef else
+              let fr_qvars, f1 = (fresh_qvars qvars1 basef) in
+              add_quantifiers (qvars0a@fr_qvars) f1 in
+            mkEBase [] ii [] nb None fe.formula_exists_pos
+      | Or orf -> let sf1 = helper orf.formula_or_f1 in
+        let sf2 = helper orf.formula_or_f2 in
+        EList [(Label_only.empty_spec_label_def,sf1);(Label_only.empty_spec_label_def,sf2)]
+  in
+  helper f0
+
+
+let normal_formula view_nodes data_nodes f0=
+  let pr1 = !print_formula in
+  let pr2 = !print_struc_formula in
+  let pr_svl = pr_list (pr_id fst) in
+  Debug.no_3 "normal_formula" pr_svl pr_svl pr1 pr2
+      (fun _ _ _ -> normal_formula view_nodes data_nodes f0)
+      view_nodes data_nodes f0
