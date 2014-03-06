@@ -4,7 +4,8 @@
 
   Description: calculate Fibonacci numbers in parallel. Use
   Z3 prover for first-order logic constraints.
- -tp z3 --ann-vp
+
+  Required flag: --en-para --en-thrd-resource -perm none -tp z3
  */
 
 relation fiba(int n, int f).
@@ -37,7 +38,7 @@ void para_fib2(int n, ref int result)
     seq_fib(n,result);
   }else{
     int result1,result2;
-    int id1,id2;
+    thrd id1,id2;
     id1 = fork(para_fib2,n-1,result1);
     id2 = fork(para_fib2,n-2,result2);
     //any access to result1 and result2 here is not allowed
