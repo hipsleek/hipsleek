@@ -106,23 +106,35 @@ let rec rev_trans_mix f = rev_trans_pure(MCP.pure_of_mix f)
 let rec rev_trans_heap f = match f with 
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
-  | CF.HEmp   -> IF.HEmp  
+  | CF.HEmp   -> IF.HEmp
+  | CF.ThreadNode b ->
+        IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
+            b.CF.h_formula_thread_name
+            (rev_trans_formula b.CF.h_formula_thread_resource)
+            (rev_trans_pure b.CF.h_formula_thread_delayed)
+            (Perm.rev_trans_perm b.CF.h_formula_thread_perm)
+            None
+            b.CF.h_formula_thread_pos
   | CF.DataNode b ->
-      IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
-                    b.CF.h_formula_data_name
-                    0
-                    b.CF.h_formula_data_derv 
-                    (IP.ConstAnn(Mutable))
-                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
-                    None b.CF.h_formula_data_pos         
+        IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
+            b.CF.h_formula_data_name
+            0
+            b.CF.h_formula_data_derv 
+            (IP.ConstAnn(Mutable))
+            true false false
+            (Perm.rev_trans_perm b.CF.h_formula_data_perm)
+            (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
+            None b.CF.h_formula_data_pos
   | CF.ViewNode b ->
       IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
-                    b.CF.h_formula_view_name
-                    0
-                    b.CF.h_formula_view_derv 
-                    (IP.ConstAnn(Mutable))
-                    true false false None (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
-                    None b.CF.h_formula_view_pos
+          b.CF.h_formula_view_name
+          0
+          b.CF.h_formula_view_derv 
+          (IP.ConstAnn(Mutable))
+          true false false
+          (Perm.rev_trans_perm b.CF.h_formula_view_perm)
+          (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_view_arguments) (List.map (fun _ -> None) b.CF.h_formula_view_arguments)
+          None b.CF.h_formula_view_pos
   | CF.Hole _ -> failwith "holes should not have been here"
   | CF.HRel  (sv,el,p)  -> IF.HRel (sv_n sv, List.map rev_trans_exp el, p)
   | CF.Phase b  -> IF.mkPhase (rev_trans_heap b.CF.h_formula_phase_rd) (rev_trans_heap b.CF.h_formula_phase_rw) b.CF.h_formula_phase_pos

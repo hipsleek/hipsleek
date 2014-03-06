@@ -224,6 +224,7 @@ let helper prog h_node = match h_node with
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) option)= match lhs_node,rhs_node with
+  | ThreadNode dn1, ThreadNode dn2-> (true, None) (*No branches for ThreadNode*)
   | HRel h1, HRel h2->  (true, None)    (* what decision should be taken abt unk pred? *)
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
@@ -2919,6 +2920,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | HEmp -> [(HEmp,HEmp)]
     | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
     | HRel _
+    | ThreadNode _
     | DataNode _ 
     | ViewNode _ -> [(h,HEmp)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
@@ -3125,6 +3127,7 @@ and find_pred_roots_heap h0 =
         tmp
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
+    | ThreadNode _
     | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ -> []
 
 (* unfold then unsat *)
@@ -5263,6 +5266,207 @@ and count_octx x = match x with
   | OCtx (c1,c2) -> (count_octx c1) + (count_octx c2)
   | _ -> 1
 
+(*
+  es_f : entail state formula
+  id : thread id / thread node
+
+  RETURN:
+  (delayed formula, resource, AND-conj, new_es) option
+  Ctx option
+*)
+and find_thread_delayed_resource es es_f id pos =
+  (*TO CHECK: asssume no disjuntive form in f*)
+  let h, p, ft, t,a = CF.split_components es_f in (*pickup pure constraints and threads*)
+  let ids = MCP.find_closure_mix_formula id p in
+  if (!Globals.allow_threads_as_resource) then
+    begin
+        let heaps =  (CF.split_star_conjunctions h) in (*TOCHECK: complex heaps might throw errors*)
+        let t_heaps, r_heaps = List.partition (fun h ->
+            match h with
+              | ThreadNode _
+              | ViewNode _
+              | DataNode _ -> Gen.BList.mem_eq CP.eq_spec_var (CF.get_node_var h) ids
+              | _ -> false) heaps
+        in
+        let _ = if (List.length t_heaps) > 1 then
+              print_endline ("[Warning] helper_inner: multiple ThreadNode, might need to normalize")
+        in
+        (if ((List.length t_heaps) == 0) then
+              let error_msg = "Thrd node " ^ (Cprinter.string_of_spec_var id) ^ "not found when join" in
+              let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext error_msg es (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must ("101 : "^ error_msg)  Globals.sl_error)), NoAlias) in
+              (None, Some rs)
+         else 
+              let tn = List.hd t_heaps in
+              let dl,rsr =
+                match tn with
+                  | ThreadNode t -> (t.CF.h_formula_thread_delayed, t.CF.h_formula_thread_resource)
+                  | _ -> report_error pos ("helper_inner: expecting ThreadNode")
+              in
+              let new_h = CF.join_star_conjunctions r_heaps in
+              let new_es_f = CF.mkBase new_h p t ft a pos in
+              (Some (dl,rsr,[],new_es_f),None))
+    end
+  else
+    begin
+        (*select the thread with id.*)
+        let rec helper (ls:CF.one_formula list) vars : CF.one_formula option * (CF.one_formula list) =
+          (match ls with
+            | [] -> (None,[])
+            | x::xs ->
+                let id = x.CF.formula_thread in
+                if (List.mem id vars) then
+                  (Some x),xs
+                else
+                  let res1,res2 = helper xs vars in
+                  (match res1 with
+                    | None -> None,[]
+                    | Some f -> Some f, x::res2))
+        in
+        let res1,res2 = helper a ids in (*res1 is the thread, res2 is the rest*)
+        (match res1 with
+          | None ->
+              (*FAIL to find the thread with id*)
+              (*TO CHECK: become FALSE, which may not good enough*)
+              let error_msg = ("Join: thread with id = " ^ (Cprinter.string_of_spec_var id) ^ " not found") in
+              let ctx = (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure) in
+              (None, Some ctx)
+          | Some one_f ->
+              let base = CF.formula_of_one_formula one_f in
+              (******Checking the delayed constraints at join point >>> *******)
+              (* Some variables in delayed constraints could be exist vars
+                 in estate. Therefore, need to rename them appropriately.
+                 The renaming is only used in proving delayed constraints.
+                 After proving, nothing changed
+              *)
+              let delayed_f = MCP.pure_of_mix one_f.CF.formula_delayed in
+              (Some (delayed_f,base,res2,es_f), None))
+    end
+
+(*permfom delayed lockset before join(tid)
+  es: old entail state
+  new_es_f : new formula
+  delayed_f: delayed lockset constraints
+  base : resource/post condition of the thread tid
+  res2 : AND-conj if not(!Globals.allow_threads_as_resource)
+*)
+and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
+  let evars = CF.get_exists_context (CF.Ctx es) in
+  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
+                              ^ "\n### es = " ^ (Cprinter.string_of_estate es)
+                              ^ "\n### delayed_f = " ^ (Cprinter.string_of_pure_formula delayed_f)
+                              ^"\n") pos in
+  (*Those exist vars that are free var in delayed constraints*)
+  let devars =  Gen.BList.intersect_eq CP.eq_spec_var evars (CP.fv delayed_f) in
+  (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
+  (* let _ = print_endline ("MCP.mfv delayed_f = " ^ (Cprinter.string_of_spec_var_list (MCP.mfv delayed_f))) in *)
+  (* let _ = print_endline ("devars = " ^ (Cprinter.string_of_spec_var_list devars)) in *)
+  let delayed_f,new_es_f =
+    if (devars = []) then (delayed_f,new_es_f)
+    else
+      (******helper>*****)
+      let rec helper delayed_f (f:formula) =
+        (match f with
+          |  Exists {formula_exists_qvars = qvars;
+                     formula_exists_heap = qh;
+                     formula_exists_pure = qp;
+                     formula_exists_type = qt;
+                     formula_exists_flow = qfl;
+                     formula_exists_and = qa;
+                     formula_exists_pos = pos} ->
+              (*Only renamed those variables that are related to
+                delayed constraints. Then, remove them from the evars*)
+              let renamed_vars = Gen.BList.intersect_eq CP.eq_spec_var qvars devars in
+              let remained_vars = Gen.BList.difference_eq CP.eq_spec_var qvars devars in
+              let fresh_vars = CP.fresh_spec_vars renamed_vars in
+              let st = List.combine renamed_vars fresh_vars in
+              let new_f = if remained_vars=[] then
+                    mkBase qh qp qt qfl qa pos
+                  else
+                    mkExists remained_vars qh qp qt qfl qa pos
+              in
+              let new_f2 = subst st new_f in
+              let new_delayed_f = CP.subst st delayed_f in
+              (new_delayed_f,new_f2)
+          | Base b -> (delayed_f,Base b)
+          | Or {formula_or_f1 = f1;
+                formula_or_f2 = f2;
+                formula_or_pos = p} ->
+              let delayed_f1,new_f1 = helper delayed_f f1 in
+              let delayed_f2,new_f2 = helper delayed_f1 f2 in
+              let new_f = Or {formula_or_f1 = new_f1;
+                              formula_or_f2 = new_f2;
+                              formula_or_pos = p}
+              in
+              (delayed_f2,new_f))
+      in
+      (******<helper*****)
+      let new_es_f,new_delayed_f = helper delayed_f new_es_f in
+      new_es_f,new_delayed_f
+  in
+  let new_es = {es with es_formula = new_es_f; es_evars = Gen.BList.difference_eq CP.eq_spec_var es.es_evars devars} in
+  let ls_var_uprimed = CP.mkLsVar Unprimed in
+  let ls_var_primed = CP.mkLsVar Primed in
+  let ndf = CP.apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
+  let new_f = CF.formula_of_pure_formula ndf no_pos in
+  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: after elim exists:  \n "
+                              ^ "\n### es = " ^ (Cprinter.string_of_estate new_es)
+                              ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
+                              ^"\n") pos in
+  let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
+  rs, prf
+
+and compose_thread_post_condition prog es new_es_f post res2 pos =
+  (**********Compose variable permissions >>> *******)
+  (* let ps,new_post = CF.filter_varperm_formula post in *)
+  (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
+  let full_vars = CF.get_varperm_formula post VP_Full in
+  let new_post = CF.drop_varperm_formula post in
+  let zero_vars = es.CF.es_var_zero_perm in
+  let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+  if (tmp!=[]) then
+    begin
+        (*all @full in the conseq should be in @zero in the ante*)
+        let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
+        (mkFailCtx_simple msg es (CF.mkTrue_nf pos) pos, Failure)
+    end
+  else
+    begin
+        let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
+        let es = {es with CF.es_var_zero_perm=vars1} in
+        (**********<<< Compose @full variable permissions *******)
+        let new_es_f = if (!Globals.allow_threads_as_resource) then new_es_f else CF.replace_formula_and res2 new_es_f 
+        in
+        let primed_full_vars = List.map (fun var -> match var with
+          | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+        (* let _ = print_endline ("check_exp: SCall : join : \n ### new_es_f = " ^ (Cprinter.string_of_formula new_es_f) ^ " \n new_post = " ^ (Cprinter.string_of_formula new_post)) in *)
+        (**** DO NOT COMPOSE lockset because they are thread-local*****)
+        let new_f = CF.compose_formula_join new_es_f new_post (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
+        let new_es = {es with CF.es_formula = new_f;
+            es_unsat_flag = true;} in
+        let nctx = CF.Ctx new_es in
+        let rs = CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) nctx in
+        let rs2 = prune_ctx prog rs in
+        (*********CHECK db-consistency***********)
+        let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs2 in
+        let res = (if (!Globals.perm = Bperm) then
+              let hfv = (CF.fv_heap_of new_post) in
+              let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
+              (*Only check for consistency when there are barrier variables inside the post-condition*)
+              if (bfv == []) then None
+              else
+                (*normalize until a fixpoint is reached*)
+                (* check_barrier_inconsistency_context prog res1 *)
+                let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
+                if (isFailCtx res) then Some (res,prf)
+                else None
+            else None)
+        in
+        (match res with
+          | Some res -> res
+          | None -> (SuccCtx [rs_norm] ,TrueConseq))
+    end
+
+
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) = 
   let slk_entail ctx conseq = heap_entail_conjunct_lhs_struc_x p is_folding has_post ctx conseq tid delayed_f join_id pos pid in
   (* WN : to log sleek commands here *)
@@ -5295,161 +5499,31 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                   (****************************************************)
                   (match join_id with
                     | Some id ->
-                          let es_f = es.CF.es_formula in
-                          (*TO CHECK: asssume no disjuntive form in f*)
-                          let _, p, _, _,a = CF.split_components es_f in (*pickup pure constraints and threads*)
-                          let ids = MCP.find_closure_mix_formula id p in
-                          (*select the thread with id.*)
-                          let rec helper (ls:CF.one_formula list) vars : CF.one_formula option * (CF.one_formula list) =
-                            (match ls with
-                              | [] -> (None,[])
-                              | x::xs ->
-                                    let id = x.CF.formula_thread in
-                                    if (List.mem id vars) then
-                                      (Some x),xs
-                                    else
-                                      let res1,res2 = helper xs vars in
-                                      (match res1 with
-                                        | None -> None,[]
-                                        | Some f -> Some f, x::res2))
-                          in
-                          let res1,res2 = helper a ids in (*res1 is the thread, res2 is the rest*)
-                          (match res1 with
-                            | None ->
-                                  (*FAIL to find the thread with id*)
-                                  (*TO CHECK: become FALSE, which may not good enough*)
-                                  let error_msg = ("Join: thread with id = " ^ (Cprinter.string_of_spec_var id) ^ " not found") in
-                                  (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
-                            | Some one_f ->
-                                  let base = CF.formula_of_one_formula one_f in
-                                  (******Checking the delayed constraints at join point >>> *******)
-                                  (* Some variables in delayed constraints could be exist vars
-                                     in estate. Therefore, need to rename them appropriately.
-                                     The renaming is only used in proving delayed constraints.
-                                     After proving, nothing changed
-                                  *)
-                                  let evars = CF.get_exists_context (CF.Ctx es) in
-                                  let delayed_f = one_f.CF.formula_delayed in
-                                  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
-                                  ^ "\n### es = " ^ (Cprinter.string_of_estate es)
-                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_mix_formula delayed_f)
-                                  ^"\n") pos in
-                                  (*Those exist vars that are free var in delayed constraints*)
-                                  let devars =  Gen.BList.intersect_eq CP.eq_spec_var evars (MCP.mfv delayed_f) in
-                                  (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
-                                  (* let _ = print_endline ("MCP.mfv delayed_f = " ^ (Cprinter.string_of_spec_var_list (MCP.mfv delayed_f))) in *)
-                                  (* let _ = print_endline ("devars = " ^ (Cprinter.string_of_spec_var_list devars)) in *)
-                                  let delayed_f,new_es_f =
-                                    if (devars = []) then (delayed_f,es_f)
-                                    else
-                                      (******helper>*****)
-                                      let rec helper delayed_f (f:formula) =
-                                        match f with
-                                          |  Exists {formula_exists_qvars = qvars;
-                                             formula_exists_heap = qh;
-                                             formula_exists_pure = qp;
-                                             formula_exists_type = qt;
-                                             formula_exists_flow = qfl;
-                                             formula_exists_and = qa;
-                                             formula_exists_pos = pos} ->
-                                                 (*Only renamed those variables that are related to
-                                                   delayed constraints. Then, remove them from the evars*)
-                                                 let renamed_vars = Gen.BList.intersect_eq CP.eq_spec_var qvars devars in
-                                                 let remained_vars = Gen.BList.difference_eq CP.eq_spec_var qvars devars in
-                                                 let fresh_vars = CP.fresh_spec_vars renamed_vars in
-                                                 let st = List.combine renamed_vars fresh_vars in
-                                                 let new_f = if remained_vars=[] then
-                                                   mkBase qh qp qt qfl qa pos
-                                                 else
-                                                   mkExists remained_vars qh qp qt qfl qa pos
-                                                 in
-                                                 let new_f2 = subst st new_f in
-                                                 let new_delayed_f = memo_subst st delayed_f in
-                                                 (new_delayed_f,new_f2)
-                                          | Base b -> (delayed_f,Base b)
-                                          | Or {formula_or_f1 = f1;
-                                            formula_or_f2 = f2;
-                                            formula_or_pos = p} ->
-                                                let delayed_f1,new_f1 = helper delayed_f f1 in
-                                                let delayed_f2,new_f2 = helper delayed_f1 f2 in
-                                                let new_f = Or {formula_or_f1 = new_f1;
-                                                formula_or_f2 = new_f2;
-                                                formula_or_pos = p}
-                                                in
-                                                (delayed_f2,new_f)
-                                      in
-                                      (******<helper*****)
-                                      let new_es_f,new_delayed_f = helper delayed_f es_f in
-                                      new_es_f,new_delayed_f
-                                  in
-                                  let new_es = {es with es_formula = new_es_f; es_evars = Gen.BList.difference_eq CP.eq_spec_var es.es_evars devars} in
-                                  let ls_var_uprimed = CP.mkLsVar Unprimed in
-                                  let ls_var_primed = CP.mkLsVar Primed in
-                                  let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
-                                  let new_f = CF.formula_of_mix_formula ndf no_pos in
-                                  let _ = Debug.devel_pprint ("Proving delayed lockset constraints: after elim exists:  \n "
-                                  ^ "\n### es = " ^ (Cprinter.string_of_estate new_es)
-                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
-                                  ^"\n") pos in
-                                  let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
-                                  (if (CF.isFailCtx rs) then
-                                    (*FAIL to satisfy the delayed constraints*)
-                                    (*TO CHECK: become FALSE, which may not good enough*)
-                                    let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
-                                    rs,prf
-                                  else
-                                    let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
-                                    (*******<<<Checking the delayed constraints at join point*****)
-                                    (*if checking succeeds --> proceed as normal*)
-                                    (**********Compose variable permissions >>> *******)
-                                    (* let ps,new_base = CF.filter_varperm_formula base in *)
-                                    (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
-
-                                    let full_vars = CF.get_varperm_formula base VP_Full in
-                                    let new_base = CF.drop_varperm_formula base in
-                                    let zero_vars = es.CF.es_var_zero_perm in
-                                    let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
-                                    (if (tmp!=[]) then
-                                      (*all @full in the conseq should be in @zero in the ante*)
-                                      let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
-                                      (mkFailCtx_simple msg es (CF.mkTrue_nf pos) pos, Failure)
-                                    else
-                                      let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
-                                      let es = {es with CF.es_var_zero_perm=vars1} in
-                                      (**********<<< Compose @full variable permissions *******)
-                                      let es_f = CF.replace_formula_and res2 es_f in
-                                      let primed_full_vars = List.map (fun var -> match var with
-                                        | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
-                                      (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
-                                      (**** DO NOT COMPOSE lockset because they are thread-local*****)
-                                      let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
-                                      let new_es = {es with CF.es_formula = new_f;
-                                          es_unsat_flag = true;} in
-                                      let nctx = CF.Ctx new_es in
-                                      let rs = CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) nctx in
-                                      let rs2 = prune_ctx prog rs in
-                                      (*********CHECK db-consistency***********)
-                                      let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs2 in
-                                      let res = if (!Globals.perm = Bperm) then
-                                        let hfv = (CF.fv_heap_of new_base) in
-                                        let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
-                                        (*Only check for consistency when there are barrier variables inside the post-condition*)
-                                        if (bfv == []) then None
-                                        else
-                                          (*normalize until a fixpoint is reached*)
-                                          (* check_barrier_inconsistency_context prog res1 *)
-                                          let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
-                                          if (isFailCtx res) then Some (res,prf)
-                                          else None
-                                      else None
-                                      in
-                                      match res with
-                                        | Some res -> res
-                                        | None -> (SuccCtx [rs_norm] ,TrueConseq)
-                                              (****************************************)
-                                    ) (*END IF*)
-                                  ) (*END IF*)
-                          ) (* END match res1 with *)
+                        let res,ctx_option = find_thread_delayed_resource es es.CF.es_formula id pos in
+                        (match res, ctx_option with
+                          | _ , Some ctx -> ctx (*often error ctx*)
+                          | Some (delayed_f,post,res2,new_es_f), _ ->
+                              if (CP.isConstTrue delayed_f) then
+                                (*if delayed_f is trivial -> no need to check*)
+                                let _ = Debug.devel_pprint ("Delayed lockset constraints trivially satisfiable\n " ^ "\n") pos in
+                                compose_thread_post_condition prog es new_es_f post res2 pos
+                              else
+                                let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
+                                (if (CF.isFailCtx rs) then
+                                      (*FAIL to satisfy the delayed constraints*)
+                                      (*TO CHECK: become FALSE, which may not good enough*)
+                                      let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
+                                      rs,prf
+                                 else
+                                      let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
+                                      (*******<<<Checking the delayed constraints at join point*****)
+                                      (*if checking succeeds --> proceed as normal*)
+                                      compose_thread_post_condition prog es new_es_f post res2 pos
+                                ) (*END (if (CF.isFailCtx rs) then*)
+                          | _ ->
+                              let error_msg = ("Join with thread with id = " ^ (Cprinter.string_of_spec_var id) ^" : unexpected ") in
+                              (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
+                        ) (*END match res, ctx_option with *)
                     | None ->
                           (****************************************************)
                           (**************** <<< Perform check when join *******)
@@ -5656,7 +5730,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                          else
                                     (match tid with
-			              | Some id ->
+			                          | Some id ->
                                             (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                                             (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
                                             (* let _ = print_endline ("### ctx11 (before) = " ^ (Cprinter.string_of_context ctx11)) in *)
@@ -5675,9 +5749,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             (* in *)
                                             (* let ctx11 = CF.transform_context add_es_pure ctx11 in *)
                                             (* let _ = print_endline ("### ctx11 (after) = " ^ (Cprinter.string_of_context ctx11)) in *)
-                                            let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
-	                                    let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
-                                            (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
                                             let df = match delayed_f with
                                               | None -> (MCP.mkMTrue pos)
                                               | Some mf -> mf
@@ -5688,8 +5759,23 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 let vname = CP.name_of_spec_var v in
                                                 vname <> Globals.ls_name && vname <> Globals.lsmu_name
                                             ) ref_vars in
-                                            let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
-				            let rs3 = add_path_id rs2 (pid,i) (-1) in
+                                            let rs2 = if (!Globals.allow_threads_as_resource) then
+                                                  (*Threas as resource*)
+                                                  let dl = CP.remove_redundant (MCP.pure_of_mix df) in
+                                                  let ht = CF.mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true new_post dl None pos in
+                                                  let f = CF.formula_of_heap ht no_pos in
+	                                              let rs1 = compose_context_formula ctx11 f new_ref_vars true Flow_replace pos in
+                                                  rs1
+                                                else
+                                                  (*Threads as AND-conj*)
+                                                  let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
+	                                              let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
+                                                  (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
+                                                  let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
+                                                  rs2
+                                            in
+
+				                            let rs3 = add_path_id rs2 (pid,i) (-1) in
                                             let rs4 = prune_ctx prog rs3 in
 	                                    ((SuccCtx [rs4]),TrueConseq)
                                       | None ->
@@ -5744,24 +5830,24 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                 of each spec*)
                                               let post_fv = CF.fv new_post in
                                               let new_ref_vars,new_post = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv
-                                              then (*if LOCKSET ghost var is in the post-condition*)
-                                                let waitlevel_var = CP.mkWaitlevelVar Primed in
-                                                let new_post =
-                                                  if !Globals.allow_locklevel then
-                                                    CF.translate_waitlevel_formula new_post
-                                                  else
-                                                    CF.drop_svl new_post [waitlevel_var]
-                                                in
-                                                (ls_var::lsmu_var::ref_vars),new_post
-                                              else (*if not -> do not consider ls_var as a ref-vars*)
-                                                ref_vars,new_post
+                                                  then (*if LOCKSET ghost var is in the post-condition*)
+                                                    let waitlevel_var = CP.mkWaitlevelVar Primed in
+                                                    let new_post =
+                                                      if !Globals.allow_locklevel then
+                                                        CF.translate_waitlevel_formula new_post
+                                                      else
+                                                        CF.drop_svl new_post [waitlevel_var]
+                                                    in
+                                                    (ls_var::lsmu_var::ref_vars),new_post
+                                                  else (*if not -> do not consider ls_var as a ref-vars*)
+                                                    ref_vars,new_post
                                               in
-	                                      let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
-					      let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
+	                                          let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+					                          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
                                               let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
-	                                      let rs3 = add_path_id rs2 (pid,i) (-1) in
+	                                          let rs3 = add_path_id rs2 (pid,i) (-1) in
                                               (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
                                               let rs4 = prune_ctx prog rs3 in
                                               (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
@@ -6569,6 +6655,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
       | Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
 	    List.append (collect_data_view h1) (collect_data_view h2) 
       | DataNode _ | ViewNode _ -> [f]
+      | ThreadNode _ -> [f]
       | Hole _ | HTrue | HFalse | HEmp | HRel _ -> []
     in (* End of function collect_data_view *)
 
@@ -9909,6 +9996,7 @@ and do_unfold_for_classic_reasoning_x prog (f: CF.formula) (pos : loc) =
         CP.remove_dups_svl (r1 @ r2)
     | CF.ViewNode { CF.h_formula_view_node = c } -> [c]
     | CF.DataNode _ -> []
+    | CF.ThreadNode _ -> [] (*TOCHECK*)
     | CF.Hole _ -> []
     | CF.HRel _ -> []
     | CF.HTrue -> []
@@ -10184,6 +10272,200 @@ and generate_rels_formulas prog rels pos=
    in
    helper (CP.mkTrue pos) (CP.mkTrue pos) rels
 
+(* Compute syntactic matching number of two resources eq_rsr: l_rsr |- r_rsr
+   0 : completely matched -> MATCH
+   1 : possibly matched with some substitution -> (try)MATCH
+   2 : unmatched, lhs>rhs -> (syntatic) SPLIT
+   3 : unmatched, lhs>rhs or lhs!=rhs -> FAIL (will try semantic MATCH/SPLIT)
+   -1 : not care
+
+   l_idents: root vars to guide the syntatic comparision
+   RETURN (matching number, mapping table , remained_rsr)
+      - Matching number (above)
+      - mapping table: [(from,to)] -> possible substitutions
+        so that the delayed/resource are equal.
+      - remained_rsr: resource left after split
+*)
+and compute_matching_thread_nodes l_idents l_rsr r_rsr =
+  let pr i = match i with
+    | 0 -> "MATCH"
+    | 1 -> "(may)MATCH"
+    | 2 -> "(syn)SPLIT"
+    | 3 -> "FAIL"
+    | _ -> "UNKNOWN"
+  in
+  let pr_out = pr_triple pr Cprinter.string_of_subst (pr_option (pr_list Cprinter.string_of_formula)) in
+  Debug.no_3 "compute_matching_thread_nodes"
+      string_of_ident_list
+      Cprinter.string_of_formula
+      Cprinter.string_of_formula
+      pr_out
+      compute_matching_thread_nodes_x l_idents l_rsr r_rsr
+
+and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
+  let (eq_rsr,mtl_rsr) = Checkeq.checkeq_formulas_with_diff l_idents l_rsr r_rsr in
+  if eq_rsr then
+    (*possibly matched*)
+    if (mtl_rsr==[]) then (0,[],None) (*exacly match*)
+    else
+      (*TOCHECK: pick the first one only*)
+      let (mt_rsr,_,_) = List.hd mtl_rsr in
+      let mt_rsr = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt mt_rsr) in
+      if (mt_rsr==[]) then (0,[],None) (*exactly matched*)
+      else (1,mt_rsr,None) (*possibly matched, with some subsitition mt_rsr*)
+  else
+    (*UNMATCH: see whether it is a split or a failure*)
+    if (mtl_rsr==[]) then report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected"
+    else
+      (*TOCHECK: pick the first one only*)
+      let (mt_rsr, l_residue , r_residue) = List.hd mtl_rsr in
+      if not (CF.isStrictConstEmp r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
+      else (2,mt_rsr,Some [l_residue]) (*SPLIT*)
+
+(***********begin-of do_match_thread_nodes*****************)
+(*Handle Threads as Resource:
+
+  checkeq(l_dl,r_dl)       checkeq(l_rsr,r_rsr)
+  --------------------------------------------------------[MATCH]
+  t1::thread<l_rsr> |- t1::thread<r_rsr>
+
+
+  checkeq(l_dl,r_dl)         !checkeq(l_rsr,r_rsr)
+  l_rsr |- r_rsr * remained_rsr
+  --------------------------------------------------------[SPLIT]
+  t1::thread<l_rsr> |- t1::thread<r_rsr> * t1::thread<rsr3>
+
+
+  !checkeq(l_dl,r_dl) or l_rsr |/- r_rsr
+  --------------------------------------------------------[FAIL]
+  t1::thread<l_rsr> |/- t1::thread<r_rsr>
+
+*)
+(* RETURN:
+   new label_list
+   new l_args
+   new r_args
+   (is_thread, is_matched, rs_matched, rs_split)
+   is_threads=true -> matching two ThreadNodes
+   eq_dl=true -> two delayed formulas are eq
+   is_matched -> whether a matching happened
+
+*)
+(*Only care about this if you are matching two HeapNode*)
+and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list =
+  let is_thread,eq_dl,match_number,subst, remained_rsr =
+    (match (l_node,r_node) with
+      | ThreadNode ({CF.h_formula_thread_delayed = l_dl;
+                     CF.h_formula_thread_resource = l_rsr;}),
+        ThreadNode ({CF.h_formula_thread_delayed = r_dl;
+        CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+            let _ = print_endline ("Matching ThreadNodes") in
+            (*Whether the delayed constraints are syntatically eq*)
+          let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
+          let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in
+          (* non-empty mt_dl means l_dl and r_dl are not exactly match
+             This may be too strict, will re-consider later *)
+          let eq_dl = if mt1!=[] then false else eq_dl in
+          (*Whether the resources are syntatically eq*)
+          let l_idents = List.map CP.name_of_spec_var (CF.collect_node_var_formula l_rsr) in
+          let match_number, mt_rsr, remained_rsr = compute_matching_thread_nodes l_idents l_rsr r_rsr in
+
+          let mt = (List.concat mt_dl)@mt_rsr in
+          let subst = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt mt) in
+          true,eq_dl,match_number,subst, remained_rsr
+      | _ -> false,false,-1,[],None)
+  in
+  (match is_thread, eq_dl, match_number with
+    | false, _ , _ -> label_list, l_args, r_args, (is_thread,true,None,None)
+    | true, false, _ ->
+        let _ = print_endline ("MATCH of ThreadNodes failed") in
+        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "delayed formulas unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "101 : delayed formulas unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
+        label_list, l_args, r_args, (is_thread,false,Some rs,None)
+    | true, true, 0
+    | true, true, 1 ->
+        (*For matching two thread nodes*)
+        let _ = print_endline ("Attempt Syntatic MATCH of ThreadNodes") in
+        let label_list = if ((List.length subst) ==0 ) then label_list
+            else
+              (*Create a list of empty labels*)
+              let rec helper i =
+                if (i==0) then []
+                else
+                  let res = helper (i-1) in
+                  (LO.unlabelled)::res
+              in
+              let lbs = helper (List.length subst) in
+              lbs@label_list
+        in
+        let l_subst,r_subst = List.split subst in
+        let l_args = l_subst@l_args in
+        let r_args = r_subst@r_args in
+        let is_matched = true in
+        label_list, l_args, r_args, (is_thread,is_matched,None,None)
+    | true, true, 2 ->
+        (*For Syntatic SPLIT 
+          TOCHECK: currently ignore pure constraints for the resource*)
+        let _ = print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in
+        let label_list = if ((List.length subst) ==0 ) then label_list
+            else
+              (*Create a list of empty labels*)
+              let rec helper i =
+                if (i==0) then []
+                else
+                  let res = helper (i-1) in
+                  (LO.unlabelled)::res
+              in
+              let lbs = helper (List.length subst) in
+              lbs@label_list
+        in
+        let l_subst,r_subst = List.split subst in
+        let l_args = l_subst@l_args in
+        let r_args = r_subst@r_args in
+        let is_matched = true in
+        label_list, l_args, r_args, (is_thread,is_matched, None, remained_rsr)
+    | true, true, 3 (*EVEN if syntatically failed, try to prove semantically*)
+        (* -> let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources syntatically unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "102 : resources syntatically unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in *)
+        (* label_list, l_args, r_args, (is_thread,false,Some rs, None) *)
+
+        ->
+
+        (*If NOT syntatic MATCH/SPLIT, try to permform semantic MATCH/SPLIT*)
+        (*This will invoke provers, hence, is often slow.
+          Therefore, we do a syntatic check above first,
+          before going with this option *)
+        (match (l_node,r_node) with
+          | ThreadNode ({CF.h_formula_thread_resource = l_rsr;}),
+            ThreadNode ({CF.h_formula_thread_resource = r_rsr;}) ->
+              let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) l_rsr else l_rsr in
+              let new_estate = {estate with es_formula = es_f;} in
+              let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
+              let new_conseq = r_rsr in
+              let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in
+              let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
+      		  (match res_ctx with
+	            | SuccCtx(cl) ->
+                    let formulas = List.map (fun c -> match c with
+                      | Ctx es ->
+                          let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in
+                          let f = CF. push_exists evars es.es_formula in
+                          (*Simplify the remained resources*)
+                          let f = CF.elim_exists f in
+                          (CF.simplify_pure_f f)
+                      | OCtx _ -> report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected Octx. Not yet handled"
+                    ) cl
+                    in
+                    let is_matched = true in
+                    label_list, l_args, r_args, (is_thread,is_matched, None, Some formulas)
+                | FailCtx _ ->
+                    let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources semantically unmatched between LHS node and RHS node" new_estate new_conseq None pos, CF.mk_failure_must "103 : resources semantically unmatched between LHS and RHS thread nodes" Globals.sl_error)), NoAlias) in
+                    label_list, l_args, r_args, (is_thread,false,Some rs,None))
+          | _ ->
+              report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
+    | true, true, _ ->
+        report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
+(***********END-of do_match_thread_nodes*****************)
+
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -10207,6 +10489,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* Debug.tinfo_hprint (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
               (* Debug.tinfo_hprint (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
     let l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = match l_node with
+      | ThreadNode {h_formula_thread_name = l_node_name;
+        h_formula_thread_perm = perm;} -> ([], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
@@ -10221,6 +10505,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
     let r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
+      | ThreadNode {h_formula_thread_name = r_node_name;
+                    h_formula_thread_node = r_var;
+        h_formula_thread_perm = perm;} -> ([], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
@@ -10263,9 +10550,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     Debug.tinfo_hprint (add_str "param_ann_lhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_lhs pos;
     Debug.tinfo_hprint (add_str "param_ann_rhs" (pr_list ( Cprinter.string_of_pure_formula))) param_ann_rhs pos;
     Debug.tinfo_hprint (add_str "Imm annotation mismatch (field lvl)" (string_of_bool)) (not(rl)) pos;
-    let join_ann_constr ann ann_lst =
-      let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
-      List.fold_left Immutable.mkAndOpt None f_lst in
+    (* let join_ann_constr ann ann_lst = *)
+    (*   let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in *)
+    (*   List.fold_left Immutable.mkAndOpt None f_lst in *)
     let join_ann_constr ann ann_lst = 
       if List.length (ann@ann_lst) == 0 then None
       else Some (CP.join_conjunctions (ann@ann_lst)) in
@@ -10371,7 +10658,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
                 else (rem_l_node,rem_r_node,l_args,r_args,l_param_ann,r_param_ann)
 	          (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
-	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
+	  | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
       in
       match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
 	    | DataNode _ -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
@@ -10386,7 +10673,29 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   begin
                     List.map (fun _ -> LO.unlabelled) l_args 
                   end
-            in     
+            in
+
+            (*** BEGIN threads as resource *****)
+            let label_list, l_args, r_args, (is_thread, is_matched, rs_matched, remained_rsr) = do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_folding pos l_args r_args label_list in
+            if (is_thread && (not is_matched)) then
+              match rs_matched with (*EXIT points of do_match*)
+                | None -> report_error no_pos "[solver.ml] do_match: expecting some result"
+                | Some rs -> rs
+            else
+            let remained_thread_node = 
+              if(is_thread && is_matched) then
+                (match remained_rsr with
+                  | None -> CF.HTrue
+                  | Some f ->
+                      (*LDKTODO: currently try the first only*)
+                      let f = List.hd f in
+                      (match l_node with
+                        | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}
+                        | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
+                      ))
+              else CF.HTrue
+            in
+            (*** END threads as resource *****)
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)
             (*renamed and instantiate perm var*)
             let evars = estate.es_evars in
@@ -10465,7 +10774,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : strip all the pair of equality involving # *)
 	        let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)
                                                  && not (CP.is_rel_typ x) (* && not((CP.is_ann_typ y) && (Gen.BList.mem_eq CP.eq_spec_var  y estate.es_ante_evars) ) *)) other_subs in
-              let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in
+              (* let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in *)
               (* let _ =  Debug.ninfo_zprint  (lazy  ("other_subs: " ^ (pr_list pr1 other_subs))) no_pos in *)
               let _ = Debug.tinfo_hprint (add_str "other subs" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
               (* let _ =  Debug.info_zprint  (lazy  ("new_exist_vars: " ^ (!CP.print_svl new_exist_vars))) no_pos in *)
@@ -10473,7 +10782,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ =  Debug.info_zprint  (lazy  ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars))) no_pos in *)
               let to_lhs,to_rhs,ext_subst =  get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos  in
               let ext_subst = ext_subst@subst in
-              let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in
+              (* let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in *)
               let _ =  Debug.ninfo_zprint  (lazy  ("to_lhs: " ^ (!CP.print_formula to_lhs))) no_pos in
               (* let _ =  Debug.tinfo_hprint  (add_str  ("ext_subst: "  (pr_pair  ext_subst))) no_pos in *)
               (*adding pure formula for relational args of view*)
@@ -10514,6 +10823,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          let l_h = match rem_l_node with
 		        | HRel _ | HTrue | HFalse | HEmp-> l_h
 		        | _ -> mkStarH rem_l_node l_h pos in
+              (*Add remained resource*)
+              let l_h = if (is_thread && is_matched) then
+                    mkStarH remained_thread_node l_h pos
+                  else l_h in
               (* Debug.tinfo_hprint (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
               Debug.tinfo_hprint (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
@@ -11526,7 +11839,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
 and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
       lhs_node lhs_rest rhs_node rhs_rest holes=
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches 1" sl_error)), NoAlias)
   else
     let new_es_formula = Base{lhs_b with formula_base_heap = lhs_rest} in
     (* let _ = print_string ("\n(andreeac) lhs_rest: " ^ (Cprinter.string_of_h_formula lhs_rest)) in *)
@@ -11572,7 +11885,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) 
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing || (CF.is_thread lhs_node)) 
                   (* || (!Globals.perm=Bperm && (not !Globals.use_split_match)) *)
                 then
                   (*If not using permissions or is in normalization process --> MATCH ONLY*)
@@ -11585,8 +11898,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   let lhs_perm = CF.get_node_perm lhs_node in
                   let rhs_perm = CF.get_node_perm rhs_node in
                   let lhs_orignal = CF.get_node_original lhs_node in
-                  let rhs_orignal = CF.get_node_original rhs_node in
-                  let flag = lhs_orignal in (*if flag then MATCH*)
+                  (* let rhs_orignal = CF.get_node_original rhs_node in *)
+                  (* let flag = lhs_orignal in (\*if flag then MATCH*\) *)
                   (* let lhs_pvars = Perm.get_cperm lhs_perm in *)
                   (* let rhs_pvars = Perm.get_cperm rhs_perm in *)
                   let exact_flag,perm_f,vars = match lhs_perm,rhs_perm with
@@ -11777,7 +12090,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      (CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error)), NoAlias)
 	    else
 	      let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
-	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
+	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches 2" sl_error)), NoAlias)
 	      else
 		let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
 		let n_rhs_pure =
@@ -12219,27 +12532,28 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (add_str "rhs_b" pr3) pr2
       (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) a estate conseq (Base lhs_b) (Base rhs_b) 
       
-      
-and do_universal_perms (perm1:cperm) (perm2:cperm) =
-  (match perm1,perm2 with
-    | Some _, Some _ ->
-        let ls1 = Perm.get_cperm_var perm1 in
-        let ls2 = Perm.get_cperm_var perm2 in
-        (ls1,ls2)
-    | Some f1, None ->
-        (match !Globals.perm with
-          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
-          | _ ->
-              let f1 = Cpure.get_var f1 in
-              ([f1],[full_perm_var()]))
-    | None, Some f2 ->
-        (match !Globals.perm with
-          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
-          | _ ->
-              let f2 = Cpure.get_var f2 in
-              ([full_perm_var()],[f2]))
-    | None, None ->
-        ([],[]))
+
+(*2014-02-24: replaced by Perm.get_perm_var_lists *)
+(* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
+(*   (match perm1,perm2 with *)
+(*     | Some _, Some _ -> *)
+(*         let ls1 = Perm.get_cperm_var perm1 in *)
+(*         let ls2 = Perm.get_cperm_var perm2 in *)
+(*         (ls1,ls2) *)
+(*     | Some f1, None -> *)
+(*         (match !Globals.perm with *)
+(*           | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm" *)
+(*           | _ -> *)
+(*               let f1 = Cpure.get_var f1 in *)
+(*               ([f1],[full_perm_var()])) *)
+(*     | None, Some f2 -> *)
+(*         (match !Globals.perm with *)
+(*           | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm" *)
+(*           | _ -> *)
+(*               let f2 = Cpure.get_var f2 in *)
+(*               ([full_perm_var()],[f2])) *)
+(*     | None, None -> *)
+(*         ([],[])) *)
 
 (*******************************************************************************************************************************************************************************************)
 (*
@@ -12364,7 +12678,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 (*subst perm variable when applicable*)
                 let perms1,perms2 =
                   if (Perm.allow_perm ()) then
-                    do_universal_perms perm1 perm2
+                    Perm.get_perm_var_lists perm1 perm2
                   else
                     ([],[])
                 in
@@ -12563,7 +12877,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		  (* apply \rho (G)	and \rho(B) *)
                   let perms1,perms2 =
                     if (Perm.allow_perm ()) then
-                      do_universal_perms perm1 perm2
+                      Perm.get_perm_var_lists perm1 perm2
                     else ([],[])
                   in
                   let fr_vars = perms2@(p2 :: ps2)in
@@ -13256,7 +13570,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
           when CF.is_eq_node_name c1 c2 ->
             let perms1, perms2 = 
               if (Perm.allow_perm ()) then
-                do_universal_perms perm1 perm2
+                Perm.get_perm_var_lists perm1 perm2
               else ([],[]) in
             let fr_vars = perms2@(p2 :: ps2) in
             let to_vars = perms1@(p1 :: ps1) in
@@ -13331,6 +13645,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
               let name = match anode with
                 | ViewNode vn -> vn.h_formula_view_name
                 | DataNode dn -> dn.h_formula_data_name
+                | ThreadNode tn -> tn.h_formula_thread_name
                 | HTrue -> "htrue"
                 | _ -> let _ = print_string("[solver.ml] Warning: normalize_w_coers expecting DataNode, ViewNode or HTrue\n") in
                   ""

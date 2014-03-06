@@ -580,7 +580,7 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
 
 
 and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
-  let vname = vinfo.Cil.vname in
+  (* let vname = vinfo.Cil.vname in *)
   let pos = translate_location vinfo.Cil.vdecl in
   let ty = vinfo.Cil.vtype in
   let (new_ty, need_init) = (match ty with
@@ -704,7 +704,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
                           | _ -> Iast.mkMember base found_fields None pos
                     )
                   | Cil.Field ((field, l1), off, _) ->
-                        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                        (* let p = makeLocation (startPos pos) (endPos (translate_location l1)) in *)
                         create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
                   | Cil.Index (e, off, _) ->
                         let l1 = loc_of_cil_exp e in
@@ -1126,6 +1126,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                     IF.h_formula_heap2_name = H
                     }*)
         | IF.HeapNode _ | IF.HeapNode2 _
+        | IF.ThreadNode _ 
         | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (

@@ -473,7 +473,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
     match f with
       | HRel _
       | DataNode _ | ViewNode _ 
-      | HTrue | HFalse | HEmp | Hole _-> f
+      | HTrue | HFalse | HEmp | Hole _ |  ThreadNode _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
             h_formula_phase_rw = helper b.h_formula_phase_rw}
       | Conj b -> begin

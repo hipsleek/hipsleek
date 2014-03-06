@@ -50,8 +50,16 @@ I.data_invs = []; (* F.mkTrue no_pos; *)
 I.data_is_template = false;
 I.data_methods = [] }
 
+let ithrd_def =  {I.data_name = Globals.thrd_name ;
+I.data_fields = [];
+I.data_pos = no_pos;
+I.data_parent_name = "Object";
+I.data_invs = []; (* F.mkTrue no_pos; *)
+I.data_is_template = false;
+I.data_methods = [] }
+
 let iprog = { I.prog_include_decls =[];
-I.prog_data_decls = [iobj_def];
+I.prog_data_decls = [iobj_def;ithrd_def];
 I.prog_global_var_decls = [];
 I.prog_logical_var_decls = [];
 I.prog_enum_decls = [];
@@ -104,7 +112,7 @@ let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_v
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
-  iprog.I.prog_data_decls <- [iobj_def];
+  iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];

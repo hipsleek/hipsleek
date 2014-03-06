@@ -55,6 +55,7 @@ type sleek_token =
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
+  | TOPAREN | TCPAREN
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE (* | PREF *)
   | PLUS | PRIME 
@@ -138,6 +139,8 @@ module Token = struct
     | MAYLOOP -> "MayLoop"
     | VALIDATE -> "validate"
     | XPURE -> "XPURE"
+    | TOPAREN -> "<#" 
+    | TCPAREN -> "#>" (*Open and close paren for thread heap*)
 
 
   let print ppf x = pp_print_string ppf (to_string x)
