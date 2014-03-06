@@ -142,7 +142,7 @@ let rec rev_trans_heap f = match f with
   | CF.Star  b  -> IF.mkStar  (rev_trans_heap b.CF.h_formula_star_h1) (rev_trans_heap b.CF.h_formula_star_h2) b.CF.h_formula_star_pos
   | CF.StarMinus _| CF.ConjStar _|CF.ConjConj _ -> report_error no_pos "AS.rev_trans_heap: not handle yet"
  
-let rec rev_trans_formula f = match f with 
+and rev_trans_formula f = match f with 
 	| CF.Base b-> IF.Base  { 
 					 IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
                      IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
