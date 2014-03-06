@@ -10,98 +10,100 @@ echo "======= motiv-example.ss  ======"
 diff test-cases/motiv-example.res test-cases/motiv-example.n
 echo "======= motiv-example2.ss  ======"
 diff test-cases/motiv-example2.res test-cases/motiv-example2.n
-echo "======= no-deadlock-nonlexical.ss ======"
-diff test-cases/no-deadlock-nonlexical.res test-cases/no-deadlock-nonlexical.n
 echo "======= no-deadlock-nonlexical2.ss ======"
 diff test-cases/no-deadlock-nonlexical2.res test-cases/no-deadlock-nonlexical2.n
+echo "======= point.ss  ======"
+diff test-cases/point.res test-cases/point.n
+#================parahip-rsr/PARAHIP==========================
+#================parahip-rsr/PARAHIP==========================
+echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"
+diff test-cases/parahip-rsr/no-deadlock-nonlexical.res test-cases/parahip-rsr/no-deadlock-nonlexical.n
 
-#================PARAHIP==========================
-#================PARAHIP==========================
-# echo "======= parahip/simple.ss ======"
+# echo "======= parahip-rsr/simple.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/simple.res test-cases/parahip/simple.n
+# diff test-cases/parahip-rsr/simple.res test-cases/parahip-rsr/simple.n
 
-echo "======= parahip/forkjoin.ss ======"
-diff test-cases/parahip/forkjoin.res test-cases/parahip/forkjoin.n
+echo "======= parahip-rsr/forkjoin.ss ======"
+diff test-cases/parahip-rsr/forkjoin.res test-cases/parahip-rsr/forkjoin.n
 
-# echo "======= parahip/cell.ss ======"
+# echo "======= parahip-rsr/cell.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/cell.res test-cases/parahip/cell.n
+# diff test-cases/parahip-rsr/cell.res test-cases/parahip-rsr/cell.n
 
-echo "======= parahip/cell4.ss ======"
-diff test-cases/parahip/cell4.res test-cases/parahip/cell4.n
+echo "======= parahip-rsr/cell4.ss ======"
+diff test-cases/parahip-rsr/cell4.res test-cases/parahip-rsr/cell4.n
 
-# echo "======= parahip/cell-lock-vperm.ss ======"
+# echo "======= parahip-rsr/cell-lock-vperm.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/cell-lock-vperm.res test-cases/parahip/cell-lock-vperm.n
+# diff test-cases/parahip-rsr/cell-lock-vperm.res test-cases/parahip-rsr/cell-lock-vperm.n
 
-# echo "======= parahip/cell-extreme-cases.ss ======"
+# echo "======= parahip-rsr/cell-extreme-cases.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/cell-extreme-cases.res test-cases/parahip/cell-extreme-cases.n
+# diff test-cases/parahip-rsr/cell-extreme-cases.res test-cases/parahip-rsr/cell-extreme-cases.n
 
-echo "======= parahip/ls-bind.ss ======"
-diff test-cases/parahip/ls-bind.res test-cases/parahip/ls-bind.n
+echo "======= parahip-rsr/ls-bind.ss ======"
+diff test-cases/parahip-rsr/ls-bind.res test-cases/parahip-rsr/ls-bind.n
 
-# echo "======= parahip/ls-waitlevel2.ss ======"
+# echo "======= parahip-rsr/ls-waitlevel2.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/ls-waitlevel2.res test-cases/parahip/ls-waitlevel2.n
+# diff test-cases/parahip-rsr/ls-waitlevel2.res test-cases/parahip-rsr/ls-waitlevel2.n
 
-# echo "======= parahip/double-acquire.ss ======"
+# echo "======= parahip-rsr/double-acquire.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/double-acquire.res test-cases/parahip/double-acquire.n
+# diff test-cases/parahip-rsr/double-acquire.res test-cases/parahip-rsr/double-acquire.n
 
-echo "======= parahip/no-deadlock1.ss ======"
-diff test-cases/parahip/no-deadlock1.res test-cases/parahip/no-deadlock1.n
+echo "======= parahip-rsr/no-deadlock1.ss ======"
+diff test-cases/parahip-rsr/no-deadlock1.res test-cases/parahip-rsr/no-deadlock1.n
 
-echo "======= parahip/no-deadlock2.ss ======"
-diff test-cases/parahip/no-deadlock2.res test-cases/parahip/no-deadlock2.n
+echo "======= parahip-rsr/no-deadlock2.ss ======"
+diff test-cases/parahip-rsr/no-deadlock2.res test-cases/parahip-rsr/no-deadlock2.n
 
-echo "======= parahip/no-deadlock3.ss ======"
-diff test-cases/parahip/no-deadlock3.res test-cases/parahip/no-deadlock3.n
+echo "======= parahip-rsr/no-deadlock3.ss ======"
+diff test-cases/parahip-rsr/no-deadlock3.res test-cases/parahip-rsr/no-deadlock3.n
 
-echo "======= parahip/deadlock1.ss ======"
-diff test-cases/parahip/deadlock1.res test-cases/parahip/deadlock1.n
+echo "======= parahip-rsr/deadlock1.ss ======"
+diff test-cases/parahip-rsr/deadlock1.res test-cases/parahip-rsr/deadlock1.n
 
-echo "======= parahip/deadlock2.ss ======"
-diff test-cases/parahip/deadlock2.res test-cases/parahip/deadlock2.n
+echo "======= parahip-rsr/deadlock2.ss ======"
+diff test-cases/parahip-rsr/deadlock2.res test-cases/parahip-rsr/deadlock2.n
 
-echo "======= parahip/deadlock3.ss ======"
-diff test-cases/parahip/deadlock3.res test-cases/parahip/deadlock3.n
+echo "======= parahip-rsr/deadlock3.ss ======"
+diff test-cases/parahip-rsr/deadlock3.res test-cases/parahip-rsr/deadlock3.n
 
-echo "======= parahip/disj-no-deadlock1.ss ======"
-diff test-cases/parahip/disj-no-deadlock1.res test-cases/parahip/disj-no-deadlock1.n
+echo "======= parahip-rsr/disj-no-deadlock1.ss ======"
+diff test-cases/parahip-rsr/disj-no-deadlock1.res test-cases/parahip-rsr/disj-no-deadlock1.n
 
-echo "======= parahip/disj-no-deadlock2.ss ======"
-diff test-cases/parahip/disj-no-deadlock2.res test-cases/parahip/disj-no-deadlock2.n
+echo "======= parahip-rsr/disj-no-deadlock2.ss ======"
+diff test-cases/parahip-rsr/disj-no-deadlock2.res test-cases/parahip-rsr/disj-no-deadlock2.n
 
-echo "======= parahip/disj-no-deadlock3.ss ======"
-diff test-cases/parahip/disj-no-deadlock3.res test-cases/parahip/disj-no-deadlock3.n
+echo "======= parahip-rsr/disj-no-deadlock3.ss ======"
+diff test-cases/parahip-rsr/disj-no-deadlock3.res test-cases/parahip-rsr/disj-no-deadlock3.n
 
-echo "======= parahip/disj-deadlock.ss ======"
-diff test-cases/parahip/disj-deadlock.res test-cases/parahip/disj-deadlock.n
+echo "======= parahip-rsr/disj-deadlock.ss ======"
+diff test-cases/parahip-rsr/disj-deadlock.res test-cases/parahip-rsr/disj-deadlock.n
 
-echo "======= parahip/ordered-locking.ss ======"
-diff test-cases/parahip/ordered-locking.res test-cases/parahip/ordered-locking.n
+echo "======= parahip-rsr/ordered-locking.ss ======"
+diff test-cases/parahip-rsr/ordered-locking.res test-cases/parahip-rsr/ordered-locking.n
 
-echo "======= parahip/unordered-locking.ss ======"
-diff test-cases/parahip/unordered-locking.res test-cases/parahip/unordered-locking.n
+echo "======= parahip-rsr/unordered-locking.ss ======"
+diff test-cases/parahip-rsr/unordered-locking.res test-cases/parahip-rsr/unordered-locking.n
 
-# echo "======= parahip/multicast.ss ======"
+# echo "======= parahip-rsr/multicast.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/multicast.res test-cases/parahip/multicast.n
+# diff test-cases/parahip-rsr/multicast.res test-cases/parahip-rsr/multicast.n
 
-echo "======= parahip/oracle.ss ======"
-diff test-cases/parahip/oracle.res test-cases/parahip/oracle.n
+echo "======= parahip-rsr/oracle.ss ======"
+diff test-cases/parahip-rsr/oracle.res test-cases/parahip-rsr/oracle.n
 
-echo "======= parahip/owicki-gries.ss ======"
-diff test-cases/parahip/owicki-gries.res test-cases/parahip/owicki-gries.n
+echo "======= parahip-rsr/owicki-gries.ss ======"
+diff test-cases/parahip-rsr/owicki-gries.res test-cases/parahip-rsr/owicki-gries.n
 
-echo "======= parahip/fibonacci.ss ======"
-diff test-cases/parahip/fibonacci.res test-cases/parahip/fibonacci.n
+echo "======= parahip-rsr/fibonacci.ss ======"
+diff test-cases/parahip-rsr/fibonacci.res test-cases/parahip-rsr/fibonacci.n
 
-# echo "======= parahip/create_and_acquire.ss ======"
+# echo "======= parahip-rsr/create_and_acquire.ss ======"
 # ##No Fork/Join
-# diff test-cases/parahip/create_and_acquire.res test-cases/parahip/create_and_acquire.n
+# diff test-cases/parahip-rsr/create_and_acquire.res test-cases/parahip-rsr/create_and_acquire.n
 
 #================BENCHMARK==========================
 #================BENCHMARK==========================
