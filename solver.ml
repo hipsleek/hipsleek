@@ -11835,7 +11835,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let coer_l = Lem_store.all_lemma # get_left_coercion in 
             let coer = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
               else List.hd coer_l in 
-            (* let () = print_endline (Cprinter.string_of_coercion coer) in*)
+            (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
               (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
               let rest_heap = split_star_conjunctions lhs_rest in
@@ -11851,6 +11851,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = extr_formula_base lhs_b in
               let filter_sm = List.filter (fun h -> if (Mem.contains_starminus h) then false
                   else if (is_data h) then false else true) (split_star_conjunctions lhs_h) in
+              let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
+              if (List.length filter_sm >0)
+              then 
               let rhs = List.hd filter_sm in
               let fvl = Cformula.h_fv rhs in
               let _,check_p,_,_,_ = split_components coer.coercion_head in
@@ -11894,6 +11897,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	            coer.coercion_body tmp_prf coer.coercion_name
               in
               (res, [prf])
+              else (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="no suitable ramify lemma";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "112" Globals.sl_error)),
+                  [])
             else (CF.mkFailCtx_in( Basic_Reason ( { 
 	          fc_message ="failed ramify lemma application";
 	          fc_current_lhs = estate;
@@ -11901,7 +11913,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "112" Globals.sl_error)), [])
+                                                  CF.mk_failure_must "112" Globals.sl_error)),
+                  [])
             in
             (r1,Search r2)
       | Context.M_lemma  ({

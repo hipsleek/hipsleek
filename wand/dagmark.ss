@@ -1,4 +1,4 @@
-//============== dag.v ==================//
+////============== dag.v ==================//
 data node{
 int val;
 node left;
@@ -21,16 +21,16 @@ rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
       & notreach(G,x,NR) & notreach(G1,x,NR)
       -> x::dag<G1> U* y::dag<G1>;
 
-//rlemma x::node<v,l,r> * (l::dag<G> U* r::dag<G>)
-//	& lookup(G,x,v,l,r) -> x::dag<G1> & updG(G,x,v,l,r,G1);
+//rlemma x::node<1,l,r> * (l::dag<G> U* r::dag<G>)
+//	& lookup(G,x,v,l,r) -> x::dag<G1> & updG(G,x,1,l,r,G1);
  
 //========================================//
 
 relation mark(bag(node) G,node x,bag(node) G1).
 relation mark1(bag(node) G,node x,bag(node) G1).
 
-axiom lookup(G,x,v,l,r) ==> updG(G,x,1,l,r,G1).
-axiom updG(G,x,1,l,r,G1) ==> mark(G,x,G1).
+//axiom lookup(G,x,v,l,r) ==> updG(G,x,1,l,r,G1).
+axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
 //axiom lookup(G,x,v,l,r) ==> updG(G,x,v,l,r,_).
 
 axiom updG(G,x,1,l,r,G1) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
@@ -53,6 +53,7 @@ if(x==null) return;
 else {
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G)  /\ d(x,v,l,r,G) |- x::node<v@L,_,_ >  // BIND]
   if (x.val == 1) return;
+assume false;
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G) /\ d(x,v,l,r,G) |- x::node<_,l@L,_>   // BIND]
   l = x.left;
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G)  /\ d(x,v,l,r,G) |- x::node<_,_,r@L>  // BIND]
@@ -63,15 +64,17 @@ else {
 //[x::node<1,l,r> * (dag(l,G) --@ dag(l,G) U* dag(r,G)) // Residue]
 //dprint;
   mark(l);
+  mark(r);
 //dprint;
 //[x::node<1,l,r> * (dag(l,G) --@ dag(l,G) U* dag(r,G)) * dag(l,G1) // Add PostCondition]
 //[x::node<1,l,r> * dag(l,G1) U* dag(r,G1) // Apply Ramification Lemma]
 //[x::node<1,l,r> * dag(l,G1) U* dag(r,G1) /\ mark(G,l,G1) /\ d(x,1,l,r,G) |- dag(r,G1)   // PRE]
 //[x::node<1,l,r> * (dag(r,G1) --@ dag(l,G1) U* dag(r,G1)) // Residue]
-  mark(r);
+
 //dprint;
 //[x::node<1,l,r> * (dag(r,G1) --@ dag(l,G1) U* dag(r,G1)) * dag(r,G2)// Add PostCondition]
 //[x::node<1,l,r> * dag(l,G2) U* dag(r,G2) // Apply Ramification Lemma]
 //[x::node<1,l,r> * dag(l,G2) U* dag(r,G2) /\ mark(G,l,G1) /\ mark(G1,r,G2) /\ d(x,1,l,r,G) |- dag(x,G2) /\ mark(G,x,G2) // POST]
 }
+dprint;
 }
