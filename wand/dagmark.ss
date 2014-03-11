@@ -29,11 +29,16 @@ rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
 relation mark(bag(node) G,node x,bag(node) G1).
 relation mark1(bag(node) G,node x,bag(node) G1).
 
+//axiom mark(G,null,G1) ==> G = G1.
+axiom G = G1 ==> mark(G,null,G1).
+axiom lookup(G1,x,1,l,r) ==> mark1(_,x,G1).
+//axiom mark1(G,x,G1) ==> mark(G,x,G1).
 //axiom lookup(G,x,v,l,r) ==> updG(G,x,1,l,r,G1).
-axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
+//axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
+//axiom updG(G,x,1,l,r,G1) ==> lookup(G,x,_,null,null) & mark(G,x,G1).
 //axiom lookup(G,x,v,l,r) ==> updG(G,x,v,l,r,_).
 
-axiom updG(G,x,1,l,r,G1) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
+axiom lookup(G,x,1,l,r) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
 
 axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1).
 axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
@@ -53,7 +58,7 @@ if(x==null) return;
 else {
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G)  /\ d(x,v,l,r,G) |- x::node<v@L,_,_ >  // BIND]
   if (x.val == 1) return;
-assume false;
+//assume false;
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G) /\ d(x,v,l,r,G) |- x::node<_,l@L,_>   // BIND]
   l = x.left;
 //[x::node<v,l,r> * dag(l,G) U* dag(r,G)  /\ d(x,v,l,r,G) |- x::node<_,_,r@L>  // BIND]
