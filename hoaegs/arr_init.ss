@@ -2,14 +2,18 @@
  Example: array initialization.
  **/
  
-relation zeros(int[] a, int i, int j) == (i > j | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] = 0))).
+relation zeros(int[] a, int i, int j) == (i > j 
+     | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] = 0))).
 
 /* a and b are identical except a[k] = 0 for all i <= k <= j */ 
-relation identicalzeroes(int[] a, int[] b, int i, int j) == forall ( k : (k < i & a[k] = b[k] | k > j & a[k] = b[k] | i <= k & k <= j & a[k] = 0)).
+relation identicalzeroes(int[] a, int[] b, int i, int j) == 
+   forall ( k : (k < i & a[k] = b[k] | k > j & a[k] = b[k] 
+      | i <= k & k <= j & a[k] = 0)).
 
 void initright(int[]@R a, int i, int j) 
 	requires true
-	ensures identicalzeroes(a',a,i,j); /* zeros(a', i, j); ==> missing condition: a'[k] = a[k] for k < i | k > j */
+	ensures identicalzeroes(a',a,i,j); 
+ /* zeros(a', i, j); ==> missing condition: a'[k] = a[k] for k < i | k > j */
 {
 	if (i <= j)
 	{
