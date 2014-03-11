@@ -1,11 +1,14 @@
-relation markedzero(int[] a) == forall (i:(a[i] = 0)). 
+relation zeros(int[] a, int[]b, int i, int j) == 
+forall (k : (k < i & a[k] = b[k] | k > j & a[k] = b[k] | i <= k & k <= j & a[k] = 0)).
 
-void mark(int[] x,int i,int l)
-requires dom(x,i,l)
-ensures markedzero(x);
+
+void mark(ref int[] x,int i,int l)
+requires [k,t] dom(x,k,t) & k <= i & l <= t
+ensures dom(x',k,t)& zeros(x',x,i,l);
 {
-if(!(i<l)) return;
-if(x[i] == 0) return;
-x[i] = 0;
-mark(x,i+1,l);
+	if (i <= l)
+	{
+		x[i] = 0;
+		mark(x,i+1,l);
+	}
 }

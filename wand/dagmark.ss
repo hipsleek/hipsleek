@@ -38,7 +38,7 @@ axiom lookup(G1,x,1,l,r) ==> mark1(_,x,G1).
 //axiom updG(G,x,1,l,r,G1) ==> lookup(G,x,_,null,null) & mark(G,x,G1).
 //axiom lookup(G,x,v,l,r) ==> updG(G,x,v,l,r,_).
 
-axiom lookup(G,x,1,l,r) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
+//axiom lookup(G,x,1,l,r) & mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
 
 axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1).
 axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
