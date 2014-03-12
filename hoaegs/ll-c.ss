@@ -18,18 +18,24 @@ relation zeros(int[] a, int i, int j) == (i > j
 */
 
 ll2<i,j,a> == self = null & i=j
-  or self::node<v, r> * r::ll2<i+1,j,a> & a[i]=v 
+  or self::node<v, r> * r::ll2<i+1,j,a> //& a[i]=v 
   inv i<=j;
 
 /* append two singly linked lists */
-void append(node x, node y)
-  requires x::ll2<i,j,a> * y::ll2<j,k,a> & i<j //& x!=null
-  ensures x::ll2<i,k+1,a>;
+void inc(node x)
+/*
+  requires x::ll<n> 
+  ensures x::ll<n>;
+*/
+  requires x::ll2<i,j,a> 
+  ensures x::ll2<i,j,b>;
 {
-	if (x.next == null) {
-		x.next = y;
+        
+	if (x == null) {
+		return;
 	} else {
-		append(x.next, y);
+                x.val = x.val+1;
+		inc(x.next);
 	}
 }
 
