@@ -16,7 +16,7 @@ let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let process_cmd_line () =
-        Perm.disable_para();
+    if not (Perm.allow_perm ()) then Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()
@@ -324,16 +324,7 @@ let reverify_with_hp_rel old_cprog iprog =
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
   let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
-  let _ = if (!Globals.sap)
-  then
-    let _ =  Debug.binfo_pprint "new-spec\n" no_pos in
-    print_spec cprog
-  else () in
-  if (!Globals.reverify_all_flag)
-  then
-    let _ =  Debug.binfo_pprint "re-verify\n" no_pos in
-    ignore (Typechecker.check_prog iprog cprog)
-  else ()
+  ignore (Typechecker.check_prog iprog cprog)
 
 let hip_epilogue () = 
   (* ------------------ lemma dumping ------------------ *)
@@ -447,6 +438,9 @@ let process_source_full source =
     (*to improve: annotate field*)
     let _ = I.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
+    (*used in lemma*)
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
     (* ========= lemma process (normalize, translate, verify) ========= *)
@@ -508,18 +502,21 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog intermediate_prog cprog);
+      (* let _ =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
+      (* let _ = I.set_iprog intermediate_prog in *)
+      ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError1(s) detected at main "^"\n");
       let _ = Log.process_proof_logging !Globals.source_files in
       raise e
     end);
-	if (!Globals.reverify_all_flag or !Globals.sap)
+	if (!Globals.reverify_all_flag)
 	then
-          reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
-        else ();
-
+          let _ =  Debug.binfo_pprint "re-verify\n" no_pos; in
+	  reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+	else ();
+	
     (* Stopping the prover *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
@@ -668,12 +665,16 @@ let process_source_full_after_parser source (prog, prims_list) =
   (**************************************)
   (*annotate field*)
   let _ = I.annotate_field_pure_ext intermediate_prog in
+  (*used in lemma*)
+  (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
+  (* let _ = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
-      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula)
+    (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
   let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
@@ -723,6 +724,8 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");

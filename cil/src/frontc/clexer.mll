@@ -799,9 +799,13 @@ and matchingpars = parse
 | ')'           { addWhite lexbuf; decr matchingParsOpen;
                   if !matchingParsOpen = 0 then ()
                   else matchingpars lexbuf }
-| "/*"          { addWhite lexbuf; let il = comment lexbuf in
+| "/*"          { let startPos = currentPos () in
+                  addWhite lexbuf;
+                  let il = comment lexbuf in
+                  let endPos = currentPos () in
+                  let loc = Cabs.makeLoc startPos endPos in
                   let sl = intlist_to_string il in
-                  addComment sl;
+                  addComment sl loc;
                   matchingpars lexbuf }
 | '"'           { addWhite lexbuf; (* '"' *)
                   let _ = str lexbuf in 

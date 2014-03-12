@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred HP<r> == self::node<_, null> & r=self
+  or self::node<_, q> * q::HP<r>.
+
+
+pred lseg<p> == self= p
+  or self::node<_, q> * q::lseg<p>.
+
+//lemma_safe self::HP<p1> <-> self::lseg<p1> * p1::node<_,null>.
+
+checkentail z::HP<r> |- r::node<_,null>.

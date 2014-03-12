@@ -5,12 +5,16 @@ struct node {
 
 /* view for singly linked circular lists */
 /*@
-cll<p, n> == self = p & n = 0
-	or self::node<_, r> * r::cll<p, n-1> & self != p  
+clls<p, n> == self = p & n = 0
+	or self::node<_, r> * r::clls<p, n-1> & self != p  
 	inv n >= 0;
 
+cll<p> == self = p
+	or self::node<_, r> * r::cll<p> & self != p  
+	inv true;
+
 hd<n> == self = null & n = 0
-	or self::node<_, r> * r::cll<self, n-1>  
+	or self::node<_, r> * r::clls<self, n-1>
 	inv n >= 0;
 */
 /*@

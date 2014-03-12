@@ -8,7 +8,7 @@ relation idexptwopts(int[] a, int[] b, int i, int j) == forall(k : (k = i | k = 
 
 relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
 
-void insertelm(ref int[] a, int n)
+void insertelm(int[]@R a, int n)
 	requires [t] dom(a,0,t) & 0 <= n & n <= t & sorted(a,0,n-1)
 	case {
 		n <= 0 -> ensures a'=a & dom(a',0,t);
@@ -26,7 +26,7 @@ void insertelm(ref int[] a, int n)
 }
 
 /* Sort a[0..n] using Insertion sort algorithm */
-void insertion_sort(ref int[] a, int n)
+void insertion_sort(int[]@R a, int n)
 	requires [t] dom(a,0,t) & n<=t
 	ensures dom(a',0,t) & sorted(a',0,n);
 {

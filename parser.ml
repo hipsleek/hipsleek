@@ -677,7 +677,8 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
+             |[_;OSQUARE,_] -> (* An Hoa*) (* let _ = print_endline "Array found!" in *) ()
+             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let _ = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
 let peek_pointer_type = 
@@ -1102,7 +1103,7 @@ opt_branches:[[t=OPT branches -> un_option t (P.mkTrue no_pos)]];
 
 branches : [[`AND; `OSQUARE; b= LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> P.mkAndList_opt b ]];
 
-one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]];
+(* one_branch_single : [[ `STRING (_,id); `COLON; pc=pure_constr -> (LO.singleton id,pc)]]; *)
 
 one_string: [[`STRING (_,id)-> id]];
 
@@ -1148,6 +1149,7 @@ view_header:
           view_is_prim = false;
           view_kind = View_NORM;
           view_prop_extns = [];
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -1181,6 +1183,7 @@ view_header_ext:
           view_is_prim = false;
           view_kind = View_EXTN;
           view_prop_extns = sl;
+          view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
 		  view_materialized_vars = get_mater_vars l;
@@ -1367,7 +1370,7 @@ opt_label: [[t= OPT label->un_option t ""]];
 
 label : [[  `STRING (_,id);  `COLON -> id ]];
 
-label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]];
+(* label_w_ann : [[  `STRING (_,id); ann_lbl = OPT ann_label; `COLON -> (id, un_option ann_lbl (Lbl.LA_Both)) ]]; *)
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -1449,6 +1452,7 @@ simple_heap_constr_imm:
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let (c, hid, deref) = get_heap_id_info c hid in
        match hl with
+       | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> 
            let t11, t12 = List.split t in
            let t21, t22 = List.split t12 in
@@ -1461,8 +1465,11 @@ simple_heap_constr_imm:
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-  [[ 
-     peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
+  [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; simple2; frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+     (*For threads as resource*)
+     let (c, hid, deref) = get_heap_id_info c hid in
+     F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
@@ -1480,6 +1487,7 @@ simple_heap_constr:
         let imm_opt = get_heap_ann annl in
         let (c, hid, deref) = get_heap_id_info c hid in
         match hl with
+        | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
         | ([], t) -> 
             let t11, t12 = List.split t in  
             let t21, t22 = List.split t12 in 
@@ -1492,6 +1500,7 @@ simple_heap_constr:
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        match hal with
+       | ([],[]) -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> F.mkHeapNode2 c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
@@ -1514,6 +1523,7 @@ simple_heap_constr:
      )
    | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        match hal with
+       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
@@ -1561,7 +1571,11 @@ general_h_args:
 data_h_args:
   [[ t= opt_heap_data_arg_list2 -> ([],t)
   | t= opt_heap_data_arg_list -> (t,[])]]; 
-              
+
+opt_delayed_constr:[[t = OPT delayed_constr -> un_option t (P.mkTrue no_pos) ]];
+
+delayed_constr:[[t = pure_constr; `CONSTR -> t ]];
+
 opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
@@ -2070,10 +2084,10 @@ coercion_decl:
         (* coercion_head = dc1; *)
         (* coercion_body = dc2; *)
         (* must remove stub flow from formula - replace with top_flow *)
-        coercion_head = (F.subst_stub_flow top_flow dc1);
-        coercion_body = (F.subst_stub_flow top_flow dc2);
-        (* coercion_head = (F.subst_stub_flow n_flow dc1); *)
-        (* coercion_body = (F.subst_stub_flow n_flow dc2); *)
+        (* coercion_head = (F.subst_stub_flow top_flow dc1); *)
+        (* coercion_body = (F.subst_stub_flow top_flow dc2); *)
+        coercion_head = (F.subst_stub_flow n_flow dc1);
+        coercion_body = (F.subst_stub_flow n_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 });
@@ -2093,13 +2107,13 @@ infer_coercion_decl:
         `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
     ]];
 
-infer_coercion_decl_list:
-    [[
-        coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> {
-            coercion_list_elems = coerc;
-            coercion_list_kind  = LEM;
-        }
-    ]];
+(* infer_coercion_decl_list: *)
+(*     [[ *)
+(*         coerc = LIST1 infer_coercion_decl SEP `SEMICOLON -> { *)
+(*             coercion_list_elems = coerc; *)
+(*             coercion_list_kind  = LEM; *)
+(*         } *)
+(*     ]]; *)
 
 coerc_decl_aux:
     [[
@@ -2134,7 +2148,7 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let _ = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
@@ -2871,7 +2885,8 @@ while_statement:
         While { exp_while_condition = bc;
             exp_while_body = es;
             exp_while_addr_vars = [];
-            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
+            (* exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1); *)
+            exp_while_specs = (Iformula.EList []); (*set to generate. if do not want to infer requires true ensures false;*)
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
             exp_while_f_name = "";
