@@ -13,8 +13,13 @@ HeapPred H(node a).
      ensures G(x,res);//'
 {
   if (x == null) return null;
-  else if (x.next == null) return x;
-  else return get_last(x.next);
+  else {
+    while (x.next != null) {
+      x = x.next;
+    }
+    return x;/* if (x.next == null) return x; */
+    /* else return get_last(x.next); */
+  }
 }
 
 /*

@@ -1,3 +1,7 @@
+let partition_constrs_4_paths link_hpargs_w_path constrs0 =
+  let a = Sacore.partition_constrs_4_paths link_hpargs_w_path constrs0 in
+  a
+
 let subst_formula formula hprel_def =
   let helper formula h_formula hprel_def =
     if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
@@ -184,39 +188,39 @@ let check_cases cases specs = (* true *)
       (new_cases, new_specs)
   )
 
-let subst_hprel_defs hprel_defs =
-  let (main, opt) = List.fold_left (fun (main, opt) hprel_def ->
-      let name = Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel in
-      let reg = Str.regexp "_.*" in
-      let pos = try Str.search_forward reg name 0 with
-        | Not_found -> -1
-      in
-      if (pos == -1)
-      then (hprel_def::main, opt)
-      else (main, hprel_def::opt)
-  ) ([], []) hprel_defs in
-  List.map (fun hprel_def ->
-      let new_body = List.map (fun (cp, fo) ->
-          match fo with
-            | None -> (cp, fo)
-            | Some f -> (
-                  match f with
-                    | Cformula.Base fb -> (
-                          match fb.Cformula.formula_base_heap with
-                            | Cformula.HRel hr as hf -> (
-                                  let name = Cformula.get_node_name hf in
-                                  let subst_formula = List.find (fun formula -> name == Cformula.get_node_name formula.Cformula.hprel_def_hrel) opt in
-                                  match List.hd subst_formula.Cformula.hprel_def_body with
-                                    | (_, Some f) -> (cp, Some f)
-                                    | (_, None) -> raise (Failure "subst hprel")
-                              )
-                            | _ -> (cp,fo)
-                      )
-                    | _ -> (cp,fo)
-              )
-      ) hprel_def.Cformula.hprel_def_body in
-      { hprel_def with
-          Cformula.hprel_def_body = new_body }) main
+(* let subst_hprel_defs hprel_defs = *)
+(*   let (main, opt) = List.fold_left (fun (main, opt) hprel_def -> *)
+(*       let name = Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel in *)
+(*       let reg = Str.regexp "_.*" in *)
+(*       let pos = try Str.search_forward reg name 0 with *)
+(*         | Not_found -> -1 *)
+(*       in *)
+(*       if (pos == -1) *)
+(*       then (hprel_def::main, opt) *)
+(*       else (main, hprel_def::opt) *)
+(*   ) ([], []) hprel_defs in *)
+(*   List.map (fun hprel_def -> *)
+(*       let new_body = List.map (fun (cp, fo) -> *)
+(*           match fo with *)
+(*             | None -> (cp, fo) *)
+(*             | Some f -> ( *)
+(*                   match f with *)
+(*                     | Cformula.Base fb -> ( *)
+(*                           match fb.Cformula.formula_base_heap with *)
+(*                             | Cformula.HRel hr as hf -> ( *)
+(*                                   let name = Cformula.get_node_name hf in *)
+(*                                   let subst_formula = List.find (fun formula -> name == Cformula.get_node_name formula.Cformula.hprel_def_hrel) opt in *)
+(*                                   match List.hd subst_formula.Cformula.hprel_def_body with *)
+(*                                     | (_, Some f) -> (cp, Some f) *)
+(*                                     | (_, None) -> raise (Failure "subst hprel") *)
+(*                               ) *)
+(*                             | _ -> (cp,fo) *)
+(*                       ) *)
+(*                     | _ -> (cp,fo) *)
+(*               ) *)
+(*       ) hprel_def.Cformula.hprel_def_body in *)
+(*       { hprel_def with *)
+(*           Cformula.hprel_def_body = new_body }) main *)
 
 let create_specs hprel_defs prog proc_name =
   let _ = print_endline "\n*************************************" in
@@ -236,11 +240,11 @@ let create_specs hprel_defs prog proc_name =
   (*     let partition_hprel_defs = partition_paths hprel_defs prog in *)
   (*     group_paths partition_hprel_defs *)
   (* in *)
-  let substed_grouped_hprel_defs = List.map (fun hprel_defs -> subst_hprel_defs hprel_defs) grouped_hprel_defs in
+  (* let substed_grouped_hprel_defs = List.map (fun hprel_defs -> subst_hprel_defs hprel_defs) grouped_hprel_defs in *)
   (* let _ = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) substed_grouped_hprel_defs in *)
   let proc_static_specs = proc.Cast.proc_static_specs in
   let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs (* substed_grouped_hprel_defs *) in
-  let args = Cformula.h_fv (List.hd (List.hd substed_grouped_hprel_defs)).Cformula.hprel_def_hrel in
+  let args = Cformula.h_fv (List.hd (List.hd grouped_hprel_defs (* substed_grouped_hprel_defs *))).Cformula.hprel_def_hrel in
   let cases = List.map (fun struc_formula -> get_case struc_formula prog args hprel_defs) specs in
   (* let final_spec = *)
   (* if (check_cases cases specs) *)
