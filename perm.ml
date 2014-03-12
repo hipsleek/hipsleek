@@ -220,7 +220,7 @@ struct
                 let ec_var,ec_ls = float_one ec in
                 let et_var,et_ls = float_one et in
                 let ea_var,ea_ls = float_one ea in
-                let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
+                (* let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in *)
                 let new_perm = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
                 (Some new_perm,ec_ls@et_ls@ea_ls)
                 (* let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)
@@ -434,13 +434,12 @@ struct
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
   (*create fractional permission invariant 0<f<=1*)
-  (*2014-03-12: allow 0<=f<=1*)
   let mkPermInv (e:Cpure.exp) : Cpure.formula =
     (match e with
       | Cpure.Var _ ->
           let upper = 
             Cpure.BForm (((Cpure.Lte (e,(Cpure.FConst (1.0,no_pos)),no_pos)), None),None) in
-          let lower =  Cpure.BForm (((Cpure.Gte (e,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
+          let lower =  Cpure.BForm (((Cpure.Gt (e,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
           let inv = 
             (Cpure.And (lower,upper,no_pos)) in
           inv
