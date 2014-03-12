@@ -23,7 +23,12 @@ checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v
 
 checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v
    |- x::ll2<i,j,bxx>.
-//print residue.
+print residue.
+
+checkentail x::node<v,q>*q::ll2<i+1,j,aa> & aa[i] = v
+   |- x::ll2<i,j,bxx>.
+print residue.
+
 
 /*
 WHY rhs still contains an "aa"? Is there a
