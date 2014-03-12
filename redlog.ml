@@ -1217,7 +1217,7 @@ let imply_ops_b pr_w pr_s ante conseq imp_no =
 
 (*Before deligating to Redlog, try to prove using Omega*)
 let imply_ops_a pr_w pr_s ante conseq imp_no =
-  if not (CP.is_float_formula conseq) && (is_linear_formula conseq && is_linear_formula ante) then
+  if not (CP.is_float_formula conseq) then
     if not (CP.is_float_formula ante) then
       Omega.imply_ops pr_w pr_s ante conseq imp_no false
     else
@@ -1230,7 +1230,10 @@ let imply_ops_a pr_w pr_s ante conseq imp_no =
       let ls = CP.split_conjunctions ante in
       let _,f1 = List.partition (fun f -> CP.is_float_formula f) ls in
       let f1 = CP.join_conjunctions f1 in
-      let res = Omega.imply_ops pr_w pr_s f1 conseq imp_no false in
+      let res = if (is_linear_formula conseq && is_linear_formula f1) then
+            Omega.imply_ops pr_w pr_s f1 conseq imp_no false
+          else false
+      in
       if res then res
       else
         imply_ops_b pr_w pr_s ante conseq imp_no

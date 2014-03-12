@@ -14,6 +14,8 @@ echo "======= no-deadlock-nonlexical2.ss ======"
 diff test-cases/no-deadlock-nonlexical2.res test-cases/no-deadlock-nonlexical2.n
 echo "======= point.ss  ======"
 diff test-cases/point.res test-cases/point.n
+echo "======= frac-cell-list.ss  ======"
+diff test-cases/frac-cell-list.res test-cases/frac-cell-list.n
 #================parahip-rsr/PARAHIP==========================
 #================parahip-rsr/PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"

@@ -17,6 +17,10 @@ echo "======= no-deadlock-nonlexical2.ss ======"
 
 echo "======= point.ss  ======"
 ../../../hip --en-para --en-thrd-resource --dis-locklevel -tp parahip point.ss | grep -E 'Proc|assert:' >  test-cases/point.n
+
+echo "======= frac-cell-list.ss  ======"
+../../../hip --en-para -tp redlog frac-cell-list.ss | grep -E 'Proc|assert:' >  test-cases/frac-cell-list.n
+
 #================PARAHIP==========================
 #================PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"
