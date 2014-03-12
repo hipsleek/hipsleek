@@ -8,46 +8,9 @@ pred ll2<i,j,aaa> == self = null & i=j
   or self::node<v, r> * r::ll2<i+1,j,aaa> & aaa[i]=v 
   inv i<=j.
 
-/*
-checkentail x::node<v,q>*q::ll2<i+1,j,a> & a[i]=v
-   |- x::ll2<i,j,b>.
-print residue.
-*/
-//unsound due to unfolding problem.
-
-
-/*
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v
-   |- x::node<vv,q1>*q1::ll2<i+1,j,bxx> & bxx[i]=vv.
-*/
-
-//(1)
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v & aa=bxx
-   |- x::ll2<i,j,bxx>.
-print residue.
-
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & aa[i] = v
-   |- x::ll2<i,j,bxx>.
-print residue.
-
-
 //(2)
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v 
-   |- x::ll2<i,j,bxx> & .
-
 checkentail x::node<v,q>*q::ll2<i+1,j,aa> & aa[i]=v 
    |- x::ll2<i,j,bxx>.
-print residue.
-
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v 
-   & forall(k:!(i+1<=k<=j) | aa[k]=bxx[k])
-   |- x::ll2<i,j,bxx>.
-// incompleteness problem
-
-checkentail x::node<v,q>*q::ll2<i+1,j,aa> & bxx[i]=v 
-   & forall(k:aa[k]=bxx[k])
-   |- x::ll2<i,j,bxx>.
-
 print residue.
 
 
