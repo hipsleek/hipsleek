@@ -24,7 +24,7 @@ ll2<i,j,a> == self = null & i=j
 /* append two singly linked lists */
 void append(node x, node y)
   requires x::ll2<i,j,a> * y::ll2<j,k,a> & i<j //& x!=null
-  ensures x::ll2<i,k+1,a>;
+  ensures x::ll2<i,k,a>;
 {
 	if (x.next == null) {
 		x.next = y;
