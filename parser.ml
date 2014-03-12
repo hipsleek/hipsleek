@@ -357,6 +357,7 @@ let cexp_to_pure2 fct f01 f02 =
           | _ -> (
               let typ1 = P.typ_of_exp f1 in 
               let typ2 = P.typ_of_exp f2 in
+              (*Why checking types in parser???*)
               let arr_typ_check typ1 typ2 = (
                 match typ1 with
                 | Array (t1,_) ->
@@ -369,7 +370,7 @@ let cexp_to_pure2 fct f01 f02 =
                 | _ -> (
                     match typ2 with
                     | Array (t,_) -> if t== UNK then true else false
-                    | _ -> false
+                    | _ -> true (*TOCHECK: neither typ1 nor typ2 is array-type -> should return true. Typechecking should be done later, not at parser*)
                   )
               ) in
               if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 

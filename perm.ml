@@ -434,12 +434,13 @@ struct
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
   (*create fractional permission invariant 0<f<=1*)
+  (*2014-03-12: allow 0<=f<=1*)
   let mkPermInv (e:Cpure.exp) : Cpure.formula =
     (match e with
       | Cpure.Var _ ->
           let upper = 
             Cpure.BForm (((Cpure.Lte (e,(Cpure.FConst (1.0,no_pos)),no_pos)), None),None) in
-          let lower =  Cpure.BForm (((Cpure.Gt (e,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
+          let lower =  Cpure.BForm (((Cpure.Gte (e,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
           let inv = 
             (Cpure.And (lower,upper,no_pos)) in
           inv
