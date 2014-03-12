@@ -6,6 +6,9 @@ data node {
 HeapPred H(node a).
   HeapPred G(node a, node b).
 
+  HeapPred H1(node a).
+  HeapPred G1(node a, node b).
+
 /* return the last element */
   node get_last(node x)
   infer[H,G]
@@ -13,13 +16,18 @@ HeapPred H(node a).
      ensures G(x,res);//'
 {
   if (x == null) return null;
-  else {
-    while (x.next != null) {
-      x = x.next;
-    }
-    return x;/* if (x.next == null) return x; */
-    /* else return get_last(x.next); */
-  }
+  /* else { */
+  /*   while (x.next != null) */
+  /*     infer[H1,G1] */
+  /*       requires H1(x) */
+  /*       ensures G1(x,x');//' */
+  /*     { */
+  /*       x = x.next; */
+  /*     } */
+  /*   return x; */
+  /* } */
+  else if (x.next == null) return x;
+  else return get_last(x.next);
 }
 
 /*
