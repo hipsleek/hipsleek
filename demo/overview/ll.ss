@@ -1,5 +1,3 @@
-/* sorted lists */
-
 /* representation of a node */
 data node {
 	int val; 
