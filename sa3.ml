@@ -2755,6 +2755,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
       | _ -> hp_def
   in
   let process_one_path (cond_path, link_hpargs, constrs1)=
+    let _ = print_endline "process one path" in
     (* let _ = DD.info_hprint (add_str "all_post_hps" !CP.print_svl) all_post_hps no_pos in *)
     (* let _ = DD.info_hprint (add_str "sel_hps" !CP.print_svl) sel_hps no_pos in *)
     let is0 = infer_init iprog prog proc_name cond_path constrs1
@@ -2808,7 +2809,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
     [(cond_path, link_hpargs1,  constrs0)]
   in
   (*synthesize for each path*)
-  (* let _ = print_endline ("ls_cond_danghps_constrs: " ^ (string_of_int (List.length ls_cond_danghps_constrs))) in *)
+  let _ = print_endline ("ls_cond_danghps_constrs: " ^ (string_of_int (List.length ls_cond_danghps_constrs))) in
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
   ls_res
 

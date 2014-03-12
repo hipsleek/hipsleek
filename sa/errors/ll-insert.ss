@@ -13,16 +13,24 @@ HeapPred H(node a, int b).
 {
   if (x == null)
     return new node(a, null);
-  else if (x.next == null)
-    {
-      x.next = new node(a, null);
-      return x;
+  else {
+    node tmp = x;
+    while (x.next != null) {
+      tmp = tmp.next;
     }
-  else
-    {
-      x.next = insert(x.next, a);
-      return x;
-    }
+    tmp.next = new node(a, null);
+    return x;
+  }
+  /* else if (x.next == null) */
+  /*   { */
+  /*     x.next = new node(a, null); */
+  /*     return x; */
+  /*   } */
+  /* else */
+  /*   { */
+  /*     x.next = insert(x.next, a); */
+  /*     return x; */
+  /*   } */
 }
 
 /*
