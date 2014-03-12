@@ -2809,7 +2809,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
     [(cond_path, link_hpargs1,  constrs0)]
   in
   (*synthesize for each path*)
-  let _ = print_endline ("ls_cond_danghps_constrs: " ^ (string_of_int (List.length ls_cond_danghps_constrs))) in
+  (* let _ = print_endline ("ls_cond_danghps_constrs: " ^ (string_of_int (List.length ls_cond_danghps_constrs))) in *)
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
   ls_res
 
