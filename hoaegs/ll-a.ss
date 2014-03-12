@@ -23,8 +23,8 @@ relation zeros(int[] a, int i, int j) == (i > j
 /* append two singly linked lists */
 void append(node x, node y)
 
-  requires x::ll2<i,j> * y::ll2<j,k> & x!=null
-  ensures x::ll2<i,k>;
+  requires x::ll<m> * y::ll<n> & x!=null
+  ensures x::ll<m+n+1>;
 
 {
 	if (x.next == null) {

@@ -28,6 +28,25 @@ print residue.
 checkentail x::node<v,q>*q::ll2<i+1,j,a> |- x::ll2<i,j,b>.
 print residue.
 
-checkentail x::node<v,q>*q::ll2<i+1,j,a> & b[i]=v
-  & forall(k:k=i | k!=i & b[k]=a[k]) |- x::ll2<i,j,b>.
+checkentail x::node<v,q>*q::ll2<i+1,j,a> & a[i]=v 
+  |- x::ll2<i,j,a>.
 print residue.
+
+checkentail x::node<v,q>*q::ll2<i+1,j,a> & b[i]=v
+  & forall(k:k=i | k!=i & b[k]=a[k]) |- x::ll2<i,j,c>.
+print residue.
+
+
+/*
+checkentail x=5 |- x>0.
+
+checkentail x=5 |- x>6.
+
+checkentail 
+  x::node<_,q>*q::node<_,null> 
+  |- x::ll<m>.
+print residue.
+
+checkentail  k=a* a |- k>=0.
+*/
+
