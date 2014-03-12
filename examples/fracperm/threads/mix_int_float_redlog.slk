@@ -1,0 +1,18 @@
+/*
+  Flag: -tp redlog
+
+  Allow certain part of the formula to be checked
+  by Omega before deligating it to Redlog
+  e.g. as N, M are ints, to prove:
+    (n:int/M:int)<=1.0 & (n/M)>=0.0 & n<1 & n<=M & 0<=n & M>0 |-  n=0.
+    Then, use Omega to prove n<1 & n<=M & 0<=n & M>0 |- n=0.
+*/
+
+//VALID
+checkentail (n:int/M:int)<=1.0 & (n/M)>=0.0 & n<1 & n<=M & 0<=n & M>0 |-  n=0.
+
+//VALID
+checkentail n<1 & n<=M & 0<=n & M>0 |- n=0.
+
+//VALID
+checkentail (n/M)<=1.0 & (n/M)>=0.0 & n=0 & M>0 |-  n=0.

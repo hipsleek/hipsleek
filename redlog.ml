@@ -1187,7 +1187,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
       (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
 
-let imply_ops pr_w pr_s ante conseq imp_no =
+let imply_ops_b pr_w pr_s ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
@@ -1215,10 +1215,32 @@ let imply_ops pr_w pr_s ante conseq imp_no =
   log DEBUG (if res then "VALID" else "INVALID");
   res
 
+(*Before deligating to Redlog, try to prove using Omega*)
+let imply_ops_a pr_w pr_s ante conseq imp_no =
+  if not (CP.is_float_formula conseq) then
+    if not (CP.is_float_formula ante) then
+      Omega.imply_ops pr_w pr_s ante conseq imp_no true
+    else
+      (*As the conseq is not a float formula, might want to use Omega*)
+      (*
+        f1 |- conseq
+        -------------
+        f1 & f2 |- conseq
+      *)
+      let ls = CP.split_conjunctions ante in
+      let _,f1 = List.partition (fun f -> CP.is_float_formula f) ls in
+      let f1 = CP.join_conjunctions f1 in
+      let res = Omega.imply_ops pr_w pr_s f1 conseq imp_no true in
+      if res then res
+      else
+        imply_ops_b pr_w pr_s ante conseq imp_no
+  else
+    imply_ops_b pr_w pr_s ante conseq imp_no
+
 let imply_ops pr_w pr_s ante conseq imp_no =
   let pr = !CP.print_formula in
   Debug.no_2 "[redlog.ml]imply_ops" pr pr string_of_bool
-  (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
+  (fun _ _ -> imply_ops_a pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in

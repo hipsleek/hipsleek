@@ -5580,8 +5580,10 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (i:int) (pf : formula) :  formula =   
-  Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
+  Debug.no_1 ("arith_simplify_LHS") !print_formula !print_formula 
       arith_simplify_x pf
+  (* Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula  *)
+  (*     arith_simplify_x pf *)
 
 
 and arith_simplify_x (pf : formula) :  formula =
