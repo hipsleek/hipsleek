@@ -857,7 +857,7 @@ run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
   (* disabled by default as it is unstable and
      other features, such as shape analysis are affected by it *)
-let allow_ramify = ref true
+let allow_ramify = ref false
 let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
 
