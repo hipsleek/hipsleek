@@ -957,10 +957,33 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let mf,svl,_ =  xpure_symbolic 5 prog rsr in
           (mf,svl)
     | DataNode ({ h_formula_data_node = p;
+      h_formula_data_arguments = args;
       h_formula_data_perm = perm;
       h_formula_data_label = lbl;
       h_formula_data_pos = pos}) ->
           let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
+          let rdels = prog.C.prog_rel_decls in
+          let update_rel = List.filter (fun r -> if r.rel_name = "update" then true else false) rdels in
+          let rec last = function
+            | [] -> failwith "No Last Element in list"
+            | [x] -> x
+            | _ :: t -> last t in
+          let non_zero = if (List.length update_rel = 1)
+            then let rel = List.hd update_rel in
+                 let rel_vars = rel.rel_vars in
+                 let r_sv = (List.hd rel_vars) in
+                 let r_sv2 = CP.fresh_spec_var (last rel_vars) in
+                 let pfrsv = CP.mkEqVar r_sv r_sv2 no_pos in
+                 let non_zero = CP.mkAnd non_zero pfrsv no_pos in
+                 let sbargs = [r_sv]@p::args@[r_sv2] in
+                 (*let () = print_endline ("RelVargs : "^string_of_spec_var_list rel_vars)in
+                 let () = print_endline ("SBArgs : " ^string_of_spec_var_list sbargs) in*)
+                 let st = List.combine rel_vars sbargs in
+                 let rel_exps = List.map CP.conv_var_to_exp rel_vars in
+                 let rel = CP.mkRel (CP.mkRel_sv rel.rel_name) rel_exps no_pos in
+                 let up_rel = CP.subst st rel in
+                 CP.mkAnd non_zero up_rel no_pos
+            else non_zero in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)
           (match perm with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])

@@ -245,7 +245,10 @@ let common_arguments = [
   "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
-  ("--allow_ramify", Arg.Set Globals.allow_ramify, "Enable Coq based Ramification for Shared Structures");
+  ("--allow_ramify", Arg.Unit (fun _ -> 
+    Globals.allow_ramify := true; 
+    Solver.unfold_duplicated_pointers := false;)
+    , "Enable Coq based Ramification for Shared Structures");
     ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--infer-en-raw",Arg.Set Globals.infer_raw_flag,"Enable simplify_raw during pure inference");
   ("--infer-dis-raw",Arg.Clear Globals.infer_raw_flag,"Disable simplify_raw during pure inference");
