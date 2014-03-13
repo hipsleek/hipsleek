@@ -1833,6 +1833,7 @@ let simplify (f : CP.formula) : CP.formula =
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
       let z3_simplify f =
+        if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
         CP.arith_simplify 13 f
       in
@@ -2139,6 +2140,9 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
+    | PARAHIP -> (*TOCHECK: what is it for? *)
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Redlog.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in

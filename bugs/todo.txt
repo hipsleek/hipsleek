@@ -1119,7 +1119,37 @@ Total number of errors: 5 in files:
   infer/infer5.slk({E3#Fail}) infer/infer12.slk({E14#Fail},{E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E14#Valid},{E16#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
 T
 ===================================================================
+# bugs/bubble-1.ss --esl --en-inf -p bubble
+
+Can we tidy printing for --esl. It could be
+an option that is on by default (e.g. --print-tidy)
+
+ --------------------
+!!!dumping for bubble$node FAIL2
+!!!  
+id: 423; caller: []; line: 51; TIME: 0.83; classic: false; kind: POST; hec_num: 5; evars: [n_2565,k1_2566,sm1_2567]; infer_vars: []; c_heap: emp
+ checkentail r_1706::lls<flted_35_1704,k_1702,sm_1703>@M * xs'::node<v_1705,r_1528>@M * 
+r_1528::node<v_1527,r_1706>@M&0<n_1540 & 0<n_1540 & 0<n_1540 & 0<n_1540 & 
+k1_1566!=n_1540 & n_1540=flted_35_1704+1 & k1_1566<n_1540 & 
+v_1705<=sm1_1567 & k1_1566=k_1702 & sm1_1567=sm_1703 & 0<n_1540 & 0<n_1540 & 
+k!=n & n=flted_35_1526+1 & k<n & v_1527<=sm & k=k_1524 & sm=sm_1525 & 0<n & 
+xs=xs' & k!=n & r_1528!=null & !(v_bool_57_1175') & r_1528!=null & 
+!(v_bool_57_1175') & flted_35_1526=n_1540 & k_1524=k_1541 & 
+sm_1525=sm_1542 & k_1541!=n_1540 & k_1524<=flted_35_1526 & 0<=k_1524 & 
+tmp_2563 & k1_1566=1+k_1541 & sm1_1567<=sm_1542 & k_1541!=n_1540 & 
+k_1541<=n_1540 & 0<=k_1541 & v_1705<v_1527 & !(v_bool_65_1173') & 
+v_1705<v_1527 & !(v_bool_65_1173') & v_1527=val_70_1736 & 
+v_1705=val_71_1748 & flag_2564 & v_boolean_76_1174' & flag_2564 & 
+res=v_boolean_76_1174'&{FLOW,(26,27)=__norm}[]
+ |-  (exists n_2565,k1_2566,sm1_2567: xs::lls<n_2565,k1_2566,sm1_2567>@M&
+{FLOW,(26,27)=__norm})[]. 
+
 ===================================================================
+ ./run-fast-tests.pl sleek_fracperm
+
+Total number of errors: 7 in files:
+  fracperm/norm1.slk({E4#Valid}) fracperm/norm3.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) fracperm/norm4.slk({E2#Valid},{E3#Valid}) fracperm/combine_data.slk({E1#Valid},{E11#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) fracperm/combine_simple.slk({E1#Valid},{E2#Valid},{E4#Valid},{E7#Valid}) fracperm/split-combine.slk({E14#Valid},{E15#Valid}) fracperm/combine2.slk({E1#Valid},{E2#Valid},{E4#Valid}).
+
 ===================================================================
 ===================================================================
 ===================================================================

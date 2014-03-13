@@ -22,7 +22,7 @@ relation idbtwn(int[] a, int ia, int ja, int[] b, int ib, int jb) ==
  */
 void merge_sorted_arrays(int[] a, int ia, int n,
                               int[] b, int ib, int m,
-                              ref int[] c)
+                              int[]@R c)
 	requires [la,ha,lb,hb,lc,hc,u] 
 	         dom(a,la,ha) & la <= ia & ia+n-1 <= ha & n >= 0 & 
 	         dom(b,lb,hb) & lb <= ib & ib+m-1 <= hb & m >= 0 &
@@ -66,7 +66,7 @@ void merge_sorted_arrays(int[] a, int ia, int n,
  Copy array a[s..e] to b[i..i+e-s].
  NOTE: the algorithm is NOT guaranteed when a and b overlap.
  */
-void copy_array(int[] a, int s, int e, ref int[] b, int i)
+void copy_array(int[] a, int s, int e, int[]@R b, int i)
 	requires [la,ha,lb,hb] dom(a,la,ha) & la <= s & e <= ha & 
 	                       dom(b,lb,hb) & lb <= i & i + e - s <= hb
 	ensures idbtwn(a,s,e,b',i,i+e-s) & amodr(b',b,i,i+e-s);
@@ -81,7 +81,7 @@ void copy_array(int[] a, int s, int e, ref int[] b, int i)
 /**
  Sort the array a[i..j] using merge sort algorithm.
  */
-void merge_sort(ref int[] a, int i, int j)
+void merge_sort(int[]@R a, int i, int j)
 	requires [la,ha] dom(a,la,ha) & la <= i & j <= ha
 	ensures dom(a',la,ha) & sorted(a',i,j) & amodr(a,a',i,j);
 {

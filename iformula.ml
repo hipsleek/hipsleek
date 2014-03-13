@@ -84,6 +84,10 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
                        formula_exists_and : one_formula list;
                        formula_exists_pos : loc }
 
+(*Note that one_formula and h_formula_thread
+  are different ways of representing threads.
+  Using one_formula, thread is a separate AND-conjunction,
+  while using h_formula_thread, thread is a resource *)
 and one_formula = {
     formula_heap : h_formula;
     formula_pure : P.formula;
@@ -112,6 +116,10 @@ and h_formula = (* heap formula *)
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
 	  (*  | ArrayNode of ((ident * primed) * ident * P.exp list * loc) *)
 	  (* pointer * base type * list of dimensions *)
+
+  (*Added in 2014-02-18: Thread node carrying a resource
+    e.g. t::thread(0.5)<x::node<>> *)
+  | ThreadNode of h_formula_thread
   | HRel of (ident * (P.exp list) * loc)
   | HTrue 
   | HFalse
@@ -154,6 +162,15 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_pseudo_data : bool;
                        h_formula_heap_label : formula_label option;
                        h_formula_heap_pos : loc }
+
+and h_formula_thread = { h_formula_thread_node : (ident * primed);
+                       h_formula_thread_name : ident;
+                       h_formula_thread_delayed : P.formula; (* for delayed lockset checking *)
+                       h_formula_thread_resource : formula;
+                       h_formula_thread_perm : iperm; (*LDK: optional fractional permission*)
+                       h_formula_thread_label : formula_label option;
+                       h_formula_thread_pos : loc }
+
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_name : ident;
@@ -466,6 +483,15 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
+and mkThreadNode c id rsr dl perm ofl l =
+  ThreadNode { h_formula_thread_node = c;
+             h_formula_thread_name = id;
+             h_formula_thread_resource = rsr;
+             h_formula_thread_perm = perm;
+             h_formula_thread_delayed = dl;
+             h_formula_thread_label = ofl;
+             h_formula_thread_pos = l }
+
 and mkHeapNode_x c id deref dr i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
@@ -533,34 +559,32 @@ and formula_same_flow f1 f2 =
 (**
  * An Hoa : function to extract the root of a quantified id.
  **)
-let extract_var_from_id (id,p) =
+and extract_var_from_id (id,p) =
 	let ids = Str.split (Str.regexp "\\.") id in
 	let var = List.hd ids in
 		(var,p)
-;;
-
-let rec ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.ann list = 
+and ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.ann list = 
   match ann_opt_lst with
     | [] -> []
     | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann_lst t default_ann)
     | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
-let fv_imm ann = match ann with
+and fv_imm ann = match ann with
   | P.ConstAnn _ -> []
   | P.PolyAnn (id,_) -> [id]
 
-let fv_imm_opt ann = 
+and fv_imm_opt ann = 
   match ann with
     | Some ann -> fv_imm ann
     | None     -> [] 
 
-let fv_imm_list ann_lst = 
+and fv_imm_list ann_lst = 
   List.fold_left (fun acc a -> acc @ (fv_imm a)) [] ann_lst
 
-let fv_imm_opt_list ann_lst = 
+and fv_imm_opt_list ann_lst = 
   List.fold_left (fun acc a -> acc @ (fv_imm_opt a)) [] ann_lst
 
-let h_fv_ann (f:h_formula):(ident*primed) list = 
+and h_fv_ann (f:h_formula):(ident*primed) list = 
   let rec helper f = 
     match f with   
       | Conj ({h_formula_conj_h1 = h1; 
@@ -588,15 +612,16 @@ let h_fv_ann (f:h_formula):(ident*primed) list =
             let imm_vars = fv_imm imm in
             let imm_param_vars = fv_imm_opt_list imm_param in
             Gen.BList.remove_dups_eq (=) imm_vars@imm_param_vars
+      | ThreadNode _
       | HRel _
       | HTrue 
       | HFalse 
       | HEmp -> [] 
   in helper f
 
-let heap_fv_ann_one_formula (f:one_formula):(ident*primed) list =  (h_fv_ann f.formula_heap)
+and heap_fv_ann_one_formula (f:one_formula):(ident*primed) list =  (h_fv_ann f.formula_heap)
 
-let fv_ann_formula_x (f:formula):(ident*primed) list = 
+and fv_ann_formula_x (f:formula):(ident*primed) list = 
   let rec helper f = 
     match f with
       | Base b-> 
@@ -610,16 +635,15 @@ let fv_ann_formula_x (f:formula):(ident*primed) list =
       | Or b-> Gen.BList.remove_dups_eq (=) ((helper b.formula_or_f1)@(helper b.formula_or_f2))
   in helper f 
 
-let fv_ann_formula (f:formula):(ident*primed) list = 
+and fv_ann_formula (f:formula):(ident*primed) list = 
   let pr = !print_formula in
   let pr_out = pr_list (pr_id fst) in
   Debug.no_1 "fv_ann_formula" pr pr_out fv_ann_formula_x f
 
-let collect_annot_vars f  = fv_ann_formula f
-;;
+and collect_annot_vars f  = fv_ann_formula f
 
 
-let rec h_fv (f:h_formula):(ident*primed) list = match f with   
+and h_fv (f:h_formula):(ident*primed) list = match f with   
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
 	   h_formula_conj_pos = pos})
@@ -659,15 +683,22 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
      let perm_vars =  (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+ | ThreadNode {h_formula_thread_node = name ;
+              h_formula_thread_perm = perm;
+              h_formula_thread_delayed = dl;
+              h_formula_thread_resource = rsr} ->
+     let perm_vars = (fv_iperm ()) perm in
+     let rsr_vars = heap_fv rsr in (*TOCHECK: currently recursively look into resource*)
+     (*This is h_fv, hence, dl is not included*)
+     Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
   | HRel (_, args, _)->
       let args_fv = List.concat (List.map Ipure.afv args) in
 	  Gen.BList.remove_dups_eq (=) args_fv
   | HTrue -> []
   | HFalse -> [] 
   | HEmp -> [] 
-;;
 
-let get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
+and get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   let rec helper f =match f with
     | Conj ({h_formula_conj_h1 = h1; 
       h_formula_conj_h2 = h2; 
@@ -692,17 +723,17 @@ let get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
           Gen.BList.remove_dups_eq (=) args_fv
     | HeapNode _
     | HeapNode2 _
+    | ThreadNode _
     | HTrue
     | HFalse
     | HEmp -> []
   in
   helper f0
-;;
 
-let heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap);;
+and heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap)
 
 (*TO CHECK: how about formula_and*)
-let rec heap_fv (f:formula):(ident*primed) list = match f with
+and heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> 
         let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
         let hvars = (h_fv b.formula_base_heap) in
@@ -713,9 +744,8 @@ let rec heap_fv (f:formula):(ident*primed) list = match f with
         Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars)
              b.formula_exists_qvars 
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
-	;;
 
-let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
+and struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 	| EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
 	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
@@ -723,7 +753,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
     | EInfer b -> struc_hp_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
 
-let rec struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
+and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 	| EBase b-> Gen.BList.difference_eq (=)(Gen.fold_opt struc_case_fv b.formula_struc_continuation)
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
 	| ECase b-> List.fold_left (fun a (c1,c2)-> (P.fv c1)@(struc_case_fv c2)@a)
@@ -824,10 +854,9 @@ and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
 	  let new_f2 = push_exists qvars f2 in
 	  let resform = mkOr new_f1 new_f2 pos in
 		resform
-  | _ -> add_quantifiers qvars f ;;
+  | _ -> add_quantifiers qvars f
 
-
-let formula_to_struc_formula (f:formula):struc_formula =
+and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with
 		| Base b-> EBase {
 			 		formula_struc_explicit_inst =[];
@@ -844,11 +873,11 @@ let formula_to_struc_formula (f:formula):struc_formula =
 					formula_struc_continuation = None;
 		 			formula_struc_pos = b.formula_exists_pos}
 		| Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
-	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
+	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f
   
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-let split_components (f : formula) =  match f with
+and split_components (f : formula) =  match f with
     | Base ({formula_base_heap = h; 
 	  formula_base_pure = p; 
           formula_base_and = a;
@@ -859,7 +888,7 @@ let split_components (f : formula) =  match f with
       formula_exists_flow = fl }) -> (h, p, fl, a)
     | _ -> failwith ("split_components: don't expect OR")
 
-let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
+and split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
 			 formula_exists_heap =  h; 
 			 formula_exists_pure = p; 
@@ -872,7 +901,7 @@ let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
 
 (*var substitution*)
 
-let rec subst sst (f : formula) = match sst with
+and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
   | [] -> f 
 
@@ -1115,6 +1144,7 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
                   (node,[])
             | _ ->
                 (node,[]))
+    | ThreadNode _ (*TOCHECK: _delayed*)
     | HeapNode2 _
     | Phase _
     | HRel _ (*TO CHECK*)
@@ -1227,6 +1257,19 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                   h_formula_heap2_pseudo_data = ps_data;
                   h_formula_heap2_label = l;
                   h_formula_heap2_pos = pos})
+  | ThreadNode ({ h_formula_thread_node = x;
+                  h_formula_thread_name = c;
+                  h_formula_thread_resource = rsr;
+                  h_formula_thread_delayed = dl;
+                  h_formula_thread_perm = perm;} as t) ->
+      let rsr1 = apply_one s rsr in
+      let dl1 = Ipure.apply_one s dl in
+      let perm1 = ( match perm with
+        | Some f -> Some (apply_one_iperm () s f)
+        | None -> None)
+      in ThreadNode {t with h_formula_thread_resource = rsr1;
+                            h_formula_thread_delayed = dl1;
+                            h_formula_thread_perm = perm1;}
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -1443,6 +1486,19 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                     h_formula_heap2_pseudo_data =ps_data;
                     h_formula_heap2_label = l;
                     h_formula_heap2_pos = pos})
+  | ThreadNode ({ h_formula_thread_node = x;
+                  h_formula_thread_name = c;
+                  h_formula_thread_resource = rsr;
+                  h_formula_thread_delayed = dl;
+                  h_formula_thread_perm = perm;} as t) ->
+      let rsr1 = apply_one_w_data_name s rsr in
+      let dl1 =  Ipure.apply_one s dl in
+      let perm1 = ( match perm with
+        | Some f -> Some (apply_one_iperm () s f)
+        | None -> None)
+      in ThreadNode {t with h_formula_thread_resource = rsr1;
+                            h_formula_thread_delayed = dl1;
+                            h_formula_thread_perm = perm1;}
     | HTrue -> f
     | HFalse -> f
     | HEmp -> f
@@ -1645,6 +1701,20 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         in
         let na,ls = List.split (List.map helper  b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
+    | ThreadNode b->
+        let perm = b.h_formula_thread_perm in
+        let na_perm, ls_perm = float_out_iperm () perm b.h_formula_thread_pos in
+        let rsr1 = float_out_exps_from_heap lbl_getter annot_getter b.h_formula_thread_resource in (*TOCHECK*)
+        let qvars, rsr2 = split_quantifiers rsr1 in
+        let rl = if (List.length qvars) == 0 then
+              ls_perm
+            else
+              let rl = List.map (fun v -> (v,P.mkTrue b.h_formula_thread_pos)) qvars in
+              rl@ls_perm
+        in
+        (*TOCHECK: need to float our _delayed??? *)
+        let new_node = ThreadNode ({b with h_formula_thread_resource = rsr2; h_formula_thread_perm = na_perm}) in
+        (new_node,rl)
     | HRel (r, args, l) ->
         	(* let nargs = List.map Ipure.float_out_exp_min_max args in *)
 			(* let nargse = List.map fst nargs in *)
@@ -1969,7 +2039,7 @@ and float_out_heap_min_max (h :  h_formula) :
 	    let args = h1.h_formula_heap_arguments in
         (*LDK*)
 	    let perm = h1.h_formula_heap_perm in
-	    let nl_perm, new_p_perm = float_out_mix_max_iperm () perm l in
+	    let nl_perm, new_p_perm = float_out_min_max_iperm () perm l in
 	          let nl, new_p =
 	            List.fold_left (helper1 l)
                     (* (fun (a, c) d ->  *)
@@ -1989,7 +2059,7 @@ and float_out_heap_min_max (h :  h_formula) :
 	    let l = h1. h_formula_heap2_pos in
 	    let args = h1. h_formula_heap2_arguments in
 	    let perm = h1. h_formula_heap2_perm in
-	    let nl_perm, new_p_perm = float_out_mix_max_iperm () perm l in
+	    let nl_perm, new_p_perm = float_out_min_max_iperm () perm l in
 	    let nl, new_p =
 	      List.fold_left (helper2 l)
               (* (fun (a, c) (d1,d2) -> *)
@@ -2008,6 +2078,14 @@ and float_out_heap_min_max (h :  h_formula) :
 	      (*   	               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) *) ([], new_p_perm) args 
         in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
+    |  ThreadNode h1->
+	    let l = h1.h_formula_thread_pos in
+        let rsr = float_out_min_max h1.h_formula_thread_resource in
+	    let perm = h1.h_formula_thread_perm in
+        let dl = Ipure.float_out_pure_min_max h1.h_formula_thread_delayed in
+	    let nl_perm, new_p_perm = float_out_min_max_iperm () perm l in
+        ((ThreadNode { h1 with  h_formula_thread_resource = rsr; h_formula_thread_perm = nl_perm; h_formula_thread_delayed = dl;}), new_p_perm)
+
     | HRel (r, args, l) ->
         	let nargs = List.map Ipure.float_out_exp_min_max args in
 			let nargse = List.map fst nargs in
@@ -2389,7 +2467,8 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 					| (P.Var (v,_))::_-> Bar_state_var v
 					| (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
 					| _ -> Bar_wrong_state)
-			else Bar_not_found 
+			else Bar_not_found
+	     | ThreadNode h -> Bar_not_found (*TOCHECK: inside thread_resource*)
 		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
 		 | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
 	let rec find_node x f= match f with 
@@ -2486,20 +2565,21 @@ let rec heap_trans_heap_node fct f =
  match f with
   | HRel b -> fct f
   | HTrue  | HFalse | HEmp  | HeapNode _ | HeapNode2 _ -> f
+  | ThreadNode h -> ThreadNode {h with h_formula_thread_resource = formula_trans_heap_node fct h.h_formula_thread_resource}
   | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
   | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
   | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
   | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "IF.heap_trans_heap_node: not handle yet"
 
 
-let rec formula_trans_heap_node fct f =
+and formula_trans_heap_node fct f =
   let recf = formula_trans_heap_node fct in
   match f with
 	| Base b-> Base{b with  formula_base_heap = heap_trans_heap_node fct b.formula_base_heap}
 	| Exists b-> Exists{b with  formula_exists_heap = heap_trans_heap_node fct b.formula_exists_heap}
 	| Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
  
-let rec struc_formula_trans_heap_node fct f =
+and struc_formula_trans_heap_node_x fct f =
  let recf = struc_formula_trans_heap_node fct in
   match f with
     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
@@ -2513,9 +2593,9 @@ let rec struc_formula_trans_heap_node fct f =
 	| EList l -> EList (Gen.map_l_snd recf l)
 	(* | EOr b-> mkEOr (recf b.formula_struc_or_f1) (recf b.formula_struc_or_f2) b.formula_struc_or_pos *)
 	
-let struc_formula_trans_heap_node fct f =
+and struc_formula_trans_heap_node fct f =
 	let pr = !print_struc_formula in
-	Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+	Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node_x fct) f
 
 
 let rec heap_drop_heap_node f0 hns=
@@ -2529,6 +2609,10 @@ let rec heap_drop_heap_node f0 hns=
       else f
   | HeapNode2 hn2 ->
       if List.exists (fun s1 -> String.compare s1 hn2.h_formula_heap2_name =0) hns then
+        HEmp
+      else f
+  | ThreadNode hn ->
+      if List.exists (fun s1 -> String.compare s1 hn.h_formula_thread_name =0) hns then
         HEmp
       else f
   | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd; h_formula_phase_rw = helper b.h_formula_phase_rw}

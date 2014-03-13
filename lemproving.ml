@@ -42,6 +42,7 @@ let split_infer_vars vrs =
 
 let add_infer_vars_to_ctx ivs ctx =
   let (p,rl,hp) = split_infer_vars ivs in
+  let _ = Debug.ninfo_hprint (add_str  "rl " !Cpure.print_svl) rl no_pos in
   let ctx = Infer.init_vars ctx p rl hp [] in 
   ctx
    
@@ -284,9 +285,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
         else [sv_self]
       else rhs_unfold_ptrs0
       in
-      List.fold_left (fun sf sv ->
+    let unfolded_rhs = List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
-      ) new_rhs rhs_unfold_ptrs
+      ) new_rhs rhs_unfold_ptrs in
+    CF.struc_elim_exist unfolded_rhs
   in
   (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
