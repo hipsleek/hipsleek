@@ -1,0 +1,43 @@
+data node2 {
+	int val;
+}.
+
+pred lls<n> == case {
+ n=1 -> [] self::node2<n-1>;
+ n!=1 -> [] self::node2<n>;}.
+
+/*
+pred lls<n> == 
+   self::node2<n-1> & n=1
+or self::node2<n> & n!=1
+.
+*/
+
+checkentail r1::node2<a> & a!=1 |- r1::lls<a1>.
+print residue.
+// 1 answer
+/*
+ <1>emp&a1=1 & a!=1 & a1=a+1 & a1=1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>emp&a1!=1 & a!=1 & a=a1 & a1!=1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+*/
+
+checkentail r1::node2<a> & a=0 |- r1::lls<a1>.
+print residue.
+// 2 answer
+/*
+ <1>emp&a1=1 & a=0 & a1=a+1 & a1=1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>emp&a1!=1 & a=0 & a=a1 & a1!=1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+*/
+
+checkentail r1::node2<a> & a=1 |- r1::lls<a1>.
+print residue.
+/*
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+

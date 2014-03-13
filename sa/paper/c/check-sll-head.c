@@ -5,7 +5,7 @@ struct node {
 
 /*@
 lsegh<h> == self=h
-  or self::node<h, q> * q::lsegh<h>
+  or self::node<h, q> * q::lsegh<h> & self!=h
   inv true;
 */
 /*@

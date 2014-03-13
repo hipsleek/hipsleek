@@ -28,7 +28,7 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
-    mutable prog_hp_decls : hp_decl list; 
+    mutable prog_hp_decls : hp_decl list;
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
     mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -77,6 +77,7 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_kind : view_kind;
     view_prop_extns:  ident list;
+    view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
     view_mem : F.mem_formula option; 
@@ -202,6 +203,7 @@ proc_dynamic_specs : Iformula.struc_formula;
 proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
+mutable proc_is_invoked : bool;
 proc_file : string;
 proc_loc : loc;
 proc_test_comps: test_comps option}
@@ -1130,7 +1132,12 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x body_opt args ret pos=
+let genESpec_x body_opt args0 ret pos=
+  (*keep pointers only*)
+  let args = List.filter (fun p -> match p.param_type with
+    | Named _ -> true
+    | _ -> false
+  ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
   if args = [] && ret = Void then
     F.mkETrueTrueF (),[]
@@ -1154,14 +1161,16 @@ let genESpec_x body_opt args ret pos=
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
     in
-    let _ = Debug.ninfo_hprint (add_str "generate HP for Pre" !print_hp_decl) hp_pre_decl no_pos in
+    let _ = Debug.info_hprint (add_str "generate unknown predicate for Pre synthesis" !print_hp_decl) hp_pre_decl no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
-            let in_info =
-              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
-                  arg.param_name mut_vars then Globals.I else Globals.NI
-            in
+            (*post-preds are all I*)
+            (* let in_info = *)
+            (*   if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) *)
+            (*       arg.param_name mut_vars then Globals.I else Globals.NI *)
+            (* in *)
+            let in_info = Globals.I in
             let hp_arg = (arg.param_type, arg.param_name, in_info) in
             let ref_args = if arg.param_mod = RefMod then
               [hp_arg;(arg.param_type, arg.param_name ^ (string_of_int (Globals.fresh_int())), Globals.I)]
@@ -1178,7 +1187,7 @@ let genESpec_x body_opt args ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.ninfo_hprint (add_str "generate HP for Post" !print_hp_decl) hp_post_decl no_pos in
+    let _ = Debug.info_hprint (add_str "generate unknown predicate for Post Synthesis" !print_hp_decl) hp_post_decl no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1274,6 +1283,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_dynamic_specs = ds;
   proc_loc = pos;
   proc_is_main = true;
+  proc_is_invoked = false;
   proc_file = !input_file_name;
   proc_body = bd;
   proc_test_comps = None}
@@ -2644,7 +2654,7 @@ let add_bar_inits prog =
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_hp_decls = [];
-			  proc_constructor = false;
+                          proc_constructor = false;
 			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars);
@@ -2654,6 +2664,7 @@ let add_bar_inits prog =
 			  proc_exceptions = [];
 			  proc_body = None;
 			  proc_is_main = false;
+                          proc_is_invoked = false;
 			  proc_file = "";
 			  proc_loc = no_pos;
 			proc_test_comps = None}) prog.prog_barrier_decls in
@@ -2708,12 +2719,12 @@ let gen_normalize_lemma_comb ddef =
   coercion_infer_vars = [];
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
-  
+
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
   coercion_type_orig = None;
   coercion_kind = LEM_SAFE;
  }
-	
+
 let add_normalize_lemmas prog4 = 
 	if !perm = NoPerm || not !enable_split_lemma_gen then prog4
 	else {prog4 with prog_coercion_decls =
@@ -2937,3 +2948,45 @@ let annotate_field_pure_ext iprog=
   ) iprog.prog_data_decls in
   let _ = iprog.prog_data_decls <- idatas in
   ()
+
+(*
+  trav body of proc to look for ICall(proc_name, ...) and SCall (proc_name, ...)
+   - look up proc_name from prog
+   - set proc_is_invoked = true;
+output: list of procs called by this function
+*)
+let detect_invoke_x prog proc =
+  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
+  let collect_called_proc e =
+    match e with
+      (* | CallRecv cr -> *)
+      (*       let _ = print_endline "rec" in *)
+      (*       let called_proc_name = cr.exp_call_recv_method in *)
+      (*       let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in *)
+      (*       if (called_proc.proc_is_main && (not called_proc.proc_is_invoked)) *)
+      (*       then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
+      (*       else None *)
+      | CallNRecv cnr ->
+            let called_proc_name = cnr.exp_call_nrecv_method in
+            let cmp = String.compare called_proc_name proc.proc_name in
+            if (cmp == 0)
+            then None
+            else (
+                let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in
+	        if (called_proc.proc_is_main && (not called_proc.proc_is_invoked))
+	        then let _ = called_proc.proc_is_invoked <- true in Some [called_proc_name]
+	        else None
+            )
+      | _ -> None
+  in
+  match proc.proc_body with
+    | None -> []
+    | Some e -> fold_exp e collect_called_proc (List.concat) []
+  (* let _ = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "update the output" no_pos in *)
+  (* [] *)
+
+let detect_invoke prog proc=
+  let pr1 p = pr_id p.proc_mingled_name in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "detect_invoke" pr1 pr2
+      (fun _ -> detect_invoke_x prog proc) proc

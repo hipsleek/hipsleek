@@ -30,7 +30,7 @@ int array_index_of_max(int[] a, int i, int j)
 	return k;
 }
 
-void selection_sort(ref int[] a, int i, int j)
+void selection_sort(int[]@R a, int i, int j)
 	requires [h,t] dom(a,h,t) & h<=i & j<=t
 	ensures dom(a',h,t) & sorted(a',i,j) & idexc(a',a,i,j) & upperbndprev(a,a',i,j);
 {

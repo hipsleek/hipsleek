@@ -41,7 +41,7 @@ bool contain(int[] S, int i, int j, int x)
 /**
  Modify the pair (S,n) to get the set S U {x}
  **/
-void insert(ref int[] S, ref int n, int x)
+void insert(int[]@R S, int@R n, int x)
 	requires isset(S,n)
 	ensures isset(S',n') & member(S',0,n'-1,x) & idbwn(S,S',0,n-1) & issubset(S,n,S',n');
 {
@@ -72,7 +72,7 @@ int getindex(int[] S, int i, int j, int x)
 /**
  Modify the pair (S,n) to get the set S \ {x}
  **/
-void remove(ref int[] S, ref int n, int x)
+void remove(int[]@R S, int@R n, int x)
 	requires isset(S,n)
 	ensures !(member(S',0,n'-1,x));
 {
@@ -87,7 +87,7 @@ void remove(ref int[] S, ref int n, int x)
 /**
  Modify the pair (S,n) to get the set S U T
  **/
-void unionsets(ref int[] S, ref int n, int[] T, int nT)
+void unionsets(int[]@R S, int@R n, int[] T, int nT)
 	requires isset(S,n) & isset(T,nT)
 	ensures isset(S',n') & isunion(S',n',S,n,T,nT);
 {
@@ -101,7 +101,7 @@ void unionsets(ref int[] S, ref int n, int[] T, int nT)
 /**
  Modify the pair (S,n) to get the set S Intersect T
  **/
-void intersectsets(ref int[] S, ref int n, int[] T, int nT)
+void intersectsets(int[]@R S, int@R n, int[] T, int nT)
 	requires isset(S,n) & isset(T,nT)
 	ensures isset(S',n') & issubset(S',n,S,n) & issubset(S',n,T,nT);
 {

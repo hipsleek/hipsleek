@@ -1,0 +1,48 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+// use --lem-en-lhs-unfold
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred lseg<rm> == self=rm
+  or self::node<_,_, p> * p::lseg<rm>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+/*
+lemma_safe "1" self::lseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+*/
+
+/*
+//--ulhs
+lemma_safe "2" self::rlseg<rm> <- exists lm: self::dseg<lm,rm,last>.
+*/
+
+/*
+lemma_safe "3" self::dseg<lm,p1,lst2>*p1::dseg<lst2,rm,last> <-> self::dseg<lm,rm,last>.
+*/
+
+
+//1 OK with --lem-en-syn
+checkentail exists lm,last: self::dseg<lm,rm,last> |- self::lseg<rm> .
+
+
+
+//2 --lem-en-syn
+checkentail exists lm: x::dseg<lm,rm,last> |- x::rlseg<rm>.
+
+
+
+//3a --lem-en-syn
+checkentail self::dseg<lm,p1,lst2>*p1::dseg<lst2,rm,last> |- self::dseg<lm,rm,last>.
+
+
+//3b --lem-en-syn
+checkentail self::dseg<lm,rm,last> |- self::dseg<lm,p1,lst2>*p1::dseg<lst2,rm,last>.
+

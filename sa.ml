@@ -186,6 +186,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
 		             CF.h_formula_phase_pos = pos}),m1@m2
       | CF.DataNode hd -> hf0,[]
       | CF.ViewNode hv -> hf0,[]
+      | CF.ThreadNode ht -> hf0,[] (*TOCHECK*)
       | CF.HRel (sv, args, l) ->
 	            let locs =  look_up_drop_hp sv drlocs in
                 if locs = [] then hf0,[]
@@ -3965,7 +3966,8 @@ let build_horm_view_x templ_view_decls horm_dd=
 	  Iast.view_modes = view.Iast.view_modes;
 	  Iast.view_is_prim = view.Iast.view_is_prim;
 	  Iast.view_kind = view.Iast.view_kind;
-      Iast.view_prop_extns = view.Iast.view_prop_extns;
+          Iast.view_prop_extns = view.Iast.view_prop_extns;
+          Iast.view_derv_info = view.Iast.view_derv_info;
 	  Iast.view_typed_vars = view.Iast.view_typed_vars;
 	  Iast.view_invariant = n_view_invariant;
 	  Iast.view_mem = view.Iast.view_mem;

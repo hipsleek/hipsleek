@@ -15,7 +15,7 @@ struct node{
 /* predicate for a non-empty tree  */
 /*@
  tree<> == self::node<null,null,_>
-	or self::node<l,r,null> * l::tree<> * r::tree<>
+	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 
 */

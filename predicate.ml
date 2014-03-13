@@ -13,21 +13,6 @@ module CEQ = Checkeq
 module TP = Tpdispatcher
 
 
-let default_prefix_pure_hprel = "_pure_of_"
-
-let pure_hprel_map = ref ([]: (ident * ident) list)
-
-let generate_pure_rel hprel=
-  let n_p_hprel ={
-      CA.rel_name = default_prefix_pure_hprel ^ hprel.CA.hp_name;
-      CA.rel_vars = List.map fst hprel.CA.hp_vars_inst;
-      CA.rel_formula = CF.get_pure hprel.CA.hp_formula;
-  }
-  in
-  (*add map*)
-  let _ = pure_hprel_map := !pure_hprel_map@[(hprel.CA.hp_name, n_p_hprel.CA.rel_name)] in
-  let _= Smtsolver.add_relation n_p_hprel.CA.rel_name n_p_hprel.CA.rel_vars n_p_hprel.CA.rel_formula in
-  n_p_hprel
 
 let pure_relation_name_of_heap_pred (CP.SpecVar (_, hp, p))=
   let rec look_up map=
@@ -36,7 +21,7 @@ let pure_relation_name_of_heap_pred (CP.SpecVar (_, hp, p))=
       | (id1,id2)::rest -> if String.compare id1 hp = 0 then (CP.SpecVar (RelT [], id2, p)) else
           look_up rest
   in
-  look_up !pure_hprel_map
+  look_up !CA.pure_hprel_map
 
 
 let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
@@ -46,7 +31,7 @@ let heap_pred_name_of_pure_relation (CP.SpecVar (_, pure_hp, p))=
       | (id1,id2)::rest -> if String.compare id2 pure_hp = 0 then Some (CP.SpecVar(HpT, id1, p)) else
           look_up rest
   in
-  look_up !pure_hprel_map
+  look_up !CA.pure_hprel_map
 
 
 let pure_of_heap_pred_gen_h hf0=

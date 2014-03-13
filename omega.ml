@@ -157,7 +157,7 @@ and omega_of_b_formula b =
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
-  | RelForm _ -> "1=1"(* illegal_format ("Omega.omega_of_exp: RelForm") *)
+  | RelForm _ -> "0=0" (* illegal_format ("Omega.omega_of_exp: RelForm") *)
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
 
@@ -175,7 +175,7 @@ and omega_of_formula_x pr_w pr_s f  =
           let _ = print_endline ("AndList:?"^(!print_formula f)) in
           report_error no_pos "omega.ml: encountered AndList, should have been already handled"
         end
-  | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
+  | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
@@ -445,7 +445,7 @@ let mkSpecVarList i svl =
   (*   match List.nth svl i with *)
   (*     | Cpure.SpecVar(typ, ident, primed) -> Cpure.SpecVar(typ, ("v" ^ string_of_int(i)), primed) :: mkSpecVarList (i + 1) svl *)
 
-let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
+let is_sat_ops_x pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
   (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
   (* print_string ("going omega-> "^(!print_formula pe)^"\n"); *)
@@ -506,6 +506,9 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
           sat
       end
   end
+
+let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
+  Debug.no_1 "Omega.is_sat_ops" !print_formula (string_of_bool) (fun _ -> is_sat_ops_x pr_weak pr_strong pe sat_no) pe
 
 let is_sat (pe : formula)  (sat_no : string): bool =
   let pr x = None in
@@ -731,7 +734,7 @@ let match_vars (vars_list0 : spec_var list) rel =
   let pr = !print_svl in
   Debug.no_2 "match_vars" pr string_of_relation !print_formula (fun _ _ -> match_vars vars_list0 rel) vars_list0 rel
 
-let simplify_ops pr_weak pr_strong (pe : formula) : formula =
+let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   (* print_endline "LOCLE: simplify";*)
   (* let _ = print_string ("\nomega_simplify: f
      before"^(!print_formula pe)) in *)
@@ -817,6 +820,9 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                 (* Cpure.subst ss2 *) pe (* not simplified *)
             end
   end
+
+let simplify_ops pr_weak pr_strong (pe : formula) : formula =
+  Debug.no_1 "Omega.simplify_ops" !print_formula !print_formula (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 
 let simplify (pe : formula) : formula =
   let pr x = None in 
@@ -973,7 +979,7 @@ let hull (pe : formula) : formula =
 	        match_vars (fv pe) rel
   end
 
-let gist (pe1 : formula) (pe2 : formula) : formula =
+let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
 	omega_subst_lst := [];
@@ -1001,6 +1007,9 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
             end
       | _, _ -> pe1
             end
+
+let gist (pe1 : formula) (pe2 : formula) : formula =
+  Debug.no_2 "gist" !print_formula !print_formula !print_formula gist_x pe1 pe2
 
 let log_mark (mark : string) =
   if !log_all_flag then begin
