@@ -18,7 +18,6 @@ axiom lookup(L,x,1,p) ==> mark(L,x,L).
 //axiom mark(L,null,L1) ==> L = L1.
 //axiom lookup(L1,x,1,p) ==> update(_,x,1,p,L1).
 axiom lookup(L,x,v,p) & update(L,x,1,p,L1) & mark(L1,p,L2) ==> lookup(L2,x,1,p).
-
 */
 
 void mark(struct node* x)
