@@ -2700,7 +2700,7 @@ and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formul
 
 (*LDK: only heap need fractional permision spec var (perm) *)
 and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula = match f with
-	| ECase b -> f
+	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(add_mix_formula_to_struc_formula rhs_p c2)) ) b.formula_case_branches;}
 	| EBase b -> EBase {b with  formula_struc_base = add_mix_formula_to_formula rhs_p b.formula_struc_base ;
 			  formula_struc_continuation = map_opt (add_mix_formula_to_struc_formula_x rhs_p) b.formula_struc_continuation;}
 	| EAssume _ -> f

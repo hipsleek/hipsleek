@@ -3893,6 +3893,13 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                     | Some f -> (Cpure.get_var f)::vs
                 else vs
               in
+              (*If any vs are existential variables, add their related constraints into
+              view_form to assist proving*)
+              let view_form =
+                let e_vs = List.filter (fun v -> Gen.BList.mem_eq CP.eq_spec_var v estate.es_evars) vs in
+                let to_fold_view = MCP.find_rel_constraints rhs_p e_vs in
+                add_mix_formula_to_struc_formula to_fold_view view_form
+              in
               (* vs may contain non-existential free vars! *)
               (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
               (* let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in *)
@@ -10383,9 +10390,14 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
           | ThreadNode ({CF.h_formula_thread_resource = l_rsr;} as l_t),
             ThreadNode ({CF.h_formula_thread_resource = r_rsr;} as r_t) ->
               let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) l_rsr else l_rsr in
+              let _,l_p,_,_, _ = split_components estate.es_formula in (*Used pure to assist proving*)
+              let to_ante = MCP.find_rel_constraints l_p (CF.fv l_rsr) in (*only extract relevant constraints*)
+              let _,r_p,_,_, _ = split_components rhs in
+              let to_conseq = MCP.find_rel_constraints r_p (CF.fv r_rsr) in
+              let es_f = CF.add_mix_formula_to_formula to_ante es_f in
               let new_estate = {estate with es_formula = es_f;} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
-              let new_conseq = r_rsr in
+              let new_conseq =  CF.add_mix_formula_to_formula to_conseq r_rsr in
               let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in
               let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
