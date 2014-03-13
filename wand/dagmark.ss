@@ -30,8 +30,9 @@ relation mark(bag(node) G,node x,bag(node) G1).
 relation mark1(bag(node) G,node x,bag(node) G1).
 
 //axiom mark(G,null,G1) ==> G = G1.
-axiom G = G1 ==> mark(G,null,G1).
-axiom lookup(G1,x,1,l,r) ==> mark1(_,x,G1).
+//axiom G = G1 ==> mark(G,null,G1).
+//axiom lookup(G1,x,1,l,r) ==> mark1(_,x,G1).
+axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
 //axiom mark1(G,x,G1) ==> mark(G,x,G1).
 //axiom lookup(G,x,v,l,r) ==> updG(G,x,1,l,r,G1).
 //axiom updG(G,x,1,l,r,G1) ==> mark1(G,x,G1).
