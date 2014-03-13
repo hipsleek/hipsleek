@@ -10318,7 +10318,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
           let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in
           (* non-empty mt_dl means l_dl and r_dl are not exactly match
              This may be too strict, will re-consider later *)
-          let eq_dl = if mt1!=[] then false else eq_dl in
+          (* let eq_dl = if mt1!=[] then false else eq_dl in *)
           (*Whether the resources are syntatically eq*)
           let l_idents = List.map CP.name_of_spec_var (CF.collect_node_var_formula l_rsr) in
           let match_number, mt_rsr, remained_rsr = compute_matching_thread_nodes l_idents l_rsr r_rsr in

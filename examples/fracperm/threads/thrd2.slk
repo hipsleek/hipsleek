@@ -1,0 +1,22 @@
+/*
+   For threads as resource, we attempt syntatic MATCH/SPLIT
+   first. If they fail, we try semantic MATCH/SPLIT
+
+   - Syntatic MATCH/SPLIT: based on the syntax of the
+     two resources
+   - Semantic MATCH/SPLIT: perform entailment
+   l_rsr |- r_rsr * remained_rsr
+
+*/
+
+data cell{ int val;}.
+
+//(1)
+checkentail t::thrd<# a in B --> x::cell(0.5)<v1> & true #> |- t::thrd<# a in B --> x::cell(0.5)<v1> & true #> .
+print residue.
+//VALID: exact matching with fractional permissions, bag constraints
+
+//(2)
+checkentail t::thrd<# a1 in B1 & M1>0 --> true #> |- t::thrd<# a2 in B2 & M2>0 --> true #> .
+print residue.
+//VALID and instantiate: M1=M2 & B1=B2 & a1=a2

@@ -1862,15 +1862,23 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
-    true (*check_pre*) in
+  let tlist = if !Globals.allow_ls then
+        ([(Globals.ls_name,{ sv_info_kind = Globals.ls_typ ;id = fresh_int () })]@tlist) else
+        tlist
+  in
+  let (n_tl,cf) = if !Globals.allow_ls then
+        trans_I2C_struc_formula 1 prog false true (Globals.ls_name::(self :: vdef.I.view_vars)) vdef.I.view_formula (ann_typs@tlist) false true
+      else
+    trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
+    true (*check_pre*) 
+  in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
   let (n_tl,inv_lock) = 
     (match inv_lock with
       | None -> (n_tl, None)
       | Some f ->
-            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in
+            let (n_tl_tmp,new_f) = trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in (*inv_loc will not mention lockset*)
             (*find existential variables*)
             let fvars = CF.fv new_f in
             let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
@@ -1916,7 +1924,12 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       let null_c_var = Cpure.null_var in 
       let _ =
         let vs1 = (CF.struc_fv cf) in
-        let vs2 = (null_c_var::self_c_var::view_sv_vars) in
+        let vs2 = if !Globals.allow_ls then
+              let ls_var = CP.mkLsVar Unprimed in
+              (ls_var::(null_c_var::self_c_var::view_sv_vars))
+            else
+              (null_c_var::self_c_var::view_sv_vars) 
+        in
         let vs1a = CP.fv inv_pf in
         Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
         let vs1 = vs1@vs1a in

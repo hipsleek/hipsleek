@@ -3,6 +3,8 @@
 # ================SLEEK==========================
 echo "======= thrd1.slk ======"
 ../../../sleek --en-para --en-thrd-resource -tp redlog thrd1.slk | grep Entail > test-cases/thrd1.n
+echo "======= thrd2.slk ======"
+../../../sleek --en-para --en-thrd-resource -tp redlog thrd2.slk | grep Entail > test-cases/thrd2.n
 
 #================HIP==========================
 #================HIP==========================

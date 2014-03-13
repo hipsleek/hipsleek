@@ -51,6 +51,7 @@ print residue.
 checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# b=1 --> x::cell<v1> & true #> .
 print residue.
 //FAIL: delayed formulas unmatched
+//Since 13/03/2014: VALID after instantiate  a=b
 
 //(8)
 checkentail t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> .
@@ -83,7 +84,7 @@ print residue.
 checkentail t::thrd<# a=1 --> x1::cell<v1> * x2::cell<v2> & true #> & x1=y1 & x2=y2 |- t::thrd<# a=1 --> y1::cell<v1> * y2::cell<v2> & true #>.
 print residue.
 //FAIL. Currently FAIL because lhs's resource is unmatched with rhs' resource
-//Restrictive, re-consider later TODO
+//Since 13/03/2014: VALID after instantiate  x1=y1 & x2=y2
 
 //(14)
 checkentail t::thrd<# a=1 --> x::cell(0.5)<1> * x::cell(0.5)<1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> & true #>.

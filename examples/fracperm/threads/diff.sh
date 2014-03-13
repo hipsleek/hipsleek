@@ -3,6 +3,8 @@
 #================SLEEK==========================
 echo "======= thrd1.slk ======"
 diff test-cases/thrd1.res test-cases/thrd1.n
+echo "======= thrd2.slk ======"
+diff test-cases/thrd2.res test-cases/thrd2.n
 
 #================HIP==========================
 #================HIP==========================
