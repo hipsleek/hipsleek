@@ -11,6 +11,11 @@ ll<n> == self = null & n=0
 	or self::node<v, r> * r::ll<n-1> 
   inv n>=0;
 
+relation dom(int[] a, int low, int high).
+
+axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
+axiom l>=h ==> dom(a,l,h).
+axiom dom(a,l,k) & dom(a,k,h) ==> dom(a,l,h).
 
 /*
 relation zeros(int[] a, int i, int j) == (i > j 
@@ -18,8 +23,8 @@ relation zeros(int[] a, int i, int j) == (i > j
 */
 
 ll2<i,j,a> == self = null & i=j
-  or self::node<v, r> * r::ll2<i+1,j,a> & a[i]=v 
-  inv i<=j;
+  or self::node<v, r> * r::ll2<i+1,j,a> & a[i]=v & dom(a,i,i+1) 
+  inv i<=j & dom(a,i,j);
 
 /* append two singly linked lists */
 void inc(node x)

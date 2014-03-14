@@ -13,7 +13,7 @@ ll<L> == self = null
       or self::node<v,p> * p::ll<L> & lookup(L,self,v,p);
 
 axiom lookup(L,x,1,p) ==> mark(L,x,L).
-axiom L = L1 ==> mark(L,null,L1).
+axiom true ==> mark(L,null,L).
 axiom lookup(L,x,v,p) & update(L,x,1,p,L1) & mark(L1,p,L2) ==> lookup(L2,x,1,p) & mark(L,x,L2).
 */
 

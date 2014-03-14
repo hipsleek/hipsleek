@@ -24,14 +24,14 @@ rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
 
 relation mark(bag(node) G,node x,bag(node) G1).
 
-axiom G = G1 ==> mark(G,null,G1).
+axiom true ==> mark(G,null,G).
 axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
 
 axiom mark(G,x,G1) ==> reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1).
 axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
 
-axiom lookup(G,x,v,l,r) &  update(G,x,1,l,r,G1) & 
-mark(G1,l,G2) & mark(G2,r,G3) ==> lookup(G3,x,1,l,r).
+axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
+mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
 */
 
 void mark(struct node *x)
@@ -47,7 +47,8 @@ else {
   l = x->left;
   r = x->right;
   x->val = 1;
-  mark(l);
   mark(r);
+  mark(l);
 }
+//@dprint;
 }
