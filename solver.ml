@@ -3898,6 +3898,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let view_form =
                 let e_vs = List.filter (fun v -> Gen.BList.mem_eq CP.eq_spec_var v estate.es_evars) vs in
                 let to_fold_view = MCP.find_rel_constraints rhs_p e_vs in
+                (*locklevel constraints will be proven later*)
+                let to_fold_view = MCP.remove_level_mix_formula to_fold_view in
                 add_mix_formula_to_struc_formula to_fold_view view_form
               in
               (* vs may contain non-existential free vars! *)
@@ -4107,7 +4109,7 @@ and elim_exists_pure_formula_debug (f0:CP.formula) =
 *)
 and elim_exists_pure_branch (i:int) (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
+  Debug.no_2 ("elim_exists_pure_branch") Cprinter.string_of_spec_var_list pf pf 
       (fun w f0 -> elim_exists_pure_branch_x w f0 pos) w f0
 
 and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
@@ -11834,7 +11836,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing || (CF.is_thread lhs_node)) 
+            let lhs_perm = CF.get_node_perm lhs_node in
+            let rhs_perm = CF.get_node_perm rhs_node in
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing || (CF.is_thread lhs_node) || (lhs_perm=None && rhs_perm=None) ) 
                   (* || (!Globals.perm=Bperm && (not !Globals.use_split_match)) *)
                 then
                   (*If not using permissions or is in normalization process --> MATCH ONLY*)
@@ -11844,8 +11848,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   (* let _ = print_endline ("rhs_node = " ^ (Cprinter.string_of_h_formula rhs_node)) in *)
                   (* let _ = print_endline ("### estate = " ^ ( Cprinter.string_of_entail_state estate)) in *)
                   let exists_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
-                  let lhs_perm = CF.get_node_perm lhs_node in
-                  let rhs_perm = CF.get_node_perm rhs_node in
                   let lhs_orignal = CF.get_node_original lhs_node in
                   let rhs_orignal = CF.get_node_original rhs_node in
                   let flag = lhs_orignal in (*if flag then MATCH*)

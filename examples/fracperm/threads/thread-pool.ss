@@ -86,7 +86,7 @@ void joinThreads(threadNode tn, cell x, int n)
 }
 
 void destroyCell(cell x)
-  requires c::cell<_>
+  requires x::cell<_>
   ensures true;
 
 //receive certain input
@@ -109,8 +109,10 @@ void main()
 
   cell x = new cell(7);
 
+  // create a pool consisting of n threads
   threadNode tn = createThreads(x,n);
 
+  // wait for all threads to finish their execution
   joinThreads(tn,x,n);
 
   destroyCell(x);

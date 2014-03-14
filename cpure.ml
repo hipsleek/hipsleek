@@ -3452,7 +3452,14 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Mult (a1, a2, pos) -> Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Div (a1, a2, pos) -> Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
-  | Level (sv, pos) -> e (* if eq_spec_var sv fr then t else e *) (*donot replace locklevel by any expression*)
+  | Level (sv, pos) ->
+      if eq_spec_var sv fr then
+        (match t with
+          | Var (v, _) ->  Level (v, pos)
+          | _ ->
+              let _ = print_endline ("[a_apply_one_term] Warning: donot replace locklevel by any expression rather than a Var") in
+              e)
+      else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | TypeCast (ty, a, pos) -> TypeCast (ty, a_apply_one_term (fr, t) a, pos)
@@ -10382,7 +10389,7 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
 Before sending to provers,
 translate l1=l2 into l1=l2 & level(l1)=level(l2)
 *)
-let translate_level_eqn_b_formula (bf:b_formula) : formula =
+let rec translate_level_eqn_b_formula (bf:b_formula) : formula =
   let pf,sth = bf in
   (match pf with
     | Eq (e1,e2,pos) ->
@@ -10405,7 +10412,7 @@ let translate_level_eqn_b_formula (bf:b_formula) : formula =
 Before sending to provers,
 translate l1=l2 into l1=l2 & level(l1)=level(l2)
 *)
-let translate_level_eqn_pure_x (pf : formula) : formula =
+and translate_level_eqn_pure_x (pf : formula) : formula =
   let rec helper f =
     match f with
       | BForm (bf, lbl) ->
@@ -10440,12 +10447,12 @@ let translate_level_eqn_pure_x (pf : formula) : formula =
 Before sending to provers,
 translate l1=l2 into l1=l2 & level(l1)=level(l2)
 *)
-let translate_level_eqn_pure (pf : formula) : formula =
+and translate_level_eqn_pure (pf : formula) : formula =
   Debug.no_1 "translate_level_eqn_pure" !print_formula !print_formula 
       translate_level_eqn_pure_x pf
 
 (*Translate level(l) into l_mu before sending to provers*)
-let translate_level_pure_x (pf : formula) : formula =
+and translate_level_pure_x (pf : formula) : formula =
   let pf = translate_level_eqn_pure pf in
   let trans_exp (e:exp): exp =
       let rec helper e = 
@@ -10525,16 +10532,30 @@ let translate_level_pure_x (pf : formula) : formula =
           Forall (sv, n_f, lbl, pos)
       | Exists (sv, f, lbl, pos) ->
           let n_f = helper f in
-          Exists (sv, n_f, lbl, pos)
+          let l_vars = level_vars_formula f in
+          let f_vars = fv f in
+          (*free level variables*)
+          let l_vars = Gen.BList.intersect_eq eq_spec_var l_vars f_vars in
+          if ( Gen.BList.mem_eq eq_spec_var sv l_vars) then
+            (*if sv is a locklevel var*)
+            (* ex l. level(l)>0 & l>0 ==> ex l. ex l_mu. l_mu>0 & l>0 *)
+            (match sv with
+              | SpecVar (t,id,p) -> 
+                  let nid = id^"_mu" in
+                  let v = SpecVar (level_data_typ,nid,p) in
+                  let f1 = Exists (v, n_f, lbl, pos) in
+                  Exists (sv, f1, lbl, pos))
+          else
+            Exists (sv, n_f, lbl, pos)
   in helper pf
 
 (*Translate level(l) into l_mu before sending to provers*)
-let translate_level_pure (pf : formula) : formula =
+and translate_level_pure (pf : formula) : formula =
   Debug.no_1 "translate_level_pure" !print_formula !print_formula 
       translate_level_pure_x pf
 
 
-let level_vars_exp e =
+and level_vars_exp e =
   let rec helper e =
   match e with
     | Var (SpecVar (t,id,pr),pos) ->
@@ -10549,9 +10570,9 @@ let level_vars_exp e =
         let vars2 = helper e2 in
         vars1@vars2
     | _ -> []
-in helper e
+  in helper e
 
-let level_vars_b_formula bf =
+and level_vars_b_formula bf =
   let (pf,il) = bf in
   (match pf with
 	| Lt (e1,e2,l) 
@@ -10584,8 +10605,35 @@ let level_vars_b_formula bf =
 	| BagMax _ -> []
   )
 
+and level_vars_formula_x f =
+  let rec helper f = 
+    match f with
+      | BForm (bf, lbl) ->
+          let vars = level_vars_b_formula bf in
+          vars
+      | And (f1, f2, _)
+      | Or (f1, f2, _, _) ->
+          let vars1 = helper f1 in
+          let vars2 = helper f2 in
+          vars1@vars2
+      | AndList b -> 
+          let vars = List.fold_left (fun ls_f (_,f_b) -> 
+              let vars = helper f_b in
+              vars
+          ) [] b in
+          vars
+      | Not (f, _, _)
+      | Forall (_, f, _, _)
+      | Exists (_, f, _, _) -> helper f
+  in helper f
+
+and level_vars_formula (f : formula) : spec_var list =
+  Debug.no_1 "level_vars_formula"
+      !print_formula !print_svl
+      level_vars_formula_x f
+
 (*for each level(l), add a constraint level(l) > 0*)
-let infer_level_pure_x (pf : formula) : formula =
+and infer_level_pure_x (pf : formula) : formula =
   let rec helper f =
     match f with
       | BForm (bf, lbl) ->
@@ -10621,7 +10669,7 @@ let infer_level_pure_x (pf : formula) : formula =
           Exists (sv, n_f, lbl, pos)
   in helper pf
 
-let infer_level_pure (f : formula) : formula =
+and infer_level_pure (f : formula) : formula =
   Debug.no_1 "infer_level_pure"
       !print_formula !print_formula
       infer_level_pure_x f
@@ -10631,7 +10679,7 @@ For example:
 LS'=LS --infer--> LSMU'=LSMU
 l in LS --infer--> l.mu=v & v in LSMU
 *)
-let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
+and infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
   if (not !allow_locklevel) then (f,[]) else
   let convert_ls_to_lsmu_exp (e:exp) : exp =
     let rec helper e =
@@ -10746,7 +10794,7 @@ For example:
 LS'=LS --infer--> LSMU'=LSMU
 l in LS --infer--> l.mu=v & v in LSMU
 *)
-let infer_lsmu_pure (f:formula) : formula * (spec_var list) =
+and infer_lsmu_pure (f:formula) : formula * (spec_var list) =
   let pr_out = pr_pair !print_formula !print_svl in
   Debug.no_1 "infer_lsmu_pure"
       !print_formula pr_out
@@ -10779,7 +10827,7 @@ waitlevel=x ==def== (not LS={} | x=0)
 *)
 
 (*TODO: may want to extend it to <=, >, >= *)
-let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : formula =
+and translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : formula =
   (*forall v. v in LSMU & v>0*)
   (* let level_var = mkLevelVar Unprimed in *)
   (* let fresh_var = fresh_spec_var level_var in *)
