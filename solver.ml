@@ -12317,7 +12317,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	            coer.coercion_body tmp_prf coer.coercion_name
               in
               (res, [prf])
-              else failwith "no suitable axiom " (*(CF.mkFailCtx_in( Basic_Reason ( { 
+              else (CF.mkFailCtx_in( Basic_Reason ( { 
 	          fc_message ="no suitable ramify lemma";
 	          fc_current_lhs = estate;
 	          fc_prior_steps = estate.es_prior_steps;
@@ -12325,7 +12325,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
                                                   CF.mk_failure_must "112" Globals.sl_error)),
-                  [])*)
+                  [])
             else (CF.mkFailCtx_in( Basic_Reason ( { 
 	          fc_message ="failed ramify lemma application";
 	          fc_current_lhs = estate;
