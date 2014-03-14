@@ -35,13 +35,20 @@ let collect_rele_views cprog specs=
 
 let view_pure_ext iprog cprog view_ext extn_sv view=
   (*extend view with view_ext*)
+  let extn_id = CP.name_of_spec_var extn_sv in
   let extn_view_name = view_ext.Cast.view_name in
   let data_name = view.Cast.view_data_name in
   let extn_props = Cast.look_up_extn_info_rec_field cprog.Cast.prog_data_decls data_name in
   let extn_info = ((view.Cast.view_name,
-  List.map CP.name_of_spec_var view.Cast.view_vars),(extn_view_name, extn_props , [extn_sv] )) in
+  List.map CP.name_of_spec_var view.Cast.view_vars),(extn_view_name, extn_props , [extn_id] )) in
   let iview = Iast.look_up_view_def_raw 48 iprog.Iast.prog_view_decls view.Cast.view_name in
-  let der_view = {iview with Iast.view_name = fresh_any_name view.Cast.view_name} in
+  let vars =  iview.Iast.view_vars@[(extn_id)] in
+  let der_view = {iview with Iast.view_name = fresh_any_name view.Cast.view_name;
+      Iast.view_vars = vars;
+      Iast.view_typed_vars = iview.Iast.view_typed_vars@[(CP.type_of_spec_var extn_sv, extn_id)];
+      Iast.view_labels = List.map (fun _ ->  Label_only.LOne.unlabelled) vars, false;
+      Iast.view_modes = List.map (fun _ -> ModeOut) vars ;
+  } in
   let is_exted, der_view1 = Derive.trans_view_one_derv iprog Rev_ast.rev_trans_formula Astsimp.trans_view
     cprog.Cast.prog_view_decls der_view extn_info in
   if is_exted then [(view, der_view1)] else []
@@ -68,9 +75,8 @@ let extend_specs_views_pure_ext iprog cprog sccs error_traces =
           ) [] rele_vnames1 in
           (*for each view, do extn*)
           (*subst new der views into the specs*)
-          let extn_id = CP.name_of_spec_var extn_sv in
           let exted_sst0 = List.fold_left (fun r v ->
-              let ss = view_pure_ext iprog cprog view_extn extn_id v in
+              let ss = view_pure_ext iprog cprog view_extn extn_sv v in
               r@ss
           ) [] rele_views in
           sccs

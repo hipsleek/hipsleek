@@ -315,8 +315,14 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
       Iast.view_materialized_vars = [];
       Iast.try_case_inference = false; }
   in
-  let der_vdecl = Iast.look_up_view_def_raw 54 prog.Iast.prog_view_decls view_derv.Iast.view_name in
-  let _ = der_vdecl.Iast.view_data_name <- data_name in
+  let _ = try
+    let der_vdecl = Iast.look_up_view_def_raw 54 prog.Iast.prog_view_decls view_derv.Iast.view_name in
+    let _ = der_vdecl.Iast.view_data_name <- data_name in
+    ()
+  with _ ->
+      let _ = prog.Iast.prog_view_decls <- prog.Iast.prog_view_decls@[n_iview] in
+      ()
+  in
   let der_view0 = trans_view_fnc prog tis n_iview in
   let der_view = {der_view0 with Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains;} in
   der_view
@@ -327,10 +333,10 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc cviews derv
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
     let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc cviews derv view_derv in
-    let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name) no_pos in
+    let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
     (true,r)
   else
-     let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already") no_pos in
+     let _ =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
      (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc (cviews (*orig _extn*) :

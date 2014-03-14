@@ -1,8 +1,4 @@
-#fixc_preprocess
-#update_with_td_fp
-#pre_rel_fixpoint
-infer_pure_m_1
-infer_lhs_contra
-early_hp_contra_detection
-infer_lhs_contra_estate
-solver_detect_lhs_rhs_contra
+infer_shapes_proper
+elim_dangling_conj_heap
+def_subst_fix
+succ_subst_hpdef

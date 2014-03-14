@@ -1135,6 +1135,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let vr_view_origs = vr.h_formula_view_origins in
                   let vl_view_derv =  vl.h_formula_view_derv in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 1" no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vl_name: " pr_id) vl_name no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vr_name: " pr_id) vr_name no_pos in
                   let is_l_lock = match vl_vdef.view_inv_lock with
@@ -1218,7 +1219,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
                       match a6 with
                         | Some a -> [a]
-                        | None ->
+                        | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
                               (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
                               (* let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
@@ -1307,6 +1308,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let a1 = 
                     if is_r_lock then [] else
                       if ((new_orig || vr_self_pts==[]) && sub_ann) then
+                        let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
                         let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                         let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
                          if (syn_lem_typ != -1) then
@@ -1353,6 +1355,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                     | Some _ -> true
                     | None -> false
                   in
+                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
                   (* WN_all_lemma - is this overriding of lemmas? *)
@@ -1371,7 +1374,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                         else
                           (*cyclic checkpoint here*)
                           let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs in
-                          if (syn_lem_typ != -1) then
+                          if (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
                             (*find the first viewnode readable from right datanode*)
                                let lvs = CF.look_up_reachable_first_reachable_view prog
                                  rhs [dr.CF.h_formula_data_node] in
@@ -1434,6 +1437,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let alternative = process_infer_heap_match prog estate lhs_h is_normalizing (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view vl_name h_name c ms alternative 
             | ViewNode vl, DataNode dr ->
+                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 5" no_pos in
                   let _ = DD.tinfo_pprint "try LHS case analysis here!\n" no_pos in
 
 

@@ -619,6 +619,21 @@ let check_separation_unsat f0=
       (fun _ -> check_separation_unsat f0)
       f0
 
+(*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
+let poss_prune_pred_x prog vnode f=
+  let pure_svl = List.filter (fun sv -> not (CP.is_node_typ sv)) vnode.h_formula_view_arguments in
+  let pure_constr = CP.filter_var (get_pure f) pure_svl in
+  let ps = List.filter (fun p -> not (CP.is_eq_between_vars p) &&
+      not (CP.isConstTrue p)) (CP.list_of_conjs pure_constr) in
+  (ps != [])
+
+let poss_prune_pred prog vnode f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in
+  Debug.no_2 "poss_prune_pred" pr2 pr1 string_of_bool
+      (fun _ _ -> poss_prune_pred_x prog vnode f)
+      vnode f
+
 (*
   res = -1: NO cyclic - not syn lemma
   res = 0: syn Left lemma
