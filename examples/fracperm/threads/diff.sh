@@ -20,6 +20,9 @@ echo "======= frac-cell-list.ss  ======"
 diff test-cases/frac-cell-list.res test-cases/frac-cell-list.n
 echo "======= thread-pool.ss ======"
 diff test-cases/thread-pool.res test-cases/thread-pool.n
+echo "======= multicast.ss ======"
+diff test-cases/multicast.res test-cases/multicast.n
+
 #================parahip-rsr/PARAHIP==========================
 #================parahip-rsr/PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"

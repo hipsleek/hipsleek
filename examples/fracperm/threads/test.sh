@@ -23,6 +23,9 @@ echo "======= frac-cell-list.ss  ======"
 echo "======= thread-pool.ss ======"
 ../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer thread-pool.ss | grep -E 'Proc|assert:' >  test-cases/thread-pool.res
 
+echo "======= multicast.ss ======"
+../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer multicast.ss | grep -E 'Proc|assert:' >  test-cases/multicast.res
+
 #================PARAHIP==========================
 #================PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"
