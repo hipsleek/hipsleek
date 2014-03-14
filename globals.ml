@@ -872,7 +872,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref false (*enable compilation flag for website*)
+let web_compile_flag = ref true (*enable compilation flag for website*)
 
 
 (* Decide whether normalization/simplification

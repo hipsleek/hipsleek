@@ -1,6 +1,8 @@
 /*
 
-  Well-known Owicki-Gries example in literature
+  Well-known Owicki-Gries example in literature, e.g.
+  that found in the paper
+  Expressive Modular Fine-Grained Concurrency Specification - POPL2011
 
  */
 

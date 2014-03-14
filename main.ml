@@ -335,7 +335,7 @@ let process_source_full source =
       and waitlevel.
     *)
     let search_for_locklevel proc =
-      if (not !Globals.allow_locklevel) then
+      if (!Globals.allow_ls && not !Globals.allow_locklevel) then
         let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
         let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
         if b then
@@ -350,6 +350,30 @@ let process_source_full source =
     let _ = I.annotate_field_pure_ext intermediate_prog in
     (*END: annotate field*)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+
+    (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Search entire program, if there is no lock used -> disable allow_ls and allow_locklevel *)
+    let search_for_lock proc =
+      if (BatString.exists proc.Cast.proc_name "__") then
+        (*assume primitive proc -> ignore*)
+        false
+      else
+        let struc_fvars = Cformula.struc_fv proc.Cast.proc_static_specs in
+        let b1 = List.exists (fun (t,_) -> (t = Globals.lock_typ)) proc.Cast.proc_args in
+        let b2 = List.exists (fun (Cpure.SpecVar (t,id,_)) -> (t = Globals.lock_typ) || (id = Globals.waitlevel_name) || (id = Globals.ls_name)) struc_fvars in
+        (b1||b2)
+    in
+    let _ = if !Globals.web_compile_flag && (!Globals.allow_ls) then
+          let b = List.fold_left (fun b proc -> b || (search_for_lock proc)) false (Cast.list_of_procs cprog) in
+          (*if there is any lock -> b=true*)
+          if (not b) then
+            begin
+              Globals.allow_ls := false;
+              Globals.allow_locklevel := false;
+            end
+    in
+    (**************************************)
 
     (* ========= lemma process (normalize, translate, verify) ========= *)
     let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
