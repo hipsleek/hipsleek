@@ -954,7 +954,7 @@ let pairwisecheck (pe : formula) : formula =
   let pf = !print_pure in
   Debug.no_1 "Omega.pairwisecheck" pf pf pairwisecheck pe
 
-let hull (pe : formula) : formula =
+let hull_x (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
 	omega_subst_lst := [];
@@ -978,6 +978,10 @@ let hull (pe : formula) : formula =
             let rel = send_and_receive fomega !in_timeout (* 0. *) in
 	        match_vars (fv pe) rel
   end
+
+let hull (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.hull" pf pf hull_x pe
 
 let gist_x (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)

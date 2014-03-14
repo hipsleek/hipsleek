@@ -20,6 +20,9 @@ echo "======= point.ss  ======"
 echo "======= frac-cell-list.ss  ======"
 ../../../hip --en-para -tp redlog frac-cell-list.ss | grep -E 'Proc|assert:' >  test-cases/frac-cell-list.res
 
+echo "======= thread-pool.ss ======"
+../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer thread-pool.ss | grep -E 'Proc|assert:' >  test-cases/thread-pool.res
+
 #================PARAHIP==========================
 #================PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"

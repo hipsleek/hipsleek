@@ -18,6 +18,8 @@ echo "======= point.ss  ======"
 diff test-cases/point.res test-cases/point.n
 echo "======= frac-cell-list.ss  ======"
 diff test-cases/frac-cell-list.res test-cases/frac-cell-list.n
+echo "======= thread-pool.ss ======"
+diff test-cases/thread-pool.res test-cases/thread-pool.n
 #================parahip-rsr/PARAHIP==========================
 #================parahip-rsr/PARAHIP==========================
 echo "======= parahip-rsr/no-deadlock-nonlexical.ss ======"

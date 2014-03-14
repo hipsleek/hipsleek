@@ -2029,6 +2029,10 @@ let hull (f : CP.formula) : CP.formula =
     | ZM ->
           if is_bag_constraint f then Mona.hull f
           else Smtsolver.hull f
+    | PARAHIP ->
+        if is_bag_constraint f then Mona.hull f
+        else if (CP.is_float_formula f) then  Redlog.hull f
+        else om_hull f (*TOCHECK: shall we have mixed constraints*)
     | _ -> (om_hull f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
