@@ -12,6 +12,26 @@ Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or
 ====================================================================
 # ll-c1b.ss -tp z3 --smtinp --smtout
 
+tp_imply_no_cache@13@12@11
+tp_imply_no_cache inp1 : ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply_no_cache inp2 : dm(aaa,i,j)
+tp_imply_no_cache inp3 :162
+tp_imply_no_cache inp4 :Z3
+tp_imply_no_cache@13 EXIT:false
+
+tp_imply_perm@12@11
+tp_imply_perm inp1 : ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply_perm inp2 : dm(aaa,i,j)
+tp_imply_perm@12 EXIT:false
+
+tp_imply@11
+tp_imply inp1 :ante: ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply inp2 :conseq: dm(aaa,i,j)
+tp_imply@11 EXIT:solver:Z3: false
+
 Error below came from hip which declared dm wrongly.
 
 ;Variables declarations
@@ -39,6 +59,26 @@ Below came from sleek. Here, dm is declared twice, and
 with the 2nd being the correct one with relevant axioms added.
 Why aren't axioms duplicated.
 Why wasn't axioms added when proving hip?
+
+tp_imply_no_cache@9@8@7
+tp_imply_no_cache inp1 : ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply_no_cache inp2 : dm(aaa,i,j)
+tp_imply_no_cache inp3 :4
+tp_imply_no_cache inp4 :Z3
+tp_imply_no_cache@9 EXIT:true
+
+tp_imply_perm@8@7
+tp_imply_perm inp1 : ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply_perm inp2 : dm(aaa,i,j)
+tp_imply_perm@8 EXIT:true
+
+tp_imply@7
+tp_imply inp1 :ante: ((self=null & i=j) | ((1+i)<=j & dm(aaa,1+i,j) & dm(aaa,i,1+i) & 
+self!=null))
+tp_imply inp2 :conseq: dm(aaa,i,j)
+tp_imply@7 EXIT:solver:Z3: true
 
 ;Variables declarations
 (declare-fun dm () Int)
