@@ -30,6 +30,31 @@ HeapPred H(node a).
   else return get_last(x.next);
 }
 
+
+/*
+G(x,res) ::= 
+ x::node<val,next>@M * G(next,res)&next!=null
+ or x::node<val,next>@M&res=x & next=null
+
+
+G(x,res) ::= lseg(x,p) * p::node<_,_>
+
+ x::node<val,next>@M * G(next,res)&next!=null
+ or x::node<val,next>@M&res=x & next=null
+
+ */
+/*
+loop 1:
+p1 x=null
+p2 x!=null & x.next=null
+p3 x!=null & x.next!=null
+
+loop2:
+
+loop3:
+
+ */
+
 /*
 H'(x) := x::node(val,next) & next = null \/ x::node(val,next) * H'(next) & next != null
 G'(x,res) := x::node(val,next) & next = null & res = x \/ x::node(val,next) * G'(next,res) & next != null

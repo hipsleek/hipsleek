@@ -2830,7 +2830,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
   let ls_cond_danghps_constrs = if !Globals.sa_dnc then
     Sacore.partition_constrs_4_paths link_hpargs_w_path constrs0
   else if !Globals.sae then
-    Saerror.partition_constrs_4_paths link_hpargs_w_path constrs0
+    Saerror.partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name
   else
     let cond_path, link_hpargs1 =
       match link_hpargs_w_path with
@@ -2841,6 +2841,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
   in
   (*synthesize for each path*)
   let ls_res = List.map process_one_path ls_cond_danghps_constrs in
+  (* let _ = List.map (fun ls -> print_endline (Cprinter.string_of_infer_state_short ls)) ls_res in *)
   ls_res
 
 let infer_shapes_divide iprog prog proc_name (constrs0: Cformula.hprel list) callee_hps sel_hps all_post_hps
@@ -2895,16 +2896,10 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     else is
     in
     (* let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.CF.is_dang_hpargs in *)
-    (* let _ = List.map (fun (sp, spl) -> print_endline ("before link: " ^ (Cprinter.string_of_spec_var sp))) is.Cformula.is_link_hpargs in *)
     let hp_defs1,tupled_defs = Sautil.partition_tupled is.CF.is_hp_defs in
-    (* let _ = print_endline (Cprinter.string_of_infer_state_short is) in *)
     let dang_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_dang_hpargs in
-    (* let _ = List.map (fun (sp, spl) -> print_endline ("new dang: " ^ (Cprinter.string_of_spec_var sp))) dang_hpargs in *)
     let link_hpargs = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) is.Cformula.is_link_hpargs in
-    (* let _ = List.map (fun (sp, spl) -> print_endline ("new link: " ^ (Cprinter.string_of_spec_var sp))) link_hpargs in *)
     let hp_defs1,tupled_defs = Sautil.partition_tupled is.Cformula.is_hp_defs in
-    (* let _ = List.map (fun hp_def -> print_endline ("hp_defs1: " ^ (Cprinter.string_of_hp_rel_def hp_def))) hp_defs1 in *)
-    (* let _ = List.map (fun hp_def -> print_endline ("tupled_defs: " ^ (Cprinter.string_of_hp_rel_def hp_def))) tupled_defs in *)
     let cl_sel_hps, defs, tupled_defs2=
       if !Globals.pred_elim_unused_preds then
         let cl_sel_hps0 = CP.remove_dups_svl ((List.map fst link_hpargs)@
@@ -2933,11 +2928,9 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     let hpdefs = List.map (fun d ->
         let (k, hf, og, f) = Cformula.flatten_hp_rel_def d in
         Cformula.mk_hprel_def k hf og [(is.Cformula.is_cond_path, Some f)] None) defs in
-    (* let _ = List.map (fun hp_def -> print_endline ("hpdefs: " ^ (Cprinter.string_of_hprel_def hp_def))) hpdefs in *)
     let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) link_hpargs no_pos in
     let link_hpdefs = Sacore.generate_hp_def_from_link_hps prog is.Cformula.is_cond_path is.Cformula.is_hp_equivs
       (link_hpargs) in
-    (* let _ = List.map (fun hp_def -> print_endline ("link_hpdefs: " ^ (Cprinter.string_of_hprel_def hp_def))) link_hpdefs in *)
     let link_hp_defs = List.map (fun hpdef ->
         let fs = List.fold_left (fun ls (_, f_opt) ->
             match f_opt with
@@ -2949,7 +2942,6 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         in
         Cformula.mk_hp_rel_def1 hpdef.Cformula.hprel_def_kind hpdef.Cformula.hprel_def_hrel [(f,hpdef.Cformula.hprel_def_guard)]) link_hpdefs
     in
-    (* let _ = List.map (fun hp_def -> print_endline ("link_hp_defs: " ^ (Cprinter.string_of_hp_rel_def hp_def))) link_hp_defs in *)
     (cl_sel_hps@(List.map fst link_hpargs), hpdefs@link_hpdefs,
     tupled_defs2, is.Cformula.is_hp_defs@link_hp_defs)
   in
@@ -2963,7 +2955,6 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
     (fst_is.Cformula.is_post_hps,(List.map fst fst_is.Cformula.is_dang_hpargs),(List.map fst fst_is.Cformula.is_link_hpargs)) (List.tl ls_is)
   in
   let unk_hps = if !Globals.pred_elim_dangling then dang_hps else link_hps in
-  (* let _ = print_endline ("ls_is length: " ^ (string_of_int (List.length ls_is))) in *)
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting unk_hps path_setting in
       let _ = DD.ninfo_hprint (add_str "   r2:" (pr_list_ln Cprinter.string_of_hprel_def)) r2 no_pos in
@@ -3087,12 +3078,6 @@ let infer_shapes_x iprog prog proc_name (constrs0: Cformula.hprel list) sel_hps 
     let ls_path_is = infer_shapes_divide iprog prog proc_name constrs1
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
     in
-    (* let _ = if !Globals.sae then *)
-    (* let (_, hp_rel_def) = infer_shapes_conquer iprog prog proc_name [List.hd ls_path_is] sel_hps in *)
-    (* let _ = List.map (fun hp_rel_def -> print_endline (Cprinter.string_of_hp_rel_def hp_rel_def)) hp_rel_def in *)
-    (* let (_, hp_rel_def) = infer_shapes_conquer iprog prog proc_name (List.tl ls_path_is) sel_hps in *)
-    (* let _ = List.map (fun hp_rel_def -> print_endline (Cprinter.string_of_hp_rel_def hp_rel_def)) hp_rel_def in () *)
-    (* else () in *)
     let r = if !Globals.sa_syn then
       match ls_path_is with
         | [] -> ([],[])

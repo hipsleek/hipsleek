@@ -1,8 +1,136 @@
-let partition_constrs_4_paths link_hpargs_w_path constrs0 =
-  let a = Sacore.partition_constrs_4_paths link_hpargs_w_path constrs0 in
+let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
+  let rec init body stmt cpl binding = match stmt with
+    | Cast.Label lab -> (* let _ = print_endline "label" in *) init body lab.Cast.exp_label_exp cpl binding
+    (* | Cast.CheckRef _ -> let _ = print_endline "check ref" in cpl *)
+    (* | Cast.Java _ -> let _ = print_endline "java" in cpl *)
+    (* | Cast.Assert _ -> let _ = print_endline "assert" in cpl *)
+    | Cast.Assign assi -> (* let _ = print_endline "assign" in *) init body assi.Cast.exp_assign_rhs cpl binding
+    (* | Cast.BConst _ -> let _ = print_endline "bconst" in cpl *)
+    (* | Cast.Bind _ -> let _ = print_endline "bind" in cpl *)
+    | Cast.Block bl -> (* let _ = print_endline "block" in *) init body bl.Cast.exp_block_body cpl binding
+    (* | Cast.Barrier _ -> let _ = print_endline "barrier" in cpl *)
+    | Cast.Cond co -> (* let _ = print_endline "cond" in *)
+      let (cpl1, binding1) = init body co.Cast.exp_cond_then_arm (List.map (fun (cp, cl) -> (1::cp, cl)) cpl) binding in
+      let (cpl2, binding2) = init body co.Cast.exp_cond_else_arm (List.map (fun (cp, cl) -> (2::cp, cl)) cpl) binding in
+      (cpl1@cpl2, binding1@binding2)
+    (* | Cast.Cast _ -> let _ = print_endline "cast" in cpl *)
+    (* | Cast.Catch _ -> let _ = print_endline "catch" in cpl *)
+    (* | Cast.Debug _ -> let _ = print_endline "debug" in cpl *)
+    (* | Cast.Dprint _ -> let _ = print_endline "dprint" in cpl *)
+    (* | Cast.FConst _ -> let _ = print_endline "fconst" in cpl *)
+    (* | Cast.ICall _ -> let _ = print_endline "icall" in cpl *)
+    (* | Cast.IConst _ -> let _ = print_endline "iconst" in cpl *)
+    (* | Cast.New _ -> let _ = print_endline "new" in cpl *)
+    (* | Cast.Null _ -> let _ = print_endline "null" in cpl *)
+    (* | Cast.EmptyArray _ -> let _ = print_endline "empty array" in cpl *)
+    (* | Cast.Print _ -> let _ = print_endline "print" in cpl *)
+    | Cast.SCall sc -> (* let _ = print_endline "scall" in *)
+      (* let cl1 = if ((String.compare sc.Cast.exp_scall_method_name "is_null___$node") = 0 or *)
+      (*         (String.compare sc.Cast.exp_scall_method_name "is_not_null___$node") = 0) then *)
+      (*   sc::cl else cl in *)
+      (* if sc.Cast.exp_scall_is_rec then (cp, cl1) else (cp, cl1) *)
+      (List.map (fun (cp, cl) -> (cp, sc::cl)) cpl, binding)
+    | Cast.Seq seq -> (* let _ = print_endline "seq" in *)
+      let (cpl1, binding1) = init body seq.Cast.exp_seq_exp1 cpl binding in
+      init body seq.Cast.exp_seq_exp2 cpl1 binding1
+    (* | Cast.This _ -> let _ = print_endline "this" in cpl *)
+    (* | Cast.Time _ -> let _ = print_endline "time" in cpl *)
+    (* | Cast.Var _ -> let _ = print_endline "var" in cpl *)
+    (* | Cast.VarDecl _ -> let _ = print_endline "var decl" in cpl *)
+    (* | Cast.Unfold _ -> let _ = print_endline "unfold" in cpl *)
+    (* | Cast.Unit _ -> let _ = print_endline "unit" in cpl *)
+    (* | Cast.While _ -> let _ = print_endline "while" in cpl *)
+    (* | Cast.Sharp _ -> let _ = print_endline "sharp" in cpl *)
+    (* | Cast.Try _ -> let _ = print_endline "try" in cpl *)
+    | _ -> (cpl, binding)
+  in
+  (* let rec loop cpl args = *)
+    (* let _ = List.map (fun (cp, cl) ->  *)
+    (*     let _ = List.map (fun c -> *)
+    (*         if c.Cast.exp_scall_is_rec *)
+    (*         then *)
+    (*           let values = ["not_null"] *)
+    (*           let _ = List.map (fun c -> *)
+    (*               let name = c.Cast.exp_scall_method_name in *)
+    (*               let paras = c.Cast.exp_scall_arguments in *)
+    (*               if ((String.compare name "is_null___$node") = 0 and () *)
+    (*           ) *)
+    (*           print_endline "rec" *)
+    (*         else ()) cl in *)
+    (*     (cp, cl)) cpl in *)
+   (*  cpl *)
+  (* in *)
+  (* let rec stop body cpl0 cpl1 args = *)
+  (*   if ((List.length cpl0) == (List.length cpl1)) then cpl0 *)
+  (*   else stop body cpl1 (loop cpl1 args) args  *)
+  (* in *)
+  let check_node name =
+    ((String.compare name "is_null___$node") = 0) or ((String.compare name "is_not_null___$node") = 0)
+  in
+  let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+        try ignore (Str.search_forward re s1 0); true
+        with Not_found -> false
+  in
+  let rec part stmt cpl args = match stmt with
+    | Cast.Label lab -> part lab.Cast.exp_label_exp cpl args
+    | Cast.Assign assi -> part assi.Cast.exp_assign_rhs cpl args
+    | Cast.Block bl -> part bl.Cast.exp_block_body cpl args
+    | Cast.Cond co ->
+          let (_, cl) = List.hd cpl in
+          let sc = List.hd cl in
+          if (List.mem "x" sc.Cast.exp_scall_arguments) then
+            let cpl1 = part co.Cast.exp_cond_then_arm (List.map (fun (cps, cl) -> (List.map (fun cp -> (1::cp)) cps, cl)) cpl) args in
+            let cpl2 = part co.Cast.exp_cond_else_arm (List.map (fun (cps, cl) -> (List.map (fun cp -> (2::cp)) cps, cl)) cpl) args in
+            cpl1@cpl2
+          else
+            List.map (fun (cps, cl) ->
+                let cps1 = List.map (fun cp -> (1::cp)) cps in
+                let cps2 = List.map (fun cp -> (2::cp)) cps in
+                let cps = cps1@cps2 in
+                (cps, cl)) cpl
+    | Cast.SCall sc ->
+          if (check_node sc.Cast.exp_scall_method_name) then
+            List.map (fun (cp, cl) -> (cp, sc::cl)) cpl
+          else cpl
+    | Cast.Seq seq ->
+          let cpl1 = part seq.Cast.exp_seq_exp1 cpl args in
+          part seq.Cast.exp_seq_exp2 cpl1 args
+    | _ -> cpl
+  in
+  let string_of_cond_path cp = List.fold_left (fun s i -> s ^ string_of_int(i) ^ ";") "" cp in
+  let _ = print_endline proc_name in
+  let proc = Cast.find_proc prog proc_name in
+  let _ = print_endline (Cprinter.string_of_proc_decl 100 proc) in
+  let cpl = match proc.Cast.proc_body with
+    | None -> [([], [])]
+    | Some body -> part body [([[0]], [])] proc.Cast.proc_args
+  in
+  (* let cpl = match proc.Cast.proc_body with *)
+  (*   | None -> [([], [])] *)
+  (*   | Some body -> *)
+  (*         let cpl0 = [([0], [])] in *)
+  (*         let (cpl1, binding) = init body body [([0], [])] [] in *)
+  (*         let cpl2 = stop body cpl0 cpl1 proc.Cast.proc_args in *)
+  (*         cpl1 *)
+  (* in *)
+  (* let _ = List.map (fun hprel -> print_endline ("hprel: " ^ (Cprinter.string_of_hprel_short hprel))) constrs0 in *)
+  (* let _ = List.map (fun (cps, _) -> let _ = print_endline "cond path: " in List.map (fun cp -> print_endline (string_of_cond_path cp)) cps) cpl in *)
+  (* let _ = List.map (fun (_, cl) -> let _ = print_endline "call list: " in List.map (fun cl -> print_endline (Cprinter.string_of_exp (Cast.SCall cl))) cl) cpl in *)
+  (* let _ = List.map (fun (il, _) -> let _ = print_endline "il: " in List.map (fun i -> print_string (string_of_int i)) il) link_hpargs_w_path in *)
+  let a = List.map (fun (cps, _) -> let filted_hprel = 
+    List.filter (fun hprel -> 
+        let cp_hprel = string_of_cond_path hprel.Cformula.hprel_path in
+        List.fold_left (fun b hprel1 -> b or (contains (string_of_cond_path hprel1) cp_hprel)) false cps
+    ) constrs0 in
+  (List.hd cps, [], filted_hprel)) cpl in
+  let _ = List.map (fun (_, _, hprel_list) -> let _ = print_endline "hprel group:" in List.map (fun hprel -> print_endline (Cprinter.string_of_hprel_short hprel)) hprel_list) a in
   a
+  (* let a = Sacore.partition_constrs_4_paths link_hpargs_w_path constrs0 in *)
+  (* a *)
 
-let subst_formula formula hprel_def =
+ let subst_formula formula hprel_def =
   let helper formula h_formula hprel_def =
     if (Cformula.get_node_name h_formula == Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
     then (

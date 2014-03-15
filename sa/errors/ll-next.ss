@@ -13,7 +13,7 @@ HeapPred H(node a).
      ensures G(x,res);//'
 {
   if (x==null) return null;
-  else return x.next;
+  return x.next;
 }
 
 /*
@@ -21,5 +21,5 @@ case x == null =>
   ensures res = null;
 case x != null =>
   requires x::node(val,next)
-  ensures x::node(val,next) * res = next;
+  ensures x::node(val,res);
 */
