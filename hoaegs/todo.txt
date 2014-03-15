@@ -10,6 +10,73 @@ Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or
  Formula: exists(i_1094:i_1038=1+i_1094 & v_1097=a_1041[i_1094])
 
 ====================================================================
+# ll-c1b.ss -tp z3 --smtinp --smtout
+
+Error below came from hip which declared dm wrongly.
+
+;Variables declarations
+(declare-fun dm () Int)
+(declare-fun aaa () (Array Int Int))
+(declare-fun i () Int)
+(declare-fun j () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (<= i j))
+(assert (dm aaa i j))
+;Negation of Consequence
+(assert (not (and (<= i j) (dm aaa i j))))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+(error "line 11 column 19: invalid function application, wrong number of arguments")
+(error "line 13 column 39: invalid function application, wrong number of arguments")
+sat
+>>> VERDICT: FAILED!
+
+# ll-c1a.slk -tp z3 --smtinp --smtout
+
+Below came from sleek. Here, dm is declared twice, and
+with the 2nd being the correct one with relevant axioms added.
+Why aren't axioms duplicated.
+Why wasn't axioms added when proving hip?
+
+;Variables declarations
+(declare-fun dm () Int)
+(declare-fun aaa () (Array Int Int))
+(declare-fun i () Int)
+(declare-fun j () Int)
+;Relations declarations
+(declare-fun dm ((Array Int Int) Int Int) Bool)
+;Axioms assertions
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+;Antecedent
+(assert (<= i j))
+(assert (dm aaa i j))
+;Negation of Consequence
+(assert (not (and (<= i j) (dm aaa i j))))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+unsat
+>>> VERDICT: UNSAT/VALID!
+
+
 ====================================================================
 ====================================================================
 ====================================================================
@@ -18,6 +85,7 @@ Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or
 ====================================================================
 ====================================================================
 ====================================================================
+
 ====================================================================
 ====================================================================
 ====================================================================
