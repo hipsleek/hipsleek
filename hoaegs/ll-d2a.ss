@@ -16,14 +16,15 @@ ll2<i,j,aaa> == self = null & i=j //& dm(aaa,i,j)
       & dm(aaa,i,i+1) 
      inv i<=j & dm(aaa,i,j);
 
-void foo(node x)
+node foo(node x)
  requires x::ll2<i,j,aaa>
- ensures x::ll2<i,j,aaa>;
+ ensures res::ll2<i,j,aaa> ;
 {
   if (x==null) { 
-    return;
+    return null;
   } else {
-    foo(x.next);
+    x.next = foo(x.next);
+    return x;
   }
 }
 

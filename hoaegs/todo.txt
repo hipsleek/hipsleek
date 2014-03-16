@@ -209,7 +209,32 @@ unsat
 >>> VERDICT: UNSAT/VALID!
 
 ====================================================================
+# ll-d2a.slk -tp z3
+
+checkentail x::ll2<i,j,aaa>@M&res=v & v=null & x=null 
+ |-  x::ll2<i,j,aaa>. 
+// valid
+
+checkentail x::ll2<i,j,aaa>@M&res=v & v=null & x=null 
+ |-  res::ll2<i,j,aaa>. 
+// fail
+
+checkentail x::ll2<i,j,aaa>@M&res=null & x=null 
+ |-  res::ll2<i,j,aaa>. 
+// valid
 ====================================================================
+# ll-d2b.slk -tp z3
+
+how come below fails for z3 but not omega?
+
+checkentail x::ll2<n>@M&res=null & x=null 
+ |-  res::ll2<n>. 
+// valid
+
+checkentail x::ll2<n>@M&res=v & v=null & x=null 
+ |-  res::ll2<n>. 
+// fail for -tp z3
+
 ====================================================================
 ====================================================================
 ====================================================================
