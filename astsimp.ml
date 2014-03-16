@@ -1401,7 +1401,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       Debug.tinfo_hprint (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
       let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
       Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
-	  let cviews = List.map (trans_view prog []) tmp_views in
+      (*relation and axiom should be transformed before views since view can use their info to cumpute/check inv*)
+      let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+      let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
+      let cviews = List.map (trans_view prog []) tmp_views in
       let cviews1 =
         (*todo: after elim useless, update methos specs. tmp: do not elim*)
         if (* !Globals.pred_elim_useless *) false then
@@ -1414,85 +1417,80 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
         else
           cviews1
       in
-	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
-      (* let rel_decls = String.concat "" (List.map (fun x -> x.Iast.rel_name) prog.I.prog_rel_decls) in *)
-      (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
-      let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+      (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps1, pure_chps = List.split pr_chps in
-          let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
-          let crels1 = crels0@pure_chps in
-	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
+      let chps1, pure_chps = List.split pr_chps in
+      let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
+      let crels1 = crels0@pure_chps in
       (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
-	  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
-	  (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
-	  (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
-          let _ = List.map (fun p ->
-              if p.I.proc_is_main then
-              I.detect_invoke prog p
-              else
-                let _ = p.I.proc_is_invoked <- false in
-                []
-          ) (prog.I.prog_proc_decls) in
-          let old_i_hp_decls = prog.I.prog_hp_decls in
-	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-          let iloop_hp_decls = List.filter (fun hpdecl ->
-              not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0)
-                  old_i_hp_decls)
-          ) prog.I.prog_hp_decls in
-          let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
-          let c_loophps, loop_pure_chps = List.split pr_loop_chps in
-          let chps = chps1@c_loophps in
-          let crels = crels1@loop_pure_chps in
-	  (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
-	  (* Start calling is_sat,imply,simplify from trans_proc *)
-	  let cprocs = !loop_procs @ cprocs1 in
-          (* let _ = print_newline () in *)
-          (* let _ = List.iter (fun p -> *)
-          (*     if p.C.proc_is_main then *)
-          (*     print_endline (p.C.proc_name ^ " : " ^ string_of_bool(p.C.proc_is_invoked)) *)
-          (*     else () *)
-          (* ) cprocs in *)
-	  (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
+      let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
+      (* let _ = print_string "trans_prog :: trans_data PASSED\n" in *)
+      (* let _ = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
+      let _ = List.map (fun p ->
+          if p.I.proc_is_main then
+            I.detect_invoke prog p
+          else
+            let _ = p.I.proc_is_invoked <- false in
+            []
+      ) (prog.I.prog_proc_decls) in
+      let old_i_hp_decls = prog.I.prog_hp_decls in
+      let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+      let iloop_hp_decls = List.filter (fun hpdecl ->
+          not (List.exists (fun hp -> String.compare hpdecl.I.hp_name hp.I.hp_name = 0)
+              old_i_hp_decls)
+      ) prog.I.prog_hp_decls in
+      let pr_loop_chps = List.map (trans_hp prog) iloop_hp_decls in 
+      let c_loophps, loop_pure_chps = List.split pr_loop_chps in
+      let chps = chps1@c_loophps in
+      let crels = crels1@loop_pure_chps in
+      (* let _ = print_string "trans_prog :: trans_proc PASSED\n" in *)
+      (* Start calling is_sat,imply,simplify from trans_proc *)
+      let cprocs = !loop_procs @ cprocs1 in
+      (* let _ = print_newline () in *)
+      (* let _ = List.iter (fun p -> *)
+      (*     if p.C.proc_is_main then *)
+      (*     print_endline (p.C.proc_name ^ " : " ^ string_of_bool(p.C.proc_is_invoked)) *)
+      (*     else () *)
+      (* ) cprocs in *)
+      (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
       (* let _ = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
       (* let _ = List.iter proc_one_lemma cmds; *)
-	  let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
-	  let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
-	  let cprog = {
-	      C.prog_data_decls = cdata;
-	      C.prog_view_decls = cviews2;
-	      C.prog_barrier_decls = bdecls;
-	      C.prog_logical_vars = log_vars;
-	      C.prog_rel_decls = crels; (* An Hoa *)
+      let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
+      let bdecls = List.map (trans_bdecl prog) prog.I.prog_barrier_decls in
+      let cprog = {
+	  C.prog_data_decls = cdata;
+	  C.prog_view_decls = cviews2;
+	  C.prog_barrier_decls = bdecls;
+	  C.prog_logical_vars = log_vars;
+	  C.prog_rel_decls = crels; (* An Hoa *)
           C.prog_hp_decls = chps;
           C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
-	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
-	      (*C.old_proc_decls = cprocs;*)
-	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
-	      (*C.prog_left_coercions = l2r_coers;*)
-	      (*C.prog_right_coercions = r2l_coers;*)} in
-	  let cprog1 = { cprog with			
-	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
+	  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
+	  (*C.old_proc_decls = cprocs;*)
+	  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
+	  (*C.prog_left_coercions = l2r_coers;*)
+	  (*C.prog_right_coercions = r2l_coers;*)} in
+      let cprog1 = { cprog with			
+	  (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
           C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
-	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
+	  C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
       (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
        ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
        ignore (C.build_hierarchy cprog1);
-	   let cprog1 = fill_base_case cprog1 in
+       let cprog1 = fill_base_case cprog1 in
        let cprog2 = sat_warnings cprog1 in   
-	   
-	   let cprog2 = Solver.normalize_perm_prog cprog2 in
-	   let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
+       let cprog2 = Solver.normalize_perm_prog cprog2 in
+       let cprog2 = if (!Globals.enable_case_inference) then sat_warnings (case_inference prog cprog2) else cprog2 in 
        let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
-           then pred_prune_inference cprog2 else cprog2 in
-	   (*let cprog3 = normalize_fracs cprog3 in*)
+       then pred_prune_inference cprog2 else cprog2 in
+       (*let cprog3 = normalize_fracs cprog3 in*)
        let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in   
        (*let cprog4 = (add_pre_to_cprog cprog3) in*)
        (* Termination: Mark recursive calls and call order of function
         * Normalize the term specification with call number and implicit
         * phase variable *)
-	   let c = (mark_rec_and_call_order cprog3) in
+       let c = (mark_rec_and_call_order cprog3) in
        let c = 
          if not !Globals.dis_term_chk 
          then Cast.add_term_nums_prog c 

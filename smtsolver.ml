@@ -741,6 +741,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
         | _ -> false
       ) ante 
     else ante in
+  let _ = Debug.ninfo_hprint (add_str "ante" !CP.print_formula) ante no_pos in
   let ante_info = collect_formula_info ante in
   let info = combine_formula_info ante_info conseq_info in
   let ante_fv = CP.fv ante in
@@ -1066,11 +1067,16 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     res
 
 (*let default_is_sat_timeout = 2.0*)
-let is_sat_ops pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+let is_sat_ops_x pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
 (* see imply *)
 let is_sat f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   smt_is_sat pr_w pr_s f sat_no Z3 z3_sat_timeout_limit
+
+let is_sat_ops pr_weak pr_strong f sat_no =
+  let pr1 = !CP.print_formula in
+  Debug.no_1 "z3.is_sat_ops" pr1 string_of_bool
+      (fun _ -> is_sat_ops_x pr_weak pr_strong f sat_no) f
 
 let is_sat_with_check (pe : CP.formula) sat_no : bool option = CP.do_with_check "" (fun x -> is_sat x sat_no) pe 
 
