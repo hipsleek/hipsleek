@@ -116,9 +116,98 @@ tp_imply@7 EXIT:solver:Z3: true
 unsat
 >>> VERDICT: UNSAT/VALID!
 
+====================================================================
+# hip ll-c1b.ss -tp z3 --smtinp --smtout
+
+z3 parser error
+
+;Variables declarations
+(declare-fun dm () Int)
+(declare-fun aaa () (Array Int Int))
+(declare-fun i () Int)
+(declare-fun j () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (<= i j))
+(assert (dm aaa i j))
+;Negation of Consequence
+(assert (not (and (<= i j) (dm aaa i j))))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+(error "line 11 column 19: invalid function application, wrong number of arguments")
+(error "line 13 column 39: invalid function application, wrong number of arguments")
+sat
+>>> VERDICT: FAILED!
 
 ====================================================================
-====================================================================
+# sleek ll-c1a.ss -tp z3 --smtinp --smtout
+
+3 problems
+ (i) repeated declaration
+ (ii) repeated axioms
+ (iii) why is an error becoming "unsat". this is unsound!
+
+(error "line 9 column 46: invalid declaration, function 'dm' (whith the given signature) already declared")
+
+>>> GENERATED SMT INPUT:
+
+;Variables declarations
+(declare-fun dm () Int)
+(declare-fun aaa () (Array Int Int))
+(declare-fun i () Int)
+(declare-fun j () Int)
+;Relations declarations
+(declare-fun dm ((Array Int Int) Int Int) Bool)
+(declare-fun dm ((Array Int Int) Int Int) Bool)
+;Axioms assertions
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a low high) (and (<= low l) (<= h high)))
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((a (Array Int Int)) (l Int) (h Int))
+	(=> (>= l h)
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+(assert (forall ((k Int) (a (Array Int Int)) (l Int) (h Int))
+	(=> (and (dm a l k) (dm a k h))
+	(dm a l h))))
+;Antecedent
+(assert (<= i j))
+(assert (dm aaa i j))
+;Negation of Consequence
+(assert (not (and (<= i j) (dm aaa i j))))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+(error "line 9 column 46: invalid declaration, function 'dm' (whith the given signature) already declared")
+unsat
+>>> VERDICT: UNSAT/VALID!
+
 ====================================================================
 ====================================================================
 ====================================================================
