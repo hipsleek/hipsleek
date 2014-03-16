@@ -322,8 +322,10 @@ let add_axiom h dir c =
     ) !global_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
+    (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) !global_rel_defs in
     let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
+    (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
     let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
     let op = match dir with 
@@ -338,6 +340,7 @@ let add_axiom h dir c =
       (if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *) 
     ) in
     (* Add 'h dir c' to the global axioms *)
+    (* let _ = print_endline ("cache_smt_input : " ^ cache_smt_input ^ "\n") in *)
     let new_axiom = {
       axiom_direction = dir;
       axiom_hypothesis = h;
