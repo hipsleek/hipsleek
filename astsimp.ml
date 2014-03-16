@@ -1419,7 +1419,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
           let chps1, pure_chps = List.split pr_chps in
-      let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
+          let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
           let crels1 = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
       (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
@@ -2065,9 +2065,13 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   (* Need to collect the type information before translating the formula *)
   let n_tl = gather_type_info_pure prog rdef.I.rel_formula n_tl in
   let crf = trans_pure_formula rdef.I.rel_formula n_tl in
-  {C.rel_name = rdef.I.rel_name; 
+  let crdef = {C.rel_name = rdef.I.rel_name; 
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
+  in
+  (* Forward the relation to the smt solver. *)
+  let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+  crdef
 
 and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -2108,9 +2112,13 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let chyp = trans_pure_formula adef.I.axiom_hypothesis n_tl in
   let ccln = trans_pure_formula adef.I.axiom_conclusion n_tl in
   (* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
-  { C.axiom_id=adef.I.axiom_id; 
+  let cadef = { C.axiom_id=adef.I.axiom_id; 
   C.axiom_hypothesis = chyp;
   C.axiom_conclusion = ccln; }
+  in
+  (* Forward the axiom to the smt solver. *)
+  let _ = Smtsolver.add_axiom chyp Smtsolver.IMPLIES ccln in
+  cadef
       (* END : trans_axiom *) 
 
 and rec_grp prog :ident list =
