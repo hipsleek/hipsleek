@@ -32,8 +32,6 @@ axiom mark(G,x,G1) ==> notreach(G,x,NR) & notreach(G1,x,NR).
 
 axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
 mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
-axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
-mark(G1,r,G2) & mark(G2,l,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
 */
 
 void mark(struct node *x)
@@ -49,8 +47,8 @@ else {
   l = x->left;
   r = x->right;
   x->val = 1;
-  mark(r);
   mark(l);
+  mark(r);
 }
 //@dprint;
 }
