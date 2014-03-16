@@ -1415,7 +1415,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           cviews1
       in
 	  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
-	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+      (* let rel_decls = String.concat "" (List.map (fun x -> x.Iast.rel_name) prog.I.prog_rel_decls) in *)
+      (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
+      let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
           let chps1, pure_chps = List.split pr_chps in

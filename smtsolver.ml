@@ -287,7 +287,7 @@ and collect_bformula_info b = match b with
 
 and combine_formula_info if1 if2 =
   { relations = List.append if1.relations if2.relations;
-    axioms = List.append if1.axioms if2.axioms; }
+    axioms = Gen.BList.remove_dups_eq (=) (List.append if1.axioms if2.axioms); }
 
 and compact_formula_info info =
   { relations = Gen.BList.remove_dups_eq (=) info.relations;
@@ -314,7 +314,7 @@ let add_axiom h dir c =
        2)   Add all other relations (appearing in h and c) to the list of related relations *)
     global_rel_defs := List.map (fun x ->
       if (List.mem x.rel_name related_relations) then
-        let rs = Gen.BList.remove_dups_eq (=) (x.related_rels @ related_relations) in
+        let rs = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 =0) (x.related_rels @ related_relations) in
         { x with 
           related_rels = rs;
           related_axioms = x.related_axioms @ [aindex]; }
@@ -446,8 +446,8 @@ let rec collect_output chn accumulated_output : string list =
   output
 
 let sat_type_from_string r input=
-  if (r = "sat") then Sat
-  else if (r = "unsat") then UnSat
+  if (String.compare r "sat" == 0) then Sat
+  else if (String.compare r "unsat" == 0) then UnSat
   else
     try
       let _ = Str.search_forward (Str.regexp "unexpected") r 0 in
@@ -457,10 +457,25 @@ let sat_type_from_string r input=
       | Not_found -> Unknown
 
 let iget_answer chn input=
+  let check_error_msg s=
+    try
+      (* let _ = print_endline ("s : " ^ s) in *)
+      let _ = Str.search_forward (Str.regexp "error ") s 0 in
+      true
+    with _ -> false
+  in
   let output = icollect_output chn [] in
   let solver_sat_result = List.nth output (List.length output - 1) in
+  let last_z3_sat_type = sat_type_from_string solver_sat_result input in
+  let st = if List.length output > 1 then
+    try
+      let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
+      if b then Sat else last_z3_sat_type
+    with _ -> Sat
+  else last_z3_sat_type
+  in
   { original_output_text = output;
-    sat_result = sat_type_from_string solver_sat_result input; }
+    sat_result =  st; }
 
 let get_answer chn input=
   let output = collect_output chn [] in
@@ -649,11 +664,15 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
   let used_rels = info.relations in
-  (* let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in *)
+  let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
+  (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
   let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
   (* Necessary axioms *)
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
-  let axiom_asserts = String.concat "" (List.map (fun ax_id -> let ax = List.nth !global_axiom_defs ax_id in ax.axiom_cache_smt_assert) info.axioms) in
+  let axiom_asserts = String.concat "" (List.map (fun ax_id ->
+      (* let _ = Debug.info_hprint (add_str " ax_id" (string_of_int))  ax_id no_pos in *)
+      let ax = List.nth !global_axiom_defs ax_id in
+      ax.axiom_cache_smt_assert) info.axioms) in
   (* Antecedent and consequence : split /\ into small asserts for easier management *)
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
@@ -1064,7 +1083,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
     flush stdout;
     failwith s
 
-let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2(* _loop *) "z3.is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**
