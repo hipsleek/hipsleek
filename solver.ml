@@ -13583,16 +13583,37 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                         process_one_h xs 
                   | ((coer,anode,res)::xs1) ->
                         (*for each triple, try to find a posible entailment*)
-                        let res,res_es,res_h,res_p,res_fl = process_one estate anode rest coer h p fl in
-                        if (res) (*we could find a result*)
-                        then
-                          (*restart and normalize the new estate*)
-                          let res_es = CF.clear_entailment_history_es2 (fun x -> None) res_es in
-                          let res_h2,res_p2,res_fl2 = helper res_es res_h res_p res_fl in
-                          res_h2,res_p2,res_fl2 (*TOCHECK: why res_fl2 != res_fl*)
-                        else
-                          (*otherwise, try the rest*)
-                          process_one_coerc xs1
+                        (************>>>***********)
+                        (*Some heuristic for beter performance of permission-based normalization
+                        #(permission-based nodes) >= #(self nodes of coer_lsh) *)
+                        let coer_lhs_vars = CF.collect_node_var_formula coer.coercion_head in
+                        let self_vars = List.filter (fun v -> (CP.name_of_spec_var v) = self) coer_lhs_vars in
+                        let will_normalize =
+                          if (List.length self_vars) >1 then
+                          (* Very likely to be a permission-based lemma*)
+                            let var = CF.get_node_var anode in
+                            let vars = MCP.find_closure_mix_formula var p in
+                            let rest_vars = CF.collect_node_var_h_formula rest in
+                            let same_vars = List.filter (fun v -> Gen.BList.mem_eq CP.eq_spec_var v vars) rest_vars in
+                            let same_vars = var::same_vars in
+                            if ((List.length self_vars) > (List.length same_vars)) then false (* #(permission-based nodes) < #(self nodes of coer_lsh) ==> cannot normalize. Try the next coercions*)
+                            else true (*able to normalize using the permission-based lemma*)
+                          else true (*Not a permission-based lemma -> try normalizing*)
+                        in
+                        if (not will_normalize) then process_one_coerc xs1 else
+                        (************<<<***********)
+                          begin
+                              let res,res_es,res_h,res_p,res_fl = process_one estate anode rest coer h p fl in
+                              if (res) (*we could find a result*)
+                              then
+                                (*restart and normalize the new estate*)
+                                let res_es = CF.clear_entailment_history_es2 (fun x -> None) res_es in
+                                let res_h2,res_p2,res_fl2 = helper res_es res_h res_p res_fl in
+                                res_h2,res_p2,res_fl2 (*TOCHECK: why res_fl2 != res_fl*)
+                              else
+                                (*otherwise, try the rest*)
+                                process_one_coerc xs1
+                          end
               in
               process_one_coerc lst
     in

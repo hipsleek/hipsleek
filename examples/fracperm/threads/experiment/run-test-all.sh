@@ -22,7 +22,7 @@ EXAMPLE=~/hg/para5-threads/sleekex/examples/fracperm/threads
 PARAHIP_ORG=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip-org
 FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
 
-ITERATIONS=10
+ITERATIONS=5
 LOG=run-all-logs_$(date +%b%d_%H%M)
 #log all run
 LOGRUN=$LOG-run.xls
