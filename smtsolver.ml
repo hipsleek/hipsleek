@@ -461,6 +461,7 @@ let iget_answer chn input=
     try
       (* let _ = print_endline ("s : " ^ s) in *)
       let _ = Str.search_forward (Str.regexp "error ") s 0 in
+      let _ = Error.report_warning { Error.error_loc = no_pos; Error.error_text =("Z3 error message: "^s)} in
       true
     with _ -> false
   in
@@ -470,8 +471,8 @@ let iget_answer chn input=
   let st = if List.length output > 1 then
     try
       let b = List.fold_left (fun old_b s -> old_b || (check_error_msg s)) false output in
-      if b then Sat else last_z3_sat_type
-    with _ -> Sat
+      (* if b then Sat else *) last_z3_sat_type
+    with _ -> last_z3_sat_type
   else last_z3_sat_type
   in
   { original_output_text = output;
