@@ -26,10 +26,22 @@ void foo(node x)
     //assume false;
     int t = x.val+1;
     x.val = t;
-    assume bbb[i]=t' & dm(bbb,i,i+1); //'
-    dprint;
+    //assume bbb[i]=t' & dm(bbb,i,i+1); //'
     foo(x.next);
+    dprint;
     //return x;
   }
 }
 
+/*
+void foo$node(  node x) rec
+static  :EBase exists (Expl)[](Impl)[i; j; aaa](ex)[]x::ll2<i,j,aaa>@M&
+        {FLOW,(24,25)=__norm}[]
+          EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                  EAssume 
+                    (exists i_42,j_43,bbb: x::ll2<i_42,j_43,bbb>@M&
+                    forall(k:(!((i<=k & k<j)) | bbb[k]=1+(aaa[k]))) & 
+                    i=i_42 & j=j_43&{FLOW,(24,25)=__norm})[]
+
+
+ */
