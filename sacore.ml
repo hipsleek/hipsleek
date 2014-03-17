@@ -3903,19 +3903,20 @@ let seg_split prog unk_hps ass_stk hpdef_stk hp_def=
             (List.fold_left (fun r (f,og) ->
                 r@(List.map (fun f1 -> (f1,og)) (CF.split_conjuncts f))) [] hp_def.CF.def_rhs) in
           match split_seg_opt with
-            | None -> [hp_def]
+            | None -> ([],[hp_def])
             | Some (n_rhs, gen_hp_def) ->
                   (*prove equiv*)
                   let n_hp_def = {hp_def with CF.def_rhs = [(n_rhs,None)]} in
-                  [n_hp_def;gen_hp_def]
+                  ([hp],[n_hp_def;gen_hp_def])
         end
-      | _ -> [hp_def]
+      | _ -> ([],[hp_def])
   else
-    [hp_def]
+    ([],[hp_def])
 
 let seg_split prog unk_hps ass_stk hpdef_stk hp_def=
   let pr1 = Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "SAC.seg_split" pr1 (pr_list_ln pr1)
+  let pr2 = pr_pair !CP.print_svl (pr_list_ln pr1) in
+  Debug.no_1 "SAC.seg_split" pr1 pr2
       (fun _ -> seg_split prog unk_hps ass_stk hpdef_stk hp_def)
       hp_def
 
@@ -3960,7 +3961,8 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   (*do seg split*)
   let _ = DD.ninfo_hprint (add_str "sing_hp_defs2: " ( pr_list_ln Cprinter.string_of_hp_rel_def)) sing_hp_defs2 no_pos in
   let sing_hp_defs3 = if not !Globals.pred_seg_split then
-    List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def)
+    List.fold_left (fun r def -> let split_hps, new_defs = (seg_split prog unk_hps ass_stk hpdef_stk def) in
+    r@new_defs
   ) [] sing_hp_defs2
   else  sing_hp_defs2
   in
@@ -3985,8 +3987,14 @@ let pred_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def l
   Debug.no_2 "pred_split_hp" !CP.print_svl pr1 pr4
       (fun _ _ -> pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk hp_defs)  unk_hps hp_defs
 
-
-let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list): (CF.hp_rel_def list) =
+(*
+ return a triples
+  - new hp_defs
+  - splited_hps (to remove them on the hpdefs)
+  - split_hp_defs (to transform them to hpdefs)
+*)
+let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def list):
+      (CF.hp_rel_def list * CP.spec_var list * CF.hp_rel_def list) =
   let sing_hp_defs, tupled_hp_defs, tupled_hps = List.fold_left (fun (s_hpdefs, t_hpdefs, t_hps)  hp_def->
       match hp_def.CF.def_cat with
         | CP.HPRelDefn _ -> (s_hpdefs@[hp_def], t_hpdefs, t_hps)
@@ -4009,9 +4017,15 @@ let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_d
   let sing_hp_defs1, sing_hp_def1b = List.partition (fun def ->
       let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] def.CF.def_rhs in
       if List.length fs < 1 then false else true) sing_hp_defs1a in
-  let sing_hp_defs2 = List.fold_left (fun r def -> r@(seg_split prog unk_hps ass_stk hpdef_stk def)
-  ) [] sing_hp_defs1 in
-  (sing_hp_defs2@sing_hp_def1b@tupled_hp_defs1)
+  let sing_hp_defs2, splited_hps, split_hp_defs = List.fold_left (fun (acc_hp_defs, acc_split_hps, split_hp_defs) def ->
+      let split_hps, new_defs = (seg_split prog unk_hps ass_stk hpdef_stk def) in
+      let new_split_hp_defs = match split_hps with
+        | [] -> split_hp_defs
+        | _ -> split_hp_defs@new_defs
+      in
+      (acc_hp_defs@new_defs , acc_split_hps@split_hps, new_split_hp_defs)
+  ) ([],[],[]) sing_hp_defs1 in
+  (sing_hp_defs2@sing_hp_def1b@tupled_hp_defs1,splited_hps, split_hp_defs)
 
 (*=============**************************================*)
        (*=============END PRED SPLIT================*)

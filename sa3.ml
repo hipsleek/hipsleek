@@ -2985,14 +2985,34 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else
     (n_all_hp_defs0b, n_cmb_defs0)
   in
-  let n_all_hp_defs1 = if !Globals.pred_seg_split then
-      Sacore.pred_seg_split_hp iprog prog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk n_all_hp_defs1a
-    else n_all_hp_defs1a in
+  let n_cmb_defs, n_all_hp_defs1 = if !Globals.pred_seg_split then
+    let new_hp_defs, splited_hps, split_hp_defs = Sacore.pred_seg_split_hp iprog prog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk n_all_hp_defs1a in
+    let n_cmb_defs0 = if splited_hps = [] then n_cmb_defs
+    else
+      (*remove hpdefs of splited_hps*)
+      let n_cmb_defs0a = List.filter (fun hpdef ->
+          match hpdef.CF.hprel_def_kind with
+            | CP.HPRelDefn (hp,_,_) -> not (CP.mem_svl hp splited_hps)
+            | _ -> true
+      ) n_cmb_defs in
+      (*transform split_hp_defs to split_hpdefs*)
+      let split_hpdefs = List.map (fun hp_def ->
+      {CF.hprel_def_kind = hp_def.CF.def_cat;
+      CF.hprel_def_hrel = hp_def.CF.def_lhs;
+      CF.hprel_def_guard = None;
+      CF.hprel_def_body = List.map (fun (f,_) -> ([],Some f)) hp_def.CF.def_rhs;
+      CF.hprel_def_body_lib = None;
+      }
+      ) split_hp_defs in
+      (n_cmb_defs0a@split_hpdefs)
+    in
+    (n_cmb_defs0, new_hp_defs)
+    else n_cmb_defs,n_all_hp_defs1a in
   (*reuse: check equivalent form - substitute*)
   let n_cmb_defs1, n_all_hp_defs2 = (* Sautil.reuse_equiv_hpdefs prog *) (n_cmb_defs, n_all_hp_defs1) in
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
-    let lib_matching = match_hps_views iprog prog cl_sel_hps1 n_all_hp_defs1
+    let lib_matching = match_hps_views iprog prog cl_sel_hps1 n_all_hp_defs2
       (List.filter (fun vdcl -> vdcl.CA.view_kind == CA.View_NORM) prog.CA.prog_view_decls) in
     (* let _ = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
     (* let _ =  DD.info_pprint (" matching: " ^ *)

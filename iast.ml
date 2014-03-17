@@ -1136,7 +1136,7 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x body_opt args0 ret pos=
+let genESpec_x pname body_opt args0 ret pos=
   (*keep pointers only*)
   let args = List.filter (fun p -> match p.param_type with
     | Named _ -> true
@@ -1165,7 +1165,7 @@ let genESpec_x body_opt args0 ret pos=
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
     in
-    let _ = Debug.info_hprint (add_str "generate unknown predicate for Pre synthesis" !print_hp_decl) hp_pre_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname) !print_hp_decl) hp_pre_decl no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1191,7 +1191,7 @@ let genESpec_x body_opt args0 ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.info_hprint (add_str "generate unknown predicate for Post Synthesis" !print_hp_decl) hp_post_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post Synthesis of " ^ pname) !print_hp_decl) hp_post_decl no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1220,11 +1220,11 @@ let genESpec_x body_opt args0 ret pos=
         F.formula_inf_pos = pos;
     }, [hp_pre_decl;hp_post_decl])
 
-let genESpec body_opt args ret pos=
+let genESpec pname body_opt args ret pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
   Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
-      (fun _ _ -> genESpec_x body_opt args ret pos) args ret
+      (fun _ _ -> genESpec_x pname body_opt args ret pos) args ret
 
 
 let genESpec_wNI body_header body_opt args ret pos=
@@ -1237,13 +1237,13 @@ let genESpec_wNI body_header body_opt args ret pos=
   let ss, n_hp_dcls =
     match body_header.proc_static_specs with
       | F.EList [] ->
-          let ss, hps = genESpec body_opt args ret pos in
+          let ss, hps = genESpec body_header.proc_mingled_name body_opt args ret pos in
           let _ = print_gen_spec ss hps in
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
           (ss,hps)
       | _ ->
             let _ = if !Globals.sags then
-              let ss, hps = genESpec body_opt args ret pos in
+              let ss, hps = genESpec body_header.proc_mingled_name body_opt args ret pos in
               let _ = print_gen_spec ss hps in
               ()
             else ()

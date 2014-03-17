@@ -1571,7 +1571,7 @@ perform another inference step?
  inferred hprel: [// Sleek_Entail(1)
 H1(y) --> emp&y=null]
 ======================================================================
-# gnode-deb.c
+# gnode-deb.c bugs/inc.c
 
 
 why x = (86, ):cast_int_to_GNode(tmp);? in pip
@@ -1606,6 +1606,9 @@ def_subst_fix causes loop.
 should topo sort and handle mutual rec.
 
 ======================================================================
+#g_list_app.c g_list_con.c g_list_list_insb.c
+
+depend on relational specs of g_list_last
 
 # ll-prepend.ss
 
@@ -1616,6 +1619,15 @@ expect:
  G(x,res) ::= H(x) * res::node<d',x>@M]
 
 ======================================================================
+# next.c
+
+[ HP_18(x) ::= x::node<key,DP>@M,
+ GP_19(x,res) ::= x::node<key,res>@M]
+
+===>
+HP_18(x) ::= x::node<key,DP>@M,
+ GP_19(x,res) ::= x::node<key,res>@M & res = DP
+
 ======================================================================
 ======================================================================
 ======================================================================
