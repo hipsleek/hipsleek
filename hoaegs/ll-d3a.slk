@@ -17,8 +17,8 @@ pred ll2<i,j,aaa> == self = null & i=j //& dm(aaa,i,j)
      inv i<=j & dm(aaa,i,j).
 
 checkentail
-  x::node<v,q>*q::ll2<i+1,j,bbb> 
-  & forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1)
+  x::node<v,q>
+  * q::ll2<i+1,j,bbb> & forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1)
   & v=aaa[i]+1 & dm(aaa,i,i+1)
   //& bbb[i]=v & dm(bbb,i,i+1) // missing ctr
   |- x::ll2<i,j,bbb>  & forall(k:!(i<=k<j)|bbb[k]=aaa[k]+1)

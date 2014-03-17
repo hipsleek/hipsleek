@@ -18,13 +18,15 @@ ll2<i,j,aaa> == self = null & i=j //& dm(aaa,i,j)
 
 node foo(node x)
  requires x::ll2<i,j,aaa>
- ensures res::ll2<i,j,aaa> ;
+ ensures  x::ll2<i,j,aaa> * res::ll2<i,j,aaa>  ;
 {
   if (x==null) { 
     return null;
   } else {
-    x.next = foo(x.next);
-    return x;
+    node y = new node();
+    y.val = x.val;
+    y.next = foo(x.next);
+    return y;
   }
 }
 

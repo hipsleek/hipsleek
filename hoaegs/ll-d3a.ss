@@ -27,7 +27,7 @@ void foo(node x)
     int t = x.val+1;
     x.val = t;
     assume bbb[i]=t' & dm(bbb,i,i+1); //'
-      dprint;
+    dprint;
     foo(x.next);
     //return x;
   }
