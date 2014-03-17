@@ -225,37 +225,10 @@ let get_case struc_formula prog args hprel_defs =
           | _ -> true
     ) case_list_list1
   in
-  (* let rec filter case args = *)
-  (*   match case with *)
-  (*     | Cpure.And(f1, f2, pos) -> Cpure.mkAnd (filter f1 args) (filter f2 args) pos *)
-  (*     | Cpure.Or(f1, f2, label, pos) -> Cpure.mkOr (filter f1 args) (filter f2 args) label pos *)
-  (*     | Cpure.BForm(bf, label) -> ( *)
-  (*           let vars = Cpure.fv case in *)
-  (*           let is_contains = List.fold_left (fun res arg -> res or (Cpure.mem_svl1 arg vars)) false args in *)
-  (*           if is_contains then case else Cpure.mkPure (Cpure.mkEq (Cpure.mkIConst 0 Globals.no_pos) (Cpure.mkIConst 0 Globals.no_pos) Globals.no_pos) *)
-  (*       ) *)
-  (*     | _ -> raise (Failure "fail filter") *)
-  (* in *)
   let case0 = helper struc_formula prog in
   let case1 = Solver.normalize_to_CNF case0 Globals.no_pos in
+  (* let _ = List.map (fun arg -> print_endline (Cprinter.string_of_spec_var arg)) args in *)
   Cpure.remove_dup_constraints case1
-  (* let _ = print_endline (Cprinter.string_of_pure_formula case1) in *)
-  (* let case_list_list = split_case case1 in *)
-  (* let filtered_case_list_list = filter_case case_list_list args in *)
-  (* let case2 = match filtered_case_list_list with *)
-  (*   | [] -> Cpure.mkTrue Globals.no_pos *)
-  (*   | hd::tl -> ( *)
-  (*         let first_or = List.fold_left (fun f1 f2 -> Cpure.mkOr f1 f2 None Globals.no_pos) (List.hd hd) (List.tl hd) in *)
-  (*         List.fold_left (fun f1 fl -> *)
-  (*             let f2 = List.fold_left (fun f11 f12 -> Cpure.mkOr f11 f12 None Globals.no_pos) (List.hd fl) (List.tl fl) in *)
-  (*             Cpure.mkAnd f1 f2 Globals.no_pos) first_or tl *)
-  (*     ) *)
-  (* in *)
-  (* (\* let case10 = filter case1 args in *\) *)
-  (* case2 *)
-
-(* let group_paths1 grouped_hprel_defs = *)
-(*   let _ = print_endline "group_paths1" in grouped_hprel_defs *)
 
 let group_paths hprel_defs =
   let rec helper hprel_defs new_hprel_defs =
@@ -297,14 +270,7 @@ let rec group_cases pf_sf_l =
           (pf1, Cformula.mkEList_flatten sfl)::(group_cases (List.filter (fun (pf, sf) -> not (is_eq pf pf1)) tl))
       )
 
-let check_cases cases specs = (* true *)
-  (* if ((List.length cases) == 1)  *)
-  (* then false *)
-  (* else ( *)
-  (*     let _ = print_endline "abc" in *)
-  (*     let uni_case = List.fold_left (fun uc c -> Cpure.mkOr uc c None Globals.no_pos) (List.hd cases) (List.tl cases) in *)
-  (*     not (Tpdispatcher.is_sat 100 (Cpure.mkNot uni_case None Globals.no_pos) "check universe" "") *)
-  (* ) *)
+let check_cases cases specs =
   let rec helper pure_formula =
     let list_conjs = Cpure.split_conjunctions pure_formula in
     let filtered_list_conjs = List.filter (fun pf -> Tpdispatcher.is_sat 100 (Cpure.mkNot pf None Globals.no_pos) "check true conjs" "") list_conjs in
@@ -360,12 +326,12 @@ let create_specs hprel_defs prog proc_name =
   let proc = try List.find (fun proc -> proc.Cast.proc_name = proc_name) (Cast.list_of_procs prog) with
     | Not_found -> raise (Failure "fail proc name")
   in
-  let partition_hprel_defs = partition_paths hprel_defs prog in
-  if (List.length partition_hprel_defs = 1)
+  if (List.length (List.hd hprel_defs).Cformula.hprel_def_body = 1)
   then
     let _ = print_endline "\n*************************************" in
     ()
   else
+    let partition_hprel_defs = partition_paths hprel_defs prog in
     let grouped_hprel_defs = group_paths partition_hprel_defs in
     (* let _ = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) grouped_hprel_defs in *)
     (* let grouped_hprel_defs = *)
@@ -390,7 +356,8 @@ let create_specs hprel_defs prog proc_name =
     (* } *)
     (* else *)
     (* Cformula.mkEList_flatten specs *)
-    let (new_cases, new_specs) = check_cases cases specs in
+    (* let (new_cases, new_specs) = check_cases cases specs in *)
+    let (new_cases, new_specs) = (cases, specs) in
     let final_spec = Cformula.ECase {
         Cformula.formula_case_branches = group_cases (List.combine new_cases new_specs);
         Cformula.formula_case_pos = Globals.no_pos
