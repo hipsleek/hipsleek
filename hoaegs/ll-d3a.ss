@@ -16,15 +16,20 @@ ll2<i,j,aaa> == self = null & i=j //& dm(aaa,i,j)
       & dm(aaa,i,i+1) 
      inv i<=j & dm(aaa,i,j);
 
-node foo(node x)
+void foo(node x)
  requires x::ll2<i,j,aaa>
- ensures res::ll2<i,j,aaa> ;
+ ensures x::ll2<i,j,bbb> & forall(k:!(i<=k<j)|bbb[k]=aaa[k]+1) ;
 {
   if (x==null) { 
-    return null;
+    return;
   } else {
-    x.next = foo(x.next);
-    return x;
+    //assume false;
+    int t = x.val+1;
+    x.val = t;
+    assume bbb[i]=t' & dm(bbb,i,i+1); //'
+      dprint;
+    foo(x.next);
+    //return x;
   }
 }
 

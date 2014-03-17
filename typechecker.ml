@@ -1384,9 +1384,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         in
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
-                        let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in
+                        (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
-                        let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in
+                        (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
                         let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                         (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                         (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
