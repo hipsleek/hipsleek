@@ -228,7 +228,13 @@ let get_case struc_formula prog args hprel_defs =
   let case0 = helper struc_formula prog in
   let case1 = Solver.normalize_to_CNF case0 Globals.no_pos in
   (* let _ = List.map (fun arg -> print_endline (Cprinter.string_of_spec_var arg)) args in *)
-  Cpure.remove_dup_constraints case1
+  let case2 = Cpure.remove_dup_constraints case1 (* need more *) in
+  match case2 with
+    | Cpure.And (f1, f2, _) ->
+          let sv1 = Cpure.fv f1 in
+          let sv2 = Cpure.fv f2 in
+          if (List.fold_left (fun b arg -> b or (List.mem arg sv1)) false args) then f1 else f2
+    | _ -> case2
 
 let group_paths hprel_defs =
   let rec helper hprel_defs new_hprel_defs =
@@ -326,7 +332,7 @@ let create_specs hprel_defs prog proc_name =
   let proc = try List.find (fun proc -> proc.Cast.proc_name = proc_name) (Cast.list_of_procs prog) with
     | Not_found -> raise (Failure "fail proc name")
   in
-  if (List.length (List.hd hprel_defs).Cformula.hprel_def_body = 1)
+  if (List.fold_left (fun b hprel_def -> b && (List.length hprel_def.Cformula.hprel_def_body = 1)) true hprel_defs)
   then
     let _ = print_endline "\n*************************************" in
     ()

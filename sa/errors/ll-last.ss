@@ -15,25 +15,25 @@ HeapPred H(node a).
   requires H(x)
      ensures G(x,res);//'
 {
-  /* if (x != null) */
-  /*   { */
-  /*     while (x.next != null) */
-  /*       infer[H1,G1] */
-  /*         requires H1(x) */
-  /*         ensures G1(x,x');//' */
-  /*       { */
-  /*         x = x.next; */
-  /*       } */
-  /*   } */
-  /* return x; */
-  if (x == null)
-    return null;
-  else if (x.next == null)
-    return x;
-  else if (x.next.next == null)
-    return x.next;
-  else
-    return get_last(x.next.next);
+  if (x != null)
+    {
+      while (x.next != null)
+        infer[H1,G1]
+          requires H1(x)
+          ensures G1(x,x');//'
+        {
+          x = x.next;
+        }
+    }
+  return x;
+  /* if (x == null) */
+  /*   return null; */
+  /* else if (x.next == null) */
+  /*   return x; */
+  /* else if (x.next.next == null) */
+  /*   return x.next; */
+  /* else */
+  /*   return get_last(x.next.next); */
 }
 /* else if (x.next == null) return x; */
 /*   else return get_last(x.next); */
