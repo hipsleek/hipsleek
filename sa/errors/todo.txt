@@ -26,6 +26,15 @@ tree-rem
 =====================================================================
 #alias.ss
 
+GOT
+
+ case {
+   (tmp!=null | tmp=null) ->
+     requires tmp::node<val,next>@M * HP_930(next) & true || emp & tmp=null
+     ensures HP_930(res) * x::node<val,res>@M & true || emp & x=null & res=null;;
+   }
+
+==============>
 /* EXPEXTED
 case x == null =>
   ensures res = null;
