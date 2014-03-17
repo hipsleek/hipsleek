@@ -2802,25 +2802,25 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
         in
         {is2 with CF.is_hp_defs = hp_defs2}
       in
-      is3
-      (*unfold view, if it is not rec*)
-      (* let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in *)
-      (* let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in *)
-      (* let hp_defs4 = List.map (fun def -> *)
-      (*       match def.CF.def_cat with *)
-      (*         | CP.HPRelDefn (hp, r, args) -> *)
-      (*               if CP.mem_svl hp post_hps then *)
-      (*               let n_rhs = List.map (fun (f, og) -> *)
-      (*                   helper f, og) def.CF.def_rhs in *)
-      (*               let n_def = {def with CF.def_rhs = n_rhs} in *)
-      (*               n_def *)
-      (*               else def *)
-      (*         | _ -> def *)
-      (*   ) is3.CF.is_hp_defs *)
-      (* in *)
-      (* let is4 = {is3 with CF.is_hp_defs = hp_defs4 } in *)
+      (* is3 *)
+      (* unfold view, if it is not rec *)
+      let unfold_fnc f sv = Solver.unfold_nth 45 (prog, None) f sv true 0 no_pos in
+      let helper f = Cfutil.unfold_non_rec_views prog unfold_fnc (Cast.is_rec_view_def prog) f in
+      let hp_defs4 = List.map (fun def ->
+            match def.CF.def_cat with
+              | CP.HPRelDefn (hp, r, args) ->
+                    if CP.mem_svl hp post_hps then
+                    let n_rhs = List.map (fun (f, og) ->
+                        helper f, og) def.CF.def_rhs in
+                    let n_def = {def with CF.def_rhs = n_rhs} in
+                    n_def
+                    else def
+              | _ -> def
+        ) is3.CF.is_hp_defs
+      in
+      let is4 = {is3 with CF.is_hp_defs = hp_defs4 } in
       (* let _ = print_endline ("is4: " ^ (Cprinter.string_of_infer_state_short is4)) in *)
-      (* is4 *)
+      is4
     else
       (* let _ =  print_endline (Cformula.string_of_cond_path is0.Cformula.is_cond_path) in *)
       is0
@@ -3078,6 +3078,7 @@ let infer_shapes_x iprog prog proc_name (constrs0: Cformula.hprel list) sel_hps 
     let ls_path_is = infer_shapes_divide iprog prog proc_name constrs1
       callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang
     in
+    (* let _ = List.map (fun is -> print_endline (Cprinter.string_of_infer_state_short is)) ls_path_is in *)
     let r = if !Globals.sa_syn then
       match ls_path_is with
         | [] -> ([],[])

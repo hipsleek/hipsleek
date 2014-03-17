@@ -6,33 +6,53 @@ data node {
 HeapPred H(node a, node b).
   HeapPred G(node a, node b, node c).
 
-node append(node x, node y)
+node get_last(node x)
+{
+  if (x != null)
+    {
+      while (x.next != null)
+        {
+          x = x.next;
+        }
+    }
+  return x;
+}
+
+node append(node x, int d)
   infer[H,G]
   requires H(x,y)
      ensures G(x,y,res);
-
 {
-  if (x == null)
-    return y;
-  else if (x.next == null)
+  node new_list = new node(d, null);
+  if (x != null)
     {
-      x.next = y;
+      node last = get_last(x);
+      last.next = new_list;
       return x;
     }
   else
-    {
-      x.next = append(x.next, y);
-      return x;
-    }
+    return new_list;
 }
 
 /*
-H'(x) := x::node(val,next) & next = null \/ x::node(val,next) * H'(next) & next != null
-G'(x,y,res) := x::node(val,y) & res = x \/ x::node(val,v) * G'(next,y,v) & res = x & next != null
+*************************************
+**************case specs*************
+*************************************
+ case {
+   x=null -> 
+     ensures res::node<d',v>@M & v=null & x1=null;; 
+   x!=null -> 
+     requires x::HP_12<> & x!=null
+     ensures new::node<d',v1>@M * x1::GP_1000<last> * last::node<val,new>@M & res=x1 & v1=null;; 
+   }
+*************************************
 
-case x == null =>
-  ensures res = y;
-case x != null =>
-  requires H'(x)
-  ensures G'(x,y,res);
+*************************************
+*******relational definition ********
+*************************************
+[ H(x,y) ::=(1;0) x::HP_12<>@M&x!=null \/ (2;0) emp&x=null,
+ G(x,y,res) ::=(1;0) x::GP_1000<last>@M * last::node<val,new>@M * new::node<d',v1>@M&res=x & 
+v1=null
+   \/ (2;0) res::node<d',v>@M&v=null & x=null]
+*************************************
 */

@@ -17,9 +17,22 @@ HeapPred H(node a).
 }
 
 /*
-case x == null =>
-  ensures res = null;
-case x != null =>
-  requires x::node(val,next)
-  ensures x::node(val,res);
+*************************************
+**************case specs*************
+*************************************
+ case {
+   x!=null -> 
+     requires x::node<val,DP>@M & true
+     ensures x1::node<val,res>@M & true;; 
+   x=null -> 
+     ensures emp & x1=null & res=null & res=x1;; 
+   }
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::=(1;0) emp&x=null \/ (2;0) x::node<val,DP>@M,
+ G(x,res) ::=(1;0) emp&x=null & res=null & res=x \/ (2;0) x::node<val,res>@M]
+*************************************
 */
