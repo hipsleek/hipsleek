@@ -239,13 +239,14 @@ let common_arguments = [
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+  ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--mem", Arg.Unit (fun _ -> 
     Globals.allow_mem := true; 
     Globals.allow_field_ann := true;),
   "Enable the use of Memory Specifications");
   ("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
   ("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
-  ("--allow_ramify", Arg.Unit (fun _ -> 
+  ("--allow-ramify", Arg.Unit (fun _ -> 
     Globals.allow_ramify := true; 
     Solver.unfold_duplicated_pointers := false;)
     , "Enable Coq based Ramification for Shared Structures");

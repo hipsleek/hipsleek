@@ -1010,7 +1010,7 @@ let imply ante conseq timeout =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   let f  = smt_imply pr_w pr_s ante conseq Z3 timeout in
   (*let () = print_endline ("Ante3 : "^ !print_pure ante) in*)
-  if (not f) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
+  if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
   else f
 
 let imply ante conseq timeout =
@@ -1019,7 +1019,7 @@ let imply ante conseq timeout =
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   let f = smt_imply pr_weak pr_strong ante conseq Z3 timeout in
   (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
-  if (not f) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
+  if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
   else f
 
 (*
