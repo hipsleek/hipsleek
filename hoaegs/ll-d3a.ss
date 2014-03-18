@@ -31,6 +31,7 @@ void foo(node x)
     foo(x.next);
     dprint;
     //return x;
+    dprint;	
   }
 }
 

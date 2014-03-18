@@ -51,6 +51,10 @@ let is_inter_deference_spec_var sv = match sv with
 	 *)
   (* | Array of typ  *)
 
+let is_arr_typ sv = match sv with
+  | SpecVar(Array _,_,_) -> true
+  | _ -> false
+
 let is_self_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = self
 

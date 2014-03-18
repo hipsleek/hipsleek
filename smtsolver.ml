@@ -991,21 +991,41 @@ and has_exists conseq =
   | CP.Exists _ -> true
   | _ -> false
 
+
+let instantiate_array_vars_before_imply pr_w pr_s ante conseq prover timeout =
+  let c_arr_vars = List.filter CP.is_arr_typ (CP.fv conseq) in
+  let a_arr_vars = List.filter CP.is_arr_typ (CP.fv ante) in
+  let rec helper l1 l2 = match l1 with
+    | [] -> []
+    | x::xs -> (List.map (fun c -> (x,c)) l2)@(helper xs l2) in
+  let all_pairs = helper a_arr_vars c_arr_vars in
+  let all_insts = List.map (fun (a,c) -> CP.mkEqVar a c no_pos) all_pairs in 
+  (*let () = print_endline ("Ante1 : "^ !print_pure ante) in*)
+  List.exists (fun p -> smt_imply pr_w pr_s (CP.mkAnd ante p no_pos) conseq prover timeout) all_insts
+  
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
   let (pr_w,pr_s) = CP.drop_complex_ops in
-  smt_imply pr_w pr_s ante conseq Z3 timeout
+  let f  = smt_imply pr_w pr_s ante conseq Z3 timeout in
+  (*let () = print_endline ("Ante3 : "^ !print_pure ante) in*)
+  if (not f) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
+  else f
 
 let imply ante conseq timeout =
   Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
 
-let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_strong ante conseq Z3 timeout
+let imply_ops pr_weak pr_strong ante conseq timeout = 
+  let f = smt_imply pr_weak pr_strong ante conseq Z3 timeout in
+  (*let () = print_endline ("Ante2 : "^ !print_pure ante) in*)
+  if (not f) then instantiate_array_vars_before_imply pr_weak pr_strong ante conseq Z3 timeout
+  else f
 
+(*
 let imply_ops pr_weak pr_strong ante conseq timeout = 
   Gen.Profiling.do_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
-
+*)
 
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq
