@@ -233,7 +233,15 @@ let get_case struc_formula prog args hprel_defs =
     | Cpure.And (f1, f2, _) ->
           let sv1 = Cpure.fv f1 in
           let sv2 = Cpure.fv f2 in
-          if (List.fold_left (fun b arg -> b or (List.mem arg sv1)) false args) then f1 else f2
+          if (List.fold_left (fun b arg -> b or (List.mem arg sv1)) false args)
+          then
+            if (List.fold_left (fun b arg -> b or (List.mem arg sv2)) false args)
+            then
+              case2
+            else
+              f1
+          else
+            f2
     | _ -> case2
 
 let group_paths hprel_defs =
