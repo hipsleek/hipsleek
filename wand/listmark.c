@@ -4,10 +4,10 @@ struct node *next;
 };
 
 /*@
-relation update(bag(node) L, node x, int v, node p, bag(node) L1).
-relation lookup(bag(node) L, node x, int v, node p).
+relation update(abstract L, node x, int v, node p, abstract L1).
+relation lookup(abstract L, node x, int v, node p).
 
-relation mark(bag(node) L,node x,bag(node) L1).
+relation mark(abstract L,node x,abstract L1).
 
 ll<L> == self = null
       or self::node<v,p> * p::ll<L> & lookup(L,self,v,p);

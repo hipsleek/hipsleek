@@ -116,6 +116,7 @@ module Make (Token : SleekTokenS)
    ("alln", ALLN);
    ("app", APPEND);
    ("AndList", ANDLIST);
+   ("abstract", ABSTRACT);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);

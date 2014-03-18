@@ -5,14 +5,14 @@ struct node *right;
 };
 
 /*@
-relation update(bag(node) T, node x, int d, node l, node r, bag(node) T1).
-relation lookup(bag(node) T, node x, int d, node l, node r).
+relation update(abstract T, node x, int d, node l, node r, abstract T1).
+relation lookup(abstract T, node x, int d, node l, node r).
 
 tree<T> == self = null
        or self::node<v,l,r> * l::tree<T> * r::tree<T>
 	& lookup(T,self,v,l,r);
 
-relation mark(bag(node) T,node x,bag(node) T1).
+relation mark(abstract T,node x,abstract T1).
 
 axiom true ==> mark(T,null,T).
 axiom lookup(T,x,1,l,r) ==> mark(T,x,T).

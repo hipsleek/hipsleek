@@ -2160,6 +2160,7 @@ non_array_type:
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG               -> bag_type
+   | `ABSTRACT          -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
    | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
