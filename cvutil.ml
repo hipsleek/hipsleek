@@ -968,7 +968,8 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
             | [] -> failwith "No Last Element in list"
             | [x] -> x
             | _ :: t -> last t in
-          let non_zero = if (List.length update_rel = 1)
+          let non_zero = 
+            if (List.length update_rel = 1)
             then let rel = List.hd update_rel in
                  let rel_vars = rel.rel_vars in
                  let r_sv = (List.hd rel_vars) in
@@ -982,6 +983,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
                  let rel_exps = List.map CP.conv_var_to_exp rel_vars in
                  let rel = CP.mkRel (CP.mkRel_sv rel.rel_name) rel_exps no_pos in
                  let up_rel = CP.subst st rel in
+                 (*let non_zero = CP.subst st non_zero in*)
                  CP.mkAnd non_zero up_rel no_pos
             else non_zero in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)

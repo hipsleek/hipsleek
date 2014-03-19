@@ -12293,8 +12293,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rl = List.hd gvl in
               let rl2 = List.hd (List.tl gvl) in
               let fl2 = List.hd (List.tl fvl) in
-              let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in
-              let gvl = fvl@[rl]@[rl2] in
+              (*let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in*)
+              let gvl = fvl@[rl]@[fl2] in
               let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else failwith "Ramification Lemma with different variables" in
@@ -12302,7 +12302,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
               let () = if not(f) then failwith "Ramification Lemma failed guard checking" else () in
               let new_lhs_h = Cformula.h_subst rho h in
-              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in
+(*              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in*)
+              let new_lhs_p = Mcpure.memo_subst rho lhs_p in
               let new_lhs_h = Cformula.join_star_conjunctions (new_lhs_h::rest_heap) in
               let new_lhs = Cformula.mkBase new_lhs_h new_lhs_p lhs_t lhs_fl lhs_a no_pos in
               let () = print_endline("LHS :"^Cprinter.string_of_formula_base lhs_b) in
