@@ -406,6 +406,8 @@ let set_tp tp_str =
     (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)	
   else if tp_str = "log" then
     (pure_tp := LOG; prover_str := "log"::!prover_str)
+  else if tp_str = "mathematica" then
+    (pure_tp := Mathematica; prover_str := "mathematica"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
