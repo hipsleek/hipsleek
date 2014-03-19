@@ -147,7 +147,18 @@ let op_div = "/"
 let op_max = "max" 
 let op_min = "min" 
 let op_union = "union" 
-let op_intersect = "intersect" 
+let op_intersect = "intersect"
+let op_abs = "abs"
+let op_sqrt = "sqrt"
+let op_pow = "pow"
+let op_sin = "sin"
+let op_cos = "cos"
+let op_tan = "tan"
+let op_cotan = "cotan"
+let op_arcsin = "arcsin"
+let op_arccos = "arccos"
+let op_arctan2 = "arctan2"
+let op_arccot = "arccot"
 let op_diff = "-" 
 let op_lt = if not (!print_html) then "<" else "&lt;"
 let op_lte = "<=" 
@@ -776,6 +787,17 @@ let rec pr_formula_exp (e:P.exp) =
     | P.TypeCast (ty, e1, l) ->
         fmt_string ("(" ^ (Globals.string_of_typ ty) ^ ")");
         pr_formula_exp e1;
+    | P.Abs (e, _) -> pr_fn_args op_abs pr_formula_exp [e]
+    | P.Sqrt (e, _) -> pr_fn_args op_sqrt pr_formula_exp [e]
+    | P.Pow (e1, e2, _) -> pr_fn_args op_pow pr_formula_exp [e1; e2]
+    | P.Sin (e, _) -> pr_fn_args op_sin pr_formula_exp [e]
+    | P.Cos (e, _) -> pr_fn_args op_cos pr_formula_exp [e]
+    | P.Tan (e, _) -> pr_fn_args op_tan pr_formula_exp [e]
+    | P.Cotan (e, _) -> pr_fn_args op_cotan pr_formula_exp [e]
+    | P.ArcSin (e, _) -> pr_fn_args op_arcsin pr_formula_exp [e]
+    | P.ArcCos (e, _) -> pr_fn_args op_arccos pr_formula_exp [e]
+    | P.ArcTan2 (e1, e2, _) -> pr_fn_args op_arctan2 pr_formula_exp [e1; e2]
+    | P.ArcCot (e, _) -> pr_fn_args op_arccot pr_formula_exp [e]
     | P.Bag (elist, l) 	-> 
         fmt_string ("{"); 
         pr_list_none pr_formula_exp elist;
@@ -3857,7 +3879,7 @@ let app_sv_print xs ys =
 
 (* HTML for operators *)
 let html_op_add = " + " 
-let html_op_sub = " - " 
+let html_op_sub = " - "
 let html_op_mult = " &sdot; " 
 let html_op_div = " &divide; " 
 let html_op_max = "<b>max</b>" 
@@ -3887,7 +3909,18 @@ let html_op_cons = " ::: "
 let html_op_in = " &isin; "
 let html_op_notin = " &notin; "
 let html_op_subset = " &sub; "
-let html_arrow = " --> " 
+let html_op_abs = " <b>abs</b>"
+let html_op_sqrt = " <b>sqrt</b>"
+let html_op_pow = " <b>pow</b>"
+let html_op_sin = " <b>sin</b>"
+let html_op_cos = " <b>cos</b>"
+let html_op_tan = " <b>tan</b>"
+let html_op_cotan = " <b>cotan</b>"
+let html_op_arcsin = " <b>arcsin</b>"
+let html_op_arccos = " <b>arccos</b>"
+let html_op_arctan2 = " <b>arctan2</b>"
+let html_op_arccot = " <b>arccot</b>"
+let html_arrow = " --> "
 
 (* Other characters *)
 let html_exist = " &exist; "
@@ -3936,6 +3969,17 @@ let rec html_of_formula_exp e =
           html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
     | P.TypeCast (ty, e1, l) ->
           "(" ^ (Globals.string_of_typ ty) ^ ")" ^ (html_of_formula_exp e1)
+    | P.Abs (e, _) -> String.concat html_op_abs (List.map html_of_formula_exp [e])
+    | P.Sqrt (e, _) -> String.concat html_op_sqrt (List.map html_of_formula_exp [e])
+    | P.Pow (e1, e2, _) -> String.concat html_op_pow (List.map html_of_formula_exp [e1; e2])
+    | P.Sin (e, _) -> String.concat html_op_sin (List.map html_of_formula_exp [e])
+    | P.Cos (e, _) -> String.concat html_op_cos (List.map html_of_formula_exp [e])
+    | P.Tan (e, _) -> String.concat html_op_tan (List.map html_of_formula_exp [e])
+    | P.Cotan (e, _) -> String.concat html_op_cotan (List.map html_of_formula_exp [e])
+    | P.ArcSin (e, _) -> String.concat html_op_arcsin (List.map html_of_formula_exp [e])
+    | P.ArcCos (e, _) -> String.concat html_op_arccos (List.map html_of_formula_exp [e])
+    | P.ArcTan2 (e1, e2, _) -> String.concat html_op_arctan2 (List.map html_of_formula_exp [e])
+    | P.ArcCot (e, _) -> String.concat html_op_arccot (List.map html_of_formula_exp [e])
     | P.Bag (elist, l) 	-> "{" ^ (String.concat "," (List.map html_of_formula_exp elist)) ^ "}"
     | P.BagUnion (args, l) -> 
 		let args = bin_op_to_list op_union_short exp_assoc_op e in

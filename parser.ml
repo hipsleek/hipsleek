@@ -1808,6 +1808,28 @@ cexp_w:
         apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+    | `ABS; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkAbs c (get_pos_camlp4 _loc 1)) c
+    | `SQRT; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkSqrt c (get_pos_camlp4 _loc 1)) c
+    | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+        apply_cexp_form2 (fun c1 c2 -> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+    | `SIN; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkSin c (get_pos_camlp4 _loc 1)) c
+    | `COS; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkCos c (get_pos_camlp4 _loc 1)) c
+    | `TAN; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkTan c (get_pos_camlp4 _loc 1)) c
+    | `COTAN; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkCotan c (get_pos_camlp4 _loc 1)) c
+    | `ARCSIN; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkArcSin c (get_pos_camlp4 _loc 1)) c
+    | `ARCCOS; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkArcCos c (get_pos_camlp4 _loc 1)) c
+    | `ARCTAN2; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+        apply_cexp_form2 (fun c1 c2 -> P.mkArcTan2 c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+    | `ARCCOT; `OPAREN; c=SELF; `CPAREN ->
+        apply_cexp_form1 (fun c -> P.mkArcCot c (get_pos_camlp4 _loc 1)) c
     ]
   | "pure_base"
     [ `TRUE -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))

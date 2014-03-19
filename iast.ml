@@ -1661,6 +1661,8 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
   | P.IConst _ | P.FConst _ | P.AConst _  | P.InfConst _ | P.Tsconst _ -> ([], [])
   | P.Add _ | P.Subtract _ | P.Mult _ | P.Div _ -> ([], [])
   | P.Max _ | P.Min _ | P.TypeCast _ -> ([], [])
+  | P.Abs _ | P.Sqrt _ | P.Pow _ | P.ArcCot _ | P.Sin _ | P.Cos _ | P.Tan _
+  | P.Cotan _ | P.ArcSin _ | P.ArcCos _ | P.ArcTan2 _ -> ([], [])
   | P.Bag _ | P.BagUnion _ | P.BagIntersect _ | P.BagDiff _ -> ([], [])
   | P.List _ | P.ListCons _ | P.ListHead _ | P.ListTail _ -> ([], [])
   | P.ListLength _ | P.ListAppend _ | P.ListReverse _ -> ([], [])

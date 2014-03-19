@@ -226,6 +226,17 @@ let rec string_of_formula_exp = function
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.TypeCast (ty, e1, l) -> "(" ^ (Globals.string_of_typ ty) ^ ")" ^ (string_of_formula_exp e1)
+  | P.Abs (e, _) -> "abs(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Sqrt (e, _) -> "sqrt(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Pow (e1, e2, _) -> "pow(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.Sin (e, _) -> "sin(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Cos (e, _) -> "cos(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Tan (e, _) -> "tan(" ^ (string_of_formula_exp e) ^ ")"
+  | P.Cotan (e, _) -> "cotan(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ArcSin (e, _) -> "arcsin(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ArcCos (e, _) -> "arccos(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ArcTan2 (e1, e2, _) -> "arctan2(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | P.ArcCot (e, _) -> "arccot(" ^ (string_of_formula_exp e) ^ ")"
   | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)

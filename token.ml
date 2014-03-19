@@ -68,6 +68,7 @@ type sleek_token =
   | INFINITY
   | VALIDATE
   | XPURE
+  | ABS | SQRT | POW | SIN | COS | TAN | COTAN | ARCSIN | ARCCOS | ARCTAN2 | ARCCOT
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
@@ -141,6 +142,9 @@ module Token = struct
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
+    | ABS -> "abs" | SQRT -> "sqrt" | POW -> "pow" | SIN -> "sin" | COS -> "cos"
+    | TAN -> "tan" | COTAN -> "cotan" | ARCSIN -> "arcsin" | ARCCOS -> "arccos"
+    | ARCTAN2 -> "arctan2" | ARCCOT -> "arccot"
 
 
   let print ppf x = pp_print_string ppf (to_string x)

@@ -14921,6 +14921,8 @@ let elim_prm e =
     | CP.Max _
     | CP.Min _
     | CP.TypeCast _
+    | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+    | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _
     | CP.Bag _ 
     | CP.BagUnion _
     | CP.BagIntersect _

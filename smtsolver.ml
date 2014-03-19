@@ -116,6 +116,9 @@ let rec smt_of_exp a =
   | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "( / " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   (* UNHANDLED *)
+  | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+  | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+      illegal_format ("z3.smt_of_exp: built-in math exp should not appear here")
   | CP.Bag ([], _) -> "0"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")

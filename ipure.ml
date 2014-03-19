@@ -245,6 +245,9 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   | TypeCast (_, a, _) -> afv a
+  | Abs (a, _) | Sqrt (a, _) | Sin (a, _) | Cos (a, _) | Tan (a, _)
+  | Cotan (a, _) | ArcSin (a, _) | ArcCos (a, _) | ArcCot (a, _) -> afv a
+  | Pow (a1, a2, _) | ArcTan2 (a1, a2, _) -> combine_avars a1 a2
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
@@ -338,6 +341,28 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkTypeCast t a pos = TypeCast (t, a, pos)
+
+and mkAbs a pos = Abs (a, pos)
+
+and mkSqrt a pos = Sqrt (a, pos)
+
+and mkPow a1 a2 pos = Pow (a1, a2, pos)
+
+and mkSin a pos = Sin (a, pos)
+
+and mkCos a pos = Cos (a, pos)
+
+and mkTan a pos = Tan (a, pos)
+
+and mkCotan a pos = Cotan (a, pos)
+
+and mkArcSin a pos = ArcSin (a, pos)
+
+and mkArcCos a pos = ArcCos (a, pos)
+
+and mkArcTan2 a1 a2 pos = ArcTan2 (a1, a2, pos)
+
+and mkArcCot a pos = ArcCot (a, pos)
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
@@ -570,6 +595,9 @@ and pos_of_exp (e : exp) = match e with
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
   | TypeCast (_, _, p) -> p
+  | Abs (_, p) | Sqrt (_, p) | Sin (_, p) | Cos (_, p) | Tan (_, p)
+  | Cotan (_, p) | ArcSin (_, p) | ArcCos (_, p) | ArcCot (_, p) -> p
+  | Pow (_, _, p) | ArcTan2 (_, _, p) -> p
   | Bag (_, p) -> p
   | BagUnion (_, p) -> p
   | BagIntersect (_, p) -> p
@@ -720,6 +748,17 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Max (a1, a2, pos) -> Max (e_apply_one p a1, e_apply_one p a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one p a1, e_apply_one p a2, pos)
   | TypeCast (ty, a1, pos) -> TypeCast (ty, e_apply_one p a1, pos)
+  | Abs (a, pos) -> Abs (e_apply_one p a, pos)
+  | Sqrt (a, pos) -> Sqrt (e_apply_one p a, pos)
+  | Pow (a1, a2, pos) -> Pow (e_apply_one p a1, e_apply_one p a2, pos)
+  | Sin (a, pos) -> Sin (e_apply_one p a, pos)
+  | Cos (a, pos) -> Cos (e_apply_one p a, pos)
+  | Tan (a, pos) -> Tan (e_apply_one p a, pos)
+  | Cotan (a, pos) -> Cotan (e_apply_one p a, pos)
+  | ArcSin (a, pos) -> ArcSin (e_apply_one p a, pos)
+  | ArcCos (a, pos) -> ArcCos (e_apply_one p a, pos)
+  | ArcTan2 (a1, a2, pos) -> ArcTan2 (e_apply_one p a1, e_apply_one p a2, pos)
+  | ArcCot (a, pos) -> ArcCot (e_apply_one p a, pos)
   | Bag (alist, pos) -> Bag ((e_apply_one_list p alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list p alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list p alist), pos)
@@ -893,6 +932,9 @@ and find_lexp_exp (e: exp) ls =
   | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | TypeCast (_, e1, _) -> find_lexp_exp e1 ls
+  | Abs (a, _) | Sqrt (a, _) | Sin (a, _) | Cos (a, _) | Tan (a, _) | Cotan (a, _)
+  | ArcSin (a, _) | ArcCos (a, _) | ArcCot (a, _) -> find_lexp_exp a ls
+  | Pow (a1, a2, _) | ArcTan2 (a1, a2, _) -> (find_lexp_exp a1 ls) @ (find_lexp_exp a2 ls)
   | Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
@@ -958,6 +1000,9 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | TypeCast (_, exp, _) -> contain_vars_exp exp
+  | Abs (a, _) | Sqrt (a, _) | Sin (a, _) | Cos (a, _) | Tan (a, _) | Cotan (a, _)
+  | ArcSin (a, _) | ArcCos (a, _) | ArcCot (a, _) -> contain_vars_exp a
+  | Pow (a1, a2, _) | ArcTan2 (a1, a2, _) -> (contain_vars_exp a1) || (contain_vars_exp a2)
   | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
@@ -1065,6 +1110,51 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | TypeCast (ty, e1, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       (TypeCast (ty, ne1, l), np1)
+  | Abs (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Abs (ne, l), np)
+  | Sqrt (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Sqrt (ne, l), np)
+  | Pow (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+      (Pow (ne1, ne2, l), r) 
+  | Sin (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Sin (ne, l), np)
+  | Cos (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Cos (ne, l), np)
+  | Tan (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Tan (ne, l), np)
+  | Cotan (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (Cotan (ne, l), np)
+  | ArcSin (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (ArcSin (ne, l), np)
+  | ArcCos (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (ArcCos (ne, l), np)
+  | ArcTan2 (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match (np1, np2) with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+      (ArcTan2 (ne1, ne2, l), r)
+  | ArcCot (e, l) ->
+      let ne, np = float_out_exp_min_max e in
+      (ArcCot (ne, l), np)
   (* bag expressions *)
   | Bag (le, l) ->
       let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
@@ -1427,6 +1517,8 @@ let rec typ_of_exp (e: exp) : typ =
                                  let ty2 = typ_of_exp ex2 in
                                  merge_types ty1 ty2
   | TypeCast (ty, ex1, _)     -> ty
+  | Abs _ | Sqrt _ | Pow _ | ArcCot _ | Sin _ | Cos _ | Tan _ | Cotan _
+  | ArcSin _ | ArcCos _ | ArcTan2 _ -> Globals.Float
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)

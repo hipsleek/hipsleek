@@ -497,7 +497,7 @@ and gather_type_info_exp_x a0 tlist et =
   | IP.FConst (_,pos) -> 
       let t = I.float_type in
       let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)      
+      (n_tl,n_typ)
   | IP.Bptriple ((pc,pt,pa), pos) ->
       let _ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
       let (new_et, n_tl) = fresh_tvar tlist in
@@ -543,6 +543,20 @@ and gather_type_info_exp_x a0 tlist et =
       let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
       let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
       (n_tl,t1)
+  | IP.Abs (a, pos) ->
+      let (new_et, n_tl) = fresh_tvar tlist in
+      let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
+      let (tmp1,tmp2)=nt in
+      let (n_tl1,t1) = gather_type_info_exp a n_tl new_et in
+      let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
+      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
+      (n_tl,t1)
+  | IP.Sqrt (_, pos) | IP.Pow (_, _, pos) | IP.Sin (_, pos)
+  | IP.Cos (_, pos) | IP.Tan (_, pos) | IP.Cotan (_, pos) | IP.ArcSin (_, pos)
+  | IP.ArcCos (_, pos) | IP.ArcTan2 (_, _, pos) | IP.ArcCot (_, pos) ->
+      let t = I.float_type in
+      let (n_tl,n_typ) = must_unify_expect t et tlist pos in
+      (n_tl,n_typ)
   | IP.BagDiff (a1,a2,pos) ->
       let (el_t, n_tl) = fresh_tvar tlist in
       let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 

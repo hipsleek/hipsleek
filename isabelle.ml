@@ -122,6 +122,9 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Max _
   | CP.Min _ -> failwith ("isabelle.isabelle_of_exp: min/max can never appear here")
   | CP.TypeCast _ -> failwith ("isabelle.isabelle_of_exp: TypeCast can never appear here")
+  | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+  | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+      failwith ("isabelle.isabelle_of_exp: built-in math exp should not appear here")
   | CP.Bag (elist, _) ->
       if !bag_flag then "{#"^ (isabelle_of_formula_exp_list elist) ^ "}"
       else "{"^ (isabelle_of_formula_exp_list elist) ^ "}"

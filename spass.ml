@@ -54,6 +54,9 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
   | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
+  | Cpure.Abs _ | Cpure.Sqrt _ | Cpure.Pow _ | Cpure.Sin _ | Cpure.Cos _ | Cpure.Tan _
+  | Cpure.Cotan _ | Cpure.ArcSin _ | Cpure.ArcCos _ | Cpure.ArcTan2 _ | Cpure.ArcCot _ ->
+      illegal_format "SPASS don't support built-in math expresion"
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -194,7 +197,10 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
   | Cpure.TypeCast _       -> illegal_format "SPASS don't support TypeCast expresion"
-    (* bag expressions *)
+  | Cpure.Abs _ | Cpure.Sqrt _ | Cpure.Pow _ | Cpure.Sin _ | Cpure.Cos _ | Cpure.Tan _
+  | Cpure.Cotan _ | Cpure.ArcSin _ | Cpure.ArcCos _ | Cpure.ArcTan2 _ | Cpure.ArcCot _ ->
+      illegal_format "SPASS don't support built-in math expresion"
+  (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
@@ -277,6 +283,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Max _
   | Cpure.Min _
   | Cpure.TypeCast _     -> false
+  | Cpure.Abs _ | Cpure.Sqrt _ | Cpure.Pow _ | Cpure.Sin _ | Cpure.Cos _ | Cpure.Tan _
+  | Cpure.Cotan _ | Cpure.ArcSin _ | Cpure.ArcCos _ | Cpure.ArcTan2 _ | Cpure.ArcCot _ -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _

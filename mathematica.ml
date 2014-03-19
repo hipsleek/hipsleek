@@ -310,6 +310,17 @@ let rec math_of_exp e0 : string=
       | _ -> failwith ("mathematica.math_of_exp: don't support type casting to '"
                        ^ (Globals.string_of_typ t) ^ "'")
     )
+  | CP.Abs (e, _) -> "Abs[" ^ (math_of_exp e) ^ "]" 
+  | CP.Sqrt (e, _) -> "Sqrt[" ^ (math_of_exp e) ^ "]"
+  | CP.Pow (e1, e2, _) -> "Power[" ^ (math_of_exp e1) ^ ", " ^ (math_of_exp e2) ^ "]"
+  | CP.Sin (e, _) -> "Sin[" ^ (math_of_exp e) ^ "]" 
+  | CP.Cos (e, _) -> "Cos[" ^ (math_of_exp e) ^ "]"
+  | CP.Tan (e, _) -> "Tan[" ^ (math_of_exp e) ^ "]"
+  | CP.Cotan (e, _) -> "Cotan[" ^ (math_of_exp e) ^ "]" 
+  | CP.ArcSin (e, _) -> "ArcSin[" ^ (math_of_exp e) ^ "]" 
+  | CP.ArcCos (e, _) -> "ArcCos[" ^ (math_of_exp e) ^ "]" 
+  | CP.ArcTan2 (e1, e2, _) -> "ArcTan[" ^ (math_of_exp e2) ^ ", " ^ (math_of_exp e1) ^ "]"
+  | CP.ArcCot (e, _) -> "ArcCot[" ^ (math_of_exp e) ^ "]"
   | CP.Max _
   | CP.Min _ -> failwith ("mathematica.math_of_exp: min/max can't appear here")
   | CP.Bag _

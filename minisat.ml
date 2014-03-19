@@ -380,6 +380,8 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Max _
   | Cpure.Min _
   | Cpure.TypeCast _     -> false
+  | Cpure.Abs _ | Cpure.Sqrt _ | Cpure.Pow _ | Cpure.Sin _ | Cpure.Cos _ | Cpure.Tan _
+  | Cpure.Cotan _ | Cpure.ArcSin _ | Cpure.ArcCos _ | Cpure.ArcTan2 _ | Cpure.ArcCot _ -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _

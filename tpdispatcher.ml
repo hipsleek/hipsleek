@@ -624,6 +624,7 @@ let rec is_array_exp e = match e with
   | CP.Div (e1,e2,_)
   | CP.Max (e1,e2,_)
   | CP.Min (e1,e2,_)
+  | CP.ArcTan2 (e1, e2, _) | CP.Pow (e1, e2, _)
   | CP.BagDiff (e1,e2,_) -> (
       match (is_array_exp e1) with
       | Some true -> Some true
@@ -643,6 +644,10 @@ let rec is_array_exp e = match e with
     | CP.Bptriple _
   | CP.Level _
   | CP.Var _ | CP.Null _ -> Some false
+  | CP.Abs (e, _) | CP.Sqrt (e, _) | CP.ArcCot (e, _) | CP.Sin (e, _) 
+  | CP.Cos (e, _) | CP.Tan (e, _) | CP.Cotan (e, _) | CP.ArcSin (e, _) 
+  | CP.ArcCos (e, _) -> is_array_exp e
+
 
   (* Method checking whether a formula contains list constraints *)
 let rec is_list_exp e = match e with
@@ -659,6 +664,7 @@ let rec is_list_exp e = match e with
   | CP.Div (e1,e2,_)
   | CP.Max (e1,e2,_)
   | CP.Min (e1,e2,_)
+  | CP.ArcTan2 (e1, e2, _) | CP.Pow (e1, e2, _)
   | CP.BagDiff (e1,e2,_) -> (
       match (is_list_exp e1) with
       | Some true -> Some true
@@ -678,6 +684,10 @@ let rec is_list_exp e = match e with
   | CP.Level _
   | CP.FConst _ | CP.IConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
+  | CP.Abs (e, _) | CP.Sqrt (e, _) | CP.ArcCot (e, _) | CP.Sin (e, _) 
+  | CP.Cos (e, _) | CP.Tan (e, _) | CP.Cotan (e, _) | CP.ArcSin (e, _) 
+  | CP.ArcCos (e, _) -> is_list_exp e
+
 
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
 	| Some ss -> string_of_bool ss

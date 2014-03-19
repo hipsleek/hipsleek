@@ -282,6 +282,9 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 		  r1 || r2
 	  end else
 		failwith ("compute_fo_exp: invalid parameters: non SO bag expression.")
+  | Abs _ | Sqrt _ | Pow _ | Sin _ | Cos _ | Tan _
+  | Cotan _ | ArcSin _ | ArcCos _ | ArcTan2 _ | ArcCot _ ->
+      failwith ("Setmona.compute_fo_exp: built-in math exp should not appear here")
   | List _
   | ListCons _
   | ListHead _

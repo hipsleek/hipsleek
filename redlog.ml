@@ -302,6 +302,9 @@ let rec rl_of_exp e0 =
       | _ -> failwith ("redlog.rl_of_exp: redlog don't support type casting to '"
                        ^ (Globals.string_of_typ t) ^ "'") 
     )
+  | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+  | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+      failwith ("redlog.rl_of_exp: need to handle built-in math exp")
   | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =

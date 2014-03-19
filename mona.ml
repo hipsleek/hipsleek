@@ -818,6 +818,9 @@ and mona_of_exp_x e0 f =
       | CP.Max _
       | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
       | CP.TypeCast _ -> failwith ("mona.mona_of_exp: TypeCast can never appear here")
+      | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+      | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+          failwith ("mona.mona_of_exp: built-in math exp should not appear here")
       | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
       | CP.BagUnion ([], _) -> ""
       | CP.BagUnion (e::[], _) -> (helper e)

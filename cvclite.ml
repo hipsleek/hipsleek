@@ -102,6 +102,9 @@ and cvcl_of_exp a = match a with
   | CP.Max _ 
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
   | CP.TypeCast _ -> failwith ("Cvclite.cvcl_of_exp: TypeCast should not appear here")
+  | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+  | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+      failwith ("Cvclite.cvcl_of_exp: built-in math exp should not appear here")
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvcLite.ml]: ERROR in constraints (set should not appear here)");

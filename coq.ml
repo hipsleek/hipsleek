@@ -90,6 +90,9 @@ and coq_of_exp e0 =
   | CP.Max _
   | CP.Min _ -> illegal_format "coq_of_exp : min/max cannot be handled"
   | CP.TypeCast _ -> illegal_format "coq_of_exp : TypeCast cannot be handled"
+  | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+  | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ ->
+      failwith ("coq_of_exp: built-in math exp should not appear here")
   (* lists *)
   | CP.List (alist, pos) -> 
     begin match alist with

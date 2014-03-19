@@ -790,6 +790,8 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.TypeCast (ty, a1, pos) ->
           let a1_conv = sub_inf_list_exp a1 vars is_neg in
           CP.TypeCast (ty, a1_conv, pos)
+    | CP.Abs _ | CP.Sqrt _ | CP.Pow _ | CP.Sin _ | CP.Cos _ | CP.Tan _
+    | CP.Cotan _ | CP.ArcSin _ | CP.ArcCos _ | CP.ArcTan2 _ | CP.ArcCot _ -> exp
     | CP.Bag _
     | CP.BagUnion _
     | CP.BagIntersect _

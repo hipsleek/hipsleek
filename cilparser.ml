@@ -1271,6 +1271,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
               e (* TODO *)
         | Ipure.Func (id, el, pos) -> 
               e (* TODO *)
+        | Ipure.Abs _ | Ipure.Sqrt _ | Ipure.Pow _ | Ipure.Sin _ | Ipure.Cos _
+        | Ipure.Tan _ | Ipure.Cotan _ | Ipure.ArcSin _ | Ipure.ArcCos _ | Ipure.ArcTan2 _ | Ipure.ArcCot _ -> e
   ) in
   match exp with
     | Iast.Assert a -> (
