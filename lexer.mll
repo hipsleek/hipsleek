@@ -107,14 +107,9 @@ module Make (Token : SleekTokenS)
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
-	[("abs", ABS);
-   ("assert", ASSERT);
+  [("assert", ASSERT);
    ("assert_exact", ASSERT_EXACT);
    ("at", ATPOS);
-   ("arccos", ARCCOS);
-   ("arccot", ARCCOT);
-   ("arcsin", ARCSIN);
-   ("arctan2", ARCTAN2);
    ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
@@ -132,8 +127,6 @@ module Make (Token : SleekTokenS)
    ("catch", CATCH);
    ("checkeq", CHECKEQ);
    ("checkentail", CHECKENTAIL);
-   ("cos", COS);
-   ("cotan", COTAN);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
@@ -223,7 +216,6 @@ module Make (Token : SleekTokenS)
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
 	 ("macro",PMACRO);
-     ("pow", POW);
      ("perm",PERM);
      ("pred", PRED);
      ("pred_prim", PRED_PRIM);
@@ -246,9 +238,7 @@ module Make (Token : SleekTokenS)
 	 ("return", RETURN);
 	 ("self", SELFT "self");
    ("set",SET);
-   ("sin", SIN);
 	 ("split", SPLIT);
-   ("sqrt", SQRT);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
     ("template", TEMPL);
@@ -257,7 +247,6 @@ module Make (Token : SleekTokenS)
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
-   ("tan", TAN);
 	 ("then", THEN);
 	 ("this", THIS "this");
    ("time", DTIME);
@@ -425,7 +414,7 @@ rule tokenizer file_name = parse
 		  (* IDENTIFIER ("Anon" ^ fresh_trailer ()) *)
 		else if idstr = "java" then begin
       store file_name; JAVA (parse_nested java file_name)
-		end else
+    end else
 		  try Hashtbl.find sleek_keywords idstr
 		  with | _ -> IDENTIFIER idstr
 	  }

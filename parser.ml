@@ -395,7 +395,10 @@ let cexp_to_pure2 fct f01 f02 =
         )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
     )
-  | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
+  | _ -> 
+      let _ = print_endline ("== f01 = " ^ (string_of_pure_double f01)) in
+      let _ = print_endline ("   f02 = " ^ (string_of_pure_double f02)) in
+      report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
 let peek_try = 
@@ -469,7 +472,18 @@ let peek_try =
           | [_; OPAREN,_;_;_;_] -> ()
           | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
           | _ -> raise Stream.Failure)
-		  
+
+ let peek_builtin_math = 
+ SHGram.Entry.of_parser "peek_builtin_math" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [IDENTIFIER id,_; OPAREN,_;] when 
+                ((id = "abs") || (id = "sqrt") || (id = "pow") || (id = "sin") 
+                 || (id = "cos") || (id = "tan") || (id = "cotan") || (id = "arcsin")
+                 || (id = "arccos") || (id = "arctan2") || (id = "arccot")) ->
+             ()
+          | _ -> raise Stream.Failure)
+
  let peek_member_name = 
  SHGram.Entry.of_parser "peek_member_name" 
      (fun strm ->
@@ -1741,6 +1755,35 @@ cexp_w:
   | [`MINUS; c=SELF -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c]
   | "ann_exp"
     [e=SELF ; `COLON; ty=typ -> apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e]
+  | "builtin math" RIGHTA
+    [ peek_builtin_math; `IDENTIFIER id; `OPAREN; c=SELF; `CPAREN ->
+        if (id = "abs") then
+          apply_cexp_form1 (fun c -> P.mkAbs c (get_pos_camlp4 _loc 1)) c
+        else if (id = "sqrt") then
+          apply_cexp_form1 (fun c -> P.mkSqrt c (get_pos_camlp4 _loc 1)) c
+        else if (id = "sin") then
+          apply_cexp_form1 (fun c -> P.mkSin c (get_pos_camlp4 _loc 1)) c
+        else if (id = "cos") then
+          apply_cexp_form1 (fun c -> P.mkCos c (get_pos_camlp4 _loc 1)) c
+        else if (id = "tan") then
+          apply_cexp_form1 (fun c -> P.mkTan c (get_pos_camlp4 _loc 1)) c
+        else if (id = "cotan") then
+          apply_cexp_form1 (fun c -> P.mkCotan c (get_pos_camlp4 _loc 1)) c
+        else if (id = "arcsin") then
+          apply_cexp_form1 (fun c -> P.mkArcSin c (get_pos_camlp4 _loc 1)) c
+        else if (id = "arccos") then
+          apply_cexp_form1 (fun c -> P.mkArcCos c (get_pos_camlp4 _loc 1)) c
+        else if (id = "arccot") then
+          apply_cexp_form1 (fun c -> P.mkArcCot c (get_pos_camlp4 _loc 1)) c
+        else
+          report_error (get_pos_camlp4 _loc 2) ("The IDENTIFIER \"" ^ id ^ "\" is unsuitble." )
+    | peek_builtin_math; `IDENTIFIER id; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+        if (id = "pow") then
+          apply_cexp_form2 (fun c1 c2 -> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+        else if (id = "arctan2") then
+          apply_cexp_form2 (fun c1 c2 -> P.mkArcTan2 c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+        else
+          report_error (get_pos_camlp4 _loc 2) ("The IDENTIFIER \"" ^ id ^ "\" is unsuitble." )]
   | "una"
     [ `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
     | `HASH ->
@@ -1808,28 +1851,6 @@ cexp_w:
         apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-    | `ABS; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkAbs c (get_pos_camlp4 _loc 1)) c
-    | `SQRT; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkSqrt c (get_pos_camlp4 _loc 1)) c
-    | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
-        apply_cexp_form2 (fun c1 c2 -> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-    | `SIN; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkSin c (get_pos_camlp4 _loc 1)) c
-    | `COS; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkCos c (get_pos_camlp4 _loc 1)) c
-    | `TAN; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkTan c (get_pos_camlp4 _loc 1)) c
-    | `COTAN; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkCotan c (get_pos_camlp4 _loc 1)) c
-    | `ARCSIN; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkArcSin c (get_pos_camlp4 _loc 1)) c
-    | `ARCCOS; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkArcCos c (get_pos_camlp4 _loc 1)) c
-    | `ARCTAN2; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
-        apply_cexp_form2 (fun c1 c2 -> P.mkArcTan2 c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-    | `ARCCOT; `OPAREN; c=SELF; `CPAREN ->
-        apply_cexp_form1 (fun c -> P.mkArcCot c (get_pos_camlp4 _loc 1)) c
     ]
   | "pure_base"
     [ `TRUE -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
@@ -3174,7 +3195,7 @@ cast_expression:
 
 invocation_expression:
  [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
-	  CallRecv { exp_call_recv_receiver = fst qi;
+    CallRecv { exp_call_recv_receiver = fst qi;
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
