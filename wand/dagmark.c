@@ -5,42 +5,46 @@ struct node *right;
 };
 
 /*@
-relation update(abstract G, node x, int d, node l, node r, abstract G1).
-relation lookup(abstract G, node x, int d, node l, node r).
+relation update(abstract D, node x, int d, node l, node r, abstract D1).
+relation lookup(abstract D, node x, int d, node l, node r).
 
-dag<G> == self = null
-       or self::node<v,l,r> * (l::dag<G> U* r::dag<G>)
-	& lookup(G,self,v,l,r);
+dag<D> == self = null
+       or self::node<v,l,r> * (l::dag<D> U* r::dag<D>)
+	& lookup(D,self,v,l,r);
 
-relation sub(abstract R, abstract R1, abstract G, abstract G1).
-relation reach(abstract G, node x, abstract R).
-relation notreach(abstract G, node x, abstract NR).
+relation subset_reach(abstract D, abstract D1).
+relation eq_notreach(abstract D, abstract D1).
 
-rlemma x::dag<G1> * x::dag<G> --@ (x::dag<G> U* y::dag<G>)
-      & exists(R,R1,NR: reach(G,x,R) & reach(G1,x,R1) 
-      & sub(R,R1,G,G1) 
-      & notreach(G,x,NR) & notreach(G1,x,NR))
-      -> x::dag<G1> U* y::dag<G1>;
+rlemma x::dag<D1> * x::dag<D> --@ (x::dag<D> U* y::dag<D>)
+      & subset_reach(D,D1) & eq_notreach(D,D1)
+      -> x::dag<D1> U* y::dag<D1>;
 
-relation mark(abstract G,node x,abstract G1).
+relation mark(abstract D,node x,abstract D1).
 
-axiom true ==> mark(G,null,G).
-axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
+axiom true ==> mark(D,null,D).
+axiom lookup(D,x,1,l,r) ==> mark(D,x,D).
 
-axiom mark(G,x,G1) ==> exists(R,R1: reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1)).
-axiom mark(G,x,G1) ==> exists(NR: notreach(G,x,NR) & notreach(G1,x,NR)).
+axiom mark(D,x,D1) ==> subset_reach(D,D1) & eq_notreach(D,D1).
+axiom mark(D,x,D1) & mark(D1,y,D2) ==> mark(D,y,D1) & mark(D1,x,D2).
 
-axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
-mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
+axiom lookup(D,x,v,l,r) & update(D,x,1,l,r,D1) & v != 1 & //v is unmarked skipped in paper
+mark(D1,l,D2) & mark(D2,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
 
-axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
-mark(G1,r,G2) & mark(G2,l,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
+axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
+& mark(D1,r,D2) & update(D2,x,1,l,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
+& mark(D2,r,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,r,D1) & v != 1
+& mark(D2,r,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
 */
 
 void mark(struct node *x)
 /*@
-requires x::dag<G>
-ensures x::dag<G1> & mark(G,x,G1);
+requires x::dag<D>
+ensures x::dag<D1> & mark(D,x,D1);
 */
 {
 struct node *l,*r;

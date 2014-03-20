@@ -12248,13 +12248,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_rest = rhs_rest;
         } -> 
             let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in 
-            let r1,r2 =
             let ctx0 = Ctx estate in
             (* let ((coer_l,coer_r),univ_coers) = 
               find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
-            let coer_l = Lem_store.all_lemma # get_left_coercion in 
-            let coer = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
-              else List.hd coer_l in 
+            let helper coer estate = 
+              let r1,r2 =
             (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
               (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
@@ -12272,18 +12270,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let filter_sm = List.filter (fun h -> if (Mem.contains_starminus h) then false
                   else if (is_data h) then false else true) (split_star_conjunctions lhs_h) in
               let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
+              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in
               if (List.length filter_sm >0)
               then 
               let rhs = List.hd filter_sm in
               let fvl = Cformula.h_fv rhs in
               let _,check_p,_,_,_ = split_components coer.coercion_head in
               let check_p = Mcpure.mix_of_pure
-                (CP.join_conjunctions (List.filter (fun c -> CP.is_RelForm c)
+                (CP.join_conjunctions (List.filter (fun c -> CP.is_RelForm c || CP.contains_exists c)
                 (CP.split_conjunctions (Mcpure.pure_of_mix check_p)))) in
               let h,p,fl,t,a = split_components coer.coercion_body in
               let () = print_endline("RLEM HEAD : "^Cprinter.string_of_mix_formula check_p) in
               let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in
-              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in
               let vl = Cformula.h_fv h in
               let fresh_vl = CP.fresh_spec_vars vl in
               let h = Cformula.h_subst (List.combine vl fresh_vl) h in
@@ -12334,10 +12332,27 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "112" Globals.sl_error)),
+                                                  CF.mk_failure_must "113" Globals.sl_error)),
                   [])
             in
-            (r1,Search r2)
+            (r1,r2)
+            in
+            let coer_l = Lem_store.all_lemma # get_left_coercion in 
+            let r1,r2 = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"
+              else let lc = List.map (fun coer -> helper coer estate) coer_l in
+                   try List.find (fun (sc,pf) -> match sc with 
+                     | FailCtx _ -> false
+                     | SuccCtx _ -> true) lc 
+                   with _ -> (CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "114" Globals.sl_error)),
+                              [])
+            in (r1,Search r2)
       | Context.M_lemma  ({
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_lhs_rest = lhs_rest;
