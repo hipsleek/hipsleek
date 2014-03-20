@@ -320,6 +320,13 @@ struct
         [] -> []
       | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
 
+  let remove_dups_eq_stable eq n = 
+    let rec aux eq n =
+    match n with
+        [] -> []
+      | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
+    in List.rev (aux eq (List.rev n))
+
   let rec check_dups_eq eq n = 
     match n with
       | [] -> false

@@ -55,6 +55,10 @@ let is_arr_typ sv = match sv with
   | SpecVar(Array _,_,_) -> true
   | _ -> false
 
+let is_void_typ sv = match sv with
+  | SpecVar(Void,_,_) -> true
+  | _ -> false
+
 let is_self_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n = self
 
@@ -683,6 +687,8 @@ let eq_xpure_view xp1 xp2=
       (fun _ _ -> eq_xpure_view_x xp1 xp2) xp1 xp2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_spec_var vl rl
 

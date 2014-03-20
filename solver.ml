@@ -12256,19 +12256,26 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
               (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
+              let () = print_endline("LHS_REST : "^(Cprinter.string_of_h_formula lhs_rest)) in
               let rest_heap = split_star_conjunctions lhs_rest in
               let filter_starminus = List.filter (fun h -> Mem.contains_starminus h) rest_heap in
               (*let _ = List.map (fun c -> print_endline(Cprinter.string_of_h_formula c)) rest_heap in*)
-              let rest_heap = List.filter 
-                (fun h -> if (Mem.contains_starminus h) then false
-                  else if (is_view h) then false else true) rest_heap in
-              let lhs_wand = 
+              let lhs_wand =
               if not (List.length filter_starminus > 0) 
               then failwith "Ramification Lemma has more than one wand"
               else List.hd filter_starminus in
               let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = extr_formula_base lhs_b in
               let filter_sm = List.filter (fun h -> if (Mem.contains_starminus h) then false
-                  else if (is_data h) then false else true) (split_star_conjunctions lhs_h) in
+                  else if (is_data h) then 
+                    if List.exists (fun c -> CP.eq_spec_var c (get_node_var h)) (h_fv lhs_wand)
+                    then true else false else true) (split_star_conjunctions lhs_h) in
+              let rest_heap = List.filter 
+                (fun h -> if (Mem.contains_starminus h) then false
+                  else 
+                    if (is_view h) ||
+                     ((is_data h) && 
+                         List.exists (fun c -> CP.eq_spec_var c (get_node_var h)) (h_fv lhs_wand))
+                    then false else true) rest_heap in
               let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
               let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in
               if (List.length filter_sm >0)
@@ -12287,16 +12294,28 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let h = Cformula.h_subst (List.combine vl fresh_vl) h in
               let check_p = Mcpure.memo_subst (List.combine vl fresh_vl) check_p in
               let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in
+             (* let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in*)
               let gvl = Cformula.h_fv lhs_wand in
+              let abs_vl = List.filter (fun c -> CP.is_void_typ c) gvl in
               let rl = List.hd gvl in
               let rl2 = List.hd (List.tl gvl) in
               let fl2 = List.hd (List.tl fvl) in
               (*let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in*)
               let gvl = fvl@[rl]@[fl2] in
+              let abs_vl = abs_vl in
               let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              let () = print_endline("AVL :"^Cprinter.string_of_spec_var_list abs_vl) in
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else failwith "Ramification Lemma with different variables" in
-              let check_p = Mcpure.memo_subst rho check_p in
+              let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
+              let check_p_vl = List.filter CP.is_void_typ check_p_vl in
+              let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
+              let rho2 = if List.length check_p_vl = List.length abs_vl then List.combine check_p_vl abs_vl
+                else if List.length check_p_vl > 0 && List.length abs_vl > 0
+                then List.combine check_p_vl ((List.hd abs_vl)::[fl2])
+                else failwith "Ramification Guard with different variables" in
+              let check_p = Mcpure.memo_subst rho2 check_p in
+              let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
               let () = if not(f) then failwith "Ramification Lemma failed guard checking" else () in
               let new_lhs_h = Cformula.h_subst rho h in

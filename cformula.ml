@@ -2509,7 +2509,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
 	h_formula_conjstar_pos = pos}) 		
   | ConjConj ({h_formula_conjconj_h1 = h1; 
 	h_formula_conjconj_h2 = h2; 
-	h_formula_conjconj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
+	h_formula_conjconj_pos = pos}) -> CP.remove_dups_svl_stable (h_fv_x h1 @ h_fv_x h2)
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2; 
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv_x h1 @ h_fv_x h2)
