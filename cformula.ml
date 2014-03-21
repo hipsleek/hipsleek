@@ -4753,6 +4753,16 @@ let rec get_HRels_f f=
         let a2 = get_HRels_f orf.formula_or_f2 in
         (a1@a2)
 
+let get_hp_rel_pre_struc_formula (sf0:struc_formula) =
+  let rec helper sf= match sf with
+    | ECase b-> List.fold_left (fun r (_,sc) -> r@(helper sc)) [] b.formula_case_branches
+    | EBase b -> get_HRels_f b.formula_struc_base
+    | EAssume _ -> []
+    | EInfer b -> helper b.formula_inf_continuation
+    | EList l -> List.fold_left (fun r (_,sc) -> r@(helper sc)) [] l
+  in
+  helper sf0
+
 let check_and_get_one_hpargs f=
   let helper mf hf=
     if CP.isConstTrue (MCP.pure_of_mix mf) then
@@ -5250,6 +5260,7 @@ and get_hp_rel_h_formula hf=
     | HTrue
     | HFalse
     | HEmp -> ([],[],[])
+
 
 (*first_ptr = true: stop at the first*)
 let look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr=

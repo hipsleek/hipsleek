@@ -23,6 +23,9 @@ tll<p,ll,lr> == self::node<p,D1,null,lr> & self = ll
   HeapPred H(node a, node@NI p, node@NI b).
   HeapPred G(node a, node@NI p, node@NI b, node@NI c).
 
+HeapPred H1(node a, node@NI p, node@NI b).
+    HeapPred G1(node a, node p, node b, node c).
+
 node set_right (node p, node x, node t)
   infer [H,G] 
   requires H(x,p,t) 
@@ -43,6 +46,13 @@ node set_right (node p, node x, node t)
   	}
 }
 
+node testhar (node p, node x, node t)
+  /* infer [H1,G1]  */
+  /* requires H1(x,p,t)  */
+  /* ensures G1(x,p,res,t) ; */
+{
+  return set_right(p,x,t);
+}
 /*
 # tll-parent.ss --pred-en-dangling
 

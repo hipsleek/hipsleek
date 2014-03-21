@@ -1313,7 +1313,7 @@ res:  [
   H1(y)&true&{FLOW,(19,20)=__norm}[]
   ]
 ======================================================================
-# infer13c.slk
+# infer13c.slk: DONE
 
 infer [H1] H1(y) & y=z |- z=null .
 print residue.
@@ -1336,7 +1336,7 @@ Entail (2) : Valid.
 
 */
 ======================================================================
-# infer13d.slk
+# infer13d.slk:D ONE
 
 HeapPred H1(node y).
 
@@ -1358,7 +1358,7 @@ res:  failctx
 w
 */
 ======================================================================
-# infer8a.slk
+# infer8a.slk: DONE
 
 infer [m] m=-1 |- x::node<_,_> & m>=0.
 print residue.
@@ -1610,10 +1610,13 @@ should topo sort and handle mutual rec.
 
 depend on relational specs of g_list_last
 
+======================================================================
 # ll-prepend.ss
 
+GOT
 G(x,res) ::=(0) res::node<d',x>@M
 
+======
 expect:
 [ H(a) ::= NONE,
  G(x,res) ::= H(x) * res::node<d',x>@M]

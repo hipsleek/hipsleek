@@ -115,7 +115,7 @@ and axiom_decl = {
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
-hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+mutable hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
 hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
 mutable hp_root_pos: int;
 hp_is_pre: bool;
@@ -200,6 +200,7 @@ proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
 proc_args : param list;
+mutable proc_args_wi : (ident *hp_arg_kind) list;
 proc_return : typ;
 (*   mutable proc_important_vars : CP.spec_var list;*)
 proc_static_specs : Iformula.struc_formula;
@@ -956,6 +957,11 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 
+
+let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
+  | [] -> raise Not_found
+
 let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let nhp_dclr = { hp_name = hp_id;
   hp_typed_inst_vars = vars;
@@ -975,131 +981,6 @@ let rec get_mut_vars_x e0 =
       | _ -> None
   in
   let get_vars e= fold_exp e f (List.concat) [] in
-  (* let rec helper (e:exp) = *)
-  (*   match e with *)
-  (*     | Assert _ *)
-  (*     | BoolLit _ *)
-  (*     | Break _ *)
-  (*     | Continue _ *)
-  (*     | Debug _ *)
-  (*     | Dprint _ *)
-  (*     | Empty _ *)
-  (*     | FloatLit _ *)
-  (*     | IntLit _ *)
-  (*     | Java _ *)
-  (*     | Null _ *)
-  (*     | This _ *)
-  (*     | Time _ *)
-  (*     | Unfold _ *)
-  (*     | Var _ -> [] *)
-  (*     | ArrayAt b -> (\* An Hoa *\) *)
-  (*           let rl = (List.map helper b.exp_arrayat_index) in *)
-  (*           comb_f rl *)
-  (*     | Assign b -> begin *)
-  (*           let r1 = helper b.exp_assign_lhs  in *)
-  (*           let r2 = helper  b.exp_assign_rhs  in *)
-  (*           match b.exp_assign_lhs with *)
-  (*             | Var {exp_var_name = id} -> id::r1@r2 *)
-  (*             | _ -> r1@r2 *)
-  (*       end *)
-  (*     | Binary b -> *)
-  (*           let r1 = helper  b.exp_binary_oper1  in *)
-  (*           let r2 = helper  b.exp_binary_oper2  in *)
-  (*           (comb_f [r1;r2]) *)
-  (*     | Bind b -> *)
-  (*           let r1 = helper  b.exp_bind_body  in *)
-  (*           b.exp_bind_bound_var::r1 *)
-  (*     | Barrier _ -> [] *)
-  (*     | Block b -> *)
-  (*            helper  b.exp_block_body *)
-  (*     | CallRecv b -> *)
-  (*           let r1 = helper  b.exp_call_recv_receiver in *)
-  (*           let ler = List.map (helper ) b.exp_call_recv_arguments in *)
-  (*            comb_f (r1::ler) *)
-  (*     | CallNRecv b -> *)
-  (*           let ler = List.map (helper ) b.exp_call_nrecv_arguments in *)
-  (*           let r = comb_f ler in *)
-  (*           r *)
-  (*     | Cast b -> *)
-  (*           let r1 = helper b.exp_cast_body in *)
-  (*           r1 *)
-  (*     | Catch b -> *)
-  (*           helper b.exp_catch_body *)
-  (*     | Cond b -> *)
-  (*           let r1 = helper  b.exp_cond_condition in *)
-  (*           let r2 = helper  b.exp_cond_then_arm in *)
-  (*           let r3 = helper  b.exp_cond_else_arm in *)
-  (*           let r = comb_f [r1;r2;r3] in *)
-  (*           r *)
-  (*     | Finally b -> *)
-  (*           let r1 = helper b.exp_finally_body in *)
-  (*           r1 *)
-  (*     | Label (l,b) -> *)
-  (*           helper  b *)
-  (*     | Member b -> (\* begin let _ =  print_endline (!print_exp b.exp_member_base) in *\) *)
-  (*            get_vars b.exp_member_base *)
-  (*       (\* with *\) *)
-  (*       (\*       | Var { exp_var_name = id} -> [id] *\) *)
-  (*       (\*       | _ -> [] *\) *)
-  (*       (\* end *\) *)
-  (*     | ArrayAlloc b -> *)
-  (*           let rl= (List.map helper b.exp_aalloc_dimensions) in *)
-  (*           comb_f rl *)
-  (*     | New b -> *)
-  (*           let rl = (List.map helper b.exp_new_arguments) in *)
-  (*           (comb_f rl) *)
-  (*     | Raise b -> (match b.exp_raise_val with *)
-  (*         | None -> [] *)
-  (*         | Some body -> *)
-  (*               helper  body *)
-  (*       ) *)
-  (*     | Return b->(match b.exp_return_val with *)
-  (*         | None -> [] *)
-  (*         | Some body -> *)
-  (*               helper body *)
-  (*       ) *)
-  (*     | Seq b -> *)
-  (*           let r1 = helper b.exp_seq_exp1 in *)
-  (*           let r2 = helper b.exp_seq_exp2 in *)
-  (*           let r = comb_f [r1;r2] in *)
-  (*           r *)
-  (*     | Try b -> *)
-  (*           let ecl = List.map helper b.exp_catch_clauses in *)
-  (*           let fcl = List.map helper b.exp_finally_clause in *)
-  (*           let r1 = helper b.exp_try_block in *)
-  (*           let r = comb_f (r1::(ecl@fcl)) in r *)
-  (*     | Unary b -> *)
-  (*           let r1 = helper b.exp_unary_exp in *)
-  (*           r1 *)
-  (*     | ConstDecl b -> *)
-  (*           let l = List.map (fun (c1,c2,c3)-> *)
-  (*               let r1 = helper  c2 in *)
-  (*               r1 *)
-  (*           ) b.exp_const_decl_decls *)
-  (*           in *)
-  (*           let r = comb_f l in *)
-  (*           r *)
-  (*     | VarDecl b -> *)
-  (*           let ll = List.map (fun (c1,c2,c3)-> match c2 with *)
-  (*             | None -> [] *)
-  (*             | Some s -> *)
-  (*                   let r1 = helper s in *)
-  (*                   r1 *)
-  (*           ) b.exp_var_decl_decls in *)
-  (*           let r = comb_f ll in *)
-  (*           r *)
-  (*     | While b -> *)
-  (*           let r = match b.exp_while_wrappings with *)
-  (*             | None -> [] *)
-  (*             | Some (s,l) -> *)
-  (*                   let r = helper s in *)
-  (*                   r *)
-  (*           in *)
-  (*           let cr = helper b.exp_while_condition in *)
-  (*           let br = helper b.exp_while_body in *)
-  (*           let r = comb_f [r;cr;br] in *)
-  (*           r *)
-  (* in *)
   (**************************END****************)
   let rec collect_lhs_ass_vars e=
     match e with
@@ -1144,7 +1025,7 @@ let genESpec_x pname body_opt args0 ret pos=
   ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
   if args = [] && ret = Void then
-    F.mkETrueTrueF (),[]
+    F.mkETrueTrueF (),[],[]
   else
     let mut_vars = match body_opt with
       | Some body_exp -> get_mut_vars body_exp
@@ -1218,14 +1099,35 @@ let genESpec_x pname body_opt args0 ret pos=
         F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
-    }, [hp_pre_decl;hp_post_decl])
+    }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
 let genESpec pname body_opt args ret pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
+  let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
+  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
       (fun _ _ -> genESpec_x pname body_opt args ret pos) args ret
 
+let extract_mut_args_x prog proc=
+  let hp_decls = prog.prog_hp_decls in
+  let hpargs = Iformula.struc_formula_collect_pre_hprel proc.proc_static_specs in
+  let args_wi = List.fold_left (fun r (hp,args) ->
+      let hp_decl = look_up_hp_def_raw hp_decls hp in
+      let pr_hp_args_wi = List.combine hp_decl.hp_typed_inst_vars args in
+      r@(List.map (fun ((_,_, info), a) -> (a, info) ) pr_hp_args_wi)
+  ) [] hpargs in
+  List.map (fun p ->
+      try
+        let info = List.assoc p.param_name args_wi in
+        (p.param_name, info)
+      with _ -> (p.param_name,I)
+  ) proc.proc_args
+
+let extract_mut_args prog proc=
+  let pr1 p = p.proc_name in
+  let pr2 = pr_list (pr_pair pr_id print_arg_kind) in
+  Debug.no_1 "extract_mut_args" pr1 pr2
+      (fun _ -> extract_mut_args_x prog proc) proc
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
@@ -1234,25 +1136,26 @@ let genESpec_wNI body_header body_opt args ret pos=
     let _ = Debug.info_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls =
+  let ss, n_hp_dcls,args_wi =
     match body_header.proc_static_specs with
       | F.EList [] ->
-          let ss, hps = genESpec body_header.proc_mingled_name body_opt args ret pos in
+          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
           let _ = print_gen_spec ss hps in
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps)
+          (ss,hps,args_wi)
       | _ ->
             let _ = if !Globals.sags then
-              let ss, hps = genESpec body_header.proc_mingled_name body_opt args ret pos in
+              let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in
               let _ = print_gen_spec ss hps in
               ()
             else ()
             in
-            (body_header.proc_static_specs,[])
+            (body_header.proc_static_specs,[],body_header.proc_args_wi)
   in
   {body_header with
       proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
       proc_static_specs = ss;
+      proc_args_wi = args_wi;
   }
 
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
@@ -1281,6 +1184,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_constructor = c;
   proc_exceptions = ot;
   proc_args = ags;
+  proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
   proc_return = r;
   (*  proc_important_vars = [];*)
   proc_static_specs = ss;
@@ -1383,10 +1287,6 @@ and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
       (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
       if d.rel_name = name then d else look_up_rel_def_raw rest name
-  | [] -> raise Not_found
-
-and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
 and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
@@ -2662,6 +2562,9 @@ let add_bar_inits prog =
 				let str = F.mkEBase [] [] [] simp None no_pos in
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
+                        let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
+				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
+								b.barrier_shared_vars) in
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
 			  proc_flags = [];
@@ -2669,9 +2572,8 @@ let add_bar_inits prog =
 			  proc_data_decl = None ;
 			  proc_hp_decls = [];
                           proc_constructor = false;
-			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
-				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
-								b.barrier_shared_vars);
+			  proc_args = ags;
+                          proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
 			  proc_return = Void;
 			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
 			  proc_dynamic_specs = F.mkEFalseF ();

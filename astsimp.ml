@@ -2810,11 +2810,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               (*     Err.error_loc = no_pos; *)
               (*     Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "}  *)
       in
+      let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
+      else proc.Iast.proc_args_wi
+      in
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_source = proc.I.proc_source;
           C.proc_flags = proc.I.proc_flags;
           C.proc_args = args;
+          C.proc_args_wi = args_wi;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
           C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
@@ -4550,6 +4554,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_data_decl = proc.I.proc_data_decl;
                   I.proc_constructor = false;
                   I.proc_args = w_formal_args;
+                  I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) w_formal_args;
                   I.proc_return = I.void_type;
                   (* I.proc_important_vars= [];*)
                   I.proc_static_specs = prepost;
@@ -4563,10 +4568,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_test_comps = proc.I.proc_test_comps} in
             (* let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in *)
             let w_proc = match w_proc.I.proc_static_specs with
-              |  IF.EList [] -> let new_prepost, hp_decls = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body w_formal_args I.void_type pos in
+              |  IF.EList [] -> let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body w_formal_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
                  {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
-                     I.proc_static_specs = new_prepost;}
+                     I.proc_static_specs = new_prepost;
+                     I.proc_args_wi = args_wi;
+                 }
               | _ ->  w_proc
             in
               let temp_call =  I.CallNRecv {

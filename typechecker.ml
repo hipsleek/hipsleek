@@ -3300,7 +3300,8 @@ let check_prog iprog (prog : prog_decl) =
           if i==x.proc_call_order then (x::xs)::xss
           else [x]::a
   ) [] sorted_proc_main in
-  let proc_scc = List.rev proc_scc in
+  let proc_scc0 = List.rev proc_scc in
+  let proc_scc = Cast.update_mut_vars_bu iprog prog proc_scc0 in
   let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
@@ -3336,7 +3337,7 @@ let check_prog iprog (prog : prog_decl) =
           r
         end
       ) in
-      let scc = if is_all_verified2 then scc
+      let scc = if is_all_verified2 || not !Globals.sa_ex then scc
       else
         let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
         (*extn rele views and specs*)
