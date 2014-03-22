@@ -30,8 +30,14 @@ axiom mark(D,x,D1) ==> subset_reach(D,x,D1) & eq_notreach(D,x,D1).
 axiom lookup(D,x,v,l,r) & update(D,x,1,l,r,D1) & v != 1 & //v is unmarked skipped in paper
 mark(D1,l,D2) & mark(D2,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
 
+axiom lookup(D,x,v,l,r) & update(D,x,1,l,r,D1) & v != 1 & //v is unmarked skipped in paper
+mark(D1,r,D2) & mark(D2,l,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
 axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
 & mark(D1,r,D2) & update(D2,x,1,l,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
+
+axiom lookup(D,x,v,l,r) & mark(D,r,D1) & v != 1
+& mark(D1,l,D2) & update(D2,x,1,l,r,D3) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).
 
 axiom lookup(D,x,v,l,r) & mark(D,l,D1) & v != 1
 & mark(D2,r,D3) & update(D1,x,1,l,r,D2) ==> mark(D,x,D3) & lookup(D3,x,1,l,r).

@@ -12308,11 +12308,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else failwith "Ramification Lemma with different variables" in
               let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
-              let check_p_vl = List.filter CP.is_void_typ check_p_vl in
+              let check_p_vl = List.filter (fun c -> not(CP.is_rel_typ c)) check_p_vl in
               let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
               let rho2 = if List.length check_p_vl = List.length abs_vl then List.combine check_p_vl abs_vl
                 else if List.length check_p_vl > 0 && List.length abs_vl > 0
-                then List.combine check_p_vl ((List.hd abs_vl)::[fl2])
+                then List.combine check_p_vl ((List.hd abs_vl)::[List.hd gvl]@[fl2])
                 else failwith "Ramification Guard with different variables" in
               let check_p = Mcpure.memo_subst rho2 check_p in
               let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in

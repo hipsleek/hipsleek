@@ -15,9 +15,12 @@ tree<T> == self = null
 relation mark(abstract T,node x,abstract T1).
 
 axiom true ==> mark(T,null,T).
+
 axiom lookup(T,x,1,l,r) ==> mark(T,x,T).
+
 axiom lookup(T,x,v,l,r) & update(T,x,1,l,r,T1) & v != 1 &
 mark(T1,l,T2) & mark(T1,r,T2) ==> lookup(T2,x,1,l,r) & mark(T,x,T2).
+
 */
 
 void mark(struct node *x)
