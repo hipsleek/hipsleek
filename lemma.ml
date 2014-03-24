@@ -255,14 +255,23 @@ let manage_safe_lemmas repo iprog cprog =
   match invalid_lem with
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
-          let _ = print_endline ("\nFailed to prove "^ (name) ^ " in current context.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nFailed to prove "^ (name) ^ " in current context.")
+          else ()
+          in
           Lem_store.all_lemma # pop_coercion;
-          let _ = print_endline ("Removing invalid lemma ---> lemma store restored.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("Removing invalid lemma ---> lemma store restored.")
+          else ()
+          in
           Some([List.hd(nctx)])
     | None ->
           let lem_str = pr_list pr_id (List.map (fun i -> 
               i.I.coercion_name^":"^(Cprinter.string_of_coercion_type i.I.coercion_type)) repo) in
-          let _ = print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.")
+          else ()
+          in
           None
 
 (* update store with given repo without verifying the lemmas *)
@@ -303,10 +312,16 @@ let manage_infer_lemmas str repo iprog cprog =
   match invalid_lem with
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
-          let _ = print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.")
+          else ()
+          in
           false,Some([List.hd(nctx)])
     | None ->
-          let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.")
+          else ()
+          in
           true,Some nctx
 
 (* verify  a list of lemmas *)

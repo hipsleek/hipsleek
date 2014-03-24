@@ -3064,7 +3064,10 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
   (*   else () *)
   (*   in () *)
   (* in *)
-  try 
+  let orig_lemma_ep = !Globals.lemma_ep in
+  try
+    (*turn off lemma printing during normalization*)
+    let _ = Globals.lemma_ep := false in
     let callee_hps = [] in
     let _ = if !Globals.sap then
       DD.info_hprint (add_str "  sel_hps" !CP.print_svl) sel_hps no_pos
@@ -3097,9 +3100,11 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
               infer_shapes_conquer iprog prog proc_name ls_path_is sel_hps
     else ([],[])
     in
+    let _ = Globals.lemma_ep := orig_lemma_ep in
     (* let _ = print_generated_slk_file () in *)
     r
   with _ ->
+      let _ = Globals.lemma_ep := orig_lemma_ep in
       (* let _ = print_generated_slk_file () in *)
       let _ = print_endline ("\n --error: "^" at:"^(Printexc.get_backtrace ())) in
       ([],[])
