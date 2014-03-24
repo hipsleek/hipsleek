@@ -206,6 +206,29 @@ let hp_defs_topo_sort defs=
   Debug.no_1 "hp_defs_topo_sort" pr1 (pr_pair (pr_list_ln pr1) pr1)
       (fun _ -> hp_defs_topo_sort_x defs) defs
 
+let classify_equiv_hp_defs_x defs=
+  let classify_equiv_form (equiv_defs, non_equiv_defs, equiv) def=
+    match def.def_cat with
+      | CP.HPRelDefn (hp,_,_) -> begin
+          match def.def_rhs with
+            | [(f,_)] -> begin
+                  let equiv_opt = extract_hrel_head f in
+                  match equiv_opt with
+                    | None -> (equiv_defs, non_equiv_defs@[def], equiv)
+                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+              end
+            | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+        end
+      | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+  in
+  List.fold_left classify_equiv_form ([],[],[]) defs
+
+let classify_equiv_hp_defs defs=
+  let pr1 = pr_list_ln  Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_1 "classify_equiv_hp_defs" pr1 (pr_triple pr1 pr1 pr2)
+      (fun _ -> classify_equiv_hp_defs_x defs) defs
+
 (*
 (i) build emap for LHS/RHS 
   - eqnull -> make closure. do not subst

@@ -1437,7 +1437,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (c:match_res) (rhs_
                   let alternative = process_infer_heap_match prog estate lhs_h is_normalizing (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view vl_name h_name c ms alternative 
             | ViewNode vl, DataNode dr ->
-                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 5" no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 5" no_pos in
                   let _ = DD.tinfo_pprint "try LHS case analysis here!\n" no_pos in
 
 

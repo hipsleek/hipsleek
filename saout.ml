@@ -266,6 +266,21 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
       | sv1::rest -> if CP.eq_spec_var sv sv1 then n
         else get_pos rest (n+1) sv
   in
+  let rec get_pos_of_inter rest n inter_svl res=
+    match rest with
+      | [] -> res
+      | sv1::rest -> if CP.mem_svl sv1  inter_svl then
+          get_pos_of_inter rest (n+1) inter_svl (res@[n])
+        else get_pos_of_inter rest (n+1) inter_svl res
+  in
+  let rec retreive_svl_of_inter_svl rest n inter_pos res=
+    match rest with
+      | [] -> res
+      | sv1::rest ->let n_res=
+          if Gen.BList.mem_eq (=) n  inter_pos then res@[sv1] else res
+        in
+        retreive_svl_of_inter_svl rest (n+1) inter_pos n_res
+  in
   let rec partition_args_from_loc rem_args n r_pos non_root_args=
     match rem_args with
       | [] -> report_error no_pos "sa0:partition_args_from_loc"
@@ -288,6 +303,23 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             | _ -> look_up_root rest hp act_args
           end
   in
+  let get_args_w_useless hp args=
+    try
+      let def = CF.look_up_hp_def hpdefs hp in
+      match def.CF.def_rhs with
+        | [(f,_)] -> begin
+            try
+              let _,frm_args = CF.extract_HRel def.CF.def_lhs in
+              let _,equiv_args = CF.extract_HRel_f f in
+              if List.length frm_args = List.length equiv_args then args else
+                let inter_pos = get_pos_of_inter frm_args 0 equiv_args [] in
+                let inter_args = retreive_svl_of_inter_svl args 0 inter_pos [] in
+                inter_args
+            with _ -> args
+          end
+        | _ -> args
+    with _ -> args
+  in
   let hn_c_trans hn = match hn with
     | CF.HRel (hp,eargs, pos)-> begin
         let view_name0 = (CP.name_of_spec_var hp) in
@@ -295,7 +327,8 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
         let view_name = try List.assoc view_name0 view_equivs
         with _ -> view_name0
         in
-        let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+        let args0 = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+        let args =get_args_w_useless hp args0 in
         match look_up_root hpdefs hp args with
           | Some (r,tl) ->
 	        (* let r,tl = C.get_root_args_hprel chprels_decl view_name args in *)

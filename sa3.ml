@@ -1839,14 +1839,22 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: C
       )
     | _ -> false
   ) hp_defs in
-  (*sort topo*)
-  (* let sorted_scc, mutrec_defs = CFU.hp_defs_topo_sort hp_defs in *)
+  (*sort topo: to fix bug this function*)
+  (* let sorted_scc, mutrec_defs = CFU.hp_defs_topo_sort hp_defs1 in *)
+  let equiv_hp_defs, non_equiv_hp_defs, hp_sst = Cfutil.classify_equiv_hp_defs hp_defs1 in
   (*process bottom-up*)
   let m = List.fold_left (fun cur_m def ->
       let hp,new_ls_m = match_one_fnc iprog prog cur_m vdcls def in
       if new_ls_m = [] then cur_m else
-        cur_m@[(hp,new_ls_m)]
-  ) [] hp_defs1 in
+        let equiv_match = try
+          let hp_equivs = List.fold_left (fun r (hp1,hp2) ->
+              if CP.eq_spec_var hp2 hp then r@[hp1] else r
+          ) [] hp_sst in
+          List.map (fun hp3 -> (hp3, new_ls_m)) hp_equivs
+        with _ -> []
+        in
+        cur_m@((hp,new_ls_m)::equiv_match)
+  ) [] non_equiv_hp_defs in
   (*extract view_equiv*)
   let view_equivs = List.fold_left (fun r (hp, hfs) ->
       let hp_name = CP.name_of_spec_var hp in
