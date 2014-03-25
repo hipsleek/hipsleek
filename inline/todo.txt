@@ -244,6 +244,15 @@ Successful States:
 
  ]
 *******************************************************
+#switch-1.c
+
+to Handle switch stmt
+
+ERROR: at switch-1.c_9:2_12:3
+Message: TRUNG TODO: Handle Cil.Switch later!
+ caught
+
+Exception occurred: Failure("TRUNG TODO: Handle Cil.Switch later!")
 
 
 *******************************************************
