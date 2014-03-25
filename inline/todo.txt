@@ -244,7 +244,7 @@ Successful States:
 
  ]
 *******************************************************
-#switch-1.c
+#switch-1.c: FIXED
 
 to Handle switch stmt
 
@@ -256,6 +256,51 @@ Exception occurred: Failure("TRUNG TODO: Handle Cil.Switch later!")
 
 
 *******************************************************
+#switch-1a.c:
+
+
+
+GOT:
+ERROR: at switch-1a.c_3:0_13:1
+Message: not all paths of foo contain a return
+
+
+int foo(int x)[]
+static
+
+(None,[]): EBase: [][](emp)*(x = 1)( FLOW __norm) {EAssume: 1,:(emp)*(res = 1)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{(71, ):if (x == 1) {
+  (71, ):(75, ):return 1;
+} else {
+  (71, ):(72, ):if (x == 2) {
+  (72, ):(73, ):return 0;
+} else {
+  ^^^^^^^^^^
+  (72, ):
+}
+}}
+}
+
+=========>
+EXPECTED:
+int foo(int x)[]
+static
+
+(None,[]): EBase: [][](emp)*(x = 1)( FLOW __norm) {EAssume: 1,:(emp)*(res = 1)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{(71, ):if (x == 1) {
+  (71, ):(75, ):return 1;
+} else {
+  (71, ):(72, ):if (x == 2) {
+  (72, ):(73, ):return 0;
+}
+}}
+}
+
+
 *******************************************************
 *******************************************************
 *******************************************************
