@@ -1,0 +1,20 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_unsafe
+  self::lseg<p,n> 
+   <- self::lseg<q,a>*q::lseg<p,b> & n=a+b.
+
+checkentail
+ (exists q_427,b_428,a_429: q_427::lseg<p,b_428>@M&q_427=self_lem_13 & 
+ a_429=0 & n=b_428+a_429)
+ or (exists p_439,flted_6_440,q_441,q_427,b_428,
+    a_429: self_lem_13::node<q_441>@M * q_441::lseg<p_439,flted_6_440>@M * 
+    q_427::lseg<p,b_428>@M&a_429=flted_6_440+1 & q_427!=self_lem_13 & 
+    p_439=q_427 & n=b_428+a_429)
+ |- self_lem_13::lseg<p,n> .

@@ -6,6 +6,12 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let debug_precise_trace = ref false
+
+type formula_type =
+  | Simple
+  | Complex
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -28,7 +34,7 @@ let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER
+type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -131,6 +137,32 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
+let rec cmp_typ t1 t2=
+  match t1,t2 with
+    | UNK, UNK
+    | AnnT, AnnT
+    | Bool, Bool
+    | Float, Float
+    | Int, Int
+    | INFInt, INFInt
+    | NUM, NUM
+    | Void, Void -> true
+    | TVar i1, TVar i2 -> i1=i2
+    | BagT t11, BagT t22
+    | List t11, List t22 -> cmp_typ t11 t22
+    | Named s1, Named s2 -> String.compare s1 s2 = 0
+    | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
+    | RelT lst1, RelT lst2 ->(
+          try
+            List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
+          with _ -> false
+      )
+    | HpT, HpT
+    | Tree_sh, Tree_sh
+    | Bptyp, Bptyp -> true
+    | Pointer t11, Pointer t22 -> cmp_typ t11 t22
+    | _ -> false
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
@@ -203,9 +235,18 @@ let convert_prim_to_obj (t:typ) : typ =
   )
 
 (*for heap predicate*)
+let default_prefix_pure_hprel = "_pure_of_"
 let hp_default_prefix_name = "HP_"
+let rel_default_prefix_name = "P_"
 let hppost_default_prefix_name = "GP_"
-let dang_hp_default_prefix_name = "__DP"
+let unkhp_default_prefix_name = "DP_"
+let dang_hp_default_prefix_name = "DP_DP"
+let ex_first = "v"
+let size_rel_name = "size"
+let size_rel_arg = "n"
+let field_rec_ann = "REC"
+let field_val_ann = "VAL"
+
 (*
   Data types for code gen
 *)
@@ -572,6 +613,8 @@ let constinfinity = "ZInfinity"
 let deep_split_disjuncts = ref false
 let check_integer_overflow = ref false
 
+let preprocess_disjunctive_consequence = ref false
+
 let this = "this"
 
 let is_self_ident id = self=id
@@ -602,6 +645,9 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let thrd_name = "thrd"
+let thrd_typ = Named "thrd"
+
 let silence_output = ref false
 
 (*precluded files*)
@@ -628,6 +674,8 @@ let label_split_ante = ref true
 let label_aggressive_sat = ref true
 let label_aggressive_imply = ref true
 
+let force_verbose_xpure = ref false
+
 let texify = ref false
 let testing_flag = ref false
 
@@ -645,12 +693,25 @@ let use_split_match = ref false
 
 let consume_all = ref false
 
+let dis_base_case_unfold = ref false
+
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
+let enable_lemma_lhs_unfold = ref false
+let allow_lemma_residue = ref false
+let allow_lemma_deep_unfold = ref true
+let allow_lemma_switch = ref true
+let allow_lemma_fold = ref false
+let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
 
-let sa_print_inter = ref false
+let sap = ref false
+
+let sags = ref false
+
+let sa_gen_slk = ref false
+let gen_fixcalc = ref false
 
 let tc_drop_unused = ref false
 let simpl_unfold3 = ref false
@@ -670,6 +731,8 @@ let sa_dnc = ref false
 
 let pred_reuse = ref false
 
+let pred_trans_view = ref true
+
 (*temp: should be improve*)
 let pred_en_oblg = ref true
 
@@ -679,27 +742,39 @@ let pred_syn_flag = ref true
 
 let sa_syn = ref true
 
+let print_relassume  = ref true
+
 let lemma_syn = ref false
 
 let sa_en_split = ref false
 
 let pred_split = ref false
 
+let pred_seg_split = ref true
+
 (* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
 
-let pred_elim_useless = ref false
+let pred_elim_useless = ref true
 let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
+
+let sa_pure = ref false
+
+(* let iSIZE_PROP = 0 *)
+(* let iBAG_VAL_PROP = 1 *)
+
+
+let sa_ex = ref false
 
 let sa_infer_split_base = ref true
 
@@ -713,18 +788,26 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
+let pred_seg_unify = ref false
+
 let pred_equiv = ref false
 
+let pred_equiv_one = ref true
+
 let pred_unify_post = ref false
+
+let pred_unify_inter = ref true
 
 let sa_tree_simp = ref false
 
 let sa_subsume = ref false
 
-(* let norm_elim_useless = ref false *)
+let norm_elim_useless = ref false
 
 let norm_extract = ref false
 let allow_norm_disj = ref true
+
+let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
@@ -744,6 +827,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let unsat_consumed_heap = ref false (* to add consumed heap for unsat_now *)
 let disj_compute_flag = ref false
 let compute_xpure_0 = ref true
 let inv_wrap_flag = ref true
@@ -765,7 +849,8 @@ let elim_exists_ff = ref true
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
-let allow_field_ann = ref true
+let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)
+let allow_field_ann = ref false
 
 (*Since this flag is disabled by default if you use this ensure that 
 run-fast-test mem test cases pass *)
@@ -777,6 +862,7 @@ let allow_mem = ref false
 (*enabling allow_mem will turn on field ann as well *)
 
 let infer_mem = ref false
+let infer_raw_flag = ref true
 
 let pa = ref false
 
@@ -819,6 +905,12 @@ let allow_norm = ref true
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
+
+(*
+  true -> threads as resource
+  false -> threads as AND-conjunctions
+*)
+let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 
@@ -889,6 +981,8 @@ let pre_residue_lvl = ref 0
 (* Lvl -1 - never add any pre to residue *) 
 
 let check_coercions = ref false
+let dump_lemmas = ref false
+let dump_lemmas_med = ref false
 
 let num_self_fold_search = ref 0
 
@@ -905,6 +999,10 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
+
+let print_en_tidy = ref true
+
+let print_html = ref false
 
 (* let enable_sat_statistics = ref false *)
 
@@ -1138,6 +1236,11 @@ let fresh_formula_label (s:string) :formula_label =
   
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
+
+let mk_strict_branch_point (id:control_path_id) (s:string) : control_path_id_strict = 
+  match id with 
+    | Some i -> i
+    | None -> fresh_formula_label s
 
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
@@ -1429,6 +1532,13 @@ let set_last_sleek_fail () =
 (*     Hashtbl.find debug_map x *)
 (*   with _ -> DO_None *)
 
+(* let inf_number = ref 0 *)
 
+(* let fresh_inf_number() =  *)
+(*   inf_number := !inf_number + 1; *)
+(*   string_of_int(!inf_number) *)
 
-
+let gen_field_ann t=
+  match t with
+    | Named _ -> fresh_any_name field_rec_ann
+    | _ -> fresh_any_name field_val_ann

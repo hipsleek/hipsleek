@@ -1,0 +1,14 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+lemma_unsafe self::ls<vv,ll> * vv::node<uu> -> self::ls<uu,ll+1> .
+//lemma_unsafe self::ls<vv,ll-1> * vv::node<uu> -> self::ls<uu,ll> .
+//lemma_unsafe self::ls<uu,ll> <- (exists uu2: self::ls<vv,ll-1> * vv::node<uu2> & uu2=uu).
+
+checkentail_exact x::ls<zz,hh>*zz::node<tt>  |- x::ls<tt2,kk>.
+print residue.

@@ -1,0 +1,72 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> & (a=0 | a>0 & self!=q).
+
+// example from APLAS13 which sleek cannot solve..
+
+//(1)
+checkentail p::lseg<q',i'>*q'::node<q>*q::lseg<nil,m> & i=i'+1
+  & i'>=0 & m=n-i'-1 & m>=0
+ |- p::lseg<q,i>*q::lseg<nil,n-i>.
+
+
+checkentail p::lseg<q',i'>*q'::node<q>
+  & i'>=0 & m=n-i'-1 & m>=0
+ |- p::lseg<q,i>
+/*
+lemma_safe x::ls<y>*y::ls<z>*z::node<k> --> x::ls<z>*z::node<k>
+lemma_safe x::ls<y>*y::ls<z>*z::ls<nil> --> x::ls<z>*z::ls<nil>
+
+m = n-i'-1
+  = n- (i'+1_
+  = n-i
+ 
+fail: due to incompleteness?
+
+*/
+
+//(2) fails but should succeed
+checkentail p::lseg<q',i'>*q'::node<q> & i=i'+1
+  & i'>=0 
+ |- p::lseg<q,i>.
+
+//(3) fail but should succeed
+checkentail 
+  p::lseg<q,i> & i=i2+1 & i2>=0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(4)
+checkentail 
+  p::lseg<q2,a> & q2::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 & b>=0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(5)
+checkentail 
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 & b>0
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+
+// (6)to infer b
+// seems broken here!
+infer[b] 
+  q1::lseg<q,b> & q!=q1
+  |- q1::node<q>.
+print residue.
+
+//(7)
+infer[b]
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & a>=0 
+  |- p::lseg<q1,i2>*q1::node<q>.
+
+//(8)
+infer[a,b]
+  p::lseg<q1,a> & q1::lseg<q,b> & a+b=i2+1 & i2>=0 & q!=q1 
+  |- p::lseg<q1,i2>*q1::node<q>.
+print residue.

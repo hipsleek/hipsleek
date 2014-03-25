@@ -461,6 +461,17 @@ let rec string_of_h_formula = function
       string_of_formula_label_opt pi
         ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
         ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.ThreadNode ({F.h_formula_thread_node = x;
+                 F.h_formula_thread_name = id;
+                 F.h_formula_thread_resource = rsr;
+                 F.h_formula_thread_delayed = dl;
+                 F.h_formula_thread_label = pi;
+                  F.h_formula_thread_perm = perm;
+                 F.h_formula_thread_pos = l}) ->
+      let perm_str = string_of_iperm perm in
+      let rsr_str = string_of_formula rsr in
+      ((string_of_id x) ^ "::" ^ id ^ perm_str 
+      ^ "<" ^ (string_of_pure_formula dl) ^ " --> " ^ rsr_str ^ ">" ^ "[ThreadNode]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
@@ -468,7 +479,7 @@ let rec string_of_h_formula = function
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
-let string_of_one_formula (f:F.one_formula) =
+and string_of_one_formula (f:F.one_formula) =
   let h,p,dl,th,pos = F.split_one_formula f in
   let sh = string_of_h_formula h in
   let sp = string_of_pure_formula p in
@@ -481,11 +492,11 @@ let string_of_one_formula (f:F.one_formula) =
     ^ " --> " ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
-let rec string_of_one_formula_list (f:F.one_formula list) =
+and string_of_one_formula_list (f:F.one_formula list) =
   String.concat "\n AND" (List.map string_of_one_formula f)
 
 (* pretty printing for formulae *) 
-let rec string_of_formula = function 
+and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
                   F.formula_base_flow = fl;
@@ -515,9 +526,8 @@ let rec string_of_formula = function
                  else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
               ^ ")"
       in rs^sa
-;;
 
-let rec string_of_struc_formula c = match c with 
+and  string_of_struc_formula c = match c with 
 	| F.ECase {
 			F.formula_case_branches  =  case_list ;
 		} -> 
@@ -787,11 +797,11 @@ and
 
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann ann= String.concat "@" ann
+  (* match ann with *)
+  (*   | VAL -> "@VAL" *)
+  (*   | REC -> "@REC" *)
+  (*   | F_NO_ANN -> "" *)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
@@ -912,6 +922,7 @@ let string_of_lem_kind l =
     | LEM_UNSAFE   -> "unsafe lemmas(not proved)"
     | LEM_SAFE     -> "safe lemmas(added to store only if valid)"
     | LEM_INFER    -> "infer lemmas"
+    | LEM_INFER_PRED    -> "infer lemmas + pred"
 ;;
 
 (* pretty printing for a list of coerc_decl_list *)
@@ -973,8 +984,11 @@ let string_of_rel_decl_list rdecls =
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
-  let args = String.concat ";" (List.map (fun (_,n,_) -> n) hpdecl.Iast.hp_typed_inst_vars) in
-  name^"("^args^")"
+  let args = String.concat ";" (List.map (fun (t,n,i) -> (string_of_typ t) ^  (if not !print_ann then "" else if i=NI then "@NI" else "")
+      ^ " " ^ n
+  ) hpdecl.Iast.hp_typed_inst_vars) in
+  let parts = if hpdecl.Iast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Iast.hp_part_vars) in
+  name^"("^args^")"^parts
 
 
 (* An Hoa : print axioms *)
@@ -1021,7 +1035,7 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
   (string_of_coerc_decl_list_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
-;;                                                                                                                         
+;;
 
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;

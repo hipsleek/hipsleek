@@ -1,0 +1,26 @@
+// sleek file of zip_paper_eq-2.ss
+
+relation P3(int a, int b).
+
+//inv decl
+relAssume
+  n>=0 & m>=0 & P3(n,m) --> true.
+
+relAssume
+   P3(n,m) -->  (n!=0 | m<1).
+
+relAssume
+   P3(n,m) -->  (m!=0 | n<1).
+
+relAssume
+   P3(n,m) & 1<=n 
+     & 1<=m & m2=m-1 & n2=n-1
+   -->  P3(n2,m2).
+
+relation_infer [P3][].
+
+/*
+# zip-fix-eq-2.slk
+
+
+*/

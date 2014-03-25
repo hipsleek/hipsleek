@@ -109,6 +109,7 @@ module Make (Token : SleekTokenS)
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
    ("assert_exact", ASSERT_EXACT);
+   ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
@@ -136,6 +137,8 @@ module Make (Token : SleekTokenS)
    ( "shape_post_obligation", SHAPE_POST_OBL);
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
+   ("shape_lfp" , SHAPE_LFP);
+   ("shape_rec" , SHAPE_REC);
    ( "shape_split_base", SHAPE_SPLIT_BASE);
    ("shape_elim_useless", SHAPE_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
@@ -147,6 +150,7 @@ module Make (Token : SleekTokenS)
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("infer_exact", INFER_EXACT);
    ("infer_inexact", INFER_INEXACT);
+   ("relation_infer", REL_INFER);
    ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
@@ -197,6 +201,7 @@ module Make (Token : SleekTokenS)
 	 ("lemma_unsafe", LEMMA TLEM_UNSAFE);
          ("lemma_safe", LEMMA TLEM_SAFE);
 	 ("lemma_infer", LEMMA TLEM_INFER);
+         ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
 	 (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
 	 ("let", LET);
@@ -213,9 +218,11 @@ module Make (Token : SleekTokenS)
 	 ("macro",PMACRO);
      ("perm",PERM);
      ("pred", PRED);
-	 ("pred_prim", PRED_PRIM);
+     ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
-	 ("hip_include", HIP_INCLUDE);
+     ("hip_include", HIP_INCLUDE);
+     ("pred_split", PRED_SPLIT);
+     ("pred_norm_disj", PRED_NORM_DISJ);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);
@@ -330,11 +337,13 @@ rule tokenizer file_name = parse
   | "@D" { DERV }
   | "@M" { MUT }
   | "@S" { SAT }
-  | "@VAL" {VAL}
+  (* | "@VAL" {VAL} *)
   | "@C" {PASS_COPY}
   | "@R" {PASS_REF}
-  | "@REC" {REC}
+  | "ref" {PASS_REF2}
+  (* | "@REC" {REC} *)
   | "@NI" {NI}
+  | "@RO" {RO}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
@@ -388,6 +397,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
+  | "<#" { TOPAREN }
+  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

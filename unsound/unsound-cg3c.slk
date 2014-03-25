@@ -1,0 +1,31 @@
+data node {
+    int v;
+    node next;
+}.
+
+pred lls<n,k,sm> == 
+ self::node<sm,null> & v>0 & n=1 & k=1 
+ or self::node<v,null> & n=1 & k=0 
+ or self::node<v,q> * q::lls<n-1,k> 
+ or self::node<v,q> * q::lls<n-1,k-1> & n=k & v>0
+ inv self!=null & n>=k>=0 & n>0.
+
+// works fine below..
+
+checkentail xs::node<v,q> * q::lls<n,k> & n=k |- xs::lls<nn,kk>.
+print residue.
+// 1 answer
+
+checkentail xs::node<v,q> * q::lls<n,k> & n=k & v>0 |- xs::lls<nn,kk>.
+print residue.
+// 2 answers
+
+checkentail xs::node<v,q1> *q1::node<v2,q> * q::lls<n,k> & n=k & v>0
+    & v2>0 |- xs::lls<nn,kk>.
+print residue.
+// 3 answers
+
+checkentail xs::node<v,q1> *q1::node<v2,q> * q::lls<n,k> & n=k 
+    & v2>0 |- xs::lls<nn,kk>.
+print residue.
+// 2 answers

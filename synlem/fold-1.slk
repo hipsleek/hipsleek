@@ -1,0 +1,16 @@
+data node { int val ; node next }.
+
+pred lseg<n> == self:node=null & n=0
+    or self::node<_,null> & n=1
+         inv n >= 0.
+
+checkentail
+  self::node<_,null>
+ |- (exists kkk : self::lseg<kkk> & kkk=1).
+print residue.
+
+checkentail
+  self::node<_,null>
+ |- self::lseg<kkk> & kkk=1.
+print residue.
+

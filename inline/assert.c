@@ -13,7 +13,7 @@ void f() {
   //@ assert (y' = 2 | x'=0);
   **pp = 5;
   //@ assert p'!=null;
-  // need to be fixed
+  // need to be fixed below
   //@ assert p'::int_star<5>; 
   // assert addr_p'::int_star_star<q> * q::int_star<5>;
   // ==>  assert addr_p'::int_star_star<q> * q::int_star<5>;

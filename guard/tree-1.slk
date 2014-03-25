@@ -1,0 +1,33 @@
+data node{
+	node left;
+	node right;
+}.
+
+HeapPred H0(node a).
+HeapPred H(node a).
+
+
+infer [H0,H]  x::node<lf,ri>*H0(lf) & ri!=null |- H(lf).
+print residue.
+
+/*
+# tree-1.slk
+
+This inference is too weak.
+
+Entail (1) : Valid. 
+
+ <1>x::node<lf,ri>@M&ri!=null&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [H0(lf) --> H(lf)]
+
+Can we obtain instead:
+
+ <1>x::node<lf,ri>@M&ri!=null&{FLOW,(21,22)=__norm}[]
+
+   H0(lf) |#| x::node<lf,ri>@M&ri!=null --> H(lf)
+
+This gives relational information that ri!=null is required.
+
+*/
+
+

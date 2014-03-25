@@ -1,0 +1,22 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+HeapPred zip(node@RO a, node b).
+HeapPred zipN(node@RO a, node b, int n:1).
+
+relDefn zip(x,y) <->
+  x=null & y=null
+or x::node<_,p>*y::node<_,q>*zip(p,q).
+
+//relDefn zipN(a,b,n) <-> extends zip(a,b) at 0 with size[REC]<n> .
+
+pred_split [zip].
+
+print residue.

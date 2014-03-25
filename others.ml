@@ -29,10 +29,12 @@ type proving_kind =
         | PK_Pred_Split
 	| PK_Assign_Stmt
 	| PK_Assert
+	| PK_Assert_Assume
 	| PK_BIND
 	| PK_PRE
 	| PK_PRE_REC
 	| PK_POST
+        | PK_SA_EQUIV
 	| PK_Unknown
 
 
@@ -54,10 +56,12 @@ let string_of_proving_kind pk =
     | PK_If_Stmt -> "If_Stmt"
     | PK_Assign_Stmt -> "Assign_Stmt"
     | PK_Assert -> "Assert"
+    | PK_Assert_Assume -> "Assert/Assume"
     | PK_BIND -> "BIND"
     | PK_PRE -> "PRE"
     | PK_PRE_REC -> "PRE_REC"
     | PK_POST -> "POST"
+    | PK_SA_EQUIV -> "PK_SA_EQUIV"
     | PK_Pre_Oblg -> "PRE-OBLIGATION"
     | PK_Post_Oblg -> "POST-OBLIGATION"
     | PK_Pred_Split -> "PK_Pred_Split"
@@ -73,7 +77,8 @@ let find_impt ls =
     | [x] -> x
     | x::xs -> (match x with
         | PK_Sleek_Entail(_)
-        | PK_Assert | PK_BIND | PK_PRE | PK_PRE_REC | PK_POST -> x
+        | PK_Assert | PK_Assert_Assume | PK_BIND 
+        | PK_PRE | PK_PRE_REC | PK_POST -> x
         | _ -> aux xs
       ) 
   in aux ls
@@ -101,15 +106,17 @@ let wrap_proving_kind (tk) exec_function args =
   (* let str = string_of_proving_kind tk in *)
   (* if (!sleek_logging_txt || !proof_logging_txt) then *)
   begin
-    let m = proving_kind # get_stk in
+    (* let m = proving_kind # get_stk in *)
     let _ = proving_kind # push tk in
     try 
       let res = exec_function args in
-      let _ =  proving_kind # pop
-      in res
+      let _ =  proving_kind # pop in
+      (* let _ = proving_kind # set_stk m in *)
+      res
     with _ as e ->
         begin
-          proving_kind # set_stk m;
+          let _ = proving_kind # pop in
+          (* let _ = proving_kind # set_stk m in *)
           raise e
         end
   end

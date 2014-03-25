@@ -92,7 +92,7 @@ let rec intersect_list_ann (ann_lst_l: CP.ann list) (ann_lst_r: CP.ann list): CP
 	  			 else ann_r :: (intersect_list_ann tl tr)
 	  | CP.ConstAnn(Lend)    -> if (CP.isAccs ann_l) then ann_r :: (intersect_list_ann tl tr)
 	  			 else ann_l :: (intersect_list_ann tl tr)
-	  | CP.TempAnn _
+	  | CP.TempAnn _ | CP.NoAnn
 	  | CP.TempRes _
 	  | CP.ConstAnn(Accs)    -> ann_l :: (intersect_list_ann tl tr)
 	  | CP.PolyAnn(v)        -> ann_l :: (intersect_list_ann tl tr) (* TODO(ann): check if var ann is replaced or not *)
@@ -365,6 +365,12 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 		      let mpf2,disjf2 = xmem_heap f2 vl in
 		      let mpf = mem_union mpf1 mpf2 in
 		      mpf, disjf1@disjf2
+	| CF.ThreadNode ({ CF.h_formula_thread_node = dn;
+			 CF.h_formula_thread_name = name;
+			 CF.h_formula_thread_pos = pos;}) -> 
+        (*TOCHECK: currently ignore delayed & resource*)
+		 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name,[])] [(name, [])] []), []
+
 	| CF.DataNode ({ CF.h_formula_data_node = dn;
 			 CF.h_formula_data_name = name;
 			 CF.h_formula_data_param_imm = fl;

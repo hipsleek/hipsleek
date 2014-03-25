@@ -1,0 +1,51 @@
+data node{
+     int val;
+     node next;
+}.
+
+/*
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+*/
+
+checkentail_exact
+ self::node<_,null>
+|- (exists lst,k: lst::node<_,null> & lst=k & k=self).
+// how did this succeed?
+
+
+/*
+# loc-lem-4e.slk 
+
+
+Why 2nd succeed but first failed? Both for -imm
+
+Why 2 data nodes?
+
+data node {
+  int valVAL_11;
+  node nextREC_18;
+}
+data node {
+  int valVAL_11;
+  node nextREC_18;
+}
+data Object {
+;
+}
+
+where did EQ ptr came from?
+
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(lst_35,k_36),(k_36,self)]
+compute_actions inp2 :LHS heap: self::node<_,flted_14_33>@M
+compute_actions inp3 :LHS pure: flted_14_33=null
+compute_actions inp4 :RHS cand:[ lst_35::node<_,flted_15_34>@M]
+compute_actions inp5 :right alias:[flted_15_34,lst_35,k_36,Anon_13]
+compute_actions@1 EXIT: Match =>
+          LHS: self::node<_,flted_14_33>@M
+          RHS: lst_35::node<_,flted_15_34>@M
+
+*/

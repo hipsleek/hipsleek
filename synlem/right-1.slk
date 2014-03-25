@@ -1,0 +1,38 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+lemma_unsafe "xx" 
+   self::node<_,q>*q::rlseg<p>  <- self::rlseg<p1>* p1::node<_,p> 
+.
+// wrong if we use <- for complex lemma
+checkentail self::rlseg<p1>* p1::node<_,p> |- self::node<_,q>*q::rlseg<p> .
+
+/*
+============
+RIGHT LEMMAS
+============
+[Lemma "xx":  self::node<_,q>@M * q::rlseg<p>@M&{FLOW,(21,22)=__norm}[]<== (exists p1_38,_: self::rlseg<p1_38>@M * p1_38::node<_,p>@M&
+{FLOW,(21,22)=__norm})[]
+ head match:node
+ body view:rlseg
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head_norm:  (exists p_35,_,q: self::node<_,q>@M * q::rlseg<p_35>@M&p=p_35&
+{FLOW,(1,24)=__flow})[]
+ body_norm:  EBase exists (Expl)[](Impl)[p1](ex)[](exists p_32,_: self::rlseg
+<p1>@M * 
+       p1::node<_,p_32>@M&p=p_32&{FLOW,(1,24)=__flow})[]
+ coercion_univ_vars: []
+ coercion_case: Complex
+]
+
+
+*/

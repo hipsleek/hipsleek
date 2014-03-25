@@ -12,10 +12,14 @@ type n
 
 
 module F = Cformula
+module CF = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
+
+(*used in Predicate*)
+let pure_hprel_map = ref ([]: (ident * ident) list)
 
 type typed_ident = (typ * ident)
 
@@ -25,6 +29,7 @@ and prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
     mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
+    mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -44,7 +49,7 @@ and data_field_ann =
 and data_decl = { 
     data_name : ident;
     data_pos : loc;
-    data_fields : (typed_ident * data_field_ann) list;
+    data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -75,6 +80,7 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
+  | View_SPEC
 
 and view_decl = { 
     view_name : ident; 
@@ -84,8 +90,13 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : LO.t list;
     view_modes : mode list;
+    view_domains: ident list; (*View_EXT have been applied in this view*)
     view_is_prim : bool;
     view_kind : view_kind;
+    view_prop_extns:  P.spec_var list; (*for extn views*)
+    view_parent_name: ident option;
+    (*a map of shape <-> pure properties*)
+    view_extns: (ident * int * int) list;(* (view_extn_name, r_pos , extn_arg_pos) list;*)
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;
@@ -123,6 +134,7 @@ and rel_decl = {
 and hp_decl = { 
     hp_name : ident;
     hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
     mutable hp_root_pos: int;
     hp_is_pre: bool;
     hp_formula : F.formula;}
@@ -162,6 +174,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_invoked : bool;
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;
@@ -202,6 +215,10 @@ and coercion_decl = {
     coercion_infer_vars :  P.spec_var list;
     (* coercion_proof : exp; *)
     (* coercion_head_exist : F.formula;   *)
+ 
+    (* this used to build a defn for folding right lemma *)
+    coercion_fold_def : view_decl Gen.mut_option;
+ 
     (* same as head except for annotation to self node? *)
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
@@ -209,6 +226,8 @@ and coercion_decl = {
     coercion_mater_vars : mater_property list;
     (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
     coercion_case : coercion_case; (*Simple or Complex*)
+    coercion_type_orig: coercion_type option; 
+    coercion_kind: lemma_kind;
 }
 
 and coercion_type = Iast.coercion_type
@@ -281,7 +300,7 @@ and exp_cond = { exp_cond_type : typ;
 exp_cond_condition : ident;
 exp_cond_then_arm : exp;
 exp_cond_else_arm : exp;
-exp_cond_path_id : control_path_id;
+exp_cond_path_id : control_path_id_strict;
 exp_cond_pos : loc }
 
 and exp_debug = { 
@@ -449,12 +468,14 @@ let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
   | Sharp_id id -> exlist # get_hash id
 
+
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
 let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_prog_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
-let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:F.formula) -> "cform printer has not been initialized")
+let print_pure_formula = ref (fun (c:P.formula) -> "cform printer has not been initialized")
 let print_spec_var_list = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
@@ -465,6 +486,7 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
@@ -915,6 +937,38 @@ let look_up_view_def_raw i (defs : view_decl list) (name : ident) =
   let pr_out = !print_view_decl in
   Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
+let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
+  let ext_views = List.filter (fun v ->
+      let b1 = v.view_kind=View_EXTN && List.length v.view_prop_extns = 1 in
+      let num_base = match v.view_base_case with
+        | None -> 0
+        | Some _ -> 1
+      in
+      let num_rec_br = List.length v.view_un_struc_formula - num_base in
+      b1 && (num_rec_br0 = num_rec_br) && (num_base0 = num_base)
+  ) defs in
+  ext_views
+
+let look_up_view_inv defs act_args name inv_compute_fnc =
+  let vdcl = look_up_view_def_raw 46 defs name in
+  let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
+  let inv =
+    let p1 = MP.pure_of_mix vdcl.view_user_inv in
+    if P.isConstTrue p1 then
+      (*make sure inv is not computed*)
+      if !Globals.do_infer_inv then
+        MP.pure_of_mix vdcl.view_x_formula
+      else
+        try
+          (*case Globals.do_infer_inv = false*)
+          let _ = Globals.do_infer_inv := true in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula p1 in
+          let _ = Globals.do_infer_inv := false in
+          new_pf
+        with _ -> p1
+    else p1
+  in
+  P.subst ss inv
 
 (* An Hoa *)
 let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
@@ -929,6 +983,78 @@ let look_up_hp_def_raw defs name=
   let pr1 = !print_hp_decl in
   Debug.no_1 "look_up_hp_def_raw" pr_id pr1
       (fun _ -> look_up_hp_def_raw_x defs name) name
+
+let look_up_hp_parts decls hp=
+  let hp_dc = look_up_hp_def_raw decls hp in
+  hp_dc.hp_part_vars
+
+let look_up_hp_decl_data_name_x decls hp arg_pos=
+  let rec look_up_data_name args n=
+    match args with
+      | [] -> report_error no_pos "Cast.look_up_hp_decl_data_name 1"
+      | (sv,_)::rest ->( if n = arg_pos then
+          match Cpure.type_of_spec_var sv with
+            | Named id -> id
+            | _ -> report_error no_pos "Cast.look_up_hp_decl_data_name: only pure-extend for pointer"
+          else look_up_data_name rest (n+1)
+        )
+  in
+  let hp_dcl = look_up_hp_def_raw decls hp in
+  look_up_data_name hp_dcl.hp_vars_inst 0
+
+let look_up_hp_decl_data_name decls hp arg_pos=
+  Debug.no_2 "look_up_hp_decl_data_name" pr_id string_of_int pr_id
+      (fun _ _ -> look_up_hp_decl_data_name_x decls hp arg_pos)
+      hp arg_pos
+
+let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
+
+let generate_pure_rel hprel=
+  let n_p_hprel ={
+      rel_name = default_prefix_pure_hprel ^ hprel.hp_name;
+      rel_vars = List.map fst hprel.hp_vars_inst;
+      rel_formula = F.get_pure hprel.hp_formula;
+  }
+  in
+  (*add map*)
+  let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
+  let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  n_p_hprel
+
+let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
+  if (List.length unknown_ptrs > 0) then
+    let hp_decl =
+      { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
+        if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
+        ^ (string_of_int (Globals.fresh_int()));
+      hp_part_vars = [];
+      hp_root_pos = 0; (*default, reset when def is inferred*)
+      hp_vars_inst = unknown_ptrs;
+      hp_is_pre = is_pre;
+      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) F.TypeTrue (F.mkTrueFlow()) [] pos;}
+    in
+    let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
+    prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    let p_hp_decl = generate_pure_rel hp_decl in
+    let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
+    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let hf =
+      F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
+               List.map (fun sv -> P.mkVar sv pos) unk_args,
+      pos)
+    in
+    let _ = Debug.tinfo_hprint (add_str "define: " !print_hp_decl) hp_decl pos in
+    Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
+    (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
+  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
+  let pr1 = pr_list (pr_pair !P.print_sv print_arg_kind) in
+  let pr2 = !F.print_h_formula in
+  let pr4 (hf,_) = pr2 hf in
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+      (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
@@ -1045,6 +1171,32 @@ let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match dd
 	  else look_up_data_def pos rest name
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a data/class declaration"}
+
+let look_up_extn_info_rec_field_x ddefs dname=
+  let rec look_up_helper fields=
+    match fields with
+      | ((t,_), extns)::rest -> begin
+          match t with
+            | Named id1 -> if String.compare id1 dname = 0 then
+                extns
+              else look_up_helper rest
+            | _ -> look_up_helper rest
+        end
+      | [] -> raise Not_found
+  in
+  let dd = look_up_data_def no_pos ddefs dname in
+  let _ = Debug.ninfo_hprint (add_str "    dd.data_fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id))))
+      dd.data_fields no_pos in
+  try
+    look_up_helper dd.data_fields
+  with _ ->
+      let (_, extns) = List.hd dd.data_fields in
+      extns
+
+let look_up_extn_info_rec_field ddefs dname=
+  Debug.no_1 "look_up_extn_info_rec_field" pr_id (pr_list pr_id)
+      (fun _ -> look_up_extn_info_rec_field_x ddefs dname)
+      dname
 
 let rec look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def pos ddefs name in
@@ -1193,8 +1345,9 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c ) coers
   
-let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
-	let pr1 l = string_of_int (List.length l) in
+let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
+  let pr1 = !print_coerc_decl_list in
+	(* let pr1 l = string_of_int (List.length l) in *)
 	Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "") look_up_coercion_def_raw coers c
   (* match coers with *)
   (* | p :: rest -> begin *)
@@ -1744,6 +1897,78 @@ let vdef_fold_use_bc prog ln2  =
     | Some f -> !print_struc_formula f.view_formula in
   Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
+(* WN : this helps build a vdef to perform right lemma folding *)
+(* This will make sure that the variables in coer
+coincide with the variables in the corresponding
+view definition
+   In the present of permissions, this may not hold
+   as the LHS of a view definition does not have permissions
+   while the LHS of a coer does.
+*)
+
+let vdef_lemma_fold prog coer  = 
+  let cfd = coer.coercion_fold_def in
+  let lhs = coer.coercion_head in
+  (* body contains orig=false but not body_norm*)
+  let rhs = CF.formula_to_struc_formula coer.coercion_body in
+  (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
+  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
+  if cfd # is_init then cfd # get
+  else
+    let vd2 = match lhs with
+      | CF.Base bf ->
+            begin
+              match bf.CF.formula_base_heap with
+                | CF.ViewNode vn -> 
+                      (try 
+                        let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+                        let to_vars = vd.view_vars in
+                        let from_vars = vn.CF.h_formula_view_arguments in
+                        let subs = List.combine from_vars to_vars in
+                        (* let pr = Cprinter.string_of_spec_var_list in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
+                        (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
+                        let rhs = CF.subst_struc subs rhs in
+                        Some {vd with view_formula = rhs}
+                      with  
+                        | Not_found -> None
+                      )
+                | _ -> None 
+            end
+      | _ -> None in
+    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
+    let _ = cfd # set vd2 in
+    vd2
+
+(* let vdef_lemma_fold prog coer  =  *)
+(*   let cfd = coer.coercion_fold_def in *)
+(*   let lhs = coer.coercion_head in *)
+(*   let rhs = coer.coercion_body_norm in *)
+(*   let _ = Debug.info_hprint (add_str "head" !print_formula) lhs no_pos in *)
+(*   let _ = Debug.info_hprint (add_str "body" !print_struc_formula) rhs no_pos in *)
+(*   if cfd # is_init then cfd # get *)
+(*   else *)
+(*     let vd2 = match lhs with *)
+(*       | F.Base bf -> *)
+(*             begin *)
+(*               match bf.F.formula_base_heap with *)
+(*                 | F.ViewNode vn ->  *)
+(*                       (try  *)
+(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         Some {vd with view_formula = rhs} *)
+(*                       with   *)
+(*                         | Not_found -> None *)
+(*                       ) *)
+(*                 | _ -> None  *)
+(*             end *)
+(*       | _ -> None in *)
+(*     let _ = cfd # set vd2 in *)
+(*     vd2 *)
+
+let vdef_lemma_fold prog coer  = 
+  let op = coer.coercion_fold_def in
+  let pr _ = pr_option !print_view_decl_short (op # get) in
+   Debug.no_1 "vdef_lemma_fold" pr pr (fun _ -> vdef_lemma_fold prog coer) ()
 
 let get_xpure_one vdef rm_br  =
   match rm_br with

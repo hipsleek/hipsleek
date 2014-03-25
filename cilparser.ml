@@ -179,6 +179,7 @@ let typ_of_cil_exp (e: Cil.exp) : Cil.typ =
 let rec is_cil_struct_pointer (ty: Cil.typ) : bool = (
   match ty with
   | Cil.TPtr (Cil.TComp (comp, _), _) -> true
+  | Cil.TPtr (Cil.TNamed _, _) -> true
   | Cil.TPtr (ty, _) -> is_cil_struct_pointer ty
   | _ -> false
 )
@@ -236,7 +237,8 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         "  case { \n" ^
         "    p =  null -> ensures res = null; \n" ^
         "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-        "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^
+        (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+        "                 ensures res::" ^ data_name ^ param ^ " ; \n" ^
         "  }\n"
       ) in
       let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -624,7 +626,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                               (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                               let ftyp = deref_ty in
                 let fname = str_deref in
-                              let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                              let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in
                               Hashtbl.add tbl_pointer_typ refined_ty dtyp;
@@ -702,7 +704,7 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
                     (* create new Globals.typ and Iast.data_decl update to hash tables *)
                     let ftyp = translate_typ actual_ty pos in
                     let fname = str_deref in
-                    let dfields = [((ftyp, fname), no_pos, false, Iast.F_NO_ANN)] in
+                    let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtype = Globals.Named dname in
                     Hashtbl.add tbl_pointer_typ actual_ty dtype;
@@ -738,13 +740,14 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
 
 
 and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
-  let vname = vinfo.Cil.vname in
+  (* let vname = vinfo.Cil.vname in *)
   let pos = translate_location vinfo.Cil.vdecl in
   let ty = vinfo.Cil.vtype in
   let (new_ty, need_init) = (match ty with
     | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
           (translate_typ ty1 pos, false)                 (* heap allocated data *)
     | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
+    | Cil.TNamed _ -> (translate_typ ty pos, true)
     | _ -> (translate_typ ty pos, false)
   ) in
   let name = vinfo.Cil.vname in
@@ -781,23 +784,23 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 (* translate a field of a struct                       *)
 (*     return: field type * location * inline property *)
 and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-      : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
+      : (Iast.typed_ident * loc * bool * (ident list)(* Iast.data_field_ann *)) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ftyp = field.Cil.ftype in
   match ftyp with
     | Cil.TComp (comp, _) ->
           let ty = Globals.Named comp.Cil.cname in
-          ((ty, name), pos, true, Iast.F_NO_ANN)                     (* struct ~~> inline data *)
+          ((ty, name), pos, true, [gen_field_ann ty] (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
     | Cil.TPtr (ty, _) ->
           let new_ty = (
               if (is_cil_struct_pointer ftyp) then translate_typ ty pos    (* pointer goes down 1 level *) 
               else translate_typ ftyp pos
           ) in
-          ((new_ty, name), pos, false, Iast.F_NO_ANN)
+          ((new_ty, name), pos, false, [gen_field_ann new_ty] (* Iast.F_NO_ANN *))
     | _ ->
           let ty = translate_typ ftyp pos in
-          ((ty, name), pos, false, Iast.F_NO_ANN)
+          ((ty, name), pos, false, [gen_field_ann ty] (* Iast.F_NO_ANN *))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
@@ -844,7 +847,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
   let _, _, l = lv in
   let pos = translate_location l in
   let lv_str = string_of_cil_lval lv in
-  try 
+  try
     let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
     let addr_var = Iast.mkVar addr_vname pos in
     Iast.mkMember addr_var [str_deref] None pos
@@ -861,7 +864,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
                           | _ -> Iast.mkMember base found_fields None pos
                     )
                   | Cil.Field ((field, l1), off, _) ->
-                        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                        (* let p = makeLocation (startPos pos) (endPos (translate_location l1)) in *)
                         create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
                   | Cil.Index (e, off, _) ->
                         let l1 = loc_of_cil_exp e in
@@ -884,6 +887,9 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
               let base_typ = typ_of_cil_exp e in
               match base_typ with
                 | Cil.TPtr (Cil.TComp _, _) ->
+                      let base = translate_exp e  in
+                      create_complex_exp base offset [] pos
+                | Cil.TPtr (Cil.TNamed _, _) ->
                       let base = translate_exp e  in
                       create_complex_exp base offset [] pos
                 | _ -> (
@@ -960,6 +966,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           ) in
           let input_typ = (
               let ity = typ_of_cil_exp exp in
+              (* let _ = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
               match ity with
                 | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
                 | _ -> translate_typ ity pos
@@ -969,6 +976,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
             | _ -> translate_typ ty pos
           ) in
           let input_exp = translate_exp exp in
+          (* let _ = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+          (* let _ = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
           if (input_typ = output_typ) then
             (* no need casting *)
             input_exp
@@ -1310,6 +1319,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                   }
                 with _ -> h
               end
+        | IF.ThreadNode _
         | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
@@ -1612,10 +1622,14 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
     let static_specs1, hp_decls = match static_specs with
-      | Iformula.EList [] ->
-	    let ss, hps = Iast.genESpec funargs return_typ pos in
-	    (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-	    (ss, hps)
+      | Iformula.EList [] -> begin
+          match funbody with
+            | Some _ ->
+	          let ss, hps = Iast.genESpec funbody funargs return_typ pos in
+	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+	          (ss, hps)
+            | None -> static_specs, []
+        end
       | _ ->
 	    static_specs, []
     in
@@ -1634,6 +1648,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_exceptions = [];
         Iast.proc_body = funbody;
         Iast.proc_is_main = true;
+        Iast.proc_is_invoked = false;
         Iast.proc_file = filename;
         Iast.proc_loc = pos;
         Iast.proc_test_comps = None;

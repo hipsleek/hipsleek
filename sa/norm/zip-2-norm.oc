@@ -1,0 +1,7 @@
+I:={[m,n,k]: m>=0 & n>=0 & k>=0};
+B:={[m,n,k]:((k=n) | (k=m & k<n))};
+C:={[m,n,k]:((k=n & k<=m) | (k=m & k<n))};
+B :=B intersection I;
+C :=C intersection I;
+B subset C;
+C subset B;

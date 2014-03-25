@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+
+//lemma_safe "two" self::lseg<p1>*p1::lseg<p> -> self::lseg<p>.
+
+
+//1. FAIL. need cyclic->
+checkentail x::lseg<p1>*p1::lseg<p> |- x::lseg<p>.
+print residue.
+
+//2. VALID <-
+checkentail  x::lseg<p> |- x::lseg<p1>*p1::lseg<p>.

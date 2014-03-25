@@ -1,0 +1,75 @@
+data node {
+  int v;
+  node next;
+}.
+
+//relation RR0(int a, int b)
+// == a=?*b+?.
+//relation RR4(int a, int b,int c,int d).
+//relation RR2(int a, int b).
+
+//infer [RR2]  RR2(a,b) |- a>b.
+//print residue.
+
+//infer [RR2]  RR2(a,c) & b=c |- a>b.
+
+infer [a,b]   b=c |- a>b.
+print residue.
+
+infer [a,c]   b=c |- a>b.
+print residue.
+
+/*
+Old branch @ term_si give correct result:
+Entail (1) : Valid. 
+ <1>Base emp&b=c & b<a&{FLOW,(19,20)=__norm}[]
+ inferred pure: [b<a]
+
+
+Entail (2) : Valid. 
+ <1>Base emp&b=c & c<a&{FLOW,(19,20)=__norm}[]
+ inferred pure: [c<a]
+
+*/
+
+/*
+infer [RR4,RR2,RR0] 
+ x'::node<v_905,q_906>@M
+ //&TermR[][r_ll_865] 
+ &  s=v_905+s1_907 & 0<v_905 
+ //& r_ll_865 = RR[1]( s) 
+ //& r_ll_908 = RR[1]( s1_907) 
+ //& RR0(r_ll_865,s)  & RR0(r_ll_908,s1_907) 
+ //& RR2(r_ll_865,r_ll_908) 
+ & RR4(r_ll_865,s,r_ll_908,s1_907) 
+ & x=x' & x'!=null & !(v_bool_15_864') & x'!=null & !(v_bool_15_864') 
+ & v_int_19_862'=1 & q_906=v_node_19_860' & s1_907=s_911 
+ & r_ll_908=r_ll_912 
+ |- r_ll_865>r_ll_912.
+ // TermR[][r_ll_912]
+
+print residue.
+*/
+
+
+
+/*
+relation RR(a,b) == a=?*b+?.
+
+SIMPL: s1_907=s_911 & 
+r_ll_908=r_ll_912 & s=v_905+s1_907 & r_ll_908 = RR[1]( s1_907) & 0<v_905 & 
+r_ll_865 = RR[1]( s) |- r_ll_865>r_ll_912
+
+SOL: s1_907=s_911 & 
+r_ll_908=r_ll_912 & s=v_905+s1_907 & r_ll_908=0+s1_907 & 0<v_905 & 
+r_ll_865=0+s |- r_ll_865>r_ll_912]
+infer[RR] s1_907=s_911 
+  & r_ll_908=r_ll_912 & s=v_905+s1_907 
+  & 0<v_905 
+  & RR(r_ll_908,s1_907) 
+  & RR(r_ll_865,s) |- r_ll_865>r_ll_912.
+
+Solution:
+  RR(a,b) == a=1*b+0
+*/
+

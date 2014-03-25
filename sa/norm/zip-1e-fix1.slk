@@ -1,0 +1,11 @@
+relation P3(int a, int b).
+
+relAssume
+   m=0 & n=0 -->  P3(n,m).
+
+relAssume
+   emp & P3(n_127,m_128) & m=m_128+1 & n=n_127+1 -->  P3(n,m).
+
+relation_infer [][P3].
+
+//!!! fixpoint for post-rels:[( P3(n,m), m=n & 0<=m)]

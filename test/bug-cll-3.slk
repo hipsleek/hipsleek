@@ -1,0 +1,63 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> & self != p  
+	inv n >= 0.
+
+/*
+pred cll<p, n> == 
+  case {
+    self = p -> [] n = 0;
+    self!=p -> [] self::node<_, r> * r::cll<p, n-1> ;
+  } inv n >= 0.
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+*/
+
+
+pred hd1<n> == 
+ case {
+   self=null -> [] n = 0;
+   self!=null -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+pred hd2<n> == 
+ case {
+   n=0 -> [] self=null;
+   n>0 -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd<n+1>.
+print residue.
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd1<n+1>.
+print residue.
+
+checkentail
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd2<n+1>.
+print residue.
+
+/*
+Why (1) and (2) succeed but (3) fails?
+with --dci
+
+
+*/

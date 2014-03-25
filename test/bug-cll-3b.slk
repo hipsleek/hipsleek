@@ -1,0 +1,60 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for singly linked circular lists */
+pred cll<p, n> == self = p & n = 0
+	or self::node<_, r> * r::cll<p, n-1> //& self != p  
+	inv n >= 0.
+
+/*
+pred cll<p, n> == 
+  case {
+    self=p -> [] n = 0;
+    self!=p -> [] self::node<_, r> * r::cll<p, n-1> ;
+  } inv n >= 0.
+*/
+
+
+pred hd1<n> == 
+ case {
+   self=null -> [] n = 0;
+   self!=null -> [] self::node<_, r> * r::cll<self, n-1>;
+  }
+ inv n >= 0.
+
+
+checkentail_exact
+ r::cll<self,flted>@M * tmp'::node<v',r>@M * x'::node<_,tmp'>@M&n=flted+1 & self=x'
+  & 0<n & v=v' & x=x' & next=r 
+ |- x::hd1<n+1>.
+print residue.
+
+/*
+# bug-cll-3b.slk
+
+Why did --eci lead to failure?
+--dci lead to success.
+
+# seems related to classic bug ..
+
+Entail 1: Fail.(may) cause:UnionR[Nothing_to_do? 
+  Type: WArg
+  LHS: r::cll<self,flted>@M
+  RHS: x::hd1<flted_31_77>@M
+ lhs_rest: tmp'::node<v',r>@M * 
+  x'::node<_,tmp'>@M
+ rhs_rest: emp,OrR[residue is forbidden.,valid]]
+
+
+(i) remove redundant constraint
+  ECase case {
+         p=self -> EBase {1}->emp&p=self & n=0&{FLOW,(1,24)=__flow}[] ;
+         p!=self -> EBase exists (Expl)[](Impl)[_; r](ex)[]{2}->(exists p_21,
+                          flted_8_20: self::node<_,r>@M * 
+                          r::cll<p_21,flted_8_20>@M&n=flted_8_20+1 & 
+                          p!=self & p=p_21&{FLOW,(1,24)=__flow})[]
+         
+         }
+*/

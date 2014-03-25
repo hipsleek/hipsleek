@@ -4,6 +4,7 @@
 (******************************************)
 open Gen.Basic
 open Globals
+module I = Iast
 
 module M = Lexer.Make(Token.Token)
 
@@ -15,7 +16,7 @@ let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let process_cmd_line () =
-        Perm.disable_para();
+    if not (Perm.allow_perm ()) then Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()
@@ -197,8 +198,9 @@ let process_lib_file prog =
 let reverify_with_hp_rel old_cprog iprog =
   (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
   (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
-  let hp_defs = Saout.collect_hp_defs old_cprog in
-  let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) ((hp_kind, _,_,f) as hp_def) ->
+  let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
+  let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
+      let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
         match hp_kind with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try
@@ -216,14 +218,33 @@ let reverify_with_hp_rel old_cprog iprog =
              end
           | _ -> (r_hp_defs, r_unk_hps)
   ) ([],[]) hp_defs in
-  let need_trans_hprels1 = (* List.map (fun (a,b,c,f) -> *)
-  (*     let new_f,_ = Cformula.drop_hrel_f f unk_hps in *)
-  (*     (a,b,c,new_f) *)
-  (* ) *) need_trans_hprels0 in
+  (* let _ = Debug.info_hprint (add_str "unk_hps " !Cpure.print_svl) unk_hps no_pos in *)
+  let need_trans_hprels1 = (* List.map (fun def -> *)
+  (*     let new_rhs = List.map (fun (f, og) -> *)
+  (*         let nf, esvl= (Cformula.drop_hrel_f f unk_hps) in *)
+  (*         let svl = List.fold_left (fun r eargs -> *)
+  (*             match eargs with *)
+  (*               | [] -> r *)
+  (*               | e::_ -> r@(Cpure.afv e) *)
+  (*         ) [] esvl in *)
+  (*         let nf1 = Cformula.add_quantifiers (Cpure.remove_dups_svl svl) nf in *)
+  (*         (nf1 , og) *)
+  (*     ) def.Cformula.def_rhs in *)
+  (*     {def with Cformula.def_rhs = new_rhs} *)
+  (* ) *) need_trans_hprels0
+  in
   let proc_name = "" in
   let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 chprels_decl in
+  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
+  (* let _ =  Debug.info_zprint (lazy  ("XXXX 4: ")) no_pos in *)
+  (* let _ = I.set_iprog iprog in *)
   ignore (Typechecker.check_prog iprog cprog)
+
+let hip_epilogue () = 
+  (* ------------------ lemma dumping ------------------ *)
+  if (!Globals.dump_lemmas) then 
+    Lem_store.all_lemma # dump
+  else ()
 
 (***************end process compare file*****************)
 (*Working*)
@@ -327,8 +348,18 @@ let process_source_full source =
           ()
     in
     (**************************************)
+    (*to improve: annotate field*)
+    let _ = I.annotate_field_pure_ext intermediate_prog in
+    (*END: annotate field*)
+    (*used in lemma*)
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
+    let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
-    let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+    (* ========= lemma process (normalize, translate, verify) ========= *)
+    let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+    (* ========= end - lemma process (normalize, translate, verify) ========= *)
+
 		(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
@@ -384,7 +415,9 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog intermediate_prog cprog);
+      (* let _ =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
+      (* let _ = I.set_iprog intermediate_prog in *)
+      ignore (Typechecker.check_prog intermediate_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError1(s) detected at main "^"\n");
@@ -441,7 +474,7 @@ let process_source_full source =
     (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-    
+    hip_epilogue ();
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -543,21 +576,26 @@ let process_source_full_after_parser source (prog, prims_list) =
         ()
   in
   (**************************************)
- let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
- 	(* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
-   
+  (*annotate field*)
+  let _ = I.annotate_field_pure_ext intermediate_prog in
+  (*used in lemma*)
+  (* let _ =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
+  (* let _ = I.set_iprog intermediate_prog in *)
+  let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   let _ = List.map (fun crdef -> 
-      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula)
+    (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
-		        else if(!Globals.print_core) then
-							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
-						else ()
-	in
-  let _ = 
+  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
+  else if(!Globals.print_core) then
+    print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+  else ()
+  in
+  let _ =
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
       Globals.procs_verified := tmp
@@ -599,6 +637,8 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
   else (try
+    (* let _ =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
+    (* let _ = I.set_iprog intermediate_prog in *)
     ignore (Typechecker.check_prog intermediate_prog cprog);
   with _ as e -> begin
     print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
@@ -740,7 +780,8 @@ let _ =
           print_string ("\nException occurred: " ^ (Printexc.to_string e));
           print_string ("\nError4(s) detected at main \n");
         end
-    done
+    done;
+    hip_epilogue ()
 
 
   

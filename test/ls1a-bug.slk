@@ -1,0 +1,36 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b> & (b=0 | b>0 & q!=p & self!=p) & (a=0 | a>0 & self!=q).
+
+/*
+lemma_safe self::lseg<p,n> & n>0
+   -> self::lseg<q,a>*q::node<p> & p!=q.
+*/
+
+// cannot be proven
+lemma_test self::lseg<p,n> & n>0
+   <- self::lseg<q,a>*q::node<p> & p!=q.
+
+// example from APLAS13 which sleek did not prove;
+// perhaps the APLAS13 is unsound!
+
+//(1)
+checkentail p::lseg<q',i'>*q'::node<q> & i=i'+1
+    |- p::lseg<q,i>.
+/*
+ fail: due to incompleteness?
+*/
+
+checkentail 
+  p::lseg<q,i> & i=i'+1 & i'>=0
+  |- p::lseg<q',i'>*q'::node<q>.
+print residue.
+// why distr lemma did not unfold properly?
+

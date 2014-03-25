@@ -1,0 +1,28 @@
+relation P(int m,int n).
+
+infer [P] 
+   x=0 & y!=0 & (x=0 & n=0) & (y!=0 & m>0) 
+   & P(m,n)
+ |-  false.
+print residue.
+/*
+# zp-1c.slk
+
+Why does the above yield different results?
+They should be the same. The second one
+is good.
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [n=0; 1<=m]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+
+*/

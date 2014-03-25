@@ -1,0 +1,20 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+
+lemma_unsafe "3" 
+     self::rlseg<p1>* p1::node<_,p>
+    -> self::rlseg<p>.
+
+lemma_safe "3" self::node<_,q>*q::rlseg<p> 
+    <-> self::rlseg<p1>* p1::node<_,p>.
+
+

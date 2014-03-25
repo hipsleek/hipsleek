@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|sleek_veribsync|hip_veribsync [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm|sleek_veribsync|hip_veribsync [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -730,100 +730,100 @@ $output_file = "log";
              ],
 	"parahip" =>[
         ### GENERAL TESTS
-				["parahip/simple.ss",2,  "--en-para -tp parahip", 
+				["parahip/simple.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/forkjoin.ss",2,  "--en-para -tp parahip", 
+				["parahip/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "test","SUCCESS",
                                 "test1","FAIL"
 								],
-				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "inc","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
+				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "testCell","SUCCESS",
                                 "testVar","FAIL"
 								],
-				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "test","FAIL",
                                 "test2","FAIL",
                                 "test3","FAIL",
                                 "test4","FAIL"
 								],
-				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
+				["parahip/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip", 
+				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func2","SUCCESS",
                                 "func3","SUCCESS",
                                 "func4","SUCCESS"
 								],
         ### DEADLOCKED and DEADLOCK-FREE scenarios
-				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
+				["parahip/double-acquire.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
+				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "func","FAIL",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
-				["parahip/multicast.ss",2,  "--en-para -tp parahip", 
+				["parahip/multicast.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "initialize","SUCCESS",
                                 "thread","SUCCESS"
 								],
-				["parahip/oracle.ss",2,  "--en-para -tp parahip", 
+				["parahip/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "thread","SUCCESS",
                  #NOTE: loop calls' naming could be varied
 #                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
@@ -831,19 +831,120 @@ $output_file = "log";
                                 "main","SUCCESS"
 								],
 # slow in parahip/owicki-gries.ss due to search. Could modify search heuristics.
-				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip", 
+				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "incrementor2","SUCCESS",
                                 "incrementor1","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/fibonacci.ss",2,  "--en-para -tp parahip", 
+				["parahip/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
                                 "seq_fib","SUCCESS",
                                 "para_fib","SUCCESS"
 								],
-				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel", 
+				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel --en-thrd-and-conj", 
                                 "create_and_acquire","SUCCESS"
 								]
         ### END parahip
+             ],
+	"hip_threads" =>[
+        ### GENERAL TESTS for "Threads as Resource"
+				["threads/motiv-example.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/motiv-example2.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical2.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/no-deadlock-nonlexical.ss",3,  "--en-para --en-thrd-resource -tp parahip --en-lsmu-infer",
+                                "main","SUCCESS",
+                                "thread1","SUCCESS",
+                                "thread2","SUCCESS"
+								],
+				["threads/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "inc","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","FAIL"
+								],
+				["threads/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","FAIL"
+								],
+				["threads/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","FAIL"
+								],
+				["threads/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","FAIL"
+								],
+				["threads/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "func","FAIL",
+                                "main","SUCCESS"
+								],
+				["threads/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "thread","SUCCESS",
+                 #NOTE: loop calls' naming could be varied
+#                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
+#                                "f_r_689_hip_parahip_oracle_ss_80_4","SUCCESS",
+                                "main","SUCCESS"
+								],
+# slow in threads/owicki-gries.ss due to search. Could modify search heuristics.
+				["threads/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "incrementor2","SUCCESS",
+                                "incrementor1","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["threads/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+                                "seq_fib","SUCCESS",
+                                "para_fib","SUCCESS"
+								]
+        ### END hip_threads
              ],
 	"hip_veribsync" =>[
 				["veribsync/while-loop.ss",4,  "--en-para -perm bperm -tp redlog",
@@ -1497,14 +1598,20 @@ $output_file = "log";
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", "--en-inf --elp ", "Valid.Valid.", "Fail.Valid."],
-        ["sort1.slk", " --elp ", "Valid.Fail.Fail.", ""],
-        ["sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
-        ["lseg.slk", " --elp ", "Valid.Fail.", ""],
-        ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["inflem.slk", "--en-inf --elp ", "Valid.", "Fail.Valid."],
+#        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
+        # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
+        ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
+         ["lemmas/lseg.slk", " --elp ", "Valid.Valid.Valid.Valid.", ""],
+        # ["lemmas/lseg.slk", " --elp ", "", ""],
+        ["lemmas/lseg1.slk", " --elp ", "Valid.", ""],
+        ["lemmas/rlseg.slk", " --elp ", "Valid.Valid.Valid.", ""],
+        ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
         ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
-        ["lemmas/ll_tail.slk", "", "Valid.Valid", "Valid.Valid"],
-        ["sll_tailL.slk", "", "Valid.Valid", ""]
+        ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
+        ["lemmas/sll_tailL.slk", " --elp --en-lem-rhs-unfold ", "Valid.Valid", ""],
+        ["lemmas/dseg-new.slk", " --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
+        ["lemmas/dseg1.slk", " --elp ", "Valid.Fail.", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -1513,9 +1620,12 @@ $output_file = "log";
 				  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 				  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
                  ],
+    "sleek_threads" => [
+                      ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"]
+                 ],
     "sleek_vperm" => [
-                      ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
-                      ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
+                      ["vperm/vperm.slk"," --ann-vp", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["vperm/vperm2.slk"," --ann-vp", "", "Valid.Valid.Fail."]],
 		"sleek_fracperm"=>[["fracperm/sleek.slk","--en-para -perm fperm -tp redlog", "","Valid.Valid.Valid.Fail."],
 					["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", "", "Fail."],
 					["fracperm/sleek10.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail."],
@@ -1773,7 +1883,7 @@ sub grep_failures {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
 	  my $barr = 0;
       if ("$param" =~ "musterr") {
@@ -1781,7 +1891,8 @@ sub sleek_process_file  {
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
-      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+      $lem = index($script_arguments, "--elp");
+      if (("$param" =~ "lemmas") ) {  $lem = 1; }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
@@ -1796,6 +1907,7 @@ sub sleek_process_file  {
       foreach $test (@{$t_list})
       {
           my $extra_options = $test->[1];
+          my $leme = index($extra_options, "--elp") + $lem;
           if ("$extra_options" eq "") {
               print "Checking $test->[0]\n";
           } else {
@@ -1836,9 +1948,10 @@ sub sleek_process_file  {
                   }
               }
           }
-          #print "\n!!!!!Ent Res: $entail_results \nEnd Ent Res: $test->[3]\n";
+          #print "\n!!!!!Ent Res: $entail_results \n";
+          #print "\n!!!!!Exp Res: $test->[3] $leme\n";
           my @failures = ();
-          if  (($lem == 1)  && ($lemmas_results ne /^$test->[2]$/)){
+          if  (($leme >= 0 )  && ($lemmas_results ne /^$test->[2]$/)){
               @failures = grep_failures($lemmas_results, $test->[2],"L");
           }
           if ((($barr==0) && ($entail_results ne $test->[3])) || 

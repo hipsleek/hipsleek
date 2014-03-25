@@ -1,0 +1,56 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> 
+  inv n>=0.
+
+pred ns<p,n> == self=p & n=0
+  or self::node<q>*q::ns<p,n-1> & self!=p 
+  inv n>=0.
+
+lemma_unsafe
+  self::lseg<p,n> & a>=0 & b>=0 & n=a+b
+  <- self::lseg<q,a> * q::lseg<p,b>.
+
+checkentail 
+ (exists q_67,b_68,a_69: q_67::lseg<p,b_68>@M&q_67=self_lem_11 & a_69=0 & 
+ 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ or (exists p_79,flted_7_80,q_81,q_67,b_68,a_69: 
+    self_lem_11::node<q_81>@M * 
+    q_81::lseg<p_79,flted_7_80>@M * q_67::lseg<p,b_68>@M
+     &a_69=flted_7_80+1 & 
+    p_79=q_67 & 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ |- emp&p=self_lem_11 & n=0
+ or (exists q_82,p_88,flted_7_89: 
+     self_lem_11::node<q_82>@M * 
+          q_82::lseg<p_88,flted_7_89>@M&n=flted_7_89+1 & p=p_88)
+ .
+
+checkentail 
+ (exists q_67,b_68,a_69: q_67::lseg<p,b_68>@M&q_67=self_lem_11 & a_69=0 & 
+ 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ or (exists p_79,flted_7_80,q_81,q_67,b_68,a_69: 
+    self_lem_11::node<q_81>@M * 
+    q_81::lseg<p_79,flted_7_80>@M * q_67::lseg<p,b_68>@M
+     &a_69=flted_7_80+1 & 
+    p_79=q_67 & 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ |-  self_lem_11::lseg<p_88,n>@M
+ .
+
+checkentail 
+ (exists q_67,b_68,a_69: q_67::lseg<p,b_68>@M&q_67=self_lem_11 & a_69=0 & 
+ 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ or (exists p_79,flted_7_80,q_81,q_67,b_68,a_69: 
+    self_lem_11::node<q_81>@M * 
+    q_81::lseg<p_79,flted_7_80>@M * q_67::lseg<p,b_68>@M
+     &a_69=flted_7_80+1 & 
+    p_79=q_67 & 0<=a_69 & 0<=b_68 & n=b_68+a_69)
+ |- case { 
+     n=0 -> [] p=self_lem_11;
+     n!=0 -> [] (exists q_82,p_88,flted_7_89:
+        self_lem_11::node<q_82>@M * 
+          q_82::lseg<p_88,flted_7_89>@M&n=flted_7_89+1 & p=p_88);
+   }.

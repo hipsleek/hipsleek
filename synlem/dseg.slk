@@ -1,0 +1,21 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+
+pred dseg<lm, rm:node> == self=lm & lm=rm
+  or self::node<_,lm, p> * p::dseg<self,rm>.
+
+pred lseg<rm> == self=rm
+  or self::node<_,_, p> * p::lseg<rm>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma self::lseg<rm> <- exists lm: self::dseg<lm,rm>.
+
+lemma self::rlseg<rm> <- exists lm: self::dseg<lm,rm>.
+
+lemma self::dseg<lm,p1>*p1::dseg<p1,rm> <-> self::dseg<lm,rm>.

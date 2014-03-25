@@ -1,0 +1,38 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+
+checkentail_exact
+ self::node<_,last>*last::node<_,null>
+|- (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+//Entail 1: Fail.(must) cause:Cannot infer heap and pure 2
+
+
+/*
+# loc-lem-4d.slk 
+
+
+Above fails for -imm
+
+but succeeds when we use --dis-imm.
+This seems to be caused by pure being stripped 
+apart to allow heap to be proved first before pure.
+
+We need to introduce a linearizing task for conseq where we convert:
+
+ (exists lst,p: self::node<_,lst>*p::node<_,null> & lst=p).
+ --> (exists lst,p: self::node<_,lst>*lst::node<_,null> & lst=p).
+
+Also:
+ (exists lst: lst::node<_,null> & lst=self)
+ -->  (exists lst: self::node<_,null> & lst=self)
+
+
+*/

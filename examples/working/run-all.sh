@@ -9,6 +9,7 @@ time ./run-fast-tests.pl sleek $@
 echo -e "\n##################### hip tests --eps #####################"
 time ./run-fast-tests.pl hip -flags "--eps" $@
 
+#not succ all
 echo -e "\n##################### imm tests --eps ###################"
 time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 
@@ -18,6 +19,7 @@ time ./run-fast-tests.pl musterr $@
 echo -e "\n##################### infinity tests ########################"
 time ./run-fast-tests.pl infinity $@
 
+#not succ all
 echo -e "\n##################### mem tests ######################"
 time ./run-fast-tests.pl mem $@
 

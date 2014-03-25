@@ -1,0 +1,7 @@
+pre_rel_fixpoint
+#,Trace
+update_with_td_fp,Trace
+# why not tracing when more than one lines?
+# ANSWER : trace will occur for the current call and its
+# untraced children! should distinguish trace of
+# current call from that of its children..

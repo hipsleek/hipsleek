@@ -1,0 +1,46 @@
+relation P(int m,int n).
+
+infer [m,n] x=0 & y!=0 & (x=0 & n=0) & (y!=0 & m>0)
+ |-  false.
+print residue.
+
+/*
+# zp-1b.slk
+
+Why does the above yield different results?
+They should be the same. The second one
+is good.
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [n=0; 1<=m]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+
+# zp-1b.slk
+
+infer_lhs_contra_estate#4@1
+infer_lhs_contra_estate#4 inp1 :estate: emp&x=0 & y!=0 & x=0 & n=0 & y!=0 & 0<m&{FLOW,(21,22)=__norm}[]
+  es_infer_vars: [m; n]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: x=0 & y!=0 & x=0 & n=0 & y!=0 & 0<m
+infer_lhs_contra_estate#4@1 EXIT:(Some(( hfalse&false&{FLOW,(21,22)=__norm}[]
+  es_infer_vars: [m; n], (n!=0 | 1>m))),[])
+
+Why SOME in above but NONE for below?
+
+# zp-1c.slk
+
+infer_lhs_contra_estate#4@1
+infer_lhs_contra_estate#4 inp1 :estate: emp&x=0 & y!=0 & x=0 & n=0 & y!=0 & 0<m & P(m,n)&{FLOW,(21,22)=__norm}[]
+  es_infer_vars_rel: [P]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: x=0 & y!=0 & x=0 & n=0 & y!=0 & 0<m & P(m,n)
+infer_lhs_contra_estate#4@1 EXIT:(None,[([RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)],true)])
+
+
+*/

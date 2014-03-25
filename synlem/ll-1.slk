@@ -1,0 +1,27 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma_safe "V2" self::ll_s<n> <- self::ll<>.
+
+/*
+checkentail 
+      self = null 
+   or self::node<next = r> * r::ll<>
+|- self::ll_s<n>
+.
+*/
+
+/*
+ emp&self=null&{FLOW,(21,22)=__norm}[]
+ or self::node<_,r>@M * r::ll<>@M&{FLOW,(21,22)=__norm}[]
+  [] |-  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]
+*/
+

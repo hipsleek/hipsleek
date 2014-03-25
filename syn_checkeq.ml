@@ -1,7 +1,7 @@
 open Globals
 open Gen
 
-module DD = Debug
+(* module DD = Debug *)
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
@@ -71,6 +71,64 @@ let check_stricteq_hnodes stricted_eq hns1 hns2=
   Debug.no_3 "check_stricteq_hnodes" string_of_bool pr2 pr2 (pr_pair string_of_bool pr3)
       (fun _ _ _ -> check_stricteq_hnodes_x stricted_eq hns1 hns2)  stricted_eq hns1 hns2
 
+let check_stricteq_vnodes_x stricted_eq vns1 vns2=
+  (*allow dangl ptrs have diff names*)
+  let all_ptrs =
+    if stricted_eq then [] else
+    let ptrs1 = List.map (fun hd -> hd.CF.h_formula_view_node) vns1 in
+    let ptrs2 = List.map (fun hd -> hd.CF.h_formula_view_node) vns2 in
+    CP.remove_dups_svl (ptrs1@ptrs2)
+  in
+  let check_stricteq_vnode hn1 hn2=
+    let arg_ptrs1 = (* List.filter CP.is_node_typ *) hn1.CF.h_formula_view_arguments in
+    let arg_ptrs2 = (* List.filter CP.is_node_typ *)  hn2.CF.h_formula_view_arguments in
+    if (hn1.CF.h_formula_view_name = hn2.CF.h_formula_view_name) &&
+        (CP.eq_spec_var hn1.CF.h_formula_view_node hn2.CF.h_formula_view_node) then
+      let b = CP.eq_spec_var_order_list arg_ptrs1 arg_ptrs2 in
+      (*bt-left2: may false if we check set eq as below*)
+      let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
+      (* (\*for debugging*\) *)
+      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1))) no_pos in *)
+      (* let _ = Debug.info_zprint  (lazy  ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2))) no_pos in *)
+      (* let _ = Debug.info_zprint  (lazy  ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+      (*END for debugging*)
+      if stricted_eq then (* (diff1=[]) *)(b,[]) else
+          (*allow dangl ptrs have diff names*)
+        let diff2 = CP.intersect_svl diff1 all_ptrs in
+        let ss = List.combine arg_ptrs1 arg_ptrs2 in
+        (diff2 = [], (* List.filter (fun (sv1, sv2) -> not(CP.eq_spec_var sv1 sv2)) *) ss)
+    else
+      (false,[])
+  in
+  let rec helper vn vns2 rest2=
+    match vns2 with
+      | [] -> (false,[], rest2)
+      | vn1::vss ->
+            let r,ss1 = check_stricteq_vnode vn vn1 in
+          if r then
+            (true, ss1, rest2@vss)
+          else helper vn vss (rest2@[vn1])
+  in
+  let rec helper2 vns1 vns2 ss0=
+    match vns1 with
+      | [] -> if vns2 = [] then (true,ss0) else (false,ss0)
+      | vn1::rest1 ->
+          let r,ss1, rest2 = helper vn1 vns2 [] in
+          if r then
+            let n_rest1 = if ss1 = [] then rest1 else List.map (fun dn -> CF.vn_subst ss1 dn) rest1 in
+            helper2 n_rest1 rest2 (ss0@ss1)
+          else (false,ss0)
+  in
+  if (List.length vns1) <= (List.length vns2) then
+    helper2 vns1 vns2 []
+  else (false,[])
+
+let check_stricteq_vnodes stricted_eq vns1 vns2=
+  let pr1 vn = Cprinter.prtt_string_of_h_formula (CF.ViewNode vn) in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_3 "check_stricteq_vnodes" string_of_bool pr2 pr2 (pr_pair string_of_bool pr3)
+      (fun _ _ _ -> check_stricteq_vnodes_x stricted_eq vns1 vns2)  stricted_eq vns1 vns2
 
 let check_stricteq_hrels hrels1 hrels2=
    let check_stricteq_hr (hp1, eargs1, _) (hp2, eargs2, _)=
@@ -119,25 +177,42 @@ let check_stricteq_hrels hrels1 hrels2=
   else (false,[])
 
 let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
-  let hnodes1, _, hrels1 = CF.get_hp_rel_h_formula hf1 in
-  let hnodes2, _, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  let hnodes1, vnodes1, hrels1 = CF.get_hp_rel_h_formula hf1 in
+  let hnodes2, vnodes2, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  (* if vnodes1 <> [] || vnodes2 <> [] then (false,[]) else *)
   let r,ss = check_stricteq_hrels hrels1 hrels2 in
-  let helper hn=
+  let data_helper hn=
     let n_hn = CF.h_subst ss (CF.DataNode hn) in
     match n_hn with
       | CF.DataNode hn -> hn
-      | _ -> report_error no_pos "sau.check_stricteq_h_fomula"
+      | _ -> report_error no_pos "sau.check_stricteq_h_fomula 1"
+  in
+  let view_helper ss0 vn=
+    let n_vn = CF.h_subst ss0 (CF.ViewNode vn) in
+    match n_vn with
+      | CF.ViewNode vn -> vn
+      | _ -> report_error no_pos "sau.check_stricteq_h_fomula 2"
   in
   if r then begin
-      let n_hnodes1 = List.map helper hnodes1 in
-      let n_hnodes2 = List.map helper hnodes2 in
-      let r,ss1 =
+      let n_hnodes1 = List.map data_helper hnodes1 in
+      let n_hnodes2 = List.map data_helper hnodes2 in
+      let r1,ss1 =
         if (List.length n_hnodes1) <= (List.length n_hnodes2) then
           check_stricteq_hnodes stricted_eq n_hnodes1 n_hnodes2
         else
           check_stricteq_hnodes stricted_eq n_hnodes2 n_hnodes1
       in
-      (r,ss@ss1)
+      let ss1a = ss@ss1 in
+      if not r1 then (false,[]) else
+        let n_vnodes1 = List.map (view_helper ss1a) vnodes1 in
+        let n_vnodes2 = List.map (view_helper ss1a) vnodes2 in
+        let r2,ss2 =
+          if (List.length n_vnodes1) <= (List.length n_vnodes2) then
+            check_stricteq_vnodes stricted_eq n_vnodes1 n_vnodes2
+          else
+            check_stricteq_vnodes stricted_eq n_vnodes2 n_vnodes1
+        in
+        (r2,ss@ss1@ss2)
     end
   else (false,[])
 
@@ -162,47 +237,57 @@ let checkeq_pure qvars1 qvars2 p1 p2=
   Debug.no_2 "checkeq_pure" pr1 pr1 string_of_bool
       (fun _ _ -> checkeq_pure_x qvars1 qvars2 p1 p2) p1 p2
 
-let check_relaxeq_formula_x args f1 f2=
-  let qvars1, base_f1 = CF.split_quantifiers f1 in
-  let qvars2, base_f2 = CF.split_quantifiers f2 in
-  let hf1,mf1,_,_,_ = CF.split_components base_f1 in
-  let hf2,mf2,_,_,_ = CF.split_components base_f2 in
-  DD.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
-  DD.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
-  (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
-  let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
-  if r1 then
-    (* let new_mf1 = xpure_for_hnodes hf1 in *)
-    (* let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in *)
-    (* let new_mf2 = xpure_for_hnodes hf2 in *)
-    (* let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in *)
-    (* (\*remove dups*\) *)
-    (* let np1 = CP.remove_redundant (MCP.pure_of_mix cmb_mf1) in *)
-    (* let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in *)
-    let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
-    let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
-    (* DD.info_zprint  (lazy  ("   f1: " ^(!CP.print_formula np1))) no_pos; *)
-    (* DD.info_zprint  (lazy  ("   f2: " ^ (!CP.print_formula np2))) no_pos; *)
-    (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
-    let diff2 = List.map snd ss in
-    let _ = DD.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
-    let np11 = (* CP.mkExists qvars1 np1 None no_pos *) np1 in
-    let np21 = (* CP.mkExists qvars2 np2 None no_pos *) np2 in
-    let np12 = CP.subst ss np11 in
-    (* let _, bare_f2 = CP.split_ex_quantifiers np2 in *)
-    let svl1 = CP.fv np12 in
-    let svl2 = CP.fv np21 in
-    DD.ninfo_zprint  (lazy  ("   np12: " ^(!CP.print_formula np12))) no_pos;
-    DD.ninfo_zprint  (lazy  ("   np21: " ^ (!CP.print_formula np21))) no_pos;
-    let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args@diff2))) in
-    let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args@diff2))) in
-    let r2 = checkeq_pure qvars1 qvars2 np12 np21 in
-    let _ = DD.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
-    r2
-  else
-    false
+let rec check_relaxeq_formula_x args f10 f20=
+  (********REMOVE dup branches**********)
+  let fs11 = CF.list_of_disjs f10 in
+  let fs12 = Gen.BList.remove_dups_eq (check_relaxeq_formula args) fs11 in
+  let f1 = CF.disj_of_list fs12 (CF.pos_of_formula f10) in
+  let fs21 = CF.list_of_disjs f20 in
+  let fs22 = Gen.BList.remove_dups_eq (check_relaxeq_formula_x args) fs21 in
+  let f2 = CF.disj_of_list fs22 (CF.pos_of_formula f20) in
+  (********END********)
+  try
+    let qvars1, base_f1 = CF.split_quantifiers f1 in
+    let qvars2, base_f2 = CF.split_quantifiers f2 in
+    let hf1,mf1,_,_,_ = CF.split_components base_f1 in
+    let hf2,mf2,_,_,_ = CF.split_components base_f2 in
+    Debug.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
+    Debug.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
+    (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
+    let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
+    if r1 then
+      (* let new_mf1 = xpure_for_hnodes hf1 in *)
+      (* let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in *)
+      (* let new_mf2 = xpure_for_hnodes hf2 in *)
+      (* let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in *)
+      (* (\*remove dups*\) *)
+      (* let np1 = CP.remove_redundant (MCP.pure_of_mix cmb_mf1) in *)
+      (* let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in *)
+      let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
+      let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
+      (* Debug.info_zprint  (lazy  ("   f1: " ^(!CP.print_formula np1))) no_pos; *)
+      (* Debug.info_zprint  (lazy  ("   f2: " ^ (!CP.print_formula np2))) no_pos; *)
+      (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
+      let diff2 = List.map snd ss in
+      let _ = Debug.ninfo_zprint  (lazy  ("   diff: " ^ (!CP.print_svl diff2))) no_pos in
+      let np11 = (* CP.mkExists qvars1 np1 None no_pos *) np1 in
+      let np21 = (* CP.mkExists qvars2 np2 None no_pos *) np2 in
+      let np12 = CP.subst ss np11 in
+      (* let _, bare_f2 = CP.split_ex_quantifiers np2 in *)
+      let svl1 = CP.fv np12 in
+      let svl2 = CP.fv np21 in
+      Debug.ninfo_zprint  (lazy  ("   np12: " ^(!CP.print_formula np12))) no_pos;
+      Debug.ninfo_zprint  (lazy  ("   np21: " ^ (!CP.print_formula np21))) no_pos;
+      let qvars1 = CP.remove_dups_svl ((CP.diff_svl svl1 (args@diff2))) in
+      let qvars2 = CP.remove_dups_svl ((CP.diff_svl svl2 (args@diff2))) in
+      let r2 = checkeq_pure qvars1 qvars2 np12 np21 in
+      let _ = Debug.ninfo_zprint  (lazy  ("   eq: " ^ (string_of_bool r2))) no_pos in
+      r2
+    else
+      false
+  with _ -> false
 
-let check_relaxeq_formula args f1 f2=
+and check_relaxeq_formula args f1 f2=
   let pr1 = Cprinter.string_of_formula in
   Debug.no_2 "check_relaxeq_formula" pr1 pr1 string_of_bool
       (fun _ _ -> check_relaxeq_formula_x args f1 f2) f1 f2

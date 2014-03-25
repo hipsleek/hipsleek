@@ -1,0 +1,26 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p 
+  or self::node<_,q> * q::lseg<p>.
+
+
+//lemma_safe "one" self::lseg<p1> * p1::node<_,p> -> self::lseg<p>.
+//lemma_safe "two" self::lseg<p> <- self::lseg<p1> * p1::node<_,p> .
+
+//FAIL
+//lemma_safe "three" self::node<_,p3> * p3::lseg<p> -> self::lseg<p1>* p1::node<_,p> .
+
+//1. FAIL. need cyclic->
+checkentail x::lseg<p1>* p1::node<_,p> |- x::lseg<p>.
+
+//1a. need cyclic
+checkentail x::lseg<p1>* p2::node<_,p> & p1=p2 |- x::lseg<p>.
+
+
+//2. need cyclic
+checkentail x::lseg<p1>* p2::node<_,p> & p1=p2 |- x::node<_,p3> * p3::lseg<p>.
+
+

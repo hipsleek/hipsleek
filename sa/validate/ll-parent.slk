@@ -1,0 +1,25 @@
+data node{
+	node parent;
+	node right;
+}.
+
+HeapPred H(node@NI p, node a).
+HeapPred H6(node a, node@NI p).
+
+
+relAssume H(p,x) --> x::node<p,q>@M * H6(q,p).
+
+relAssume
+ H6(right_22_924,p) & right_22_924=null --> true.
+
+relAssume
+ H6(q,p)&q!=null |#| xx::node<p,q>@M --> H(xx,q).
+
+shape_infer [H,H6][].
+
+/*
+
+
+*/
+
+

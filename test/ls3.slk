@@ -1,0 +1,35 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_unsafe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   -> self::lseg<q,a>*q::lseg<p,b>.
+
+checkentail x::lseg<p,n> & n>=0 
+    |- x::lseg<q1,a>.
+print residue.
+
+/*
+checkentail 
+            x::lseg<q,aa>*q::lseg<p,bb> //& n=a+b & a>=0 & b>=0
+    |- x::lseg<q1,a>.
+print residue.
+
+checkentail x::lseg<p,n> //& n>=0
+    |- [a,b] n=a+b & a>=0 & b>=0.*/
+/*
+Two solutions when n>=0 added explicitly. 
+Need a way to add this information in..
+
+Entail 1: Valid. 
+
+ <1>emp&0<=n & p=q1 & a=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+<2>q1::lseg<p,b_60>@M&0<=n & 0<=b_60 & b_60<=n & n=b_60+a & 0<=a & 0<=b_60&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
+
+*/

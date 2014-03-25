@@ -1571,6 +1571,33 @@ perform another inference step?
  inferred hprel: [// Sleek_Entail(1)
 H1(y) --> emp&y=null]
 ======================================================================
+# gnode-deb.c
+
+
+why x = (86, ):cast_int_to_GNode(tmp);? in pip
+
+
+======================
+
+GNode g_node_copy(GNode node)[]
+static
+
+(None,[]): EBase: [][](hfalse)*(false)( FLOW __norm) {EAssume: 4,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{local: GNode child,GNode x,int tmp
+GNode child;
+GNode x;
+int tmp;
+{tmp = (78, ):g_node_last_child(node);
+x = (80, ):cast_int_to_GNode(tmp);
+          ^^^^^^^^^^^^^^^^^^^^^
+child = x;
+(82, ):return node}}
+}
+
+
+
 ======================================================================
 ======================================================================
 ======================================================================

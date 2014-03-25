@@ -1,0 +1,58 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma_unsafe "V2" self::ll_s<n> <- self::ll<>.
+
+checkentail 
+      self = null 
+   or self::node<next = r> * r::ll<>
+|- self::ll_s<n>
+.
+
+/*
+# ll-1.slk fails but ll-1a.slk --dl succeeds
+
+SOLUTION : use __flow rather than __norm for lemmas..
+
+[Lemma "V2":  self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]<== self::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+
+ emp&self=null&{FLOW,(21,22)=__norm}[]
+ or self::node<_,r>@M * r::ll<>@M&{FLOW,(21,22)=__norm}[]
+  [] |-  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>@M&{FLOW,(21,22)=__norm}[]
+
+# ll-1.slk fails but ll-1a.slk succeeds
+
+process_coercion_check@3@2@1
+process_coercion_check inp1 : 
+ emp&self_V2=null&{FLOW,(1,24)=__flow}[]
+ or (exists _,r_37: self_V2::node<_,r_37>@M * r_37::ll<>@M&
+    {FLOW,(1,24)=__flow})[]
+ 
+process_coercion_check inp2 : ECase case {
+        self_V2=null -> EBase (exists n_38: emp&self_V2=null & n_38=0&
+                              {FLOW,(1,24)=__flow})[]
+        ;
+        self_V2!=null -> EBase exists (Expl)[](Impl)[_; 
+                               r_40](ex)[](exists flted_5_46,
+                               n_38: self_V2::node<_,r_40>@M * 
+
+context:
+  r_53::ll<>@M&self_V2!=null & Anon_39=Anon_52 & r_40=r_53&
+  {FLOW,(1,24)=__flow}[]
+conseq:
+ r_40::ll<>@M&{FLOW,(21,22)=__norm}[]
+
+
+
+
+*/
+

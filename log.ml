@@ -85,6 +85,10 @@ let string_of_sleek_proving_kind ()
 let string_of_top_proving_kind () 
       = string_of_proving_kind (proving_kind#top_no_exc)
 
+let string_of_impt_proving_kind () 
+      = string_of_proving_kind (Others.find_impt_proving_kind ())
+
+
 let string_of_log_type lt =
   match lt with
     |PT_IMPLY_TOP (ante, conseq) -> 
@@ -185,9 +189,13 @@ let pr_sleek_log_entry e=
   fmt_string ("; infer_vars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_infer_vars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
-  fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
+  if (!Globals.print_en_tidy)
+  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_ante))
+  else fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
   fmt_string "\n |- ";
-  fmt_string  (Cprinter.string_of_formula e.sleek_proving_conseq);
+  if (!Globals.print_en_tidy)
+  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_conseq))
+  else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq);
   fmt_string ". \n";
   (if !print_clean_flag then 
 	  let ante,conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
@@ -263,7 +271,7 @@ object (self)
     in ()
   method start_sleek src =
     begin
-      let (parent,_) = sleek_stk # top_no_exc in
+      (* let (parent,_) = sleek_stk # top_no_exc in *)
       sleek_no <- sleek_no+1;
       Globals.sleek_proof_no := sleek_no;
       sleek_stk # push (sleek_no,src);
@@ -380,7 +388,8 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
         sleek_proving_classic_flag = classic_flag;
         sleek_proving_hec = hec;
         sleek_proving_pos = pos;
-        sleek_proving_kind = string_of_top_proving_kind ();
+        (* sleek_proving_kind = string_of_top_proving_kind (); *)
+        sleek_proving_kind = string_of_impt_proving_kind ();
         (* !sleek_proving_kind; *)
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
@@ -405,6 +414,15 @@ let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid he
     ; ()
   else 
     ()
+
+let add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos=
+  let pr = Cprinter.string_of_formula in
+  Debug.no_4 " add_sleek_logging" 
+      string_of_bool string_of_int
+      pr pr pr_none
+      (fun _ _ _ _ -> add_sleek_logging timeout_flag stime infer_vars classic_flag caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result) pos) avoid slk_no ante conseq
 
 let find_bool_proof_res pno =
 	try 
@@ -467,7 +485,7 @@ let add_proof_logging timeout_flag (cache_status:bool) old_no pno tp ptype time 
 	  log_res = res; } in
       let _ = last_cmd # set plog in
       proof_log_stk # push plog;
-      let pno_str = string_of_int pno in
+      (* let pno_str = string_of_int pno in *)
       (* let _ = add_proof_tbl pno_str plog in *)
       let _ =  Debug.devel_pprint (string_of_proof_log_entry plog) no_pos in
       (* let _ = try *)
@@ -515,17 +533,17 @@ let proof_log_to_text_file fname (src_files) =
           |PT_HULL f -> "Hull: "^(string_of_pure_formula f)
           |PT_PAIRWISE f -> "PairWise: "^(string_of_pure_formula f)
       in
-      let helper log =
-        "\n--------------\n"^
-	    (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
-	    (* "\nid: "^log.log_id^ *)
-            "\nProver: "^
-            (if log.log_cache then "CACHED" 
-            else (string_of_prover log.log_prover))^
-            "\nType: "^(string_of_log_type log.log_type)^
-            (* "\nTime: "^(string_of_float(log.log_time))^ *)
-            "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" 
-      in
+      (* let helper log = *)
+      (*   "\n--------------\n"^ *)
+      (*       (\* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *\) *)
+      (*       (\* "\nid: "^log.log_id^ *\) *)
+      (*       "\nProver: "^ *)
+      (*       (if log.log_cache then "CACHED"  *)
+      (*       else (string_of_prover log.log_prover))^ *)
+      (*       "\nType: "^(string_of_log_type log.log_type)^ *)
+      (*       (\* "\nTime: "^(string_of_float(log.log_time))^ *\) *)
+      (*       "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n"  *)
+      (* in *)
       (* with *)
       (*            |PR_BOOL b -> string_of_bool b *)
       (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
@@ -590,7 +608,7 @@ let wrap_calculate_time exec_func src_file args =
   let tstartlog = Gen.Profiling.get_time () in
   let _ = exec_func args in
   let tstoplog = Gen.Profiling.get_time () in 
-  let period = (tstoplog -. tstartlog) in
+  (* let period = (tstoplog -. tstartlog) in *)
   ()
   (* if (period> 0.7) then *)
   (*   proof_gt5_log_list :=   *)
@@ -638,6 +656,7 @@ let sleek_log_to_text_file slfn (src_files) =
     close_out oc
 
 let sleek_log_to_text_file2 (src_files) =
+  (* let _ = print_endline "sleek_log_2" in *)
   let fn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
   let pr = pr_list pr_id in
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
@@ -650,7 +669,7 @@ let process_proof_logging src_files  =
       let _= proof_log_to_file src_files in
       let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-      let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      (* let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in *)
       let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
       (* let _=  *)
       (*   (\* if (!Globals.sleek_logging_txt || !Globals.proof_logging_txt)  *\) *)

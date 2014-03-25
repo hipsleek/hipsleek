@@ -29,7 +29,7 @@ PostPred G(node a, node ra, node b, node rb, node@NI c).
 
 PostPred G1(node ra,  node rb, node@NI c).
 
-void lscan(ref node cur, ref node prev, node sent)
+void lscan( node@R cur, node@R prev, node sent)
 /*
  requires cur::node<_,n> * n::lx<_,sent> * prev::lx<_,sent> & cur!=sent
 // ensures prev'::lx<_,sent>  & cur'=sent &prev'!=sent ;//'

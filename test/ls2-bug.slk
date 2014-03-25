@@ -1,0 +1,22 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+pred lseg2<p,S,n> == self=p & n=0 & S={}
+  or self::node<q>*q::lseg2<p,S2,n-1> & self!=p & S=union({self},S2)
+  inv n>=0.
+
+
+lemma_safe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <-> self::lseg<q,a>*q::lseg<p,b> .
+
+lemma_test  self::lseg<q,a>*q::lseg<p,b>* p::node<r> & n=a+b
+   -> self::lseg<p,n> * p::node<r> .
+
+lemma_test  self::lseg2<q,S1,a>*q::lseg2<p,S2,b> & not(p \in S1) n=a+b
+   -> self::lseg2<p,S3,n> & S3=union(S1,S2).
+

@@ -1,0 +1,57 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+lemma_safe "xx" 
+   self::node<_,q>*q::rlseg<p>  <- self::rlseg<p1>* p1::node<_,p> 
+.
+// wrong if we use <- for complex lemma
+
+checkentail_exact 
+  self::rlseg<p1>* p1::node<_,p>
+ |- 
+  self::node<_,q>*q::rlseg<p>
+.
+
+checkentail_exact 
+  p1::node<_,p> & self=p1
+  or self::node<_,q> * q::rlseg<p1> * p1::node<_,p>
+ |- 
+  self::node<_,q1>*q1::rlseg<p>
+.
+
+
+
+/* 
+# rlseg-new-b3a1.slk
+
+Cannot be proven automatically, but manual
+version in rlseg-new-b3a.slk went thru!
+
+checkentail_exact 
+  self::node<_,q> & q=p 
+  or self::node<_,q>*q::node<_,q1> * q1::rlseg<p>   
+    |- self::rlseg<p1>* p1::node<_,p>.
+
+
+process_coercion_check@1
+process_coercion_check inp1 : 
+ self_3a::node<_,q>@M&p=q&{FLOW,(21,22)=__norm}[]
+ or (exists p_44,_,q_46: self_3a::node<_,q>@M * q::node<_,q_46>@M * 
+    q_46::rlseg<p_44>@M&p=p_44&{FLOW,(21,22)=__norm})[]
+ 
+process_coercion_check inp2 : EBase (exists p1,_: 
+     self_3a::rlseg<p1>@M * p1::node<_,p>@M&
+       {FLOW,(21,22)=__norm})[]
+process_coercion_check inp3 :inf_vars:[]
+process_coercion_check@1 EXIT:(false, failctx
+
+
+*/

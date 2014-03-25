@@ -1,0 +1,90 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<q>*q::lseg<p,n-1> & self!=p
+  inv n>=0.
+
+lemma_unsafe self::lseg<p,n> & n=a+b & a>=0 & b>=0 
+   <-> self::lseg<q,a>*q::lseg<p,b>.
+
+//(1)
+checkentail x::lseg<p,n> & n=m |- x::lseg<q,m>.
+print residue.
+// p=q
+
+//(2)
+checkentail x::lseg<p,n> & n>m & m>=0 |- x::lseg<q,m>.
+print residue.
+// <1>q::lseg<p,b_667>@M&m<n & 0<=m & 0<=b_667 & n=b_667+m & 0<=m&{FLOW,(21,22)=__norm}[]
+
+
+//(3)
+checkentail x::lseg<p,n> & n<m |- x::lseg<q,m>.
+print residue.
+// fail
+
+//(4)
+checkentail x::lseg<p,n> & n<=m |- x::lseg<q,m>.
+print residue.
+// fail
+
+//(5)
+checkentail x::lseg<p,n> & n>=0 |- x::lseg<q,m>.
+print residue.
+/* 2 solutions
+ <1>emp&0<=n & p=q & m=n&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==> ]]
+<2>q::lseg<p,b_810>@M&0<=n & 0<=b_810 & b_810<=n & n=b_810+m & 0<=m & 0<=b_810&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_11) ==>  Match ==> ]]
+*/
+
+//(6)
+checkentail x::lseg<p,n> & n>=0 |- (exists m: x::lseg<q,m>).
+print residue.
+// 2 solutions
+
+//(7)
+checkentail x::lseg<p,n> & n>0 & p!=q
+   |- x::lseg<q,m>.
+print residue.
+/*
+# incomplete?
+
+Entail 7: Fail.(may) cause: (((1<=a_915 & x!=null) | (q_928=x & a_915=0))) & (((1<=b_916 & 
+q_928!=null) | (p=q_928 & b_916=0))) & p!=q |-  q=q_928. LOCS:[1;0;42] (may-bug)
+*/
+
+//(8)
+checkentail x::lseg<p,n> & n>0 
+   |- x::lseg<q,m>.
+print residue.
+
+//(9)
+checkentail x::lseg<p,n> & n>0 
+   |- x::lseg<q,m>.
+print residue.
+
+//(10)
+checkentail p::lseg<q',i'>*q'::node<q>*q::lseg<nil,m> & i=i'+1
+  & i'>=0 & m=n-i'-1 & m>=0
+ |- p::lseg<q,i>*q::lseg<nil,n-i>.
+/*
+fail: due to incompleteness?
+
+Entail 10: Fail.(may) cause:UnionR[UnionR[AndR[ 0<=m & 0<=i' & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
+(nil=q & m=0))) & q'!=null & exists(nil_1064:nil_1064=q) & 
+exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[71;1;0;70;72;5];  0<=m & 0<=i' & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
+(nil=q & m=0))) & q'!=null & exists(nil_1064:nil_1064=q) & 
+exists(q_1062:q'=q_1062) |-  nil=q. LOCS:[71;1;0;70;72;5];  0<=m & exists(q_1062:q'=q_1062) & exists(nil_1064:nil_1064=q) & q'!=null & 
+(((1<=m & q!=null) | (nil=q & m=0))) & (((1<=i' & p!=null) | (p=q' & 
+i'=0))) & n=m+1+i' & 0<=i' & i=1+i' |-  n=i+0. LOCS:[1;0;71;70;72] (may-bug).], 0<=i' & 0<=m & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=m & q!=null) | 
+(nil=q & m=0))) & q'!=null & exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[71;1;0;70;72;5] (may-bug)],AndR[ 0<=b_1335 & 0<=i' & 0<=m & b_1335<=m & (((1<=b_1335 & q_1349!=null) | 
+(nil=q_1349 & b_1335=0))) & (((1<=i' & p!=null) | (p=q' & i'=0))) & 
+(((1<=a_1334 & q!=null) | (q=q_1349 & a_1334=0))) & q'!=null & 
+exists(q_1062:q'=q_1062) |-  q=q'. LOCS:[9;71;1;0;70;72;5];  0<=b_1335 & 0<=i' & 0<=m & exists(q_1062:q'=q_1062) & b_1335<=m & 
+q'!=null & (((1<=i' & p!=null) | (p=q' & i'=0))) & (((1<=a_1334 & q!=null) | 
+
+
+*/

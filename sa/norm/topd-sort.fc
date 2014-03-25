@@ -1,0 +1,9 @@
+
+wh:={[x,y]->[px,py]->[]:
+  (exists (x1,y1:x>0 && (y<0 || y>0) && x1=x-1 && y1=y-1 && wh(x1,y1,px,py)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
+
+#[RELDEFN P: ( y=y1+1 & x=x1+1 & 0<=y1 & 0<=x1 & P(x,y)) -->  P(x1,y1),
+
+

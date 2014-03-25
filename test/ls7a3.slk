@@ -1,0 +1,27 @@
+data node {
+  node next;
+}.
+
+// touching list segment..
+pred ll<n> == self=null & n=0
+  or self::node<q>*q::ll<n-1> 
+  inv n>=0.
+
+checkentail x::ll<n> |- x=null & n=0 or x!=null & n>0.
+
+checkentail x::ll<n> & !(x=null & n=0) |-  x!=null & n>0.
+
+
+checkentail x::ll<n> & n>0 |- x::node<null> or x::node<p> & p!=null.
+
+checkentail x::ll<n> & n>0 |- 
+            x::node<null> 
+            or x::node<p> & p::node<q>.
+
+checkentail x::ll<n> & n>0 |- x::node<p> & (p=null | p!=null).
+
+
+checkentail x::ll<n> & n>0 |- 
+  [] x::node<p>   case {
+                    p=null -> [] true;
+                    p!=null -> [] p::node<q>;}.

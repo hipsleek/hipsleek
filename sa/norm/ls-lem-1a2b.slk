@@ -1,0 +1,54 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last> //& self!=last
+ inv true.
+
+/*
+checkentail_exact self::node<_,null>
+ |-    (exists pp: pp::node<_,null> & self=pp
+    or self::node<_,p>*p::lseg<pp> * pp::node<_,null>).
+//succeeds
+*/
+
+//
+/*
+checkentail self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+print residue.
+
+ <1>(exists flted_22_67: emp&flted_22_67=null & Anon_15=Anon_16&{FLOW,(21,22)=__norm})[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+
+
+checkentail_exact self::node<_,null>
+ |-    (exists pp: pp::node<_,null> & self=pp)
+    or (exists pp,p: self::node<_,p>*p::lseg<pp> * pp::node<_,null>).
+//succeeded!
+*/
+
+checkentail self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+print residue.
+
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+
+/*
+Why did classic fail when we have no residue?
+
+checkentail self_two::node<_,flted_19_41>@M&flted_19_41=null&{FLOW,(21,22)=__norm}[]
+ |-  (exists flted_20_42,pp_43: self_two::lseg<pp_43>@M * 
+pp_43::node<_,flted_20_42>@M&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  p_45=null |-  pp_43!=null & p_45=pp_43. LOCS
+*/
+

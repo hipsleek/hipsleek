@@ -1,0 +1,15 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last> //& self!=last
+ inv true.
+
+
+checkentail_exact self_two::node<_,null>@M
+ |-  (exists pp: self_two::lseg<pp> * pp::node<_,null>). 
+print residue.
+

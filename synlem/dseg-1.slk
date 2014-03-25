@@ -1,0 +1,30 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+pred dseg<pr, p, last> == self=p & pr=last
+  or self::node<_,pr, q> * q::dseg<self,p,last>.
+
+lemma_safe "three" 
+  self::dseg<pr,p,last> <->
+      self::dseg<pr,p1,last2>*p1::dseg<last2,p,last>.
+
+lemma_safe "last"
+  self::dseg<pr,p,last> <-> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+/*
+# dseg-1.slk
+
+Entailing lemma three: Fail. Details below:
+	 "->" implication: : Valid.
+	 "<-" implication: : Fail. (may) cause:UnionR[AndR[ (p1_702!=null | (last=pr & p=p1_702)) |-  last=pr. LOCS:[12;1;0;7];  (self_three!=null | (last=last2_701 & p=self_three)) |-  p=self_three. LOCS:[12;1;0;7] (may-bug).],OrR[Cannot infer heap and pure 2,valid]]
+
+Failed to prove three:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Entailing lemma last: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[Cannot infer heap and pure 2,valid]
+	 "<-" implication: : Valid.
+*/

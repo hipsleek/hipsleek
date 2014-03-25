@@ -1,0 +1,43 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+/*
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+*/
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+lemma_safe "one" self::HP<> <-> self::node<_,p> * p::ll<>.
+
+/*
+lemma_safe "oneb"  self::node<_,p> * p::ll<> <-> self::HP<>.
+
+lemma_safe "two" self::HP<> <-> self::lseg<p> * p::node<_,null>.
+*/
+
+/*
+# loc-lem2.slk -debug lem.log
+
+ unfold needs to be applied to predicates reachable from self.
+
+process_coercion_check@4@3
+process_coercion_check inp1 : (exists _,p_87: self_one::node<_,p_87>@M * p_87::ll<>@M&
+{FLOW,(21,22)=__norm})[]
+process_coercion_check inp2 : :EBase exists (Expl)[](Impl)[_](ex)[](exists flted_19_93: self_one::node<_,flted_19_93>@M&
+        flted_19_93=null&{FLOW,(21,22)=__norm})[]
+|| :EBase exists (Expl)[](Impl)[_; p_91](ex)[]self_one::node<_,p_91>@M * 
+          p_91::HP<>@M&p_91!=null&{FLOW,(21,22)=__norm}[]
+*/

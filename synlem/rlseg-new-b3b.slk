@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred rlseg<p:node> == 
+     self=p
+  or self::node<_,q> * q::rlseg<p>
+.
+
+
+lemma_safe "3a" 
+     self::rlseg<p1>* p1::node<_,p>
+    -> self::rlseg<p>.
+
+lemma_safe "3b" self::node<_,q>*q::rlseg<p> 
+    <- self::rlseg<p1>* p1::node<_,p>.
+
+/*
+Entailing lemma 3b: Fail. Details below:
+	 "->" implication: : Fail. (may) cause:OrR[residue is forbidden.(2),valid]
+	 "<-" implication: : Valid.
+
+*/
+
+print residue.

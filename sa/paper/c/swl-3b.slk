@@ -1,0 +1,17 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred KK<p,t> == self::node<_,p>*p::node<_,t>
+ inv self!=null.
+/* 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]{1}->(exists p_30,
+        t_31: self::node<_,p_30>@M * p::node<_,t_31>@M&p=p_30 & t=t_31&
+        {FLOW,(1,24)=__flow})[]
+*/
+
+pred K2<p,t,s> == (exists pp: self::node<_,pp>*p::KK<t,_> & t=s & pp=p)
+ inv self!=null.
+
