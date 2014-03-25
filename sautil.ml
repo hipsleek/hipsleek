@@ -4866,7 +4866,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   (*in rec branches, one parameter is continuous*)
   let cont_args = List.fold_left (look_up_continuous_para) other_args rec_fs_wg in
   let _ = Debug.ninfo_hprint (add_str "cont_args: " !CP.print_svl) cont_args no_pos in
-  if cont_args = [] then
+  if rec_fs_wg = [] || cont_args = [] then
     None
   else
     (*in base branches, root is closed and continuos parameter is contant*)

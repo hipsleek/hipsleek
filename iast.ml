@@ -1072,7 +1072,7 @@ let genESpec_x pname body_opt args0 ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post Synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->

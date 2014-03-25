@@ -3,6 +3,10 @@ data node {
   node next;
 }
 
+ll<> == self=null
+	or self::node<_, q> * q::ll<> & self!=null
+	inv true;
+
 HeapPred H(node a).
   HeapPred G(node a, node b).
 
@@ -16,4 +20,12 @@ HeapPred H(node a).
   new_list.next = x;
 
   return new_list;
+}
+
+
+node testhar(node x)
+  requires x::ll<>@I
+  ensures res::node<_,x>;
+{
+  return prepend(x,0);
 }
