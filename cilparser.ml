@@ -1113,9 +1113,32 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
           let e2 = translate_block blk2 in
           let ifexp = Iast.mkCond cond e1 e2 None pos in
           ifexp
-    | Cil.Switch (_, _, _, l) ->
+    | Cil.Switch (exp, block, stmt_list, l) ->
+          let e = translate_exp exp in
           let pos = translate_location l in
-          report_error pos "TRUNG TODO: Handle Cil.Switch later!"
+          let e_list = List.flatten (List.map (fun s ->
+              List.map (fun lbl -> match lbl with
+                | Cil.Case (e_case, _) -> (Some (translate_exp e_case), translate_stmt s)
+                | _ -> (None, translate_stmt s)
+              ) s.Cil.labels
+          ) stmt_list) in
+          let rec helper e_list = match e_list with
+            | (ec,es)::[] -> (
+                  match ec with
+                    | Some ec -> let cond = Iast.mkBinary Iast.OpEq e ec None pos in
+                      Iast.mkCond cond es (Iast.Empty pos) None pos
+                    | None -> es
+              )
+            | (ec,es)::tl -> (
+                  match ec with
+                    | Some ec -> let cond = Iast.mkBinary Iast.OpEq e ec None pos in
+                      Iast.mkCond cond es (helper tl) None pos
+                    | None -> report_error pos "Error: Default!"
+              )
+            | _ -> report_error pos "Error: Empty list!"
+          in
+          helper e_list
+          (* report_error pos "TRUNG TODO: Handle Cil.Switch later!" *)
     | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
           let p = translate_location l in
           let cond = Iast.mkBoolLit true p in
