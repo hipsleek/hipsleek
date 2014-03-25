@@ -2698,6 +2698,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		      Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                     end;
+                  let _ = if proc0.Cast.proc_sel_hps = [] then () else
+                    print_endline "";
+                    print_endline "\n\n*************************************";
+                    print_endline "******* Shape Inference ********";
+                    print_endline "*************************************";
+                    print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
+                  in
                   (*****LOCKSET variable: ls'=ls *********)
                   let args = 
                     if (!allow_ls) then

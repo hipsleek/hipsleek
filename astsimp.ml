@@ -5346,7 +5346,7 @@ and add_pre_x (prog :C.prog_decl) (f:CF.struc_formula):CF.struc_formula =
     | CF.EList b -> CF.EList (map_l_snd (helper pf) b)
      in
   helper (Cpure.mkTrue no_pos) f
-      
+
 and add_pre prog f =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "add_pre"  pr pr (add_pre_x prog) f 

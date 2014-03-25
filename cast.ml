@@ -2391,7 +2391,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
             ) ([],[]) proc.proc_args_wi in
             (*update hp_decl of precondition*)
             let _ = if diff_args_i = [] then () else
-              let _ = Debug.info_hprint (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
+              let _ = Debug.tinfo_hprint (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
               let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
               let _ = List.map (fun (hp,args) ->
                   let s_args = List.map P.name_of_spec_var args in

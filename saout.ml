@@ -491,6 +491,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
 (*******************************)
 
 let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
+  (*subst simple precondition*)
   let need_trans_hprels0, unk_hps =
     List.fold_left (fun (r_hp_defs, r_unk_hps) hp_def ->
         match hp_def.CF.def_cat with

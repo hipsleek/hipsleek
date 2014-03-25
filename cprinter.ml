@@ -1925,7 +1925,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           prtt_pr_h_formula_inst prog h ; 
-          (if not(MP.isConstMTrue p) then 
+          (if not(MP.isConstMTrue p || MP.isTrivMTerm p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
           (* pr_cut_after "&" ; pr_mix_formula p;() *)
 
@@ -2621,9 +2621,9 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
     formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
-    fmt_string "requires ";
-    pr_formula_for_spec fb;
-    (match cont with 
+        fmt_string "requires ";
+        pr_formula_for_spec fb;
+        (match cont with 
       | None -> ()
       | Some l -> pr_struc_formula_for_spec l;
     );
@@ -2644,13 +2644,59 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 	  (fmt_string "struct:";
 	   wrap_box ("B",0) pr_struc_formula_for_spec s)
 	 else ()
-  | EInfer _ -> report_error no_pos "Do not expect EInfer at this level"
+  | EInfer b -> fmt_string ("infer" ^ (string_of_spec_var_list b.formula_inf_vars)) ;
+        pr_struc_formula_for_spec b.formula_inf_continuation
+            (* report_error no_pos "Do not expect EInfer at this level" *)
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec c) b
   (*| EOr b ->
     let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
     let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
     let f_b e = pr_bracket struc_formula_wo_paren pr_struc_formula_for_spec e in
     pr_list_vbox_wrap "eor " f_b (arg1@arg2) *)
+  in
+  res
+
+let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
+  let pr_helper = pr_struc_formula_for_spec_inst prog in
+  let res = match e with
+  | ECase {formula_case_branches = case_list} ->
+    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    (
+      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+        (fun () -> pr_helper c2; fmt_string ";")
+    ) case_list
+  | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
+    formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
+        let _ = if isTrivTerm fb then () else begin
+          fmt_string "requires ";
+          prtt_pr_formula_inst prog fb;
+          ()
+        end
+        in
+    (match cont with 
+      | None -> ()
+      | Some l -> pr_helper l;
+    );
+  | EAssume  {
+			formula_assume_vars = x;
+			formula_assume_simpl = b;
+			formula_assume_lbl = (y1,y2);
+			formula_assume_ensures_type = t;
+			formula_assume_struc = s;}->
+    let ensures_str = match t with
+                     | None -> "\n ensures "
+                     | Some true -> "\n ensures_exact "
+                     | Some false -> "\n ensures_inexact " in
+    fmt_string ensures_str;
+    prtt_pr_formula_inst prog b;
+    fmt_string ";";
+	if !print_assume_struc then 
+	  (fmt_string "struct:";
+	   wrap_box ("B",0) pr_helper s)
+	 else ()
+  | EInfer b-> fmt_string ("infer" ^ (string_of_spec_var_list b.formula_inf_vars)) ;
+        pr_helper b.formula_inf_continuation
+  | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_helper c) b
   in
   res
 
@@ -2662,6 +2708,8 @@ let printer_of_ext_formula (fmt: Format.formatter) (e:ext_formula) : unit =
 let string_of_struc_formula (e:struc_formula) : string =  poly_string_of_pr  pr_struc_formula e
 
 let string_of_struc_formula_for_spec (e:struc_formula): string = poly_string_of_pr pr_struc_formula_for_spec e
+
+let string_of_struc_formula_for_spec_inst prog (e:struc_formula): string = poly_string_of_pr (pr_struc_formula_for_spec_inst prog) e
 
 let printer_of_struc_formula (fmt: Format.formatter) (e:struc_formula) : unit =
   poly_printer_of_pr fmt pr_struc_formula e
