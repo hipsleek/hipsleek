@@ -1046,7 +1046,7 @@ let genESpec_x pname body_opt args0 ret pos=
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
     in
-    let _ = Debug.ninfo_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname) !print_hp_decl) hp_pre_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1072,7 +1072,7 @@ let genESpec_x pname body_opt args0 ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.ninfo_hprint (add_str ("generate unknown predicate for Post Synthesis of " ^ pname) !print_hp_decl) hp_post_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post Synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1133,23 +1133,23 @@ let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
     let _ = print_endline "\nHeap Predicate Declarations" in
     let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
-    let _ = Debug.info_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
+    let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
   let ss, n_hp_dcls,args_wi =
     match body_header.proc_static_specs with
       | F.EList [] ->
           let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
-          let _ = print_gen_spec ss hps in
+          (* let _ = print_gen_spec ss hps in *)
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
           (ss,hps,args_wi)
       | _ ->
-            let _ = if !Globals.sags then
-              let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in
-              let _ = print_gen_spec ss hps in
-              ()
-            else ()
-            in
+            (* let _ = if !Globals.sags then *)
+            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+            (*   let _ = print_gen_spec ss hps in *)
+            (*   () *)
+            (* else () *)
+            (* in *)
             (body_header.proc_static_specs,[],body_header.proc_args_wi)
   in
   {body_header with

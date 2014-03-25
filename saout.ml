@@ -451,12 +451,52 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
         r@[(hpdcl.C.hp_name,equiv_view)]
       with _ -> r
   ) [] chprels_decl in
+  let rec get_sst_hp hp_defs res=
+    match hp_defs with
+      | [] -> res
+      | hp_def::rest -> begin
+          let rec_fnc = get_sst_hp rest res in
+          match hp_def.CF.def_cat with
+            | Cpure.HPRelDefn (hp,r,args) -> begin
+                let fs = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f) ) [] hp_def.CF.def_rhs in
+                match fs with
+                  | [f] -> begin
+                      try
+                        let hpargs = CF.extract_HRel_f f in
+                        let hpargs0 = CF.extract_HRel  hp_def.CF.def_lhs in
+                        get_sst_hp rest (res@[(hpargs0, hpargs)])
+                      with _ -> rec_fnc
+                    end
+                  | _ -> rec_fnc
+              end
+            | _ -> rec_fnc
+        end
+  in
+  let hn_hprel_subst_trans sst_hps hn = match hn with
+    | CF.HRel (hp, eargs,p) -> begin
+       try
+         let ((hp1,frm_args1),(hp2,frm_args2)) = List.find (fun ((hp1,_),_) -> CP.eq_spec_var hp hp1) sst_hps in
+         let to_args1 = List.concat (List.map CP.afv eargs) in
+         let sst0 = List.combine frm_args1 to_args1 in
+         let to_args2 = CP.subst_var_list sst0 frm_args2 in
+         let eargs2 = List.map (fun sv -> CP.mkVar sv no_pos) to_args2 in
+         CF.HRel (hp2, eargs2, p)
+       with _ -> hn
+      end
+    | _ -> hn
+  in
+  let sst_hps = get_sst_hp hpdefs [] in
   let plug_views_proc proc =
     if proc.C.proc_hpdefs = [] then proc else
       let name = C.unmingle_name proc.C.proc_name in
       (* let _ = print_endline ("proc_name: "^name) in *)
+      let s_spec1 = (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
+      (*subst simple view def (equiv, should subst views with one branch also)*)
+      let s_spec2 = if sst_hps = [] then s_spec1 else
+        CF.struc_formula_trans_heap_node (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec1
+      in
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
-      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
+      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula s_spec2 in
       let _ =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos; in
       let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)

@@ -2701,7 +2701,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   let _ = if proc0.Cast.proc_sel_hps = [] then () else
                     print_endline "";
                     print_endline "\n\n*************************************";
-                    print_endline "******* Shape Inference ********";
+                    print_endline "******* SPECIFICATION ********";
                     print_endline "*************************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
                   in

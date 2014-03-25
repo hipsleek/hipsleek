@@ -2669,39 +2669,39 @@ and subst_struc_pre sst (f : struc_formula) =
   | [] -> f
 
 and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula = match f with
-	| ECase b -> ECase {b with 
-              formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc_pre s c2)) ) b.formula_case_branches;}
-	| EBase b -> EBase {
-			  formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
-			  formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
-			  formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
-			  formula_struc_base = apply_one s  b.formula_struc_base;
-			  formula_struc_continuation = map_opt (apply_one_struc_pre s) b.formula_struc_continuation;
-			  formula_struc_pos = b.formula_struc_pos	
-		  }
-	| EAssume b-> if (List.mem fr b.formula_assume_vars) then f 
-		else EAssume { b with
-				formula_assume_simpl = apply_one s b.formula_assume_simpl;
-				formula_assume_struc = apply_one_struc_pre s b.formula_assume_struc;}
-    | EInfer b -> EInfer {b with formula_inf_continuation = apply_one_struc_pre s b.formula_inf_continuation}
-    | EList b-> EList (map_l_snd (apply_one_struc_pre s) b)
+  | ECase b -> ECase {b with 
+        formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc_pre s c2)) ) b.formula_case_branches;}
+  | EBase b -> EBase {
+	formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
+	formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
+	formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
+	formula_struc_base = apply_one s  b.formula_struc_base;
+	formula_struc_continuation = map_opt (apply_one_struc_pre s) b.formula_struc_continuation;
+	formula_struc_pos = b.formula_struc_pos	
+    }
+  | EAssume b-> if (List.mem fr b.formula_assume_vars) then f 
+    else EAssume { b with
+	formula_assume_simpl = apply_one s b.formula_assume_simpl;
+	formula_assume_struc = apply_one_struc_pre s b.formula_assume_struc;}
+  | EInfer b -> EInfer {b with formula_inf_continuation = apply_one_struc_pre s b.formula_inf_continuation}
+  | EList b-> EList (map_l_snd (apply_one_struc_pre s) b)
 
 
 and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula =  match f with
-	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc s c2)) ) b.formula_case_branches;}
-	| EBase b -> EBase {
-			  formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
-			  formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
-			  formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
-			  formula_struc_base = apply_one s  b.formula_struc_base;
-			  formula_struc_continuation = map_opt (apply_one_struc s) b.formula_struc_continuation;
-			  formula_struc_pos = b.formula_struc_pos }
-	| EAssume b-> EAssume{ b with 
-		formula_assume_vars = subst_var_list [s] b.formula_assume_vars;
-		formula_assume_simpl = apply_one s b.formula_assume_simpl;
-		formula_assume_struc = apply_one_struc s b.formula_assume_struc;}
-    | EInfer b -> EInfer {b with  formula_inf_continuation = apply_one_struc s b.formula_inf_continuation}
-    | EList b-> EList (map_l_snd (apply_one_struc s) b)
+  | ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc s c2)) ) b.formula_case_branches;}
+  | EBase b -> EBase {
+	formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
+	formula_struc_implicit_inst = List.map (subst_var s)  b.formula_struc_implicit_inst;
+	formula_struc_exists = List.map (subst_var s)  b.formula_struc_exists;
+	formula_struc_base = apply_one s  b.formula_struc_base;
+	formula_struc_continuation = map_opt (apply_one_struc s) b.formula_struc_continuation;
+	formula_struc_pos = b.formula_struc_pos }
+  | EAssume b-> EAssume{ b with 
+	formula_assume_vars = subst_var_list [s] b.formula_assume_vars;
+	formula_assume_simpl = apply_one s b.formula_assume_simpl;
+	formula_assume_struc = apply_one_struc s b.formula_assume_struc;}
+  | EInfer b -> EInfer {b with  formula_inf_continuation = apply_one_struc s b.formula_inf_continuation}
+  | EList b-> EList (map_l_snd (apply_one_struc s) b)
 
 (*LDK: add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formula): struc_formula =
@@ -2711,18 +2711,18 @@ and add_mix_formula_to_struc_formula  (rhs_p: MCP.mix_formula) (f : struc_formul
 
 (*LDK: only heap need fractional permision spec var (perm) *)
 and add_mix_formula_to_struc_formula_x (rhs_p: MCP.mix_formula) (f : struc_formula) : struc_formula = match f with
-	| ECase b -> f
-	| EBase b -> EBase {b with  formula_struc_base = add_mix_formula_to_formula rhs_p b.formula_struc_base ;
-			  formula_struc_continuation = map_opt (add_mix_formula_to_struc_formula_x rhs_p) b.formula_struc_continuation;}
-	| EAssume _ -> f
-	| EInfer b -> EInfer { b with formula_inf_continuation = add_mix_formula_to_struc_formula_x rhs_p b.formula_inf_continuation;}
-    | EList b -> EList (map_l_snd (add_mix_formula_to_struc_formula_x rhs_p) b)
+  | ECase b -> f
+  | EBase b -> EBase {b with  formula_struc_base = add_mix_formula_to_formula rhs_p b.formula_struc_base ;
+	formula_struc_continuation = map_opt (add_mix_formula_to_struc_formula_x rhs_p) b.formula_struc_continuation;}
+  | EAssume _ -> f
+  | EInfer b -> EInfer { b with formula_inf_continuation = add_mix_formula_to_struc_formula_x rhs_p b.formula_inf_continuation;}
+  | EList b -> EList (map_l_snd (add_mix_formula_to_struc_formula_x rhs_p) b)
 
 and add_pure_formula_to_struc_formula f1 (f2:struc_formula): struc_formula = 
 	add_mix_formula_to_struc_formula (MCP.mix_of_pure f1) f2
-	
+
 and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula = 
-	add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
+  add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
 
 (*LDK : add a constraint formula between perm spec var of datanode to fresh spec var of a view decl  *)
 and add_mix_formula_to_formula  (f1_mix: MCP.mix_formula) (f2_f:formula) : formula =
@@ -5107,6 +5107,35 @@ let rec struc_formula_drop_infer unk_hps f =
    | EInfer b-> recf b.formula_inf_continuation
    | EList l-> EList (Gen.map_l_snd recf l)
 
+let formula_map hf_fct f0=
+  let rec helper f=
+    match f with
+      | Base b -> Base {b with formula_base_heap = hf_fct b.formula_base_heap}
+      | Exists _ ->
+            let quans ,base = split_quantifiers f in
+            let new_base = helper base in
+            add_quantifiers quans new_base
+      | Or orf ->
+            Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+                formula_or_f2 = helper orf.formula_or_f2;
+            }
+  in
+  helper f0
+
+(* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
+(*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
+(*   match f with *)
+(*     | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches} *)
+(*     | EBase b -> EBase {b with *)
+(* 	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation; *)
+(* 	  formula_struc_base=(\* formula_trans_heap_node fct *\)formula_fct hf_fct b.formula_struc_base;} *)
+(*     | EAssume ea-> EAssume {ea with  formula_assume_simpl = (\* formula_trans_heap_node fct *\) *)
+(*               formula_fct hf_fct ea.formula_assume_simpl; *)
+(*           formula_assume_struc = recf ea.formula_assume_struc} *)
+(*           (\* (formula_trans_heap_node fct f, fl, et) *\) *)
+(*     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation} *)
+(*     | EList l -> EList (Gen.map_l_snd recf l) *)
+
 let rec struc_formula_trans_heap_node formula_fct f =
  let recf = struc_formula_trans_heap_node formula_fct in
   match f with
@@ -5117,7 +5146,7 @@ let rec struc_formula_trans_heap_node formula_fct f =
     | EAssume ea-> EAssume {ea with  formula_assume_simpl = (* formula_trans_heap_node fct *) formula_fct ea.formula_assume_simpl;
           formula_assume_struc = recf ea.formula_assume_struc}
           (* (formula_trans_heap_node fct f, fl, et) *)
-    | EInfer _ -> f
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
     | EList l -> EList (Gen.map_l_snd recf l)
 
 let struc_formula_trans_heap_node fct f =
