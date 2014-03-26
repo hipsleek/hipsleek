@@ -1622,7 +1622,7 @@ expect:
  G(x,res) ::= H(x) * res::node<d',x>@M]
 
 ======================================================================
-# next.c
+# next.c: FIXED
 
 [ HP_18(x) ::= x::node<key,DP>@M,
  GP_19(x,res) ::= x::node<key,res>@M]

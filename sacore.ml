@@ -1134,7 +1134,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       (we abs preds as a set it should be set inclusion operators).
       so we set eqs = []*)
     (***************************************)
-    let eqs = [] in
+    (* let eqs = [] in *)
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list (CP.remove_redundant_helper p_eqs []) pos in
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
