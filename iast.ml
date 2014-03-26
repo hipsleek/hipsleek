@@ -973,6 +973,12 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
+let find_close_ids ids equivs=
+  let pr1 = pr_list pr_id in
+  let pr2 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_2 "find_close_ids" pr1 pr2 pr1
+      (fun _ _ -> Gen.find_close_ids ids equivs) ids equivs
+
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
   let f e=
@@ -984,9 +990,16 @@ let rec get_mut_vars_x e0 =
   (**************************END****************)
   let rec collect_lhs_ass_vars e=
     match e with
-      | Assign {exp_assign_lhs = lhs} -> begin
+      | Assign {exp_assign_lhs = lhs;
+        exp_assign_rhs = rhs;
+        } -> begin
           match lhs with
-            | Var {exp_var_name = id} -> Some [id]
+            | Var {exp_var_name = id} -> begin
+                match rhs with
+                  | Var {exp_var_name = rid} ->
+                        Some [(id, [(id,rid)])]
+                  | _ -> Some [(id,[])]
+              end
             |  _ -> begin
                  collect_lhs_ass_vars lhs
                end
@@ -1005,9 +1018,11 @@ let rec get_mut_vars_x e0 =
       | Member b -> Some (get_vars b.exp_member_base)
       | _ -> None
   in
-  let lhs_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
-  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) (lhs_vars@bind_vars)
+  let mut_vars = find_close_ids (lhs_vars@bind_vars) eqs in
+  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars
   (* let mut_vars = helper e0 in *)
   (* Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars *)
 

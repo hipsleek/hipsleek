@@ -2330,8 +2330,12 @@ let get_mut_vars_bu_x cprocs (e0 : exp): ident list =
   let get_vars e= fold_exp e f (List.concat) [] in
   let rec collect_lhs_ass_vars e=
     match e with
-      | Assign {exp_assign_lhs = id} -> begin
-           Some [id]
+      | Assign {exp_assign_lhs = id;
+        exp_assign_rhs = rhs;} -> begin
+           match rhs with
+             | Var {exp_var_name = rid} ->
+                   Some [(id, [(id,rid)])]
+             | _ -> Some [(id,[])]
         end
       | _ -> None
   in
@@ -2366,9 +2370,11 @@ let get_mut_vars_bu_x cprocs (e0 : exp): ident list =
         end
       | _ -> None
   in
-  let lhs_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
-  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) (lhs_vars@bind_vars)
+  let mut_vars = Gen.find_close_ids (lhs_vars@bind_vars) eqs in
+  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars
 
 
 let get_mut_vars_bu cprocs (e0 : exp) =

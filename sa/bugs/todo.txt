@@ -1626,7 +1626,25 @@ expect:
 HP_18(x) ::= x::node<key,DP>@M,
  GP_19(x,res) ::= x::node<key,res>@M & res = DP
 
+======================================================================
+# next-1a.c: FIXED
 
+
+GOT
+-----------
+ infer[HP_15,GP_16]requires HP_15(x@NI)&true
+ ensures GP_16(x,res)&true;       ^^^^
+
+==========
+EXPECTED
+
+infer[HP_15,GP_16]requires HP_15(x)&true
+ ensures GP_16(x,res)&true;
+
+======================================================================
+# next-1b.c
+
+Get imm parameters
 
 ======================================================================
 #ll-last-rec.c
