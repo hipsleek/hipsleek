@@ -1,4 +1,4 @@
-#include "inc.h"
+#include "../bugs/inc.h"
 
 struct node* get_next(struct node* x)
 {
