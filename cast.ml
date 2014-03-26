@@ -150,6 +150,7 @@ and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
     proc_args_wi: (ident*hp_arg_kind) list;
+    proc_mut_args : (ident * bool) list;
     proc_source : ident; (* source file *)
     proc_return : typ;
     proc_flags : (ident*ident*(flags option)) list;
@@ -2321,7 +2322,7 @@ let exp_fv (e:exp) =
   fold_exp_args e [] f f_args comb_f []
 
 
-let get_mut_vars_bu_x cprocs (e0 : exp): ident list =
+let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
    let f e=
     match e with
       | Var { exp_var_name = id} -> Some [id]
@@ -2373,14 +2374,15 @@ let get_mut_vars_bu_x cprocs (e0 : exp): ident list =
   let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
   let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
-  let mut_vars = Gen.find_close_ids (lhs_vars@bind_vars) eqs in
-  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars
+  let mut_unaccess_vars = Gen.find_close_ids (lhs_vars@bind_vars) eqs in
+  let mut_unaccess_vars1 = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars in
+  (mut_unaccess_vars1, Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars1 lhs_vars)
 
 
 let get_mut_vars_bu cprocs (e0 : exp) =
   let pr1 = !print_prog_exp in
   let pr2 = pr_list pr_id in
-  Debug.no_1 "get_mut_vars_bu" pr1 pr2
+  Debug.no_1 "get_mut_vars_bu" pr1 (pr_pair pr2 pr2)
       (fun _ -> get_mut_vars_bu_x cprocs e0) e0
 
 let update_mut_vars_bu iprog cprog scc_procs =
@@ -2388,7 +2390,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
   let update_mut_vars_proc cprocs proc=
     match proc.proc_body with
       | Some p ->
-            let mut_vars = get_mut_vars_bu cprocs p in
+            let mut_unchange_vars, mut_vars = get_mut_vars_bu cprocs p in
             let new_args_wi,diff_args_i = List.fold_left (fun (r1,r2) (arg, ni_info) ->
                 if ni_info = I then (r1@[(arg, ni_info)],r2) else
                   if Gen.BList.mem_eq string_cmp arg mut_vars then

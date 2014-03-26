@@ -2819,6 +2819,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_flags = proc.I.proc_flags;
           C.proc_args = args;
           C.proc_args_wi = args_wi;
+          C.proc_mut_args = List.map (fun (id,_) -> (id,false)) args_wi;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
           C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
           C.proc_static_specs = final_static_specs_list;
