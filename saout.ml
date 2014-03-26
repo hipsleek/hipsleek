@@ -485,6 +485,12 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
       end
     | _ -> hn
   in
+  let formula_subst_dangling_pred dang_hps f0=
+    let hp_opt = CF.extract_hrel_head f0 in
+    match hp_opt with
+      | None -> f0
+      | Some hp -> if CP.mem_svl hp dang_hps then CF.mkTrue_nf (CF.pos_of_formula f0) else f0
+  in
   let sst_hps = get_sst_hp hpdefs [] in
   let plug_views_proc proc =
     if proc.C.proc_hpdefs = [] then proc else
@@ -492,11 +498,14 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
       (* let _ = print_endline ("proc_name: "^name) in *)
       let s_spec1 = (CF.struc_formula_drop_infer unk_hps proc.C.proc_static_specs) in
       (*subst simple view def (equiv, should subst views with one branch also)*)
-      let s_spec2 = if sst_hps = [] then s_spec1 else
-        CF.struc_formula_trans_heap_node (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec1
+      let s_spec2 = if unk_hps=[] then s_spec1 else
+        CF.struc_formula_trans_heap_node (formula_subst_dangling_pred unk_hps) s_spec1
+      in
+      let s_spec3 = if sst_hps = [] then s_spec2 else
+        CF.struc_formula_trans_heap_node (CF.formula_map (hn_hprel_subst_trans sst_hps)) s_spec2
       in
       let hn_trans_formula = trans_formula_hp_2_view iprog cprog name chprels_decl proc.C.proc_hpdefs sel_view_equivs in
-      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula s_spec2 in
+      let n_static_spec = CF.struc_formula_trans_heap_node hn_trans_formula s_spec3 in
       let _ =  Debug.ninfo_hprint (add_str "trans static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos; in
       let n_dynamic_spec = CF.struc_formula_trans_heap_node hn_trans_formula (CF.struc_formula_drop_infer unk_hps proc.C.proc_dynamic_specs) in
       (* let proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs  in *)
@@ -530,7 +539,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps hpdefs chprels_decl 
 (********END REVERIFY**********)
 (*******************************)
 
-let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
+let plug_shape_into_specs_x cprog iprog dang_hps proc_names hp_defs=
   (*subst simple precondition*)
   let need_trans_hprels0, unk_hps =
     List.fold_left (fun (r_hp_defs, r_unk_hps) hp_def ->
@@ -552,6 +561,8 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
              end
           | _ -> (r_hp_defs, r_unk_hps)
     ) ([],[]) hp_defs in
+  let unk_hps = CP.remove_dups_svl (dang_hps@unk_hps) in
+  let _ = Debug.ninfo_hprint (add_str "    unk_hps" (!CP.print_svl))  unk_hps no_pos in
   let plug_proc need_trans_hprels1 chprels_decl cprog proc_name=
     let cprog = trans_specs_hprel_2_cview iprog cprog proc_name unk_hps need_trans_hprels1 chprels_decl in
     cprog
@@ -568,11 +579,11 @@ let plug_shape_into_specs_x cprog iprog proc_names hp_defs=
       let _ = print_endline ("\n --:plug_shape_into_specs warning: "^" at:"^(Printexc.get_backtrace ())) in
       cprog
 
-let plug_shape_into_specs cprog iprog proc_names hp_defs=
+let plug_shape_into_specs cprog iprog dang_hps proc_names hp_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 =String.concat ";" in
   Debug.no_2 "plug_shape_into_specs" pr1 pr2 pr_none
-      (fun _ _ -> plug_shape_into_specs_x cprog iprog proc_names hp_defs)
+      (fun _ _ -> plug_shape_into_specs_x cprog iprog dang_hps proc_names hp_defs)
       hp_defs proc_names
 
 

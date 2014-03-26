@@ -4217,14 +4217,21 @@ let rec look_up_hp_def hp_defs hp0=
           | _ -> look_up_hp_def rest hp0
       end
 
-let rec is_unknown_f f=
-   match f with
+let is_unknown_f_x f0=
+  let rec helper f=  match f with
     | Base fb ->
         (is_unknown_heap fb.formula_base_heap) &&
             (CP.isConstTrue (MCP.pure_of_mix fb.formula_base_pure))
     | Exists _ -> let _, base1 = split_quantifiers f in
-                     is_unknown_f base1
-    | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (is_unknown_f o11) && (is_unknown_f o12)
+      helper base1
+    | Or {formula_or_f1 = o11; formula_or_f2 = o12;} -> (helper o11) && (helper o12)
+  in
+  helper f0
+
+let is_unknown_f f=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_unknown_f" pr1 string_of_bool
+      (fun _ -> is_unknown_f_x f) f
 
 let get_hpdef_name hpdef=
    match hpdef with

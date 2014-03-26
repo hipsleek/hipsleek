@@ -25,7 +25,8 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
   (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
   (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
   let b = ([] : CF.hp_rel_def list) in
-  (a, b)
+  let c = ([] : CP.spec_var list) in
+  (a, b, c)
 )
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
@@ -464,7 +465,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
                       in
                       let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
-                        let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                        let _, hp_defs, _ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                           [] [] [] true true in
                         hp_defs
                       in
@@ -494,7 +495,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                       | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 2"
                     in
                     let hp_defs = if sel_hps = [] || hp_lst_assume = [] then [] else
-                      let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                      let _, hp_defs,_ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                         [] [] [] true true in
                       hp_defs
                     in
