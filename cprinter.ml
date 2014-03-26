@@ -1925,7 +1925,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_pos = pos}) ->
           (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           prtt_pr_h_formula_inst prog h ; 
-          (if not(MP.isConstMTrue p || MP.isTrivMTerm p) then 
+          (if not( MP.isTrivMTerm p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
           (* pr_cut_after "&" ; pr_mix_formula p;() *)
 

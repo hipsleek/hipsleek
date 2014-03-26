@@ -1611,7 +1611,7 @@ should topo sort and handle mutual rec.
 depend on relational specs of g_list_last
 
 ======================================================================
-# ll-prepend.ss
+# ll-prepend.ss: FIXED
 
 GOT
 G(x,res) ::=(0) res::node<d',x>@M
