@@ -3,17 +3,11 @@
 struct node* get_next(struct node* x)
 {
   struct node* tmp = x;
-  return tmp->next;
+  tmp->next = NULL;
+  return x;
 }
 
-struct node* testhar(struct node* x)
-/*@
-  requires x::node<_,null>
-  ensures x::node<_,null> & res=null;
-*/
-{
-  return get_next(x);
-}
+
 
 /*
 [ HP_18(x) ::= x::node<key,DP>@M,

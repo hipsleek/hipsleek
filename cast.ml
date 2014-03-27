@@ -150,7 +150,7 @@ and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
     proc_args_wi: (ident*hp_arg_kind) list;
-    proc_mut_args : (ident * bool) list;
+    proc_imm_args : (ident * bool) list;
     proc_source : ident; (* source file *)
     proc_return : typ;
     proc_flags : (ident*ident*(flags option)) list;
