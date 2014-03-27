@@ -1116,13 +1116,17 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
     | Cil.Switch (exp, block, stmt_list, l) ->
           let e = translate_exp exp in
           let pos = translate_location l in
-          let e_list = List.flatten (List.map (fun s ->
-              List.map (fun lbl -> match lbl with
-                | Cil.Case (e_case, _) -> (Some (translate_exp e_case), translate_stmt s)
-                | _ -> (None, translate_stmt s)
-              ) s.Cil.labels
-          ) stmt_list) in
-          let rec helper e_list = match e_list with
+          let rec get_stmt2 sl = match sl with
+            | [] -> []
+            | s::sl -> match s.Cil.skind with
+                | Cil.Break _ -> []
+                | _ -> s::(get_stmt2 sl)
+          in
+          let rec get_stmt1 lbl sl = match sl with
+            | [] -> []
+            | s::sl -> if (List.mem lbl s.Cil.labels) then s::(get_stmt2 sl) else get_stmt1 lbl sl
+          in
+          let rec translate e_list = match e_list with
             | (ec,es)::[] -> (
                   match ec with
                     | Some ec -> let cond = Iast.mkBinary Iast.OpEq e ec None pos in
@@ -1132,12 +1136,23 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
             | (ec,es)::tl -> (
                   match ec with
                     | Some ec -> let cond = Iast.mkBinary Iast.OpEq e ec None pos in
-                      Iast.mkCond cond es (helper tl) None pos
+                      Iast.mkCond cond es (translate tl) None pos
                     | None -> report_error pos "Error: Default!"
               )
             | _ -> report_error pos "Error: Empty list!"
           in
-          helper e_list
+          let e_list = List.flatten (List.map (fun s ->
+              List.map (fun lbl ->
+                  let sl = get_stmt1 lbl block.Cil.bstmts in
+                  (* let sl = List.filter (fun s -> List.mem lbl s.Cil.labels) block.Cil.bstmts in *)
+                  let s = merge_iast_exp (List.map (fun s -> translate_stmt s) sl) in
+                  match lbl with
+                | Cil.Case (e_case, _) ->
+                      (Some (translate_exp e_case), (* translate_stmt *) s)
+                | _ -> (None, (* translate_stmt *) s)
+              ) s.Cil.labels
+          ) stmt_list) in
+          translate e_list
           (* report_error pos "TRUNG TODO: Handle Cil.Switch later!" *)
     | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
           let p = translate_location l in
