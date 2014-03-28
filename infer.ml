@@ -604,7 +604,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
     if (over_v ==[]) then None
     else 
       let exists_var = CP.diff_svl vf ivars in
-      (* let _ = DD.info_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in *)
+      let _ = DD.ninfo_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in
       let qvars0, bare_f = split_ex_quantifiers f in
       let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
       let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
@@ -633,6 +633,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let ps2 = List.filter (fun p -> CP.intersect_svl ivars (CP.fv p) <> []) (CP.list_of_conjs f) in
+        let _ = DD.ninfo_hprint (add_str "ps2: " (pr_list !print_formula)) ps2 pos in
         let neg_f = 
           if List.for_all (fun p -> CP.is_eq_neq_exp p (* && *)
               (* CP.intersect_svl ivars (CP.fv p) <> [] *)

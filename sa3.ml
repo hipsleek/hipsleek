@@ -1024,6 +1024,13 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *CF.hp_rel_def) list) 
           if CP.mem_svl hp skip_hps then
             let fs = List.map (fun (a1,args,og,f,unk_args) -> fst (CF.drop_hrel_f f [hp]) ) par_defs in
             let fs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> Sautil.check_relaxeq_formula args f1 f2) fs in
+            (* let fs2 = try *)
+            (*   let res_sv = List.find (fun sv -> String.compare res_name (CP.name_of_spec_var sv) =0) args in *)
+            (*   let fr_res = CP.fresh_spec_var res_sv in *)
+            (*   let ss = [(res_sv,fr_res)] in *)
+            (*   List.map (fun f -> CF.subst ss f) fs1 *)
+            (* with _ -> fs1 *)
+            (* in *)
             (true, Sautil.mk_unk_hprel_def hp args fs1 no_pos,[])
           else
             (*find the root: ins2,ins3: root is the second, not the first*)

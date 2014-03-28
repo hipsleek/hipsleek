@@ -2285,9 +2285,9 @@ and struc_fv_infer (f: struc_formula) : CP.spec_var list =
 and struc_post_fv (f:struc_formula):Cpure.spec_var list = 
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in  
   match f with
-	| ECase b-> rdv (fold_l_snd struc_post_fv b.formula_case_branches)
-	| EBase b->	fold_opt struc_post_fv b.formula_struc_continuation
-	| EAssume b-> fv b.formula_assume_simpl
+    | ECase b-> rdv (fold_l_snd struc_post_fv b.formula_case_branches)
+    | EBase b->	fold_opt struc_post_fv b.formula_struc_continuation
+    | EAssume b-> CP.remove_dups_svl ((fv b.formula_assume_simpl)(* @(struc_post_fv b.formula_assume_struc) *))
     | EInfer b -> struc_post_fv b.formula_inf_continuation
     | EList b -> rdv (fold_l_snd struc_post_fv b)
 

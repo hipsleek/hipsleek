@@ -5511,11 +5511,12 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
   let r = trans_case_coverage prepost_flag cfvhp r in
   let tmp_vars  =  (CF.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
+  let _ = Debug.ninfo_hprint (add_str "tmp_vars" (!CP.print_svl)) tmp_vars no_pos in
   let pre_fv = List.map CP.name_of_spec_var (Gen.BList.difference_eq (=) (CF.struc_fv r) tmp_vars) in
   let pr_s_v_l = pr_list pr_id in
   (* WN : BUG why isn't this trace working when ho is turned on? *)
-  Debug.tinfo_hprint (add_str "pre_fv" pr_s_v_l) pre_fv no_pos;
-  Debug.tinfo_hprint (add_str "post_fv" pr_s_v_l) post_fv no_pos;
+  Debug.ninfo_hprint (add_str "pre_fv" pr_s_v_l) pre_fv no_pos;
+  Debug.ninfo_hprint (add_str "post_fv" pr_s_v_l) post_fv no_pos;
   let r = if check_self_sp && ((List.mem self pre_fv) || (List.mem self post_fv)) then
     Err.report_error { Err.error_loc = CF.pos_of_struc_formula r; Err.error_text ="self is not allowed in pre/postcondition";}
   else if check_pre && (List.mem res_name pre_fv) then

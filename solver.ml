@@ -6490,9 +6490,15 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let _ = Debug.ninfo_hprint (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
                 (* let _ = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
                 let pf,rele_p_rhs_xpure =
-                  if (CP.isConstFalse p_rhs_xpure) ||  TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf])))  then
+                  if (CP.isConstFalse p_rhs_xpure) ||
+                    not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))))  then
                     (pf,p_rhs_xpure)
                   else
+                    (* let rele_rhs_xpure = CP.filter_var p_rhs_xpure  orig_inf_vars in *)
+                    let _ = Debug.ninfo_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
+                    let _ = Debug.ninfo_hprint (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
+                    (* let _ = Debug.ninfo_hprint (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
+                    (* if CP.isConstTrue rele_rhs_xpure then (pf,rele_rhs_xpure) else *)
                     let rele_svl = CP.fv pf in
                     let sst = (MCP.ptr_equations_without_null lhs_xpure) in
                     let rele_sst = List.fold_left (fun r (sv1,sv2) ->
@@ -6504,10 +6510,11 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                           | false, false -> r
                           | true, true -> r@[(sv1,sv2)]
                     ) [] sst in
-                    let l_ps = CP. remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
+                    let l_ps = CP.remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
                     let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
-                    (* let _ = Debug.info_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in *)
-                    (CP.join_conjunctions l_ps1, CP.subst rele_sst p_rhs_xpure)
+                    let _ = Debug.ninfo_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+                    let rele_rhs_xpure = CP.subst rele_sst p_rhs_xpure in
+                    (CP.join_conjunctions l_ps1, rele_rhs_xpure)
                 in
                 (*skip*-list*)
                 let res_ctx_opt = if CP.is_neq_null_exp pf then None else

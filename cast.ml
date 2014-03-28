@@ -2374,7 +2374,8 @@ let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
   let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
   let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
-  let mut_unaccess_vars = Gen.find_close_ids (lhs_vars@bind_vars) eqs in
+  (*todo*)
+  let mut_unaccess_vars = (* Gen.find_close_ids *) (lhs_vars@bind_vars)  in
   let mut_unaccess_vars1 = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars in
   (mut_unaccess_vars1, Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars1 lhs_vars)
 
