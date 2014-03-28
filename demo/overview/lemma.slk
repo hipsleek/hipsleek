@@ -1,0 +1,18 @@
+data node{
+  int val;
+  node next
+}.
+
+pred lseg<p> == self = p
+	or self::node<v, q> * q::lseg<p>.
+
+lemma self::lseg<p> <-> self::lseg<q> * q::lseg<p>.
+
+//Entail 1: Proof Search with 2 Residues
+checkentail x::lseg<p> & x != p |- x::lseg<q> * q::lseg<p>.
+print residue.
+
+//Entail 2: Proof search with 4 Residues
+checkentail x::lseg<q> * q::lseg<p> |- x::lseg<r> * r::lseg<p>.
+print residue.
+

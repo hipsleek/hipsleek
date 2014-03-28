@@ -1,0 +1,13 @@
+//relation intarray(int[] a) == true.
+relation ud(int x) == forall( y : y < x).
+// loop below
+
+
+checkentail true |- forall(y: y<1).
+// why no timeout here?
+
+
+//(6)
+checkentail true |- ud(1).
+// timeout
+

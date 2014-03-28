@@ -3255,7 +3255,7 @@ let lookup_called_procs_x iprog prog root_scc verified_sccs=
       let procs = Cast.callees_of_proc prog (Cast.unmingle_name p.Cast.proc_name) in
       r@procs
   ) [] root_scc in
-  let _ = Debug.info_hprint (add_str "called_procs" (pr_list pr_id)) called_procs no_pos in
+  let _ = Debug.ninfo_hprint (add_str "called_procs" (pr_list pr_id)) called_procs no_pos in
   List.fold_left (fun r scc ->
           let called_scc = List.filter (fun p ->
               let pn = Cast.unmingle_name p.proc_name in

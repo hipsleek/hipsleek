@@ -10838,13 +10838,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let e_subs = ivar_subs_to_conseq@ext_subst in
               (*do not subst heap relation*)
               let e_subs = List.filter (fun (sv1,sv2) -> (not (CP.is_rel_typ sv1)) && (not(CP.is_rel_typ sv2))) e_subs in
-              let _ = Debug.tinfo_hprint (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs pos in
+              let _ = Debug.ninfo_hprint (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs pos in
               let r_subs, l_subs = List.split e_subs in
               (*IMPORTANT TODO: global existential not took into consideration*)
               (* let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in *)
               (* let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in *)
-              let _ = Debug.tinfo_hprint (add_str "r_subs" Cprinter.string_of_spec_var_list) r_subs pos in
-              let _ = Debug.tinfo_hprint (add_str "l_subs" Cprinter.string_of_spec_var_list) l_subs pos in
+              let _ = Debug.ninfo_hprint (add_str "r_subs" Cprinter.string_of_spec_var_list) r_subs pos in
+              let _ = Debug.ninfo_hprint (add_str "l_subs" Cprinter.string_of_spec_var_list) l_subs pos in
               let _ = DD.ninfo_zprint (lazy ((" tmp_conseq: " ^ (Cprinter.prtt_string_of_formula tmp_conseq)))) no_pos in
               let rhs_eqset = estate.es_rhs_eqset in
               let subs_rhs_eqset = 
@@ -10923,8 +10923,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let res_es1, prf1 = 
                 if (!Globals.allow_mem) then heap_entail_split_rhs prog is_folding new_ctx new_conseq (rhs_matched_set @ [r_var]) pos
                 else heap_entail_conjunct 11 prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
-              let res_es1 = Cformula.add_to_subst res_es1 r_subs l_subs in
-              let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos in
+              let res_es1 = Cformula.add_to_subst res_es1 r_subs l_subs in  
+              let res_es1 = Cformula.add_to_exists_pure res_es1 ann_rhs_ex pos 
+              in
               (res_es1, prf1) 
       		  (*match final_ctx with
 	            | SuccCtx(cl) ->

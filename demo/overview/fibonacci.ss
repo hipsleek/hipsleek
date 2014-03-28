@@ -15,8 +15,8 @@ axiom n > 1 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
 
 /* sequential version */
 void seq_fib(int n, ref int result)
-  requires n >= 0 // & @value[n] & @full[result]
-    ensures fiba(n,result'); // & @full[result]; //'
+  requires n >= 0
+  ensures fiba(n,result');//'
 {
 	if (n <= 1)
       result = n;
@@ -30,17 +30,17 @@ void seq_fib(int n, ref int result)
 }
 
 //parallel version
-void para_fib2(int n, ref int result)
-  requires n >= 0 // & @value[n] & @full[result]
-    ensures fiba(n,result'); // & @full[result]; //'
+void para_fib(int n, ref int result)
+  requires n >= 0
+  ensures fiba(n,result'); //'
 {
   if (n < 10){
     seq_fib(n,result);
   }else{
     int result1,result2;
     thrd id1,id2;
-    id1 = fork(para_fib2,n-1,result1);
-    id2 = fork(para_fib2,n-2,result2);
+    id1 = fork(para_fib,n-1,result1);
+    id2 = fork(para_fib,n-2,result2);
     //any access to result1 and result2 here is not allowed
     //if(result1 == result2) result = 2*result1;
     join(id1);

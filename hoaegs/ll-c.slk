@@ -1,0 +1,52 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next
+}.
+
+/* view for a singly linked list */
+pred ll<n> == self = null & n=0
+	or self::node<v, r> * r::ll<n-1> 
+  inv n>=0.
+
+
+/*
+relation zeros(int[] a, int i, int j) == (i > j 
+     | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] = 0))).
+*/
+
+pred ll2<i,j,a> == self = null & i=j
+  or self::node<v, r> * r::ll2<i+1,j,a> & a[i]=v 
+  inv i<=j.
+
+  checkentail x::ll2<i,j,a> |- x::ll2<i,j,b>.
+print residue.
+
+
+checkentail x::node<v,q>*q::ll2<i+1,j,a> |- x::ll2<i,j,b>.
+print residue.
+
+checkentail x::node<v,q>*q::ll2<i+1,j,a> & a[i]=v 
+  |- x::ll2<i,j,a>.
+print residue.
+
+checkentail x::node<v,q>*q::ll2<i+1,j,a> & b[i]=v
+  & forall(k:k=i | k!=i & b[k]=a[k]) |- x::ll2<i,j,c>.
+print residue.
+
+
+/*
+checkentail x=5 |- x>0.
+
+checkentail x=5 |- x>6.
+
+checkentail 
+  x::node<_,q>*q::node<_,null> 
+  |- x::ll<m>.
+print residue.
+
+checkentail  k=a* a |- k>=0.
+*/
+
