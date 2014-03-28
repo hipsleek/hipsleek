@@ -5,15 +5,20 @@ struct node {
 
 /* view for singly linked circular lists */
 /*@
-cll<p, n> == self = p & n = 0
-	or self::node<_, r> * r::cll<p, n-1> & self != p  
+clls<p, n> == self = p & n = 0
+	or self::node<_, r> * r::clls<p, n-1> & self != p  
 	inv n >= 0;
+
+cll<p> == self = p
+	or self::node<_, r> * r::cll<p> & self != p  
+	inv true;
 
 hd<n> == self = null & n = 0
-	or self::node<_, r> * r::cll<self, n-1>  
+	or self::node<_, r> * r::clls<self, n-1>
 	inv n >= 0;
-
-HeapPred H(node a, node@NI b).
+*/
+/*@
+HeapPred H(node a, node b).
 HeapPred G(node a, node b).
 */
 /* functions to count the number of nodes in a circular list */
@@ -24,19 +29,18 @@ int count_rest(struct node* rest, struct node* h)
    ensures G(rest,h);
 */
 /*
-  requires rest::cll<p, n> & h = p 
-  ensures rest::cll<p, n> & res = n; 
+	requires rest::cll<p, n> & h = p 
+	ensures rest::cll<p, n> & res = n; 
 */
+
 {
   int n;
-
   if (rest == h)
     return 0; 
   else
     {
       n = count_rest(rest->next, h);
       n = n + 1;
-
       return n;
     }
 }

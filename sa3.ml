@@ -3042,7 +3042,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   else (n_cmb_defs2, n_all_hp_defs2)
   in
   let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) (n_cmb_defs3@tupled_defs) in
-  ([],(* cmb_defs, *) n_all_hp_defs3, CP.remove_dups_svl (dang_hps@link_hps))
+  ((* (n_cmb_defs3@tupled_defs) *)[],(* cmb_defs, *) n_all_hp_defs3, CP.remove_dups_svl (dang_hps@link_hps))
 
 let infer_shapes_conquer iprog prog proc_name ls_is sel_hps=
   let pr1 = pr_list_ln Cprinter.string_of_infer_state_short in

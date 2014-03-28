@@ -2609,6 +2609,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     let rel_defs = if not (!Globals.pred_syn_modular) then Sa2.rel_def_stk
     else CF.rel_def_stk
     in
+    let inferred_hpdefs = (rel_defs# get_stk) in
     if not(rel_defs# is_empty) (* && !Globals.sap *) then
       begin
         let defs0 = List.sort CF.hpdef_cmp (rel_defs # get_stk) in
@@ -2658,7 +2659,9 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
     let _ = if(!Globals.validate || !Globals.cp_prefile) then
-      CEQ.validate proc scc_hprel_ass scc_inferred_hps scc_sel_hps in
+      (*update lib def*)
+      let scc_inferred_hps1 = CEQ.update_lib inferred_hpdefs  scc_inferred_hps  scc_sel_hps in
+      CEQ.validate proc scc_hprel_ass scc_inferred_hps1 scc_sel_hps in
     (* let _ = if(!Globals.gen_cpfile) then *)
     (*   CEQ.gen_cpfile prog proc scc_hprel_ass scc_inferred_hps scc_dropped_hps old_hpdecls sel_hp_rels cout_option in *)
     (**************end cp_test _ gen_cpfile******************)

@@ -6519,13 +6519,14 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 (*skip*-list*)
                 let res_ctx_opt = if CP.is_neq_null_exp pf then None else
                   let p_contr_lhs = (CP.join_conjunctions ([lhs_p;pf])) in
-                  let hinf_args_map0 = List.filter (fun (_,args) ->
+                  let _ = Debug.ninfo_hprint (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
+                  let hinf_args_map0 =  List.filter (fun (_,args) ->
                       let rele_p = CP.filter_var p_contr_lhs args in
                       TP.is_sat_raw (MCP.mix_of_pure rele_p)
                   ) hinf_args_map in
                   Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
                 let _ = Debug.tinfo_hprint (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
-	        let _ = Debug.ninfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+	        let _ = Debug.info_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
                 let es = 
                   match res_ctx_opt with
                     | None -> 
