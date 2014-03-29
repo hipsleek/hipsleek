@@ -2006,8 +2006,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*=== NORMAL METHOD CALL ==*)
                   (*=========================*)
 	          let proc = look_up_proc_def pos prog.new_proc_decls mn in
-                  (* let _ = Debug.info_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in *)
-                  (* let _ = Debug.info_zprint (lazy (("   spec: " ^(Cprinter.string_of_struc_formula proc.Cast.proc_static_specs)))) no_pos in *)
+                  let _ = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
+                  let _ = Debug.ninfo_zprint (lazy (("   spec: " ^(Cprinter.string_of_struc_formula proc.Cast.proc_static_specs)))) no_pos in
 	          let farg_types, farg_names = List.split proc.proc_args in
 	          let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	          let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
@@ -2058,9 +2058,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
                     let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
 
-                    (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
-                       (Cprinter.string_of_pos pos) ^ "\n" ^
-                       (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in*)
+                    (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^ *)
+                    (*    (Cprinter.string_of_pos pos) ^ "\n" ^ *)
+                    (*    (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in *)
                     (* let _ = Debug.info_zprint (lazy (("  renamed spec 1 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
                     let renamed_spec = CF.subst_struc st1 renamed_spec in
                     let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
@@ -2868,7 +2868,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       if (pre_ctr # get> 0) 
                       then
                         begin
-                          let new_spec =                           
+                          let new_spec = if rels=[] then proc.proc_stk_of_static_specs # top else
                             let inf_post_flag = post_ctr # get > 0 in
                             Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
                             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
@@ -3002,6 +3002,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           (*                        let _ = Specutil.test prog in*)
                           (* TODO WN : what happen to the old MayLoop? *)
                           (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
+                          let _ = Debug.ninfo_zprint (lazy (("   old_spec: " ^(Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))))) no_pos in
+                          let _ = Debug.ninfo_zprint (lazy (("   new_spec: " ^(Cprinter.string_of_struc_formula new_spec)))) no_pos in
                           let _ = proc.proc_stk_of_static_specs # push new_spec in
                           (* let old_sp = Cprinter.string_of_struc_formula proc.proc_static_specs in *)
                           (* let new_sp = Cprinter.string_of_struc_formula new_spec in *)
