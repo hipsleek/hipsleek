@@ -799,27 +799,27 @@ and struc_split_fv f0 wi =
 
 
 and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
-	let rde = Gen.BList.remove_dups_eq (=)  in
-	let diffe = Gen.BList.difference_eq (=)  in
-	let rec helper f = match f with
-		| EBase b -> 
-			let fvb = all_fv b.formula_struc_base in
-			let prc,psc = match b.formula_struc_continuation with | None -> ([],[]) | Some l -> helper l in
-			let rm = (if with_inst then [] else b.formula_struc_explicit_inst@ b.formula_struc_implicit_inst) @ b.formula_struc_exists in
-			(rde (diffe (fvb@prc) rm),(diffe psc rm))
-		| ECase b -> 
-			let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
-					let prc, psc = helper c2 in
-					((a1@prc@(Ipure.fv c1)),psc@a2)) ([],[]) b.formula_case_branches in
-			(rde prl, rde psl)		
-		| EAssume b-> ([],all_fv b.formula_assume_simpl)
-		| EInfer b -> helper b.formula_inf_continuation
-		| EList b-> 
-			let prl, pcl = List.split (List.map (fun c-> helper (snd c)) b) in
-			(rde (List.concat prl), rde (List.concat pcl)) in
-	helper f0
-  
- 
+  let rde = Gen.BList.remove_dups_eq (=)  in
+  let diffe = Gen.BList.difference_eq (=)  in
+  let rec helper f = match f with
+    | EBase b ->
+	  let fvb = all_fv b.formula_struc_base in
+	  let prc,psc = match b.formula_struc_continuation with | None -> ([],[]) | Some l -> helper l in
+	  let rm = (if with_inst then [] else b.formula_struc_explicit_inst@ b.formula_struc_implicit_inst) @ b.formula_struc_exists in
+	  (rde (diffe (fvb@prc) rm),(diffe psc rm))
+    | ECase b ->
+	  let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
+	      let prc, psc = helper c2 in
+	      ((a1@prc@(Ipure.fv c1)),psc@a2)) ([],[]) b.formula_case_branches in
+	  (rde prl, rde psl)
+    | EAssume b-> ([],all_fv b.formula_assume_simpl)
+    | EInfer b -> helper b.formula_inf_continuation
+    | EList b->
+	  let prl, pcl = List.split (List.map (fun c-> helper (snd c)) b) in
+	  (rde (List.concat prl), rde (List.concat pcl)) in
+  helper f0
+
+
 and all_fv_one_formula (f:one_formula):(ident*primed) list = 
   Gen.BList.remove_dups_eq (=) ((h_fv f.formula_heap)@(Ipure.fv f.formula_pure))
 
@@ -857,24 +857,24 @@ and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
   | _ -> add_quantifiers qvars f
 
 and formula_to_struc_formula (f:formula):struc_formula =
-	let rec helper (f:formula):struc_formula = match f with
-		| Base b-> EBase {
-			 		formula_struc_explicit_inst =[];
-		 			formula_struc_implicit_inst = [];
-					formula_struc_exists = [];
-		 			formula_struc_base = f;
-					formula_struc_continuation = None;
-		 			formula_struc_pos = b.formula_base_pos}
-		| Exists b-> EBase {
-			 		formula_struc_explicit_inst =[];
-		 			formula_struc_implicit_inst = [];
-					formula_struc_exists = [];
-		 			formula_struc_base = f;
-					formula_struc_continuation = None;
-		 			formula_struc_pos = b.formula_exists_pos}
-		| Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
-	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f
-  
+  let rec helper (f:formula):struc_formula = match f with
+    | Base b-> EBase {
+	  formula_struc_explicit_inst =[];
+	  formula_struc_implicit_inst = [];
+	  formula_struc_exists = [];
+	  formula_struc_base = f;
+	  formula_struc_continuation = None;
+	  formula_struc_pos = b.formula_base_pos}
+    | Exists b-> EBase {
+	  formula_struc_explicit_inst =[];
+	  formula_struc_implicit_inst = [];
+	  formula_struc_exists = [];
+	  formula_struc_base = f;
+	  formula_struc_continuation = None;
+	  formula_struc_pos = b.formula_exists_pos}
+    | Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
+  Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f
+
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f : formula) =  match f with
@@ -1370,6 +1370,38 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
              (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
 
+let get_heap_nodes (f0:h_formula) =
+  let rec helper f =match f with
+    | Conj ({h_formula_conj_h1 = h1; 
+      h_formula_conj_h2 = h2; 
+      h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+      h_formula_conjstar_h2 = h2; 
+      h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+      h_formula_starminus_h2 = h2; 
+      h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+      h_formula_star_h2 = h2; 
+      h_formula_star_pos = pos}) ->
+          let r11, r12 = (helper h1) in
+          let r21, r22 = (helper h2) in
+          (r11@r21, r12@r22)
+    | HeapNode hn -> [hn],[]
+    | HeapNode2 hn2 -> [],[hn2]
+    | ThreadNode _
+    | HRel _
+    | HTrue
+    | HFalse
+    | HEmp -> [],[]
+  in
+  helper f0
 
 (*======for generate tmp view=========*)
 let rec one_formula_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) =
@@ -2097,35 +2129,35 @@ and float_out_heap_min_max (h :  h_formula) :
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with
 	| EAssume b -> 
-		EAssume {b with 
-			formula_assume_simpl = float_out_min_max b.formula_assume_simpl; 
-			formula_assume_struc = float_out_struc_min_max b.formula_assume_struc;}
+	      EAssume {b with 
+		  formula_assume_simpl = float_out_min_max b.formula_assume_simpl; 
+		  formula_assume_struc = float_out_struc_min_max b.formula_assume_struc;}
 	| ECase b-> ECase {b with 
-					 formula_case_branches = (List.map (fun (c1,c2)->((Ipure.float_out_pure_min_max c1),(float_out_struc_min_max c2))) b.formula_case_branches)}
+	      formula_case_branches = (List.map (fun (c1,c2)->((Ipure.float_out_pure_min_max c1),(float_out_struc_min_max c2))) b.formula_case_branches)}
 	| EBase b -> EBase {b with 
-					 formula_struc_base = float_out_min_max b.formula_struc_base;
-					 formula_struc_continuation = Gen.map_opt float_out_struc_min_max b.formula_struc_continuation}
+	      formula_struc_base = float_out_min_max b.formula_struc_base;
+	      formula_struc_continuation = Gen.map_opt float_out_struc_min_max b.formula_struc_continuation}
 	| EInfer b -> EInfer {b with formula_inf_continuation = float_out_struc_min_max b.formula_inf_continuation;}
 	| EList b -> EList (Gen.map_l_snd float_out_struc_min_max b)
-	
+
 and view_node_types_struc (f:struc_formula):ident list = match f with
-	| ECase b -> Gen.fold_l_snd view_node_types_struc b.formula_case_branches
-	| EBase b -> (view_node_types b.formula_struc_base)@(Gen.fold_opt view_node_types_struc b.formula_struc_continuation)
-	| EAssume b -> view_node_types b.formula_assume_simpl
-	| EInfer b -> view_node_types_struc b.formula_inf_continuation
-	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd view_node_types_struc b)
-		
+  | ECase b -> Gen.fold_l_snd view_node_types_struc b.formula_case_branches
+  | EBase b -> (view_node_types b.formula_struc_base)@(Gen.fold_opt view_node_types_struc b.formula_struc_continuation)
+  | EAssume b -> view_node_types b.formula_assume_simpl
+  | EInfer b -> view_node_types_struc b.formula_inf_continuation
+  | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd view_node_types_struc b)
+
 and view_node_types (f:formula):ident list = 
-	let rec helper (f:h_formula):ident list =  match f with
-		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
-		| HeapNode b -> [b.h_formula_heap_name]
-		| HeapNode2 b -> [b.h_formula_heap2_name]
-		| _ -> [] in
-	match f with
-	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
-	| Base b -> helper b.formula_base_heap
-	| Exists b -> helper b.formula_exists_heap
-	
+  let rec helper (f:h_formula):ident list =  match f with
+    | Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+    | HeapNode b -> [b.h_formula_heap_name]
+    | HeapNode2 b -> [b.h_formula_heap2_name]
+    | _ -> [] in
+  match f with
+    | Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+    | Base b -> helper b.formula_base_heap
+    | Exists b -> helper b.formula_exists_heap
+
 and has_top_flow_struc (f:struc_formula) = 
 	let rec has_top_flow (f:formula) = match f with
 		| Base b-> if (String.compare b.formula_base_flow top_flow)<>0 then Error.report_error {
@@ -2635,9 +2667,9 @@ let rec heap_drop_heap_node f0 hns=
 let rec formula_drop_heap_node f0 hns=
   let rec helper f=
     match f with
-	  | Base b-> Base{b with formula_base_heap = heap_drop_heap_node b.formula_base_heap hns}
-	  | Exists b-> Exists{b with formula_exists_heap = heap_drop_heap_node b.formula_exists_heap hns}
-	  | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;formula_or_f2 = helper b.formula_or_f2}
+      | Base b-> Base{b with formula_base_heap = heap_drop_heap_node b.formula_base_heap hns}
+      | Exists b-> Exists{b with formula_exists_heap = heap_drop_heap_node b.formula_exists_heap hns}
+      | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;formula_or_f2 = helper b.formula_or_f2}
   in
   helper f0
 
@@ -2645,15 +2677,15 @@ let rec struc_formula_drop_heap_node f0 hns =
   let rec helper f=
     match f with
       | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd helper b.formula_case_branches}
-	  | EBase b -> EBase {b with
-						formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
-						formula_struc_base=formula_drop_heap_node b.formula_struc_base hns;}
-	  | EAssume ea -> EAssume {ea with formula_assume_simpl = formula_drop_heap_node ea.formula_assume_simpl hns;
-          formula_assume_struc = helper ea.formula_assume_struc }
-          (* (formula_drop_heap_node f hns, fl, et) *)
-	  | EInfer _ -> f
-	  | EList l -> EList (Gen.map_l_snd helper l)
-	  (* | EOr b-> mkEOr (helper b.formula_struc_or_f1) (helper b.formula_struc_or_f2) b.formula_struc_or_pos *)
+      | EBase b -> EBase {b with
+	    formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
+	    formula_struc_base=formula_drop_heap_node b.formula_struc_base hns;}
+      | EAssume ea -> EAssume {ea with formula_assume_simpl = formula_drop_heap_node ea.formula_assume_simpl hns;
+            formula_assume_struc = helper ea.formula_assume_struc }
+            (* (formula_drop_heap_node f hns, fl, et) *)
+      | EInfer _ -> f
+      | EList l -> EList (Gen.map_l_snd helper l)
+	    (* | EOr b-> mkEOr (helper b.formula_struc_or_f1) (helper b.formula_struc_or_f2) b.formula_struc_or_pos *)
   in
   helper f0
 
@@ -2689,3 +2721,118 @@ let type_of_formula (f: formula) : formula_type =
         if ((List.length hs)>1) then Complex 
         else Simple
     | _ -> Complex
+
+
+let normal_formula view_nodes data_nodes f0=
+  let sv_cmp (s1,p1) (s2,p2) = p1=p2 && String.compare s1 s2 = 0 in
+  let extract_qvars hns hn2s=
+    let ei1 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap_node data_nodes then
+      r@hn.h_formula_heap_arguments else r) [] (hns) in
+    let ei2 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap2_node data_nodes then
+      r@hn.h_formula_heap2_arguments else r) [] (hn2s) in
+    let ei = ei1@(snd (List.split ei2)) in
+    List.fold_left (fun r e -> r@(Ipure.afv e)) [] ei
+  in
+  let extract_iis hns hn2s=
+    let qvars1 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap_node view_nodes then
+      r@hn.h_formula_heap_arguments else r) [] (hns) in
+    let qvars2 = List.fold_left (fun r hn -> if Gen.BList.mem_eq sv_cmp hn.h_formula_heap2_node view_nodes then
+      r@hn.h_formula_heap2_arguments else r) [] (hn2s) in
+    let qvars = qvars1@(snd (List.split qvars2)) in
+    List.fold_left (fun r e -> r@(Ipure.afv e)) [] qvars
+  in
+  let fresh_qvars qvars f=
+    let fr_qvars = Ipure.fresh_vars qvars in
+    let ss0 = List.combine qvars fr_qvars in
+    let eq_ps = List.map (fun (sv1, sv2) -> Ipure.mkEqVarExp sv1 sv2 no_pos) ss0 in
+    let p = Ipure.conj_of_list eq_ps in
+    let f1 = subst ss0 f in
+    (fr_qvars,add_pure_formula_to_formula p f1)
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+            let hns, hn2s = get_heap_nodes fb.formula_base_heap in
+            (*data nodes*)
+            let qvars0 = extract_qvars hns hn2s in
+            (*view nodes*)
+            let ii = extract_iis hns hn2s in
+            let qvars = Gen.BList.difference_eq sv_cmp qvars0 ii in
+            let nb = if qvars = [] then f else
+              let fr_qvars, f1 = (fresh_qvars qvars f) in
+              add_quantifiers fr_qvars f1 in
+            mkEBase [] ii [] nb None fb.formula_base_pos
+      | Exists fe ->
+            let hns, hn2s = get_heap_nodes fe.formula_exists_heap in
+            (*data nodes*)
+            let qvars = extract_qvars hns hn2s in
+            (*view nodes*)
+            let ii = extract_iis hns hn2s in
+            let qvars0, basef = split_quantifiers f in
+            let qvars0a = Gen.BList.difference_eq sv_cmp qvars0 ii in
+            let qvars1 = Gen.BList.difference_eq sv_cmp qvars (ii@qvars0) in
+            let nb = if qvars1 = [] then add_quantifiers qvars0a basef else
+              let fr_qvars, f1 = (fresh_qvars qvars1 basef) in
+              add_quantifiers (qvars0a@fr_qvars) f1 in
+            mkEBase [] ii [] nb None fe.formula_exists_pos
+      | Or orf -> let sf1 = helper orf.formula_or_f1 in
+        let sf2 = helper orf.formula_or_f2 in
+        EList [(Label_only.empty_spec_label_def,sf1);(Label_only.empty_spec_label_def,sf2)]
+  in
+  helper f0
+
+
+let normal_formula view_nodes data_nodes f0=
+  let pr1 = !print_formula in
+  let pr2 = !print_struc_formula in
+  let pr_svl = pr_list (pr_id fst) in
+  Debug.no_3 "normal_formula" pr_svl pr_svl pr1 pr2
+      (fun _ _ _ -> normal_formula view_nodes data_nodes f0)
+      view_nodes data_nodes f0
+
+
+let h_formula_collect_hprel hf0 =
+  let rec helper hf = match hf with
+    |  Star{ h_formula_star_h1 = hf1;
+          h_formula_star_h2 = hf2;}
+    |  StarMinus{ h_formula_starminus_h1 = hf1;
+          h_formula_starminus_h2 = hf2;}
+    |  Conj { h_formula_conj_h1 = hf1;
+          h_formula_conj_h2 = hf2;}
+    |  ConjStar { h_formula_conjstar_h1 = hf1;
+          h_formula_conjstar_h2 = hf2;}
+    |  ConjConj { h_formula_conjconj_h1 = hf1;
+          h_formula_conjconj_h2 = hf2;}
+    |  Phase { h_formula_phase_rd = hf1;
+          h_formula_phase_rw = hf2;} -> (helper hf1)@(helper hf2)
+    | HRel (id, es,_) -> [(id, List.fold_left (fun r e -> r@(List.map fst (Ipure.afv e))) [] es)]
+    | _ -> []
+  in
+  helper hf0
+
+let formula_collect_hprel f0 =
+  let rec helper f=
+    match f with
+      | Base {formula_base_heap = hf}
+      | Exists {formula_exists_heap = hf} ->
+            h_formula_collect_hprel hf
+      | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
+  in
+  helper f0
+
+let struc_formula_collect_pre_hprel_x f0 =
+  let rec helper f=
+    match f with
+      | ECase b-> List.fold_left (fun r (_,sc) -> r@(helper sc)) [] b.formula_case_branches
+      | EBase b ->  formula_collect_hprel b.formula_struc_base
+      | EAssume _ -> []
+      | EInfer b -> helper b.formula_inf_continuation
+      | EList l -> List.fold_left (fun r (_,sc) -> r@(helper sc)) [] l
+  in
+  helper f0
+
+let struc_formula_collect_pre_hprel f0 =
+  let pr1 = !print_struc_formula in
+  let pr2 = pr_list (pr_pair pr_id (pr_list pr_id)) in
+  Debug.no_1 "struc_formula_collect_pre_hprel" pr1 pr2
+      (fun _ -> struc_formula_collect_pre_hprel_x f0) f0

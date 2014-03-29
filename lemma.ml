@@ -25,7 +25,8 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
   (link_hpargs: (int list * (Cformula.CP.spec_var * Cformula.CP.spec_var list)) list)
   (need_preprocess: bool) (detect_dang: bool) -> let a = ([] : CF.hprel list) in
   let b = ([] : CF.hp_rel_def list) in
-  (a, b)
+  let c = ([] : CP.spec_var list) in
+  (a, b, c)
 )
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
@@ -255,14 +256,23 @@ let manage_safe_lemmas repo iprog cprog =
   match invalid_lem with
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
-          let _ = print_endline ("\nFailed to prove "^ (name) ^ " in current context.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nFailed to prove "^ (name) ^ " in current context.")
+          else ()
+          in
           Lem_store.all_lemma # pop_coercion;
-          let _ = print_endline ("Removing invalid lemma ---> lemma store restored.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("Removing invalid lemma ---> lemma store restored.")
+          else ()
+          in
           Some([List.hd(nctx)])
     | None ->
           let lem_str = pr_list pr_id (List.map (fun i -> 
               i.I.coercion_name^":"^(Cprinter.string_of_coercion_type i.I.coercion_type)) repo) in
-          let _ = print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.")
+          else ()
+          in
           None
 
 (* update store with given repo without verifying the lemmas *)
@@ -303,10 +313,16 @@ let manage_infer_lemmas str repo iprog cprog =
   match invalid_lem with
     | Some name -> 
           let _ = Log.last_cmd # dumping (name) in
-          let _ = print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\nFailed to "^str^" for "^ (name) ^ " ==> invalid lemma encountered.")
+          else ()
+          in
           false,Some([List.hd(nctx)])
     | None ->
-          let _ = print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.") in
+          let _ = if !Globals.lemma_ep then
+            print_endline ("\n Temp Lemma(s) "^str^" as valid in current context.")
+          else ()
+          in
           true,Some nctx
 
 (* verify  a list of lemmas *)
@@ -449,7 +465,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                         | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas"
                       in
                       let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else
-                        let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                        let _, hp_defs, _ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                           [] [] [] true true in
                         hp_defs
                       in
@@ -479,7 +495,7 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc=
                       | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas 2"
                     in
                     let hp_defs = if sel_hps = [] || hp_lst_assume = [] then [] else
-                      let _, hp_defs = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
+                      let _, hp_defs,_ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps
                         [] [] [] true true in
                       hp_defs
                     in
@@ -814,11 +830,11 @@ let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
   let f12 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
   let f22 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
   (*iform*)
-  let if12 = Astsimp.rev_trans_formula f12 in
-  let if22 = Astsimp.rev_trans_formula f22 in
+  let if12 = Rev_ast.rev_trans_formula f12 in
+  let if22 = Rev_ast.rev_trans_formula f22 in
   (*unfold lhs - rhs*)
-  let f13 = do_unfold_view cprog0 f12 in
-  let f23 = do_unfold_view cprog0 f22 in
+  (* let f13 = do_unfold_view cprog0 f12 in *)
+  (* let f23 = do_unfold_view cprog0 f22 in *)
   let r=
     let lemma_name = "tmp" in
     let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if12 if22 in

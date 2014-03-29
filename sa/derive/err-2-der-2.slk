@@ -1,0 +1,50 @@
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+/*
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred llN<n> == self=null & n=0
+  or self::node<_,p> * p::llN<m> & n=m+1
+inv n>=0.
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2
+   inv true.
+
+
+pred llSum<s> == extends ll<> with pos_sum[REC,VAL]<s> .
+
+
+pred llNPSum<n,s> == extends llN<n> with pos_sum[VAL,REC]<s> .
+
+pred llNN<> == 
+  self::node<_,null> 
+  or self::node<_,p> * p::llNN<>
+inv self!=null.
+*/
+//pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
+// need sanity check that n does not exist in RHS
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2
+   inv true.
+
+pred llNN2<> == 
+  self::node<_,null> 
+  or self::node<_,p> * p::node<_,null>
+  or self::node<_,p> * p::llNN2<>
+inv self!=null.
+
+/*
+Fatal error: exception Invalid_argument("List.combine")
+*/
+pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
+
+

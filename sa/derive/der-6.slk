@@ -1,0 +1,43 @@
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+data node2 {
+        int val@VAL;
+        node2 prev@REC;
+        node2 next@REC;
+}.
+
+pred llNN<> == self::node<_,null>
+  or self::node<_,p> * p::llNN<>
+inv self!=null.
+
+pred treeNN<> ==
+  self::node2<_,null,null>
+  or self::node2<_,null,q> * q::treeNN<>
+  or self::node2<_,p,null> * p::treeNN<>
+  or self::node2<_,p,q> * p::treeNN<> * q::treeNN<>
+ inv self!=null.
+
+pred_extn hed[V]<n> ==
+          n=V
+   //inv self!=null // does not entail implied formula
+   .
+
+pred llhead<n> == extends llNN<> with hed[VAL]<n> .
+
+/*
+WHY isn't N=Anon_11 captured in base and recursive cases?
+
+view llhead[]<n:TVar[51]>= 
+  
+   EBase {2}->EXISTS(flted_13_18,
+         Anon_11: self::node<Anon_11,flted_13_18>@M[Orig]&flted_13_18=null&
+         {FLOW,(1,22)=__flow})[]
+  eor 
+   EBase {1}->EXISTS(Anon_12,p: self::node<Anon_12,p>@M[Orig] * 
+         p::llhead<n_52>@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow})[]
+ 
+*/
