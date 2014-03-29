@@ -23,7 +23,7 @@ echo "sll-insertsort"
 $HIP sll-insertsort.c -validate ../o/sll-insertsort.cp | grep Validate
 echo "CSll"
 $HIP cll.c  --pred-en-dangling -validate ../o/cll.cp | grep Validate
-echo "check-CSll: can not verify"
+echo "check-csll"
 $HIP check-cll.c  --pred-en-dangling -validate ../o/check-cll.cp | grep Validate
 echo " 0/1 SLLs"
 $HIP sll-01-slls.c  --pred-en-dangling -validate o/sll-01-slls.cp | grep Validate
@@ -34,27 +34,25 @@ $HIP check-dll.c -tp z3  --pred-en-dangling -validate ../o/check-dll.cp | grep V
 echo "bt-search-2."
 $HIP bt-search-2.c -tp z3 --pred-unify-post -validate  ../o/bt-search-2.cp | grep Validate
 echo "tll"
-$HIP tll.c  --pred-en-dangling  --pred-en-equiv -validate ../o/tll.cp | grep Validate
+$HIP tll.c  --pred-en-dangling -tp z3 --pred-en-equiv -validate ../o/tll.cp | grep Validate
 echo "rose-tree"
 $HIP rose-tree-1.c --pred-en-dangling  --pred-en-equiv -validate ../o/rose-tree-1.cp | grep Validate
 echo "check mcf"
-$HIP check-mcf.c --pred-en-dangling -validate o/check-mcf.cp | grep Validate
-echo "check-tll"
-$HIP check-tll.ss --sa-dnc --pred-en-dangling -validate o/check-tll.cp | grep Validate
-echo "ll-back.ss"
+$HIP check-mcf.c --pred-en-dangling -validate ../o/check-mcf.cp | grep Validate
+echo "tll-parent.c"
+$HIP tll-parent.c -tp z3 --pred-en-dangling --pred-en-equiv -validate ../o/tll-parent.cp | grep Validate
+#echo "ll-back.ss"
 #$HIP ll-back.ss
 #sa-dangling
-echo "dll-app"
-$HIP dll-append_paper.c --classic --pred-en-dangling -validate ../o/dll-append_paper.cp | grep Validate
-echo "tll"
-$HIP tll.c --sa-dnc --pred-en-dangling --pred-en-eup -validate ../o/tll_dang.cp | grep Validate
+echo "dll-app: to improvo/rectify segmentation"
+$HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_paper.cp | grep Validate
 #pred-disj-unify
-echo "ll-trav-1.ss --pred-disj-unify"
-$HIP ll-trav-1.c --pred-disj-unify -validate ../o/ll-trav-1-unify.cp | grep Validate
+#echo "ll-trav-1.ss --pred-disj-unify"
+#$HIP ll-trav-1.c --pred-disj-unify -validate ../o/ll-trav-1-unify.cp | grep Validate
 
 #pred-en-split
 echo "cyc-lseg"
-$HIP cyc-lseg.c  -validate ../o/cyc-lseg.cp --pred-en-split | grep Validate
+#$HIP cyc-lseg.c  -validate ../o/cyc-lseg.cp --pred-en-split | grep Validate
 echo "zip_paper_eq"
 $HIP zip_paper_eq.c  -validate ../o/zip_paper_eq-split.cp --pred-en-split | grep Validate
 
@@ -62,9 +60,7 @@ $HIP zip_paper_eq.c  -validate ../o/zip_paper_eq-split.cp --pred-en-split | grep
 echo "cyc-tree (search)"
 $HIP cyc-tree-1.c --pred-unify-post -validate ../o/cyc-tree-1.cp | grep Validate
 echo "bt-search-2.ss"
-$HIP bt-search-2.c -validate --pred-unify-post  ../o/bt-search-2.cp | grep Validate
+$HIP bt-search-2.c --pred-unify-post -validate  ../o/bt-search-2.cp | grep Validate
 #sa-dnc
 
 #--pred-en-equiv
-echo "cyc-lseg"
-#$HIP ll-trav.c --pred-en-equiv -validate ../o/ll-trav-equiv.cp --pred-en-split | grep Validate
