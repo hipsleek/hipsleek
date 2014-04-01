@@ -476,7 +476,7 @@ type smtprover = Z3
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let z3_sat_timeout_limit = 2.0
+let z3_sat_timeout_limit = 100.0 (*2.0*)
 let prover_pid = ref 0
 let prover_process = ref {
   name = "z3";
