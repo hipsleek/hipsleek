@@ -1857,7 +1857,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   (* retrieve imm_map from I.view_decl *)
   (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
-  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels" in
+  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
   let ann_map_pos = vdef.I.view_imm_map in
   let _ = Debug.tinfo_hprint (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in
   (* create list of view_arg*pos  *)
@@ -1884,7 +1884,7 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   let anns, pos = List.split anns_pos in
   let annot_arg = CP.imm_ann_to_annot_arg_list anns in
   let annot_args_pos = try List.combine annot_arg pos 
-  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining annot_arg with pos" in
+  with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining annot_arg with pos 2" in
   svp, lbl, annot_args_pos, view_args_pos
 
 let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * (CP.view_arg * int) list  =

@@ -461,6 +461,17 @@ let rec string_of_h_formula = function
       string_of_formula_label_opt pi
         ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
         ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.ThreadNode ({F.h_formula_thread_node = x;
+                 F.h_formula_thread_name = id;
+                 F.h_formula_thread_resource = rsr;
+                 F.h_formula_thread_delayed = dl;
+                 F.h_formula_thread_label = pi;
+                  F.h_formula_thread_perm = perm;
+                 F.h_formula_thread_pos = l}) ->
+      let perm_str = string_of_iperm perm in
+      let rsr_str = string_of_formula rsr in
+      ((string_of_id x) ^ "::" ^ id ^ perm_str 
+      ^ "<" ^ (string_of_pure_formula dl) ^ " --> " ^ rsr_str ^ ">" ^ "[ThreadNode]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
@@ -468,7 +479,7 @@ let rec string_of_h_formula = function
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
-let string_of_one_formula (f:F.one_formula) =
+and string_of_one_formula (f:F.one_formula) =
   let h,p,dl,th,pos = F.split_one_formula f in
   let sh = string_of_h_formula h in
   let sp = string_of_pure_formula p in
@@ -481,11 +492,11 @@ let string_of_one_formula (f:F.one_formula) =
     ^ " --> " ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
-let rec string_of_one_formula_list (f:F.one_formula list) =
+and string_of_one_formula_list (f:F.one_formula list) =
   String.concat "\n AND" (List.map string_of_one_formula f)
 
 (* pretty printing for formulae *) 
-let rec string_of_formula = function 
+and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
                   F.formula_base_flow = fl;
@@ -515,9 +526,8 @@ let rec string_of_formula = function
                  else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
               ^ ")"
       in rs^sa
-;;
 
-let rec string_of_struc_formula c = match c with 
+and  string_of_struc_formula c = match c with 
 	| F.ECase {
 			F.formula_case_branches  =  case_list ;
 		} -> 
@@ -837,7 +847,7 @@ let string_of_barrier_decl b =
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = v.view_name ^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
 ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
 ;;

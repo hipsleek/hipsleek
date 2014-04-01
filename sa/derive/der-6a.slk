@@ -1,0 +1,28 @@
+
+pred_extn hed[V]<n> ==
+          n=V
+   inv self!=null 
+   // does not entail implied formula
+   .
+
+pred_extn minValue[V,R]<m> ==
+   m=V // this denote singleton case without any R
+   or R::minValue<m2> & m=min(V,m2) // in case of multiple m2
+   inv self!=null
+. 
+
+/*
+
+Please also print for pred_extn whenever debug-derive flag
+is set.
+
+Please add self!=null whenever any annotated parameter being
+used, as it signify that self!=null is present.
+
+ view_extn minValue[V:NUM,R:minValue]<m:NUM>= 
+  
+   EBase {2}->emp&V=m&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase exists (Expl)(Impl)[R; m2](ex){1}->R::minValue<m2>@M[0][Orig]&
+         m=min(V,m2)&{FLOW,(1,22)=__flow}[]
+*/

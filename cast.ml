@@ -18,6 +18,9 @@ module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
 
+(*used in Predicate*)
+let pure_hprel_map = ref ([]: (ident * ident) list)
+
 type typed_ident = (typ * ident)
 
 and prog_decl = { 
@@ -77,6 +80,8 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
+  | View_SPEC
+  | View_DERV
 
 and view_decl = { 
     view_name : ident; 
@@ -88,7 +93,11 @@ and view_decl = {
     view_modes : mode list;
     view_is_prim : bool;
     view_kind : view_kind;
-    view_prop_extns:  P.spec_var list;
+    view_prop_extns:  P.spec_var list; (*for extn views*)
+    view_parent_name: ident option; (*for view_spec*)
+    (*a map of shape <-> pure properties*)
+    (*View_EXT have been applied in this view*)
+    view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
     (* below to detect @L in post-condition *)
     mutable view_contains_L_ann : bool;
     view_ann_params : (P.annot_arg * int) list;
@@ -125,7 +134,7 @@ and rel_decl = {
 
 and hp_decl = { 
     hp_name : ident;
-    hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
+    mutable hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
     hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
     mutable hp_root_pos: int;
     hp_is_pre: bool;
@@ -140,6 +149,8 @@ and axiom_decl = {
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
+    proc_args_wi: (ident*hp_arg_kind) list;
+    proc_imm_args : (ident * bool) list;
     proc_source : ident; (* source file *)
     proc_return : typ;
     proc_flags : (ident*ident*(flags option)) list;
@@ -166,6 +177,7 @@ and proc_decl = {
     proc_logical_vars : P.spec_var list;
     proc_call_order : int;
     proc_is_main : bool;
+    proc_is_invoked : bool;
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;
@@ -468,6 +480,7 @@ and exp = (* expressions keep their types *)
 let get_sharp_flow sf = match sf with
   | Sharp_ct ff -> ff.F.formula_flow_interval
   | Sharp_id id -> exlist # get_hash id
+
 
 let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
@@ -1011,6 +1024,53 @@ let look_up_hp_decl_data_name decls hp arg_pos=
 
 let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
 
+let generate_pure_rel hprel=
+  let n_p_hprel ={
+      rel_name = default_prefix_pure_hprel ^ hprel.hp_name;
+      rel_vars = List.map fst hprel.hp_vars_inst;
+      rel_formula = F.get_pure hprel.hp_formula;
+  }
+  in
+  (*add map*)
+  let _ = pure_hprel_map := !pure_hprel_map@[(hprel.hp_name, n_p_hprel.rel_name)] in
+  let _= Smtsolver.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
+  n_p_hprel
+
+let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
+  if (List.length unknown_ptrs > 0) then
+    let hp_decl =
+      { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
+        if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
+        ^ (string_of_int (Globals.fresh_int()));
+      hp_part_vars = [];
+      hp_root_pos = 0; (*default, reset when def is inferred*)
+      hp_vars_inst = unknown_ptrs;
+      hp_is_pre = is_pre;
+      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) F.TypeTrue (F.mkTrueFlow()) [] pos;}
+    in
+    let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
+    prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
+    (* PURE_RELATION_OF_HEAP_PRED *)
+    let p_hp_decl = generate_pure_rel hp_decl in
+    let _ = prog.prog_rel_decls <- (p_hp_decl::prog.prog_rel_decls) in
+    Smtsolver.add_hp_relation hp_decl.hp_name unk_args hp_decl.hp_formula;
+    let hf =
+      F.HRel (P.SpecVar (HpT,hp_decl.hp_name, Unprimed), 
+               List.map (fun sv -> P.mkVar sv pos) unk_args,
+      pos)
+    in
+    let _ = Debug.tinfo_hprint (add_str "define: " !print_hp_decl) hp_decl pos in
+    Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
+    (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
+  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
+  let pr1 = pr_list (pr_pair !P.print_sv print_arg_kind) in
+  let pr2 = !F.print_h_formula in
+  let pr4 (hf,_) = pr2 hf in
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+      (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
+
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
   let _ = hpdclr.hp_root_pos <- r_pos in
@@ -1411,68 +1471,68 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | MustAssert _ -> [] (* ADI: MustAssert *)
 	(* AN HOA *)
 	(*| ArrayAt ({exp_arrayat_type = _;
-			 exp_arrayat_array_base = _;
-			 exp_arrayat_index = e;
-			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
+	  exp_arrayat_array_base = _;
+	  exp_arrayat_index = e;
+	  exp_arrayat_pos = _; }) -> callees_of_exp e*)
 	(*| ArrayMod ({exp_arraymod_lhs = l;
-			 exp_arraymod_rhs = r;
-			 exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)*)
-  (* AN HOA *)
-	| Assign ({exp_assign_lhs = _;
-			 exp_assign_rhs = e;
-			 exp_assign_pos = _}) -> callees_of_exp e
+	  exp_arraymod_rhs = r;
+	  exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)*)
+        (* AN HOA *)
+  | Assign ({exp_assign_lhs = _;
+    exp_assign_rhs = e;
+    exp_assign_pos = _}) -> callees_of_exp e
   | BConst _ -> []
   | Bind ({exp_bind_type = _;
-		   exp_bind_bound_var = _;
-		   exp_bind_fields = _;
-		   exp_bind_body = e;
-		   exp_bind_pos = _}) -> callees_of_exp e
+    exp_bind_bound_var = _;
+    exp_bind_fields = _;
+    exp_bind_body = e;
+    exp_bind_pos = _}) -> callees_of_exp e
   | Block ({exp_block_type = _;
-			exp_block_body = e;
-			exp_block_local_vars = _;
-			exp_block_pos = _}) -> callees_of_exp e
+    exp_block_body = e;
+    exp_block_local_vars = _;
+    exp_block_pos = _}) -> callees_of_exp e
   | Barrier _ -> [] 
   | Cast ({exp_cast_body = e}) -> callees_of_exp e
   | Catch e-> callees_of_exp e.exp_catch_body
   | Cond ({exp_cond_type = _;
-		   exp_cond_condition = _;
-		   exp_cond_then_arm = e1;
-		   exp_cond_else_arm = e2;
-		   exp_cond_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
+    exp_cond_condition = _;
+    exp_cond_then_arm = e1;
+    exp_cond_else_arm = e2;
+    exp_cond_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | Debug _ -> []
   | Dprint _ -> []
   | FConst _ -> []
-	  (*| FieldRead _ -> []*)
-	  (*| FieldWrite _ -> []*)
+	(*| FieldRead _ -> []*)
+	(*| FieldWrite _ -> []*)
   | ICall ({exp_icall_type = _;
-			exp_icall_receiver = _;
-			exp_icall_method_name = n;
-			exp_icall_arguments = _;
-			exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
+    exp_icall_receiver = _;
+    exp_icall_method_name = n;
+    exp_icall_arguments = _;
+    exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
 	(*| ArrayAlloc _ -> []*)
   | New _ -> []
   | Null _ -> []
-	| EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
+  | EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
   | Print _ -> []
   | Sharp b -> []
   | SCall ({exp_scall_type = _;
-			exp_scall_method_name = n;
-			exp_scall_arguments = _;
-			exp_scall_pos = _}) -> [unmingle_name n]
+    exp_scall_method_name = n;
+    exp_scall_arguments = _;
+    exp_scall_pos = _}) -> [unmingle_name n]
   | Seq ({exp_seq_type = _;
-		  exp_seq_exp1 = e1;
-		  exp_seq_exp2 = e2;
-		  exp_seq_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
+    exp_seq_exp1 = e1;
+    exp_seq_exp2 = e2;
+    exp_seq_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | This _ -> []
   | Time _ -> []
   | Var _ -> []
   | VarDecl _ -> []
   | Unit _ -> []
   | While ({exp_while_condition = _;
-			exp_while_body = e;
-			exp_while_spec = _;
-			exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
+    exp_while_body = e;
+    exp_while_spec = _;
+    exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
   | Try b -> Gen.BList.remove_dups_eq (=) ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
 
@@ -1856,6 +1916,14 @@ let vdef_fold_use_bc prog ln2  =
   Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
 (* WN : this helps build a vdef to perform right lemma folding *)
+(* This will make sure that the variables in coer
+coincide with the variables in the corresponding
+view definition
+   In the present of permissions, this may not hold
+   as the LHS of a view definition does not have permissions
+   while the LHS of a coer does.
+*)
+
 let vdef_lemma_fold prog coer  = 
   let cfd = coer.coercion_fold_def in
   let lhs = coer.coercion_head in
@@ -2224,50 +2292,159 @@ let look_up_cont_args a_args vname cviews=
   let pr1 = !Cpure.print_svl in
   Debug.no_2 "look_up_cont_args" pr1 pr_id pr1
       (fun _ _ -> look_up_cont_args_x a_args vname cviews) a_args vname
-	  
-	  
-	  
-let exp_fv (e:exp) = 
+
+let exp_fv (e:exp) =
   let comb_f = List.concat in
   let f (ac:ident list) e : ident list option= match e with
-			  | Assert b -> 
-				let l = (Gen.fold_opt F.struc_fv b.exp_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_assert_assumed_formula)in
-				Some (ac@ List.map P.name_of_spec_var l)
+    | Assert b ->
+	  let l = (Gen.fold_opt F.struc_fv b.exp_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_assert_assumed_formula)in
+	  Some (ac@ List.map P.name_of_spec_var l)
               | MustAssert b ->  (* ADI: MustAssert *)
                 let l = (Gen.fold_opt F.struc_fv b.exp_must_assert_asserted_formula)@ (Gen.fold_opt F.fv b.exp_must_assert_assumed_formula) in
                 Some (ac@ List.map P.name_of_spec_var l)
-	          | Java _ -> Some ac
-	          | CheckRef b-> Some (b.exp_check_ref_var::ac)
-	          | BConst _ -> Some ac
-	          | Debug _ -> Some ac
-	          | Dprint b -> Some (b.exp_dprint_visible_names@ac)
-	          | FConst _ -> Some ac
-	          | ICall b -> Some (b.exp_icall_receiver::b.exp_icall_arguments@ac)
-	          | IConst _ -> Some ac
-			  | New b -> Some ((List.map snd b.exp_new_arguments)@ac)
-	          | Null _ -> Some ac
-			  | EmptyArray _ -> Some ac
-	          | Print _ -> Some ac
-			  | Barrier b-> Some ((snd b.exp_barrier_recv)::ac)
-	          | SCall b -> Some (ac@b.exp_scall_arguments)
-	          | This _ -> Some ac
-	          | Time _ -> Some ac
-	          | Var b -> Some (b.exp_var_name::ac)
-	          | VarDecl b -> Some (b.exp_var_decl_name::ac)
-	          | Unfold b -> Some ((P.name_of_spec_var b.exp_unfold_var)::ac)
-	          | Unit _ -> Some ac
-	          | Sharp _ -> Some ac
-			  |  _ -> None in
-    let f_args (ac:ident list) e : ident list= match e with
-		| Label b -> ac
-		| Assign b -> b.exp_assign_lhs::ac
-		| Bind b ->ac@ ((snd b.exp_bind_bound_var)::(List.map snd b.exp_bind_fields))
-		| Block b -> ac@(List.map snd b.exp_block_local_vars)
-		| Cond b ->b.exp_cond_condition::ac
-		| Cast b -> ac
-		| Catch b -> (Gen.fold_opt (fun (_,c)-> [c]) b.exp_catch_var)@ac
-		| Seq b -> ac
-		| While b -> ac@[b.exp_while_condition]@(List.map P.name_of_spec_var (F.struc_fv b.exp_while_spec))
-		| Try b -> ac
-		| _ -> ac in
+    | Java _ -> Some ac
+    | CheckRef b-> Some (b.exp_check_ref_var::ac)
+    | BConst _ -> Some ac
+    | Debug _ -> Some ac
+    | Dprint b -> Some (b.exp_dprint_visible_names@ac)
+    | FConst _ -> Some ac
+    | ICall b -> Some (b.exp_icall_receiver::b.exp_icall_arguments@ac)
+    | IConst _ -> Some ac
+    | New b -> Some ((List.map snd b.exp_new_arguments)@ac)
+    | Null _ -> Some ac
+    | EmptyArray _ -> Some ac
+    | Print _ -> Some ac
+    | Barrier b-> Some ((snd b.exp_barrier_recv)::ac)
+    | SCall b -> Some (ac@b.exp_scall_arguments)
+    | This _ -> Some ac
+    | Time _ -> Some ac
+    | Var b -> Some (b.exp_var_name::ac)
+    | VarDecl b -> Some (b.exp_var_decl_name::ac)
+    | Unfold b -> Some ((P.name_of_spec_var b.exp_unfold_var)::ac)
+    | Unit _ -> Some ac
+    | Sharp _ -> Some ac
+    |  _ -> None
+  in
+  let f_args (ac:ident list) e : ident list= match e with
+    | Label b -> ac
+    | Assign b -> b.exp_assign_lhs::ac
+    | Bind b ->ac@ ((snd b.exp_bind_bound_var)::(List.map snd b.exp_bind_fields))
+    | Block b -> ac@(List.map snd b.exp_block_local_vars)
+    | Cond b ->b.exp_cond_condition::ac
+    | Cast b -> ac
+    | Catch b -> (Gen.fold_opt (fun (_,c)-> [c]) b.exp_catch_var)@ac
+    | Seq b -> ac
+    | While b -> ac@[b.exp_while_condition]@(List.map P.name_of_spec_var (F.struc_fv b.exp_while_spec))
+    | Try b -> ac
+    | _ -> ac in
   fold_exp_args e [] f f_args comb_f []
+
+
+let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
+   let f e=
+    match e with
+      | Var { exp_var_name = id} -> Some [id]
+      | _ -> None
+  in
+  let get_vars e= fold_exp e f (List.concat) [] in
+  let rec collect_lhs_ass_vars e=
+    match e with
+      | Assign {exp_assign_lhs = id;
+        exp_assign_rhs = rhs;} -> begin
+           match rhs with
+             | Var {exp_var_name = rid} ->
+                   Some [(id, [(id,rid)])]
+             | _ -> Some [(id,[])]
+        end
+      | _ -> None
+  in
+  let look_up_inst_args_x proc act_args=
+    let pr_args_wi = List.combine proc.proc_args_wi act_args in
+    List.fold_left (fun r ((_,ni_info), act_arg) -> if ni_info = I then r@[act_arg] else r) [] pr_args_wi
+  in
+  let look_up_inst_args proc act_args=
+    let pr1 p = p.proc_name in
+    let pr2 = pr_list pr_id in
+    Debug.no_2 "look_up_inst_args" pr1 pr2 pr2
+        (fun _ _ -> look_up_inst_args_x proc act_args)
+        proc act_args
+  in
+  let rec collect_bind_vars e=
+    match e with
+      | Bind {exp_bind_bound_var = (_,id);
+        exp_bind_body = b;
+        } -> begin let b_opt = collect_bind_vars b in
+        match b_opt with
+          | None -> Some [id]
+          | Some ids -> Some (id::ids)
+        end
+      | Unfold u -> Some [(P.name_of_spec_var u.exp_unfold_var)]
+      | SCall sc -> begin if sc.exp_scall_is_rec then None else
+          let pn = sc.exp_scall_method_name in
+          let act_args = sc.exp_scall_arguments in
+          try
+            let proc = List.find (fun p -> String.compare pn p.proc_name=0) cprocs in
+            Some (look_up_inst_args proc act_args)
+          with _ -> None
+        end
+      | _ -> None
+  in
+  let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
+  let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
+  (*todo*)
+  let mut_unaccess_vars = (* Gen.find_close_ids *) (lhs_vars@bind_vars)  in
+  let mut_unaccess_vars1 = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars in
+  (mut_unaccess_vars1, Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_unaccess_vars1 lhs_vars)
+
+
+let get_mut_vars_bu cprocs (e0 : exp) =
+  let pr1 = !print_prog_exp in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "get_mut_vars_bu" pr1 (pr_pair pr2 pr2)
+      (fun _ -> get_mut_vars_bu_x cprocs e0) e0
+
+let update_mut_vars_bu iprog cprog scc_procs =
+  let string_cmp=(fun s1 s2 -> String.compare s1 s2 = 0) in
+  let update_mut_vars_proc cprocs proc=
+    match proc.proc_body with
+      | Some p ->
+            let mut_unchange_vars, mut_vars = get_mut_vars_bu cprocs p in
+            let new_args_wi,diff_args_i = List.fold_left (fun (r1,r2) (arg, ni_info) ->
+                if ni_info = I then (r1@[(arg, ni_info)],r2) else
+                  if Gen.BList.mem_eq string_cmp arg mut_vars then
+                    (r1@[(arg, I)],r2@[arg])
+                  else (r1@[(arg, ni_info)],r2)
+            ) ([],[]) proc.proc_args_wi in
+            (*update hp_decl of precondition*)
+            let _ = if diff_args_i = [] then () else
+              let _ = Debug.tinfo_hprint (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
+              let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
+              let _ = List.map (fun (hp,args) ->
+                  let s_args = List.map P.name_of_spec_var args in
+                  let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in
+                  if inter = [] then () else
+                    let hp_decl = look_up_hp_def_raw cprog.prog_hp_decls (P.name_of_spec_var hp) in
+                    let pr = List.combine hp_decl.hp_vars_inst s_args in
+                    let n_vars_inst = List.map (fun ((form_sv, info), act_sv) ->
+                        if Gen.BList.mem_eq string_cmp act_sv inter then (form_sv, I) else (form_sv, info)
+                    ) pr in
+                    let _ = hp_decl.hp_vars_inst <- n_vars_inst in
+                    ()
+              ) hpargs in
+              ()
+            in
+            {proc with proc_args_wi = new_args_wi}
+      | None -> proc
+  in
+  let new_scc_procs, _ = List.fold_left (fun (r1,done_procs) scc ->
+      let new_scc = match scc with
+        | [proc] -> let n_proc = update_mut_vars_proc done_procs proc in
+          [n_proc]
+        | _ -> (*todo: compute fixpoint for mutrec*)
+              List.map (update_mut_vars_proc done_procs) scc
+      in
+      (r1@[new_scc], done_procs@(List.filter (fun p -> p.proc_is_main) new_scc))
+  ) ([],[]) scc_procs
+  in
+  new_scc_procs

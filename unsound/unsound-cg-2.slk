@@ -1,0 +1,32 @@
+data node2 {
+	int val;
+	int next;
+}.
+
+pred lls<n,k> == case {
+ n!=k -> [] self::node2<n-1,k>;
+ n=k -> [] self::node2<n-1,k-1>;}
+.
+
+/*
+pred lls<n,k> == 
+   self::node2<n-1,k> & n!=k
+ or self::node2<n-1,k-1> & n=k.
+*/
+
+checkentail r1::node2<a,k> & a=k |- r1::lls<a1,b1>.
+print residue.
+/*
+ <1>emp&a=k & k!=(a+1) & a1=a+1 & b1=k & a1!=b1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>emp&a=k & a+1=a+1 & k+1=a+1 & a1=a+1 & b1=k+1 & a1=b1&{FLOW,(21,22)=__norm}[]
+*/
+
+
+checkentail r1::node2<a,k> & a!=k |- r1::lls<a1,b1>.
+print residue.
+
+/*
+Entail 2: Fail.(may) cause: a!=k |-  k!=(1+a). LOCS:[20;14] (may-bug)
+*/
+

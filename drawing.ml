@@ -97,6 +97,11 @@ and gen_nodes prog n h0 buffer = match h0 with
       let nodes1 = gen_nodes prog n h1 buffer in
       let nodes2 = gen_nodes prog n h2 buffer in
 	nodes1 @ nodes2
+  | ThreadNode ({h_formula_thread_node = p;
+	       h_formula_thread_name = c}) ->
+      let pname = (dot_of_spec_var p) ^ "__" ^ (string_of_int n) in
+	Buffer.add_string buffer (pname ^ " [shape=box,label=\"" ^ c ^ "\"];\n");
+	[(dot_of_spec_var p, pname)]
   | DataNode ({h_formula_data_node = p;
 	       h_formula_data_name = c}) ->
       let pname = (dot_of_spec_var p) ^ "__" ^ (string_of_int n) in
@@ -151,6 +156,7 @@ and gen_edges prog n h0 p nodes buffer =
 	       h_formula_phase_rw = h2}) ->
 	  gen_edges prog n h1 p nodes buffer;
 	  gen_edges prog n h2 p nodes buffer
+      | ThreadNode _ -> failwith "make_edge: not support ThreadNode yet"
       | DataNode ({h_formula_data_node = p;
 		   h_formula_data_name = c;
 		   h_formula_data_arguments = args}) -> begin

@@ -1313,7 +1313,7 @@ res:  [
   H1(y)&true&{FLOW,(19,20)=__norm}[]
   ]
 ======================================================================
-# infer13c.slk
+# infer13c.slk: DONE
 
 infer [H1] H1(y) & y=z |- z=null .
 print residue.
@@ -1336,7 +1336,7 @@ Entail (2) : Valid.
 
 */
 ======================================================================
-# infer13d.slk
+# infer13d.slk:D ONE
 
 HeapPred H1(node y).
 
@@ -1358,7 +1358,7 @@ res:  failctx
 w
 */
 ======================================================================
-# infer8a.slk
+# infer8a.slk: DONE
 
 infer [m] m=-1 |- x::node<_,_> & m>=0.
 print residue.
@@ -1571,12 +1571,107 @@ perform another inference step?
  inferred hprel: [// Sleek_Entail(1)
 H1(y) --> emp&y=null]
 ======================================================================
+# gnode-deb.c bugs/inc.c
+
+
+why x = (86, ):cast_int_to_GNode(tmp);? in pip
+
+
+======================
+
+GNode g_node_copy(GNode node)[]
+static
+
+(None,[]): EBase: [][](hfalse)*(false)( FLOW __norm) {EAssume: 4,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{local: GNode child,GNode x,int tmp
+GNode child;
+GNode x;
+int tmp;
+{tmp = (78, ):g_node_last_child(node);
+x = (80, ):cast_int_to_GNode(tmp);
+          ^^^^^^^^^^^^^^^^^^^^^
+child = x;
+(82, ):return node}}
+}
+
+
+
 ======================================================================
+# ll-last2
+
+def_subst_fix causes loop.
+
+should topo sort and handle mutual rec.
+
 ======================================================================
+# ll-prepend.ss: FIXED
+
+GOT
+G(x,res) ::=(0) res::node<d',x>@M
+
+======
+expect:
+[ H(a) ::= NONE,
+ G(x,res) ::= H(x) * res::node<d',x>@M]
+
 ======================================================================
+# next.c: FIXED
+
+[ HP_18(x) ::= x::node<key,DP>@M,
+ GP_19(x,res) ::= x::node<key,res>@M]
+
+===>
+HP_18(x) ::= x::node<key,DP>@M,
+ GP_19(x,res) ::= x::node<key,res>@M & res = DP
+
 ======================================================================
+# next-1a.c: FIXED
+
+
+GOT
+-----------
+ infer[HP_15,GP_16]requires HP_15(x@NI)&true
+ ensures GP_16(x,res)&true;       ^^^^
+
+==========
+EXPECTED
+
+infer[HP_15,GP_16]requires HP_15(x)&true
+ ensures GP_16(x,res)&true;
+
 ======================================================================
+# next-1b.c
+
+x is not IMM
+
+# next-1c.c: x is IMM
+
+Get imm parameters
+
 ======================================================================
+#ll-last-rec.c
+
+to add imm analysis
+--pred-en-imm
+
+
+
+======================================================================
+#ll-last.c
+
+
+case spec
+======================================================================
+#dll-last: --pred-en-split
+
+
+======================================================================
+#g_list_app.c g_list_con.c g_list_list_insb.c
+
+depend on relational specs of g_list_last
+
 ======================================================================
 ======================================================================
 ======================================================================

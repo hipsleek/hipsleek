@@ -1,0 +1,187 @@
+# der-1a.slk  # DONE
+
+// PROBLEM : should allow type annotation
+pred_extn pos_sum[R,V:int]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0.
+
+## der-5.slk: DONE (from Cris's fixing)
+
+WHY --pcp shows data nodes printed twice?
+
+data node {
+  int val@VAL
+  node next@REC
+}
+data node2 {
+  int val@VAL
+  node2 prev@REC
+  node2 next@REC
+}
+
+data node2 {
+  int val@VAL
+  node2 prev@REC
+  node2 next@REC
+}
+
+## err-1-der-5.slk: DONE (fix exception in Omega: Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  "))
+
+Fatal error: exception Not_found
+
+## der-2.slk: DONE
+
+pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
+// need sanity check that n does not exist in RHS
+
+## err-2-der-2.slk: DONE
+
+Fatal error: exception Invalid_argument("List.combine")
+
+pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
+
+
+## der-6c.slk: DONE (not yet done! bug still there)
+
+pred llhead<n> == extends llNN<> with hed[VAL]<n> .
+
+WHY isn't N=Anon_11 captured in base and recursive cases?
+
+view llhead[]<n:TVar[51]>= 
+  
+   EBase {2}->EXISTS(flted_13_18,
+         Anon_11: self::node<Anon_11,flted_13_18>@M[Orig]&flted_13_18=null&
+         {FLOW,(1,22)=__flow})[]
+  eor 
+   EBase {1}->EXISTS(Anon_12,p: self::node<Anon_12,p>@M[Orig] * 
+         p::llhead<n_52>@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow})[]
+ 
+## der-6a.slk: DONE
+
+Please also print for pred_extn whenever debug-derive flag
+is set.
+
+## der-6a.slk: DONE
+
+:Fatal error: exception Failure("view formula does not entail supplied invariant
+")
+
+Please add self!=null whenever any annotated parameter being
+used in a branch, as it signify that self!=null is present.
+
+ view_extn minValue[V:NUM,R:minValue]<m:NUM>= 
+  
+   EBase {2}->emp&V=m&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase exists (Expl)(Impl)[R; m2](ex){1}->R::minValue<m2>@M[0][Orig]&
+         m=min(V,m2)&{FLOW,(1,22)=__flow}[]
+
+## der-6b.slk (not pick anything), der-5.slk:
+
+derive inv: pick something relevant to V,n
+
+pred_extn hed[V]<n> ==
+          n=V
+   inv self!=null 
+
+
+
+
+## der-5.slk: DONE
+
+(1) Omega error (norm min/max: DONE)
+(2) Why isn't n>=0 taken from the size view_extn?: DONE
+
+************VIEW_DERIVED*************
+ view llSNN[]<n:int>= 
+  
+   EBase EXISTS(flted_15_18,Anon_11: self::node<Anon_11,flted_15_18>@M[Orig]&
+         flted_15_18=null & n=1&{FLOW,(1,22)=__flow})[]
+  eor 
+   EBase EXISTS(Anon_12,p,n_66: self::node<Anon_12,p>@M[Orig] * 
+         p::llSNN<n_66>@M[0][Orig][LHSCase]&n=1+n_66&{FLOW,(1,22)=__flow})[]
+  
+  xform: self!=null
+Fatal error: exception Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  ")
+
+## der-2d.slk: DONE
+
+data node {
+	int val@VAL;
+	node prev;
+	node next;
+}.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+
+REC used but is not specified in data structure.
+This should be highlighted as an ERROR.
+
+## der-2b.slk: DONE
+
+data node {
+	int val;
+	node next@REC;
+}.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+
+Missing VAL but below still goes through.
+I think we should highlight as an error since VAL cannot be used
+
+## der-1c.slk: 
+
+************VIEW_DERIVED*************
+ view llNPSum[]<s:int>= 
+  
+   EBase {4}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase EXISTS(Anon_11,p,s_24: self::node<Anon_11,p>@M[Orig] * 
+         p::llNPSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11+s_24 & 0<=Anon_11 & 
+         0<=s_24&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+
+PROBLEMS
+========
+   (i) 0<=s_24 need not be added in branch
+   (ii) 0<=s must be added to xform (or xpure0)
+
+Another issue
+=============
+
+  (i) Good to give  warning that property extension should not have
+      non-definitional constraints, like v>=0
+
+ This introduced "0<=V" which is free inside pred defn.
+ Perhaps, an error should be flagged to indicate that
+ that this is a specialization rather than extension.
+
+# err-1-der-5.slk; DONE
+
+Why did we have : min(,Anon_11), min(,Anon_12,m_61) ??
+
+Fatal error: exception Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  ")
+
+view llMin[]<m:NUM>= 
+  
+   EBase EXISTS(flted_13_18,Anon_11: self::node<Anon_11,flted_13_18>@M[Orig]&
+         flted_13_18=null & m=min(,Anon_11)&{FLOW,(1,22)=__flow})[]
+  eor 
+   EBase EXISTS(Anon_12,p,m_61: self::node<Anon_12,p>@M[Orig] * 
+         p::llMin<m_61>@M[0][Orig][LHSCase]&m=min(,Anon_12,m_61)&
+         {FLOW,(1,22)=__flow})[]
+  
+  xform: self!=null
+
+## der-6d.slk: DONE
+
+pred_extn hed[V]<n> ==
+          n=V
+   inv self=null // does not entail implied formula
+   .
+/*
+    PROBLEM :
+    should report an error that invariant cannot be entailed.
+*/

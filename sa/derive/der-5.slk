@@ -1,0 +1,42 @@
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+data node2 {
+        int val@VAL;
+        node2 prev@REC;
+        node2 next@REC;
+}.
+
+
+
+pred llNN<> == self::node<_,null>
+  or self::node<_,p> * p::llNN<>
+inv self!=null.
+
+pred treeNN<> ==
+  self::node2<_,null,null>
+  or self::node2<_,null,q> * q::treeNN<>
+  or self::node2<_,p,null> * p::treeNN<>
+  or self::node2<_,p,q> * p::treeNN<> * q::treeNN<>
+ inv self!=null.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+pred_extn minValue[V,R]<m> ==
+    m=V // this denote singleton case without any R
+    or R::minValue<m2> & m=min(V,m2). // in case of multiple m2
+
+pred llSNN<n> == extends llNN<> with size[REC]<n> .
+
+pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
+
+pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
+
+pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
+

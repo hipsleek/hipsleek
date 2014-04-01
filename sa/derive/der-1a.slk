@@ -1,0 +1,35 @@
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+// PROBLEM : should allow type annotation
+pred_extn pos_sum[R,V:int]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0.
+/*
+pred llN<n> == extend ll<> with size[REC]<n> .
+
+pred llNPSum<n,s> == extend llN<n> with pos_sum[VAL,REC]<s> .
+
+
+*/
+
+
+
+
+
+
+
+

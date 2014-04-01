@@ -1,0 +1,53 @@
+data node{
+  int val;
+  node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+HeapPred H(node x).
+
+
+//Entail 1: Inference Pure
+infer[n]  x::ll<n> |- x=null.
+print residue.
+
+//Entail 2: Inference Pure
+infer[n]  x::ll<n> |- x!=null.
+print residue.
+
+
+//Entail 3: Inference Pure
+infer[n]  x::ll<n> |- x::node<_,q>.
+print residue.
+// expects x>0
+
+//Entail 4: Inference Pure
+infer[n]  x::ll<n> |- x::node<_,null>.
+print residue.
+/*
+ expects n=1
+
+ <1>(exists r_52,flted_7_50: r_52::ll<flted_7_50>@M&n=flted_7_50+1 & n=1&{FLOW,(21,22)=__norm})[]
+ inferred pure: [n=1; n=0]
+*/
+
+
+//Entail 5: Inference Pure
+infer[n]  x::ll<n> |- x::node<_,q> & x!=null.
+print residue.
+
+/*
+expects n>0
+
+Entail (4) : Valid. 
+
+ <1>(exists flted_7_83: q::ll<flted_7_83>@M&n=flted_7_83+1&{FLOW,(21,22)=__norm})[]
+ inferred pure: [n=0]
+[[ SEARCH ==>  Unfold 0 ==>  Match ==> ]]
+*/
+
+
+

@@ -1,0 +1,14 @@
+relation dom(int[] a, int low, int high).
+
+relation update_array_1d(int[] a, int[] r, int val, int i).
+
+relation zero(int[] a, int[] na, int i) == 
+  forall(j: j=i & na[j] = 0 | j!=i & na[j] = a[j] ).
+
+checkentail 
+ dom(a,ahalb,ahaub) & 
+ update_array_1d(a,a',0,i) 
+ & dom(a',ahalb,ahaub) 
+ & i<=ahaub & ahalb<=i |-  zero(a,a',i).
+
+

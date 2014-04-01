@@ -8,14 +8,14 @@ struct node{
 
 /* predicate for a non-empty tree with chained leaf list */
 /*@
- tll<ll,lr> == self::node<null,null,lr> & self = ll
-	or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+ tll<ll,lr> == self::node<_,null,lr> & self = ll
+	or self::node<l,r,_> * l::tll<ll,z> * r::tll<z,lr>
 	inv self!=null;
 */
 /* predicate for a non-empty tree  */
 /*@
- tree<> == self::node<null,null,_>
-	or self::node<l,r,null> * l::tree<> * r::tree<>
+ tree<> == self::node<_,null,_>
+	or self::node<l,r,_> * l::tree<> * r::tree<>
 	inv self!=null;
 */
 
@@ -38,6 +38,11 @@ struct node* set_right (struct node* x, struct node* t)
       struct node* l_most = set_right(x->right, t);
       return set_right(x->left, l_most);
   	}
+}
+
+struct node* testhar (struct node* x, struct node* t)
+{
+  return set_right(x,t);
 }
 
 /*

@@ -2725,6 +2725,67 @@ let removeLS_mix_formula (mf : mix_formula) : mix_formula =
   Debug.no_1 "removeLS_mix_formula" !print_mix_formula !print_mix_formula
       removeLS_mix_formula_x mf
 
+(*remove level constraints from a formula*)
+let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
+  let f_m mp = None in
+  let f_a _ = None in
+  let f_p_f pf = None in
+  let f_b b =
+	let (pf,il) = b in
+	let npf = match pf with	  
+	  | BConst _
+	  | XPure _ 
+	  | BVar _ 
+	  | BagMin _ 
+      | SubAnn _
+      | VarPerm _
+	  | BagMax _ -> pf
+	  | Lt (e1,e2,l)
+	  | Lte (e1,e2,l)
+	  | Gt (e1,e2,l)
+	  | Gte (e1,e2,l)
+	  | Eq (e1,e2,l)
+	  | Neq (e1,e2,l)
+	  | BagSub (e1,e2,l)
+	  | ListIn (e1,e2,l)
+	  | ListNotIn (e1,e2,l)
+	  | ListAllN (e1,e2,l)
+	  | ListPerm (e1,e2,l) ->
+          if ( has_level_constraint_exp e1 || has_level_constraint_exp e2) then
+            mkTrue_p no_pos
+          else pf
+	  | EqMax (e1,e2,e3,l)
+	  | EqMin (e1,e2,e3,l) ->
+          if ( has_level_constraint_exp e1 || has_level_constraint_exp e2 || has_level_constraint_exp e3) then
+            mkTrue_p no_pos
+          else pf
+	    (* bag formulas *)
+	  | BagIn (v,e,l)
+	  | BagNotIn (v,e,l)->
+          if ( has_level_constraint_exp e) then
+            mkTrue_p no_pos
+          else pf
+	  | RelForm (r, args, l) -> pf (*TOCHECK*)
+	  | LexVar t_info -> pf (*TOCHECK*)
+	in Some (npf,il)
+  in
+  let f_e e = None in
+  let trans = (f_m, f_a, f_p_f, f_b, f_e) in
+  match mf with
+    | OnePF f -> 
+        let nmf = Cpure.transform_formula trans f in
+        (OnePF nmf)
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nmf = Cpure.transform_formula trans f in
+        (mix_of_pure nmf)
+
+(*remove level constraints from a formula*)
+let remove_level_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.no_1 "remove_level_mix_formula" !print_mix_formula !print_mix_formula
+      remove_level_mix_formula_x mf
+
 (*remove constraints related to a list of spec vars*)
 let drop_svl_mix_formula (mf : mix_formula)  (svl:spec_var list) : mix_formula =
   match mf with

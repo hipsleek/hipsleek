@@ -8,7 +8,7 @@ HeapPred H1(node a, node@NI b).
 HeapPred H2(node a, node@NI b).
 HeapPred G(node a, node@NI ra, node b, node@NI rb, node@NI c).
 
-
+/*
 ll<s> == self=null & self!=s 
   or self::node<_,nxt> * nxt::ll<s> & self!=s 
 inv self!=s ;
@@ -29,7 +29,7 @@ lx<g:node,s> == self=s
   or self!=s & self=null
   or self::node<_,nxt> * nxt::lx<_,s> & self!=s 
 inv true ;
-
+*/
 lx1<s> == self=s
   or self!=s & self=null
   or self::node<_,nxt> * nxt::lx1<s> & self!=s 
@@ -44,15 +44,15 @@ GG<cur':node,prev,sent> == (exists p: self::node<_,p>@M * p::HP0<cur'> & p=prev
      &cur'=sent)
 inv self!=null;
 
-
+/*
 GG0<cur':node,sent> == self::node<_,p>@M * p::HP0<cur'> & cur'=sent
 inv self!=null;
 
-
+*/
 
 HP0<sent> ==
-                       next::lx1<sent>@M * self::node<val,next>@M&self!=sent
-                       or emp&self!=sent & self=null
+  next::lx1<sent>@M * self::node<val,next>@M&self!=sent
+  or emp&self!=sent & self=null
 inv self!=sent;
 
 

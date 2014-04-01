@@ -42,6 +42,7 @@ let split_infer_vars vrs =
 
 let add_infer_vars_to_ctx ivs ctx =
   let (p,rl,hp) = split_infer_vars ivs in
+  let _ = Debug.ninfo_hprint (add_str  "rl " !Cpure.print_svl) rl no_pos in
   let ctx = Infer.init_vars ctx p rl hp [] in 
   ctx
    
@@ -284,9 +285,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
         else [sv_self]
       else rhs_unfold_ptrs0
       in
-      List.fold_left (fun sf sv ->
+    let unfolded_rhs = List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
-      ) new_rhs rhs_unfold_ptrs
+      ) new_rhs rhs_unfold_ptrs in
+    CF.struc_elim_exist unfolded_rhs
   in
   (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
@@ -339,7 +341,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
   match valid with
-  | true -> print_string (num_id ^ ": Valid.\n")
+  | true -> if !Globals.lemma_ep then print_string (num_id ^ ": Valid.\n") else ()
   | false ->
       let s = 
       if !Globals.disable_failure_explaining then ""
@@ -350,7 +352,8 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
               | Some s -> "(may) cause: " ^ s
               | None -> "INCONSISTENCY : expected failure but success instead"
             )
-      in print_string (num_id ^ ": Fail. " ^ s ^ "\n")
+      in if !Globals.lemma_ep then print_string (num_id ^ ": Fail. " ^ s ^ "\n")
+      else ()
 
 (* check the validity of the lemma where:
    l2r: "->" implication
@@ -390,7 +393,7 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
         let _ = (
           if valid then print_lemma_entail_result valid residue num_id
           else
-            let _ = print_string (num_id ^ ": Fail. Details below:\n") in
+            let _ = Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos in
             let typ1_str = Cprinter.string_of_coercion_type typ1 in
             let typ2_str = Cprinter.string_of_coercion_type typ2 in
             let _ = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
