@@ -3,7 +3,7 @@
   Inspired by an example given in the paper:
   "Local Reasoning for Storable Locks and Threads" [APLAS 2007]
 
-  Improve the example in APLAS2008 by allowing a pool of threads (implemented as a linked list).
+  Improve the example in APLAS2008 by allowing a pool of threads (implemented as a linked list) for dynamic thread creation.
 
   The program is verified as:
   - Functionally correct
@@ -60,10 +60,8 @@ void main()
   p = new PACKET(l,0,0);
   init[LOCK](l,p,M); //initialize l with invariant LOCK and a list of args consisting of p and M
   release(l);
-  dprint;
   //create a pool of threads
   threadNode tn = createThreads(l,p,M);
-  dprint;
   // wait for all threads to finish
   joinThreads(tn,l,p,M);
  
@@ -109,6 +107,10 @@ threadNode createThreads(lock l, PACKET p, int M)
   return createhelper(l,p,M,M);
 }
 
+void destroyThreadNode(threadNode x)
+  requires x::threadNode<_,_>
+  ensures true;
+
 void joinhelper(threadNode tn, lock l, PACKET p, int n, int M)
   requires tn::threadPool<l,n,M> & M>=n & n>=0 & [waitlevel<l.mu # l notin LS]
   ensures true & LS'=LS; //'
@@ -119,6 +121,7 @@ void joinhelper(threadNode tn, lock l, PACKET p, int n, int M)
     joinhelper(node,l,p,n-1,M);
     thrd t = tn.v;
     join(t);
+    destroyThreadNode(tn);
   }
 }
 

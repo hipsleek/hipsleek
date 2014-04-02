@@ -14,9 +14,9 @@ data threadNode{
 }
 
 /* A list of threads, i.e. a thread pool */
-threadPool<x,n,M> == self=null & n=0
+threadPool<x,n,M> == self=null & n=0 & M>0
   or self::threadNode<v,p> * p::threadPool<x,n-1,M> * v::thrd<# x::cell(1/M)<_> & true #>
-  inv n>=0;
+  inv n>=0 & M>0;
 
 //permission splitting. Allow f2=0, if any.
 lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
@@ -26,7 +26,7 @@ lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v
 
 // Each thread reads the cell x
 void thread(cell x, int M)
-  requires x::cell(1/M)<_>
+  requires x::cell(1/M)<_> & M>0
   ensures x::cell(1/M)<_>;
 {
   // Perform computation ...
@@ -36,9 +36,9 @@ void thread(cell x, int M)
 
 threadNode createhelper(cell x, int n, int M)
   requires x::cell(f)<_> & f=n/M & M>=n & n>=0
-  ensures res::threadPool<x,n,M>;
+  ensures res::threadPool<x,n,M> & n>0 or res=null & n=0;
 {
-  if (n<1){return null;}
+  if (n==0){return null;}
   else{
     thrd t = fork(thread,x,M);
     threadNode p = createhelper(x,n-1,M);
@@ -72,6 +72,7 @@ void joinhelper(threadNode tn, cell x, int n, int M)
     joinhelper(node,x,n-1,M);
     thrd t = tn.v;
     join(t);
+    destroyThreadNode(tn);
   }
 }
 
@@ -87,6 +88,10 @@ void joinThreads(threadNode tn, cell x, int n)
 
 void destroyCell(cell x)
   requires x::cell<_>
+  ensures true;
+
+void destroyThreadNode(threadNode x)
+  requires x::threadNode<_,_>
   ensures true;
 
 //receive certain input
