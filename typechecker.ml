@@ -1371,7 +1371,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                          let new_ctx,pure_info = match c1_o with
                                 | None -> ts,None
                                 | Some c1 ->
-                                    let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                                    let c1 = Cvutil.prune_pred_struc prog true c1 in (* specialise asserted formula *)
                                     let c1 = match c2 with
                                       | None -> 
                                       (* WN_2_Loc: clear c1 of inferred info first *)
@@ -1429,7 +1429,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                         translate before adding them into current state*)
                                         CF.translate_waitlevel_formula c
                                       else c in
-                                      let c = prune_preds prog false c in (* specialise assumed formula *)
+                                      let c = Cvutil.prune_preds prog false c in (* specialise assumed formula *)
                                       let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                                       let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
 			                            else 
