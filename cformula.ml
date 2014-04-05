@@ -4516,7 +4516,7 @@ let extract_unk_hprel (f0:formula) =
   Debug.no_1 "extract_unk_hprel" pr1 pr2
       (fun _ ->  extract_unk_hprel_x f0) f0
 
-let extract_hrel_head_x (f0:formula) =
+let extract_hrel_head (f0:formula) =
   let rec helper f=
   match f with
     | Base ({ formula_base_pure = p1;
@@ -4527,7 +4527,7 @@ let extract_hrel_head_x (f0:formula) =
             let p2 = (MCP.pure_of_mix p1) in
             if (CP.isConstTrue p2 || CP.is_xpure p2) then
               match h1 with
-                | HRel (hp, _, _ ) -> Some hp
+                | HRel (hp, _, _ ) -> Some (hp)
                 | _ -> None
             else
               None
@@ -4536,19 +4536,40 @@ let extract_hrel_head_x (f0:formula) =
   in
   helper f0
 
-let extract_hrel_head (f0:formula) =
+let extract_hrel_head_w_args_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            if (CP.isConstTrue p2 || CP.is_xpure p2) then
+              match h1 with
+                | HRel (hp, eargs, _ ) -> Some (hp,List.concat (List.map CP.afv eargs))
+                | _ -> None
+            else
+              None
+        )
+    | Or _ -> None
+  in
+  helper f0
+
+let extract_hrel_head_w_args (f0:formula) =
   let pr1 = !print_formula in
   let pr2 a = match a with None -> "None"
-    | Some hp -> !CP.print_sv hp
+    | Some (hp, args) -> let pr = pr_pair !CP.print_sv !CP.print_svl in
+      pr (hp,args)
   in
-  Debug.no_1 "extract_hrel_head" pr1 pr2
-      (fun _ ->  extract_hrel_head_x f0) f0
+  Debug.no_1 "extract_hrel_head_w_args" pr1 pr2
+      (fun _ ->  extract_hrel_head_w_args_x f0) f0
 
 let is_top_guard rhs link_hps og=
   let hp_opt = extract_hrel_head rhs in
   match hp_opt with
     | None -> false
-    | Some hp -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
+    | Some (hp) -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
               && (og != None)
 
 let is_only_viewnode_x acc_pure (f0:formula) =
@@ -12352,13 +12373,14 @@ let get_view_branches (f0:struc_formula):(formula * formula_label) list=
   let res = get_view_branches f0 in
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
  
-	
+let rec is_disj (f:formula) : bool = match f with
+  | Base _
+  | Exists _ -> false
+  | Or b -> true 
+
+
 let get_bar_branches (f0:struc_formula):(formula * formula_label) list= 
-  let rec is_disj (f:formula) : bool = match f with
-    | Base _
-    | Exists _ -> false
-    | Or b -> true in
-	
+  	
 	let rec struc_formula_br (f:struc_formula):(formula * formula_label) list = match f with
 		| ECase b-> List.concat 
 			(List.map (fun (c1,c2) -> 

@@ -54,7 +54,7 @@ $HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_pape
 echo "cyc-lseg"
 #$HIP cyc-lseg.c  -validate ../o/cyc-lseg.cp --pred-en-split | grep Validate
 echo "zip_paper_eq"
-$HIP zip_paper_eq.c  -validate ../o/zip_paper_eq-split.cp --pred-en-split | grep Validate
+$HIP zip_paper_eq.c  --sa-ext -validate ../o/zip_paper_eq-split.cp --pred-en-split | grep Validate
 
 #pred-unify-post
 echo "cyc-tree (search)"

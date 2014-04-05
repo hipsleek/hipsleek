@@ -3521,7 +3521,7 @@ let is_trivial_constr cs=
   let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
   let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
   match l_ohp,r_ohp with
-    | Some hp1, Some hp2 -> (* if *) CP.eq_spec_var hp1 hp2 (* then *)
+    | Some (hp1), Some (hp2) -> (* if *) CP.eq_spec_var hp1 hp2 (* then *)
         (* let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in *)
         (* let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in *)
         (* eq_spec_var_order_list largs rargs *)
@@ -7428,7 +7428,7 @@ let reuse_equiv_hpdefs_x prog hpdefs hp_defs=
     in
     match eq_hp_opt with
       | None -> (r_hp_defs@[hp_def], r_drop_hps, r_equivs)
-      | Some hp1 ->
+      | Some (hp1) ->
             try
               let hp,_ = CF.extract_HRel hp_def.CF.def_lhs in
               (r_hp_defs, r_drop_hps@[hp], r_equivs@[(hp,hp1)])

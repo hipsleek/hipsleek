@@ -5151,7 +5151,7 @@ and need_unfold_rhs prog vn=
   (*looking for unknown case*)
   let unk_hps = List.fold_left (fun r (f,_) ->
       match CF.extract_hrel_head f with
-        | Some hp -> r@[hp]
+        | Some (hp) -> r@[hp]
         | None -> r
   ) [] vdef.view_un_struc_formula in
   if unk_hps <> [] then

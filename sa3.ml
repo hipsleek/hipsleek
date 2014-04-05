@@ -145,7 +145,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                    let hp_opt = CF.extract_hrel_head cs2.CF.hprel_rhs in
                    match hp_opt with
                      | None -> false
-                     | Some hp -> if (CP.mem_svl hp sel_hps) then
+                     | Some (hp) -> if (CP.mem_svl hp sel_hps) then
                          let lhps = CF.get_hp_rel_name_formula cs2.CF.hprel_lhs in
                          List.length lhps > 1
                        else false
@@ -919,7 +919,7 @@ let combine_pdefs_pre_x prog unk_hps link_hps pr_pdefs=
       let hp_opt = CF.extract_hrel_head cs.CF.hprel_rhs in
       match hp_opt with
         | None -> false
-        | Some hp -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
+        | Some (hp) -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
               && (cs.CF.hprel_guard != None)
   ) pr_pdefs in
   (*group*)
@@ -1897,7 +1897,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
   let get_pre_fix_hp pre_fix_hps cs=
     let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> if (CP.mem_svl hp pre_fix_hps) then pre_fix_hps else
+          | Some (hp) -> if (CP.mem_svl hp pre_fix_hps) then pre_fix_hps else
               let lhps = CF.get_hp_rel_name_formula cs.CF.hprel_lhs in
               if CP.mem_svl hp lhps && (CF.extract_hrel_head cs.CF.hprel_lhs = None) then
                 (pre_fix_hps@[hp])
@@ -1909,7 +1909,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp hps)
+          | Some (hp) -> (CP.mem_svl hp hps)
           | None -> false
       with _ -> false
     in
