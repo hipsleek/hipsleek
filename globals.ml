@@ -708,6 +708,7 @@ let allow_lemma_norm = ref false
 let dis_show_diff = ref false
 
 let sap = ref false
+let sae = ref false
 
 let sags = ref false
 

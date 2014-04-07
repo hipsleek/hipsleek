@@ -2577,6 +2577,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
       (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
     (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in *)
     (* let _ = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)
+    let proc = List.hd scc_procs in
     let scc_hprel, scc_inferred_hps, dang_hps =
       if !Globals.pred_syn_flag && List.length scc_sel_hps> 0 && List.length scc_hprel_ass > 0 then
         let res =
@@ -2594,7 +2595,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
                         (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
               in ([],[], [])
           else
-            Sa3.infer_shapes iprog prog (* proc.proc_name *)"" scc_hprel_ass
+            Sa3.infer_shapes iprog prog proc.proc_name (* "" *) scc_hprel_ass
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                     (fun ((hp1,_),_) ((hp2, _),_) ->
                         (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true
@@ -2698,7 +2699,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		  if pr_flag then
                     begin
                       print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-                      (* print_string ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) );*)
+                      (* print_string ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) ); *)
 		      Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		      Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                     end;
