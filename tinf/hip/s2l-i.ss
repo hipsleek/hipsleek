@@ -1,7 +1,6 @@
-data node {
-  int val;
-  node next;
-}
+template int r(int x, int y).
+
+data node { int val; node next; }
 
 pll<n, s> == 
   self = null & n = 0 & s = 0 or
@@ -9,8 +8,9 @@ pll<n, s> ==
   inv n >= 0 & s >= 0;
 
 node s2l (node x)
-  requires x::pll<n, s> & Term[s, n]
-	//requires x::pll<n, s> & Term[n, s] // not valid
+	//infer[r]
+  //requires x::pll<n, s> & Term[r(n, s)]
+	requires x::pll<n, s> & Term[n + 2*s]
   ensures res::pll<n + s, 0> & res = x;
 {
   if (x == null) return x;

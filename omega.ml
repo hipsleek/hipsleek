@@ -199,17 +199,16 @@ let omega_of_formula i pr_w pr_s f  =
       pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =
+  if has_template_formula f then None else
   let (pr_w, pr_s) = no_drop_ops in
   try 
-    Some(omega_of_formula i pr_w pr_s f)
+    Some (omega_of_formula i pr_w pr_s f)
   with | _ -> None
 
-
-	  
-(* let omega_of_formula_old i f  = *)
-(*   let pr = !print_formula in *)
-(*   Debug.no_1_num i "omega_of_formula_old"  *)
-(*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
+let omega_of_formula_old i f  =
+   let pr = !print_formula in
+   Debug.no_1_num i "omega_of_formula_old"
+       pr (pr_option pr_id) (fun _ -> omega_of_formula_old i f) f
 
  let omegacalc = ref ("oc":string)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)

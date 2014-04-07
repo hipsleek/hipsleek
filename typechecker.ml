@@ -3307,7 +3307,9 @@ let check_prog iprog (prog : prog_decl) =
       in
       let _ = 
         let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
-        Template.collect_and_solve_templ_assumes prog inf_templs 
+        if !Globals.templ_term_inf then  
+          Terminf.infer_rank_template_init prog inf_templs
+        else Template.collect_and_solve_templ_assumes prog inf_templs 
       in
       prog
   ) prog proc_scc 
