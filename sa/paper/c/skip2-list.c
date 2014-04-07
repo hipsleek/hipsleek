@@ -35,8 +35,8 @@ infer[H1] requires H1(l) ensures res=1;
 
 int skip0(struct node2* l, struct node2* e) 
 /*@
-infer[H2] requires H2(l,e) ensures res=1;
-//requires l::lseg<e> ensures res=1;
+infer[H2] requires H2(l,e)  ensures res=1;
+//requires l::lseg<e> & e!=null ensures res=1;
 */
 {
 	if (l == e) return 1;

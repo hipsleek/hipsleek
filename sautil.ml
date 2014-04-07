@@ -4855,7 +4855,23 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
        (CF.look_up_reachable_ptr_args prog hds hvs drop_node_svl) [] sel_hpargs in
     let _ = Debug.ninfo_hprint (add_str "   cont_f: " Cprinter.prtt_string_of_formula) cont_f no_pos in
     let _ = Debug.ninfo_hprint (add_str "   rem_f: " Cprinter.prtt_string_of_formula) rem_f no_pos in
-    (cont_f, rem_f)
+    (*root is terminated by a separate node or sharing node?*)
+    (* let r_hd_svl = List.fold_left (fun r hd -> if CP.mem_svl hd.CF.h_formula_data_node rem_args then *)
+    (* r@[hd.CF.h_formula_data_node] else r) [] hds in *)
+    (* let r_non_link_svl = List.filter (fun sv -> List.for_all (fun (sv1,sv2) -> *)
+    (*     not(CP.eq_spec_var sv sv1 || CP.eq_spec_var sv sv2) ) eqs *)
+    (* ) r_eqs in *)
+    (* let fr_cont_args = CP.fresh_spec_vars r_non_link_svl in *)
+    (* let sst = List.combine r_non_link_svl fr_cont_args in *)
+    (* let n_rem_f = if sst=[] then (rem_f) else *)
+    (*   let link_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar r sv1 no_pos) sst in *)
+    (*   let link_p = CP.conj_of_list link_ps no_pos in *)
+    (*   let n_rem_f = CF.simplify_pure_f (CF.mkAnd_pure rem_f (MCP.mix_of_pure link_p) no_pos) in *)
+    (*   n_rem_f *)
+    (* in *)
+    (* let _ = Debug.ninfo_hprint (add_str "   n_rem_f: " Cprinter.prtt_string_of_formula) n_rem_f no_pos in *)
+    (* (n_rem_f, (cont_f,sst)) *)
+    (rem_f, cont_f)
   in
   (********END INTERNAL*************)
   (*classify base vs. rec*)
@@ -4866,7 +4882,7 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   (*in rec branches, one parameter is continuous*)
   let cont_args = List.fold_left (look_up_continuous_para) other_args rec_fs_wg in
   let _ = Debug.ninfo_hprint (add_str "cont_args: " !CP.print_svl) cont_args no_pos in
-  if cont_args = [] then
+  if rec_fs_wg = [] || cont_args = [] then
     None
   else
     (*in base branches, root is closed and continuos parameter is contant*)
@@ -4876,8 +4892,8 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
     else
       let rem_args = r::(CP.diff_svl other_args cont_args) in
       let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
-          let cont_f,seg_f = segmentation_on_base_cases rem_args cont_args base in
-          (segs@[(seg_f,og)], cont_fs@[cont_f])
+          let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args base in
+          (segs@[((seg_f,og))], cont_fs@[cont_f])
       ) ([],[]) base_fs_wg in
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
         (*generate another pred*)

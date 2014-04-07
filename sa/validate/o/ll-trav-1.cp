@@ -12,7 +12,7 @@ ass [H,H1][]:{
 
 hpdefs [H,H1][]:{
   H1(x) <-> x::node<_,p> & p=null or  x::node<_,p> * H1(p) & p!=null;
-  H(x) <-> x::node<_,p> * HP_1b(p);
+  H(x) <-> x::node<_,p> * HP_1b(p) & x!=null;
   HP_1b(x) <-> x=null or x::node<_,p>*HP_1b(p)
  }
 ]
