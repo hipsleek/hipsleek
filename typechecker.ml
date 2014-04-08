@@ -2710,6 +2710,10 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     print_endline "*************************************";
                     print_endline (Cprinter.string_of_struc_formula_for_spec_inst prog proc0.Cast.proc_static_specs)
                   in
+                  (*get case inference*)
+                  let _ = (* if proc0.Cast.proc_sel_hps = [] then [] else *)
+                    Da.get_spec_cases prog proc body
+                  in
                   (*****LOCKSET variable: ls'=ls *********)
                   let args = 
                     if (!allow_ls) then
