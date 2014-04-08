@@ -21,7 +21,7 @@ let get_type v svl=
   CP.type_of_spec_var orig_sv
 
 
-let case_analysis targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * CP.formula) list) list =
+let case_analysis proc targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * CP.formula) list) list =
   let arg_svl = List.map (fun (t, id) -> CP.SpecVar (t, id, Unprimed)) targs in
   let rec collect_aliasing svl e=
     match e with
@@ -95,7 +95,6 @@ let case_analysis targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * 
       | IConst _   | New _
       | Null _  | EmptyArray _ (* An Hoa *)
       | Print _ | Barrier _
-      | SCall _
       | This _   | Time _
       | Var _   | VarDecl _
       | Unfold _  | Unit _
@@ -155,6 +154,31 @@ let case_analysis targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * 
       | Try b ->
             let res1 = helper b.exp_try_body path_conds in
             helper b.exp_catch_clause res1
+      | SCall {exp_scall_type=st;
+        exp_scall_method_name = mn;
+        exp_scall_arguments = args;
+        } ->
+            let _ =  Debug.ninfo_hprint (add_str "cur_procn" pr_id) proc.Cast.proc_name no_pos in
+             let _ =  Debug.ninfo_hprint (add_str "mn" pr_id) mn no_pos in
+            if String.compare proc.Cast.proc_name mn !=0 then
+              path_conds
+            else
+              let svl = List.fold_left (fun r (p,_,_) -> r@(CP.fv p)) arg_svl path_conds in
+              let arg_svl = List.fold_left (fun r sv ->
+                  try
+                    let t = get_type sv svl in
+                    let n_sv = CP.SpecVar (t, sv, Unprimed) in
+                    r@[n_sv]
+                  with _ -> r
+              ) [] args in
+              let path_conds1 = if arg_svl=[] then
+                List.map (fun (p,emap, c) -> (CP.mkTrue no_pos,emap, c)) path_conds
+              else
+                List.map (fun (p,emap, c) -> (CP.filter_var p arg_svl,emap, c)) path_conds
+              in
+              let pr = pr_list (pr_triple !CP.print_formula pr_none (pr_list (pr_pair pr_id !CP.print_formula))) in
+              let _ =  Debug.info_hprint (add_str "path_conds1" pr) path_conds1 no_pos in
+              path_conds
   in
   (*init context*)
   let path_conds = helper e0 [(ctx_p,init_alias targs,[])] in
@@ -164,14 +188,14 @@ let case_analysis targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * 
           let eqs = CP.EMapSV.find_equiv_all arg emap in
           r@(List.map (fun sv -> (sv,arg)) eqs)
       ) [] arg_svl in
-      CP.remove_redundant (CP.subst sst p)
+      (CP.remove_redundant (CP.subst sst p), emap,c)
   ) path_conds
 
 
 let get_spec_cases_x prog proc e0: (Cpure.formula list) =
   (****************INTERNAL****************)
   (*get all path conditions with context-sensitive*)
-  let path_conds =  case_analysis proc.proc_args e0 (CP.mkTrue no_pos) in
+  let path_conds =  case_analysis proc proc.proc_args e0 (CP.mkTrue no_pos) in
   (**************END**INTERNAL****************)
    List.map (fun (a,b,c) -> a) path_conds
 
