@@ -1450,7 +1450,8 @@ let infer_pure_m unk_heaps estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     (None,None,[])
   else if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
     (* Disable template inference when phase numbers are being inferred *)
-    let es_opt = Template.collect_templ_assume estate lhs_mix_0 (MCP.pure_of_mix rhs_mix) pos in 
+    (* let _ = print_endline "COLLECT PURE" in *)
+    let es_opt = Template.collect_templ_assume_init estate lhs_mix_0 (MCP.pure_of_mix rhs_mix) pos in 
     match es_opt with
     | None -> (None, None, [])
     | Some es -> (Some (es, mkTrue pos), None, [])

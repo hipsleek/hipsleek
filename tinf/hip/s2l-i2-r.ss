@@ -1,19 +1,20 @@
-template int f().
-template int g(int x, int y).
-
 data node { int val; node next; }
 
+/*
+pll<r1, r2> == 
+  self = null & r1 = 0 & r2 = 0 or
+  self::node<v, p> * p::pll<rp1, rp2> & v >= 0 & r1 = 1 + v + rp1 & r2 = v + rp2
+	inv r1 >= 0 & r2 >= 0;
+*/
+
 pll<r> == 
-  self = null & r = f() or
-  self::node<v, p> * p::pll<r1> & v >= 0 & r = g(v, r1)
+  self = null & r = 0 or
+  self::node<v, p> * p::pll<r1> & v >= 0 & r = 1 + 2*v + r1
 	inv r >= 0;
 
 node s2l (node x)
-	infer[f, g]
-  //requires x::pll<n, s> & Term[n, s]
-	//ensures res::pll<n + s, 0> & res = x;
+  //requires x::pll<r1, r2> & Term[r1, r2]
 	requires x::pll<r> & Term[r]
-  //ensures res::pll<_> & res = x;
 	ensures true;
 {
   if (x == null) return x;

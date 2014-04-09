@@ -129,11 +129,11 @@ let collect_templ_assume_init (es: CF.entail_state) (ante: formula) (cons: formu
   let es = collect_templ_assume_disj_lhs es ante cons pos in
   Some es
 
-let collect_templ_assume (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
+let collect_templ_assume_init (es: CF.entail_state) (ante: MCP.mix_formula) (cons: formula) pos =
   let pr1 = !MCP.print_mix_formula in
   let pr2 = !print_formula in
   let pr3 = string_of_loc in
-  Debug.no_3 "collect_templ_assume" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
+  Debug.no_3 "collect_templ_assume_init" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
     (fun _ _ _ -> collect_templ_assume_init es (MCP.pure_of_mix ante) cons pos) ante cons pos 
     
  (*********************************************)

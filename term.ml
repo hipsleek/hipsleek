@@ -487,7 +487,8 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
           let estate, entail_dec_res = 
             if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
               let _ = Globals.templ_term_inf := true in
-              let es = Template.collect_templ_assume estate lhs_p rank_formula pos in 
+              (* let _ = print_endline "COLLECT RANK" in *)
+              let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 
               (match es with Some es -> es | None -> estate), true
             else
               let res, _, _ = TP.imply_one 30 lhs rank_formula "" false None 
@@ -517,7 +518,8 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
                 let bnd_formula = CP.join_conjunctions bnd_formula_l in
                 let estate, entail_bnd_res = 
                   if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
-                    let es = Template.collect_templ_assume estate lhs_p bnd_formula pos
+                    (* let _ = print_endline "COLLECT BND" in *)
+                    let es = Template.collect_templ_assume_init estate lhs_p bnd_formula pos
                     in (match es with Some es -> es | None -> estate), true
                   else
                     let res, _, _ = TP.imply_one 31 lhs bnd_formula "" false None 

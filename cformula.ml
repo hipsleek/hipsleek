@@ -8977,10 +8977,10 @@ let rec collect_templ ctx =
   | Ctx estate -> estate.es_infer_templ 
   | OCtx (ctx1, ctx2) -> (collect_templ ctx1) @ (collect_templ ctx2)
 
-let rec collect_templ_assume ctx = 
+let rec collect_templ_assume_ctx ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_templ_assume
-  | OCtx (ctx1, ctx2) -> (collect_templ_assume ctx1) @ (collect_templ_assume ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_templ_assume_ctx ctx1) @ (collect_templ_assume_ctx ctx2) 
 
 let rec collect_rel ctx = 
   match ctx with

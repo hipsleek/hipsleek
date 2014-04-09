@@ -2310,7 +2310,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
     | (ctx,(a,b))::xs -> 
           begin
           let lh = collect_pre_heap ctx in
-          let lt = collect_templ_assume ctx in
+          let lt = collect_templ_assume_ctx ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
@@ -2335,7 +2335,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
     | (ctx,(a,b))::xs -> 
           begin
           let lh = collect_pre_heap ctx in
-          let lt = collect_templ_assume ctx in
+          let lt = collect_templ_assume_ctx ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
