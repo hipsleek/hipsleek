@@ -1,4 +1,4 @@
-#create a list of expected results
+#create a list of source files in website
 WEB=/home/project/public_html/threadhip/src/hip/
 
 
@@ -20,14 +20,17 @@ WEB=/home/project/public_html/threadhip/src/hip/
 # cp threadhip/multi-join2.ss $WEB/9.ss
 # cp threadhip/no-deadlock-nonlexical2.ss $WEB/10.ss
 
+# #===================
+# # Spare for future use
+
 # cp $WEB/11.ss
-# cp  $WEB/12.ss
+# cp $WEB/12.ss
 # cp $WEB/13.ss
-# cp  $WEB/14.ss
-# cp  $WEB/15.ss
-# cp  $WEB/16.ss
+# cp $WEB/14.ss
+# cp $WEB/15.ss
+# cp $WEB/16.ss
 # cp $WEB/17.ss
-# cp  $WEB/18.ss
+# cp $WEB/18.ss
 # cp $WEB/19.ss
 # cp $WEB/20.ss
 # cp $WEB/21.ss
