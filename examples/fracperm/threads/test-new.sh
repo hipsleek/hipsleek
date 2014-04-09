@@ -9,10 +9,10 @@ echo "======= thrd2.slk ======"
 #================HIP==========================
 #================HIP==========================
 echo "======= multi-join1.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp redlog threadhip/multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.n
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.n
 
 echo "======= multi-join2.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp redlog threadhip/multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.n
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.n
 
 echo "======= no-deadlock-nonlexical2.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/no-deadlock-nonlexical2.ss | grep -E 'Proc|assert:' >  test-cases/no-deadlock-nonlexical2.n
@@ -32,7 +32,7 @@ echo "======= multicast.ss ======"
 #================PARAHIP==========================
 #================PARAHIP==========================
 echo "======= threadhip/no-deadlock-nonlexical.ss ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/no-deadlock-nonlexical.ss | grep -E 'Proc|assert:' >  test-cases/threadhip/parahip-benchmark/no-deadlock-nonlexical.n
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/parahip-benchmark/no-deadlock-nonlexical.ss | grep -E 'Proc|assert:' >  test-cases/threadhip/no-deadlock-nonlexical.n
 # echo "======= threadhip/simple.ss ======"
 # ##No Fork/Join
 # ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/simple.ss | grep -E 'Proc|assert:' > test-cases/threadhip/simple.n
