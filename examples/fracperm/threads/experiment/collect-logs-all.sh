@@ -1,12 +1,8 @@
 #!/bin/bash
 
 
-# Run all tests, output to xls file for experimental comparison
-# between threadhip and parahip.
-# threadhip: parahip using threads as resource
-# parahip: orignal parahip using threads as AND-conj
+# Run all tests and display output
 
-#HOME=.
 HIP=../../../../hip
 
 # Threads as resource
