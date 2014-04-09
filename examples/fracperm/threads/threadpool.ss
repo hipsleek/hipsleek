@@ -8,14 +8,14 @@
 
 data cell{ int val;}
 
-data threadNode{
-  thrd v;
-  threadNode next;
+data item{
+  thrd t;
+  item next;
 }
 
 /* A list of threads, i.e. a thread pool */
 threadPool<x,n,M> == self=null & n=0 & M>0
-  or self::threadNode<v,p> * p::threadPool<x,n-1,M> * v::thrd<# x::cell(1/M)<_> & true #>
+  or self::item<t,p> * p::threadPool<x,n-1,M> * t::thrd<# x::cell(1/M)<_> & true #>
   inv n>=0 & M>0;
 
 //permission splitting. Allow f2=0, if any.
@@ -34,64 +34,59 @@ void thread(cell x, int M)
   // Perform computation ...
 }
 
-threadNode createhelper(cell x, int n, int M)
+item createhelper(cell x, int n, int M)
   requires x::cell(f)<_> & f=n/M & M>=n & n>=0
   ensures res::threadPool<x,n,M> & n>0 or res=null & n=0;
 {
   if (n==0){return null;}
   else{
     thrd t = fork(thread,x,M);
-    threadNode p = createhelper(x,n-1,M);
-    threadNode node = new threadNode(t,p);
+    item p = createhelper(x,n-1,M);
+    item node = new item(t,p);
     return node;
   }
 }
 
 //create a thread pool with n threads
 // sharing read accesses to the cell x.
-threadNode createThreads(cell x, int n)
+item forkThreads(cell x, int n)
   requires x::cell<_> & n>0
   ensures res::threadPool<x,n,n>;
 {
   return createhelper(x,n,n);
 }
 
-void joinhelper(threadNode tn, cell x, int n, int M)
- /* case { */
- /*  tn=null -> ensures true; */
- /*  tn!=null -> requires tn::threadPool<x,n,M> & M>=n & n>=0 */
- /*           ensures x::cell(n/M)<_>; */
- /*  } */
-  requires tn::threadPool<x,n,M> & M>=n & n>=0
+void joinhelper(item tp, cell x, int n, int M)
+  requires tp::threadPool<x,n,M> & M>=n & n>=0
   ensures x::cell(n/M)<_> & n>0
      or true & n=0;
 {
-  if (tn==null){return;}
+  if (tp==null){return;}
   else{
-    threadNode node = tn.next;
+    item node = tp.next;
     joinhelper(node,x,n-1,M);
-    thrd t = tn.v;
+    thrd t = tp.t;
     join(t);
-    destroyThreadNode(tn);
+    destroyItem(tp);
   }
 }
 
 
 // Join all threads in the thread pool
 // and get back the full ownership of x.
-void joinThreads(threadNode tn, cell x, int n)
-  requires tn::threadPool<x,n,n> & n>0
+void joinThreads(item tp, cell x, int n)
+  requires tp::threadPool<x,n,n> & n>0
   ensures x::cell<_>;
 {
-  joinhelper(tn,x,n,n);
+  joinhelper(tp,x,n,n);
 }
 
 void destroyCell(cell x)
   requires x::cell<_>
   ensures true;
 
-void destroyThreadNode(threadNode x)
-  requires x::threadNode<_,_>
+void destroyItem(item x)
+  requires x::item<_,_>
   ensures true;
 
 //receive certain input
@@ -112,13 +107,13 @@ void main()
 {
   int n = input();
 
-  cell x = new cell(7);
+  cell x = new cell(1);
 
   // create a pool consisting of n threads
-  threadNode tn = createThreads(x,n);
+  item tp = forkThreads(x,n);
 
   // wait for all threads to finish their execution
-  joinThreads(tn,x,n);
+  joinThreads(tp,x,n);
 
   destroyCell(x);
 }

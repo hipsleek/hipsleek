@@ -8,18 +8,18 @@ diff test-cases/thrd2.res test-cases/thrd2.n
 
 #================HIP==========================
 #================HIP==========================
-echo "======= motiv-example.ss  ======"
-diff test-cases/motiv-example.res test-cases/motiv-example.n
-echo "======= motiv-example2.ss  ======"
-diff test-cases/motiv-example2.res test-cases/motiv-example2.n
+echo "======= multi-join1.ss  ======"
+diff test-cases/multi-join1.res test-cases/multi-join1.n
+echo "======= multi-join2.ss  ======"
+diff test-cases/multi-join2.res test-cases/multi-join2.n
 echo "======= no-deadlock-nonlexical2.ss ======"
 diff test-cases/no-deadlock-nonlexical2.res test-cases/no-deadlock-nonlexical2.n
 echo "======= point.ss  ======"
 diff test-cases/point.res test-cases/point.n
 echo "======= frac-cell-list.ss  ======"
 diff test-cases/frac-cell-list.res test-cases/frac-cell-list.n
-echo "======= thread-pool.ss ======"
-diff test-cases/thread-pool.res test-cases/thread-pool.n
+echo "======= threadpool.ss ======"
+diff test-cases/threadpool.res test-cases/threadpool.n
 echo "======= multicast.ss ======"
 diff test-cases/multicast.res test-cases/multicast.n
 

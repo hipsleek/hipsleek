@@ -1,6 +1,9 @@
 /*
-  A variant of the motivating example in Fig.1
-  where resource is split using fractional permissions.
+
+  An example with fork and multi-join.
+  Joiners (main and t2) share-read the resource of the joinee (t1).
+
+  The resource is split using fractional permissions.
  */
 
 //memory cell

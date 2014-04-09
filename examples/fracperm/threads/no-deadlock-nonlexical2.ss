@@ -1,7 +1,6 @@
 /*
   A deadlock-free example in the presence of
-  Non-lexical Fork/join Concurrency, Locks, and Multi-join
-  (Fig.8)
+  Non-lexical Fork/join Concurrency, First-class Threads and Locks, and Multi-join
 */
 
 //define lock invariant with name LOCK and empty list of args

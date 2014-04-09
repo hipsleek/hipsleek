@@ -1,5 +1,6 @@
 /*
-  The motivating example in Fig.1
+  An example with fork and multi-join.
+  Joiners (main and t2) share-write the resource of the joinee (t1).
  */
 
 //memory cell
@@ -11,16 +12,17 @@ void destroyCell(cell a)
   ensures true;
 
 void thread1(cell x, cell y)
-  requires x::cell<0> * y::cell<0>
-  ensures x::cell<1> * y::cell<2>;
+  requires x::cell<vx> * y::cell<vy>
+  ensures x::cell<vy> * y::cell<vx>;
 {
-  x.val = x.val + 1;
-  y.val = y.val + 2;
+  int tmp = x.val;
+  x.val = y.val;
+  y.val = tmp;
 }
 
 void thread2(thrd t1, cell y)
-  requires t1::thrd<# y::cell<2> & true #>
-  ensures y::cell<4>;
+  requires t1::thrd<# y::cell<vy> & true #>
+  ensures y::cell<vy+2>;
 {
   join(t1);
   y.val = y.val + 2;
@@ -30,8 +32,8 @@ void main()
   requires true ensures true;
 {
 
-  cell x = new cell(0);
-  cell y = new cell(0);
+  cell x = new cell(1);
+  cell y = new cell(2);
 
   thrd t1 = fork(thread1,x,y);
   thrd t2 = fork(thread2,t1,y);
@@ -41,7 +43,7 @@ void main()
 
   join(t2);
 
-  assert x'::cell<2> * y'::cell<4>;
+  assert x'::cell<3> * y'::cell<3>;
 
   destroyCell(x);
   destroyCell(y);

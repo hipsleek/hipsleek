@@ -8,11 +8,11 @@ echo "======= thrd2.slk ======"
 
 #================HIP==========================
 #================HIP==========================
-echo "======= motiv-example.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp redlog motiv-example.ss | grep -E 'Proc|assert:' > test-cases/motiv-example.n
+echo "======= multi-join1.ss  ======"
+../../../hip --en-para --en-thrd-resource -tp redlog multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.n
 
-echo "======= motiv-example2.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp redlog motiv-example2.ss | grep -E 'Proc|assert:' > test-cases/motiv-example2.n
+echo "======= multi-join2.ss  ======"
+../../../hip --en-para --en-thrd-resource -tp redlog multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.n
 
 echo "======= no-deadlock-nonlexical2.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer no-deadlock-nonlexical2.ss | grep -E 'Proc|assert:' >  test-cases/no-deadlock-nonlexical2.n
@@ -23,8 +23,8 @@ echo "======= point.ss  ======"
 echo "======= frac-cell-list.ss  ======"
 ../../../hip --en-para -tp redlog frac-cell-list.ss | grep -E 'Proc|assert:' >  test-cases/frac-cell-list.n
 
-echo "======= thread-pool.ss ======"
-../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer thread-pool.ss | grep -E 'Proc|assert:' >  test-cases/thread-pool.n
+echo "======= threadpool.ss ======"
+../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer threadpool.ss | grep -E 'Proc|assert:' >  test-cases/threadpool.n
 
 echo "======= multicast.ss ======"
 ../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer multicast.ss | grep -E 'Proc|assert:' >  test-cases/multicast.n
