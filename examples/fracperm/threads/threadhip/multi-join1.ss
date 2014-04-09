@@ -1,6 +1,6 @@
 /*
   An example with fork and multi-join.
-  Joiners (main and t2) share-write the resource of the joinee (t1).
+  Joiners (main and t2) write-share the resource of the joinee (t1).
  */
 
 //memory cell

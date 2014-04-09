@@ -1,7 +1,7 @@
 /*
 
   An example with fork and multi-join.
-  Joiners (main and t2) share-read the resource of the joinee (t1).
+  Joiners (main and t2) read-share the resource of the joinee (t1).
 
   The resource is split using fractional permissions.
  */
