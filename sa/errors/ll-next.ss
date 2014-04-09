@@ -16,6 +16,13 @@ node get_next(node x)
   return x.next;
 }
 
+node test (node x)
+  requires x=null
+  ensures res=null;
+{
+  return get_next(x);
+}
+
 /*
 *************************************
 **************case specs*************

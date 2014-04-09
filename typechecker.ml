@@ -3398,9 +3398,22 @@ let check_prog iprog (prog : prog_decl) =
               else
                 (*get case inference*)
                 let pcs = Da.get_spec_cases prog proc body in
-                if pcs = [] then
+                if List.length pcs < 2 then
                   verify_scc_helper prog verified_sccs scc
                 else begin
+                  let so_spec = proc.Cast.proc_static_specs in
+                  let _ =  Debug.info_hprint (add_str "so_spec" (Cprinter.string_of_struc_formula)) so_spec no_pos in
+                  let infer_specs = List.map (fun p ->
+                      let fr_sel_hps = CP.fresh_spec_vars sel_hps in
+                      let so_spec1 = CF.subst_struc (List.combine sel_hps fr_sel_hps) so_spec in
+                      let pc_spec = CF.mkAnd_pure_pre_struc_formula p so_spec1 in
+                      let _ =  Debug.info_hprint (add_str "pc_spec" (Cprinter.string_of_struc_formula)) pc_spec no_pos in
+                      let n_proc = {proc with Cast.proc_static_specs = pc_spec} in
+                      let n_procs = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name pc_spec in
+                      let n_prog = {prog with Cast.new_proc_decls = n_procs} in
+                      let _ = verify_scc_helper n_prog verified_sccs [n_proc] in
+                      pc_spec
+                  ) pcs in
                   verify_scc_helper prog verified_sccs scc
                 end
             | None -> (prog, verified_sccs)

@@ -1272,6 +1272,16 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
       Error.error_loc = no_pos;
       Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
 
+let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec = 
+  try
+    let proc = Hashtbl.find procs pname in
+    let new_proc = {proc with proc_static_specs = spec} in
+    let _ = Hashtbl.replace procs pname new_proc in
+    procs
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "update_sspec_proc: Procedure " ^ pname ^ " is not found."}
+
 (* Replaced by the new function with Hashtbl *)
 (*
 let rec look_up_proc_def_no_mingling pos (procs : proc_decl list) (name : string) = match procs with

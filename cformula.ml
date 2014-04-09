@@ -5180,6 +5180,20 @@ let struc_formula_trans_heap_node fct f =
   let pr = !print_struc_formula in
   Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
 
+let rec mkAnd_pure_pre_struc_formula_x p f =
+ let recf =  mkAnd_pure_pre_struc_formula_x p in
+  match f with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b -> EBase {b with
+	  formula_struc_base= mkAnd_pure b.formula_struc_base (MCP.mix_of_pure p) b.formula_struc_pos;}
+    | EAssume ea-> f
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+let rec mkAnd_pure_pre_struc_formula p f =
+  let pr1 = !print_struc_formula in
+  Debug.no_2 " mkAnd_pure_pre_struc_formula" !CP.print_formula pr1 pr1
+      (fun _ _ -> mkAnd_pure_pre_struc_formula_x p f) p f
 (*node + args is one group*)
 let get_ptrs_group_hf hf0=
   let rec helper hf=
@@ -5715,7 +5729,7 @@ let get_hp_rel_name_struc sf0=
             (vns1 @ vns2)
       | EInfer { formula_inf_continuation = sf } -> helper sf
   in
-  helper sf0
+  CP.remove_dups_svl (helper sf0)
 
 let get_vnodes_x (f: formula) =
   let get_view_node hf=
@@ -6358,13 +6372,13 @@ let rec subst_hprel (f0: formula) from_hps to_hp=
   let rec helper f=
    match f with
       | Base fb -> let nh = subst_hprel_hf fb.formula_base_heap from_hps to_hp in
-                   (Base {fb with formula_base_heap = nh})
+        (Base {fb with formula_base_heap = nh})
       | Or orf -> let nf1 = helper orf.formula_or_f1 in
-                  let nf2 = helper orf.formula_or_f2 in
-                  ( Or {orf with formula_or_f1 = nf1;
-                      formula_or_f2 = nf2;})
-	  | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
-                     (Exists {fe with formula_exists_heap = nh;})
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
+        (Exists {fe with formula_exists_heap = nh;})
   in
   if from_hps = [] then f0 else helper f0
 
