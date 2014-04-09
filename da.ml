@@ -13,6 +13,21 @@ module CP=Cpure
 find distinct case spec
 *)
 
+type sympath = {
+    sp_id: int list;
+    sp_constr: CP.formula;
+    sp_alias: CP.EMapSV.emap;
+    sp_tobe_cond: (ident * CP.formula) list;
+    sp_rec_context: CP.formula option;
+}
+
+let print_sympath sp=
+  ((pr_list string_of_int) sp.sp_id) ^
+      "\n" ^ (!CP.print_formula sp.sp_constr) ^
+      "\n" ^ (CP.string_of_var_eset sp.sp_alias) ^
+      "\n" ^ ((pr_list (pr_pair pr_id !CP.print_formula)) sp.sp_tobe_cond)^
+      "\n" ^ ((pr_option !CP.print_formula) sp.sp_rec_context)
+
 let init_alias targs=
   CP.EMapSV.mkEmpty
 
@@ -21,7 +36,7 @@ let get_type v svl=
   CP.type_of_spec_var orig_sv
 
 
-let case_analysis proc targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ident * CP.formula) list) list =
+let case_analysis_x proc targs (e0:exp) ctx_p :sympath list =
   let arg_svl = List.map (fun (t, id) -> CP.SpecVar (t, id, Unprimed)) targs in
   let rec collect_aliasing svl e=
     match e with
@@ -85,8 +100,9 @@ let case_analysis proc targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ide
       | _ -> None,[]
   in
   let args = List.map snd targs in
-  let rec helper (e:exp) (path_conds:(CP.formula * CP.EMapSV.emap * (ident * CP.formula) list) list):
-        (CP.formula * CP.EMapSV.emap * (ident * CP.formula) list) list=
+  (***************************************************************)
+  (***************************************************************)
+  let rec helper (e:exp) (path_conds:sympath list):sympath list=
     match e with
       | Assert _   | Java _
       | CheckRef _ | BConst _
@@ -101,44 +117,50 @@ let case_analysis proc targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ide
       | Sharp _  -> path_conds
       | Label b ->  helper b.exp_label_exp path_conds
       | Assign b -> begin (*to update aliasing *)
-          let svl = List.fold_left (fun r (p,_,_) -> r@(CP.fv p)) arg_svl path_conds in
+          let svl = List.fold_left (fun r pc -> r@(CP.fv pc.sp_constr)) arg_svl path_conds in
           let eqs_opt, sst_cond = collect_aliasing svl e in
           let _ =  Debug.ninfo_hprint (add_str "sst_cond" (pr_list (pr_pair pr_id !CP.print_formula))) sst_cond no_pos in
-          let path_conds1 = List.map (fun (p, a, l_sst_cond) -> (p, a, l_sst_cond@sst_cond)) path_conds in
-          let pr = pr_list (pr_triple !CP.print_formula pr_none (pr_list (pr_pair pr_id !CP.print_formula))) in
-          let _ =  Debug.ninfo_hprint (add_str "path_conds1" pr) path_conds1 no_pos in
+          let path_conds1 = List.map (fun pc -> {pc with sp_tobe_cond = pc.sp_tobe_cond@sst_cond}) path_conds in
+          let _ =  Debug.ninfo_hprint (add_str "path_conds1" (pr_list print_sympath)) path_conds1 no_pos in
           let n_path_conds= match eqs_opt with
             | None -> path_conds1
-            | Some ((id,rid), (sst, ass_p)) ->
-                  let path_conds2 = List.map (fun (p, aliasing, sst_cond) ->
+            | Some ((lsv,rsv), (sst, ass_p)) ->
+                  let path_conds2 = List.map (fun pc ->
                       (*kill*)
-                      let n_aliasing1 = CP.EMapSV.elim_elems_one aliasing id in
+                      let n_aliasing1 = CP.EMapSV.elim_elems_one pc.sp_alias lsv in
                       (*gen*)
-                      let n_aliasing2 = CP.EMapSV.add_equiv n_aliasing1 rid id in
-                      let p1 =CP.subst sst p in
+                      let n_aliasing2 = CP.EMapSV.add_equiv n_aliasing1 rsv lsv in
+                      let p1 =CP.subst sst pc.sp_constr in
                       let p2 = CP.mkAnd p1 ass_p no_pos in
-                      (p2, n_aliasing2,sst_cond)
+                      {pc with sp_constr = p2; sp_alias= n_aliasing2}
                   ) path_conds1 in
                   path_conds2
           in
-          let _ =  Debug.ninfo_hprint (add_str "n_path_conds" pr) n_path_conds no_pos in
+          let _ =  Debug.ninfo_hprint (add_str "n_path_conds" (pr_list print_sympath)) n_path_conds no_pos in
 	  helper b.exp_assign_rhs n_path_conds
         end
       | Bind b -> helper b.exp_bind_body path_conds
       | Block b -> helper b.exp_block_body path_conds
       | Cond b -> (*to update path condition*)
             let pos = b.exp_cond_pos in
-            let pr = pr_list (pr_triple !CP.print_formula pr_none (pr_list (pr_pair pr_id !CP.print_formula))) in
-            let _ =  Debug.ninfo_hprint (add_str "path_conds" pr) path_conds no_pos in
-            let init_then_paths,init_else_paths = List.fold_left (fun (r1,r2) (p, aliasing, sst_conds) ->
+            let _ =  Debug.ninfo_hprint (add_str "path_conds" (pr_list print_sympath)) path_conds no_pos in
+            let init_then_paths,init_else_paths = List.fold_left (fun (r1,r2) pc ->
                 let n_p_then, n_p_else = try
-                  let _ =  Debug.ninfo_hprint (add_str "sst_conds" (pr_list (pr_pair pr_id !CP.print_formula))) sst_conds no_pos in
-                  let _,then_cond = List.find (fun (sv,_) -> String.compare sv b.exp_cond_condition ==0) sst_conds in
+                  let _ =  Debug.ninfo_hprint (add_str "sst_conds" (pr_list (pr_pair pr_id !CP.print_formula))) pc.sp_tobe_cond no_pos in
+                  let _,then_cond = List.find (fun (sv,_) -> String.compare sv b.exp_cond_condition ==0) pc.sp_tobe_cond in
                   let else_cond =  CP.mkNot then_cond None pos in
-                  CP.mkAnd p then_cond pos, CP.mkAnd p else_cond pos
-                with _ -> p,p
+                  CP.mkAnd pc.sp_constr then_cond pos, CP.mkAnd pc.sp_constr else_cond pos
+                with _ -> pc.sp_constr,pc.sp_constr
                 in
-                (r1@[(n_p_then, aliasing, [])],r2@[(n_p_else, aliasing, [])])
+                let then_pc= {pc with sp_id = 1::pc.sp_id;
+                    sp_constr = n_p_then;
+                    sp_tobe_cond = [];
+                } in
+                let else_pc= {pc with sp_id = 2::pc.sp_id;
+                    sp_constr = n_p_else;
+                    sp_tobe_cond = [];
+                } in
+                (r1@[then_pc],r2@[else_pc])
             ) ([],[]) path_conds in
 	    let then_path = helper b.exp_cond_then_arm init_then_paths in
             (*else path*)
@@ -163,41 +185,83 @@ let case_analysis proc targs (e0:exp) ctx_p :(CP.formula * CP.EMapSV.emap * (ide
             if String.compare proc.Cast.proc_name mn !=0 then
               path_conds
             else
-              let svl = List.fold_left (fun r (p,_,_) -> r@(CP.fv p)) arg_svl path_conds in
-              let arg_svl = List.fold_left (fun r sv ->
+              let svl = List.fold_left (fun r pc -> r@(CP.fv pc.sp_constr)) arg_svl path_conds in
+              let larg_svl = List.fold_left (fun r sv ->
                   try
                     let t = get_type sv svl in
                     let n_sv = CP.SpecVar (t, sv, Unprimed) in
                     r@[n_sv]
                   with _ -> r
               ) [] args in
-              let path_conds1 = if arg_svl=[] then
-                List.map (fun (p,emap, c) -> (CP.mkTrue no_pos,emap, c)) path_conds
+              let path_conds1 = if larg_svl=[] then
+                let ptrue = CP.mkTrue no_pos in
+                List.map (fun pc -> {pc with sp_rec_context = Some ptrue}) path_conds
               else
-                List.map (fun (p,emap, c) -> (CP.filter_var p arg_svl,emap, c)) path_conds
+                List.map (fun pc ->
+                    let rec_ctx = CP.filter_var pc.sp_constr larg_svl in
+                    let rec_ctx1 = try
+                      (*fresh cur arguments*)
+                      let fr_arg_svl = CP.fresh_spec_vars arg_svl in
+                      let sst0 = List.combine arg_svl fr_arg_svl in
+                      let rec_ctxa = CP.subst sst0 rec_ctx in
+                      (*subst callee args by current args*)
+                      let sst1 = List.combine larg_svl arg_svl in
+                      CP.subst sst1 rec_ctxa
+                    with _ -> rec_ctx
+                    in
+                    {pc with sp_rec_context = Some rec_ctx1}) path_conds
               in
-              let pr = pr_list (pr_triple !CP.print_formula pr_none (pr_list (pr_pair pr_id !CP.print_formula))) in
-              let _ =  Debug.info_hprint (add_str "path_conds1" pr) path_conds1 no_pos in
-              path_conds
+              let _ =  Debug.info_hprint (add_str "path_conds1" (pr_list print_sympath) ) path_conds1 no_pos in
+              path_conds1
   in
+  (***************************************************************)
+  let rec context_sen_case_analysis e pcs=
+    let path_conds = helper e pcs in
+    (*keep args only*)
+    let r_pcs = List.map (fun pc ->
+        let sst = List.fold_left (fun r arg ->
+            let eqs = CP.EMapSV.find_equiv_all arg pc.sp_alias in
+            r@(List.map (fun sv -> (sv,arg)) eqs)
+        ) [] arg_svl in
+        {pc with sp_constr = CP.remove_redundant (CP.subst sst pc.sp_constr)}
+    ) path_conds
+    in
+    (*classify path conds: rec (poss terminated, nonterminated), not rec*)
+    let ter_rec_pcs,nter_rec_pcs, nrec_pcs = List.fold_left (fun (ter_rec, nter_rec, nrec) pc ->
+        match pc.sp_rec_context with
+          | None -> (ter_rec, nter_rec, nrec@[pc])
+          | Some p -> if CP.isConstTrue p then (ter_rec, nter_rec@[pc], nrec)
+            else (ter_rec@[pc], nter_rec, nrec)
+    ) ([],[],[]) r_pcs in
+    if nter_rec_pcs = [] then
+      (*to do context sensitive here to combine paths*)
+      r_pcs
+    else []
+  in
+  (***************************************************************)
+  (***************************************************************)
   (*init context*)
-  let path_conds = helper e0 [(ctx_p,init_alias targs,[])] in
-  (*keep args only*)
-  List.map (fun (p, emap,c) ->
-      let sst = List.fold_left (fun r arg ->
-          let eqs = CP.EMapSV.find_equiv_all arg emap in
-          r@(List.map (fun sv -> (sv,arg)) eqs)
-      ) [] arg_svl in
-      (CP.remove_redundant (CP.subst sst p), emap,c)
-  ) path_conds
+  let ini_pc = { sp_id = [0];
+  sp_constr = ctx_p;
+  sp_alias = init_alias targs;
+  sp_tobe_cond = [];
+  sp_rec_context = None;
+  } in
+  let path_conds = context_sen_case_analysis e0 [ini_pc] in
+  path_conds
 
+let case_analysis proc targs (e0:exp) ctx_p :sympath list =
+  let pr1 = !print_prog_exp in
+  let pr2 = pr_list_ln print_sympath in
+  Debug.no_2 "case_analysis" pr1 !CP.print_formula pr2
+      (fun _ _ -> case_analysis_x proc targs e0 ctx_p) e0 ctx_p
 
 let get_spec_cases_x prog proc e0: (Cpure.formula list) =
   (****************INTERNAL****************)
   (*get all path conditions with context-sensitive*)
   let path_conds =  case_analysis proc proc.proc_args e0 (CP.mkTrue no_pos) in
   (**************END**INTERNAL****************)
-   List.map (fun (a,b,c) -> a) path_conds
+   List.map (fun sp -> sp.sp_constr) path_conds
 
 let get_spec_cases prog proc e0: (Cpure.formula list) =
   let pr1 = !print_prog_exp in

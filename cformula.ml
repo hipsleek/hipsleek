@@ -5696,6 +5696,27 @@ let get_hp_rel_name_formula (f: formula) =
 let get_hp_rel_name_bformula bf=
   get_hp_rel_name_formula (Base bf)
 
+let get_hp_rel_name_struc sf0=
+  let rec helper sf=
+    let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
+    match sf with
+      | EList sfs -> helper_list sfs
+      | ECase { formula_case_branches = sfs } -> helper_list sfs
+      | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
+      let vns1 = get_hp_rel_name_formula f in
+      let vns2 = (match sf_opt with
+        | None -> []
+        | Some sf -> helper sf
+      ) in
+      (vns1 @ vns2)
+      | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
+            let vns1 = get_hp_rel_name_formula f in
+            let vns2 = helper sf in
+            (vns1 @ vns2)
+      | EInfer { formula_inf_continuation = sf } -> helper sf
+  in
+  helper sf0
+
 let get_vnodes_x (f: formula) =
   let get_view_node hf=
     match hf with
