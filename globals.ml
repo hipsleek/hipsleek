@@ -1031,7 +1031,8 @@ let print_cil_input = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+(* current disabled, to publish on website*)
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 

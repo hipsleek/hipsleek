@@ -10314,7 +10314,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
                      CF.h_formula_thread_resource = l_rsr;} as l_t),
     ThreadNode ({CF.h_formula_thread_delayed = r_dl;
                  CF.h_formula_thread_resource = r_rsr;} as r_t) ->
-          let _ = print_endline ("Matching ThreadNodes") in
+          (* let _ = print_endline ("Matching ThreadNodes") in *)
           (*Whether the delayed constraints are syntatically eq*)
           let (eq_dl,mt_dl) = Checkeq.checkeq_p_formula [] l_dl r_dl [[]] in
           let mt1 = Checkeq.remove_trivial_mt (Checkeq.remove_dupl_mt (List.concat mt_dl)) in
@@ -10333,13 +10333,13 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
   (match is_thread, eq_dl, match_number with
     | false, _ , _ -> label_list, l_args, r_args, (is_thread,true,None,None)
     | true, false, _ ->
-        let _ = print_endline ("MATCH of ThreadNodes failed") in
+        (* let _ = print_endline ("MATCH of ThreadNodes failed") in *)
         let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "delayed formulas unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "101 : delayed formulas unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
         label_list, l_args, r_args, (is_thread,false,Some rs,None)
     | true, true, 0
     | true, true, 1 ->
         (*For matching two thread nodes*)
-        let _ = print_endline ("Attempt Syntatic MATCH of ThreadNodes") in
+        (* let _ = print_endline ("Attempt Syntatic MATCH of ThreadNodes") in *)
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -10360,7 +10360,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
     | true, true, 2 ->
         (*For Syntatic SPLIT 
           TOCHECK: currently ignore pure constraints for the resource*)
-        let _ = print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in
+        (* let _ = print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in *)
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -10400,7 +10400,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
               let new_estate = {estate with es_formula = es_f;} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
               let new_conseq =  CF.add_mix_formula_to_formula to_conseq r_rsr in
-              let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in
+              (* let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in *)
               let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
 	            | SuccCtx(cl) ->

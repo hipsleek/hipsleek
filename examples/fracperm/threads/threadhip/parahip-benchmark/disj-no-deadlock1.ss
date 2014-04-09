@@ -53,7 +53,6 @@ void main()
      //LS={l2}
    }
    // LS={} & b
-   dprint;
    join(id); //CHECK,ok because LS={} & b |- l1 notin LS & b 
    
 }
