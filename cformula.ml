@@ -4116,7 +4116,7 @@ and hp_rel_def_old = CP.rel_cat * h_formula * (formula option) * formula
 and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
-    def_rhs : formula_guard list;
+    def_rhs : ((* cond_path_type * *) formula_guard) list;
 }
 
 

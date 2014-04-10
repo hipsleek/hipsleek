@@ -4478,6 +4478,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_body = body;
             exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
+            I.exp_while_f_name = a_wn;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
@@ -4500,7 +4501,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fn3 = fresh_name () in
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
-            let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
+            let w_name = if String.compare a_wn "" == 0 then fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos)
+            else a_wn
+            in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in

@@ -1390,12 +1390,12 @@ and checkeq_p_formula_with_diff_x (hvars: ident list)(p1: CP.formula) (p2: CP.fo
 	else (false, List.combine (mtl12@mtl22) (diff12@diff22))
       )
     )
-    | AndList _ -> report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet"
-    | Or f -> report_error no_pos "not handle checkeq 2 formula that have OR yet" (*todo: match_equiv_orform hvars f pf2 mtl *) 
+    | AndList _ -> report_error no_pos "not handle checkeq 2 pure formula that have ANDLIST yet"
+    | Or f -> report_error no_pos "not handle checkeq 2 pure formula that have OR yet" (*todo: match_equiv_orform hvars f pf2 mtl *) 
     | Not(f,_,_) ->  let (a,b) = match_equiv_notform hvars f pf2 mtl in 
 		     if (a) then (a, modify b (CP.mkTrue no_pos)) else (a,modify b pf1)
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> report_error no_pos "not handle checkeq 2 pure formula that have forall and exists yet"
 
 and checkeq_p_formula_with_diff  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in

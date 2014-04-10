@@ -3,6 +3,8 @@ echo "ll-trav.ss"
 $HIP ll-trav.c -validate ../o/ll-trav.cp | grep Validate
 echo "ll-trav-1.ss: ll with at least one node"
 $HIP ll-trav-1.c -validate ../o/ll-trav-1.cp | grep Validate
+echo "ll-delete"
+$HIP ../../paper/c/ll-delete.c -tp z3 -validate ../o/ll-delete.cp | grep Validate
 #echo "sll-reverse"
 #$HIP sll-reverse.c -validate ../o/sll-reverse.cp | grep Validate
 echo "zip_paper_eq"
@@ -44,7 +46,7 @@ $HIP tll-parent.c -tp z3 --pred-en-dangling --pred-en-equiv -validate ../o/tll-p
 #echo "ll-back.ss"
 #$HIP ll-back.ss
 #sa-dangling
-echo "dll-app: to improvo/rectify segmentation"
+echo "dll-app: to improve/rectify segmentation"
 $HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_paper.cp | grep Validate
 #pred-disj-unify
 #echo "ll-trav-1.ss --pred-disj-unify"
@@ -53,14 +55,14 @@ $HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_pape
 #pred-en-split
 echo "cyc-lseg"
 #$HIP cyc-lseg.c  -validate ../o/cyc-lseg.cp --pred-en-split | grep Validate
-echo "zip_paper_eq"
-$HIP zip_paper_eq.c  --sa-ext -validate ../o/zip_paper_eq-split.cp --pred-en-split | grep Validate
+echo "zip-split: FAILED G (fixpoint)"
+$HIP ../zip-split.ss  --sa-ext -validate ../o/zip-split.cp --pred-en-split | grep Validate
 
 #pred-unify-post
 echo "cyc-tree (search)"
 $HIP cyc-tree-1.c --pred-unify-post -validate ../o/cyc-tree-1.cp | grep Validate
 echo "bt-search-2.ss"
-$HIP bt-search-2.c --pred-unify-post -validate  ../o/bt-search-2.cp | grep Validate
+$HIP bt-search-2.c --pred-unify-post -validate -tp z3 ../o/bt-search-2.cp | grep Validate
 #sa-dnc
 
 #--pred-en-equiv
