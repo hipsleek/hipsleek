@@ -1,16 +1,22 @@
-HeapPred HP_1(node a).
-HeapPred HP_1a(node a).
+HeapPred HP_938(node a).
+HeapPred GP_972(node a, node b).
 
-foo:SUCCESS[
-ass [H2,G2][]:{
-  H2(x)&x!=null --> x::node<_,p> * HP_1a(p);
-  HP_1a(x') --> H2(x')&true;
-  x::node<_,x'> * G2(x')&true --> G2(x)&true;
-  H2(x) & x=null --> G2(x)&true
+whiledel:SUCCESS[
+ass [H1,G1][]:{
+  // BIND (1;0)
+  H1(x)&x!=null --> x::node<val,next>@M * HP_938(next);
+ // PRE_REC (1;0)
+  HP_938(next)&true --> H1(next);
+ // POST (1;0)
+  x::node<val,next>@M * G1(next,x')&true --> G1(x,x');
+ // POST (2;0)
+   H1(x)&x=null & x'=null & x=x' --> G1(x,x')
  }
 
-hpdefs [H,H1][]:{
-  H2(x) <->  x=null or x::node<_,p> * H2(p);
-  G2(x) <-> x=null or x::node<_,p> * G2(p)
+hpdefs [H1,G1][]:{
+   H1(x) <-> x::node<val,next>@M * H1(next) or emp&x=null;
+   G1(x1,x) <-> GP_972(x1,x)&x=null;
+   GP_972(x1,x) <-> x1::node<val,next>@M * GP_972(next,x)
+    or emp&x1=null & x=null
  }
 ]

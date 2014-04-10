@@ -2373,7 +2373,7 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
   let test_comps = proc.Cast.proc_test_comps in
   let (res1, res2) =
     match test_comps with
-      | None -> (false,false)
+      | None ->(false,false)
       | Some (tcs) -> (
 	let ass = tcs.Cast.expected_ass in
 	let hpdefs = tcs.Cast.expected_hpdefs in

@@ -2493,7 +2493,9 @@ hprogn:
     prog_proc_decls = !proc_defs;
     prog_coercion_decls = !coercion_defs; 
     prog_hopred_decls = !hopred_defs;
-    prog_barrier_decls = !barrier_defs; } ]];
+    prog_barrier_decls = !barrier_defs;
+    prog_test_comps = [];
+    } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   

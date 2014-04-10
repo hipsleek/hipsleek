@@ -4,7 +4,7 @@ $HIP ll-trav.c -validate ../o/ll-trav.cp | grep Validate
 echo "ll-trav-1.ss: ll with at least one node"
 $HIP ll-trav-1.c -validate ../o/ll-trav-1.cp | grep Validate
 echo "ll-delete"
-$HIP ../../paper/c/ll-delete.c -tp z3 -validate ../o/ll-delete.cp | grep Validate
+$HIP ../ll-delete.ss -tp z3 -validate ../o/ll-delete.cp | grep Validate
 #echo "sll-reverse"
 #$HIP sll-reverse.c -validate ../o/sll-reverse.cp | grep Validate
 echo "zip_paper_eq"
@@ -33,6 +33,8 @@ echo "sll2dll"
 $HIP sll-dll.c  --pred-en-dangling --pred-en-equiv -validate ../o/sll-dll.cp | grep Validate
 echo "check-dll"
 $HIP check-dll.c -tp z3  --pred-en-dangling -validate ../o/check-dll.cp | grep Validate
+echo "dll-app: to improve/rectify segmentation"
+$HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_paper.cp | grep Validate
 echo "bt-search-2."
 $HIP bt-search-2.c -tp z3 --pred-unify-post -validate  ../o/bt-search-2.cp | grep Validate
 echo "tll"
@@ -45,9 +47,6 @@ echo "tll-parent.c"
 $HIP tll-parent.c -tp z3 --pred-en-dangling --pred-en-equiv -validate ../o/tll-parent.cp | grep Validate
 #echo "ll-back.ss"
 #$HIP ll-back.ss
-#sa-dangling
-echo "dll-app: to improve/rectify segmentation"
-$HIP dll-append_paper.c -tp z3 --pred-en-dangling -validate ../o/dll-append_paper.cp | grep Validate
 #pred-disj-unify
 #echo "ll-trav-1.ss --pred-disj-unify"
 #$HIP ll-trav-1.c --pred-disj-unify -validate ../o/ll-trav-1-unify.cp | grep Validate

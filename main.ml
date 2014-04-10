@@ -166,22 +166,25 @@ let process_validate prog =
     "sa/hip/test/ll-append3.cp"
   )
   in
-  let (hpdefs, proc_tcomps) = parse_file_cp file_to_cp in 
+  let (hpdecls, proc_tcomps) = parse_file_cp file_to_cp in 
   let helper procs tcomps =
     let rec update_tcomp proc tcomps =
       let proc_name = proc.Iast.proc_name in
       match tcomps with
-	|[] -> proc
-	|(id, tcs)::y -> if(String.compare id proc_name == 0) then (
-	  {proc with Iast.proc_test_comps = Some tcs}
-	)
-	  else update_tcomp proc y
+        |[] -> proc
+        |(id, tcs)::y ->
+             let _ = Debug.info_hprint (add_str "id" pr_id) id no_pos in
+             let _ = Debug.info_hprint (add_str "proc_name" pr_id) proc_name no_pos in
+             if(String.compare id proc_name == 0) then (
+                 {proc with Iast.proc_test_comps = Some tcs}
+             )
+             else update_tcomp proc y
     in
-    List.map (fun proc -> update_tcomp proc tcomps) procs 
-    (*procs proc_decl list*)
+    List.map (fun proc -> update_tcomp proc tcomps) procs
   in
-  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
-  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
+  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdecls;
+  (* Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps; *)
+  Iast.prog_test_comps = proc_tcomps}
 
 let process_lib_file prog =
   let parse_one_lib (ddecls,vdecls) lib=

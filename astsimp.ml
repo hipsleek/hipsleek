@@ -1425,7 +1425,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps1, pure_chps = List.split pr_chps in
+      let chps1, pure_chps = List.split pr_chps in
       let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
           let crels1 = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
@@ -4569,7 +4569,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_is_invoked = true;
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
-                  I.proc_test_comps = proc.I.proc_test_comps} in
+                  I.proc_test_comps = if not !Globals.validate then None else
+                    I.look_up_test_comps prog.I.prog_test_comps w_name} in
             (* let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in *)
             let w_proc = match w_proc.I.proc_static_specs with
               |  IF.EList [] -> let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body w_formal_args I.void_type pos in

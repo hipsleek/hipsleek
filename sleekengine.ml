@@ -74,6 +74,7 @@ I.prog_proc_decls = [];
 I.prog_coercion_decls = [];
 I.prog_hopred_decls = [];
 I. prog_barrier_decls = [];
+I.prog_test_comps = [];
 }
 
 let cobj_def = { Cast.data_name = "Object";
