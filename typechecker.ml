@@ -2704,7 +2704,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 		      Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                     end;
                   let sel_hps = CF.get_hp_rel_name_struc proc0.Cast.proc_static_specs in
-                  let _ =  Debug.info_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
+                  let _ =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
                   let _ = if sel_hps = [] then () else begin
                     print_endline "";
                     print_endline "\n\n*************************************";
@@ -3402,12 +3402,13 @@ let check_prog iprog (prog : prog_decl) =
                   verify_scc_helper prog verified_sccs scc
                 else begin
                   let so_spec = proc.Cast.proc_static_specs in
-                  let _ =  Debug.info_hprint (add_str "so_spec" (Cprinter.string_of_struc_formula)) so_spec no_pos in
+                  let so_spec1 = (* CF.elim_useless_term_struc *) so_spec in
+                  let _ =  Debug.ninfo_hprint (add_str "so_spec1" (Cprinter.string_of_struc_formula)) so_spec1 no_pos in
                   let infer_specs = List.map (fun p ->
                       let fr_sel_hps = CP.fresh_spec_vars sel_hps in
-                      let so_spec1 = CF.subst_struc (List.combine sel_hps fr_sel_hps) so_spec in
-                      let pc_spec = CF.mkAnd_pure_pre_struc_formula p so_spec1 in
-                      let _ =  Debug.info_hprint (add_str "pc_spec" (Cprinter.string_of_struc_formula)) pc_spec no_pos in
+                      let so_spec2 = CF.subst_struc (List.combine sel_hps fr_sel_hps) so_spec1 in
+                      let pc_spec = CF.mkAnd_pure_pre_struc_formula p so_spec2 in
+                      let _ =  Debug.ninfo_hprint (add_str "pc_spec" (Cprinter.string_of_struc_formula)) pc_spec no_pos in
                       let n_proc = {proc with Cast.proc_static_specs = pc_spec} in
                       let n_procs = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name pc_spec in
                       let n_prog = {prog with Cast.new_proc_decls = n_procs} in

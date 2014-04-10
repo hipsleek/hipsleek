@@ -5190,10 +5190,34 @@ let rec mkAnd_pure_pre_struc_formula_x p f =
     | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
     | EList l -> EList (Gen.map_l_snd recf l)
 
+
 let rec mkAnd_pure_pre_struc_formula p f =
   let pr1 = !print_struc_formula in
   Debug.no_2 " mkAnd_pure_pre_struc_formula" !CP.print_formula pr1 pr1
       (fun _ _ -> mkAnd_pure_pre_struc_formula_x p f) p f
+
+
+let rec elim_useless_term_struc_x sf=
+ let recf = elim_useless_term_struc_x in
+  match sf with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b -> begin if isTrivTerm b.formula_struc_base then
+        match b.formula_struc_continuation with
+          | None -> EBase {b with
+	        formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;}
+          | Some sf1 -> recf sf1
+      else EBase {b with
+	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;}
+      end
+    | EAssume ea-> EAssume {ea with formula_assume_struc = recf ea.formula_assume_struc}
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+let elim_useless_term_struc sf=
+   let pr = !print_struc_formula in
+   Debug.no_1 "elim_useless_term_struc" pr pr
+       (fun _ -> elim_useless_term_struc_x sf) sf
+
 (*node + args is one group*)
 let get_ptrs_group_hf hf0=
   let rec helper hf=
