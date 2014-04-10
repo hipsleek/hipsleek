@@ -1,33 +1,34 @@
-HeapPred HP_962(node a, node b).
-HeapPred HP_961(node a, node b).
-HeapPred HP_964(node a, node b).
-HeapPred HP_986(node a, node b).
-HeapPred HP_987(node a, node b).
-HeapPred HP1a(node a).
+HeapPred HP_947(node a, node@NI b).
+HeapPred HP_949(node a, node@NI b).
+HeapPred HP_948(node a, node@NI b).
+HeapPred HP_971(node a, node@NI b).
+HeapPred HP_972(node a, node@NI b).
+HeapPred HP_1042(node a).
+HeapPred GP_1048(node a, node b).
 
 dll_append:SUCCESS[
 ass [H,G][]:{
- // BIND (0)
-  H(x,y) --> x::node<prev_15_960,next_15_961>@M * HP_962(prev_15_960,y) * HP_961(next_15_961,y) * HP_964(y,x);
+  // BIND (0)
+ H(x,y)&true --> HP_947(prev,y) * HP_949(y,x) * x::node<prev,next>@M * HP_948(next,y) & true;
  // PRE_REC (1;0)
-  HP_961(next_15_961,y) * HP_964(y,x)& next_15_961!=null --> H(next_15_961,y);
+ HP_949(y,x) * HP_948(next,y)&next!=null --> H(next,y);
  // BIND (2;0)
-  HP_964(y,x) --> y::node<prev_21_984,next_21_985>@M * HP_986(prev_21_984,x) * HP_987(next_21_985,x);
+ HP_949(y,x)&true --> y::node<prev,next>@M * HP_971(prev,x) * HP_972(next,x);
  // POST (1;0)
-  HP_962(prev_15_960,y) * x::node<prev_15_960,next_15_961>@M * G(next_15_961,y)& next_15_961!=null --> G(x,y);
+ x::node<prev,next>@M * HP_947(prev,y) * G(next,y)& next!=null --> G(x,y);
  // POST (2;0)
-  HP_961(next_15_961,y)& next_15_961=null --> emp;
+ HP_947(prev,y) * y::node<x,next>@M * x::node<prev,y>@M * HP_972(next,x)&true --> G(x,y);
  // POST (2;0)
-  HP_962(prev_15_960,y) * x::node<prev_15_960,y>@M *HP_987(next_21_985,x) *y::node<x,next_21_985>@M --> G(x,y)
-  }
+ HP_948(next,y)&next=null --> emp&true
+}
 
 //__DP_HP_962,__DP_HP_986,__DP_HP_987
 hpdefs [H,G][]:{
- G(x_1010,y_1011) <-> x_1010::node<__DP_HP_962,y_1011>@M * y_1011::node<x_1010,__DP_HP_987>@M
-   or x_1010::node<__DP_HP_962,next_15_961>@M * G(next_15_961,y_1011)& next_15_961!=null;
- H(x_1006,y_1007) <-> y_1007::node<__DP_HP_986,__DP_HP_987>@M *
-      x_1006::node<__DP_HP_962,next_15_999>@M * HP1a(next_15_999);
- HP1a(next_15_1008) <-> next_15_1008::node<__DP_HP_962,next_15_961>@M * HP1a(next_15_961)
-   or emp&next_15_1008=null
+   H(x,y) <-> x::node<DP2,next>@M * HP_1042(next) * y::node<DP1,DP>;
+   G(x1,y) <-> GP_1048(x1,x) * x::node<DP1,y>@M * y::node<x,DP>@M;
+   GP_1048(x1,x) <-> x1::node<DP,next>@M * GP_1048(next,x)&next!=null
+       or emp&x=x1;
+   HP_1042(next) <->  next::node<DP,next1>@M * HP_1042(next1)
+    or emp&next=null
  }
 ]

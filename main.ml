@@ -183,7 +183,8 @@ let process_validate prog =
     List.map (fun proc -> update_tcomp proc tcomps) procs
   in
   {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdecls;
-  (* Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps; *)
+  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps;
+  (*store this test for while loops*)
   Iast.prog_test_comps = proc_tcomps}
 
 let process_lib_file prog =

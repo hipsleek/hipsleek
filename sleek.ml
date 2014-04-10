@@ -272,7 +272,7 @@ let main () =
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
 		I.prog_barrier_decls = [];
-                I.prog_test_comps = []
+                I.prog_test_comps = [];
               } in
   (*Generate barrier data type*)
   let _ = if (!Globals.perm = Globals.Dperm) then

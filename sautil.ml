@@ -4825,53 +4825,41 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
         cont_paras
   in
   let exchange_nodes f hds hvs cont_vars eqs =
-    let neqs = List.fold_left (fun r (sv1,sv2) ->
-        let b1 = CP.mem_svl sv1 cont_vars in
-        let b2 = CP.mem_svl sv2 cont_vars in
-        match b1,b2 with
-          | true,false -> r@[(sv2,sv1)]
-          | false,true -> r@[(sv1,sv2)]
-          | _ -> r
-    ) [] eqs in
-    let n_f = CF.subst neqs f in
-    let cont_vars1 = CF.find_close cont_vars eqs in
-    let drop_node_svl = List.fold_left (fun r hd ->
-        if CP.mem_svl hd.CF.h_formula_data_node cont_vars1 then r@[hd.CF.h_formula_data_node] else r
-    ) [] hds in
-    let n_hds = List.map (fun hd -> {hd with CF.h_formula_data_node = CP.subs_one neqs hd.CF.h_formula_data_node}) hds in
-    let n_hvs = List.map (fun hv -> {hv with CF.h_formula_view_node = CP.subs_one neqs hv.CF.h_formula_view_node}) hvs in
-    (drop_node_svl,n_f, n_hds, n_hvs, neqs)
+    (* let neqs = List.fold_left (fun r (sv1,sv2) -> *)
+    (*     let b1 = CP.mem_svl sv1 cont_vars in *)
+    (*     let b2 = CP.mem_svl sv2 cont_vars in *)
+    (*     match b1,b2 with *)
+    (*       | true,false -> r@[(sv2,sv1)] *)
+    (*       | false,true -> r@[(sv1,sv2)] *)
+    (*       | _ -> r *)
+    (* ) [] eqs in *)
+    (* let n_f = CF.subst neqs f in *)
+    (* let cont_vars1 = CF.find_close cont_vars eqs in *)
+    (* let drop_node_svl = List.fold_left (fun r hd -> *)
+    (*     if CP.mem_svl hd.CF.h_formula_data_node cont_vars1 then r@[hd.CF.h_formula_data_node] else r *)
+    (* ) [] hds in *)
+    (* let n_hds = List.map (fun hd -> {hd with CF.h_formula_data_node = CP.subs_one neqs hd.CF.h_formula_data_node}) hds in *)
+    (* let n_hvs = List.map (fun hv -> {hv with CF.h_formula_view_node = CP.subs_one neqs hv.CF.h_formula_view_node}) hvs in *)
+    (* (drop_node_svl,n_f, n_hds, n_hvs, neqs) *)
+    ([], f, hds, hvs, eqs)
   in
   (*partition f into: cont_args and remain*)
-  let segmentation_on_base_cases rem_args cont_args f=
+  let segmentation_on_base_cases rem_args cont_args n_root f=
+    let _ = Debug.ninfo_hprint (add_str "   f: " Cprinter.prtt_string_of_formula) f no_pos in
+    let keep_svl = [n_root] in
     let ( _,mix_f,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
     let hds, hvs, hrs = CF.get_hp_rel_formula f in
     let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in
-    let sel_hpargs, rem_sel_hpargs = List.partition (fun (_,args) -> CP.diff_svl args cont_args = []) hpargs in
+    let sel_hpargs, rem_sel_hpargs = List.partition (fun (_,args) -> CP.diff_svl args keep_svl = []) hpargs in
     let drop_node_svl,n_f, n_hds, n_hvs, eqs1 = exchange_nodes f hds hvs cont_args eqs in
-    let cont_f = keep_data_view_hpargs_nodes prog n_f n_hds n_hvs cont_args sel_hpargs in
-    let rem_f = drop_data_view_hrel_nodes_from_root prog f hds hvs eqs (drop_node_svl@cont_args)
-       (CF.look_up_reachable_ptr_args prog hds hvs drop_node_svl) [] sel_hpargs in
+    let _ = Debug.ninfo_hprint (add_str "   n_f: " Cprinter.prtt_string_of_formula) n_f no_pos in
+    let cont_f = keep_data_view_hpargs_nodes prog n_f n_hds n_hvs keep_svl sel_hpargs in
+    let rem_f = drop_data_view_hrel_nodes_from_root prog f hds hvs eqs (drop_node_svl@keep_svl)
+       (CF.look_up_reachable_ptr_args prog hds hvs (drop_node_svl@keep_svl)) [] sel_hpargs in
     let _ = Debug.ninfo_hprint (add_str "   cont_f: " Cprinter.prtt_string_of_formula) cont_f no_pos in
     let _ = Debug.ninfo_hprint (add_str "   rem_f: " Cprinter.prtt_string_of_formula) rem_f no_pos in
-    (*root is terminated by a separate node or sharing node?*)
-    (* let r_hd_svl = List.fold_left (fun r hd -> if CP.mem_svl hd.CF.h_formula_data_node rem_args then *)
-    (* r@[hd.CF.h_formula_data_node] else r) [] hds in *)
-    (* let r_non_link_svl = List.filter (fun sv -> List.for_all (fun (sv1,sv2) -> *)
-    (*     not(CP.eq_spec_var sv sv1 || CP.eq_spec_var sv sv2) ) eqs *)
-    (* ) r_eqs in *)
-    (* let fr_cont_args = CP.fresh_spec_vars r_non_link_svl in *)
-    (* let sst = List.combine r_non_link_svl fr_cont_args in *)
-    (* let n_rem_f = if sst=[] then (rem_f) else *)
-    (*   let link_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar r sv1 no_pos) sst in *)
-    (*   let link_p = CP.conj_of_list link_ps no_pos in *)
-    (*   let n_rem_f = CF.simplify_pure_f (CF.mkAnd_pure rem_f (MCP.mix_of_pure link_p) no_pos) in *)
-    (*   n_rem_f *)
-    (* in *)
-    (* let _ = Debug.ninfo_hprint (add_str "   n_rem_f: " Cprinter.prtt_string_of_formula) n_rem_f no_pos in *)
-    (* (n_rem_f, (cont_f,sst)) *)
-    (rem_f, cont_f)
+    ( elim_irr_eq_exps prog (n_root::rem_args) rem_f, cont_f)
   in
   (********END INTERNAL*************)
   (*classify base vs. rec*)
@@ -4882,32 +4870,42 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   (*in rec branches, one parameter is continuous*)
   let cont_args = List.fold_left (look_up_continuous_para) other_args rec_fs_wg in
   let _ = Debug.ninfo_hprint (add_str "cont_args: " !CP.print_svl) cont_args no_pos in
-  if rec_fs_wg = [] || cont_args = [] then
+  if rec_fs_wg = [] || List.length cont_args != 1 then
     None
   else
     (*in base branches, root is closed and continuos parameter is contant*)
-    (*if there are > segments: need generation. NOW: ASSUME one base case*)
+    (*if there are > segments: need generalization. NOW: ASSUME one base case*)
     if base_fs_wg = [] || List.length base_fs_wg > 1 then
       None
     else
-      let rem_args = r::(CP.diff_svl other_args cont_args) in
+      let fr_root = CP.fresh_spec_var r in
+      let sst = [(r, fr_root)] in
+      let link_ps = List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) sst in
+      let link_p = CP.conj_of_list link_ps no_pos in
+      let rem_args = (CP.diff_svl other_args cont_args) in
       let seg_fs_wg,cont_fs  = List.fold_left (fun (segs, cont_fs) (base, og) ->
-          let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args base in
-          (segs@[((seg_f,og))], cont_fs@[cont_f])
+          let seg_f,cont_f = segmentation_on_base_cases rem_args cont_args fr_root (CF.subst sst base) in
+          let seg_f1 =  CF.simplify_pure_f (CF.mkAnd_pure seg_f (MCP.mix_of_pure link_p) no_pos) in
+          (segs@[((seg_f1,og))], cont_fs@[cont_f])
       ) ([],[]) base_fs_wg in
       if List.for_all (fun f -> not (CF.isConstTrueFormula f)) cont_fs then
+        try
         (*generate another pred*)
-        let n_lhs,n_hp =  add_raw_hp_rel prog false false ((r,I)::(List.map (fun sv -> (sv,NI)) cont_args)) no_pos in
-        (*subst hp -> new_hp*)
-        let hp_ss = [(hp0, n_hp)] in
-        let rec_fs_wg1 = List.map (fun (f,og) -> CF.subst hp_ss f, og) rec_fs_wg in
-        let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
-        ) ([],[]) (seg_fs_wg@rec_fs_wg1) in
-        let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
-        (*should generalize cont_fs*)
-        let rhs1 = CF.disj_of_list cont_fs no_pos in
-        let rhs2 = CF.mkAnd_f_hf rhs1 n_lhs no_pos in
-        Some (rhs2, n_hp_def)
+          (*now: deal with one seg point (rec point)*)
+          let fr_cont_args = [fr_root] in
+          let sst1 = List.combine cont_args fr_cont_args in
+          let n_lhs,n_hp =  add_raw_hp_rel prog false false ((r,I)::(List.map (fun sv -> (sv,NI)) fr_cont_args)) no_pos in
+          (*subst hp -> new_hp*)
+          let hp_ss = [(hp0, n_hp)] in
+          let rec_fs_wg1 = List.map (fun (f,og) -> CF.subst sst1 (CF.subst hp_ss f), og) rec_fs_wg in
+          let none_rhs,rem_rhs = List.fold_left (fun (r1,r2) (f,og) -> if og =None then (r1@[f],r2) else (r1,r2@[(f,og)])
+          ) ([],[]) (seg_fs_wg@rec_fs_wg1) in
+          let n_hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn (n_hp, r, cont_args)) n_lhs ([(CF.disj_of_list none_rhs no_pos , None)]@rem_rhs) in
+          (*should generalize cont_fs*)
+          let rhs1 = CF.disj_of_list cont_fs no_pos in
+          let rhs2 = CF.mkAnd_f_hf rhs1 n_lhs no_pos in
+          Some (rhs2, n_hp_def)
+        with _ -> None
       else
         None
 
