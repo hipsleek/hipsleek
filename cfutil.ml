@@ -215,7 +215,7 @@ let classify_equiv_hp_defs_x defs=
                   let equiv_opt = extract_hrel_head f in
                   match equiv_opt with
                     | None -> (equiv_defs, non_equiv_defs@[def], equiv)
-                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+                    | Some (hp1) -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
               end
             | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
         end

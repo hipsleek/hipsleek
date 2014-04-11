@@ -10,7 +10,7 @@ HeapPred G1(node a, node b).
 HeapPred H1(node a).
 HeapPred H2(node a).
 
-void append(ref node x, ref node y)
+void append(node@R x,node@R y)
   infer[H1,H2,G1]
   requires H1(x) * H2(y)
   ensures G1(x',y');//'

@@ -2493,7 +2493,9 @@ hprogn:
     prog_proc_decls = !proc_defs;
     prog_coercion_decls = !coercion_defs; 
     prog_hopred_decls = !hopred_defs;
-    prog_barrier_decls = !barrier_defs; } ]];
+    prog_barrier_decls = !barrier_defs;
+    prog_test_comps = [];
+    } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -2923,6 +2925,8 @@ if_statement:
 
 iteration_statement: [[t=while_statement -> t]];
 
+
+
 while_statement:
   [[ `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
         While { exp_while_condition = bc;
@@ -2944,7 +2948,29 @@ while_statement:
           exp_while_path_id = None ;
           exp_while_f_name = "";
           exp_while_wrappings = None;
-          exp_while_pos = get_pos_camlp4 _loc 1 }]];
+          exp_while_pos = get_pos_camlp4 _loc 1 }
+   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN;`OSQUARE; t = id; `CSQUARE; es=embedded_statement ->
+         While { exp_while_condition = bc;
+         exp_while_body = es;
+         exp_while_addr_vars = [];
+         (* exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1); *)
+         exp_while_specs = (Iformula.EList []); (*set to generate. if do not want to infer requires true ensures false;*)
+         exp_while_jump_label = NoJumpLabel;
+         exp_while_path_id = None ;
+         exp_while_f_name = t;
+         exp_while_wrappings = None;
+         exp_while_pos = get_pos_camlp4 _loc 1 }
+   | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; `OSQUARE; t = id; `CSQUARE; sl=spec_list_outer; es=embedded_statement ->
+         While { exp_while_condition = bc;
+         exp_while_body = es;
+         exp_while_addr_vars = [];
+         exp_while_specs = sl;(*List.map remove_spec_qualifier $5;*)
+         exp_while_jump_label = NoJumpLabel;
+         exp_while_path_id = None ;
+         exp_while_f_name = t;
+         exp_while_wrappings = None;
+         exp_while_pos = get_pos_camlp4 _loc 1 }
+  ]];
 
 jump_statement:
   [[ t=return_statement -> t

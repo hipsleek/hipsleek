@@ -1,0 +1,59 @@
+
+#ll-next.ss
+
+ --sa-ep:
+   print inferred spec
+
+expect:
+----------
+
+requires x::node<val,next>@M * HP_907(next) or emp&x=null
+ensures  x::node<val,res>@M * HP_907(res) or emp&x=null & res=null;
+
+=====================================================================
+
+ll-val
+ll-next
+ll-last
+ll-get-size
+ll-next
+ll-insert
+ll-append
+ll-delete
+tree-val
+tree-rem
+
+=====================================================================
+#alias.ss
+
+GOT
+
+ case {
+   (tmp!=null | tmp=null) ->
+     requires tmp::node<val,next>@M * HP_930(next) & true || emp & tmp=null
+     ensures HP_930(res) * x::node<val,res>@M & true || emp & x=null & res=null;;
+   }
+
+==============>
+/* EXPEXTED
+case x == null =>
+  ensures res = null;
+case x != null =>
+  requires x::node(val,next)
+  ensures x::node(val,next) & res=next;
+*/
+
+=====================================================================
+
+======================================================================
+#ll-next, ll-size, ll-last.c
+ll-last2
+
+
+case spec
+
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================

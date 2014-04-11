@@ -259,7 +259,7 @@ and sharp_val =
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
    exp_arraymod_rhs : exp; 
    exp_arraymod_pos : loc } *)
-	
+
 and exp_assert = { 
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
@@ -271,7 +271,7 @@ and exp_assign =
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
     exp_assign_pos : loc }
-	
+
 and exp_bconst = { 
     exp_bconst_val : bool;
     exp_bconst_pos : loc }
@@ -293,8 +293,8 @@ exp_block_local_vars : typed_ident list;
 exp_block_pos : loc }
 
 and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
-    
-and exp_cast = { 
+
+and exp_cast = {
     exp_cast_target_type : typ;
     exp_cast_body : exp;
     exp_cast_pos : loc }
@@ -306,14 +306,14 @@ exp_cond_else_arm : exp;
 exp_cond_path_id : control_path_id_strict;
 exp_cond_pos : loc }
 
-and exp_debug = { 
+and exp_debug = {
     exp_debug_flag : bool;
     exp_debug_pos : loc }
 
-and exp_fconst = { 
+and exp_fconst = {
     exp_fconst_val : float;
     exp_fconst_pos : loc }
-    
+
 (* instance call *)
 and exp_icall = { exp_icall_type : typ;
 exp_icall_receiver : ident;
@@ -325,11 +325,11 @@ exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
 exp_icall_path_id : control_path_id;
 exp_icall_pos : loc }
 
-and exp_iconst = { 
+and exp_iconst = {
     exp_iconst_val : int;
     exp_iconst_pos : loc }
 
-and exp_new = { 
+and exp_new = {
     exp_new_class_name : ident;
     exp_new_parent_name : ident;
     exp_new_arguments : typed_ident list;
@@ -353,7 +353,7 @@ and exp_seq = { exp_seq_type : typ;
 exp_seq_exp1 : exp;
 exp_seq_exp2 : exp;
 exp_seq_pos : loc }
-    
+
 and exp_sharp = {
     exp_sharp_type : typ;
     exp_sharp_flow_type :sharp_flow;(*the new flow*)
@@ -362,14 +362,14 @@ and exp_sharp = {
     exp_sharp_path_id : control_path_id;
     exp_sharp_pos : loc;
 }
-    
-and exp_catch = { 
+
+and exp_catch = {
     exp_catch_flow_type : nflow (* nflow *) ;
     exp_catch_flow_var : ident option;
     exp_catch_var : typed_ident option;
-    exp_catch_body : exp;			
+    exp_catch_body : exp;
     exp_catch_pos : loc }
-    
+
 and exp_try = { exp_try_type : typ;
 exp_try_body : exp;
 exp_try_path_id : control_path_id_strict;
@@ -1271,6 +1271,16 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
       Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
+
+let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec = 
+  try
+    let proc = Hashtbl.find procs pname in
+    let new_proc = {proc with proc_static_specs = spec} in
+    let _ = Hashtbl.replace procs pname new_proc in
+    procs
+  with Not_found -> Error.report_error {
+      Error.error_loc = no_pos;
+      Error.error_text = "update_sspec_proc: Procedure " ^ pname ^ " is not found."}
 
 (* Replaced by the new function with Hashtbl *)
 (*

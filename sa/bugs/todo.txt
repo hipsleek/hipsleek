@@ -1650,29 +1650,31 @@ x is not IMM
 
 Get imm parameters
 
-======================================================================
-#ll-last-rec.c
 
-to add imm analysis
---pred-en-imm
-
-
-
-======================================================================
-#ll-last.c
-
-
-case spec
 ======================================================================
 #dll-last: --pred-en-split
 
 
 ======================================================================
-#g_list_app.c g_list_con.c g_list_list_insb.c
+#g_list_app.c g_list_con.c g_list_insb.c: FIXED
 
 depend on relational specs of g_list_last
 
 ======================================================================
+#g_list_nth
+
+expect
+
+struct GList*
+g_list_nth (struct GList* list,
+	    int n)
+/*@
+case {
+  list=null -> ensures res=null;
+  list!=null -> requires list::dlseg<null> ensures res::dlseg<null> & res!=null;
+}
+*/;
+
 ======================================================================
 ======================================================================
 ======================================================================

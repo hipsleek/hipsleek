@@ -246,11 +246,11 @@ let pr_cut_before_no op =  pr_op_sep_gen "B" op
 (*   (fun () -> fmt_string ")"; fmt_close();)  *)
 (*   fmt_space x *)
 
-(** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box 
-    @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *) 
+(** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box
+    @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *)
 let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_o x = match x with
-    | Some(s,i) -> 
+    | Some(s,i) ->
           if s="V" then fmt_open_vbox i
           else if s="H" then fmt_open_hbox ()
           else  fmt_open_box i; (* must be B *)
@@ -259,26 +259,26 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
     | Some(s,i) -> fmt_close();
     | None -> () in
   let opt_cut () = match box_opt with
-    | Some(s,i) -> 
+    | Some(s,i) ->
           if s="V" then fmt_cut()
           else  ()
     | None -> () in
   let f_s x sep = match x with
     | Some s -> if s="A" then (fmt_string sep_str; fmt_cut())
-      else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut()) 
+      else if s="AB" then (fmt_cut(); fmt_string sep_str; fmt_cut())
       else (fmt_cut(); fmt_string sep_str)  (* must be Before *)
-    | None -> fmt_string sep_str in 
-  pr_list_open_sep 
+    | None -> fmt_string sep_str in
+  pr_list_open_sep
       (fun () -> (f_o box_opt); fmt_string op; fmt_string open_str; opt_cut())
-      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt)) 
-      (fun () -> f_s sep_opt sep_str) 
+      (fun () -> opt_cut(); fmt_string close_str; (f_c box_opt))
+      (fun () -> f_s sep_opt sep_str)
       f_empty  f xs
 
- (** invoke pr_args_gen  *)   
+ (** invoke pr_args_gen  *)
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> fmt_string (op^open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
- (** invoke pr_args_gen and print nothing when xs  is empty  *)      
+ (** invoke pr_args_gen and print nothing when xs  is empty  *)
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> ()) box_opt sep_opt op open_str close_str sep_str f xs
 
@@ -451,7 +451,7 @@ let pr_fn_args op f xs = match xs with
 
 (** print infix form : x1 op .. op xn *)
 let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
-  
+
   (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox sep f xs = 
   pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
@@ -2020,7 +2020,7 @@ and pr_formula_for_spec e =
     (pr_mix_formula p)
   in
   let disjs = Cformula.list_of_disjs e in
-  pr_list_op_none " ||" (print_fun) disjs
+  pr_list_op_none " || " (print_fun) disjs
 
 and pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
 
@@ -2604,29 +2604,47 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
       fmt_cut();
       wrap_box ("B",0) pr_struc_formula cont;
       fmt_close();
-	| EList b ->  if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
+	| EList b -> if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula)) b
 	(*| EOr b -> 
 	      let arg1 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f1 in
           let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
 		  let f_b e =  pr_bracket struc_formula_wo_paren pr_struc_formula e in
 	      pr_list_vbox_wrap "eor " f_b (arg1@arg2)*)
-	
-let rec pr_struc_formula_for_spec (e:struc_formula) = 
+
+let rec pr_struc_formula_for_spec1 (e:struc_formula) =
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
-    pr_args (Some("V",1)) (Some "A") "case " "{" "}" "" 
+    pr_args (Some("V",2)) (Some "A") "case " "{" "}" ""
     (
-      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
-        (fun () -> pr_struc_formula_for_spec c2; fmt_string ";")
+      fun (c1,c2) -> wrap_box ("H",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+        (fun () -> pr_struc_formula_for_spec1 c2; fmt_string ";")
     ) case_list
   | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
-    formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
-        fmt_string "requires ";
-        pr_formula_for_spec fb;
-        (match cont with 
-      | None -> ()
-      | Some l -> pr_struc_formula_for_spec l;
-    );
+    formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} -> (
+        match fb with
+          | Or _ -> (
+                fmt_string "\n     requires ";
+                pr_formula_for_spec fb;
+                (match cont with
+                  | None -> ()
+                  | Some l -> pr_struc_formula_for_spec1 l
+                ) );
+          | _ ->
+                let h, _, _, _, _ = split_components fb in
+                if (is_empty_heap h)
+                then (
+                    (match cont with
+                      | None -> ()
+                      | Some l -> pr_struc_formula_for_spec1 l
+                    ) )
+                else (
+                    fmt_string "\n     requires ";
+                    pr_formula_for_spec fb;
+                    (match cont with
+                      | None -> ()
+                      | Some l -> pr_struc_formula_for_spec1 l
+                    ) );
+    )
   | EAssume  {
 			formula_assume_vars = x;
 			formula_assume_simpl = b;
@@ -2634,9 +2652,47 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
 			formula_assume_ensures_type = t;
 			formula_assume_struc = s;}->
     let ensures_str = match t with
-                     | None -> "\n ensures "
-                     | Some true -> "\n ensures_exact "
-                     | Some false -> "\n ensures_inexact " in
+                     | None -> "\n     ensures "
+                     | Some true -> "\n     ensures_exact "
+                     | Some false -> "\n     ensures_inexact " in
+    fmt_string ensures_str;
+    pr_formula_for_spec b;
+    fmt_string ";";
+	if !print_assume_struc then
+	  (fmt_string "struct:";
+	   wrap_box ("B",0) pr_struc_formula_for_spec1 s)
+	 else ()
+  | EInfer _ -> report_error no_pos "Do not expect EInfer at this level"
+  | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_struc_formula_for_spec1 c) b
+  in
+  res
+
+let rec pr_struc_formula_for_spec (e:struc_formula) =
+  let res = match e with
+  | ECase {formula_case_branches = case_list} ->
+    pr_args (Some("V",2)) (Some "A") "case " "{" "}" "" 
+    (
+      fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
+        (fun () -> pr_struc_formula_for_spec c2; fmt_string ";")
+    ) case_list
+  | EBase {formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei;
+    formula_struc_exists = ee; formula_struc_base = fb; formula_struc_continuation = cont} ->
+        fmt_string "\n     requires ";
+        pr_formula_for_spec fb;
+        (match cont with 
+          | None -> ()
+          | Some l -> pr_struc_formula_for_spec l
+        );
+  | EAssume  {
+			formula_assume_vars = x;
+			formula_assume_simpl = b;
+			formula_assume_lbl = (y1,y2);
+			formula_assume_ensures_type = t;
+			formula_assume_struc = s;}->
+    let ensures_str = match t with
+                     | None -> "\n     ensures "
+                     | Some true -> "\n     ensures_exact "
+                     | Some false -> "\n     ensures_inexact " in
     fmt_string ensures_str;
     pr_formula_for_spec b;
     fmt_string ";";
@@ -2709,6 +2765,7 @@ let string_of_struc_formula (e:struc_formula) : string =  poly_string_of_pr  pr_
 
 let string_of_struc_formula_for_spec (e:struc_formula): string = poly_string_of_pr pr_struc_formula_for_spec e
 
+let string_of_struc_formula_for_spec1 (e:struc_formula): string = poly_string_of_pr pr_struc_formula_for_spec1 e
 let string_of_struc_formula_for_spec_inst prog (e:struc_formula): string = poly_string_of_pr (pr_struc_formula_for_spec_inst prog) e
 
 let printer_of_struc_formula (fmt: Format.formatter) (e:struc_formula) : unit =
@@ -3734,6 +3791,11 @@ let rec string_of_proc_decl_list l = match l with
 
 let string_of_proc_decl_list l =
   Debug.no_1 " string_of_proc_decl_list" (fun _ -> "?") (fun _ -> "?") string_of_proc_decl_list l
+
+let rec string_of_view_decl_list_short l = match l with
+  | [] -> ""
+  | h::[] -> (string_of_view_decl_short h)
+  | h::t -> (string_of_view_decl_short h) ^ "\n" ^ (string_of_view_decl_list_short t)
 
 (* pretty printing for a list of view_decl *)
 let rec string_of_view_decl_list l = match l with 
