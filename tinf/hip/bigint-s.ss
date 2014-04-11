@@ -3,17 +3,17 @@ template int g(int x, int y).
 
 data node { int val; node next; }
 
+/*
 bigint<r> == 
 	self = null & r = 0 or
 	self::node<p, q> * q::bigint<r1> & 0 <= p <= 9 & r = f(p, r1)
 	inv r >= 0;
+*/
 
-/*
 bigint<r> == 
 	self = null & r = 0 or
-	self::node<p, q> * q::bigint<r1> & 0 <= p <= 9 & r = 10 + r1
+	self::node<p, q> * q::bigint<r1> & 0 <= p <= 9 & r = p + 10*r1 & r > 0
 	inv r >= 0;
-*/
 
 node clone(node x)
   requires x::bigint<r> & Term
@@ -21,10 +21,9 @@ node clone(node x)
 
 node add_one_digit(node x, int c)
   requires x::bigint<r> & 0 <= c <= 9 & Term
-  ensures res::bigint<r1 + c> * x::bigint<r>;
+  ensures res::bigint<r + c> * x::bigint<r>;
 
 node karatsuba_mult(node x, node y)
-	infer[f]
   requires x::bigint<r1> * y::bigint<r2> & Term[r1]
   ensures true;
 {
