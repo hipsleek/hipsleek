@@ -15,8 +15,8 @@ ass [H1,G1][]:{
 
 hpdefs [H1,G1][]:{
    H1(x) <-> x::node<val,next>@M * H1(next) or emp&x=null;
-   G1(x1,x) <-> GP_972(x1,x)&x=null;
+   G1(x1,x2) <-> GP_972(x1,x)&x=null & x2=null;
    GP_972(x1,x) <-> x1::node<val,next>@M * GP_972(next,x)
-    or emp&x1=null & x=null
+    or emp&x1= x
  }
 ]

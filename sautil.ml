@@ -4848,8 +4848,9 @@ let norm_unfold_seg_x prog hp0 r other_args unk_hps defs_wg=
   in
   (*partition f into: cont_args and remain*)
   let segmentation_on_base_cases rem_args cont_args n_root f=
+    let _ = Debug.ninfo_hprint (add_str "n_root: " !CP.print_sv) n_root no_pos in
     let _ = Debug.ninfo_hprint (add_str "   f: " Cprinter.prtt_string_of_formula) f no_pos in
-    let keep_svl = [n_root] in
+    let keep_svl = [n_root]@cont_args in
     let ( _,mix_f,_,_,_) = CF.split_components f in
     let eqs = (MCP.ptr_equations_without_null mix_f) in
     let hds, hvs, hrs = CF.get_hp_rel_formula f in
