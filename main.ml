@@ -173,8 +173,8 @@ let process_validate prog =
       match tcomps with
         |[] -> proc
         |(id, tcs)::y ->
-             let _ = Debug.info_hprint (add_str "id" pr_id) id no_pos in
-             let _ = Debug.info_hprint (add_str "proc_name" pr_id) proc_name no_pos in
+             let _ = Debug.ninfo_hprint (add_str "id" pr_id) id no_pos in
+             let _ = Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos in
              if(String.compare id proc_name == 0) then (
                  {proc with Iast.proc_test_comps = Some tcs}
              )

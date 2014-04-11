@@ -2369,7 +2369,8 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     in
     res
   in
-  let _ = Gen.Profiling.push_time "Compare res with cp file" in
+  let _ = Gen.Profiling.push_time "Validating" in
+  let _ = print_endline ("Validating procedure " ^ proc.Cast.proc_name ^ "....") in
   let test_comps = proc.Cast.proc_test_comps in
   let (res1, res2) =
     match test_comps with
@@ -2389,16 +2390,23 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     | _ -> true
   in
   let _ =
-    if(is_have_tc) then (
-        let _ = if(res1) then
-	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
-	        else
-	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " FAIL\n" )
-        in
-        let _ = if(res2) then
-	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
-	        else
-	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " FAIL\n" )
+    if(is_have_tc) then(
+        let _ = 
+        if res1 && res2 then
+          print_endline ("Validate " ^ proc.Cast.proc_name ^ " SUCCESS.")
+        else
+          let f_ass_msg = if not res1 then "assumption" else "" in
+          let f_msg = if not res2 then f_ass_msg ^ " definition" else f_ass_msg in
+          print_endline ("Validate " ^ proc.Cast.proc_name ^ " FAIL. (at " ^ f_msg ^")")
+        (* let _ = if(res1) then *)
+	(*           print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" ) *)
+	(*         else *)
+	(*           print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " FAIL\n" ) *)
+        (* in *)
+        (* let _ = if(res2) then *)
+	(*           print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " SUCCESS\n" ) *)
+	(*         else *)
+	(*           print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " FAIL\n" ) *)
         in
         ()
     )
