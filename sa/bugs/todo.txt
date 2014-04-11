@@ -1661,6 +1661,20 @@ Get imm parameters
 depend on relational specs of g_list_last
 
 ======================================================================
+#g_list_nth
+
+expect
+
+struct GList*
+g_list_nth (struct GList* list,
+	    int n)
+/*@
+case {
+  list=null -> ensures res=null;
+  list!=null -> requires list::dlseg<null> ensures res::dlseg<null> & res!=null;
+}
+*/;
+
 ======================================================================
 ======================================================================
 ======================================================================
