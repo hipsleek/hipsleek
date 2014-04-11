@@ -27,6 +27,7 @@ type constant_flow = string
 
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
+exception SA_HP_NOT_PRED
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false
@@ -237,6 +238,7 @@ let convert_prim_to_obj (t:typ) : typ =
 (*for heap predicate*)
 let default_prefix_pure_hprel = "_pure_of_"
 let hp_default_prefix_name = "HP_"
+let rel_default_prefix_name = "P_"
 let hppost_default_prefix_name = "GP_"
 let unkhp_default_prefix_name = "DP_"
 let dang_hp_default_prefix_name = "DP_DP"
@@ -644,6 +646,9 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let thrd_name = "thrd"
+let thrd_typ = Named "thrd"
+
 let silence_output = ref false
 
 (*precluded files*)
@@ -764,7 +769,13 @@ let pred_elim_dangling = ref true
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_ex = ref true
+let sa_pure = ref true
+
+(* let iSIZE_PROP = 0 *)
+(* let iBAG_VAL_PROP = 1 *)
+
+
+let sa_ex = ref false
 
 let sa_infer_split_base = ref true
 
@@ -803,6 +814,8 @@ let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
+
+let lemma_ep = ref true
 
 let dis_sem = ref false
 
@@ -895,6 +908,12 @@ let allow_norm = ref true
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
+
+(*
+  true -> threads as resource
+  false -> threads as AND-conjunctions
+*)
+let allow_threads_as_resource = ref false
 
 (* let has_locklevel = ref false *)
 

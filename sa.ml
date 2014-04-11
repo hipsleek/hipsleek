@@ -186,6 +186,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
 		             CF.h_formula_phase_pos = pos}),m1@m2
       | CF.DataNode hd -> hf0,[]
       | CF.ViewNode hv -> hf0,[]
+      | CF.ThreadNode ht -> hf0,[] (*TOCHECK*)
       | CF.HRel (sv, args, l) ->
 	            let locs =  look_up_drop_hp sv drlocs in
                 if locs = [] then hf0,[]
@@ -3958,22 +3959,25 @@ let build_horm_view_x templ_view_decls horm_dd=
     in
     { Iast.view_name = n_view_name;
     Iast.view_pos = no_pos;
-	  Iast.view_data_name = data_name;
-          Iast.view_vars = view.Iast.view_vars;
-          Iast.view_imm_map = view.Iast.view_imm_map;
-	  Iast.view_labels = view.Iast.view_labels;
-	  Iast.view_modes = view.Iast.view_modes;
-	  Iast.view_is_prim = view.Iast.view_is_prim;
-	  Iast.view_kind = view.Iast.view_kind;
-      Iast.view_prop_extns = view.Iast.view_prop_extns;
-	  Iast.view_typed_vars = view.Iast.view_typed_vars;
-	  Iast.view_invariant = n_view_invariant;
-	  Iast.view_mem = view.Iast.view_mem;
-	  Iast.view_formula = n_view_formula;
-      Iast.view_inv_lock = n_view_inv_lock;
-	  Iast.view_pt_by_self = view.Iast.view_pt_by_self;
-	  Iast.try_case_inference = view.Iast.try_case_inference;
-	  Iast.view_materialized_vars = view.Iast.view_materialized_vars;
+    Iast.view_data_name = data_name;
+    Iast.view_vars = view.Iast.view_vars;
+    Iast.view_imm_map = view.Iast.view_imm_map;
+    Iast.view_labels = view.Iast.view_labels;
+    Iast.view_modes = view.Iast.view_modes;
+    Iast.view_is_prim = view.Iast.view_is_prim;
+    Iast.view_kind = view.Iast.view_kind;
+    Iast.view_derv = view.Iast.view_derv;
+    Iast.view_parent_name = view.Iast.view_parent_name;
+    Iast.view_prop_extns = view.Iast.view_prop_extns;
+    Iast.view_derv_info = view.Iast.view_derv_info;
+    Iast.view_typed_vars = view.Iast.view_typed_vars;
+    Iast.view_invariant = n_view_invariant;
+    Iast.view_mem = view.Iast.view_mem;
+    Iast.view_formula = n_view_formula;
+    Iast.view_inv_lock = n_view_inv_lock;
+    Iast.view_pt_by_self = view.Iast.view_pt_by_self;
+    Iast.try_case_inference = view.Iast.try_case_inference;
+    Iast.view_materialized_vars = view.Iast.view_materialized_vars;
     }
   in
   let (tmp_data_name,tmp_data_fields),(data_name,data_fields) = horm_dd in

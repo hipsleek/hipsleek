@@ -10,6 +10,66 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+(*arg is global vars*)
+let norm_free_vars f0 args=
+  let rec helper f=
+    match f with
+      | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
+            (* (CF.h_fv fb.CF.formula_base_heap) *)
+            (fv f)
+        ) args) in
+        if fr_svl = [] then (f,[])
+        else
+          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
+          (*rename primed quantifiers*)
+          let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
+              if p = Unprimed then
+                (r_svl@[sv], r_ss)
+              else
+                (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
+                let fr_sv = CP.fresh_spec_var sv in
+                (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
+          ) ([],[]) fr_svl
+          in
+          let nf0 = if ss = [] then (Base fb) else
+            subst ss (Base fb)
+          in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
+          let nf = add_quantifiers fr_svl1 nf0 in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
+          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+              let vk = Typeinfer.fresh_proc_var_kind ls t in
+              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+              ls@[(svp,vk)]
+          ) [] fr_svl1 in
+          (nf, tis)
+      | Exists _ ->
+            let qvars1, base1 = split_quantifiers f in
+            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
+            let base2,tis = helper base1 in
+             (add_quantifiers qvars1 base2, tis)
+      | Or orf ->
+            let nf1, tis1 = helper orf.formula_or_f1 in
+            let nf2, tis2 = helper orf.formula_or_f2 in
+           (Or {orf with formula_or_f1 = nf1;
+               formula_or_f2 = nf2;
+           }, tis1@tis2)
+  in
+  let f,tis = helper f0 in
+  let def = List.map fst tis in
+  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
+      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      (List.for_all (fun n2 -> String.compare n n2 != 0) def)
+  ) args in
+  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
+  (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+      let vk = Typeinfer.fresh_proc_var_kind ls t in
+      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      ls@[(svp,vk)]
+  ) [] (rem_svl) in
+  (f, tis@tis1)
+
 let get_data_view_name hf=
   match hf with
     | ViewNode vn -> ( vn.h_formula_view_name)
@@ -145,6 +205,29 @@ let hp_defs_topo_sort defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "hp_defs_topo_sort" pr1 (pr_pair (pr_list_ln pr1) pr1)
       (fun _ -> hp_defs_topo_sort_x defs) defs
+
+let classify_equiv_hp_defs_x defs=
+  let classify_equiv_form (equiv_defs, non_equiv_defs, equiv) def=
+    match def.def_cat with
+      | CP.HPRelDefn (hp,_,_) -> begin
+          match def.def_rhs with
+            | [(f,_)] -> begin
+                  let equiv_opt = extract_hrel_head f in
+                  match equiv_opt with
+                    | None -> (equiv_defs, non_equiv_defs@[def], equiv)
+                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+              end
+            | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+        end
+      | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+  in
+  List.fold_left classify_equiv_form ([],[],[]) defs
+
+let classify_equiv_hp_defs defs=
+  let pr1 = pr_list_ln  Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_1 "classify_equiv_hp_defs" pr1 (pr_triple pr1 pr1 pr2)
+      (fun _ -> classify_equiv_hp_defs_x defs) defs
 
 (*
 (i) build emap for LHS/RHS 
@@ -413,7 +496,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
     match f with
       | HRel _
       | DataNode _ | ViewNode _ 
-      | HTrue | HFalse | HEmp | Hole _-> f
+      | HTrue | HFalse | HEmp | Hole _ |  ThreadNode _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
             h_formula_phase_rw = helper b.h_formula_phase_rw}
       | Conj b -> begin
@@ -559,6 +642,21 @@ let check_separation_unsat f0=
       (fun _ -> check_separation_unsat f0)
       f0
 
+(*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
+let poss_prune_pred_x prog vnode f=
+  let pure_svl = List.filter (fun sv -> not (CP.is_node_typ sv)) vnode.h_formula_view_arguments in
+  let pure_constr = CP.filter_var (get_pure f) pure_svl in
+  let ps = List.filter (fun p -> not (CP.is_eq_between_vars p) &&
+      not (CP.isConstTrue p)) (CP.list_of_conjs pure_constr) in
+  (ps != [])
+
+let poss_prune_pred prog vnode f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in
+  Debug.no_2 "poss_prune_pred" pr2 pr1 string_of_bool
+      (fun _ _ -> poss_prune_pred_x prog vnode f)
+      vnode f
+
 (*
   res = -1: NO cyclic - not syn lemma
   res = 0: syn Left lemma
@@ -566,8 +664,8 @@ let check_separation_unsat f0=
 *)
 let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
   if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    (*check root has unfold information information??*)
-    let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in
+    (*check root has unfold information??*)
+    (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
       let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
       let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
@@ -722,3 +820,52 @@ let check_seg_split_pred prog es_formula vdef vnode dnode=
   Debug.no_3 "check_seg_split_pred" Cprinter.prtt_string_of_formula pr1 pr2 (pr_option (pr_pair pr1 pr2))
       (fun _ _ _ -> check_seg_split_pred_x prog es_formula vdef vnode dnode)
       es_formula vnode dnode
+
+
+let subst_rel_def_x f rel_defs=
+  let ls_rel_args = get_list_rel_args f in
+  if ls_rel_args = [] || rel_defs = [] then f else
+    let rel_p, substed_rels = List.fold_left (fun (p, acc_rels) (rel_sv, rel_def) ->
+        (*normalize the paras (convert back to the orig)*)
+        let rel_args_opt = CP.get_relargs_opt rel_sv in
+        let rel_def1,n_acc_rels =
+          match rel_args_opt with
+            | Some (rel,args) -> begin
+                try
+                  let _,args0 = List.find (fun (rel1,_) -> CP.eq_spec_var rel rel1) ls_rel_args in
+                  let ss0 = List.combine args args0 in
+                  (CP.subst ss0 rel_def, acc_rels@[rel])
+                with _ -> rel_def,acc_rels
+              end
+            | None -> rel_def,acc_rels
+      in
+        let _ = Debug.ninfo_hprint (add_str "rel_def1:\n " (!CP.print_formula)) rel_def1 no_pos in
+        (CP.mkAnd p rel_def1 no_pos, n_acc_rels)
+    ) ((CP.mkTrue no_pos),[]) rel_defs in
+    let f1 = drop_sel_rel substed_rels f in
+    let f2 = mkAnd_pure f1 (MCP.mix_of_pure rel_p) no_pos in
+    f2
+
+let subst_rel_def f rel_defs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_pair !CP.print_formula !CP.print_formula) in
+  Debug.no_2 "subst_rel_def" pr1 pr2 pr1
+      (fun _ _ -> subst_rel_def_x f rel_defs)
+      f rel_defs
+
+let subst_rel_def_4_hpdef hp_def rel_defs=
+  {hp_def with def_rhs = List.map (fun (f, og) ->
+      let nf = subst_rel_def f rel_defs in
+      let nog = match og with
+        | None -> None
+        | Some f -> Some (subst_rel_def f rel_defs)
+      in
+      (nf, nog)
+  ) hp_def.def_rhs}
+
+
+let analyse_error () =
+  (*size*)
+  (* iSIZE_PROP *)
+  0
+  (* BAG_VAL_PROP 1 *)

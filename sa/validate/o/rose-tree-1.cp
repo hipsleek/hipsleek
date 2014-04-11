@@ -16,19 +16,13 @@ ass [H1,G1][]:{
   t::tree<val_33_945,children_33_946>@M * G2(children_33_946,t)& children_33_946!=null --> G1(t)
  }
   hpdefs [H1,G1][]:{
-  G1(t_1188) <-> t_1188::tree<val_33_945,children_33_946>@M&children_33_946=null
-    or t_1188::tree<val_33_945,children_33_946>@M * G2(children_33_946,t_1188)&
-       children_33_946!=null;
-  G2(l_1189,par_1190) <-> emp&l_1189=null
-    or l_1189::node<child_47_971,next_47_972,par_1190>@M * G2(next_47_972,par_1190);
-  H1(t_1159) <->
-     t_1159::tree<val_33_945,children_33_946>@M * H2(children_33_946,t_1159)& children_33_946!=null
-    or t_1159::tree<val_33_945,children_33_946>@M&children_33_946=null;
-  H2(l_1186,par_1187) <-> H2(next_47_1061,par_1187) *  child_47_1060::tree<val_33_1058,children_33_1059>@M * 
-     l_1186::node<child_47_1060,next_47_1061,parent_47_1062>@M& par_1187=parent_47_1062 & children_33_1059=null
-    or H2(next_47_1061,par_1187) * child_47_1060::tree<val_33_1058,children_33_1059>@M * 
-     l_1186::node<child_47_1060,next_47_1061,parent_47_1062>@M& par_1187=parent_47_1062 & children_33_1059!=null
-    or emp&l_1186=null
+ H1(t) <-> t::tree<val,children>@M * children::sll<t>@M;
+ H2(l,par) <-> l::sll<par>@M;
+ G1(t) <-> t::tree<val,children>@M * G2(children,t);
+ G2(l,par) <->
+   l::node<child,next,par>@M * G2(next,par)
+   or emp&l=null
+
  }
 ]
 

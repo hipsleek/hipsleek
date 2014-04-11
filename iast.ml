@@ -28,7 +28,7 @@ type prog_decl = {
     mutable prog_view_decls : view_decl list;
     mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
     mutable prog_rel_decls : rel_decl list; 
-    mutable prog_hp_decls : hp_decl list; 
+    mutable prog_hp_decls : hp_decl list;
     mutable prog_rel_ids : (typ * ident) list; 
     mutable prog_hp_ids : (typ * ident) list; 
     mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -64,6 +64,8 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
+  | View_DERV
+  | View_SPEC
 
 and view_decl = 
     { view_name : ident; 
@@ -75,8 +77,11 @@ and view_decl =
     view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
+    view_parent_name: (ident) option;
+    mutable view_derv: bool;
     view_kind : view_kind;
-    view_prop_extns:  ident list;
+    view_prop_extns:  (typ * ident) list;
+    view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_is_prim : bool;
     view_invariant : P.formula;
     view_mem : F.mem_formula option; 
@@ -110,7 +115,7 @@ and axiom_decl = {
 and hp_decl = { hp_name : ident; 
 (* rel_vars : ident list; *)
 (* rel_labels : branch_label list; *)
-hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
+mutable hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
 hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
 mutable hp_root_pos: int;
 hp_is_pre: bool;
@@ -195,6 +200,7 @@ proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
 proc_args : param list;
+mutable proc_args_wi : (ident *hp_arg_kind) list;
 proc_return : typ;
 (*   mutable proc_important_vars : CP.spec_var list;*)
 proc_static_specs : Iformula.struc_formula;
@@ -951,6 +957,11 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 
+
+let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
+  | [] -> raise Not_found
+
 let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let nhp_dclr = { hp_name = hp_id;
   hp_typed_inst_vars = vars;
@@ -962,6 +973,12 @@ let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let _ = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
 
+let find_close_ids ids equivs=
+  let pr1 = pr_list pr_id in
+  let pr2 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_2 "find_close_ids" pr1 pr2 pr1
+      (fun _ _ -> Gen.find_close_ids ids equivs) ids equivs
+
 let rec get_mut_vars_x e0 =
   (* let comb_f = List.concat in *)
   let f e=
@@ -970,137 +987,19 @@ let rec get_mut_vars_x e0 =
       | _ -> None
   in
   let get_vars e= fold_exp e f (List.concat) [] in
-  (* let rec helper (e:exp) = *)
-  (*   match e with *)
-  (*     | Assert _ *)
-  (*     | BoolLit _ *)
-  (*     | Break _ *)
-  (*     | Continue _ *)
-  (*     | Debug _ *)
-  (*     | Dprint _ *)
-  (*     | Empty _ *)
-  (*     | FloatLit _ *)
-  (*     | IntLit _ *)
-  (*     | Java _ *)
-  (*     | Null _ *)
-  (*     | This _ *)
-  (*     | Time _ *)
-  (*     | Unfold _ *)
-  (*     | Var _ -> [] *)
-  (*     | ArrayAt b -> (\* An Hoa *\) *)
-  (*           let rl = (List.map helper b.exp_arrayat_index) in *)
-  (*           comb_f rl *)
-  (*     | Assign b -> begin *)
-  (*           let r1 = helper b.exp_assign_lhs  in *)
-  (*           let r2 = helper  b.exp_assign_rhs  in *)
-  (*           match b.exp_assign_lhs with *)
-  (*             | Var {exp_var_name = id} -> id::r1@r2 *)
-  (*             | _ -> r1@r2 *)
-  (*       end *)
-  (*     | Binary b -> *)
-  (*           let r1 = helper  b.exp_binary_oper1  in *)
-  (*           let r2 = helper  b.exp_binary_oper2  in *)
-  (*           (comb_f [r1;r2]) *)
-  (*     | Bind b -> *)
-  (*           let r1 = helper  b.exp_bind_body  in *)
-  (*           b.exp_bind_bound_var::r1 *)
-  (*     | Barrier _ -> [] *)
-  (*     | Block b -> *)
-  (*            helper  b.exp_block_body *)
-  (*     | CallRecv b -> *)
-  (*           let r1 = helper  b.exp_call_recv_receiver in *)
-  (*           let ler = List.map (helper ) b.exp_call_recv_arguments in *)
-  (*            comb_f (r1::ler) *)
-  (*     | CallNRecv b -> *)
-  (*           let ler = List.map (helper ) b.exp_call_nrecv_arguments in *)
-  (*           let r = comb_f ler in *)
-  (*           r *)
-  (*     | Cast b -> *)
-  (*           let r1 = helper b.exp_cast_body in *)
-  (*           r1 *)
-  (*     | Catch b -> *)
-  (*           helper b.exp_catch_body *)
-  (*     | Cond b -> *)
-  (*           let r1 = helper  b.exp_cond_condition in *)
-  (*           let r2 = helper  b.exp_cond_then_arm in *)
-  (*           let r3 = helper  b.exp_cond_else_arm in *)
-  (*           let r = comb_f [r1;r2;r3] in *)
-  (*           r *)
-  (*     | Finally b -> *)
-  (*           let r1 = helper b.exp_finally_body in *)
-  (*           r1 *)
-  (*     | Label (l,b) -> *)
-  (*           helper  b *)
-  (*     | Member b -> (\* begin let _ =  print_endline (!print_exp b.exp_member_base) in *\) *)
-  (*            get_vars b.exp_member_base *)
-  (*       (\* with *\) *)
-  (*       (\*       | Var { exp_var_name = id} -> [id] *\) *)
-  (*       (\*       | _ -> [] *\) *)
-  (*       (\* end *\) *)
-  (*     | ArrayAlloc b -> *)
-  (*           let rl= (List.map helper b.exp_aalloc_dimensions) in *)
-  (*           comb_f rl *)
-  (*     | New b -> *)
-  (*           let rl = (List.map helper b.exp_new_arguments) in *)
-  (*           (comb_f rl) *)
-  (*     | Raise b -> (match b.exp_raise_val with *)
-  (*         | None -> [] *)
-  (*         | Some body -> *)
-  (*               helper  body *)
-  (*       ) *)
-  (*     | Return b->(match b.exp_return_val with *)
-  (*         | None -> [] *)
-  (*         | Some body -> *)
-  (*               helper body *)
-  (*       ) *)
-  (*     | Seq b -> *)
-  (*           let r1 = helper b.exp_seq_exp1 in *)
-  (*           let r2 = helper b.exp_seq_exp2 in *)
-  (*           let r = comb_f [r1;r2] in *)
-  (*           r *)
-  (*     | Try b -> *)
-  (*           let ecl = List.map helper b.exp_catch_clauses in *)
-  (*           let fcl = List.map helper b.exp_finally_clause in *)
-  (*           let r1 = helper b.exp_try_block in *)
-  (*           let r = comb_f (r1::(ecl@fcl)) in r *)
-  (*     | Unary b -> *)
-  (*           let r1 = helper b.exp_unary_exp in *)
-  (*           r1 *)
-  (*     | ConstDecl b -> *)
-  (*           let l = List.map (fun (c1,c2,c3)-> *)
-  (*               let r1 = helper  c2 in *)
-  (*               r1 *)
-  (*           ) b.exp_const_decl_decls *)
-  (*           in *)
-  (*           let r = comb_f l in *)
-  (*           r *)
-  (*     | VarDecl b -> *)
-  (*           let ll = List.map (fun (c1,c2,c3)-> match c2 with *)
-  (*             | None -> [] *)
-  (*             | Some s -> *)
-  (*                   let r1 = helper s in *)
-  (*                   r1 *)
-  (*           ) b.exp_var_decl_decls in *)
-  (*           let r = comb_f ll in *)
-  (*           r *)
-  (*     | While b -> *)
-  (*           let r = match b.exp_while_wrappings with *)
-  (*             | None -> [] *)
-  (*             | Some (s,l) -> *)
-  (*                   let r = helper s in *)
-  (*                   r *)
-  (*           in *)
-  (*           let cr = helper b.exp_while_condition in *)
-  (*           let br = helper b.exp_while_body in *)
-  (*           let r = comb_f [r;cr;br] in *)
-  (*           r *)
-  (* in *)
   (**************************END****************)
   let rec collect_lhs_ass_vars e=
     match e with
-      | Assign {exp_assign_lhs = lhs} -> begin
+      | Assign {exp_assign_lhs = lhs;
+        exp_assign_rhs = rhs;
+        } -> begin
           match lhs with
-            | Var {exp_var_name = id} -> Some [id]
+            | Var {exp_var_name = id} -> begin
+                match rhs with
+                  | Var {exp_var_name = rid} ->
+                        Some [(id, [(id,rid)])]
+                  | _ -> Some [(id,[])]
+              end
             |  _ -> begin
                  collect_lhs_ass_vars lhs
                end
@@ -1119,9 +1018,11 @@ let rec get_mut_vars_x e0 =
       | Member b -> Some (get_vars b.exp_member_base)
       | _ -> None
   in
-  let lhs_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_eq_vars = fold_exp e0 collect_lhs_ass_vars (List.concat) [] in
+  let lhs_vars, eqs = List.fold_left (fun (r1,r2) (id, ls) -> (r1@[id], r2@ls)) ([],[]) lhs_eq_vars in
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
-  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) (lhs_vars@bind_vars)
+  let mut_vars = find_close_ids (lhs_vars@bind_vars) eqs in
+  Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars
   (* let mut_vars = helper e0 in *)
   (* Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars *)
 
@@ -1131,10 +1032,15 @@ let rec get_mut_vars e0 =
   Debug.no_1 "get_mut_vars" pr1 pr2
       (fun _ -> get_mut_vars_x e0) e0
 
-let genESpec_x body_opt args ret pos=
+let genESpec_x pname body_opt args0 ret pos=
+  (*keep pointers only*)
+  let args = List.filter (fun p -> match p.param_type with
+    | Named _ -> true
+    | _ -> false
+  ) args0 in
   (*generate one HeapPred for args and one HeapPred for ret*)
   if args = [] && ret = Void then
-    F.mkETrueTrueF (),[]
+    F.mkETrueTrueF (),[],[]
   else
     let mut_vars = match body_opt with
       | Some body_exp -> get_mut_vars body_exp
@@ -1155,7 +1061,7 @@ let genESpec_x body_opt args ret pos=
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;
     }
     in
-    let _ = Debug.info_hprint (add_str "generate unknown predicate for Pre synthesis" !print_hp_decl) hp_pre_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id) hp_pre_decl.hp_name no_pos in
     let hp_post_decl = {
         hp_name = Globals.hppost_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         hp_typed_inst_vars = (List.fold_left (fun r arg ->
@@ -1181,7 +1087,7 @@ let genESpec_x body_opt args ret pos=
         hp_is_pre = false;
         hp_formula = F.mkBase F.HEmp (P.mkTrue pos) top_flow [] pos;}
     in
-    let _ = Debug.info_hprint (add_str "generate unknown predicate for Post Synthesis" !print_hp_decl) hp_post_decl no_pos in
+    let _ = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
     let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
     (*todo: care ref args*)
     let post_eargs0 = List.fold_left (fun r p ->
@@ -1208,41 +1114,63 @@ let genESpec_x body_opt args ret pos=
         F.formula_inf_vars = [(hp_pre_decl.hp_name, Globals.Unprimed); (hp_post_decl.hp_name, Globals.Unprimed)];
         F.formula_inf_continuation = ipre;
         F.formula_inf_pos = pos;
-    }, [hp_pre_decl;hp_post_decl])
+    }, [hp_pre_decl;hp_post_decl], List.map (fun (_,id,ni) -> (id,ni)) hp_pre_decl.hp_typed_inst_vars)
 
-let genESpec body_opt args ret pos=
+let genESpec pname body_opt args ret pos=
   let pr1 = !print_param_list in
   let pr2 = string_of_typ in
-  Debug.no_2 "genESpec" pr1 pr2 (pr_pair !F.print_struc_formula pr_none)
-      (fun _ _ -> genESpec_x body_opt args ret pos) args ret
+  let pr3 = pr_list (pr_pair pr_id  print_arg_kind) in
+  Debug.no_2 "genESpec" pr1 pr2 (pr_triple !F.print_struc_formula pr_none pr3)
+      (fun _ _ -> genESpec_x pname body_opt args ret pos) args ret
 
+let extract_mut_args_x prog proc=
+  let hp_decls = prog.prog_hp_decls in
+  let hpargs = Iformula.struc_formula_collect_pre_hprel proc.proc_static_specs in
+  let args_wi = List.fold_left (fun r (hp,args) ->
+      let hp_decl = look_up_hp_def_raw hp_decls hp in
+      let pr_hp_args_wi = List.combine hp_decl.hp_typed_inst_vars args in
+      r@(List.map (fun ((_,_, info), a) -> (a, info) ) pr_hp_args_wi)
+  ) [] hpargs in
+  List.map (fun p ->
+      try
+        let info = List.assoc p.param_name args_wi in
+        (p.param_name, info)
+      with _ -> (p.param_name,I)
+  ) proc.proc_args
+
+let extract_mut_args prog proc=
+  let pr1 p = p.proc_name in
+  let pr2 = pr_list (pr_pair pr_id print_arg_kind) in
+  Debug.no_1 "extract_mut_args" pr1 pr2
+      (fun _ -> extract_mut_args_x prog proc) proc
 
 let genESpec_wNI body_header body_opt args ret pos=
   let print_gen_spec ss unk_hps=
     let _ = print_endline "\nHeap Predicate Declarations" in
     let _ = List.iter (fun hpdcl -> print_endline (!print_hp_decl hpdcl)) unk_hps in
-    let _ = Debug.info_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
+    let _ = Debug.ninfo_hprint (add_str "\ngen spec:" !F.print_struc_formula) ss no_pos in
     ()
   in
-  let ss, n_hp_dcls =
+  let ss, n_hp_dcls,args_wi =
     match body_header.proc_static_specs with
       | F.EList [] ->
-          let ss, hps = genESpec body_opt args ret pos in
-          let _ = print_gen_spec ss hps in
+          let ss, hps, args_wi = genESpec body_header.proc_mingled_name body_opt args ret pos in
+          (* let _ = print_gen_spec ss hps in *)
           let _ = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in
-          (ss,hps)
+          (ss,hps,args_wi)
       | _ ->
-            let _ = if !Globals.sags then
-              let ss, hps = genESpec body_opt args ret pos in
-              let _ = print_gen_spec ss hps in
-              ()
-            else ()
-            in
-            (body_header.proc_static_specs,[])
+            (* let _ = if !Globals.sags then *)
+            (*   let ss, hps,_ = genESpec body_header.proc_mingled_name body_opt args ret pos in *)
+            (*   let _ = print_gen_spec ss hps in *)
+            (*   () *)
+            (* else () *)
+            (* in *)
+            (body_header.proc_static_specs,[],body_header.proc_args_wi)
   in
   {body_header with
       proc_hp_decls = body_header.proc_hp_decls@n_hp_dcls;
       proc_static_specs = ss;
+      proc_args_wi = args_wi;
   }
 
 let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
@@ -1271,6 +1199,7 @@ let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   proc_constructor = c;
   proc_exceptions = ot;
   proc_args = ags;
+  proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
   proc_return = r;
   (*  proc_important_vars = [];*)
   proc_static_specs = ss;
@@ -1373,10 +1302,6 @@ and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
       (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
       if d.rel_name = name then d else look_up_rel_def_raw rest name
-  | [] -> raise Not_found
-
-and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
 and cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
@@ -1723,7 +1648,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
   if change then fixpt_data_name_x r
   else r
 
-and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  = 
+and incr_fixpt_view iprog (dl:data_decl list) (view_decls: view_decl list)  = 
   let create n = if n="" then [] else [n] in
   match view_decls with
     | [] -> ""
@@ -1731,37 +1656,47 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
       let vl = syn_data_name dl [vd] in
       let vl = fixpt_data_name (vl@vans) in
 	  (* let _ = print_endline "Call update_fixpt from incr_fixpt_view" in *)
-      let _ = update_fixpt vl in
+      let _ = update_fixpt iprog vl in
       (List.hd view_decls).view_data_name
 
-and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  = 
+and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) ->
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_is_prim || v.view_kind = View_EXTN then
+          v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        else if v.view_kind = View_DERV  then
+          match v.view_derv_info with
+            | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
+                  let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+                   v.view_data_name <- orig_vdecl.view_data_name
+            | [] ->
+                  let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
+                   v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else v.view_data_name <- List.hd a) vl
 
-and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
+and update_fixpt (iprog:prog_decl) (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
   let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
+  Debug.no_1 "update_fixpt" pr pr_none (fun _ -> update_fixpt_x iprog vl) vl
 
-and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
+and set_check_fixpt (iprog:prog_decl) (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list_ln !print_data_decl in 
   let pr2 = pr_list_ln !print_view_decl in 
-  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
+  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x iprog data_decls view_decls )
+      data_decls view_decls
 
-and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
+and set_check_fixpt_x iprog (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
   let vl = fixpt_data_name vl in
   (* An Hoa *)
   (* let _ = print_endline "Call update_fixpt from set_check_fixpt_x" in *)
-  update_fixpt vl
+  update_fixpt iprog vl
 
 
 and data_name_of_view (view_decls : view_decl list) (f0 : F.struc_formula) : ident = 
@@ -2642,16 +2577,18 @@ let add_bar_inits prog =
 				let str = F.mkEBase [] [] [] simp None no_pos in
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
+                        let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
+				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
+								b.barrier_shared_vars) in
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
 			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_hp_decls = [];
-			  proc_constructor = false;
-			  proc_args = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
-				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
-								b.barrier_shared_vars);
+                          proc_constructor = false;
+			  proc_args = ags;
+                          proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
 			  proc_return = Void;
 			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
 			  proc_dynamic_specs = F.mkEFalseF ();
@@ -2770,6 +2707,40 @@ let look_up_field_ann prog view_data_name sel_anns=
   let pr3 = pr_list (pr_pair pr_id string_of_int) in
   Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
       (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
+
+
+(************************************************************
+Building the derive graph for view hierarchy based on Iast
+*************************************************************)
+module IdentComp = struct
+  type t = ident
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = ( = )
+end
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
+
+let ex_args f a b = f b a
+
+let ngs_union gs =
+  List.fold_left IGO.union IG.empty gs
+
+let addin_derivegraph_of_views cg der_v : IG.t =
+  let gs = List.map (fun ((orig_v ,_),_) ->  IG.add_edge cg der_v.view_name orig_v) der_v.view_derv_info in 
+  ngs_union gs
+
+let derivegraph_of_views der_views : IG.t =
+  let cg = IG.empty in
+  let pn v = v.view_name in
+  let mns = List.map pn der_views in
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  List.fold_left (fun a b -> ex_args addin_derivegraph_of_views b a) cg der_views
+
 
 let exists_return_x e0=
   let rec helper e=

@@ -1056,14 +1056,15 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
 	   h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1;
 	   h_formula_conjconj_h2 = h2;
-	   h_formula_conjconj_pos = pos})	   	   
+	   h_formula_conjconj_pos = pos})
   | Phase ({h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos}) -> begin
       let o1 = gen_bindings_heap prog h1 unbound_vars vmap in
       let o2 = gen_bindings_heap prog h2 unbound_vars vmap in
       o1 @ o2
-    end
+  end
+  | ThreadNode _ -> failwith "gen_bindings_heap: not support ThreadNode yet"
   | DataNode ({h_formula_data_node = p;
     h_formula_data_name = c;
     h_formula_data_arguments = vs;
@@ -1497,7 +1498,8 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let e2 = gen_heap prog h2 vmap unbound_vars in
       let seq = mkSeq e1 e2 pos in
       seq
-    end
+  end
+  | ThreadNode _ -> failwith "gen_heaps: not support ThreadNode yet"
   | DataNode ({h_formula_data_node = p;
     h_formula_data_name = c;
     h_formula_data_arguments = vs;
@@ -1721,6 +1723,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_data_decl = None; (* the class containing the method *)
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
+    proc_args_wi =  List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
     proc_return = Bool;
     (* proc_static_specs = Iformula.mkEFalseF (); *)
     proc_static_specs = Iformula.mkETrueF ();
@@ -1844,6 +1847,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_data_decl = None;
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
+    proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
     proc_return = Bool;
     proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();

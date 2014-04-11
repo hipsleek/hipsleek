@@ -49,9 +49,22 @@ bool bubble(node xs)
 }
 
 /*
+ gen lemma: 
+self::sll<flted_10_1112,qs_1114,lg_1111>@M&0<n 
+ & 0<flted_15_1021 & n=flted_15_1021+1 
+ & 0<=flted_15_1021 & Anon_1355<Anon_1022 
+ & flted_15_1021=flted_10_1112+1 & self!=null 
+ & Anon_1355<=qs_1114&
+ {FLOW,(24,25)=__norm}[] 
+ <-  self::ll<flted_15_1366>@M&{FLOW,(1,27)=__flow}[]
 
-xs::node<sm_1099,r_1012>@M * r_1012::node<_,q_1102> * q_1102::sll<flted_10_1101,qs_1103,lg_1100>@M
- |-  (exists n_1345: xs::ll<n_1345>).
+ gen lemma: 
+ r_1121::ll<flted_15_1119>@M * self::node<_,r_1121>@M&0<n 
+  & 0<flted_15_1021 & n=flted_15_1021+1 & 0<=flted_15_1021 
+  & flted_15_1021=flted_15_1119+1 & Anon_1120<Anon_1022
+  &{FLOW,(24,25)=__norm}[] 
+  <-  self::sll<flted_10_1621,qs_1624,lg_1618>@M
+  &{FLOW,(24,25)=__norm}[]
 
 
  */

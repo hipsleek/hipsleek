@@ -72,7 +72,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let rselfr = CP.SpecVar (CP.type_of_spec_var rr, self, Unprimed) in
     let cl_rseffr0 = CP.EMapSV.find_equiv_all rr (CP.EMapSV.merge_eset l_emap0 r_emap0) in
     let cl_rseffr = if cl_rseffr0 = [] then [rr] else cl_rseffr0 in
-    let rss = List.map (fun rr -> (rr, rselfr)) cl_rseffr in
+    (* let rss = List.map (fun rr -> (rr, rselfr)) cl_rseffr in *)
     (*LHS: find reachable heap + pure*)
     let lf1a = CF.subst_b lss lhs_b1 in
     let rf1a = CF.subst_b lss rhs_b1 in

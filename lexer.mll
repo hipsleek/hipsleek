@@ -218,11 +218,13 @@ module Make (Token : SleekTokenS)
 	 ("macro",PMACRO);
      ("perm",PERM);
      ("pred", PRED);
+     ("spec", SPEC);
      ("pred_prim", PRED_PRIM);
      ("pred_extn", PRED_EXT);
      ("hip_include", HIP_INCLUDE);
      ("pred_split", PRED_SPLIT);
      ("pred_norm_disj", PRED_NORM_DISJ);
+     ("pred_spec", PRED_SPEC);
      ("print", PRINT);
      ("print_lemmas", PRINT_LEMMAS);
      ("mem", MEM);
@@ -397,6 +399,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
+  | "<#" { TOPAREN }
+  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

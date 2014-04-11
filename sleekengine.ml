@@ -50,8 +50,16 @@ I.data_invs = []; (* F.mkTrue no_pos; *)
 I.data_is_template = false;
 I.data_methods = [] }
 
+let ithrd_def =  {I.data_name = Globals.thrd_name ;
+I.data_fields = [];
+I.data_pos = no_pos;
+I.data_parent_name = "Object";
+I.data_invs = []; (* F.mkTrue no_pos; *)
+I.data_is_template = false;
+I.data_methods = [] }
+
 let iprog = { I.prog_include_decls =[];
-I.prog_data_decls = [iobj_def];
+I.prog_data_decls = [iobj_def;ithrd_def];
 I.prog_global_var_decls = [];
 I.prog_logical_var_decls = [];
 I.prog_enum_decls = [];
@@ -104,7 +112,7 @@ let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_v
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let clear_iprog () =
-  iprog.I.prog_data_decls <- [iobj_def];
+  iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
   iprog.I.prog_hp_decls <- [];
@@ -512,6 +520,7 @@ let process_data_def ddef =
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
+(*should merge with astsimp.convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
   (*annotate field*)
   let idatas = List.map (fun ddef ->
@@ -548,14 +557,22 @@ let convert_data_and_pred_to_cast_x () =
   ) iprog.I.prog_view_decls in
   let tmp_views = (Astsimp.order_views tmp_views) in
   Debug.tinfo_pprint "after order_views" no_pos;
-  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
   let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
-  let cviews = List.map (Astsimp.trans_view iprog []) tmp_views in
+  let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
+  let cviews0 = List.map (Astsimp.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
+  (*derv and spec views*)
+  let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
+  let cviews_derv = List.fold_left (fun norm_views v ->
+              let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
+              (cviews0@[der_view])
+          ) cviews0 tmp_views_derv1 in
+  let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -761,7 +778,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
 
 let run_simplify (iante0 : meta_formula) =
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -777,7 +794,7 @@ let run_simplify (iante0 : meta_formula) =
 
 let run_hull (iante0 : meta_formula) = 
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -794,7 +811,7 @@ let run_hull (iante0 : meta_formula) =
 
 let run_pairwise (iante0 : meta_formula) = 
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante =
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -821,7 +838,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                               ^"\n\n") no_pos in
   let (n_tl,ante) = meta_to_formula iante0 false [] [] in
   (*let ante = Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
-  let ante = Solver.prune_preds !cprog true ante in
+  let ante = Cvutil.prune_preds !cprog true ante in
   let ante = (*important for permissions*)
     if (Perm.allow_perm ()) then
       (*add default full permission to ante;
@@ -1066,7 +1083,7 @@ let shape_infer_pre_process constrs pre_hps post_hps=
       let t = CP.type_of_spec_var sv in
       not ((* is_RelT t || *) is_HpT t )) post_vars1 in
   (*END*)
-  let infer_vars = infer_pre_vars@infer_post_vars in
+  (* let infer_vars = infer_pre_vars@infer_post_vars in *)
   let sel_hps = pre_hp_rels@post_hp_rels in
   (* let sel_hps, sel_post_hps = Sautil.get_pre_post pre_hps post_hps constrs in *)
   (***END PRE/POST***)
@@ -1086,7 +1103,7 @@ let process_shape_infer pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps =
+  let ls_hprel, ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
         Sa2.infer_shapes
@@ -1094,7 +1111,7 @@ let process_shape_infer pre_hps post_hps=
       in
       infer_shape_fnc iprog !cprog "" constrs2
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
-    else [],[]
+    else [],[],[]
   in
   let _ =
     begin
@@ -1524,7 +1541,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps=
+  let ls_hprel, ls_inferred_hps,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)

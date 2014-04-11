@@ -604,7 +604,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
     if (over_v ==[]) then None
     else 
       let exists_var = CP.diff_svl vf ivars in
-      (* let _ = DD.info_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in *)
+      let _ = DD.ninfo_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in
       let qvars0, bare_f = split_ex_quantifiers f in
       let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
       let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
@@ -633,6 +633,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let ps2 = List.filter (fun p -> CP.intersect_svl ivars (CP.fv p) <> []) (CP.list_of_conjs f) in
+        let _ = DD.ninfo_hprint (add_str "ps2: " (pr_list !print_formula)) ps2 pos in
         let neg_f = 
           if List.for_all (fun p -> CP.is_eq_neq_exp p (* && *)
               (* CP.intersect_svl ivars (CP.fv p) <> [] *)
@@ -3169,7 +3170,7 @@ let infer_collect_hp_rel_empty_rhs_x prog (es0:entail_state) mix_rf pos =
       end
     else
       begin
-        let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+        (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
         let _ = DD.ninfo_zprint (lazy (("  es0.CF.es_evars: " ^ (!CP.print_svl  es0.CF.es_evars)))) no_pos in
         (*which pointers are defined and which arguments of data nodes are pointer*)let lhs_b0 = match lhs0 with
           | Base fb -> fb
@@ -3674,7 +3675,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   with Not_found -> None
 
 let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) conseq : list_context option =
-  let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in 
+  let pr1 = pr_list (pr_pair (pr_pair !print_sv Cprinter.string_of_h_formula) !print_svl) in 
   let pr2 = pr_list !CP.print_formula in
   let pr3 = !print_list_context in
   Debug.no_4 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 !CP.print_formula (pr_option pr3)

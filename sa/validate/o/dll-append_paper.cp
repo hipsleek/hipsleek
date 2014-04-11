@@ -3,6 +3,7 @@ HeapPred HP_961(node a, node b).
 HeapPred HP_964(node a, node b).
 HeapPred HP_986(node a, node b).
 HeapPred HP_987(node a, node b).
+HeapPred HP1a(node a).
 
 dll_append:SUCCESS[
 ass [H,G][]:{
@@ -25,8 +26,8 @@ hpdefs [H,G][]:{
  G(x_1010,y_1011) <-> x_1010::node<__DP_HP_962,y_1011>@M * y_1011::node<x_1010,__DP_HP_987>@M
    or x_1010::node<__DP_HP_962,next_15_961>@M * G(next_15_961,y_1011)& next_15_961!=null;
  H(x_1006,y_1007) <-> y_1007::node<__DP_HP_986,__DP_HP_987>@M *
-      x_1006::node<__DP_HP_962,next_15_999>@M * HP_961(next_15_999,y_1007);
- HP_961(next_15_1008,y_1009) <-> next_15_1008::node<__DP_HP_962,next_15_961>@M * HP_961(next_15_961,y_1009)
+      x_1006::node<__DP_HP_962,next_15_999>@M * HP1a(next_15_999);
+ HP1a(next_15_1008) <-> next_15_1008::node<__DP_HP_962,next_15_961>@M * HP1a(next_15_961)
    or emp&next_15_1008=null
  }
 ]

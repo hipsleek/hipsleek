@@ -1,0 +1,26 @@
+data node {
+ int val;
+ node next;
+}.
+
+pred lseg0<p> == self=p
+  or self::node<v,q>*q::lseg0<p>& self!=null
+ inv true.
+
+pred lseg<p,n:int> == self=p & n=0
+  or self::node<v,q>*q::lseg<p,n-1>& self!=null
+ inv n>=0.
+
+
+pred lsegN<p,n:int> == self=p & n=0
+  or self::node<v,q>*q::lsegN<p,n-1>& self!=null
+ inv  n>=0.
+
+/*
+//1. should SUCC
+checkentail x::node<_,q>*q::lseg<null,m> |- x::node<_,p> * p::lseg0<null>.
+*/
+
+
+//2.
+checkentail x::lseg<null,m1> & m1=m & m>0 |- x::node<_,p> * p::lsegN<null, m-1>.

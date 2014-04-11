@@ -533,17 +533,17 @@ let proof_log_to_text_file fname (src_files) =
           |PT_HULL f -> "Hull: "^(string_of_pure_formula f)
           |PT_PAIRWISE f -> "PairWise: "^(string_of_pure_formula f)
       in
-      let helper log =
-        "\n--------------\n"^
-	    (* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *)
-	    (* "\nid: "^log.log_id^ *)
-            "\nProver: "^
-            (if log.log_cache then "CACHED" 
-            else (string_of_prover log.log_prover))^
-            "\nType: "^(string_of_log_type log.log_type)^
-            (* "\nTime: "^(string_of_float(log.log_time))^ *)
-            "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n" 
-      in
+      (* let helper log = *)
+      (*   "\n--------------\n"^ *)
+      (*       (\* List.fold_left (fun a c->a^c) "" log.log_other_properties^ *\) *)
+      (*       (\* "\nid: "^log.log_id^ *\) *)
+      (*       "\nProver: "^ *)
+      (*       (if log.log_cache then "CACHED"  *)
+      (*       else (string_of_prover log.log_prover))^ *)
+      (*       "\nType: "^(string_of_log_type log.log_type)^ *)
+      (*       (\* "\nTime: "^(string_of_float(log.log_time))^ *\) *)
+      (*       "\nResult: "^(string_of_log_res log.log_type log.log_res)^"\n"  *)
+      (* in *)
       (* with *)
       (*            |PR_BOOL b -> string_of_bool b *)
       (*            |PR_FORMULA f -> string_of_pure_formula f)^"\n" in *)
@@ -608,7 +608,7 @@ let wrap_calculate_time exec_func src_file args =
   let tstartlog = Gen.Profiling.get_time () in
   let _ = exec_func args in
   let tstoplog = Gen.Profiling.get_time () in 
-  let period = (tstoplog -. tstartlog) in
+  (* let period = (tstoplog -. tstartlog) in *)
   ()
   (* if (period> 0.7) then *)
   (*   proof_gt5_log_list :=   *)
@@ -669,7 +669,7 @@ let process_proof_logging src_files  =
       let _= proof_log_to_file src_files in
       let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
-      let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+      (* let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in *)
       let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt" in
       (* let _=  *)
       (*   (\* if (!Globals.sleek_logging_txt || !Globals.proof_logging_txt)  *\) *)

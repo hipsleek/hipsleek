@@ -294,6 +294,11 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_annot_arg = ref (fun (c:annot_arg) -> "cpure printer has not been initialized")
+let print_view_arg v= match v with
+  | SVArg sv -> "SVArg " ^ (!print_sv sv)
+  | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
+
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
@@ -7826,6 +7831,36 @@ and has_level_constraint (f: formula) : bool =
       !print_formula string_of_bool
       has_level_constraint_x f
 
+and has_level_constraint_exp (e: exp) : bool =
+  let rec helper e =
+    match e with
+      | Level _ -> true
+      | BagDiff (e1,e2,_)
+      | ListCons(e1,e2,_)
+      | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+      | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) ->
+          let res1 = helper e1 in
+          let res2 = helper e2 in
+          (res1||res2)
+      | TypeCast (_, e1, _) -> helper e1
+      | List (exps,_)
+      | ListAppend (exps,_)
+      | ArrayAt (_,exps,_)
+      | Func (_,exps,_)
+      | Bag (exps,_)
+      | BagUnion (exps,_)
+      | BagIntersect (exps,_) ->
+          let ress = List.map helper exps in
+          (List.exists (fun v -> v) ress)
+      | ListHead (e,_)
+      | ListTail (e,_) 
+      | ListLength (e,_)
+      | ListReverse (e,_) ->
+          helper e
+      | _ -> false
+  in
+  helper e
+
 (* result of xpure with baga and memset/diffset *)
 type xp_res_type = (BagaSV.baga * DisjSetSV.dpart * formula)
 
@@ -9350,6 +9385,19 @@ let strong_drop_rel_formula (f:formula) : formula =
 let drop_rel_formula (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "drop_rel_formula" pr pr drop_rel_formula f
+
+let drop_sel_rel_formula (f:formula) sel_svs : formula =
+  let ps = list_of_conjs f in
+  let ps1 = List.fold_left (fun r p ->
+      match p with
+        | BForm (bf,_) ->
+              (match bf with
+                | (RelForm(rel,_,_),_) ->
+                      if mem_svl rel sel_svs then r else r@[p]
+                | _ -> r@[p])
+  | _ -> r@[p]
+  ) [] ps in
+  conj_of_list ps1 (pos_of_formula f)
 
 let memoise_formula_ho is_complex (f:formula) : 
       (formula * ((spec_var * formula) list) * (spec_var list)) =
@@ -12052,3 +12100,4 @@ let prune_relative_unsat_disj p0 base_p=
   Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
       (fun _ _ -> prune_relative_unsat_disj p0 base_p)
       p0 base_p
+

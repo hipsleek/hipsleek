@@ -16,6 +16,11 @@ type cperm_var = Cpure.spec_var (*permission variable in cformula*)
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:Cpure.exp) -> "cpure printer has not been initialized")
 
+(* ================================= *)
+(* UTILITIES for Permissions*)
+let rev_trans_spec_var v = match v with Cpure.SpecVar (t,v,p)-> (v,p) 
+(* ================================ *)
+
 let string_of_perm_type t =
   match t with
     | Frac -> "Frac"
@@ -108,13 +113,15 @@ module type PERM =
     val mkPermWrite : Cpure.exp -> Cpure.formula
     val mkPermWrite_var : cperm_var -> Cpure.formula
     val float_out_iperm : iperm -> loc -> (iperm * ( ( (ident*primed) * Ipure.formula )list) )
-    val float_out_mix_max_iperm : iperm -> loc -> (iperm * Ipure.formula option)
+    val float_out_min_max_iperm : iperm -> loc -> (iperm * Ipure.formula option)
     val fv_cperm : cperm -> cperm_var list
     val get_cperm : cperm -> Cpure.exp list
     val get_cperm_var : cperm -> cperm_var list
     val subst_var_perm : (cperm_var * cperm_var) -> cperm -> cperm
     val fresh_cperm_var : cperm_var -> cperm_var
     val mkEq_cperm : cperm_var -> cperm_var -> loc -> Cpure.b_formula
+    val rev_trans_perm : cperm -> iperm   (*revert from cperm to iperm*)
+    val get_perm_var_lists : cperm -> cperm -> (cperm_var list) * (cperm_var list) (*get two equal-size lists of varperms*)
    end;;
 
 (*==============================*)
@@ -223,7 +230,7 @@ struct
                 (* (Some nv_perm,ec_ls@et_ls@ea_ls@perm) *)
             | _ -> failwith ("bounded permission is undefined")
 
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -250,7 +257,7 @@ struct
                             | Some f2 -> Some (Ipure.mkAnd f1 f2 no_pos)))
                 ) ec_f [et_f;ea_f] in
                 (Some new_triple,p_f)
-            | _ -> failwith ("float_out_mix_max_iperm: expecting bperm triple")
+            | _ -> failwith ("float_out_min_max_iperm: expecting bperm triple")
 
   let fv_cperm perm : Cpure.spec_var list =
     match perm with
@@ -276,7 +283,33 @@ struct
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
-end;;
+  (*revert from cperm to iperm*)
+  let rev_trans_perm perm =
+    (match perm with
+      | Some e ->
+          (match e with
+            | (Cpure.Bptriple ((c,t,a),p)) ->
+                let nc = Ipure.Var (rev_trans_spec_var c, p) in
+                let nt = Ipure.Var (rev_trans_spec_var t, p) in
+                let na = Ipure.Var (rev_trans_spec_var a, p) in
+                Some (Ipure.Bptriple ((nc,nt,na),p))
+            | _ -> failwith ("rev_trans_perm: expecting Bptriple"))
+      | None -> None)
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some _, None
+      | None, Some _ ->
+          report_error no_pos "[BPERM] get_perm_var_lists : unexpected for bperm"
+      | None, None ->
+          ([],[]))
+
+end;; (*BPERM*)
 
 
 (*=======================================*)
@@ -319,7 +352,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos = match perm with
+  let float_out_min_max_iperm perm pos = match perm with
       | None -> (None, None)
       | Some f ->  match f with
 		    | Ipure.Var _ -> (Some f, None)
@@ -346,7 +379,27 @@ struct
   let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
-end;;
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some _, None
+      | None, Some _ ->
+          report_error no_pos "[DPERM] get_perm_var_lists : unexpected for Dperm"
+      | None, None ->
+          ([],[]))
+end;; (*DPERM*)
 
 (*==============================*)
 (*====fractional permissions====*)
@@ -421,7 +474,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -456,7 +509,31 @@ struct
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
-end;;
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some f1, None ->
+          let f1 = Cpure.get_var f1 in
+          ([f1],[full_perm_var])
+      | None, Some f2 ->
+          let f2 = Cpure.get_var f2 in
+          ([full_perm_var],[f2])
+      | None, None ->
+          ([],[]))
+
+end;; (*FPERM*)
 
 (*==============================*)
 (*=====counting permissions=====*)
@@ -530,7 +607,7 @@ struct
 			    let nv_perm = Ipure.Var (nn_perm,pos) in
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 (Some nv_perm,[(nn_perm,npf_perm)])
-  let float_out_mix_max_iperm perm pos =
+  let float_out_min_max_iperm perm pos =
     match perm with
       | None -> (None, None)
       | Some f -> 
@@ -560,12 +637,54 @@ struct
   let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
-end;;
+  let rev_trans_perm (c : cperm) : iperm =
+    (match c with
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
+            | _ -> failwith ("rev_trans_perm: expecting Var"))
+      | None -> None)
+
+  (*get two equal-size lists of varperms*)
+  let get_perm_var_lists perm1 perm2 =
+    (match perm1, perm2 with
+      | Some _, Some _ ->
+          let ls1 = get_cperm_var perm1 in
+          let ls2 = get_cperm_var perm2 in
+          (ls1,ls2)
+      | Some f1, None ->
+          let f1 = Cpure.get_var f1 in
+          ([f1],[full_perm_var])
+      | None, Some f2 ->
+          let f2 = Cpure.get_var f2 in
+          ([full_perm_var],[f2])
+      | None, None ->
+          ([],[]))
+
+end;; (*CPERM*)
 
 
 (*==============================*)
 (*===dispacher for permissions==*)
 (*==============================*)
+
+(*get two equal-size lists of varperms*)
+let get_perm_var_lists cperm1 cperm2 = 
+  match !perm with
+    | Count -> CPERM.get_perm_var_lists cperm1 cperm2
+	| Dperm -> DPERM.get_perm_var_lists cperm1 cperm2
+	| Bperm -> BPERM.get_perm_var_lists cperm1 cperm2
+    | Frac -> FPERM.get_perm_var_lists cperm1 cperm2
+    | NoPerm -> FPERM.get_perm_var_lists cperm1 cperm2
+
+let rev_trans_perm cperm = 
+  match !perm with
+    | Count -> CPERM.rev_trans_perm cperm
+	| Dperm -> DPERM.rev_trans_perm cperm
+	| Bperm -> BPERM.rev_trans_perm cperm
+    | Frac -> FPERM.rev_trans_perm cperm
+    | NoPerm -> None
+
 let cperm_typ () = 
   match !perm with
     | Count -> CPERM.cperm_typ
@@ -692,12 +811,12 @@ let float_out_iperm () =   match !perm with
     | Frac -> FPERM.float_out_iperm
     | NoPerm -> FPERM.float_out_iperm
 
-let float_out_mix_max_iperm () =   match !perm with
-    | Count -> CPERM.float_out_mix_max_iperm
-	| Dperm -> DPERM.float_out_mix_max_iperm
-	| Bperm -> BPERM.float_out_mix_max_iperm
-    | Frac -> FPERM.float_out_mix_max_iperm
-    | NoPerm -> FPERM.float_out_mix_max_iperm
+let float_out_min_max_iperm () =   match !perm with
+    | Count -> CPERM.float_out_min_max_iperm
+	| Dperm -> DPERM.float_out_min_max_iperm
+	| Bperm -> BPERM.float_out_min_max_iperm
+    | Frac -> FPERM.float_out_min_max_iperm
+    | NoPerm -> FPERM.float_out_min_max_iperm
 
 let fv_cperm p = match !perm with
     | Count -> CPERM.fv_cperm p

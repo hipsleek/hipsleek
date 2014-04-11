@@ -16,7 +16,7 @@ let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let process_cmd_line () =
-        Perm.disable_para();
+    if not (Perm.allow_perm ()) then Perm.disable_para();
 	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
 	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
 	else ()
@@ -355,7 +355,17 @@ let process_source_full source =
     (* let _ =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
     (* let _ = I.set_iprog intermediate_prog in *)
     let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-
+    (* let _ = if !Globals.sa_pure then *)
+    (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
+    (*       if v.Cast.view_kind = Cast.View_NORM then *)
+    (*         (nviews@[v], eviews) *)
+    (*       else if v.Cast.view_kind = Cast.View_EXTN then *)
+    (*         (nviews, eviews@[v]) *)
+    (*       else (nviews, eviews) *)
+    (*   ) ([],[]) cprog.Cast.prog_view_decls in *)
+    (*   Derive.expose_pure_extn tiprog cprog norm_views extn_views *)
+    (* else cprog.Cast.prog_view_decls *)
+    (* in *)
     (* ========= lemma process (normalize, translate, verify) ========= *)
     let _ = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
     (* ========= end - lemma process (normalize, translate, verify) ========= *)
