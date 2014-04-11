@@ -1656,7 +1656,7 @@ Get imm parameters
 
 
 ======================================================================
-#g_list_app.c g_list_con.c g_list_list_insb.c
+#g_list_app.c g_list_con.c g_list_insb.c: FIXED
 
 depend on relational specs of g_list_last
 
