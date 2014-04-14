@@ -4,7 +4,7 @@ data intp {
 
 void main(intp l, intp l2, int h, int h2)
   requires l::intp<v> * l2::intp<v2> & v=v2
-  ensures l::intp<v3> * l2::intp<v4> & (v3=v4 | v3!=v4);
+  ensures l::intp<v3> * l2::intp<v4> & v3=v4;
 {
   if(h == 2) {
     l.val = 0;
