@@ -1507,10 +1507,10 @@ let check_equiv_2f_with_diff_x hvars (constr1: CF.formula * CF.formula) (constr2
     (rvars1, rvars2)
   )
     else ([],[])
-  in  
+  in
 
   let check_back mix_mt f1 f2 res1=
-    let (mt,df11,df12) = mix_mt in 	
+    let (mt,df11,df12) = mix_mt in
     let (res2, mix_mtl2) =  (checkeq_formulas_with_diff_mt hvars rvars f1 f2 [mt@spairs]) in
     (res2&&res1, List.map (fun (mt1,df21,df22) -> (mt1,(df11,df21),(df12,df22))) mix_mtl2)
   in
@@ -1596,14 +1596,15 @@ let rec checkeq_constrs_with_diff_step1 hvars (constrs: (CF.formula * CF.formula
       (fun _ _ -> checkeq_constrs_with_diff_step1_x hvars constrs infile_constrs) constrs infile_constrs
 
 let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list)) =
- 
+
   let count_constr mix_mtls = 
     match mix_mtls with
       | [] -> 0 
       | x::y -> let (_,(d11,d12),(d21,d22)) = x in 
 		CF.no_of_cnts_fml d11+ CF.no_of_cnts_fml d12 + CF.no_of_cnts_fml d21 + CF.no_of_cnts_fml d22		
   in
-  let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs in
+  let infile_constrs1 = List.map (fun (hf,t) -> (CF.elim_exists hf, t)) infile_constrs in
+  let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs1 in
     let rec check_diff_one_constr constr diff_constrs =
       match diff_constrs with
 	| [] -> let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
@@ -1622,15 +1623,19 @@ let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) li
 	  else (mt,xt,mtls_t,x::rt)
 	)
     in
-    if(List.length diff_constrs1 != 0) then  (
-      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr c constrs in ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs1 in
+    if(List.length diff_constrs1 != 0) then
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->
+          let (m,x,mtls,r) = check_diff_one_constr c constrs in
+          ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2
+      )  diff_constrs1 in
       (res,res_list)
-    )
-    else (
+    else
       let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
-      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr e constrs in ((e,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs2 in
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->
+          let (m,x,mtls,r) = check_diff_one_constr e constrs in
+          ((e,x,mtls)::tmp_res,r)
+      ) ([],diff_constrs2)  diff_constrs2 in
       (res,res_list)
-    )
 
 let rec checkeq_constrs_with_diff hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list)=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
@@ -1954,7 +1959,8 @@ let checkeq_defs_with_diff_x hvars svars (defs: CF.hp_rel_def list)
       let (a,b,c) = CF.flatten_hp_rel_def_wo_guard def1 in
       Some ((CF.formula_of_heap b no_pos,c),def2)
     )
-    with Not_found -> if(parent) then report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
+    with Not_found -> if(parent) then
+      report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
       else None
   in
   let modify_mtl d1 d2 mtl hps=
