@@ -51,51 +51,59 @@ int maxf(int i, int j)
 	else return j;
 }
 
-// (4) Change each of the MayLoop below to
-//     either (i) Term[..] or (ii) Loop, so that 
-//     termination or non-termination property for 
-//     Ackermann function is completely proven.
+//(4) Give the correct pre and post condition for the
+//    following method using the ll<n> predicate
+//    The method inserts a new element in the list
 
-int Ack(int m, int n) 
-case {
-  m<0 -> requires Loop 		       // Ans
-         ensures true;
-  m=0 -> requires Term		       // Ans
-         ensures res=n+1;
-  m>0 -> case 
-          { 
-	    n<0 -> requires Loop       // Ans 
-                   ensures true;
-            n>=0 -> requires Term[m,n] // Ans
-                    ensures res>0;
-          }  
-}
-{ 
-	if (m==0) return n+1;
-    	else if (n==0) return Ack(m-1,1);
-  	else return Ack(m-1, Ack(m,n-1));
-}
+data node{int val; node next;}
 
-// (5) Change each of the MayLoop below to
-//     either (i) Term[..] or (ii) Loop, so that 
-//     termination or non-termination property for 
-//     gcd function is completely proven.
+ll<n> == self = null & n = 0
+      or self::node<_,p> * p::ll<n-1>
+inv n >=0;
 
-int gcd(int m, int n)
-case {
- m=n -> requires Term ensures res=m;		// Ans
- m!=n ->
-  case {
-    m <= 0 -> requires Loop ensures true;	// Ans
-    m > 0 -> 
-    case {
-	  n <= 0 -> requires Loop ensures true; // Ans
-	  n > 0 -> requires Term[n+m] ensures res>0; // Ans
-	}
-  }
-}
+node insert(node x, int v)
+requires x::ll<n>	//Ans
+ensures res::ll<n+1>;	//Ans
 {
-   if (m == n) return m;
-   else if (m > n) return gcd(m-n, n);
-   else return gcd(m, n-m);
+node tmp = new node(v,x);
+return tmp;
+}
+
+//(5) Give the correct specifications for the same insert
+//    method using bag of values predicate llB<n,B>
+
+data node{int val; node next;}
+
+llB<n,B> == self = null & n = 0 & B = {}
+      or self::node<v,p> * p::llB<n-1,B1> & B = union(B1,{v})
+inv n >=0;
+
+node insert2(node x, int v)
+requires x::llB<n,B>	//Ans
+ensures res::llB<n+1,union(B,{v})>;	//Ans
+{
+node tmp = new node(v,x);
+return tmp;
+}
+
+//(6) Give the correct specifications for the 
+//    following method using the ll<> and lseg<p> predicates
+//    The method returns the last element in the list
+
+data node{int val; node next;}
+
+ll<> == self = null
+      or self::node<_,p> * p::ll<>
+inv true;
+
+lseg<p> == self = p
+        or self::node<_,q> * q::lseg<p>
+inv true;
+
+node getlast(node x)
+requires x::ll<> & x != null
+ensures res::node<_,null> * x::lseg<res>;
+{
+if(x.next == null) return x;
+else return getlast(x.next);
 }
