@@ -1,0 +1,86 @@
+/* EXAMPLE PROGRAM
+if(h>0) { // should only work when NOT (_high(h) & _low(l))
+  l = h;
+} */
+
+// Axiomatic System
+// - Set of Relations:
+relation low(int x)  == true.                // Low Security Value
+relation high(int x) == true.                // High Security Value
+relation direct_flow(int x, int y) == true.  // Direct Flow from x to y
+                                             // - may come from direct assignment
+                                             // - or from block security value during assignment in block
+relation closure_flow(int x, int y) == true. // Reflexive & Transitive Closure of Direct Flow
+                                             // - used to find insecure flow
+                                             // - insecure flow iff high(x) & low(y)
+
+// - Direct Flow: Allowed Direct Flow
+axiom direct_flow(x,y) & high(x) & high(y) ==> closure_flow(x,y). // high --> high
+axiom direct_flow(x,y) & low(x)  & high(y) ==> closure_flow(x,y). // high --> low (side-effect: y becomes high)
+axiom direct_flow(x,y) & low(x)  & low(y)  ==> closure_flow(x,y). // low  --> low
+
+// - Reflexive & Transitive Closure of Flow
+axiom closure_flow(x,y) & closure_flow(y,z) ==> closure_flow(x,z). // Transitivity
+axiom closure_flow(x,x) ==> true.                  // Reflexivity
+
+// - Examples of Simple Flow
+//   let x__ encodes the Security Level of variable x
+//   let __block encodes the Security Level of the block
+// 1. Code: if(h>0) l = h;
+//    - PASS: high(h__) --> high(l__)
+checkentail
+  h>0 & l=h &
+  high(h__) & high(l__) & high(__block) &
+  direct_flow(__block, l__) & direct_flow(h__, l__)
+    |- closure_flow(__block, l__) & closure_flow(__block, l__).
+
+//    - Fail: high(h__) --> low(l__)
+checkentail
+  h>0 & l=h &
+  high(h__) & low(l__) & high(__block) &
+  direct_flow(__block, l__) & direct_flow(h__, l__)
+    |- closure_flow(__block, l__) & closure_flow(__block, l__).
+
+//    - PASS: low(h__) --> high(l__)
+checkentail
+  h>0 & l=h &
+  low(h__) & high(l__) & low(__block) &
+  direct_flow(__block, l__) & direct_flow(h__, l__)
+    |- closure_flow(__block, l__) & closure_flow(__block, l__).
+
+//    - PASS: low(h__) --> low(l__)
+checkentail
+  h>0 & l=h &
+  low(h__) & low(l__) & low(__block) &
+  direct_flow(__block, l__) & direct_flow(h__, l__)
+    |- closure_flow(__block, l__) & closure_flow(__block, l__).
+
+
+// 2. Code: if(h>0) l = 1;
+//    - PASS: high(h__) --> high(l__)
+checkentail
+  h>0 & l=1 &
+  high(h__) & high(l__) & high(__block) &
+  direct_flow(__block, l__)
+    |- closure_flow(__block, l__).
+
+//    - Fail: high(h__) --> low(l__)
+checkentail
+  h>0 & l=1 &
+  high(h__) & low(l__) & high(__block) &
+  direct_flow(__block, l__)
+    |- closure_flow(__block, l__).
+
+//    - PASS: low(h__) --> high(l__)
+checkentail
+  h>0 & l=1 &
+  low(h__) & high(l__) & low(__block) &
+  direct_flow(__block, l__)
+    |- closure_flow(__block, l__).
+
+//    - PASS: low(h__) --> low(l__)
+checkentail
+  h>0 & l=1 &
+  low(h__) & low(l__) & low(__block) &
+  direct_flow(__block, l__)
+    |- closure_flow(__block, l__).
