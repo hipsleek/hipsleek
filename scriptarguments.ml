@@ -461,6 +461,7 @@ let common_arguments = [
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
     Tlutils.set_solver), "Choose LP solver");
+  ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
 
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");

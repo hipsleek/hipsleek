@@ -747,6 +747,22 @@ let rec partition_by_assoc eq ls =
   | ((k, _) as x)::xs -> 
     let k_xs, nk_xs = List.partition (fun (ks, _) -> eq k ks) xs in
     (x::k_xs)::(partition_by_assoc eq nk_xs)
+    
+let rec partition_by_assoc_to_pair eq ls =
+  match ls with
+  | [] -> []
+  | ((k, v) as x)::xs -> 
+    let k_xs, nk_xs = List.partition (fun (ks, _) -> eq k ks) xs in
+    (k, v::(snd (List.split k_xs)))::(partition_by_assoc_to_pair eq nk_xs)
+    
+let eq_templ t1 t2 = eq_spec_var t1.templ_id t2.templ_id
+
+let rec combine_ls xs =
+  match xs with
+  | [] -> []
+  | x::xs -> 
+    let rs = combine_ls xs in
+    List.concat (List.map (fun e -> List.map (fun r -> e @ r) rs) x)
 
 let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
   let unk_subst = List.map (fun v -> 

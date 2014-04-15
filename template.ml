@@ -255,11 +255,15 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
-    let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in ()
+    let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
     (* if !Globals.templ_term_inf then                                                         *)
     (*   let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in  *)
     (*   infer_lex_template_init prog inf_templs templ_unks templ_assumes                      *)
     (* else ()                                                                                 *)
+    if !Globals.templ_piecewise then
+      let _ = print_endline ("Continue with piecewise function inference ...") in
+      Piecewise.infer_piecewise_main inf_templs templ_unks templ_assumes
+    else ()
   | Sat model ->
     let templ_decls = prog.C.prog_templ_decls in
     let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in

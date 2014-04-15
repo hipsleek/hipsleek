@@ -1109,6 +1109,7 @@ let phase_infer_ind = ref false
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
+let templ_piecewise = ref false
   
 (* Options for slicing *)
 let en_slc_ps = ref false

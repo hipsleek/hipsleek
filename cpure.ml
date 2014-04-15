@@ -1229,6 +1229,12 @@ and is_Gt_formula (f: formula) =
   match f with
   | BForm ((Gt _, _), _) -> true
   | _ -> false
+
+and is_strict_formula (f: formula) =
+  match f with
+  | BForm ((Gt _, _), _)
+  | BForm ((Lt _, _), _) -> true
+  | _ -> false
         
 and isConstBTrue (p:b_formula) =
   let (pf,_) = p in
@@ -1900,6 +1906,19 @@ and mkTemplate id (args: exp list) pos =
   let t_typ = mkFuncT (List.map (fun e -> if is_float_exp e then Float else Int) args) Int in
   let t = {
     templ_id = SpecVar(t_typ, id, Unprimed);
+    templ_args = args;
+    templ_unks = t_unks;
+    templ_body = None;
+    templ_pos = pos; } in 
+  { t with templ_body = Some (exp_of_template t); }
+  
+and mkTemplate_sv sv (args: exp list) pos = 
+  let id = name_of_spec_var sv in
+  let mkUnk i pos = mkVar (SpecVar (Int, id ^ "_" ^ (string_of_int i), Unprimed)) pos in
+  let t_unks = List.fold_left (fun (a, i) _ -> a @ [mkUnk i pos], i+1) ([], 1) args in 
+  let t_unks = (mkUnk 0 pos)::(fst t_unks) in
+  let t = {
+    templ_id = sv;
     templ_args = args;
     templ_unks = t_unks;
     templ_body = None;

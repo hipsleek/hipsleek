@@ -7,7 +7,7 @@ pll<n, s, r> ==
   self::node<v, p> * p::pll<n1, s1, r1> & v >= 0 
 		& n = n1 + 1 & s = s1 + v
 		//& (v <= 0 & r = 1 + r1 | v = 1 & r = 1 + r1 | v > 1 & r = 2*v + r1 - 1)
-		& (v <= 1 & r = 1 + r1 | v > 1 & r = 2*v + r1)
+		& (v <= 1 & r = 1 + r1 | v > 1 & r = 2*v + r1 - 1)
 	inv n >= 0 & s >= 0 & r >= 0;
 
 node s2l (node x)
