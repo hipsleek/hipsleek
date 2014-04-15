@@ -818,6 +818,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
             end
   end
 
+let simplify_ops pr_weak pr_strong (pe : formula) : formula =
+  let pf = !print_pure in
+  Debug.no_1 "Omega.simplify_ops" pf pf 
+  (fun _ -> simplify_ops pr_weak pr_strong pe) pe
+
 let simplify (pe : formula) : formula =
   let pr_w, pr_s = no_drop_ops in
   (* simplify_ops pr_w pr_s pe *)

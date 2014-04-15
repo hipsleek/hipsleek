@@ -250,26 +250,42 @@ let solve_templ_assume _ =
   let unks = remove_dups (List.concat (List.map fv constrs)) in
   let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
   templ_assumes, templ_unks, res
-
-let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
+  
+let collect_and_solve_templ_assumes_common prog (inf_templs: ident list) =
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
-    let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in
-    (* if !Globals.templ_term_inf then                                                         *)
-    (*   let _ = print_endline ("Trying to infer lexicographic termination arguments ...") in  *)
-    (*   infer_lex_template_init prog inf_templs templ_unks templ_assumes                      *)
-    (* else ()                                                                                 *)
-    if !Globals.templ_piecewise then
-      let _ = print_endline ("Continue with piecewise function inference ...") in
-      Piecewise.infer_piecewise_main inf_templs templ_unks templ_assumes
-    else ()
+    let _ = print_endline ("TEMPLATE INFERENCE: Unsat.") in 
+    res, templ_assumes, templ_unks
   | Sat model ->
+    (* let _ = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in *)
+    (* let _ = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in         *)
     let templ_decls = prog.C.prog_templ_decls in
     let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
     print_endline "**** TEMPLATE INFERENCE RESULT ****";
-    print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls)
-  | _ -> (* print_endline ("TEMPLATE INFERENCE: No result.") *) ()
+    print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls);
+    res, templ_assumes, templ_unks
+  | _ -> 
+    (* print_endline ("TEMPLATE INFERENCE: No result.") *) 
+    res, templ_assumes, templ_unks
+
+let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
+  let res, templ_assumes, _ = collect_and_solve_templ_assumes_common prog inf_templs in
+  match res with
+  | Unsat -> 
+    if !Globals.templ_piecewise then
+      let _ = print_endline ("\nContinue with piecewise function inference ...") in
+      let ptempl_assumes, inf_ptempls, ptempl_defs = 
+        Piecewise.infer_piecewise_main prog templ_assumes in
+      let estate = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+      let estate = { estate with CF.es_infer_vars_templ = inf_ptempls; } in
+      let es = List.fold_left (fun es (ante, cons) -> 
+        let nes = collect_templ_assume_init es (MCP.mix_of_pure ante) cons no_pos in
+        match nes with | Some es -> es | None -> es) estate ptempl_assumes in
+      let prog = { prog with C.prog_templ_decls = prog.C.prog_templ_decls @ ptempl_defs } in
+      let _ = collect_and_solve_templ_assumes_common prog (List.map name_of_spec_var inf_ptempls) in ()
+    else ()
+  | _ -> ()
 
 
 

@@ -12,7 +12,10 @@ let subset = Gen.BList.subset_eq eq_spec_var
 let intersect = Gen.BList.intersect_eq eq_spec_var
 let overlap = Gen.BList.overlap_eq eq_spec_var
 
-let is_sat f = Tpdispatcher.is_sat_sub_no 0 f (ref 0) 
+let is_sat f = 
+  (* Tpdispatcher.is_sat_sub_no 0 f (ref 0)  *)
+  let (pr_weak, pr_strong) = drop_complex_ops in
+  Omega.is_sat_ops pr_weak pr_strong f ""
 
 (***********************************)
 (* PREPROCESSING FOR PURE FORMULAE *)
@@ -885,4 +888,13 @@ type templ_assume = {
 
 (* Stack of template assumption per scc *)
 let templ_assume_scc_stk: templ_assume Gen.stack = new Gen.stack
+
+let pr_templ_assume ta = 
+  Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)
+  
+let pr_formula = Cprinter.string_of_pure_formula
+
+let pr_exp = Cprinter.string_of_formula_exp
+
+let pr_spec_var = Cprinter.string_of_spec_var
 

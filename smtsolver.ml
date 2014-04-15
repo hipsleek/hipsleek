@@ -1046,7 +1046,9 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     res
 
 (*let default_is_sat_timeout = 2.0*)
-let is_sat_ops pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+let is_sat_ops pr_weak pr_strong f sat_no = 
+  smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
+
 (* see imply *)
 let is_sat f sat_no =
   let (pr_w,pr_s) = CP.drop_complex_ops in
