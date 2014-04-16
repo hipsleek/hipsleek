@@ -5,6 +5,10 @@ echo "======= thrd1.slk ======"
 diff test-cases/thrd1.res test-cases/thrd1.n
 echo "======= thrd2.slk ======"
 diff test-cases/thrd2.res test-cases/thrd2.n
+echo "======= thrd-liveness.slk ======"
+diff test-cases/thrd-liveness.slk.res test-cases/thrd-liveness.slk.n
+echo "======= thrd-liveness.ss ======"
+diff test-cases/thrd-liveness.ss.res test-cases/thrd-liveness.ss.n
 
 #================HIP==========================
 #================HIP==========================
@@ -12,6 +16,8 @@ echo "======= multi-join1.ss  ======"
 diff test-cases/multi-join1.res test-cases/multi-join1.n
 echo "======= multi-join2.ss  ======"
 diff test-cases/multi-join2.res test-cases/multi-join2.n
+echo "======= multi-join3.ss  ======"
+diff test-cases/multi-join3.res test-cases/multi-join3.n
 echo "======= no-deadlock-nonlexical2.ss ======"
 diff test-cases/no-deadlock-nonlexical2.res test-cases/no-deadlock-nonlexical2.n
 echo "======= point.ss  ======"

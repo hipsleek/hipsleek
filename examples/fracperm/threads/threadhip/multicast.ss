@@ -61,7 +61,6 @@ void main()
   init[LOCK](l,p,M); //initialize l with invariant LOCK and a list of args consisting of p and M
   release(l);
   //create a pool of threads
-  dprint;
   threadNode tn = createThreads(l,p,M);
   // wait for all threads to finish
   joinThreads(tn,l,p,M);
@@ -102,7 +101,7 @@ threadNode createhelper(lock l, PACKET p, int n, int M)
 //create a thread pool with M threads
 // sharing read accesses to the lock l.
 threadNode createThreads(lock l, PACKET p, int M)
-  requires l::LOCK<p,M> & M>0 //& [waitlevel<l.mu # l notin LS]
+  requires l::LOCK<p,M> & M>0 & [waitlevel<l.mu # l notin LS]
   ensures res::threadPool<l,M,M> & LS'=LS; //'
 {
   return createhelper(l,p,M,M);
@@ -128,7 +127,7 @@ void joinhelper(threadNode tn, lock l, PACKET p, int n, int M)
 
 // Join all threads in the thread pool
 void joinThreads(threadNode tn, lock l, PACKET p, int M)
-  requires tn::threadPool<l,M,M> & M>0 //& [waitlevel<l.mu # l notin LS]
+  requires tn::threadPool<l,M,M> & M>0 & [waitlevel<l.mu # l notin LS]
   ensures true  & LS'=LS; //'
 {
   joinhelper(tn,l,p,M,M);

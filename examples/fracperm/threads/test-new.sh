@@ -5,14 +5,21 @@ echo "======= thrd1.slk ======"
 ../../../sleek --en-para --en-thrd-resource -tp redlog thrd1.slk | grep Entail > test-cases/thrd1.n
 echo "======= thrd2.slk ======"
 ../../../sleek --en-para --en-thrd-resource -tp redlog thrd2.slk | grep Entail > test-cases/thrd2.n
+echo "======= thrd-liveness.slk ======"
+../../../sleek --en-para --en-thrd-resource -tp parahip thrd-liveness.slk | grep Entail > test-cases/thrd-liveness.slk.n
 
 #================HIP==========================
 #================HIP==========================
+echo "======= thrd-liveness.ss ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer thrd-liveness.ss | grep -E 'Proc|assert:' > test-cases/thrd-liveness.ss.n
 echo "======= multi-join1.ss  ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.n
 
 echo "======= multi-join2.ss  ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.n
+
+echo "======= multi-join3.ss  ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join3.ss | grep -E 'Proc|assert:' > test-cases/multi-join3.n
 
 echo "======= no-deadlock-nonlexical2.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/no-deadlock-nonlexical2.ss | grep -E 'Proc|assert:' >  test-cases/no-deadlock-nonlexical2.n
