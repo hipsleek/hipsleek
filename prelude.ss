@@ -291,6 +291,11 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
+//Currently, model dead(t) predicate as a relation.
+//However, as --en-para do not use z3, we have to
+//write our own solver to discharge proof of dead(t)
+relation dead(thrd t).
+
 //thread object, carrying resources
 data thrd{
 }

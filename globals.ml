@@ -645,7 +645,7 @@ let lsmu_typ = BagT (Int)
 
 let thrd_name = "thrd"
 let thrd_typ = Named "thrd"
-
+let thrd_dead_name = "dead"
 let silence_output = ref false
 
 (*precluded files*)

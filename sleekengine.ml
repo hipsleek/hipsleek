@@ -58,6 +58,13 @@ I.data_invs = []; (* F.mkTrue no_pos; *)
 I.data_is_template = false;
 I.data_methods = [] }
 
+(* relation dead(thrd t) *)
+let rel_dead_def_id = (thrd_typ,"t")
+let rel_dead_def = {
+    I.rel_name = "dead";
+    I.rel_typed_vars = [rel_dead_def_id];
+    I.rel_formula = IP.mkTrue no_pos;}
+
 let iprog = { I.prog_include_decls =[];
 I.prog_data_decls = [iobj_def;ithrd_def];
 I.prog_global_var_decls = [];
@@ -65,7 +72,7 @@ I.prog_logical_var_decls = [];
 I.prog_enum_decls = [];
 I.prog_view_decls = [];
 I.prog_func_decls = [];
-I.prog_rel_decls = [];
+I.prog_rel_decls = [rel_dead_def];
 I.prog_rel_ids = [];
 I.prog_hp_decls = [];
 I.prog_hp_ids = [];
@@ -114,7 +121,7 @@ let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
-  iprog.I.prog_rel_decls <- [];
+  iprog.I.prog_rel_decls <- [rel_dead_def];
   iprog.I.prog_hp_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
@@ -626,6 +633,9 @@ let perform_second_parsing_stage () =
   (*annotate field*)
   let _ = I.annotate_field_pure_ext iprog in
   let cddefs = List.map (Astsimp.trans_data iprog) iprog.I.prog_data_decls in
+  let crel_dead_def = Astsimp.trans_rel iprog rel_dead_def in
+  !cprog.Cast.prog_rel_decls <- (crel_dead_def::!cprog.Cast.prog_rel_decls);
+  Smtsolver.add_relation crel_dead_def.Cast.rel_name crel_dead_def.Cast.rel_vars crel_dead_def.Cast.rel_formula;
   !cprog.Cast.prog_data_decls <- cddefs
 
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
