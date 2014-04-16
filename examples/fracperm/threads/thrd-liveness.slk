@@ -1,0 +1,12 @@
+
+//VALID
+checkentail dead(t) |- dead(t).
+
+//FAIL
+checkentail dead(t1) |- dead(t2).
+
+//VALID
+checkentail dead(t1) & t1=t2 & t=0.5 & S={} |- dead(t2).
+
+//VALID
+checkentail dead(t1) & dead(t2) |- dead(t2).

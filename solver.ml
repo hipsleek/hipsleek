@@ -652,9 +652,13 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	    let m2 = helper h2 in
 	    let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	    {mem_formula_mset = m;}
-      | ThreadNode _ ->
+      | ThreadNode {h_formula_thread_node = p;} ->
           (* cannot decide just based on the resource, hence empty *)
-          {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	      let new_mset = 
+	        if List.mem p evars then CP.DisjSetSV.mkEmpty
+	        else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
+          in
+          {mem_formula_mset = new_mset;}
       | DataNode ({h_formula_data_node = p;
 	h_formula_data_perm = perm;
 	h_formula_data_pos = pos}) ->
@@ -758,7 +762,12 @@ and h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	      let m1 = helper_simpl h1  in
 	      let m2 = helper_simpl h2 in
 	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
-	| ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+    | ThreadNode {h_formula_thread_node = p;} ->
+	    let new_mset = 
+	      if List.mem p evars then CP.DisjSetSV.mkEmpty
+	      else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
+        in
+        {mem_formula_mset = new_mset;}
 	| DataNode ({h_formula_data_node = p;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* if List.mem p evars || perm<> None then *)
@@ -1614,10 +1623,21 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                       in
                       MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv () f) no_pos)
               )
-      | ThreadNode {CF.h_formula_thread_resource = rsr}  ->
-          (*Thread resource may be used for xpure*)
-          let mf,_ =  xpure_mem_enum prog rsr in
-          mf
+      | ThreadNode {CF.h_formula_thread_node = p;
+                    CF.h_formula_thread_resource = rsr}  ->
+            let i = fresh_int2 () in
+            let p_mf =
+              if not (Perm.allow_perm ()) then
+                let eq_i = CP.mkEqVarInt p i no_pos in
+	            MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) eq_i
+              else
+                (*WITH PERMISSION*)
+                let non_null = CP.mkNeqNull p no_pos in
+                MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) non_null
+            in
+            (*Thread resource may be used for xpure*)
+            let mf,_ =  xpure_mem_enum prog rsr in
+            CF.add_mix_formula_to_mix_formula mf p_mf
       | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
 	h_formula_view_arguments = vs;
@@ -4555,6 +4575,65 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (ivars 
 (*   in *)
 (*   helper f0 his *)
 
+
+(**************************************************************)
+(* Check thread consistency (t-consistency)                   *)
+(* Neccesary for soundness of frame rule and par rule         *)
+(**************************************************************)
+
+(*
+  A formula is t-consistent if for every thread t,
+  t::thrd<# phi #> and dead(t) do not co-exist in the formula.
+*)
+
+(*
+  sv is a pointer to a thread node
+  We only need to check whether dead(sv) exists
+
+  return a list of thread ids that could cause t-inconsistency
+*)
+and check_thread_inconsistent_formula_x (f:formula) =
+  let hfv = (CF.fv_heap_of f) in
+  let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = Globals.thrd_typ) hfv in
+  if (bfv==[]) then []
+  else
+    let h, p, ft, t,a = CF.split_components f in
+    let rels = MCP.get_list_rel_args_mf p in
+    let dead_rels = List.filter (fun (v,vs) -> (CP.name_of_spec_var v) = Globals.thrd_dead_name) rels in
+    let dead_tids = List.map (fun (_,vs) -> vs) dead_rels in
+    let dead_tids = List.concat dead_tids in
+    let dead_tids = CP.remove_dups_svl (List.concat (List.map (fun tid -> MCP.find_closure_mix_formula tid p) dead_tids)) in
+    let res = Gen.BList.intersect_eq CP.eq_spec_var dead_tids bfv in
+    res
+
+and check_thread_inconsistent_formula (f:formula) =
+  Debug.no_1 "check_thread_inconsistent_formula" Cprinter.string_of_formula Cprinter.string_of_spec_var_list check_thread_inconsistent_formula_x f
+
+and check_thread_inconsistency_context prog ctx pos =
+  let rec helper ctx = match ctx with
+  | OCtx (c1, c2) ->
+      let rs1,prf1 = helper c1 in
+      let rs2,prf2 = helper c2 in
+      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx (CF.struc_formula_of_heap HTrue pos) [prf1;prf2]))
+  | Ctx es ->
+      let f = es.es_formula in
+      let vars = check_thread_inconsistent_formula f in
+      if vars!=[] then
+        (* if co-exist *)
+        let err_msg = "Thrd-inconsistency detected : " ^ (Cprinter.string_of_spec_var_list vars) in
+        let fe = mk_failure_may err_msg "Thrd-inconsistent state" in
+        (CF.mkFailCtx_in (Basic_Reason
+                            ({fc_message =err_msg;
+                              fc_current_lhs = es;
+                              fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
+                              fc_prior_steps = es.es_prior_steps;
+                              fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
+                              fc_failure_pts =[];}, fe)), Failure)
+      else
+        (* if NOT co-exist *)
+        (SuccCtx [ctx] ,Unknown)
+  in helper ctx
+
 (**************************************************************)
 (* Check barrier consistency (db-consistency)                 *)
 (* Check is done on combined states (after normalize_w_coer)  *)
@@ -5444,7 +5523,18 @@ and compose_thread_post_condition prog es new_es_f post res2 pos =
         in
         (match res with
           | Some res -> res
-          | None -> (SuccCtx [rs_norm] ,TrueConseq))
+          | None ->
+              (*********CHECK t-consistency***********)
+              let res2 =
+                if (!Globals.allow_threads_as_resource) then
+                  let res,prf = check_thread_inconsistency_context prog rs_norm pos in
+                  if (isFailCtx res) then Some (res,prf)
+                  else None
+                else None
+              in
+              (match res2 with
+                | Some res -> res
+                | None ->(SuccCtx [rs_norm] ,TrueConseq)))
     end
 
 
@@ -5883,6 +5973,19 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               match res with
                                                 | Some res -> res
                                                 | None ->
+                                                    (*********CHECK t-consistency of rs4>>>***********)
+                                                    let res =
+                                                      if (!Globals.allow_threads_as_resource) then
+                                                        let res,prf = check_thread_inconsistency_context prog rs4 pos in
+                                                        if (isFailCtx res) then Some (res,prf)
+                                                        else None
+                                                      else None
+                                                    in
+                                                    match res with
+                                                    | Some res -> res
+                                                    | None ->
+                                                        (*********<<< t-consistency PASSED ***********)
+
                                                       (****************************************)
                                                       (*l2: debugging*)
                                                       (* DD.info_zprint  (lazy  ("  before consume post rs: " ^ (Cprinter.string_of_context rs))) pos; *)
