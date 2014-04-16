@@ -5226,6 +5226,32 @@ and count_octx x = match x with
   id : thread id / thread node
 
   RETURN:
+  true, if there is dead(id)
+  false, otherwise
+
+  Note: only used with threads as resource
+*)
+and find_dead_thread_x es_f id =
+  if (!Globals.allow_threads_as_resource) then
+    (*TO CHECK: asssume no disjuntive form in f*)
+    let h, p, ft, t,a = CF.split_components es_f in (*pickup pure constraints and threads*)
+    let ids = MCP.find_closure_mix_formula id p in
+    let rels = MCP.get_list_rel_args_mf p in
+    let rels = List.filter (fun (v,vs) -> (CP.name_of_spec_var v) = Globals.thrd_dead_name) rels
+    in
+    let rels = List.map (fun (_,vs) -> Gen.BList.intersect_eq CP.eq_spec_var vs ids) rels in
+    if (rels != []) then true else false
+  else false
+
+and find_dead_thread es_f id =
+  Debug.no_2 "find_dead_thread" Cprinter.string_of_formula Cprinter.string_of_spec_var string_of_bool find_dead_thread_x es_f id
+
+
+(*
+  es_f : entail state formula
+  id : thread id / thread node
+
+  RETURN:
   (delayed formula, resource, AND-conj, new_es) option
   Ctx option
 *)
@@ -5304,7 +5330,7 @@ and find_thread_delayed_resource es es_f id pos =
   base : resource/post condition of the thread tid
   res2 : AND-conj if not(!Globals.allow_threads_as_resource)
 *)
-and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
+and delayed_lockset_checking prog es new_es_f delayed_f pos =
   let evars = CF.get_exists_context (CF.Ctx es) in
   let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
                               ^ "\n### es = " ^ (Cprinter.string_of_estate es)
@@ -5456,14 +5482,25 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                     | Some id ->
                         let res,ctx_option = find_thread_delayed_resource es es.CF.es_formula id pos in
                         (match res, ctx_option with
-                          | _ , Some ctx -> ctx (*often error ctx*)
+                          | _ , Some ctx ->
+                              if (find_dead_thread es.CF.es_formula id) then
+                                (*if dead(id) then no-op*)
+                                (SuccCtx [ctx11],JoinDeadThread)
+                              else
+                                ctx (*often error ctx*)
                           | Some (delayed_f,post,res2,new_es_f), _ ->
+                              let post = if (!Globals.allow_threads_as_resource) then
+                                  (* Add dead(tid) after join *)
+                                  let dead_pred = CP.mkRel CP.mkDeadThrdVar [(CP.Var (id,no_pos))] no_pos in
+                                  add_pure_formula_to_formula dead_pred post
+                                else post
+                              in
                               if (CP.isConstTrue delayed_f) then
                                 (*if delayed_f is trivial -> no need to check*)
                                 let _ = Debug.devel_pprint ("Delayed lockset constraints trivially satisfiable\n " ^ "\n") pos in
                                 compose_thread_post_condition prog es new_es_f post res2 pos
                               else
-                                let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f post res2 pos in
+                                let rs,prf = delayed_lockset_checking prog es new_es_f delayed_f pos in
                                 (if (CF.isFailCtx rs) then
                                       (*FAIL to satisfy the delayed constraints*)
                                       (*TO CHECK: become FALSE, which may not good enough*)

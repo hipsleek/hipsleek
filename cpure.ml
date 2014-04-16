@@ -314,6 +314,8 @@ and isConstFalse (p:formula) =
     | AndList b -> exists_l_snd isConstFalse b
     | _ -> false
 
+and mkDeadThrdVar = SpecVar (Globals.thrd_typ, Globals.thrd_dead_name, Unprimed)
+
 and mkAnd_dumb f1 f2 pos = 
   if (isConstFalse f1) then f1
   else if (isConstTrue f1) then f2

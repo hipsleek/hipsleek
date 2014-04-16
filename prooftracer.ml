@@ -58,6 +58,7 @@ type proof =
   | PEEx of eex_step
   | Search of proof list
   | ClassicSepLogic of classic_seplogic_step
+  | JoinDeadThread
   | Unknown 
 
 and ex_step = { ex_step_ante : CF.context;

@@ -2907,3 +2907,5 @@ let check_pointer_dis_sat mf = match mf with
 	| OnePF f -> 
 		let r,b = check_pointer_dis_sat f in
 		b, OnePF r
+
+let get_list_rel_args_mf mf =  CP.get_list_rel_args (pure_of_mix mf)
