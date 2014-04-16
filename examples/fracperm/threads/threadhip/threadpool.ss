@@ -66,6 +66,7 @@ void joinhelper(item tp, cell x, int n, int M)
     item node = tp.next;
     joinhelper(node,x,n-1,M);
     thrd t = tp.t;
+    dprint;
     join(t);
     destroyItem(tp);
   }

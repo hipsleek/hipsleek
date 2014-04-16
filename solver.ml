@@ -4593,11 +4593,22 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (ivars 
   return a list of thread ids that could cause t-inconsistency
 *)
 and check_thread_inconsistent_formula_x (f:formula) =
-  let hfv = (CF.fv_heap_of f) in
-  let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = Globals.thrd_typ) hfv in
+  let h, p, ft, t,a = CF.split_components f in
+  let heaps = split_star_conjunctions h in
+  let heaps = List.filter (fun h ->
+    match h with
+    | HEmp
+    | HFalse
+    | HTrue -> false
+    | _ -> true) heaps
+  in
+  let thread_nodes = List.filter (fun h ->
+    let name = CF.get_node_name h in
+    if (name=Globals.thrd_name) then true else false) heaps
+  in
+  let bfv = List.map get_node_var thread_nodes in
   if (bfv==[]) then []
   else
-    let h, p, ft, t,a = CF.split_components f in
     let rels = MCP.get_list_rel_args_mf p in
     let dead_rels = List.filter (fun (v,vs) -> (CP.name_of_spec_var v) = Globals.thrd_dead_name) rels in
     let dead_tids = List.map (fun (_,vs) -> vs) dead_rels in
