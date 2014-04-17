@@ -26,6 +26,8 @@ echo "======= frac-cell-list.ss  ======"
 diff test-cases/frac-cell-list.res test-cases/frac-cell-list.n
 echo "======= threadpool.ss ======"
 diff test-cases/threadpool.res test-cases/threadpool.n
+echo "======= deadpool.ss ======"
+diff test-cases/deadpool.res test-cases/deadpool.n
 echo "======= multicast.ss ======"
 diff test-cases/multicast.res test-cases/multicast.n
 

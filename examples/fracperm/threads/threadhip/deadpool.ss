@@ -18,6 +18,11 @@ threadPool<x,n,M> == self=null & n=0 & M>0
   or self::item<t,p> * p::threadPool<x,n-1,M> * t::thrd<# x::cell(1/M)<_> & true #>
   inv n>=0 & M>0;
 
+/* A list of threads, i.e. a thread pool */
+deadPool<n> == self=null & n=0
+  or self::item<t,p> * p::deadPool<n-1> & dead(t)
+  inv n>=0;
+
 //permission splitting. Allow f2=0, if any.
 lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
 
@@ -63,8 +68,8 @@ item forkThreads(cell x, int n)
 
 void joinhelper(item tp, cell x, int n, int M)
   requires tp::threadPool<x,n,M> & M>=n & n>=0
-  ensures x::cell(n/M)<_> & n>0
-     or emp & n=0;
+  ensures x::cell(n/M)<_> * tp::deadPool<n> & n>0
+     or tp::deadPool<n> & n=0;
 {
   if (tp==null){return;}
   else{
@@ -72,7 +77,6 @@ void joinhelper(item tp, cell x, int n, int M)
     joinhelper(node,x,n-1,M);
     thrd t = tp.t;
     join(t);
-    destroyItem(tp);
   }
 }
 
@@ -81,7 +85,7 @@ void joinhelper(item tp, cell x, int n, int M)
 // and get back the full ownership of x.
 void joinThreads(item tp, cell x, int n)
   requires tp::threadPool<x,n,n> & n>0
-  ensures x::cell<_>;
+  ensures x::cell<_> * tp::deadPool<n>;
 {
   joinhelper(tp,x,n,n);
 }
@@ -93,6 +97,18 @@ void destroyCell(cell x)
 void destroyItem(item x)
   requires x::item<_,_>
   ensures emp;
+
+void destroyDeadPool(item tp)
+  requires tp::deadPool<n>
+  ensures emp;
+{
+  if (tp ==null){
+    return;
+  }else{
+    destroyDeadPool(tp.next);
+    destroyItem(tp);
+  }
+}
 
 //receive certain input
 int input()
@@ -121,4 +137,6 @@ void main()
   joinThreads(tp,x,n);
 
   destroyCell(x);
+
+  destroyDeadPool(tp);
 }

@@ -1948,6 +1948,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
             );
             not (is_deref_var)
         ) ffv in
+        let ffv = List.concat (List.map (fun v -> if ((CP.name_of_spec_var v) = Globals.thrd_dead_name) then [] else [v]) ffv) in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in
