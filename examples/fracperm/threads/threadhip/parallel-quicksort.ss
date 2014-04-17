@@ -18,6 +18,11 @@ sll<n, sm, lg> ==
   or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
+
+void destroy(node x)
+  requires x::node<_,_>
+  ensures emp;
+
 //parition a list into 2 sublists.
 // xs constains elements < c
 // res include elemts >= c
@@ -39,7 +44,9 @@ node partition(ref node xs, int c)
 			bind xs to (xsval, xsnext) in {
 				tmp1 = partition(xsnext, c);
 			}
+            node tmp = xs;
 			xs = xs.next;
+            destroy(tmp);
 			return new node(v, tmp1);
 		}
 		else {
@@ -100,6 +107,8 @@ void para_qsort2(ref node xs)
         join(id2);
         xs.next = tmp2;
 		tmp = new node(v, tmp);
+        node tmp3 = xs;
         xs = append_bll(xs.next, tmp);
+        destroy(tmp3);
 	}
 }

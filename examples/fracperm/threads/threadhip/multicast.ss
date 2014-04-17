@@ -86,8 +86,13 @@ void thread(lock l, PACKET p, int M)
 }
 
 threadNode createhelper(lock l, PACKET p, int n, int M)
-  requires l::LOCK(f)<p,M> & f=n/M & M>=n & n>=0 & [waitlevel<l.mu # l notin LS]
-  ensures res::threadPool<l,n,M> & LS'=LS; //'
+ case{//more precise
+    n=0 -> ensures res=null & LS'=LS; //'
+    n>0 -> requires l::LOCK(f)<p,M> & f=n/M & M>=n & [waitlevel<l.mu # l notin LS]
+      ensures res::threadPool<l,n,M> & LS'=LS; //'
+  }
+  /* requires l::LOCK(f)<p,M> & f=n/M & M>=n & n>=0 & [waitlevel<l.mu # l notin LS] */
+  /* ensures res::threadPool<l,n,M> & LS'=LS; //' */
 {
   if (n<1){return null;}
   else{

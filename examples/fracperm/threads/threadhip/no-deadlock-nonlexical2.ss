@@ -55,5 +55,6 @@ void main()
   //
   join(t2);// CHECKING --> OK
   //
+
   destroyLock(l);
 }

@@ -120,5 +120,11 @@ diff test-cases/threadhip/fibonacci.res test-cases/threadhip/fibonacci.n
 # ##No Fork/Join
 # diff test-cases/threadhip/create_and_acquire.res test-cases/threadhip/create_and_acquire.n
 
+echo "======= threadhip/parallel-mergesort.ss ======"
+diff test-cases/threadhip/parallel-mergesort.res test-cases/threadhip/parallel-mergesort.n
+
+echo "======= threadhip/parallel-quicksort.ss ======"
+diff test-cases/threadhip/parallel-quicksort.res test-cases/threadhip/parallel-quicksort.n
+
 #================BENCHMARK==========================
 #================BENCHMARK==========================

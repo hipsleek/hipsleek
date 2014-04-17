@@ -12,6 +12,10 @@ lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)
 
 lemma "combineLock" self::LOCK(f1)<> * self::LOCK(f2)<> -> self::LOCK(f1+f2)<>;
 
+void destroyLock(lock l)
+  requires l::lock<>
+  ensures emp;
+
 void thread1(lock l)
      requires l::LOCK(0.5)<> & [waitlevel<l.mu # l notin LS]
      ensures l::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
@@ -47,4 +51,9 @@ void main()
   //
   join(t2);// CHECKING --> OK
 
+  acquire(l);
+  finalize(l);
+  destroyLock(l);
+
+  dprint;
 }

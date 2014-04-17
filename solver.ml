@@ -10409,7 +10409,7 @@ and compute_matching_thread_nodes l_idents l_rsr r_rsr =
       compute_matching_thread_nodes_x l_idents l_rsr r_rsr
 
 and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
-  let (eq_rsr,mtl_rsr) = Checkeq.checkeq_formulas_with_diff l_idents l_rsr r_rsr in
+  let (eq_rsr, mtl_rsr) = Checkeq.checkeq_formulas_with_diff l_idents l_rsr r_rsr in
   if eq_rsr then
     (*possibly matched*)
     if (mtl_rsr==[]) then (0,[],None) (*exacly match*)
@@ -10425,8 +10425,15 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
     else
       (*TOCHECK: pick the first one only*)
       let (mt_rsr, l_residue , r_residue) = List.hd mtl_rsr in
-      if not (CF.isStrictConstEmp r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
-      else (2,mt_rsr,Some [l_residue]) (*SPLIT*)
+      if not (CF.isWeakConstHEmp r_residue) then
+        (*lhs<rhs: syntactically FAIL: try semantically*)
+        (3,[],None)
+      else if (not (CF.isWeakConstHEmp l_residue)) then
+        (*r_residue is emp but l_residue is not -> (syn)SPLIT*)
+        (2,mt_rsr,Some [l_residue]) 
+      else if (CF.isStrictConstTrue r_residue) then
+        (1,mt_rsr,None) (*both residue is empty, r_residue is strictly empty --> (may)MATCH, lost pure info in l_reside but that's intended *)
+      else (3,[],None)
 
 (***********begin-of do_match_thread_nodes*****************)
 (*Handle Threads as Resource:
@@ -10484,13 +10491,13 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
   (match is_thread, eq_dl, match_number with
     | false, _ , _ -> label_list, l_args, r_args, (is_thread,true,None,None)
     | true, false, _ ->
-        (* let _ = print_endline ("MATCH of ThreadNodes failed") in *)
+        let _ = print_endline ("MATCH of ThreadNodes failed") in
         let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "delayed formulas unmatched between LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must "101 : delayed formulas unmatched between LHS node and RHS node" Globals.sl_error)), NoAlias) in
         label_list, l_args, r_args, (is_thread,false,Some rs,None)
     | true, true, 0
     | true, true, 1 ->
         (*For matching two thread nodes*)
-        (* let _ = print_endline ("Attempt Syntatic MATCH of ThreadNodes") in *)
+        let _ = if (not !Globals.web_compile_flag) then print_endline ("Attempt Syntatic MATCH of ThreadNodes") in
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -10511,7 +10518,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
     | true, true, 2 ->
         (*For Syntatic SPLIT 
           TOCHECK: currently ignore pure constraints for the resource*)
-        (* let _ = print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in *)
+        let _ = if (not !Globals.web_compile_flag) then print_endline ("Attempt Syntatic SPLIT of ThreadNodes") in
         let label_list = if ((List.length subst) ==0 ) then label_list
             else
               (*Create a list of empty labels*)
@@ -10551,7 +10558,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
               let new_estate = {estate with es_formula = es_f;} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
               let new_conseq =  CF.add_mix_formula_to_formula to_conseq r_rsr in
-              (* let _ = print_endline ("Attempt Semantic Matching of ThreadNodes") in *)
+              let _ = if (not !Globals.web_compile_flag) then print_endline ("Attempt Semantic Matching of ThreadNodes") in
               let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
 	            | SuccCtx(cl) ->
@@ -10796,7 +10803,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let remained_thread_node = 
               if(is_thread && is_matched) then
                 (match remained_rsr with
-                  | None -> CF.HTrue
+                  | None -> CF.HEmp
                   | Some f ->
                       (*LDKTODO: currently try the first only*)
                       let f = List.hd f in
@@ -10804,7 +10811,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         | ThreadNode t -> ThreadNode {t with CF.h_formula_thread_resource = f;}
                         | _ -> report_error no_pos "[solver.ml] do_match: expecting a ThreadNode"
                       ))
-              else CF.HTrue
+              else CF.HEmp
             in
             (*** END threads as resource *****)
             (*LDK: using fractional permission introduces 1 more spec var We also need to add 1 more label*)

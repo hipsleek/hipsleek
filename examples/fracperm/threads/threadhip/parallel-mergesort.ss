@@ -16,7 +16,11 @@ bnd<n, sm, bg> == self = null & n = 0 or
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
                   self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs
                inv n >= 1 & sm <= lg & self!=null;
- 
+
+void destroy(node x)
+  requires x::node<_,_>
+  ensures emp;
+
 /* function to count the number of elements of a list */
 int count(node x)
   requires x::bnd<n, sm, bg> 
@@ -60,7 +64,16 @@ int div_2(int c)
   ensures res + res = c;
 
 node merge(node x1, node x2)
-  requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> 
+ /* case{ */
+ /*  x2=null -> ensures res=x1; */
+ /*  x2!=null -> */
+ /*    case{ */
+ /*      x1=null -> ensures res=x2; */
+ /*      x1!=null -> requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> */
+ /*        ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2); */
+ /*  } */
+ /* } */
+  requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2>
   ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2);
 {
 	if (x2 == null)
@@ -76,10 +89,13 @@ node merge(node x1, node x2)
 			{
 				node tmp = merge(x1, x2.next);
 				assert tmp'::sll<n1+n2,_,max(b1,b2)>  ; //'
+                destroy(x2);
 				return tmp;
 			}
-			else
-				return x1;
+			else{
+              destroy(x2);
+              return x1;
+            }
 		}
 	}
 }

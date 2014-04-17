@@ -438,6 +438,16 @@ let isStrictConstHTrue f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+let isWeakConstHEmp f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        ( h==HEmp) (*don't care about others*)
+  | _ -> false
+
 let rec isConstDFalse f = 
   match f with
 	| EBase b -> isAnyConstFalse b.formula_struc_base
@@ -14399,7 +14409,7 @@ let collect_heap_args_failesc_context ((fail_c,esc_c, succ_c):failesc_context) (
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
          let _ = List.iter (fun (args,id) ->
-             if (id<>"") && (((List.length head_args) != (List.length args)) || (id!=head_id)) then
+             if (id<>"") && (((List.length head_args) != (List.length args)) || (id<>head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
              else ()

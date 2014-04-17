@@ -15,6 +15,16 @@ LOCK<> == self::lock<>
 
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
+lemma "combineLock" self::LOCK(f1)<> * self::LOCK(f2)<> -> self::LOCK(f1+f2)<>;
+
+void destroyLock(lock l)
+  requires l::lock<>
+  ensures emp;
+
+void destroyCell(cell x)
+     requires x::cell<_>
+     ensures emp;
+
 void func(lock l1)
   requires l1::LOCK(0.6)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.6)<> & LS'=LS;//'
@@ -24,8 +34,8 @@ void func(lock l1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   cell x = new cell(10);
   lock l1 = new lock();
@@ -38,4 +48,9 @@ void main()
   x.val = i+1;
   release(l1);
   join(id);
+
+  acquire(l1);
+  finalize(l1);
+  destroyLock(l1);
+  destroyCell(x);
 }

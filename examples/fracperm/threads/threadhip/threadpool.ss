@@ -19,7 +19,7 @@ threadPool<x,n,M> == self=null & n=0 & M>0
   inv n>=0 & M>0;
 
 //permission splitting. Allow f2=0, if any.
-lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0;
 
 //permission combine.
 lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v>;
@@ -35,8 +35,13 @@ void thread(cell x, int M)
 }
 
 item createhelper(cell x, int n, int M)
-  requires x::cell(f)<_> & f=n/M & M>=n & n>=0
-  ensures res::threadPool<x,n,M> & n>0 or res=null & n=0;
+  case{//more precise
+  n=0 -> ensures res=null;
+  n>0 -> requires x::cell(f)<_> & f=n/M & M>=n
+         ensures res::threadPool<x,n,M>;
+  }
+  /* requires x::cell(f)<_> & f=n/M & M>=n & n>=0 */
+  /* ensures res::threadPool<x,n,M> & n>0 or res=null & n=0; */
 {
   if (n==0){return null;}
   else{
