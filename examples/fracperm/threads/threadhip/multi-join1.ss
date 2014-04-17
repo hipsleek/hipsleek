@@ -9,7 +9,7 @@ data cell{ int val;}
 //deallocate a cell
 void destroyCell(cell a)
   requires a::cell<_>
-  ensures true;
+  ensures emp;
 
 void thread1(cell x, cell y)
   requires x::cell<vx> * y::cell<vy>
@@ -29,7 +29,7 @@ void thread2(thrd t1, cell y)
 }
 
 void main()
-  requires true ensures true;
+  requires emp ensures emp;
 {
 
   cell x = new cell(1);

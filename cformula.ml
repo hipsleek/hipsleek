@@ -378,6 +378,7 @@ let mkTrue_b (flowt:flow_formula) pos = {
 		formula_base_flow = flowt (*(mkTrueFlow ())*);
 		formula_base_label = dummy_lbl 2;
 		formula_base_pos = pos}
+
 let mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 let mkETrue flowt pos = EBase({
@@ -13726,8 +13727,8 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1*)
   (* let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
   (*TOCHECK: ??? donot need lock_node*)
-  (* let tmp_pre = mkBase HTrue (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
-  let tmp_pre = mkBase HTrue (MCP.memoise_add_pure_N (MCP.mkMTrue pos) ls_pre_f) TypeTrue (mkTrueFlow ()) [] pos in
+  (* let tmp_pre = mkBase HEmp (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
+  let tmp_pre = mkBase HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) ls_pre_f) TypeTrue (mkTrueFlow ()) [] pos in
   (* let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
   (* let tmp = add_original tmp true in  (\*but allow SPLIT in post*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1 & inv*)
@@ -13735,7 +13736,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let pre_evars, pre_base = split_quantifiers pre in *)
   (* let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in *)
   (*TOCHECK: ??? donot need lock_node*)
-  let post_f = mkBase_simp HTrue (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
+  let post_f = mkBase_simp HEmp (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post_f (mkEBase post_f None no_pos) lbl in
   EBase { 
 	formula_struc_explicit_inst = [];

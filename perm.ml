@@ -430,6 +430,7 @@ struct
         (Cpure.Var (full_perm_var,no_pos)),
         no_pos
     )),None), None)
+
   let mkFullPerm_pure_from_ident id : Cpure.formula = 
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var

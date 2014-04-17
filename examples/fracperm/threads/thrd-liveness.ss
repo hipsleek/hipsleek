@@ -18,15 +18,15 @@ void join_thread2(thrd t)
 }
 
 //VALID
-void join_thread3(thrd t, cell x)
-  requires t::thrd<# x::cell<_> & true #> or dead(t)
+void join_thread3(thrd t)
+  requires t::thrd<# emp #> or dead(t)
   ensures emp & dead(t);
 {
   join(t);
   /* dprint; */
 }
 
-//VALID
+//FAIL with --classic, VALID
 void test(thrd t)
   requires t::thrd<# emp #>
   ensures t!=null;
@@ -47,6 +47,9 @@ bool check_must_dead(thrd t)
   ensures !res;
 {
   bool b = must_dead(t);
+  if (!b){
+    join(t);
+  }
   return b;
 }
 

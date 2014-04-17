@@ -18,14 +18,19 @@ cellList<n,M> == self=null & n=0
 
 // helper function to help split a cell into suitable form
 cell getFrac(cell x, int M)
-  requires x::cell(f)<_> & f>=1/M
-  ensures x::cell(f-1/M)<_> * res::cell(1/M)<_> & res=x;
+  requires x::cell(f)<_>
+  ensures x::cell(f-1/M)<_> * res::cell(1/M)<_> & res=x & f>=1/M
+     or res=x & f=0.0;
 
 cellNode helper(cell x, int n, int M)
-  requires x::cell(f)<_> & f=n/M & M>=n & n>=0
-  ensures res::cellList<n,M>;
+  case{
+    n=0 -> ensures res=null;
+    n>0 -> requires x::cell(f)<_> & f=n/M & M>=n ensures res::cellList<n,M>;
+  } //this spec is more precise (not allow f=0.0)
+  /* requires x::cell(f)<_> & f=n/M & M>=n & n>=0 */
+  /* ensures res::cellList<n,M> & n>0 or res=null & n=0; */
 {
-  if (n<1){return null;}
+  if (n<=0){return null;}
   else{
     cell fracCell = getFrac(x,M);
     int n1 = n-1;

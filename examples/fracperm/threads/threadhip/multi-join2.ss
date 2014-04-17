@@ -20,7 +20,7 @@ lemma "combineCell" self::cell(f1)<v> * self::cell(f2)<v> -> self::cell(f1+f2)<v
 //deallocate a cell
 void destroyCell(cell a)
   requires a::cell<_>
-  ensures true;
+  ensures emp;
 
 void thread1(cell x, cell y)
   requires x::cell<0> * y::cell<0>
@@ -40,7 +40,7 @@ void thread2(thrd t1, cell x, cell y)
 }
 
 void main()
-  requires true ensures true;
+  requires emp ensures emp;
 {
 
   cell x = new cell(0);

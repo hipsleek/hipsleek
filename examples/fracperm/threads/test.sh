@@ -11,21 +11,21 @@ echo "======= thrd-liveness.slk ======"
 #================HIP==========================
 #================HIP==========================
 echo "======= thrd-liveness.ss ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer thrd-liveness.ss | grep -E 'Proc|assert:' > test-cases/thrd-liveness.ss.res
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic thrd-liveness.ss | grep -E 'Proc|assert:' > test-cases/thrd-liveness.ss.res
 echo "======= multi-join1.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.res
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/multi-join1.ss | grep -E 'Proc|assert:' > test-cases/multi-join1.res
 echo "======= multi-join2.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.res
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/multi-join2.ss | grep -E 'Proc|assert:' > test-cases/multi-join2.res
 echo "======= multi-join3.ss  ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multi-join3.ss | grep -E 'Proc|assert:' > test-cases/multi-join3.res
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/multi-join3.ss | grep -E 'Proc|assert:' > test-cases/multi-join3.res
 echo "======= no-deadlock-nonlexical2.ss ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/no-deadlock-nonlexical2.ss | grep -E 'Proc|assert:' >  test-cases/no-deadlock-nonlexical2.res
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/no-deadlock-nonlexical2.ss | grep -E 'Proc|assert:' >  test-cases/no-deadlock-nonlexical2.res
 
 echo "======= point.ss  ======"
-../../../hip --en-para --en-thrd-resource --dis-locklevel -tp parahip point.ss | grep -E 'Proc|assert:' >  test-cases/point.res
+../../../hip --en-para --en-thrd-resource --dis-locklevel -tp parahip --classic point.ss | grep -E 'Proc|assert:' >  test-cases/point.res
 
 echo "======= frac-cell-list.ss  ======"
-../../../hip --en-para -tp redlog frac-cell-list.ss | grep -E 'Proc|assert:' >  test-cases/frac-cell-list.res
+../../../hip --en-para -tp parahip --classic frac-cell-list.ss | grep -E 'Proc|assert:' >  test-cases/frac-cell-list.res
 
 echo "======= threadpool.ss ======"
 ../../../hip --en-thrd-resource --en-para -tp parahip --en-lsmu-infer threadhip/threadpool.ss | grep -E 'Proc|assert:' >  test-cases/threadpool.res
