@@ -50,7 +50,7 @@ void destroyRexc(rexc e)
 //LOCK protecting a cell
 void main()
   requires emp & LS={}
-  ensures emp; //'
+  ensures emp & LS'={}; //'
 {
   cell x;
   lock l;
@@ -85,8 +85,6 @@ void main()
   }catch(bexc e){
     destroyBexc(e);
   };
-
-
   finalize(l);
 
   destroylock(l);

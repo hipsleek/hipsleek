@@ -39,8 +39,8 @@ void destroyCell(cell x)
      ensures emp;
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   lock l = new lock();
   cell x = new cell(l,2);
@@ -59,6 +59,7 @@ void main()
   join(id);
 
   acquire(l);
+
   finalize(l);
   destroylock(l);
   destroyCell(x);

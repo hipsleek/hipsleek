@@ -27,8 +27,8 @@ void func(lock l1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
    lock l1 = new lock();
    //initialization

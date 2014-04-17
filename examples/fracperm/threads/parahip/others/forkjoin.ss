@@ -10,6 +10,12 @@ LOCK<> == self::lock<>
 //fractional permission splitting for concurrency
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
+lemma "combineLock" self::LOCK(f1)<> * self::LOCK(f2)<> -> self::LOCK(f1+f2)<>;
+
+void destroyLock(lock l)
+     requires l::lock<>
+     ensures emp;
+
 void func(lock l1)
      requires l1::LOCK(0.5)<> & [waitlevel<l1.mu # l1 notin LS]
      ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
@@ -19,8 +25,8 @@ void func(lock l1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   int level = 100;
   lock l1 = new lock(level); //define a locklevel
@@ -35,4 +41,8 @@ void main()
   release(l1);
   //
   join(id);//checking ok
+
+  acquire(l1);
+  finalize(l1);
+  destroyLock(l1);
 }

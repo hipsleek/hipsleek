@@ -31,9 +31,6 @@ diff test-cases/multicast.res test-cases/multicast.n
 
 #================threadhip/PARAHIP==========================
 #================threadhip/PARAHIP==========================
-echo "======= threadhip/no-deadlock-nonlexical.ss ======"
-diff test-cases/threadhip/no-deadlock-nonlexical.res test-cases/threadhip/no-deadlock-nonlexical.n
-
 # echo "======= threadhip/simple.ss ======"
 # ##No Fork/Join
 # diff test-cases/threadhip/simple.res test-cases/threadhip/simple.n
@@ -63,9 +60,18 @@ diff test-cases/threadhip/ls-bind.res test-cases/threadhip/ls-bind.n
 # ##No Fork/Join
 # diff test-cases/threadhip/ls-waitlevel2.res test-cases/threadhip/ls-waitlevel2.n
 
-# echo "======= threadhip/double-acquire.ss ======"
-# ##No Fork/Join
-# diff test-cases/threadhip/double-acquire.res test-cases/threadhip/double-acquire.n
+
+
+
+echo "======= threadhip/double-acquire.ss ======"
+##No Fork/Join
+diff test-cases/threadhip/double-acquire.res test-cases/threadhip/double-acquire.n
+
+echo "======= threadhip/deadlock-nonlexical.ss ======"
+diff test-cases/threadhip/deadlock-nonlexical.res test-cases/threadhip/deadlock-nonlexical.n
+
+echo "======= threadhip/no-deadlock-nonlexical.ss ======"
+diff test-cases/threadhip/no-deadlock-nonlexical.res test-cases/threadhip/no-deadlock-nonlexical.n
 
 echo "======= threadhip/no-deadlock1.ss ======"
 diff test-cases/threadhip/no-deadlock1.res test-cases/threadhip/no-deadlock1.n
@@ -84,6 +90,12 @@ diff test-cases/threadhip/deadlock2.res test-cases/threadhip/deadlock2.n
 
 echo "======= threadhip/deadlock3.ss ======"
 diff test-cases/threadhip/deadlock3.res test-cases/threadhip/deadlock3.n
+
+echo "======= threadhip/deadlock-nested-forkjoin.ss ======"
+diff test-cases/threadhip/deadlock-nested-forkjoin.res test-cases/threadhip/deadlock-nested-forkjoin.n
+
+echo "======= threadhip/fork-join-as-send-recv.ss ======"
+diff test-cases/threadhip/fork-join-as-send-recv.res test-cases/threadhip/fork-join-as-send-recv.n
 
 echo "======= threadhip/disj-no-deadlock1.ss ======"
 diff test-cases/threadhip/disj-no-deadlock1.res test-cases/threadhip/disj-no-deadlock1.n

@@ -27,9 +27,17 @@ LOCK<x,y,z> == self::lock<>
   inv self!=null
   inv_lock x::intCell<x_val> * y::intCell(1/2)<y_val> * z::intCell(1/2)<z_val> & x_val=y_val+z_val;
 
+void destroyCell(intCell x)
+  requires x::intCell<_>
+  ensures emp;
+
+void destroylock(lock l)
+  requires l::lock<>
+  ensures emp;
+
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   lock l = new lock();
   intCell xCell = new intCell(0);
@@ -42,6 +50,13 @@ void main()
   int id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
   incrementor2(l,xCell,yCell,zCell);
   join(id);
+
+  acquire(l);
+  finalize(l);
+  destroylock(l);
+  destroyCell(xCell);
+  destroyCell(yCell);
+  destroyCell(zCell);
 }
 
 //valid

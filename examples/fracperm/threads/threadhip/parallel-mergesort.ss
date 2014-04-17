@@ -64,15 +64,6 @@ int div_2(int c)
   ensures res + res = c;
 
 node merge(node x1, node x2)
- /* case{ */
- /*  x2=null -> ensures res=x1; */
- /*  x2!=null -> */
- /*    case{ */
- /*      x1=null -> ensures res=x2; */
- /*      x1!=null -> requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2> */
- /*        ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2); */
- /*  } */
- /* } */
   requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2>
   ensures res::sll<n1+n2, s3, b3> & s3 = min(s1, s2) & b3 = max(b1, b2);
 {

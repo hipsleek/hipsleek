@@ -31,10 +31,26 @@ lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1
 //fractional permission combining
 lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
+void destroylock(lock l)
+  requires l::lock<>
+  ensures emp;
+
+void destroyCell(cell x)
+  requires x::cell<_,_,_,_>
+  ensures emp;
+
+void destroyBexc(bexc e)
+  requires e::bexc<>
+  ensures emp;
+
+void destroyRexc(rexc e)
+  requires e::rexc<>
+  ensures emp;
+
 //LOCK protecting a cell
 void main()
-  requires LS={}
-  ensures true; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   cell x;
   lock l;
@@ -54,7 +70,7 @@ void main()
   while (true)
     requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & [waitlevel=l.mu # l in LS] & v1=v2 & v3=1
           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & [waitlevel=l.mu # l in LS] & v1=v2 & v3=0 // 0.4 + 0.6 = 1.0'
-    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & LS'=LS & waitlevel'=waitlevel & flow bexc;//'
+    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> * eres::bexc<> & l'=l & v11=v22 & v33=0 & LS'=LS & waitlevel'=waitlevel & flow bexc;//'
   {
     if (x.val3==0){
       raise new bexc(); // break
@@ -65,10 +81,18 @@ void main()
     i=i+1;
     acquire(l);
   } //end TRY
+
   }catch(bexc e){
-      ; //no-op
+    destroyBexc(e);
   };
   finalize(l);
+
+  destroylock(l);
+  destroyCell(x);
+
+  join(id); //to prevent thread leakage,
+  //otherwise has to specify in post-condition
+
 }
 
 void thread(lock l, cell x)
@@ -76,10 +100,11 @@ void thread(lock l, cell x)
   ensures LS'=LS; //'
 {
   try{
+
     //syntatic sugar
     while(true)
       requires l::LOCK(0.6)<x> & [waitlevel<l.mu # l notin LS ]
-      ensures LS'=LS & flow rexc; //'
+        ensures eres::rexc<> & LS'=LS & flow rexc; //'
     {
       acquire(l);
       x.val1=x.val1 + x.val1;
@@ -92,8 +117,10 @@ void thread(lock l, cell x)
       release(l);
     };
     // End Try
+
   }catch (rexc e){
-    ; //no-op
+    destroyRexc(e);
   };
+
   return;
 }

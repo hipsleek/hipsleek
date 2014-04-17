@@ -25,8 +25,8 @@ void func(lock l1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   int level = 100;
   lock l1 = new lock(level); //define a locklevel

@@ -23,16 +23,24 @@ data cell{
 
 lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<x> * self::LOCK(f2)<x> & 0.0<f<=1.0;
 
-                                                                  lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
+lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
 
 LOCK<x> == self::lock<>
   inv self!=null
   inv_lock (exists v: x::cell<self,v> & v>=2);
 
+void destroylock(lock l)
+     requires l::lock<>
+     ensures emp;
+
+void destroyCell(cell x)
+     requires x::cell<_,_>
+     ensures emp;
+
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   lock l = new lock();
   cell x = new cell(l,2);
@@ -53,7 +61,8 @@ void main()
   acquire(l);
 
   finalize(l);
-
+  destroylock(l);
+  destroyCell(x);
 }
 
 //valid

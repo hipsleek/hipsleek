@@ -35,8 +35,6 @@ echo "======= multicast.ss ======"
 
 #================PARAHIP==========================
 #================PARAHIP==========================
-echo "======= threadhip/no-deadlock-nonlexical.ss ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/no-deadlock-nonlexical.ss | grep -E 'Proc|assert:' >  test-cases/threadhip/no-deadlock-nonlexical.res
 # echo "======= threadhip/simple.ss ======"
 # ##No Fork/Join
 # ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/simple.ss | grep -E 'Proc|assert:' > test-cases/threadhip/simple.res
@@ -58,9 +56,15 @@ echo "======= threadhip/ls-bind.ss ======"
 # echo "======= threadhip/ls-waitlevel2.ss ======"
 # ##No Fork/Join
 # ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/ls-waitlevel2.ss | grep -E 'Proc|assert:' > test-cases/threadhip/ls-waitlevel2.res
-# echo "======= threadhip/double-acquire.ss ======"
-# ##No Fork/Join
-# ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/double-acquire.ss | grep -E 'Proc|assert:' > test-cases/threadhip/double-acquire.res
+
+
+echo "======= threadhip/double-acquire.ss ======"
+##No Fork/Join
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/double-acquire.ss | grep -E 'Proc|assert:' > test-cases/threadhip/double-acquire.res
+echo "======= threadhip/deadlock-nonlexical.ss ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/deadlock-nonlexical.ss | grep -E 'Proc|assert:' >  test-cases/threadhip/deadlock-nonlexical.res
+echo "======= threadhip/no-deadlock-nonlexical.ss ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/no-deadlock-nonlexical.ss | grep -E 'Proc|assert:' >  test-cases/threadhip/no-deadlock-nonlexical.res
 echo "======= threadhip/no-deadlock1.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/no-deadlock1.ss | grep -E 'Proc|assert:' > test-cases/threadhip/no-deadlock1.res
 echo "======= threadhip/no-deadlock2.ss ======"
@@ -73,8 +77,12 @@ echo "======= threadhip/deadlock2.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/deadlock2.ss | grep -E 'Proc|assert:' > test-cases/threadhip/deadlock2.res
 echo "======= threadhip/deadlock3.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/deadlock3.ss | grep -E 'Proc|assert:' > test-cases/threadhip/deadlock3.res
+echo "======= threadhip/deadlock-nested-forkjoin.ss ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/deadlock-nested-forkjoin.ss | grep -E 'Proc|assert:' > test-cases/threadhip/deadlock-nested-forkjoin.res
+echo "======= threadhip/fork-join-as-send-recv.ss ======"
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/fork-join-as-send-recv.ss | grep -E 'Proc|assert:' > test-cases/threadhip/fork-join-as-send-recv.res
 echo "======= threadhip/disj-no-deadlock1.ss ======"
-../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/disj-no-deadlock1.ss | grep -E 'Proc|assert:' > test-cases/threadhip/disj-no-deadlock1.resxs
+../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/disj-no-deadlock1.ss | grep -E 'Proc|assert:' > test-cases/threadhip/disj-no-deadlock1.res
 echo "======= threadhip/disj-no-deadlock2.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/disj-no-deadlock2.ss | grep -E 'Proc|assert:' > test-cases/threadhip/disj-no-deadlock2.res
 echo "======= threadhip/disj-no-deadlock3.ss ======"
@@ -85,9 +93,9 @@ echo "======= threadhip/ordered-locking.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/ordered-locking.ss | grep -E 'Proc|assert:' > test-cases/threadhip/ordered-locking.res
 echo "======= threadhip/unordered-locking.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/parahip-benchmark/unordered-locking.ss | grep -E 'Proc|assert:' > test-cases/threadhip/unordered-locking.res
-# echo "======= threadhip/multicast.ss ======"
-# ##No Fork/Join
-# ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer threadhip/multicast.ss | grep -E 'Proc|assert:' > test-cases/threadhip/multicast.res
+
+
+
 echo "======= threadhip/oracle.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic threadhip/oracle.ss | grep -E 'Proc|assert:' > test-cases/threadhip/oracle.res
 echo "======= threadhip/owicki-gries.ss ======"
@@ -97,11 +105,8 @@ echo "======= threadhip/fibonacci.ss ======"
 # echo "======= threadhip/create_and_acquire.ss ======"
 # ##No Fork/Join
 # ../../../hip --en-para --en-thrd-resource -tp parahip --dis-locklevel threadhip/create_and_acquire.ss | grep -E 'Proc|assert:' > test-cases/threadhip/create_and_acquire.res
-
-
 echo "======= threadhip/parallel-mergesort.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --dis-ls --dis-locklevel --classic threadhip/parallel-mergesort.ss | grep -E 'Proc|assert:' > test-cases/threadhip/parallel-mergesort.res
-
 echo "======= threadhip/parallel-quicksort.ss ======"
 ../../../hip --en-para --en-thrd-resource -tp parahip --dis-ls --dis-locklevel --classic threadhip/parallel-quicksort.ss | grep -E 'Proc|assert:' > test-cases/threadhip/parallel-quicksort.res
 #================BENCHMARK==========================

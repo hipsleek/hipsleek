@@ -32,8 +32,8 @@ void thread2(lock l, thrd t1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   lock l = new lock(); //define a locklevel
   //initialization
@@ -55,5 +55,4 @@ void main()
   finalize(l);
   destroyLock(l);
 
-  dprint;
 }

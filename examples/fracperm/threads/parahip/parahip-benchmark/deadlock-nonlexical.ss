@@ -16,6 +16,10 @@ lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)
 
 lemma "combineLock" self::LOCK(f1)<> * self::LOCK(f2)<> -> self::LOCK(f1+f2)<>;
 
+void destroyLock(lock l)
+  requires l::lock<>
+  ensures emp;
+
 void thread1(lock l)
      requires l::LOCK(0.5)<> & [waitlevel<l.mu # l notin LS]
      ensures l::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
@@ -33,8 +37,8 @@ void thread2(lock l, int tid1)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
   lock l = new lock(); //define a locklevel
   //initialization
@@ -50,4 +54,9 @@ void main()
   //
   join(tid2);// CHECKING --> FAIL
   release(l);
+
+  acquire(l);
+  finalize(l);
+  destroyLock(l);
+
 }

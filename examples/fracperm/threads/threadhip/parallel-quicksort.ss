@@ -18,7 +18,6 @@ sll<n, sm, lg> ==
   or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
-
 void destroy(node x)
   requires x::node<_,_>
   ensures emp;

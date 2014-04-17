@@ -36,8 +36,8 @@ void func(bool b, lock l1,lock l2)
 }
 
 void main()
-  requires LS={}
-  ensures LS'={}; //'
+  requires emp & LS={}
+  ensures emp & LS'={}; //'
 {
    lock l1 = new lock();
    init[LOCK](l1); //initialize l1 with invariant LOCK

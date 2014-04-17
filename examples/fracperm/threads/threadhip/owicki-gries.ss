@@ -37,7 +37,7 @@ void destroylock(lock l)
 
 void main()
   requires emp & LS={}
-  ensures true & LS'={}; //'
+  ensures emp & LS'={}; //'
 {
   lock l = new lock();
   intCell xCell = new intCell(0);
