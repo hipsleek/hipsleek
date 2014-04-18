@@ -16,7 +16,7 @@ FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic"
 PARAHIP=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip
 FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer --classic"
 
-ITERATIONS=1
+ITERATIONS=10
 LOG=run-all-logs_$(date +%b%d_%H%M)
 #log all run
 LOGRUN=$LOG-run.xls

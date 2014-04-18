@@ -423,6 +423,12 @@ and formula_2_mem (f : formula) prog : CF.mem_formula =
 (*   Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula *)
 (*       (fun f -> h_formula_2_mem f evars prog) f *)
 
+(*
+  TO DO: there is the difference between ThreadHIP and ParaHIP at this point
+  In ThreadHIP, threads are ThreadNode, hence, are avail in memset.
+  In ParaHIP, threads are and-conj, and not considered here.
+  Need to improve ParaHIP further.
+*)
 and h_formula_2_mem (f : h_formula) (p : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
   let pr0 = Cprinter.string_of_spec_var in
   (* let pr_subs = pr_list (pr_pair pr0 pr0) in *)
