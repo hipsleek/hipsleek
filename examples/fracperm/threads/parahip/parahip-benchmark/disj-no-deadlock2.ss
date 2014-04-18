@@ -1,6 +1,6 @@
 /*
-  example proving deadlock freedom using both
-  disjunctive formulae and disjunctive delayed formulae
+  example proving deadlock freedom using disjunctive delayed formulae
+
 */
 
 //define lock invariant with name LOCK and empty list of args
@@ -25,12 +25,8 @@ void func(bool b, lock l1,lock l2)
   b -> requires l1::LOCK(0.6)<> & [waitlevel<l1.mu # l1 notin LS] ensures l1::LOCK(0.6)<> & LS'=LS;
   !b -> requires l2::LOCK(0.6)<> & [waitlevel<l2.mu # l2 notin LS] ensures l2::LOCK(0.6)<> & LS'=LS;
  }
-  /* requires l1::LOCK(0.6)<> & l1 notin LS & b &l1!=l2 */
-  /*    or l2::LOCK(0.6)<> & l2 notin LS & !b &l1!=l2 */
-  /* ensures LS'=LS; //' */
 {
   int i;
-  
   if (b){
     acquire(l1);
     release(l1);
@@ -38,7 +34,6 @@ void func(bool b, lock l1,lock l2)
     acquire(l2);
     release(l2);
   }
-  
 }
 
 void main()
@@ -46,44 +41,25 @@ void main()
   ensures emp & LS'={}; //'
 {
    lock l1 = new lock();
-   init[LOCK](l1); //initialize l1 with invariant LOCK
+   init[LOCK](l1);
    release(l1);
    //
    lock l2 = new lock();
-   init[LOCK](l2);
+   init[LOCK](l2); //initialize l1 with invariant LOCK
    release(l2);
-
-   bool b; //b got unknown value
-   
-   //LS-{}
+   //
+   bool b = true;
+   //LS={}
    int id = fork(func,b,l1,l2);
    //DELAYED: l1 notin LS & b | l2 notin LS & !b
-   
 
-   if (b){
-     //LS={}
-     acquire(l2);
-     //LS={l1}
-   }else{
-     //LS={}
-     acquire(l1);
-     //LS={l2}
-   }
-   
-   // LS={l2} & b | LS={l1} & !b
-   join(id); //CHECK, no deadlock
-   // LS={l2} & b | LS={l1} & !b
+   //LS={}
+   acquire(l2);
+   //LS={l2} & b
 
-   if (b){
-     //LS={l2}
-     release(l2);
-     //LS={}
-   }else{
-     //LS={l1}
-     release(l1);
-     //LS={}
-   }
+   join(id); //CHECK,ok because LS={l2} & b |- l1 notin LS & b
 
+   release(l2);
 
    acquire(l1);
    finalize(l1);
