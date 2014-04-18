@@ -25,8 +25,8 @@ let gen_def_ptempl prog ptempl =
   with _ -> raise (Piecewise_Infer_Failure (ptempl_name ^ " is not defined.")) 
 
 let pr_ptempl pt =
-  (pr_spec_var pt.ptempl_id) ^ (pr_list pr_spec_var pt.ptempl_params) ^ " = { " ^
-  (String.concat ";" (List.map (fun (c, t) -> 
+  (pr_spec_var pt.ptempl_id) ^ (pr_list pr_spec_var pt.ptempl_params) ^ " = {\n\t" ^
+  (String.concat ";\n\t" (List.map (fun (c, t) -> 
     (pr_formula c) ^ " -> " ^ (pr_exp (Template t))) pt.ptempl_pieces)) ^ "}" 
 
 let get_var_exp e =
@@ -239,7 +239,7 @@ let infer_piecewise_main prog templ_assumes =
     List.map (fun f -> (f, cons)) 
     (subst_piecewise_templ_formula ptempl_ls ante)) templ_assumes) in 
   print_endline ("Piecewise template definition:\n" ^ (pr_list pr_ptempl ptempl_ls));
-  print_endline "\n**** PIECEWISE TEMPLATE ASSUMPTION(S) ****";
-  print_endline (pr_list (fun pta -> (Cprinter.string_of_templ_assume pta) ^ "\n") ptempl_assumes);
+  (* print_endline "\n**** PIECEWISE TEMPLATE ASSUMPTION(S) ****";                                     *)
+  (* print_endline (pr_list (fun pta -> (Cprinter.string_of_templ_assume pta) ^ "\n") ptempl_assumes); *)
   ptempl_assumes, inf_ptempls, ptempl_defs
 

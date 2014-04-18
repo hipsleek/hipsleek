@@ -12,6 +12,10 @@ let subset = Gen.BList.subset_eq eq_spec_var
 let intersect = Gen.BList.intersect_eq eq_spec_var
 let overlap = Gen.BList.overlap_eq eq_spec_var
 
+let pr_formula = Cprinter.string_of_pure_formula
+let pr_exp = Cprinter.string_of_formula_exp
+let pr_spec_var = Cprinter.string_of_spec_var
+
 let is_sat f = 
   (* Tpdispatcher.is_sat_sub_no 0 f (ref 0)  *)
   let (pr_weak, pr_strong) = drop_complex_ops in
@@ -429,6 +433,10 @@ let get_opt_model is_linear templ_unks vars assertions =
     | Z3m.Sat_or_Unk model -> 
       let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
       let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
+      
+      (* let _ = print_endline ("MOST COMMON NL VARS: " ^ (pr_list pr_spec_var subst_nl_vars)) in         *)
+      (* let _ = print_endline ("Z3m MODEL: " ^ (pr_list (pr_pair pr_id Z3m.string_of_z3m_val) model)) in *)
+      
       let nl_vars_w_z3m_val = List.map (fun v -> 
         let v_name = name_of_spec_var v in
         List.find (fun (vm, _) -> v_name = vm) model) subst_nl_vars in
@@ -891,10 +899,4 @@ let templ_assume_scc_stk: templ_assume Gen.stack = new Gen.stack
 
 let pr_templ_assume ta = 
   Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)
-  
-let pr_formula = Cprinter.string_of_pure_formula
-
-let pr_exp = Cprinter.string_of_formula_exp
-
-let pr_spec_var = Cprinter.string_of_spec_var
 

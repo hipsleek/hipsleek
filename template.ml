@@ -263,7 +263,8 @@ let collect_and_solve_templ_assumes_common prog (inf_templs: ident list) =
     let templ_decls = prog.C.prog_templ_decls in
     let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
     print_endline "**** TEMPLATE INFERENCE RESULT ****";
-    print_endline (pr_list Cprinter.string_of_templ_decl res_templ_decls);
+    print_endline (pr_list (fun tdef -> 
+      (Cprinter.string_of_templ_decl tdef) ^ "\n") res_templ_decls);
     res, templ_assumes, templ_unks
   | _ -> 
     (* print_endline ("TEMPLATE INFERENCE: No result.") *) 
