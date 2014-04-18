@@ -1,6 +1,8 @@
 /*
 
-  Implement a thread pool using a linked list.
+  Implement a thread pool using a linked list where
+  threads are stored in data structures.
+
   Forking and storing threads in a ThreadPool (i.e. the thread pool)
 
   In this program, create a pool of threads, each with a read permission to a cell x
@@ -14,8 +16,8 @@ data item{
 }
 
 /* A list of threads, i.e. a thread pool */
-threadPool<x,n,M> == self=null & n=0 & M>0
-  or self::item<t,p> * p::threadPool<x,n-1,M> * t::thrd<# x::cell(1/M)<_> & true #>
+pool<x,n,M> == self=null & n=0 & M>0
+  or self::item<t,p> * p::pool<x,n-1,M> * t::thrd<# x::cell(1/M)<_> & true #>
   inv n>=0 & M>0;
 
 //permission splitting. Allow f2=0, if any.
@@ -34,19 +36,19 @@ void thread(cell x, int M)
   // Perform computation ...
 }
 
-item createhelper(cell x, int n, int M)
+item forkHelper(cell x, int n, int M)
   case{//more precise
-  n=0 -> ensures res=null;
+  n=0 -> requires emp ensures emp & res=null;
   n>0 -> requires x::cell(f)<_> & f=n/M & M>=n
-         ensures res::threadPool<x,n,M>;
+         ensures res::pool<x,n,M>;
   }
   /* requires x::cell(f)<_> & f=n/M & M>=n & n>=0 */
-  /* ensures res::threadPool<x,n,M> & n>0 or res=null & n=0; */
+  /* ensures res::pool<x,n,M> & n>0 or res=null & n=0; */
 {
   if (n==0){return null;}
   else{
     thrd t = fork(thread,x,M);
-    item p = createhelper(x,n-1,M);
+    item p = forkHelper(x,n-1,M);
     item node = new item(t,p);
     return node;
   }
@@ -56,20 +58,19 @@ item createhelper(cell x, int n, int M)
 // sharing read accesses to the cell x.
 item forkThreads(cell x, int n)
   requires x::cell<_> & n>0
-  ensures res::threadPool<x,n,n>;
+  ensures res::pool<x,n,n>;
 {
-  return createhelper(x,n,n);
+  return forkHelper(x,n,n);
 }
 
-void joinhelper(item tp, cell x, int n, int M)
-  requires tp::threadPool<x,n,M> & M>=n & n>=0
-  ensures x::cell(n/M)<_> & n>0
-     or emp & n=0;
+void joinHelper(item tp, cell x, int n, int M)
+  requires tp::pool<x,n,M> & M>=n & n>=0
+  ensures x::cell(n/M)<_> & n>0 or emp & n=0;
 {
   if (tp==null){return;}
   else{
     item node = tp.next;
-    joinhelper(node,x,n-1,M);
+    joinHelper(node,x,n-1,M);
     thrd t = tp.t;
     join(t);
     destroyItem(tp);
@@ -80,10 +81,10 @@ void joinhelper(item tp, cell x, int n, int M)
 // Join all threads in the thread pool
 // and get back the full ownership of x.
 void joinThreads(item tp, cell x, int n)
-  requires tp::threadPool<x,n,n> & n>0
+  requires tp::pool<x,n,n> & n>0
   ensures x::cell<_>;
 {
-  joinhelper(tp,x,n,n);
+  joinHelper(tp,x,n,n);
 }
 
 void destroyCell(cell x)

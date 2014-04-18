@@ -8,13 +8,13 @@ HIP=../../../../hip
 
 # Threads as resource
 THREADHIP=~/hg/para5-threads/sleekex/examples/fracperm/threads/threadhip
-FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
+FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer --classic"
 
 
 
 # Threads as AND-conjunction
 PARAHIP=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip
-FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
+FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer --classic"
 
 ITERATIONS=1
 LOG=run-all-logs_$(date +%b%d_%H%M)

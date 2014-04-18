@@ -5784,7 +5784,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                       (*Identify delayed constraints and propagate*)
                                                       let evars = CF.get_exists_context n_ctx in (*get exists vars from context*)
                                                       (*partion the post-condition based on LS*)
-                                                      let df,new_formula_base = partLS (evars@impl_inst@expl_inst) formula_base in
+                                                      let p_vars = CF.fv formula_base in
+                                                      let p_vars = List.filter CP.is_primed p_vars in
+                                                      let exclusive_vars = CP.remove_dups_svl (evars@impl_inst@expl_inst@p_vars) in
+                                                      let df,new_formula_base = partLS exclusive_vars formula_base in
                                                       (* let _ = print_endline ("delayed formula df = " ^ (Cprinter.string_of_mix_formula df)) in *)
                                                       let n_ctx_list, prf = heap_entail_one_context 16 prog (if formula_cont!=None then true else is_folding) n_ctx new_formula_base tid (Some df) join_id pos in
                                                       (n_ctx_list, prf ,Some df)

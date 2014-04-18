@@ -1,9 +1,9 @@
 /*
 
-  Implement a thread pool using a linked list.
-  Forking and storing threads in a ThreadPool (i.e. the thread pool)
+  Forking and storing threads in a threadPool (i.e. the thread pool)
+  Joined threads are dead, and are in deadPool
 
-  In this program, create a pool of threads, each with a read permission to a cell x
+  In this program, assume a pool of threads where each with a read permission to a cell x
  */
 
 data cell{ int val;}
@@ -13,12 +13,12 @@ data item{
   item next;
 }
 
-/* A list of threads, i.e. a thread pool */
+/* A list of live threads, i.e. a thread pool */
 threadPool<x,n,M> == self=null & n=0 & M>0
   or self::item<t,p> * p::threadPool<x,n-1,M> * t::thrd<# x::cell(1/M)<_> & true #>
   inv n>=0 & M>0;
 
-/* A list of threads, i.e. a thread pool */
+/* A list of dead threads, i.e. a thread pool */
 deadPool<n> == self=null & n=0
   or self::item<t,p> * p::deadPool<n-1> & dead(t)
   inv n>=0;
