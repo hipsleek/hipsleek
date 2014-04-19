@@ -899,4 +899,5 @@ let templ_assume_scc_stk: templ_assume Gen.stack = new Gen.stack
 
 let pr_templ_assume ta = 
   Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)
+  
 

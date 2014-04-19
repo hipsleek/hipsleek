@@ -490,6 +490,7 @@ let prover_process = ref {
 let z3_call_count: int ref = ref 0
 let is_z3_running = ref false
 let smtsolver_name = ref ("z3": string)
+let smtsolver_path = "/home/chanhle/tools/z3/z3-4.3.2" (* "z3" *)
 
 (***********)
 let test_number = ref 0
@@ -505,7 +506,7 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3" -> (smtsolver_path, [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
@@ -1113,7 +1114,7 @@ let get_model is_linear vars assertions =
     (if is_linear then "(check-sat)\n" else "(check-sat-using qfnra-nlsat)\n") ^
     (* "(check-sat)\n" ^ *)
     "(get-model)" in
-  let model = (run "" "z3" smt_inp 5.0).original_output_text in
+  let model = (run "" !smtsolver_name smt_inp 5.0).original_output_text in
 
   let _ = 
     Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;

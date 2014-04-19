@@ -193,7 +193,6 @@ let subst_piecewise_templ_b_formula pts bf =
 let subst_piecewise_templ_formula pts f =
   let rec helper pts f = match f with 
   | BForm (bf, lbl) -> 
-    let pos = pos_of_formula f in 
     let nbf_w_cond_ls = subst_piecewise_templ_b_formula pts bf in
     let nf_w_cond_ls = List.map (fun (bf, c) ->
       BForm (bf, lbl), c) nbf_w_cond_ls in
