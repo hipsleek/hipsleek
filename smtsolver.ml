@@ -528,7 +528,7 @@ let run st prover input timeout =
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
           Printexc.print_backtrace stdout;
-          print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
+          if not !Globals.web_compile_flag then print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted; }

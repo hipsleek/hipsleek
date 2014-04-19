@@ -256,7 +256,7 @@ let stop () =
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let _ = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    let _ = if (not !Globals.web_compile_flag) then print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
   else begin

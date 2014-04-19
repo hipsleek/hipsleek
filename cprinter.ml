@@ -2824,7 +2824,7 @@ let pr_fail_estate (es:fail_context) =
    (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)  (* failure points in conseq *)
   fmt_string "}"; 
   fmt_close ()
-  
+
 let string_of_fail_estate (es:fail_context) : string =  poly_string_of_pr  pr_fail_estate es
 let printer_of_fail_estate (fmt: Format.formatter) (es: fail_context) : unit =
   poly_printer_of_pr fmt pr_fail_estate es

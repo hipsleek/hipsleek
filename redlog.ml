@@ -141,7 +141,7 @@ let stop () =
       let ending_fnc () = 
         let outchannel = !process.outchannel in
         output_string outchannel "quit;\n"; flush outchannel;
-        print_endline "Halting Reduce... "; flush stdout;
+        if not !Globals.web_compile_flag then print_endline "Halting Reduce... "; flush stdout;
         log DEBUG "\n***************";
         log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
         log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
@@ -158,7 +158,7 @@ let stop () =
 let restart reason =
   if !is_reduce_running then begin
     print_string reason;
-    print_endline " Restarting Reduce... "; flush stdout;
+    if not !Globals.web_compile_flag then print_endline " Restarting Reduce... "; flush stdout;
     Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
   end
 

@@ -1275,7 +1275,7 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = if not !Globals.web_compile_flag then print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
@@ -1325,7 +1325,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             begin
     	      if !log_all_flag == true then
 		output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not sent to mona)\n");
-	      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
+	      if not !Globals.web_compile_flag then print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
               is_sat_b;
             end
       | "" ->
@@ -1335,7 +1335,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
-	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
+	    if not !Globals.web_compile_flag then print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in
@@ -1348,7 +1348,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
                     begin
     	              if !log_all_flag == true then
 		        output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
-		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
+		      if not !Globals.web_compile_flag then print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure --> Mona aborted)\n");
                       is_sat_b;
                     end
   in
@@ -1422,7 +1422,7 @@ let create_file_for_mona_x (filename: string) (fv: CP.spec_var list) (f: CP.form
         let var_decls = first_order_var_decls ^ second_order_var_decls in
         var_decls ^(mona_of_formula f f vs)
       end
-    with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
+    with exc -> if not !Globals.web_compile_flag then print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
   in
   if not (f_str == "") then  output_string mona_file (f_str ^ ";\n" );
   flush mona_file;
