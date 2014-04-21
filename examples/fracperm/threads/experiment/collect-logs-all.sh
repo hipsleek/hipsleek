@@ -4,15 +4,17 @@
 # Run all tests and display output
 
 THREADHIP=../../../../threadhip
-PARAHIP=../../../../threadhip
+PARAHIP=../../../../parahip
 
 # Threads as resource
-THREADHIP_DIR=../threadhip
-FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
+THREADHIP_DIR=../threadhip/
+#FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
+FLAG1="" #no need for flags if running in website, bundle, or vm
 
 # Threads as AND-conjunction
-PARAHIP_DIR=../parahip
-FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
+PARAHIP_DIR=../parahip/
+#FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
+FLAG2="" #no need for flags if running in website, bundle, or vm
 
 ITERATIONS=1 # ALWAYS 1
 

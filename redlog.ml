@@ -19,7 +19,7 @@ let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
-let timeout = ref 10.0 (* default timeout is 15 seconds *)
+let timeout = ref 15.0 (* default timeout is 15 seconds *)
 let dis_omega = ref false
 let pasf = ref false
 
