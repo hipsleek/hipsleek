@@ -6,11 +6,11 @@
 HIP=../../../../hip
 
 # Threads as resource
-THREADHIP=~/hg/para5-threads/sleekex/examples/fracperm/threads/threadhip
+THREADHIP=../threadhip
 FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
 
 # Threads as AND-conjunction
-PARAHIP=~/hg/para5-threads/sleekex/examples/fracperm/threads/parahip
+PARAHIP=../parahip
 FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
 
 ITERATIONS=1 # ALWAYS 1
