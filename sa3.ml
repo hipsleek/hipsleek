@@ -252,6 +252,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
         (fun _ _ -> check_full_path_sensitive_x cs new_constrs)
         cs new_constrs
   in
+
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     let frozen_constrs0 = List.filter (fun cs -> not (Sacore.cs_rhs_is_only_neqNull cs)) frozen_constrs in
     if frozen_constrs = [] then is_changed,non_frozen,unfrozen_hps else
