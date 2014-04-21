@@ -889,13 +889,13 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 
-let allow_lsmu_infer = ref false
+let allow_lsmu_infer = ref true
 
-let allow_norm = ref true
+let allow_norm = ref false
 
-let allow_ls = ref false (*enable lockset during verification*)
+let allow_ls = ref true (*enable lockset during verification*)
 
-let allow_locklevel = ref false (*enable locklevel during verification*)
+let allow_locklevel = ref true (*enable locklevel during verification*)
 
 (*
   true -> threads as resource
@@ -1128,7 +1128,7 @@ let disable_pre_sat = ref true
 let do_infer_inv = ref false
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
+let opt_classic = ref true                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 
 (** for type of frame inference rule that will be used in specs commands *)
