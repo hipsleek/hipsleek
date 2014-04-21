@@ -262,7 +262,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref NoPerm
+let perm = ref Frac
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -901,7 +901,7 @@ let allow_locklevel = ref true (*enable locklevel during verification*)
   true -> threads as resource
   false -> threads as AND-conjunctions
 *)
-let allow_threads_as_resource = ref false
+let allow_threads_as_resource = ref true
 
 (* let has_locklevel = ref false *)
 

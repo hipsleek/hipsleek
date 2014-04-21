@@ -3,22 +3,23 @@
 
 # Run all tests and display output
 
-HIP=../../../../hip
+THREADHIP=../../../../threadhip
+PARAHIP=../../../../threadhip
 
 # Threads as resource
-THREADHIP=../threadhip
+THREADHIP_DIR=../threadhip
 FLAG1="--en-para --en-thrd-resource -tp parahip --en-lsmu-infer"
 
 # Threads as AND-conjunction
-PARAHIP=../parahip
+PARAHIP_DIR=../parahip
 FLAG2="--en-para --en-thrd-and-conj -tp parahip --en-lsmu-infer"
 
 ITERATIONS=1 # ALWAYS 1
 
 #########################################
 #########################################
-echo "Running programs in $THREADHIP ..."
-for prog in $( ls $THREADHIP/*.ss );
+echo "Running programs in $THREADHIP_DIR ..."
+for prog in $( ls $THREADHIP_DIR/*.ss );
 do
     sum=0
     for (( i = 1; i <= $ITERATIONS; i++ ))
@@ -26,12 +27,12 @@ do
 	    echo "============================="
 	    echo "===$prog : $i"
 	    echo "============================="
-        $HIP $FLAG1 $prog
+        $THREADHIP $FLAG1 $prog
     done
 done
 
-echo "Running programs in $THREADHIP/parahip-benchmark/ ..."
-for prog in $( ls $THREADHIP/parahip-benchmark/*.ss );
+echo "Running programs in $THREADHIP_DIR/parahip-benchmark/ ..."
+for prog in $( ls $THREADHIP_DIR/parahip-benchmark/*.ss );
 do
     sum=0
     for (( i = 1; i <= $ITERATIONS; i++ ))
@@ -39,15 +40,15 @@ do
 	    echo "============================="
 	    echo "===$prog : $i"
 	    echo "============================="
-        $HIP $FLAG1 $prog
+        $THREADHIP $FLAG1 $prog
     done
 done
 
 #########################################
 #########################################
 
-echo "Running programs in $PARAHIP ..."
-for prog in $( ls $PARAHIP/*.ss );
+echo "Running programs in $PARAHIP_DIR ..."
+for prog in $( ls $PARAHIP_DIR/*.ss );
 do
     sum=0
     for (( i = 1; i <= $ITERATIONS; i++ ))
@@ -55,12 +56,12 @@ do
 	    echo "============================="
 	    echo "===$prog : $i"
 	    echo "============================="
-        $HIP $FLAG2 $prog
+        $PARAHIP $FLAG2 $prog
     done
 done
 
-echo "Running programs in $PARAHIP/parahip-benchmark/ ..."
-for prog in $( ls $PARAHIP/parahip-benchmark/*.ss );
+echo "Running programs in $PARAHIP_DIR/parahip-benchmark/ ..."
+for prog in $( ls $PARAHIP_DIR/parahip-benchmark/*.ss );
 do
     sum=0
     for (( i = 1; i <= $ITERATIONS; i++ ))
@@ -68,6 +69,6 @@ do
 	    echo "============================="
 	    echo "===$prog : $i"
 	    echo "============================="
-        $HIP $FLAG2 $prog
+        $PARAHIP $FLAG2 $prog
     done
 done
