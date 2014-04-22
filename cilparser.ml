@@ -509,28 +509,41 @@ let rec remove_goto_with_if_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
     | [] -> ([],[])
     | stmt::stmts ->
-          if (List.exists (fun stmt_lbl -> label == stmt_lbl) stmt.Cil.labels)
+          if (List.exists (fun stmt_lbl ->
+              let s1 = string_of_cil_label label in
+              let s2 = string_of_cil_label stmt_lbl in
+              (String.compare s1 s2 == 0)) stmt.Cil.labels)
           then ([],stmt::stmts)
           else
-            let (stmts1, blk2) = get_stmts stmts in
+            let (stmts1, stmts2) = get_stmts stmts in
             (stmt::stmts1, stmts2)
+  in
   match stmts with
     | [] -> []
     | stmt::stmts ->
           let skind = stmt.Cil.skind in
-          let new_skind = match skind with
-            | Cil.If (_, , b2, p) ->
-                  let fst_stmt = List.hd b1.Cil.stmts in
-                  if (goto == fst_stmt)
-                  then
-                    let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
-                    let (new_b1, stmts) = get_stmts stmts in
-                    Cil.If (false_exp, new_b1, b2, p)
-                  else skind
-            | Cil.Block blk -> Cil.Block (remove_goto_with_if_block goto label blk)
-            | _ -> skind
+          let (new_skind, new_stmts) = match skind with
+            | Cil.If (e, b1, b2, p) ->
+                  let fst_stmt = List.hd b1.Cil.bstmts in
+                  let fst_skind = fst_stmt.Cil.skind in
+                  ( match fst_skind with
+                    | Cil.Goto (goto_stmt, _) ->
+                          let s1 = string_of_cil_stmt goto in
+                          let s1 = string_of_cil_stmt goto in
+                          let s2 = string_of_cil_stmt !goto_stmt in
+                          if (String.compare s1 s2 == 0)
+                          then
+                            let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
+                            let (stmts1, stmts2) = get_stmts stmts in
+                            let new_b1 = Cil.mkBlock stmts1 in
+                            (Cil.If (false_exp, new_b1, b2, p), stmts2)
+                          else
+                            (skind, stmts)
+                    | _ -> (Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p), stmts) )
+            | Cil.Block blk -> (Cil.Block (remove_goto_with_if_block goto label blk), stmts)
+            | _ -> (skind, stmts)
           in
-          {stmt with Cil.skind = new_skind}::(remove_goto_with_if_stmts goto label stmts)
+          {stmt with Cil.skind = new_skind}::(remove_goto_with_if_stmts goto label new_stmts)
 
 and remove_goto_with_if_block goto label blk =
   let new_stmts = remove_goto_with_if_stmts goto label blk.Cil.bstmts in
@@ -543,7 +556,10 @@ let remove_goto_with_if_fundec goto label fd =
 let remove_goto (fd: Cil.fundec) : Cil.fundec =
   let fd = normalize_goto_fundec fd in
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
-  let new_fd = remove_goto_with_if (List.hd gotos) (List.hd labels) fd in
+  let new_fd = List.fold_left (fun fd (goto, _, _) ->
+      let label = List.hd goto.Cil.labels in
+      remove_goto_with_if_fundec goto label fd
+  ) fd gotos in
   new_fd
 
 (************************************************************)
@@ -1806,7 +1822,6 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
               let gvar = translate_global_var v init (Some l) in
               global_var_decls := !global_var_decls @ [gvar];
         | Cil.GFun (fd, l) ->
-              let _ = print_endline "remove goto" in
               let fd = remove_goto fd in
               let proc = translate_fundec fd (Some l) in
               proc_decls := !proc_decls @ [proc]
