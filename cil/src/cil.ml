@@ -105,15 +105,15 @@ type lineDirectiveStyle =
   | LinePreprocessorOutput     (** Use # nnn directives (in gcc mode) *)
 
 let lineDirectiveStyle = ref (Some LinePreprocessorInput)
- 
+
 let print_CIL_Input = ref false
-           
+
 let printCilAsIs = ref false
 
 let lineLength = ref 80
 
 let warnTruncate = ref true
-                      
+
 (* sm: return the string 's' if we're printing output for gcc, suppres
  * it if we're printing for CIL to parse back in.  the purpose is to
  * hide things from gcc that it complains about, but still be able
@@ -456,9 +456,9 @@ and varinfo = {
 and storage = 
     NoStorage |                         (** The default storage. Nothing is 
                                          * printed  *)
-    Static |                           
-    Register |                          
-    Extern                              
+    Static |
+    Register |
+    Extern
 
 
 (** Expressions (Side-effect free)*)
@@ -478,7 +478,7 @@ and exp =
       * having type pointer to character. *)
   | AlignOf    of typ * location        (** Has [unsigned int] type *)
   | AlignOfE   of exp * location
-                                        
+
   | UnOp       of unop * exp * typ * location
                                         (** Unary operation. Includes 
                                             the type of the result *)

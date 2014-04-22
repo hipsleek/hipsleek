@@ -377,7 +377,7 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
       (* collect label statements *)
       let new_lbls1, index = (match stmt.Cil.labels with
         | [] -> [], index
-        | _ -> 
+        | _ ->
             let index = index + 1 in
             let new_lbls = [(stmt, index, depth)] in
             (new_lbls, index)
@@ -436,7 +436,7 @@ and collect_goto_label_in_fundec (fd: Cil.fundec)
   ) in
   Debug.no_1 "collect_goto_label_in_fundec" pr_in pr_out
     (fun _ -> collect_goto_label_in_fundec_x fd) fd
-    
+
  (* Normalizing all goto-statements:                          *)
  (* all goto-statement must be conditioned by an If-statment  *)
  (* an unconditional goto is converted into "If (true) goto"  *)
@@ -505,10 +505,46 @@ and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
   Debug.no_1 "normalize_goto_fundec" pr_in pr_out
     (fun _ -> normalize_goto_fundec_x fd) fd
 
+let rec remove_goto_with_if_stmts goto label stmts =
+  let rec get_stmts stmts = match stmts with
+    | [] -> ([],[])
+    | stmt::stmts ->
+          if (List.exists (fun stmt_lbl -> label == stmt_lbl) stmt.Cil.labels)
+          then ([],stmt::stmts)
+          else
+            let (stmts1, blk2) = get_stmts stmts in
+            (stmt::stmts1, stmts2)
+  match stmts with
+    | [] -> []
+    | stmt::stmts ->
+          let skind = stmt.Cil.skind in
+          let new_skind = match skind with
+            | Cil.If (_, , b2, p) ->
+                  let fst_stmt = List.hd b1.Cil.stmts in
+                  if (goto == fst_stmt)
+                  then
+                    let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
+                    let (new_b1, stmts) = get_stmts stmts in
+                    Cil.If (false_exp, new_b1, b2, p)
+                  else skind
+            | Cil.Block blk -> Cil.Block (remove_goto_with_if_block goto label blk)
+            | _ -> skind
+          in
+          {stmt with Cil.skind = new_skind}::(remove_goto_with_if_stmts goto label stmts)
+
+and remove_goto_with_if_block goto label blk =
+  let new_stmts = remove_goto_with_if_stmts goto label blk.Cil.bstmts in
+  {blk with Cil.bstmts = new_stmts}
+
+let remove_goto_with_if_fundec goto label fd =
+  let new_body = remove_goto_with_if_block goto label fd.Cil.sbody in
+  {fd with Cil.sbody = new_body}
+
 let remove_goto (fd: Cil.fundec) : Cil.fundec =
   let fd = normalize_goto_fundec fd in
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
-  fd
+  let new_fd = remove_goto_with_if (List.hd gotos) (List.hd labels) fd in
+  new_fd
 
 (************************************************************)
 (****** collect information about address-of operator *******)
@@ -1731,7 +1767,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let barrier_decls : Iast.barrier_decl list ref = ref [] in
   let coercion_decls : Iast.coercion_decl_list list ref = ref [] in
   let aux_progs : Iast.prog_decl list ref = ref [] in
-  
+
   (* reset & init global vars *)
   Hashtbl.reset tbl_pointer_typ;
   Hashtbl.reset tbl_data_decl;
@@ -1769,6 +1805,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
               let gvar = translate_global_var v init (Some l) in
               global_var_decls := !global_var_decls @ [gvar];
         | Cil.GFun (fd, l) ->
+              let _ = print_endline "remove goto" in
               let fd = remove_goto fd in
               let proc = translate_fundec fd (Some l) in
               proc_decls := !proc_decls @ [proc]
