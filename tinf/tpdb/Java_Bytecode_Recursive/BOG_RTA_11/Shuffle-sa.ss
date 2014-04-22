@@ -1,0 +1,27 @@
+data node { int value; node next; }
+
+HeapPred G(node a).
+HeapPred H(node a, node b).
+
+node reverse (node l)
+infer[G,H]
+requires G(l)
+ensures H(l, res);
+{
+  if (l == null || l.next == null) return l;
+  node nextItem = l.next;
+  node reverseRest = reverse(nextItem);
+  l.next = null;
+  nextItem.next = l;
+  return reverseRest;
+}
+
+node shuffle (node xs) 
+{
+  if (xs == null)
+    return null;
+  else {
+    node next = xs.next;
+    return new node(xs.value, shuffle(reverse(next)));
+  }
+} 
