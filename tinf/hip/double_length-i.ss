@@ -1,18 +1,15 @@
 template int f(int x, int y).
-template int g(int x).
-
-relation R (int x, int y).
 
 data node { int val; node next; }
 
-ll<r> ==
-  self = null & r = 0 or
-  self::node<v, p> * p::ll<r1> & r = f(v, r1);
+ll<n> ==
+  self = null & n = 0 or
+  self::node<v, p> * p::ll<n1> & n = 1 + n1
+  inv n >= 0;
 
 int length (node x) 
-  infer[f, R]
-  requires x::ll<r>@L & Term[r]
-  ensures R(r, res);
+  requires x::ll<n>@L & Term[n]
+  ensures res = n;
 {
   if (x == null) return 0;
   else return 1 + length(x.next);
@@ -22,9 +19,10 @@ int rand ()
   requires Term
   ensures true;
 
-/*
-node double (node x, int i)
-  requires x::ll<r> 
+/* ./hip double_length-i.ss --term-dis-bnd-pre */
+node double (node x, int i) 
+  infer[f]
+  requires x::ll<n> & Term[f(n, i)]
   ensures true;
 {
   if (i >= length(x)) 
@@ -32,4 +30,4 @@ node double (node x, int i)
   else
     return double(new node(rand(), x), i + 2);
 }
-*/
+
