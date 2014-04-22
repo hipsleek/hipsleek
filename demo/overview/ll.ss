@@ -30,3 +30,10 @@ if (x.next == null) x.next = y;
 else append(x.next,y);
 }
 
+void append_s(node x, node y)
+requires x::ll<n> * y::ll<m> & x != null
+ensures x::ll<n+m>;
+{
+if (x.next == null) x.next = y;
+else append_s(x.next,y);
+}
