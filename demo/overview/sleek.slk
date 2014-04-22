@@ -71,3 +71,8 @@ print residue.
 //Entail 16: Inference Shape
 infer [H]  H(y) |- y::node<a,b> * b::ll<m>.
 print residue.
+
+//Entail 17: Termination with Heap
+checkentail x::ll<n> & x != null & Term[n] |- x::node<_,p> * p::ll<m> & Term[m].
+print residue.
+

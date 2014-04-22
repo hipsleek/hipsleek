@@ -8,11 +8,11 @@ struct node3{
 /*@
 skipll3<> == self=null or self::node3<_,null,n2,n3> * n2::skipll2<n3> * n3::skipll3<>;
 
-skipll2<q> == self=q or self::node3<_,n1,n2,null> * n2::skipll2<q> * n1::lseg<n2>;
+skipll2<q> == self=q or self::node3<_,n1,n2,null> * n2::skipll2<q> * n1::lseg<n2> & self != q;
 
 //lseg2<q> == seff=q or self::node3<_,_,n2,null> * n2::lseg2<q>;
 
-lseg<q> == self=q or self::node3<_,n1,null,null> * n1::lseg<q>;
+lseg<q> == self=q or self::node3<_,n1,null,null> * n1::lseg<q> & self != q;
 */
 /*@
 HeapPred H1(node3 a,node3@NI b).
@@ -36,7 +36,8 @@ int skip1(struct node3* l, struct node3* e)
 /*@
 infer[H2] requires H2(l,e) ensures res>0;
 */
-/* requires l::skipll2<e>
+/*
+  requires l::skipll2<e>
     ensures res>0;
 */
 {
@@ -48,8 +49,9 @@ int skip0(struct node3* l, struct node3* e)
 /*@
 infer[H1] requires H1(l,e) ensures res>0;
 */
-/* requires l::lseg<e>
-    ensures res>0;
+/*
+  requires l::lseg<e>
+  ensures res>0;
  */
 {
   if (l == e) return 1;

@@ -27,6 +27,7 @@ type constant_flow = string
 
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
+exception SA_HP_NOT_PRED
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false
@@ -768,7 +769,7 @@ let pred_elim_dangling = ref true
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_pure = ref false
+let sa_pure = ref true
 
 (* let iSIZE_PROP = 0 *)
 (* let iBAG_VAL_PROP = 1 *)
@@ -813,6 +814,8 @@ let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
+
+let lemma_ep = ref true
 
 let dis_sem = ref false
 

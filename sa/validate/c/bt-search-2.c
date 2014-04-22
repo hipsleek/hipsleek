@@ -3,10 +3,9 @@ struct node2 {
   struct node2* left;
   struct node2* right;
 };
-
-/*
+/*@
 bst0<> == self = null
-	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
+	or self::node2<_, p, q> * p::bst0<> * q::bst0<> & self != null
 	inv true;
 */
 /*@
@@ -20,14 +19,11 @@ HeapPred H1(node2 a).
   requires H1(x)
   ensures G1(x);
   */
-  /*
-   requires x::bst0<>
-   ensures x::bst0<>;//'n>=0 & h>=0 & n=n1 & h=h1
- */
+  /* requires x::bst0<> 
+   ensures x::bst0<>;  */
 {
   int tmp;
-
-  if (x)
+  if (x != NULL)
     {
       // bind x to (xval, xleft, xright) in
       {
@@ -35,9 +31,9 @@ HeapPred H1(node2 a).
           return 1;
         else {
             if (x->val < a)
-             return search(x->right, a);
+              return search(x->right, a);
             else
-             return search(x->left, a);
+              return search(x->left, a);
         }
       }
       // return false;

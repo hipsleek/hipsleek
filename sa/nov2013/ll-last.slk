@@ -1,0 +1,14 @@
+data node {
+ int val;
+ node next;
+}.
+
+HeapPred H(node x, node b).
+
+pred  ll<r> == self::node<_,null> & r=self
+  or self::node<v,q>*q::ll<r>& q!=null
+ inv true.
+
+
+lemma_infer [H] self::ll<r> -> H(self,r) * r::node<_,null>.
+print residue.

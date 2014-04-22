@@ -1,0 +1,58 @@
+
+data node {
+	int val#VAL;
+	node next#REC;
+}.
+
+data node2 {
+	int val#VAL; 
+	node2 prev#REC; 
+	node2 next#REC; 
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<> & self!=null
+inv true.
+
+pred ll1<n> == self=null & n>0
+  or self::node<_,p> * p::ll1<n1> & self!=null & n=n1+1
+inv true.
+
+pred tree<> == self=null
+  or self::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 //& V>=0 
+   inv true.//s>=0.
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+
+pred llN1<n:int> == extends llN<> with size[REC]<n> .
+
+/*
+pred treeN<n> == extends tree<> with size[REC]<n> .
+
+
+pred llNPSum<n,s> == extends llN<n> with pos_sum[VAL,REC]<s> .
+*/
+
+
+
+
+
+
+pred lseg<p> == self=p
+  or self::node<v,q>*q::lseg<p>& self!=null
+ inv true.
+
+pred lsegN<p,n:int> == extends lseg<p> with size[REC]<n> .
+
+
+

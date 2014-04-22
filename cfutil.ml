@@ -10,6 +10,66 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+(*arg is global vars*)
+let norm_free_vars f0 args=
+  let rec helper f=
+    match f with
+      | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
+            (* (CF.h_fv fb.CF.formula_base_heap) *)
+            (fv f)
+        ) args) in
+        if fr_svl = [] then (f,[])
+        else
+          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
+          (*rename primed quantifiers*)
+          let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
+              if p = Unprimed then
+                (r_svl@[sv], r_ss)
+              else
+                (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
+                let fr_sv = CP.fresh_spec_var sv in
+                (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
+          ) ([],[]) fr_svl
+          in
+          let nf0 = if ss = [] then (Base fb) else
+            subst ss (Base fb)
+          in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
+          let nf = add_quantifiers fr_svl1 nf0 in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
+          let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+              let vk = Typeinfer.fresh_proc_var_kind ls t in
+              let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+              ls@[(svp,vk)]
+          ) [] fr_svl1 in
+          (nf, tis)
+      | Exists _ ->
+            let qvars1, base1 = split_quantifiers f in
+            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
+            let base2,tis = helper base1 in
+             (add_quantifiers qvars1 base2, tis)
+      | Or orf ->
+            let nf1, tis1 = helper orf.formula_or_f1 in
+            let nf2, tis2 = helper orf.formula_or_f2 in
+           (Or {orf with formula_or_f1 = nf1;
+               formula_or_f2 = nf2;
+           }, tis1@tis2)
+  in
+  let f,tis = helper f0 in
+  let def = List.map fst tis in
+  let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
+      let n = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      (List.for_all (fun n2 -> String.compare n n2 != 0) def)
+  ) args in
+  (* let _ = Debug.ninfo_hprint (add_str "rem_svl: " !CP.print_svl) rem_svl no_pos in *)
+  (* let s = CP.SpecVar (CP.type_of_spec_var (List.hd args),self,Unprimed) in *)
+  let tis1 =  List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
+      let vk = Typeinfer.fresh_proc_var_kind ls t in
+      let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
+      ls@[(svp,vk)]
+  ) [] (rem_svl) in
+  (f, tis@tis1)
+
 let get_data_view_name hf=
   match hf with
     | ViewNode vn -> ( vn.h_formula_view_name)
@@ -145,6 +205,29 @@ let hp_defs_topo_sort defs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "hp_defs_topo_sort" pr1 (pr_pair (pr_list_ln pr1) pr1)
       (fun _ -> hp_defs_topo_sort_x defs) defs
+
+let classify_equiv_hp_defs_x defs=
+  let classify_equiv_form (equiv_defs, non_equiv_defs, equiv) def=
+    match def.def_cat with
+      | CP.HPRelDefn (hp,_,_) -> begin
+          match def.def_rhs with
+            | [(f,_)] -> begin
+                  let equiv_opt = extract_hrel_head f in
+                  match equiv_opt with
+                    | None -> (equiv_defs, non_equiv_defs@[def], equiv)
+                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+              end
+            | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+        end
+      | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
+  in
+  List.fold_left classify_equiv_form ([],[],[]) defs
+
+let classify_equiv_hp_defs defs=
+  let pr1 = pr_list_ln  Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_1 "classify_equiv_hp_defs" pr1 (pr_triple pr1 pr1 pr2)
+      (fun _ -> classify_equiv_hp_defs_x defs) defs
 
 (*
 (i) build emap for LHS/RHS 
@@ -558,6 +641,21 @@ let check_separation_unsat f0=
   Debug.no_1 "check_separation_unsat" pr1 pr2
       (fun _ -> check_separation_unsat f0)
       f0
+
+(*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
+let poss_prune_pred_x prog vnode f=
+  let pure_svl = List.filter (fun sv -> not (CP.is_node_typ sv)) vnode.h_formula_view_arguments in
+  let pure_constr = CP.filter_var (get_pure f) pure_svl in
+  let ps = List.filter (fun p -> not (CP.is_eq_between_vars p) &&
+      not (CP.isConstTrue p)) (CP.list_of_conjs pure_constr) in
+  (ps != [])
+
+let poss_prune_pred prog vnode f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in
+  Debug.no_2 "poss_prune_pred" pr2 pr1 string_of_bool
+      (fun _ _ -> poss_prune_pred_x prog vnode f)
+      vnode f
 
 (*
   res = -1: NO cyclic - not syn lemma

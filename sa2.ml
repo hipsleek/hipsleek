@@ -2087,7 +2087,7 @@ and infer_shapes_new_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps se
   r
 
 and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang:
-      (CF.hprel list * CF.hp_rel_def list) =
+      (CF.hprel list * CF.hp_rel_def list * CP.spec_var list) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
   (*   try *)
@@ -2139,13 +2139,13 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     sel_hp_defs@tupled_defs1@link_hp_defs
   in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) shown_defs in
-  (constr, hp_defs)
+  (constr, hp_defs, CP.remove_dups_svl (List.map fst (unk_hpargs2@link_hpargs2)))
 
 
 let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels
       hp_rel_unkmap unk_hpargs link_hpargs need_preprocess detect_dang:
  (* (CF.cond_path_type * CF.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) = *)
-  (CF.hprel list * CF.hp_rel_def list) =
+  (CF.hprel list * CF.hp_rel_def list * CP.spec_var list) =
   (* let pr0 = pr_list !CP.print_exp in *)
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
@@ -2171,7 +2171,7 @@ let infer_shapes iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels se
       ()
   else ()
   in
-  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_pair pr1 pr2)
+  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 !CP.print_svl)
       (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
           sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
           need_preprocess detect_dang)

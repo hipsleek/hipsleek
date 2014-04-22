@@ -127,77 +127,79 @@ let helper prog h_node = match h_node with
   - if there are more than 1 --> means that we can simplify further (by performing the operation)
 *)
 
-let rec count_iconst (f : CP.exp) = match f with
-  | CP.Subtract (e1, e2, _)
-  | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
-  | CP.Mult (e1, e2, _)
-  | CP.Div (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
-  | CP.IConst _ -> 1
-  | _ -> 0
+(*L2: moved to cvutil.ml*)
+(* let rec count_iconst (f : CP.exp) = match f with *)
+(*   | CP.Subtract (e1, e2, _) *)
+(*   | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2)) *)
+(*   | CP.Mult (e1, e2, _) *)
+(*   | CP.Div (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2)) *)
+(*   | CP.IConst _ -> 1 *)
+(*   | _ -> 0 *)
 
-let simpl_b_formula (f : CP.b_formula): CP.b_formula =
-  let (pf,il) = f in
-  match pf with
-  | CP.Lt (e1, e2, pos)
-  | CP.Lte (e1, e2, pos)
-  | CP.Gt (e1, e2, pos)
-  | CP.Gte (e1, e2, pos)
-  | CP.Eq (e1, e2, pos)
-  | CP.Neq (e1, e2, pos)
-  | CP.BagSub (e1, e2, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1, _) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.EqMax (e1, e2, e3, pos)
-  | CP.EqMin (e1, e2, e3, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 8 (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.BagIn (sv, e1, pos)
-  | CP.BagNotIn (sv, e1, pos) ->
-      if ((count_iconst e1) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 7 (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.ListIn (e1, e2, pos)
-  | CP.ListNotIn (e1, e2, pos)
-  | CP.ListAllN (e1, e2, pos)
-  | CP.ListPerm (e1, e2, pos) ->
-		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
-			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = TP.simplify_a 6 (CP.BForm(f,None)) in
-  		begin
-  		match simpl_f with
-  		| CP.BForm(simpl_f1,_) ->
-  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  			simpl_f1
-  		| _ -> f
-  		end
-  		else f
- 	| _ -> f
+(*L2: moved to cvutil.ml*)
+(* let simpl_b_formula (f : CP.b_formula): CP.b_formula = *)
+(*   let (pf,il) = f in *)
+(*   match pf with *)
+(*   | CP.Lt (e1, e2, pos) *)
+(*   | CP.Lte (e1, e2, pos) *)
+(*   | CP.Gt (e1, e2, pos) *)
+(*   | CP.Gte (e1, e2, pos) *)
+(*   | CP.Eq (e1, e2, pos) *)
+(*   | CP.Neq (e1, e2, pos) *)
+(*   | CP.BagSub (e1, e2, pos) -> *)
+(*       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then *)
+(* 	    (\*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*\) *)
+(* 	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in *)
+(*   	    begin *)
+(*   	      match simpl_f with *)
+(*   	        | CP.BForm(simpl_f1, _) -> *)
+(*   		        (\*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*\) *)
+(*   		        simpl_f1 *)
+(*   	        | _ -> f *)
+(*   	    end *)
+(*       else f *)
+(*   | CP.EqMax (e1, e2, e3, pos) *)
+(*   | CP.EqMin (e1, e2, e3, pos) -> *)
+(*       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then *)
+(* 	    (\*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*\) *)
+(* 	    let simpl_f = TP.simplify_a 8 (CP.BForm(f,None)) in *)
+(*   	    begin *)
+(*   	      match simpl_f with *)
+(*   	        | CP.BForm(simpl_f1,_) -> *)
+(*   		        (\*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*\) *)
+(*   		        simpl_f1 *)
+(*   	        | _ -> f *)
+(*   	    end *)
+(*       else f *)
+(*   | CP.BagIn (sv, e1, pos) *)
+(*   | CP.BagNotIn (sv, e1, pos) -> *)
+(*       if ((count_iconst e1) > 1) then *)
+(* 	    (\*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*\) *)
+(* 	    let simpl_f = TP.simplify_a 7 (CP.BForm(f,None)) in *)
+(*   	    begin *)
+(*   	      match simpl_f with *)
+(*   	        | CP.BForm(simpl_f1,_) -> *)
+(*   		        (\*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*\) *)
+(*   		        simpl_f1 *)
+(*   	        | _ -> f *)
+(*   	    end *)
+(*       else f *)
+(*   | CP.ListIn (e1, e2, pos) *)
+(*   | CP.ListNotIn (e1, e2, pos) *)
+(*   | CP.ListAllN (e1, e2, pos) *)
+(*   | CP.ListPerm (e1, e2, pos) -> *)
+(* 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then *)
+(* 			(\*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*\) *)
+(* 			let simpl_f = TP.simplify_a 6 (CP.BForm(f,None)) in *)
+(*   		begin *)
+(*   		match simpl_f with *)
+(*   		| CP.BForm(simpl_f1,_) -> *)
+(*   			(\*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*\) *)
+(*   			simpl_f1 *)
+(*   		| _ -> f *)
+(*   		end *)
+(*   		else f *)
+(*  	| _ -> f *)
 
 (*L2: moved to cvutil.ml*)
 (* let rec filter_formula_memo f (simp_b:bool)= *)
@@ -6490,9 +6492,15 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                 let _ = Debug.ninfo_hprint (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
                 (* let _ = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
                 let pf,rele_p_rhs_xpure =
-                  if (CP.isConstFalse p_rhs_xpure) ||  TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf])))  then
+                  if (CP.isConstFalse p_rhs_xpure) ||
+                    not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions ([lhs_p;pf]))))  then
                     (pf,p_rhs_xpure)
                   else
+                    (* let rele_rhs_xpure = CP.filter_var p_rhs_xpure  orig_inf_vars in *)
+                    let _ = Debug.ninfo_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
+                    let _ = Debug.ninfo_hprint (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
+                    (* let _ = Debug.ninfo_hprint (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
+                    (* if CP.isConstTrue rele_rhs_xpure then (pf,rele_rhs_xpure) else *)
                     let rele_svl = CP.fv pf in
                     let sst = (MCP.ptr_equations_without_null lhs_xpure) in
                     let rele_sst = List.fold_left (fun r (sv1,sv2) ->
@@ -6504,14 +6512,21 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                           | false, false -> r
                           | true, true -> r@[(sv1,sv2)]
                     ) [] sst in
-                    let l_ps = CP. remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
+                    let l_ps = CP.remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
                     let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
-                    (* let _ = Debug.info_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in *)
-                    (CP.join_conjunctions l_ps1, CP.subst rele_sst p_rhs_xpure)
+                    let _ = Debug.ninfo_hprint (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+                    let rele_rhs_xpure = CP.subst rele_sst p_rhs_xpure in
+                    (CP.join_conjunctions l_ps1, rele_rhs_xpure)
                 in
                 (*skip*-list*)
                 let res_ctx_opt = if CP.is_neq_null_exp pf then None else
-                  Infer.add_infer_hp_contr_to_list_context hinf_args_map [pf] temp_ctx rele_p_rhs_xpure in
+                  let p_contr_lhs = (CP.join_conjunctions ([lhs_p;pf])) in
+                  let _ = Debug.ninfo_hprint (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
+                  let hinf_args_map0 =  List.filter (fun (_,args) ->
+                      let rele_p = CP.filter_var p_contr_lhs args in
+                      TP.is_sat_raw (MCP.mix_of_pure rele_p)
+                  ) hinf_args_map in
+                  Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
                 let _ = Debug.tinfo_hprint (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
 	        let _ = Debug.ninfo_hprint (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
                 let es = 
@@ -14038,19 +14053,19 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
 		                                                                                                   - whenever the pure part contains some arithmetic formula that can be further simplified --> call the theorem prover to perform the simplification
 		                                                                                                   Ex. x = 1 + 0 --> simplify to x = 1
 ******************************************************************************************************************)
-
-and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
-  | CP.And (f1, f2, pos) -> CP.mkAnd (simpl_pure_formula f1) (simpl_pure_formula f2) pos
-  | CP.AndList b -> CP.AndList (map_l_snd simpl_pure_formula b)
-  | CP.Or (f1, f2, lbl, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) lbl pos
-  | CP.Not (f1, lbl, pos) -> CP.mkNot (simpl_pure_formula f1) lbl pos
-  | CP.Forall (sv, f1, lbl, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl pos
-  | CP.Exists (sv, f1, lbl, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) lbl pos
-  | CP.BForm (f1,lbl) ->
-        let simpl_f = CP.BForm(simpl_b_formula f1, lbl) in
-	(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in
-	  let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
-	simpl_f
+(*L2: moved to cvutil.ml*)
+(* and simpl_pure_formula (f : CP.formula) : CP.formula = match f with *)
+(*   | CP.And (f1, f2, pos) -> CP.mkAnd (simpl_pure_formula f1) (simpl_pure_formula f2) pos *)
+(*   | CP.AndList b -> CP.AndList (map_l_snd simpl_pure_formula b) *)
+(*   | CP.Or (f1, f2, lbl, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) lbl pos *)
+(*   | CP.Not (f1, lbl, pos) -> CP.mkNot (simpl_pure_formula f1) lbl pos *)
+(*   | CP.Forall (sv, f1, lbl, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl pos *)
+(*   | CP.Exists (sv, f1, lbl, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) lbl pos *)
+(*   | CP.BForm (f1,lbl) -> *)
+(*         let simpl_f = CP.BForm(simpl_b_formula f1, lbl) in *)
+(* 	(\*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in *)
+(* 	  let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*\) *)
+(* 	simpl_f *)
 
 and combine_struc_base b1 b2 = 
 	   {formula_struc_explicit_inst = b1.formula_struc_explicit_inst@b2.formula_struc_explicit_inst;
