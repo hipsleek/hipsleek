@@ -16,12 +16,3 @@ ensures H(l, res);
   return reverseRest;
 }
 
-node shuffle (node xs) 
-{
-  if (xs == null)
-    return null;
-  else {
-    node next = xs.next;
-    return new node(xs.value, shuffle(reverse(next)));
-  }
-} 
