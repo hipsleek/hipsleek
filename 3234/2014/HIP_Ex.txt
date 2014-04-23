@@ -1,0 +1,105 @@
+// (1) Given a method where i,j are in-out parameters.
+//     write the strongest postcondition involving i,j,i',j'
+//     for swap method below
+
+void swap (ref int i, ref int j)
+  requires true 
+  ensures true; // Write the correct Postcondition
+{
+  int c=i;
+  i=j;
+  j=c;  
+}
+
+// (2) Add strongest postcondition for the swap method
+//     below over cell data structures.
+
+data cell {int val;}
+
+void swap (cell i, cell j)
+  requires i::cell<a> & i=j
+  ensures  true; // Write the correct Postcondition
+  requires i::cell<a>*j::cell<b>
+  ensures  true; // Write the correct Postcondition
+{
+	int c=i.val;
+	i.val = j.val;
+	j.val = c;	
+}
+
+// (3)  Use multiple specifications to give another 
+//      pre and post condition for the following methods
+//      using min(a,b) and max(a,b) constructs
+
+int minf(int i, int j)  
+  requires true
+  ensures i<=j & res=i or i>=j & res=j;
+{
+	if (i<j) return i;
+	else return j;
+}
+
+int maxf(int i, int j)  
+  requires true
+  ensures i<=j & res=j or i>=j & res=i;
+{
+	if (i>j) return i;
+	else return j;
+}
+
+//(4) Give the correct pre and post condition for the
+//    following method using the ll<n> predicate
+//    The method inserts a new element in the list
+
+data node{int val; node next;}
+
+ll<n> == self = null & n = 0
+      or self::node<_,p> * p::ll<n-1>
+inv n >=0;
+
+node insert(node x, int v)
+requires true
+ensures true; // Write the correct spec
+{
+node tmp = new node(v,x);
+return tmp;
+}
+
+//(5) Give the correct specifications for the same insert
+//    method using bag of values predicate llB<n,B>
+
+data node{int val; node next;}
+
+llB<n,B> == self = null & n = 0 & B = {}
+      or self::node<v,p> * p::llB<n-1,B1> & B = union(B1,{v})
+inv n >=0;
+
+node insert2(node x, int v)
+requires true
+ensures true;  // Write the correct spec
+{
+node tmp = new node(v,x);
+return tmp;
+}
+
+//(6) Give the correct specifications for the 
+//    following method using the ll<> and lseg<p> predicates
+//    The method returns the last element in the list
+
+data node{int val; node next;}
+
+ll<> == self = null
+      or self::node<_,p> * p::ll<>
+inv true;
+
+lseg<p> == self = p
+        or self::node<_,q> * q::lseg<p>
+inv true;
+
+node getlast(node x)
+requires true
+ensures true; // Write the correct spec
+{
+if(x.next == null) return x;
+else return getlast(x.next);
+}
