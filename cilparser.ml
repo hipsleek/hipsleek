@@ -505,14 +505,24 @@ and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
   Debug.no_1 "normalize_goto_fundec" pr_in pr_out
     (fun _ -> normalize_goto_fundec_x fd) fd
 
+let match_stmt stmt1 stmt2 =
+  let s1 = string_of_cil_stmt stmt1 in
+  let s1 = string_of_cil_stmt stmt1 in
+  let s2 = string_of_cil_stmt stmt2 in
+  if (String.compare s1 s2 == 0) then true else false
+
+let match_label lbl1 lbl2 =
+  let s1 = string_of_cil_label lbl1 in
+  let s2 = string_of_cil_label lbl2 in
+  if (String.compare s1 s2 == 0) then true else false
+
 let rec remove_goto_with_if_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
-    | [] -> ([],[])
+    | [] -> report_error no_pos "remove goto: not find matched label!"
     | stmt::stmts ->
           if (List.exists (fun stmt_lbl ->
-              let s1 = string_of_cil_label label in
-              let s2 = string_of_cil_label stmt_lbl in
-              (String.compare s1 s2 == 0)) stmt.Cil.labels)
+              match_label label stmt_lbl
+          ) stmt.Cil.labels)
           then ([],stmt::stmts)
           else
             let (stmts1, stmts2) = get_stmts stmts in
@@ -528,10 +538,7 @@ let rec remove_goto_with_if_stmts goto label stmts =
                   let fst_skind = fst_stmt.Cil.skind in
                   ( match fst_skind with
                     | Cil.Goto (goto_stmt, _) ->
-                          let s1 = string_of_cil_stmt goto in
-                          let s1 = string_of_cil_stmt goto in
-                          let s2 = string_of_cil_stmt !goto_stmt in
-                          if (String.compare s1 s2 == 0)
+                          if (match_stmt goto !goto_stmt)
                           then
                             let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
                             let (stmts1, stmts2) = get_stmts stmts in
@@ -553,12 +560,69 @@ let remove_goto_with_if_fundec goto label fd =
   let new_body = remove_goto_with_if_block goto label fd.Cil.sbody in
   {fd with Cil.sbody = new_body}
 
+let rec remove_goto_with_while_stmts goto label stmts =
+  let rec get_stmts stmts = match stmts with
+    | [] -> report_error no_pos "remove goto: not find matched goto!"
+    | stmt::stmts ->
+          let skind = stmt.Cil.skind in
+          match skind with
+            | Cil.If (_, b1, _, _) ->
+                  let fst_stmt = List.hd b1.Cil.bstmts in
+                  let fst_skind = fst_stmt.Cil.skind in
+                  ( match fst_skind with
+                    | Cil.Goto (goto_stmt, _) ->
+                          if (match_stmt goto !goto_stmt)
+                          then ([],stmts)
+                          else
+                            let (stmts1, stmts2) = get_stmts stmts in
+                            (stmt::stmts1, stmts2)
+                    | _ ->
+                          let (stmts1, stmts2) = get_stmts stmts in
+                          (stmt::stmts1, stmts2) )
+            | _ ->
+                  let (stmts1, stmts2) = get_stmts stmts in
+                  (stmt::stmts1, stmts2)
+  in
+  match stmts with
+    | [] -> []
+    | stmt::stmts ->
+          if (List.exists (fun stmt_lbl ->
+              match_label label stmt_lbl
+          ) stmt.Cil.labels)
+          then
+            let (stmts1, stmts2) = get_stmts (stmt::stmts) in
+            let true_exp = Cil.Const (Cil.CInt64 (Int64.one, Cil.IInt, None), Cil.get_stmtLoc stmt.Cil.skind) in
+            stmts1@(Cil.mkWhile true_exp stmts1 (Iformula.mkETrueF ()))@(remove_goto_with_while_stmts goto label stmts2)
+          else stmt::(remove_goto_with_while_stmts goto label stmts)
+
+and remove_goto_with_while_block goto label blk =
+  let new_stmts = remove_goto_with_while_stmts goto label blk.Cil.bstmts in
+  {blk with Cil.bstmts = new_stmts}
+
+let remove_goto_with_while_fundec goto label fd =
+  let new_body = remove_goto_with_while_block goto label fd.Cil.sbody in
+  {fd with Cil.sbody = new_body}
+
 let remove_goto (fd: Cil.fundec) : Cil.fundec =
+  let rec find_matched_label goto labels =
+    match labels with
+      | [] -> report_error no_pos "remove goto: not find matched label!"
+      | (label,i,j)::labels ->
+            if (match_stmt goto label)
+            then (label,i,j)
+            else find_matched_label goto labels
+  in
   let fd = normalize_goto_fundec fd in
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
-  let new_fd = List.fold_left (fun fd (goto, _, _) ->
-      let label = List.hd goto.Cil.labels in
-      remove_goto_with_if_fundec goto label fd
+  let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
+      let (matched_label,li,lj) = find_matched_label goto labels in
+      if (gj != lj)
+      then report_error no_pos "remove goto: goto and label are not the same level!"
+      else
+        let label = List.hd goto.Cil.labels in
+        if (gi < li)
+        then remove_goto_with_if_fundec goto label fd
+        else remove_goto_with_while_fundec goto label fd
   ) fd gotos in
   new_fd
 
