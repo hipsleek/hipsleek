@@ -3318,7 +3318,8 @@ let check_prog iprog (prog : prog_decl) =
           else [x]::a
   ) [] sorted_proc_main in
   let proc_scc0 = List.rev proc_scc in
-  let proc_scc = Cast.update_mut_vars_bu iprog prog proc_scc0 in
+  let proc_scc1 = Cast.update_mut_vars_bu iprog prog proc_scc0 in
+  let proc_scc = Da.find_rel_args_groups_scc prog proc_scc1 in
   let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in

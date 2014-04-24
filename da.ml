@@ -9,6 +9,8 @@ open Cast
 
 module CP=Cpure
 
+
+let string_cmp s1 s2= String.compare s1 s2 =0
 (*
 find distinct case spec
 *)
@@ -268,3 +270,216 @@ let get_spec_cases prog proc e0: (Cpure.formula list) =
   let pr2 = pr_list !CP.print_formula in
   Debug.no_1 "get_spec_cases" pr1 pr2
       (fun _ -> get_spec_cases_x prog proc e0) e0
+
+(***************************************************************)
+(***************************************************************)
+
+let find_rel_args_groups_x prog proc e0=
+  (****************************INTERNAL****************************)
+    (********************************************************)
+  (********************************************************)
+  let rec lookup_sv_from_id id svl=
+    match svl with
+      | [] -> raise Not_found
+      | sv::rest -> if string_cmp (CP.name_of_spec_var sv) id then sv else
+          lookup_sv_from_id id rest
+  in
+  let rec find_must_neq_helper (e:exp) (neqs:(ident*ident) list):(ident*ident) list=
+    match e with
+      | Assert _   | Java _
+      | CheckRef _ | BConst _
+      | Debug _    | Dprint _
+      | FConst _   | ICall _
+      | IConst _   | New _
+      | Null _  | EmptyArray _ (* An Hoa *)
+      | Print _ | Barrier _
+      | This _   | Time _
+      | Var _   | VarDecl _
+      | Unfold _  | Unit _
+      | Sharp _  -> neqs
+      | Label b ->  find_must_neq_helper b.exp_label_exp neqs
+      | Assign b -> (*to handle alias*) neqs
+      | Bind  {exp_bind_bound_var = (_,id);
+        exp_bind_body = b;
+        exp_bind_read_only = is_read;
+        } -> begin
+          match b with
+            | Assign {exp_assign_lhs = id2;
+              exp_assign_rhs = rhs;
+              exp_assign_pos = pos;
+              } -> begin
+                match rhs with
+                  | Var {exp_var_name = rid} ->
+                        neqs@[(id,rid)]
+                  | _ -> neqs
+              end
+            | _ -> neqs
+        end
+      | Block b -> find_must_neq_helper b.exp_block_body neqs
+      | Cond b -> (*to update neqs*)
+            let pos = b.exp_cond_pos in
+            let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
+            let then_eqs = find_must_neq_helper b.exp_cond_then_arm neqs in
+            (*else path*)
+            let else_eqs = find_must_neq_helper b.exp_cond_else_arm neqs in
+            Gen.BList.remove_dups_eq (fun (s11,s12) (s21, s22) ->
+                (string_cmp s11 s21 && string_cmp s12 s22) ||
+                    (string_cmp s11 s22 && string_cmp s12 s21)
+            ) (then_eqs@else_eqs)
+      | Cast b -> find_must_neq_helper b.exp_cast_body neqs
+      | Catch b -> find_must_neq_helper b.exp_catch_body neqs
+      | Seq b ->
+	    let res1 = find_must_neq_helper b.exp_seq_exp1 neqs in
+	    find_must_neq_helper b.exp_seq_exp2 res1
+      | While b ->
+	    find_must_neq_helper b.exp_while_body neqs
+      | Try b ->
+            let res1 = find_must_neq_helper b.exp_try_body neqs in
+            let res2 = find_must_neq_helper b.exp_catch_clause neqs in
+            res1@res2
+      | SCall {exp_scall_type=st;
+        exp_scall_method_name = mn;
+        exp_scall_arguments = args;
+        } ->
+            neqs
+  in
+  let rec split_args svl split non_split neqs=
+    match svl with
+      | [] -> (split, non_split)
+      | sv::rest ->
+            let sv_neqs = List.fold_left (fun r (id1,id2) ->
+                let id = CP.name_of_spec_var sv in
+                if string_cmp id id1 then r@[id2] else
+                  if string_cmp id id2 then r@[id1] else r
+            ) [] neqs in
+            let rem_ids = List.map CP.name_of_spec_var (rest@non_split) in
+            if Gen.BList.difference_eq string_cmp rem_ids sv_neqs = [] then
+              split_args rest (split@[sv]) non_split neqs
+            else split_args rest split (non_split@[sv]) neqs
+  in
+  (**************END**INTERNAL****************)
+  (********************************************************)
+  (********************************************************)
+  let maybe_root_args, id_ni_args = List.partition (fun (_, inst) -> inst = I) proc.Cast.proc_args_wi in
+  if not (proc.Cast.proc_is_recursive && List.length maybe_root_args > 1) then
+    false,[]
+  else
+    let _ =  Debug.ninfo_hprint (add_str "maybe_root_args" (pr_list (fun (id,_) -> pr_id id)))
+      maybe_root_args no_pos in
+    (*look up unknown preds in pre-condition => separation *)
+    let pre_unk_hpargs = CF.get_hp_rel_pre_struc_formula proc.Cast.proc_static_specs in
+    if List.length pre_unk_hpargs >= 1 then
+      let arg_groups = List.map snd pre_unk_hpargs in
+      let grouped_args = List.fold_left (@) [] arg_groups in
+      let id_grouped_args = List.map CP.name_of_spec_var grouped_args in
+      let rem = List.filter (fun (sv,_) -> not (Gen.BList.mem_eq  string_cmp sv id_grouped_args)) maybe_root_args in
+      if rem = [] then
+        try
+          let _ =  Debug.ninfo_hprint (add_str "arg_groups" (pr_list !CP.print_svl))
+            arg_groups no_pos in
+          let ni_args = List.map (fun (id,_) ->
+              lookup_sv_from_id id grouped_args
+          ) id_ni_args in
+          (* analysize the source code to find x = y.next ==> x # y*)
+          let neqs = find_must_neq_helper e0 [] in
+          let _ =  Debug.info_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
+            neqs no_pos in
+          let args_split_conf = List.fold_left (fun r (hp,svl) ->
+              if List.length svl <= 1 then r else
+                (*split at arg that diff all rem*)
+                let split_args, rem = split_args svl [] [] neqs in
+                if split_args = [] then r else
+                  let rem_i, rem_ni = List.partition (fun sv -> not (CP.mem_svl sv ni_args)) rem in
+                  let n_rels = List.map (fun sv -> ([sv], rem_ni)) split_args in
+                  let splits = if rem = [] then n_rels else ((rem_i, rem_ni)::n_rels) in
+                  r@[((hp,svl), splits)]
+          ) [] pre_unk_hpargs in
+          if args_split_conf = [] then false,[] else
+            true,args_split_conf
+        with _ -> false,[]
+      else false,[]
+    else false,[]
+
+
+(*
+ - partition parameters into relevant groups.
+ - now only focus on
+    + NOT (must eq)
+
+out: list of need to split unknown preds
+ ((pred_name, pred args), ((args inst, args noninst) list) list
+*)
+let find_rel_args_groups prog proc e0 =
+  let pr1 = !print_prog_exp in
+  let pr2 = pr_list (pr_pair (pr_pair !CP.print_sv !CP.print_svl)
+      (pr_list (pr_pair !CP.print_svl !CP.print_svl))) in
+  Debug.no_1 "find_rel_args_groups" pr1 (pr_pair string_of_bool pr2)
+      (fun _ -> find_rel_args_groups_x prog proc e0) e0
+
+
+let find_rel_args_groups_scc prog sccs =
+  (*************************************************)
+  (*************************************************)
+  let process_split ((hp,args), ls_sep_args)=
+    let ls_inst_args = List.map (fun (i_args, ni_args) ->
+        (List.map (fun sv -> (sv,I)) i_args)@(List.map (fun sv -> (sv,NI)) ni_args)) ls_sep_args in
+    let n_hf, n_hps = List.fold_left (fun (hf, r) args ->
+        let nhf, nhp = Cast.add_raw_hp_rel prog true false args no_pos in
+        (CF.mkStarH hf nhf no_pos, r@[nhp])
+    ) (CF.HEmp,[]) ls_inst_args in
+    let f = CF.formula_of_heap n_hf no_pos in
+    (*form the def for hp*)
+    let hf = CF.HRel (hp, List.map (fun v -> CP.mkVar v no_pos) args, no_pos) in
+    let def =  {CF.hprel_def_kind = CP.HPRelDefn (hp, List.hd args, List.tl args);
+      CF.hprel_def_hrel = hf;
+      CF.hprel_def_guard = None;
+      CF.hprel_def_body = [([], Some f)];
+      CF.hprel_def_body_lib = None;
+    }
+    in
+    (hp, def, n_hf,n_hps)
+  in
+  let rec update_spec drop_hps add_hps sf=
+    let recf = update_spec drop_hps add_hps in
+     match sf with
+       | CF.EInfer b ->
+             (* let _ =  Debug.info_hprint (add_str "EInfer" pr_id) "EInfer" no_pos in *)
+             CF.EInfer {b with formula_inf_vars =
+                     add_hps@(CP.diff_svl b.formula_inf_vars drop_hps);
+                 CF.formula_inf_continuation = CF.struc_formula_drop_infer drop_hps b.CF.formula_inf_continuation;
+             }
+       | EList l-> (* let _ =  Debug.info_hprint (add_str "EList" pr_id) "EList" no_pos in *)
+          EList (Gen.map_l_snd recf l)
+       | _ -> sf
+  in
+  (*************************************************)
+  (*************************************************)
+  let process_scc scc=
+    match scc with
+      | [proc] -> begin
+          match proc.Cast.proc_body with
+            | Some p -> begin
+                  let b,splits = find_rel_args_groups prog proc p in
+                  if b then
+                    (*generate new unk preds*)
+                    let splitted_hps, defs, n_hfs, n_hps = List.fold_left (fun (r1,r2,r3, r4) split ->
+                        let hp, def, hf, n_hps =  process_split split in
+                        (r1@[hp], r2@[def], r3@[hf], r4@n_hps)
+                    ) ([],[],[],[]) splits in
+                    let sspec1 = proc.Cast.proc_static_specs in
+                    let _ =  Debug.ninfo_hprint (add_str "sspec1" (Cprinter.string_of_struc_formula)) sspec1 no_pos in
+                    let sspec2 = update_spec  splitted_hps n_hps sspec1 in
+                    let nf =  CF.formula_of_heap (CF.join_star_conjunctions n_hfs) no_pos in
+                    let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
+                    let n_proc = {proc with Cast.proc_static_specs = sspec3} in
+                    let _ =  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
+                    let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in
+                    let _ = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
+                    [n_proc]
+                  else [proc]
+              end
+            | _ -> [proc]
+        end
+      | _ -> scc
+  in
+  List.map process_scc sccs

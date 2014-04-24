@@ -4790,6 +4790,7 @@ let get_hp_rel_pre_struc_formula (sf0:struc_formula) =
   in
   helper sf0
 
+
 let check_and_get_one_hpargs f=
   let helper mf hf=
     if CP.isConstTrue (MCP.pure_of_mix mf) then
@@ -5148,6 +5149,16 @@ let formula_map hf_fct f0=
             }
   in
   helper f0
+
+let rec mkAnd_pre_struc_formula sf f=
+  let recf sf1 = mkAnd_pre_struc_formula sf1 f in
+  match sf with
+   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+   | EBase b -> EBase {b with
+         formula_struc_base = mkStar b.formula_struc_base f Flow_combine b.formula_struc_pos}
+   | EAssume b -> sf
+   | EInfer b-> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation;}
+   | EList l-> EList (Gen.map_l_snd recf l)
 
 (* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
 (*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
