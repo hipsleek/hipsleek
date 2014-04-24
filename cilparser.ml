@@ -518,7 +518,7 @@ let match_label lbl1 lbl2 =
 
 let rec remove_goto_with_if_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
-    | [] -> report_error no_pos "remove goto: not find matched label!"
+    | [] -> report_error no_pos "remove goto with if stmts: not find matched label!"
     | stmt::stmts ->
           if (List.exists (fun stmt_lbl ->
               match_label label stmt_lbl
@@ -566,7 +566,7 @@ let remove_goto_with_if_fundec goto label fd =
 
 let rec remove_goto_with_while_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
-    | [] -> report_error no_pos "remove goto: not find matched goto!"
+    | [] -> report_error no_pos "remove goto with while stmts: not find matched goto!"
     | stmt::stmts ->
           let skind = stmt.Cil.skind in
           match skind with
