@@ -30,7 +30,7 @@ node reverse (node l)
   requires l::node<_, p> * p::node<_, q> * q::lseg<n, null>
   case {
     q = null -> ensures p::node<_, l> * l::node<_, null> & res = p;
-    q != null -> ensures res::lseg<_, p> * p::node<_, l> * l::node<_, null>;
+    q != null -> ensures res::lseg<_, _> * p::node<_, l> * l::node<_, null>;
   }
 {
   if (l == null) return l;
