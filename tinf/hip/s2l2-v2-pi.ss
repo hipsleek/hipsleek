@@ -20,8 +20,8 @@ pll<n, s, r> ==
 node s2l (node x)
 	infer[f2]
   requires x::pll<n, s, r> & Term[r]
-  //ensures res::pll<s, s, s>;
-	ensures true;
+  ensures res::pll<s, s, _>;
+	//ensures true;
 {
   if (x == null) return x;
   else if (x.val <= 0) {
