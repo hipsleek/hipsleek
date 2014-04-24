@@ -417,7 +417,7 @@ let find_rel_args_groups prog proc e0 =
       (fun _ -> find_rel_args_groups_x prog proc e0) e0
 
 
-let find_rel_args_groups_scc prog sccs =
+let find_rel_args_groups_scc prog scc =
   (*************************************************)
   (*************************************************)
   let process_split ((hp,args), ls_sep_args)=
@@ -473,13 +473,16 @@ let find_rel_args_groups_scc prog sccs =
                     let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
                     let n_proc = {proc with Cast.proc_static_specs = sspec3} in
                     let _ =  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
-                    let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in
+                    (* let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
                     let _ = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
-                    [n_proc]
-                  else [proc]
+                    [n_proc],defs
+                  else [proc],[]
               end
-            | _ -> [proc]
+            | _ -> [proc],[]
         end
-      | _ -> scc
+      | _ -> scc,[]
   in
-  List.map process_scc sccs
+process_scc scc
+(* List.fold_left (fun (r1,r2) scc -> let nscc,defs = process_scc scc in *)
+(*	r1@[nscc],r2@defs *)
+(*	) ([],[]) sccs *)
