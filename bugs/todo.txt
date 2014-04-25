@@ -1172,9 +1172,22 @@ checkentail x::lseg<n,r> & n>0 |- x::lseg<n-1, l>*l::node<_,r>.
 // fail but shd succeed?
 
 print residue.
-
-
 ===================================================================
+# sh-rev2.slk
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
+
+checkentail_exact  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::lseg<n,r>.
+// valid : base case
+print residue.
+
+/*
+Why is a RD_lemma triggered?? when the RHS did not contain a node?
+This lemma should only be triggered by a folding when both
+LHS and RHS are x::lseg<..>
+
+
 ===================================================================
 ===================================================================
 ===================================================================
