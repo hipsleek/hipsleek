@@ -1,0 +1,24 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> & self!=p
+  inv n >= 0.
+  
+pred ll<n> ==
+  self = null & n = 0 or
+  self::node<v, q> * q::ll<n-1>
+  inv n >= 0.
+  
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+
+checkentail res::lseg<n_1296,q_1286> * q_1286::node<_,l> * l::node<_,null> &
+  n=n_1296+1 & 1<n_1296 |- res::lseg<n,l> * l::node<_,null>.
+print residue.
+
+checkentail res::lseg<n_1301 - 1,q_1291> * q_1291::node<_,l> * l::node<_,null> &
+  n=n_1301+1 & 1<n & 1<n_1301 |- res::lseg<n - 1,l> * l::node<_,null>.
+print residue.
+
+checkentail nextItem::node<_, l> * l::node<_,null> & reverseRest = nextItem |- reverseRest::lseg<2, l> * l::node<_, null>.
+print residue.

@@ -11,7 +11,7 @@ ll<n> ==
   inv n >= 0;
 
 
-lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1 ;
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1;
 
 
 /*
@@ -30,11 +30,11 @@ node reverse (node l)
 */
 
 node reverse (node l)
- requires l::ll<n>
- case {
-  n<=1 -> ensures res::ll<n> & res=l;
-  n>1 -> ensures res::lseg<n,l>*l::node<_,null>;
- }
+  requires l::ll<n>
+  case {
+    n<=1 -> ensures res::ll<n> & res=l;
+    n>1 -> ensures res::lseg<n,l> * l::node<_,null>;
+  }
 /*
   requires l = null
   ensures res = l;  
