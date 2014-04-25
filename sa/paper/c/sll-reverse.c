@@ -38,11 +38,11 @@ void reverse(struct node* x, struct node* y)
  */
 {
   while(x)
-    /*@
+    /*
      // infer[HX,HY,G1]
     //  requires HX(x)*HY(y)
       infer[H4,G1]
-        requires H4(x,y)
+      requires H4(x,y)
       ensures G1(x,x',y,y');
     */
     /* requires x::ll<> * y::ll<>
