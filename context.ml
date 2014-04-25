@@ -1334,9 +1334,11 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         [(1,M_fold m_res)]
                       else [] in
                   (* WN : what is M_rd_lemma for?? *)
+                  (* WN : why do we apply lemma blindly here!! *)
                   let r_lem = 
                     if (Lem_store.all_lemma # any_coercion) then
-                      [(1,M_rd_lemma m_res)]
+                      []
+                      (* [(1,M_rd_lemma m_res)] *)
                     else [] in
                   let a2 = if (new_orig) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
