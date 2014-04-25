@@ -6,7 +6,7 @@ pred lseg<n, p> ==
   inv n >= 0.
 
 
-lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+3.
 
 //lemma_safe  self::lseg<m,q>*q::node<_,r> -> self::lseg<m+1,r> .
 
