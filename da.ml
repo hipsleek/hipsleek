@@ -361,11 +361,13 @@ let find_rel_args_groups_x prog proc e0=
   (********************************************************)
   (********************************************************)
   let maybe_root_args, id_ni_args = List.partition (fun (_, inst) -> inst = I) proc.Cast.proc_args_wi in
+  let _ =  Debug.ninfo_hprint (add_str "maybe_root_args" (pr_list (fun (id,_) -> pr_id id)))
+    maybe_root_args no_pos in
+  let _ =  Debug.ninfo_hprint (add_str "proc.Cast.proc_is_recursive" string_of_bool)
+    proc.Cast.proc_is_recursive no_pos in
   if not (proc.Cast.proc_is_recursive && List.length maybe_root_args > 1) then
     false,[]
   else
-    let _ =  Debug.ninfo_hprint (add_str "maybe_root_args" (pr_list (fun (id,_) -> pr_id id)))
-      maybe_root_args no_pos in
     (*look up unknown preds in pre-condition => separation *)
     let pre_unk_hpargs = CF.get_hp_rel_pre_struc_formula proc.Cast.proc_static_specs in
     if List.length pre_unk_hpargs >= 1 then
@@ -373,7 +375,7 @@ let find_rel_args_groups_x prog proc e0=
       let grouped_args = List.fold_left (@) [] arg_groups in
       let id_grouped_args = List.map CP.name_of_spec_var grouped_args in
       let rem = List.filter (fun (sv,_) -> not (Gen.BList.mem_eq  string_cmp sv id_grouped_args)) maybe_root_args in
-      if rem = [] then
+      (* if rem = [] then *)
         try
           let _ =  Debug.ninfo_hprint (add_str "arg_groups" (pr_list !CP.print_svl))
             arg_groups no_pos in
@@ -382,7 +384,7 @@ let find_rel_args_groups_x prog proc e0=
           ) id_ni_args in
           (* analysize the source code to find x = y.next ==> x # y*)
           let neqs = find_must_neq_helper e0 [] in
-          let _ =  Debug.info_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
+          let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
             neqs no_pos in
           let args_split_conf = List.fold_left (fun r (hp,svl) ->
               if List.length svl <= 1 then r else
@@ -397,7 +399,7 @@ let find_rel_args_groups_x prog proc e0=
           if args_split_conf = [] then false,[] else
             true,args_split_conf
         with _ -> false,[]
-      else false,[]
+      (* else false,[] *)
     else false,[]
 
 
@@ -417,7 +419,7 @@ let find_rel_args_groups prog proc e0 =
       (fun _ -> find_rel_args_groups_x prog proc e0) e0
 
 
-let find_rel_args_groups_scc prog sccs =
+let find_rel_args_groups_scc prog scc0 =
   (*************************************************)
   (*************************************************)
   let process_split ((hp,args), ls_sep_args)=
@@ -473,13 +475,14 @@ let find_rel_args_groups_scc prog sccs =
                     let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
                     let n_proc = {proc with Cast.proc_static_specs = sspec3} in
                     let _ =  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in
-                    let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in
+                    (* let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) defs in *)
                     let _ = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name sspec3 in
-                    [n_proc]
-                  else [proc]
+                    [n_proc],defs
+                  else [proc],[]
               end
-            | _ -> [proc]
+            | _ -> [proc],[]
         end
-      | _ -> scc
+      | _ -> scc,[]
   in
-  List.map process_scc sccs
+  process_scc scc0
+  (* List.map process_scc sccs *)

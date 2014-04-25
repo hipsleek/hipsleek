@@ -4485,6 +4485,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
+            let _ =  Debug.info_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
+            let _ =  Debug.info_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
             (*ONLY NEED THOSE that are modified in the body and condition*)
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
