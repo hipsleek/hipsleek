@@ -341,6 +341,7 @@ let find_rel_args_groups_x prog proc e0=
         exp_scall_method_name = mn;
         exp_scall_arguments = args;
         } ->
+            let _ =  Debug.info_hprint (add_str "SCall neqs" (pr_list (pr_pair pr_id pr_id))) neqs no_pos in
             neqs
   in
   let rec split_args svl split non_split neqs=
@@ -384,16 +385,17 @@ let find_rel_args_groups_x prog proc e0=
           ) id_ni_args in
           (* analysize the source code to find x = y.next ==> x # y*)
           let neqs = find_must_neq_helper e0 [] in
-          let _ =  Debug.ninfo_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
+          let _ =  Debug.info_hprint (add_str "neqs" (pr_list (pr_pair pr_id pr_id)))
             neqs no_pos in
           let args_split_conf = List.fold_left (fun r (hp,svl) ->
               if List.length svl <= 1 then r else
                 (*split at arg that diff all rem*)
-                let split_args, rem = split_args svl [] [] neqs in
+                let svl_i, svl_ni = List.partition (fun sv -> not (CP.mem_svl sv ni_args)) svl in
+                let split_args, rem_i = split_args svl_i [] [] neqs in
                 if split_args = [] then r else
-                  let rem_i, rem_ni = List.partition (fun sv -> not (CP.mem_svl sv ni_args)) rem in
-                  let n_rels = List.map (fun sv -> ([sv], rem_ni)) split_args in
-                  let splits = if rem = [] then n_rels else ((rem_i, rem_ni)::n_rels) in
+                  (* let rem_i, rem_ni = List.partition (fun sv -> not (CP.mem_svl sv ni_args)) rem in *)
+                  let n_rels = List.map (fun sv -> ([sv], svl_ni)) split_args in
+                  let splits = if rem_i = [] then n_rels else ((rem_i, svl_ni)::n_rels) in
                   r@[((hp,svl), splits)]
           ) [] pre_unk_hpargs in
           if args_split_conf = [] then false,[] else
