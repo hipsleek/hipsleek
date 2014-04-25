@@ -1156,6 +1156,24 @@ Total number of errors: 7 in files:
 unsoundness of hip ; log of sleek contains failure.
 
 ===================================================================
+# sh-rev.sh
+
+
+unsound lemma problem with
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<2, l> * l::node<_, null>.
+// valid but should fail
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<1, l>*l::node<_,null>.
+
+checkentail x::lseg<n,r> & n>0 |- x::lseg<n-1, l>*l::node<_,r>.
+// fail but shd succeed?
+
+print residue.
+
+
 ===================================================================
 ===================================================================
 ===================================================================
