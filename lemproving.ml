@@ -317,11 +317,21 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
+  let pr = Cprinter.string_of_coerc_med in
+  let pr2 = Cprinter.string_of_struc_formula in
+  let pr3 = Cprinter.string_of_formula in
   let ent_lhs =coer.C.coercion_head_norm in
   let ent_rhs =  coer.C.coercion_body_norm in
   (* let ent_lhs = coer.C.coercion_head in                                    *)
   (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
-  check_coercion_struc coer ent_lhs ent_rhs cprog
+  Debug.binfo_pprint "Verify Left Coercion" no_pos;
+  Debug.binfo_hprint (add_str "lemma(med)" pr) coer no_pos;
+  Debug.binfo_hprint (add_str "norm lhs" pr3) ent_lhs no_pos;
+  Debug.binfo_hprint (add_str "norm rhs" pr2) ent_rhs no_pos;
+  let (r,ctx) = check_coercion_struc coer ent_lhs ent_rhs cprog in
+  Debug.binfo_hprint (add_str "Verify Lemma success? :" string_of_bool) r no_pos;
+  (r,ctx)
+
 
 let check_left_coercion coer cprog  =
   let pr = Cprinter.string_of_coercion in
@@ -330,9 +340,18 @@ let check_left_coercion coer cprog  =
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
   (* using normalization form of lemma body and head to check *)
+  let pr = Cprinter.string_of_coerc_med in
+  let pr2 = Cprinter.string_of_struc_formula in
+  let pr3 = Cprinter.string_of_formula in
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
-  check_coercion_struc coer ent_lhs ent_rhs cprog 
+  Debug.binfo_pprint "Verify Right Coercion" no_pos;
+  Debug.binfo_hprint (add_str "lemma(med)" pr) coer no_pos;
+  Debug.binfo_hprint (add_str "norm lhs" pr3) ent_lhs no_pos;
+  Debug.binfo_hprint (add_str "norm rhs" pr2) ent_rhs no_pos;
+  let (r,ctx) = check_coercion_struc coer ent_lhs ent_rhs cprog in
+  Debug.binfo_hprint (add_str "Verify Lemma success? :" string_of_bool) r no_pos;
+  (r,ctx)
 
 let check_right_coercion coer (cprog: C.prog_decl) =
   let pr = Cprinter.string_of_coercion in
