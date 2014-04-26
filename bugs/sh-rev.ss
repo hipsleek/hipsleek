@@ -2,16 +2,13 @@ data node { int value; node next; }
 
 lseg<n, p> ==
   self = p & n = 0 or
-  self::node<v, q> * q::lseg<n-1, p> & self!=p
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
   inv n >= 0;
 
 ll<n> ==
   self = null & n = 0 or
   self::node<v, q> * q::ll<n-1>
   inv n >= 0;
-
-
-lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1;
 
 
 /*
@@ -29,11 +26,14 @@ node reverse (node l)
 }
 */
 
+//lemma_safe self::lseg<n,r> & n>0  <-> self::lseg<m,q>*q::node<_,r> & n=m+1;
+lemma_safe self::lseg<n,r> <- self::lseg<m,q>*q::node<_,r> & n=m+1;
+
 node reverse (node l)
   requires l::ll<n>
   case {
     n<=1 -> ensures res::ll<n> & res=l;
-    n>1 -> ensures res::lseg<n,l> * l::node<_,null>;
+    n>1 -> ensures res::lseg<n-1,l> * l::node<_,null>;
   }
 /*
   requires l = null
