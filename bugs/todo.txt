@@ -1230,6 +1230,32 @@ res:  failctx
                    fc_message:  n=0+2 |-  n=1+0. LOCS:[24;5] (must-bug)
                    fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
 
+=======
+
+!!! LP.lhs: (exists q_51,_,m_53: self::lseg<m_53,q_51>@M * q_51::node<_,r>@M&n=2+m_53&
+{FLOW,(21,22)=__norm})[]
+!!! LP.fv_lhs:[self,r,n]
+!!! LP.lhs(unfolded): 
+ (exists q_54,_,m_56: q_54::node<_,r>@M&q_54=self & m_56=0 & n=2+m_56&
+ {FLOW,(21,22)=__norm})[]
+ or (exists p_68,flted_5_69,v_70,q_71,q_54,_,m_56: self::node<v_70,q_71>@M * 
+    q_71::lseg<flted_5_69,p_68>@M * q_54::node<_,r>@M&m_56=flted_5_69+1 & 
+    p_68=q_54 & n=2+m_56&{FLOW,(21,22)=__norm})[]
+ 
+!!! LP.rhs: EBase (exists n_45,r_46: self::lseg<n_45,r_46>@M&n=n_45 & r=r_46&
+       {FLOW,(21,22)=__norm})[]
+
+!!! LP.new_rhs: EBase (exists n_45,r_46: self::lseg<n_45,r_46>@M&n=n_45 & r=r_46&
+       {FLOW,(21,22)=__norm})[]
+
+>>> Calling process_coercion_check
+>>> How come rhs lost some info
+
+!!! LP.glob_vs_rhs:[]
+!!! LP.fv_rhs:[]
+!!! LP.rhs(after unfold): EBase self::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
+!!! iconseq: EBase self_lem_13::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
+
 ===================================================================
 ===================================================================
 ===================================================================

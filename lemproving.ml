@@ -118,8 +118,8 @@ let print_exc (check_id: string) =
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
-  let _ = Debug.tinfo_pprint "Calling process_coercion_check" no_pos in
-  let _ = Debug.tinfo_hprint (add_str "iconseq" string_of_lem_formula) iconseq no_pos in
+  let _ = Debug.binfo_pprint "Calling process_coercion_check" no_pos in
+  let _ = Debug.binfo_hprint (add_str "iconseq" string_of_lem_formula) iconseq no_pos in
   let dummy_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in  
   try 
     let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
@@ -225,8 +225,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   in
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let fv_lhs = CF.fv lhs in
-  let _ = Debug.tinfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
-  let _ = Debug.tinfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let (new_rhs,fv_rhs) = add_exist_heap_of_struc fv_lhs rhs in
   let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
   (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
@@ -269,13 +269,13 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       ) (lhs, []) lhs_unfold_ptrs
   ) in
   (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let _ = Debug.tinfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
-  let _ = Debug.tinfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
-  let _ = Debug.tinfo_hprint (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
-  let _ = Debug.tinfo_hprint (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
-  let _ = Debug.tinfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   (* let vs_rhs = CF.fv_s rhs in *)
   (* let _ = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let rhs =
@@ -291,7 +291,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     CF.struc_elim_exist unfolded_rhs
   in
   (* let _ = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let _ = Debug.tinfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
+  let _ = Debug.binfo_hprint (add_str "LP.rhs(after unfold)" Cprinter.string_of_struc_formula) rhs pos in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
