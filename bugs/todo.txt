@@ -1256,8 +1256,27 @@ res:  failctx
 !!! LP.fv_rhs:[]
 !!! LP.rhs(after unfold): EBase self::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
 !!! iconseq: EBase self_lem_13::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
-
 ===================================================================
+
+without rd_lemma
+----------------
+Total number of errors: 2 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+Total verification time: 0.00 second
+
+Checking append-tail.ss
+error at: append-tail.ss append
+
+Total number of errors: 1 in files:
+ error at: append-tail.ss append
+
+with rd_lemma
+-------------
+Total number of errors: 1 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}).
+
+Leads to unsoundness of sh-rev3a.slk
+
 ===================================================================
 ===================================================================
 ===================================================================
