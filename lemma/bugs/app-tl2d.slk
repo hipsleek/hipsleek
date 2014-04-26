@@ -1,0 +1,36 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+// add this to run-fast-test
+//Fail.Valid.Fail.Valid.Fail.Valid
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  (exists qq: x::lseg2<tx, qq> & qq = nn+2).
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  (exists qq: x::lseg2<tx, qq> & qq = nn+1).
+print residue.
+// with qq=nn+1
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  x::lseg2<tx, qq> & qq = nn+2.
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  x::lseg2<tx, qq> & qq = nn+1.
+print residue.
+// with qq=nn+1
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  [qq] x::lseg2<tx, qq> & qq = nn+2.
+
+checkentail x::node<_,q> * q::lseg2<tx,nn>@M 
+ |-  [qq] x::lseg2<tx, qq> & qq = nn+1.
+print residue.
+// with qq=nn+1
+
