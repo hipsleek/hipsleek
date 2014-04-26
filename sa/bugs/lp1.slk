@@ -1,0 +1,40 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>.
+
+
+pred zipM<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipM<n1> & n=n1+1 
+ inv n>=0.
+
+relation P3(int a, int b).
+
+/*
+lemma_safe self::zip<y> <- self::zipM<n> * y::zipM<m> & m=n.
+*/
+
+
+lemma_infer_pred [P3] "one3" self::zip<y>  <-  self::zipM<n> * y::zipM<m> & P3(n,m) .
+print residue.
+
+/*
+!!! fixpoint:[( true, true, P3(n_49,m_50), m_50=n_49)]
+ <1>(exists m_93,n_92,n1_91,n1_111: emp&m_93=1+n1_111 & n_92=1+n1_91 & P3(n_92,m_93)&{FLOW,(21,22)=__norm})[]
+ inferred rel: [RELASS [P3]: ( P3(n_49,m_50)) -->  (n_49!=0 | 1>m_50);
+                RELASS [P3]: ( P3(n_92,m_93)) -->  (m_93!=0 | 1>n_92);
+                RELDEFN P3: ( P3(n_92,m_93) & 1<=n_92 & 1<=m_93 & n1_111=m_93-1 & n1_91=n_92-1) -->  P3(n1_91,n1_111)]
+[[ Match ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  Match ==>  SEARCH ==>  (Lemma <== one3) ==> (right: one3) ==>  COND ==>  COND ==>  Match ==>  COND ==>  Match ==> ]]
+
+
+*/

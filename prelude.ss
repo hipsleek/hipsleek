@@ -291,6 +291,10 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
+//thread object, carrying resources
+data thrd{
+}
+
 data barrier{
   int phase;
 }
@@ -302,7 +306,7 @@ int fork()
   requires true
   ensures true;
 
-void join(int id)
+void join()
   requires true
   ensures true;
 

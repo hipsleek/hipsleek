@@ -14,40 +14,15 @@ sortll<n> == self=null
 /*
 ../../../hip check-sorted.c --sa-en-pure-field --pred-en-equiv
 
-How come --pred-en-equiv does not work here?
-It also triggered below:
-
-Updated store with unsafe repo.
-ERROR : top of empty stackERROR : top of empty stackERROR : top of empty stackERROR : top of empty stack
-Updated store with unsafe repo.
-ERROR : top of empty stackERROR : top of empty stack
-!!!  views: [G]
-!!!  transform: [G]
-
-Updated store with unsafe repo.
-ERROR : top of empty stackERROR : top of empty stackERROR : top of empty stackERROR : top of empty stack
-Updated store with unsafe repo.
-ERROR : top of empty stackERROR : top of empty stack
-
-[ G(x_1014,v_1015) ::= 
- emp&x_1014=null
- or x_1014::node<val_24_945,next_24_946>@M * G(next_24_946,val_24_945)&
-    v_1015<=val_24_945
- ,
- H(x_1012,v_1013) ::= 
- x_1012::node<val_24_945,next_24_946>@M * H(next_24_946,val_24_945)&
- v_1013<=val_24_945
- or emp&x_1012=null
- ]
-
 */
 int check_sorted(struct node* x, int v)
 /*@
   infer [H,G]
   requires H(x,v)
   ensures G(x,v) & res=1;
-//requires x::sortll<v>@L ensures  res=1;
 */
+// requires x::sortll<v>@L ensures  res=1;
+
 { 
   if (!x) return 1;
   else {

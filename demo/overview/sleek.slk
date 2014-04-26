@@ -1,0 +1,78 @@
+data node{
+  int val;
+  node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+HeapPred H(node x).
+
+//Entail 1:
+checkentail x=null |- x::ll<0>.
+
+//Entail 2:
+checkentail x=null |- x::ll<n>.
+print residue.
+
+//Entail 3:
+checkentail x::ll<n> & n > 2 |- x::node<_,q>.
+print residue.
+
+//Entail 4:
+checkentail  x::node<_,q> * q::ll<2> |- x::ll<n> & n > 2.
+print residue.
+
+//Entail 5: Fail (May)
+checkentail x::ll<n> |- x::node<_,q>.
+print residue.
+
+//Entail 6: Fail (Must)
+checkentail x::ll<n> & n > 2 |- x = null.
+print residue.
+
+//Entail 7: Immutability
+checkentail x::ll<n> |- x::ll<n>@I.
+print residue.
+
+//Entail 8: Immutability Fail
+checkentail x::ll<n>@I |- x::ll<n>.
+print residue.
+
+//Entail 9: Immutability Heap Sharing
+checkentail x::ll<n>@I & y::ll<m>@I & n > 0 & m > 0 |- x::node<_,q>@I.
+print residue.
+
+//Entail 10: Inference Pure
+infer[n]  x::ll<n> |- x::node<_,null>.
+print residue.
+
+//Entail 11: Inference Fail
+infer[n] x::ll<n> * y::ll<m>  |- y::node<_,null>.
+print residue.
+
+//Entail 12: Inference Selective
+infer[m] x::ll<n> * y::ll<m>  |- y::node<_,null>.
+print residue.
+
+//Entail 13: Inference Shape
+infer [H] H(y) |- y::node<a,b>.
+print residue.
+
+//Entail 14: Inference Shape
+infer [H] H(y) |- y::ll<n>.
+print residue.
+
+//Entail 15: Inference Shape
+infer [H]  H(y) |- y::node<a,b> * b::node<c,d>.
+print residue.
+
+//Entail 16: Inference Shape
+infer [H]  H(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+
+//Entail 17: Termination with Heap
+checkentail x::ll<n> & x != null & Term[n] |- x::node<_,p> * p::ll<m> & Term[m].
+print residue.
+

@@ -1,0 +1,32 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
+  inv n >= 0.
+
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+
+checkentail  self::lseg<m,q>*q::node<_,r> & n=m+1
+  |- self::lseg<n,r>.
+
+
+checkentail_exact  self::node<_,r> & n=m+1 & m=0 & self=q
+  |- self::lseg<n,r>.
+// valid : base case
+
+checkentail_exact  self::node<_,qq>*qq::lseg<m-1,q>*q::node<_,r> & n=m+1
+  |- self::lseg<n,r>.
+print residue.
+// valid rec case
+
+checkentail_exact  self::node<_,r> & n=m+1 & m=0 & self=q
+  |- self::node<_,qq>*qq::lseg<n-1,r>.
+
+checkentail  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::node<_,k> * k::lseg<n-1,r>.
+
+//lemma_safe  self::lseg<m,q>*q::node<_,r> -> self::lseg<m+1,r> .
+
+

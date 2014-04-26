@@ -35,7 +35,7 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
-  let conseq = Solver.prune_pred_struc cprog true conseq in
+  let conseq = Cvutil.prune_pred_struc cprog true conseq in
   let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
   (* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
   (* let _ = Debug.info_pprint "=============================================================" no_pos in *)
@@ -132,8 +132,8 @@ let sleek_sat_check isvl cprog f=
 *)
 let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
   let gen_lemma (r_left, r_right) (ante,conseq)=
-    let iante = Astsimp.rev_trans_formula ante in
-    let iconseq = Astsimp.rev_trans_formula conseq in
+    let iante = Rev_ast.rev_trans_formula ante in
+    let iconseq = Rev_ast.rev_trans_formula conseq in
     let l2r,r2l = !generate_lemma iprog "temp" I.Equiv [] iante iconseq in
     (r_left@l2r, r_right@r2l)
   in

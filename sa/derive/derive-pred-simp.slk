@@ -1,0 +1,144 @@
+/**************** SINGLY LINKED LIST *********************/
+
+// @VAL, @REC: user-defined
+data node {
+	int val@VAL; 
+	node next@REC; 
+}.
+
+// Shape predicate
+pred ll<> == 
+      self=null
+   or self::node<_,p> * p::ll<>
+  inv true.
+
+// Predicate extension definition
+pred_extn size<n> ==
+      n=0
+   or n=1+m & @REC::size<m>.
+
+pred_extn head<n> ==
+      n=UNDEFINED
+   or n=@VAL.
+
+pred_extn head2<n> ==
+      n=@VAL
+
+pred_extn sum<s> ==
+      s=0
+   or s=@VAL+s2 & @REC::sum<s2>.
+
+pred_extn height<h> ==
+      h=0
+   or h=1+max(h2) & @REC::height<h2>.
+
+pred_extn ordered<@VAL,R:relation(int,int)> ==
+      true & @REC=NULL
+   or R(@VAL,@REC@VAL) & @REC::ordered<@REC@VAL,R>.
+
+pred_extn set<S> ==
+      S={}
+   or S={@VAL} union S2 & @REC::set<S2>.
+
+pred_extn minValue<m> ==
+      m=inf
+   or m=min(@VAL,m2) & @REC::minValue<m2>.
+
+pred_extn maxValue<m> ==
+      m=inf
+   or m=max(@VAL,m2) & @REC::maxValue<m2>.
+
+/***********************************************/
+
+pred llN<n> == extends ll<> with size<n> .
+
+pred llNSum<s,n> == extends llN<n> with sum<s> .
+
+pred llH<n> == extends ll<> with height<n>.
+
+pred llS<S> == extends ll<> with set<S>.
+
+pred llNS<n,S> == extends llN<n> with set<S>.
+
+pred llHead<n> == extends ll<> with head<n>.
+
+pred llMin<m> == extends ll<> with minValue<m>.
+
+pred llMax<m> == extends ll<> with maxValue<m>.
+
+/***********************************************/
+
+// Relation definition
+relation Inc(int a, Int b) == a<=b .
+
+relation Dec(int a, Int b) == a>=b .
+
+pred llOrdered<v,R:relation(int,int)> 
+        == extends llHead<h> with ordered<v,R> .
+
+pred llSorted<v> == extends llHead<h> with ordered<v,Inc> .
+
+pred llSorted<v> == llOrdered<v,Dec> .
+
+pred llMinMax<mi,mx> 
+        == extends ll<> with (minValue<mi>,maxValue<mx>).
+
+/**************** TREE *********************/
+
+// @REC represent both @REC1 and @REC2
+data node2 {
+	int val@VAL; 
+	node2 prev@REC1; 
+	node2 next@REC2; 
+}.
+
+// Shape predicate
+pred tree<> == 
+     self=null
+  or tree::node2<_,p,q> * p::tree<> * q::tree<>
+ inv true.
+
+// Predicate extension definition
+pred_extn sizeT<n> ==
+      n=0
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
+
+pred_extn sumT<s> ==
+      s=0
+   or s=@VAL+s1+s2 & @REC1::sumT<s1> & @REC2::sumT<s2>.
+
+pred_extn headT<n> ==
+      n=@VAL.
+
+pred_extn heightT<h> ==
+      h=0
+   or h=1+max(h1,h2) & @REC1::heightT<h1> & @REC2::heightT<h2>.
+
+pred_extn setT<S> ==
+      S={}
+   or S={@VAL} union S1 union S2 & @REC1::setT<S1> & @REC2::setT<S2>.
+
+/***********************************************/
+
+pred treeN<n> == extends tree<> with sizeT<n> .
+
+pred treeNSum<n> == extends treeN<n> with sumT<n> .
+
+pred treeH<n> == extends tree<> with heightT<n>.
+
+pred treeS<S> == extends tree<> with setT<S>.
+
+pred treeNS<n,S> == extends treeN<n> with setT<S> .
+
+pred treeHead<n> == extends tree<> with headT<n> .
+
+
+
+
+
+
+
+
+
+
+

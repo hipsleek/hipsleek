@@ -4,7 +4,7 @@ struct node{
 };
 
 /*@
-dll<p> == self = null or self::node<p,x> * x::dll<self>;
+dll<p> == self = null or self::node<p,x> * x::dll<self> & self!=null;
 */
 
 /*@

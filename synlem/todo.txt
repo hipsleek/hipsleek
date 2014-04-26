@@ -223,31 +223,56 @@ absent in rlseg-new-b4a.slk
 =================================================================
 lemma syn: --lem-en-syn
 
-1. syn-mix-1.slk: OK
+1. syn-mix-1.slk: OK (added cyclic checkpoint for view-view matching (diff view name))
 
 2. syn-mix-2.slk: with null: ll vs lseg. OK
 
-3. syn-ls.slk (run-fast-test): w/wo size
+3. syn-ll.slk (run-fast-test): w/wo size: OK
 
 4. syn-lseg-(1|2).slk: OK
+   (added cyclic checkpoint for view-view matching (same view name))
 
-5. syn-ls.slk
+5. syn-ls.slk: OK (added cyclic checkpoint for fold + unfold)
 
 6. syn-lseg-s.slk
 
+7. syn-dseg-new.slk (run-fast-test) OK
+
+8. syn-lemma_check01.slk (run-fast-test)
+
 =================================================================
-#yn-mix-2.slk: FIXED
+#syn-mix-2.slk: FIXED
 
 rhs_split_phase: split heap and pure ==> lost pure in rhs when do syn lemma.
 
 solution: es_conseq_pure_lemma to keep
-=================================================================
-# equiv-1.slk and equiv-2.slk --lem-en-switch (FIXED)
-# bug-lemma_check01.slk
 
-should generate two left lemmas 
 
 =================================================================
+# bug-infer8-26.slk: FIXED
+
+do not generate lemma without meaning, e.g. with false in the lhs, rhs
+
+should FAIL
+=================================================================
+lemma syn: ss
+
+1. syn-ll-inst-last.ss --pred-en-split (DONE)
+
+2. syn-append-tail.ss
+   - syn-append-tail-2.slk: w/o size: OK with --lem-en-syn
+   - syn-append-tail.slk: w/ size
+   - syn-append-tail-2a.slk: OK
+
+2a. syn-append-tail-1.ss wo size: DONE
+    - gen lemma template with unknown pred
+    - gen lemma hypo
+
+3. syn-qsort.ss
+
+4. syn-bubble-all.ss (MONA timout)
+
+5. syn-bubble.ss: --lem-en-syn
 # bug-lemma_check01.slk
 lost n=b+a in body
 
@@ -270,9 +295,12 @@ trans_one_coercion@2 EXIT:[Lemma "V2":  self::lseg<n,p>@M&{FLOW,(21,22)=__norm}[
 
 
 =================================================================
+# syn-append-tail-2a.slk
 # equiv-1.slk
 
+generate lemma template (bi-abduction?)
 Did we manage to prove two --> lemmas from <-> ?
+
 
 =================================================================
 # equiv-3a1.slk --ulhs (FIXED)
@@ -378,6 +406,20 @@ print residue.
 above seems unsound for folding
 
 =================================================================
+# syn-bubble.ss --lem-en-syn
+
+  Lemma below is unsound.
+
+ gen lemma: 
+self::sll<flted_10_1112,qs_1114,lg_1111>@M&0<n 
+ & 0<flted_15_1021 & n=flted_15_1021+1 
+ & 0<=flted_15_1021 & Anon_1355<Anon_1022 
+ & flted_15_1021=flted_10_1112+1 & self!=null 
+ & Anon_1355<=qs_1114&
+ {FLOW,(24,25)=__norm}[] 
+ <-  self::ll<flted_15_1366>@M&{FLOW,(1,27)=__flow}[]
+
+
 =================================================================
 =================================================================
 =================================================================

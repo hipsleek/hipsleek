@@ -1119,12 +1119,164 @@ Total number of errors: 5 in files:
   infer/infer5.slk({E3#Fail}) infer/infer12.slk({E14#Fail},{E3#Valid}) infer/infer13.slk({E5#Valid}) infer/infer14.slk({E14#Valid},{E16#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}).
 T
 ===================================================================
+# bugs/bubble-1.ss --esl --en-inf -p bubble
+
+Can we tidy printing for --esl. It could be
+an option that is on by default (e.g. --print-tidy)
+
+ --------------------
+!!!dumping for bubble$node FAIL2
+!!!  
+id: 423; caller: []; line: 51; TIME: 0.83; classic: false; kind: POST; hec_num: 5; evars: [n_2565,k1_2566,sm1_2567]; infer_vars: []; c_heap: emp
+ checkentail r_1706::lls<flted_35_1704,k_1702,sm_1703>@M * xs'::node<v_1705,r_1528>@M * 
+r_1528::node<v_1527,r_1706>@M&0<n_1540 & 0<n_1540 & 0<n_1540 & 0<n_1540 & 
+k1_1566!=n_1540 & n_1540=flted_35_1704+1 & k1_1566<n_1540 & 
+v_1705<=sm1_1567 & k1_1566=k_1702 & sm1_1567=sm_1703 & 0<n_1540 & 0<n_1540 & 
+k!=n & n=flted_35_1526+1 & k<n & v_1527<=sm & k=k_1524 & sm=sm_1525 & 0<n & 
+xs=xs' & k!=n & r_1528!=null & !(v_bool_57_1175') & r_1528!=null & 
+!(v_bool_57_1175') & flted_35_1526=n_1540 & k_1524=k_1541 & 
+sm_1525=sm_1542 & k_1541!=n_1540 & k_1524<=flted_35_1526 & 0<=k_1524 & 
+tmp_2563 & k1_1566=1+k_1541 & sm1_1567<=sm_1542 & k_1541!=n_1540 & 
+k_1541<=n_1540 & 0<=k_1541 & v_1705<v_1527 & !(v_bool_65_1173') & 
+v_1705<v_1527 & !(v_bool_65_1173') & v_1527=val_70_1736 & 
+v_1705=val_71_1748 & flag_2564 & v_boolean_76_1174' & flag_2564 & 
+res=v_boolean_76_1174'&{FLOW,(26,27)=__norm}[]
+ |-  (exists n_2565,k1_2566,sm1_2567: xs::lls<n_2565,k1_2566,sm1_2567>@M&
+{FLOW,(26,27)=__norm})[]. 
+
 ===================================================================
+ ./run-fast-tests.pl sleek_fracperm
+
+Total number of errors: 7 in files:
+  fracperm/norm1.slk({E4#Valid}) fracperm/norm3.slk({E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) fracperm/norm4.slk({E2#Valid},{E3#Valid}) fracperm/combine_data.slk({E1#Valid},{E11#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) fracperm/combine_simple.slk({E1#Valid},{E2#Valid},{E4#Valid},{E7#Valid}) fracperm/split-combine.slk({E14#Valid},{E15#Valid}) fracperm/combine2.slk({E1#Valid},{E2#Valid},{E4#Valid}).
+
 ===================================================================
+# Shuffle-v.ss  vs rev-1.ss
+
+unsoundness of hip ; log of sleek contains failure.
+
 ===================================================================
+# sh-rev.sh
+
+
+unsound lemma problem with
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<2, l> * l::node<_, null>.
+// valid but should fail
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<1, l>*l::node<_,null>.
+
+checkentail x::lseg<n,r> & n>0 |- x::lseg<n-1, l>*l::node<_,r>.
+// fail but shd succeed?
+
+print residue.
 ===================================================================
+# sh-rev2.slk
+
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
+
+checkentail_exact  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::lseg<n,r>.
+// valid : base case
+print residue.
+
+/*
+Why is a RD_lemma triggered?? when the RHS did not contain a node?
+This lemma should only be triggered by a folding when both
+LHS and RHS are x::lseg<..>
+
 ===================================================================
+# sh-rev3a.slk  (unsoundness in lemma)
+
+Must add sh-rev3a.slk and sh-rev3b.slk to run-fast-test!
+
+Why was false triggered by lemma proving?
+I guess it is not properly normalized.
+I am concerned that unnormalized form leads to unsoundness.
+
+id: 1; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 5; evars: []; infer_vars: []; c_heap: emp
+ checkentail q::node<_,r>@M&n=2+m & m=0 & q=self&{FLOW,(21,22)=__norm}[]
+ |-  self::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]. 
+res:  1[
+   hfalse&false&{FLOW,(21,22)=__norm}[]
+   ]
+
+
+Below came from sleek proving where the RHS was normalized as:
+ |-  (exists n1,r1: self::lseg<n1,r1>@M & n1=n & r1=r). 
+
+However, it is a weirf that we have instead:
+ |-  (exists n,r: self::lseg<n,r>@M & ...)
+
+--------
+
+id: 20; caller: []; line: 25; classic: true; kind: Sleek_Entail(1); hec_num: 5; evars: [n_166,r_167]; infer_vars: []; c_heap: emp
+ checkentail q::node<_,r>@M&q=self & m=0 & n=m+2&{FLOW,(21,22)=__norm}[]
+ |-  (exists n,r: self::lseg<n,r>@M&{FLOW,(21,22)=__norm})[]. 
+res:  1[
+   emp&n=m+2 & m=0 & q=self & Anon_14=v_168 & q_169=r & exists(flted_5_176:flted_5_176=0) & exists(p_175:p_175=q_169) & exists(r_167:q_169=r_167) & exists(n_166:n_166=0+1)&{FLOW,(21,22)=__norm}[]
+   ]
+ 
+id: 28; caller: []; line: 25; classic: true; kind: Sleek_Entail(1); hec_num: 4; evars: [n_166,r_167]; infer_vars: []; c_heap: q::node<_,r>@M
+ checkentail emp&exists(n_166:n_166=0+1) & exists(r_167:q=r_167) & 
+exists(p_175:p_175=q) & exists(flted_5_176:flted_5_176=0) & q=r & Anon=v & 
+q1=self & m=0 & n=m+2&{FLOW,(21,22)=__norm}[]
+ |-  (exists n1,r1: emp&q=r1 & n1=0+1 & r=r1 & n=n1&{FLOW,(21,22)=__norm})[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  n=0+2 |-  n=1+0. LOCS:[24;5] (must-bug)
+                   fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+
+=======
+
+!!! LP.lhs: (exists q_51,_,m_53: self::lseg<m_53,q_51>@M * q_51::node<_,r>@M&n=2+m_53&
+{FLOW,(21,22)=__norm})[]
+!!! LP.fv_lhs:[self,r,n]
+!!! LP.lhs(unfolded): 
+ (exists q_54,_,m_56: q_54::node<_,r>@M&q_54=self & m_56=0 & n=2+m_56&
+ {FLOW,(21,22)=__norm})[]
+ or (exists p_68,flted_5_69,v_70,q_71,q_54,_,m_56: self::node<v_70,q_71>@M * 
+    q_71::lseg<flted_5_69,p_68>@M * q_54::node<_,r>@M&m_56=flted_5_69+1 & 
+    p_68=q_54 & n=2+m_56&{FLOW,(21,22)=__norm})[]
+ 
+!!! LP.rhs: EBase (exists n_45,r_46: self::lseg<n_45,r_46>@M&n=n_45 & r=r_46&
+       {FLOW,(21,22)=__norm})[]
+
+!!! LP.new_rhs: EBase (exists n_45,r_46: self::lseg<n_45,r_46>@M&n=n_45 & r=r_46&
+       {FLOW,(21,22)=__norm})[]
+
+>>> Calling process_coercion_check
+>>> How come rhs lost some info
+
+!!! LP.glob_vs_rhs:[]
+!!! LP.fv_rhs:[]
+!!! LP.rhs(after unfold): EBase self::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
+!!! iconseq: EBase self_lem_13::lseg<n,r>@M&{FLOW,(21,22)=__norm}[]
 ===================================================================
+
+without rd_lemma
+----------------
+Total number of errors: 2 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+Total verification time: 0.00 second
+
+Checking append-tail.ss
+error at: append-tail.ss append
+
+Total number of errors: 1 in files:
+ error at: append-tail.ss append
+
+with rd_lemma
+-------------
+Total number of errors: 1 in files:
+  lemmas/lseg.slk({L1#Valid},{L2#Valid}).
+
+Leads to unsoundness of sh-rev3a.slk
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -1665,7 +1665,7 @@ let tp_is_sat_perm f sat_no =
 	| Can_split ->
 		let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
 		let tp_wrap f = Debug.no_1 "tp_is_sat_perm_wrap" Cprinter.string_of_pure_formula (fun c-> "") tp_wrap f in
-		let ss_wrap (e,f) = if f=[] then true else Share_prover_w.sleek_sat_wrapper (e,f) in
+		let ss_wrap (e,f) = if f=[] then true else Share_prover_w2.sleek_sat_wrapper (e,f) in
 		List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
  
@@ -1798,6 +1798,7 @@ let simplify (f : CP.formula) : CP.formula =
       (* this simplifcation will first remove complex formula as boolean
          vars but later restore them *)
       let z3_simplify f =
+        if is_array_constraint f then f else
         let f = wrap_pre_post norm_pure_input norm_pure_result Smtsolver.simplify f in
         CP.arith_simplify 13 f
       in
@@ -2106,6 +2107,9 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     | ZM ->
         if is_bag_constraint f then Mona.pairwisecheck f
         else Smtsolver.pairwisecheck f
+    | PARAHIP -> (*TOCHECK: what is it for? *)
+        if is_bag_constraint f then Mona.pairwisecheck f
+        else Redlog.pairwisecheck f
     | _ -> (om_pairwisecheck f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
@@ -2438,7 +2442,7 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
 			let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
-			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
+			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w2.sleek_imply_wrapper (ea,fa) (ec,fc) in
 			List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else tp_imply_no_cache ante conseq imp_no timeout process
 	
