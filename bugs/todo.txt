@@ -1188,8 +1188,9 @@ This lemma should only be triggered by a folding when both
 LHS and RHS are x::lseg<..>
 
 ===================================================================
-
 # sh-rev3a.slk  (unsoundness in lemma)
+
+Must add sh-rev3a.slk and sh-rev3b.slk to run-fast-test!
 
 Why was false triggered by lemma proving?
 I guess it is not properly normalized.

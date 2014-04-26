@@ -5,8 +5,8 @@ pred lseg<n, p> ==
   self::node<v, q> * q::lseg<n-1, p> //& self!=p
   inv n >= 0.
 
-lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
-// should fail
+lemma_safe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+1.
+// should succeed
 
 /*
 Why is this lemma proven when the base case fails?
