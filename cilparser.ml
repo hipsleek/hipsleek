@@ -632,8 +632,6 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
     match labels with
       | [] -> report_error no_pos "remove goto: not find matched label!"
       | (label,i,j)::labels ->
-            let _ = print_endline (string_of_cil_stmt label) in
-            let _ = print_endline (string_of_cil_stmt goto) in
             if (match_stmt goto label)
             then (label,i,j)
             else find_matched_label goto labels
@@ -642,8 +640,6 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
   let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
       let (matched_label,li,lj) = find_matched_label goto labels in
-      let _ = print_endline ("goto depth: " ^ (string_of_int gj)) in
-      let _ = print_endline ("label depth: " ^ (string_of_int lj)) in
       if (gj != lj)
       then report_error no_pos "remove goto: goto and label are not the same level!"
       else
