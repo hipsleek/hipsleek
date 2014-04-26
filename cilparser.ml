@@ -379,7 +379,13 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
         | [] -> [], index
         | _ ->
             let index = index + 1 in
-            let new_lbls = [(stmt, index, depth)] in
+            let new_lbls =
+              match stmt.Cil.skind with
+                  (* because Goto is always placed in an If-statment, *)
+                  (* the depth of label is consider to be equal to the depth of If-statement *)
+                | Cil.Goto _ -> [(stmt, index, depth - 1)]
+                | _ -> [(stmt, index, depth)]
+            in
             (new_lbls, index)
       ) in
       (* collect goto statements *)
@@ -534,19 +540,22 @@ let rec remove_goto_with_if_stmts goto label stmts =
           let skind = stmt.Cil.skind in
           let (new_skind, new_stmts) = match skind with
             | Cil.If (e, b1, b2, p) ->
-                  let fst_stmt = List.hd b1.Cil.bstmts in
-                  let fst_skind = fst_stmt.Cil.skind in
-                  ( match fst_skind with
-                    | Cil.Goto (goto_stmt, _) ->
-                          if (match_stmt goto !goto_stmt)
-                          then
-                            let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
-                            let (stmts1, stmts2) = get_stmts stmts in
-                            let new_b1 = Cil.mkBlock stmts1 in
-                            (Cil.If (false_exp, new_b1, b2, p), stmts2)
-                          else
-                            (skind, stmts)
-                    | _ -> (Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p), stmts) )
+                  if (List.length b1.Cil.bstmts == 0) (* why do we have bstmts with length == 0 *)
+                  then (skind, stmts)
+                  else
+                    let fst_stmt = List.hd b1.Cil.bstmts in
+                    let fst_skind = fst_stmt.Cil.skind in
+                    ( match fst_skind with
+                      | Cil.Goto (goto_stmt, _) ->
+                            if (match_stmt goto !goto_stmt)
+                            then
+                              let false_exp = Cil.Const (Cil.CInt64 (Int64.zero, Cil.IInt, None), p) in
+                              let (stmts1, stmts2) = get_stmts stmts in
+                              let new_b1 = Cil.mkBlock stmts1 in
+                              (Cil.If (false_exp, new_b1, b2, p), stmts2)
+                            else
+                              (skind, stmts)
+                      | _ -> (Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p), stmts) )
             | Cil.Switch (exp, blk, stmts1, p) -> (Cil.Switch (exp, remove_goto_with_if_block goto label blk, stmts1, p), stmts)
             | Cil.Block blk -> (Cil.Block (remove_goto_with_if_block goto label blk), stmts)
             | Cil.Loop (blk, sf, p, stmt1, stmt2) -> (Cil.Loop (remove_goto_with_if_block goto label blk, sf, p, stmt1, stmt2), stmts)
@@ -623,6 +632,8 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
     match labels with
       | [] -> report_error no_pos "remove goto: not find matched label!"
       | (label,i,j)::labels ->
+            let _ = print_endline (string_of_cil_stmt label) in
+            let _ = print_endline (string_of_cil_stmt goto) in
             if (match_stmt goto label)
             then (label,i,j)
             else find_matched_label goto labels
@@ -631,6 +642,8 @@ let remove_goto (fd: Cil.fundec) : Cil.fundec =
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
   let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
       let (matched_label,li,lj) = find_matched_label goto labels in
+      let _ = print_endline ("goto depth: " ^ (string_of_int gj)) in
+      let _ = print_endline ("label depth: " ^ (string_of_int lj)) in
       if (gj != lj)
       then report_error no_pos "remove goto: goto and label are not the same level!"
       else
