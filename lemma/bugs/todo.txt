@@ -11,6 +11,18 @@ checkentail_exact
 ======================================================================
 # append-tail.ss
 
+bind failure with --dis-imm ??
+
+Why below with exists ty?
+
+id: 7; caller: []; line: 39; classic: false; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  1[
+   y::lseg2<ty_1045,flted_25_1092>@M * tx'::node<_,y'>@M&m=flted_25_1092+1 & flted_25_1091=null & n=flted_25_1062+1 & flted_25_1061=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_25_1061=next_43_1064&{FLOW,(24,25)=__norm}[]
+   ]
 
 ======================================================================
 # app-tl2c1.slk
@@ -89,11 +101,23 @@ two solutions; first is unnecessary
 Can we give priority to full relevation by lemma?
  Why is lemma not given higher priority?
  Why is lemma repeated with both ==> and <== ?
+
 Solution : (i) change priority
   (ii) change search to cond if priorities are different
  wt - 
       search --> lowest; 
       cond  --> lowest;
+
+ Prio:0COND =>[Prio:0(Lemma ==> ll_tail2) =>
+                 LHS: x::ll_tail2<tx,n>@M
+                 RHS: tx::node<_,b>@L;Prio:1BaseCaseUnfold =>
+ LHS: x::ll_tail2<tx,n>@M
+ RHS: tx::node<_,b>@L];
+ Prio:0COND =>[Prio:0(Lemma <== ll_tail2) =>
+                 LHS: x::ll_tail2<tx,n>@M
+                 RHS: tx::node<_,b>@L;Prio:1BaseCaseUnfold =>
+ LHS: x::ll_tail2<tx,n>@M
+ RHS: tx::node<_,b>@L]]
 
 compute_actions@1
 compute_actions inp1 :EQ ptr:[]

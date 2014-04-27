@@ -1040,8 +1040,8 @@ and check_lemma_not_exist vl vr=
 
 
 and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest): action_wt =
-  let pr_debug s = DD.binfo_pprint s no_pos in
-  let pr_hdebug h a = DD.binfo_hprint h a no_pos in
+  let pr_debug s = DD.tinfo_pprint s no_pos in
+  let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
   let lhs_node = m_res.match_res_lhs_node in
   (*Normalize false --> split
@@ -1454,7 +1454,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let alternative = process_infer_heap_match prog estate lhs_h is_normalizing (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view vl_name h_name m_res ms alternative 
             | ViewNode vl, DataNode dr ->
-                  let _ = Debug.binfo_hprint (add_str "cyclic " pr_id) " 5" no_pos in
+                  let _ = pr_hdebug (add_str "cyclic " pr_id) " 5" in
                   let _ = pr_debug "try LHS case analysis here!\n" in
                   (* let i = if mv.mater_full_flag then 0 else 1 in  *)
                   (* let a1 = (match ms with *)
@@ -1486,10 +1486,10 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         let _ = pr_debug "Sel (cond) 2" in
                         (-1, (Cond_action (a2::l1)))
                     else
-                      let _ = pr_debug "Sel (cond) 3" in
+                      let _ = pr_debug ("Sel (cond) 3:"^(string_of_int uf_i)) in
                       let l1 = if !dis_base_case_unfold then [] else [(1,M_base_case_unfold m_res)] in
                       (* (-1, (Search_action (a2::l1))) *)
-                      (uf_i, (Cond_action (a2::l1)))
+                      (5, (Cond_action (a2::l1)))
                   in a1
             | HRel _, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
@@ -1613,8 +1613,10 @@ and process_matches_x prog estate lhs_h conseq is_normalizing ((l:match_res list
     | x::[] -> process_one_match prog estate lhs_h conseq is_normalizing x (rhs_node,rhs_rest)
     | _ ->  
           let rs = List.map (fun l -> process_one_match prog estate lhs_h conseq is_normalizing l (rhs_node,rhs_rest)) l in
-          let _ = DD.binfo_pprint "process many matches" no_pos in
+          let _ = DD.tinfo_pprint "process many matches" no_pos in
           (* WN : TODO use cond_action if of different priorities *)
+          let rs = sort_wt rs in
+          let _ = DD.tinfo_hprint (pr_list string_of_action_wt_res_simpl) rs no_pos in
           (-1, Search_action rs)
 
 and choose_closest a ys =
@@ -1680,7 +1682,9 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | Seq_action l
     | Cond_action l -> List.exists uncertain l  in	
   
-  let rec recalibrate_wt (w,a) = match a with
+  let rec recalibrate_wt (w,a) = 
+    let pick a b = if a<b then a else b in
+    match a with
     | Search_action l ->
           let l = List.map recalibrate_wt l in
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
@@ -1695,11 +1699,11 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
           (*drop ummatched actions if possible*)
           (* let l = drop_unmatched_action l in *)
           let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+          let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
           (rw,Cond_action l)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
-          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+          let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
           (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
