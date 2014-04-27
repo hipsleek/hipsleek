@@ -19,8 +19,10 @@ ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
 	inv self!=null & tx!=null & n>=1;
 
-lemma "lseg2" self::lseg2<p, n> <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
-lemma "ll_tail2" self::ll_tail2<t, n> <-> self::lseg2<t, n-1> * t::node<_, null>;
+lemma "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
+lemma "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>;
 //lemma "ll_tail2_1" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
 
@@ -46,8 +48,41 @@ void append(node x, node tx, node y, node ty)
  lemma "ll_tail2" self::ll_tail2<t, n>
    <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
+
+Why so many states?
+===================
+
+Successful States:
+[
+ Label: []
+ State:or[y::ll_tail2<ty_1045,m>@M * tx'::node<_,y'>@M&flted_18_1069=null & tx_1044=x & n=1 & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_18_1069=next_43_1116&{FLOW,(24,25)=__norm}[]
+          es_heap: emp
+          es_var_measures 2: MayLoop[]
+          es_cond_path: [0]
+; 
+         r_1078::lseg2<tx_1075,flted_25_1095>@M * x::node<_,r_1078>@M * y::ll_tail2<ty_1045,m>@M * tx'::node<_,y'>@M&flted_19_1076=flted_25_1095+1 & flted_25_1094=null & n=flted_19_1076+1 & r_1078!=null & tx_1044=tx_1075 & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_25_1094=next_43_1115&{FLOW,(24,25)=__norm}[]
+         es_heap: emp
+         es_var_measures 2: MayLoop[]
+         es_cond_path: [0]
+]
+ ],
+
+Successful States:
+[
+ Label: []
+ State:x::lseg2<tx_1044,flted_25_1113>@M * y::ll_tail2<ty_1045,m>@M * tx'::node<_,y'>@M&n=flted_25_1113+1 & flted_25_1112=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_25_1112=next_43_1117&{FLOW,(24,25)=__norm}[]
+       es_heap: emp
+       es_var_measures 2: MayLoop[]
+       es_cond_path: [0]
+
+ ]
+
+
 This is a composite of lseg and ll_tail2 lemma. A hand-trace
 looks like below. Please check if it works!
+
+
+
 
 ===============
 x::ll_tail2<tx, n> * y::ll_tail2<ty, m> |- tx:node(_,_)
