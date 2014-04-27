@@ -1606,6 +1606,7 @@ $output_file = "log";
         # ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp ", "Valid.", ""],
         ["lemmas/rlseg.slk", " --elp ", "Valid.Valid.Valid.", ""],
+        ["lemmas/lemma-fold.slk", "--elp", "Valid","Valid.Fail.Valid.Fail.Valid.Fail."],
         ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
         ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
         ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
