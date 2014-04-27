@@ -47,7 +47,7 @@ checkentail_exact x::lseg2<tx,n-1>
  |-  [tt] x::ll_tail2<tt,q>@M.
 print residue.
 
-//(4)
+//(5)
 checkentail_exact x::lseg2<tx,n-1>
   * tx::node<_,y> * y::ll_tail2<ty,m>
  |-  (exists tt: x::ll_tail2<tt,q>).
@@ -66,3 +66,18 @@ flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 &
 flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
  |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
 */
+ 
+//(6)
+checkentail x::ll_tail2<tx,n> * y::ll_tail2<ty,m>
+ |-  tx::node<_,b>@L.
+print residue.
+
+/*
+ <1>
+    x::node<_,b>@M * y::ll_tail2<ty,m>@M&b=null & tx=x & n=1&
+    {FLOW,(21,22)=__norm}[]
+    or (exists flted_11_2733: x::node<_,b>@M * 
+       b::ll_tail2<tx,flted_11_2733>@M * y::ll_tail2<ty,m>@M&n=flted_11_2733+
+       1 & b!=null&{FLOW,(21,22)=__norm})[]
+*/
+
