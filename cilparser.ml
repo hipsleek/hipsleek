@@ -609,12 +609,12 @@ let rec remove_goto_with_while_stmts goto label stmts =
           else
             let skind = stmt.Cil.skind in
             let new_skind = match skind with
-            | Cil.If (e, b1, b2, p) -> Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p)
-            | Cil.Switch (exp, blk, stmts1, p) -> Cil.Switch (exp, remove_goto_with_if_block goto label blk, stmts1, p)
-            | Cil.Block blk -> Cil.Block (remove_goto_with_if_block goto label blk)
-            | Cil.Loop (blk, sf, p, stmt1, stmt2) -> Cil.Loop (remove_goto_with_if_block goto label blk, sf, p, stmt1, stmt2)
-            | Cil.TryFinally (blk1, blk2, p) -> Cil.TryFinally (remove_goto_with_if_block goto label blk1, remove_goto_with_if_block goto label blk2, p)
-            | Cil.TryExcept (blk1, ies, blk2, p) -> Cil.TryExcept (remove_goto_with_if_block goto label blk1, ies, remove_goto_with_if_block goto label blk2, p)
+            | Cil.If (e, b1, b2, p) -> Cil.If (e, remove_goto_with_while_block goto label b1, remove_goto_with_while_block goto label b2, p)
+            | Cil.Switch (exp, blk, stmts1, p) -> Cil.Switch (exp, remove_goto_with_while_block goto label blk, stmts1, p)
+            | Cil.Block blk -> Cil.Block (remove_goto_with_while_block goto label blk)
+            | Cil.Loop (blk, sf, p, stmt1, stmt2) -> Cil.Loop (remove_goto_with_while_block goto label blk, sf, p, stmt1, stmt2)
+            | Cil.TryFinally (blk1, blk2, p) -> Cil.TryFinally (remove_goto_with_while_block goto label blk1, remove_goto_with_while_block goto label blk2, p)
+            | Cil.TryExcept (blk1, ies, blk2, p) -> Cil.TryExcept (remove_goto_with_while_block goto label blk1, ies, remove_goto_with_while_block goto label blk2, p)
             | _ -> skind
           in
           {stmt with Cil.skind = new_skind}::(remove_goto_with_while_stmts goto label stmts)
