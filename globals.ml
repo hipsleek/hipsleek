@@ -703,6 +703,9 @@ let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
 
+let allow_rd_lemma = ref false
+(* unsound *)
+
 let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
