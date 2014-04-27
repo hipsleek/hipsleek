@@ -41,7 +41,7 @@ void append(node x, node tx, node y, node ty)
 	//ensures x::lseg2<ty, m+n-1> * ty::node<_, null>;
 {
 	tx.next = y;
-        dprint;
+        //dprint;
 }
 /*
 ****************************************************************************************************************************
