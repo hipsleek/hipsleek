@@ -1,0 +1,245 @@
+===============================================
+
+- bubble_sort_linux_false.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c -o cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c.prep
+
+ERROR: at cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c_60:56_60:60 
+Message: translate_exp: couldn't cast type 1: list_head to int_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: list_head to int_star")
+Error3(s) detected at main 
+
+- bubble_sort_linux_true.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_true.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_true.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_true.c -o cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_true.c.prep
+
+ERROR: at cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_true.c_60:56_60:60 
+Message: translate_exp: couldn't cast type 1: list_head to int_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: list_head to int_star")
+Error3(s) detected at main 
+
+- dll_of_dll_false.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_false.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_false.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/dll_of_dll_false.c -o cparser/svcomp/2014/heap-manipulation/dll_of_dll_false.c.prep
+
+!!! generate unknown predicate for Pre synthesis of alloc_or_die_slave: :HP_19
+!!! generate unknown predicate for Post synthesis of alloc_or_die_slave: :GP_20
+!!! generate unknown predicate for Pre synthesis of alloc_or_die_master: :HP_24
+!!! generate unknown predicate for Post synthesis of alloc_or_die_master: :GP_25
+!!! generate unknown predicate for Pre synthesis of dll_insert_slave: :HP_27
+!!! generate unknown predicate for Post synthesis of dll_insert_slave: :GP_28
+ERROR: at _0:0_0:0 
+Message: TRUNG TODO: handle TFun later! Maybe it's function pointer case?
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("TRUNG TODO: handle TFun later! Maybe it's function pointer case?")
+Error3(s) detected at main 
+
+- dll_of_dll_true.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_true.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_true.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/dll_of_dll_true.c -o cparser/svcomp/2014/heap-manipulation/dll_of_dll_true.c.prep
+
+!!! generate unknown predicate for Pre synthesis of alloc_or_die_slave: :HP_19
+!!! generate unknown predicate for Post synthesis of alloc_or_die_slave: :GP_20
+!!! generate unknown predicate for Pre synthesis of alloc_or_die_master: :HP_24
+!!! generate unknown predicate for Post synthesis of alloc_or_die_master: :GP_25
+!!! generate unknown predicate for Pre synthesis of dll_insert_slave: :HP_27
+!!! generate unknown predicate for Post synthesis of dll_insert_slave: :GP_28
+ERROR: at _0:0_0:0 
+Message: TRUNG TODO: handle TFun later! Maybe it's function pointer case?
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("TRUNG TODO: handle TFun later! Maybe it's function pointer case?")
+Error3(s) detected at main 
+
+- merge_sort_false.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_false.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/merge_sort_false.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/merge_sort_false.c -o cparser/svcomp/2014/heap-manipulation/merge_sort_false.c.prep
+
+!!! generate unknown predicate for Pre synthesis of merge_single_node: :HP_20
+!!! generate unknown predicate for Post synthesis of merge_single_node: :GP_21
+!!! generate unknown predicate for Pre synthesis of merge_pair: :HP_22
+!!! generate unknown predicate for Post synthesis of merge_pair: :GP_23
+ERROR: at cparser/svcomp/2014/heap-manipulation/merge_sort_false.c_71:13_71:17 
+Message: translate_exp: couldn't cast type 1: list to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_star")
+Error3(s) detected at main 
+
+- merge_sort_true.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_true.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/merge_sort_true.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/merge_sort_true.c -o cparser/svcomp/2014/heap-manipulation/merge_sort_true.c.prep
+
+!!! generate unknown predicate for Pre synthesis of merge_single_node: :HP_20
+!!! generate unknown predicate for Post synthesis of merge_single_node: :GP_21
+!!! generate unknown predicate for Pre synthesis of merge_pair: :HP_22
+!!! generate unknown predicate for Post synthesis of merge_pair: :GP_23
+ERROR: at cparser/svcomp/2014/heap-manipulation/merge_sort_true.c_71:13_71:17 
+Message: translate_exp: couldn't cast type 1: list to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_star")
+Error3(s) detected at main 
+
+- sll_to_dll_rev_false.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c -o cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c.prep
+
+!!! generate unknown predicate for Pre synthesis of alloc_node: :HP_16
+!!! generate unknown predicate for Post synthesis of alloc_node: :GP_17
+!!! generate unknown predicate for Pre synthesis of chain_node: :HP_19
+!!! generate unknown predicate for Post synthesis of chain_node: :GP_20
+!!! generate unknown predicate for Pre synthesis of create_sll: :HP_22
+!!! generate unknown predicate for Post synthesis of create_sll: :GP_23
+!!! generate unknown predicate for Pre synthesis of init_back_link: :HP_24
+!!! generate unknown predicate for Post synthesis of init_back_link: :GP_25
+!!! generate unknown predicate for Pre synthesis of reverse_dll: :HP_26
+!!! generate unknown predicate for Post synthesis of reverse_dll: :GP_27
+!!! generate unknown predicate for Pre synthesis of remove_fw_link: :HP_28
+!!! generate unknown predicate for Post synthesis of remove_fw_link: :GP_29
+!!! generate unknown predicate for Pre synthesis of check_seq_next: :HP_30
+!!! generate unknown predicate for Post synthesis of check_seq_next: :GP_31
+!!! generate unknown predicate for Pre synthesis of check_seq_prev: :HP_32
+!!! generate unknown predicate for Post synthesis of check_seq_prev: :GP_33
+ERROR: at cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c_134:13_134:17 
+Message: translate_exp: couldn't cast type 1: node to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
+Error3(s) detected at main 
+
+- sll_to_dll_rev_true.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c -o cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c.prep
+
+!!! generate unknown predicate for Pre synthesis of alloc_node: :HP_16
+!!! generate unknown predicate for Post synthesis of alloc_node: :GP_17
+!!! generate unknown predicate for Pre synthesis of chain_node: :HP_19
+!!! generate unknown predicate for Post synthesis of chain_node: :GP_20
+!!! generate unknown predicate for Pre synthesis of create_sll: :HP_22
+!!! generate unknown predicate for Post synthesis of create_sll: :GP_23
+!!! generate unknown predicate for Pre synthesis of init_back_link: :HP_24
+!!! generate unknown predicate for Post synthesis of init_back_link: :GP_25
+!!! generate unknown predicate for Pre synthesis of reverse_dll: :HP_26
+!!! generate unknown predicate for Post synthesis of reverse_dll: :GP_27
+!!! generate unknown predicate for Pre synthesis of remove_fw_link: :HP_28
+!!! generate unknown predicate for Post synthesis of remove_fw_link: :GP_29
+!!! generate unknown predicate for Pre synthesis of check_seq_next: :HP_30
+!!! generate unknown predicate for Post synthesis of check_seq_next: :GP_31
+!!! generate unknown predicate for Pre synthesis of check_seq_prev: :HP_32
+!!! generate unknown predicate for Post synthesis of check_seq_prev: :GP_33
+ERROR: at cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c_135:13_135:17 
+Message: translate_exp: couldn't cast type 1: node to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
+Error3(s) detected at main 
+
+- tree_false.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_false.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/tree_false.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/tree_false.c -o cparser/svcomp/2014/heap-manipulation/tree_false.c.prep
+
+!!! generate unknown predicate for Pre synthesis of inspect: :HP_16
+!!! generate unknown predicate for Post synthesis of inspect: :GP_17
+!!! generate unknown predicate for Pre synthesis of create_tree: :HP_22
+!!! generate unknown predicate for Post synthesis of create_tree: :GP_23
+ERROR: at cparser/svcomp/2014/heap-manipulation/tree_false.c_81:17_81:27 
+Message: translate_exp: couldn't cast type 1: node to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
+Error3(s) detected at main 
+
+- tree_true.c:
+
+!!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_true.c"
+Parsing file "cparser/svcomp/2014/heap-manipulation/tree_true.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E cparser/svcomp/2014/heap-manipulation/tree_true.c -o cparser/svcomp/2014/heap-manipulation/tree_true.c.prep
+
+!!! generate unknown predicate for Pre synthesis of __VERIFIER_nondet_int: :HP_15
+!!! generate unknown predicate for Post synthesis of __VERIFIER_nondet_int: :GP_16
+!!! generate unknown predicate for Pre synthesis of inspect: :HP_18
+!!! generate unknown predicate for Post synthesis of inspect: :GP_19
+!!! generate unknown predicate for Pre synthesis of create_tree: :HP_24
+!!! generate unknown predicate for Post synthesis of create_tree: :GP_25
+ERROR: at cparser/svcomp/2014/heap-manipulation/tree_true.c_84:17_84:27 
+Message: translate_exp: couldn't cast type 1: node to void_star
+ caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
+Error3(s) detected at main 
+
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
