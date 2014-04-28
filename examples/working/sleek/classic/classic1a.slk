@@ -4,11 +4,11 @@ data node {
 }.
 
 //(1)
-checkentail htrue |- emp.
+checkentail_exact htrue |- emp.
 print residue.
 
 //(2)
-checkentail htrue |- htrue.
+checkentail_exact htrue |- htrue.
 print residue.
 /* --classic ?
 Entail 2: Valid. 
@@ -16,11 +16,11 @@ Entail 2: Valid.
 */
 
 //(3)
-checkentail emp |- emp.
+checkentail_exact emp |- emp.
 print residue.
 
 //(4)
-checkentail emp |- htrue.
+checkentail_exact emp |- htrue.
 print residue.
 /* --classic
 Entail 4: Valid. 
@@ -29,11 +29,11 @@ Entail 4: Valid.
 */
 
 //(5)
-checkentail x::node<_,_> |- emp.
+checkentail_exact x::node<_,_> |- emp.
 print residue.
 
 //(6)
-checkentail x::node<_,_> |- htrue.
+checkentail_exact x::node<_,_> |- htrue.
 print residue.
 /* --classic
 Entail 6: Valid. 
@@ -41,9 +41,9 @@ Entail 6: Valid.
 */
 
 //(7)
-checkentail htrue |- x::node<_,_>.
+checkentail_exact htrue |- x::node<_,_>.
 print residue.
 
 //(8)
-checkentail emp |- x::node<_,_>.
+checkentail_exact emp |- x::node<_,_>.
 print residue.
