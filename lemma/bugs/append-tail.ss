@@ -21,6 +21,7 @@ ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 
 lemma "lseg2" self::lseg2<p, n> 
    <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
+
 lemma "ll_tail2" self::ll_tail2<t, n> 
    <-> self::lseg2<t, n-1> * t::node<_, null>;
 //lemma "ll_tail2_1" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
