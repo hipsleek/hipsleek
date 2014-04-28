@@ -29,9 +29,10 @@ checkentail_exact x::lseg2<tx,n-1>
 print residue.
 
 //(2)
-checkentail_exact x::lseg2<tx,n-1>
+checkentail x::lseg2<tx,n-1>
   * tx::node<_,y> * y::ll_tail2<ty,m>
- |-  (exists q,tt: x::ll_tail2<tt,q>@M & q=m+n+1 & tt=ty).
+ |-  (exists q,tt: x::ll_tail2<tt,q>@M & q=m+n //& tt=ty
+       ).
 print residue.
 
 

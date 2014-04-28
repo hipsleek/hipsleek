@@ -149,6 +149,24 @@ compute_actions@1 EXIT: SEARCH =>[
   ]
 
 ======================================================================
+# app-tail4.slk
+
+check exact fail for (4), but (3) did not have residue..
+
+//(3)
+checkentail x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+print residue.
+
+//(4)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+print residue.
+
 ======================================================================
 ======================================================================
 ======================================================================

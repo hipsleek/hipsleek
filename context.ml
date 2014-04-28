@@ -1430,6 +1430,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
             then (pr_debug "FULL" ;0) 
             else (pr_debug "PARTIAL";1) 
           in 
+          (* let uf_i = 1 in *)
           (match lhs_node,rhs_node with
             | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ThreadNode dt, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
