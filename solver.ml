@@ -8424,8 +8424,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               ) in
                               let _ = DD.ninfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
                               let _ = DD.ninfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
+                              let _ = DD.ninfo_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
+                              let _ = DD.ninfo_hprint (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in
                               (*use global var is dangerous, should pass as parameter*)
-                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && (* not(is_folding) && *) (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
+                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && not(is_folding) && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
                                   if  not (Infer.no_infer_hp_rel estate) then
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(1)" "" )) in
@@ -8487,17 +8489,17 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               in
                                                     (* explicit inst *)
                                                     let l_inst = get_expl_inst es p2 in
-                                                                              Debug.tinfo_hprint (add_str "l_inst" Cprinter.string_of_mix_formula) l_inst no_pos;
-                                                                              Debug.tinfo_hprint (add_str "p2" Cprinter.string_of_mix_formula) p2 no_pos;
+                                                    Debug.tinfo_hprint (add_str "l_inst" Cprinter.string_of_mix_formula) l_inst no_pos;
+                                                    Debug.tinfo_hprint (add_str "p2" Cprinter.string_of_mix_formula) p2 no_pos;
                                                     let es = move_impl_inst_estate es p2 in
                                                     Ctx (if (es.es_imm_last_phase) then
-                                                                                    move_expl_inst_estate es p2
-                                                                              else begin
-                                                                                  Debug.tinfo_hprint (add_str "es" Cprinter.string_of_entail_state) es no_pos;
-                                                                                  let new_es = add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos in
-                                                                                  Debug.tinfo_hprint (add_str "new_es" Cprinter.string_of_entail_state) new_es no_pos;
-                                                                                  new_es
-                                                                              end )
+                                                      move_expl_inst_estate es p2
+                                                    else begin
+                                                      Debug.tinfo_hprint (add_str "es" Cprinter.string_of_entail_state) es no_pos;
+                                                      let new_es = add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos in
+                                                      Debug.tinfo_hprint (add_str "new_es" Cprinter.string_of_entail_state) new_es no_pos;
+                                                      new_es
+                                                    end )
                                                 )  c)) cl in
                                       SuccCtx(new_cl) in
                                     (* let _ = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in *)
@@ -8525,11 +8527,11 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               formula_base_label = None;
                               formula_base_pos = pos } in
                               (*ctx0 and b1 is identical*)
-                                                  Debug.tinfo_hprint (add_str "estate.es_heap match_" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
-                                                  Debug.tinfo_hprint (add_str "ctx0 match_" (Cprinter.string_of_context)) ctx0 no_pos;
-                                                  let ctx_lst, prf = heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos in
-                                                  Debug.tinfo_hprint (add_str "ctx0_lst match_" (Cprinter.string_of_list_context)) ctx_lst no_pos;
-                                                  (ctx_lst, prf)
+                              Debug.ninfo_hprint (add_str "estate.es_heap match_" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
+                              Debug.tinfo_hprint (add_str "ctx0 match_" (Cprinter.string_of_context)) ctx0 no_pos;
+                              let ctx_lst, prf = heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos in
+                              Debug.tinfo_hprint (add_str "ctx0_lst match_" (Cprinter.string_of_list_context)) ctx_lst no_pos;
+                              (ctx_lst, prf)
                             )
                         )
                         else (
@@ -12516,12 +12518,19 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         , CF.mk_failure_must "Cond action - none succeeded" Globals.sl_error)), NoAlias)
               | [(_,act)] -> process_action 2 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
               | (_,act)::xs ->
+                    (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
                     let (r,prf) = process_action 3 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
-                    if isFailCtx r then helper xs
+                    if isFailCtx r then
+                      (* let _ = rhs_rest_emp := cur_rhs_rest_emp in *)
+                      helper xs
                     else (r,prf)
             in helper l
       | Context.Search_action l ->
-            let r = List.map (fun (_,a1) -> process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos) l in
+            (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
+            let r = List.map (fun (_,a1) ->
+                (* let _ = rhs_rest_emp := cur_rhs_rest_emp in *)
+                process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos
+            ) l in
             let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
             (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
             

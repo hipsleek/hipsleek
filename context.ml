@@ -88,7 +88,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
           if m.match_res_rhs_rest = HEmp then true else false
     | M_Nothing_to_do _ -> old_is_rhs_emp
     | M_infer_heap _ -> old_is_rhs_emp
-    | M_unmatched_rhs_data_node _ -> old_is_rhs_emp
+    | M_unmatched_rhs_data_node _ -> false
           (* perform a list of actions until there is one succeed*)
     | Cond_action _ -> old_is_rhs_emp
           (*not handle yet*)
