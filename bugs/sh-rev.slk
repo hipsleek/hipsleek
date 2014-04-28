@@ -1,0 +1,19 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
+  inv n >= 0.
+
+lemma_safe self::lseg<n,r> & n>0 <-> self::lseg<m,q>*q::node<_,r> & n=m+1.
+
+//lemma_safe  self::lseg<m,q>*q::node<_,r> -> self::lseg<m+1,r> .
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<2, l> * l::node<_, null>.
+
+checkentail ni::node<_, l> * l::node<_,null> |- ni::lseg<1, l>*l::node<_,null>.
+
+checkentail x::lseg<n,r> & n>0 |- x::lseg<n-1, l>*l::node<_,r>.
+
+print residue.
+

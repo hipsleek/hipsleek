@@ -1,0 +1,19 @@
+data node{
+  int val;
+  node next
+}.
+
+
+infer[n]  x=null & n=0 |- x::node<_,q>.
+print residue.
+
+/*
+should infer n!=0 to force LHS contradiction
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred pure: [n=0]
+[[empty]]
+
+*/

@@ -1,0 +1,41 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+
+lemma_unsafe "t1a" self::node<_,q>*q::rlseg<p>  -> self::rlseg<p1>* p1::node<_,p>.
+
+checkentail self::node<_,q>*q::rlseg<p>  
+ |- self::node<_,p>.
+
+checkentail_exact 
+  self::node<_,q>*q::rlseg<p>  |- self::rlseg<p1>* p1::node<_,p>
+.
+// why lemma isn't triggered here?
+
+
+checkentail_exact 
+  self::node<_,p>  |- self::rlseg<p1>* p1::node<_,p>
+.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,qq>*qq::rlseg<p>  
+      |- self::rlseg<p1>* p1::node<_,p>
+.
+
+checkentail_exact 
+  self::node<_,q>*q::node<_,qq>*qq::rlseg<p>  
+      |- self::node<_,qqq>*qqq::rlseg<p1>* p1::node<_,p>
+.
+
+checkentail_exact 
+  q::node<_,qq>*qq::rlseg<p>  
+      |- q::rlseg<p1>* p1::node<_,p>
+.
+// can we deal with complex lemma?

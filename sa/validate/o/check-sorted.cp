@@ -13,9 +13,7 @@ ass [H,G][]:{
   H(x,v)& x=null --> G(x,v);
  // POST (1;2;0)
   HP_884(val_22_882,v) * x::node<val_22_882,next_22_883>@M *
-   G(next_22_883,val_22_882)& v<=val_22_882 --> G(x,v);
- // POST
-  HP_884(val_22_882,v) & v<=val_22_882 --> emp
+   G(next_22_883,val_22_882)& v<=val_22_882 --> G(x,v)
   }
 
 hpdefs [H,G][]:{

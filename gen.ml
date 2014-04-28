@@ -968,6 +968,27 @@ struct
     in aux evars
 end;;
 
+module ID =
+struct 
+  type t = string
+  let eq = fun s1 s2 -> String.compare s1 s2 = 0
+  let string_of = fun s -> s
+end;;
+
+module EMapID = EqMap(ID);;
+
+
+let find_close_ids ids equivs=
+  if equivs = [] then ids else
+  match ids with
+    | [] -> []
+    | [x] -> [x]
+    | sv0::rest -> let tpl0 = EMapID.mkEmpty in
+      let tpl1 = List.fold_left (fun tpl sv1 -> EMapID.add_equiv tpl sv0 sv1) tpl0 rest in
+      let tpl2 = List.fold_left (fun tpl (sv1,sv2) -> EMapID.add_equiv tpl sv1 sv2) tpl1 equivs in
+      EMapID.find_equiv_all sv0 tpl2
+
+
 module INT =
 struct
   type t = int

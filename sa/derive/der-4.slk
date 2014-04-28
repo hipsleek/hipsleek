@@ -1,0 +1,72 @@
+/*
+min max
+*/
+
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+data node2 {
+	int val@VAL;
+	node2 prev@REC;
+	node2 next@REC;
+}.
+
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+/*
+we need a method to derive the following non-null pred
+pred llNN<> == 
+  self::node<_,null> 
+  or self::node<_,p> * p::llNN<>
+inv self!=null.
+*/
+
+pred tree<> == self=null
+  or self::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+/*
+for tree, our non-null derivation would result in:
+ pred treeNN<> == 
+  self::node2<_,null,null> 
+  or self::node2<_,null,q> * q::treeNN<> 
+  or self::node2<_,p,null> * p::treeNN<> 
+  or self::node<_,p> * p::treeNN<> * q::treeNN<>
+ inv self!=null.
+*/
+
+
+pred_extn minValue[V,R]<m> ==
+   m=min(V) // this denote singleton case without any R
+   or R::minValue<m2> & m=min(V,min(m2)). // in case of multiple m2
+
+pred_extn maxValue[V,R]<m> ==
+   m=max(V) // in case of multiple V 
+   or R::maxValue<m2> & m=max(V,m2).
+
+pred llMin<m> == extends ll<> with minValue[VAL,REC]<m>.
+
+/*
+pred llMin<m> == 
+  self::node<m,null> 
+  or self::node<v,p> * p::llMin<m2> & m=min(v.m2)
+inv self!=null.
+*/
+
+pred llMax<m> == extends ll<> with maxValue[VAL,REC]<m>.
+
+pred treeMax<m> == extends tree<> with maxValue[VAL,REC]<m>.
+/*
+ pred treeNN<m> == 
+  self::node2<v,null,null> & m=v 
+  or self::node2<v,null,q> * q::treeNN<m1> & m=max(v,m1)
+  or self::node2<v,p,null> * p::treeNN<m1> & m=max(v,m1)
+  or self::node<v,p> * p::treeNN<m1> * q::treeNN<m2> & m=max(v,m1,m2)
+ inv self!=null.
+*/

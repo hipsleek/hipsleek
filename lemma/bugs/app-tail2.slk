@@ -1,0 +1,84 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_safe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_safe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+/*
+	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
+	ensures x::ll_tail2<ty, q> & q=m+n;
+*/
+
+//(1)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<ty,q>@M & q=m+n).
+print residue.
+
+//(2)
+checkentail x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q,tt: x::ll_tail2<tt,q>@M & q=m+n //& tt=ty
+       ).
+print residue.
+
+
+//(3)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  x::ll_tail2<ty,q>@M.
+print residue.
+
+//(4)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  [tt] x::ll_tail2<tt,q>@M.
+print residue.
+
+//(5)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists tt: x::ll_tail2<tt,q>).
+print residue.
+
+/*
+id: 27; caller: []; line: 39; classic: false; kind: POST; hec_num: 5; evars: [ty_1141,q_1142]; infer_vars: []; c_heap: emp
+ checkentail r::lseg2<tx1,flted1>@M * x::node<_,r>@M * y::ll_tail2<ty1,m>@M * 
+tx'::node<_,y'>@M&flted=next & x=x' & tx=tx' & y=y' & ty'=ty1 & tx=tx2 & 
+ty=ty1 & tx1=tx2 & r!=null & n=flted2+1 & flted=null & flted2=flted1+1&
+{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+
+checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+*/
+ 
+//(6)
+checkentail x::ll_tail2<tx,n> * y::ll_tail2<ty,m>
+ |-  tx::node<_,b>@L.
+print residue.
+
+/*
+ <1>
+    x::node<_,b>@M * y::ll_tail2<ty,m>@M&b=null & tx=x & n=1&
+    {FLOW,(21,22)=__norm}[]
+    or (exists flted_11_2733: x::node<_,b>@M * 
+       b::ll_tail2<tx,flted_11_2733>@M * y::ll_tail2<ty,m>@M&n=flted_11_2733+
+       1 & b!=null&{FLOW,(21,22)=__norm})[]
+*/
+

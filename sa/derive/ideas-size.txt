@@ -1,0 +1,115 @@
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m
+   inv n>=0.
+=========>
+step 1:
+
+  ho_b = \ n -> n=0
+
+  ho_ind_r = \ R m_i --> (m_i, true)
+// (the second formula is other constraints (may come from invariant)
+
+  ho_ind  = \ n [m_1..m_a]
+                          --> n= fold_left (\ a b -> a + b) 1 [m_1..m_a]
+
+=======================================================================
+Example 1:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred llN<n> == extends ll<> with size[REC]<n> .
+=========>
+step 2: self::ll<n>
+  - branch 1: f1== self=null:
+     DER([REC],n,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC],n, f1)) = EXTR(true) =EMP in
+      ho_b(n)
+     == (n=0)
+  - branch 2: f2=self::node<_,p> * p::ll<m_1>:
+      DER([REC],n,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC],n, f2)) = [REC::ll<m_1>] in
+         ho_ind (n, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,m_1)])
+      == n = m_1 + 1
+=======================================
+Example 2:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<> == self=node<_,null>
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred llN<n> == extends ll<> with size[REC]<n> .
+=========>
+step 2: self::ll<n>
+  - branch 1: f1==  self=node<_,null>:
+     DER([REC],n,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC],n, f1)) = [REC=null] in
+      ho_ind (n, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,0)])
+      == n = 0 + 1 = 1
+  - branch 2: f2=self::node<_,p> * p::ll<m_1>:
+      DER([REC],n,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC],n, f2)) = [REC::ll<m_1>] in
+         ho_ind (n, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,m_1)])
+      == n = m_1 + 1
+=======================================
+Example 3:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<q> == self=q
+  or self::node<_,p> * p::ll<q>
+inv true.
+
+pred llN<n> == extends ll<> with size[REC]<n> .
+=========>
+step 2: self::ll<n>
+  - branch 1: f1==  self=q:
+     DER([REC],n,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC],n, f1)) = EXTR(true0 = EMP in
+      ho_b (n)
+      == n = 0
+  - branch 2: f2=self::node<_,p> * p::ll<m_1>:
+      DER([REC],n,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC],n, f2)) = [REC::ll<m_1>] in
+         ho_ind (n, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,m_1)])
+      == n = m_1 + 1
+=======================================
+Example 4:
+data node2 {
+	int val@VAL;
+	node2 prev@REC;
+	node2 next@REC;
+}.
+
+pred tree<> == self=null
+  or tree::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+pred treeN<n> == extends tree<> with size[REC]<n> .
+
+=========>
+step 2: self::tree<n>
+  - branch 1: f1== self=null:
+     DER([REC],n,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC],n, f1)) = EXTR(true) = EMP in
+      ho_b(n)
+     == (n=0)
+  - branch 2: f2=self::node2<_,p,q> * p::tree<m_1> * q::tree<m_2>:
+      DER([REC],n,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC],n, f2)) = [REC::ll<m_1>,REC::tree<m_2>] in
+         ho_ind (n, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,m_1);(REC,m_2])
+      == n = m_2 + m_1 + 1
+=======================================

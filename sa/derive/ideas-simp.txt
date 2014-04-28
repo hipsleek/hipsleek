@@ -1,0 +1,281 @@
+// @VAL, @REC: user-defined
+data node {
+	int val@VAL; 
+	node next@REC; 
+}.
+
+// Shape predicate
+pred ll<> == 
+      self=null
+   or self::node<v,p> * p::ll<>
+  inv true.
+
+/***********************************************/
+
+pred_extn size<n> ==
+      n=0
+   or n=1+m & @REC::size<m>
+
+pred llN<n> == extends ll<> with size<n> .
+
+n=size(emp) /* no call @REC */
+  --> n=0
+n=size(node(@VAL,@REC)) -> n=1+size(@REC)
+
+llN<n> = self=null & n=size(self)
+   or self::node<v,p> * p::llN<m> & n=size(self)
+
+llN<n> = self=null & n=size(emp)
+   or self::node<v,p> * p::llN<m> & n=size(node<v,p>)
+
+llN<n> = self=null & n=0
+   or self::node<v,p> * p::llN<m> & n=1+size(p)
+
+llN<n> = self=null & n=0
+   or self::node<v,p> * p::llN<m> & n=1+m
+
+/***********************************************/
+
+pred_extn sum<s> ==
+      s=0
+   or s=@VAL+s2 & @REC::sum<s2>.
+
+pred llNSum<s,n> == extends llN<n> with sum<s> .
+
+s=sum(emp) /* no call @REC */
+  --> s=0
+s=sum(node(@VAL,@REC)) -> s=@VAL+sum(@REC)
+
+llNSum<s,n> = self=null & n=0 & s=sum(self)
+   or self::node<v,p> * p::llNSum<s2,m> & n=1+m & s=sum(self)
+
+llNSum<s,n> = self=null & n=0 & s=sum(emp)
+   or self::node<v,p> * p::llNSum<s2,m> & n=1+m & s=sum(node<v,p>)
+
+llNSum<s,n> = self=null & n=0 & s=0
+   or self::node<v,p> * p::llNSum<s2,m> & n=1+m & s=v+sum(p)
+
+llNSum<s,n> = self=null & n=0 & s=0
+   or self::node<_,p> * p::llNSum<s2,m> & n=1+m & s=v+s2
+
+/***********************************************/
+
+pred_extn set<S> ==
+      S={}
+   or S={@VAL} union S2 & @REC::set<S2>.
+
+pred llS<n> == extends ll<> with set<S>.
+
+S=set(emp) /* no call @REC */
+  --> S={}
+S=set(node(@VAL,@REC)) -> S=@VAL union set(@REC)
+
+pred llS<S> == self=null & S=set(self)
+   or self::node<v,p> * p::llS<S1> & S=set(self)
+
+pred llS<S> == self=null & S=set(emp)
+   or self::node<v,p> * p::llS<S1> & S=set(node<v,p>)
+
+pred llS<S> == self=null & S={}
+   or self::node<v,p> * p::llS<S1> & S={v} union set(p)
+
+pred llS<S> == self=null & S={}
+   or self::node<v,p> * p::llS<S1> & S={v} union S1
+
+/***********************************************/
+
+pred_extn head<n> ==
+      n=UNDEFINED
+   or n=@VAL.
+
+pred llHead<n> == extends ll<> with head<n>.
+
+n=head(emp) /* no call @REC */
+  --> n=UNDEFINED
+n=head(node(@VAL,@REC)) -> n=@VAL
+
+llHead<n> = self=null & n=head(self)
+   or self::node<v,p> * p::llHead<m> & n=head(self)
+
+llHead<n> = self=null & n=head(emp)
+   or self::node<v,p> * p::llHead<m> & n=head(node<v,p>)
+
+llHead<n> = self=null & n=UNDEFINED
+   or self::node<v,p> * p::llHead<m> & n=v
+
+/***********************************************/
+
+pred_extn head<n> ==
+      n=@VAL
+
+pred_extn head<n> ==
+      n=@VAL & @RES=NULL
+   or n=@VAL & @RES!=NULL.
+
+pred llHead<n> == extends ll<> with head<n>.
+
+n=head(emp) /* access @REC */
+  --> raise exception
+n=head(node(@VAL,NULL)) -> n=@VAL
+n=head(node(@VAL,@REC)) -> n=@VAL
+
+llHead<n> = self=null & n=head(self)
+   or self::node<v,null> & n=head(self)
+   or self::node<v,p> * p::llHead<m> & n=head(self)
+
+llHead<n> = self=null & n=head(emp)
+   or self::node<v,null> & n=head(node<v,null>)
+   or self::node<v,p> * p::llHead<m> & n=head(node<v,p>)
+
+llHead<n> = 
+      self::node<v,null> & n=v
+   or self::node<v,p> * p::llHead<m> & n=v
+
+/***********************************************/
+
+pred_extn minValue<m> ==
+      m=inf
+   or m=min(@VAL,m2) & @REC::minValue<m2>.
+
+pred llMin<m> == extends ll<> with minValue<m>.
+
+n=minValue(emp) /* no call @REC */
+  --> m=inf
+n=minValue(node(@VAL,@REC)) -> n=min(@VAL,minValue(@REC))
+
+llMin<n> = self=null & n=minValue(self)
+   or self::node<v,p> * p::llMin<m> & n=minValue(self)
+
+llMin<n> = self=null & n=minValue(emp)
+   or self::node<v,p> * p::llMin<m> & n=minValue(node<v,p>)
+
+llMin<n> = self=null & n=inf
+   or self::node<v,p> * p::llMin<m> & n=min(v,minValue(p))
+
+llMin<n> = self=null & n=inf
+   or self::node<v,p> * p::llMin<m> & n=min(v,m)
+
+/***********************************************/
+
+pred_extn ordered<@VAL,R:relation(int,int)> ==
+      true & @REC=NULL
+   or R(@VAL,@REC@VAL) & @REC::ordered<@REC@VAL,R>.
+
+pred llOrdered<h,R:relation(int,int)> 
+        == extends llHead<h> with ordered<h,R> .
+
+(h,R)=ordered(emp) /* access @REC */
+  --> raise exception
+(h,R)=ordered(node(@VAL,NULL))
+  --> true
+(h,R)=ordered(node(@VAL,@REC)) -> (h,R)=R(@VAL,@REC@VAL) & ordered(@REC@VAL,R))
+
+llHead<h> = self::node<v,null> & h=v
+   or self::node<v,p> * p::llHead<m> & h=v
+
+llOrdered<h,R> = self::node<v,null> & h=v & ordered(self)
+   or self::node<v,p> * p::llOrdered<m,R> & h=v & ordered(self)
+
+llOrdered<h,R> = self::node<v,null> & h=v & ordered(node(v,null))
+   or self::node<v,p> * p::llOrdered<m,R> & h=v & ordered(node(v,p))
+
+llOrdered<h,R> = self::node<v,null> & h=v & true
+   or self::node<v,p> * p::llOrdered<m,R> & h=v & R(v,m)
+
+
+/***********************************************/
+
+pred llMinMax<mi,mx> 
+        == extends ll<> with (minValue<mi>,maxValue<mx>).
+
+mi,mx = minValue(emp),maxValue(emp) /* no call @REC */
+  --> mi=inf,mx=inf
+mi,mx = minValue(node(@VAL,@REC)),maxValue(node(@VAL,@REC))
+  --> mi=min(@VAL,minValue(@REC)),mx=max(@VAL,maxValue(@REC))
+
+llMinMax<mi,mx> = self=null & mi=minValue(self) & mx=maxValue(self)
+   or self::node<v,p> * p::llMinMax<mi2,mx2> & mi=minValue(self) & mx=maxValue(self)
+
+llMinMax<mi,mx> = self=null & mi=inf & mx=inf
+   or self::node<v,p> * p::llMinMax<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
+
+
+/***********************************************/
+
+pred_extn sizeT<n> ==
+      n=0
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
+
+pred treeN<n> == extends tree<> with sizeT<n> .
+
+n=sizeT(emp) /* no call @REC */
+  --> n=0
+n=sizeT(node2(@VAL,@REC1,@REC2)) -> n=1+sizeT(@REC1)+sizeT(@REC2)
+
+pred treeN<n> == 
+     self=null & n=sizeT(self)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=sizeT(self).
+
+pred treeN<n> == 
+     self=null & n=sizeT(emp)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=sizeT(node2<_,p,q>).
+
+pred treeN<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=1+n1+n2.
+
+/***********************************************/
+
+pred_extn sizeT<n> ==
+      n=0
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
+
+pred treeN<n> == extends tree<> with sizeT<n> .
+
+n=sizeT(emp) /* no call @REC */
+  --> n=0
+n=sizeT(node2(@VAL,@REC1,@REC2)) -> n=1+sizeT(@REC1)+sizeT(@REC2)
+
+pred treeN<n> == 
+     self=null & n=sizeT(self)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=sizeT(self).
+
+pred treeN<n> == 
+     self=null & n=sizeT(emp)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=sizeT(node2<_,p,q>).
+
+pred treeN<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=1+n1+n2.
+
+/***********************************************/
+
+pred_extn heightT<h> ==
+      h=0
+   or h=1+max(h1,h2) & @REC1::heightT<h1> & @REC2::heightT<h2>.
+
+pred treeH<n> == extends tree<> with heightT<n>.
+
+n=heightT(emp) /* no call @REC */
+  --> n=0
+n=heightT(node2(@VAL,@REC1,@REC2)) -> n=1+max(heightT(@REC1),heightT(@REC2))
+
+pred treeH<n> == 
+     self=null & n=heightT(self)
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=heightT(self).
+
+pred treeH<n> == 
+     self=null & n=heightT(emp)
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=heightT(node2<_,p,q>).
+
+pred treeH<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=1+max(n1,n2).
+
+
+
+
+
+
+
+
