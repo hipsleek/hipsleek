@@ -7,7 +7,8 @@ X * emp       ==> X
 I think the defn of htrue is
           s,h |- htrue
 where h is any heap which could also be emp. 
-This is somewhat like true.
+This is somewhat like a weak true applied to
+Hoare logic.
 
 Thus, we should support the following
 classical entailment, namely:
@@ -27,9 +28,9 @@ Thus,for classical reasoning, we have:
 classic
 =======
 checkentail_exact   htrue |- htrue --> emp
-checkentail_exact   htrue |- emp --> htrue; thus FAIL
+checkentail_exact   htrue |- emp   --> htrue; thus FAIL
 checkentail_exact   emp   |- htrue --> emp; 
-checkentail_exact   emp   |- emp --> emp; 
+checkentail_exact   emp   |- emp   --> emp; 
 checkentail_exact   x::node<..> |- emp   --> x::node<..>; thus FAIL 
 checkentail_exact   x::node<..> |- htrue --> emp
 
@@ -37,16 +38,16 @@ checkentail_exact   x::node<..> |- htrue --> emp
 How about intuitionistic reasoning? My contention is that
 htrue is unnecessary in intuitionistic reasoning. Also,
 emp is more precise that htrue; so we should strive
-to obtain emp where possible. Thus, for intuitioistic
+to obtain emp where possible. For intuitioistic
 reasoning, we allow non-empty residual. Hence, we should
 have:
 
 intuitionistic
 ==============
-checkentail_inexact htrue |- htrue --> emp
-checkentail_inexact htrue |- emp   --> htrue
-checkentail_inexact emp   |- htrue --> emp
-checkentail_inexact emp   |- emp   --> emp
+checkentail_inexact htrue         |- htrue --> true
+checkentail_inexact htrue         |- emp   --> htrue
+checkentail_inexact emp           |- htrue --> emp
+checkentail_inexact emp           |- emp   --> emp
 checkentail_inexact x::node<..>   |- htrue --> x::node<..>
 checkentail_inexact x::node<..>   |- emp   --> x::node<..>
 
