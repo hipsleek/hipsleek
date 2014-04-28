@@ -31,7 +31,6 @@ Entail 4: Valid.
 //(5)
 checkentail_exact x::node<_,_> |- emp.
 print residue.
-// fail
 
 //(6)
 checkentail_exact x::node<_,_> |- htrue.
@@ -44,9 +43,7 @@ Entail 6: Valid.
 //(7)
 checkentail_exact htrue |- x::node<_,_>.
 print residue.
-// fail
 
 //(8)
 checkentail_exact emp |- x::node<_,_>.
 print residue.
-// fail
