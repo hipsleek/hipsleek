@@ -361,6 +361,13 @@ Total verification time: 275.33 second
 
   How to trigger complex lemma?
 ====================================================================
+--dis-imm (with dis-early-contra)
+
+Total number of errors: 11 in files:
+  infer/infer1.slk({E10#Valid},{E8#Valid}) infer/infer5.slk({E4#Valid}) infer/infer7.slk({E5#Fail}) infer/infer8.slk({E17#Fail},{E26#Fail}) infer/infer9.slk({E6#Fail},{E8#Fail}) infer/infer13.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid}) infer/infer14.slk({E11#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E3#Valid}) infer/infer15.slk({E1#Valid}) lemmas/lseg.slk({L1#Valid},{L2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/app-tail.slk({E1#Valid}).
+Total verification time: 0.00 second
+
+
 ====================================================================
 ====================================================================
 ====================================================================
