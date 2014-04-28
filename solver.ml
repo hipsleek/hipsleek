@@ -6762,7 +6762,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     let process_entail_state (es : entail_state) =
       let pr = Cprinter.string_of_formula in
       let pr2 = Cprinter.string_of_entail_state in
-      Debug.no_2 " process_entail_state"  pr pr
+      Debug.no_2 "process_entail_state"  pr pr
           (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
           (* (fun (_,b) -> string_of_bool b)  *)
           (fun _ _ -> process_entail_state es) es.es_formula conseq
@@ -11613,6 +11613,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let rhs_xpure,_,_ = xpure prog conseq in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+    let p_lhs_xpure,p_rhs_xpure= if not !Globals.allow_imm then
+      Cpure.overapp_ptrs p_lhs_xpure,  Cpure.overapp_ptrs p_rhs_xpure
+    else p_lhs_xpure, p_rhs_xpure in
     let contr, _ = Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
     contr in
   let r_inf_contr,relass = 

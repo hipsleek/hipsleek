@@ -3299,9 +3299,9 @@ and apply_par_term (sst : (spec_var * exp) list) f = match f with
           Exists  (v, apply_par_term sst qf, lbl, pos)
   | AndList b-> AndList (map_l_snd (apply_par_term sst) b)
         
-and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (is_member v t)) false sst
+and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr || (is_member v t)) false sst
 
-and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr or (eq_spec_var v nv)) false vl
+and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr || (eq_spec_var v nv)) false vl
 
 and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let (pf,il) = bf in
@@ -12101,3 +12101,33 @@ let prune_relative_unsat_disj p0 base_p=
       (fun _ _ -> prune_relative_unsat_disj p0 base_p)
       p0 base_p
 
+
+let overapp_ptrs_x f0=
+  let rec helper f= match f with
+    | BForm (bf,a) ->
+          (match bf with
+            | (Eq (sv1,sv2,b),c) -> begin
+                match sv1 with
+                  | Var (sv ,pos) ->
+                          if is_node_typ sv && is_num sv2 then
+                            let zero = IConst (0, pos) in
+                            BForm ((Neq (sv1, zero, b), c), a)
+                          else f
+                  | _ -> f
+              end
+            | _ -> f)
+    | Not _ -> f
+    | Or (f1,f2,a,b) ->  Or (helper f1, helper f2,a,b)
+    |  And (f1,f2, a) ->  And (helper f1, helper f2, a)
+    | Exists (a, p, c,l) ->
+          Exists (a, helper p, c,l)
+    | Forall (a, p, c,l) ->
+          Forall (a, helper p, c,l)
+    | AndList l -> AndList( List.map (fun (a, p) -> (a, helper p) ) l)
+  in
+  helper f0
+
+let overapp_ptrs p=
+   let pr1 = !print_formula in
+  Debug.no_1 "overapp_ptrs" pr1 pr1
+      (fun _ -> overapp_ptrs_x p) p
