@@ -6,34 +6,42 @@ data node {
 //(1)
 checkentail_inexact htrue |- emp.
 print residue.
-// residue : htrue
-
+// residue htrue
 
 //(2)
-checkentail_inexact htrue |- htrue.
-print residue.
-// residue : htrue
-
-//(3)
 checkentail_inexact emp |- emp.
 print residue.
 // residue : emp
 
+//(3)
+checkentail_inexact x::node<_,_> |- emp.
+print residue.
+// residue x::node<..>
+
 //(4)
+checkentail_inexact htrue |- htrue.
+print residue.
+/* --classic ?
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be htrue instead?
+*/
+
+//(5)
 checkentail_inexact emp |- htrue.
 print residue.
 // residue : emp
 
-
-//(5)
-checkentail_inexact x::node<_,_> |- emp.
-print residue.
-// residue : x::node<_,_>@M
-
 //(6)
 checkentail_inexact x::node<_,_> |- htrue.
 print residue.
-// residue : x::node<_,_>@M
+/* --classic
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be x::node<_,_> instead
+*/
 
 //(7)
 checkentail_inexact htrue |- x::node<_,_>.
@@ -45,14 +53,25 @@ checkentail_inexact emp |- x::node<_,_>.
 print residue.
 // fail
 
-
 //(9)
 checkentail_inexact x::node<_,_> * htrue |- htrue.
 print residue.
-// residue : x::node<_,_>@M
-// <1>x::node<_,_>@M * (htrue)&{FLOW,(21,22)=__norm}[]
+/*
+Got;
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+Expects:
+ residue : x::node<_,_>*htrue
+*/
 
 //(10)
 checkentail_inexact htrue * emp |- htrue.
 print residue.
-// <1>htrue&{FLOW,(21,22)=__norm}[]
+/*
+Got;
+  <1>emp&{FLOW,(21,22)=__norm}[]
+
+Expects:
+ residue : htrue
+*/

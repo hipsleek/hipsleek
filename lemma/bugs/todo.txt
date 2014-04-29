@@ -184,6 +184,58 @@ print residue.
 [[ SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  (Lemma <== lseg2) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
 */
 ======================================================================
+# classic1b.slk
+
+data node {
+	int val;
+	node next;
+}.
+
+
+//(4)
+checkentail_inexact htrue |- htrue.
+print residue.
+/* --classic ?
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be htrue instead?
+*/
+
+//(6)
+checkentail_inexact x::node<_,_> |- htrue.
+print residue.
+/* --classic
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be x::node<_,_> instead
+*/
+
+//(9)
+checkentail_inexact x::node<_,_> * htrue |- htrue.
+print residue.
+/*
+Got;
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+Expects:
+ residue : x::node<_,_>*htrue
+*/
+
+//(10)
+checkentail_inexact htrue * emp |- htrue.
+print residue.
+/*
+Got;
+  <1>emp&{FLOW,(21,22)=__norm}[]
+
+Expects:
+ residue : htrue
+*/
+
+
 ======================================================================
 ======================================================================
 ======================================================================
