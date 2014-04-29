@@ -3,6 +3,7 @@ data node {
 	node next;
 }.
 
+
 //(1)
 checkentail_inexact htrue |- emp.
 print residue.
@@ -27,6 +28,7 @@ print residue.
 
 # should be htrue instead?
 */
+
 
 //(5)
 checkentail_inexact emp |- htrue.
