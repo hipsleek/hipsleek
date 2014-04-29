@@ -1,5 +1,5 @@
 
-x::node<..> * htrue  =\=>  x::node<..>
+D * htrue     =\=>  D
 htrue * htrue ==> htrue
 X * emp       ==> X
 
@@ -27,11 +27,11 @@ Thus,for classical reasoning, we have:
 
 classic
 =======
-checkentail_exact   htrue |- htrue --> emp
-checkentail_exact   htrue |- emp   --> htrue; thus FAIL
-checkentail_exact   emp   |- htrue --> emp; 
-checkentail_exact   emp   |- emp   --> emp; 
+checkentail_exact   htrue       |- emp   --> htrue; thus FAIL
 checkentail_exact   x::node<..> |- emp   --> x::node<..>; thus FAIL 
+checkentail_exact   emp         |- emp   --> emp; 
+checkentail_exact   htrue       |- htrue --> emp
+checkentail_exact   emp         |- htrue --> emp; 
 checkentail_exact   x::node<..> |- htrue --> emp
 
 
@@ -44,12 +44,13 @@ have:
 
 intuitionistic
 ==============
-checkentail_inexact htrue         |- htrue --> htrue
-checkentail_inexact htrue         |- emp   --> htrue
-checkentail_inexact emp           |- htrue --> emp
 checkentail_inexact emp           |- emp   --> emp
-checkentail_inexact x::node<..>   |- htrue --> x::node<..>
+checkentail_inexact htrue         |- emp   --> htrue
 checkentail_inexact x::node<..>   |- emp   --> x::node<..>
+checkentail_inexact emp           |- htrue --> emp
+checkentail_inexact htrue         |- htrue --> htrue (emp)
+checkentail_inexact x::node<..>   |- htrue --> x::node<..> (emp)
+
 
 Do remember that htrue can also be present in post-condition,
 and is used to denote some unspecified footprint. Its

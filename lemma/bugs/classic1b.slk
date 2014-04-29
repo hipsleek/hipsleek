@@ -1,0 +1,58 @@
+data node {
+	int val;
+	node next;
+}.
+
+//(1)
+checkentail_inexact htrue |- emp.
+print residue.
+// residue : htrue
+
+
+//(2)
+checkentail_inexact htrue |- htrue.
+print residue.
+// residue : htrue
+
+//(3)
+checkentail_inexact emp |- emp.
+print residue.
+// residue : emp
+
+//(4)
+checkentail_inexact emp |- htrue.
+print residue.
+// residue : emp
+
+
+//(5)
+checkentail_inexact x::node<_,_> |- emp.
+print residue.
+// residue : x::node<_,_>@M
+
+//(6)
+checkentail_inexact x::node<_,_> |- htrue.
+print residue.
+// residue : x::node<_,_>@M
+
+//(7)
+checkentail_inexact htrue |- x::node<_,_>.
+print residue.
+// fail
+
+//(8)
+checkentail_inexact emp |- x::node<_,_>.
+print residue.
+// fail
+
+
+//(9)
+checkentail_inexact x::node<_,_> * htrue |- htrue.
+print residue.
+// residue : x::node<_,_>@M
+// <1>x::node<_,_>@M * (htrue)&{FLOW,(21,22)=__norm}[]
+
+//(10)
+checkentail_inexact htrue * emp |- htrue.
+print residue.
+// <1>htrue&{FLOW,(21,22)=__norm}[]
