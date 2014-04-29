@@ -15,10 +15,9 @@ graph<G> == self = null
 relation subset_reach(abstract G, node x, abstract G1).
 relation eq_notreach(abstract G, node x, abstract G1).
 
-rlemma x::node<v1,l1,r1> * x::node<v,l,r> --@ 
-	(x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
-	& lookup(G,x,v,l,r) & update(G,x,v1,l1,r1,G1) 
-      -> x::node<v1,l1,r1> U* (l1::graph<G1> U* r1::graph<G1>);
+rlemma x::node<v1,l,r> * x::node<v,l,r> --@ x::graph<G>
+	& lookup(G,x,v,l,r) & update(G,x,v1,l,r,G1)
+      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
 rlemma x::graph<G1> * x::graph<G> --@ (x::graph<G> U* y::graph<G>)
       & subset_reach(G,x,G1) & eq_notreach(G,x,G1)
@@ -54,3 +53,9 @@ else {
   mark(r);
   }
 }
+
+void ramify_assign(struct node *x, int v)
+/*@
+requires x::node<_,l,r> U* l::graph<G> U* r::graph<G>
+ensures x::node<v,l,r> U* l::graph<G1> U* r::graph<G1> & update(G,x,v,l,r,G1);
+*/
