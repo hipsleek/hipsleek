@@ -27,18 +27,20 @@ id: 5; caller: []; line: 39; classic: false; kind: POST; hec_num: 1; evars: []; 
 flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
 flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
  |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
-
+*/
+/*
 //(2)
 checkentail_exact x::lseg2<tx,f> * y::ll_tail2<ty,m>
   * tx::node<_,y> & f=n-1
  |-  (exists q,tt: x::ll_tail2<tt,q> & q=m+n & tt=ty
        ).
 print residue.
-*/
 
+*/
 
 checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
 flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
 flted=null & n=flted1+1
- |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m). 
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m).
+
 print residue.

@@ -5207,7 +5207,7 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
                 fs
               else []
               in
-              let _ = Debug.tinfo_hprint (add_str "fs" (pr_list Cprinter.string_of_formula)) fs no_pos in
+              let _ = Debug.ninfo_hprint (add_str "fs" (pr_list Cprinter.string_of_formula)) fs no_pos in
               if need_unfold && List.length fs > 1 then
                 let orctx = List.map (fun f ->
                     Ctx {es with CF.es_formula = f;}
@@ -5529,7 +5529,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           (**************** <<< Perform check when join *******)
                           (* let _ = DD.info_zprint  (lazy  ("  conseq: " ^ (Cprinter.string_of_struc_formula f))) pos in *)
                           match f with
-                            | ECase b   -> 
+                            | ECase b   ->
                                   let ctx = add_to_context_num 1 ctx11 "case rule" in
                                   let ivs = collect_infer_vars ctx11 in
                                   let case_brs = b.formula_case_branches in
@@ -5617,6 +5617,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_exists = base_exists;
 		                  formula_struc_base = formula_base;
 		                  formula_struc_continuation = formula_cont;} as b) ->begin
+                                 (* let _ = print_endline ("l2: ### EBASE xxx") in *)
                                   let vn_opt= CF.is_only_viewnode true formula_base in
                                   let need_unfold, pr_views ,args, unk_hps= match vn_opt with
                                     | Some vn ->
@@ -5628,6 +5629,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     | None -> (false, [], [], [])
                                   in
                                   if need_unfold then
+                                    (* let _ = print_endline ("l2: ### EBASE 1") in *)
                                     let nf = CF.do_unfold_view prog pr_views formula_base in
                                     let fs = CF.list_of_disjs nf in
                                     let struc_disj = List.map (fun f ->
@@ -5649,10 +5651,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     in
                                     helper_inner 14 n_ctx n_struc_f
                                   else
+                                    (* let _ = print_endline ("l2: ### EBASE 2") in *)
                                   (*formula_ext_complete = pre_c;*)
                                   let rel_args = CF.get_rel_args formula_base in
                                   (* let rel_args1 = Sautil.find_close_f rel_args formula_base in *)
-                                  (* let _ = DD.info_zprint  (lazy  ("  formula_base: " ^ (Cprinter.string_of_formula formula_base))) pos in *)
+                                  let _ = DD.ninfo_zprint  (lazy  ("  formula_base: " ^ (Cprinter.string_of_formula formula_base))) pos in
                                   (* let _ = DD.info_zprint  (lazy  ("  rel_args: " ^ (!CP.print_svl rel_args))) pos in *)
                                   (* let _ = DD.info_zprint  (lazy  ("  rel_args1: " ^ (!CP.print_svl rel_args1))) pos in *)
                                   (* let _ = DD.info_zprint  (lazy  ("  base_exists: " ^ (!CP.print_svl base_exists))) pos in *)
@@ -5667,7 +5670,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                            let new_ctx = push_exists_context ws ctx11 in
 	                            let nc, np = helper_inner 4 new_ctx new_struc in 
 	                            (nc, (mkEexStep ctx11 f np))
-	                          else 
+	                          else
+                                    (* let _ = print_endline ("l2: ### EBASE 3") in *)
 			            (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
                                     let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
                                     (*delayed lockset constraints*)
@@ -5843,8 +5847,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                     ref_vars,new_post
                                               in
 	                                          let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
-					                          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
-                                              let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
+					          let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
+                                                  let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                               if (!Globals.ann_vp) then
                                                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                                          let rs3 = add_path_id rs2 (pid,i) (-1) in
@@ -5953,7 +5957,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             (* assumes each EInfer contains exactly one continuation *)
                             (* TODO : change the syntax of EInfer? *)
 		            | EList b -> 
-			          if (List.length b) > 0 then	
+			          if (List.length b) > 0 then
+                                    let _ = print_endline ("### xxx ELIST") in
+                                     let _ = DD.info_zprint  (lazy  ("  f: " ^ (Cprinter.string_of_struc_formula f))) pos in
 			            let ctx = CF.add_to_context_num 2 ctx11 "para OR on conseq" in
 			            let conseq = CF.Label_Spec.filter_label_rec (get_ctx_label ctx) b in
 			            if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
@@ -8412,6 +8418,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                               ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
+                                (*consume htrue in RHS*)
+                                if h2=HTrue then
+                                  let n_h1, n_h2, n_es,n_rhs_h_matched_set = Classic.heap_entail_rhs_htrue prog estate h1 h2 rhs_h_matched_set in
+                                  let new_ctx = Ctx n_es in
+                                  let n_conseq = CF.mkBase n_h2 p2 t2 fl2 a2 (CF.pos_of_formula conseq) in
+                                  heap_entail_conjunct_helper_x prog is_folding new_ctx n_conseq n_rhs_h_matched_set pos
+                                else
                               let prep_h1 = (
                                 (* preproces h1 for checking HEmp in classic reasoning *) 
                                 if (!Globals.do_classic_frame_rule && (h2 = HEmp)) then (

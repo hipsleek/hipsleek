@@ -3332,20 +3332,20 @@ and normalize_combine_conjstar (f1 : formula) (f2 : formula) (pos : loc) = match
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
-		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_conjstar f1 o21 pos in
-			  let eo2 = normalize_combine_conjstar f1 o22 pos in
-			  mkOr eo1 eo2 pos
-		| _ -> begin
-			let rf1 = rename_bound_vars f1 in
-			let rf2 = rename_bound_vars f2 in
-			let qvars1, base1 = split_quantifiers rf1 in
-			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkConjStar_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-			resform
-		  end
+	| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+	      let eo1 = normalize_combine_conjstar f1 o21 pos in
+	      let eo2 = normalize_combine_conjstar f1 o22 pos in
+	      mkOr eo1 eo2 pos
+	| _ -> begin
+	    let rf1 = rename_bound_vars f1 in
+	    let rf2 = rename_bound_vars f2 in
+	    let qvars1, base1 = split_quantifiers rf1 in
+	    let qvars2, base2 = split_quantifiers rf2 in
+	    let new_base = mkConjStar_combine base1 base2 Flow_combine pos in
+	    let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+	    let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+	    resform
+	  end
     end
 
 and normalize_combine_conjconj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -3355,20 +3355,20 @@ and normalize_combine_conjconj (f1 : formula) (f2 : formula) (pos : loc) = match
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
-		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_conjconj f1 o21 pos in
-			  let eo2 = normalize_combine_conjconj f1 o22 pos in
-			  mkOr eo1 eo2 pos
-		| _ -> begin
-			let rf1 = rename_bound_vars f1 in
-			let rf2 = rename_bound_vars f2 in
-			let qvars1, base1 = split_quantifiers rf1 in
-			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkConjConj_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-			resform
-		  end
+	| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+	      let eo1 = normalize_combine_conjconj f1 o21 pos in
+	      let eo2 = normalize_combine_conjconj f1 o22 pos in
+	      mkOr eo1 eo2 pos
+	| _ -> begin
+	    let rf1 = rename_bound_vars f1 in
+	    let rf2 = rename_bound_vars f2 in
+	    let qvars1, base1 = split_quantifiers rf1 in
+	    let qvars2, base2 = split_quantifiers rf2 in
+	    let new_base = mkConjConj_combine base1 base2 Flow_combine pos in
+	    let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+	    let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+	    resform
+	  end
     end
 
 and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
