@@ -3,6 +3,13 @@ data node {
 	node next;
 }.
 
+// Valid.Valid.Valid.Valid.Valid.
+// Valid.Fail.Fail.Valid.Valid.
+// Valid.Valid.Valid.Valid.
+// Valid.Valid.Valid.Valid.Valid.Fail.
+
+// Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.
+
 //(1)
 checkentail_exact htrue |- emp.
 print residue.
@@ -21,12 +28,8 @@ print residue.
 //(4)
 checkentail_exact htrue |- htrue.
 print residue.
-/* --classic ?
-Entail 2: Valid. 
- <1>htrue&{FLOW,(21,22)=__norm}[]
-
-# should be emp residue
-*/
+capture_residue $r4.
+// expects emp
 
 //(5)
 checkentail_exact emp |- htrue.
@@ -36,12 +39,9 @@ print residue.
 //(6)
 checkentail_exact x::node<_,_> |- htrue.
 print residue.
-/* --classic
-Entail 6: Valid. 
- <1>x::node<_,_>@M&{FLOW,(21,22)=__norm}[]
+capture_residue $r6.
+// expects emp
 
-# should be emp residue
-*/
 
 //(7)
 checkentail_exact htrue |- x::node<_,_>.
@@ -56,21 +56,46 @@ print residue.
 //(9)
 checkentail_exact x::node<_,_> * htrue |- htrue.
 print residue.
-/*
-Got;
- <1>x::node<_,_>@M * (htrue)&{FLOW,(21,22)=__norm}[]
+// expects emp
 
-Expects:
- residue : emp
-*/
 
 //(10)
 checkentail_exact htrue * emp |- htrue.
 print residue.
-/*
-Got;
-  <1>htrue&{FLOW,(21,22)=__norm}[]
+capture_residue $r10.
+// expects emp
 
-Expects:
- residue : emp
-*/
+//(11)
+checkentail_exact htrue * emp |- htrue.
+print residue.
+// expects emp
+
+//(12)
+checkentail_exact x::node<_,_> * emp |- htrue.
+print residue.
+//expects emp
+
+//(13)
+checkentail_exact htrue * x::node<_,_> * emp  * htrue * emp |- htrue.
+print residue.
+capture_residue $r13.
+// expects emp
+
+//(14)
+checkentail_exact x::node<1,q> * q::node<2,null>  |- q::node<a,b> * htrue.
+print residue.
+//expects emp & a=1 & b=p
+capture_residue $r14.
+
+//print $r14.
+checkentail_exact $r14 |- emp & a=2 & b=null.
+
+checkentail_exact $r4 |- emp.
+
+checkentail_exact $r6 |- emp.
+
+checkentail_exact $r10 |- emp.
+
+checkentail_exact $r13 |- emp.
+
+checkentail_exact $r14 |- false.
