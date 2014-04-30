@@ -877,21 +877,28 @@ match f with
         else 
         let l1 = helper f1 in
         let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
+          let nl,nn,nh,nm = 
             if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
               let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
-              (mkStarH lhs1 ramify_f2 pos , node1, hole1, match1)
-            else (mkStarH lhs1 f2 pos , node1, hole1, match1)) l1 in  
+             (* if CF.contains_starminus lhs1 then (lhs1, node1, hole1, match1)
+              else*) (mkStarH lhs1 ramify_f2 pos , node1, hole1, match1)
+            else (mkStarH lhs1 f2 pos , node1, hole1, match1) in
+          let () = print_endline("F : "^Cprinter.string_of_h_formula nl) in nl,nn,nh,nm) l1 in  
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
+          let nl,nn,nh,nm = 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
               let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
-              (mkStarH ramify_f1 lhs2 pos , node2, hole2, match2)
+              (*if CF.contains_starminus lhs2 then (lhs2, node2, hole2, match2)
+              else*) (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
             else
-              (mkStarH f1 lhs2 pos , node2, hole2, match2)) l2 in
+              (mkStarH f1 lhs2 pos , node2, hole2, match2) in
+          let () = print_endline("G : "^Cprinter.string_of_h_formula nl) in nl,nn,nh,nm) l2 in
         (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
       	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
 	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)
         res1 @ res2
+      (*[(mkStarMinusH f rhs_node Not_Aliased pos 37,rhs_node,[],Root)]*)
       else 
 	let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
         failwith("[context.ml]: There should be no conj/phase in the lhs at this level 1\n")

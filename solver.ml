@@ -12273,6 +12273,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* let ((coer_l,coer_r),univ_coers) = 
               find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
             let helper coer estate = 
+              try
               let r1,r2 =
             (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
@@ -12322,27 +12323,28 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rl = List.hd gvl in
               let rl2 = List.hd (List.tl gvl) in
               let fl2 = List.hd (List.tl fvl) in
-              let fl2 = if CP.is_void_typ fl2 then fl2 else List.hd (CP.fresh_spec_vars [rl]) in
+              (*let fl2 = if CP.is_void_typ fl2 then fl2 else List.hd (CP.fresh_spec_vars [rl]) in*)
               (*let add_p = Mcpure.mix_of_pure (Cpure.mkEqVar rl2 fl2 no_pos) in*)
               let gvl = fvl@[rl]@[fl2] in
               let abs_vl = abs_vl in
+              let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
+              let check_p_vl = List.filter (fun c -> not(CP.is_rel_typ c)) check_p_vl in
+              let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
+              let rho2 = if List.length check_p_vl = List.length abs_vl
+                then List.combine check_p_vl abs_vl
+                else if List.length check_p_vl =  List.length ((List.hd abs_vl)::[List.hd gvl]@[fl2])
+                then List.combine check_p_vl ((List.hd abs_vl)::[List.hd gvl]@[fl2])
+                else [] in
+              let gvl = if (List.length rho2)=0 then fvl@abs_vl else gvl in
               let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
               let () = print_endline("AVL :"^Cprinter.string_of_spec_var_list abs_vl) in
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else failwith "Ramification Lemma with different variables" in
-              let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
-              let check_p_vl = List.filter (fun c -> not(CP.is_rel_typ c)) check_p_vl in
-              let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
-              let rho2 = if List.length check_p_vl = List.length abs_vl then List.combine check_p_vl abs_vl
-                else if List.length check_p_vl > 0 && List.length abs_vl > 0
-                then if List.length check_p_vl = List.length ((List.hd abs_vl)::[List.hd gvl]@[fl2])
-                  then List.combine check_p_vl ((List.hd abs_vl)::[List.hd gvl]@[fl2])
-                  else failwith "Ramification Lemma too complex"
-                else [] in
               let check_p = Mcpure.memo_subst rho2 check_p in
               let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
-              let () = if not(f) then failwith "Ramification Lemma failed guard checking" else () in
+              let () = if not(f) && (List.length rho2)>0 
+                then failwith "Ramification Lemma failed guard checking" else () in
               let new_lhs_h = Cformula.h_subst rho h in
 (*              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in*)
               let new_lhs_p = Mcpure.memo_subst rho lhs_p in
@@ -12389,6 +12391,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   [])
             in
             (r1,r2)
+              with _ ->(CF.mkFailCtx_in( Basic_Reason ( { 
+	          fc_message ="failed ramify lemma application continue search";
+	          fc_current_lhs = estate;
+	          fc_prior_steps = estate.es_prior_steps;
+	          fc_orig_conseq = estate.es_orig_conseq;
+	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
+	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
+                                                  CF.mk_failure_must "115" Globals.sl_error)),
+                  [])
             in
             let coer_l = Lem_store.all_lemma # get_left_coercion in 
             let r1,r2 = if not (List.length coer_l > 0) then failwith "No Ramification Lemma to use"

@@ -19,7 +19,7 @@ rlemma x::node<v1,l,r> * x::node<v,l,r> --@ x::graph<G>
 
 rlemma l::graph<G1> * l::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
       & subset_reach(G,l,G1) & eq_notreach(G,l,G1)
-      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
+      -> x::node<_,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
 relation mark(abstract G,node x,abstract G1).
 
@@ -47,3 +47,4 @@ else {
   mark(r);
   }
 }
+
