@@ -10,6 +10,70 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+
+(* formula_trans_heap_node fct f *)
+let simplify_htrue_x hf0=
+  (*********INTERNAL***************)
+  let rec elim_htrue_hemp hf=
+    match hf with
+      | HTrue -> HEmp
+      | Star b -> begin let hf2 = elim_htrue_hemp b.h_formula_star_h2 in
+        let hf1 = elim_htrue_hemp b.h_formula_star_h1 in
+        match hf1,hf2 with
+          | HEmp,HEmp -> HEmp
+          | HEmp,_ -> hf2
+          | _ , HEmp -> hf1
+          | _ ->
+            Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+        end
+      | _ -> hf
+  in
+  let star_elim_htrue_hemp hf htrue_left pos=
+    let nhf = elim_htrue_hemp hf in
+    match nhf with
+      | HEmp -> HTrue
+      | _ ->  if htrue_left then
+          Star {h_formula_star_h1 = HTrue; h_formula_star_h2 = nhf;h_formula_star_pos = pos}
+        else
+          Star {h_formula_star_h2 = HTrue; h_formula_star_h1 = nhf;h_formula_star_pos = pos}
+  in
+  let rec dfs_elim_dups_htrue_emp hf=
+    let recf =  dfs_elim_dups_htrue_emp in
+    match hf with
+      | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
+      | Star b -> begin
+          let l_htrue = b.h_formula_star_h1 = HTrue in
+          let r_htrue =  b.h_formula_star_h2 = HTrue in
+          match  l_htrue, r_htrue with
+            | true, true -> HTrue
+            | true, _ -> star_elim_htrue_hemp b.h_formula_star_h2 true b.h_formula_star_pos
+            | _ ,true -> star_elim_htrue_hemp b.h_formula_star_h1 false b.h_formula_star_pos
+            | _ -> begin
+                  let hf2 = recf b.h_formula_star_h2 in
+                  let hf1 = recf b.h_formula_star_h1 in
+                  match hf1,hf2 with
+                    | HEmp,HEmp -> HEmp
+                    | HTrue,HTrue -> HTrue
+                    | HTrue,HEmp -> HTrue
+                    | HEmp, HTrue -> HTrue
+                    | HEmp,_ -> hf2
+                    | _ , HEmp -> hf1
+                    | _ ->
+                          Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+              end
+        end
+      | HRel _ | DataNode _ |  ViewNode _ | ThreadNode _
+      | HFalse | Hole _ | HTrue | HEmp
+      | Conj _ | ConjStar _|ConjConj _|StarMinus _ -> hf
+  in
+  (*********INTERNAL***************)
+  dfs_elim_dups_htrue_emp hf0
+
+let simplify_htrue hf=
+  let pr1 = !print_h_formula in
+  Debug.no_1 "simplify_htrue" pr1 pr1
+      (fun _ -> simplify_htrue_x hf) hf
+
 (*arg is global vars*)
 let norm_free_vars f0 args=
   let rec helper f=

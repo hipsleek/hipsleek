@@ -92,6 +92,7 @@ Expects:
 // residue : x::node<_,_>*htrue
 capture_residue $r13.
 
+
 //(14)
 checkentail_inexact x::node<1,q> * q::node<2,null>  |- q::node<a,b> * htrue.
 print residue.

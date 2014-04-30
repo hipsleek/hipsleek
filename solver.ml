@@ -8418,6 +8418,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                               ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
+                                (*simplify htrue in LHS*)
+                                let h1 = Cfutil.simplify_htrue h1 in
+                                let estate = {estate with es_formula =
+                                        formula_trans_heap_node Cfutil.simplify_htrue estate.es_formula} in
                                 (*consume htrue in RHS*)
                                 if h2=HTrue && !Globals.do_classic_frame_rule && not(is_folding) then
                                   let n_h1, n_h2, n_es,n_rhs_h_matched_set = Classic.heap_entail_rhs_htrue prog estate h1 h2 rhs_h_matched_set in
