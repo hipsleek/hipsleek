@@ -11,6 +11,7 @@ pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
 	inv self!=null & tx!=null & n>=1.
 
+
 lemma_unsafe "lseg2" self::lseg2<p, n> 
    <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
 
@@ -23,7 +24,7 @@ lemma_unsafe "ll_tail2" self::ll_tail2<t, n>
 checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
 flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
 flted=null & n=flted1+1
- |-  (exists q: x::ll_tail2<ty1,q>). 
+ |-  (exists q: x::ll_tail2<ty1,q>).
 print residue.
 
 /*
