@@ -48,8 +48,8 @@ checkentail_inexact emp           |- emp   --> emp
 checkentail_inexact htrue         |- emp   --> htrue
 checkentail_inexact x::node<..>   |- emp   --> x::node<..>
 checkentail_inexact emp           |- htrue --> emp
-checkentail_inexact htrue         |- htrue --> htrue (emp)
-checkentail_inexact x::node<..>   |- htrue --> x::node<..> (emp)
+checkentail_inexact htrue         |- htrue --> htrue 
+checkentail_inexact x::node<..>   |- htrue --> x::node<..> 
 
 
 Do remember that htrue can also be present in post-condition,
