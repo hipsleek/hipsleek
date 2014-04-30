@@ -3954,7 +3954,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)} in
               (* let new_es = estate in *)
               let new_ctx = Ctx new_es in
-	      (*let new_ctx = set_es_evars ctx vs in*)
+              let _ = Debug.ninfo_hprint (add_str "view_form" Cprinter.string_of_struc_formula) view_form no_pos in
+              (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
               let rels = Infer.collect_rel_list_context rs0 in
               let _ = Infer.infer_rel_stk # push_list rels in
@@ -5958,8 +5959,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             (* TODO : change the syntax of EInfer? *)
 		            | EList b -> 
 			          if (List.length b) > 0 then
-                                    (* let _ = DD.tinfo_pprint ("### xxx ELIST") in *)
-                                    (* let _ = DD.tinfo_zprint  (lazy  ("  f: " ^ (Cprinter.string_of_struc_formula f))) pos in *)
+                                    (* let _ = print_endline ("### xxx ELIST") in *)
+                                     let _ = DD.ninfo_zprint  (lazy  ("  f: " ^ (Cprinter.string_of_struc_formula f))) pos in
 			            let ctx = CF.add_to_context_num 2 ctx11 "para OR on conseq" in
 			            let conseq = CF.Label_Spec.filter_label_rec (get_ctx_label ctx) b in
 			            if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
@@ -8491,8 +8492,6 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
                                 (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
                                 let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
-                                let _ = Debug.binfo_hprint (add_str "classic2" string_of_bool) !Globals.do_classic_frame_rule no_pos in
-                                let _ = Debug.binfo_hprint (add_str "rhs_heap" Cprinter.string_of_h_formula) h2 no_pos in
                                 let p2 = MCP.drop_varperm_mix_formula p2 in
                                 let new_ctx =
                                   match ctx with
@@ -9503,9 +9502,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 		        | Some s1,Some s2 -> (s1,s2)::a
 		        | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
           let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
-              Debug.binfo_hprint (add_str "classic" string_of_bool) !do_classic_frame_rule no_pos;
-	      Debug.binfo_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
-	      Debug.binfo_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context_short res_ctx))) pos;
+	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	      (SuccCtx[res_ctx], prf)
 	    end
   end
@@ -11284,9 +11282,10 @@ and combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
   Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
 
 and do_fold prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
-  let pr = fun _ -> "??" in
+  let pr1 = pr_option (pr_triple  !CP.print_svl !CP.print_svl Cprinter.string_of_view_decl) in
+  let pr2 (cl,_) = Cprinter.string_of_list_context cl in
   let pr_es = Cprinter.string_of_entail_state_short in
-  Debug.no_2 "do_fold" pr_es pr pr
+  Debug.no_2 "do_fold" pr_es pr1 pr2
       (fun _ _ -> do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd
 
 and do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =

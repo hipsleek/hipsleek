@@ -9,6 +9,7 @@ inv true.
 
 checkentail x::node<_,_> |- x::foo<a>.
 print residue.
+
 /*
 why folding has only one answer?
 */
@@ -17,6 +18,8 @@ why folding has only one answer?
 pred goo<> == emp  
     or self::node<_,_> 
 inv true.
+
+
 checkentail x::node<_,_> |- x::goo<>.
 print residue.
 /*
@@ -27,6 +30,7 @@ why folding has only one answer in goo?
 
 Expects two answers.
 */
+
 
 checkentail_exact x::node<_,_> |- x::goo<>.
 print residue.

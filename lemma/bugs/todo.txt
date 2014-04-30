@@ -235,7 +235,7 @@ Expects:
  residue : htrue
 */
 ======================================================================
-# classic1b
+# classic1b: FIXED
 
 //(13)
 checkentail_inexact htrue * x::node<_,_> * emp  * htrue * emp |- htrue.
@@ -247,7 +247,7 @@ Expects:
 [// residue : x::node<_,_>*htrue
 */
 ======================================================================
-# app-tail6b.slk
+# app-tail6b.slk: FIXED
 
 pred goo<> == emp  
     or self::node<_,_> 
