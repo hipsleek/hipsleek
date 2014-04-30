@@ -5958,8 +5958,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             (* TODO : change the syntax of EInfer? *)
 		            | EList b -> 
 			          if (List.length b) > 0 then
-                                    let _ = print_endline ("### xxx ELIST") in
-                                     let _ = DD.info_zprint  (lazy  ("  f: " ^ (Cprinter.string_of_struc_formula f))) pos in
+                                    (* let _ = DD.tinfo_pprint ("### xxx ELIST") in *)
+                                    (* let _ = DD.tinfo_zprint  (lazy  ("  f: " ^ (Cprinter.string_of_struc_formula f))) pos in *)
 			            let ctx = CF.add_to_context_num 2 ctx11 "para OR on conseq" in
 			            let conseq = CF.Label_Spec.filter_label_rec (get_ctx_label ctx) b in
 			            if (List.length conseq) = 0 then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "group label mismatch" Globals.sl_error)) , UnsatConseq)
@@ -8491,6 +8491,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 (* at the end of an entailment due to the epplication of an universal lemma, we need to move the explicit instantiation to the antecedent  *)
                                 (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
                                 let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
+                                let _ = Debug.binfo_hprint (add_str "classic2" string_of_bool) !Globals.do_classic_frame_rule no_pos in
+                                let _ = Debug.binfo_hprint (add_str "rhs_heap" Cprinter.string_of_h_formula) h2 no_pos in
                                 let p2 = MCP.drop_varperm_mix_formula p2 in
                                 let new_ctx =
                                   match ctx with
@@ -9501,8 +9503,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 		        | Some s1,Some s2 -> (s1,s2)::a
 		        | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
           let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+              Debug.binfo_hprint (add_str "classic" string_of_bool) !do_classic_frame_rule no_pos;
+	      Debug.binfo_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+	      Debug.binfo_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context_short res_ctx))) pos;
 	      (SuccCtx[res_ctx], prf)
 	    end
   end
