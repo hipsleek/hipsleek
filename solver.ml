@@ -12339,7 +12339,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
               let () = print_endline("AVL :"^Cprinter.string_of_spec_var_list abs_vl) in
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
-                else failwith "Ramification Lemma with different variables" in
+                else let gvl = List.filter (fun h -> is_data h) (split_all_conjunctions lhs_wand) in
+                     let () = print_endline("H : "^Cprinter.string_of_h_formula (List.hd gvl)) in
+                     if List.length gvl > 0 && List.length ((h_fv (List.hd gvl))@[fl2]@[fl2]) == List.length fresh_vl 
+                     then let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl))) in
+                          List.combine fresh_vl ((h_fv (List.hd gvl))@[fl2]@[fl2])
+                     else failwith "Ramification Lemma with different variables" in
               let check_p = Mcpure.memo_subst rho2 check_p in
               let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in

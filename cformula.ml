@@ -10720,6 +10720,20 @@ let join_star_conjunctions_opt (hs : h_formula list) : (h_formula option)  =
   Debug.no_1 "join_star_conjunctions_opt" pr1 pr2
   join_star_conjunctions_opt_x hs
 
+let split_all_conjunctions (f:h_formula) : (h_formula list) =
+  let rec helper f = 
+    match f with
+      | Star({h_formula_star_h1 = h1;
+              h_formula_star_h2 = h2;}) 
+      | StarMinus({h_formula_starminus_h1 = h1;
+              h_formula_starminus_h2 = h2;})
+      | Conj({h_formula_conj_h1 = h1;
+              h_formula_conj_h2 = h2;}) ->
+          let res1 = helper h1 in
+          let res2 = helper h2 in
+          (res1@res2)
+      | _ -> [f]
+  in helper f
 
 let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 

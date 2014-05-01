@@ -889,8 +889,14 @@ match f with
           let nl,nn,nh,nm = 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
               let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
-              (*if CF.contains_starminus lhs2 then (lhs2, node2, hole2, match2)
-              else*) (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
+              if CF.contains_starminus lhs2 then 
+                match lhs2 with
+                  | StarMinus ({h_formula_starminus_h1 = lhs2_f1;
+                                h_formula_starminus_h2 = lhs2_f2;
+                                h_formula_starminus_aliasing = lhs2_al;
+                                h_formula_starminus_pos = lhs2_pos}) -> (mkStarMinusH (mkConjH f1 lhs2_f1 lhs2_pos) node2 lhs2_al pos 39, node2, hole2, match2)
+                  | _ -> (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
+              else (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
             else
               (mkStarH f1 lhs2 pos , node2, hole2, match2) in
           let () = print_endline("G : "^Cprinter.string_of_h_formula nl) in nl,nn,nh,nm) l2 in
