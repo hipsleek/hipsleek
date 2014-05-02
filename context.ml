@@ -1919,15 +1919,16 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_5 "compute_actions"
+  Debug.no_6 "compute_actions"
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)
       (add_str "RHS cand" pr1)
+      (add_str "RHS pure" pr3)
       (add_str "right alias" pr4)
       pr2
-      (fun _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
-      es lhs_h lhs_p rhs_lst  posib_r_alias 
+      (fun _ _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
+      es lhs_h lhs_p rhs_lst rhs_p posib_r_alias 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

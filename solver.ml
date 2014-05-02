@@ -6842,7 +6842,11 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                	  heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
                 end
 	      else
-                heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos
+                 (* let _, rhs_pure, _, _, _  = CF.split_components conseq in *)
+                 (* let _ = DD.info_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in *)
+                 (* let eqns = (MCP.ptr_equations_without_null rhs_pure) in *)
+                 (* let ctx = CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx in *)
+                 heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos
             in
 
             let (real_c,contra, r1, prf) = 
@@ -8179,6 +8183,13 @@ and hec_stack = new Gen.stack_pr (string_of_int) (==)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
+  let _, rhs_pure, _, _, _  = CF.split_components conseq in
+  let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in
+  let eqns = (MCP.ptr_equations_without_null rhs_pure) in
+  let ctx0 = CF.set_context (fun es -> {es with es_rhs_eqset=
+          Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) -> CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22)
+              (es.es_rhs_eqset@eqns)
+      ;}) ctx0 in
   let hec a b c =
     let (ante,consumed_heap,evars,infer_vars) =
       match ctx0 with
