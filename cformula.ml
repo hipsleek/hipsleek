@@ -5739,6 +5739,10 @@ let get_views (f: formula) =
   let views = get_one_kind_heap get_vn f in
   views
 
+let is_rec_br vn f=
+  let vns = get_views f in
+  List.exists (fun v -> String.compare v.h_formula_view_name vn = 0) vns
+
 let get_views_struc sf0=
   let rec helper sf=
     let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in

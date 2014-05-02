@@ -2062,7 +2062,7 @@ and fill_one_base_case_x prog vd =
   else
     begin
       {vd with C.view_base_case = 
-              compute_base_case prog vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
+              compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
     end
 
 and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }    
@@ -2135,13 +2135,13 @@ and rec_grp prog :ident list =
   let recs = Gen.BList.difference_eq (=) recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
   recs
       
-and compute_base_case prog cf vars = 
+and compute_base_case prog vn cf vars = 
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
-  Debug.no_2(* _loop *) "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Debug.no_3(* _loop *) "compute_base_case" pr_id pr1 pr2 pr3 (fun _ _ _ -> compute_base_case_x prog vn cf vars) vn cf vars
 
-and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
+and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
     let xpuring f = 
       let (xform', _ , _) = Cvutil.xpure_symbolic 3 prog f in
@@ -2153,15 +2153,34 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
             let (d1,d2) = part b.CF.formula_or_f2 in
             (c1@d1,c2@d2)
       | CF.Base b -> 
-            if (CF.is_complex_heap b.CF.formula_base_heap) then xpuring f          
+            let _ = Debug.ninfo_hprint (add_str "f (base)" ( Cprinter.string_of_formula)) f no_pos in
+            if (CF.is_complex_heap b.CF.formula_base_heap) then
+              if (CF.is_rec_br vn f) then
+                xpuring f
+              else
+                let l1, l2 = xpuring f in
+                (List.map MCP.mix_of_pure l2,l1)
             else ([b.CF.formula_base_pure],[])
-      | CF.Exists e -> 
-            if (CF.is_complex_heap e.CF.formula_exists_heap) then xpuring f
-            else 
+      | CF.Exists e ->
+             let _ = Debug.ninfo_hprint (add_str "f (exists)" ( Cprinter.string_of_formula)) f no_pos in
+            if (CF.is_complex_heap e.CF.formula_exists_heap) then
+              if (CF.is_rec_br vn f) then
+                xpuring f
+              else
+                let l1, l2 = xpuring f in
+                let _ = Debug.ninfo_hprint (add_str "l2" (pr_list !CP.print_formula )) l2 no_pos in
+                (List.map MCP.mix_of_pure l2,l1)
+            else
               let l1,qv = e.CF.formula_exists_pure, e.CF.formula_exists_qvars in
-              ([MCP.memo_pure_push_exists qv l1],[]) in
-    let sim,co = List.split(List.map (fun (c,_)-> let _=proving_loc #set (CF.pos_of_formula c) in   part c) cf) in
+              ([MCP.memo_pure_push_exists qv l1],[])
+    in
+    let sim,co = List.split (List.map (fun (c,_)->
+        let _=proving_loc #set (CF.pos_of_formula c) in
+        let _ = Debug.ninfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
+        part c
+    ) cf) in
     let sim,co = List.concat sim, List.concat co in
+    let _ = Debug.ninfo_hprint (add_str "sim" (pr_list Cprinter.string_of_mix_formula)) sim no_pos in
     if (sim==[]) then None 
     else
       let guards = List.map (fold_mem_lst (CP.mkTrue no_pos) true true) sim in
