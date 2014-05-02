@@ -19,10 +19,10 @@ ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
 	inv self!=null & tx!=null & n>=1;
 
-lemma "lseg2" self::lseg2<p, n> 
+lemma_unsafe "lseg2" self::lseg2<p, n> 
    <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2;
 
-lemma "ll_tail2" self::ll_tail2<t, n> 
+lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
    <-> self::lseg2<t, n-1> * t::node<_, null>;
 //lemma "ll_tail2_1" self::ll_tail2<t, n> <-> self::lseg2<q, a> * q::lseg2<t, b> * t::node<_, null> & n=a+b+1;
 
@@ -42,7 +42,7 @@ void append(node x, node tx, node y, node ty)
 	//ensures x::lseg2<ty, m+n-1> * ty::node<_, null>;
 {
 	tx.next = y;
-        //dprint;
+        // dprint;
 }
 /*
 ****************************************************************************************************************************

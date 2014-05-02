@@ -663,6 +663,31 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   in
   List.fold_left (fun x y -> x@(helper y)) [] m
 
+
+let find_close svl0 eqs0=
+  let rec find_match svl ls_eqs rem_eqs=
+    match ls_eqs with
+      | [] -> svl,rem_eqs
+      | (sv1,sv2)::ss->
+            let b1 = CP.mem_svl sv1 svl in
+            let b2 = CP.mem_svl sv2 svl in
+            let new_m,new_rem_eqs=
+              match b1,b2 with
+                | false,false -> [],[(sv1,sv2)]
+                | true,false -> ([sv2],[])
+                | false,true -> ([sv1],[])
+                | true,true -> ([],[])
+            in
+            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
+  in
+  let rec loop_helper svl eqs=
+    let new_svl,rem_eqs = find_match svl eqs [] in
+    if List.length new_svl > List.length svl then
+      loop_helper new_svl rem_eqs
+    else new_svl
+  in
+  loop_helper svl0 eqs0
+
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_base_of_heap h pos = {formula_base_heap = h; 
@@ -3674,6 +3699,60 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+and simplify_pure_f_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+and simplify_pure_f (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 "simplify_pure_f" pr pr
+      (fun _ -> simplify_pure_f_x f0) f0
+
+
+and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc_formula =
+  let find_close_f svl0 f=
+    let ( _,mf,_,_,_) = split_components f in
+    let eqs = (MCP.ptr_equations_without_null mf)in
+    find_close svl0 eqs
+  in
+   let rec helper pre_evars cf = match cf with
+     | EList b  -> EList (map_l_snd (helper pre_evars) b)
+     | ECase b  -> ECase {b with formula_case_branches = map_l_snd (helper pre_evars) b.formula_case_branches;}
+     | EBase b  ->
+             let qvars, base_f = split_quantifiers b.formula_struc_base in
+             let cl_qvars = find_close_f qvars base_f in
+             EBase {b with
+               formula_struc_continuation = map_opt (helper (CP.remove_dups_svl  (pre_evars@cl_qvars)))
+                b.formula_struc_continuation; }
+     | EAssume b ->
+          let qvars, base_f = split_quantifiers b.formula_assume_simpl in
+           let ( _,mf,_,_,_) = split_components base_f in
+          let eqs = (MCP.ptr_equations_without_null mf) in
+          let cl_qvars = find_close qvars eqs in
+          let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "cl_qvars" !CP.print_svl) cl_qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "pre_evars" !CP.print_svl) pre_evars no_pos in
+          let _ = DD.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+          let inter = CP.intersect_svl cl_qvars pre_evars in
+          let sst = List.fold_left (fun r (sv1, sv2) ->
+            if CP.mem_svl sv1 qvars && CP.mem_svl sv2 inter then r@[(sv1,sv2)] else r
+          ) [] eqs in
+          let n_qvars = CP.subst_var_list sst qvars in
+          let n_base_f = simplify_pure_f (subst sst base_f) in
+          let _ = DD.ninfo_hprint (add_str "n_qvars" !CP.print_svl) n_qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "n_base_f" !print_formula) n_base_f no_pos in
+             EAssume {b with
+	     formula_assume_simpl = add_quantifiers  n_qvars n_base_f;
+	     formula_assume_struc = (helper pre_evars) b.formula_assume_struc;}
+     | EInfer b -> EInfer {b with formula_inf_continuation = (helper pre_evars) b.formula_inf_continuation}
+    in
+    helper pre_evars0 cf0
 
 and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
@@ -4347,30 +4426,6 @@ let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
      hprel_def_body_lib = opflib;
  }
 
-let find_close svl0 eqs0=
-  let rec find_match svl ls_eqs rem_eqs=
-    match ls_eqs with
-      | [] -> svl,rem_eqs
-      | (sv1,sv2)::ss->
-            let b1 = CP.mem_svl sv1 svl in
-            let b2 = CP.mem_svl sv2 svl in
-            let new_m,new_rem_eqs=
-              match b1,b2 with
-                | false,false -> [],[(sv1,sv2)]
-                | true,false -> ([sv2],[])
-                | false,true -> ([sv1],[])
-                | true,true -> ([],[])
-            in
-            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
-  in
-  let rec loop_helper svl eqs=
-    let new_svl,rem_eqs = find_match svl eqs [] in
-    if List.length new_svl > List.length svl then
-      loop_helper new_svl rem_eqs
-    else new_svl
-  in
-  loop_helper svl0 eqs0
-
 let pr_h_formula_opt og=
   match og with
     | None -> ""
@@ -4650,22 +4705,6 @@ let get_xpure_view (f0:formula) =
         (helper f1) @ (helper f2)
   in
   helper f0
-
-let simplify_pure_f_x (f0:formula) =
-  let rec helper f=
-    match f with
-      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
-      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
-      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
-          formula_or_f2 = helper orf.formula_or_f2}
-  in
-  helper f0
-
-let simplify_pure_f (f0:formula) =
-  let pr= !print_formula in
-  Debug.no_1 "simplify_pure_f" pr pr
-      (fun _ -> simplify_pure_f_x f0) f0
-
 
 let rec look_up_ptr_args_data_node_x hd=
   List.filter CP.is_node_typ hd.h_formula_data_arguments
@@ -5167,6 +5206,14 @@ let formula_map hf_fct f0=
             }
   in
   helper f0
+
+let fresh_view f=
+  let fresh_view_h hf=
+    match hf with
+     | ViewNode vn -> ViewNode {vn with h_formula_view_original = true;}
+     | _ -> hf
+   in
+   formula_trans_heap_node fresh_view_h f
 
 (* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
 (*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
@@ -11755,6 +11802,9 @@ and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : l
 
 and push_exists_list_partial_context (qvars : CP.spec_var list) (ctx : list_partial_context) : list_partial_context = 
   transform_list_partial_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
+
+and fresh_view_list_partial_context (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context ((fun es -> Ctx{es with es_formula = fresh_view es.es_formula}),(fun c->c)) ctx
 
 and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
   transform_list_failesc_context (idf,idf,(fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula})) ctx
