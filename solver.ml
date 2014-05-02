@@ -12348,7 +12348,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let check_p = Mcpure.memo_subst rho2 check_p in
               let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
-              let () = if not(f) && (List.length rho2)>0 
+              let () = if not(f) && (List.length rho2)>0
                 then failwith "Ramification Lemma failed guard checking" else () in
               let new_lhs_h = Cformula.h_subst rho h in
 (*              let new_lhs_p = Mcpure.merge_mems (Mcpure.memo_subst rho lhs_p) add_p true in*)

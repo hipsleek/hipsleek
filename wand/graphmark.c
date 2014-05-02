@@ -15,12 +15,12 @@ graph<G> == self = null
 relation subset_reach(abstract G, node x, abstract G1).
 relation eq_notreach(abstract G, node x, abstract G1).
 
-rlemma x::node<v1,l,r> * x::node<v,l,r> --@ x::graph<G>
-      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
-
 rlemma l::graph<G1> * l::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
-      & subset_reach(G,l,G1) & eq_notreach(G,l,G1)
+      & subset_reach(G,l,G1) & eq_notreach(G,l,G1) & lookup(G,x,v,l,r) & lookup(G1,x,_,l,r)
       -> x::node<_,l,r> U* (l::graph<G1> U* r::graph<G1>);
+
+rlemma x::node<v1,l,r> * x::node<v,l,r> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>))
+      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
 relation mark(abstract G,node x,abstract G1).
 
@@ -29,6 +29,8 @@ axiom true ==> mark(G,null,G).
 axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
 
 axiom mark(G,x,G1) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1).
+
+axiom mark(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1) & lookup(G1,y,_,l,r).
 
 axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
 mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
