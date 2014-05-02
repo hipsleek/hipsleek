@@ -273,6 +273,51 @@ Entail 3: Fail.(must) cause:residue is forbidden.(2)
 Expects one answer.
 */
 ======================================================================
+# app-tail7.slk -dre "compute_action"
+
+--dis-imm
+compute_actions@2
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>
+compute_actions inp3 :LHS pure: flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=1+flted1
+compute_actions inp4 :RHS cand:[ x::lseg2<ty1_136,flted_19_145>@M, ty1_136::node<_,flted_19_144>]
+compute_actions inp5 :right alias:[flted_19_144,flted_19_145,Anon_146,ty1_136,q_137]
+compute_actions@2 EXIT: SEARCH =>[
+  Prio:1COND =>[Prio:1BaseCaseUnfold =>
+                                        LHS: x::lseg2<tx1,flted1>@M
+                                        RHS: x::lseg2<ty1_136,flted_19_145>@M;Prio:1Match =>
+  
+   LHS: x::lseg2<tx1,flted1>@M
+   RHS: x::lseg2<ty1_136,flted_19_145>@M];
+  Prio:1(Lemma <== lseg2) =>
+                             LHS: x::lseg2<tx1,flted1>@M
+                             RHS: x::lseg2<ty1_136,flted_19_145>@M
+  ]
+
+
+Why imm has links between ty1 & ty1_136 but not --dis-imm?
+
+--imm
+compute_actions@2
+compute_actions inp1 :EQ ptr:[(ty1_136,ty1)]
+compute_actions inp2 :LHS heap: x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M
+compute_actions inp3 :LHS pure: flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=1+flted1
+compute_actions inp4 :RHS cand:[ x::lseg2<ty1_136,flted_19_145>@M, ty1_136::node<_,flted_19_144>@M]
+compute_actions inp5 :right alias:[flted_19_144,flted_19_145,Anon_146,ty1_136,q_137]
+compute_actions@2 EXIT: COND =>[Prio:0COND =>[Prio:0(Lemma ==> ll_tail2) =>
+                                                     LHS: y::ll_tail2<ty1,m>@M
+                                                     RHS: ty1_136::node<_,flted_19_144>@M;Prio:1BaseCaseUnfold =>
+
+ LHS: y::ll_tail2<ty1,m>@M
+ RHS: ty1_136::node<_,flted_19_144>@M];Prio:0COND =>[Prio:0(Lemma <== ll_tail2) =>
+
+ LHS: y::ll_tail2<ty1,m>@M
+ RHS: ty1_136::node<_,flted_19_144>@M;Prio:1BaseCaseUnfold =>
+                                                              LHS: y::ll_tail2<ty1,m>@M
+                                                              RHS: ty1_136::node<_,flted_19_144>@M]]
+
 ======================================================================
 ======================================================================
 ======================================================================

@@ -8,6 +8,8 @@ pred foo<n> == emp & n=1
 inv true.
 
 /*
+# remove spurious printing
+
 ### xxx ELIST
 
 !!!  f:  :EBase {1}->emp&a=1&{FLOW,(1,24)=__flow}[]
