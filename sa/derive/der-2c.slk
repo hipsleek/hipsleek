@@ -1,0 +1,33 @@
+data node {
+	int val@VAL;
+	node prev;
+	node next@REC;
+}.
+
+
+pred ll<> == self=null
+  or self::node<_,p,_> * p::ll<>
+inv true.
+
+pred_extn ssum[R,V]<s> ==
+      s=0 // base case
+   or R::ssum<s2> & s=V+s2
+   inv true.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+/*
+
+LOoks OK.
+
+ view llSum[]<s:int>= 
+  
+   EBase {4}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase EXISTS(Anon_11,Anon_12,p: self::node<Anon_11,p,Anon_12>@M[Orig] * 
+         p::llSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+
+*/
+
+

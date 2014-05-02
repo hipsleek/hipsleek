@@ -1,0 +1,63 @@
+
+D * htrue     =\=>  D
+htrue * htrue ==> htrue
+X * emp       ==> X
+
+
+I think the defn of htrue is
+          s,h |- htrue
+where h is any heap which could also be emp. 
+This is somewhat like a weak true applied to
+Hoare logic.
+
+Thus, we should support the following
+classical entailment, namely:
+
+  x::node<..> |- htrue * emp  (where htrue is mapped to x::node<..>)
+  emp         |- htrue * emp  (where htrue is mapped to emp)
+  D           |- htrue * emp  (where htrue is mapped to D)
+
+One thing about htrue is that it should never
+appear in pre-condition since it is practically
+useless there. However, we may allow htrue to
+appear in post-condition, as it can be used to
+capture space leaks for classical reasoning.
+
+Thus,for classical reasoning, we have:
+
+classic
+=======
+checkentail_exact   htrue       |- emp   --> htrue; thus FAIL
+checkentail_exact   x::node<..> |- emp   --> x::node<..>; thus FAIL 
+checkentail_exact   emp         |- emp   --> emp; 
+checkentail_exact   htrue       |- htrue --> emp
+checkentail_exact   emp         |- htrue --> emp; 
+checkentail_exact   x::node<..> |- htrue --> emp
+
+
+How about intuitionistic reasoning? My contention is that
+htrue is unnecessary in intuitionistic reasoning. Also,
+emp is more precise that htrue; so we should strive
+to obtain emp where possible. For intuitioistic
+reasoning, we allow non-empty residual. Hence, we should
+have:
+
+intuitionistic
+==============
+checkentail_inexact emp           |- emp   --> emp
+checkentail_inexact htrue         |- emp   --> htrue
+checkentail_inexact x::node<..>   |- emp   --> x::node<..>
+checkentail_inexact emp           |- htrue --> emp
+checkentail_inexact htrue         |- htrue --> htrue 
+checkentail_inexact x::node<..>   |- htrue --> x::node<..> 
+
+
+Do remember that htrue can also be present in post-condition,
+and is used to denote some unspecified footprint. Its
+presence in intuitionistic reasoning is unnecessary since
+residual frame already allows that. However, for
+classical reasoning; its presence (in post-condition) is
+significant; as it is being use to denote some unspecified heap.
+
+
+

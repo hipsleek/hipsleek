@@ -1,0 +1,31 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred KK<p,t> == self::node<_,p>*p::node<_,t>
+ inv self!=null.
+/* 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]{1}->(exists p_30,
+        t_31: self::node<_,p_30>@M * p::node<_,t_31>@M&p=p_30 & t=t_31&
+        {FLOW,(1,24)=__flow})[]
+*/
+
+pred K2<p,t,s> == self::node<_,p>*p::KK<t,_> & t=s
+ inv self!=null.
+
+/*
+ view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]{2}->(exists p_18,
+        t_19: self::node<_,p_18>@M * p::KK<t_19,Anon_15>@M&s=t & p=p_18 & 
+        t=t_19&{FLOW,(1,24)=__flow})[]
+
+*/
+
+checkentail x::node<_,b>*b::KK<c,d> |- x::K2<bb,cc,dd>.
+print residue.
+/*
+ <1>emp&Anon_16=Anon_53 & Anon_54=d & cc=dd & b=bb & c=cc&{FLOW,(21,22)=__norm}[]
+
+*/

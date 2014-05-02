@@ -1,0 +1,94 @@
+data node{
+	int val;
+	node next;
+}.
+/*
+pred lseg<p> == self=p or self::node<_,q>*q::lseg<p>
+ inv true.
+*/
+pred KK<p,t> == self::node<_,p>*p::node<_,t>
+ inv self!=null.
+/* 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]{1}->(exists p_30,
+        t_31: self::node<_,p_30>@M * p::node<_,t_31>@M&p=p_30 & t=t_31&
+        {FLOW,(1,24)=__flow})[]
+*/
+
+pred K2<p,t,s> == (exists pp: self::node<_,pp>*p::KK<t,_> & t=s & pp=p)
+ inv self!=null.
+
+/*
+pred K2<p,t,s> == (exists pp: self::node<_,pp>*p::KK<t,_> & t=s & pp=p)
+ inv self!=null.
+
+pred K2<p,t,s> == self::node<_,p>*p::KK<t,_> & t=s
+ inv self!=null.
+
+view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]self::node<_,p>@M * 
+        p::KK<t,Anon_15>@M&s=t&{FLOW,(1,24)=__flow}[]
+ 
+pred K2<p,t,s> == (exists pp: self::node<_,pp>*p::KK<t,_> & t=s & pp=p)
+ inv self!=null.
+
+view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]self::node<_,p>@M * 
+        p::KK<t,Anon_15>@M&s=t&{FLOW,(1,24)=__flow}[]
+  
+*/
+
+/*
+pred K3<p,t> == self::node<_,p>*p::KK<t,_> 
+ inv self!=null.
+
+ EBase exists (Expl)[](Impl)[_; _](ex)[]{4}->(exists p_26,
+        t_27: self::node<_,p_26>@M * p::KK<t_27,Anon_17>@M&p=p_26 & t=t_27&
+        {FLOW,(1,24)=__flow})[]
+
+
+
+ */
+
+pred HP0<sent> ==
+                       self::node<val,next>@M&self!=sent
+                       or emp&self!=sent & self=null
+inv self!=sent.
+
+pred GG1<cur':node,p,sent> == self::node<_,p>@M * p::HP0<cur'> &cur'=sent
+inv self!=null.
+
+
+
+/*
+ view HP0[]<sent:node>= view HP0<sent:node>= 
+  ECase case {
+         self!=null -> EBase exists (Expl)[](Impl)[val; 
+                             next](ex)[]{1}->self::node<val,next>@M&
+                             self!=sent&{FLOW,(1,24)=__flow}[]
+         ;
+         self=null -> EBase {2}->emp&self!=sent & self=null&
+                            {FLOW,(1,24)=__flow}[]
+         
+         }
+
+view GG1[]<cur':node,p:node,sent:node>= view GG1<cur':node,p:node,
+                                         sent:node>= 
+  EBase self::GG1_64<p,sent>@M&{FLOW,(1,24)=__flow}[]
+*/
+
+checkentail x::node<_,b>*b::KK<c,d> |- x::K2<bb,cc,dd>.
+print residue.
+// why bb not instantiated?
+
+/*
+# swl-3.slk
+
+Why isn't K2 linearlised esp in presence of GG1 which had
+a parameter eliminated. If you remove GG1, the linearlization
+works just fine.
+
+view K2[]<p:node,t:node,s:node>= view K2<p:node,t:node,s:node>= 
+  EBase exists (Expl)[](Impl)[_; _](ex)[]self::node<_,p>@M * 
+        p::KK<t,Anon_15>@M&s=t&{FLOW,(1,24)=__flow}[]
+
+*/

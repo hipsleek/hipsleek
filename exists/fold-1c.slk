@@ -1,0 +1,13 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+lemma_unsafe self::ls<uu,ll> <- self::ls<vv,ll-1> * vv::node<uu>.
+
+checkentail x::ls<zz,hh> |- x::ls<tt,kk>.
+print residue.
+

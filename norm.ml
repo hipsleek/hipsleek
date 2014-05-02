@@ -8,7 +8,7 @@ module CP=Cpure
 module MCP=Mcpure
 module C = Cast
 module TP = Tpdispatcher
-module SAU = Sautility
+(* module SAU = Sautility *)
 
 
 (***********************************************)
@@ -16,7 +16,7 @@ module SAU = Sautility
 let norm_elim_useless_para_x view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
-    let new_f = CF.drop_view_formula f1 [view_name] in
+    let new_f = CF.drop_views_formula f1 [view_name] in
     (* let _ = Debug.info_zprint  (lazy  (" new_f:" ^ (Cprinter.prtt_string_of_formula new_f) )) no_pos in *)
      (CF.fv new_f)
   in
@@ -151,6 +151,7 @@ let view_to_hprel_h_formula hf0=
                   CF.h_formula_phase_rw = n_hf2;
                   CF.h_formula_phase_pos = pos},hvs1@hvs2)
       | CF.DataNode hd -> (hf,[])
+      | CF.ThreadNode ht -> (hf,[])
       | CF.ViewNode hv ->
           let eargs = List.map (fun v -> CP.mkVar v no_pos) (hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments) in
           let nh = CF.HRel (CP.SpecVar (HpT, hv.CF.h_formula_view_name, Unprimed ),eargs, no_pos) in
@@ -222,6 +223,7 @@ let hprel_to_view_h_formula hf0=
                   CF.h_formula_phase_pos = pos})
       | CF.DataNode hd -> (hf)
       | CF.ViewNode hv -> hf
+      | CF.ThreadNode ht -> hf
       | CF.HRel (hp, eargs, p) ->
           let args = List.fold_left List.append [] (List.map CP.afv eargs) in
           (CF.mkViewNode (List.hd args) (CP.name_of_spec_var hp) (List.tl args) p)
@@ -254,7 +256,7 @@ let hprel_to_view (f2_f:formula): (CF.formula) =
   Debug.no_1 "hprel_to_view" !print_formula !print_formula 
       hprel_to_view_x f2_f
 
-let look_for_anonymous_h_formula_x hf0=
+let rec look_for_anonymous_h_formula_x hf0=
   let rec helper hf=
     match hf with
       | CF.Star { h_formula_star_h1 = hf1;
@@ -280,6 +282,16 @@ let look_for_anonymous_h_formula_x hf0=
           (hr1@hr2)
       | DataNode hd -> (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments
       | ViewNode hv -> hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments
+      | ThreadNode ht ->
+          let rec helper (f:CF.formula) : (CP.spec_var list) =
+            match f with
+              | CF.Or ({formula_or_f1 = f1; formula_or_f2 = f2;}) -> (helper f1)@(helper f2)
+              | CF.Base b -> look_for_anonymous_h_formula b.formula_base_heap
+              | CF.Exists e ->
+                  let qvars= look_for_anonymous_h_formula e.CF.formula_exists_heap in
+                  CP.diff_svl qvars e.CF.formula_exists_qvars
+          in
+          ht.CF.h_formula_thread_node::(helper ht.CF.h_formula_thread_resource)
       | HRel _
       | Hole _
       | HTrue
@@ -289,12 +301,12 @@ let look_for_anonymous_h_formula_x hf0=
   let svl = CP.remove_dups_svl (helper hf0) in
   svl
 
-let look_for_anonymous_h_formula hf0=
+and look_for_anonymous_h_formula hf0=
   let pr1 = Cprinter.string_of_h_formula in
   Debug.no_1 "look_for_anonymous_h_formula" pr1 !CP.print_svl
       (fun _ -> look_for_anonymous_h_formula_x hf0) hf0
 
-let convert_anonym_to_exist_formula_x f0 args=
+and convert_anonym_to_exist_formula_x f0 args=
   let rec helper f=
     match f with
       | CF.Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -312,7 +324,7 @@ let convert_anonym_to_exist_formula_x f0 args=
   in
   helper f0
 
-let convert_anonym_to_exist_formula f0 args=
+and convert_anonym_to_exist_formula f0 args=
   let pr1 = Cprinter.string_of_formula in
   Debug.no_1 "convert_anonym_to_exist_formula" pr1 pr1
       (fun _ -> convert_anonym_to_exist_formula_x f0 args) f0
@@ -368,7 +380,7 @@ let recover_view_decl old_vdecl vname vvars ir f=
       (fun _ _ _ _ -> recover_view_decl_x old_vdecl vname vvars ir f) old_vdecl vname vvars f
 
 
-let norm_extract_common_one_view_x iprog cprog cviews vdecl=
+let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
   let extract_view_name hf=
     match hf with
       | CF.ViewNode hv -> hv.CF.h_formula_view_name
@@ -383,7 +395,7 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
   (***views to hprels*******)
   let fs1 = List.map CF.elim_exists fs in
   let fs2,map = List.split (List.map view_to_hprel fs1) in
-  let defs,elim_ss = SAU.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
+  let defs,elim_ss = Sautil.get_longest_common_hnodes_list cprog false cdefs unk_hps unk_svl
     hp self_var vdecl.C.view_vars args (List.map (fun f-> (f,None)) fs2) in
   match defs with
     | [a] -> [vdecl]
@@ -400,7 +412,7 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
         (* let _ = Debug.info_zprint  (lazy  ("  hp2: "^ (!CP.print_sv hp2))) no_pos in *)
         (*IMPORTANT: process hp2 first + check equiv then hp1*)
         (*matching with current views*)
-        let (_, eq_hfs) = SAU.match_one_hp_views iprog cprog cviews def2 in
+        let (_, eq_hfs) = Sautil.match_one_hp_views iprog cprog cur_m cviews def2 in
         let n_vdecl2, view_ss=
           if eq_hfs = [] then
              let _ = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in 
@@ -432,10 +444,10 @@ let norm_extract_common_one_view_x iprog cprog cviews vdecl=
         n_vdecl2@[n_vdecl1]
     | _ -> report_error no_pos "norm:norm_extract_common_one_view: sth wrong"
 
-let norm_extract_common_one_view iprog cprog cviews vdecl=
+let norm_extract_common_one_view iprog cprog cur_m cviews vdecl=
   let pr1 = Cprinter.string_of_view_decl in
   Debug.no_1 "norm_extract_common_one_view" pr1 (pr_list_ln pr1)
-      (fun _ -> norm_extract_common_one_view_x iprog cprog cviews vdecl) vdecl
+      (fun _ -> norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl) vdecl
 
 let norm_extract_common iprog cprog cviews sel_vns=
   let rec process_helper rem_vs done_vs=
@@ -444,12 +456,14 @@ let norm_extract_common iprog cprog cviews sel_vns=
       | vdecl::rest ->
           let n_vdecls =
             if List.exists (fun vn -> String.compare vn vdecl.Cast.view_name = 0) sel_vns then
-              norm_extract_common_one_view iprog cprog (done_vs@rest) vdecl
+              norm_extract_common_one_view iprog cprog [] (done_vs@rest) vdecl
             else [vdecl]
           in
           process_helper rest (done_vs@n_vdecls)
   in
-  process_helper cviews []
+  (*not sure it is necessary*)
+  (* process_helper cviews [] *)
+  cviews
 
 
 (*****************************************************************)
@@ -464,20 +478,26 @@ let cont_para_analysis_view cprog vdef other_vds=
       let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
       (*cont paras are para not changed, just forwarded*)
       let cont_paras = List.fold_left (fun cur_cont_paras vn ->
-          let closed_rec_args = CF.find_close vn.CF.h_formula_view_arguments eqs in
+          let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else
+            CF.find_close vn.CF.h_formula_view_arguments eqs
+          in
           CP.intersect_svl cur_cont_paras closed_rec_args
       ) args rec_vns
       in
+      cont_paras
       (* process other_vns*)
-      try
-        let cont_paras1 = List.fold_left (fun cur_cont_paras vn ->
-            let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in
-            let closed_rec_args = CF.find_close cont_args eqs in
-            CP.intersect_svl cur_cont_paras closed_rec_args
-        ) cont_paras other_vns
-        in
-        cont_paras1
-      with Not_found -> []
+      (* try *)
+      (*   let cont_paras1 = List.fold_left (fun cur_cont_paras vn -> *)
+      (*       let cont_args = Cast.look_up_cont_args vn.CF.h_formula_view_arguments vn.CF.h_formula_view_name other_vds in *)
+      (*       let closed_rec_args = *)
+      (*         if eqs = [] then cont_args else *)
+      (*           CP.remove_dups_svl ((CF.find_close cont_args eqs)@cont_args) *)
+      (*       in *)
+      (*       CP.intersect_svl cur_cont_paras closed_rec_args *)
+      (*   ) cont_paras other_vns *)
+      (*   in *)
+      (*   cont_paras1 *)
+      (* with Not_found -> cont_paras *)
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
@@ -494,7 +514,11 @@ let cont_para_analysis_x cprog cviews=
     match rem_cviews with
       | [] -> done_cviews
       | vdef::rest ->
-            let new_vdef = cont_para_analysis_view cprog vdef done_cviews in
+            (*if non recursive then not check*)
+            let new_vdef = if vdef.Cast.view_is_rec then
+              cont_para_analysis_view cprog vdef done_cviews
+            else vdef
+            in
             loop_helper rest (done_cviews@[new_vdef])
   in
   loop_helper cviews []
@@ -502,8 +526,9 @@ let cont_para_analysis_x cprog cviews=
 let cont_para_analysis cprog cviews=
   (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
   let pr1 = pr_pair pr_id !CP.print_svl in
+  let pr2a = Cprinter.string_of_view_decl in
   let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
-  let pr3 = pr_list pr2 in
+  let pr3 = pr_list pr2a in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews
 

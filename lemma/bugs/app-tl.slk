@@ -1,0 +1,64 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_safe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_safe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+//(1)
+checkentail_exact x::lseg2<tx,nn>@M 
+  * tx::node<_,y>@M * y::ll_tail2<ty,m>@M & n=nn+1
+ |-  (exists q: x::ll_tail2<ty,q>@M & q=m+n).
+print residue.
+
+//(2)
+checkentail_exact x::lseg2<tx,nn>@M 
+  * tx::node<_,y>@M 
+  * y::ll_tail2<ty,m>@M 
+  & n=nn+1
+ |-  (exists q: x::lseg2<ty, q-1> * ty::node<_, null> & q=m+n).
+
+//(3)
+checkentail_exact x::lseg2<tx,nn>@M 
+  * tx::node<_,y>@M 
+  * y::lseg2<ty, m-1> * ty::node<_, null> 
+  & n=nn+1
+ |-  (exists q: x::lseg2<ty, q-1> * ty::node<_, null> & q=m+n).
+
+//(4)
+checkentail_exact x::lseg2<tx,nn>@M 
+  * tx::node<_,y>@M 
+  * y::lseg2<ty, m-1> 
+  & n=nn+1
+ |-  (exists q: x::lseg2<ty, q-1> & q=m+n).
+
+// (5)
+checkentail_exact x::lseg2<tx,nn>@M 
+  * tx::node<_,y>@M 
+  * y::lseg2<ty, m-1> 
+  & n=nn+1
+ |-  (exists q: x::lseg2<qq, a> * qq::lseg2<ty, b> & q=m+n & q=a+b+1).
+
+//(6)
+checkentail_exact 
+  tx::node<_,y>@M 
+  * y::lseg2<ty, m-1> 
+  & n=nn+1 & tx=qq & a=nn
+ |-  (exists q: qq::lseg2<ty, b> & q=m+n & q=a+b+1).
+
+//(7)
+checkentail_exact 
+  n=nn+1 & a=nn & b=m
+ |-  (exists q : q=m+n  & q=a+b+1).

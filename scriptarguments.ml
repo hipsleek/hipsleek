@@ -152,6 +152,15 @@ let common_arguments = [
    "enable lemma printing");
   ("--dl", Arg.Set Globals.dump_lemmas,
    "enable lemma printing");
+  ("--dump-lemmas-short", Arg.Unit 
+      (fun _ -> Globals.dump_lemmas := true;
+          Globals.dump_lemmas_med := true;),
+   "enable lemma printing (short version)");
+  ("--dls", Arg.Unit
+      (fun _ -> 
+          Globals.dump_lemmas_med := true;
+          Globals.dump_lemmas := true;),
+   "enable lemma printing (short version)");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
@@ -224,6 +233,8 @@ let common_arguments = [
 	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
   ("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
   ("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+  ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
+  ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
@@ -240,7 +251,9 @@ let common_arguments = [
     ("--pa",Arg.Set Globals.pa,"Program analysis with memory specifications");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
-  ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--dis-imm", Arg.Unit (fun _ ->
+      Globals.allow_imm:=false; 
+      (* Globals.early_contra_flag:=false*)),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
@@ -362,6 +375,7 @@ let common_arguments = [
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
+  ("--dbc", Arg.Set Globals.dis_base_case_unfold, "explicitly disable base case unfold");
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
 	"disable simplified view def normalization");
   ("--eci", Arg.Set Globals.enable_case_inference,
@@ -524,6 +538,13 @@ let common_arguments = [
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
+  ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
+  ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
+  ("--en-rd-lemma", Arg.Set Globals.allow_rd_lemma, "Enable rd-lemma");
+  ("--lem-dis-fold", Arg.Clear Globals.allow_lemma_fold, "Disable do_fold with right lemma");
+  ("--lem-en-switch", Arg.Set Globals.allow_lemma_switch, "Allow lhs/lhs switching for Lemma Proving");
+  ("--lem-dis-switch", Arg.Clear Globals.allow_lemma_switch, "Disallow lhs/lhs switching for Lemma Proving");
   ("--lem-en-deep-unfold", Arg.Set Globals.allow_lemma_deep_unfold, "Allow deep unfold for Lemma Proving");
   ("--lem-dis-deep-unfold", Arg.Clear Globals.allow_lemma_deep_unfold, "Disallow deep unfold for Lemma Proving");
   ("--lem-en-residue", Arg.Set Globals.allow_lemma_residue, "Allow residue for Lemma Proving");
@@ -569,13 +590,15 @@ let common_arguments = [
   ("--pred-dis-useless-para", Arg.Clear Globals.pred_elim_useless, "disable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
   ("--pred-en-dangling", Arg.Set Globals.pred_elim_dangling, "enable the elimination of dangling predicate from derived HP defns");
   ("--pred-dis-dangling", Arg.Clear Globals.pred_elim_dangling, "disable the elimination of dangling predicate from derived HP defns");
+  ("--pred-dtv", Arg.Clear Globals.pred_trans_view, "disable trans HP defns to view after synthesis");
   ("--sa-refine-dang", Arg.Set Globals.sa_refine_dang, "refine dangling among branches of one hprels def");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
   ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
   ("--sa-en-pure-field", Arg.Set Globals.sa_pure_field, "enable the inference of pure field property");
   ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
-  ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property");
+  ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
+  ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");
   ("--sa-dis-ext", Arg.Clear Globals.sa_ex, "disable the inference of shape and pure property");
   ("--sa-en-sp-split", Arg.Set Globals.sa_sp_split_base, "enable special base case split at entailment");
   ("--sa-dis-sp-split", Arg.Clear Globals.sa_sp_split_base, "disable special base case split at entailment");
@@ -583,9 +606,11 @@ let common_arguments = [
   ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
   ("--sa-fb", Arg.Set_int Globals.sa_fix_bound, "number of loops for fixpoint");
   ("--pred-en-split", Arg.Set Globals.pred_split, "splitting hp args into multiple hp if possible");
+  ("--pred-dis-seg", Arg.Clear Globals.pred_seg_split, "disable segmentation");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
-   ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
+  ("--pred-seg-unify", Arg.Set Globals.pred_seg_unify, "attempt to segmentation pred defs");
+  ("--pred-conj-unify", Arg.Set Globals.pred_conj_unify, "attempt to conj-unify among inferred assumption");
   ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
   ("--pred-dis-equiv", Arg.Clear Globals.pred_equiv, "disable reuse of predicates with identical definition");
   ("--pred-unify-post", Arg.Set Globals.pred_unify_post, "unify (branches, syntax) definition of post-predicates");

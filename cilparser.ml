@@ -580,7 +580,7 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
 
 
 and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
-  let vname = vinfo.Cil.vname in
+  (* let vname = vinfo.Cil.vname in *)
   let pos = translate_location vinfo.Cil.vdecl in
   let ty = vinfo.Cil.vtype in
   let (new_ty, need_init) = (match ty with
@@ -704,7 +704,7 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
                           | _ -> Iast.mkMember base found_fields None pos
                     )
                   | Cil.Field ((field, l1), off, _) ->
-                        let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
+                        (* let p = makeLocation (startPos pos) (endPos (translate_location l1)) in *)
                         create_complex_exp base off (found_fields @ [field.Cil.fname]) pos
                   | Cil.Index (e, off, _) ->
                         let l1 = loc_of_cil_exp e in
@@ -806,6 +806,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           ) in
           let input_typ = (
               let ity = typ_of_cil_exp exp in
+              (* let _ = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
               match ity with
                 | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
                 | _ -> translate_typ ity pos
@@ -815,6 +816,8 @@ and translate_exp (e: Cil.exp) : Iast.exp =
             | _ -> translate_typ ty pos
           ) in
           let input_exp = translate_exp exp in
+          (* let _ = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+          (* let _ = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
           if (input_typ = output_typ) then
             (* no need casting *)
             input_exp
@@ -1123,6 +1126,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
                     IF.h_formula_heap2_name = H
                     }*)
         | IF.HeapNode _ | IF.HeapNode2 _
+        | IF.ThreadNode _ 
         | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp -> h
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
@@ -1460,13 +1464,17 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                 Some (Iast.mkBlock body Iast.NoJumpLabel [] pos)
     ) in
     let filename = pos.start_pos.Lexing.pos_fname in
-    let static_specs1, hp_decls = match static_specs with
-      | Iformula.EList [] ->
-	    let ss, hps = Iast.genESpec funbody funargs return_typ pos in
-	    (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
-	    (ss, hps)
+    let static_specs1, hp_decls,args_wi = match static_specs with
+      | Iformula.EList [] -> begin
+          match funbody with
+            | Some _ ->
+	          let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ pos in
+	          (*let _ = Debug.info_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in *)
+	          (ss, hps, args_wi)
+            | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+        end
       | _ ->
-	    static_specs, []
+	    static_specs, [],List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
     in
     let newproc : Iast.proc_decl = {
         Iast.proc_name = name;
@@ -1476,6 +1484,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_hp_decls = hp_decls;
         Iast.proc_constructor = false;
         Iast.proc_args = funargs;
+        Iast.proc_args_wi = args_wi;
         Iast.proc_source = ""; (* WN : need to change *)
         Iast.proc_return = return_typ;
         Iast.proc_static_specs = static_specs1;
@@ -1483,6 +1492,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         Iast.proc_exceptions = [];
         Iast.proc_body = funbody;
         Iast.proc_is_main = true;
+        Iast.proc_is_invoked = false;
         Iast.proc_file = filename;
         Iast.proc_loc = pos;
         Iast.proc_test_comps = None;

@@ -8,6 +8,10 @@ let total_entailments = ref 0
 
 let debug_precise_trace = ref false
 
+type formula_type =
+  | Simple
+  | Complex
+
 type aliasing_scenario = 
   | Not_Aliased
   | May_Aliased
@@ -23,6 +27,7 @@ type constant_flow = string
 
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
+exception SA_HP_NOT_PRED
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false
@@ -231,7 +236,9 @@ let convert_prim_to_obj (t:typ) : typ =
   )
 
 (*for heap predicate*)
+let default_prefix_pure_hprel = "_pure_of_"
 let hp_default_prefix_name = "HP_"
+let rel_default_prefix_name = "P_"
 let hppost_default_prefix_name = "GP_"
 let unkhp_default_prefix_name = "DP_"
 let dang_hp_default_prefix_name = "DP_DP"
@@ -639,6 +646,9 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let thrd_name = "thrd"
+let thrd_typ = Named "thrd"
+
 let silence_output = ref false
 
 (*precluded files*)
@@ -684,11 +694,22 @@ let use_split_match = ref false
 
 let consume_all = ref false
 
+let dis_base_case_unfold = ref false
+
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
+let allow_lemma_switch = ref true
+
+let allow_rd_lemma = ref false
+(* unsound *)
+
+let allow_lemma_fold = ref true
+(* unsound if false for lemma/bugs/app-t2c1.slk *)
+
+let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
 
@@ -717,6 +738,8 @@ let sa_dnc = ref false
 
 let pred_reuse = ref false
 
+let pred_trans_view = ref true
+
 (*temp: should be improve*)
 let pred_en_oblg = ref true
 
@@ -734,23 +757,31 @@ let sa_en_split = ref false
 
 let pred_split = ref false
 
+let pred_seg_split = ref true
+
 (* let sa_dangling = ref false *)
 
 let sa_refine_dang = ref false
 
-let pred_elim_useless = ref false
+let pred_elim_useless = ref true
 let infer_deep_ante_flag = ref false
 
 let pred_infer_flag = ref true
 
-let pred_elim_dangling = ref false
+let pred_elim_dangling = ref true
 
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_ex = ref true
+let sa_pure = ref true
+
+(* let iSIZE_PROP = 0 *)
+(* let iBAG_VAL_PROP = 1 *)
+
+
+let sa_ex = ref false
 
 let sa_infer_split_base = ref true
 
@@ -764,7 +795,11 @@ let pred_conj_unify = ref false
 
 let pred_disj_unify = ref false
 
-let pred_equiv = ref true
+let pred_seg_unify = ref false
+
+let pred_equiv = ref false
+
+let pred_equiv_one = ref true
 
 let pred_unify_post = ref false
 
@@ -774,17 +809,19 @@ let sa_tree_simp = ref false
 
 let sa_subsume = ref false
 
-(* let norm_elim_useless = ref false *)
+let norm_elim_useless = ref false
 
 let norm_extract = ref false
 let allow_norm_disj = ref true
 
-let sa_fix_bound = ref 4
+let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
+
+let lemma_ep = ref true
 
 let dis_sem = ref false
 
@@ -878,6 +915,12 @@ let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
+(*
+  true -> threads as resource
+  false -> threads as AND-conjunctions
+*)
+let allow_threads_as_resource = ref false
+
 (* let has_locklevel = ref false *)
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
@@ -948,6 +991,7 @@ let pre_residue_lvl = ref 0
 
 let check_coercions = ref false
 let dump_lemmas = ref false
+let dump_lemmas_med = ref false
 
 let num_self_fold_search = ref 0
 
@@ -977,7 +1021,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref true
+let enable_case_inference = ref false
 
 let print_core = ref false
 let print_core_all = ref false

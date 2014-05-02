@@ -1,0 +1,41 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+lemma_unsafe self::ls<uu,ll> <- self::ls<vv,ll-1> * vv::node<uu>.
+//lemma_unsafe self::ls<uu,ll> <- (exists uu2: self::ls<vv,ll-1> * vv::node<uu2> & uu2=uu).
+
+checkentail_exact x::ls<zz,hh>*zz::node<tt>  |- x::ls<tt2,kk>.
+print residue.
+/*
+Entail 3: Valid. 
+
+ <1>emp&kk=hh+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== lem_11) ==>  Match ==>  Match ==> ]]
+
+Why is tt2=zz not captured?
+
+ view ls[]<pp:TVar[25],nn:int>= view ls<pp:TVar[25],nn:int>= 
+  ECase case {
+         self=null -> EBase {1}->emp&self=null & nn=0&{FLOW,(1,24)=__flow}[] ;
+         self!=null -> EBase exists (Expl)[](Impl)[qq](ex)[]{2}->(exists pp_14,
+                             flted_6_13: self::node<qq>@M * 
+                             qq::ls<pp_14,flted_6_13>@M&nn=flted_6_13+1 & 
+                             pp=pp_14&{FLOW,(1,24)=__flow})[]
+         
+         }
+
+ vd =  EBase (exists flted_9_47,vv_48: self::ls<vv_48,flted_9_47>@M * 
+       vv_48::node<pp>@M&nn=flted_9_47+1&{FLOW,(1,24)=__flow})[]
+
+needs to be:
+
+ vd =  EBase (exists flted_9_47,vv_48: self::ls<vv_48,flted_9_47>@M * 
+       vv_48::node<pp2>@M&nn=flted_9_47+1& & pp2=pp{FLOW,(1,24)=__flow})[]
+
+
+*/

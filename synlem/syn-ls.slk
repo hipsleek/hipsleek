@@ -1,0 +1,42 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+
+pred lseg<last> ==
+  self=last
+ or self::node<_,p>*p::lseg<last>
+ inv true.
+
+pred HP<> ==
+  self::node<_,null>
+ or self::node<_,p>*p::HP<> & p!=null
+ inv self!=null.
+
+
+//lemma_safe "one" self::HP<> <-> self::node<_,p> * p::ll<>.
+
+//lemma_safe "oneb"  self::node<_,p> * p::ll<> <-> self::HP<>.
+
+//lemma_safe "two" self::HP<> <-> self::lseg<p> * p::node<_,null>.
+
+
+//1a
+//checkentail x::HP<> |- x::node<_,p> * p::ll<>.
+
+//1b
+//checkentail x::node<_,p> * p::ll<> |- x::HP<>.
+
+
+
+//3a.
+//checkentail x::HP<> |- x::lseg<p> * p::node<_,null>.
+
+//3b.
+checkentail x::lseg<p> * p::node<_,null> |- x::HP<>.

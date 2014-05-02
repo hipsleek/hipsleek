@@ -1,0 +1,30 @@
+data node {
+  node next;
+}.
+
+pred ls<pp,nn> == self=null & nn=0
+ or self::node<qq> * qq::ls<pp,nn-1>
+ inv nn>=0.
+
+lemma_unsafe self::ls<uu,ll> <- self::ls<vv,ll-1> * vv::node<uu>.
+
+checkentail x::ls<zz,hh>*zz::node<tt>  |- (exists kk: x::ls<tt,kk> & kk=2).
+print residue.
+
+checkentail x::ls<zz,hh>*zz::node<tt>  |- (exists kk: x::ls<tt,kk> & kk=hh+1).
+print residue.
+
+checkentail x::ls<zz,hh>*zz::node<tt>  |- x::ls<tt,kk>.
+print residue.
+/*
+Entail 3: Valid. 
+
+ <1>emp&kk=hh+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== lem_11) ==>  Match ==>  Match ==> ]]
+
+Why is tt=zz not captured?
+*/
+
+checkentail x::ls<zz,hh>  |- x::ls<tt,kk>.
+print residue.
+

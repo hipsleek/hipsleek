@@ -1,0 +1,63 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+/* view for a singly linked list */
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+/*
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, q> * q::lseg<p, n-1>
+	inv n>=0.
+
+checkentail x::ll<1>  |- x::node<a,b>.
+print residue.
+
+*/
+
+
+checkentail x::node<1,null>  |- x::node<a,b>.
+print residue.
+
+/*
+checkentail x::node<1,null> * y::node<1,null>  |- x::node<a,b>.
+print residue.
+*/
+
+/*
+
+!!!:0: 0:  exists(q:exists(flted_9_15:n=flted_9_15+1 & (((1<=flted_9_15 & q!=null) | 
+(flted_9_15=0 & q=null))))) & self!=null
+
+why do we have self=1?
+----------------------
+
+!!!:0: 0:  exists(q:exists(flted_9_15:n=flted_9_15+1 & (((1<=flted_9_15 & q!=null) | 
+(flted_9_15=0 & q=null))))) & self=1
+
+!!!:0: 0: ante 1: : flted_18_35=flted_9_41+1 & flted_18_35=1 & x!=null & (((1<=flted_9_41 & 
+q_43!=null) | (flted_9_41=0 & q_43=null)))
+!!!:0: 0: ante 3: : flted_18_35=flted_9_41+1 & flted_18_35=1 & x!=null & (((1<=flted_9_41 & 
+q_43!=null) | (flted_9_41=0 & q_43=null)))
+!!!:0: 0: ante 4: : flted_18_35=flted_9_41+1 & flted_18_35=1 & x!=null & (((1<=flted_9_41 & 
+q_43!=null) | (flted_9_41=0 & q_43=null)))
+
+
+Why x!=null converted to x=2 and x=3??
+-------------------------------------
+
+!!!:0: 0: ante 1: : flted_18_34=flted_9_40+1 & flted_18_34=1 & x=2 & (((1<=flted_9_40 & 
+q_42!=null) | (flted_9_40=0 & q_42=null)))
+!!!:0: 0: ante 3: : flted_18_34=flted_9_40+1 & flted_18_34=1 & x=2 & (((1<=flted_9_40 & 
+q_42!=null) | (flted_9_40=0 & q_42=null)))
+!!!:0: 0: ante 4: : flted_18_34=flted_9_40+1 & flted_18_34=1 & x=2 & (((1<=flted_9_40 & 
+q_42!=null) | (flted_9_40=0 & q_42=null)))
+!!!:0: 0: IMP #29
+!!!:0: 0: imply_timeout: ante:  x=2
+!!!:0: 0: imply_timeout: conseq:  x=3
+
+*/

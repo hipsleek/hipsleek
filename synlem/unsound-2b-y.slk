@@ -1,0 +1,18 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma_unsafe "V2" self::lseg<n, p> <- 
+   self::lseg<a, r> * r::lseg<b, p> 
+   & n = a + b 
+   & a,b >=0 .
+
+checkentail
+  self::lseg<a, r> * r::lseg<b, p> 
+ |-  self::lseg<k, p> & k=5.
+print residue.
+
+

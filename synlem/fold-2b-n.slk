@@ -1,0 +1,30 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+checkentail
+  self::node<_,q>*q::lseg<n,p>
+ |- (exists kkk : self::lseg<kkk, p> & kkk>n).
+print residue.
+
+/*
+# unsound-2b-n.slk
+
+How come lemma did not use folding mechanism
+used by fold-2b-n.slk?
+
+do_full_fold@4
+do_full_fold inp1 : es_formula: self::node<_,q>@M * q::lseg<n,p>@M&{FLOW,(21,22)=__norm}[]
+ es_evars: [p_43; kkk_44]
+ es_rhs_eqset: [p_43:p]
+ es_trace:  SEARCH ==>  Fold ==> 
+ es_unsat_flag: false
+do_full_fold inp2 : self::lseg<kkk_44,p_43>@M
+do_full_fold@4 EXIT: 2[
+   self::node<_,q>@M * q::lseg<n,p>@M&exists(kkk_44:kkk_44=0) & exists(p_43:p_43=self)&{FLOW,(21,22)=__norm}[];
+   emp&Anon_12=Anon_47 & q=r_48 & exists(kkk_44:kkk_44=n+1 & 1<=kkk_44) & exists(p_43:p=p_43)&{FLOW,(21,22)=__norm}[]
+   ]
+*/

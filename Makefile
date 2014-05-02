@@ -1,6 +1,5 @@
 OCAMLBUILD = ocamlbuild
 
-
 # OPAM repository
 OPREP = $(OCAML_TOPLEVEL_PATH)/..
 #~/.opam/system/lib
@@ -32,13 +31,15 @@ LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBG
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
+GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+#FLAGS = $(INCLUDES),-ccopt,-fopenmp 
+#GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
@@ -143,63 +144,57 @@ install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
 
-cmi: clean_cmi all create_cmi
+FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer 
 
-clean_cmi:
-	echo "Temp" > temp.mli
+init: clean_mli all create_mli
+
+clean_mli:
+	echo 'Temp' > temp.mli
 	rm *.mli
 	rm -r _build
 
-create_cmi:
+create_mli:
 	cp _build/*.cmi .
 	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
 	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
-	ocamlc -i globals.ml > globals.mli
-	ocamlc -i auxnorm.ml > auxnorm.mli
-	ocamlc -i coq.ml > coq.mli
-	ocamlc -i lem_store.ml > lem_store.mli
-	ocamlc -i cprinter.ml > cprinter.mli
-	ocamlc -i cpure.ml > cpure.mli
-	ocamlc -i cvc3.ml > cvc3.mli
-	ocamlc -i cvclite.ml > cvclite.mli
-	ocamlc -i debug.ml > debug.mli
-	ocamlc -i dp.ml > dp.mli
-	ocamlc -i error.ml > error.mli
-	ocamlc -i exc.ml > exc.mli
-	ocamlc -i fixcalc.ml > fixcalc.mli
-	ocamlc -i gen.ml > gen.mli
-	ocamlc -i globProver.ml > globProver.mli
-	ocamlc -i iformula.ml > iformula.mli
-	ocamlc -i infinity.ml > infinity.mli
-	ocamlc -i inliner.ml > inliner.mli
-	ocamlc -i iprinter.ml > iprinter.mli
-	ocamlc -i ipure_D.ml > ipure_D.mli
-	ocamlc -i ipure.ml > ipure.mli
-	ocamlc -i isabelle.ml > isabelle.mli
-	ocamlc -i java.ml > java.mli
-	ocamlc -i label_aggr.ml > label_aggr.mli
-	ocamlc -i label.ml > label.mli
-	ocamlc -i label_only.ml > label_only.mli
-	ocamlc -i lem_store.ml > lem_store.mli
-	ocamlc -i mathematica.ml > mathematica.mli
-	ocamlc -i mcpure_D.ml > mcpure_D.mli
-	ocamlc -i mcpure.ml > mcpure.mli
-	ocamlc -i machdep.ml > machdep.mli
-	ocamlc -i mona.ml > mona.mli
-	ocamlc -i net.ml > net.mli
-	ocamlc -i omega.ml > omega.mli
-	ocamlc -i others.ml > others.mli
-	ocamlc -i perm.ml > perm.mli
-	ocamlc -i procutils.ml > procutils.mli
-	ocamlc -i redlog.ml > redlog.mli
-	ocamlc -i setmona.ml > setmona.mli
-	ocamlc -i share_prover.ml > share_prover.mli
-	ocamlc -i share_prover_w.ml > share_prover_w.mli
-	ocamlc -i slicing.ml > slicing.mli
-	ocamlc -i smtsolver.ml > smtsolver.mli
-	ocamlc -i spass.ml > spass.mli
-	ocamlc -i timelog.ml > timelog.mli
-	ocamlc -i tpdispatcher.ml > tpdispatcher.mli
-	ocamlc -i tree_shares.ml > tree_shares.mli
-	ocamlc -i wrapper.ml > wrapper.mli
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4_import.cmi .
+	$(foreach file, $(FILES), \
+		ocamlc -i $(file).ml > $(file).mli; \
+		sed -i 's/type vertex = vertex$$/type vertex = V.t/' $(file).mli; \
+	)
 	rm *.cmi
+	mkdir -p mlold
+	cp --preserve *.ml mlold/
+
+mli: change_mli all
+
+change_mli:
+	cp _build/*.cmi .
+	cp /usr/local/.opam/system/lib/batteries/batString.cmi .
+	cp /usr/local/.opam/system/lib/ocamlgraph/graph.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4.cmi .
+	# cp /usr/local/lib/ocaml/camlp4/Camlp4_import.cmi .
+	$(foreach file, $(FILES), \
+		TIME1=$(shell stat -c %Y $(file).ml); \
+		TIME2=$(shell stat -c %Y mlold/$(file).ml); \
+		if [ $$TIME1 -eq $$TIME2 ]; then \
+			echo "SAME" $(file); \
+		else \
+			cp --preserve $(file).ml mlold/$(file).ml; \
+			ocamlc -i mlold/$(file).ml > mlold/$(file).mli; \
+			sed -i 's/type vertex = vertex$$/type vertex = V.t/' mlold/$(file).mli; \
+			cmp -s $(file).mli mlold/$(file).mli; \
+			RETVAL=$$?; \
+			if [ $$RETVAL -eq 0 ]; then \
+			 	echo "SAME" $(file); \
+			else \
+			 	echo "DIFF" $(file); \
+			 	ocamlc mlold/$(file).mli; \
+			 	mv mlold/$(file).cmi .; \
+			 	cp mlold/$(file).mli .; \
+			fi; \
+		fi; \
+	)
+	rm *.cmi
+

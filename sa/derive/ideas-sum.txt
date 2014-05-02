@@ -1,0 +1,115 @@
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0.
+
+=========>
+step 1:
+
+ ho_b = \ s -> s=0
+
+ ho_ind  = \ s V [s_1..s_a] 
+                          --> s= fold_left (\ a b -> a + b) V [s_1..s_a] & V>=0
+
+ ho_ind_r  = \ R s_i --> (s_i, true)
+
+
+=======================================================================
+Example 1:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<n> == self=null &n=0
+  or self::node<_,p> * p::ll<m_1> & n=m_1 + 1
+inv true.
+
+llNSum<s,n> == extends llN<n> with pos_sum[REC,VAL]<s> .
+=========>
+step 2: self::ll<s,n>
+  - branch 1: f1== self=null &n=0 :
+     DER([REC,VAL],s,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC,VAL],s, f1)) = EXTR(true) = EMP in
+      ho_b(s)
+     == (s=0)
+  - branch 2: f2=self::node<v,p> * p::ll<s_1> & n=m_1 + 1:
+      DER([REC,VAL],s,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC,VAL],s, f2)) = (v,[REC::ll<s_1>]) in
+         ho_ind (s,v, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,s_1)])
+      == s = s_1 + v & v>=0
+=======================================
+Example 2:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<> == self=node<_,null>
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred llN<s> == extends ll<> with pos_sum[REC,VAL]<s> .
+=========>
+step 2: self::ll<s>
+  - branch 1: f1==  self=node<v,null>:
+     DER([REC,VAL],s,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC,VAL],s, f1)) = (v,[REC=null]) in
+      ho_ind (n, v,List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,0)])
+      == s = v
+  - branch 2: f2=self::node<v,p> * p::ll<s_1>:
+      DER([REC,VAL],s,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC,VAL],s, f2)) = (v,[REC::ll<s_1>]) in
+         ho_ind (s,v, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,s_1)])
+      == s = s_1 + 1
+=======================================
+Example 3:
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+pred ll<q> == self=q
+  or self::node<_,p> * p::ll<q>
+inv true.
+
+pred llN<s> == extends ll<> with pos_sum[REC,VAL]<s>.
+=========>
+step 2: self::ll<s>
+  - branch 1: f1==  self=q:
+     DER([REC,VAL],s,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC,VAL],s, f1)) = EXTR(true) =EMP in
+      ho_b (s)
+      == s = 0
+  - branch 2: f2=self::node<v,p> * p::ll<s_1>:
+      DER([REC,VAL],s,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = EXTR(abs([REC,VAL],s, f2)) = (v,[REC::ll<s_1>]) in
+         ho_ind (s,v, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,s_1)])
+      == s = s_1 + 1
+=======================================
+Example 4:
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
+pred tree<> == self=null
+  or tree::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+pred treeN<s> == extends tree<> with pos_sum[REC,VAL]<s> .
+
+=========>
+step 2: self::tree<s>
+  - branch 1: f1== self=null:
+     DER([REC,VAL],s,f1,ho_b,ho_ind_r,ho_ind) =
+      let f10 = EXTR(abs([REC,VAL],n, f1)) = EXTR(true) =EMP in
+      ho_b(s)
+     == (s=0)
+  - branch 2: f2=self::node2<v,p,q> * p::tree<s_1> * q::tree<s_2>:
+      DER([REC,VAL],s,f2,ho_b,ho_ind_r,ho_ind)=
+      let f20 = abs([REC,VAL],n, f2) = (v,[REC::ll<s_1>,REC::tree<s_2>]) in
+         ho_ind (s,v, List.map (\ (R, m_i) -> ho_ind_r R m_i) [] [(REC,s_1);(REC,s_2])
+      == s = s_2 + s_1 + v
+=======================================

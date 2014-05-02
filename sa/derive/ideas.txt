@@ -1,0 +1,113 @@
+steps:
+1. from pred_extn to higher-order functions:
+ a. base case:
+ b.inductive case:
+     - recursive:
+     - general:
+
+2. extends .HP.. with ..EXTN
+ for each branch of HP
+  - compute abstract of the formula with properties of EXTN
+  - apply the higher-order functions to get the extension
+  - combine
+================================================
+Step 1:
+================================================
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m
+   inv n>=0.
+
+ base_case = \ n -> n=0
+
+  ind_gen_case  = \ n [m_1..m_a]
+                          --> n= fold_left (\ a b -> a + b) 1 [m_1..m_a]
+
+  ind_rec_case  = \ R m_i --> (m_i, true)
+================================
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0.
+
+  base_case = \ s -> s=0
+
+  ind_gen_case  = \ s V [s_1..s_a] 
+                          --> s= fold_left (\ a b -> a + b) V [s_1..s_a] & V>=0
+
+  ind_rec_case  = \ R s_i --> (s_i, true)
+================================
+pred_extn head[V]<n> ==
+   n=V.
+
+   base_case = \ n -> true
+
+  ind_gen_case  = \ n V [n_1..n_a]
+                          --> n= V
+
+  ind_rec_case  = \ R n_i --> (n_i, true)
+================================
+pred_extn sum[V,R]<s> ==
+   s=0 // base case
+   or R::sum<s2> & n=V+s2 // recursive case
+
+ base_case = \ s -> s=0
+
+  ind_gen_case  = \ s V [s_1..s_a] 
+                          --> s= fold_left (\ a b -> a + b) V [s_1..s_a]
+
+  ind_rec_case  = \ R s_i --> (s_i, true)
+================================
+(******???******)
+pred_extn height[R]<h> ==
+   h=0 // base case
+   or R::height<h2> & h=1+max(h2) // recursive case
+   //or R::height<h2> * R::height<h3>  & h=1+max(h2,h3) // recursive case
+
+  base_case = \ h -> h=0
+
+  ind_gen_case  = \ h [h_1..h_a] 
+                          --> h= 1+ fold_left (\ a b -> max(a, b)) (-INF) [h_1..h_a]
+
+  ind_rec_case  = \ R h_i --> (h_i, true)
+================================
+pred_extn ordered[V,R]<RR:relation(int,int)> ==
+   R::ordered<RR> & RR(V,V2)
+
+  base_case = \ RR -> true
+
+  ind_gen_case  = \ RR v [RR_1..RR_a]
+                          --> RR(v, v_log)
+
+  ind_rec_case  = \ R RR_i --> (RR_i, true)
+===============================
+pred_extn set[V,R]<S> ==
+   S={}
+   or R::set<S2> & S={V} union S2 .
+
+  base_case = \ S -> S={}
+
+  ind_gen_case  = \ S V [S_1..S_a]
+                          --> S= fold_left (\ a b -> a union b) {V} [S_1..S_a]
+
+  ind_rec_case  = \ R S_i --> (S_i, true)
+===============================
+pred_extn minValue[V,R]<m> ==
+   R::minValue<m2> & m=min(V,m2).
+
+  base_case = \ m -> true
+
+  ind_gen_case  = \ S V [m_1..m_a]
+                          --> m= fold_left (\ a b -> min(a, b)) V [m_1..m_a]
+
+  ind_rec_case  = \ R m_i --> (m_i, true)
+===============================
+pred_extn maxValue[V,R]<m> ==
+   R::maxValue<m2> & m=max(V,m2).
+
+  base_case = \ m -> true
+
+  ind_gen_case  = \ S V [m_1..m_a]
+                          --> m= fold_left (\ a b -> max(a, b)) V [m_1..m_a]
+
+  ind_rec_case  = \ R m_i --> (m_i, true)

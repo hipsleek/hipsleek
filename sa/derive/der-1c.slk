@@ -1,0 +1,53 @@
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0
+   .
+
+pred llNPSum<s> == extends ll<> with pos_sum[VAL,REC]<s> .
+
+/*
+************VIEW_DERIVED*************
+ view llNPSum[]<s:int>= 
+  
+   EBase {4}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase EXISTS(Anon_11,p,s_24: self::node<Anon_11,p>@M[Orig] * 
+         p::llNPSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11+s_24 & 0<=Anon_11 & 
+         0<=s_24&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+
+PROBLEMS
+========
+   (i) 0<=s_24 need not be added in branch
+   (ii) 0<=s must be added to xform (or xpure0)
+
+
+*/
+
+
+
+
+
+
+
+
+
+

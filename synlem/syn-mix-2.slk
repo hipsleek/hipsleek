@@ -1,0 +1,26 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self=null
+     or self::node<_, q> * q::ll<>
+inv true.
+
+
+pred lseg<p> == self=p
+     or self::node<_, q> * q::lseg<p>
+inv true.
+
+
+//lemma_safe self::ll<> <-> self::lseg<null>.
+
+//1 FAIL. --lem-en-syn
+checkentail x::ll<> |- x::lseg<p> & p=null.
+print residue.
+
+
+//2.  FAIL. --lem-en-syn
+//checkentail x::lseg<null> |- x::ll<>.
+//print residue.
+
