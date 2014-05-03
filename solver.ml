@@ -12268,7 +12268,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
         } -> 
-            let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in 
+            (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
             let ctx0 = Ctx estate in
             (* let ((coer_l,coer_r),univ_coers) = 
               find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
@@ -12278,7 +12278,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (*let () = print_endline (Cprinter.string_of_coercion coer) in*)
             if coer.coercion_kind = RLEM then
               (*let lhs_list = split_star_conjunctions coer.coercion_head in*)
-              let () = print_endline("LHS_REST : "^(Cprinter.string_of_h_formula lhs_rest)) in
+              (*let () = print_endline("LHS_REST : "^(Cprinter.string_of_h_formula lhs_rest)) in*)
               let rest_heap = split_star_conjunctions lhs_rest in
               let filter_starminus = List.filter (fun h -> Mem.contains_starminus h) rest_heap in
               (*let _ = List.map (fun c -> print_endline(Cprinter.string_of_h_formula c)) rest_heap in*)
@@ -12298,8 +12298,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                      ((is_data h) && 
                          List.exists (fun c -> CP.eq_spec_var c (get_node_var h)) (h_fv lhs_wand))
                     then false else true) rest_heap in
-              let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
-              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in
+              (*let () = print_endline("LHS_H : "^(Cprinter.string_of_h_formula lhs_h)) in
+              let () = print_endline("LHS WAND :"^Cprinter.string_of_h_formula lhs_wand) in*)
               let wand_head = match lhs_wand with 
                 | StarMinus({h_formula_starminus_h1 = h1;
 	                         h_formula_starminus_h2 = h2})-> h2 
@@ -12321,15 +12321,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 (CP.split_conjunctions (Mcpure.pure_of_mix check_p)))) 
                 else failwith "Ramification Lemma failed heap guard checking" in
               let h,p,fl,t,a = split_components coer.coercion_body in
-              let () = print_endline("RLEM_H : "^(Cprinter.string_of_h_formula check_h)) in
+              (*let () = print_endline("RLEM_H : "^(Cprinter.string_of_h_formula check_h)) in
               let () = print_endline("RLEM_P : "^Cprinter.string_of_mix_formula check_p) in
-              let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in
+              let () = print_endline("RHS :"^Cprinter.string_of_h_formula h) in*)
               let vl = Cformula.h_fv h in
               let fresh_vl = CP.fresh_spec_vars vl in
               let h = Cformula.h_subst (List.combine vl fresh_vl) h in
               let check_p = Mcpure.memo_subst (List.combine vl fresh_vl) check_p in
-              let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in
-             (* let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in*)
+              (*let () = print_endline("SVL :"^Cprinter.string_of_spec_var_list vl) in
+              let () = print_endline("FVL :"^Cprinter.string_of_spec_var_list fvl) in*)
               let gvl = Cformula.h_fv lhs_wand in
               let abs_vl = List.filter (fun c -> CP.is_void_typ c) gvl in
               let rl = List.hd gvl in
@@ -12341,21 +12341,21 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let abs_vl = abs_vl in
               let check_p_vl = CP.fv (Mcpure.pure_of_mix check_p) in
               let check_p_vl = List.filter (fun c -> not(CP.is_rel_typ c)) check_p_vl in
-              let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in
+              (*let () = print_endline("CVL :"^Cprinter.string_of_spec_var_list check_p_vl) in*)
               let rho2 = if List.length check_p_vl = List.length abs_vl
                 then List.combine check_p_vl abs_vl
                 else if List.length check_p_vl =  List.length ((List.hd abs_vl)::[List.hd gvl]@[fl2])
                 then List.combine check_p_vl ((List.hd abs_vl)::[List.hd gvl]@[fl2])
                 else []  in
               let gvl = if (List.length rho2)=0 then fvl@abs_vl else gvl in
-              let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
-              let () = print_endline("AVL :"^Cprinter.string_of_spec_var_list abs_vl) in
+              (*let () = print_endline("GVL :"^Cprinter.string_of_spec_var_list gvl) in
+              let () = print_endline("AVL :"^Cprinter.string_of_spec_var_list abs_vl) in*)
               let gvl_2 = List.filter (fun h -> is_data h) (split_all_conjunctions lhs_wand) in
               let rho = if List.length fresh_vl = List.length gvl then List.combine fresh_vl gvl
                 else
-                     let () = print_endline("H : "^Cprinter.string_of_h_formula (List.hd gvl_2)) in
+                     (*let () = print_endline("H : "^Cprinter.string_of_h_formula (List.hd gvl_2)) in*)
                      if List.length gvl_2 > 0 && List.length ((h_fv (List.hd gvl_2))@[fl2]@[fl2]) == List.length fresh_vl 
-                     then let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in
+                     then (*let () = print_endline("GVL_2 :"^Cprinter.string_of_spec_var_list (h_fv (List.hd gvl_2))) in*)
                           List.combine fresh_vl ((h_fv (List.hd gvl_2))@[fl2]@[fl2])
                      else failwith "Ramification Lemma with different variables" in
               let rho2 = if List.length rho2 > 0 then rho2 else 
@@ -12367,7 +12367,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                        let v = List.hd (List.tl gvl2_vl) in
                        let g = List.hd abs_vl in
                        List.combine check_p_vl (g::[v]@[g']@gvl2_vl) 
-                  with _ -> let () = print_endline ("Exception") in failwith " " in
+                  with _ -> (*let () = print_endline ("Exception") in *)failwith "Lemma too complex" in
               let check_p = Mcpure.memo_subst rho2 check_p in
               let lhs_p,_,_ = xpure prog (Cformula.mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos) in
               let f = simple_imply (Mcpure.pure_of_mix lhs_p) (Mcpure.pure_of_mix check_p) in
@@ -12380,8 +12380,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let new_lhs_p = Mcpure.memo_subst rho lhs_p in
               let new_lhs_h = Cformula.join_star_conjunctions (new_lhs_h::rest_heap) in
               let new_lhs = Cformula.mkBase new_lhs_h new_lhs_p lhs_t lhs_fl lhs_a no_pos in
-              let () = print_endline("LHS :"^Cprinter.string_of_formula_base lhs_b) in
-              let () = print_endline("NEW LHS : " ^Cprinter.string_of_formula new_lhs) in
+              (*let () = print_endline("LHS :"^Cprinter.string_of_formula_base lhs_b) in
+              let () = print_endline("NEW LHS : " ^Cprinter.string_of_formula new_lhs) in*)
               let old_trace = estate.es_trace in
               let estate = {estate with es_trace=(("(ramify: " ^ coer.coercion_name ^ ")")::old_trace)} in
               let new_ctx1 = Ctx{estate with es_formula = new_lhs } in

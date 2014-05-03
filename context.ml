@@ -883,7 +883,7 @@ match f with
              (* if CF.contains_starminus lhs1 then (lhs1, node1, hole1, match1)
               else*) (mkStarH lhs1 ramify_f2 pos , node1, hole1, match1)
             else (mkStarH lhs1 f2 pos , node1, hole1, match1) in
-          let () = print_endline("F : "^Cprinter.string_of_h_formula nl) in nl,nn,nh,nm) l1 in  
+          (*let () = print_endline("F : "^Cprinter.string_of_h_formula nl) in*) nl,nn,nh,nm) l1 in 
         let l2 = helper f2 in
         let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
           let nl,nn,nh,nm = 
@@ -899,7 +899,7 @@ match f with
               else (mkStarH ramify_f1 lhs2 pos, node2, hole2, match2)
             else
               (mkStarH f1 lhs2 pos , node2, hole2, match2) in
-          let () = print_endline("G : "^Cprinter.string_of_h_formula nl) in nl,nn,nh,nm) l2 in
+          (*let () = print_endline("G : "^Cprinter.string_of_h_formula nl) in*) nl,nn,nh,nm) l2 in
         (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
       	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
 	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)
@@ -1569,7 +1569,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
     | WArg -> 
           let _ = pr_debug "WArg  analysis here!\n" in  
           (1,M_Nothing_to_do (string_of_match_res m_res)) 
-    | Wand -> let _ = (print_endline"eliminate wand") in 
+    | Wand -> (*let _ = (print_endline"eliminate wand") in *)
                if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma m_res)
                else (1,M_Nothing_to_do (string_of_match_res m_res))
   in
