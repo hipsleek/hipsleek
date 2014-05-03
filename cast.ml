@@ -1915,7 +1915,7 @@ let vdef_lemma_fold prog coer  =
   (* body contains orig=false but not body_norm*)
   let rhs = CF.formula_to_struc_formula coer.coercion_body in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
-  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "body" !print_struc_formula) rhs no_pos in
   if cfd # is_init then cfd # get
   else
     let vd2 = match lhs with

@@ -14019,7 +14019,7 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) resth2 ln2 (*rhs_p
 (* CF.list_context * Prooftracer.proof *)
 
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
-  let vd = vdef_lemma_fold prog coer in
+  let vd = Cast.vdef_lemma_fold prog coer in
   match vd with
     | None ->
         apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
