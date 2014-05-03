@@ -10739,8 +10739,7 @@ let split_star_conjunctions (f:h_formula): (h_formula list) =
   let rec helper f = 
   match f with
   | Star({h_formula_star_h1 = h1;
-	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos;}) ->
+	h_formula_star_h2 = h2;}) ->
         let res1 = helper h1 in
         let res2 = helper h2 in
         (res1@res2)
