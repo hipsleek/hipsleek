@@ -369,6 +369,15 @@ Total verification time: 0.00 second
 
 
 ====================================================================
+sleek --eps why eps trigger so many more failures?
+
+baga-test.slk({E15#Fail}) 
+infer/infer1.slk({E6#Valid}) infer/infer2.slk({E5#Valid}) infer/infer5.slk({E4#Valid}) infer/infer6.slk({E1#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid}) infer/infer8.slk({E10#Valid},{E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) 
+eps.slk({E1#Valid}) 
+infinity.slk({E77#Valid},{E78#Valid}) 
+inflem.slk({E2#Valid}) 
+lemmas/lseg.slk({L4#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) lemmas/lemma-fold.slk({E1#Valid},{E3#Valid},{E5#Valid}) lemmas/rd-lem-1.slk({L2#Valid}) 
+lemmas/app-tail.slk({E1#Valid}) lemmas/dseg1.slk({L1#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================

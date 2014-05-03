@@ -12361,9 +12361,10 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
                         (* HACK : this assumed that unlabelled disj is false *)
                         let cf = !print_formula f in
                         if is_false_flow flowt.formula_flow_interval then []
-                        else Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"}
+                        else (* Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"} *)
                           (* WN -> CG : is this error related to --eps or labelling? *)
-                          (* [f] *)
+                          (* for unlabelled branches in lemma; keep all branches for --eps*)
+                          [f]
 		  | Some lbl -> 
                         if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) 
                         else (Gen.Profiling.inc_counter "saved_unfolds";[]))
