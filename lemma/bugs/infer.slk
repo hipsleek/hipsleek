@@ -11,7 +11,7 @@ HeapPred H1(node x).
 HeapPred H2(node q, int n).
 HeapPred H3(node x).
 
-
+/*
 //infer1.slk (6) --eps
 infer [H1] H1(x) & n=0 & x=y  |- y::ll<n>.
 print residue.
@@ -37,4 +37,13 @@ infer [H1] H1(x) & n=0 & x=y  |- y::ll<n>.
 */
 
 
+
+//infer7 (6)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+
+//infer7 (7)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.
+print residue.
 

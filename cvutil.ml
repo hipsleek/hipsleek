@@ -618,18 +618,33 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
               | None -> CP.mkTrue pos
               | Some f -> mkPermInv () f in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
-            let res = 
+            let diff_flag = not(vdef.view_xpure_flag) in
+            let _ = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) (!force_verbose_xpure) no_pos in
+            let _ = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
+             (*LDK: ??? be careful to handle frac var properly. 
+               Currently, no fracvar in view definition*)
+            let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+            let to_svs = p :: vs in
+            let res =
               (match inv_opt with
-                | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv
+                | None ->
+                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in
+                      let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in
+                      let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
+                      subst_m_fun (MCP.memoise_add_pure_N inv frac_inv)
+                      (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
                 | Some xp1 ->
+                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
                       let vinv = match which_xpure with
                         | -1 -> MCP.mkMTrue no_pos
                         | 0 -> vdef.view_user_inv
-                        | _ -> xp1 in
-                      (*LDK: ??? be careful to handle frac var properly. 
+                        | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
+                      in
+                      (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
+                       (*LDK: ??? be careful to handle frac var properly. 
                         Currently, no fracvar in view definition*)
-                      let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
-                      let to_svs = p :: vs in
+                      (* let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
+                      (* let to_svs = p :: vs in *)
                       (*add fractional invariant*)
                       let frac_inv_mix = MCP.OnePF frac_inv in
                       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in

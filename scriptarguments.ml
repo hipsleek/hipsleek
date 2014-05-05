@@ -253,7 +253,7 @@ let common_arguments = [
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
   ("--dis-imm", Arg.Unit (fun _ ->
       Globals.allow_imm:=false; 
-      Globals.early_contra_flag:=false
+      (* Globals.early_contra_flag:=false *)
       (* WN : quick fix *)
       (* WN : xpure_enum is not working properly with early_contra for --eps *)
       ),"disable the use of immutability annotations");

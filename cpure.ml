@@ -12103,19 +12103,49 @@ let prune_relative_unsat_disj p0 base_p=
 
 
 let overapp_ptrs_x f0=
+  let detect_ptr_xpure_form f sv1 sv2 a b c=
+     match sv1 with
+       | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
+         (* let t = type_of_spec_var sv in *)
+         (* let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+         if is_node_typ sv && is_num sv2 then
+           let zero = IConst (0, pos) in
+           (true, BForm ((Neq (sv1, zero, b), c), a))
+         else (false, f)
+       | _ -> (false, f)
+  in
   let rec helper f= match f with
     | BForm (bf,a) ->
+          let _ = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
           (match bf with
-            | (Eq (sv1,sv2,b),c) -> begin
-                match sv1 with
-                  | Var (sv ,pos) ->
-                          if is_node_typ sv && is_num sv2 then
-                            let zero = IConst (0, pos) in
-                            BForm ((Neq (sv1, zero, b), c), a)
-                          else f
-                  | _ -> f
-              end
-            | _ -> f)
+            | (Eq (sv1,sv2,b),c) ->
+                let detected, new_f = detect_ptr_xpure_form f sv1 sv2 a b c in
+                if detected then new_f else
+                  snd (detect_ptr_xpure_form f sv2 sv1 a b c)
+                      (* begin *)
+                (* match sv1 with *)
+              (*     | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
+              (*           let t = type_of_spec_var sv in *)
+              (*           let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*             if is_node_typ sv && is_num sv2 then *)
+              (*               let zero = IConst (0, pos) in *)
+              (*               BForm ((Neq (sv1, zero, b), c), a) *)
+              (*             else f *)
+              (*     | _ -> begin *)
+              (*         match sv2 with *)
+              (*           | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
+              (*             let t = type_of_spec_var sv in *)
+              (*             let _ = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*             if is_node_typ sv && is_num sv1 then *)
+              (*               let zero = IConst (0, pos) in *)
+              (*               BForm ((Neq (sv2, zero, b), c), a) *)
+              (*             else f *)
+              (*           | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
+              (*       end *)
+              (* end *)
+            | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
+                  f
+          )
     | Not _ -> f
     | Or (f1,f2,a,b) ->  Or (helper f1, helper f2,a,b)
     |  And (f1,f2, a) ->  And (helper f1, helper f2, a)
