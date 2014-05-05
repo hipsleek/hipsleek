@@ -695,6 +695,9 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 	h_formula_conjconj_pos = pos}) ->
             let ph1 = xpure_heap_helper prog h1 which_xpure memset in
             let ph2 = xpure_heap_helper prog h2 which_xpure memset in
+            let _ = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "memset" !CF.print_mem_formula) memset no_pos in
             MCP.merge_mems ph1 ph2 true
       | StarMinus _ 
       | HTrue  -> MCP.mkMTrue no_pos
@@ -1068,32 +1071,41 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
           let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
 		  let helper () = 
-				  (*--imm only*)
-                  (*LDK: add fractional invariant 0<f<=1, if applicable*)
-			      let diff_flag = not(vdef.view_xpure_flag) in
-                  let _ = if diff_flag then smart_same_flag := false in
-                  let frac_inv = match perm with
+		    (*--imm only*)
+                    (*LDK: add fractional invariant 0<f<=1, if applicable*)
+		    let diff_flag = not(vdef.view_xpure_flag) in
+                    let _ = if diff_flag then smart_same_flag := false in
+                    let frac_inv = match perm with
                     | None -> CP.mkTrue pos
                     | Some f -> mkPermInv () f in
-                  let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
-                  (*add fractional invariant*)
-                  let frac_inv_mix = MCP.OnePF frac_inv in
-                  let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
-                  let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
-                  (subst_m_fun vinv, ba) in
-          (match lbl_lst with
-            | None -> helper ()
-            | Some ls -> if !force_verbose_xpure then helper ()
-				else 
-                  (*--imm and --eps *)
-                  let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
-                  (MCP.mkMTrue no_pos, ba))
+                    let _ = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) diff_flag no_pos in
+                    let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
+                    let _ = Debug.ninfo_hprint (add_str "vinv" !Cast.print_mix_formula) vinv no_pos in
+                    (*add fractional invariant*)
+                    let frac_inv_mix = MCP.OnePF frac_inv in
+                    let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
+                    let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
+                    let vinv1 = subst_m_fun vinv in
+                    let _ = Debug.ninfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
+                    (vinv1, ba) in
+                  (match lbl_lst with
+                    | None -> helper ()
+                    | Some ls -> if !force_verbose_xpure then helper ()
+		      else
+                        (*--imm and --eps *)
+                        let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
+                        (MCP.mkMTrue no_pos, ba)
+                  )
     | Star ({ h_formula_star_h1 = h1;
       h_formula_star_h2 = h2;
       h_formula_star_pos = pos}) ->
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           let tmp1 = MCP.merge_mems ph1 ph2 true in
+          let _ = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "addrs1" !CP.print_svl) addrs1 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "addrs2" !CP.print_svl) addrs2 no_pos in
           (tmp1, addrs1 @ addrs2)
     | StarMinus ({ h_formula_starminus_h1 = h1;
       h_formula_starminus_h2 = h2;

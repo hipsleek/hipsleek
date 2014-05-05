@@ -5786,6 +5786,15 @@ let get_views (f: formula) =
   let views = get_one_kind_heap get_vn f in
   views
 
+let get_dnodes (f: formula) =
+  let get_dn hf=
+    match hf with
+      | DataNode dn -> [dn]
+      | _ -> []
+  in
+  let dns = get_one_kind_heap get_dn f in
+  dns
+
 let is_rec_br vn f=
   let vns = get_views f in
   List.exists (fun v -> String.compare v.h_formula_view_name vn = 0) vns
@@ -5805,6 +5814,27 @@ let get_views_struc sf0=
       (vns1 @ vns2)
       | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
             let vns1 = get_views f in
+            let vns2 = helper sf in
+            (vns1 @ vns2)
+      | EInfer { formula_inf_continuation = sf } -> helper sf
+  in
+  helper sf0
+
+let get_dnodes_struc sf0=
+  let rec helper sf=
+    let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
+    match sf with
+      | EList sfs -> helper_list sfs
+      | ECase { formula_case_branches = sfs } -> helper_list sfs
+      | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
+      let vns1 = get_dnodes f in
+      let vns2 = (match sf_opt with
+        | None -> []
+        | Some sf -> helper sf
+      ) in
+      (vns1 @ vns2)
+      | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
+            let vns1 = get_dnodes f in
             let vns2 = helper sf in
             (vns1 @ vns2)
       | EInfer { formula_inf_continuation = sf } -> helper sf

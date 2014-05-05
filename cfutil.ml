@@ -754,10 +754,9 @@ let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
       (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
       lhs rhs
 
-let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in
-    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
+  let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs lroots 3 in
+    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs rroots 3 in
     (* let lnlength = List.length l_reach_dns in *)
     let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
     (* let rnlength = List.length r_reach_dns in *)
@@ -765,6 +764,19 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
     if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
       1
     else -1
+
+let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+    (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
+    (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
+    (* (\* let lnlength = List.length l_reach_dns in *\) *)
+    (* let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in *)
+    (* (\* let rnlength = List.length r_reach_dns in *\) *)
+    (* let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in *)
+    (* if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then *)
+    (*   1 *)
+    (* else -1 *)
+    need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
 
 let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in

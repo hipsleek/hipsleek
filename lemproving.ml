@@ -242,12 +242,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           let lhs_vns = CF.get_views lhs in
           let rhs_vns = CF.get_views_struc new_rhs in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
+            let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
+            (* if List.length (CF.get_dnodes lhs) < List.length (CF.get_dnodes_struc new_rhs) then [],[] else *)
             [sv_self],[]
           else [sv_self],[sv_self]
         else
           [sv_self],[]
       else begin
-        if is_singl sv_self rhs_unfold_ptrs then (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
+        if is_singl sv_self rhs_unfold_ptrs then
+           let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "2" pos in
+          (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
         else if !Globals.allow_lemma_deep_unfold then
           let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
           let r_ptrs = if rhs_unfold_ptrs != [] then [sv_self] else [] in

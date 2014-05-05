@@ -371,15 +371,33 @@ Total verification time: 0.00 second
 ====================================================================
 sleek --eps why eps trigger so many more failures?
 
---eps
+baga-test.slk({E15#Fail}) : Expected VALID (w/wo --eps)
 --dis-early-contra for --dis-imm
 Total number of errors: 20 in files:
 
-baga-test.slk({E15#Fail}) 
 
-infer/infer1.slk({E6#Valid}) infer/infer2.slk({E5#Valid}) infer/infer5.slk({E4#Valid}) infer/infer6.slk({E1#Valid}) infer/infer7.slk({E6#Valid},{E7#Valid}) infer/infer8.slk({E10#Valid},{E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid}) infer/infer9.slk({E7#Valid}) infer/infer10.slk({E1#Valid},{E2#Valid}) infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid}) infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) 
+infer/infer1.slk({E6#Valid}): infer_collect_hp
 
-infinity.slk({E77#Valid},{E78#Valid}) 
+ infer/infer2.slk({E5#Valid}): infer_collect_hp
+
+ infer/infer5.slk({E4#Valid}): infer_collect_hp
+
+ infer/infer6.slk({E1#Valid}): infer_collect_hp
+
+ infer/infer7.slk({E6#Valid},{E7#Valid}): infer_pure
+
+ infer/infer8.slk({E10#Valid},{E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid})
+
+ infer/infer9.slk({E7#Valid})
+
+ infer/infer10.slk({E1#Valid},{E2#Valid})
+
+
+ infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid})
+
+ infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid}) 
+
+infinity.slk({E77#Valid},{E78#Valid})
 inflem.slk({E2#Valid}) 
 
 lemmas/lseg.slk({L4#Valid}) 
