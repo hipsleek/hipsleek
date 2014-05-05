@@ -1,6 +1,9 @@
 ===========================================================================
 eps/at-2a.slk --eps
 
+tofix (i) get rid of warning messages
+      (2) get lemma proving to specialized form
+
 Warning: ::0: 0: left hand side node is not specialized!
 
 Warning: ::0: 0: left hand side node is not specialized!
@@ -8,6 +11,20 @@ Warning: ::0: 0: left hand side node is not specialized!
 Warning: ::0: 0: left hand side node is not specialized!
 
 Entailing lemma lseg2: Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
+
+
+// lemma for proving for entailment not in --eps form
+id: 5; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 5; evars: [p_119,n_120]; infer_vars: []; c_heap: emp
+checkentail self::node<_,r>@M@ rem br[{1}] 
+* r::lseg2<p1,flted>@M@ rem br[{1,2}] 
+* q::lseg2<p,n2>@M
+&(([0<=flted & n1=1+flted & n=n1+n2][p1=q][self!=null]))
+&{FLOW,(21,22)=__norm}[]
+ |-  (exists p,n: self::lseg2<p,n>@M&{FLOW,(21,22)=__norm})[].
+
+res:  failctx
+         
+          fe_kind: MUST
 ===========================================================================
 # at-2b.slk --eps
 
@@ -46,6 +63,21 @@ Entailing lemma ll_tail2: Fail. Details below:
 0<=flted_7_264) & n=1+flted_15_250) |-  n=1. LOCS:[0] (must-bug)
 
 Valid Lemmas : [ll_tail2:<==>] added to lemma store.
+
+
+I noticed that the pcp has labels on each branch of the views but not
+on the lemmas. When I first did the pruning the lemmas were to
+brittle to try and add pruning there so I remember not doing it. The
+code to add the labels for lemmas should be almost identical to the
+"view_prune_inv_inference" function that labels views in Astsimp. 
+
+Of course adding None and bypassing the pruning for lemmas is also a
+feasible option.
+
+WN : I think lemmas are now specialized but the lemma proving
+entailment wasn't specialized..
+
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
