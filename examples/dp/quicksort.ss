@@ -46,5 +46,5 @@ node quicksort(node x, node y, int lb, int ub)
 
 void split1(node x, node y, int lb, int ub, ref node rx, ref node pivot)
   requires x::blseg<y,lb,ub> & (x != y)
-  ensures rx::bslseg<pivot,lb,pivot.val> * pivot::bslseg<y,pivot.val,ub>
+  ensures rx::blseg<pivot,lb,pivot.val> * pivot::blseg<y,pivot.val,ub>
             & pivot != y;
