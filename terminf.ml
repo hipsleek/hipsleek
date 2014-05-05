@@ -303,7 +303,7 @@ let rec infer_pre_cond_iter loop_trans_list loop_cond_list =
     | Sat m ->
       let model = List.map (fun v -> 
         let vi = List.assoc (name_of_spec_var v) m in
-        (v, mkIConst vi no_pos)) templ_unks in
+        (v, vi)) templ_unks in
       let sst_loop_cond = List.map (fun (id, (sv, c)) ->
         (id, (sv, subst_model_to_formula model c))) templ_loop_cond in
       let sst_loop_trans = (List.map snd reach_other_trans) @

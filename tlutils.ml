@@ -802,7 +802,7 @@ let subst_model_to_formula sst f =
     match e with
     | Template t ->
       let t_exp = exp_of_template t in
-      Some (a_apply_par_term sst t_exp)
+      Some (subst_model_to_exp sst t_exp)
     | _ -> None
   in
   transform_formula (nonef, nonef, nonef, nonef, f_e) f
@@ -854,7 +854,7 @@ let norm_subst svl subst =
   in
   let normalized_subst = helper subst in
   (* We assume that trivial and cyclic substs like 
-   * (x1, x2) and (x2, x1) have been remove by simplify *)
+   * (x1, x2) and (x2, x1) have been removed by simplify *)
   let sorted_subst = List.sort (fun (v1, e1) (v2, e2) -> 
     if Gen.BList.mem_eq eq_spec_var v1 (afv e2) then -1
     else if Gen.BList.mem_eq eq_spec_var v2 (afv e1) then 1
