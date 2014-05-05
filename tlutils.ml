@@ -774,18 +774,26 @@ let rec combine_ls xs =
   | x::xs -> 
     let rs = combine_ls xs in
     List.concat (List.map (fun e -> List.map (fun r -> e @ r) rs) x)
+    
+let subst_model_to_exp sst e =
+  let efv = afv e in
+  let rel_sst = List.filter (fun (v, _) -> mem v efv) sst in
+  let mi = List.map (fun (_, i) -> i) rel_sst in
+  let gcd_mi = abs (gcd_l mi) in
+  let e_sst = List.map (fun (v, i) -> (v, mkIConst (i / gcd_mi) no_pos)) rel_sst in
+  a_apply_par_term e_sst e
 
 let subst_model_to_templ_decls inf_templs templ_unks templ_decls model =
   let unk_subst = List.map (fun v -> 
     let v_val = try List.assoc (name_of_spec_var v) model with _ -> 0 in
-    (v, mkIConst v_val no_pos)) templ_unks in
+    (v, v_val)) templ_unks in
   let inf_templ_decls = match inf_templs with
   | [] -> templ_decls
   | _ -> List.find_all (fun tdef -> List.exists (fun id -> 
       id = tdef.Cast.templ_name) inf_templs) templ_decls
   in
   let res_templ_decls = List.map (fun tdef -> { tdef with
-    Cast.templ_body = map_opt (fun e -> a_apply_par_term unk_subst e) tdef.Cast.templ_body; 
+    Cast.templ_body = map_opt (fun e -> subst_model_to_exp unk_subst e) tdef.Cast.templ_body; 
   }) inf_templ_decls in
   res_templ_decls
 

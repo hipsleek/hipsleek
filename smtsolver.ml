@@ -490,7 +490,7 @@ let prover_process = ref {
 let z3_call_count: int ref = ref 0
 let is_z3_running = ref false
 let smtsolver_name = ref ("z3": string)
-let smtsolver_path = "/home/chanhle/tools/z3/z3-4.3.2" (* "z3" *)
+let smtsolver_path = "z3" (* "/home/chanhle/tools/z3/z3-4.3.2" *)
 
 (***********)
 let test_number = ref 0
@@ -1143,10 +1143,10 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   let vl, il = List.split m in
   let il = z3m_val_to_int il in
   let m = List.combine vl il in
-
-  let mi = List.map (fun (_, i) -> i) m in
-  let gcd_mi = abs (gcd_l mi) in
-  List.map (fun (v, i) -> (v, i / gcd_mi)) m
+  m
+  (* let mi = List.map (fun (_, i) -> i) m in   *)
+  (* let gcd_mi = abs (gcd_l mi) in             *)
+  (* List.map (fun (v, i) -> (v, i / gcd_mi)) m *)
 
 let norm_model (m: (string * z3m_val) list): (string * int) list =
   let pr1 = pr_list (pr_pair idf string_of_z3m_val) in
