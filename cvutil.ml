@@ -537,7 +537,7 @@ let formula_2_mem (f : formula) prog : CF.mem_formula =
       (fun _ -> formula_2_mem_x f prog) f
 
 
-let rec xpure_mem_enum (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_formula) = 
+let rec xpure_mem_enum (prog : prog_decl) (* is_conseq:bool *) (f0 : formula) : (mix_formula * CF.mem_formula) = 
   Debug.no_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,a2)->(Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2))
       (fun f0 -> xpure_mem_enum_x prog f0) f0
 
