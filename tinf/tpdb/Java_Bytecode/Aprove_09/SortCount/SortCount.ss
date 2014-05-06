@@ -40,7 +40,7 @@ int mx(node l)
   return m;
 }
 
-// --term-dis-bnd-pre
+// Check boundedness at loop (using --term-dis-bnd-pre)
 node sort(int n, node l) 
   requires l::ll<s, mx, S>@L & Term
   ensures true;
