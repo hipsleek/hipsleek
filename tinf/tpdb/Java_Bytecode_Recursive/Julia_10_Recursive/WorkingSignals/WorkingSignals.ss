@@ -186,7 +186,7 @@ void test(Signal s)
 
 void testAll(Signal s) 
   requires s::Signal<init, t> * t::ll_trans<n> & Term
-  ensures true;
+  ensures s::Signal<init, t> * t::ll_trans<n>;
 {
   test(s);
   Signal is = invert(s);
@@ -201,6 +201,37 @@ void testAll(Signal s)
   //System.out.println();
   Signal ir = renverser(it);
   test(ir);
+}
+
+int random() 
+  requires Term
+  ensures true;
+  
+void main()
+  requires Term
+  ensures true;
+{
+  Signal s1 = new Signal(false, null);
+  Signal s2 = new Signal(false, new Transition(10*random(), 
+					                      new Transition(50*random(), null)));
+  Signal s3 = new Signal(true,  new Transition(10*random(), 
+                                new Transition(15*random(),
+                                new Transition(30*random(), null))));
+  Signal signal1 = new Signal(false, new Transition(1*random(), 
+                                     new Transition(3*random(), 
+                                     new Transition(4*random(), null))));
+  //System.out.println("\ns1");
+  testAll(s1);
+  //System.out.println("\ns2");
+  testAll(s2);
+  //System.out.println("\ns3");
+  testAll(s3);
+      
+  //System.out.println("s2 ^ s3");
+  printSignal(xorSignals(s2, s3));
+      
+  //System.out.println("\nsigna1");
+  testAll(signal1);
 }
 
   
