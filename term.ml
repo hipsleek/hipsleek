@@ -386,7 +386,6 @@ let strip_lexvar_list ls =
             (l2@l0,r2::r0)
   in aux ls
 
-
 let strip_lexvar_from_andlist ls =
   List.fold_left (fun (l,cj) f ->
       match f with
@@ -403,19 +402,31 @@ let strip_lexvar_from_pure f =
   (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
   (lexvar, CP.join_conjunctions fs)
 
+let strip_lexvar_memo_grp mg =
+  let b_lexvar, memo_grp_cons = List.partition (fun mc -> 
+    CP.is_lexvar_b_formula mc.Mcpure_D.memo_formula) mg.Mcpure_D.memo_group_cons in
+  let lexvar, memo_grp_slice = List.split (List.map 
+    (fun f -> strip_lexvar_from_pure f) mg.Mcpure_D.memo_group_slice) in
+  let lexvar = 
+    (List.map (fun mc -> CP.BForm (mc.Mcpure_D.memo_formula, None)) b_lexvar) @ 
+    (List.concat lexvar) in 
+  (lexvar, { mg with
+    Mcpure_D.memo_group_cons = memo_grp_cons;
+    Mcpure_D.memo_group_slice = memo_grp_slice; })
+
 let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
-  let mf_p = MCP.pure_of_mix mf in
-  let (lexvar, f) = strip_lexvar_from_pure mf_p in
-  (lexvar, f)
-  (* let mf_ls = CP.split_conjunctions mf_p in *)
-  (* Debug.tinfo_hprint (add_str "mf_ls" (pr_list !CP.print_formula)) mf_ls no_pos; *)
-  (* let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in *)
-  (* (lexvar, CP.join_conjunctions other_p) *)
+  match mf with
+  | MCP.OnePF f ->
+    let lexvar, f = strip_lexvar_from_pure f in
+    (lexvar, MCP.OnePF f)
+  | MCP.MemoF mp -> 
+    let lexvar, mp = List.split (List.map strip_lexvar_memo_grp mp) in
+    (List.concat lexvar, MCP.MemoF mp)
 
 let strip_lexvar_mix_formula mf =
   let pr0 = !CP.print_formula in
   let pr = !MCP.print_mix_formula in
-  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) !CP.print_formula) strip_lexvar_mix_formula mf
+  Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (pr_list pr0) pr) strip_lexvar_mix_formula mf
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
 let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
@@ -598,15 +609,12 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
-      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, dst_il, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-      (* TODO: THIS MAY CAUSE THE LOST --eps information*)
-      let rhs_p = MCP.mix_of_pure rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
       let term_pos = (p_pos, proving_loc # get) in
@@ -662,11 +670,9 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = MCP.mix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
-  if !Globals.dis_term_chk or estate.es_term_err != None then
+  if !Globals.dis_term_chk || estate.es_term_err != None then
     (* Remove LexVar in RHS *)
-    (* TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
-    let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
   else
     check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
@@ -692,9 +698,9 @@ let strip_lexvar_lhs (ctx: context) : context =
       let f_e_f _ = None in
       let f_f _ = None in
       let f_h_f e = Some e in
-      let f_m mp = Some (MCP.memoise_add_pure_N_m (MCP.mkMTrue_no_mix no_pos) other_p) in
+      let f_m mp = Some (MCP.memo_of_mix other_p) in
       let f_a _ = None in
-      let f_p_f pf = Some other_p in
+      let f_p_f pf = Some (MCP.pure_of_mix other_p) in
       let f_b _ = None in
       let f_e _ = None in
       match lexvar with

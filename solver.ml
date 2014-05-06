@@ -9070,6 +9070,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     if not !Globals.dis_term_chk then
       Term.check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
     else
+      let _, rhs_p = Term.strip_lexvar_mix_formula rhs_p in
       (estate, lhs_p, rhs_p, None)
   in
   (* Termination: Try to prove rhs_wf with inference *)

@@ -9414,12 +9414,15 @@ and has_func (f:formula): bool = match f with
   | BForm ((b,_),_) -> has_func_pf b
   | _ -> false
 
-let is_lexvar (f:formula) : bool =
+let is_lexvar_b_formula (bf: b_formula): bool =
+  let b, _ = bf in 
+  match b with
+  | LexVar _ -> true
+  | _ -> false 
+
+let is_lexvar (f:formula): bool =
   match f with
-    | BForm ((b,_),_) -> 
-              (match b with
-                | LexVar _ -> true
-                | _ -> false)
+    | BForm (bf, _) -> is_lexvar_b_formula bf
     | _ -> false
 
 let rec has_lexvar (f: formula) : bool =
