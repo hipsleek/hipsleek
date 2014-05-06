@@ -96,6 +96,16 @@ to check why examples/working/sleek/lemma/sll_tailL.slk and lseg_case
 need --en-lem-rhs-unfold to pass lemma proving phase. 
 
 ====================================================================
+to check below for ./run-fast-test.pl sleek --flags "--eps --dis-imm":
+
+Checking lemmas/lseg_case.slk (runs with extra options:  --elp  --en-lem-rhs-unfold )
+
+!!!output: ../../sleek: unknown option `--en-lem-rhs-unfold'.
+
+Checking lemmas/sll_tailL.slk (runs with extra options:  --elp --en-lem-rhs-unfold )
+
+!!!output: ../../sleek: unknown option `--en-lem-rhs-unfold'.
+
 ====================================================================
 ====================================================================
 ====================================================================
