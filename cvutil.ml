@@ -1154,7 +1154,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
 
 let xpure_heap_x (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
-  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then 	
+  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
     xpure_heap_symbolic 1 prog h0 p0 which_xpure
   else
     let a, c = xpure_heap_mem_enum prog h0 p0 which_xpure in

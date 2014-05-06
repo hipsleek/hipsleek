@@ -8233,9 +8233,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list Cprinter.string_of_h_formula)) unk_heaps no_pos; *)
   let cur_force_verbose_xpure = !force_verbose_xpure in
-    let _ = if !Globals.en_slc_ps && not (Infer.no_infer_pure estate_orig) then
-      let _ = force_verbose_xpure := true in ()
-    else ()
+  (*for pure inference, we need return verbose xpure to expose the disjunction:
+    infer [n] x::ll<n> |- x!=null
+  *)
+  let _ = if !Globals.en_slc_ps && not (Infer.no_infer_pure estate_orig) then
+    let _ = force_verbose_xpure := true in ()
+  else ()
   in
   let (xpure_lhs_h1, yy, memset) as xp1 = xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let _ = force_verbose_xpure := cur_force_verbose_xpure in
@@ -10856,11 +10859,14 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
   (* call infer_lhs_contra *)
   let lhs_rhs_contra_flag = 
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
+    let old_imm_flag = !Globals.allow_imm in
+    let _ = Globals.allow_imm := true in
     let rhs_xpure,_,_ = xpure prog conseq in
+     let _ = Globals.allow_imm := old_imm_flag in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let p_lhs_xpure,p_rhs_xpure= if not !Globals.allow_imm then
-      Cpure.overapp_ptrs p_lhs_xpure,  Cpure.overapp_ptrs p_rhs_xpure
-    else p_lhs_xpure, p_rhs_xpure in
+    let p_lhs_xpure= if not !Globals.allow_imm then
+      Cpure.overapp_ptrs p_lhs_xpure
+    else p_lhs_xpure in
     let contr, _ = Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
     contr in
   let r_inf_contr,relass = 
@@ -10878,9 +10884,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
           MCP.mix_of_pure (CP.prune_relative_unsat_disj (MCP.pure_of_mix lhs_xpure0) (CF.xpure_for_hnodes_f conseq))
         else lhs_xpure0
         in
-        let _ = Debug.info_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
-        let _ = Debug.info_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in
-        let _ = Debug.info_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in
+        let _ = Debug.ninfo_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+        let _ = Debug.ninfo_hprint (add_str "lhs_xpure0" Cprinter.string_of_mix_formula) lhs_xpure0 no_pos in
+        let _ = Debug.ninfo_hprint (add_str "lhs_xpure" Cprinter.string_of_mix_formula) lhs_xpure no_pos in
         let r_inf_contr,relass = Infer.infer_lhs_contra_estate 4 estate lhs_xpure pos msg  in
         let contra, c,r =
           match r_inf_contr with
