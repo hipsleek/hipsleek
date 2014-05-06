@@ -702,13 +702,20 @@ let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
-let allow_lemma_fold = ref false
+
+let allow_rd_lemma = ref false
+(* unsound *)
+
+let allow_lemma_fold = ref true
+(* unsound if false for lemma/bugs/app-t2c1.slk *)
+
 let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
 
 let sap = ref false
 let sae = ref false
+let sac = ref false
 
 let sags = ref false
 

@@ -1,0 +1,46 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_unsafe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+/*
+	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
+	ensures x::ll_tail2<ty, q> & q=m+n;
+
+
+id: 5; caller: []; line: 39; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
+*/
+/*
+//(2)
+checkentail_exact x::lseg2<tx,f> * y::ll_tail2<ty,m>
+  * tx::node<_,y> & f=n-1
+ |-  (exists q,tt: x::ll_tail2<tt,q> & q=m+n & tt=ty
+       ).
+print residue.
+
+*/
+
+checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m).
+
+print residue.

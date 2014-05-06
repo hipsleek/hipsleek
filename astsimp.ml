@@ -1425,7 +1425,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	  let crels0 = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
       let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
       let pr_chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
-          let chps1, pure_chps = List.split pr_chps in
+      let chps1, pure_chps = List.split pr_chps in
       let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
           let crels1 = crels0@pure_chps in
 	  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
@@ -1895,6 +1895,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
   let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
   let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
     true (*check_pre*) in
+  let _ = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
   (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
   let (n_tl,inv_lock) = 
@@ -1993,7 +1994,9 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
       let sf = find_pred_by_self vdef data_name in
+      let _ = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
       let cf = CF.struc_formula_set_lhs_case false cf in
+      let _ = Debug.ninfo_hprint (add_str "cf 2" Cprinter.string_of_struc_formula) cf no_pos in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
       let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str inv_pf in
@@ -2059,7 +2062,7 @@ and fill_one_base_case_x prog vd =
   else
     begin
       {vd with C.view_base_case = 
-              compute_base_case prog vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
+              compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
     end
 
 and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }    
@@ -2132,13 +2135,13 @@ and rec_grp prog :ident list =
   let recs = Gen.BList.difference_eq (=) recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
   recs
       
-and compute_base_case prog cf vars = 
+and compute_base_case prog vn cf vars = 
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
-  Debug.no_2(* _loop *) "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Debug.no_3(* _loop *) "compute_base_case" pr_id pr1 pr2 pr3 (fun _ _ _ -> compute_base_case_x prog vn cf vars) vn cf vars
 
-and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
+and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
   let compute_base_case_x_op ()=
     let xpuring f = 
       let (xform', _ , _) = Cvutil.xpure_symbolic 3 prog f in
@@ -2150,15 +2153,34 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
             let (d1,d2) = part b.CF.formula_or_f2 in
             (c1@d1,c2@d2)
       | CF.Base b -> 
-            if (CF.is_complex_heap b.CF.formula_base_heap) then xpuring f          
+            let _ = Debug.ninfo_hprint (add_str "f (base)" ( Cprinter.string_of_formula)) f no_pos in
+            if (CF.is_complex_heap b.CF.formula_base_heap) then
+              if (CF.is_rec_br vn f) then
+                xpuring f
+              else
+                let l1, l2 = xpuring f in
+                (List.map MCP.mix_of_pure l2,l1)
             else ([b.CF.formula_base_pure],[])
-      | CF.Exists e -> 
-            if (CF.is_complex_heap e.CF.formula_exists_heap) then xpuring f
-            else 
+      | CF.Exists e ->
+             let _ = Debug.ninfo_hprint (add_str "f (exists)" ( Cprinter.string_of_formula)) f no_pos in
+            if (CF.is_complex_heap e.CF.formula_exists_heap) then
+              if (CF.is_rec_br vn f) then
+                xpuring f
+              else
+                let l1, l2 = xpuring f in
+                let _ = Debug.ninfo_hprint (add_str "l2" (pr_list !CP.print_formula )) l2 no_pos in
+                (List.map MCP.mix_of_pure l2,l1)
+            else
               let l1,qv = e.CF.formula_exists_pure, e.CF.formula_exists_qvars in
-              ([MCP.memo_pure_push_exists qv l1],[]) in
-    let sim,co = List.split(List.map (fun (c,_)-> let _=proving_loc #set (CF.pos_of_formula c) in   part c) cf) in
+              ([MCP.memo_pure_push_exists qv l1],[])
+    in
+    let sim,co = List.split (List.map (fun (c,_)->
+        let _=proving_loc #set (CF.pos_of_formula c) in
+        let _ = Debug.ninfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
+        part c
+    ) cf) in
     let sim,co = List.concat sim, List.concat co in
+    let _ = Debug.ninfo_hprint (add_str "sim" (pr_list Cprinter.string_of_mix_formula)) sim no_pos in
     if (sim==[]) then None 
     else
       let guards = List.map (fold_mem_lst (CP.mkTrue no_pos) true true) sim in
@@ -2822,7 +2844,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
           C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
-          C.proc_static_specs = final_static_specs_list;
+          C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
           C.proc_dynamic_specs = final_dynamic_specs_list;
           (* C.proc_static_specs_with_pre =  []; *)
           C.proc_stk_of_static_specs = new Gen.stack (* _noexc Cprinter.string_of_struc_formula (=) *);
@@ -4478,12 +4500,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_while_body = body;
             exp_while_addr_vars = addr_vars;
             I.exp_while_specs = prepost;
+            I.exp_while_f_name = a_wn;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
             (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
+            let _ =  Debug.ninfo_hprint (add_str "tvars" (pr_list (fun (_,id) -> pr_id id))) tvars no_pos in
+            let _ =  Debug.ninfo_hprint (add_str "proc_args" (pr_list (fun p -> pr_id p.Iast.param_name))) proc.Iast.proc_args no_pos in
             (*ONLY NEED THOSE that are modified in the body and condition*)
             (*INDEED: we could identify readSET and writeSET. This will
               help reduce annotation for read-only variables
@@ -4500,7 +4525,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fn3 = fresh_name () in
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
-            let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
+            let w_name = if String.compare a_wn "" == 0 then fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos)
+            else a_wn
+            in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
             let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
@@ -4566,16 +4593,30 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.proc_is_invoked = true;
                   I.proc_file = proc.I.proc_file;
                   I.proc_loc = pos; 
-                  I.proc_test_comps = proc.I.proc_test_comps} in
-            (* let _ = Debug.info_hprint (add_str "prepost" Iprinter.string_of_struc_formula) prepost no_pos in *)
+                  I.proc_test_comps = if not !Globals.validate then None else
+                    I.look_up_test_comps prog.I.prog_test_comps w_name} in
+            let _ = Debug.ninfo_hprint (add_str " w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
             let w_proc = match w_proc.I.proc_static_specs with
-              |  IF.EList [] -> let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body w_formal_args I.void_type pos in
+              |  IF.EList [] ->
+                     let infer_args, ninfer_args = List.partition (fun p -> List.exists (fun p2 ->
+                         String.compare p.Iast.param_name p2.Iast.param_name = 0) proc.Iast.proc_args
+                     ) w_formal_args in
+                     let _ =  Debug.ninfo_hprint (add_str "infer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) infer_args no_pos in
+                     let _ =  Debug.ninfo_hprint (add_str "ninfer_args" (pr_list (fun p -> pr_id p.Iast.param_name))) ninfer_args no_pos in
+                     let new_prepost, hp_decls, args_wi = I.genESpec w_proc.I.proc_mingled_name w_proc.I.proc_body infer_args I.void_type pos in
                  let _ = prog.I.prog_hp_decls <- prog.I.prog_hp_decls@hp_decls in
+                 let full_args_wi = if ninfer_args = [] then args_wi
+                 else List.fold_left (fun r p ->
+                     try
+                       let iarg = List.find (fun (id,_) -> String.compare id p.Iast.param_name = 0) args_wi in
+                       r@[iarg]
+                     with _ -> r@[(p.Iast.param_name, NI)]
+                 ) [] w_formal_args in
                  {w_proc with I.proc_hp_decls = w_proc.I.proc_hp_decls@hp_decls;
                      I.proc_static_specs = new_prepost;
-                     I.proc_args_wi = args_wi;
+                     I.proc_args_wi = full_args_wi;
                  }
-              | _ ->  w_proc
+              | _ -> w_proc
             in
               let temp_call =  I.CallNRecv {
                   I.exp_call_nrecv_method = w_name;
@@ -5500,7 +5541,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (prepost_flag:bool) (quantify
               (n_tl,(c,cf)::n_cl)
         ) in
         let (n_tl,n_cl) = aux tl b in
-        (n_tl,CF.mkEList_no_flatten n_cl)
+        (n_tl,CF.mkEList_no_flatten2 n_cl)
   ) in
   let n_tl =gather_type_info_struc_f prog f0 tlist in
   let (n_tl,r) = trans_struc_formula fvars n_tl f0 in

@@ -1390,12 +1390,12 @@ and checkeq_p_formula_with_diff_x (hvars: ident list)(p1: CP.formula) (p2: CP.fo
 	else (false, List.combine (mtl12@mtl22) (diff12@diff22))
       )
     )
-    | AndList _ -> report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet"
-    | Or f -> report_error no_pos "not handle checkeq 2 formula that have OR yet" (*todo: match_equiv_orform hvars f pf2 mtl *) 
+    | AndList _ -> report_error no_pos "not handle checkeq 2 pure formula that have ANDLIST yet"
+    | Or f -> report_error no_pos "not handle checkeq 2 pure formula that have OR yet" (*todo: match_equiv_orform hvars f pf2 mtl *) 
     | Not(f,_,_) ->  let (a,b) = match_equiv_notform hvars f pf2 mtl in 
 		     if (a) then (a, modify b (CP.mkTrue no_pos)) else (a,modify b pf1)
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> report_error no_pos "not handle checkeq 2 pure formula that have forall and exists yet"
 
 and checkeq_p_formula_with_diff  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in
@@ -1507,10 +1507,10 @@ let check_equiv_2f_with_diff_x hvars (constr1: CF.formula * CF.formula) (constr2
     (rvars1, rvars2)
   )
     else ([],[])
-  in  
+  in
 
   let check_back mix_mt f1 f2 res1=
-    let (mt,df11,df12) = mix_mt in 	
+    let (mt,df11,df12) = mix_mt in
     let (res2, mix_mtl2) =  (checkeq_formulas_with_diff_mt hvars rvars f1 f2 [mt@spairs]) in
     (res2&&res1, List.map (fun (mt1,df21,df22) -> (mt1,(df11,df21),(df12,df22))) mix_mtl2)
   in
@@ -1596,14 +1596,15 @@ let rec checkeq_constrs_with_diff_step1 hvars (constrs: (CF.formula * CF.formula
       (fun _ _ -> checkeq_constrs_with_diff_step1_x hvars constrs infile_constrs) constrs infile_constrs
 
 let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list)) =
- 
+
   let count_constr mix_mtls = 
     match mix_mtls with
       | [] -> 0 
       | x::y -> let (_,(d11,d12),(d21,d22)) = x in 
 		CF.no_of_cnts_fml d11+ CF.no_of_cnts_fml d12 + CF.no_of_cnts_fml d21 + CF.no_of_cnts_fml d22		
   in
-  let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs in
+  let infile_constrs1 = List.map (fun (hf,t) -> (CF.elim_exists hf, t)) infile_constrs in
+  let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs1 in
     let rec check_diff_one_constr constr diff_constrs =
       match diff_constrs with
 	| [] -> let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
@@ -1622,15 +1623,19 @@ let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) li
 	  else (mt,xt,mtls_t,x::rt)
 	)
     in
-    if(List.length diff_constrs1 != 0) then  (
-      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr c constrs in ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs1 in
+    if(List.length diff_constrs1 != 0) then
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->
+          let (m,x,mtls,r) = check_diff_one_constr c constrs in
+          ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2
+      )  diff_constrs1 in
       (res,res_list)
-    )
-    else (
+    else
       let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
-      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr e constrs in ((e,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs2 in
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->
+          let (m,x,mtls,r) = check_diff_one_constr e constrs in
+          ((e,x,mtls)::tmp_res,r)
+      ) ([],diff_constrs2)  diff_constrs2 in
       (res,res_list)
-    )
 
 let rec checkeq_constrs_with_diff hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list)=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
@@ -1954,7 +1959,8 @@ let checkeq_defs_with_diff_x hvars svars (defs: CF.hp_rel_def list)
       let (a,b,c) = CF.flatten_hp_rel_def_wo_guard def1 in
       Some ((CF.formula_of_heap b no_pos,c),def2)
     )
-    with Not_found -> if(parent) then report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
+    with Not_found -> if(parent) then
+      report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
       else None
   in
   let modify_mtl d1 d2 mtl hps=
@@ -2369,11 +2375,12 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     in
     res
   in
-  let _ = Gen.Profiling.push_time "Compare res with cp file" in
+  let _ = Gen.Profiling.push_time "Validating" in
+  let _ = print_endline ("Validating procedure " ^ proc.Cast.proc_name ^ "....") in
   let test_comps = proc.Cast.proc_test_comps in
   let (res1, res2) =
     match test_comps with
-      | None -> (false,false)
+      | None ->(false,false)
       | Some (tcs) -> (
 	let ass = tcs.Cast.expected_ass in
 	let hpdefs = tcs.Cast.expected_hpdefs in
@@ -2389,16 +2396,23 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
     | _ -> true
   in
   let _ =
-    if(is_have_tc) then (
-        let _ = if(res1) then
-	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
-	        else
-	          print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " FAIL\n" )
-        in
-        let _ = if(res2) then
-	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " SUCCESS\n" )
-	        else
-	          print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " FAIL\n" )
+    if(is_have_tc) then(
+        let _ = 
+        if res1 && res2 then
+          print_endline ("Validate " ^ proc.Cast.proc_name ^ " SUCCESS.")
+        else
+          let f_ass_msg = if not res1 then "assumption" else "" in
+          let f_msg = if not res2 then f_ass_msg ^ " definition" else f_ass_msg in
+          print_endline ("Validate " ^ proc.Cast.proc_name ^ " FAIL. (at " ^ f_msg ^")")
+        (* let _ = if(res1) then *)
+	(*           print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " SUCCESS\n" ) *)
+	(*         else *)
+	(*           print_string ("Validate assumption: " ^ proc.Cast.proc_name ^ " FAIL\n" ) *)
+        (* in *)
+        (* let _ = if(res2) then *)
+	(*           print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " SUCCESS\n" ) *)
+	(*         else *)
+	(*           print_string ("Validate shape: " ^ proc.Cast.proc_name ^ " FAIL\n" ) *)
         in
         ()
     )

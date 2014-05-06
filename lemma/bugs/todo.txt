@@ -1,0 +1,400 @@
+# rlc.slk  (came from rlseg.slk)
+
+// complex lemma
+lemma_unsafe "t1a" self::node<_,q>*q::rlseg<p>  -> self::rlseg<p1>* p1::node<_,p>.
+// see rlb.slk for the steps which unfold left, then right.
+
+// can we even apply complex lemma?
+checkentail_exact 
+  q::node<_,qq>*qq::rlseg<p>  
+      |- q::rlseg<p1>* p1::node<_,p>
+======================================================================
+# append-tail.ss
+
+bind failure with --dis-imm ??
+
+Why below with exists ty?
+
+id: 7; caller: []; line: 39; classic: false; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  1[
+   y::lseg2<ty_1045,flted_25_1092>@M * tx'::node<_,y'>@M&m=flted_25_1092+1 & flted_25_1091=null & n=flted_25_1062+1 & flted_25_1061=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_25_1061=next_43_1064&{FLOW,(24,25)=__norm}[]
+   ]
+
+======================================================================
+# app-tl2c1.slk
+
+ unsoundness in lemma application with 
+  some existentials.
+
+ caused by --lem-dis-fold
+
+Expect: Valid.Fail.Valid.Fail.Valid.Fail.
+
+
+Resulting in contradiction.
+ <1>emp&qq=nn+1 & qq=2+nn&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==> (right: ll_tail2) ==>  Match ==>  Match ==> ]]
+
+# app-tl2c1.slk
+
+ unsoundness in lemma application with 
+  existentials & explicit existential.
+
+Expect: Valid.Fail.Valid.Fail.Valid.Fail.
+
+
+loris@loris-desktop:/home2/loris/hg/sl_default$ hg bisect -g
+The first bad revision is:
+changeset:   10711:b9e1afcfcf66
+branch:      sa_logging
+parent:      10706:dfb9128b3bba
+user:        locle <locle@suna>
+date:        Sat Feb 22 18:32:46 2014 +0800
+summary:     fixed bugs of lseg.slk. run-fast-test is OK
+
+Correct Answers below:
+
+Entail 1: Valid. 
+
+ <1>emp&qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 2: Fail.(must) cause:UnionR[ 0<=nn & nn=qq |-  qq=nn+2. LOCS:[8;37] (must-bug), true |-  qq=nn+2 & qq=1+nn. LOCS:[0;37;11] (RHS: contradiction)]
+
+
+Entail 3: Valid. 
+
+ <1>emp&qq=nn+1 & qq=1+nn & qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 4: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;50] (RHS: contradiction), true |-  exists(qq:qq=1+nn & qq=nn+2). LOCS:[0] (RHS: contradiction)]
+
+
+Entail 5: Valid. 
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 6: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;64] (RHS: contradiction), true |-  1+nn=nn+2. LOCS:[0;11] (RHS: contradiction)]
+======================================================================
+# app-tail3.slk
+
+two solutions; first is unnecessary
+
+ <1>
+    x::node<_,b>@M * y::ll_tail2<ty,m>@M&b=null & tx=x & n=1&
+    {FLOW,(21,22)=__norm}[]
+    or (exists flted_11_2733: x::node<_,b>@M * 
+       b::ll_tail2<tx,flted_11_2733>@M * y::ll_tail2<ty,m>@M&n=flted_11_2733+
+       1 & b!=null&{FLOW,(21,22)=__norm})[]
+
+<2>(exists flted_18_688: x::lseg2<tx,flted_18_688>@M * tx::node<_,b>@M&n=flted_18_688+1 & b=null&{FLOW,(21,22)=__norm})[]
+
+
+Can we give priority to full relevation by lemma?
+ Why is lemma not given higher priority?
+ Why is lemma repeated with both ==> and <== ?
+
+Solution : (i) change priority
+  (ii) change search to cond if priorities are different
+ wt - 
+      search --> lowest; 
+      cond  --> lowest;
+
+ Prio:0COND =>[Prio:0(Lemma ==> ll_tail2) =>
+                 LHS: x::ll_tail2<tx,n>@M
+                 RHS: tx::node<_,b>@L;Prio:1BaseCaseUnfold =>
+ LHS: x::ll_tail2<tx,n>@M
+ RHS: tx::node<_,b>@L];
+ Prio:0COND =>[Prio:0(Lemma <== ll_tail2) =>
+                 LHS: x::ll_tail2<tx,n>@M
+                 RHS: tx::node<_,b>@L;Prio:1BaseCaseUnfold =>
+ LHS: x::ll_tail2<tx,n>@M
+ RHS: tx::node<_,b>@L]]
+
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::ll_tail2<tx,n>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ tx::node<_,b>@L]
+compute_actions inp5 :right alias:[Anon_16,b]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1COND =>[Prio:1Unfold 1 =>
+                                  LHS: x::ll_tail2<tx,n>@M
+                                  RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+  
+   LHS: x::ll_tail2<tx,n>@M
+   RHS: tx::node<_,b>@L];
+  Prio:1COND =>[Prio:1(Lemma ==> ll_tail2) =>
+                                              LHS: x::ll_tail2<tx,n>@M
+                                              RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+  
+   LHS: x::ll_tail2<tx,n>@M
+   RHS: tx::node<_,b>@L];
+  Prio:1COND =>[Prio:1(Lemma <== ll_tail2) =>
+                                              LHS: x::ll_tail2<tx,n>@M
+                                              RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+          LHS: x::ll_tail2<tx,n>@M
+          RHS: tx::node<_,b>@L]
+  ]
+
+======================================================================
+# app-tail4.slk
+
+check exact fail for (4), but (3) did not have residue..
+
+//(3)
+checkentail x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+print residue.
+
+//(4)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+print residue.
+
+======================================================================
+# app-tail6.slk
+
+How come classic has residue?
+
+checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M & ty=ty1). 
+print residue.
+
+ <1>y::lseg2<ty1,flted_18_493>@M * tx'::node<_,y'>@M&m=flted_18_493+1 & flted_18_492=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>emp&m=flted_18_493+1 & flted_18_492=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & Anon_17=Anon_510 & r_511=y' & exists(ty_466:ty1=ty_466) & exists(n2_506:n2_506=flted_18_493+1) & exists(flted_18_475:flted_18_475=flted_18_493+1+flted1) & exists(ty_466:ty1=ty_466) & exists(q_467:q_467=flted_18_493+1+flted1+1) & exists(ty_466:ty1=ty_466)&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  (Lemma <== lseg2) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+*/
+======================================================================
+# classic1b.slk  (DONE)
+
+data node {
+	int val;
+	node next;
+}.
+
+
+//(4)
+checkentail_inexact htrue |- htrue.
+print residue.
+/* --classic ?
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be htrue instead?
+*/
+
+//(6)
+checkentail_inexact x::node<_,_> |- htrue.
+print residue.
+/* --classic
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+# should be x::node<_,_> instead
+*/
+
+//(9)
+checkentail_inexact x::node<_,_> * htrue |- htrue.
+print residue.
+/*
+Got;
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+Expects:
+ residue : x::node<_,_>*htrue
+*/
+
+//(10)
+checkentail_inexact htrue * emp |- htrue.
+print residue.
+/*
+Got;
+  <1>emp&{FLOW,(21,22)=__norm}[]
+
+Expects:
+ residue : htrue
+*/
+======================================================================
+# classic1b: FIXED
+
+//(13)
+checkentail_inexact htrue * x::node<_,_> * emp  * htrue * emp |- htrue.
+print residue.
+/*
+Got 
+ <1>(htrue) * x::node<_,_>@M * (htrue)&{FLOW,(21,22)=__norm}[]
+Expects:
+[// residue : x::node<_,_>*htrue
+*/
+======================================================================
+# app-tail6b.slk: FIXED
+
+pred goo<> == emp  
+    or self::node<_,_> 
+inv true.
+checkentail x::node<_,_> |- x::goo<>.
+print residue.
+
+why folding has only one answer in goo?
+
+ <1>x::node<_,_>@M&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==> ]]
+
+Is this due to base-case-fold? Should this be triggered?
+
+
+checkentail_exact x::node<_,_> |- x::goo<>.
+print residue.
+
+/*
+GOT:
+Entail 3: Fail.(must) cause:residue is forbidden.(2)
+
+Expects one answer.
+*/
+======================================================================
+# app-tail7.slk -dre "compute_action"
+
+--dis-imm
+compute_actions@2
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>
+compute_actions inp3 :LHS pure: flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=1+flted1
+compute_actions inp4 :RHS cand:[ x::lseg2<ty1_136,flted_19_145>@M, ty1_136::node<_,flted_19_144>]
+compute_actions inp5 :right alias:[flted_19_144,flted_19_145,Anon_146,ty1_136,q_137]
+compute_actions@2 EXIT: SEARCH =>[
+  Prio:1COND =>[Prio:1BaseCaseUnfold =>
+                                        LHS: x::lseg2<tx1,flted1>@M
+                                        RHS: x::lseg2<ty1_136,flted_19_145>@M;Prio:1Match =>
+  
+   LHS: x::lseg2<tx1,flted1>@M
+   RHS: x::lseg2<ty1_136,flted_19_145>@M];
+  Prio:1(Lemma <== lseg2) =>
+                             LHS: x::lseg2<tx1,flted1>@M
+                             RHS: x::lseg2<ty1_136,flted_19_145>@M
+  ]
+
+
+Why imm has links between ty1 & ty1_136 but not --dis-imm?
+
+--imm
+compute_actions@2
+compute_actions inp1 :EQ ptr:[(ty1_136,ty1)]
+compute_actions inp2 :LHS heap: x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M
+compute_actions inp3 :LHS pure: flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=1+flted1
+compute_actions inp4 :RHS cand:[ x::lseg2<ty1_136,flted_19_145>@M, ty1_136::node<_,flted_19_144>@M]
+compute_actions inp5 :right alias:[flted_19_144,flted_19_145,Anon_146,ty1_136,q_137]
+compute_actions@2 EXIT: COND =>[Prio:0COND =>[Prio:0(Lemma ==> ll_tail2) =>
+                                                     LHS: y::ll_tail2<ty1,m>@M
+                                                     RHS: ty1_136::node<_,flted_19_144>@M;Prio:1BaseCaseUnfold =>
+
+ LHS: y::ll_tail2<ty1,m>@M
+ RHS: ty1_136::node<_,flted_19_144>@M];Prio:0COND =>[Prio:0(Lemma <== ll_tail2) =>
+
+ LHS: y::ll_tail2<ty1,m>@M
+ RHS: ty1_136::node<_,flted_19_144>@M;Prio:1BaseCaseUnfold =>
+                                                              LHS: y::ll_tail2<ty1,m>@M
+                                                              RHS: ty1_136::node<_,flted_19_144>@M]]
+
+======================================================================
+# append-tail.ss --classic --dis-imm  (FIXED)
+
+Why is there exists ty1 for post-condition?
+
+id: 5; caller: []; line: 40; classic: true; kind: POST; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
+
+======================================================================
+# append-tail.ss --classic --dis-imm  (FIXED)
+
+Why is there exists ty1 for post-condition?
+Was this for folding? There seems an error in hip verifier.
+I am surprised it isn't detected earlier.
+
+id: 5; caller: []; line: 40; classic: true; kind: POST; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
+
+# append-tail.ss --dis-imm
+
+id: 7; caller: []; line: 40; classic: true; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  failctx
+
+======================================================================
+# append-tail.ss --classic
+
+Pure test used but missing in below. Log below seems inaccurate.
+Why run-fast-test still fails?
+
+id: 7; caller: []; line: 40; classic: true; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  1[
+   emp&m=flted_26_1092+1 & flted_26_1091=null & n=flted_26_1062+1 & flted_26_1061=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_26_1061=next_44_1064 & Anon_1063=Anon_1124 & r_1125=y' & exists(ty_1065:ty_1045=ty_1065) & exists(n2_1120:n2_1120=flted_26_1092+1) & exists(flted_26_1074:flted_26_1074=flted_26_1092+1+flted_26_1062) & exists(ty_1065:ty_1045=ty_1065) & exists(q_1066:q_1066=flted_26_1092+1+flted_26_1062+1) & exists(ty_1065:ty_1045=ty_1065)&{FLOW,(24,25)=__norm}[]
+   ]
+
+======================================================================
+# app-tail7.slk --eps
+
+
+This view is actually a lemma which is being used for folding.
+Do we make use of labels for lemma, and how is it best handled?
+
+Message: view is unlabeled  (* lbl: None *)(exists flted_19_135,flted_19_136,
+_: self::lseg2<tx,flted_19_136>@M@ rem br[{3,4}] * 
+tx::node<_,flted_19_135>@M@ rem br[{1}]&(
+([n=1+flted_19_136 & 0<=flted_19_136][flted_19_135=null][tx!=null]))&
+{FLOW,(21,22)=__norm})[]
+
+ 
+!!! WARNING logtime exception:0.
+Entail 1: EXCast. Failure("view is unlabeled  (* lbl: None *)(exists flted_19_135,flted_19_136,\n_: self::lseg2<tx,flted_19_136>@M@ rem br[{3,4}] * \ntx::node<_,flted_19_135>@M@ rem br[{1}]&(\n([n=1+flted_19_136 & 0<=flted_19_136][flted_19_135=null][tx!=null]))&\n{FLOW,(21,22)=__norm})[]\n")
+
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+

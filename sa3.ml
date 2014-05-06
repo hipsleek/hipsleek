@@ -145,7 +145,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
                    let hp_opt = Cformula.extract_hrel_head cs2.Cformula.hprel_rhs in
                    match hp_opt with
                      | None -> false
-                     | Some hp -> if (CP.mem_svl hp sel_hps) then
+                     | Some (hp) -> if (CP.mem_svl hp sel_hps) then
                          let lhps = Cformula.get_hp_rel_name_formula cs2.Cformula.hprel_lhs in
                          List.length lhps > 1
                        else false
@@ -252,6 +252,7 @@ let rec find_imply_subst_x prog sel_hps unk_hps link_hps frozen_hps frozen_const
         (fun _ _ -> check_full_path_sensitive_x cs new_constrs)
         cs new_constrs
   in
+
   let rec subst_w_frozen frozen_constrs non_frozen is_changed unfrozen_hps=
     let frozen_constrs0 = List.filter (fun cs -> not (Sacore.cs_rhs_is_only_neqNull cs)) frozen_constrs in
     if frozen_constrs = [] then is_changed,non_frozen,unfrozen_hps else
@@ -1897,7 +1898,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
   let get_pre_fix_hp pre_fix_hps cs=
     let ohp = Cformula.extract_hrel_head cs.Cformula.hprel_rhs in
         match ohp with
-          | Some hp -> if (CP.mem_svl hp pre_fix_hps) then pre_fix_hps else
+          | Some (hp) -> if (CP.mem_svl hp pre_fix_hps) then pre_fix_hps else
               let lhps = Cformula.get_hp_rel_name_formula cs.Cformula.hprel_lhs in
               if CP.mem_svl hp lhps && (Cformula.extract_hrel_head cs.Cformula.hprel_lhs = None) then
                 (pre_fix_hps@[hp])
@@ -1909,7 +1910,7 @@ let partition_constrs_x constrs post_hps0 dang_hps=
       try
         let ohp = Cformula.extract_hrel_head cs.Cformula.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp hps)
+          | Some (hp) -> (CP.mem_svl hp hps)
           | None -> false
       with _ -> false
     in

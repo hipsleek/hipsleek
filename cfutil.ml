@@ -10,6 +10,70 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+
+(* formula_trans_heap_node fct f *)
+let simplify_htrue_x hf0=
+  (*********INTERNAL***************)
+  let rec elim_htrue_hemp hf=
+    match hf with
+      | HTrue -> HEmp
+      | Star b -> begin let hf2 = elim_htrue_hemp b.h_formula_star_h2 in
+        let hf1 = elim_htrue_hemp b.h_formula_star_h1 in
+        match hf1,hf2 with
+          | HEmp,HEmp -> HEmp
+          | HEmp,_ -> hf2
+          | _ , HEmp -> hf1
+          | _ ->
+            Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+        end
+      | _ -> hf
+  in
+  let star_elim_htrue_hemp hf htrue_left pos=
+    let nhf = elim_htrue_hemp hf in
+    match nhf with
+      | HEmp -> HTrue
+      | _ ->  if htrue_left then
+          Star {h_formula_star_h1 = HTrue; h_formula_star_h2 = nhf;h_formula_star_pos = pos}
+        else
+          Star {h_formula_star_h2 = HTrue; h_formula_star_h1 = nhf;h_formula_star_pos = pos}
+  in
+  let rec dfs_elim_dups_htrue_emp hf=
+    let recf =  dfs_elim_dups_htrue_emp in
+    match hf with
+      | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
+      | Star b -> begin
+          let l_htrue = b.h_formula_star_h1 = HTrue in
+          let r_htrue =  b.h_formula_star_h2 = HTrue in
+          match  l_htrue, r_htrue with
+            | true, true -> HTrue
+            | true, _ -> star_elim_htrue_hemp b.h_formula_star_h2 true b.h_formula_star_pos
+            | _ ,true -> star_elim_htrue_hemp b.h_formula_star_h1 false b.h_formula_star_pos
+            | _ -> begin
+                  let hf2 = recf b.h_formula_star_h2 in
+                  let hf1 = recf b.h_formula_star_h1 in
+                  match hf1,hf2 with
+                    | HEmp,HEmp -> HEmp
+                    | HTrue,HTrue -> HTrue
+                    | HTrue,HEmp -> HTrue
+                    | HEmp, HTrue -> HTrue
+                    | HEmp,_ -> hf2
+                    | _ , HEmp -> hf1
+                    | _ ->
+                          Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
+              end
+        end
+      | HRel _ | DataNode _ |  ViewNode _ | ThreadNode _
+      | HFalse | Hole _ | HTrue | HEmp
+      | Conj _ | ConjStar _|ConjConj _|StarMinus _ -> hf
+  in
+  (*********INTERNAL***************)
+  dfs_elim_dups_htrue_emp hf0
+
+let simplify_htrue hf=
+  let pr1 = !print_h_formula in
+  Debug.no_1 "simplify_htrue" pr1 pr1
+      (fun _ -> simplify_htrue_x hf) hf
+
 (*arg is global vars*)
 let norm_free_vars f0 args=
   let rec helper f=
@@ -215,7 +279,7 @@ let classify_equiv_hp_defs_x defs=
                   let equiv_opt = extract_hrel_head f in
                   match equiv_opt with
                     | None -> (equiv_defs, non_equiv_defs@[def], equiv)
-                    | Some hp1 -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
+                    | Some (hp1) -> (equiv_defs@[def], non_equiv_defs, equiv@[(hp, hp1)])
               end
             | _ -> (equiv_defs, non_equiv_defs@[def], equiv)
         end
@@ -690,10 +754,9 @@ let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
       (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
       lhs rhs
 
-let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in
-    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
+  let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs lroots 3 in
+    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs rroots 3 in
     (* let lnlength = List.length l_reach_dns in *)
     let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
     (* let rnlength = List.length r_reach_dns in *)
@@ -701,6 +764,19 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
     if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
       1
     else -1
+
+let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+    (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
+    (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
+    (* (\* let lnlength = List.length l_reach_dns in *\) *)
+    (* let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in *)
+    (* (\* let rnlength = List.length r_reach_dns in *\) *)
+    (* let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in *)
+    (* if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then *)
+    (*   1 *)
+    (* else -1 *)
+    need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
 
 let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in

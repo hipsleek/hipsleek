@@ -398,6 +398,10 @@ let isAnyConstFalse f = match f with
     formula_base_flow = fl;}) -> h = HFalse || MCP.isConstMFalse p||is_false_flow fl.formula_flow_interval
   | _ -> false
 
+let isAnyConstFalse f=
+  let pr1 = !print_formula in
+  Debug.no_1 "isAnyConstFalse" pr1 string_of_bool
+      (fun _ -> isAnyConstFalse f) f
 
 let isAllConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
@@ -423,13 +427,24 @@ let isStrictConstTrue_wo_flow f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
-let isStrictConstTrue_x f = match f with
+let isStrictConstTrue2 f = match f with
   | Exists ({ formula_exists_heap = h;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
   | Base ({formula_base_heap = h;
     formula_base_pure = p;
     formula_base_flow = fl;}) -> 
+        (h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+  | _ -> false
+
+let isStrictConstTrue_x f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) ->
+        (*Loc: why h = HEmp is considered as ConstrTrue*)
         (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
@@ -450,17 +465,25 @@ let isStrictConstHTrue f = match f with
 
 let rec isConstDFalse f = 
   match f with
-	| EBase b -> isAnyConstFalse b.formula_struc_base
+    | EBase b -> isAnyConstFalse b.formula_struc_base
     | EList x-> List.for_all (fun (_,c)-> isConstDFalse c) x
-	| _ -> false
+    | _ -> false
 
 let rec isConstDTrue f =
   match f with
-	| EBase b -> (isStrictConstTrue b.formula_struc_base) &&(b.formula_struc_continuation==None)
+    | EBase b -> (isStrictConstTrue b.formula_struc_base) &&(b.formula_struc_continuation==None)
     | EList x -> List.exists (fun (_,c)-> isConstDTrue c) x
-	| _ -> false
+    | _ -> false
 
-let isConstETrue f = (*List.exists*) isConstDTrue f
+let rec isConstDTrue2 f = 
+  match f with
+    | EBase b -> (isStrictConstTrue2 b.formula_struc_base) &&(b.formula_struc_continuation==None)
+    | EList x -> List.exists (fun (_,c)-> isConstDTrue2 c) x
+    | _ -> false
+
+let isConstETrue f = (*List.exists*) isConstDTrue2 f
+
+let isConstETrue2 f = (*List.exists*) isConstDTrue2 f
 
 let isConstEFalse f = (*List.for_all*) isConstDFalse f
 
@@ -468,23 +491,39 @@ let chg_assume_forms b f1 f2 = { b with
 	formula_assume_simpl = f1;
 	formula_assume_struc = f2;}
 
+let mkEList_no_flatten_x l =
+  if isConstETrue (EList l) then
+    mkETrue (mkTrueFlow ()) no_pos 
+  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  else
+    let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
+    if l=[] then mkEFalse (mkFalseFlow) no_pos
+    else EList l
+
+let mkEList_no_flatten2 l =
+  if isConstETrue2 (EList l) then
+    mkETrue (mkTrueFlow ()) no_pos 
+  else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
+  else
+    let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
+    if l=[] then mkEFalse (mkFalseFlow) no_pos
+    else EList l
+
 let mkEList_no_flatten l =
-	if isConstETrue (EList l) then mkETrue (mkTrueFlow ()) no_pos
-	else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
-	else
-	  let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
-	  if l=[] then mkEFalse (mkFalseFlow) no_pos
-	  else EList l
+  let pr1 (_,cf) = !print_struc_formula cf in
+  let pr2 = pr_list_ln pr1 in
+  Debug.no_1 "mkEList_no_flatten" pr2 !print_struc_formula
+      (fun _ -> mkEList_no_flatten_x l) l
 
 let mkSingle f = (empty_spec_label_def,f)
 
 let mkEList_flatten l =
-	let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
-	mkEList_no_flatten (List.concat l)
+  let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
+  mkEList_no_flatten (List.concat l)
 
 let is_or_formula f = match f with
-| Or _ -> true
-| _ -> false
+  | Or _ -> true
+  | _ -> false
 
 module Exp_Heap =
 struct 
@@ -623,6 +662,31 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
     | [] -> []
   in
   List.fold_left (fun x y -> x@(helper y)) [] m
+
+
+let find_close svl0 eqs0=
+  let rec find_match svl ls_eqs rem_eqs=
+    match ls_eqs with
+      | [] -> svl,rem_eqs
+      | (sv1,sv2)::ss->
+            let b1 = CP.mem_svl sv1 svl in
+            let b2 = CP.mem_svl sv2 svl in
+            let new_m,new_rem_eqs=
+              match b1,b2 with
+                | false,false -> [],[(sv1,sv2)]
+                | true,false -> ([sv2],[])
+                | false,true -> ([sv1],[])
+                | true,true -> ([],[])
+            in
+            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
+  in
+  let rec loop_helper svl eqs=
+    let new_svl,rem_eqs = find_match svl eqs [] in
+    if List.length new_svl > List.length svl then
+      loop_helper new_svl rem_eqs
+    else new_svl
+  in
+  loop_helper svl0 eqs0
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 
@@ -3331,20 +3395,20 @@ and normalize_combine_conjstar (f1 : formula) (f2 : formula) (pos : loc) = match
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
-		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_conjstar f1 o21 pos in
-			  let eo2 = normalize_combine_conjstar f1 o22 pos in
-			  mkOr eo1 eo2 pos
-		| _ -> begin
-			let rf1 = rename_bound_vars f1 in
-			let rf2 = rename_bound_vars f2 in
-			let qvars1, base1 = split_quantifiers rf1 in
-			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkConjStar_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-			resform
-		  end
+	| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+	      let eo1 = normalize_combine_conjstar f1 o21 pos in
+	      let eo2 = normalize_combine_conjstar f1 o22 pos in
+	      mkOr eo1 eo2 pos
+	| _ -> begin
+	    let rf1 = rename_bound_vars f1 in
+	    let rf2 = rename_bound_vars f2 in
+	    let qvars1, base1 = split_quantifiers rf1 in
+	    let qvars2, base2 = split_quantifiers rf2 in
+	    let new_base = mkConjStar_combine base1 base2 Flow_combine pos in
+	    let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+	    let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+	    resform
+	  end
     end
 
 and normalize_combine_conjconj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -3354,20 +3418,20 @@ and normalize_combine_conjconj (f1 : formula) (f2 : formula) (pos : loc) = match
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
-		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			  let eo1 = normalize_combine_conjconj f1 o21 pos in
-			  let eo2 = normalize_combine_conjconj f1 o22 pos in
-			  mkOr eo1 eo2 pos
-		| _ -> begin
-			let rf1 = rename_bound_vars f1 in
-			let rf2 = rename_bound_vars f2 in
-			let qvars1, base1 = split_quantifiers rf1 in
-			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkConjConj_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-			resform
-		  end
+	| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+	      let eo1 = normalize_combine_conjconj f1 o21 pos in
+	      let eo2 = normalize_combine_conjconj f1 o22 pos in
+	      mkOr eo1 eo2 pos
+	| _ -> begin
+	    let rf1 = rename_bound_vars f1 in
+	    let rf2 = rename_bound_vars f2 in
+	    let qvars1, base1 = split_quantifiers rf1 in
+	    let qvars2, base2 = split_quantifiers rf2 in
+	    let new_base = mkConjConj_combine base1 base2 Flow_combine pos in
+	    let new_h, new_p, new_fl, new_t, new_a = split_components new_base in
+	    let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+	    resform
+	  end
     end
 
 and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -3634,6 +3698,60 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
+and simplify_pure_f_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+and simplify_pure_f (f0:formula) =
+  let pr= !print_formula in
+  Debug.no_1 "simplify_pure_f" pr pr
+      (fun _ -> simplify_pure_f_x f0) f0
+
+
+and elim_exists_struc_preserve_pre_evars pre_evars0 (cf0: struc_formula) : struc_formula =
+  let find_close_f svl0 f=
+    let ( _,mf,_,_,_) = split_components f in
+    let eqs = (MCP.ptr_equations_without_null mf)in
+    find_close svl0 eqs
+  in
+   let rec helper pre_evars cf = match cf with
+     | EList b  -> EList (map_l_snd (helper pre_evars) b)
+     | ECase b  -> ECase {b with formula_case_branches = map_l_snd (helper pre_evars) b.formula_case_branches;}
+     | EBase b  ->
+             let qvars, base_f = split_quantifiers b.formula_struc_base in
+             let cl_qvars = find_close_f qvars base_f in
+             EBase {b with
+               formula_struc_continuation = map_opt (helper (CP.remove_dups_svl  (pre_evars@cl_qvars)))
+                b.formula_struc_continuation; }
+     | EAssume b ->
+          let qvars, base_f = split_quantifiers b.formula_assume_simpl in
+           let ( _,mf,_,_,_) = split_components base_f in
+          let eqs = (MCP.ptr_equations_without_null mf) in
+          let cl_qvars = find_close qvars eqs in
+          let _ = DD.ninfo_hprint (add_str "qvars" !CP.print_svl) qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "cl_qvars" !CP.print_svl) cl_qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "pre_evars" !CP.print_svl) pre_evars no_pos in
+          let _ = DD.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+          let inter = CP.intersect_svl cl_qvars pre_evars in
+          let sst = List.fold_left (fun r (sv1, sv2) ->
+            if CP.mem_svl sv1 qvars && CP.mem_svl sv2 inter then r@[(sv1,sv2)] else r
+          ) [] eqs in
+          let n_qvars = CP.subst_var_list sst qvars in
+          let n_base_f = simplify_pure_f (subst sst base_f) in
+          let _ = DD.ninfo_hprint (add_str "n_qvars" !CP.print_svl) n_qvars no_pos in
+          let _ = DD.ninfo_hprint (add_str "n_base_f" !print_formula) n_base_f no_pos in
+             EAssume {b with
+	     formula_assume_simpl = add_quantifiers  n_qvars n_base_f;
+	     formula_assume_struc = (helper pre_evars) b.formula_assume_struc;}
+     | EInfer b -> EInfer {b with formula_inf_continuation = (helper pre_evars) b.formula_inf_continuation}
+    in
+    helper pre_evars0 cf0
 
 and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
@@ -4116,7 +4234,7 @@ and hp_rel_def_old = CP.rel_cat * h_formula * (formula option) * formula
 and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
-    def_rhs : formula_guard list;
+    def_rhs : ((* cond_path_type * *) formula_guard) list;
 }
 
 
@@ -4307,30 +4425,6 @@ let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
      hprel_def_body_lib = opflib;
  }
 
-let find_close svl0 eqs0=
-  let rec find_match svl ls_eqs rem_eqs=
-    match ls_eqs with
-      | [] -> svl,rem_eqs
-      | (sv1,sv2)::ss->
-            let b1 = CP.mem_svl sv1 svl in
-            let b2 = CP.mem_svl sv2 svl in
-            let new_m,new_rem_eqs=
-              match b1,b2 with
-                | false,false -> [],[(sv1,sv2)]
-                | true,false -> ([sv2],[])
-                | false,true -> ([sv1],[])
-                | true,true -> ([],[])
-            in
-            find_match (svl@new_m) ss (rem_eqs@new_rem_eqs)
-  in
-  let rec loop_helper svl eqs=
-    let new_svl,rem_eqs = find_match svl eqs [] in
-    if List.length new_svl > List.length svl then
-      loop_helper new_svl rem_eqs
-    else new_svl
-  in
-  loop_helper svl0 eqs0
-
 let pr_h_formula_opt og=
   match og with
     | None -> ""
@@ -4515,7 +4609,7 @@ let extract_unk_hprel (f0:formula) =
   Debug.no_1 "extract_unk_hprel" pr1 pr2
       (fun _ ->  extract_unk_hprel_x f0) f0
 
-let extract_hrel_head_x (f0:formula) =
+let extract_hrel_head (f0:formula) =
   let rec helper f=
   match f with
     | Base ({ formula_base_pure = p1;
@@ -4526,7 +4620,7 @@ let extract_hrel_head_x (f0:formula) =
             let p2 = (MCP.pure_of_mix p1) in
             if (CP.isConstTrue p2 || CP.is_xpure p2) then
               match h1 with
-                | HRel (hp, _, _ ) -> Some hp
+                | HRel (hp, _, _ ) -> Some (hp)
                 | _ -> None
             else
               None
@@ -4535,19 +4629,40 @@ let extract_hrel_head_x (f0:formula) =
   in
   helper f0
 
-let extract_hrel_head (f0:formula) =
+let extract_hrel_head_w_args_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            let p2 = (MCP.pure_of_mix p1) in
+            if (CP.isConstTrue p2 || CP.is_xpure p2) then
+              match h1 with
+                | HRel (hp, eargs, _ ) -> Some (hp,List.concat (List.map CP.afv eargs))
+                | _ -> None
+            else
+              None
+        )
+    | Or _ -> None
+  in
+  helper f0
+
+let extract_hrel_head_w_args (f0:formula) =
   let pr1 = !print_formula in
   let pr2 a = match a with None -> "None"
-    | Some hp -> !CP.print_sv hp
+    | Some (hp, args) -> let pr = pr_pair !CP.print_sv !CP.print_svl in
+      pr (hp,args)
   in
-  Debug.no_1 "extract_hrel_head" pr1 pr2
-      (fun _ ->  extract_hrel_head_x f0) f0
+  Debug.no_1 "extract_hrel_head_w_args" pr1 pr2
+      (fun _ ->  extract_hrel_head_w_args_x f0) f0
 
 let is_top_guard rhs link_hps og=
   let hp_opt = extract_hrel_head rhs in
   match hp_opt with
     | None -> false
-    | Some hp -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
+    | Some (hp) -> CP.mem_svl hp link_hps (*CF.isStrictConstHTrue cs.CF.hprel_rhs*)
               && (og != None)
 
 let is_only_viewnode_x acc_pure (f0:formula) =
@@ -4610,22 +4725,6 @@ let get_xpure_view (f0:formula) =
         (helper f1) @ (helper f2)
   in
   helper f0
-
-let simplify_pure_f_x (f0:formula) =
-  let rec helper f=
-    match f with
-      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
-      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
-      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
-          formula_or_f2 = helper orf.formula_or_f2}
-  in
-  helper f0
-
-let simplify_pure_f (f0:formula) =
-  let pr= !print_formula in
-  Debug.no_1 "simplify_pure_f" pr pr
-      (fun _ -> simplify_pure_f_x f0) f0
-
 
 let rec look_up_ptr_args_data_node_x hd=
   List.filter CP.is_node_typ hd.h_formula_data_arguments
@@ -4768,6 +4867,7 @@ let get_hp_rel_pre_struc_formula (sf0:struc_formula) =
     | EList l -> List.fold_left (fun r (_,sc) -> r@(helper sc)) [] l
   in
   helper sf0
+
 
 let check_and_get_one_hpargs f=
   let helper mf hf=
@@ -5128,6 +5228,24 @@ let formula_map hf_fct f0=
   in
   helper f0
 
+let fresh_view f=
+  let fresh_view_h hf=
+    match hf with
+     | ViewNode vn -> ViewNode {vn with h_formula_view_original = true;}
+     | _ -> hf
+   in
+   formula_trans_heap_node fresh_view_h f
+
+let rec mkAnd_pre_struc_formula sf f=
+  let recf sf1 = mkAnd_pre_struc_formula sf1 f in
+  match sf with
+   | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+   | EBase b -> EBase {b with
+         formula_struc_base = mkStar b.formula_struc_base f Flow_combine b.formula_struc_pos}
+   | EAssume b -> sf
+   | EInfer b-> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation;}
+   | EList l-> EList (Gen.map_l_snd recf l)
+
 (* let rec struc_formula_trans_heap_node2 formula_fct hf_fct f = *)
 (*   let recf = struc_formula_trans_heap_node2 formula_fct  hf_fct in *)
 (*   match f with *)
@@ -5158,6 +5276,44 @@ let rec struc_formula_trans_heap_node formula_fct f =
 let struc_formula_trans_heap_node fct f =
   let pr = !print_struc_formula in
   Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+
+let rec mkAnd_pure_pre_struc_formula_x p f =
+ let recf =  mkAnd_pure_pre_struc_formula_x p in
+  match f with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b -> EBase {b with
+	  formula_struc_base= mkAnd_pure b.formula_struc_base (MCP.mix_of_pure p) b.formula_struc_pos;}
+    | EAssume ea-> f
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+
+let rec mkAnd_pure_pre_struc_formula p f =
+  let pr1 = !print_struc_formula in
+  Debug.no_2 " mkAnd_pure_pre_struc_formula" !CP.print_formula pr1 pr1
+      (fun _ _ -> mkAnd_pure_pre_struc_formula_x p f) p f
+
+
+let rec elim_useless_term_struc_x sf=
+ let recf = elim_useless_term_struc_x in
+  match sf with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+    | EBase b -> begin if isTrivTerm b.formula_struc_base then
+        match b.formula_struc_continuation with
+          | None -> EBase {b with
+	        formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;}
+          | Some sf1 -> recf sf1
+      else EBase {b with
+	  formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;}
+      end
+    | EAssume ea-> EAssume {ea with formula_assume_struc = recf ea.formula_assume_struc}
+    | EInfer b -> EInfer {b with formula_inf_continuation = recf b.formula_inf_continuation}
+    | EList l -> EList (Gen.map_l_snd recf l)
+
+let elim_useless_term_struc sf=
+   let pr = !print_struc_formula in
+   Debug.no_1 "elim_useless_term_struc" pr pr
+       (fun _ -> elim_useless_term_struc_x sf) sf
 
 (*node + args is one group*)
 let get_ptrs_group_hf hf0=
@@ -5675,6 +5831,27 @@ let get_hp_rel_name_formula (f: formula) =
 let get_hp_rel_name_bformula bf=
   get_hp_rel_name_formula (Base bf)
 
+let get_hp_rel_name_struc sf0=
+  let rec helper sf=
+    let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
+    match sf with
+      | EList sfs -> helper_list sfs
+      | ECase { formula_case_branches = sfs } -> helper_list sfs
+      | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
+      let vns1 = get_hp_rel_name_formula f in
+      let vns2 = (match sf_opt with
+        | None -> []
+        | Some sf -> helper sf
+      ) in
+      (vns1 @ vns2)
+      | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
+            let vns1 = get_hp_rel_name_formula f in
+            let vns2 = helper sf in
+            (vns1 @ vns2)
+      | EInfer { formula_inf_continuation = sf } -> helper sf
+  in
+  CP.remove_dups_svl (helper sf0)
+
 let get_vnodes_x (f: formula) =
   let get_view_node hf=
     match hf with
@@ -5699,6 +5876,19 @@ let get_views (f: formula) =
   let views = get_one_kind_heap get_vn f in
   views
 
+let get_dnodes (f: formula) =
+  let get_dn hf=
+    match hf with
+      | DataNode dn -> [dn]
+      | _ -> []
+  in
+  let dns = get_one_kind_heap get_dn f in
+  dns
+
+let is_rec_br vn f=
+  let vns = get_views f in
+  List.exists (fun v -> String.compare v.h_formula_view_name vn = 0) vns
+
 let get_views_struc sf0=
   let rec helper sf=
     let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
@@ -5714,6 +5904,27 @@ let get_views_struc sf0=
       (vns1 @ vns2)
       | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
             let vns1 = get_views f in
+            let vns2 = helper sf in
+            (vns1 @ vns2)
+      | EInfer { formula_inf_continuation = sf } -> helper sf
+  in
+  helper sf0
+
+let get_dnodes_struc sf0=
+  let rec helper sf=
+    let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
+    match sf with
+      | EList sfs -> helper_list sfs
+      | ECase { formula_case_branches = sfs } -> helper_list sfs
+      | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
+      let vns1 = get_dnodes f in
+      let vns2 = (match sf_opt with
+        | None -> []
+        | Some sf -> helper sf
+      ) in
+      (vns1 @ vns2)
+      | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
+            let vns1 = get_dnodes f in
             let vns2 = helper sf in
             (vns1 @ vns2)
       | EInfer { formula_inf_continuation = sf } -> helper sf
@@ -6316,13 +6527,13 @@ let rec subst_hprel (f0: formula) from_hps to_hp=
   let rec helper f=
    match f with
       | Base fb -> let nh = subst_hprel_hf fb.formula_base_heap from_hps to_hp in
-                   (Base {fb with formula_base_heap = nh})
+        (Base {fb with formula_base_heap = nh})
       | Or orf -> let nf1 = helper orf.formula_or_f1 in
-                  let nf2 = helper orf.formula_or_f2 in
-                  ( Or {orf with formula_or_f1 = nf1;
-                      formula_or_f2 = nf2;})
-	  | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
-                     (Exists {fe with formula_exists_heap = nh;})
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
+        (Exists {fe with formula_exists_heap = nh;})
   in
   if from_hps = [] then f0 else helper f0
 
@@ -11712,6 +11923,9 @@ and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : l
 and push_exists_list_partial_context (qvars : CP.spec_var list) (ctx : list_partial_context) : list_partial_context = 
   transform_list_partial_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
 
+and fresh_view_list_partial_context (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context ((fun es -> Ctx{es with es_formula = fresh_view es.es_formula}),(fun c->c)) ctx
+
 and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
   transform_list_failesc_context (idf,idf,(fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula})) ctx
   
@@ -12232,72 +12446,76 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br ->
-		(* let rec filter_formula (f:formula):formula list = match f with *)
-		(* 	| Base {formula_base_label = lbl}  *)
-		(* 	| Exists {formula_exists_label = lbl} -> (match lbl with *)
-		(* 	  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"}  *)
-		(* 	  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[])) *)
-		(* 	| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    *)
-		let rec filter_helper (f:struc_formula):struc_formula = match f with
-			| EBase b -> (match b.formula_struc_continuation with
-				| None -> report_error no_pos "barrier is unlabeled \n"
+	  (* let rec filter_formula (f:formula):formula list = match f with *)
+	  (* 	| Base {formula_base_label = lbl}  *)
+	  (* 	| Exists {formula_exists_label = lbl} -> (match lbl with *)
+	  (* 	  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"}  *)
+	  (* 	  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[])) *)
+	  (* 	| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    *)
+	  let rec filter_helper (f:struc_formula):struc_formula = match f with
+	    | EBase b -> (match b.formula_struc_continuation with
+		| None -> report_error no_pos "barrier is unlabeled \n"
 				| Some f ->
-					let l = filter_helper f in
-					if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
+		      let l = filter_helper f in
+		      if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
 			| ECase b ->
-				let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
-				let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
-				if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
-			| EAssume b-> if (List.mem b.formula_assume_lbl br) then f else mkEFalse (mkFalseFlow)  no_pos
-			| EInfer b ->
-			  let l = filter_helper b.formula_inf_continuation in(* Need to check again *)
-			  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
-			| EList b -> mkEList_no_flatten (map_l_snd filter_helper b)  in
+		  let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
+		  let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
+		  if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
+	    | EAssume b-> if (List.mem b.formula_assume_lbl br) then f else mkEFalse (mkFalseFlow)  no_pos
+	    | EInfer b ->
+		  let l = filter_helper b.formula_inf_continuation in(* Need to check again *)
+		  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
+	    | EList b -> mkEList_no_flatten (map_l_snd filter_helper b)  in
 		filter_helper f0
 
 let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br ->
-		let rec filter_formula (f:formula):formula list =
-                  match f with
-			| Base {formula_base_label = lbl; formula_base_flow = flowt}
-			| Exists {formula_exists_label = lbl; formula_exists_flow = flowt} -> (match lbl with
-			  | None ->
-                                (* HACK : this assumed that unlabelled disj is false *)
-                                let cf = !print_formula f in
-                                if is_false_flow flowt.formula_flow_interval then []
-                                else Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"}
-			  | Some lbl -> 
-                                if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) 
-                                else (Gen.Profiling.inc_counter "saved_unfolds";[]))
-			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
-		let rec filter_helper (f:struc_formula):struc_formula = match f with
-			| EBase b -> (match b.formula_struc_continuation with
-				| None -> 
-					let l = filter_formula b.formula_struc_base in
-					if (l=[]) then mkEFalse (mkFalseFlow) no_pos else EBase {b with formula_struc_base = formula_of_disjuncts l}
-				| Some f -> 
-					let l = filter_helper f in
-					if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
-			| ECase b -> 
-				let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
-				let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
-				if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
-			| EAssume b-> if (List.mem b.formula_assume_lbl br) then f else mkEFalse (mkFalseFlow)  no_pos
-			| EInfer b ->
-			  let l = filter_helper b.formula_inf_continuation in(* Need to check again *)
-			  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
-			| EList b -> mkEList_no_flatten (map_l_snd filter_helper b)  in
-		filter_helper f0
-  
+	  let rec filter_formula (f:formula):formula list = 
+            match f with
+	      | Base {formula_base_label = lbl; formula_base_flow = flowt} 
+	      | Exists {formula_exists_label = lbl; formula_exists_flow = flowt} -> (match lbl with
+		  | None -> 
+                        (* HACK : this assumed that unlabelled disj is false *)
+                        let cf = !print_formula f in
+                        if is_false_flow flowt.formula_flow_interval then []
+                        else (* Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"} *)
+                          (* WN -> CG : is this error related to --eps or labelling? *)
+                          (* for unlabelled branches in lemma; keep all branches for --eps*)
+                          [f]
+		  | Some lbl -> 
+                        if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) 
+                        else (Gen.Profiling.inc_counter "saved_unfolds";[]))
+	      | Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
+	  let rec filter_helper (f:struc_formula):struc_formula = match f with
+	    | EBase b -> (match b.formula_struc_continuation with
+		| None -> 
+		      let l = filter_formula b.formula_struc_base in
+		      if (l=[]) then mkEFalse (mkFalseFlow) no_pos else EBase {b with formula_struc_base = formula_of_disjuncts l}
+		| Some f -> 
+		      let l = filter_helper f in
+		      if isConstEFalse l  then l else EBase {b with formula_struc_continuation = Some l})
+	    | ECase b -> 
+		  let l = List.map (fun (c1,c2)-> (c1,filter_helper c2)) b.formula_case_branches in
+		  let l = List.filter (fun (_,c2)-> not (isConstEFalse c2)) l in
+		  if l=[] then mkEFalse (mkFalseFlow)  no_pos else ECase {b with formula_case_branches = l}
+	    | EAssume b-> if (List.mem b.formula_assume_lbl br) then f else mkEFalse (mkFalseFlow)  no_pos
+	    | EInfer b ->
+		  let l = filter_helper b.formula_inf_continuation in(* Need to check again *)
+		  if isConstEFalse l then l else EInfer {b with formula_inf_continuation = l}
+	    | EList b -> mkEList_no_flatten (map_l_snd filter_helper b)  in
+	  filter_helper f0
+
 
 let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula =
   let pr = !print_struc_formula in
   let pr1 x = match x with
     | None -> "None"
     | Some l -> "Some"^string_of_int(List.length l) in
-  Debug.no_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
-  
+  Debug.no_2 "filter_branches" pr1 pr pr
+      (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
+
 let rec label_view (f0:struc_formula):struc_formula = 
   let rec label_formula (f:formula):formula = match f with
     | Base b -> Base{b with formula_base_label = Some (fresh_formula_label "")} 
@@ -12348,13 +12566,14 @@ let get_view_branches (f0:struc_formula):(formula * formula_label) list=
   let res = get_view_branches f0 in
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
  
-	
+let rec is_disj (f:formula) : bool = match f with
+  | Base _
+  | Exists _ -> false
+  | Or b -> true 
+
+
 let get_bar_branches (f0:struc_formula):(formula * formula_label) list= 
-  let rec is_disj (f:formula) : bool = match f with
-    | Base _
-    | Exists _ -> false
-    | Or b -> true in
-	
+  	
 	let rec struc_formula_br (f:struc_formula):(formula * formula_label) list = match f with
 		| ECase b-> List.concat 
 			(List.map (fun (c1,c2) -> 

@@ -1,0 +1,130 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node q, int n).
+HeapPred H3(node x).
+
+/*
+//infer7.slk (6)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+
+//infer7.slk (7)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.
+print residue.
+
+
+//infer8.slk (10) Valid
+infer [H1,n] H1(y) |- y::ll<n> & n=0.
+print residue.
+
+
+//infer8.slk (12)
+// Inferred n=1
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+
+///infer8.slk (14) Inferred n=0
+infer [n] y::ll<n> |- y=null.
+print residue.
+
+///infer8.slk (18) fail
+// Inferred n=1
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+///infer8.slk (19) inferred n=1
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+
+///infer8.slk (22) inferred nn=1
+infer [nn] y::ll<nn> |- y::node<_,null>.
+print residue.
+
+
+///infer8.slk (23)
+infer [n] y::ll<n> |- y=null.
+print residue.
+// Inferred Pure:[ n=0]
+*/
+
+//infer9.slk (7)
+infer [n] x::ll<n> |- x::node<_,q>*q::node<_,null>.
+print residue.
+/*
+<1>EXISTS(flted_7_146,q_162,flted_7_160: q_162::ll<flted_7_160>@M[Orig] & flted_7_160+1=flted_7_146 & flted_7_146+1=n & n=2 & {FLOW,(17,18)=__norm})
+inferred pure: [n=2; n!=0; n!=1]
+*/
+
+//infer10.slk (1) OK
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=1, !(n=0 & y=null)]
+<1>EXISTS(q_46,flted_7_45: q_46::ll<flted_7_45>[Orig] & flted_7_45=0 & n=1 &
+{FLOW,(17,18)=__norm})
+*/
+
+//infer10.slk (2)
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Pure:[ n=1, n!=0]
+<1>EXISTS(q_71,flted_7_70: q_71::ll<flted_7_70>[Orig] & flted_7_70=0 & n=1 &
+{FLOW,(17,18)=__norm})
+*/
+
+///infer14.slk (20)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+///infer14.slk (21)
+infer [m] q::ll<m> |- q=null.
+print residue.
+
+//infer14.slk (24)
+infer [m] x::node<_,a>*a::ll<m> |- x::node<_,null> .
+print residue.
+
+//infer14.slk (5)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+
+//infer14.slk (8)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.  //==> n=1
+print residue.
+
+//infer15.slk (2)
+infer [m] x::ll<m> or x::node<1,q> * q::ll<m> or x::node<_,t> * t::node<_,p> * p::ll<m> |- x::node<_,r> * r::node<_,null>.
+print residue.
+
+//infer15.slk (3)
+infer [n] x::ll<n> & x=null  or x::ll<n> & x!=null |- x::node<_,null>. 
+print residue.
+
+//infer15.slk (4)
+infer [n] x::ll<n> |- x=null or x::node<_,null>. // --> n=0 or n=1
+print residue.
+
+
+//infer15.slk (6)
+infer [n] x::ll<n> |- x=null or x::node<_,null>.
+print residue.
+
+//infer15.slk (7)
+infer [n] x::ll<n> |- case {
+           x=null -> [] true;
+           x!=null -> [] x::node<_,q>*q::node<_,null>; }.
+print residue.
+

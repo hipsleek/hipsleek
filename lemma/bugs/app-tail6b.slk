@@ -1,0 +1,43 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred foo<n> == emp & n=1 
+    or self::node<_,_> & n=2
+inv true.
+
+checkentail x::node<_,_> |- x::foo<a>.
+print residue.
+
+/*
+why folding has only one answer?
+*/
+
+
+pred goo<> == emp  
+    or self::node<_,_> 
+inv true.
+
+
+checkentail x::node<_,_> |- x::goo<>.
+print residue.
+/*
+why folding has only one answer in goo?
+
+ <1>x::node<_,_>@M&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==> ]]
+
+Expects two answers.
+*/
+
+
+checkentail_exact x::node<_,_> |- x::goo<>.
+print residue.
+
+/*
+GOT:
+Entail 3: Fail.(must) cause:residue is forbidden.(2)
+
+Expects one answer.
+*/

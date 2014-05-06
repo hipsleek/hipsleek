@@ -1,0 +1,84 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+
+lemma_unsafe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+
+checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists q: x::ll_tail2<ty1,q>).
+print residue.
+
+/*
+checkentail_exact x::lseg2<tx1,flted1>@M 
+// y::ll_tail2<ty1,m>@M
+* y::lseg2<ty1,m-1> * ty1::node<_,null>
+* tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists q: x::ll_tail2<ty1,q>). 
+print residue.
+// excess residue
+*/
+
+/*
+# app-tail7.slk
+
+How come classic has residue?
+--dis-imm results in two emp residues.
+
+-dd
+
+(i) why did folding lead to residue?
+(ii) why didn't classic trigger an error?
+
+!!!:0: 0: heap_entail_empty_heap: ctx:
+ es_formula: 
+  y::lseg2<ty1,flted_18_165>@M * tx'::node<_,y'>@M&m=flted_18_165+1 & 
+  flted_18_164=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & 
+  tx=tx1 & ty=ty1 & flted=null & n=1+flted1&{FLOW,(21,22)=__norm}[]
+ es_heap: x::lseg2<tx1,flted1>@M * ty1::node<_,flted_18_164>@M
+ es_evars: [flted_18_146; flted_18_147; _; ty1_138; q_139]
+ es_ante_evars: [flted_18_164; flted_18_165; _]
+ es_rhs_eqset: [tx1:ty1]
+ es_trace: 
+   SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> 
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+!!!:0: 0: heap_entail_empty_heap: rhs:
+ true
+!!!:0: 0: rhs_p : : true
+!!!:0: 0: conseq0 : : true
+!!!:0: 0: conseq1 : : true
+!!!:0: 0: >>>>>> entail_empty_heap: cp1 <<<<<<
+!!!:0: 0: ante0 : : m=flted_18_165+1 & flted_18_164=null & flted=next & x=x' & tx'=tx1 & y=y' & 
+ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & 0<=flted_18_165 & 
+tx'!=null & 0<=flted1 & ty1!=null & tx'!=ty1
+!!!:0: 0: ante1 : : m=flted_18_165+1 & flted_18_164=null & flted=next & x=x' & tx'=tx1 & y=y' & 
+ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & (((1<=flted_18_165 & 
+y!=null) | (flted_18_165=0 & ty1=y))) & tx'!=null & (((1<=flted1 & 
+x!=null) | (flted1=0 & tx1=x))) & ty1!=null & tx'!=ty1
+!!!:0: 0: conseq : : true
+!!!:0: 0: SAT #70
+!!!:0: 0:  m=flted_18_165+1 & flted_18_164=null & flted=next & x=x' & tx'=tx1 & y=y' & 
+ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & (((1<=flted_18_165 & 
+y!=null) | (flted_18_165=0 & ty1=y))) & tx'!=null
+!!!:0: 0: heap_entail_empty_heap: folding: formula is valid
+
+*/

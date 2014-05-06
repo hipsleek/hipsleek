@@ -1,0 +1,98 @@
+===========================================================================
+eps/at-2a.slk --eps
+
+tofix (i) get rid of warning messages
+      (2) get lemma proving to specialized form
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Entailing lemma lseg2: Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
+
+
+// lemma for proving for entailment not in --eps form
+id: 5; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 5; evars: [p_119,n_120]; infer_vars: []; c_heap: emp
+checkentail self::node<_,r>@M@ rem br[{1}] 
+* r::lseg2<p1,flted>@M@ rem br[{1,2}] 
+* q::lseg2<p,n2>@M
+&(([0<=flted & n1=1+flted & n=n1+n2][p1=q][self!=null]))
+&{FLOW,(21,22)=__norm}[]
+ |-  (exists p,n: self::lseg2<p,n>@M&{FLOW,(21,22)=__norm})[].
+
+res:  failctx
+         
+          fe_kind: MUST
+===========================================================================
+# at-2b.slk --eps
+
+(1) why <== fail ?
+(2) which lemmas have been added?
+
+!!! conseq: EXISTS(t_132,_,flted_15_134,flted_15_135: t::node<_,flted_15_134>@M&(
+([t=t_132 & self_ll_tail2=t_132][flted_15_134=null]
+ [flted_15_135=0 & n=1+flted_15_135])))
+[]
+!!! lhs_xpure0: (
+([n=n_116 & n_116=1+flted_11_129 & 1<=flted_11_129][r_131!=null]
+ [t=t_115 & t=tx_128 & tx_128!=null][self_ll_tail2!=null]))
+!!! lhs_xpure: (
+([n=n_116 & n_116=1+flted_11_129 & 1<=flted_11_129][r_131!=null]
+ [t=t_115 & t=tx_128 & tx_128!=null][self_ll_tail2!=null]))
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+!!! conseq: EXISTS(flted_10_284,t_267,
+n_268: self_ll_tail2::node<_,flted_10_284>@M@ rem br[{1}]&(
+([n_268=1 & n=1][t=t_267 & self_ll_tail2=t_267][flted_10_284=null])))[]
+!!! lhs_xpure0: (
+([flted_15_250=1+flted_7_264 & 0<=flted_7_264 & n=1+flted_15_250]
+ [p_263=t & t!=null][self_ll_tail2!=null][flted_15_249=null]))
+!!! lhs_xpure: (
+([flted_15_250=1+flted_7_264 & 0<=flted_7_264 & n=1+flted_15_250]
+ [p_263=t & t!=null][self_ll_tail2!=null][flted_15_249=null]))
+Warning: ::0: 0: left hand side node is not specialized!
+
+!!! 
+Entailing lemma ll_tail2: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (must) cause:  exists(flted_15_250:exists(flted_7_264:flted_15_250=1+flted_7_264 & 
+0<=flted_7_264) & n=1+flted_15_250) |-  n=1. LOCS:[0] (must-bug)
+
+Valid Lemmas : [ll_tail2:<==>] added to lemma store.
+
+
+I noticed that the pcp has labels on each branch of the views but not
+on the lemmas. When I first did the pruning the lemmas were to
+brittle to try and add pruning there so I remember not doing it. The
+code to add the labels for lemmas should be almost identical to the
+"view_prune_inv_inference" function that labels views in Astsimp. 
+
+Of course adding None and bypassing the pruning for lemmas is also a
+feasible option.
+
+WN : I think lemmas are now specialized but the lemma proving
+entailment wasn't specialized..
+
+
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================

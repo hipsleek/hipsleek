@@ -4,16 +4,23 @@ data node {
 }
 
 HeapPred H(node a).
-  HeapPred G(node a, node b).
- 
+HeapPred G(node a, node b).
+
 /* return the tail of a singly linked list */
-  node get_next(node x)
+node get_next(node x)
   infer[H,G]
   requires H(x)
-     ensures G(x,res);//'
+  ensures G(x,res);//'
 {
   if (x==null) return null;
   return x.next;
+}
+
+node test (node x)
+  requires x=null
+  ensures res=null;
+{
+  return get_next(x);
 }
 
 /*

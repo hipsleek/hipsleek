@@ -1574,7 +1574,7 @@ let partition_constrs_x constrs post_hps0=
       try
         let ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
         match ohp with
-          | Some hp -> (CP.mem_svl hp new_post_hps)
+          | Some (hp) -> (CP.mem_svl hp new_post_hps)
           | None -> false
       with _ -> false
     in

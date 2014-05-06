@@ -1,6 +1,9 @@
 #include "../bugs/inc.h"
 
 struct node* get_next(struct node* x)
+/* requires x::node<_,n>
+  ensures x::node<_,n> & res=n;
+*/
 {
   struct node* tmp = x;
   return tmp->next;

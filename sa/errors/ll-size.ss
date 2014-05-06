@@ -1,41 +1,32 @@
+/* singly linked lists */
+
+/* representation of a node */
 data node {
-  int val;
-  node next;
+	int val;
+	node next;
 }
+
+/* view for a singly linked list */
+ll<n> == self = null & n = 0
+	or self::node<_, q> * q::ll<n-1>
+  inv n >= 0;
 
 HeapPred H(node a).
-  HeapPred G(node a).
+//HeapPred G(node a, node b).
+HeapPred G(node a).
 
-/* return the tail of a singly linked list */
-  int get_size(node x)
+
+//The number of elements that conform the list's content.
+//relation SIZEH(int a, int b, int c).
+int size_helper(node x, ref int n)
   infer[H,G]
-  requires H(x)
-     ensures G(x);
+  requires H(x) //0<=m
+  ensures  G(x);// & SIZEH(res,n);//res=m+n & m>=0
 {
-  if(x == null) 
-    return 0;
+  if (x==null) 
+    return n;
   else {
-    return get_size(x.next) + 1;
+    n = n+1;
+    return size_helper(x.next, n);
   }
 }
-
-/*
-*************************************
-**************case specs*************
-*************************************
- case {
-   x!=null -> 
-     requires H(next1) * x::node<val1,next1>@M & true
-     ensures x1::node<val,next>@M * G(next) & true;; 
-   x=null -> 
-     ensures emp & x1=null;; 
-   }
-*************************************
-
-*************************************
-*******relational definition ********
-*************************************
-[ H(x) ::=(1;0) emp&x=null \/ (2;0) x::node<val,next>@M * H(next),
- G(x) ::=(1;0) emp&x=null \/ (2;0) x::node<val,next>@M * G(next)]
-*************************************
-*/

@@ -29,7 +29,7 @@ and assume_formula =
 		formula_assume_lbl : formula_label;
 		formula_assume_ensures_type : ensures_type;
 	}
-		
+
 and struc_formula = 
 	| ECase of struc_case_formula
 	| EBase of struc_base_formula
@@ -39,7 +39,7 @@ and struc_formula =
 	| EInfer of struc_infer_formula
 	| EList of (spec_label_def*struc_formula) list 
 
-	
+
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
@@ -132,18 +132,18 @@ and h_formula_star = { h_formula_star_h1 : h_formula;
 and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
 		       h_formula_starminus_h2 : h_formula;
 		       h_formula_starminus_pos : loc }
-		       
+
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 		       h_formula_conj_h2 : h_formula;
 		       h_formula_conj_pos : loc }
-		       
+
 and h_formula_conjstar = { h_formula_conjstar_h1 : h_formula;
 		       h_formula_conjstar_h2 : h_formula;
 		       h_formula_conjstar_pos : loc }
-		       
+
 and h_formula_conjconj = { h_formula_conjconj_h1 : h_formula;
 		       h_formula_conjconj_h2 : h_formula;
-		       h_formula_conjconj_pos : loc }		       		       
+		       h_formula_conjconj_pos : loc }
 
 and h_formula_phase = { h_formula_phase_rd : h_formula;
 			h_formula_phase_rw : h_formula;
@@ -341,7 +341,7 @@ and mkEAssume simp struc lbl ens = EAssume{
 		formula_assume_lbl = lbl;
 		formula_assume_ensures_type = ens;
 	}
-		 
+
 and mkETrue flow pos = EBase {
 		 formula_struc_explicit_inst = [];
 		 formula_struc_implicit_inst = [];
@@ -358,8 +358,8 @@ and mkEFalse flow pos = EBase {
 		 formula_struc_continuation = None;
 		 formula_struc_pos = pos	}
 
-and mkEFalseF () = mkEFalse false_flow no_pos			
-and mkETrueF () = mkETrue n_flow no_pos			
+and mkEFalseF () = mkEFalse false_flow no_pos
+and mkETrueF () = mkETrue n_flow no_pos
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
 
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
@@ -372,7 +372,7 @@ and mkEBase ei ii e b (c:struc_formula option) l= EBase {
 						 	formula_struc_explicit_inst = ei;
 						 	formula_struc_implicit_inst = ii;
 							formula_struc_exists = e;
-						 	formula_struc_base = b;				
+						 	formula_struc_base = b;
 						 	formula_struc_continuation = c;
 						 	formula_struc_pos = l;}
   

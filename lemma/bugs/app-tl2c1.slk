@@ -1,0 +1,101 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+lemma "ll_tail2" self::lseg<p, n> 
+   <- self::lseg<t, n-1> * t::node<_, p>.
+
+/*
+# app-tl2c1.slk
+
+ unsoundness in lemma application with 
+  some existentials.
+
+Expect: Valid.Fail.Valid.Fail.Valid.Fail.
+
+
+Resulting in contradiction.
+ <1>emp&qq=nn+1 & qq=2+nn&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==> (right: ll_tail2) ==>  Match ==>  Match ==> ]]
+
+*/ 
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  x::lseg<p, qq> & qq = nn+1.
+print residue.
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  x::lseg<p, qq> & qq = nn+2.
+print residue.
+
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  [qq] x::lseg<p, qq> & qq = nn+1.
+print residue.
+
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  (exists qq: x::lseg<p, qq> & qq = nn+2).
+print residue.
+// UNSOUND
+
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  [qq] x::lseg<p, qq> & qq = nn+2.
+print residue.
+// UNSOUND
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  (exists qq: x::lseg<p, qq> & qq = nn+1).
+print residue.
+user:        locle <locle@suna>
+date:        Sat Feb 22 18:32:46 2014 +0800
+summary:     fixed bugs of lseg.slk. run-fast-test is OK
+
+
+Correct Answers below:
+
+Entail 1: Valid. 
+
+ <1>emp&qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 2: Fail.(must) cause:UnionR[ 0<=nn & nn=qq |-  qq=nn+2. LOCS:[8;37] (must-bug), true |-  qq=nn+2 & qq=1+nn. LOCS:[0;37;11] (RHS: contradiction)]
+
+
+Entail 3: Valid. 
+
+ <1>emp&qq=nn+1 & qq=1+nn & qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 4: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;50] (RHS: contradiction), true |-  exists(qq:qq=1+nn & qq=nn+2). LOCS:[0] (RHS: contradiction)]
+
+
+Entail 5: Valid. 
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 6: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;64] (RHS: contradiction), true |-  1+nn=nn+2. LOCS:[0;11] (RHS: contradiction)]
+*/
+
