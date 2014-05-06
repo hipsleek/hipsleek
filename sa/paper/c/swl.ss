@@ -65,10 +65,6 @@ ensures prev'::ll<sent>  & cur'=sent ;
   requires cur::node<_,n> * n::lx1<sent> * prev::lx8<sent> & cur!=sent
   ensures prev'::node<_,p> * p::lx8<sent> & cur'=sent ;//'
 */
-/*
- requires cur::node<_,n> * n::lx1<sent> * prev::lx8<sent> & cur!=sent
-  ensures prev'::node<_,prev> * prev::lx8<cur'> & cur'=sent ;//'
-*/
 
   infer [H,G]
   requires H(cur,prev,sent)
