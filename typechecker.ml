@@ -758,7 +758,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (*                      let rel1 =  Infer.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_zprint (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
                       (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
-                      (* let _ = print_string ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
+                     (*  let _ = print_string ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                       let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -2401,9 +2401,11 @@ and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
+  (*fresh views: h_formula_view_original = true*)
+  let ctx = CF.fresh_view_list_partial_context ctx0 in
   (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
   if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
@@ -2455,7 +2457,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
         Debug.devel_pprint to_print pos;
         final_state
-      else ctx
+      else
+        ctx
     in
     (* let _ = DD.info_zprint (lazy (("       sleek-logging (POST): "  ^ "\n" ^ (to_print)))) pos in *)
     let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in

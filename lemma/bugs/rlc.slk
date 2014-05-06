@@ -1,0 +1,46 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+
+// complex lemma
+lemma_unsafe "t1a" 
+   self::node<_,q>*q::rlseg<p>  
+   -> self::rlseg<p1>* p1::node<_,p>.
+// see rlb.slk for the steps which unfold left, then right.
+
+// can we even apply complex lemma?
+checkentail_exact 
+  x::node<_,qq>*qq::rlseg<p>  
+      |- x::rlseg<p1>* p1::node<_,p>
+.
+
+/*
+
+  D[x] --> P[y,x]
+
+  checkentail D[z] * R |- 
+  checkentail P[y',z] * R |- 
+
+
+lemma_unsafe "t1a" 
+   self::node<_,q>*q::rlseg<p>  
+   -> self::rlseg<p1>* p1::node<_,p>.
+
+Trigger complex rule as:
+  requires self::node<_,q>*q::rlseg<p>
+  ensures self::rlseg<p1>@D* p1::node<_,p>;
+
+  x::node<_,qq>*qq::rlseg<p>  
+      |- x::rlseg<p1>* p1::node<_,p>
+
+  x::node<_,qq>*qq::rlseg<p> *
+      |- x::rlseg<p1>* p1::node<_,p>
+
+*/

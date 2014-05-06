@@ -1,0 +1,80 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_unsafe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+ 
+//(1)
+checkentail x::ll_tail2<tx,n>
+ |-  tx::node<_,b>@L.
+print residue.
+
+/*
+# app-tail3.slk
+
+two solutions; first is unnecessary
+
+ <1>
+    x::node<_,b>@M * y::ll_tail2<ty,m>@M&b=null & tx=x & n=1&
+    {FLOW,(21,22)=__norm}[]
+    or (exists flted_11_2733: x::node<_,b>@M * 
+       b::ll_tail2<tx,flted_11_2733>@M * y::ll_tail2<ty,m>@M&n=flted_11_2733+
+       1 & b!=null&{FLOW,(21,22)=__norm})[]
+
+<2>(exists flted_18_688: x::lseg2<tx,flted_18_688>@M * tx::node<_,b>@M&n=flted_18_688+1 & b=null&{FLOW,(21,22)=__norm})[]
+
+
+Can we give priority to full relevation by lemma?
+ Why is lemma not given higher priority?
+ Why is lemma repeated with both ==> and <== ?
+Solution : (i) change priority
+  (ii) change search to cond if priorities are different
+ wt - 
+      search --> lowest; 
+      cond  --> lowest;
+
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::ll_tail2<tx,n>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ tx::node<_,b>@L]
+compute_actions inp5 :right alias:[Anon_16,b]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1COND =>[Prio:1Unfold 1 =>
+                                  LHS: x::ll_tail2<tx,n>@M
+                                  RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+  
+   LHS: x::ll_tail2<tx,n>@M
+   RHS: tx::node<_,b>@L];
+  Prio:1COND =>[Prio:1(Lemma ==> ll_tail2) =>
+                                              LHS: x::ll_tail2<tx,n>@M
+                                              RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+  
+   LHS: x::ll_tail2<tx,n>@M
+   RHS: tx::node<_,b>@L];
+  Prio:1COND =>[Prio:1(Lemma <== ll_tail2) =>
+                                              LHS: x::ll_tail2<tx,n>@M
+                                              RHS: tx::node<_,b>@L;
+                Prio:1BaseCaseUnfold =>
+          LHS: x::ll_tail2<tx,n>@M
+          RHS: tx::node<_,b>@L]
+  ]
+
+
+*/
+
