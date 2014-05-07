@@ -13,7 +13,7 @@ ll_trans<n> == self = null & n = 0 or
   inv n >= 0;
 
 Signal invert(Signal s) 
-  requires s::Signal<init, trans> * trans::ll_trans<n> & Term
+  requires s::Signal<init, trans> * trans::ll_trans<n> & Term[0]
   ensures res::Signal<inv_init, trans> * s::Signal<init, trans> * trans::ll_trans<n> & 
           (init & !inv_init | !init & inv_init);
 {
@@ -42,13 +42,13 @@ bool valueAt_l(bool v, int t, Transition trans)
 }
 
 void printSignal(Signal s) 
-  requires s::Signal<init, t> * t::ll_trans<n> & Term
+  requires s::Signal<init, t> * t::ll_trans<n> & Term[1]
   ensures s::Signal<init, t> * t::ll_trans<n>;
 {
   bool v = s.initialValue;
   Transition trans = s.transitions;
   while (trans != null) 
-    requires trans::ll_trans<n> & Term[n]
+    requires trans::ll_trans<n> & Term[0, n]
     ensures trans::ll_trans<n> & trans' = null;
   {
 	  v = !v;
@@ -57,7 +57,7 @@ void printSignal(Signal s)
 }
 
 Transition shiftTrans(Transition t, int delta) 
-  requires t::ll_trans<n> & Term[n]
+  requires t::ll_trans<n> & Term[0, n]
   ensures res::ll_trans<n> * t::ll_trans<n>;
 {
   if (t == null) return null;
@@ -66,7 +66,7 @@ Transition shiftTrans(Transition t, int delta)
 }
 
 Signal shift(Signal s, int delta) 
-  requires s::Signal<init, trans> * trans::ll_trans<n> & Term
+  requires s::Signal<init, trans> * trans::ll_trans<n> & Term[1]
   ensures res::Signal<init, trans_r> * trans_r::ll_trans<n> * 
           s::Signal<init, trans> * trans::ll_trans<n>;
 {
@@ -90,7 +90,7 @@ bool isWellFormed(Signal s)
 }
 
 Transition copyTrans(Transition t)
-  requires t::ll_trans<n> & Term[n]
+  requires t::ll_trans<n> & Term[0, n]
   ensures t::ll_trans<n> * res::ll_trans<n>;
 {
   if (t == null) return null;
@@ -100,7 +100,7 @@ Transition copyTrans(Transition t)
 }
 
 Transition xorTransitions(Transition t1, Transition t2) 
-  requires t1::ll_trans<n1> * t2::ll_trans<n2> & Term[n1 + n2]
+  requires t1::ll_trans<n1> * t2::ll_trans<n2> & Term[1, n1 + n2]
   ensures t1::ll_trans<n1> * t2::ll_trans<n2> * res::ll_trans<_>;
   
   requires t1::ll_trans<n1> & t1 = t2 & Term[n1]
@@ -121,13 +121,13 @@ Transition xorTransitions(Transition t1, Transition t2)
 }
 
 Signal xorSignals(Signal s1, Signal s2) 
-  requires s1::Signal<i1, t1> * t1::ll_trans<n1> * s2::Signal<i2, t2> * t2::ll_trans<n2> & Term
+  requires s1::Signal<i1, t1> * t1::ll_trans<n1> * s2::Signal<i2, t2> * t2::ll_trans<n2> & Term[2]
   ensures res::Signal<i, t> * t::ll_trans<_> * 
           s1::Signal<i1, t1> * t1::ll_trans<n1> * 
           s2::Signal<i2, t2> * t2::ll_trans<n2> & 
           (i1 != i2 & i | i1 = i2 & !i);
   
-  requires s1::Signal<i1, t> * s2::Signal<i2, t> * t::ll_trans<n2> & Term
+  requires s1::Signal<i1, t> * s2::Signal<i2, t> * t::ll_trans<n2> & Term[2]
   ensures res::Signal<i, tr> * tr::ll_trans<_> * 
           s1::Signal<i1, t> * s2::Signal<i2, t> * t::ll_trans<n2> & 
           (i1 != i2 & i | i1 = i2 & !i);
@@ -154,7 +154,7 @@ bool recValueAt(Signal s, int instant)
 }
 
 Signal renverser(Signal s) 
-  requires s::Signal<init, t> * t::ll_trans<n> & Term
+  requires s::Signal<init, t> * t::ll_trans<n> & Term[1]
   ensures res::Signal<_, t2> * t2::ll_trans<n> * 
           s::Signal<init, t> * t::ll_trans<n>; 
 {
@@ -162,7 +162,7 @@ Signal renverser(Signal s)
   Transition t = s.transitions;
   Transition t2 = null;
   while (t != null) 
-    requires t::ll_trans<n1> * t2::ll_trans<n2> & Term[n1]
+    requires t::ll_trans<n1> * t2::ll_trans<n2> & Term[0, n1]
     ensures t::ll_trans<n1> * t2'::ll_trans<n1 + n2> & t' = null;
   {
     t2 = new Transition(-t.timing, t2);
@@ -185,7 +185,7 @@ void test(Signal s)
 }
 
 void testAll(Signal s) 
-  requires s::Signal<init, t> * t::ll_trans<n> & Term
+  requires s::Signal<init, t> * t::ll_trans<n> & Term[3]
   ensures s::Signal<init, t> * t::ll_trans<n>;
 {
   test(s);
@@ -202,7 +202,7 @@ void testAll(Signal s)
   Signal ir = renverser(it);
   test(ir);
 }
-
+/*
 int random() 
   requires Term
   ensures true;
@@ -233,7 +233,7 @@ void main()
   //System.out.println("\nsigna1");
   testAll(signal1);
 }
-
+*/
   
   
   
