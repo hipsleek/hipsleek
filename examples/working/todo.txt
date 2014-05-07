@@ -421,6 +421,14 @@ sleek --eps --dis-imm
 Total number of errors: 10 in files:
   baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/lseg.slk({L4#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) lemmas/lemma-fold.slk({E1#Valid},{E3#Valid},{E5#Valid}) lemmas/rd-lem-1.slk({L2#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/dseg1.slk({L1#Valid}).
 ====================================================================
+sleek
+Starting hip-sleek tests:
+Total number of errors: 4 in files:
+  lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Valid}).
+
+sleek --eps (--dis-imm)
+Total number of errors: 7 in files:
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================
