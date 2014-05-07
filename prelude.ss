@@ -440,7 +440,7 @@ RS_mem malloc1(int n)
  requires n>0
  ensures  res=null or res::RS_mem<n>;
 */
-
+/*
 int rand_int ()
 requires true
 ensures true;
@@ -448,3 +448,4 @@ ensures true;
 bool rand_bool ()
 requires true
 ensures true;
+*/
