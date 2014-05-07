@@ -407,7 +407,9 @@ let process_lemma ldef =
 
 let print_residue residue =
           match residue with
-            | None -> print_string ": no residue \n"
+            | None -> 
+                  let _ = Debug.ninfo_pprint "inside p res" no_pos in
+                  print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
                   (*       (CF.list_formula_of_list_context s))^"\n") *)
                   (*print all posible outcomes and their traces with numbering*)
@@ -416,6 +418,8 @@ let print_residue residue =
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+                  else 
+                    print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^"\n")
 
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 = 
@@ -1866,18 +1870,20 @@ let process_capture_residue (lvar : ident) =
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 
-let process_print_command pcmd0 = match pcmd0 with
+let process_print_command pcmd0 = 
+  match pcmd0 with
   | PVar pvar ->	  
 	  let mf = try get_var pvar with Not_found->  Error.report_error {
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
-		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
+		print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
   | PCmd pcmd -> 
 	if pcmd = "lemmas" then
           Lem_store.all_lemma # dump
 	else if pcmd = "residue" then
+          let _ = Debug.ninfo_pprint "inside residue" no_pos in
           print_residue !CF.residues 
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)
