@@ -53,8 +53,10 @@ let add_infer_vars_to_ctx ivs ctx =
 *)
 let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf_vars: CP.spec_var list) (cprog: C.prog_decl)  =
   let ante = lem_to_cformula iante in
+  let ante = if !Globals.en_slc_ps then Cvutil.prune_preds cprog false ante else ante in
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
+  let conseq = if !Globals.en_slc_ps then Cvutil.prune_pred_struc cprog false conseq else conseq in
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   (* let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
   (* let ctx = CF.build_context ctx ante no_pos in *)
@@ -243,12 +245,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           let lhs_vns = CF.get_views lhs in
           let rhs_vns = CF.get_views_struc new_rhs in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
+            let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
+            (* if List.length (CF.get_dnodes lhs) < List.length (CF.get_dnodes_struc new_rhs) then [],[] else *)
             [sv_self],[]
           else [sv_self],[sv_self]
         else
           [sv_self],[]
       else begin
-        if is_singl sv_self rhs_unfold_ptrs then (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
+        if is_singl sv_self rhs_unfold_ptrs then
+           let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "2" pos in
+          (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[sv_self]
         else if !Globals.allow_lemma_deep_unfold then
           let l_ptrs = if lhs_unfold_ptrs != [] then [sv_self] else [] in
           let r_ptrs = if rhs_unfold_ptrs != [] then [sv_self] else [] in

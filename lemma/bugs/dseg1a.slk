@@ -1,0 +1,15 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+pred dseg<pr, p, last> == self=p & pr=last
+  or self::node<_,pr, q> * q::dseg<self,p,last>.
+
+//lemma  self::dseg<pr,p,last> <-> self::dseg<pr,p1,last2>*p1::dseg<last2,p,last>.
+
+lemma_unsafe  self::dseg<pr,p,last> -> self::dseg<pr,last,k>*last::node<_,k,p>.
+
+checkentail self::dseg<pr,p,last> |- self::dseg<pr,last,k>*last::node<_,k,p>.
+

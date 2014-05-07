@@ -1,0 +1,28 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred foo<> == emp 
+    or self::node<_,_>
+inv true.
+
+/*
+# Remove printing?? 
+
+### xxx ELIST
+
+!!!  f:  :EBase emp&{FLOW,(21,22)=__norm}[]
+|| :EBase exists (Expl)[](Impl)[_; _](ex)[]x::node<_,_>@M&
+          {FLOW,(21,22)=__norm}[]
+*/
+checkentail x::node<1,_> 
+   |- emp or x::node<a,_>.
+print residue.
+
+checkentail x::node<_,_> |- x::foo<>.
+print residue.
+
+checkentail_exact x::node<1,_> |- 
+   emp or x::node<a,_>.
+print residue.
