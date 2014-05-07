@@ -6528,6 +6528,8 @@ and hec_stack = new Gen.stack_pr (string_of_int) (==)
 (* hec_num denotes particular id of caller *)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+  (* Trung: TODO remove it later *)
+  (* let _ = Solver_dp.prove_entailment conseq conseq in *)
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   (* let _, rhs_pure, _, _, _  = CF.split_components conseq in *)
   (* let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) rhs_pure no_pos in *)

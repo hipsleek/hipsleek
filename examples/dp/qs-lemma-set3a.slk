@@ -1,0 +1,35 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,u,S> ==           // ~~ in GRASShopper: blseg<x,y,lb,ub>
+  self = y & S={} & l<=u //& lb=\inf & ub=-\inf
+or self::node<val,next> * next::bseg<y,l,u,S1>
+       & self != y & S=union({self},S1) & l<=val & val<=u
+  inv l<=u & (y notin S). //self=y | self!=y & lb<=ub.
+
+lemma_unsafe self::bseg<p,l,u,S> 
+  <- self::bseg<p,l2,u2,S> & l<=l2 & u2<=u .
+
+checkentail emp&exists(S_144:S_144=union({self},S)) & exists(p_141:p_141!=self) & 
+exists(u_143:val<=u_143 & u1<=u_143) & exists(l_142:l_142<=val & 
+l_142<=l1) & exists(l_180:l_180<=l1) & exists(u_181:u1<=u_181) & 
+next=next1 & val=val1 & u2<=u & l<=l2 & u1=u2 & l1=l2 & p=y & val1<=u2 & 
+l2<=val1 & S1=union({self},S2) & p!=self
+ |-  (exists p1,l2,u2,S2: emp
+ //& l2<=l 
+ //& u<=u2 
+ & p1!=self 
+ //& S2=union({self},S) 
+ & l2<=val & val<=u2 & S1=S2 & u1=u2 & l1=l2 & p=p1).
+
+
+ checkentail emp&exists(p_110:p_110!=self) & exists(u_112:val<=u_112 & u1<=u_112) & 
+exists(l_111:l_111<=val & l_111<=l1) & exists(l_142:l_142<=l1) & 
+exists(u_143:u1<=u_143) & next=next1 & val=val1 & u2<=u & l<=l2 & u1=u2 & 
+l1=l2 & p=y & val1<=u2 & l2<=val1 & p!=self
+//&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l2,u2: emp&l2<=l & u<=u2 & p1!=self & l2<=val & val<=u2 & 
+u1=u2 & l1=l2 & p=p1).

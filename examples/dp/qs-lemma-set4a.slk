@@ -1,0 +1,60 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,S> ==
+  self = y & S={}
+or self::node<val,next> * next::bseg<y,l,S1>
+       & self != y & S=union({self},S1) & l<=val
+  inv (y notin S).
+
+
+lemma_unsafe self::bseg<p,l,S> 
+  <- self::bseg<p,l2,S> & l<=l2.
+
+checkentail
+  self::bseg<p,l2,S> & l<=l2
+  |- self::bseg<p,l,S>.
+
+/*
+ *
+ ------------ Precondition
+id: 0; caller: []; line: 8; classic: false; kind: Pred_Check_Inv; hec_num: 2; evars: []; infer_vars: []; c_heap: emp
+ checkentail emp&((self=y & S={}) | (exists(S1:y <notin> S1  & S=union({self},S1)) & 
+self!=y & self!=null))&{FLOW,(1,24)=__flow}[]
+ |-  emp&y <notin> S &{FLOW,(1,24)=__flow}[]. 
+res:  1[
+   emp&((self=y & S={}) | (exists(S1:y <notin> S1  & S=union({self},S1)) & self!=y & self!=null))&{FLOW,(1,24)=__flow}[]
+   ]
+
+  
+ ----------- apply lemma (1)
+id: 1; caller: []; line: 26; classic: false; kind: Sleek_Entail(1); hec_num: 5; evars: [p_77,l_78,S_79]; infer_vars: []; c_heap: emp
+ checkentail self::bseg<p,l2,S>@M&l<=l2&{FLOW,(21,22)=__norm}[]
+ |-  (exists p,l,S: self::bseg<p,l,S>@M&{FLOW,(21,22)=__norm})[]. 
+res:  2[
+   emp&l<=l2&{FLOW,(21,22)=__norm}[];
+   emp&l<=l2&{FLOW,(21,22)=__norm}[]
+   ]
+
+ ----------- matching directly (no using lemma) ---> FAIL
+id: 7; caller: []; line: 26; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [p_77,l_78,S_79]; infer_vars: []; c_heap: self::bseg<p,l2,S>@M
+ checkentail emp&l<=l2&{FLOW,(21,22)=__norm}[]
+ |-  emp&l=l2&{FLOW,(21,22)=__norm}[]. 
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  l<=l2 |-  l=l2. LOCS:[25;26] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+
+ ----------- apply lemma (2)
+id: 8; caller: []; line: 26; classic: false; kind: Sleek_Entail(1); hec_num: 4; evars: [p_77,l_78,S_79]; infer_vars: []; c_heap: self::bseg<p,l2,S>@M
+ checkentail emp&l<=l2&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l1,S1: emp&l1<=l2 & S=S1 & l=l1 & p=p1&{FLOW,(21,22)=__norm})[]. 
+res:  1[
+   emp&l<=l2&{FLOW,(21,22)=__norm}[]
+   ]
+*/
