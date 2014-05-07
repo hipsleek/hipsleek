@@ -219,6 +219,12 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_s
 Error3(s) detected at main 
 
 ===============================================
+# handle #include <stdlib.h>??
+
+  - collect all functions included from stdlib.h
+       e.g. rand(), free?
+  - ??
+
 ===============================================
 ===============================================
 ===============================================

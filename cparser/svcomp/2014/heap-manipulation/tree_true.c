@@ -1,10 +1,17 @@
-#include <stdlib.h>
+//#include <stdlib.h>
 
 /* Builds a tree with parent links and
  * checks whether the values are still correct.
  */
 
 //extern int __VERIFIER_nondet_int(void);
+
+int rand()
+/*@
+  requires true ensures true;
+*/
+  ;
+
 
 int __VERIFIER_nondet_int(void) {
     return rand() / 1000;
@@ -28,7 +35,7 @@ struct node {
     int             value;
 };
 
-struct node * free(struct node* x)
+struct node * free1(struct node* x)
 /*@
   requires x::node<_,_,_,_>
   ensures res = null;
@@ -36,6 +43,12 @@ struct node * free(struct node* x)
 {
   return NULL;
 }
+
+struct node* abort()
+/*@
+  requires true ensures true & flow __Error;
+*/
+  ;
 
 static void inspect(struct node *node)
 {
@@ -89,25 +102,25 @@ void free_tree(struct node *node) {
     }
     while (node != NULL) {
         if (node->left)
-            free(node->left);
+            free1(node->left);
         if (node->right)
-            free(node->right);
+            free1(node->right);
         last = node;
         node = node->parent;
     }
-    free(last);
+    free1(last);
 }
 
 int main()
 {
-    struct node *data = create_tree();
+    struct node *d = create_tree();
 
-    if (!data)
-        return EXIT_SUCCESS;
+    if (!d)
+      return 1;//EXIT_SUCCESS;
 
-    inspect(data);
+    inspect(d);
 
-    free_tree(data);
+    free_tree(d);
 
-    return EXIT_SUCCESS;
+    return 1;//EXIT_SUCCESS;
 }
