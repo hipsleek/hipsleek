@@ -1,0 +1,7 @@
+
+data node {
+     int val;
+     node next;
+}.
+
+checkentail x::node<_,_> |- exists y:  y::node<_,_>.
