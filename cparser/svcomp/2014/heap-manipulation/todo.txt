@@ -1,6 +1,6 @@
 ===============================================
 
-- bubble_sort_linux_false.c:
+#bubble_sort_linux_false.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/bubble_sort_linux_false.c" by cil parser...
@@ -30,6 +30,7 @@ Message: translate_exp: couldn't cast type 1: list_head to int_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: list_head to int_star")
 Error3(s) detected at main 
 
+===============================================
 - dll_of_dll_false.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_false.c"
@@ -51,6 +52,7 @@ Message: TRUNG TODO: handle TFun later! Maybe it's function pointer case?
 Exception occurred: Failure("TRUNG TODO: handle TFun later! Maybe it's function pointer case?")
 Error3(s) detected at main 
 
+===============================================
 - dll_of_dll_true.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/dll_of_dll_true.c"
@@ -71,7 +73,7 @@ Message: TRUNG TODO: handle TFun later! Maybe it's function pointer case?
 
 Exception occurred: Failure("TRUNG TODO: handle TFun later! Maybe it's function pointer case?")
 Error3(s) detected at main 
-
+===============================================
 - merge_sort_false.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_false.c"
@@ -90,7 +92,7 @@ Message: translate_exp: couldn't cast type 1: list to void_star
 
 Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_star")
 Error3(s) detected at main 
-
+===============================================
 - merge_sort_true.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_true.c"
@@ -110,6 +112,7 @@ Message: translate_exp: couldn't cast type 1: list to void_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_star")
 Error3(s) detected at main 
 
+===============================================
 - sll_to_dll_rev_false.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c"
@@ -141,6 +144,7 @@ Message: translate_exp: couldn't cast type 1: node to void_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
 Error3(s) detected at main 
 
+===============================================
 - sll_to_dll_rev_true.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c"
@@ -172,6 +176,7 @@ Message: translate_exp: couldn't cast type 1: node to void_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
 Error3(s) detected at main 
 
+===============================================
 - tree_false.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_false.c"
@@ -191,6 +196,7 @@ Message: translate_exp: couldn't cast type 1: node to void_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_star")
 Error3(s) detected at main 
 
+===============================================
 - tree_true.c:
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_true.c"

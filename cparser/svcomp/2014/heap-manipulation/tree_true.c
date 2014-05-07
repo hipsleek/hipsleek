@@ -11,7 +11,6 @@ int __VERIFIER_nondet_int(void) {
 }
 
 
-
 static void fail(void) {
 ERROR:
     goto ERROR;
@@ -28,6 +27,15 @@ struct node {
     struct node     *parent;
     int             value;
 };
+
+struct node * free(struct node* x)
+/*@
+  requires x::node<_,_,_,_>
+  ensures res = null;
+*/
+{
+  return NULL;
+}
 
 static void inspect(struct node *node)
 {
