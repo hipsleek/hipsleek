@@ -546,7 +546,7 @@ let rec string_of_imm_helper imm =
     | CP.ConstAnn(Accs) -> "@A"
     | CP.ConstAnn(Imm) -> "@I"
     | CP.ConstAnn(Lend) -> "@L"
-    | CP.ConstAnn(Mutable) -> "@M"
+    | CP.ConstAnn(Mutable) -> "" (* "@M" *)
     | CP.TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
     | CP.TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
     | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)

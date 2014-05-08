@@ -1620,7 +1620,8 @@ $output_file = "log";
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", "Valid.Valid", ""],
         # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
-        ["lemmas/dseg-new.slk", " --elp ", "Valid.Valid.Valid.", ""],
+        ["lemmas/dseg-new.slk", " --elp ", "Valid.Fail.Valid.", ""],
+        # 2nd lemma requires another rlseg<..> <--> lseg to prove..
         ["lemmas/dseg1.slk", " --elp ", "Valid.Fail.", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
