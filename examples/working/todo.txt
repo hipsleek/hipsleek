@@ -430,7 +430,60 @@ sleek --eps (--dis-imm)
 Total number of errors: 7 in files:
   baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L1#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Valid}).
 ====================================================================
+        ["lemmas/lseg_case.slk", " --elp  --lem-en-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+
+
+lemma_safe "V1" self::lseg<n, p> & n = a + b & a,b >=0 ->  self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_safe "V2" self::lseg<n, p> &  n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_safe "V3" self::lseg<n, p> &  n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_safe "V4" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 -> self::lseg<n, p>.
+
+lemma_safe "V5" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <- self::lseg<n, p>.
+/* 
+  forall a,b. self::lseg<n, p> & n = a + b & a,b >=0 
+   -->  self::lseg<a, r> * r::lseg<b, p>
+*/
+
+lemma_safe "V6" self::lseg<a, r> * r::lseg<b, p> & n = a + b & a,b >=0 <-> self::lseg<n, p>.
+
+Entailing lemma V1: Valid.
+
+Valid Lemmas : [V1:==>] added to lemma store.
+
+Entailing lemma V2: Valid.
+
+Valid Lemmas : [V2:<==] added to lemma store.
+
+!!! 
+Entailing lemma V3: Fail. Details below:
+	 "==>" implication: : Fail. (may) cause: OrR[residue is forbidden.(2),valid]
+	 "<==" implication: : Valid.
+
+Failed to prove V3:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+// fail
+
+Entailing lemma V4: Valid.
+
+Valid Lemmas : [V4:==>] added to lemma store.
+
+!!! WARNING : changing lemma from <- to -> 
+Entailing lemma V5: Valid.
+
+Valid Lemmas : [V5:<==] added to lemma store.
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+Entailing lemma V6: Valid.
+
 ====================================================================
+Removing --lem-en-rhs-unfold cases ..
+
+Total number of errors: 3 in files:
+  lemmas/rlseg.slk({L3#Valid}) lemmas/lseg_case.slk({L3#Valid}) lemmas/dseg-new.slk({L2#Valid}).
+
 ====================================================================
 ====================================================================
 ====================================================================
