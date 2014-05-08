@@ -35,7 +35,7 @@ struct node {
     int             value;
 };
 
-struct node * free1(struct node* x)
+struct node * free(struct node* x)
 /*@
   requires x::node<_,_,_,_>
   ensures res = null;
@@ -47,6 +47,13 @@ struct node * free1(struct node* x)
 struct node* abort()
 /*@
   requires true ensures true & flow __Error;
+*/
+  ;
+
+struct node* malloc(int n)
+/*@
+  requires true
+  ensures res::node<_,_,_,_>;
 */
   ;
 
@@ -102,13 +109,13 @@ void free_tree(struct node *node) {
     }
     while (node != NULL) {
         if (node->left)
-            free1(node->left);
+            free(node->left);
         if (node->right)
-            free1(node->right);
+            free(node->right);
         last = node;
         node = node->parent;
     }
-    free1(last);
+    free(last);
 }
 
 int main()

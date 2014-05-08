@@ -226,6 +226,22 @@ Error3(s) detected at main
   - ??
 
 ===============================================
+
+- sll_to_dll_rev_true.c:
+
+static void chain_node(struct node **ppnode)
+{
+        ...
+}
+
+static struct node* create_sll(const struct node **pp1, const struct node **pp2)
+{
+
+        chain_node(&list);
+}
+
+duplicated top-level name(s): node_star
+
 ===============================================
 ===============================================
 ===============================================

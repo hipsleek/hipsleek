@@ -1,6 +1,16 @@
-#include <stdlib.h>
+//#include <stdlib.h>
+
+int rand()
+/*@
+  requires true ensures true;
+*/
+  ;
 
 extern int __VERIFIER_nondet_int(void);
+
+int __VERIFIER_nondet_int(void) {
+    return rand() / 1000;
+}
 
 static void fail(void) {
 ERROR:
@@ -20,6 +30,28 @@ struct node {
     struct node *next;
     struct node *prev;
 };
+
+struct node * free(struct node* x)
+/*@
+  requires x::node<_,_,_,_>
+  ensures res = null;
+*/
+{
+  return NULL;
+}
+
+struct node* abort()
+/*@
+  requires true ensures true & flow __Error;
+*/
+  ;
+
+struct node* malloc(int n)
+/*@
+  requires true
+  ensures res::node<_,_,_,_>;
+*/
+  ;
 
 static struct node* alloc_node(void)
 {

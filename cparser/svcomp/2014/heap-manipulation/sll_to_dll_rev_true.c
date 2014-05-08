@@ -1,6 +1,16 @@
-#include <stdlib.h>
+//#include <stdlib.h>
+
+int rand()
+/*@
+  requires true ensures true;
+*/
+  ;
 
 extern int __VERIFIER_nondet_int(void);
+
+int __VERIFIER_nondet_int(void) {
+    return rand() / 1000;
+}
 
 static void fail(void) {
 ERROR:
@@ -21,6 +31,28 @@ struct node {
     struct node *prev;
 };
 
+struct node * free(struct node* x)
+/*@
+  requires x::node<_,_>
+  ensures res = null;
+*/
+{
+  return NULL;
+}
+
+struct node* abort()
+/*@
+  requires true ensures true & flow __Error;
+*/
+  ;
+
+struct node* malloc(int n)
+/*@
+  requires true
+  ensures res::node<_,_>;
+*/
+  ;
+
 static struct node* alloc_node(void)
 {
     struct node *ptr = malloc(sizeof *ptr);
@@ -34,9 +66,9 @@ static struct node* alloc_node(void)
 
 static void chain_node(struct node **ppnode)
 {
-    struct node *node = alloc_node();
+  /*struct node *node = alloc_node();
     node->next = *ppnode;
-    *ppnode = node;
+    *ppnode = node;*/
 }
 
 static struct node* create_sll(const struct node **pp1, const struct node **pp2)
@@ -44,7 +76,7 @@ static struct node* create_sll(const struct node **pp1, const struct node **pp2)
     struct node *list = NULL;
 
     do
-        chain_node(&list);
+      chain_node(&list);
     while (__VERIFIER_nondet_int());
 
     *pp2 = list;
@@ -57,7 +89,8 @@ static struct node* create_sll(const struct node **pp1, const struct node **pp2)
 
     do
         chain_node(&list);
-    while (__VERIFIER_nondet_int());
+        while (__VERIFIER_nondet_int());
+
 
     return list;
 }
@@ -111,7 +144,8 @@ int main()
     const struct node *p1, *p2;
 
     struct node *list = create_sll(&p1, &p2);
-    ___sl_plot(NULL, &list, &p1, &p2);
+
+    /*___sl_plot(NULL, &list, &p1, &p2);
     check_seq_next(p1, p2);
     ___SL_ASSERT(!p1->prev);
     ___SL_ASSERT(!p2->prev);
@@ -135,6 +169,6 @@ int main()
         free(list);
         list = prev;
     }
-
+    */
     return 0;
 }
