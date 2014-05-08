@@ -11,7 +11,7 @@ unionfind<n> ==
   self::lseg<n - 1, p> * p::UnionFind<p>
   inv n > 0;
 
-lemma_safe self::lseg<n, r> <- self::lseg<m, q> * q::UnionFind<r> & n=m+1;
+lemma_safe self::lseg<n, r> <- self::lseg<m, q> * q::UnionFind<r> & n = m + 1;
 
 void setParent(UnionFind x, UnionFind p)
   requires x::UnionFind<xp> * p::UnionFind<pp> & Term
