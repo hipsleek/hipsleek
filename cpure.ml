@@ -2057,7 +2057,16 @@ and mkStupid_Or_x f1 f2 lbl pos=
 	 | _ -> Or (f1, f2, lbl ,pos)
 
 and mkStupid_Or f1 f2 lbl pos = Debug.no_2 "pure_mkStupidOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
+
+and mkImplication f1 f2 lbl pos =
+  let not_f1 = mkNot f1 lbl pos in
+  mkOr not_f1 f2 lbl pos
   
+and mkEquivalence f1 f2 lbl pos =
+  let impli1 = mkImplication f1 f2 lbl pos in
+  let impli2 = mkImplication f2 f1 lbl pos in
+  mkAnd impli1 impli2 pos
+
 and mkGtExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->

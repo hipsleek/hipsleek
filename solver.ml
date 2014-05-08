@@ -8178,8 +8178,6 @@ and hec_stack = new Gen.stack_pr (string_of_int) (==)
 (* hec_num denotes particular id of caller *)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  (* Trung: TODO remove it later *)
-  let _ = Solver1.prove_entailment conseq conseq in
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   let hec a b c =
     let (ante,consumed_heap,evars,infer_vars) =
