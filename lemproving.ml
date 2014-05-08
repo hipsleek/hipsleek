@@ -214,7 +214,7 @@ let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : C
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = Debug.ninfo_hprint in
   let is_singl sv0 svl=
     match svl with
       |[sv] -> CP.eq_spec_var sv0 sv
@@ -277,7 +277,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (nf, ss@ss1)
       ) (lhs, []) lhs_unfold_ptrs
   ) in
-  let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in
+  (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let _ = pr_debug (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in

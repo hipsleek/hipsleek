@@ -1470,16 +1470,16 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 	      C.prog_barrier_decls = bdecls;
 	      C.prog_logical_vars = log_vars;
 	      C.prog_rel_decls = crels; (* An Hoa *)
-          C.prog_hp_decls = chps;
-          C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
+              C.prog_hp_decls = chps;
+              C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
 	      C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 	      (*C.old_proc_decls = cprocs;*)
 	      C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
 	      (*C.prog_left_coercions = l2r_coers;*)
 	      (*C.prog_right_coercions = r2l_coers;*)} in
-	  let cprog1 = { cprog with			
+	  let cprog1 = { cprog with
 	      (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
-          C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
+              C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
 	      C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
       (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
        ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
@@ -2968,6 +2968,18 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
+  (***********INTERNAL************)
+  let trans_head new_head fnames quant n_tl=
+    let h = List.map (fun c-> (c,Unprimed)) fnames in
+    let p = List.map (fun c-> (c,Primed)) fnames in
+    let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false 
+      false (*allow_post_vars*) true [] in
+    let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
+      true (*check_pre*) in
+    let c_head_norm = CF.struc_to_formula cs_head_norm in
+    (n_tl,c_head_norm)
+  in
+  (*******************************)
   let i_lhs = coer.I.coercion_head in
   let lhs_vars = IF.all_fv i_lhs in
   let _ = Debug.tinfo_hprint (add_str "lhs_vars" (pr_list string_of_primed_ident)) lhs_vars no_pos in
@@ -3080,19 +3092,26 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
-  let head_pure = if  coer_type = I.Left then c_guard0 else (IP.mkTrue no_pos) in
+  let head_pure = if  coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
   let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure  c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
-  let h = List.map (fun c-> (c,Unprimed)) fnames in
-  let p = List.map (fun c-> (c,Primed)) fnames in
-  let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false 
-    false (*allow_post_vars*) true [] in
   let quant = true in
-  let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
-    true (*check_pre*) in
-  let c_head_norm = CF.struc_to_formula cs_head_norm in
+  (*moved to internal trans_head*)
+  (* let h = List.map (fun c-> (c,Unprimed)) fnames in *)
+  (* let p = List.map (fun c-> (c,Primed)) fnames in *)
+  (* let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false  *)
+  (*   false (\*allow_post_vars*\) true [] in *)
+  (* let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (\* fv_names  *\) fnames  wf n_tl false  *)
+  (*   true (\*check_pre*\) in *)
+  (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
+  (**********moved END*************)
+  let (n_tl,c_head_norm) = trans_head new_head fnames quant n_tl in
+  let c_head_norm_rlem = if coer_type = I.Equiv then
+    let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos)  c_fl0 [] no_pos in
+    snd (trans_head new_head (Gen.BList.remove_dups_eq (=)  rhs_fnames) quant n_tl)
+  else c_head_norm in
   (* free vars in RHS but not LHS *)
   let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in
   let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
@@ -3144,6 +3163,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
+                let _ = Debug.tinfo_hprint (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
                 (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
                 (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
                 (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
@@ -3152,6 +3172,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_t c_fl c_a no_pos;
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
+                    C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
                     C.coercion_body_norm = new_body_norm;
                     C.coercion_univ_vars = [];} in
         match coer_type with
@@ -3161,12 +3182,14 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
                 in
                 ([ c_coer ], [])
-          | I.Equiv -> 
-                let c_coer = {c_coer with 
-                    C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true; 
+          | I.Equiv ->
+                let c_coer = {c_coer with
+                    C.coercion_name = c_coer.C.coercion_name ^ "_left";
+                    C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head true;
                     C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body false}
                 in
-                let c_coer1 = {c_coer with 
+                let c_coer1 = {c_coer with
+                    C.coercion_name = c_coer.C.coercion_name ^ "_right";
                     C.coercion_head = CF.set_lhs_case c_coer.C.coercion_head false;
                     C.coercion_body = CF.set_lhs_case c_coer.C.coercion_body true}
                 in
