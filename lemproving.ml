@@ -277,7 +277,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (nf, ss@ss1)
       ) (lhs, []) lhs_unfold_ptrs
   ) in
-  (* let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
+  let _ = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in
   let _ = pr_debug (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
   (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
@@ -308,7 +308,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
   in
-  (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  (* let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in *)
   let lhs = CF.add_original lhs true in
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_struc_original true rhs in
