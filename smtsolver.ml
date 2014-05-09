@@ -490,7 +490,7 @@ let prover_process = ref {
 let z3_call_count: int ref = ref 0
 let is_z3_running = ref false
 let smtsolver_name = ref ("z3": string)
-let smtsolver_path = "z3" (* "/home/chanhle/tools/z3/z3-4.3.2" *)
+let smtsolver_path = "z3" (* "/home/chanhle/tools/z3-4.3.2/z3" *)
 
 (***********)
 let test_number = ref 0
@@ -553,7 +553,7 @@ and start() =
       if !smtsolver_name = "z3-2.19" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
       else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path;"-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
