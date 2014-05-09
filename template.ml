@@ -223,33 +223,34 @@ let gen_slk_file prog =
 let solve_templ_assume _ =
   let templ_assumes = List.rev (templ_assume_scc_stk # get_stk) in
   let _ = templ_assume_scc_stk # reset in
-
-  let constrs, templ_unks = List.fold_left (fun (ac, au) ta ->
-    let constr = gen_templ_constr ta in
-    (ac @ constr), (au @ ta.ass_unks)) ([], []) templ_assumes in
-  let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
-
-  let _ = 
-    if !gen_templ_slk then gen_slk_infer_templ_scc ()
-    else ()
-  in
-    
-  (* Printing template assumptions *)
-  let _ = 
-    if !print_relassume then
-      if templ_assumes = [] then ()
-      else begin
-        print_endline "**** TEMPLATE ASSUMPTION(S) ****";
-        print_endline (pr_list (fun ta -> 
-          (Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)) ^ "\n") 
-        templ_assumes)
-      end
-    else ()
-  in
-
-  let unks = remove_dups (List.concat (List.map fv constrs)) in
-  let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
-  templ_assumes, templ_unks, res
+  if templ_assumes = [] then [], [], Unknown
+  else
+    let constrs, templ_unks = List.fold_left (fun (ac, au) ta ->
+      let constr = gen_templ_constr ta in
+      (ac @ constr), (au @ ta.ass_unks)) ([], []) templ_assumes in
+    let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in
+  
+    let _ = 
+      if !gen_templ_slk then gen_slk_infer_templ_scc ()
+      else ()
+    in
+      
+    (* Printing template assumptions *)
+    let _ = 
+      if !print_relassume then
+        if templ_assumes = [] then ()
+        else begin
+          print_endline "**** TEMPLATE ASSUMPTION(S) ****";
+          print_endline (pr_list (fun ta -> 
+            (Cprinter.string_of_templ_assume (ta.ass_ante, ta.ass_cons)) ^ "\n") 
+          templ_assumes)
+        end
+      else ()
+    in
+  
+    let unks = remove_dups (List.concat (List.map fv constrs)) in
+    let res = get_model (List.for_all is_linear_formula constrs) templ_unks unks constrs in
+    templ_assumes, templ_unks, res
   
 let collect_and_solve_templ_assumes_common prog (inf_templs: ident list) =
   let templ_assumes, templ_unks, res = solve_templ_assume () in
