@@ -3116,7 +3116,7 @@ let pr_list_context (ctx:list_context) =
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
       fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " "; pr_context_list sc;
-      fmt_string (string_of_numbered_list_formula_trace (CF.list_formula_trace_of_list_context ctx));
+      fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx));
       fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
