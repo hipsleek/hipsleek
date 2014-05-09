@@ -8414,12 +8414,12 @@ and steps = string list
   }
 
   and fail_type =
-        | Basic_Reason of (fail_context * fail_explaining)
-        | Trivial_Reason of fail_explaining
+        | Basic_Reason of (fail_context * fail_explaining * formula_trace)
+        | Trivial_Reason of (fail_explaining * formula_trace)
         | Or_Reason of (fail_type * fail_type)
         | And_Reason of (fail_type * fail_type)
         | Union_Reason of (fail_type * fail_type)
-        | ContinuationErr of fail_context
+        | ContinuationErr of (fail_context * formula_trace)
         | Or_Continuation of (fail_type * fail_type)
 
 (* Fail | List of Successes *)
@@ -8645,12 +8645,12 @@ let rec set_must_error_from_one_ctx ctx msg ft=
             let instance_ft=
               (
                   match ft with
-                    | Basic_Reason (fc, fe) ->
+                    | Basic_Reason (fc, fe, ft) ->
                         let instance_fc = {fc with fc_current_lhs = es;
                             fc_message = msg;
                             fc_prior_steps = es.es_prior_steps
                                           }
-                        in Basic_Reason (instance_fc, fe)
+                        in Basic_Reason (instance_fc, fe, ft)
                     | _ -> report_error no_pos "Cformula.set_must_error_from_one_ctx: should be basic reason here"
               )
             in
@@ -8697,10 +8697,10 @@ let comb_must m1 m2 = "["^m1^","^m2^"]"
 let add_error_message_fail_type (msg:string) (f:fail_type) =
   let rec helper f =
   match f with
-    | Basic_Reason (fc,fe) ->
+    | Basic_Reason (fc,fe,ft) ->
         let new_fc_message = msg ^ "\n" ^ fc.fc_message in
         let nfc = {fc with fc_message = new_fc_message} in
-        Basic_Reason (nfc,fe)
+        Basic_Reason (nfc,fe,ft)
     | _ -> f
   in helper f
 
@@ -8723,7 +8723,7 @@ let is_bot_failure_fe (f:fail_explaining) =
 
 let rec is_must_failure_ft (f:fail_type) =
   match f with
-    | Basic_Reason (_,fe) -> is_must_failure_fe fe
+    | Basic_Reason (_,fe,_) -> is_must_failure_fe fe
     | Or_Reason (f1,f2) -> (((is_must_failure_ft f1) && (is_must_failure_ft f2)) ||
                                    ((is_bot_failure_ft f1) && (is_must_failure_ft f2)) ||
                                    ((is_must_failure_ft f1) && (is_bot_failure_ft f2)) )
@@ -8733,7 +8733,7 @@ let rec is_must_failure_ft (f:fail_type) =
 
 and is_bot_failure_ft (f:fail_type) =
   match f with
-    | Basic_Reason (_,fe) -> is_bot_failure_fe fe
+    | Basic_Reason (_,fe,_) -> is_bot_failure_fe fe
     | Or_Reason (f1,f2) -> (is_bot_failure_ft f1) && (is_bot_failure_ft f2)
     | And_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
     | Union_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
@@ -8905,7 +8905,7 @@ let gen_ror (m1,n1,e1) (m2,n2,e2)=
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
   let rec helper ft = 
   match ft with
-    | Basic_Reason (fc,fe) ->
+    | Basic_Reason (fc,fe,ft) ->
         (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
         let f = get_failure_fe fe in
         if (is_must_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
@@ -8916,7 +8916,7 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
     | ContinuationErr _ -> (Failure_May "Continuation_Err", "Continuation", None)
     | Or_Continuation (f1,f2) -> gen_lor (helper f1) (helper f2)
     (* report_error no_pos "get_must_failure : or continuation encountered" *)
-    | Trivial_Reason fe -> (fe.fe_kind, fe.fe_name, None)
+    | Trivial_Reason (fe,ft) -> (fe.fe_kind, fe.fe_name, None)
   in
   let (f, _, oes) = helper ft in (f, oes)
 
@@ -8980,7 +8980,7 @@ let get_may_failure (f:list_context) =
 (* returns Some es if it is a must failure *)
 let rec get_must_es_from_ft ft = 
   match ft with
-    | Basic_Reason (fc,fe) -> 
+    | Basic_Reason (fc,fe,ft) -> 
           if is_must_failure_fe fe then Some fc.fc_current_lhs
           else None
     | Or_Reason (f1,f2) -> 
@@ -9573,7 +9573,8 @@ let mk_not_a_failure =
   }, {
       fe_kind = Failure_Valid;
       fe_name = "" ;fe_locs=[]
-  }
+  },
+  []
 )
 
 let invert ls = 
@@ -9586,7 +9587,7 @@ let invert ls =
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
 		        fc_failure_pts =  []} in
             (Basic_Reason (fc_template,
-                 mk_failure_must "INCONSISTENCY : expected failure but success instead" "")) in
+                 mk_failure_must "INCONSISTENCY : expected failure but success instead" "", es.es_trace)) in
   let goo es ff = formula_subst_flow es.es_formula ff in
   let errmsg = "Expecting Failure but Success instead" in
   match ls with
@@ -9624,7 +9625,7 @@ let invert_ctx_branch_must_fail (pt, ctx):(branch_fail)=
 		fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
 		fc_failure_pts =  []} in
     (Basic_Reason (fc_template,
-                   mk_failure_must "INCONSISTENCY : expected failure but success instead" "")) in
+                   mk_failure_must "INCONSISTENCY : expected failure but success instead" "", es.es_trace)) in
   match ctx with
     | Ctx es -> (pt, foo es)
     | _ -> report_error no_pos "not sure how to invert_outcome"
@@ -9731,6 +9732,7 @@ let mkFailContext msg estate conseq pid pos = {
   fc_failure_pts = (match pid with | Some s-> [s] | _ -> []);
   fc_current_conseq = conseq;
 }   
+
 let mkFailCtx_in (ft:fail_type) = FailCtx ft
 
 (*simple concurrency*)
@@ -9745,13 +9747,13 @@ let mkFailCtx_simple msg estate conseq pos =
   in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
-  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex))
+  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace))
 
 let mkFailCtx_vperm msg rhs_b estate conseq pos = 
   let s = "variable permission mismatch "^msg in
   let new_estate = {estate  with es_formula = substitute_flow_into_f
           !top_flow_int estate.es_formula} in
-  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error))
+  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace))
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
@@ -9907,12 +9909,12 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 let list_context_union_x c1 c2 = 
   let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
-  | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
+  | FailCtx t1, FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
-      then FailCtx(t1)
+      then FailCtx t1
       else
 	if ((is_cont t2) && not(is_cont t1))
-	then FailCtx(t2)
+	then FailCtx t2
 	else
 	  if (is_cont t1) && (is_cont t2) then
 	    FailCtx (Or_Continuation (t1,t2))  
@@ -9941,7 +9943,7 @@ and fold_context_left_x c_l = union_context_left c_l
  (*list_context or*)
 and get_explaining t =
   match t with
-  | Basic_Reason (f, fe) -> Some fe
+  | Basic_Reason (f, fe, _) -> Some fe
   | Trivial_Reason _ -> None
   | Or_Reason _ -> None
   | Union_Reason _ -> None
@@ -10442,7 +10444,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
 		        fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
 		        fc_failure_pts =  []} in
             let ft_template = (Basic_Reason (fc_template,
-                                             mk_failure_must "INCONSISTENCY : expected failure but success instead" "")) in
+                                             mk_failure_must "INCONSISTENCY : expected failure but success instead" "", [])) in
             let new_ctx_lst = set_must_error_from_ctx ctx_lst "INCONSISTENCY : expected failure but success instead"
               ft_template in
             SuccCtx new_ctx_lst
@@ -11650,8 +11652,8 @@ let trans_context (c: context) (arg: 'a)
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason _ -> c
-    | Basic_Reason (br,fe) -> Basic_Reason ((f br), fe)
-    | ContinuationErr br -> ContinuationErr (f br)
+    | Basic_Reason (br,fe,ft) -> Basic_Reason ((f br), fe, ft)
+    | ContinuationErr (br,ft) -> ContinuationErr (f br, ft)
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Union_Reason (ft1,ft2) -> Union_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
