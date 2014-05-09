@@ -2637,8 +2637,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	else () in*)
       r
     else not (TP.is_sat_mix_sub_no npf sat_subno true true) in
-  
-  match f with
+   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;

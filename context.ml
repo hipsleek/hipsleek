@@ -1495,9 +1495,19 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
             | HRel _, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
-    | WArg -> 
-          let _ = pr_debug "WArg  analysis here!\n" in  
-          (1,M_Nothing_to_do (string_of_match_res m_res)) 
+    | WArg -> begin
+        (***************************************************)
+        let _ = pr_debug "WArg  analysis here!\n" in
+        let _ = Debug.binfo_hprint (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
+        (* let view_decls = prog.prog_view_decls in *)
+        (* match lhs_node,rhs_node with *)
+        (*   | ViewNode vl, DataNode dr -> *)
+        (* (1,M_Nothing_to_do (string_of_match_res m_res)) *)
+        (*   | _ -> (1,M_Nothing_to_do (string_of_match_res m_res)) *)
+                (***************************************************)
+                (***************************************************)
+                (1,M_Nothing_to_do (string_of_match_res m_res))
+      end
   in
 
   let r1 = match m_res.match_res_type with 

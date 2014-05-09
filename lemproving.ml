@@ -245,9 +245,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           let rhs_vns = CF.get_views_struc new_rhs in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
             let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
-            (* if List.length (CF.get_dnodes lhs) < List.length (CF.get_dnodes_struc new_rhs) then [],[] else *)
             [sv_self],[]
-          else [sv_self],[sv_self]
+          else
+            (* if List.length (CF.get_dnodes lhs) = 0 &&  List.length (CF.get_dnodes_struc new_rhs) =0 then [],[] else *)
+              [sv_self],[sv_self]
         else
           [sv_self],[]
       else begin
