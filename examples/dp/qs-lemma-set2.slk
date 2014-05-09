@@ -1,0 +1,96 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,u,S> ==           // ~~ in GRASShopper: blseg<x,y,lb,ub>
+  self = y & S={} & l<=u //& lb=\inf & ub=-\inf
+or self::node<val,next> * next::bseg<y,l,u,S1>
+       & self != y & S=union({self},S1) & l<=val & val<=u
+  inv l<=u & (y notin S). //self=y | self!=y & lb<=ub.
+
+
+lemma_unsafe self::bseg<y,l,u,S> 
+  <- self::bseg<p,l,u,S1> * p::bseg<y,l,u,S2> & S=union(S1,S2)
+     & y notin S1.
+
+lemma_unsafe self::bseg<p,l,u,S> 
+  <- self::bseg<p,l2,u2,S> & l<=l2 & u2<=u .
+
+  /*
+//(1)
+checkentail 
+  self::bseg<p,l2,u2,S> & l<=l2 & u2<=u 
+|- self::bseg<p,l,u,S> .
+
+
+//(2)
+checkentail 
+  //self::bseg<p,l2,u2,S> & 
+  l<=l2 & u2<=u 
+  & self=p & S={} & l2<=u2
+|- self::bseg<p,l,u,S> .
+  */
+
+  //(3)
+checkentail 
+   self::node<val,next> * next::bseg<p,l2,u2,S1>
+       & self != p & S=union({self},S1) & l2<=val & val<=u2
+  //self::bseg<p,l2,u2,S> 
+      & l<=l2 & u2<=u 
+|- self::bseg<p,l,u,S> .
+
+  //(4)
+checkentail 
+   self::node<val,next> * next::bseg<p,l2,u2,S1>
+       & self != p & S=union({self},S1) & l2<=val & val<=u2
+  //self::bseg<p,l2,u2,S> 
+      & l<=l2 & u2<=u 
+|- 
+   self::node<val2,n2> * n2::bseg<p,l,u,S1>
+       & self != p & S=union({self},S1) & l<=val2 & val2<=u
+  //self::bseg<p,l,u,S> 
+.
+
+
+/*
+why cannot prove 2nd lemma 
+
+Entailing lemma lem_13: Fail. (may) cause: UnionR[AndR[ self_lem_13!=null & exists(S_504:S_504=union({self_lem_13},S1_498)) & 
+val_496<=u2_500 & l_494<=val_496 & p!=self_lem_13 & 
+exists(p_501:p_501!=self_lem_13 & p=p_501) & (((l_494<=u2_500 & 0<=u2_500 & 
+next_497!=null & next_497!=p & p <notin> S1_48  & S1_498=union({next_497},
+S1_48)) | (next_497=p & l_494<=u2_500 & S1_498={}))) & 
+exists(l_502:l_502<=val_496 & l_494=l_502) & exists(u_503:val_496<=u_503 & 
+u2_500=u_503) & u2_500<=u & l<=l_494 |-  l=l_494. LOCS:[11;10;1;8;0;20;9];  self_lem_13!=null & exists(S_504:S_504=union({self_lem_13},S1_498)) & 
+val_496<=u_495 & l2_499<=val_496 & p!=self_lem_13 & 
+exists(p_501:p_501!=self_lem_13 & p=p_501) & (((l2_499<=u_495 & 0<=u_495 & 
+next_497!=null & next_497!=p & p <notin> S1_48  & S1_498=union({next_497},
+S1_48)) | (next_497=p & l2_499<=u_495 & S1_498={}))) & 
+exists(l_502:l_502<=val_496 & l2_499=l_502) & exists(u_503:val_496<=u_503 & 
+u_495=u_503) & u_495<=u & l<=l2_499 |-  u=u_495. LOCS:[11;10;1;8;0;20;9] (may-bug).], 
+
+u2_500<=u & l<=l2_499 & val_496<=u2_500 & l2_499<=val_496 & 
+exists(u_541:u2_500<=u_541) & exists(l_540:l_540<=l2_499) & 
+exists(l_502:l_502<=val_496 & l_502<=l2_499) & exists(u_503:val_496<=u_503 & 
+u2_500<=u_503) & 
+(((l2_499<=u2_500 & 0<=u2_500 & next_497!=null & 
+next_497!=p & p <notin> S1_48  & S1_498=union({next_497},S1_48)) | 
+(next_497=p & l2_499<=u2_500 & S1_498={})))
+& self_lem_13!=null & 
+exists(S_504:S_504=union({self_lem_13},S1_507)) & 
+exists(p_501:p_501!=self_lem_13) & 
+S=union({self_lem_13},S1_498) & 
+p!=self_lem_13 |-  S=union({self_lem_13},S1_507). LOCS:[20;11;1;8;0;9;10] (may-bug)]
+
+*/
+
+
+checkentail emp&n2=next & val=val2 & u2<=u & l<=l2 & val<=u2 & l2<=val & S=union({self},
+S1) & p!=self
+ |-  emp
+    //&u=u2 
+    & l=l2 
+    & val2<=u & l<=val2 
+    & S=union({self},S1) & p!=self.

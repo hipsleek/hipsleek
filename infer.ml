@@ -254,8 +254,8 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
 let collect_hp_rel_fail_type ft0=
   let rec helper ft=
     match ft with
-      | CF.Basic_Reason (fc,_)
-      | CF.ContinuationErr fc -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel
+      | CF.Basic_Reason (fc,_,_)
+      | CF.ContinuationErr (fc,_) -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel
       | CF.Or_Reason (ft1, ft2)
       | CF.And_Reason (ft1, ft2)
       | CF.Union_Reason (ft1, ft2)

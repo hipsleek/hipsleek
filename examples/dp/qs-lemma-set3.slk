@@ -1,0 +1,29 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,u> ==           // ~~ in GRASShopper: blseg<x,y,lb,ub>
+  self = y &  l<=u //& lb=\inf & ub=-\inf
+or self::node<val,next> * next::bseg<y,l,u>
+       & self != y & l<=val & val<=u
+  inv l<=u . //self=y | self!=y & lb<=ub.
+
+lemma_safe self::bseg<p,l,u> 
+  <- self::bseg<p,l2,u2> & l<=l2 & u2<=u .
+
+/*
+below seems unsound
+
+id: 19; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 4; evars: [p_110,l_111,u_112]; infer_vars: []; c_heap: next_107::bseg<y_103,l_104,u_105>@M * self_lem_12::node<val_106,next_107>@M
+ checkentail emp&exists(p_110:p_110!=self) & exists(u_112:val<=u_112 & u1<=u_112) & 
+exists(l_111:l_111<=val & l_111<=l1) & exists(l_142:l_142<=l1) & 
+exists(u_143:u1<=u_143) & next=next1 & val=val1 & u2<=u & l<=l2 & u1=u2 & 
+l1=l2 & p=y & val1<=u2 & l2<=val1 & p!=self&{FLOW,(21,22)=__norm}[]
+ |-  (exists p1,l2,u2: emp&l2<=l & u<=u2 & p1!=self & l2<=val & val<=u2 & 
+u1=u2 & l1=l2 & p=p1&{FLOW,(21,22)=__norm})[]. 
+res:  1[
+   emp&p!=self_lem_12 & l2_108<=val_106 & val_106<=u2_109 & p=y_103 & l2_108=l_104 & u2_109=u_105 & l<=l2_108 & u2_109<=u & val_106=val_113 & next_107=next_114 & exists(u_143:u_105<=u_143) & exists(l_142:l_142<=l_104) & exists(l_111:l_111<=val_113 & l_111<=l_104) & exists(u_112:val_113<=u_112 & u_105<=u_112) & exists(p_110:p_110!=self_lem_12)&{FLOW,(21,22)=__norm}[]
+   ]
+  */

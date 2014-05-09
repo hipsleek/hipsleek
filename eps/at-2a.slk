@@ -27,7 +27,7 @@ checkentail self::node<_,r>@M@ rem br[{1}]
 * r::lseg2<p1,flted>@M@ rem br[{1,2}] 
 * q::lseg2<p,n2>@M
 &(([0<=flted & n1=1+flted & n=n1+n2][p1=q][self!=null]))
-&{FLOW,(21,22)=__norm}[]
+ &{FLOW,(21,22)=__norm}[]
  |-  (exists p,n: self::lseg2<p,n>@M&{FLOW,(21,22)=__norm})[].
 
 res:  failctx

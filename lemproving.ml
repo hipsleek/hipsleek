@@ -132,7 +132,7 @@ let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (le
     (*   CF.residues := Some (lc,b)); *)
     res
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
+      let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []))) in
       (false, rs)
 
 let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl) =
@@ -215,7 +215,7 @@ let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : C
 
 (* same effect as check_coercion with the difference that the rhs is a struc_formula *)
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
-  let pr_debug = Debug.tinfo_hprint in
+  let pr_debug = Debug.ninfo_hprint in
   let is_singl sv0 svl=
     match svl with
       |[sv] -> CP.eq_spec_var sv0 sv
@@ -246,9 +246,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           let rhs_vns = CF.get_views_struc new_rhs in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
             let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
-            (* if List.length (CF.get_dnodes lhs) < List.length (CF.get_dnodes_struc new_rhs) then [],[] else *)
             [sv_self],[]
-          else [sv_self],[sv_self]
+          else
+            (* if List.length (CF.get_dnodes lhs) = 0 &&  List.length (CF.get_dnodes_struc new_rhs) =0 then [],[] else *)
+              [sv_self],[sv_self]
         else
           [sv_self],[]
       else begin
@@ -309,7 +310,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
   else lhs
   in
-  (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+  (* let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in *)
   let lhs = CF.add_original lhs true in
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_struc_original true rhs in

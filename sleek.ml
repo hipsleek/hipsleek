@@ -214,7 +214,9 @@ let parse_file (parse) (source_file : string) =
             process_eq_check lv if1 if2
       | InferCmd (ivars, iante, iconseq,etype) -> (process_infer ivars iante iconseq etype;())	
       | CaptureResidue lvar -> process_capture_residue lvar
-      | PrintCmd pcmd -> process_print_command pcmd
+      | PrintCmd pcmd -> 
+            let _ = Debug.ninfo_pprint "at print" no_pos in
+            process_print_command pcmd
       | CmpCmd ccmd -> process_cmp_command ccmd
       | LetDef (lvar, lbody) -> put_var lvar lbody
       | BarrierCheck bdef -> process_barrier_def bdef

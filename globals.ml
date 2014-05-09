@@ -29,6 +29,8 @@ exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
 exception SA_HP_NOT_PRED
 
+exception NOT_HANDLE_YET
+
 let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
