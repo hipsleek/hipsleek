@@ -748,13 +748,13 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     let _ = Hashtbl.find tbl_addrof_info lv_str in ()
                   with Not_found -> (
                       let refined_ty = (match lv_ty with
-                        | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
+                        | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> (get_actual_cil_typ ty)      (* pointer to struct goes down 1 level *)
                         | _ -> lv_ty
                       ) in
                       let deref_ty = translate_typ refined_ty pos in
                       let (addr_dtyp, addr_dname, addr_ddecl) = (
-                          try 
-                            let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
+                          try
+                            let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in (* cho nay *)
                             let ddecl = Hashtbl.find tbl_data_decl dtyp in
                             let dname = (
                                 match dtyp with
@@ -765,7 +765,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                           with Not_found -> (
                               (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                               let ftyp = deref_ty in
-                let fname = str_deref in
+                              let fname = str_deref in
                               let dfields = [((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *))] in
                               let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                               let dtyp = Globals.Named dname in
@@ -776,7 +776,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                           )
                       ) in
                       (* define new pointer var px that will be used to represent x: {x, &x} --> {*px, px} *)
-            let addr_vname = str_addr ^ lv_str in
+                      let addr_vname = str_addr ^ lv_str in
                       let addr_vdecl = (
                           (* create and temporarily initiate a new object *)
                           let init_params = [(translate_lval lv)] in
@@ -814,13 +814,15 @@ and translate_location (loc: Cil.location) : Globals.loc =
 and get_actual_cil_typ (t: Cil.typ) : Cil.typ = (
     let actual_typ = (
         match t with
-          | Cil.TNamed (tinfo, _) -> get_actual_cil_typ tinfo.Cil.ttype
-          | Cil.TComp (cinfo, _) -> (
-	        try
-                  let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
-                  get_actual_cil_typ ty
-                with _ -> t
-            )
+          | Cil.TNamed (tinfo, _) ->
+                get_actual_cil_typ tinfo.Cil.ttype
+          | Cil.TComp (cinfo, _) ->
+                (
+	            try
+                      let ty = Hashtbl.find tbl_typedef cinfo.Cil.cname in
+                      get_actual_cil_typ ty
+                    with _ -> Cil.TComp (cinfo, []) (*t*) (* need review *)
+                )
           | _ -> t
     ) in
     actual_typ
@@ -838,8 +840,8 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
             (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
             let newt = (
                 (* find if this pointer was handled before or not *)
-                try 
-                  Hashtbl.find tbl_pointer_typ actual_ty
+                try
+                  Hashtbl.find tbl_pointer_typ actual_ty (* cho nay *)
                 with Not_found -> (
                     (* create new Globals.typ and Iast.data_decl update to hash tables *)
                     let ftyp = translate_typ actual_ty pos in
@@ -864,7 +866,8 @@ and translate_typ (t: Cil.typ) pos : Globals.typ =
       | Cil.TNamed _ ->                                          (* typedef type *)
             let ty = get_actual_cil_typ t in
             translate_typ ty pos
-      | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
+      | Cil.TComp (comp, _) -> 
+            Globals.Named comp.Cil.cname                          (* struct or union type*)
       | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
       | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
@@ -1151,7 +1154,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
             | Cil.TComp _ -> translate_lval lv
             | _ -> (
                   let lv_str = string_of_cil_lval lv in
-                  try 
+                  try
                     let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
                     Iast.mkVar addr_vname pos
                   with Not_found ->

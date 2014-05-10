@@ -33,7 +33,7 @@ struct node {
 
 struct node * free(struct node* x)
 /*@
-  requires x::node<_,_,_,_>
+  requires x::node<_,_>
   ensures res = null;
 */
 {
@@ -49,7 +49,7 @@ struct node* abort()
 struct node* malloc(int n)
 /*@
   requires true
-  ensures res::node<_,_,_,_>;
+  ensures res::node<_,_>;
 */
   ;
 

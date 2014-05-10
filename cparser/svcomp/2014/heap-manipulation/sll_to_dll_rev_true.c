@@ -66,9 +66,9 @@ static struct node* alloc_node(void)
 
 static void chain_node(struct node **ppnode)
 {
-  /*struct node *node = alloc_node();
+    struct node *node = alloc_node();
     node->next = *ppnode;
-    *ppnode = node;*/
+    *ppnode = node;
 }
 
 static struct node* create_sll(const struct node **pp1, const struct node **pp2)
@@ -76,9 +76,9 @@ static struct node* create_sll(const struct node **pp1, const struct node **pp2)
     struct node *list = NULL;
 
     do
-      chain_node(&list);
+        chain_node(&list);
     while (__VERIFIER_nondet_int());
-
+    /*
     *pp2 = list;
 
     do
@@ -89,9 +89,8 @@ static struct node* create_sll(const struct node **pp1, const struct node **pp2)
 
     do
         chain_node(&list);
-        while (__VERIFIER_nondet_int());
-
-
+    while (__VERIFIER_nondet_int());
+    */
     return list;
 }
 
@@ -144,8 +143,8 @@ int main()
     const struct node *p1, *p2;
 
     struct node *list = create_sll(&p1, &p2);
-
-    /*___sl_plot(NULL, &list, &p1, &p2);
+    /*
+    ___sl_plot(NULL, &list, &p1, &p2);
     check_seq_next(p1, p2);
     ___SL_ASSERT(!p1->prev);
     ___SL_ASSERT(!p2->prev);
@@ -168,7 +167,7 @@ int main()
         struct node *prev = list->prev;
         free(list);
         list = prev;
-    }
-    */
+       }*/
+
     return 0;
 }
