@@ -227,7 +227,7 @@ Error3(s) detected at main
 
 ===============================================
 
-- sll_to_dll_rev_true.c:
+- sll_to_dll_rev_true.c: fixed
 
 static void chain_node(struct node **ppnode)
 {
@@ -243,8 +243,70 @@ static struct node* create_sll(const struct node **pp1, const struct node **pp2)
 duplicated top-level name(s): node_star
 
 ===============================================
+
+- tree_true:
+
+Exception Failure("tl") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure main$
+
+!!! proc.proc_name:main$Stop Omega... 90 invocations
+1 false contexts at: ( (62,4) )
+
 ===============================================
+
+- tree_false:
+
+Exception Failure("tl") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure main$
+
+!!! proc.proc_name:main$Stop Omega... 90 invocations
+1 false contexts at: ( (62,4) )
+
 ===============================================
+
+- sll_to_dll_rev_true.c:
+
+*************************************
+******* SPECIFICATION ********
+*************************************
+ infer[HP_39,GP_40]requires HP_39(&true
+ ensures GP_40(res@NI)&true;
+Proving binding in method main$ for spec  EAssume
+   GP_40(res)&{FLOW,(26,27)=__norm}[]
+   , Line 141
+
+( []) bind: node  addr_83'::node_star<deref_154_1282'>@L cannot be derived from context
+cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c_154:19_154:21
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(26,27)=__norm}}
+ ]cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c_154:19_154:21
+
+Context of Verification Failure: 1 File "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c",Line:141,Col:0
+Last Proving Location: 1 File "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c",Line:154,Col:19
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure main$
+
+!!! proc.proc_name:main$Stop Omega... 126 invocations
+13 false contexts at: ( (98,4)  (163,4)  (158,4)  (153,4)  (147,4)  (138,8)  (135,4)  (134,4)  (130,8)  (127,4)  (126,4)  (60,8)  (59,4) )
+
 ===============================================
 ===============================================
 ===============================================
