@@ -440,3 +440,22 @@ RS_mem malloc1(int n)
  requires n>0
  ensures  res=null or res::RS_mem<n>;
 */
+
+node free(node x)
+  requires x::node<_,_,_,_>
+  ensures res = null;
+{
+  return null;
+}
+
+node abort()
+  requires true
+  ensures true & flow __Error;
+
+int rand()
+  requires true
+  ensures true;
+
+node malloc(int n)
+  requires true
+  ensures res::node<_,_,_,_>;

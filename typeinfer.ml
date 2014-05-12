@@ -366,7 +366,7 @@ and get_type_entire tlist t =
     | Array (et,d) -> Array (helper et,d)
     | _ -> t
   in helper t
-         
+
 and get_type tlist i = 
   let key = "TVar__"^(string_of_int i) in
   ( try 

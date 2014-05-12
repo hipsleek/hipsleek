@@ -308,6 +308,22 @@ Error(s) detected when checking procedure main$
 13 false contexts at: ( (98,4)  (163,4)  (158,4)  (153,4)  (147,4)  (138,8)  (135,4)  (134,4)  (130,8)  (127,4)  (126,4)  (60,8)  (59,4) )
 
 ===============================================
+
+- prelude.ss:
+
+node malloc(int n)
+  requires true
+  ensures res::node<_,_,_,_>;
+
+- tree_true.c:
+
+call malloc
+
+ERROR: at _-1:-1_-1:-1 
+Message: OpAssign : lhs and rhs do not match 2
+
+line 149: tmp = (143, ):malloc(1);
+
 ===============================================
 ===============================================
 ===============================================
