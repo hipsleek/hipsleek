@@ -40,3 +40,25 @@ node extract_max(node root, ref node new_root)
     return root;
   }
 }
+
+/*
+procedure extract max(root: Node, implicit ghost content: set<int>)
+4 returns (new root: Node, max: Node)
+5 requires bstree(root, content) ✝ root ✘ null;
+6 ensures bstree(new root, content ③ fmax.datag) ✝ acc(max);
+7 ensures max.right ✏ null ❫ max.parent ✏ null ❫ max.data P content;
+8 ensures (❅z P (content ③ fmax.datag)). z < max.data);
+9 
+10 var c: Node, m: Node;
+11 if (root.right != null) { 
+12 c, m := extract max(root.right, root);
+13 root.right := c;
+14 if (c != null) fc.parent := root;
+15 return root, m;
+16 } else {
+17 c := root.left;
+18 root.parent := null;
+19 return c, root;
+20 }
+21 }
+*/
