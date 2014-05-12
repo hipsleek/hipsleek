@@ -20,9 +20,8 @@ bstree <C> ==
  */
 node extract_max(node root, ref node new_root)
   requires root::bstree<C> & root != null
-  ensures new_root'::bstree<C1> * res::node<rv,_,rr,rp>
-          & C1 = diff(C,{rv}) & rr = null & rp = null & rv in C
-          & forall (x: (x notin C1) | x < rv);
+  ensures new_root'::bstree<C1> * res::node<rv,_,null,null>
+          & C = union(C1,{rv}) & forall (x: (x notin C1) | x < rv);
 {
   node max_node;
   node temp_root;
