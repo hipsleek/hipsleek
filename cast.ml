@@ -1915,7 +1915,7 @@ let vdef_lemma_fold prog coer  =
   (* body contains orig=false but not body_norm*)
   let rhs = CF.formula_to_struc_formula coer.coercion_body in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
-  (* let _ = Debug.info_hprint (add_str "body" Cprinter.string_of_struc_formula) rhs no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "body" !print_struc_formula) rhs no_pos in
   if cfd # is_init then cfd # get
   else
     let vd2 = match lhs with
@@ -1976,7 +1976,8 @@ let vdef_lemma_fold prog coer  =
 let get_xpure_one vdef rm_br  =
   match rm_br with
     | Some l -> let n=(List.length l) in  
-      if n<(List.length vdef.view_prune_branches) then None
+      if n<(List.length vdef.view_prune_branches) then
+        (* if !force_verbose_xpure then Some vdef.view_x_formula  else *) None
       else (match vdef.view_complex_inv with 
         | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
@@ -1986,12 +1987,12 @@ let get_xpure_one vdef rm_br  =
   let pr mf = !print_mix_formula mf in
   Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
-let any_xpure_1 prog (f:F.h_formula) : bool = 
+let any_xpure_1 prog (f:F.h_formula) : bool =
   let ff e = match e with
 	| F.ViewNode ({ F.h_formula_view_node = p;
 	  F.h_formula_view_name = c;
 	  F.h_formula_view_remaining_branches = rm_br;
-	  F.h_formula_view_pos = pos}) ->      
+	  F.h_formula_view_pos = pos}) ->
           let vdef = look_up_view_def_num 1 pos prog.prog_view_decls c in
           (match get_xpure_one vdef rm_br with
             | None -> Some false
@@ -2430,3 +2431,5 @@ let update_mut_vars_bu iprog cprog scc_procs =
   ) ([],[]) scc_procs
   in
   new_scc_procs
+
+

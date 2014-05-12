@@ -134,6 +134,109 @@ let norm_free_vars f0 args=
   ) [] (rem_svl) in
   (f, tis@tis1)
 
+let baga_union_star baga1 baga2=
+  List.fold_left (fun r ls1 -> let r1= List.map (fun ls2 -> (ls1@ls2)) baga2 in
+  r@r1
+  ) [] baga1
+
+(*f is in normal form: **** & ..... \/ ***** & .... *)
+let rec collect_baga_models_heap prog hf0=
+  let rec helper hf =
+    match hf with
+      |Star { h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;} ->
+           let baga1 = helper hf1 in
+           let baga2 = helper hf2 in
+           baga_union_star baga1 baga2
+      | DataNode {h_formula_data_node = c} -> let tmp = [c] in [tmp]
+      | ViewNode {h_formula_view_node = p;
+         h_formula_view_name = c;
+         h_formula_view_arguments = vs;
+         h_formula_view_pos = pos
+        } ->
+            let vdef = Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
+            let from_svs = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
+            let to_svs = p :: vs in
+            let ss = List.combine from_svs to_svs in
+            let fs = List.map (fun (f,_) -> subst ss f) vdef.Cast.view_un_struc_formula in
+            List.fold_left (fun r f ->
+                let m1 =  collect_consit_models prog f in
+                let m12 = List.map (fun ls -> CP.intersect_svl ls to_svs) m1 in
+                r@m12
+            ) [] fs
+      | ThreadNode _ | Hole _ | HRel _ | HTrue | HFalse| HEmp -> []
+      | StarMinus _ | Conj _ | ConjStar _ | ConjConj _ | Phase _ -> raise NOT_HANDLE_YET
+  in
+  let r = helper hf0 in
+  r
+
+and collect_consit_models_x prog f0=
+  (*****************INTERNAL******************)
+  (**************END INTERNAL******************)
+  let rec helper f= match f with
+    | Or _ ->  raise NOT_HANDLE_YET
+    | Base ({ formula_base_heap = h;
+      formula_base_pure = p;
+      formula_base_pos = pos}) ->
+          (*collect \/ models: address from heap*)
+          let h_models0 = collect_baga_models_heap prog h in
+          let eqs = (MCP.ptr_equations_without_null p) in
+          let h_models = List.map (fun svl -> find_close svl eqs) h_models0 in
+          let _ = DD.ninfo_hprint (add_str " h_models" (pr_list !CP.print_svl))  h_models no_pos in
+          (*collect must info: bag of null and bag of non-null*)
+          let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs p) in
+          let eqNulls_cl = CP.remove_dups_svl (find_close eqNulls eqs) in
+          let neqNulls = CP.get_neq_null_svl (MCP.pure_of_mix p) in
+          let neqNulls_cl= CP.remove_dups_svl (find_close neqNulls eqs) in
+          let _ = DD.ninfo_hprint (add_str "eqNulls_cl" !CP.print_svl) eqNulls_cl no_pos in
+          let _ = DD.ninfo_hprint (add_str "neqNulls_cl" !CP.print_svl) neqNulls_cl no_pos in
+          if eqNulls_cl != [] && neqNulls_cl!= [] &&
+            CP.intersect_svl eqNulls_cl neqNulls_cl != [] then [] (*inconsistency*)
+          else
+            (*prune inconstent models*)
+            (*prune eqnull incons*)
+            let h_models1 = List.fold_left (fun r ls ->
+                if CP.intersect_svl ls eqNulls_cl != [] then r else r@[ls]
+            ) [] h_models in
+            (*prune neqnull incons*)
+            let h_models2 = List.fold_left (fun r ls ->
+                if CP.diff_svl neqNulls_cl ls != [] then r else r@[ls]
+            ) [] h_models1 in
+            h_models2
+    | Exists _ ->
+          let _, base_f = split_quantifiers f in
+          helper base_f
+  in
+  helper f0
+
+and collect_consit_models prog f0=
+  let pr1 = !print_formula in
+  let pr2 = pr_list !CP.print_svl in
+  Debug.no_1 "collect_consit_model" pr1 pr2
+      (fun _ -> collect_consit_models_x prog f0) f0
+
+let is_unsat_heap_model_x prog f=
+  let rec is_dups_svl svl=
+    match svl with
+      | [] -> false
+      | [x] -> false
+      | x::rest -> if CP.mem_svl x rest then true else is_dups_svl rest
+  in
+  try
+    let bagas = collect_consit_models prog f in
+    (*filter inconsis addr*)
+    let bagas1 = List.filter (fun svl ->
+        not (is_dups_svl svl)
+    ) bagas in
+    bagas1 = []
+  with
+  _ -> false
+
+let is_unsat_heap_model prog f=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_unsat_heap_model" pr1 string_of_bool
+      (fun _ -> is_unsat_heap_model_x prog f) f
+
 let get_data_view_name hf=
   match hf with
     | ViewNode vn -> ( vn.h_formula_view_name)
@@ -754,10 +857,9 @@ let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
       (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
       lhs rhs
 
-let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in
-    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
+  let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs lroots 3 in
+    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs rroots 3 in
     (* let lnlength = List.length l_reach_dns in *)
     let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
     (* let rnlength = List.length r_reach_dns in *)
@@ -765,6 +867,19 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
     if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
       1
     else -1
+
+let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
+  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+    (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
+    (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
+    (* (\* let lnlength = List.length l_reach_dns in *\) *)
+    (* let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in *)
+    (* (\* let rnlength = List.length r_reach_dns in *\) *)
+    (* let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in *)
+    (* if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then *)
+    (*   1 *)
+    (* else -1 *)
+    need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
 
 let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in

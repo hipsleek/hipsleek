@@ -86,6 +86,11 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = if (CF.isAnyFalseCtx ctx) then
         print_endline ("[Warning] False ctx")
   in
+  (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
+  (*   let _ = print_endline ("[Warning] False ctx") in *)
+  (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
+  (* else ctx *)
+  (* in *)
   (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then

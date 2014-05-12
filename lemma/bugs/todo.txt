@@ -319,9 +319,70 @@ compute_actions@2 EXIT: COND =>[Prio:0COND =>[Prio:0(Lemma ==> ll_tail2) =>
                                                               RHS: ty1_136::node<_,flted_19_144>@M]]
 
 ======================================================================
+# append-tail.ss --classic --dis-imm  (FIXED)
+
+Why is there exists ty1 for post-condition?
+
+id: 5; caller: []; line: 40; classic: true; kind: POST; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
+
 ======================================================================
+# append-tail.ss --classic --dis-imm  (FIXED)
+
+Why is there exists ty1 for post-condition?
+Was this for folding? There seems an error in hip verifier.
+I am surprised it isn't detected earlier.
+
+id: 5; caller: []; line: 40; classic: true; kind: POST; hec_num: 1; evars: []; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty1,q: x::ll_tail2<ty1,q>@M&ty=ty1 & q=n+m&{FLOW,(24,25)=__norm})[]. 
+
+# append-tail.ss --dis-imm
+
+id: 7; caller: []; line: 40; classic: true; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  failctx
+
 ======================================================================
+# append-tail.ss --classic
+
+Pure test used but missing in below. Log below seems inaccurate.
+Why run-fast-test still fails?
+
+id: 7; caller: []; line: 40; classic: true; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  1[
+   emp&m=flted_26_1092+1 & flted_26_1091=null & n=flted_26_1062+1 & flted_26_1061=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_26_1061=next_44_1064 & Anon_1063=Anon_1124 & r_1125=y' & exists(ty_1065:ty_1045=ty_1065) & exists(n2_1120:n2_1120=flted_26_1092+1) & exists(flted_26_1074:flted_26_1074=flted_26_1092+1+flted_26_1062) & exists(ty_1065:ty_1045=ty_1065) & exists(q_1066:q_1066=flted_26_1092+1+flted_26_1062+1) & exists(ty_1065:ty_1045=ty_1065)&{FLOW,(24,25)=__norm}[]
+   ]
+
 ======================================================================
+# app-tail7.slk --eps
+
+
+This view is actually a lemma which is being used for folding.
+Do we make use of labels for lemma, and how is it best handled?
+
+Message: view is unlabeled  (* lbl: None *)(exists flted_19_135,flted_19_136,
+_: self::lseg2<tx,flted_19_136>@M@ rem br[{3,4}] * 
+tx::node<_,flted_19_135>@M@ rem br[{1}]&(
+([n=1+flted_19_136 & 0<=flted_19_136][flted_19_135=null][tx!=null]))&
+{FLOW,(21,22)=__norm})[]
+
+ 
+!!! WARNING logtime exception:0.
+Entail 1: EXCast. Failure("view is unlabeled  (* lbl: None *)(exists flted_19_135,flted_19_136,\n_: self::lseg2<tx,flted_19_136>@M@ rem br[{3,4}] * \ntx::node<_,flted_19_135>@M@ rem br[{1}]&(\n([n=1+flted_19_136 & 0<=flted_19_136][flted_19_135=null][tx!=null]))&\n{FLOW,(21,22)=__norm})[]\n")
+
 ======================================================================
 ======================================================================
 ======================================================================
