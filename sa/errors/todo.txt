@@ -115,6 +115,64 @@ EXPECTED:
       or next1 = null;
 
 =====================================================================
+# odd1.ss
+
+
+GOT:
+[ // BIND (0)
+H(x)&true --> x::node<val,next>@M * HP_933(next)&true,
+     ^^^^
+ // BIND (1;0)
+HP_933(next)&next!=null --> next::node<val,next1>@M * HP_948(next1)&true,
+             ^^^^^^^^^
+
+ // PRE_REC (1;0)
+HP_948(next)&true --> H(next)&true,
+
+ // POST (1;0)
+ x::node<val,next>@M * next::node<val1,next1>@M * H1(next1)& true --> H1(x)&true,
+
+ // POST(2;0)
+x::node<val,next>@M * HP_933(next)&next=null --> H1(x)&true]
+
+========>
+EXPECTED
+
+ // BIND (0)
+A1. H(x)&x!=null --> x::node<val,next>@M * HP_933(next)&true,
+     ^^^^
+ // BIND (1;0)
+A2. HP_933(next)&next!=null --> next::node<val,next1>@M * HP_948(next1)&true,
+             ^^^^^^^^^
+
+ // PRE_REC (1;0)
+A3. HP_948(next) & true --> H(next),
+             ^^^^^
+ // POST (1;0)
+ x::node<val,next>@M * next::node<val1,next1>@M * H1(next1)& true --> H1(x)&true,
+
+ // POST(2;0)
+x::node<val,next>@M * HP_933(next)&next=null --> H1(x)&true
+
+
+ERROR
+// BIND (0)
+E1. H(x)&x=null --> error
+
+// BIND (1;0)
+E2. HP_933(next)&next=null --> error
+
+==============
+closure
+
+// PRE_REC (1;0)
+A3. HP_948(next) & true --> H(next), (H(x)& x=null of E1)
+
+A1. H(x)&x!=null --> x::node<val,next>@M * HP_933(next)&true, ()
+
+A2.
+=====================================================================
+
 # e-last.ss
 
 ==> EXPECTED

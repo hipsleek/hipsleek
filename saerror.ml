@@ -401,10 +401,21 @@ let create_specs hprel_defs prog proc_name =
   error constrs are those constrs with error flow in the rhs
 *)
 let classify_err_constrs_x prog constrs0=
-
-  (constrs0,[])
+  let not_is_err_constr cs=
+    not(Cformula.is_error_flow cs.Cformula.hprel_rhs)
+  in
+  List.partition not_is_err_constr constrs0
+  (* (constrs0,[]) *)
 
 let classify_err_constrs prog constrs0=
   let pr1 = pr_list_ln Cprinter.string_of_hprel_short in
   Debug.no_1 "classify_err_constrs" pr1 (pr_pair pr1 pr1)
       (fun _ -> classify_err_constrs_x prog constrs0) constrs0
+
+(*
+  find closure of err_constrs
+*)
+let cl_err_constrs prog err_constrs nerr_constrs=
+  err_constrs
+
+
