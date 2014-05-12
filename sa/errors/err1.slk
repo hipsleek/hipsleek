@@ -1,0 +1,15 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HP1(node a).
+
+infer [HP1] HP1(x) & x=null & y!=null |- true & flow __Error.
+
+/*
+Fail.(must) cause:1 Expecting Failure but Success instead
+*/
+
+print residue.
+

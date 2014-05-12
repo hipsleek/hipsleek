@@ -2773,9 +2773,9 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
                 if r_svl = [] then hp_def else
                   let nr = (CP.SpecVar (CP.type_of_spec_var (List.hd r_svl), r_id, rp)) in
                   let ss = [(r,nr)] in
-                  {hp_def with Cformula.def_cat = CP.HPRelDefn (hp,nr,paras);
-                      Cformula.def_lhs = Cformula.h_subst ss hp_def.Cformula.def_lhs;
-                      Cformula.def_rhs = List.map (fun (f,og) -> (Cformula.subst ss f, og)) hp_def.Cformula.def_rhs;
+                  { Cformula.def_cat = CP.HPRelDefn (hp,nr,paras);
+                  Cformula.def_lhs = Cformula.h_subst ss hp_def.Cformula.def_lhs;
+                  Cformula.def_rhs = List.map (fun (f,og) -> (Cformula.subst ss f, og)) hp_def.Cformula.def_rhs;
                   }
               else hp_def
             | _ -> hp_def

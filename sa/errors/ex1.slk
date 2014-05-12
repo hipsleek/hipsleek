@@ -1,0 +1,24 @@
+data node{
+ int val;
+ node next;
+}.
+
+
+HeapPred H(node a).
+HeapPred HP9(node n).
+
+
+// BIND (0)
+relAssume H(x)&x!=null --> x::node<val,next>@M * HP9(next)&true.
+
+// BIND (0)
+relAssume H(x)&x=null --> true & flow __Error.
+
+// PRE_REC (1;0)
+relAssume HP9(next) & next!=null --> H(next) & true.
+
+// POST (2;0)
+relAssume HP9(next) & next=null --> emp & true.
+
+shape_infer[H,HP9][].
+

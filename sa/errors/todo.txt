@@ -53,6 +53,169 @@ ll-last2
 case spec
 
 =====================================================================
+# ab.slk (ll-next.ss)
+
+revise abduction for memory safety to include must error case in preconditions.
+
+=============
+GOT:
+<1>HP_23(Anon_22)&Anon_12=Anon_21 & Anon_13=Anon_22&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [HP1(x)&true --> x::node<_,_>@M * HP_23(Anon_22)&true]
+
+===>
+EXPECT:
+
+  <1>HP_23(Anon_22)&Anon_12=Anon_21 & Anon_13=Anon_22&{FLOW,(21,22)=__norm}[]
+ inferred hprel: [HP1(x)&x!=null --> x::node<_,_>@M * HP_23(Anon_22)&true]
+  <2> true & flow __Error
+   inferred hprel: [HP1(x)&x=null --> true & flow __Error]
+
+=====================================================================
+#ll-next.ss
+
+
+========>
+EXPECTED:
+case {
+   x=null -> ensures true & flow __Error;
+   x!=null -> requires x::node<_,p>
+     ensures x::node<_,p> & res=p;
+ }
+=====================================================================
+
+# ex1.ss
+
+
+========>
+EXPECTED:
+case {
+   x=null -> ensures true & flow __Error;
+   x!=null -> requires x::node<_,p> * p::ll<>
+     ensures x::node<_,p> * p::ll<>;
+ }
+=====================================================================
+# ex1.slk
+
+==============
+GOT:
+ H(x) ::=
+ x::node<val,next>@M * H(next)
+ or emp&x=null
+ ,
+ HP9(next1) ::= next1::node<val,next>@M * HP9(next)
+
+========>
+EXPECTED:
+
+ H(x) ::= case { x= null -> flow __Error;
+    x!=null ->  x::node<val,next>@M * HP9(next);
+ }
+ ,
+ HP9(next1) ::= next1::node<val,next>@M * HP9(next)
+      or next1 = null;
+
+=====================================================================
+# e-last.ss
+
+==> EXPECTED
+// BIND (0)
+ H(x)&x!=null --> x::node<val,next>@M * HP_936(next)& true,
+      ^^^^^
+
+// BIND (0); MUST error
+H(x)&x!=null --> true & flow __Error.
+
+ // PRE_REC (1;0)
+HP_936(next)&next!=null --> H(next)&true,
+
+ // POST (1;0)
+x::node<val,next>@M * G(next,res)&next!=null --> G(x,res)&true,
+
+ // POST (2;0)
+HP_936(next) * res::node<val,next>@M&next=null & res=x --> G(x,res)&true
+
+
+
+===>
+EXPECTED
+
+case {
+   x!=null ->
+     requires x::node<_,next>@M * next::ll<null>
+     ensures x::ll<p> * p::node<_,null>@M & res=p;
+   x=null -> ensures true & flow __Error;
+}
+
+=====================================================================
+# err1.slk (entail must error from source code, e.g. abort statement)
+
+
+
+=====================================================================
+#zip1.ss
+
+
+ // BIND
+(2;0)H(x,y)&x!=null --> x::node<val,next>@M * HP_1011(next,y@NI) * HP_1012(y,x@NI)&true,
+
+ // BIND (2;0)
+HP_1012(y,x@NI)&true --> y::node<val,next>@M * HP_1019(next,x@NI)&true,
+
+ // PRE_REC (2;0)
+HP_1011(next,y@NI) * HP_1019(next1,x@NI)&true --> H(next,next1)&true,
+
+ // POST (1;1;0)
+H(res,y)&y=null & x=null & res=null & res=x --> G(x,y,res)&true,
+
+ // POST (2;1;0)
+H(res,y)&y!=null & x=null & res=null & res=x --> G(x,y,res)&true,
+
+ // POST (2;0)
+y::node<val,next1>@M * G(next,next1,v1) * res::node<v,v1>@M&res=x --> G(x,y,res)&true
+
+===>
+
+ // BIND
+(2;0)H(x,y)&x!=null --> x::node<val,next>@M * HP_1011(next,y@NI) *
+HP_1012(y,x@NI)&
+true,
+ // BIND
+(2;0)HP_1012(y,x@NI)& y!=null --> y::node<val,next>@M * HP_1019(next,x@NI)&true,
+                      ^^^^^^
+
+// BIND
+(2;0)HP_1012(y,x@NI)& y=null --> true & flow __Error,
+                      ^^^^^^
+
+ // PRE_REC
+(2;0)HP_1011(next,y@NI) * HP_1019(next1,x@NI)&true --> H(next,next1)&
+true,
+ // POST
+(1;1;0)H(res,y)&y=null & x=null & res=null & res=x --> G(x,y,res)&
+true,
+
+ // POST
+(2;1;0)H(res,y)&y!=null & x=null  --> true & flow __Error,
+                                      ^^^^^^^^^^^^^^^
+
+ // POST
+(2;0)y::node<val,next1>@M * G(next,next1,v1) * res::node<v,v1>@M&
+res=x --> G(x,y,res)&
+true
+
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
 =====================================================================
 =====================================================================
 =====================================================================
