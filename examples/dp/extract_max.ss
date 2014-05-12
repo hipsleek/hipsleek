@@ -18,28 +18,27 @@ bstree <C> ==
 /*
  * Return max node and update new root in parameter "new_root"
  */
-node extract_max(node root, ref node new_root)
+node extract_max(node root, ref node c)
   requires root::bstree<C> & root != null
-  ensures new_root'::bstree<C1> * res::node<rv,_,null,null>
+  ensures c'::bstree<C1> * res::node<rv,_,null,null>
           & C = union(C1,{rv}) & forall (x: (x notin C1) | x < rv);
 {
-  node max_node;
-  node temp_root;
+  node m;
   if (root.right != null) {
-    max_node = extract_max(root.right, temp_root);
-    root.right = temp_root;
-    if (temp_root != null)
-      temp_root.parent = root;
-    new_root = root;
-    return max_node;
+    m = extract_max(root.right, c);
+    root.right = c;
+    if (c != null)
+      c.parent = root;
+    c = root;
+    return m;
   }
   else {
-    temp_root = root.left;
+    c = root.left;
     root.parent = null;
-    new_root = temp_root;
     return root;
   }
 }
+
 
 /*
 procedure extract max(root: Node, implicit ghost content: set<int>)
