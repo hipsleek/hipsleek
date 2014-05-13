@@ -12,16 +12,27 @@ ll<n> ==
 
 lemma_safe self::lseg<n,r> <- self::lseg<m,q>*q::node<_,r> & n=m+1;
 
-lemma_safe self::ll<n> <- self::lseg<n, null>;
+//lemma_safe self::ll<n> <- self::lseg<n, null>;
+
+clist<n> ==
+  self::node<_,q>*q::lseg<n-1,self>
+  inv n>=1;
 
 node reverse (node l)
+/*
   requires l::ll<n> & Term[n]
   case {
     n<=1 -> ensures res::ll<n> & res=l;
     n>1 -> ensures res::lseg<n-1,l> * l::node<_,null>;
   }
+*/
+  requires l::clist<n>
+  ensures false;
+// unsound to be verified..
+/*
   requires l::ll<n>
   ensures res::ll<n>;
+*/
 {
   if (l == null) return l;
   if (l.next == null) return l;
