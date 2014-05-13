@@ -436,10 +436,10 @@ let rec icollect_all_output chn accumulated_output : string list =
   let output = 
     try
       let line = input_line chn in
-      if (line != ")") then
+      if ((String.compare line ")") != 0) then
         icollect_all_output chn (accumulated_output @ [line])
       else accumulated_output @ [line]
-    with | _ -> accumulated_output in
+    with _ -> accumulated_output in
   output
 
 let rec collect_output chn accumulated_output : string list =
@@ -501,8 +501,8 @@ let is_z3_running = ref false
 let smtsolver_name = ref ("z3": string)
 
 let smtsolver_path = 
-  "/home/chanhle/tools/z3-4.3.2/z3"
-  (* "z3" *)
+  (* "/home/chanhle/tools/z3-4.3.2/z3" *)
+  "z3"
 
 (***********)
 let test_number = ref 0
@@ -1149,9 +1149,9 @@ let get_model is_linear vars assertions =
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout));
     []
   ) in
-  (* let model = get_smt_output smt_inp !smt_timeout fail_with_timeout in *)
+  let model = get_smt_output smt_inp !smt_timeout fail_with_timeout in
   
-  let model = (run "" !smtsolver_name smt_inp 5.0).original_output_text in
+  (* let model = (run "" !smtsolver_name smt_inp 5.0).original_output_text in *)
   
   let _ = 
     Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;
@@ -1161,7 +1161,7 @@ let get_model is_linear vars assertions =
 
   let m = 
     try
-      if not ((List.hd model) = "unsat") then
+      if ((String.compare (List.hd model) "unsat") != 0) then
         let inp = String.concat "\n" (List.tl model) in
         let lexbuf = Lexing.from_string inp in
         let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
