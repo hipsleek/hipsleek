@@ -4223,6 +4223,7 @@ and hprel_def= {
     (* hprel_def_body: (cond_path_type * (formula_guard list)) list; (\* RHS *\) *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
+    
 }
 
 (*temporal: name * hrel * guard option * definition body*)
@@ -4235,6 +4236,7 @@ and hp_rel_def = {
     def_cat : CP.rel_cat;
     def_lhs : h_formula;
     def_rhs : ((* cond_path_type * *) formula_guard) list;
+    def_pguard: CP.formula; (*this pure guard to form the case predicates.*)
 }
 
 
@@ -4288,10 +4290,11 @@ let select_vnode vn1 vn_names=
 let check_neq_hrelnode id ls=
       not (CP.mem_svl id ls)
 
-let to_new_hp_rel_def (r,hf,g,f) = 
+let to_new_hp_rel_def (r,hf,g,f, pg) = 
   { def_cat = r;
   def_lhs = hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_pguard = pg;
   }
 
 let from_new_hp_rel_def d : hp_rel_def_old =
@@ -4389,17 +4392,19 @@ let hpdef_cmp d1 d2 =
     with _ -> 1
   with _ -> -1
 
-let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pos=
+let mk_hp_rel_def hp (args, r, paras) (g: formula option) f pg pos=
   let hf = HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos) in
   { def_cat= (CP.HPRelDefn (hp, r, paras));
   def_lhs =hf;
-  def_rhs = [(f,g)]
+  def_rhs = [(f,g)];
+  def_pguard = pg;
   }
 
-let mk_hp_rel_def1 c lhs rhs=
+let mk_hp_rel_def1 c lhs rhs pg=
   { def_cat= c;
   def_lhs = lhs;
-  def_rhs = rhs
+  def_rhs = rhs;
+  def_pguard = pg;
   }
 
 let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=

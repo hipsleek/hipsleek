@@ -418,4 +418,14 @@ let classify_err_constrs prog constrs0=
 let cl_err_constrs prog err_constrs nerr_constrs=
   err_constrs
 
+(*update lib of hpdefs if applicable*)
+let combine_err_def_x prog err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs=
+  nerr_hpdefs
 
+
+let combine_err_def prog err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln Cprinter.string_of_hprel_def in
+  Debug.no_4 "combine_err_def" pr1 pr2 pr1 pr2 pr2
+      (fun _ _ _ _ -> combine_err_def_x prog err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs)
+      err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs
