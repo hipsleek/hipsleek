@@ -439,6 +439,8 @@ let find_rel_args_groups_scc prog scc0 =
       CF.hprel_def_guard = None;
       CF.hprel_def_body = [([], Some f)];
       CF.hprel_def_body_lib = None;
+      CF.hprel_def_pguard = CP.mkTrue no_pos;
+      CF.hprel_def_case_body = None;
     }
     in
     (hp, def, n_hf,n_hps)

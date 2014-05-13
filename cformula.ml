@@ -112,15 +112,15 @@ and struc_infer_formula =
 
 and struc_case_formula =
 	{
-		formula_case_branches : (Cpure.formula * struc_formula ) list;
-		(* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
-		formula_case_pos : loc
+	    formula_case_branches : (Cpure.formula * struc_formula ) list;
+	    (* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
+	    formula_case_pos : loc
 	}
 
 and struc_base_formula =
 	{
-		formula_struc_explicit_inst : Cpure.spec_var list;
-		formula_struc_implicit_inst : Cpure.spec_var list;
+	    formula_struc_explicit_inst : Cpure.spec_var list;
+	    formula_struc_implicit_inst : Cpure.spec_var list;
         (*
            vars_free, vars_linking, vars_astextracted
         *)
@@ -4223,7 +4223,8 @@ and hprel_def= {
     (* hprel_def_body: (cond_path_type * (formula_guard list)) list; (\* RHS *\) *)
     hprel_def_body_lib: formula option; (* reuse of existing pred *)
     (* hprel_def_path: cond_path_type; *)
-    
+    hprel_def_pguard: CP.formula; (*this pure guard to form the case predicates.*)
+    hprel_def_case_body: struc_formula option; (*update at the end*)
 }
 
 (*temporal: name * hrel * guard option * definition body*)
@@ -4422,12 +4423,14 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hpr
 let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
   mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
- let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib= {
+ let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib pg= {
      hprel_def_kind = kind;
      hprel_def_hrel = hprel;
      hprel_def_guard = guard_opt;
      hprel_def_body =  path_opf;
      hprel_def_body_lib = opflib;
+     hprel_def_pguard = pg;
+     hprel_def_case_body = None;
  }
 
 let pr_h_formula_opt og=
@@ -15360,7 +15363,7 @@ let flatten_hp_rel_def hpdef=
   let fs,ogs = List.split hpdef.def_rhs in
   let f = disj_of_list fs no_pos in
   let og = combine_guard ogs in
-  (a1,hprel,og,f)
+  (a1,hprel,og,f, hpdef.def_pguard)
 
 let add_proof_traces_ctx ctx0 proof_traces=
   let rec helper ctx=

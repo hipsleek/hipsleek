@@ -1041,6 +1041,8 @@ let generate_hp_def_from_link_hps prog cond_path equivs link_hpargs=
       CF.hprel_def_guard = og;
       CF.hprel_def_body = [(cond_path, Some f)];
       CF.hprel_def_body_lib = Some f;
+      Cformula.hprel_def_pguard = def.CF.def_pguard;
+      CF.hprel_def_case_body = None;
     }
   in
   let link_hps = List.map fst link_hpargs in
@@ -1147,7 +1149,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     (* let fs,ogs = List.split def.CF.def_rhs in *)
     let fs1_wg_ss = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) def.CF.def_rhs in
     let fs1_wg = (* CF.disj_of_list *) (fst (List.split fs1_wg_ss)) (* no_pos *) in
-    (def.CF.def_cat, def.CF.def_lhs, fs1_wg, fs1_wg_ss)
+    (def.CF.def_cat, def.CF.def_lhs, fs1_wg, fs1_wg_ss, def.CF.def_pguard)
   in
   let subst_and_combine new_hpdefs fs_wg_ss=
     let n_fs_wg = List.map (fun ((f,g), xp_args) ->
@@ -1163,11 +1165,10 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   let ls_unk_hpargs_fr = unk_hp_frargs in
   (* let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in *)
   let new_hpdefs = List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs in
-  let new_hpdefs1 = List.map (fun (a,b,fs_wg,_) -> (a,b, fs_wg)) new_hpdefs in
-  let new_hpdefs2 = List.map (fun (a,b,_, fs_wg_ss) -> (a,b, fs_wg_ss)) new_hpdefs in
+  let new_hpdefs1 = List.map (fun (a,b,fs_wg,_,pg) -> (a,b, fs_wg,pg)) new_hpdefs in
+  let new_hpdefs2 = List.map (fun (a,b,_, fs_wg_ss,pg) -> (a,b, fs_wg_ss,pg)) new_hpdefs in
   (*subst XPURE*)
-  let pguard = CP.mkTrue no_pos in
-  List.map (fun (a,b,fs_wg_ss) ->
+  List.map (fun (a,b,fs_wg_ss,pguard) ->
       let new_rhs = subst_and_combine (*subst_xpure*) new_hpdefs1 fs_wg_ss in
       { CF.def_cat = a; CF.def_lhs = b; CF.def_rhs = new_rhs; CF.def_pguard = pguard;}
   ) new_hpdefs2

@@ -2,6 +2,8 @@ open Globals
 open Others
 open Gen
 
+module CF=Cformula
+module CP=Cpure
 
 let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
   (* let rec init body stmt cpl binding = match stmt with *)
@@ -271,7 +273,7 @@ let group_paths hprel_defs =
 let partition_paths hprel_defs prog =
   List.fold_left (fun all_hprel_defs hprel_def ->
       let new_hprel_defs = List.map (fun hprel_def_body ->
-          Cformula.mk_hprel_def hprel_def.Cformula.hprel_def_kind hprel_def.Cformula.hprel_def_hrel hprel_def.Cformula.hprel_def_guard [hprel_def_body] None) hprel_def.Cformula.hprel_def_body in
+          Cformula.mk_hprel_def hprel_def.Cformula.hprel_def_kind hprel_def.Cformula.hprel_def_hrel hprel_def.Cformula.hprel_def_guard [hprel_def_body] None hprel_def.Cformula.hprel_def_pguard) hprel_def.Cformula.hprel_def_body in
       new_hprel_defs@all_hprel_defs)
       [] hprel_defs
 
@@ -419,8 +421,49 @@ let cl_err_constrs prog err_constrs nerr_constrs=
   err_constrs
 
 (*update lib of hpdefs if applicable*)
-let combine_err_def_x prog err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs=
-  nerr_hpdefs
+let combine_err_def_x prog err_hp_defs err_hpdefs0 nerr_hp_defs nerr_hpdefs0=
+  (****************************)
+  let extract_case_formula hpdef=
+    let f = match hpdef.CF.hprel_def_body_lib with
+      | None -> let fs = List.fold_left (fun r (_, f_opt) ->
+            match f_opt with
+              | Some f -> r@[f]
+              | None -> r
+        ) [] hpdef.CF.hprel_def_body in
+        CF.disj_of_list fs no_pos
+      | Some f -> f
+    in (f, hpdef.CF.hprel_def_pguard)
+  in
+  let rec look_up_err_def hpdefs hp0=
+    match hpdefs with
+      | [] -> raise Not_found
+      | hpdef::rest -> begin
+          match hpdef.CF.hprel_def_kind with
+            | CP.HPRelDefn (hp,_,_) -> if CP.eq_spec_var hp hp0 then
+                begin
+                  extract_case_formula hpdef
+                end
+              else look_up_err_def rest hp0
+            | _ -> look_up_err_def rest hp0
+        end
+  in
+  (****************************)
+  let nerr_hpdefs1 = List.map (fun hpdef ->
+      try
+        match hpdef.CF.hprel_def_kind with
+          | CP.HPRelDefn (hp,_,_) ->
+                let (err_f, err_guard) = look_up_err_def err_hpdefs0 hp in
+                let (f, guard) = extract_case_formula hpdef in
+                let branches = [(guard, CF.struc_formula_of_formula f (CF.pos_of_formula f)); (err_guard, CF.struc_formula_of_formula err_f (CF.pos_of_formula err_f))] in
+                let sbody = CF.ECase {CF.formula_case_branches = branches;
+                CF.formula_case_pos = no_pos;
+                } in
+                {hpdef with CF.hprel_def_pguard = CP.disj_of_list [guard;err_guard] no_pos;
+                    CF.hprel_def_case_body = Some sbody}
+          | _ -> hpdef
+      with _ -> hpdef
+  ) nerr_hpdefs0 in
+  nerr_hpdefs1
 
 
 let combine_err_def prog err_hp_defs err_hpdefs nerr_hp_defs nerr_hpdefs=

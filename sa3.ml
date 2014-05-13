@@ -1399,7 +1399,7 @@ let def_subst_fix_x prog post_hps unk_hps prefix_hps hpdefs=
     (rems = [])
   in
   let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
-    let (a1,hprel,g,f) = Cformula.flatten_hp_rel_def hpdef in
+    let (a1,hprel,g,f, pguard) = Cformula.flatten_hp_rel_def hpdef in
     let hp = Cformula.get_hpdef_name a1 in
     let fs = Cformula.list_of_disjs f in
     (* DD.ninfo_zprint (lazy (("       process_dep_group hp: " ^ (!CP.print_sv hp)))) no_pos; *)
@@ -1441,7 +1441,7 @@ let def_subst_fix_x prog post_hps unk_hps prefix_hps hpdefs=
       if b then
         let r, others = Sautil.find_root prog (hp::unk_hps) args (List.map fst fs1_wg) in
         let _ = CA.set_proot_hp_def_raw (Sautil.get_pos args 0 r) prog.CA.prog_hp_decls (CP.name_of_spec_var hp) in
-        let pguard = CP.mkTrue no_pos in
+        (* let pguard = CP.mkTrue no_pos in *)
         (b , Cformula.mk_hp_rel_def1 (* hpdef.Cformula.def_cat *) (CP.HPRelDefn (hp, r, others )) hprel (* [(Cformula.disj_of_list fs1 no_pos, g)] *) fs1_wg pguard)
       else (false, hpdef)
     else
@@ -2768,7 +2768,7 @@ and infer_core iprog prog proc_name callee_hps is need_preprocess detect_dang =
 
 let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) callee_hps sel_hps all_post_hps
       hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang =
-  let rectify_type_root hp_def=
+  let rectify_type_root_x hp_def=
     match hp_def.Cformula.def_cat with
       | CP.HPRelDefn (hp,((CP.SpecVar (rt, r_id, rp)) as r),paras) -> begin
           match rt with
@@ -2788,6 +2788,11 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
             | _ -> hp_def
         end
       | _ -> hp_def
+  in
+  let rectify_type_root hp_def=
+    let pr1 = Cprinter.string_of_hp_rel_def in
+    Debug.no_1 "rectify_type_root" pr1 pr1
+        (fun _ -> rectify_type_root_x hp_def) hp_def
   in
   let process_one_path (cond_path, link_hpargs, constrs1)=
     (* let _ = DD.info_hprint (add_str "all_post_hps" !CP.print_svl) all_post_hps no_pos in *)
@@ -2934,13 +2939,15 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         (cl_sel_hps, hp_defs2, [])
       else
         let tupled_defs1 = List.map (fun d ->
-            let (a, hf, og,f) = Cformula.flatten_hp_rel_def d in
+            let (a, hf, og,f, pguard) = Cformula.flatten_hp_rel_def d in
             {
             Cformula.hprel_def_kind = a;
             Cformula.hprel_def_hrel = hf;
             Cformula.hprel_def_guard = og;
             Cformula.hprel_def_body = [(is.Cformula.is_cond_path, Some f)];
             Cformula.hprel_def_body_lib = (* Some f *) None;
+            Cformula.hprel_def_pguard = pguard;
+            Cformula.hprel_def_case_body = None;
         }
         ) tupled_defs
         in
@@ -2950,8 +2957,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
         (cl_sel_hps, hp_defs1,tupled_defs1)
     in
     let hpdefs = List.map (fun d ->
-        let (k, hf, og, f) = Cformula.flatten_hp_rel_def d in
-        Cformula.mk_hprel_def k hf og [(is.Cformula.is_cond_path, Some f)] None) defs in
+        let (k, hf, og, f, pg) = Cformula.flatten_hp_rel_def d in
+        Cformula.mk_hprel_def k hf og [(is.Cformula.is_cond_path, Some f)] None pg) defs in
     let _ = DD.ninfo_hprint (add_str "   is.Cformula.is_link_hpargs 2:" (pr_list (pr_pair !CP.print_sv !CP.print_svl))) link_hpargs no_pos in
     let link_hpdefs = Sacore.generate_hp_def_from_link_hps prog is.Cformula.is_cond_path is.Cformula.is_hp_equivs
       (link_hpargs) in
@@ -2983,6 +2990,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
   let cl_sel_hps, path_defs, tupled_defs, all_hpdefs = List.fold_left (fun (ls1, ls2,ls3, ls4) path_setting ->
       let r1,r2,r3, r4 = process_path_defs_setting unk_hps path_setting in
       let _ = DD.ninfo_hprint (add_str "   r2:" (pr_list_ln Cprinter.string_of_hprel_def)) r2 no_pos in
+      let _ = DD.ninfo_hprint (add_str "   r4:" (pr_list_ln Cprinter.string_of_hp_rel_def)) r4 no_pos in
       (ls1@r1, ls2@[r2], ls3@r3, ls4@r4)
   ) ([],[],[], []) ls_is
   in
@@ -3017,8 +3025,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
           with _ -> r
       ) [] split_comp_hps in
       let comps_hpdefs = List.map (fun d ->
-          let (k, hf, og, f) = Cformula.flatten_hp_rel_def d in
-          Cformula.mk_hprel_def k hf og [([], Some f)] None) comps_hp_defs in
+          let (k, hf, og, f, pguard) = Cformula.flatten_hp_rel_def d in
+          Cformula.mk_hprel_def k hf og [([], Some f)] None pguard) comps_hp_defs in
       n_cmb_defs0b@comps_hpdefs
     in
     (n_all_hp_defs0c, n_cmb_defs0a)
@@ -3042,6 +3050,8 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps=
       CF.hprel_def_guard = None;
       CF.hprel_def_body = List.map (fun (f,_) -> ([],Some f)) hp_def.CF.def_rhs;
       CF.hprel_def_body_lib = None;
+      CF.hprel_def_pguard = hp_def.CF.def_pguard;
+      CF.hprel_def_case_body = None;
       }
       ) split_hp_defs in
       (n_cmb_defs0a@split_hpdefs)
@@ -3135,11 +3145,12 @@ let infer_shapes_x iprog prog proc_name (constrs: CF.hprel list) sel_hps post_hp
     let a, hprel_defs_w_lib, hprel_defs_wo_lib, d = syn_shape constrs1 callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang in
     let  err_constrs1 =  Saerror.cl_err_constrs prog err_constrs0 constrs1 in
     let err_a, err_hprel_defs_w_lib, err_hprel_defs_wo_lib, err_d = syn_shape err_constrs1 callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs link_hpargs0 need_preprocess detect_dang in
-    let cmb_hprel_defs_w_lib = Saerror.combine_err_def prog hprel_defs_wo_lib hprel_defs_w_lib
-      err_hprel_defs_wo_lib err_hprel_defs_w_lib in
+    let cmb_hprel_defs_w_lib = Saerror.combine_err_def prog
+      err_hprel_defs_wo_lib err_hprel_defs_w_lib
+     hprel_defs_wo_lib hprel_defs_w_lib in
     let _ = Globals.lemma_ep := orig_lemma_ep in
     (* let _ = print_generated_slk_file () in *)
-     let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) ( hprel_defs_w_lib) in
+     let _ = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) ( cmb_hprel_defs_w_lib) in
      (* let _ = if (!Globals.sae) then Saerror.create_specs (CF.rel_def_stk # get_stk) prog proc_name else () in *)
     (a, hprel_defs_w_lib, hprel_defs_wo_lib, d)
   with _ ->

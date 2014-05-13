@@ -292,7 +292,7 @@ let reverify_with_hp_rel old_cprog iprog =
   (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
   let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
   let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
-      let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
+      let (hp_kind, _,_,f,_) = Cformula.flatten_hp_rel_def hp_def in
         match hp_kind with
           |  Cpure.HPRelDefn (hp,r,args) -> begin
                  try

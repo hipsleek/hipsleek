@@ -2253,86 +2253,6 @@ let pr_path_of (path, off)=
      | None -> fmt_string " NONE"
      | Some f -> fmt_string (prtt_string_of_formula f))
 
-let pr_hprel_def hpd=
-  fmt_open_box 1;
-  (* fmt_string "hprel(3)"; *)
-  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
-  (* fmt_string "\n"; *)
-  (pr_h_formula hpd.hprel_def_hrel);
-  let _ = match hpd.hprel_def_guard with
-    | None -> ()
-          (* fmt_string " NONE " *)
-    | Some hf -> 
-          begin
-            fmt_string " |#| ";
-            prtt_pr_formula hf
-          end
-  in
-  fmt_string " ::= ";
-  fmt_cut () ;
-   (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
-  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
-  fmt_string " LIB FORM:\n";
-  (pr_h_formula hpd.hprel_def_hrel);
-  fmt_string " ::= ";
-  fmt_cut () ;
-  fmt_string ( match hpd.hprel_def_body_lib with
-    | None -> " NONE"
-    | Some f -> prtt_string_of_formula f);
-  fmt_close()
-
-let pr_hprel_def_short hpd=
-  fmt_open_box 1;
-  (* fmt_string "hprel(4)"; *)
-  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
-  (* fmt_string "\n"; *)
-  (pr_h_formula hpd.hprel_def_hrel);
-  let _ = match hpd.hprel_def_guard with
-    | None -> ()
-          (* fmt_string " NONE " *)
-    | Some hf -> 
-          begin
-            fmt_string " |#| ";
-            prtt_pr_formula hf
-          end
-  in
-  fmt_string " ::=";
-  (* no cut here please *)
-  (* fmt_cut(); *)
-  match hpd.hprel_def_body_lib with
-    | None -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
-    | Some f -> prtt_pr_formula f;
-   (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
-  (* fmt_string " LIB FORM:\n"; *)
-  (* (pr_h_formula hpd.hprel_def_hrel); *)
-  (* fmt_string " ::="; *)
-  (* fmt_string ( match hpd.hprel_def_body_lib with *)
-  (*   | None -> "UNKNOWN" *)
-  (*   | Some f -> prtt_string_of_formula f); *)
-  fmt_close()
-
-let pr_hprel_def_lib hpd=
-  fmt_open_box 1;
-  (* fmt_string "hprel(5)"; *)
-  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
-  (* fmt_string "\n"; *)
-  (pr_h_formula hpd.hprel_def_hrel);
-  let _ = match hpd.hprel_def_guard with
-    | None -> ()
-          (* fmt_string " NONE " *)
-    | Some hf -> 
-          begin
-            fmt_string " |#| ";
-            prtt_pr_formula hf
-          end
-  in
-  fmt_string " ::= ";
-  fmt_cut() ;
-  fmt_string (match hpd.hprel_def_body_lib with
-    | None -> "NONE"
-    | Some f -> prtt_string_of_formula f);
-  fmt_close()
-
 let pr_pair_path_def (path, (hf,body))=
   fmt_open_box 1;
     pr_wrap_test_nocut "relDefn " skip_cond_path_trace  (fun l -> fmt_string (pr_list_round_sep ";" string_of_int l)) path;
@@ -2351,15 +2271,9 @@ let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 let string_of_hprel_short_inst prog hp =
   poly_string_of_pr (pr_hprel_short_inst prog) hp
 
-let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
-
 let string_of_pair_path_def pair = poly_string_of_pr pr_pair_path_def pair
 
 let string_of_pair_path_dang pair = poly_string_of_pr pr_pair_path_dang pair
-
-let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
-
-let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 
 let pr_par_def (f1,f2,f3) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
@@ -3925,6 +3839,104 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
   Created 22-Feb-2006
   Pretty printing fo the AST for the core language
 *)
+
+let pr_hprel_def_short hpd=
+  fmt_open_box 1;
+  (* fmt_string "hprel(4)"; *)
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_formula hf
+          end
+  in
+  fmt_string " ::=";
+  (* no cut here please *)
+  (* fmt_cut(); *)
+  match hpd.hprel_def_case_body with
+    | None -> begin
+        match hpd.hprel_def_body_lib with
+          | None -> (pr_list_op_none " \/ " pr_path_of) hpd.hprel_def_body;
+          | Some f -> prtt_pr_formula f;
+      end
+    | Some sf -> pr_struc_formula sf;
+   (* fmt_string (String.concat " OR " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (* fmt_string " LIB FORM:\n"; *)
+  (* (pr_h_formula hpd.hprel_def_hrel); *)
+  (* fmt_string " ::="; *)
+  (* fmt_string ( match hpd.hprel_def_body_lib with *)
+  (*   | None -> "UNKNOWN" *)
+  (*   | Some f -> prtt_string_of_formula f); *)
+  (* fmt_string ("\n@" ^ (string_of_pure_formula hpd.hprel_def_pguard) ^ ")"); *)
+  fmt_close()
+
+let pr_hprel_def_lib hpd=
+  fmt_open_box 1;
+  (* fmt_string "hprel(5)"; *)
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_formula hf
+          end
+  in
+  fmt_string " ::= ";
+  fmt_cut() ;
+  fmt_string (match hpd.hprel_def_body_lib with
+    | None -> "NONE"
+    | Some f -> prtt_string_of_formula f);
+   fmt_string ("@" ^ (string_of_pure_formula hpd.hprel_def_pguard) ^ ")");
+  fmt_close()
+
+
+let pr_hprel_def hpd=
+  fmt_open_box 1;
+  (* fmt_string "hprel(3)"; *)
+  (* fmt_string (CP.print_rel_cat hpd.hprel_def_kind); *)
+  (* fmt_string "\n"; *)
+  (pr_h_formula hpd.hprel_def_hrel);
+  let _ = match hpd.hprel_def_guard with
+    | None -> ()
+          (* fmt_string " NONE " *)
+    | Some hf -> 
+          begin
+            fmt_string " |#| ";
+            prtt_pr_formula hf
+          end
+  in
+  fmt_string " ::= ";
+  fmt_cut () ;
+   (* fmt_string (String.concat " \/ " (List.map pr_path_of hpd.hprel_def_body)); *)
+  (pr_list_op_none " \/ " pr_path_of hpd.hprel_def_body);
+  fmt_string "\n LIB FORM:\n";
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::= ";
+  fmt_cut () ;
+  fmt_string ( match hpd.hprel_def_case_body with
+    | None -> begin match hpd.hprel_def_body_lib with
+        | None -> " NONE"
+        | Some f -> prtt_string_of_formula f
+      end
+    | Some sf -> string_of_struc_formula sf
+  );
+  fmt_string ("\n@" ^ (string_of_pure_formula hpd.hprel_def_pguard) ^ ")");
+  fmt_close()
+
+let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp
+
+let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
+
+let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
 
 let string_of_label_partial_context (fs,_) : string =
   if (Gen.is_empty fs) then "" else string_of_path_trace(fst(List.hd fs))

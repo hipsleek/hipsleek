@@ -1454,13 +1454,15 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
             Some (CF.formula_of_heap hf1 no_pos)
           else look_up_lib hp ss
   in
-  let mk_hprel_def kind hprel og opf opflib=
+  let mk_hprel_def kind hprel og opf opflib pg=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
         CF.hprel_def_guard = og;
         CF.hprel_def_body = [(cond_path,opf)];
         CF.hprel_def_body_lib = opflib;
+        CF.hprel_def_pguard = pg;
+        CF.hprel_def_case_body = None;
     }
   in
   let compute_def_w_lib (hp,d)=
@@ -1480,7 +1482,7 @@ let collect_sel_hp_def cond_path defs sel_hps unk_hps m=
                 f_subst
             | Some lib_f -> lib_f
         in
-        (mk_hprel_def d.CF.def_cat d.CF.def_lhs og (Some f) (Some f1))
+        (mk_hprel_def d.CF.def_cat d.CF.def_lhs og (Some f) (Some f1) (CP.mkTrue no_pos))
     end
   in
   let look_up_depend cur_hp_sel f=
@@ -2017,6 +2019,8 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
             CF.hprel_def_guard = CF.combine_guard ogs;
             CF.hprel_def_body = [(cond_path, Some f)];
             CF.hprel_def_body_lib = Some f;
+            CF.hprel_def_pguard = d.CF.def_pguard;
+            CF.hprel_def_case_body = None;
         }
         ) tupled_defs
         in
@@ -2029,7 +2033,7 @@ and infer_shapes_conquer iprog prog proc_name ls_path_defs_setting sel_hps=
         let fs,ogs = List.split d.CF.def_rhs in
         let og = CF.combine_guard ogs in
         let f = CF.disj_of_list fs no_pos in
-        CF.mk_hprel_def d.CF.def_cat d.CF.def_lhs og [(cond_path, Some f)] (Some f)) defs in
+        CF.mk_hprel_def d.CF.def_cat d.CF.def_lhs og [(cond_path, Some f)] (Some f) d.CF.def_pguard) defs in
     let link_hp_defs = Sacore.generate_hp_def_from_link_hps prog cond_path equivs link_hpargs0 in
     (cl_sel_hps@(List.map fst link_hpargs0), hpdefs@link_hp_defs, tupled_defs2)
   in
@@ -2136,6 +2140,8 @@ and infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
           CF.hprel_def_guard = og;
           CF.hprel_def_body = [(cond_path, Some f)];
           CF.hprel_def_body_lib = Some f;
+          CF.hprel_def_pguard = d.CF.def_pguard;
+          CF.hprel_def_case_body = None;
       }
   ) tupled_defs in
   let shown_defs = if !Globals.pred_elim_unused_preds then sel_hp_defs@link_hp_defs else

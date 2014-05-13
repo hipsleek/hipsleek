@@ -2754,13 +2754,13 @@ let def_subst_fix prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef d=
-    let (a1,_,_,f) = CF.flatten_hp_rel_def d in
+    let (a1,_,_,f,_) = CF.flatten_hp_rel_def d in
     let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
   in
   let is_independ_hpdef d=
-    let (a1,_,_,f) = CF.flatten_hp_rel_def d in
+    let (a1,_,_,f,_) = CF.flatten_hp_rel_def d in
     let hp = CF.get_hpdef_name a1 in
     let hps = CF.get_hp_rel_name_formula f in
     let hps = CP.remove_dups_svl hps in
@@ -2770,7 +2770,7 @@ let def_subst_fix prog unk_hps hpdefs=
     (rems = [])
   in
   let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
-    let (a1,hprel,g,f) = CF.flatten_hp_rel_def hpdef in
+    let (a1,hprel,g,f,_) = CF.flatten_hp_rel_def hpdef in
     let hp = CF.get_hpdef_name a1 in
     let fs = CF.list_of_disjs f in
     (* DD.ninfo_zprint (lazy (("       process_dep_group hp: " ^ (!CP.print_sv hp)))) no_pos; *)
@@ -3341,7 +3341,7 @@ let generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs=
     match hpdefs with
       | [] -> (false,[Sautil.mkHRel_f hp args0 no_pos])
       | d::defss ->
-            let (_,hrel1,_,f) = CF.flatten_hp_rel_def d in
+            let (_,hrel1,_,f,_) = CF.flatten_hp_rel_def d in
           let hp1,args1 = CF.extract_HRel hrel1 in
           if CP.eq_spec_var hp1 hp then
             if is_rec_hpdef hp f then (true,[]) else
@@ -3469,7 +3469,7 @@ let unify_branches_hpdef_x unk_hps hp_defs =
     if CP.mem_svl hp unk_hps then
       d
     else
-      let (a,hrel,og,f) = CF.flatten_hp_rel_def d in
+      let (a,hrel,og,f,_) = CF.flatten_hp_rel_def d in
       let fs = CF.list_of_disjs f in
       let fs1 = check_eq [] fs [] in
       let p = CF.pos_of_formula f in
@@ -3494,7 +3494,7 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
     match hpdefs with
       | [] -> (f,[])
       | d1::tl ->
-          let  (a1,hrel1,og,f1) = CF.flatten_hp_rel_def d1 in
+          let  (a1,hrel1,og,f1,_) = CF.flatten_hp_rel_def d1 in
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
           if CP.mem_svl hp1 post_hps then
             lookup_equiv_hpdef tl hp args f
@@ -3514,7 +3514,7 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
               else lookup_equiv_hpdef tl hp args f
   in
   let process_one_hpdef all_hpdefs post_hps (eq_pairs,r_hpdefs) d=
-     let (a,hrel,og,f) = CF.flatten_hp_rel_def d in
+     let (a,hrel,og,f,_) = CF.flatten_hp_rel_def d in
     let hp,args = CF.extract_HRel hrel in
     if not (CP.mem_svl hp post_hps) || CP.mem_svl hp unk_hps then
       (eq_pairs,r_hpdefs@[d])
@@ -3524,7 +3524,7 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
       ((eq_pairs@new_eq_pairs),r_hpdefs@[{d with CF.def_rhs = [(new_f1, og)]}])
   in
   let get_post_hps_depend cur_depend d=
-     let (a,hrel,og,f) = CF.flatten_hp_rel_def d in
+     let (a,hrel,og,f,_) = CF.flatten_hp_rel_def d in
     let hp,_ = CF.extract_HRel hrel in
     if not (CP.mem_svl hp post_hps) || CP.mem_svl hp unk_hps then
        cur_depend
@@ -3538,7 +3538,7 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
   let rec move_post_hps_depend hp_defs post_hps_depend res=
     match hp_defs with
       | [] -> res
-      | d::rest -> let (a,hrel,og,f) = CF.flatten_hp_rel_def d in
+      | d::rest -> let (a,hrel,og,f,_) = CF.flatten_hp_rel_def d in
           let hp,_ = CF.extract_HRel hrel in
     if not (CP.mem_svl hp post_hps_depend) then
         move_post_hps_depend rest post_hps_depend (res@[d])
@@ -3597,16 +3597,18 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
             Some (CF.formula_of_heap hf1 no_pos)
           else look_up_lib hp ss
   in
-  let mk_hprel_def kind hprel og opf opflib=
+  let mk_hprel_def kind hprel og opf opflib pg=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
         CF.hprel_def_guard = og;
         CF.hprel_def_body = [([], opf)];
         CF.hprel_def_body_lib = opflib;
+        CF.hprel_def_pguard = pg;
+        CF.hprel_def_case_body = None;
     }
   in
-  let compute_def_w_lib (hp,d)= let (a,hprel,og,f) = CF.flatten_hp_rel_def d in
+  let compute_def_w_lib (hp,d)= let (a,hprel,og,f,pg) = CF.flatten_hp_rel_def d in
     let olib = look_up_lib hp m in
     (* if CP.mem_svl hp unk_hps then *)
     (*   (mk_hprel_def a hprel None None) *)
@@ -3620,7 +3622,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
                 f_subst
             | Some lib_f -> lib_f
         in
-        (mk_hprel_def a hprel og (Some f) (Some f1))
+        (mk_hprel_def a hprel og (Some f) (Some f1) pg)
     end
   in
   let look_up_depend cur_hp_sel f=
@@ -3635,7 +3637,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
     let rec helper1 ls res=
       match ls with
         | [] -> res
-        | (hp,d)::lss -> let (a,hf,_,f) = CF.flatten_hp_rel_def d in
+        | (hp,d)::lss -> let (a,hf,_,f,_) = CF.flatten_hp_rel_def d in
             let incr =
               if CP.mem_svl hp (cur_sel(* @unk_hps *)) then
                 []
@@ -3651,7 +3653,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
       let incr_sel_hp_def,remain_hp_defs = look_up_hp_def incr_sel_hps non_sel_hp_def in
       find_closed_sel (cur_sel@incr_sel_hps) (cur_sel_hpdef@incr_sel_hp_def) remain_hp_defs incr_sel_hp_def
   in
-  let defsw = List.map (fun d -> let (a,hf,og,f) = CF.flatten_hp_rel_def d in
+  let defsw = List.map (fun d -> let (a,hf,og,f,_) = CF.flatten_hp_rel_def d in
       (List.hd (CF.get_hp_rel_name_h_formula hf), d)) defs in
   let sel_defw,remain_hp_defs = List.partition (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
   (* let sel_defw1 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) sel_defw in *)
