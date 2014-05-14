@@ -1,4 +1,4 @@
-//#include <stdlib.h>
+#include "stdhip.h"
 
 /* Builds a tree with parent links and
  * checks whether the values are still correct.
@@ -33,20 +33,20 @@ struct node {
     int             value;
 };
 
-/* struct node * free(struct node* x) */
-/* /\*@ */
-/*   requires x::node<_,_,_,_> */
-/*   ensures res = null; */
-/* *\/ */
-/* { */
-/*   return NULL; */
-/* } */
+struct node * free(struct node* x)
+/*@
+  requires x::node<_,_,_,_>
+  ensures res = null;
+*/
+{
+  return NULL;
+}
 
-/* struct node* abort() */
-/* /\*@ */
-/*   requires true ensures true & flow __Error; */
-/* *\/ */
-/*   ; */
+struct node* abort()
+/*@
+  requires true ensures true & flow __Error;
+*/
+  ;
 
 /* struct node* malloc(int n) */
 /* /\*@ */
