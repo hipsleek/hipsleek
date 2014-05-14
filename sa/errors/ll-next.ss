@@ -8,21 +8,30 @@ HeapPred G(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(node x)
-/*
+
   infer[H,G]
   requires H(x)
-  ensures G(x,res);//'
-*/
+     ensures G(x,res) ;//' (l1): G(x,res)& SUCCC \/ (l2): true & ERROR
+
+/*
   case {
    x=null -> ensures true & flow __Error;
    x!=null -> requires x::node<_,p>
      ensures x::node<_,p> & res=p;
  }
+*/
 {
   // if (x==null) return null;
   return x.next;
 }
 
+/*
+ H(x) & x != null -> x::node<...>(l1)...
+\/
+ H(x) & x = null -> true & Error
+  Error --> (l2) true & Error
+
+ */
 node test (node x)
 
   requires x=null
