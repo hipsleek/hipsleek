@@ -1511,7 +1511,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   else failwith "Error detected at trans_prog"
 
 and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
-  Debug.no_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog
+  let pr_in = Iprinter.string_of_program in
+  let pr_out (cprog,iprog) = Cprinter.string_of_program cprog in
+  Debug.no_1 "trans_prog" pr_in pr_out (fun x -> trans_prog_x prog) prog
 
 (* Replaced to use new_proc_decls *)
 (*  
@@ -1599,8 +1601,13 @@ and sat_warnings cprog =
     {cprog with Cast.prog_view_decls = n_pred_list;}
   in
   wrap_proving_kind PK_Sat_Warning sat_warnings_op ()    
-      
+
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
+  let pr_in = Iprinter.string_of_data_decl in
+  let pr_out = Cprinter.string_of_data_decl in
+  Debug.no_1 "trans_data" pr_in pr_out (fun _ -> trans_data_x prog ddef) ddef
+
+and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* Update the list of undefined data types *)
   (** 
       * An Hoa [22/08/2011] : translate field with inline consideration.
@@ -4992,7 +4999,10 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
               | [] -> (None, [])
               | f :: rest ->
                     let fn1 = fresh_trailer () in
-                    let fresh_fn = (snd f) ^"_"^(string_of_int pos.start_pos.Lexing.pos_lnum)^ fn1 in
+                    let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+                                 string_of_int pos.start_pos.Lexing.pos_lnum
+                               else "0" in
+                    let fresh_fn = (snd f) ^ "_" ^ line ^ fn1 in
                     let (tmp, new_rest) = gen_names fn rest in
                     if (snd f) = fn then ((Some (fst f, fresh_fn)), (fresh_fn :: new_rest))
                     else (tmp, (fresh_fn :: new_rest))) in
