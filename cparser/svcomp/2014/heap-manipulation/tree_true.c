@@ -33,20 +33,20 @@ struct node {
     int             value;
 };
 
-struct node * free(struct node* x)
-/*@
-  requires x::node<_,_,_,_>
-  ensures res = null;
-*/
-{
-  return NULL;
-}
+/* struct node * free(struct node* x) */
+/* /\*@ */
+/*   requires x::node<_,_,_,_> */
+/*   ensures res = null; */
+/* *\/ */
+/* { */
+/*   return NULL; */
+/* } */
 
-struct node* abort()
-/*@
-  requires true ensures true & flow __Error;
-*/
-  ;
+/* struct node* abort() */
+/* /\*@ */
+/*   requires true ensures true & flow __Error; */
+/* *\/ */
+/*   ; */
 
 /* struct node* malloc(int n) */
 /* /\*@ */

@@ -1,10 +1,10 @@
-//#include <stdlib.h>
+#include "stdhip.h"
 
-int rand()
-/*@
-  requires true ensures true;
-*/
-  ;
+/* int rand() */
+/* /\*@ */
+/*   requires true ensures true; */
+/* *\/ */
+/*   ; */
 
 extern int __VERIFIER_nondet_int(void);
 
@@ -34,25 +34,25 @@ struct list {
 
 struct node * free(struct node* x)
 /*@
-  requires x::node<_,_,_,_>
+  requires x::node<_,_>
   ensures res = null;
 */
 {
   return NULL;
 }
 
-struct node* abort()
-/*@
-  requires true ensures true & flow __Error;
-*/
-  ;
+/* struct node* abort() */
+/* /\*@ */
+/*   requires true ensures true & flow __Error; */
+/* *\/ */
+/*   ; */
 
-struct node* malloc(int n)
-/*@
-  requires true
-  ensures res::node<_,_,_,_>;
-*/
-  ;
+/* struct node* malloc(int n) */
+/* /\*@ */
+/*   requires true */
+/*   ensures res::node<_,_,_,_>; */
+/* *\/ */
+/*   ; */
 
 static void merge_single_node(struct node ***dst,
                               struct node **data)

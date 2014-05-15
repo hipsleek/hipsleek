@@ -1,4 +1,4 @@
-//#include <stdlib.h>
+#include "stdhip.h"
 
 /* Builds a tree with parent links and
  * checks whether the values are still correct.
@@ -6,11 +6,11 @@
 
 extern int __VERIFIER_nondet_int(void);
 
-int rand()
-/*@
-  requires true ensures true;
-*/
-  ;
+/* int rand() */
+/* /\*@ */
+/*   requires true ensures true; */
+/* *\/ */
+/*   ; */
 
 int __VERIFIER_nondet_int(void) {
     return rand() / 1000;
@@ -42,18 +42,18 @@ struct node * free(struct node* x)
   return NULL;
 }
 
-struct node* abort()
-/*@
-  requires true ensures true & flow __Error;
-*/
-  ;
+/* struct node* abort() */
+/* /\*@ */
+/*   requires true ensures true & flow __Error; */
+/* *\/ */
+/*   ; */
 
-struct node* malloc(int n)
-/*@
-  requires true
-  ensures res::node<_,_,_,_>;
-*/
-  ;
+/* struct node* malloc(int n) */
+/* /\*@ */
+/*   requires true */
+/*   ensures res::node<_,_,_,_>; */
+/* *\/ */
+/*   ; */
 
 static void inspect(struct node *node)
 {

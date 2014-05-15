@@ -1,10 +1,10 @@
-//#include <stdlib.h>
+#include "stdhip.h"
 
-int rand()
-/*@
-  requires true ensures true;
-*/
-  ;
+/* int rand() */
+/* /\*@ */
+/*   requires true ensures true; */
+/* *\/ */
+/*   ; */
 
 extern int __VERIFIER_nondet_int(void);
 
@@ -40,18 +40,18 @@ struct node * free(struct node* x)
   return NULL;
 }
 
-struct node* abort()
-/*@
-  requires true ensures true & flow __Error;
-*/
-  ;
+/* struct node* abort() */
+/* /\*@ */
+/*   requires true ensures true & flow __Error; */
+/* *\/ */
+/*   ; */
 
-struct node* malloc(int n)
-/*@
-  requires true
-  ensures res::node<_,_>;
-*/
-  ;
+/* struct node* malloc(int n) */
+/* /\*@ */
+/*   requires true */
+/*   ensures res::node<_,_>; */
+/* *\/ */
+/*   ; */
 
 static struct node* alloc_node(void)
 {

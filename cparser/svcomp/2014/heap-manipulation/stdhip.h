@@ -18,3 +18,15 @@ int rand()
   requires true
   ensures true;
 */;
+
+void abort(void)
+/*@
+  requires true
+  ensures true & flow __Error;
+*/;
+
+/* void free(void* ptr) */
+/* /\*@ */
+/*   require true */
+/*   ensures true; */
+/* *\/; */
