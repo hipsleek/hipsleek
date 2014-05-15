@@ -1,6 +1,10 @@
-#include <stdlib.h>
+#include "stdhip.h"
 
 extern int __VERIFIER_nondet_int(void);
+
+int __VERIFIER_nondet_int(void) {
+    return rand() / 1000;
+}
 
 static void fail(void) {
 ERROR:
@@ -127,7 +131,7 @@ int main()
     }
 
     if (!data)
-        return EXIT_SUCCESS;
+      return 1; //EXIT_SUCCESS;
 
     inspect_before(data);
 
@@ -146,5 +150,5 @@ int main()
         node = snext;
     }
 
-    return EXIT_SUCCESS;
+    return 1; //EXIT_SUCCESS;
 }

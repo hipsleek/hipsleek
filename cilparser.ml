@@ -249,6 +249,50 @@ let create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   (* return *)
   proc_decl
 
+let create_typ_pointer_casting_proc (typ_name: string): Iast.proc_decl =
+  let proc_name = "cast_" ^ typ_name ^ "_to_void_pointer" in
+  let proc_decl = (
+      try
+        Hashtbl.find tbl_aux_proc proc_name
+      with Not_found -> (
+          let data_name, base_data = (
+              let re = Str.regexp "\(_star\)" in
+              try
+                let _ = Str.search_forward re typ_name 0 in
+                let dname = Str.global_replace re "^" typ_name in
+                let bdata = Str.global_replace re "" typ_name in
+                (dname, bdata)
+              with Not_found -> (typ_name, typ_name)
+          ) in
+          let param = (
+              match base_data with
+                | "int" -> "<_>"
+                | "bool" -> "<_>"
+                | "float" -> "<_>"
+                | "void" -> "<_>"
+                | _ -> (
+                      try
+                        let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
+                        match data_decl.Iast.data_fields with
+                          | [] -> report_error no_pos "create_typ_pointer_casting_proc: Invalid data_decl fields"
+                          | [hd] -> "<_>"
+                          | hd::tl ->  "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
+                      with Not_found -> report_error no_pos ("create_typ_pointer_casting_proc: Unknown data type: " ^ base_data)
+                  )
+          ) in
+          let cast_proc = (
+              "void_star " ^ proc_name ^ " (" ^ typ_name ^ " p)\n" ^
+              "  requires p::" ^ data_name ^ param ^ "\n" ^
+              "  ensures res=null;\n"
+          ) in
+          let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
+          Hashtbl.add tbl_aux_proc proc_name pd;
+          pd
+      )
+  ) in
+  (* return *)
+  proc_decl
+
 let create_pointer_to_int_casting_proc (pointer_typ_name: string) : Iast.proc_decl =
   let proc_name = "cast_" ^ pointer_typ_name ^ "_to_int" in
   let proc_decl = (
@@ -1130,6 +1174,11 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                 | Globals.Named otyp_name, Globals.Named ityp_name -> (
                       if (ityp_name = "void_star") then (
                           let cast_proc = create_void_pointer_casting_proc otyp_name in
+                          Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
+                      ) 
+                      else if (otyp_name = "void_star") then (
+     let _ = print_endline "casting void star" in
+                          let cast_proc = create_typ_pointer_casting_proc ityp_name in
                           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
                       )
                       else 

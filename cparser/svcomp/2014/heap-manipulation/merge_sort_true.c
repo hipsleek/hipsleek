@@ -32,14 +32,14 @@ struct list {
     struct list     *next;
 };
 
-struct node * free(struct node* x)
-/*@
-  requires x::node<_,_>
-  ensures res = null;
-*/
-{
-  return NULL;
-}
+/* struct node * free(struct node* x) */
+/* /\*@ */
+/*   requires x::node<_,_> */
+/*   ensures res = null; */
+/* *\/ */
+/* { */
+/*   return NULL; */
+/* } */
 
 /* struct node* abort() */
 /* /\*@ */

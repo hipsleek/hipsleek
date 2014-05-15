@@ -25,8 +25,8 @@ void abort(void)
   ensures true & flow __Error;
 */;
 
-/* void free(void* ptr) */
-/* /\*@ */
-/*   require true */
-/*   ensures true; */
-/* *\/; */
+void free(void* ptr)
+/*@
+  require true
+  ensures res=null;
+*/;
