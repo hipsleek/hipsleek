@@ -1177,7 +1177,6 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
                       ) 
                       else if (otyp_name = "void_star") then (
-     let _ = print_endline "casting void star" in
                           let cast_proc = create_typ_pointer_casting_proc ityp_name in
                           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos
                       )
