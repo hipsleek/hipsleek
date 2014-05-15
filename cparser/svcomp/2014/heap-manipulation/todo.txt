@@ -74,7 +74,7 @@ Message: TRUNG TODO: handle TFun later! Maybe it's function pointer case?
 Exception occurred: Failure("TRUNG TODO: handle TFun later! Maybe it's function pointer case?")
 Error3(s) detected at main 
 ===============================================
-- merge_sort_false.c:
+- merge_sort_false.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_false.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/merge_sort_false.c" by cil parser...
@@ -93,7 +93,7 @@ Message: translate_exp: couldn't cast type 1: list to void_star
 Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_star")
 Error3(s) detected at main 
 ===============================================
-- merge_sort_true.c:
+- merge_sort_true.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/merge_sort_true.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/merge_sort_true.c" by cil parser...
@@ -113,7 +113,7 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: list to void_s
 Error3(s) detected at main 
 
 ===============================================
-- sll_to_dll_rev_false.c:
+- sll_to_dll_rev_false.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_false.c" by cil parser...
@@ -145,7 +145,7 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_s
 Error3(s) detected at main 
 
 ===============================================
-- sll_to_dll_rev_true.c:
+- sll_to_dll_rev_true.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/sll_to_dll_rev_true.c" by cil parser...
@@ -177,7 +177,7 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_s
 Error3(s) detected at main 
 
 ===============================================
-- tree_false.c:
+- tree_false.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_false.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/tree_false.c" by cil parser...
@@ -197,7 +197,7 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_s
 Error3(s) detected at main 
 
 ===============================================
-- tree_true.c:
+- tree_true.c: fixed
 
 !!!Full processing file "cparser/svcomp/2014/heap-manipulation/tree_true.c"
 Parsing file "cparser/svcomp/2014/heap-manipulation/tree_true.c" by cil parser...
@@ -219,7 +219,7 @@ Exception occurred: Failure("translate_exp: couldn't cast type 1: node to void_s
 Error3(s) detected at main 
 
 ===============================================
-# handle #include <stdlib.h>??
+# handle #include <stdlib.h>??: fixed
 
   - collect all functions included from stdlib.h
        e.g. rand(), free?
@@ -309,13 +309,13 @@ Error(s) detected when checking procedure main$
 
 ===============================================
 
-- prelude.ss:
+- prelude.ss: fixed
 
 node malloc(int n)
   requires true
   ensures res::node<_,_,_,_>;
 
-- tree_true.c:
+- tree_true.c: fixed
 
 call malloc
 
@@ -325,6 +325,9 @@ Message: OpAssign : lhs and rhs do not match 2
 line 149: tmp = (143, ):malloc(1);
 
 ===============================================
+
+- how to handle function pointer ?
+
 ===============================================
 ===============================================
 ===============================================

@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "stdhip.h"
 
 extern int __VERIFIER_nondet_int(void);
 
