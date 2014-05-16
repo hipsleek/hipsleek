@@ -331,7 +331,7 @@ let check_formula f timeout =
 	        omega_call_count := 0;
         end;
       let fnc f = 
-        (* let _ = print_endline ("check:" ^ f) in *)
+        let _ = print_endline ("check:" ^ f) in
         let _ = incr omega_call_count in
         let new_f = Gen.break_lines_1024 f
         (*  if ((String.length f) > 1024) then

@@ -1,9 +1,9 @@
 
-#nll.slk
+#nll.slk: use z3. omega does not work well with eq/neq theory
 
 
 GOT:
- loop
+ very slow
 
 
 ==================================================================
