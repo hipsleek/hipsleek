@@ -1498,7 +1498,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
     | WArg -> begin
         (***************************************************)
         let _ = pr_debug "WArg  analysis here!\n" in
-        let _ = Debug.binfo_hprint (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
+        let _ = Debug.ninfo_hprint (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
         (* let view_decls = prog.prog_view_decls in *)
         (* match lhs_node,rhs_node with *)
         (*   | ViewNode vl, DataNode dr -> *)
