@@ -14,12 +14,19 @@ http://navarroj.com/research/papers.html#pldi11
 
 (declare-fun f () (Field Sll_t Sll_t))
 
+; data Sll_t {
+;        Sll_t f;
+; }.
+
 (define-fun ls ((?in Sll_t) (?out Sll_t)) Space
 (tospace (or (= ?in ?out)
 (exists ((?u Sll_t))
 (tobool
 (ssep (pto ?in (ref f ?u)) (ls ?u ?out)
 ))))))
+
+; pred ls<out> == self=out
+;   or (exists u: self::Sll_t<f:u> * u::ls<out> ).
 
 (declare-fun nil () Sll_t)
 
@@ -57,3 +64,24 @@ http://navarroj.com/research/papers.html#pldi11
 )))
 
 (check-sat)
+
+; checkentail x_emp::Sll_t<y_emp> * z_emp::Sll_t<t_emp> 
+;            & null=null 
+;         |- x_emp::Sll_t<y_emp> * z_emp::Sll_t<t_emp> 
+;            & const_1 = const_1.
+
+==============================================================================
+
+data Sll_t {
+        Sll_t f;
+}.
+
+pred ls<out> == self=out
+  or (exists u: self::Sll_t<f:u> * u::ls<out> ).
+
+checkentail x_emp::Sll_t<y_emp> 
+            * z_emp::Sll_t<t_emp> 
+            & null=null 
+         |- x_emp::Sll_t<y_emp> 
+            * z_emp::Sll_t<t_emp> 
+            & const_1 = const_1.
