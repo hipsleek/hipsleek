@@ -712,11 +712,11 @@ let rec look_up_emp_cond_x vname svl ls_map=
         if String.compare vname vname1 = 0 && (List.length svl = List.length args1) then
           match ocond with
             | Some cond ->
-                    (* let _ = Debug.info_pprint (" cond: "^ (!CP.print_formula cond)) no_pos in *)
+                    (* let _ = Debug.info_hprint (add_str " cond: " (!CP.print_formula )) cond no_pos in *)
                   let ss = List.combine args1 svl in
                   let cond1 =  (CP.subst ss cond) in
-                  (* let _ = Debug.info_pprint (" cond1: "^ (!CP.print_formula cond1)) no_pos in *)
-                  (* let _ = Debug.info_pprint (" neq: "^ (!CP.print_formula neq)) no_pos in *)
+                  (* let _ = Debug.info_hprint (add_str " cond1: " (!CP.print_formula )) cond1 no_pos in *)
+                  (* let _ = Debug.info_hprint (add_str " neq: " (!CP.print_formula )) neq no_pos in *)
                   [cond1]
             | None -> []
         else
@@ -911,9 +911,9 @@ let force_no_disctinct_loop_free_x maybe_emps (sym_r,chains) =
       | (sym_n_r1, svl1, end_links1)::rest1 ->
             let inter_svl = CP.remove_dups_svl (CP.intersect_svl svl0 svl1) in
             let inter_svl0 = CP.diff_svl inter_svl sym_r in
-            let _ = Debug.info_pprint (" inter_svl0: "^ (!CP.print_svl inter_svl0)) no_pos in
-            let _ = Debug.info_pprint (" sym_n_r1: "^ (!CP.print_svl sym_n_r1)) no_pos in
-            let _ = Debug.info_pprint (" end_links1: "^ (!CP.print_svl end_links1)) no_pos in
+            let _ = Debug.ninfo_hprint (add_str " inter_svl0: " (!CP.print_svl )) inter_svl0 no_pos in
+            let _ = Debug.ninfo_hprint (add_str " sym_n_r1: " (!CP.print_svl )) sym_n_r1 no_pos in
+            let _ = Debug.ninfo_hprint (add_str " end_links1: " (!CP.print_svl )) end_links1 no_pos in
             if inter_svl0 = [] || List.length inter_svl0 > 1 then
               (*do not have loop*)
               find_loop (sym_n_r0, svl0, end_links0) is_one_step elim_cur_chain rest1 (done_chains@[(sym_n_r1, svl1, end_links1)]) res
@@ -922,7 +922,7 @@ let force_no_disctinct_loop_free_x maybe_emps (sym_r,chains) =
               let inter_svl1 = CP.diff_svl inter_svl0 end_links1 in
               if inter_svl1 = [] then
                  (*loop that the intersection is the end*)
-                let _ = Debug.info_pprint (" ****1**** is_one_step: " ^ (string_of_bool is_one_step)) no_pos in
+                let _ = Debug.ninfo_hprint (add_str " ****1**** is_one_step " (string_of_bool )) is_one_step no_pos in
                 if is_one_step then
                   (* ([(\*(sym_n_r0, svl0, end_links0)*\)],(done_chains@rest0),res@inter_svl0) *)
                   find_loop (sym_n_r0, svl0, end_links0) is_one_step true rest1 (done_chains@[(sym_n_r1, svl1, end_links1)]) (res@inter_svl0)
@@ -932,14 +932,14 @@ let force_no_disctinct_loop_free_x maybe_emps (sym_r,chains) =
                   find_loop (sym_n_r0, svl0, end_links0) is_one_step elim_cur_chain  rest1 (done_chains@[(sym_n_r1, svl1, end_links1)]) (res@inter_svl0)
               else
                 (*loop that the intersection is the middle*)
-                let _ = Debug.info_pprint (" ****2****: ") no_pos in
+                let _ = Debug.ninfo_hprint (add_str " ****2****" pr_id)"" no_pos in
                 let inter_svl2 = ( CP.diff_svl inter_svl0 end_links0) in
                 if eq_sym_node_svl sym_n_r0 inter_svl2 then
                   (* ([(sym_n_r0, svl0, end_links0) ],(done_chains@((sym_n_r1, sym_r@sym_n_r1@inter_svl2, inter_svl2)::rest1)),res@inter_svl2) *)
-                  let _ = Debug.info_pprint (" ****3****: ") no_pos in
+                  let _ = Debug.ninfo_hprint (add_str " ****3****: " pr_id) "" no_pos in
                   (true,(done_chains@((sym_n_r1, sym_r@sym_n_r1@inter_svl2, inter_svl2)::rest1)),res@inter_svl2)
                 else if (eq_sym_node_svl sym_n_r1 inter_svl1) then
-                  let _ = Debug.info_pprint (" ****4****: ") no_pos in
+                  let _ = Debug.ninfo_hprint (add_str " ****4****: " pr_id) "" no_pos in
                   find_loop (sym_n_r0, svl0, end_links0) is_one_step elim_cur_chain rest1 (done_chains) (res@inter_svl1)
                 else
                   find_loop (sym_n_r0, svl0, end_links0) is_one_step (elim_cur_chain) rest1 (done_chains@[(sym_n_r1, svl1, end_links1)]) (res@inter_svl1)
@@ -948,7 +948,7 @@ let force_no_disctinct_loop_free_x maybe_emps (sym_r,chains) =
     match ls with
       | [] -> (CP.remove_dups_svl res, done_chains)
       | (sym_r_n, svl,end_links)::rest ->
-            (* let _ = Debug.info_pprint (" sym_r: "^ (!CP.print_svl sym_r)) no_pos in *)
+            (* let _ = Debug.info_hprint (add_str " sym_r: " (!CP.print_svl )) sym_r no_pos in *)
             (*check have a self loop*)
             if CP.intersect_svl sym_r end_links = [] then
               let elim_cur,rest1,n_inter = find_loop (sym_r_n, svl,end_links) (eq_sym_node_svl sym_r_n end_links) false
@@ -1209,8 +1209,8 @@ let norm_dups_pred_x cprog f=
       let n_els = (svl_add_list_alias els eqs) in
       let n_svl = List.fold_left (fun ls pr-> svl_add_alias ls pr) svl eqs in
       let diff_n1,diff_n2 = (* (CP.diff_svl n_sym_n sym_n) in *) get_new_next sym_n eqs [] [] in
-      let _ = Debug.info_pprint (" diff_n1: "^ (!CP.print_svl diff_n1)) no_pos in
-      let _ = Debug.info_pprint (" diff_n2: "^ (!CP.print_svl diff_n2)) no_pos in
+      let _ = Debug.ninfo_hprint (add_str " diff_n1: " (!CP.print_svl)) diff_n1 no_pos in
+      let _ = Debug.ninfo_hprint (add_str " diff_n2: " (!CP.print_svl )) diff_n2 no_pos in
       let n_svl_from_new_roots,els_from_new_roots = if diff_n1 = [] then [],[] else
         look_up_next_roots rdups_chains_grps0 diff_n1 [] []
       in

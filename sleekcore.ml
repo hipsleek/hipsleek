@@ -40,7 +40,6 @@ let check_unsat cprog ante init_ctx=
   (*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *)
   (* in *)
   let helper f=
-    (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_context ctx)) in *)
     let f1 = Frame.norm_dups_pred cprog f in
     Solver.unsat_base_nth 1 cprog (ref 1) f1
   in
@@ -60,7 +59,7 @@ let check_unsat cprog ante init_ctx=
   in
   if r then (true, CF.SuccCtx [init_ctx], [])
   else (false, CF.FailCtx (CF.Trivial_Reason
-      ({CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
+      ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
   [])
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=

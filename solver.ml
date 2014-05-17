@@ -2642,6 +2642,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       let _ = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
       not (TP.is_sat_mix_sub_no npf sat_subno true true)
   in
+  (* let f = Frame.norm_dups_pred prog f in *)
    match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
