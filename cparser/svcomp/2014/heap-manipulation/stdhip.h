@@ -27,6 +27,6 @@ void abort(void)
 
 void free(void* ptr)
 /*@
-  require true
+  require ptr!=null
   ensures res=null;
 */;
