@@ -21,6 +21,32 @@ bnd<n, sm, bg> == self = null & n = 0 or
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
                   self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs
                inv n >= 1 & sm <= lg & self!=null;
+
+/* merge sort */
+node merge_sort(node xs)
+	requires xs::bnd<n, sm, bg> & n > 0 
+	ensures res::sll<n, smres, bgres> & smres >= sm & bgres <= bg;
+{
+	int c, middle;
+	node s1, s2, s3; 
+
+	if (xs.next != null) 
+	{
+		c = count(xs);
+		middle = mydiv2(c);
+		s1 = split_func(xs, middle);
+		s2 = merge_sort(s1);
+		s3 = merge_sort(xs);
+		return merge(s2, s3);
+	}
+	else {
+		return xs;
+	}
+}
+
+
+
+
  
 /* function to count the number of elements of a list */
 int count(node x)
@@ -63,27 +89,6 @@ node split_func(node@R x, int a)
 /*rename because of name conflicting with prelude.ss*/
 int mydiv2(int c) requires true ensures res + res = c;
 
-/* merge sort */
-node merge_sort(node xs)
-	requires xs::bnd<n, sm, bg> & n > 0 
-	ensures res::sll<n, smres, bgres> & smres >= sm & bgres <= bg;
-{
-	int c, middle;
-	node s1, s2, s3; 
-
-	if (xs.next != null) 
-	{
-		c = count(xs);
-		middle = mydiv2(c);
-		s1 = split_func(xs, middle);
-		s2 = merge_sort(s1);
-		s3 = merge_sort(xs);
-		return merge(s2, s3);
-	}
-	else {
-		return xs;
-	}
-}
 
 node merge(node x1, node x2)
 	requires x1::sll<n1, s1, b1> * x2::sll<n2, s2, b2>

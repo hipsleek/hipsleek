@@ -13,6 +13,31 @@ dll<p,n> == self = null & n = 0
 	inv n >= 0;
 
 
+/* append 2 doubly linked lists */
+node2 append(node2 x, node2 y)
+  requires x::dll<q, m> * y::dll<p, n>
+  ensures res::dll<_, m+n>;
+{
+  node2 tmp;
+  if (x == null) return y;
+  else {
+    tmp = x.next;
+    tmp = append(tmp, y);
+
+    if (tmp != null){
+      x.next = tmp; 
+      tmp.prev = x;
+    } else {
+      x.next = null;
+    }
+    return x; 
+  }
+}
+
+
+
+
+
 
 void insert(node2 x, int a)
   requires x::dll<p, n> & n>0 //&  x!=null  
@@ -137,35 +162,6 @@ node2 test_fold()
 	return tmp3;
 }
 
-/* append 2 doubly linked lists */
-node2 append(node2 x, node2 y)
-
-	requires x::dll<q, m> * y::dll<p, n>
-	ensures res::dll<_, m+n>;
-
-{
-	node2 tmp;
-
-	if (x == null)
-		return y;
-	else
-	{ 	
-
-		tmp = x.next;
-		tmp = append(tmp, y);
-
-		if (tmp != null)
-		{
-			x.next = tmp; 
-			tmp.prev = x;
-		}
-		else {
-			x.next = null;
-		}
-
-		return x; 
-	}
-}
 
 /* NOT WORKING */
 node2 append1(node2 x, node2 y)
