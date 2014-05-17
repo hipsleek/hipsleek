@@ -160,6 +160,7 @@ and isabelle_of_formula_exp_list l = match l with
 and isabelle_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
   | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"

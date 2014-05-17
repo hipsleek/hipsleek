@@ -41,7 +41,7 @@ let string_of_map_table_list (mtl: map_table list): string =
 (*Remove duplicatated pairs in mtl*)
 let remove_dupl_mt (mtl: map_table) : map_table =
   let is_dupl (x1,x2) (y1,y2) =
-    (eq_spec_var x1 y1) & (eq_spec_var x2 y2)
+    (eq_spec_var x1 y1) && (eq_spec_var x2 y2)
   in Gen.BList.remove_dups_eq is_dupl mtl
 
 (*Remove trivial pairs, e.g. (x,x)*)
@@ -50,7 +50,8 @@ let remove_trivial_mt (mtl: map_table) : map_table =
 
 let rec simplify_f f hvars rvars1 = 
   let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in
-  let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
+  let evars fs rvars= if(List.length hvars == 0) then fs else
+    List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
 
   match f with
     | CF.Or ({ CF.formula_or_f1 = f1;
@@ -277,6 +278,10 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
 	)
+        | CF.FrmHole h1 -> (match hf2 with
+	    |CF.FrmHole h2 ->  (h1 == h2, mtl)
+	    |_ -> report_error no_pos "not handle Or f1 yet"
+	)
 	| CF.HRel r  -> 
 (*DONT DELETE: for repuiring exacly the same hprel name!!!
  let rec exists_hp mtl =
@@ -320,7 +325,7 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.DataNode _ 
     | CF.ViewNode _ 
     | CF.ThreadNode _ 
-    | CF.Hole _ 
+    | CF.Hole _ | CF.FrmHole _ 
     | CF.HRel _ 
     | CF.HTrue  
     | CF.HEmp   ->  false
@@ -347,7 +352,7 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
     )
     | CF.ThreadNode _ (*TOCHECK*)
     | CF.ViewNode _
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
@@ -444,7 +449,7 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
     | CF.ThreadNode n2 -> (false,[mt]) 
     | CF.DataNode n2 -> (false,[mt]) 
     | CF.ViewNode n2 -> let (res, mt2) = check_view_node_equiv hvars n n2 mt in (res, [mt2])
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
@@ -506,7 +511,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * lo
     | CF.DataNode _ 
     | CF.ViewNode _  
     | CF.ThreadNode _ 
-    | CF.Hole _ -> (false,[mt]) 
+    | CF.Hole _ -> (false,[mt]) | CF.FrmHole _ -> (false,[mt]) 
     | CF.HRel r2  ->  (
       let _ = Debug.ninfo_zprint (lazy  ("Find 2nd relation  " )) no_pos in
       let (res, mt2) = check_rel_equiv hvars r r2 mt in (res, [mt2])
@@ -593,7 +598,7 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.DataNode _ 
     | CF.ViewNode _
     | CF.ThreadNode _
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue 
     | CF.HFalse -> false
@@ -708,11 +713,11 @@ and check_equiv_exp_x hvars (e1:CP.exp) (e2:CP.exp) mt =
         let res1,mt1 = check_spec_var_equiv hvars v11 v21 mt in
         let res2,mt2 = check_spec_var_equiv hvars v12 v22 mt1 in
         let res3,mt3 = check_spec_var_equiv hvars v13 v23 mt2 in
-        (res1&res2&res3,mt3)
+        (res1 && res2 && res3,mt3)
     | Add (e11,e12,_),Add (e21,e22,_) ->
           let res1,mt1 = check_equiv_exp hvars e11 e21 mt in
           let res2,mt2 = check_equiv_exp hvars e12 e22 mt1 in
-          (res1&&res2, mt2)
+          (res1 && res2, mt2)
     (*TODO: implement for your need*)
     | _ -> (false, mt)
 
@@ -742,7 +747,7 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
     | (BagIn (v1,e1,_),_),  (BagIn (v2,e2,_),_) -> (*MUSTDO*)
         let res1,mt1 = check_spec_var_equiv hvars v1 v2 mt in
         let res2,mt2 = check_equiv_exp hvars e1 e2 mt1 in
-        (res1&res2,[mt2])
+        (res1 && res2,[mt2])
     | (XPure xp1,_),  (XPure xp2,_) ->
      
         if xp1.xpure_view_name = xp1.xpure_view_name then
@@ -1260,6 +1265,10 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	| CF.ViewNode n -> let (a,b) = match_equiv_view_node hvars n hf2 mtl in if(a) then (a,modify_mtl b CF.HEmp) else (a,modify_mtl b hf1)
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 -> let (a,b) = (h1 == h2, mtl)  in if(a) then (a,modify_mtl b CF.HEmp) else (a,modify_mtl b hf1)
+	    |_ -> report_error no_pos "not handle Or f1 yet"
+	)
+        | CF.FrmHole h1 -> (match hf2 with
+	    |CF.FrmHole h2 -> let (a,b) = (h1 == h2, mtl)  in if(a) then (a,modify_mtl b CF.HEmp) else (a,modify_mtl b hf1)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
 	)
 	| CF.HRel r  -> (

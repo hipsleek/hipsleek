@@ -157,7 +157,7 @@ let view_to_hprel_h_formula hf0=
           let nh = CF.HRel (CP.SpecVar (HpT, hv.CF.h_formula_view_name, Unprimed ),eargs, no_pos) in
           (nh, [hv])
       | CF.HRel _
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf,[])
@@ -227,7 +227,7 @@ let hprel_to_view_h_formula hf0=
       | CF.HRel (hp, eargs, p) ->
           let args = List.fold_left List.append [] (List.map CP.afv eargs) in
           (CF.mkViewNode (List.hd args) (CP.name_of_spec_var hp) (List.tl args) p)
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf)
@@ -293,7 +293,7 @@ let rec look_for_anonymous_h_formula_x hf0=
           in
           ht.CF.h_formula_thread_node::(helper ht.CF.h_formula_thread_resource)
       | HRel _
-      | Hole _
+      | Hole _ | CF.FrmHole _
       | HTrue
       | HFalse
       | HEmp -> []
@@ -525,9 +525,9 @@ let cont_para_analysis_x cprog cviews=
 
 let cont_para_analysis cprog cviews=
   (* let pr0 = pr_list_ln Cprinter.string_of_view_decl in *)
-  let pr1 = pr_pair pr_id !CP.print_svl in
+  (* let pr1 = pr_pair pr_id !CP.print_svl in *)
   let pr2a = Cprinter.string_of_view_decl in
-  let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in
+  (* let pr2 vdef = pr1 (vdef.Cast.view_name, vdef.Cast.view_cont_vars) in *)
   let pr3 = pr_list pr2a in
   Debug.no_1 "cont_para_analysis" pr3 pr3
       (fun _ -> cont_para_analysis_x cprog cviews) cviews

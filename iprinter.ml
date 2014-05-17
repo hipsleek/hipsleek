@@ -277,7 +277,8 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> string_of_bool b 
+  | P.BConst (b,l)              -> string_of_bool b
+  | P.Frm (x,l) -> (string_of_id x) ^ "@F"
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
         (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)

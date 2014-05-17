@@ -686,13 +686,13 @@ let rec is_list_exp e = match e with
 
 (* TODO : where are the array components *)
 let is_array_b_formula (pf,_) = match pf with
-    | CP.BConst _ | CP.XPure _ 
+    | CP.BConst _ | CP.XPure _ | CP.Frm _
     | CP.BVar _
 	| CP.BagMin _ 
     | CP.BagMax _
     | CP.SubAnn _
     | CP.LexVar _
-		-> Some false    
+	-> Some false
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 
     | CP.Gt (e1,e2,_)

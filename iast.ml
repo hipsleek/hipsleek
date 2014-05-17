@@ -1548,7 +1548,7 @@ and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula
 and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
   let pf, _ = bf in
   match pf with
-  | P.XPure _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
+  | P.XPure _ | Frm _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
   | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [])
   | P.Eq (e1, e2, _)
   | P.Neq (e1, e2, _) ->
@@ -1566,14 +1566,14 @@ and collect_data_view_from_pure_exp_x (data_names: ident list) (e0 : P.exp) : (i
   match e0 with
   | P.Ann_Exp (e, t, pos) -> (
       match e with
-      | P.Var ((id, _), _) ->
+        | P.Var ((id, _), _) ->
             if String.compare id self != 0 then ([],[]) else
               let t_id = string_of_typ t in
               if (List.mem t_id data_names) then
                 ([t_id], [])       (* type annotation of self to view decl *)
               else
                 report_error pos ("self has invalid type: " ^ t_id)
-      | _ -> ([], [])
+        | _ -> ([], [])
     )
   | P.Bptriple _ -> ([], []) (*MERGE CHECK*)
   | P.Null _ | P.Level _  | P.Var _ -> ([], [])

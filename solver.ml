@@ -1251,7 +1251,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | HTrue -> [(HTrue, HEmp)]
     | HFalse -> [(HFalse, HFalse)]
     | HEmp -> [(HEmp,HEmp)]
-    | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
+    | Hole _ | FrmHole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
     | HRel _
     | ThreadNode _
     | DataNode _ 
@@ -1461,7 +1461,7 @@ and find_pred_roots_heap h0 =
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
     | ThreadNode _
-    | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ -> []
+    | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ | FrmHole _ -> []
 
 (* unfold then unsat *)
 and unfold_context_unsat_now_x prog0 (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (pos : loc) : list_context =
@@ -5018,7 +5018,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 	    List.append (collect_data_view h1) (collect_data_view h2) 
       | DataNode _ | ViewNode _ -> [f]
       | ThreadNode _ -> [f]
-      | Hole _ | HTrue | HFalse | HEmp | HRel _ -> []
+      | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HRel _ -> []
     in (* End of function collect_data_view *)
 
     (** [Internal] Generate the action based on the list of node and its tail **)
@@ -8441,7 +8441,7 @@ and do_unfold_for_classic_reasoning_x prog (f: CF.formula) (pos : loc) =
     | CF.ViewNode { CF.h_formula_view_node = c } -> [c]
     | CF.DataNode _ -> []
     | CF.ThreadNode _ -> [] (*TOCHECK*)
-    | CF.Hole _ -> []
+    | CF.Hole _ | CF.FrmHole _ -> []
     | CF.HRel _ -> []
     | CF.HTrue -> []
     | CF.HFalse -> []

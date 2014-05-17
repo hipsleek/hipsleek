@@ -1103,7 +1103,7 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   (* Get relevant constraints with respect to qv *)  
   let pick_rel_constraints slice cons aset =
     let equiv_lst = get_equiv_eq_with_const aset in
-    let nas, drp3 = List.partition (fun (c1, c2) -> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
+    let nas, drp3 = List.partition (fun (c1, c2) -> (List.exists (eq_spec_var c1) qv) || (List.exists (eq_spec_var c2) qv)) equiv_lst in
     let r, drp1 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (bfv c.memo_formula) qv)) cons in
     let r = List.filter (fun c -> not (c.memo_status = Implied_R)) r in
     let ns, drp2 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (fv c) qv)) slice in 
@@ -2732,13 +2732,14 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
   let f_p_f pf = None in
   let f_b b =
 	let (pf,il) = b in
-	let npf = match pf with	  
+	let npf = match pf with
+          | Frm _
 	  | BConst _
 	  | XPure _ 
 	  | BVar _ 
 	  | BagMin _ 
-      | SubAnn _
-      | VarPerm _
+          | SubAnn _
+          | VarPerm _
 	  | BagMax _ -> pf
 	  | Lt (e1,e2,l)
 	  | Lte (e1,e2,l)

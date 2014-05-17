@@ -158,6 +158,7 @@ and lex_info = {
 }
 
 and p_formula =
+  | Frm of (spec_var * loc)
   | XPure of xpure_view
   | LexVar of lex_info
   | BConst of (bool * loc)
@@ -1082,6 +1083,7 @@ and remove_qvar qid qf =
 and bfv (bf : b_formula) =
   let (pf,_) = bf in
   match pf with
+    | Frm (fv,_) -> [fv]
     | BConst _ -> []
     | XPure xp -> begin
         match xp.xpure_view_node with
@@ -1733,7 +1735,7 @@ and partition_by_const eql =
          
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 match pf with
-  | BConst _  | BVar _ | SubAnn _ | LexVar _ | XPure _ -> true
+  | Frm _ | BConst _  | BVar _ | SubAnn _ | LexVar _ | XPure _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
@@ -2732,6 +2734,7 @@ and pos_of_exp (e : exp) = match e with
 and pos_of_b_formula (b: b_formula) = 
   let (p, _) = b in
   match p with
+    | Frm (_, p) -> p
     | LexVar l_info -> l_info.lex_loc
     | SubAnn (_, _, p) -> p
     | BConst (_, p) -> p
@@ -2782,6 +2785,7 @@ and list_pos_of_formula f rs: loc list=
     | Exists (_, f,_, l) -> rs @ [l]
 
 and subst_pos_pformula p pf= match pf with
+  | Frm (sv,_) -> Frm (sv,p)
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
   | SubAnn (e1, e2, _) -> SubAnn (e1, e2, p)
   | BConst (b,_) -> BConst (b,p)
@@ -3057,6 +3061,7 @@ and b_apply_subs sst bf =
 and b_apply_subs_x sst bf =
   let (pf,sl) = bf in
   let npf = match pf with
+    | Frm (fv, pos) -> Frm (subs_one sst fv, pos)
     | BConst _ -> pf
     | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
     | XPure x -> XPure {x with 
@@ -3306,6 +3311,11 @@ and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr |
 and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let (pf,il) = bf in
   let npf = match pf with
+    | Frm (fv, pos) ->
+          if List.exists (fun (fr,_) -> eq_spec_var fv fr) sst   then
+            failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+          else
+            pf
     | BConst _ -> pf
     | XPure _ -> pf (* WN XPure : not possible *)
     | BVar (bv, pos) ->
@@ -3397,6 +3407,12 @@ and apply_one_term (fr, t) f = match f with
 and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   let (pf,il) = bf in
   let npf = match pf with
+    | Frm (fv, pos) -> if eq_spec_var fv fr then
+	match t with
+	  | Var (t,_) -> Frm (t,pos)
+	  | _ -> failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+      else
+        pf
     | BConst _ -> pf
     | XPure _ -> pf
     | BVar (bv, pos) ->
@@ -4677,6 +4693,11 @@ and apply_one_exp ((fr, t) : spec_var * exp) f =
 and b_apply_one_exp (fr, t) bf =
   let (pf,il) = bf in
   let npf = match pf with
+    | Frm (fv,p) -> if eq_spec_var fv fr then
+      match t with
+	| Var (t,_) -> Frm (t,p)
+	| _ -> failwith ("Presburger.b_apply_one_exp: attempting to substitute arithmetic term for boolean var")
+      else pf
   | BConst _ -> pf
   | XPure _ -> pf
   | BVar (bv, pos) -> pf
@@ -5479,6 +5500,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 	(lh, rh, qh,flag) in
   let (pf,il) = b in
   let npf = match pf with
+    | Frm _
     |  BConst _ 
     |  SubAnn _ | LexVar _ | XPure _
     |  BVar _ -> pf
@@ -5808,12 +5830,13 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 			let (nel, opt1) = List.split (List.map (fun e -> helper new_arg e) el) in
 			(Some (il, lb, nel), f_comb opt1)
 		in
-        let (npf, opt2) = match pf with	  
-	      | BConst _
-	      | BVar _ 
-	      | XPure _ 
-	      | BagMin _ 
-	      | SubAnn _ 
+        let (npf, opt2) = match pf with
+          | Frm _
+	  | BConst _
+	  | BVar _ 
+	  | XPure _ 
+	  | BagMin _ 
+	  | SubAnn _ 
           | VarPerm _ (*TO CHECK*)
 	      | BagMax _ -> (pf,f_comb [])
 	      | Lt (e1,e2,l) ->
@@ -5911,7 +5934,8 @@ let transform_b_formula f (e:b_formula) :b_formula =
     | Some e1 -> e1
     | None  ->
 	  let (pf,il) = e in
-	  let npf = match pf with	  
+	  let npf = match pf with
+            | Frm _
 	    | BConst _
 	    | XPure _ (* WN : xpure *)
 	    | BVar _ 
@@ -6334,7 +6358,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
         | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
         | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
-        | BConst _ | BVar _ | EqMax _  | XPure _ 
+        | Frm _ | BConst _ | BVar _ | EqMax _  | XPure _ 
         | EqMin _ |  BagSub _ | BagMin _ 
         | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
         | VarPerm _ -> pf
@@ -7341,7 +7365,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
 				lex_tmp = List.map norm_exp t_info.lex_tmp; }
     | SubAnn _
     | VarPerm _
-    | XPure _ | BConst _ | BVar _ | EqMax _ 
+    | Frm _ | XPure _ | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
@@ -8423,7 +8447,7 @@ and group_related_vars_x (bfl: b_formula list) : (spec_var list * spec_var list 
 
 let check_dept vlist (dept_vars_list, linking_vars_list) =
   let dept_vars = Gen.BList.difference_eq eq_spec_var vlist linking_vars_list in
-  if ((List.length dept_vars) > 0 &
+  if ((List.length dept_vars) > 0 &&
 		 (Gen.BList.list_subset_eq eq_spec_var dept_vars dept_vars_list))
   then (true, Gen.BList.difference_eq eq_spec_var vlist dept_vars_list)
   else (false, [])
@@ -9338,14 +9362,14 @@ let drop_complex_ops =
         | LexVar t_info -> Some (mkTrue t_info.lex_loc)
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
-            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
+            if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
             else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
-            if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
+            if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
             else Some (mkFalse p)
         | _ -> None in
   (pr_weak,pr_strong)
@@ -10591,10 +10615,11 @@ let level_vars_b_formula bf =
 	| ListPerm _
 	| RelForm _
 	| LexVar _
+        | Frm _
 	| BConst _
 	| BVar _ 
 	| BagMin _ 
-    | SubAnn _
+        | SubAnn _
 	| EqMax _
 	| EqMin _
     | VarPerm _
@@ -11120,7 +11145,7 @@ and contain_level_b_formula bf =
 	| ListPerm _
 	| RelForm _
 	| LexVar _
-	| BConst _
+	| Frm _ | BConst _
 	| BVar _ 
 	| BagMin _ 
     | SubAnn _

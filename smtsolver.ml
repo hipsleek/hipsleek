@@ -141,15 +141,16 @@ let rec smt_of_exp a =
 let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
-  | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.XPure _ -> "true"
-  | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-  | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> 
+    | CP.Frm (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | CP.BConst (c, _) -> if c then "true" else "false"
+    | CP.XPure _ -> "true"
+    | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Eq (a1, a2, _) -> 
       if CP.is_null a2 then
         "(< " ^(smt_of_exp a1)^ " 1)"
       else if CP.is_null a1 then

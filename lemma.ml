@@ -737,7 +737,7 @@ let do_unfold_view_hf cprog hf0 =
             [(CF.HTrue, MCP.mix_of_pure (CP.mkTrue no_pos))]
       end
       | CF.ThreadNode _
-      | CF.DataNode _  | CF.HRel _ | CF.Hole _
+      | CF.DataNode _  | CF.HRel _ | CF.Hole _ | CF.FrmHole _
       | CF.HTrue  | CF.HFalse | CF.HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in
   helper hf0

@@ -2432,4 +2432,24 @@ let update_mut_vars_bu iprog cprog scc_procs =
   in
   new_scc_procs
 
+let get_emp_map_x cprog=
+  let helper vdef=
+    let o_base = match vdef.view_base_case with
+      | None -> None
+      | Some (p,_) -> Some p
+    in
+    (vdef.view_name, P.SpecVar (Named vdef.view_data_name, self, Unprimed)::vdef.view_vars, o_base)
+  in
+  List.map helper cprog.prog_view_decls
+
+let get_emp_map cprog=
+  let pr1 = fun _ -> "cprog" in
+  let pr3 = fun p -> match p with
+    | None -> "None"
+    | Some f -> !Cpure.print_formula f
+  in
+  let pr2 = pr_list (pr_triple pr_id !Cpure.print_svl pr3) in
+  Debug.no_1 "get_emp_map" pr1 pr2
+      (fun _ -> get_emp_map_x cprog) cprog
+
 

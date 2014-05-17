@@ -378,6 +378,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
       | StarMinus _
       | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+      | FrmHole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HRel _  ->{mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -390,6 +391,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       let mapper f = match f with (*base cases, no * (StarH)  *)
 	| StarMinus _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
 	| Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+        | FrmHole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
 	| HRel _  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
 	| HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
 	| HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -618,7 +620,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
               | None -> CP.mkTrue pos
               | Some f -> mkPermInv () f in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
-            let diff_flag = not(vdef.view_xpure_flag) in
+            (* let diff_flag = not(vdef.view_xpure_flag) in *)
             let _ = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) (!force_verbose_xpure) no_pos in
             let _ = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
              (*LDK: ??? be careful to handle frac var properly. 
@@ -720,6 +722,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
       | HEmp   -> MCP.mkMTrue no_pos
       | HRel _ -> MCP.mkMTrue no_pos (* report_error no_pos "[solver.ml]: xpure_heap_mem_enum_x" *)
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
+      | FrmHole _ -> MCP.mkMTrue no_pos
   in
   (* to build a subs here *)
   let memset = h_formula_2_mem h0 p0 [] prog in
@@ -1148,6 +1151,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | HRel _ -> (mkMTrue no_pos, [])
     | HTrue  -> (mkMTrue no_pos, [])
     | Hole _ -> (mkMTrue no_pos, []) (* shouldn't get here *)
+    | FrmHole _ -> (mkMTrue no_pos, [])
     | HFalse -> (mkMFalse no_pos, [])
     | HEmp   -> (mkMTrue no_pos, []) in
   helper h0
@@ -1245,7 +1249,7 @@ let rec xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula
   | HFalse -> P.mkFalse no_pos
   | HEmp   -> P.mkTrue no_pos
   | Hole _ -> P.mkTrue no_pos (* report_error no_pos ("[solver.ml]: Immutability annotation encountered\n") *)
-
+  | FrmHole _ -> P.mkTrue no_pos
 
 (* xpure of consumed precondition *)
 let rec xpure_consumed_pre (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with
@@ -1282,7 +1286,7 @@ let heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;})     
     | ConjStar ({ h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;})    
     | ConjConj ({ h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;}) -> (helper h1) @ (helper h2)
-    | Hole _ | HTrue | HFalse | HEmp | StarMinus _-> []
+    | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | StarMinus _-> []
     | HRel _ -> [] (*Error.report_no_pattern ()*)	in
   helper h0
 
@@ -1388,13 +1392,13 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           let ba2 =ba_crt@(heap_baga prog s.h_formula_star_h2) in
           let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_star_h1 old_mem ba2 in
           let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_star_h2 mem1 ba1 in
-          (mkStarH h1 h2 s.h_formula_star_pos, mem2 , (changed1 or changed2))
+          (mkStarH h1 h2 s.h_formula_star_pos, mem2 , (changed1 || changed2))
     | StarMinus s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_starminus_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_starminus_h2) in
           let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_starminus_h1 old_mem ba2 in
           let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_starminus_h2 mem1 ba1 in
-          (mkStarMinusH h1 h2 s.h_formula_starminus_aliasing s.h_formula_starminus_pos 17, mem2 , (changed1 or changed2))          
+          (mkStarMinusH h1 h2 s.h_formula_starminus_aliasing s.h_formula_starminus_pos 17, mem2 , (changed1 || changed2))          
     | Conj s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_conj_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_conj_h2) in
@@ -1412,7 +1416,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           (ConjStar {  
               h_formula_conjstar_h1 = h1;
               h_formula_conjstar_h2 = h2;
-              h_formula_conjstar_pos = s.h_formula_conjstar_pos }, mem2, (changed1 or changed2) )
+              h_formula_conjstar_pos = s.h_formula_conjstar_pos }, mem2, (changed1 || changed2) )
     | ConjConj s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_conjconj_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_conjconj_h2) in
@@ -1421,7 +1425,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           (ConjConj {  
               h_formula_conjconj_h1 = h1;
               h_formula_conjconj_h2 = h2;
-              h_formula_conjconj_pos = s.h_formula_conjconj_pos }, mem2, (changed1 or changed2) )                 
+              h_formula_conjconj_pos = s.h_formula_conjconj_pos }, mem2, (changed1 || changed2) )                 
     |Phase  s ->
          let ba1 =ba_crt@(heap_baga prog s.h_formula_phase_rd) in
          let ba2 =ba_crt@(heap_baga prog s.h_formula_phase_rw) in
@@ -1430,8 +1434,8 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
          (Phase {  
              h_formula_phase_rd = h1;
              h_formula_phase_rw = h2;
-             h_formula_phase_pos = s.h_formula_phase_pos }, mem2, (changed1 or changed2) )
-    | Hole _
+             h_formula_phase_pos = s.h_formula_phase_pos }, mem2, (changed1 || changed2) )
+    | Hole _ | FrmHole _
     | HRel _
     | HTrue
     | HFalse 

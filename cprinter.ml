@@ -890,6 +890,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (* ;if ls2!=[] then *)
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
+    | P.Frm  (x, l) -> fmt_string ((string_of_spec_var x) ^ "@F")
     | P.BConst (b,l) -> fmt_bool b 
     | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
@@ -1298,6 +1299,7 @@ let rec pr_h_formula h =
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string "emp"
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
+    | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
 and pr_hrel_formula hf=
   match hf with
@@ -1311,8 +1313,7 @@ and pr_hrel_formula hf=
 
 
 and prtt_pr_h_formula h = 
-  let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e 
-  in
+  let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e in
   match h with
     | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
@@ -1484,6 +1485,7 @@ and prtt_pr_h_formula h =
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
+    | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
 and prtt_pr_h_formula_inst prog h = 
   let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e 
@@ -1648,6 +1650,7 @@ and prtt_pr_h_formula_inst prog h =
     | HFalse -> fmt_string "hfalse"
     | HEmp -> fmt_string (texify "\emp" "emp")
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
+    | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
     | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
 and pr_h_formula_for_spec h = 
@@ -1770,6 +1773,7 @@ and pr_h_formula_for_spec h =
   | HFalse -> fmt_bool false
   | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
+  | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
 
 and string_of_memoised_list l : string  = poly_string_of_pr pr_memoise_group l
@@ -4021,6 +4025,7 @@ let rec html_of_formula_exp e =
 
 let rec html_of_pure_b_formula f = match f with
     | P.XPure _ -> "<b> XPURE </b>"
+    | P.Frm (x, l) -> "<b>" ^ ((string_of_spec_var x) ^ "@F") ^ "</b>"
     | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)
@@ -4171,6 +4176,7 @@ let rec html_of_h_formula h = match h with
       | [] -> ""
       | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"
   | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
+  | FrmHole m ->  ("FrmHole[" ^ (string_of_int m) ^ "]")
 
 and html_of_formula e = match e with
 	| Or ({formula_or_f1 = f1;

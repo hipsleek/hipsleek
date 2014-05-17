@@ -488,7 +488,7 @@ and get_data_view_hrel_vars_h_formula hf=
       | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
       | CF.HRel (hp,_,_) -> [hp]
       | CF.ThreadNode ht -> [ht.CF.h_formula_thread_node] (*TOCHECK*)
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> []
@@ -556,7 +556,7 @@ and drop_get_hrel_h_formula hf=
       | CF.ThreadNode ht -> (hf0,[])
       | CF.HRel (sv, eargs, _) -> (CF.HEmp,
                                    [(sv,List.concat (List.map CP.afv eargs))])
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf0,[])
@@ -621,7 +621,7 @@ and drop_data_hrel_except_hf dn_names hpargs hf=
       | CF.HRel (_, eargs, _) ->
           let args1 = List.concat (List.map CP.afv eargs) in
           if CP.diff_svl args1 hpargs = [] then hf0 else CF.HEmp
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> hf0
@@ -778,7 +778,7 @@ and drop_hrel_match_args_hf hf0 args=
           let args1 = List.fold_left List.append [] (List.map CP.afv eargs1) in
           if eq_spec_var_order_list args args1 then (CF.HEmp)
           else (hf)
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf)
@@ -1467,8 +1467,8 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs
   (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let _ = Debug.info_zprint (lazy (("lkeep_hpargs: " ^ (pr1 lkeep_hpargs)))) no_pos in *)
   (*remove dups*)
-  let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars 
-   (List.fold_left close_def rhs_svl eqs ) in
+  (* let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars  *)
+  (*  (List.fold_left close_def rhs_svl eqs ) in *)
   let _ = Debug.ninfo_zprint (lazy (("f1: " ^ (Cprinter.string_of_formula_base f1)))) no_pos in
   let _ = Debug.ninfo_zprint (lazy (("f2: " ^ (Cprinter.string_of_formula_base f2)))) no_pos in
   (*demo/cyc-lseg-3.ss*)
@@ -3053,7 +3053,7 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
           if (is_inconsistent subst1 []) then None else
             let n_lhs1 = CF.subst_b subst1 lhs1 in
             (*check pure implication*)
-            let nldns,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in
+            (* let  nldns ,nlvns,_ = CF.get_hp_rel_bformula n_lhs1 in *)
             (*loc-1b1.slk*)
             (* let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)
                (CF.look_up_reachable_ptr_args prog nldns nlvns all_matched_svl2) in *)
@@ -4267,7 +4267,7 @@ let get_min_common prog args unk_hps ll_ldns_lvns=
 let closer_ranking prog unk_hps fs root_cand args0=
   let build_conf f=
     let hds, hvs, hrs = CF.get_hp_rel_formula f in
-    let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in
+    (* let hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs))) hrs in *)
     let (_ ,mix_lf,_,_,_) = CF.split_components f in
     let eqNulls = MCP.get_null_ptrs mix_lf in
     let eqs = (MCP.ptr_equations_without_null mix_lf) in
@@ -4798,7 +4798,7 @@ let norm_fold_seg_x prog hp_defs hp0 r other_args unk_hps defs_wg=
 let norm_fold_seg prog hp_defs hp r other_args unk_hps defs_wg=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_pair pr1 (pr_option pr1)) in
-  let pr3 = Cprinter.string_of_hp_rel_def in
+  (* let pr3 = Cprinter.string_of_hp_rel_def in *)
   Debug.no_4 "SAU.norm_fold_seg" !CP.print_sv !CP.print_sv !CP.print_svl pr2 pr2
       (fun _ _ _ _ -> norm_fold_seg_x prog  hp_defs hp r other_args unk_hps defs_wg)
       hp r other_args defs_wg
@@ -5269,7 +5269,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
                 | [(new_hp, (n_args, n_r,paras))] ->
                       (* let (a,b,g,orig_fs) = orig_hpdef in *)
                       let fs, gs = List.split orig_hpdef.CF.def_rhs in
-                      let orig_fs = CF.disj_of_list fs no_pos in
+                      (* let orig_fs = CF.disj_of_list fs no_pos in *)
                       let _,n_orig_fs_wg,(n_args,r,n_paras), n_fs_wg,ss, link_defs, n_hp1=
                         elim_not_in_used_args prog unk_hps orig_hpdef.CF.def_rhs n_fs2_wg new_hp (n_args, n_r,paras)  in
                       ( {orig_hpdef with CF.def_rhs = n_orig_fs_wg }, [(n_hp1, (n_args,r,n_paras))], n_fs_wg ,ss, link_defs)
@@ -5598,7 +5598,7 @@ let get_sharing_x prog unk_hps r other_args args sh_ldns sh_lvns eqNulls eqPures
       (orig_def2, n_args , dnss, vnss, CP.diff_svl next_roots unk_svl)
 
 let get_sharing prog unk_hps r other_args args sh_ldns sh_lvns eqNulls eqPures hprels unk_svl=
-  let pr1 = !CP.print_sv in
+  (* let pr1 = !CP.print_sv in *)
   let pr2 = !CP.print_svl in
   let pr3 = fun hd -> Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
   let pr3a = fun hd -> Cprinter.prtt_string_of_h_formula (CF.ViewNode hd) in

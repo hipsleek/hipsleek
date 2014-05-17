@@ -857,6 +857,12 @@ let enable_constraint_based_filtering = ref false
 
 let elim_exists_ff = ref true
 
+let allow_frame = ref false
+
+let sep_unsat = ref false
+
+let slice_one = ref (0:int)
+
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)

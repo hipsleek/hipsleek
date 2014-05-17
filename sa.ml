@@ -203,7 +203,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
 	                if((List.length new_args) == 0) then CF.HEmp,[(sv,args,[])]
 	                else (CF.HRel (sv, new_args, l)),[(sv,args,new_args)]
 	              end
-      | CF.Hole _
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> hf0,[]

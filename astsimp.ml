@@ -2260,7 +2260,7 @@ and find_m_prop_heap_x params eq_f h =
       | CF.ConjStar h -> (helper h.CF.h_formula_conjstar_h1)@(helper h.CF.h_formula_conjstar_h2)
       | CF.ConjConj h -> (helper h.CF.h_formula_conjconj_h1)@(helper h.CF.h_formula_conjconj_h2)    
       | CF.Phase h -> (helper h.CF.h_formula_phase_rd)@(helper h.CF.h_formula_phase_rw)  
-      | CF.Hole _ 
+      | CF.Hole _ | CF.FrmHole _
       | CF.HTrue 
       | CF.HFalse 
               (* | CF.HRel _ *)
@@ -2331,7 +2331,7 @@ and find_node_vars_x eq_f h =
     | CF.ConjStar h -> join (helper  h.CF.h_formula_conjstar_h1) (helper  h.CF.h_formula_conjstar_h2)
     | CF.ConjConj h -> join (helper  h.CF.h_formula_conjconj_h1) (helper  h.CF.h_formula_conjconj_h2)    
     | CF.Phase h -> join (helper h.CF.h_formula_phase_rd)(helper h.CF.h_formula_phase_rw)  
-    | CF.Hole _ 
+    | CF.Hole _ | CF.FrmHole _
     | CF.HTrue 
     | CF.HFalse 
     | CF.HEmp -> ([],[]) in
@@ -3323,7 +3323,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                           CF.h_formula_view_arguments = _;
                           CF.h_formula_view_pos = _
                       } -> if (CP.name_of_spec_var p) = v then c else ""
-              | CF.HTrue | CF.HFalse | CF.HEmp | CF.HRel _ | CF.Hole _ -> "")
+              | CF.HTrue | CF.HFalse | CF.HEmp | CF.HRel _ | CF.Hole _ | CF.FrmHole _ -> "")
           in find_view_heap h
     | CF.Or _ ->
           Err.report_error
@@ -6407,6 +6407,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_f
 and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  match pf with
+    | IP.Frm ((v,p),pos) ->
+           let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) tlist pos) in
+           let sv = CP.SpecVar (v_type, v, p) in
+          CP.Frm (sv, pos)
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
@@ -8102,7 +8106,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   let pick_pures (lst:(CF.formula * formula_label) list) (vl:CP.spec_var list) (uinv:memo_pure) =
     let pr0 = Gen.BList.string_of_f (CP.SV.string_of) in
-    let pr x = Gen.BList.string_of_f Cprinter.string_of_b_formula x in
+    (* let pr x = Gen.BList.string_of_f Cprinter.string_of_b_formula x in *)
     let pr_fl x = (Cprinter.string_of_formula_label) x "" in
     let pr1 (inp,_,_) = Cprinter.string_of_prune_invariants (List.map (fun (a,b)-> ([a],b)) inp) 
 		(*let l= List.map (fun (f,(_,a)) -> (f,a)) inp in Gen.BList.string_of_f (Gen.string_of_pair pr_fl pr ) l*) in

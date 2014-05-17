@@ -109,6 +109,7 @@ ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
+  | Frm _ -> "(0=0)"
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)

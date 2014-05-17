@@ -196,7 +196,7 @@ and h_formula = (* heap formula *)
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   | ThreadNode of h_formula_thread
-  | Hole of int
+  | Hole of int | FrmHole of int
   (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*placeh older for heap predicates*)
   (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
@@ -402,6 +402,10 @@ let isAnyConstFalse f=
   let pr1 = !print_formula in
   Debug.no_1 "isAnyConstFalse" pr1 string_of_bool
       (fun _ -> isAnyConstFalse f) f
+
+let isAnyConstFalse_struc sf= match sf with
+  | EBase {formula_struc_base = f} -> isAnyConstFalse f
+  | _ -> false
 
 let isAllConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
@@ -1746,7 +1750,7 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   | DataNode _
   | ViewNode _
   | ThreadNode _
-  | Hole _
+  | Hole _ | FrmHole _
   | HFalse
   | HEmp -> false
 
@@ -2598,7 +2602,7 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
   | HRel (r, args, _) ->
       let vid = r in
 	  vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
-  | HTrue | HFalse | HEmp | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
 
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
@@ -2644,7 +2648,7 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
   | HRel (r, agrs,  pos) -> [r] (*vp*)
-  | HTrue | HFalse | HEmp | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -3032,7 +3036,7 @@ and h_subst sst (f : h_formula) =
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ -> f
+  | Hole _ | FrmHole _ -> f
 (** An Hoa : End of heap formula substitution **) 
 
 (* and subst_var_par sst v = try *)
@@ -3268,7 +3272,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ -> f    
+  | Hole _ | FrmHole _ -> f    
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
@@ -5143,7 +5147,7 @@ let rec heap_trans_heap_node fct f0 =
       | DataNode _ -> fct f
       | ViewNode _ -> fct f
       | ThreadNode _ -> fct f
-      | HTrue | HFalse | HEmp | Hole _-> f
+      | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
       | Conj b -> begin
            let hf2 = recf b.h_formula_conj_h2 in
@@ -5267,7 +5271,7 @@ let get_ptrs_group_hf hf0=
       | ViewNode hv -> [hv.h_formula_view_node::hv.h_formula_view_arguments]
       | ThreadNode ht -> [[ht.h_formula_thread_node]] (*TOCHECK*)
       | HRel _
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp ->[]
@@ -5293,7 +5297,7 @@ let get_node_args hf0=
       | ViewNode hv -> hv.h_formula_view_arguments
       | ThreadNode ht -> []
       | HRel _
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp ->[]
@@ -5327,7 +5331,7 @@ let get_data_node_ptrs_group_hf hf0=
       | ViewNode _
       | ThreadNode _ (*TOCHECK*)
       | HRel _
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp ->[]
@@ -5378,7 +5382,7 @@ and get_hp_rel_h_formula hf=
     | ViewNode hv -> ([],[hv],[])
     | HRel hr -> ([],[],[hr])
     | ThreadNode _ -> ([],[],[]) (*TOCHECK*)
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> ([],[],[])
@@ -5526,7 +5530,7 @@ and get_hprel_h_formula hf0=
     | ViewNode hv -> []
     | ThreadNode ht -> []
     | HRel hr -> ([hr])
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> ([])
@@ -5610,7 +5614,7 @@ let partition_heap_consj_hf hf0=
           (ls1@ls2, n_rem)
     | Conj { h_formula_conj_h1 = hf1;
       h_formula_conj_h2 = hf2;} -> ([hf1;hf2], HEmp)
-    | DataNode _  | ViewNode _ | HRel _ | Hole _
+    | DataNode _  | ViewNode _ | HRel _ | Hole _ | FrmHole _
     | ThreadNode _
     | HTrue  | HFalse | HEmp -> ([], hf)
   in
@@ -5683,7 +5687,7 @@ let rec get_one_kind_heap_h fn hf0=
     | ViewNode hv -> fn hf
     | ThreadNode hv -> fn hf
     | HRel (rl,_,_) ->fn hf
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> fn hf
@@ -5724,7 +5728,7 @@ let rec get_hp_rel_name_h_formula hf=
     | ViewNode hv -> []
     | ThreadNode hv -> []
     | HRel (rl,_,_) -> [rl]
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> []
@@ -5951,7 +5955,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
             with _ -> report_error no_pos ("LEM.do_unfold_view_hf: can not find view " ^ hv.h_formula_view_name)
       end
       | ThreadNode _
-      | DataNode _  | HRel _ | Hole _
+      | DataNode _  | HRel _ | Hole _ | FrmHole _
       | HTrue  | HFalse | HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in
   helper hf0
@@ -6080,7 +6084,7 @@ let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
               List.map (fun f -> (List.hd (heap_of f), MCP.mix_of_pure (get_pure f))) fs1
             with _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
         end
-      | DataNode _  | ViewNode _ | Hole _
+      | DataNode _  | ViewNode _ | Hole _ | FrmHole _
       | ThreadNode _
       | HTrue  | HFalse | HEmp -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
   in
@@ -6147,7 +6151,7 @@ and get_hp_rel_vars_h_formula_x hf=
     | ViewNode hv -> []
     | ThreadNode ht -> []
     | HRel (rl,args,_) -> [rl]@(CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args)))
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> []
@@ -6224,7 +6228,7 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
     | HRel (_, args, _) -> let args_vars = (CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))) in
                            if  CP.intersect args_vars relevant_vars = [] then HEmp
                            else hf
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -6293,7 +6297,7 @@ and filter_vars_hf hf rvs=
     | ThreadNode ht -> if CP.mem_svl ht.h_formula_thread_node rvs then hf
         else HEmp
     | HRel _ -> hf
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -6388,7 +6392,7 @@ let annotate_dl_hf hf0 unk_hps=
             let _,p,_ = generate_xpure_view [(hp,args)] [] in
             (* (HEmp,[p]) *) (hf,[p])
           else (hf,[])
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp -> (hf,[])
@@ -6505,7 +6509,7 @@ and subst_hprel_hf hf0 from_hps to_hp=
     | DataNode _
     | ViewNode _
     | ThreadNode _
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -6555,7 +6559,7 @@ let drop_views_h_formula hf0 views=
           else hf
       | ThreadNode _ -> (hf)
       | HRel _
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp -> hf
@@ -6666,7 +6670,7 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
                     h_formula_view_arguments = n_args}
       end
       | HRel _
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp -> hf
@@ -7153,7 +7157,7 @@ and drop_hrel_hf hf hp_names=
     | ThreadNode _ -> (hf,[])
     | HRel (id,args,_) -> if CP.mem_svl id hp_names then (HEmp, [args])
         else (hf,[])
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> (hf,[])
@@ -7255,7 +7259,7 @@ and drop_exact_hrel_hf hf0 unk_hpargs=
             let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
             if Gen.BList.mem_eq eq_hpargs (hp,args) unk_hpargs then (HEmp)
             else (hf)
-      | Hole _
+      | Hole _ | FrmHole _
       | HTrue
       | HFalse
       | HEmp -> (hf)
@@ -7378,7 +7382,7 @@ and drop_hnodes_hf hf0 hn_names=
     | ThreadNode ht -> if CP.mem_svl ht.h_formula_thread_node hn_names then HEmp
       else hf
     | HRel _
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -7569,7 +7573,7 @@ and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_selec
           Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
           if fn_hrel_select id hpargs_nodes then HEmp
           else hf
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -7645,7 +7649,7 @@ and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_sel
           Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
           if fn_hrel_select (id, List.concat (List.map CP.afv eargs)) hpargs_nodes then HEmp
           else hf
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -7771,7 +7775,7 @@ let rec subst_hrel_hf hf hprel_subst=
     | ViewNode hv -> hf
     | ThreadNode ht -> hf
     | HRel _ -> find_and_subst hf hprel_subst
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -7873,7 +7877,7 @@ let subst_hrel_hview_hf hf0 subst=
     | ViewNode hv -> hf
     | ThreadNode ht -> hf
     | HRel _ -> find_and_subst hf subst
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -7988,7 +7992,7 @@ let extract_rec_extn_h hf0 v_name v_args inv=
           [((hv.h_formula_view_node, hv.h_formula_view_arguments),refined_inv)] else []
     | ThreadNode hd -> []
     | HRel _
-    | Hole _
+    | Hole _ | FrmHole _
     | HTrue
     | HFalse
     | HEmp -> []
@@ -11071,7 +11075,7 @@ and filter_heap (f:formula):formula option = match f with
 	| ViewNode _ 
 	| ThreadNode _ 
 	| HRel _ (*vp*)
-	| Hole _ -> None
+	| Hole _ | FrmHole _ -> None
 	| HTrue 
 	| HFalse
   | HEmp -> Some f
@@ -11089,7 +11093,7 @@ and filter_heap (f:formula):formula option = match f with
 	  | ViewNode _ 
 	  | ThreadNode _ 
 	  | HRel _ (*vp*)
-	  | Hole _ -> None
+	  | Hole _ | FrmHole _ -> None
 	  | HTrue 
 	  | HFalse
     | HEmp -> Some f
@@ -11178,7 +11182,7 @@ let rec replace_heap_formula_label nl f = match f with
   | HTrue 
   | HFalse 
   | HEmp 
-  | Hole _ -> f
+  | Hole _ | FrmHole _ -> f
 	
 and replace_formula_label1 nl f = match f with
 	| Base b->Base {b with 
@@ -11228,7 +11232,7 @@ and residue_labels_in_formula f =
     | HTrue 
     | HFalse 
     | HEmp
-    | Hole _ -> [] 
+    | Hole _ | FrmHole _ -> [] 
         in match f with
 	| Base b-> residue_labels_in_heap b.formula_base_heap 
 	| Exists b->residue_labels_in_heap b.formula_exists_heap
@@ -11283,7 +11287,7 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
         | ViewNode _
         | ThreadNode _
         | HRel _
-        | Hole _	  
+        | Hole _ | FrmHole _
         | HTrue
         | HFalse 
         | HEmp -> (e, f_comb []) 
@@ -11347,8 +11351,8 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	      | DataNode _
 	      | ViewNode _
 	      | ThreadNode _
-          | HRel _
-	      | Hole _
+              | HRel _
+	      | Hole _ | FrmHole _
 	      | HTrue
 	      | HFalse 
         | HEmp -> e
@@ -11726,8 +11730,8 @@ let rename_labels transformer e =
   	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
 	    | ThreadNode t -> Some (ThreadNode {t with h_formula_thread_label = n_l_f t.h_formula_thread_label})
-        | HRel _
-	    | Hole _
+            | HRel _
+	    | Hole _ | FrmHole _
 	    | HTrue
 	    | HFalse 
         | HEmp -> Some e in
@@ -11765,8 +11769,8 @@ let rename_labels_formula_ante  e=
 	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
 	    | ThreadNode t -> Some (ThreadNode {t with h_formula_thread_label = n_l_f t.h_formula_thread_label})
-        | HRel _
-	    | Hole _
+            | HRel _
+	    | Hole _ | FrmHole _
 	    | HTrue
 	    | HFalse 
       | HEmp -> Some e in
@@ -12999,7 +13003,7 @@ let mark_derv_self name f =
           h_formula_phase_rw =  h_h p.h_formula_phase_rw;}     
       | DataNode _
       | ThreadNode _
-      | Hole _ | HTrue | HFalse | HEmp | HRel _ -> f in
+      | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HRel _ -> f in
   let rec h_f f = match f with 
     | Or b -> Or {b with formula_or_f1 = h_f b.formula_or_f1; formula_or_f2 = h_f b.formula_or_f2; }
     | Base b-> Base {b with formula_base_heap = h_h b.formula_base_heap; }
@@ -14393,7 +14397,7 @@ and no_of_cnts_heap heap = match heap with
   | ViewNode _ -> 1
   | ThreadNode _ -> 1
   | HRel _ -> 1
-  | Hole _ -> 1
+  | Hole _ | FrmHole _ -> 1
   | HTrue -> 1
   | HFalse -> 1
   | HEmp -> 0
@@ -14965,8 +14969,8 @@ let rec find_barr bln v f =
 		  if (List.exists f1 bln)&&(List.exists f2 eqs) then 
 			Some d (*(d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)*)
  		  else None
-      | ThreadNode _ (*TOCHECK*)
-	  | ViewNode _ | Hole _ | HTrue | HEmp | HFalse | HRel _-> None in
+          | ThreadNode _ (*TOCHECK*)
+	  | ViewNode _ | Hole _ | FrmHole _ | HTrue | HEmp | HFalse | HRel _-> None in
     
     match f with
 	  | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap
@@ -15130,7 +15134,7 @@ let elim_prm e =
 	        | ThreadNode v -> Some (ThreadNode {v with h_formula_thread_node = nv v.h_formula_thread_node}) (*TOCHECK*)
                 | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e ) b2),b3))
                 | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.f_h_f: not handle yet"
-	        | Hole _
+	        | Hole _ | FrmHole _
 	        | HTrue
 	        | HFalse 
                 | HEmp -> Some e in

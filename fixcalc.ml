@@ -185,7 +185,7 @@ let rec fixcalc_of_h_formula f = match f with
   | HFalse -> "HFalse"
   | HEmp -> "0=0"
   | HRel _ -> "HTrue"
-  | Hole _ -> 
+  | Hole _ | FrmHole _ -> 
     illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
   | Phase _ -> Error.report_no_pattern ()
 

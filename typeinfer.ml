@@ -670,6 +670,7 @@ and gather_type_info_b_formula prog b0 tlist =
 and gather_type_info_b_formula_x prog b0 tlist =
   let (pf,_) = b0 in
   match pf with
+    | IP.Frm _ -> tlist
   | IP.BConst _ -> tlist
   | IP.BVar ((bv, bp), pos) ->
       let (n_tlist,n_type) = gather_type_info_var bv tlist (C.bool_type) pos in

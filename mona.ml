@@ -925,6 +925,7 @@ and mona_of_b_formula_x b f vs =
   let ret =
 	let (pf, _) = b in
     match pf with
+      | CP.Frm (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
       | CP.XPure _ -> "(0=0)" (* WN : weakening *)
       | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
       | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
@@ -1135,6 +1136,7 @@ and mona_of_formula_x f initial_f vs =
 
 (* pretty printing for boolean vars *)
 and print_b_formula b f = match b with
+  | CP.Frm (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
   | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.Lt (a1, a2, _) -> (mona_of_exp a1 f) ^ "<" ^ (mona_of_exp a2 f)

@@ -168,6 +168,7 @@ and bfv (bf : b_formula) =
     | XPure ({xpure_view_node = vn ;
 		xpure_view_name = vname;
 		xpure_view_arguments = args})  ->  [] (*TODO*)
+    | Frm (sv,p) -> [sv]
     | BConst _ -> []
     | BVar (bv, _) -> [bv]
     | Lt (a1, a2, _) | Lte (a1, a2, _) 
@@ -539,14 +540,15 @@ and build_relation relop alist10 alist20 pos =
  (* An Hoa *)
 and pos_of_formula (f : formula) = match f with 
 	| BForm ((pf,_),_) -> begin match pf with
-		  | BConst (_,p) | BVar (_,p)
-		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | SubAnn (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
-		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
-			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
-		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
-		  | VarPerm (_,_,p) -> p
-          | XPure xp ->  xp.xpure_view_pos
+            | Frm (_, p) -> p
+	    | BConst (_,p) | BVar (_,p)
+	    | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | SubAnn (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
+	    | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
+	    | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
+	    | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
+	    | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
+	    | VarPerm (_,_,p) -> p
+            | XPure xp ->  xp.xpure_view_pos
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -655,6 +657,7 @@ and b_apply_one ((fr, t) as p) bf =
         XPure ({ xp with xpure_view_node = new_vn ;
 		    xpure_view_arguments = new_args})
   | BConst _ -> pf
+  | Frm (bv, pos) -> BVar (v_apply_one p bv, pos)
   | BVar (bv, pos) -> BVar (v_apply_one p bv, pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
@@ -799,6 +802,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   match pf with
   | XPure _ -> [] (*TO CHECK*)
   | BConst _ -> []
+  | Frm (sv,_) -> anon_var sv
   | BVar (b1, _) -> anon_var b1
   | Lt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | Lte (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -849,9 +853,10 @@ and find_lexp_b_formula (bf: b_formula) ls =
   let (pf, _) = bf in
   match pf with
     | XPure _ (*TO CHECK*)
-	| BConst _
-	| BVar _ -> []
-	| Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Frm _ (*TO CHECK*)
+    | BConst _
+    | BVar _ -> []
+    | Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Lte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Gt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Gte (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1169,7 +1174,7 @@ and float_out_pure_min_max (p : formula) : formula =
   let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
 	let (pf,il) = b in
 	match pf with
-	  | BConst _ | BVar _ |XPure _ 
+	  | BConst _ | Frm _ | BVar _ |XPure _ 
 	  | LexVar _ -> BForm (b,lbl)
 	  | Lt (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in

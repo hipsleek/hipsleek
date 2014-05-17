@@ -63,7 +63,7 @@ let simplify_htrue_x hf0=
               end
         end
       | HRel _ | DataNode _ |  ViewNode _ | ThreadNode _
-      | HFalse | Hole _ | HTrue | HEmp
+      | HFalse | Hole _ | FrmHole _ | HTrue | HEmp
       | Conj _ | ConjStar _|ConjConj _|StarMinus _ -> hf
   in
   (*********INTERNAL***************)
@@ -164,7 +164,7 @@ let rec collect_baga_models_heap prog hf0=
                 let m12 = List.map (fun ls -> CP.intersect_svl ls to_svs) m1 in
                 r@m12
             ) [] fs
-      | ThreadNode _ | Hole _ | HRel _ | HTrue | HFalse| HEmp -> []
+      | ThreadNode _ | Hole _ | FrmHole _ | HRel _ | HTrue | HFalse| HEmp -> []
       | StarMinus _ | Conj _ | ConjStar _ | ConjConj _ | Phase _ -> raise NOT_HANDLE_YET
   in
   let r = helper hf0 in
@@ -663,7 +663,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
     match f with
       | HRel _
       | DataNode _ | ViewNode _ 
-      | HTrue | HFalse | HEmp | Hole _ |  ThreadNode _ -> f
+      | HTrue | HFalse | HEmp | Hole _ | FrmHole _ |  ThreadNode _ -> f
       | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
             h_formula_phase_rw = helper b.h_formula_phase_rw}
       | Conj b -> begin
@@ -1048,3 +1048,301 @@ let analyse_error () =
   (* iSIZE_PROP *)
   0
   (* BAG_VAL_PROP 1 *)
+
+
+(*******************************************************************)
+(************************GRAPH*****************************************)
+(*******************************************************************)
+let rec get_ptrs_connected_w_args_f_x (f0: formula)=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            (get_ptrs_connected_w_args fb.formula_base_heap)
+      | Exists _ ->
+            let f1 = elim_exists f in helper f1
+      | _ -> report_error no_pos "CF.get_ptrs_connected_w_args_f_x: not handle yet"
+  in
+  helper f0
+
+and get_ptrs_connected_w_args_f (f: formula)=
+  let pr1 = !print_formula in
+  let pr2 = pr_list !CP.print_svl in
+  Debug.no_1 "CF.get_ptrs_connected_w_args_f" pr1 pr2
+      (fun _ -> get_ptrs_connected_w_args_f_x f) f
+
+and get_ptrs_connected_w_args (f0: h_formula): CP.spec_var list list =
+  (* let rec insert ls comps done_comps= *)
+  (*   match comps with *)
+  (*     | [] -> *)
+  (*           (\* let pr1 = pr_list !CP.print_svl in *\) *)
+  (*           (\* let _ = Debug.info_pprint (" ls: "^ (!CP.print_svl ls)) no_pos in *\) *)
+  (*           (\* let _ = Debug.info_pprint (" done_comps: "^ (pr1 done_comps)) no_pos in *\) *)
+  (*           done_comps@[ls] *)
+  (*     | comp::rest -> if List.exists (fun sv -> CP.mem_svl sv comp) ls then *)
+  (*         done_comps@((CP.remove_dups_svl (ls@comp))::rest) *)
+  (*       else insert ls rest (done_comps@[comp]) *)
+  (* in *)
+  (* let rec combine ls comps rest_comps= *)
+  (*     match comps with *)
+  (*     | [] -> (ls::rest_comps) *)
+  (*     | comp::rs -> if List.exists (fun sv -> CP.mem_svl sv comp) ls then *)
+  (*         combine (ls@comp) rs rest_comps *)
+  (*       else combine ls rs(rest_comps@[comp]) *)
+  (* in *)
+  (* let rec fix_helper comps= *)
+  (*   match comps with *)
+  (*     | [] -> [] *)
+  (*     | [a] -> [a] *)
+  (*     | ls::rest -> *)
+  (*           let n_comps = combine ls rest [] in *)
+  (*           if List.length comps = List.length n_comps then comps *)
+  (*           else fix_helper n_comps *)
+  (* in *)
+  let rec find_comp marked_vs es cur_comp=
+    if es = [] then (CP.remove_dups_svl (cur_comp@marked_vs), []) else
+      match marked_vs with
+        | [] -> (CP.remove_dups_svl cur_comp,es)
+        | v::vs ->
+              let inter_es,rem_es = List.partition (fun ls ->
+                  (* match ls with *)
+                  (*   | [] -> false *)
+                  (*   | sv1:: _ ->  *)(CP.mem_svl v ls)
+              ) es in
+              let inter_vs = List.fold_left (fun ls1 ls2 ->
+                  (* match ls with *)
+                  (*   | [] -> [] *)
+                  (*   |_::ls2 ->  *)ls1 @ls2
+              ) [] inter_es in
+              find_comp (CP.remove_dups_svl (vs@inter_vs)) rem_es (cur_comp@[v])
+  in
+  let rec part_connected_graph vertexs edges comps =
+    if vertexs = [] || edges = [] then comps else
+      let comp, e_rest = find_comp [List.hd vertexs] edges [] in
+      part_connected_graph (CP.diff_svl (List.tl vertexs) comp) e_rest (comps@[comp])
+  in
+  let rec helper f comps0=
+    match f with
+      | ViewNode {h_formula_view_node = c;
+        h_formula_view_arguments = args}
+      | DataNode {h_formula_data_node = c;
+        h_formula_data_arguments = args}-> (comps0@[c::args])
+            (* insert (c::((\* List.filter CP.is_node_typ *\) args)) comps0 [] *)
+      | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+      | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+      | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+          -> let comps1 = helper h1 comps0 in
+            helper h2 comps1
+      | _ -> comps0
+  in
+  let edges = helper f0 [] in
+  let vetexs = CP.remove_dups_svl (List.fold_left (fun ls1 ls2 -> ls1@ls2) [] edges) in
+  (* fix_helper comps *) part_connected_graph vetexs edges []
+
+(*duplicate with filter_var_..*)
+let slice_framing_heaps_x hf0 framing_svl =
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> Star {h_formula_star_h1 = n_hf1;
+                h_formula_star_h2 = n_hf2;
+                h_formula_star_pos = pos}
+        )
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;
+        h_formula_starminus_aliasing = a;
+        h_formula_starminus_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            StarMinus { h_formula_starminus_h1 = n_hf1;
+            h_formula_starminus_h2 = n_hf2;
+            h_formula_starminus_aliasing =a;
+            h_formula_starminus_pos = pos}
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;
+        h_formula_conj_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            Conj { h_formula_conj_h1 = n_hf1;
+            h_formula_conj_h2 = n_hf2;
+            h_formula_conj_pos = pos}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            ConjStar { h_formula_conjstar_h1 = n_hf1;
+            h_formula_conjstar_h2 = n_hf2;
+            h_formula_conjstar_pos = pos}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            ConjConj { h_formula_conjconj_h1 = n_hf1;
+            h_formula_conjconj_h2 = n_hf2;
+            h_formula_conjconj_pos = pos}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;
+        h_formula_phase_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            Phase { h_formula_phase_rd = n_hf1;
+            h_formula_phase_rw = n_hf2;
+            h_formula_phase_pos = pos}
+      | DataNode hd -> if not(CP.mem_svl hd.h_formula_data_node framing_svl) then
+          HEmp
+        else hf
+      | ViewNode hv -> if not(CP.mem_svl hv.h_formula_view_node framing_svl) then
+          HEmp
+        else hf
+      | HRel _
+      | Hole _ | FrmHole _ | ThreadNode _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+  in
+  helper hf0
+
+let slice_framing_heaps hf0 framing_svl =
+  let pr1 = !print_h_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list pr1 in
+  Debug.no_2 "slice_framing_heaps" pr1 pr2 pr1
+      (fun _ _ -> slice_framing_heaps_x hf0 framing_svl) hf0 framing_svl
+
+let slice_frame_x (f0: formula) comps=
+  let slice_helper hf p all_ptrs comp=
+    let irr_svl = CP.diff_svl all_ptrs comp in
+    let _,np = Cpgraph.prune_irr_neq_new p irr_svl in
+    let nhf = slice_framing_heaps hf comp in
+    (nhf,np)
+  in
+  let rec helper f=
+  match f with
+    | Base fb ->
+          let p = MCP.pure_of_mix fb.formula_base_pure in
+          let all_ptrs = CP.remove_dups_svl (CP.fv p) in
+          let ls_h_p = List.map (slice_helper fb.formula_base_heap p all_ptrs) comps in
+          List.map (fun (h,p) -> Base {fb with formula_base_heap = h;
+              formula_base_pure = MCP.mix_of_pure p;
+          }) ls_h_p
+    | Exists _ -> let f1 = elim_exists f in
+      helper f1
+    | _ -> report_error no_pos "CF.slice_frame: not handle yet"
+  in
+  helper f0
+
+let slice_frame (f: formula) comps=
+  let pr1 = !print_formula in
+  let pr2 = pr_list !CP.print_svl in
+  Debug.no_2 "CF.slice_frame" pr1 pr2 (pr_list_ln pr1)
+      (fun _ _ -> slice_frame_x f comps) f comps
+
+let elim_emp hf0 svl =
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+        h_formula_star_h2 = hf2;
+        h_formula_star_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> Star {h_formula_star_h1 = n_hf1;
+                h_formula_star_h2 = n_hf2;
+                h_formula_star_pos = pos}
+        )
+      | StarMinus { h_formula_starminus_h1 = hf1;
+        h_formula_starminus_h2 = hf2;
+        h_formula_starminus_aliasing =a ;
+        h_formula_starminus_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            StarMinus { h_formula_starminus_h1 = n_hf1;
+            h_formula_starminus_h2 = n_hf2;
+            h_formula_starminus_aliasing =a;
+            h_formula_starminus_pos = pos}
+      | Conj { h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;
+        h_formula_conj_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            Conj { h_formula_conj_h1 = n_hf1;
+            h_formula_conj_h2 = n_hf2;
+            h_formula_conj_pos = pos}
+      | ConjStar { h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            ConjStar { h_formula_conjstar_h1 = n_hf1;
+            h_formula_conjstar_h2 = n_hf2;
+            h_formula_conjstar_pos = pos}
+      | ConjConj { h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            ConjConj { h_formula_conjconj_h1 = n_hf1;
+            h_formula_conjconj_h2 = n_hf2;
+            h_formula_conjconj_pos = pos}
+      | Phase { h_formula_phase_rd = hf1;
+        h_formula_phase_rw = hf2;
+        h_formula_phase_pos = pos} ->
+            let n_hf1 = helper hf1 in
+            let n_hf2 = helper hf2 in
+            Phase { h_formula_phase_rd = n_hf1;
+            h_formula_phase_rw = n_hf2;
+            h_formula_phase_pos = pos}
+      | DataNode hd -> if (CP.mem_svl hd.h_formula_data_node svl) then
+          HEmp
+        else hf
+      | ViewNode hv -> if not(CP.mem_svl hv.h_formula_view_node svl) then
+          HEmp
+        else hf
+      | HRel _
+      | Hole _ | FrmHole _ | ThreadNode _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+  in
+  helper hf0
+
+
+let update_f_x f0 drop_hvns inferred_ps=
+  let rec helper f=
+  match f with
+    | Base fb ->
+          let nh = elim_emp fb.formula_base_heap drop_hvns in
+          let np =  List.fold_left (fun p1 p2->  CP.mkAnd p1 p2 no_pos)
+            (MCP.pure_of_mix fb.formula_base_pure) inferred_ps in
+          Base {fb with formula_base_heap = nh;
+              formula_base_pure = MCP.mix_of_pure np;
+          }
+    | Exists fe -> let qvars, base1 = split_quantifiers f in
+      let nf = helper base1 in
+        add_quantifiers qvars nf
+    | _ -> report_error no_pos "CF.slice_frame: not handle yet"
+  in
+  helper f0
+
+let update_f f drop_hvns inferred_ps=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "CF.update_f" pr1 pr2  pr1
+      (fun _ _ -> update_f_x f drop_hvns inferred_ps) f drop_hvns
+
+
+(*******************************************************************)
+(************************END GRAPH*****************************************)
+(*******************************************************************)

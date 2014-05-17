@@ -469,7 +469,7 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
 
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
-  let pr (c,_) = string_of_coercion c in
+  (* let pr (c,_) = string_of_coercion c in *)
   Debug.no_1 "choose_full_mater_coercion" pr_svl (* (pr_option pr) *) pr_none (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x coercs vname (vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) =
@@ -1909,7 +1909,7 @@ and drop_low ys =
   in
   match ys with
     | [] -> []
-    | ((a,w) as y)::_ -> aux a ys 
+    | ((a,w) (* as y *))::_ -> aux a ys 
 
 
 and compute_actions prog estate es (* list of right aliases *)
@@ -2003,9 +2003,9 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | ViewNode _
     | ThreadNode _
     | HEmp
-    | HRel _
+    | HRel _ | FrmHole _
     | HTrue | HFalse | StarMinus _ -> frame
-          
+
 and update_ctx_es_formula ctx0 f = 
   match ctx0 with
     | Ctx(es) -> Ctx{es with es_formula = f}
