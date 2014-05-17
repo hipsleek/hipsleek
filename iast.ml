@@ -1548,7 +1548,7 @@ and collect_data_view_from_pure_formula (data_names: ident list) (f0 : P.formula
 and collect_data_view_from_pure_bformula (data_names: ident list) (bf : P.b_formula) : (ident list) * (ident list) =
   let pf, _ = bf in
   match pf with
-  | P.XPure _ | Frm _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
+  | P.XPure _ | P.Frm _ | P.BConst _ | P.BVar _ | P.SubAnn _ -> ([], [])
   | P.Lt _ | P.Lte _ | P.Gt _ | P.Gte _ -> ([], [])
   | P.Eq (e1, e2, _)
   | P.Neq (e1, e2, _) ->
