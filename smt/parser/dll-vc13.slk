@@ -1,5 +1,4 @@
 
-
 data pto{
      pto next;
      pto prev;
