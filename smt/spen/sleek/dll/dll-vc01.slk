@@ -3,7 +3,9 @@ data pto {
      pto prev;
 }.
 
-pred dll<ex1,pr,hd> == self=pr & hd=ex1
+pred dll<ex1,pr,hd> ==
+// self=pr & hd=ex1
+  self=hd & ex1=pr
      or (exists u: self::pto<u,pr> * u::dll<ex1,self,hd>).
 
 // Fail -> expected Valid.
