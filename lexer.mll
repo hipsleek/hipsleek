@@ -168,7 +168,7 @@ module Make (Token : SleekTokenS)
    ("ensures_exact", ENSURES_EXACT);
    ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
-	 ("ex", EXISTS);
+	 (* ("ex", EXISTS); *)
 	 ("exists", EXISTS);
 	 ("extends", EXTENDS);
 	 ("false", FALSE);
