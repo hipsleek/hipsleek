@@ -29,6 +29,10 @@ data pto2 {
 )))))
 */
 
+lemma_safe self::lso<out> <- (exists u : self::lso<u> * u::lso<out>).
+
+lemma_safe self::nlcl<out> <- (exists u : self::nlcl<u> * u::nlcl<out>).
+
 pred lso<out> == self = out
      or (exists u: self::pto1<u> * u::lso<out>).
 

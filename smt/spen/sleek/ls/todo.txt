@@ -24,6 +24,11 @@ checkentail x_emp::pto<y_emp> * y_emp::lso<w_emp> *
             w_emp::pto<z_emp> |-
             x_emp::lso<z_emp>.
 
+
+fixed with lemma:
+
+lemma self::lso<out> <-> (exists u: self::lso<u> * u::lso<out>).
+
 ===================================
 ls-vc03.slk:
 
@@ -40,6 +45,7 @@ data pto {
       (lso ?u ?out))
 )))))
 */
+
 
 pred lso<out> == self=out
      or (exists u: self::pto<u> * u::lso<out>).

@@ -28,6 +28,11 @@ data pto2 {
 )))))
 */
 
+lemma_safe self::lso<out> <-> (exists u : self::lso<u> * u::lso<out>).
+
+lemma_safe self::nll<out,boundary> 
+      <-> (exists u : self::nll<u,boundary> * u::nll<out,boundary>).
+
 pred lso<out> == self = out
      or (exists u: self::pto1<u> * u::lso<out>).
 
@@ -36,7 +41,7 @@ pred nll<out,boundary> == self = out
 
 // Fail -> expected Valid.
 
-checkentail x1::pto2<x2,x1_1> * x1_1::pto1<x1_2> *
+checkentail_exact x1::pto2<x2,x1_1> * x1_1::pto1<x1_2> *
             x1_2::pto1<x1_3> * x1_3::pto1<nil_lvl1> *
             x2::nll<x3,nil_lvl1> *
             x3::pto2<nil_lvl2,x3_1> *

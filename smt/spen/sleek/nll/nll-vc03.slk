@@ -34,6 +34,11 @@ pred lso<out> == self = out
 pred nll<out,boundary> == self = out
      or (exists u, z1: self::pto2<u,z1> * z1::lso<boundary> * u::nll<out,boundary>).
 
+lemma_safe self::lso<out> <- (exists u : self::lso<u> * u::lso<out>).
+
+lemma_safe self::nll<out,boundary> 
+      <- (exists u : self::nll<u,boundary> * u::nll<out,boundary>).
+
 // Fail -> expected Valid.
 
 checkentail x1::pto2<x2,x1_1> * x1_1::pto1<x1_2> *
