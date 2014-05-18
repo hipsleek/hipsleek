@@ -41,9 +41,8 @@ pred nll<out,boundary> == self = out
 
 // Fail -> expected Valid.
 
-checkentail_exact x1::pto2<x2,x1_1> * x1_1::pto1<x1_2> *
-            x1_2::pto1<x1_3> * x1_3::pto1<nil_lvl1> *
-            x2::nll<x3,nil_lvl1> *
-            x3::pto2<nil_lvl2,x3_1> *
-            x3_1::pto1<x3_2> * x3_2::pto1<nil_lvl1> |-
-            x1::nll<nil_lvl2,nil_lvl1>.
+checkentail_exact x1::pto2<x2,x1_1> 
+            * x1_1::pto1<x1_2> * x1_2::pto1<x1_3> * x1_3::pto1<nil_lvl1> 
+            * x2::nll<x3,nil_lvl1> 
+            * x3::pto2<nil_lvl2,x3_1> * x3_1::pto1<x3_2> * x3_2::pto1<nil_lvl1> 
+            |- x1::nll<nil_lvl2,nil_lvl1>.
