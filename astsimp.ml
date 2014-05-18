@@ -2619,21 +2619,25 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               I.param_type = Named cdef.I.data_name;
               I.param_name = this;
               I.param_mod = I.NoMod;
+              I.param_sec = SUNK;
               I.param_loc = proc.I.proc_loc;} in 
           let ls_arg ={
               I.param_type = ls_typ;
               I.param_name = ls_name;
               I.param_mod = I.NoMod;
+              I.param_sec = SUNK;
               I.param_loc = proc.I.proc_loc;} in 
           let lsmu_arg ={
               I.param_type = lsmu_typ;
               I.param_name = lsmu_name;
               I.param_mod = I.NoMod;
+              I.param_sec = SUNK;
               I.param_loc = proc.I.proc_loc;} in 
           let waitlevel_arg ={
               I.param_type = waitlevel_typ;
               I.param_name = waitlevel_name;
               I.param_mod = I.NoMod;
+              I.param_sec = SUNK;
               I.param_loc = proc.I.proc_loc;} in 
           waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args)
         else proc.I.proc_args in
@@ -2723,9 +2727,9 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	| None -> None
 	| Some e -> (* let _ = print_string ("trans_proc :: Translate body " ^ Iprinter.string_of_exp e ^ "\n") in *) Some (fst (trans_exp prog proc e)) in
       (* let _ = print_string "trans_proc :: proc body translated PASSED \n" in *)
-      let args = List.map (fun p -> ((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+      let args = List.map (fun p -> (((trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name)), p.I.param_sec) ) proc.I.proc_args in
       (** An Hoa : compute the important variables **)
-      let ftypes, fnames = List.split args in
+      let ftypes, fnames = List.split (List.map fst args) in
       (* fsvars are the spec vars corresponding to the parameters *)
       let imp_vars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
       (*    let _ = print_string "Function parameters : " in                    *)
@@ -2794,7 +2798,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (** An Hoa : end **)
       let final_dynamic_specs_list = dynamic_specs_list in
       (* TODO: is below being computed multiple times? *)
-      let args2 = args@(prog.I.prog_rel_ids) in
+      let args2 = (List.map fst args)@(prog.I.prog_rel_ids) in
       let _ = 
         let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0 in
         
@@ -3907,6 +3911,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             let param = {Iast.param_type = Globals.thrd_typ;
                                          Iast.param_name = "id";
                                          Iast.param_mod = Iast.NoMod;
+                                         Iast.param_sec = SUNK;
                                          Iast.param_loc = pos;}
                             in [param]
                           else
@@ -3914,6 +3919,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                             let param = {Iast.param_type = Globals.thread_typ;
                                          Iast.param_name = "id";
                                          Iast.param_mod = Iast.NoMod;
+                                         Iast.param_sec = SUNK;
                                          Iast.param_loc = pos;}
                             in [param]
                         else pdef.I.proc_args
@@ -4577,6 +4583,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.param_name = snd tv;
                   I.param_mod = if (List.mem (snd tv) fvars_while) then I.RefMod
                   else I.NoMod; (* other vars from specification, declared with NoMod *)
+                  I.param_sec = SUNK; (*to improve*)
                   I.param_loc = pos; }) tvars in
             let w_proc ={
 		  I.proc_hp_decls = [];
@@ -7733,7 +7740,8 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 
 and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl = 
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
-  let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
+  let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod;
+  I.param_sec = SUNK; I.param_loc = no_pos })(List.concat gl_v_l) in
   let gl_proc_args = gl_v@ f.Iast.proc_args in
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in

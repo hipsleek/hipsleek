@@ -25,6 +25,11 @@ type ('a,'b) twoAns =
 type ident = string
 type constant_flow = string
 
+type security_level =
+  | LOW
+  | HIGH
+  | SUNK
+
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
 exception SA_HP_NOT_PRED

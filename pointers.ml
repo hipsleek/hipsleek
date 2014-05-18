@@ -1843,6 +1843,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
              let this_arg ={
                  param_type = Named cdef.data_name;
                  param_name = this;
+                 param_sec = SUNK;
                  param_mod = NoMod;
                  param_loc = proc.proc_loc;} in 
              this_arg :: new_params)

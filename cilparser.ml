@@ -1458,6 +1458,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
                           let newparam = {Iast.param_type = param_ty;
                           Iast.param_name = name;
                           Iast.param_mod = param_mod;
+                          Iast.param_sec = SUNK;
                           Iast.param_loc = pos; } in
                           newparam
                       ) in

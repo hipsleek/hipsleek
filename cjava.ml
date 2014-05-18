@@ -341,7 +341,7 @@ and java_of_proc_decl prog p java_code =
 	Buffer.add_char java_code ' ';
 	Buffer.add_string java_code p.proc_name;
 	Buffer.add_char java_code '(';
-	Buffer.add_string java_code (params_of_typed_ident_list ", " p.proc_args);
+	Buffer.add_string java_code (params_of_typed_ident_list ", " (List.map fst p.proc_args));
 	Buffer.add_char java_code ')';
   end;
   match p.proc_body with 

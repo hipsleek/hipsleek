@@ -160,6 +160,7 @@ and rise_type =
 and param = { param_type : typ;
 param_name : ident;
 param_mod : param_modifier;
+param_sec: security_level;
 param_loc : loc }
 
 (*
@@ -2603,8 +2604,9 @@ let add_bar_inits prog =
 				let str = F.mkEBase [] [] [] simp None no_pos in
 				F.mkEAssume simp str (fresh_formula_label "") None in
 			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
-                        let ags = {param_type =barrierT; param_name = "b"; param_mod = RefMod;param_loc=no_pos}::
-				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
+                        let ags = {param_type =barrierT; param_name = "b";  param_sec = SUNK; param_mod = RefMod;param_loc=no_pos}::
+				(List.map (fun (t,n)-> {param_type =t; param_name = n;  param_sec = SUNK;
+                                param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars) in
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";

@@ -1137,12 +1137,14 @@ let param_of_v ht md lc nm =
       { param_type = t;
         param_name = nm;
         param_mod = md;
+        param_sec = SUNK;
         param_loc = lc;
       }
   | _ ->
       { param_type = t;
         param_name = nm;
         param_mod = RefMod;
+        param_sec = SUNK;
         param_loc = lc;
       }
   with e ->

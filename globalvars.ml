@@ -1037,6 +1037,7 @@ let global_to_param (modifier : I.param_modifier) (var_decl : I.exp_var_decl) : 
   { I.param_type = var_decl.I.exp_var_decl_type;
     I.param_name = id;
     I.param_mod = modifier;
+    I.param_sec = SUNK;
     I.param_loc = loc; }
 	
 (** Add the global variables into the parameter list 

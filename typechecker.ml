@@ -214,7 +214,7 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
         report_error pos ("\ncheck_specs: EBase: duplicated VarPerm: " ^ (Cprinter.string_of_spec_var_list tmp))
   in
   (*Ensure that all arguments have corresponding varialbe permissions*)
-  let farg_types, farg_names = List.split proc.proc_args in
+  let farg_types, farg_names = List.split (List.map fst proc.proc_args) in
   let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
   (*let all_vars = val_vars@full_vars in
   let tmp1 = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars in*)
@@ -464,7 +464,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             in
             let pre_vars,post_vars = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in
             let pargs = List.concat (List.map (fun (t,n) -> 
-              if t==Int then [CP.SpecVar (t,n,Unprimed)] else []) proc.proc_args) in
+              if t==Int then [CP.SpecVar (t,n,Unprimed)] else []) (List.map fst proc.proc_args)) in
             let vars, new_formula_inf_continuation = 
               if old_vars = [] then
                 begin
@@ -526,7 +526,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 (*                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos *)
 (*              else*)
 (*                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in*)
-                let proc_args_vars = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
+                let proc_args_vars = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) (List.map fst proc.proc_args) in
                 let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv @ proc_args_vars) in
                 let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
                 let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
@@ -673,11 +673,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
 		    let _ = Gen.Profiling.push_time "typechecker : check_exp" in
-					let _ = if !Globals.tc_drop_unused then
-							let spec_names = List.map CP.name_of_spec_var ((CF.context_fv ctx1)@(CF.struc_fv post_struc)) in
-							proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd proc.proc_args))
-							;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
-							else () in
+		    let _ = if !Globals.tc_drop_unused then
+		      let spec_names = List.map CP.name_of_spec_var ((CF.context_fv ctx1)@(CF.struc_fv post_struc)) in
+		      proc_used_names := Gen.BList.remove_dups_eq (=) ((exp_fv e0)@spec_names@(List.map snd (List.map fst proc.proc_args)))
+		      ;print_string ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
+		    else () in
                     let res_ctx = check_exp prog proc lfe e0 post_label in
                     (* let _ = Debug.info_zprint (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in *)
                     (*Clear es_pure before check_post*)
@@ -731,7 +731,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO: Timing *)
                       let pres, posts = CF.get_pre_post_vars_simp [] (proc.proc_stk_of_static_specs # top) in
                       let pre_vars = CP.remove_dups_svl (pres @ (List.map 
-                          (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
+                          (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) (List.map fst proc.proc_args))) in
                       let impl_vs, expl_vs = List.partition (fun v -> CP.mem_svl v (pre_vars@posts)) impl_vs in
                       DD.devel_pprint ("Pre Vars :"^(Cprinter.string_of_spec_var_list pre_vars)) pos;
                       DD.devel_pprint ("Post Vars :"^(Cprinter.string_of_spec_var_list posts)) pos;
@@ -949,7 +949,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   (* let _ = print_endline ("\ncheck_exp: SCall: vs = " ^ (string_of_ident_list vs)) in *)
   let fargs = List.tl vs in
   let proc = look_up_proc_def pos prog.new_proc_decls fn in
-  let farg_types, farg_names = List.split proc.proc_args in
+  let farg_types, farg_names = List.split (List.map fst proc.proc_args) in
   let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
   let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) fargs farg_types in
   (*=======check_pre_post========*)
@@ -2107,7 +2107,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let proc = look_up_proc_def pos prog.new_proc_decls mn in
                   let _ = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
                   let _ = Debug.ninfo_zprint (lazy (("   spec: " ^(Cprinter.string_of_struc_formula proc.Cast.proc_static_specs)))) no_pos in
-	          let farg_types, farg_names = List.split proc.proc_args in
+	          let farg_types, farg_names = List.split (List.map fst proc.proc_args) in
 	          let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	          let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
                   (***************************************************************************)
@@ -2533,7 +2533,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
     let fn_state=
       if (!Globals.disable_failure_explaining) then
         let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
-          proc.proc_args in
+          (List.map fst proc.proc_args) in
         let r = proc.proc_by_name_params in
         let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
 
@@ -2789,7 +2789,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 	        begin
                   stk_vars # reset;
                   (* push proc.proc_args *)
-                  let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
+                  let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) (List.map fst proc.proc_args) in
                   stk_vars # push_list args;
                   let pr_flag = not(!phase_infer_ind) in
 		  if !Globals.print_proc && pr_flag then 
@@ -2811,9 +2811,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                   (*****LOCKSET variable: ls'=ls *********)
                   let args = 
                     if (!allow_ls) then
-                      let lsmu_var = (lsmu_typ,lsmu_name) in
-                      let ls_var = (ls_typ,ls_name) in
+                      let ls_var = ((ls_typ,ls_name),SUNK) in
                       if (!Globals.allow_locklevel) then
+                        let lsmu_var = ((lsmu_typ,lsmu_name), SUNK) in
                         (*LS and LSMU are ghost variables*)
                         lsmu_var::ls_var::proc.proc_args
                       else
@@ -2822,7 +2822,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       proc.proc_args
                   in
                   (******************************)
-		  let ftypes, fnames = List.split args in
+		  let ftypes, fnames = List.split ( List.map fst args) in
 		  (* fsvars are the spec vars corresponding to the parameters *)
 		  let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
                   let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
@@ -2977,7 +2977,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                             let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                             let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
                             let pre_vars = CP.remove_dups_svl (pres @ (List.map 
-                                (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
+                                (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) (List.map fst proc.proc_args))) in
                             let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
                             let post_vars = CP.remove_dups_svl all_posts in
                             let proc_spec = proc.proc_stk_of_static_specs # top in

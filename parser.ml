@@ -2730,17 +2730,28 @@ constructor_header:
 
 
 opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
-  
+
 
 fixed_parameter:
   [[ t=typ; pm=OPT pass_t; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
+        param_sec = SUNK;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = id }
+    | t=typ; pm=OPT pass_t; `IDENTIFIER id; `COLON; `IDENTIFIER slevel->
+          let sl = if String.compare slevel "high" =0 then HIGH else
+            if String.compare slevel "low" =0 then LOW else SUNK
+          in
+      { param_mod = un_option pm NoMod;
+        param_type = t;
+        param_sec = sl;
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }
     | pm=OPT pass_t2; t=typ;  `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
+        param_sec = SUNK;
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }
 ]];

@@ -964,9 +964,10 @@ let return_false pos = Return ({exp_return_val = Some
 							exp_return_pos = pos})
 
 let cur_color pos = { param_type = Named "long";
-					  param_name = "curColor";
-					  param_mod = NoMod;
-					  param_loc = pos }
+param_name = "curColor";
+param_mod = NoMod;
+param_sec = SUNK;
+param_loc = pos }
   
 let new_color pos = {(cur_color pos) with param_name = "newColor"}
 

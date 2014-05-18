@@ -200,7 +200,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
   else
     let pos = CF.pos_of_formula pre in
     let pre_fv = CF.fv pre in
-    let fargs = proc.C.proc_args in
+    let fargs = List.map fst proc.C.proc_args in
     let farg_names = List.map snd fargs in
     let farg_types = List.map fst fargs in
     let farg_spec_vars = List.map2 
@@ -266,7 +266,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
   else
     let pos = CF.pos_of_formula post in
     let post_fv = CF.fv post in
-    let fargs = proc.C.proc_args in
+    let fargs = List.map fst proc.C.proc_args in
     let farg_names = List.map snd fargs in
     let farg_types = List.map fst fargs in
     let farg_spec_vars = List.map2 
@@ -439,7 +439,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 	    | _ -> failwith ("compile_call: currently support only one pair of pre/post: " ^ mn)
 	in
 	let pre_fv = CF.fv pre in
-	let fargs = pdef.C.proc_args in
+	let fargs = List.map fst pdef.C.proc_args in
 	let farg_names = List.map snd fargs in
 	let pre_fv_names = List.map CP.name_of_spec_var pre_fv in
 	let output_vars = Gen.BList.difference_eq (=) pre_fv_names farg_names in
