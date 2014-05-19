@@ -1933,11 +1933,11 @@ let subst_cs_w_partial_defs_x hp_constrs par_defs=
                 | Some _ ,Some _ -> (*recursive par def -->currently omit*)
                     partition_par_defs ps lpdefs rpdefs
                 | Some f1, None -> (*lhs case*)
-                    let new_lpdef = if Sautil.is_empty_heap_f f1 then [] else
+                    let new_lpdef = if Cfutil.is_empty_heap_f f1 then [] else
                       [(hp_name, hp_args,unk_svl, f1)] in
                     partition_par_defs ps (lpdefs@new_lpdef) rpdefs
                 | None, Some f2 -> (*rhs case*)
-                    let new_rpdef = if Sautil.is_empty_heap_f f2 then [] else
+                    let new_rpdef = if Cfutil.is_empty_heap_f f2 then [] else
                           [(hp_name, hp_args,unk_svl, f2)] in
                     partition_par_defs ps lpdefs (rpdefs@new_rpdef)
                 | None, None -> (*can not happen*)

@@ -540,3 +540,43 @@ let norm_split_args iprog cprog cview=
 (*****************************************************************)
    (********END PARA CONTINUATION ANALYSIS **********)
 (*****************************************************************)
+
+let norm_ann_seg_opz_x iprog cprog cviews=
+  (*************INTERNAL***************)
+  (*a view can be applied for seg optimization if:
+    - seg
+    - exists base case = emp
+  *)
+  let compute_seg_opz view=
+    let is_seg, seg_emp_base = if view.Cast.view_cont_vars = [] then
+      (false, None)
+    else
+      match view.Cast.view_base_case with
+        | None -> (false, None)
+        | Some (p,_) -> begin
+            let neq_null_svl = Cpure.get_neq_null_svl p in
+          if neq_null_svl != [] then
+            (false, None)
+          else
+            (true, Some p)
+          end
+    in
+    is_seg, {view with Cast.view_seg_opz = seg_emp_base}
+  in
+  (*************END INTERNAL***************)
+  let cviews1 = if !Globals.norm_cont_analysis then cviews
+  else cont_para_analysis cprog cviews
+  in
+  List.fold_left (fun (b, r) v ->
+      let b1, n_v = compute_seg_opz v in
+      (b || b1, r@[n_v])
+  ) (false, []) cviews1
+
+let norm_ann_seg_opz iprog cprog cviews=
+  let pr1 v =
+    let pr = pr_quad pr_id Cprinter.string_of_struc_formula !CP.print_svl (pr_opt !CP.print_formula) in
+    pr (v.Cast.view_name, v.Cast.view_formula,  v.Cast.view_cont_vars, v.Cast.view_seg_opz)
+  in
+  let pr2 = pr_list_ln pr1 in
+  Debug.no_1 "norm_ann_seg_opz" pr2 (pr_pair string_of_bool pr2)
+      (fun _ -> norm_ann_seg_opz_x iprog cprog cviews) cviews

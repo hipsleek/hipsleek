@@ -2028,6 +2028,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           C.view_domains = [];
           C.view_vars = view_sv;
           C.view_cont_vars = [];
+          C.view_seg_opz = None;
           C.view_uni_vars = [];
           C.view_labels = labels;
           C.view_modes = vdef.I.view_modes;

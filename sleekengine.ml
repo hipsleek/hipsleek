@@ -591,7 +591,8 @@ let convert_data_and_pred_to_cast_x () =
   in
   let cviews2 =
     if !Globals.norm_cont_analysis then
-      Norm.cont_para_analysis !cprog cviews1
+      let cviews2a = Norm.cont_para_analysis !cprog cviews1 in
+     cviews2a
     else
       cviews1
   in
@@ -601,7 +602,21 @@ let convert_data_and_pred_to_cast_x () =
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
-  let cprog2 = Astsimp.sat_warnings cprog1 in        
+  let cprog2 = Astsimp.sat_warnings cprog1 in
+  let cprog2 =
+     if !Globals.norm_cont_analysis then
+     let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.Cast.prog_view_decls in
+     let _ = if is_need_seg_opz then
+       let _ = Frame.seg_opz := true in
+       ()
+     else
+       let _ = Frame.seg_opz := false in
+       ()
+     in
+     let cprog2a = {cprog2 with Cast.prog_view_decls = cviews3a} in
+     cprog2a
+     else cprog2
+  in
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in

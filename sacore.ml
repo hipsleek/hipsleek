@@ -397,9 +397,9 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | [(_,args)] ->
             (* let _ = Debug.info_zprint (lazy (("   lhs_f_rem: " ^ (!CF.print_formula lhs_f_rem)))) no_pos in *)
             (* let _ = Debug.info_zprint (lazy (("   rhs: " ^ (!CF.print_formula rhs)))) no_pos in *)
-            if Sautil.is_empty_heap_f lhs_f_rem then
+            if Cfutil.is_empty_heap_f lhs_f_rem then
               let svl = helper args lhs_f_rem in
-              if svl == [] && Sautil.is_empty_heap_f rhs then
+              if svl == [] && Cfutil.is_empty_heap_f rhs then
                 helper args rhs
               else svl
             else

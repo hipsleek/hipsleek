@@ -16,6 +16,8 @@ module MCP = Mcpure
 module CF = Cformula
 
 
+let seg_opz = ref false
+
 let look_up_ptr_args_one_node hd_nodes hv_nodes node_name=
   let rec look_up_data_node ls=
     match ls with
@@ -471,7 +473,7 @@ let prune_irr_neq_formula f0 =
           let np=
             if !Globals.allow_frame then
               let ptrs = Cfutil.get_ptrs_connected_w_args fb.CF.formula_base_heap in
-              let _,np2 = CPG.prune_irr_neq (MCP.pure_of_mix fb.CF.formula_base_pure) ptrs in
+              let _,np2 = CPG.prune_irr_neq_ll (MCP.pure_of_mix fb.CF.formula_base_pure) ptrs in
               MCP.mix_of_pure np2
             else fb.CF.formula_base_pure
           in
@@ -756,12 +758,12 @@ let get_non_emp_x p view_ptrs_map view_emp_map=
   (*todo: neqNulls is red node*)
   let neqNulls, neqs1 = List.partition CP.is_neq_null_exp neqs in
   let non_emps = List.fold_left (fun ls neq -> ls@(process_neq neq)) [] neqs1 in
-  (List.map list_to_pair (List.map CP.fv eqs),non_emps)
+  (List.map list_to_pair (List.map CP.fv eqs),List.map list_to_pair non_emps)
 
 let get_non_emp p view_ptrs_map view_emp_map=
   let pr1 = !CP.print_formula in
   let pr2 = pr_pair !CP.print_sv !CP.print_sv in
-  let pr3 = pr_pair (pr_list  pr2) (pr_list !CP.print_svl) in
+  let pr3 = pr_pair (pr_list  pr2) (pr_list pr2) in
   Debug.no_1 "get_non_emp" pr1 pr3
       (fun _ -> get_non_emp_x p view_ptrs_map view_emp_map) p
 (******************************)
@@ -820,7 +822,7 @@ let rec intersect_fast ls ls1=
 let rec find_non_empty_one_chain l_non_emps ptrs=
   match l_non_emps with
     | [] -> false
-    | ls::rest -> if intersect_fast ls ptrs then true
+    | (sv1,sv2)::rest -> if intersect_fast [sv1;sv2] ptrs then true
       else
         find_non_empty_one_chain rest ptrs
 
@@ -1067,6 +1069,39 @@ let combine_dependent_components comps=
   Debug.no_1 "combine_dependent_components" (pr_list_ln pr2) (pr_list_ln pr3)
       (fun _ -> combine_dependent_components_x comps) comps
 
+(****************************************************************************************)
+                      (************AUX*************************)
+(***************************************************************************************)
+let rec part_grp ls_map res=
+  match ls_map with
+    | [] -> res
+    | (vname1, svl1)::rest ->
+          let part,rem = List.partition (fun (vname2,_) -> String.compare vname1 vname2 = 0) rest in
+          let svl = List.fold_left (fun ls (_, svl2) -> ls@svl2) svl1 part in
+          part_grp rem (res@[(vname1, svl)])
+
+let get_ptr_view_map vns=
+  let ls_view_ptrs_map = List.map (fun vn ->
+      (vn.CF.h_formula_view_name, vn.CF.h_formula_view_node::(List.filter (fun sv ->
+          CP.is_node_typ sv) vn.CF.h_formula_view_arguments)
+      )
+  ) vns in
+  let maps = part_grp ls_view_ptrs_map [] in
+  maps
+  (*should improve for more precise*)
+let abs_maybe intial_emps vn=
+  List.fold_left (fun ls sv ->
+      let sv1,sv2 = (vn.CF.h_formula_view_node, sv) in
+      if ( List.exists (fun (sv3,sv4) ->
+          (CP.eq_spec_var sv1 sv3 && CP.eq_spec_var sv2 sv4) ||
+              (CP.eq_spec_var sv1 sv4 && CP.eq_spec_var sv2 sv3))
+          intial_emps) then ls else ls@[(sv1,sv2)]
+  )
+      [] (List.filter (fun sv ->
+          CP.is_node_typ sv && not (CP.eq_spec_var sv vn.CF.h_formula_view_node)) vn.CF.h_formula_view_arguments)
+(****************************************************************************************)
+                      (************END AUX*************************)
+(***************************************************************************************)
 (*
 goal: classify as many as maybe emp ---> emp
 *)
@@ -1082,28 +1117,11 @@ let norm_dups_pred_x cprog f=
               rest in
             get_dups_hv eqs rem (res@[(sv1,(sv1,sv2)::part)])
   in
-  let rec part_grp ls_map res=
-    match ls_map with
-      | [] -> res
-      | (vname1, svl1)::rest ->
-            let part,rem = List.partition (fun (vname2,_) -> String.compare vname1 vname2 = 0) rest in
-            let svl = List.fold_left (fun ls (_, svl2) -> ls@svl2) svl1 part in
-            part_grp rem (res@[(vname1, svl)])
-  in
-  let get_ptr_view_map vns=
-    let ls_view_ptrs_map = List.map (fun vn ->
-        (vn.CF.h_formula_view_name, vn.CF.h_formula_view_node::(List.filter (fun sv ->
-            CP.is_node_typ sv) vn.CF.h_formula_view_arguments)
-        )
-    ) vns in
-    let maps = part_grp ls_view_ptrs_map [] in
-    maps
-  in
   let rec find_chain all_dups_roots cur res links=
     try
       (* let _ = Debug.info_pprint (" XXXXXXXXXX 3: " ^ (!CP.print_sv cur)) no_pos in *)
       if CP.mem_svl cur all_dups_roots then
-        (*this chain points to another root*)
+        (*this chain points to anothe2r root*)
         (cur,res,[cur])
       else
         let n = List.assoc cur links in
@@ -1112,18 +1130,6 @@ let norm_dups_pred_x cprog f=
           find_chain all_dups_roots n (res@[n]) links
     with Not_found ->
         (cur,res,[])
-  in
-  (*should improve for more precise*)
-  let abs_maybe intial_emps vn=
-    List.fold_left (fun ls sv ->
-        let sv1,sv2 = (vn.CF.h_formula_view_node, sv) in
-        if ( List.exists (fun (sv3,sv4) ->
-        (CP.eq_spec_var sv1 sv3 && CP.eq_spec_var sv2 sv4) ||
-        (CP.eq_spec_var sv1 sv4 && CP.eq_spec_var sv2 sv3))
-          intial_emps) then ls else ls@[(sv1,sv2)]
-    )
-        [] (List.filter (fun sv ->
-            CP.is_node_typ sv && not (CP.eq_spec_var sv vn.CF.h_formula_view_node)) vn.CF.h_formula_view_arguments)
   in
   let build_chains all_dups_roots all_maybe_emps hds (r,maybe_rdups_group)=
     (*list of (maybe emp-next ptr,ptrs in the chain, last ptrs)*)
@@ -1145,6 +1151,7 @@ let norm_dups_pred_x cprog f=
   let eqs0,non_emps0 = get_non_emp p view_ptrs_map view_emp_map in
   (*find chains from duplicate pred roots*)
   let maybe_emps = List.fold_left (fun ls vn -> ls@(abs_maybe eqs0 vn)) [] vns in
+  let _ = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
   let maybe_rdups_groups = get_dups_hv eqs0 maybe_emps [] in
   let all_dups_roots = List.map fst maybe_rdups_groups in
   (* let _ = Debug.info_pprint (" XXXXXXXXXX 1") no_pos in *)
@@ -1292,10 +1299,34 @@ let norm_dups_pred_x cprog f=
   let f1 = Cfutil.update_f f drop_hvns ps in
   f1
 
+let norm_dups_pred_new_x cprog f=
+  (*each find emp branch - now assume emp branches are base cases*)
+  (*return = (view name, view arguments, emp condition)*)
+  let view_emp_map = Cast.get_emp_map cprog in
+  let p,vns,dns = get_p_view_data f in
+  let view_ptrs_map = get_ptr_view_map vns in
+  (*return = (list of non-emp (v1,v2), list of eq )*)
+  (*find initial non-emp constraints from pure*)
+  let eqs0,non_emps0 = get_non_emp p view_ptrs_map view_emp_map in
+  (*find chains from duplicate pred roots*)
+  let maybe_emps = List.fold_left (fun ls vn -> ls@(abs_maybe eqs0 vn)) [] vns in
+  let is_conflict,emps1 = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
+  if is_conflict then (true,f) else
+    let ps = revert_emp_abs emps1 view_ptrs_map view_emp_map in
+    (*remove hvns in non emp*)
+    let drop_hvns = CP.remove_dups_svl (List.map fst emps1) in
+    let f1 = Cfutil.update_f f drop_hvns ps in
+    (false,f1)
+
+let norm_dups_pred_new_a cprog f=
+  if not (Cfutil.is_empty_heap_f f) && !seg_opz then
+    norm_dups_pred_new_x cprog f
+  else false,f
+
 let norm_dups_pred prog f=
   let pr1 = Cprinter.string_of_formula in
-  Debug.no_1 "norm_dups_pred" pr1 pr1
-      (fun _ -> norm_dups_pred_x prog f) f
+  Debug.no_1 "norm_dups_pred" pr1 (pr_pair string_of_bool pr1)
+      (fun _ -> norm_dups_pred_new_a prog f) f
 
 let heap_normal_form_x prog f0=
   let f = CF.elim_exists f0 in
@@ -1308,10 +1339,10 @@ let heap_normal_form_x prog f0=
   in
   let comps1 = List.filter (fun ls ->( List.length ls) > 2) comps in
   let fs =
-    if List.length comps1 > 1 then
+    (* if List.length comps1 > 1 then *)
       Cfutil.slice_frame f comps1
-    else
-      [f]
+    (* else *)
+    (*   [f] *)
   in
   (* List.map (norm_dups_pred prog) *) fs
 

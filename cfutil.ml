@@ -10,6 +10,17 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+let rec is_empty_heap_f f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+          (is_empty_heap fb.formula_base_heap)
+      | Exists fe -> (* (CF.is_empty_heap fe.CF.formula_exists_heap) *)
+          let _, base_f = split_quantifiers f in
+          is_empty_heap_f base_f
+      | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
 
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=

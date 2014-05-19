@@ -2642,8 +2642,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       let _ = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
       not (TP.is_sat_mix_sub_no npf sat_subno true true)
   in
-  (* let f = Frame.norm_dups_pred prog f in *)
-   match f with
+  match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
@@ -2660,8 +2659,15 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  let ph,_,_ = xpure_heap 1 prog qh qp 1 in
 	  let npf = MCP.merge_mems qp ph true in
           tp_call_wrapper npf
-	      
 
+and unsat_base_a prog (sat_subno:  int ref) f  : bool= 
+  if !Globals.sep_unsat then
+    let is_heap_conflict,f1 = Frame.norm_dups_pred prog (CF.elim_exists f) in
+        if is_heap_conflict then true
+        else
+          unsat_base_x prog sat_subno f1
+  else
+    unsat_base_x prog sat_subno f
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
               
@@ -2670,7 +2676,7 @@ and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool =
   (*unsat_base_x prog sat_subno f*)
   Debug.no_2_num n "unsat_base_nth" 
       Cprinter.string_of_formula string_of_int string_of_bool
-      (fun _ _ -> unsat_base_x prog sat_subno f) f n
+      (fun _ _ -> unsat_base_a prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in

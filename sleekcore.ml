@@ -33,15 +33,27 @@ module SY_CEQ = Syn_checkeq
 
 let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
-let check_unsat cprog ante init_ctx=
+let sleek_unsat_check isvl cprog ante=
+  let _ = Hgraph.reset_fress_addr () in
+  let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
+  let lem = Lem_store.all_lemma # get_left_coercion in
+  let ante = Solver.normalize_formula_w_coers 11 cprog es ante (* cprog.C.prog_left_coercions *) lem in
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let init_ctx =  CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
+  let _ = if (CF.isAnyFalseCtx ctx) then
+    print_endline ("[Warning] False ctx")
+  in
   (* let _ = print_endline ("1") in *)
   (* let es = match init_ctx with *)
   (*   | CF.Ctx es -> es *)
   (*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *)
   (* in *)
   let helper f=
-    let f1 = Frame.norm_dups_pred cprog f in
-    Solver.unsat_base_nth 1 cprog (ref 1) f1
+    (* let is_heap_conflict,f1 = Frame.norm_dups_pred cprog f in *)
+    (* if is_heap_conflict then true else *)
+      Solver.unsat_base_nth 1 cprog (ref 1) f
   in
   let fs = (Frame.heap_normal_form cprog ante) in
   let rec loop_helper fs=
@@ -54,13 +66,43 @@ let check_unsat cprog ante init_ctx=
   in
   let r,fail_of =
     match fs with
-      | [] -> report_error no_pos "sleekengine.check_unsat"
+      | [] -> (* report_error no_pos "sleekengine.check_unsat" *) false, None
       | _ -> loop_helper fs
   in
   if r then (true, CF.SuccCtx [init_ctx], [])
   else (false, CF.FailCtx (CF.Trivial_Reason
-      ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
+     ( {CF.fe_kind = CF.Failure_Must "lhs is not unsat"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])),
   [])
+
+
+(* let check_unsat cprog ante init_ctx= *)
+(*   (\* let _ = print_endline ("1") in *\) *)
+(*   (\* let es = match init_ctx with *\) *)
+(*   (\*   | CF.Ctx es -> es *\) *)
+(*   (\*   | _ -> report_error no_pos "Sleekengine.check_unsat: not handle yet" *\) *)
+(*   (\* in *\) *)
+(*   let helper f= *)
+(*     (\* let f1 = Frame.norm_dups_pred cprog f in *\) *)
+(*     Solver.unsat_base_nth 1 cprog (ref 1) f *)
+(*   in *)
+(*   let fs = (\* (Frame.heap_normal_form cprog ante) *\)  [ ante] in *)
+(*   let rec loop_helper fs= *)
+(*     match fs with *)
+(*       | [] -> false, None *)
+(*       | f::rest -> *)
+(*             let res1 = helper f in *)
+(*             if res1 then (true,Some f) else *)
+(*             loop_helper rest *)
+(*   in *)
+(*   let r,fail_of = *)
+(*     match fs with *)
+(*       | [] -> report_error no_pos "sleekengine.check_unsat" *)
+(*       | _ -> loop_helper fs *)
+(*   in *)
+(*   if r then (true, CF.SuccCtx [init_ctx], []) *)
+(*   else (false, CF.FailCtx (CF.Trivial_Reason *)
+(*       ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])), *)
+(*   []) *)
 
 let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
@@ -109,7 +151,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
     else () 
   in
-  if !Globals.sep_unsat && CF.isAnyConstFalse_struc conseq then check_unsat cprog ante ctx
+  if isvl = [] && !Globals.sep_unsat && CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
   else
   let ctx = 
     if !Globals.delay_proving_sat then ctx

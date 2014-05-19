@@ -168,17 +168,6 @@ let is_empty_base fb=
   (CF.is_empty_heap fb.CF.formula_base_heap) &&
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
 
-let rec is_empty_heap_f f0=
-  let rec helper f=
-    match f with
-      | CF.Base fb ->
-          (CF.is_empty_heap fb.CF.formula_base_heap)
-      | CF.Exists fe -> (* (CF.is_empty_heap fe.CF.formula_exists_heap) *)
-          let _, base_f = CF.split_quantifiers f in
-          is_empty_heap_f base_f
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
-  in
-  helper f0
 
 let is_empty_wop opf=
   match opf with
@@ -4675,7 +4664,7 @@ let simplify_set_of_formulas_wg_x prog is_pre cdefs hp args unk_hps unk_svl defs
   if List.length defs_wg < 2 then (false, defs_wg) else
     let base_case_exist,defs1 = remove_dups_recursive_wg prog cdefs hp args unk_hps unk_svl defs_wg in
     let defs2 = List.concat (List.map helper defs1) in
-    let b_defs3,r_defs3=List.partition (fun (f,_) -> is_empty_heap_f f) defs2 in
+    let b_defs3,r_defs3=List.partition (fun (f,_) -> Cfutil.is_empty_heap_f f) defs2 in
     (*remove duplicate for base cases*)
     let b_defs4 = (* remove_subsumed_pure_formula args *) b_defs3 in
     (*remove duplicate for recursive cases*)
@@ -5319,7 +5308,7 @@ let get_longest_common_hnodes_list_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_
          let hp_subst0 = (hprel, hprel) in
          let n_fs_wg = List.map (fun (a,f,og) -> (process_one_f prog args args next_roots hp_subst0 sh_ldns2 eqNulls eqPures hprels1 (a,f), og)) lldns in
          (* let disj = CF.disj_of_list n_fs no_pos in *)
-         if List.for_all (fun (f,_) -> is_empty_heap_f f) n_fs_wg then
+         if List.for_all (fun (f,_) -> Cfutil.is_empty_heap_f f) n_fs_wg then
            (* let disj_p = CF.get_pure disj in *)
            let nfs_wg = List.map (fun (f, og) -> (CF.mkAnd_pure common_f (MCP.mix_of_pure ( CF.get_pure f)) no_pos, og)) n_fs_wg in
            check_and_elim_not_in_used_args prog is_pre cdefs unk_hps unk_svl
@@ -5674,8 +5663,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
     if b2 then f1 else
   let is_common, sharing_f, n_fs,_ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
   if not is_common then
-    let b1 = is_empty_heap_f f1 in
-    let b2 = is_empty_heap_f f2 in
+    let b1 = Cfutil.is_empty_heap_f f1 in
+    let b2 = Cfutil.is_empty_heap_f f2 in
     let nf1,nf2=
       match b1,b2 with
         | false,false
@@ -5690,8 +5679,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
       | [f] -> CF.mkStar sharing_f f CF.Flow_combine pos
       | [nf1;nf2] -> begin
           (*check pure*)
-          let b1 = is_empty_heap_f nf1 in
-          let b2 = is_empty_heap_f nf2 in
+          let b1 = Cfutil.is_empty_heap_f nf1 in
+          let b2 = Cfutil.is_empty_heap_f nf2 in
           match b1,b2 with
             | true, true ->
                   CF.mkStar sharing_f (CF.mkStar nf1 nf2 CF.Flow_combine pos) CF.Flow_combine pos
@@ -5734,7 +5723,7 @@ let simplify_disj_x prog hp args unk_hps unk_svl f1 f2 pos=
   in
   let is_common, sharing_f, n_fs = helper f1 f2 in
   if not is_common then (false, [f1;f2]) else
-    if List.for_all (fun f -> is_empty_heap_f f) n_fs then
+    if List.for_all (fun f -> Cfutil.is_empty_heap_f f) n_fs then
       if List.exists is_empty_f n_fs then
         (true, [sharing_f])
       else (false, [f1;f2])
@@ -5751,7 +5740,7 @@ let perform_conj_unify_post_wg_x prog hp args unk_hps unk_svl fs_wg pos=
     | [(f1,og1);(f2,og2)] ->
           let is_common, sharing_f, n_fs, _ = partition_common_diff prog hp args unk_hps unk_svl f1 f2 pos in
       if not is_common then fs_wg else
-        if List.for_all (fun f ->  is_empty_heap_f f) n_fs then
+        if List.for_all (fun f ->  Cfutil.is_empty_heap_f f) n_fs then
           let ps = List.map (fun f -> CF.get_pure f) n_fs in
           let p = CP.disj_of_list ps pos in
           let neg_p = CP.mkNot p None pos in
@@ -5876,7 +5865,7 @@ let norm_heap_consj_formula prog args unk_hps unk_svl f equivs=
       (fun _ -> norm_heap_consj_formula_x prog args unk_hps unk_svl f equivs) f
 
 let norm_formula_x prog hp args unk_hps unk_svl f1 f2 equivs=
-  if is_empty_heap_f f1 && is_empty_heap_f f2 then
+  if Cfutil.is_empty_heap_f f1 && Cfutil.is_empty_heap_f f2 then
     let pos = CF.pos_of_formula f1 in
     let cmb_f = CF.mkStar f1 f2 CF.Flow_combine pos in
     let cmb_f1=

@@ -2303,7 +2303,7 @@ let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_da
 let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is_pre is sel_lhps sel_rhps need_preprocess detect_dang def_hps=
   let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (*if rhs is emp heap, should retain the constraint*)
-  let pre_constrs, pre_oblg = List.partition (fun cs -> Sautil.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
+  let pre_constrs, pre_oblg = List.partition (fun cs -> Cfutil.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
   let ho_constrs0, nondef_post_hps  = List.fold_left (collect_ho_ass iprog cprog is_pre def_hps unk_hps) ([],[]) pre_oblg in
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else

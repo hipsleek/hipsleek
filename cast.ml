@@ -87,6 +87,7 @@ and view_decl = {
     view_name : ident; 
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
+    view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
     view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : LO.t list;
@@ -2434,9 +2435,17 @@ let update_mut_vars_bu iprog cprog scc_procs =
 
 let get_emp_map_x cprog=
   let helper vdef=
-    let o_base = match vdef.view_base_case with
-      | None -> None
-      | Some (p,_) -> Some p
+    let o_base = if !Globals.norm_cont_analysis then
+      let _ = Debug.ninfo_hprint (add_str "vdef.view_seg_opz" (pr_opt !Cpure.print_formula)) vdef.view_seg_opz no_pos in
+      vdef.view_seg_opz
+    else
+      match vdef.view_base_case with
+        | None -> None
+        | Some (p,_) -> begin
+            let neq_null_svl = Cpure.get_neq_null_svl p in
+            if neq_null_svl != [] then None else
+              Some p
+          end
     in
     (vdef.view_name, P.SpecVar (Named vdef.view_data_name, self, Unprimed)::vdef.view_vars, o_base)
   in
