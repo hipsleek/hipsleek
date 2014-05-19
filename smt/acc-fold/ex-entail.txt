@@ -14,9 +14,6 @@ self::lseg<p> <-> self::lseg<q> * q::lseg<p>
 
 self::node<v,u> * u::seg<r> * r::seg<p> |- self::seg<p>
 
-
- x::lseg<k>*k::node<p> |- x::lseg<p>
-
 ====================================
 // non-touching predicate
 // precise predicate
@@ -35,6 +32,7 @@ self::nlseg<p>
 ====================================
 pred ll<> == self = null
     or self::node<v,r> * r::ll<>.
+
 =============================
 
 data node2 {
@@ -44,19 +42,14 @@ data node2 {
 
 //  self --> node2<pr,_> * ... * last::node2<_,out>
 
- -> possibly touching
- -> node.next,seg.p  (forward)
-    node.prev,seg.pr (backward)
- -> aux(node.?,..) = true
-
 pred dll<pr,last,out> ==
     self=out & last=pr
  or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
 
 // possibly-touching dll segment
 lemma self::dll<pr,last,out> 
-      <-> (exists l,o :
-               self::dll<pr,l,o> * o::dll<l,last,out>)
+      <-> (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
 
 // non-touching ndll segment for out only
 pred ndll<pr,last,out> ==
@@ -69,8 +62,8 @@ lemma self::dll<pr,last,out>
                self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
 
 lemma self::dll<pr,last,out> 
-       <- (exists l,o :
-               self::dll<pr,l,o> * o::dll<l,last,out>
+       <- (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>
                * out::node2<_,_>@L)
 
 =============================================================
@@ -80,10 +73,6 @@ data node2 {
      node2 next1;
      node2 next2;
 }.
-
- -> possibly touching
- -> node.next2,lsso.p  (forward)
- -> aux(v@node.next1,u@node.next2) = v=u
 
 pred lsso<out> == self = out
      or (exists u: self::node2<v,u> * u::lsso<out> 
@@ -108,11 +97,6 @@ data node2 {
 pred lso<out> == self = out
      or (exists u: self::node1<u> * u::lso<out>).
 
-
- -> possibly touching
- -> node.next2,nlcl.out  (forward)
- -> aux(z1@node.down) = z1::lso<z1>
-
 pred nlcl<out> == self = out
      or (exists u, z1: self::node2<u,z1> * u::nlcl<out> 
                 * aux@(z1::lso<z1>)).
@@ -130,17 +114,8 @@ data node {
      node n1;
 }.
 
- -> possibly touching
- -> node.n1,skl1.ex  (forward)
- -> aux(v@node.n2) = v=null
-
 pred skl1<ex> == self=ex
      or (exists tl: self::node<v,tl> * tl::skl1<ex> & @aux(v=null)).
-
-
- -> possibly touching
- -> node.n2,skl2.ex  (forward)
- -> aux(tl@node.n2,z1@node.n1) = z1::skl1<tl>
 
 pred skl2<ex> == self=ex
      or (exists tl,z1: self::node<tl,z1> * tl::skl2<ex>
@@ -151,7 +126,6 @@ lemma self::skl1<ex>
 
 lemma self::skl2<ex> 
       <-> (exists u : self::skl2<u>*u::skl2<ex>).
-
 
 =============================================================
   generic 3-level skip segment
@@ -290,20 +264,3 @@ lemma self::tseg<a,p,last> <->
             (exists u,l : self::tseg<a,u,l> * u::tseg<l,p,last>)
 
 self::tree<a> <-> (exists last: x::tseg<a,null,last>) -
-
-
-=============================================================
-  EVEN list segment
-=============================================================
-
-data node {
-   node nxt;
-}.
-
-pred elseg<p> == self=p
-  or (exists a,b: self::node<a> * a::node<b> * b::elseg<p>).
-
-lemma_safe self::elseg<p> <-> 
-     (exists u: self::elseg<u> * u::elseg<p>).
-
-checkentail_exact x::node<a>*a::elseg<p> |- x::elseg<p>.
