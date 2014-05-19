@@ -2661,12 +2661,12 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           tp_call_wrapper npf
 
 and unsat_base_a prog (sat_subno:  int ref) f  : bool= 
-  if !Globals.sep_unsat then
-    let is_heap_conflict,f1 = Frame.norm_dups_pred prog (CF.elim_exists f) in
-        if is_heap_conflict then true
-        else
-          unsat_base_x prog sat_subno f1
-  else
+  (* if !Globals.sep_unsat then *)
+  (*   let is_heap_conflict,f1 = Frame.norm_dups_pred prog (CF.elim_exists f) in *)
+  (*       if is_heap_conflict then true *)
+  (*       else *)
+  (*         unsat_base_x prog sat_subno f1 *)
+  (* else *)
     unsat_base_x prog sat_subno f
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
