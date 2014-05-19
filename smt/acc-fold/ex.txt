@@ -1,0 +1,162 @@
+
+data node { int val ; node next }.
+
+// possibly touching predicate
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p>.
+
+self::lseg<p> <-> self::lseg<q> * q::lseg<p>
+
+
+// non-touching predicate
+// precise predicate
+// x::nlseg<p> : list segment
+pred nlseg<p> == self = p
+    or self::node<v,r> * r::nlseg<p> & self!=p.
+
+self::nlseg<p> -> self::nlseg<q> * q::nlseg<p>
+
+self::nlseg<p> * p::node<a,b>  
+   <- self::nlseg<q> * q::nlseg<p> 
+
+// x::ll<> unsegmented acyclic linked-list
+pred ll<> == self = null
+    or self::node<v,r> * r::ll<>.
+
+=============================
+
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+//  self --> node2<pr,_> * ... * last::node2<_,out>
+
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
+
+// possibly-touching dll segment
+lemma self::dll<pr,last,out> 
+      <-> (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
+
+// non-touching ndll segment for out only
+pred ndll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::ndll<self,last,out> 
+             & out!=self ).
+
+lemma self::dll<pr,last,out> 
+       -> (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
+
+lemma self::dll<pr,last,out> 
+       <- (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>
+               * out::node2<_,_>@L)
+
+=============================================================
+  lss
+=============================================================
+data node2 {
+     node2 next1;
+     node2 next2;
+}.
+
+pred lsso<out> == self = out
+     or (exists u: self::node2<v,u> * u::lsso<out> 
+           & aux@(v=u)).
+
+lemma self::lsso<out> 
+      <-> (exists u : self::lsso<u>*u::lsso<out>).
+
+=============================================================
+  nested list segment
+=============================================================
+
+data node1 {
+     node1 next1;
+}.
+
+data node2 {
+     node2 next2;
+     node1 down;
+}.
+
+pred lso<out> == self = out
+     or (exists u: self::node1<u> * u::lso<out>).
+
+pred nlcl<out> == self = out
+     or (exists u, z1: self::node2<u,z1> * u::nlcl<out> 
+                * aux@(z1::lso<z1>)).
+
+lemma self::nlcl<out> 
+      <-> (exists u : self::nlcl<u>*u::nlcl<out>).
+
+
+=============================================================
+  generic skip segment
+=============================================================
+
+data node {
+     node n2;
+     node n1;
+}.
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::node<v,tl> * tl::skl1<ex> & @aux(v=null)).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::node<tl,z1> * tl::skl2<ex>
+                * aux(z1::skl1<tl>) ).
+
+lemma self::skl1<ex> 
+      <-> (exists u : self::skl1<u>*u::skl1<ex>).
+
+lemma self::skl2<ex> 
+      <-> (exists u : self::skl2<u>*u::skl2<ex>).
+
+=============================================================
+  generic 3-level skip segment
+=============================================================
+
+data node {
+     node n3;
+     node n2;
+     node n1;
+}.
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::node<a,b,tl> 
+             * tl::skl1<ex> * aux@(a=null & b=null)).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::node<a,tl,z1> * tl::skl2<ex>
+                * aux@(z1::skl1<tl> & a=null) ).
+
+pred skl3<ex> == self=ex
+     or (exists tl,z1,z2: self::node<tl,z2,z1> * tl::skl3<ex>
+           * aux@(z1::skl1<z2> * z2::skl2<tl>) ).
+
+lemma self::skl1<ex> 
+      <-> (exists u : self::skl1<u>*u::skl1<ex>).
+
+lemma self::skl2<ex> 
+      <-> (exists u : self::skl2<u>*u::skl2<ex>).
+
+lemma self::skl3<ex> 
+      <-> (exists u : self::skl3<u>*u::skl3<ex>).
+
+=============================================================
+  tll example
+=============================================================
+
+=============================================================
+  tree segment example
+=============================================================
+
+=============================================================
+  list with last node?
+=============================================================
+
