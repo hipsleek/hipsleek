@@ -197,11 +197,11 @@ lemma x::tree<rm>
 A tree segment that is segmented can be described as follows:
 
 pred tree<p> == self=null
-  or self::node<l,r> * r::tree<p> * l::tree<>
+  or self::node<l,r> * r::tree<> * l::tree<>
 
 pred tseg<p> == self=p
   or self::node<l,r> * r::tseg<p> * aux@(l::tree<>)
-  or self::node<l,r> * l::tseg<p> * aux@(r::tree<p>)
+  or self::node<l,r> * l::tseg<p> * aux@(r::tree<>)
 
 It segmented lemma is as follows:
 
@@ -235,10 +235,13 @@ lemma self::klseg<p> <-> x::node<u>*u::lseg<p>
   tree with parent segment
 =============================================================
 
-
 pred tree<a,p> == self=null
   or self::node<a,l,r> * r::tree<self> * l::tree<self>
 
-pred tseg<p> == self=p
-  or self::node<l,r> * r::tseg<p> * aux@(l::tree<>)
-  or self::node<l,r> * l::tseg<p> * aux@(r::tree<p>)
+pred tseg<a,p,last> == self=p & a=last
+  or self::node<a,l,r> * r::tseg<self,p,last> * aux@(l::tree<self>)
+  or self::node<a,l,r> * l::tseg<self,p,last> * aux@(r::tree<self>)
+
+
+lemma self::tseg<a,p,last> <-> 
+            (exists u,l : self::tseg<a,u,l> * u::tseg<l,p,last>)
