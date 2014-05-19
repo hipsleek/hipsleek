@@ -213,8 +213,16 @@ lemma self::tseg<p> <->
 =============================================================
 
 // problem below is that it is not inductive..
-pred ltail<p> == self=null
+pred ltail<p> == self=p
   or (exists u : self::ltail<u> * u::node<p>)
+
+
+The solution is to convert it to:
+
+ self::ltail<p> <--> self::lseg<p>
+
+so that it can traverse from left-to-right
+
 
 =============================================================
   non-empty list segment
