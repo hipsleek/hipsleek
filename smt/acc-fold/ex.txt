@@ -152,9 +152,36 @@ lemma self::skl3<ex>
   tll example
 =============================================================
 
+data node {
+    node left;
+    node right;
+    node next;
+}.
+
+pred tll<ll,lr> == self::node<a,b,lr> & self = ll 
+                    & aux@(a=null & b=null)
+    or self::node<l,r,a> * l::tll<ll,u> * r::tll<v,lr>
+       & self != ll                 // non-touching
+       & aux@(a = null & u = v)
+inv self!=null.
+
+lemma x::tll<ll,lr> 
+      <-> (exists u : x::tll<u,lr> * u::tll<ll,v> & u::node<_,_,v>).
+
 =============================================================
   tree segment example
 =============================================================
+data node{
+    node left;
+    node right;
+}.
+
+pred tree<rm> == self = rm              // rm is right-most leave
+    or self::node<l,r> * l::tree<u> * r::tree<rm>
+       & rm !=self & u != self.         // non-touching
+
+lemma x::tree<rm> 
+      <-> (exists u : x::tree<u> * u::tree<rm>).
 
 =============================================================
   list with last node?
