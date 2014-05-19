@@ -16,14 +16,17 @@ pred l3a<> ==
   self::node<q>*q::node<_>  & self=q
 inv self!=null.
 
+
 //(1) fail
 checkentail x::l3<> |- false.
 
 //(2) fail
 checkentail x::l3<> * c::node<_> |- false.
 
+
 //(3) valid
 checkentail x::l3a<> |- false.
+
 
 //(4) valid
 checkentail x::l3<> * x::l3<> |- false.

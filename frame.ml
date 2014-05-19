@@ -1363,3 +1363,26 @@ let heap_normal_form_ctx prog c=
   match c with
     | CF.Ctx e -> (heap_normal_form_es prog e)
     | CF.OCtx (c1,c2) -> report_error no_pos "frame.slice_frame_ectx: not handle yet"
+
+
+let check_unsat_w_norm prog f0=
+  let helper f=
+    let is_heap_conflict,_ = norm_dups_pred prog (CF.elim_exists f) in
+    is_heap_conflict
+  in
+  if not !seg_opz then false,None else
+    let fs = (heap_normal_form prog f0) in
+    let rec loop_helper fs=
+      match fs with
+        | [] -> false, None
+        | f::rest ->
+              let res1 = helper f in
+              if res1 then (true,Some f) else
+                loop_helper rest
+    in
+    let r,fail_of =
+      match fs with
+        | [] -> (* report_error no_pos "sleekengine.check_unsat" *) false, None
+        | _ -> loop_helper fs
+    in
+    r,fail_of

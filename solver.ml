@@ -2660,17 +2660,19 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	  let npf = MCP.merge_mems qp ph true in
           tp_call_wrapper npf
 
-and unsat_base_a prog (sat_subno:  int ref) f  : bool= 
-  (* if !Globals.sep_unsat then *)
-  (*   let is_heap_conflict,f1 = Frame.norm_dups_pred prog (CF.elim_exists f) in *)
+and unsat_base_a prog (sat_subno:  int ref) f  : bool=
+  (*need normal lize heap_normal_form*)
+  (* if !Globals.sep_unsat && !Frame.seg_opz then *)
+  (*   let is_heap_conflict,_ = Frame.check_unsat_w_norm prog f in *)
   (*       if is_heap_conflict then true *)
   (*       else *)
-  (*         unsat_base_x prog sat_subno f1 *)
+  (*         unsat_base_x prog sat_subno f *)
   (* else *)
-    unsat_base_x prog sat_subno f
+   unsat_base_x prog sat_subno f
+
 (* and unsat_base_nth(\*_debug*\) n prog (sat_subno:  int ref) f  : bool =  *)
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
-              
+
 
 and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
