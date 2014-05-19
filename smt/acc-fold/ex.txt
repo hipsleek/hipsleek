@@ -152,6 +152,13 @@ lemma self::skl3<ex>
   tll example
 =============================================================
 
+pred tll<ll,lr> == self::node<null,null,lr> & self = ll
+    or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+inv self!=null.
+
+I guess about is not really a segment, as it does not have
+an empty base-case. Also, there isn't a split/join lemma present
+
 data node {
     node left;
     node right;
@@ -160,10 +167,14 @@ data node {
 
 pred tll<ll,lr> == self::node<a,b,lr> & self = ll 
                     & aux@(a=null & b=null)
+
     or self::node<l,r,a> * l::tll<ll,u> * r::tll<v,lr>
        & self != ll                 // non-touching
        & aux@(a = null & u = v)
 inv self!=null.
+
+
+// below is incorrect..
 
 lemma x::tll<ll,lr> 
       <-> (exists u : x::tll<u,lr> * u::tll<ll,v> & u::node<_,_,v>).
@@ -183,7 +194,51 @@ pred tree<rm> == self = rm              // rm is right-most leave
 lemma x::tree<rm> 
       <-> (exists u : x::tree<u> * u::tree<rm>).
 
+A tree segment that is segmented can be described as follows:
+
+pred tree<p> == self=null
+  or self::node<l,r> * r::tree<p> * l::tree<>
+
+pred tseg<p> == self=p
+  or self::node<l,r> * r::tseg<p> * aux@(l::tree<>)
+  or self::node<l,r> * l::tseg<p> * aux@(r::tree<p>)
+
+It segmented lemma is as follows:
+
+lemma self::tseg<p> <-> 
+            (exists u : self::tseg<u> * u::tseg<p>)
+
 =============================================================
   list with last node?
 =============================================================
 
+// problem below is that it is not inductive..
+pred ltail<p> == self=null
+  or (exists u : self::ltail<u> * u::node<p>)
+
+=============================================================
+  non-empty list segment
+=============================================================
+
+// problem below is that it must have at least one node
+which may be difficult to ensure
+
+pred klseg<p> == self::node<p>
+  or (exists u : self::node<u> * u::klseg<p>)
+  inv self!=null
+
+simplest to unfold to lseg predicate below..
+
+lemma self::klseg<p> <-> x::node<u>*u::lseg<p>
+
+=============================================================
+  tree with parent segment
+=============================================================
+
+
+pred tree<a,p> == self=null
+  or self::node<a,l,r> * r::tree<self> * l::tree<self>
+
+pred tseg<p> == self=p
+  or self::node<l,r> * r::tseg<p> * aux@(l::tree<>)
+  or self::node<l,r> * l::tseg<p> * aux@(r::tree<p>)
