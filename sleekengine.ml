@@ -626,6 +626,15 @@ let convert_data_and_pred_to_cast_x () =
   let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else *) [],[] in
   let _ = Lem_store.all_lemma # add_left_coercion l2r in
   let _ = Lem_store.all_lemma # add_right_coercion r2l in
+  (* let vdecls = cprog5.Cast.prog_view_decls in                                 *)
+  (* List.iter (fun vd ->                                                        *)
+  (*   let nontouching = string_of_bool (Cast.is_nontouching_view_decl vd) in    *)
+  (*   let nonsegmented = string_of_bool  (Cast.is_nonsegmented_view_decl vd) in *)
+  (*   print_endline ("pred " ^ vd.Cast.view_name ^ "\n"                         *)
+  (*                  ^ "    -- nontouching: " ^ nontouching ^ "\n"              *)
+  (*                  ^ "    -- nonsegmented: " ^ nonsegmented ^ "\n");          *)
+  (*  ) vdecls;                                                                  *)
+  
   (* let _ = cprog5.Cast.prog_left_coercions <- l2r @ cprog5.Cast.prog_left_coercions in *)
   (* let _ = cprog5.Cast.prog_right_coercions <- r2l @ cprog5.Cast.prog_right_coercions in *)
   cprog := cprog5

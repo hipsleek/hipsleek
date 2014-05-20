@@ -496,6 +496,10 @@ let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been in
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
+(* imply function has not been initialized yet *)
+let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
+
+
 (** An Hoa [22/08/2011] Extract data field information **)
 
 let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
@@ -2461,4 +2465,96 @@ let get_emp_map cprog=
   Debug.no_1 "get_emp_map" pr1 pr2
       (fun _ -> get_emp_map_x cprog) cprog
 
+(* 
+ * + Return:
+ *     - true if vdecl is a nontouching predicate,
+ *     - otherwise return false 
+ * + Note: 
+ *    - check only inductive cases (contain heap nodes)
+ *    - generated disequality constrains between cont_vars and heap vars
+ *    - if all the constrains are implied by the pure part of view's definietion,
+ *      then the view is nontouching
+ *)
+let is_nontouching_view_decl_x (vdecl: view_decl) : bool =
+  (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
+  let vname = vdecl.view_name in
+  let pos = vdecl.view_pos in
+  let cont_vars = vdecl.view_cont_vars in
+  let is_nontouching_branch branch = (
+    let rec get_possible_touching_vars hf = (match hf with
+      (* base case *)
+      | CF.HEmp | CF.HFalse -> []
+      (* how should HTrue be handled? currently, assuming it is non-touching *)
+      | CF.HTrue -> []
+      (* inductive case *)
+      | CF.Star sf ->
+          let vs1 = get_possible_touching_vars sf.CF.h_formula_star_h1 in
+          let vs2 = get_possible_touching_vars sf.CF.h_formula_star_h2 in
+          Gen.BList.remove_dups_eq P.eq_spec_var (vs1 @ vs2)
+      | CF.DataNode dn -> [dn.CF.h_formula_data_node]
+      | CF.ViewNode { CF.h_formula_view_name = hvname;
+                      CF.h_formula_view_node = hvnode } ->
+          if (String.compare hvname vname) != 0 then
+            [hvnode]
+          else if ((String.compare (P.name_of_spec_var hvnode) self) == 0) then
+            [hvnode]
+          else []
+      | _ ->
+          let msg = "is_touching_pred: unsupported formula"
+                    ^ (!print_h_formula hf) in
+          report_error pos msg
+    ) in
+    let (hf,mf,_,_,_) = CF.split_components branch in
+    let possible_vars = get_possible_touching_vars hf in
+    let nontouching_cond = ( match possible_vars with
+      | [] -> P.mkTrue pos
+      | _ ->
+          let condss = List.map (fun x ->
+            List.map (fun y -> P.mkNeqVar x y pos) cont_vars
+          ) possible_vars in
+          let conds = List.concat condss in
+          List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
+    ) in
+    let pf = MP.pure_of_mix mf in
+    (* to ensure nontouching property, the pure part of a branch must *)
+    (* imply the nontouching condition                                *)
+    (!imply_raw pf nontouching_cond)
+  ) in
+  let branches, _ = List.split vdecl.view_un_struc_formula in
+  List.for_all is_nontouching_branch branches
 
+let is_nontouching_view_decl (vdecl: view_decl) : bool =
+  let pr = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_nontouching_pred" pr pr_out is_nontouching_view_decl_x vdecl
+
+(* 
+ * + Return:
+ *     - true if vdecl is a nonsegmented predicate,
+ *     - otherwise return false 
+ * + Note: 
+ *    - check only inductive cases (contain heap nodes)
+ *    - generated equality constrains between cont_vars and null
+ *    - if all the constrains is implied by the pure part of view's definietion,
+ *      then the view is nonsegmented
+ *)
+let is_nonsegmented_view_decl_x (vdecl: view_decl) : bool =
+  (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
+  let vname = vdecl.view_name in
+  let pos = vdecl.view_pos in
+  let cont_vars = vdecl.view_cont_vars in
+  let is_nonsegmented_branch branch = (
+    let (_,mf,_,_,_) = CF.split_components branch in
+    let pf = MP.pure_of_mix mf in
+    List.for_all (fun sv ->
+      let null_cond = P.mkNull sv pos in
+      (!imply_raw pf null_cond)
+    ) cont_vars
+  ) in
+  let branches, _ = List.split vdecl.view_un_struc_formula in
+  List.for_all is_nonsegmented_branch branches
+
+let is_nonsegmented_view_decl (vdecl: view_decl) : bool =
+  let pr = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_segmented_view_decl" pr pr_out is_nonsegmented_view_decl_x vdecl

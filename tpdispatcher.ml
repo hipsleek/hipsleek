@@ -3531,4 +3531,6 @@ let check_diff xp0 xp1 =
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
 
 
-let _ = CP.simplify := simplify
+let _ = 
+  CP.simplify := simplify;
+  Cast.imply_raw := imply_raw
