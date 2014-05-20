@@ -2277,6 +2277,11 @@ and pos_of_struc_formula (f:struc_formula): loc =match f with
     | EInfer b -> b.formula_inf_pos
     | EList b-> match b with | x::_ -> pos_of_struc_formula (snd x) |_-> no_pos
 
+and base_formula_of_struc_formula sf=
+  match sf with
+    | EBase b ->  true, b.formula_struc_base
+    | _ -> false, mkTrue (mkTrueFlow()) no_pos
+
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
     | Or ({formula_or_f1 = f1;

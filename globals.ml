@@ -860,7 +860,7 @@ let elim_exists_ff = ref true
 
 let allow_frame = ref false
 
-let sep_unsat = ref false
+let graph_norm = ref false
 
 let slice_one = ref (0:int)
 

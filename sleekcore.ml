@@ -108,7 +108,7 @@ let sleek_unsat_check isvl cprog ante=
 (*       ({CF.fe_kind = CF.Failure_Must "lhs is not unsat. rhs is false"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])), *)
 (*   []) *)
 
-let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
+let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
   let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
@@ -155,8 +155,15 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
     else () 
   in
-  if isvl = [] && !Globals.sep_unsat && !Frame.seg_opz &&
-    CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
+  let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
+  let _ = Debug.info_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
+  let _ = Debug.info_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
+  let _ = Debug.info_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
+  let _ = Debug.info_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
+  if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq then
+    if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
+    else
+      check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
   let ctx = 
     if !Globals.delay_proving_sat then ctx
@@ -191,7 +198,7 @@ let sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
 (*
 proof_traces: (formula*formula) list===> for cyclic proofs
 *)
-let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
+and sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
@@ -200,8 +207,34 @@ let sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
       (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
       isvl ante conseq proof_traces
 
-let sleek_sat_check isvl cprog f=
-  true
+and check_entail_w_norm prog proof_traces init_ctx ante conseq=
+  let _ = Debug.info_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+  let f_ctx = CF.FailCtx (CF.Trivial_Reason
+     ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+  let prove_one_conj f=
+    let _ = Debug.info_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) f no_pos in
+    let is_unsat, f1 = Frame.norm_dups_pred prog f in
+    if is_unsat then false,f_ctx else
+      let _ = Globals.graph_norm := false in
+      let r, lc,_ = sleek_entail_check [] (prog: C.prog_decl) proof_traces ante (CF.struc_formula_of_formula f1 no_pos) in
+      let _ = Globals.graph_norm := true in
+      (r, lc)
+  in
+  let rec prove_list_conseqs fs ctx=
+    match fs with
+      | [] -> true, ctx
+      | f::rest ->
+            let r,lc = prove_one_conj f in
+            if not r then r,lc else
+               prove_list_conseqs rest lc
+  in
+  (*pi1 =  ptos predicate into pure*)
+  (*conseq1 = conseq /\ pi1*)
+  (*partition components on conseq1*)
+  let fs2 = Frame.heap_normal_form prog conseq in
+  (*for each comp, do norm, matching with ante + add emp if neccessary*)
+  let r, f_ctx= prove_list_conseqs fs2 (CF.SuccCtx [init_ctx]) in
+  (r, f_ctx, [])
 
 (*
 - guiding_svl is used to guide the syntatic checking.
