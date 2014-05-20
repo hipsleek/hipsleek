@@ -25,7 +25,7 @@ data pto {
 */
 
 pred skl1<ex> == self=ex
-     or (exists tl: self::pto<null,tl> * tl::skl1<ex>).
+     or (exists tl: self::pto<n1:tl,n2:null> * tl::skl1<ex>).
 
 pred skl2<ex> == self=ex
      or (exists tl,z1: self::pto<tl,z1> * z1::skl1<tl> * tl::skl2<ex>).
