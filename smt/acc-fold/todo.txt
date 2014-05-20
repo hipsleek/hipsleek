@@ -19,8 +19,24 @@ checkentail_exact x::node<a>*a::elseg<p> |- x::elseg<p>.
 checkentail_exact x::node<a>*a::nlseg<p> *  p::node<_>@L
                 |- x::nlseg<p>.
 print residue.
-
 ====================================================================
+# nlseg3.slk
+
+ folding with -L not working properly..
+
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+
+checkentail x::node<y>*y::node<p> |- x::nlseg<p>.
+print residue.
+
+/*
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+ why @L eaten node up?
+*/
 ====================================================================
 ====================================================================
 ====================================================================
