@@ -8,12 +8,26 @@ data node {
 pred nlseg<p> == 
   (exists a: self::node<a> * a::node<p>@L)
  inv true.
+/*
+  (exists a: self::node<a> & self!=a)
+  (exists a: self::node<a> & emp)
+
+*/
 
 checkentail x::node<y>*y::node<p> |- x::nlseg<p>.
 print residue.
 
+checkentail x::node<y> |- x::nlseg<p>.
+print residue.
+// fail but need better error message
+
 checkentail x::nlseg<p>  |- x::node<y>*y::node<p>.
 print residue.
+// should fail (unfold to remove @L nodes and replace by relevant pure)
+
+checkentail x::nlseg<p>  |- x::node<y> & x!=y.
+print residue.
+// residue y::node<p>@A
 
 /*
 # nlseg3a.slk --imm -dd
