@@ -9399,27 +9399,49 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+    let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
+    let _ = DD.ninfo_hprint (add_str " ante" Cprinter.prtt_string_of_formula) ante no_pos in
+    let _ = DD.ninfo_hprint (add_str " conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+    let _ = DD.ninfo_hprint (add_str " estate.es_rhs_eqset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) estate.es_rhs_eqset  no_pos in
     let lhs_h,lhs_p,_,_,_ = CF.extr_formula_base lhs_b in
     let rhs_h,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
-    let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
-    (*let _ = print_string("\nAnte: "^(Cprinter.string_of_formula ante)^"\n") in
-      let _ = print_string("\nConseq: "^(Cprinter.string_of_formula conseq)^"\n") in
-      let _ = print_string("\nAliases: "^(Cprinter.string_of_list_f Cprinter.string_of_spec_var posib_r_alias)^"\n") in*)
-    let rhs_eqset = (* if !Globals.allow_imm then *) estate.es_rhs_eqset
-    (* else let eqns = (MCP.ptr_equations_without_null rhs_p) in *)
-    (* let _ = DD.info_hprint (add_str "rhs_p" Cprinter.string_of_mix_formula) rhs_p no_pos in *)
-    (* eqns *)
+    let _ = DD.ninfo_hprint (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
+    let rhs_eqset = (* if !Globals.allow_imm then *)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) ->
+        CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22
+    ) estate.es_rhs_eqset
+      (* else let eqns = (MCP.ptr_equations_without_null rhs_p) in *)
+      (* let _ = DD.info_hprint (add_str "rhs_p" Cprinter.string_of_mix_formula) rhs_p no_pos in *)
+      (* eqns *)
     in
     (* let _ = print_endline "CA:1" in *)
     (* let _ = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
     let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
-    (* !!!!!!!! 
-       (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) 
-       caller a estate conseq (Base lhs_b) (Base rhs_b) 
+    (* !!!!!!!!
+       (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
+       caller a estate conseq (Base lhs_b) (Base rhs_b)
     *)
-    Debug.tinfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate pos;
-    process_action 1 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
+    (*check cyclic*)
+    let is_cycle,estate = if !Globals.cyc_proof_syn && Context.need_check_cyclic actions then
+      let l_emap = Infer.get_eqset (MCP.pure_of_mix lhs_p) in
+      let r_emap = CP.EMapSV.mkEmpty in
+      let r_eqsetmap = CP.EMapSV.build_eset estate.CF.es_rhs_eqset in
+      let lhs_b1, rhs_b1, _ =  Cfutil.smart_subst_new lhs_b rhs_b [] l_emap r_emap r_eqsetmap [] [] in
+      let ante1 = CF.Base lhs_b1 in
+      let conseq1 = CF.Base rhs_b1 in
+      let _ = DD.ninfo_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in
+      let _ = DD.ninfo_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in
+      let r = Syn_checkeq.check_exists_cyclic_proofs estate (ante1, conseq1) in
+      let estate = {estate with CF.es_proof_traces = estate.CF.es_proof_traces@[(ante1, conseq1)]} in
+      (r,estate)
+      else
+        (false, estate)
+    in
+    if is_cycle then
+      (SuccCtx [(Ctx estate)], CyclicProof (ante, conseq))
+    else
+      let _ = Debug.tinfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate pos in
+      process_action 1 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
@@ -10494,57 +10516,65 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Debug.tinfo_hprint (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
             Debug.tinfo_hprint (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
             Debug.tinfo_hprint (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-            (* let b = Syn_checkeq.check_exists_cyclic_proofs estate *)
-            (*   (CF.formula_of_heap lhs_node no_pos, CF.formula_of_heap rhs_node no_pos) in *)
-            (* if b then *)
-            (*   process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos *)
-            (*       lhs_node lhs_rest rhs_node rhs_rest holes *)
+            (* if !Globals.cyc_proof_syn then *)
+            (*   (\*syntax*\) *)
+            (*   let str = "(M_cyclic)" in (\*convert means ignore previous MATCH and replaced by lemma*\) *)
+            (*   let new_trace = str::(List.tl estate.es_trace) in *)
+            (*   let new_estate = {estate with CF.es_trace = new_trace; *)
+            (*   } in *)
+            (*   let b = Syn_checkeq.check_exists_cyclic_proofs estate *)
+            (*     (CF.formula_of_heap lhs_node no_pos, CF.formula_of_heap rhs_node no_pos) in *)
+            (*   if b then *)
+            (*     process_before_do_match prog new_estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos *)
+            (*         lhs_node lhs_rest rhs_node rhs_rest holes *)
+            (*   else *)
+            (*     let s = "search cyclic proof: FAIL" in *)
+            (*     let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos, *)
+            (*     CF.mk_failure_may s Globals.sl_error,new_trace)), NoAlias) in *)
+            (*     res *)
             (* else *)
-            (*   let s = "search cyclic proof: FAIL" in *)
-            (*   let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos, *)
-            (*   CF.mk_failure_may s Globals.sl_error)), NoAlias) in *)
-            (*   res *)
-            (*add checkpoint for cyclic proof*)
-            let orig_rhs_b = if CP.isConstTrue estate.CF.es_conseq_pure_lemma then rhs_b
+              (*semantic: infer lemma*)
+              (*add checkpoint for cyclic proof*)
+              let orig_rhs_b = if CP.isConstTrue estate.CF.es_conseq_pure_lemma then rhs_b
               else CF.mkAnd_base_pure rhs_b (MCP.mix_of_pure estate.CF.es_conseq_pure_lemma) no_pos
-            in
-            let new_view_opt = if !Globals.lemma_syn then
-              let nview_opt = if lem_type =2 then
-                let nview = Lemsyn.gen_lemma_infer prog Infer.rel_ass_stk CF.rel_def_stk (!rev_trans_formula)
-              (!manage_unsafe_lemmas) (!manage_infer_pred_lemmas) (!trans_hprel_2_cview)
+              in
+              let new_view_opt = if !Globals.lemma_syn then
+                let nview_opt = if lem_type =2 then
+                  let nview = Lemsyn.gen_lemma_infer prog Infer.rel_ass_stk CF.rel_def_stk (!rev_trans_formula)
+                    (!manage_unsafe_lemmas) (!manage_infer_pred_lemmas) (!trans_hprel_2_cview)
                     (!trans_formula_hp_2_view) xpure_heap estate lem_type lhs_node rhs_node
-                in
-                (Some nview)
-              else
-                let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
+                  in
+                  (Some nview)
+                else
+                  let _ = Lemsyn.gen_lemma prog (!rev_trans_formula) (!manage_unsafe_lemmas)
                     estate lem_type lhs_node lhs_b rhs_node orig_rhs_b
+                  in
+                  None
                 in
-                None
+                nview_opt
+              else None
               in
-               nview_opt
-            else None
-            in
-            (*unfold*)
-            let new_m_res = match unfold_opt with
-              | None -> m_res
-              | Some lv -> {m_res with Context.match_res_lhs_node = lv}
-            in
-            let n_act =  if lem_type = 2 then
-              let left_ls = Cast.look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (Cfutil.get_data_view_name lhs_node)
-                (match new_view_opt with
-                  | Some v -> CP.name_of_spec_var v
-                  | _ -> "")
+              (*unfold*)
+              let new_m_res = match unfold_opt with
+                | None -> m_res
+                | Some lv -> {m_res with Context.match_res_lhs_node = lv}
               in
-              let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l))) left_ls in
-              (Context.Search_action left_acts)
-            else Context.M_unfold (new_m_res, unfold_num)
-            in
-            let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
-            let new_trace = str::(List.tl estate.es_trace) in
-            let new_estate = {estate with CF.es_trace = new_trace;
-                CF.es_conseq_pure_lemma = CP.mkTrue no_pos;
-            } in
-            process_action 6 caller prog new_estate conseq lhs_b rhs_b n_act rhs_h_matched_set is_folding pos
+              let n_act =  if lem_type = 2 then
+                let left_ls = Cast.look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (Cfutil.get_data_view_name lhs_node)
+                  (match new_view_opt with
+                    | Some v -> CP.name_of_spec_var v
+                    | _ -> "")
+                in
+                let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l))) left_ls in
+                (Context.Search_action left_acts)
+              else Context.M_unfold (new_m_res, unfold_num)
+              in
+              let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)
+              let new_trace = str::(List.tl estate.es_trace) in
+              let new_estate = {estate with CF.es_trace = new_trace;
+                  CF.es_conseq_pure_lemma = CP.mkTrue no_pos;
+              } in
+              process_action 6 caller prog new_estate conseq lhs_b rhs_b n_act rhs_h_matched_set is_folding pos
       | Context.M_split_match {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;

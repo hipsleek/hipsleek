@@ -821,7 +821,8 @@ let sa_fix_bound = ref 2
 let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
-let lemma_infer = ref false
+let cyc_proof_syn = ref false
+(* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
 

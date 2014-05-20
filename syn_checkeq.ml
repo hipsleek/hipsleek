@@ -130,7 +130,7 @@ let check_stricteq_vnodes stricted_eq vns1 vns2=
   Debug.no_3 "check_stricteq_vnodes" string_of_bool pr2 pr2 (pr_pair string_of_bool pr3)
       (fun _ _ _ -> check_stricteq_vnodes_x stricted_eq vns1 vns2)  stricted_eq vns1 vns2
 
-let check_stricteq_hrels hrels1 hrels2=
+let check_stricteq_hrels_x hrels1 hrels2=
    let check_stricteq_hr (hp1, eargs1, _) (hp2, eargs2, _)=
      let r = (CP.eq_spec_var hp1 hp2) in
      (* ((Gen.BList.difference_eq CP.eq_exp_no_aset *)
@@ -167,14 +167,23 @@ let check_stricteq_hrels hrels1 hrels2=
   (*             true *)
   (*           else check_inconsistency a rest1 *)
   (* in *)
-  if (List.length hrels1) = (List.length hrels2) then
-    let b, ss = helper2 hrels1 hrels2 [] in
-    (*inconsistence: (x1,x2) and (x2,x1)*)
-    (* if b && ss != [] then *)
-    (*   if check_inconsistency (List.hd ss) (List.tl ss) then (false,[]) else *)
-    (*     (b,ss) *)
-    (* else *) (b,ss)
+  let leng1 = List.length hrels1 in
+  if leng1 = (List.length hrels2) then
+    if leng1 = 0 then (true,[]) else
+      let b, ss = helper2 hrels1 hrels2 [] in
+      (*inconsistence: (x1,x2) and (x2,x1)*)
+      (* if b && ss != [] then *)
+      (*   if check_inconsistency (List.hd ss) (List.tl ss) then (false,[]) else *)
+      (*     (b,ss) *)
+      (* else *) (b,ss)
   else (false,[])
+
+let check_stricteq_hrels hrels1 hrels2=
+  let pr1 vn = Cprinter.prtt_string_of_h_formula (CF.HRel vn) in
+  let pr2 = pr_list_ln pr1 in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "check_stricteq_hrels" pr2 pr2 (pr_pair string_of_bool pr3)
+      (fun _ _ -> check_stricteq_hrels_x hrels1 hrels2) hrels1 hrels2
 
 let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
   let hnodes1, vnodes1, hrels1 = CF.get_hp_rel_h_formula hf1 in
@@ -349,13 +358,16 @@ let check_exists_cyclic_proofs_x es (ante,conseq)=
   let check_one l_vns r_vns (a1,c1)=
     let vn_a1 = CF.map_heap_1 collect_vnode a1 in
     let vn_c1 = CF.map_heap_1 collect_vnode c1 in
-    if List.length l_vns != List.length vn_a1 || List.length r_vns != List.length vn_c1 then false
+    if List.length l_vns != List.length vn_a1 || List.length r_vns != List.length vn_c1 then
+      let _ = Debug.ninfo_hprint (add_str " xxxx" pr_id) "1" no_pos in
+      false
     else
       let l_ss = build_subst [] vn_a1 l_vns in
       let r_ss = build_subst [] vn_c1 r_vns in
       let a11 = if l_ss = [] then a1 else CF.subst l_ss a1 in
       let c11 = if r_ss = [] then c1 else CF.subst r_ss c1 in
-      (check_relaxeq_formula [] ante a11) && (check_relaxeq_formula [] conseq c11)
+      (* (check_relaxeq_formula [] ante a11) && (check_relaxeq_formula [] conseq c11) *)
+       (fst (Checkeq.checkeq_formulas [] ante a11)) && (fst(Checkeq.checkeq_formulas [] conseq c11))
   in
   let l_vns = CF.map_heap_1 collect_vnode ante in
   let r_vns = CF.map_heap_1 collect_vnode conseq in

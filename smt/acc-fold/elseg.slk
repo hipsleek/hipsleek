@@ -18,3 +18,12 @@ checkentail_exact x::node<a>*a::node<b>*b::elseg<p> |- x::elseg<p>.
 */
 
 
+/*
+let is_cycle = if !Globals.cyc_proof_syn then
+      Syn_checkeq.check_exists_cyclic_proofs estate (ante, conseq) else false
+    in
+    let estate = {estate with CF.es_proof_traces = estate.CF.es_proof_traces@[(ante, conseq)]} in
+    if is_cycle then
+      (SuccCtx [(Ctx estate)], CyclicProof (ante, conseq))
+    else
+*/

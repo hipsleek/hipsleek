@@ -973,8 +973,9 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                   end
                   else  [] in
                   (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "1"  no_pos in *)
-                  if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
-                    (* (1, M_cyclic c) *)
+                  if l=[] then
+                    (* if not (!Globals.cyc_proof_syn) then *) (1,M_Nothing_to_do (string_of_match_res c))
+                    (* else (1, M_cyclic (c, -1,-1,-1,None)) *)
                   else (-1,Search_action l)
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
@@ -1473,7 +1474,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
                   let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
                   let a1 = if !Globals.lemma_syn && lem_infer_opt !=None then
-                    let _ = DD.info_hprint (add_str "lemma_infer" pr_id) "1" no_pos in
+                    let _ = DD.ninfo_hprint (add_str "infer lemma" pr_id) "1" no_pos in
                     (1,M_cyclic (m_res,uf_i, 0, 2, None))
                   else
                     if (lhs_case_flag=true && !Globals.lhs_case_flag) then
@@ -2077,3 +2078,19 @@ let deprecated_find_node prog node lhs_h (lhs_p : MCP.mix_formula) (ps : CP.spec
   let tmp1 = List.map (fun p -> deprecated_find_node_one prog node lhs_h lhs_p p pos) ps in
   let tmp2 = List.fold_left merge_results Deprecated_Failed tmp1 in
   tmp2
+
+(*only check cyclic for fold-unfold*)
+let need_check_cyclic_x act0=
+  let rec helper act=
+    match act with
+      | M_fold _ | M_unfold _ -> true
+      | Search_action ls | Seq_action ls | Cond_action ls ->
+            List.exists (fun (_,a) -> helper a) ls
+      | _ -> false
+  in
+  helper act0
+
+let need_check_cyclic act0=
+  let pr1 = string_of_action_res_simpl in
+  Debug.no_1 "need_check_cyclic" pr1 string_of_bool
+      (fun _ -> need_check_cyclic_x act0) act0

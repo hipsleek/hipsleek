@@ -13,7 +13,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 module CF = Cformula
-module CFU = Cfutil
+(* module CFU = Cfutil *)
 module TP = Tpdispatcher
 module IF = Iformula
 module I = Iast
@@ -2891,6 +2891,11 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
       rvhp_rels leqs all_aset m post_hps unk_map hp_rel_list pos)
       es ass_lhs_b rhs all_aset
 
+let get_eqset puref =
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  eqset
+
 (*
 type: Cast.prog_decl ->
   Cformula.entail_state ->
@@ -2900,11 +2905,6 @@ type: Cast.prog_decl ->
 *)
 let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
-  let get_eqset puref =
-    let (subs,_) = CP.get_all_vv_eqs puref in
-    let eqset = CP.EMapSV.build_eset subs in
-    eqset
-  in
   (**********END INTERNAL***********)
   if CF.isStrictConstTrue_wo_flow es0.CF.es_formula ||
     (CF.get_hp_rel_name_formula es0.CF.es_formula = [] && CF.get_hp_rel_name_h_formula rhs0 = [])
@@ -3006,7 +3006,7 @@ let infer_collect_hp_rel_x prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_
         let r_hpargs = CF.get_HRels rhs0b in
         (**smart subst**)
         (* let n_es_evars = CP.subst_var_list sst0 es.CF.es_evars in *)
-        let lhs_b1, rhs_b1, subst_prog_vars = CFU.smart_subst_new lhs_b0 (formula_base_of_heap rhs0b pos) (l_hpargs@r_hpargs)
+        let lhs_b1, rhs_b1, subst_prog_vars = Cfutil.smart_subst_new lhs_b0 (formula_base_of_heap rhs0b pos) (l_hpargs@r_hpargs)
            l_emap0 r_emap r_eqsetmap [] (prog_vars@es.es_infer_vars)
         in
         (* let lhs_b1, rhs_b1, subst_prog_vars = Sautil.smart_subst lhs_b0 (formula_base_of_heap rhs pos) (l_hpargs@r_hpargs) *)
