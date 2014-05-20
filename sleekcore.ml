@@ -156,10 +156,10 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else () 
   in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
-  let _ = Debug.info_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
-  let _ = Debug.info_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
-  let _ = Debug.info_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
-  let _ = Debug.info_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
+  let _ = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
+  let _ = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
+  let _ = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
+  let _ = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq then
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
@@ -207,33 +207,69 @@ and sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
       (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
       isvl ante conseq proof_traces
 
-and check_entail_w_norm prog proof_traces init_ctx ante conseq=
-  let _ = Debug.info_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
+and check_entail_w_norm prog proof_traces init_ctx ante conseq0=
+  let _ = Debug.info_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
-  let prove_one_conj f=
-    let _ = Debug.info_hprint (add_str "conseq" Cprinter.prtt_string_of_formula) f no_pos in
-    let is_unsat, f1 = Frame.norm_dups_pred prog f in
+  let prove_one_conj ante_nemps1 f=
+    let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
+    let is_unsat, f1 = Frame.norm_dups_pred prog ante_nemps1 f in
     if is_unsat then false,f_ctx else
       let _ = Globals.graph_norm := false in
       let r, lc,_ = sleek_entail_check [] (prog: C.prog_decl) proof_traces ante (CF.struc_formula_of_formula f1 no_pos) in
       let _ = Globals.graph_norm := true in
       (r, lc)
   in
-  let rec prove_list_conseqs fs ctx=
+  let rec prove_list_conseqs ante_nemps0 fs ctx=
     match fs with
       | [] -> true, ctx
       | f::rest ->
-            let r,lc = prove_one_conj f in
-            if not r then r,lc else
-               prove_list_conseqs rest lc
+            let r,lc = prove_one_conj ante_nemps0 f in
+            if not r then false ,lc else
+               prove_list_conseqs ante_nemps0 rest lc
   in
-  (*pi1 =  ptos predicate into pure*)
-  (*conseq1 = conseq /\ pi1*)
-  (*partition components on conseq1*)
-  let fs2 = Frame.heap_normal_form prog conseq in
-  (*for each comp, do norm, matching with ante + add emp if neccessary*)
-  let r, f_ctx= prove_list_conseqs fs2 (CF.SuccCtx [init_ctx]) in
+  let view_emp_map = Cast.get_emp_map prog in
+  let seg_views = List.map (fun (vn,_,_) -> vn) view_emp_map in
+  let seg_data_names = List.map (fun vn ->
+      let vdecl = Cast.look_up_view_def_raw 55 prog.Cast.prog_view_decls vn in
+      vdecl.Cast.view_data_name
+  ) seg_views in
+  let ante = (CF.simplify_pure_f (CF.elim_exists ante)) in
+  let is_pto_inconsistent, ante_nemps, ante_neq = Cfutil.xpure_graph_pto prog seg_data_names ante in
+  if is_pto_inconsistent then
+    (true, (CF.SuccCtx [init_ctx]), [])
+  else
+  let ante_fs = Frame.heap_normal_form prog (CF.mkAnd_pure ante
+      (Mcpure.mix_of_pure ante_neq) no_pos) in
+  let ante_unsat = List.exists (fun f ->
+      let unsat,f1 = Frame.norm_dups_pred prog [](*ante_nemps*) f in
+        unsat
+  ) ante_fs in
+  let _ = Debug.ninfo_hprint (add_str "ante_unsat" string_of_bool) ante_unsat no_pos in
+  if ante_unsat then
+    (true, (CF.SuccCtx [init_ctx]), [])
+  else
+    (*pi1 =  ptos predicate into pure*)
+    (*conseq1 = conseq /\ pi1*)
+    let conseq = CF.elim_exists conseq0 in
+    let hvs = CF.get_views conseq in
+    let view_ptrs = List.fold_left (fun r vn ->
+        r@(vn.CF.h_formula_view_node::vn.CF.h_formula_view_arguments)
+    ) [] hvs in
+    let nemps1 = List.filter (fun (sv1,sv2) -> CP.mem_svl sv1 view_ptrs &&
+        CP.mem_svl sv2 view_ptrs
+    ) ante_nemps in
+    let ps = List.map (fun (sv1, sv2) -> CP.mkPtrNeqEqn sv1 sv2 no_pos) nemps1 in
+    let ante_neq1 = CP.conj_of_list ps no_pos in
+    let _ = Debug.info_hprint (add_str "view_ptrs" !CP.print_svl) view_ptrs no_pos in
+    let _ = Debug.info_hprint (add_str "ante_nemps" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) ante_nemps no_pos in
+    let _ = Debug.info_hprint (add_str "ante_neq1" !CP.print_formula) ante_neq1 no_pos in
+    (*partition components on conseq1*)
+    let ante_norm_conseq = Frame.heap_normal_form prog
+      (CF.mkAnd_pure conseq (Mcpure.mix_of_pure ante_neq1) no_pos) in
+    (*for each comp, do norm, matching with ante + add emp if neccessary*)
+    let r, f_ctx= prove_list_conseqs (* ante_nemps *)[] ante_norm_conseq
+      (CF.SuccCtx [init_ctx]) in
   (r, f_ctx, [])
 
 (*

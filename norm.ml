@@ -540,6 +540,23 @@ let norm_split_args iprog cprog cview=
 (*****************************************************************)
    (********END PARA CONTINUATION ANALYSIS **********)
 (*****************************************************************)
+let compute_base_case_raw branches=
+  let rec get_base r f=
+     match f with
+       | CF.Base b -> 
+            if is_empty_heap b.CF.formula_base_heap then
+              r@[(MCP.pure_of_mix b.CF.formula_base_pure)]
+            else r
+       | CF.Exists _ ->
+            let _, base = CF.split_quantifiers f in
+            get_base r base
+       | CF.Or _ -> r
+  in
+  let ps = List.fold_left (fun r (f,_) -> get_base r f) [] branches in
+  match ps with
+    | [p] -> Some p
+    | _ -> None
+
 
 let norm_ann_seg_opz_x iprog cprog cviews=
   (*************INTERNAL***************)
@@ -552,7 +569,12 @@ let norm_ann_seg_opz_x iprog cprog cviews=
       (false, None)
     else
       match view.Cast.view_base_case with
-        | None -> (false, None)
+        | None -> begin
+            (*re-compute by other ways*)
+            match compute_base_case_raw view.Cast.view_un_struc_formula with
+              | Some p -> (true, Some p)
+              | None -> (false, None)
+          end
         | Some (p,_) -> begin
             let neq_null_svl = Cpure.get_neq_null_svl p in
           if neq_null_svl != [] then

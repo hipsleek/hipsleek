@@ -1318,7 +1318,7 @@ let elim_emp hf0 svl =
       | DataNode hd -> if (CP.mem_svl hd.h_formula_data_node svl) then
           HEmp
         else hf
-      | ViewNode hv -> if not(CP.mem_svl hv.h_formula_view_node svl) then
+      | ViewNode hv -> if not (CP.mem_svl hv.h_formula_view_node svl) then
           HEmp
         else hf
       | HRel _
@@ -1353,6 +1353,42 @@ let update_f f drop_hvns inferred_ps=
   Debug.no_2 "CF.update_f" pr1 pr2  pr1
       (fun _ _ -> update_f_x f drop_hvns inferred_ps) f drop_hvns
 
+(*pto consistent, nemps*)
+let xpure_graph_pto_x prog seg_datas f=
+  (******************************)
+  let rec check_inconsistent dns=
+    match dns with
+      | [] -> false
+      | dn::rest -> if List.exists (fun dn1 ->
+            CP.eq_spec_var dn.h_formula_data_node dn1.h_formula_data_node
+        ) rest then true else
+          check_inconsistent rest
+  in
+  (*****************************)
+  let dns, hvs,_ = get_hp_rel_formula f in
+  let seg_dns = List.filter (fun dn -> List.exists (fun vn ->
+      String.compare dn.h_formula_data_name vn == 0
+  ) seg_datas) dns in
+  let nemps = List.fold_left (fun r dn ->
+      r@(List.map (fun a -> (dn. h_formula_data_node,a))
+          (List.filter CP.is_node_typ dn.h_formula_data_arguments))
+  ) [] seg_dns in
+  let is_inconst = check_inconsistent dns in
+  let view_ptrs = List.fold_left (fun r vn ->
+      r@(vn.h_formula_view_node::vn.h_formula_view_arguments)
+  ) [] hvs in
+  let nemps1 = List.filter (fun (sv1,sv2) -> CP.mem_svl sv1 view_ptrs &&
+      CP.mem_svl sv2 view_ptrs
+  ) nemps in
+  let ps = List.map (fun (sv1, sv2) -> CP.mkPtrNeqEqn sv1 sv2 no_pos) nemps1 in
+  is_inconst,nemps, (CP.conj_of_list ps no_pos)
+
+let xpure_graph_pto prog seg_datas f=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "xpure_graph_pto" (pr_list pr_id) pr1
+      (pr_triple string_of_bool pr2 !CP.print_formula)
+      (fun _ _ -> xpure_graph_pto_x prog seg_datas f) seg_datas f
 
 (*******************************************************************)
 (************************END GRAPH*****************************************)
