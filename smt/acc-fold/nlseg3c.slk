@@ -1,0 +1,20 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<p> == 
+  (exists a: self::node<a> * a::node<p>@L)
+ inv true.
+
+//  (a::node<p> --* self::node<a>)
+checkentail x::nlseg<p>  |- x::node<y>*y::node<p>.
+print residue.
+// should fail, and unfolding should not 
+// contain @L nodes.
+
+
+
+
