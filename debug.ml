@@ -192,13 +192,13 @@ let vv_result (s:string) (d:int) ls =
   vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>")
 
 let trace_pprint (msg:string) (pos:loc) : unit = 
-	ho_print false (fun a -> " "^a) msg
+	ho_print !devel_debug_on (fun a -> " "^a) msg
 
 let trace_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print false (fun x -> " "^(pr x)) m
+	ho_print !devel_debug_on (fun x -> " "^(pr x)) m
 
 let trace_zprint m (pos:loc) = 
-	ho_print false (fun x -> Lazy.force x) m
+	ho_print !devel_debug_on (fun x -> Lazy.force x) m
 
 let tinfo_zprint m p = trace_zprint m p
 let tinfo_hprint pr m p  = trace_hprint pr m p

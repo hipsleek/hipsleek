@@ -6842,24 +6842,26 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* let _ = DD.info_hprint (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in *)
                               (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
                               (*use global var is dangerous, should pass as parameter*)
-                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp (* not(is_folding) *) && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then (
-                                  if  not (Infer.no_infer_hp_rel estate) then
+                              if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp 
+                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) && not(is_lend_h_formula(prep_h1))
+                                  && (h2 = HEmp)) then (
+                                if  not (Infer.no_infer_hp_rel estate) then
+                                  let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+                                  let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(1)" "" , estate.es_trace)) in
+                                  let proof = mkClassicSepLogic ctx0 conseq in
+                                  (ls_ctx, proof)
+                                else
+                                  (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
+                                  let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
+                                  if not r then
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
-                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(1)" "" , estate.es_trace)) in
+                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(2)" "", new_es.es_trace)) in
                                     let proof = mkClassicSepLogic ctx0 conseq in
                                     (ls_ctx, proof)
                                   else
-                                    (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
-                                    let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
-                                    if not r then
-                                      let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
-                                      let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(2)" "", new_es.es_trace)) in
-                                      let proof = mkClassicSepLogic ctx0 conseq in
-                                      (ls_ctx, proof)
-                                    else
-                                      (*let n_ctx = SuccCtx [(Ctx new_es)] in*)
-                                      let ctx, proof =  heap_entail_conjunct_helper_x (* 4 *) prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
-                                      (ctx, proof)
+                                    (*let n_ctx = SuccCtx [(Ctx new_es)] in*)
+                                    let ctx, proof =  heap_entail_conjunct_helper_x (* 4 *) prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
+                                    (ctx, proof)
                               )
                               (* if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then ( *)
                               (*   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in *)
