@@ -9296,7 +9296,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   (*detect prdicates for graph optimization*)
   let cprog2 =
      if !Globals.norm_cont_analysis then
-     let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.prog_view_decls in
+     let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.Cast.prog_view_decls in
      let _ = if is_need_seg_opz then
        let _ = Frame.seg_opz := true in
        ()
@@ -9304,7 +9304,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
        let _ = Frame.seg_opz := false in
        ()
      in
-     let cprog2a = {cprog2 with prog_view_decls = cviews3a} in
+     let cprog2a = {cprog2 with Cast.prog_view_decls = cviews3a} in
      cprog2a
      else cprog2
   in
