@@ -17,6 +17,7 @@ let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 let coq_running = ref false
+let coq_timeout = ref 5.0
 let coq_channels = ref (stdin, stdout)
 
 let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
@@ -219,6 +220,9 @@ let coq_of_formula pr_w pr_s f =
   coq_of_formula pr_w pr_s f
   
 
+let coq_of_formula pr_w pr_s f = 
+Debug.no_1 "coq_of_formula" (fun _ -> "Input") (fun c -> c)
+(fun _ -> coq_of_formula pr_w pr_s f) pr_w
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
   try while true do
@@ -293,11 +297,13 @@ let rec send_formula (f : string) (nr : int) : bool =
 		print_string "\nCoq crashed\n"; flush stdout;
 		start ();
 		if nr > 1 then send_formula f (nr - 1) else false
+
   
 (* writing the Coq file *)
 let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 (*  print_string "*"; flush stdout; *)
 (*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
+  let fnc () = 
   let vstr = coq_of_var_list (Gen.BList.remove_dups_eq (=) ((CP.fv ante) @ (CP.fv conseq))) in
   let astr = coq_of_formula pr_w pr_s ante in
   let cstr = coq_of_formula pr_s pr_w conseq in
@@ -313,9 +319,19 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 
   (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
+  in
+try  
+  let answ = Procutils.PrvComms.maybe_raise_timeout_num 11 fnc () !coq_timeout in
+  answ
+with 
+  | (*Procutils.PrvComms.Timeout*) _ -> 
+      begin
+        print_string("\n[coq.ml]:Timeout expcetion\n");flush stdout;
+        false;
+      end
 
 let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
-  Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
+  Debug.no_2 "coqwrite" !print_p_f_f !print_p_f_f
 	string_of_bool (write pr_w pr_s) ante conseq
 	
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -336,7 +352,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
-  Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
+  Debug.no_2 "coqimplyops" !print_p_f_f !print_p_f_f
 	string_of_bool (imply_ops pr_w pr_s) ante conseq
 
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -355,6 +371,10 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no : string) : bool =
   | false ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> true\n";
 	  true
+
+let is_sat_ops pr_w pr_s (f:CP.formula) (sat_no :string) : bool = 
+  Debug.no_2 "coqsimplops" !print_p_f_f (fun x -> x) 
+     string_of_bool (is_sat_ops pr_w pr_s) f sat_no
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   let pr x = None in
