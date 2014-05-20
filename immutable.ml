@@ -256,7 +256,7 @@ let produces_hole (a: CP.ann): bool =
   if isLend a || isAccs  a (* || isPoly a *) then true
   else false
 
-let maybe_replace_w_empty h = 
+let maybe_replace_w_empty h =
   match h with
     | CF.DataNode dn -> 
           let node_imm = dn.CF.h_formula_data_imm in
@@ -267,7 +267,7 @@ let maybe_replace_w_empty h =
               | false, true -> if (isAccs node_imm) then HEmp else h
               | _,_         -> HEmp
           in new_h
-    | CF.ViewNode vn -> h
+    | CF.ViewNode vn -> h 
           (* let node_imm = vn.CF.h_formula_view_imm in *)
           (* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *)
           (* let new_h =  *)
@@ -748,7 +748,7 @@ and replace_imm imm map emap=
           begin
             let new_imm = List.fold_left (fun acc (fr,t) ->
                 if ( Gen.BList.mem_eq CP.eq_ann imm [CP.annot_arg_to_imm_ann fr]) 
-                then [CP.annot_arg_to_imm_ann t] 
+                then [get_weakest_imm ((CP.annot_arg_to_imm_ann fr)::[(CP.annot_arg_to_imm_ann t)]) ] 
                 else acc) [] map in
             match new_imm with
               | []   -> imm
@@ -756,7 +756,10 @@ and replace_imm imm map emap=
           end
     | _ -> imm                          (* replace temp as well *)
 
-
+(* andreeac TODOIMM: propagate for fields in view defs must be modified to behave as below:
+   pred p(a) = ... self<_@a>@b;
+   unfold(pred(@c)@d) = ... self<_@weakest(a,b,c,d)>
+*)
 and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) emap : h_formula = 
   match f with
     | ViewNode f1 -> 
@@ -770,7 +773,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
 			It should behave similar to the datanode...
 			*)
 			(*f*)
-			ViewNode({f1 with h_formula_view_imm = imm;})
+			ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);})
           else
             let new_node_imm = imm in
             let new_args_imm = List.fold_left (fun acc (fr,t) -> 
@@ -1263,13 +1266,15 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
             CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
                 h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0);
             } in
-          let new_f = maybe_replace_w_empty new_f in
+          (* let new_f = maybe_replace_w_empty new_f in *)
           new_f
     | CF.ViewNode h -> 
           let f args = restore_tmp_ann args pure0 in
           let new_pimm = apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
-          CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
-              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg}
+          let new_f = CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
+              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg} in
+          (* let new_f = maybe_replace_w_empty new_f in *)
+          new_f
     | _          -> f
 
 and restore_tmp_ann_formula (f: formula): formula =
