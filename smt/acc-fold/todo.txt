@@ -10,6 +10,16 @@ pred elseg<p> == self=p
 
 checkentail_exact x::node<a>*a::elseg<p> |- x::elseg<p>.
 ====================================================================
+# smt/acc-fold/nlseg.slk
+
+// below should succeed @L should not be considered
+   a residue for --classic reasoning
+ <1>p::node<_>@L&p!=x&{FLOW,(21,22)=__norm}[]
+
+checkentail_exact x::node<a>*a::nlseg<p> *  p::node<_>@L
+                |- x::nlseg<p>.
+print residue.
+
 ====================================================================
 ====================================================================
 ====================================================================
