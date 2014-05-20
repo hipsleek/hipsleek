@@ -431,16 +431,22 @@ let rec icollect_output chn accumulated_output : string list =
       else accumulated_output @ [line]
     with | End_of_file -> accumulated_output in
   output
-  
-let rec icollect_all_output chn accumulated_output : string list =
-  let output = 
+
+let line_stream_of_channel channel =
+  Stream.from (fun _ ->
+    try Some (input_line channel) 
+    with End_of_file -> None)
+
+let icollect_model chn: string list =
+  let rec helper accumulated_output =
     try
-      let line = input_line chn in
-      if ((String.compare line ")") != 0) then
-        icollect_all_output chn (accumulated_output @ [line])
+      let line = Scanf.fscanf chn "%[^\r\n]\n" idf in
+      let _ = print_endline ("line: " ^ line) in
+      if ((String.compare line "") != 0) then
+        helper (accumulated_output @ [line])
       else accumulated_output @ [line]
-    with _ -> accumulated_output in
-  output
+    with _ -> accumulated_output
+  in helper []
 
 let rec collect_output chn accumulated_output : string list =
   let output =
@@ -1118,7 +1124,7 @@ let get_smt_output inp timeout f_timeout =
     let _ = if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
-    icollect_all_output (!prover_process.inchannel) [] (* Collect output without filtering *)
+    icollect_model (!prover_process.inchannel) (* Collect all output without filtering *)
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc inp timeout f_timeout in
   let tstoplog = Gen.Profiling.get_time () in
