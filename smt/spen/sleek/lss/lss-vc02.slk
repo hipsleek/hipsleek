@@ -23,3 +23,5 @@ pred lsso<out> == self = out
 checkentail x_emp::pto<y_emp,y_emp> * y_emp::pto<u_emp,u_emp> *
             u_emp::pto<w_emp,w_emp> * w_emp::pto<z_emp,z_emp> |-
             x_emp::lsso<z_emp>.
+
+expect Valid.
