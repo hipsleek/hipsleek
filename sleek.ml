@@ -398,10 +398,16 @@ let _ =
     (* let _ = print_endline "before main" in *)
     main ();
     (*Long: print unexpected cmds if any (reset expected_cmd != []) *)
-    let _ = print_string "Warning: " in
-    let _ = List.iter (fun id_cmd ->
-        print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
-    let _ = print_string "\n\n" in
+    let _ =
+      if ((List.length !unexpected_cmd) > 0)
+      then (
+          let _ = print_string "Warning: " in
+          let _ = List.iter (fun id_cmd ->
+              print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+          print_string "\n\n"
+      ) else
+        ()
+    in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
