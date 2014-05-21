@@ -134,6 +134,8 @@ type xpure_view = {
 
 type formula =
   | BForm of (b_formula * (formula_label option))
+  (* | Pure_Baga of (spec_var list) *)
+  (* ADDR[a,b] <==> a>0 & b>0 > a!=b *)
   | And of (formula * formula * loc)
   | AndList of (LO.t * formula) list
   | Or of (formula * formula * (formula_label option) * loc)

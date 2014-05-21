@@ -5,7 +5,23 @@ data node2 {
 
 
 pred ll<n> == self = null & n=0
-    or self::node2<_,r> * r::ll<n-1>.
+    or self::node2<_,r> * r::ll<n-1>
+ inv n>=0.
+
+/*
+ inv n>=0.
+
+ xform: (self!=null & n>0 | (n=0 & self=null))
+
+ xform: (({self},self!=null & n>0) | ({},(n=0 & self=null)))
+
+
+x::node<_> * x::node<_> -->   Baga[x,x]
+x::node<_> * y::node<_> -->   Baga[x,y]
+
+Baga{a,b} ==> a>0 & b>0 > a!=b
+
+*/
 
 /*
    inv: true
