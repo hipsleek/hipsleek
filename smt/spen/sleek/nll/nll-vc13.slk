@@ -39,3 +39,5 @@ pred nll<out,boundary> == self = out
 checkentail x1::pto2<x2,x1_1> * x1_1::pto1<x1_1> *
             x2::pto2<null,x2_1> * x2_1::lso<null> |-
             x1::nll<null,null>.
+
+expect Fail.

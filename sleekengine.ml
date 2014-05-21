@@ -1372,7 +1372,6 @@ let process_validate exp_res ils_es=
                     res_str := "Expected.\n"
                   else
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-                    let _ = print_endline "abcdef" in
                     res_str := "Not Expected.\n"
                 in
                 (true, ls_a_es, CP.remove_dups_svl act_vars)

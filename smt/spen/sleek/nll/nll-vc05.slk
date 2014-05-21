@@ -40,3 +40,5 @@ checkentail x1::pto2<x2,x1_1> * x1_1::pto1<x1_2> *
             x1_2::pto1<x1_3> * x1_3::pto1<nil_lvl1> *
             x2::nll<nil_lvl2,nil_lvl1> |-
             x1::nll<nil_lvl2,nil_lvl1>.
+
+expect Valid.

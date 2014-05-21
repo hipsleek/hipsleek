@@ -41,3 +41,5 @@ checkentail x1::nll<x2,nil_lvl1> *
             x2_2::lso<nil_lvl1> *
             x3::nll<nil_lvl2,nil_lvl1> |-
             x1::nll<nil_lvl2,nil_lvl1>.
+
+expect Valid.
