@@ -62,11 +62,11 @@
 
 ;;;ListE_1(x,y) \/ ListO_1(x,y) |- List_2(x,y)
 
-(declare-fun alpha2 () SetLoc)
-(declare-fun alpha3 () SetLoc)
+(define-fun alpha2 () SetLoc)
+(define-fun alpha3 () SetLoc)
 
-(declare-fun x () GenTyp)
-(declare-fun y () GenTyp)
+(define-fun x () GenTyp)
+(define-fun y () GenTyp)
 
 (assert (or
 	(tobool (index alpha1 (ListE x y)))

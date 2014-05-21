@@ -62,12 +62,12 @@
 
 ;;;ListE(x,y) * ListO(y,z) |- ListO(x,z)              
 
-(declare-fun alpha2 () SetLoc)
-(declare-fun alpha3 () SetLoc)
+(define-fun alpha2 () SetLoc)
+(define-fun alpha3 () SetLoc)
 
-(declare-fun x () GenTyp)
-(declare-fun y () GenTyp)
-(declare-fun z () GenTyp)
+(define-fun x () GenTyp)
+(define-fun y () GenTyp)
+(define-fun z () GenTyp)
 
 (assert (tobool (sep
         (index alpha1 (ListE x y))
