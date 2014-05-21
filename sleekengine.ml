@@ -1329,9 +1329,10 @@ let process_validate exp_res ils_es=
     (guide_vars, es_formula, constrs)
   in
   (*******END INTERNAL ********)
-  let _ = Debug.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in
+  (* let _ = Debug.info_hprint (add_str  "  sleekengine " pr_id) "process_validate\n" no_pos in *)
   let nn = (sleek_proof_counter#get) in
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
+  let res_str = ref "" in
   (*get current residue -> FAIL? VALID*)
   let rs = !CF.residues in
   (* Long: todo: parser for expected result and compare here: exp_res*)
@@ -1340,9 +1341,9 @@ let process_validate exp_res ils_es=
           let _ =
             if (exp_res = "Fail")
             then
-              print_string "\nExpected.\n"
+              res_str := "Expected.\n"
             else
-              print_string "\nNot Expected.\n"
+              res_str :=  "Not Expected.\n"
           in
           (**res = Fail*)
           false, [], []
@@ -1352,9 +1353,9 @@ let process_validate exp_res ils_es=
                 let _ =
                   if (exp_res = "Fail")
                   then
-                    print_string "\nExpected.\n"
+                    res_str := "Expected.\n"
                   else
-                    print_string "\nNot Expected.\n"
+                    res_str := "Not Expected.\n"
                 in
                 (false, [], [])
           | CF.SuccCtx cl ->
@@ -1363,13 +1364,14 @@ let process_validate exp_res ils_es=
                 let _ =
                   if (exp_res = "Valid")
                   then
-                    print_string "\nExpected.\n"
+                    res_str := "Expected.\n"
                   else
-                    print_string "\nNot Expected.\n"
+                    res_str := "Not Expected.\n"
                 in
                 (true, ls_a_es, CP.remove_dups_svl act_vars)
       end
   in
+  let _ = print_string (validate_id ^ !res_str) in
   (*expect: r = FAIL? Valid*)
   (* let ex_r = if String.compare r "Valid" == 0 then true else *)
   (*   if String.compare r "FAIL" == 0 then false else *)
@@ -1378,8 +1380,8 @@ let process_validate exp_res ils_es=
   let ex_r = true in
   let _ = match a_r,ex_r with
     | false,true
-    | true,false -> let _ = print_endline (validate_id ^ "FAIL.") in ()
-    | false,false -> let _ = print_endline (validate_id ^ "SUCCast.") in ()
+    | true,false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
+    | false,false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
     | true, true ->
           (*syn new unknown preds generated between cprog and iprog*)
           let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in
@@ -1387,11 +1389,11 @@ let process_validate exp_res ils_es=
           (*for each succ context: validate residue + inferred results*)
           let ls_expect_es = List.map (preprocess_iestate act_vars) ils_es in
           let b, es_opt, ls_fail_ass = Sleekcore.validate ls_expect_es ls_a_es in
-          let _ = if b then
-            print_endline (validate_id ^ "SUCCast.")
-          else
-            print_endline (validate_id ^ "FAIL.")
-          in ()
+          (* let _ = if b then *)
+          (*   print_endline (validate_id ^ "SUCCast.") *)
+          (* else *)
+          (*   print_endline (validate_id ^ "FAIL.") *)
+          (* in *) ()
   in
   let _ = print_endline ("\n") in
   ()
