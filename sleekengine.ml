@@ -1343,9 +1343,13 @@ let process_validate ils_es=
   let nn = (sleek_proof_counter#get) in
   let validate_id = "Validate " ^ (string_of_int nn) ^": " in
   (*get current residue -> FAIL? VALID*)
+  let rs = !CF.residues in
+  (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
-    | None -> false, [], []
-    | Some (lc,_) -> begin
+    | None ->
+          (**res = Fail*)
+          false, [], []
+    | Some (lc, res) -> begin (*res*)
         match lc with
           | CF.FailCtx _ -> (false, [], [])
           | CF.SuccCtx cl ->

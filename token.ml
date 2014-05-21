@@ -137,7 +137,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
-    | VALIDATE -> "validate"
+    | VALIDATE -> "expect"
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)
