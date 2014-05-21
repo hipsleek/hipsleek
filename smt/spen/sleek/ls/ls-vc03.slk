@@ -25,3 +25,5 @@ checkentail x_emp::pto<y_emp> * y_emp::lso<w_emp> *
             u_emp::pto<v_emp> * v_emp::lso<r_emp> *
             r_emp::pto<s_emp> |-
             x_emp::lso<s_emp>.
+
+expect Valid.
