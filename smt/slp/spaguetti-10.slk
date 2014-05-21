@@ -24,6 +24,8 @@ checkentail x3::lseg<x8> * x7::lseg<x2> * x7::lseg<x5> * x10::lseg<x3> & x4 != x
 //284
 checkentail x9::lseg<x3> * x8::lseg<x10> * x1::lseg<x4> * x1::lseg<x7> * x4::lseg<x2> * x10::lseg<x6> & x5 != x9 & x5 != x7 & x1 != x7 & x1 != x8 & x4 != x5 & x4 != x10 & x9 != x10 & x3 != x10 & x6 != x10 |- false.
 
+expect Fail.
+
 /*
 //5
 //328

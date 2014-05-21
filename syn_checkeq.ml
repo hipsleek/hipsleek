@@ -385,7 +385,12 @@ let check_exists_cyclic_proofs es (ante,conseq)=
       (**********************HEAP GRAPH*************************************)
 (*******************************************************************************)
 
-let do_simpl_nodes_match_x lhs rhs =
+let syntax_nodes_match_x lhs rhs =
+  let check_exact_eq_data_node dn1 dn2=
+    CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node &&
+        List.length dn1.CF.h_formula_data_arguments = List.length dn2.CF.h_formula_data_arguments &&
+        CP.diff_svl dn1.CF.h_formula_data_arguments dn2.CF.h_formula_data_arguments = []
+  in
   let check_eq_data_node dn1 dn2=
     CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node
   in
@@ -410,29 +415,28 @@ let do_simpl_nodes_match_x lhs rhs =
       | CF.DataNode hn -> if CP.mem_svl hn.CF.h_formula_data_node matched_svl then CF.HEmp else hf
       | _ -> hf
   in
-  let l_hds, _, _ = CF.get_hp_rel_formula lhs in
-  let r_hds, _, _ = CF.get_hp_rel_formula rhs in
-  let matched_data_nodes = Gen.BList.intersect_eq check_eq_data_node l_hds r_hds in
+  (* let l_hds,_,_ = CF.get_hp_rel_formula lhs in *)
+  let l_hds = CF.get_dnodes lhs in
+  let r_hds = CF.get_dnodes rhs in
+  let matched_data_nodes = Gen.BList.intersect_eq check_exact_eq_data_node l_hds r_hds in
   let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
   let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in
-  let sl_hds = List.sort sort_data_node_by_name l_hds in
-  let sr_hds = List.sort sort_data_node_by_name r_hds in
-  let ss = get_subst sl_hds sr_hds [] in
   let matched_svl = (List.map (fun hn -> hn.CF.h_formula_data_node) matched_data_nodes) in
   let n_lhs, n_rhs =
     if matched_svl = [] then (lhs, rhs)
     else
-      let rhs1 = CF.subst ss rhs in
-      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs, 
+      (*drop matched, add pure constraints (footprints) to the lhs*)
+      let rhs1 =  rhs in
+      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs,
 
       CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs1)
   in
   n_lhs, n_rhs
 
-let do_simpl_nodes_match lhs rhs =
+let syntax_nodes_match lhs rhs =
   let pr1 = Cprinter.string_of_formula in
-  Debug.no_2 "do_simpl_nodes_match" pr1 pr1 (pr_pair pr1 pr1)
-      (fun _ _ -> do_simpl_nodes_match_x lhs rhs) lhs rhs
+  Debug.no_2 "syntax_nodes_match" pr1 pr1 (pr_pair pr1 pr1)
+      (fun _ _ -> syntax_nodes_match_x lhs rhs) lhs rhs
 
 (*******************************************************************************)
       (**********************END HEAP GRAPH**********************************)
