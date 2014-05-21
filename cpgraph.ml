@@ -280,3 +280,22 @@ let is_neg_equality neq eq=
   match (neq,eq) with
     | (BForm(c1, _), BForm(c2, _)) -> (is_neg_equality_b c1 c2)
     | _ -> false
+
+let rec inconsisten_neq (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+      | (Neq (esv1,esv2,_),_) -> begin
+          match esv1,esv2 with
+            | Var (sv1,_),Var (sv2,_) -> eq_spec_var sv1 sv2
+            | _ -> false
+        end
+      | _ -> false
+  in
+  match f with
+	| BForm (b,_)-> helper b
+	| And (b1,b2,_) -> (inconsisten_neq b1) || (inconsisten_neq  b2)
+	| AndList b -> List.exists (fun (_,c)-> inconsisten_neq  c) b
+	| Or (b1,b2,_,_) -> (inconsisten_neq  b1) && (inconsisten_neq b2)
+	| Not (b,_,_)-> not (inconsisten_neq  b)
+	| Forall (_,f,_,_) -> inconsisten_neq f
+	| Exists (_,f,_,_) -> inconsisten_neq f

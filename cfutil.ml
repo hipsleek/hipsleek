@@ -1318,7 +1318,7 @@ let elim_emp hf0 svl =
       | DataNode hd -> if (CP.mem_svl hd.h_formula_data_node svl) then
           HEmp
         else hf
-      | ViewNode hv -> if not (CP.mem_svl hv.h_formula_view_node svl) then
+      | ViewNode hv -> if (CP.mem_svl hv.h_formula_view_node svl) then
           HEmp
         else hf
       | HRel _
@@ -1327,7 +1327,7 @@ let elim_emp hf0 svl =
       | HFalse
       | HEmp -> hf
   in
-  helper hf0
+  if svl = [] then hf0 else helper hf0
 
 
 let update_f_x f0 drop_hvns inferred_ps=
@@ -1389,6 +1389,26 @@ let xpure_graph_pto prog seg_datas f=
   Debug.no_2 "xpure_graph_pto" (pr_list pr_id) pr1
       (pr_triple string_of_bool pr2 !CP.print_formula)
       (fun _ _ -> xpure_graph_pto_x prog seg_datas f) seg_datas f
+
+let force_elim_exists_x f quans=
+  let ( _,mf,_,_,_) = split_components f in
+  let eqs = (MCP.ptr_equations_without_null mf) in
+  let sst, inter_eqs = List.fold_left (fun (r1,r2) (sv1,sv2) ->
+      let b1 = CP.mem_svl sv1 quans in
+      let b2 = CP.mem_svl sv2 quans in
+      match b1,b2 with
+        | false,true -> (r1@[(sv2,sv1)], r2@[(sv1,sv2)])
+        | true, false -> r1@[(sv1,sv2)], r2@[(sv1,sv2)]
+        | _ -> r1,r2
+  ) ([],[]) eqs in
+  let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in
+  simplify_pure_f (subst sst f),  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos)
+
+let force_elim_exists f quans=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "force_elim_exists" pr1 pr2 (pr_pair pr1  Cprinter.string_of_mix_formula)
+      (fun _ _ -> force_elim_exists_x f quans) f quans
 
 (*******************************************************************)
 (************************END GRAPH*****************************************)

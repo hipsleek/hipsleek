@@ -385,7 +385,8 @@ let check_exists_cyclic_proofs es (ante,conseq)=
       (**********************HEAP GRAPH*************************************)
 (*******************************************************************************)
 
-let syntax_nodes_match_x lhs rhs =
+let syntax_nodes_match_x lhs0 rhs0 =
+  (******************************************************)
   let check_exact_eq_data_node dn1 dn2=
     CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node &&
         List.length dn1.CF.h_formula_data_arguments = List.length dn2.CF.h_formula_data_arguments &&
@@ -394,48 +395,61 @@ let syntax_nodes_match_x lhs rhs =
   let check_eq_data_node dn1 dn2=
     CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node
   in
-  let sort_data_node_by_name dn1 dn2=
-    String.compare (CP.name_of_spec_var dn1.CF.h_formula_data_node)
-        (CP.name_of_spec_var dn2.CF.h_formula_data_node)
-  in
-  let rec get_subst lhds rhds res=
-    match rhds,lhds with
-      | [],_ -> res
-      | _, [] -> res
-      | dn2::rest2,dn1::rest1 ->
-          let ss=
-            if CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node then
-              List.combine dn2.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments
-            else []
-          in
-          get_subst rest1 rest2 (res@ss)
+  let xpure_dnode pos dn=
+    let sv1 = dn.CF.h_formula_data_node in
+    let ps = List.map (fun sv2 ->
+        CP.mkPtrNeqEqn sv1 sv2 pos
+    ) dn.CF.h_formula_data_arguments in
+    let neqNull = CP.mkNeqNull sv1 pos in
+    CP.conj_of_list (neqNull::ps) pos
   in
   let hn_drop_matched matched_svl hf=
     match hf with
       | CF.DataNode hn -> if CP.mem_svl hn.CF.h_formula_data_node matched_svl then CF.HEmp else hf
       | _ -> hf
   in
-  (* let l_hds,_,_ = CF.get_hp_rel_formula lhs in *)
-  let l_hds = CF.get_dnodes lhs in
-  let r_hds = CF.get_dnodes rhs in
-  let matched_data_nodes = Gen.BList.intersect_eq check_exact_eq_data_node l_hds r_hds in
-  let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
-  let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in
-  let matched_svl = (List.map (fun hn -> hn.CF.h_formula_data_node) matched_data_nodes) in
-  let n_lhs, n_rhs =
-    if matched_svl = [] then (lhs, rhs)
-    else
-      (*drop matched, add pure constraints (footprints) to the lhs*)
-      let rhs1 =  rhs in
-      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs,
-
-      CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs1)
+  let rec check_inconsistent dns=
+    match dns with
+      | [] -> false
+      | dn::rest -> if List.exists (fun dn1 ->
+            CP.eq_spec_var dn.CF.h_formula_data_node dn1.CF.h_formula_data_node
+        ) rest then true else
+          check_inconsistent rest
   in
-  n_lhs, n_rhs
+  let check_pure_inconsistent f=
+    let p = (CF.get_pure f) in
+    CP.isConstFalse p || Cpgraph.inconsisten_neq p
+  in
+  (******************************************************)
+  (* let l_hds,_,_ = CF.get_hp_rel_formula lhs in *)
+  let l_hds = CF.get_dnodes lhs0 in
+  let r_hds = CF.get_dnodes rhs0 in
+  let lhs_unsat = check_inconsistent l_hds || check_pure_inconsistent lhs0 in
+  let rhs_unsat = check_inconsistent r_hds || check_pure_inconsistent rhs0 in
+  let lhs = if lhs_unsat then CF.mkFalse_nf no_pos else lhs0 in
+  let rhs = if rhs_unsat then CF.mkFalse_nf no_pos else rhs0 in
+  if lhs_unsat || rhs_unsat then
+    (lhs, rhs, lhs_unsat, rhs_unsat)
+  else
+    let matched_data_nodes = Gen.BList.intersect_eq check_exact_eq_data_node l_hds r_hds in
+    let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
+    let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in
+    let matched_svl = (List.map (fun hn -> hn.CF.h_formula_data_node) matched_data_nodes) in
+    let n_lhs, n_rhs =
+      if matched_svl = [] then (lhs, rhs)
+      else
+        (*drop matched, add pure constraints (footprints) to the lhs*)
+        let xpure_ps = List.map (xpure_dnode no_pos) matched_data_nodes in
+        let xpure_p = CP.conj_of_list xpure_ps no_pos in
+        let droped_lhs = CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs in
+        (CF.mkAnd_pure droped_lhs (Mcpure.mix_of_pure xpure_p) no_pos,
+        CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs)
+    in
+    (n_lhs, n_rhs, lhs_unsat, rhs_unsat)
 
 let syntax_nodes_match lhs rhs =
   let pr1 = Cprinter.string_of_formula in
-  Debug.no_2 "syntax_nodes_match" pr1 pr1 (pr_pair pr1 pr1)
+  Debug.no_2 "syntax_nodes_match" pr1 pr1 (pr_quad pr1 pr1 string_of_bool string_of_bool)
       (fun _ _ -> syntax_nodes_match_x lhs rhs) lhs rhs
 
 (*******************************************************************************)
