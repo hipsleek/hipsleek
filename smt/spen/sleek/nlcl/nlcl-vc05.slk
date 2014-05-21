@@ -46,3 +46,5 @@ checkentail x1::nlcl<x2> *
             x2_1::pto1<x2_2> * x2_2::lso<x2_3> * x2_3::pto1<x2_1> *
             x3::nlcl<null> |-
             x1::nlcl<null>.
+
+expect Valid.

@@ -1354,7 +1354,8 @@ let process_validate exp_res ils_es=
         match lc with
           | CF.FailCtx _ ->
                 let _ =
-                  if (exp_res = "Fail")
+                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
+                  (* if (exp_res = "Fail") *)
                   then
                     res_str := "Expected.\n"
                   else
@@ -1366,11 +1367,12 @@ let process_validate exp_res ils_es=
                 let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
                 let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
                 let _ =
-                  if (exp_res = "Valid")
+                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
                   then
                     res_str := "Expected.\n"
                   else
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+                    let _ = print_endline "abcdef" in
                     res_str := "Not Expected.\n"
                 in
                 (true, ls_a_es, CP.remove_dups_svl act_vars)
