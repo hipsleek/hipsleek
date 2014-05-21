@@ -447,14 +447,15 @@ let icollect_model chn: string list =
   let rec helper cnt accumulated_output =
     try
       let line = input_line chn in
+      (* let _ = print_endline line in *)
       let cnt_open, cnt_close = count_paren line in
       let cnt = cnt + cnt_open - cnt_close in
-      if (cnt == 0) then
-        accumulated_output @ [line]
+      if (cnt == 0) then accumulated_output @ [line]
       else helper cnt (accumulated_output @ [line])
     with _ -> accumulated_output
   in
   let first_line = input_line chn in
+  (* let _ = print_endline first_line in *)
   helper 0 [first_line]
   
 let rec collect_output chn accumulated_output : string list =
