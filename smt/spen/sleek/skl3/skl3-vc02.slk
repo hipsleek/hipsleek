@@ -41,3 +41,5 @@ pred skl3<ex> == self=ex
 checkentail x1::pto<x2,x1_2,x2> * x1_2::skl2<x2> *
             x2::skl3<null> |-
             x1::skl3<null>.
+
+expect Fail.

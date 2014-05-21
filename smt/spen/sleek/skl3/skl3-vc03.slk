@@ -42,3 +42,5 @@ checkentail x1::skl3<x2> * x2::pto<x3,x2_1,x2_0_1> *
             x3::skl3<null> * x2_1::skl2<x3> *
             x2_0_1::skl1<x2_1> |-
             x1::skl3<null>.
+
+expect Valid.
