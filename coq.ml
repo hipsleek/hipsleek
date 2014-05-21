@@ -219,10 +219,10 @@ let coq_of_formula pr_w pr_s f =
   let _ = set_prover_type () in
   coq_of_formula pr_w pr_s f
   
-
 let coq_of_formula pr_w pr_s f = 
 Debug.no_1 "coq_of_formula" (fun _ -> "Input") (fun c -> c)
 (fun _ -> coq_of_formula pr_w pr_s f) pr_w
+
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
   try while true do
@@ -240,6 +240,7 @@ let rec check fd coq_file_name : bool=
 	  (*ignore (Sys.remove coq_file_name);	*)
 	  false
 ;;
+
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 let decidez_vo_dir = Gen.get_path Sys.executable_name
@@ -270,6 +271,7 @@ let stop_prover_debug () =
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
   try
+    let fnc () = 
 	  output_string (snd !coq_channels) f;
 	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
@@ -291,6 +293,16 @@ let rec send_formula (f : string) (nr : int) : bool =
         end;
 	  done;
 	  !result
+    in
+    try  
+      let answ = Procutils.PrvComms.maybe_raise_timeout_num 11 fnc () !coq_timeout in
+      answ
+    with 
+      | Procutils.PrvComms.Timeout -> 
+          begin
+            print_string("\n[coq.ml]:Timeout expcetion\n");flush stdout;
+            false;
+          end
   with
 	_ -> ignore (Unix.close_process !coq_channels);
 		coq_running := false;
@@ -303,7 +315,6 @@ let rec send_formula (f : string) (nr : int) : bool =
 let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 (*  print_string "*"; flush stdout; *)
 (*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
-  let fnc () = 
   let vstr = coq_of_var_list (Gen.BList.remove_dups_eq (=) ((CP.fv ante) @ (CP.fv conseq))) in
   let astr = coq_of_formula pr_w pr_s ante in
   let cstr = coq_of_formula pr_s pr_w conseq in
@@ -319,16 +330,7 @@ let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 
   (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
-  in
-try  
-  let answ = Procutils.PrvComms.maybe_raise_timeout_num 11 fnc () !coq_timeout in
-  answ
-with 
-  | (*Procutils.PrvComms.Timeout*) _ -> 
-      begin
-        print_string("\n[coq.ml]:Timeout expcetion\n");flush stdout;
-        false;
-      end
+
 
 let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   Debug.no_2 "coqwrite" !print_p_f_f !print_p_f_f
