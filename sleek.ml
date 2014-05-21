@@ -100,7 +100,7 @@ let proc_gen_cmd cmd =
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-    | Validate ( lc) -> process_validate lc
+    | Validate (id, lc) -> process_validate id lc
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapeLFP ids -> process_shape_lfp ids
@@ -188,7 +188,7 @@ let parse_file (parse) (source_file : string) =
       | Slk_Hull f -> process_hull f
       | Slk_PairWise f -> process_pairwise f
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-      | Validate ( lc) -> process_validate lc
+      | Validate (id, lc) -> process_validate id lc
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
       | ShapeLFP ids -> process_shape_lfp ids

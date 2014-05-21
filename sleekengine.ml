@@ -1316,7 +1316,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline "*************************************" in
   ()
 
-let process_validate ils_es=
+let process_validate exp_res ils_es=
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
     let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
@@ -1325,7 +1325,8 @@ let process_validate ils_es=
     let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
     (lhs,rhs)
   in
-  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs)=
+  let preprocess_iestate act_vars (iguide_vars
+, ief, iconstrs)=
     let act_idents = (List.map CP.name_of_spec_var act_vars) in
     let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = Typeinfer.fresh_proc_var_kind ls t in
@@ -1347,14 +1348,36 @@ let process_validate ils_es=
   (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
+          let _ =
+            if (exp_res = "Fail")
+            then
+              print_string "\nExpected.\n"
+            else
+              print_string "\nNot Expected.\n"
+          in
           (**res = Fail*)
           false, [], []
     | Some (lc, res) -> begin (*res*)
         match lc with
-          | CF.FailCtx _ -> (false, [], [])
+          | CF.FailCtx _ ->
+                let _ =
+                  if (exp_res = "Fail")
+                  then
+                    print_string "\nExpected.\n"
+                  else
+                    print_string "\nNot Expected.\n"
+                in
+                (false, [], [])
           | CF.SuccCtx cl ->
                 let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
                 let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
+                let _ =
+                  if (exp_res = "Valid")
+                  then
+                    print_string "\nExpected.\n"
+                  else
+                    print_string "\nNot Expected.\n"
+                in
                 (true, ls_a_es, CP.remove_dups_svl act_vars)
       end
   in

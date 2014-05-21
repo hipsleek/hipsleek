@@ -1931,8 +1931,8 @@ validate_list_context:
   ]];
 
 validate_cmd:
-  [[ `VALIDATE; lc = OPT validate_list_context  ->
-      (un_option lc [])
+  [[ `VALIDATE; `IDENTIFIER ex; lc = OPT validate_list_context  ->
+      (ex, (un_option lc []))
    ]];
 
 cond_path:
