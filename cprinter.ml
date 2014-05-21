@@ -3313,6 +3313,8 @@ let pr_view_decl v =
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
+  pr_vwrap  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
+  pr_vwrap  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;

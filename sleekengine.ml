@@ -621,23 +621,13 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
+  let cprog6 = Cast.categorize_view cprog5 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
-  let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog5 else *) [],[] in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
+  let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog6 else *) [],[] in
   let _ = Lem_store.all_lemma # add_left_coercion l2r in
   let _ = Lem_store.all_lemma # add_right_coercion r2l in
-  (* let vdecls = cprog5.Cast.prog_view_decls in                                 *)
-  (* List.iter (fun vd ->                                                        *)
-  (*   let nontouching = string_of_bool (Cast.is_nontouching_view_decl vd) in    *)
-  (*   let nonsegmented = string_of_bool  (Cast.is_nonsegmented_view_decl vd) in *)
-  (*   print_endline ("pred " ^ vd.Cast.view_name ^ "\n"                         *)
-  (*                  ^ "    -- nontouching: " ^ nontouching ^ "\n"              *)
-  (*                  ^ "    -- nonsegmented: " ^ nonsegmented ^ "\n");          *)
-  (*  ) vdecls;                                                                  *)
-  
-  (* let _ = cprog5.Cast.prog_left_coercions <- l2r @ cprog5.Cast.prog_left_coercions in *)
-  (* let _ = cprog5.Cast.prog_right_coercions <- r2l @ cprog5.Cast.prog_right_coercions in *)
-  cprog := cprog5
+  cprog := cprog6
 
 let convert_data_and_pred_to_cast () = 
   Debug.no_1 "convert_data_and_pred_to_cast" pr_no pr_no convert_data_and_pred_to_cast_x ()
@@ -712,7 +702,6 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
       (n_tl,res)
   | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) (tl,b) (* assume it has already been normalized *)
   in helper mf0 quant fv_idents tlist 
-
 
 let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
 	: (Typeinfer.spec_var_type_list*CF.struc_formula) 

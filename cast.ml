@@ -93,6 +93,8 @@ and view_decl = {
     view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_is_touching: bool;
+    view_is_segmented: bool;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
@@ -2467,7 +2469,7 @@ let get_emp_map cprog=
 
 (* 
  * + Return:
- *     - true if vdecl is a nontouching predicate,
+ *     - true if vdecl is a touching predicate,
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
@@ -2475,7 +2477,7 @@ let get_emp_map cprog=
  *    - if all the constrains are implied by the pure part of view's definietion,
  *      then the view is nontouching
  *)
-let is_nontouching_view_decl_x (vdecl: view_decl) : bool =
+let is_touching_view_x (vdecl: view_decl) : bool =
   (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
   let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
@@ -2521,16 +2523,17 @@ let is_nontouching_view_decl_x (vdecl: view_decl) : bool =
     (!imply_raw pf nontouching_cond)
   ) in
   let branches, _ = List.split vdecl.view_un_struc_formula in
-  List.for_all is_nontouching_branch branches
+  let nontouching = (List.for_all is_nontouching_branch branches) in
+  not (nontouching)
 
-let is_nontouching_view_decl (vdecl: view_decl) : bool =
+let is_touching_view (vdecl: view_decl) : bool =
   let pr = !print_view_decl in
   let pr_out = string_of_bool in
-  Debug.no_1 "is_nontouching_pred" pr pr_out is_nontouching_view_decl_x vdecl
+  Debug.no_1 "is_touching_view" pr pr_out is_touching_view_x vdecl
 
 (* 
  * + Return:
- *     - true if vdecl is a nonsegmented predicate,
+ *     - true if vdecl is a segmented predicate,
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
@@ -2538,9 +2541,8 @@ let is_nontouching_view_decl (vdecl: view_decl) : bool =
  *    - if all the constrains is implied by the pure part of view's definietion,
  *      then the view is nonsegmented
  *)
-let is_nonsegmented_view_decl_x (vdecl: view_decl) : bool =
+let is_segmented_view_x (vdecl: view_decl) : bool =
   (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
-  let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
   let cont_vars = vdecl.view_cont_vars in
   let is_nonsegmented_branch branch = (
@@ -2552,9 +2554,20 @@ let is_nonsegmented_view_decl_x (vdecl: view_decl) : bool =
     ) cont_vars
   ) in
   let branches, _ = List.split vdecl.view_un_struc_formula in
-  List.for_all is_nonsegmented_branch branches
+  let nonsegmented = (List.for_all is_nonsegmented_branch branches) in
+  not (nonsegmented)
 
-let is_nonsegmented_view_decl (vdecl: view_decl) : bool =
+let is_segmented_view (vdecl: view_decl) : bool =
   let pr = !print_view_decl in
   let pr_out = string_of_bool in
-  Debug.no_1 "is_segmented_view_decl" pr pr_out is_nonsegmented_view_decl_x vdecl
+  Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
+
+let categorize_view (prog: prog_decl) : prog_decl =
+  let vdecls = prog.prog_view_decls in
+  let new_vdecls = List.map (fun vd ->
+    let touching = is_touching_view vd in
+    let segmented = is_segmented_view vd in
+    { vd with view_is_touching = touching;
+              view_is_segmented = segmented; }
+  ) vdecls in
+  { prog with prog_view_decls = new_vdecls }

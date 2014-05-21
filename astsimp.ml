@@ -2022,6 +2022,8 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
+          C.view_is_touching = false;      (* temporarily assigned *)
+          C.view_is_segmented = false;     (* temporarily assigned *)
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
