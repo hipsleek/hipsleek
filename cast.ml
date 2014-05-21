@@ -1181,6 +1181,13 @@ let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match dd
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a data/class declaration"}
 
+let rec look_up_data_def_raw (ddefs : data_decl list) (name : string) =
+  match ddefs with
+  | d :: rest -> 
+      if d.data_name = name then d 
+      else look_up_data_def_raw rest name
+  | [] -> raise Not_found
+
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
     match fields with
@@ -2561,42 +2568,43 @@ let is_segmented_view (vdecl: view_decl) : bool =
   let pr_out = string_of_bool in
   Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
 
+module ViewSet = Set.Make (
+  struct
+    let compare x y = String.compare x.view_name y.view_name
+    type t = view_decl
+  end )
+
 module ViewGraph = struct
-  module Node = struct
-    type t = { node_name: string;
-               node_data: data_decl;
-               node_view: view_decl list; }
-    let compare x y = String.compare x.node_name y.node_name
-    let hash = Hashtbl.hash
-    let equal x y = (String.compare x.node_name y.node_name) == 0
-  end
+  type vertex_t = { vertex_name: string;
+                    vertex_data: data_decl;
+                    vertex_view: ViewSet.t; }
+  type label_t = | FieldAccess of (string * string)   (* view/data name + field name *)
+                 | Equality
+  type edge_t = { edge_label: label_t;
+                  edge_begin_vertex: vertex_t;
+                  edge_end_vertex: vertex_t } 
+  type t = { tbl_vertices: (string, vertex_t) Hashtbl.t;
+             mutable edges: edge_t list }
   
-  module Edge = struct
-    type t = | FieldAccess of (string * string)   (* view/data name + field name *)
-             | Equality
-             | Unknown
-    let compare x y = match (x, y) with
-      | Unknown, Unknown -> 0
-      | Unknown, _ -> -1
-      | _, Unknown -> 1
-      | Equality, Equality -> 0
-      | Equality, FieldAccess _ -> -1
-      | FieldAccess _, Equality -> 1
-      | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
-          let compare_host = String.compare x1 y1 in
-          if (compare_host != 0) then compare_host
-          else String.compare x2 y2
-    let hash x y = Hashtbl.hash
-    let equal x y = match (x, y) with
-      | Unknown, Unknown -> true
-      | Equality, Equality -> true
-      | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
-          ((String.compare x1 y1) == 0) && ((String.compare x2 y2) == 0)
-      | _ -> false
-    let default = Unknown
-  end
-  
-  include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Node) (Edge)
+  let create () =
+    { tbl_vertices = Hashtbl.create 3;
+      edges = []; }
+  let add_vertex (g: t) (v: vertex_t) = Hashtbl.add g.tbl_vertices v.vertex_name v
+  let add_edge (g: t) (e: edge_t) = g.edges <- g.edges @ [e]
+  let equal_label x y = match x, y with
+    | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
+        (String.compare x1 y1 == 0) && (String.compare x2 y2 == 0)
+    | Equality, Equality -> true
+    | _ -> false
+  let get_vertex (g: t) (vname: string) = Hashtbl.find g.tbl_vertices vname
+  let get_edge (g: t) (lbl: label_t) =
+      List.find_all (fun e -> equal_label e.edge_label lbl) g.edges
+  let make_vertex name vdata vview = { vertex_name = name;
+                                       vertex_data = vdata;
+                                       vertex_view = vview; }
+  let make_edge lbl vbegin vend = { edge_label = lbl;
+                                    edge_begin_vertex = vbegin;
+                                    edge_end_vertex = vend; }
 end
 
 let build_view_graph (vdecl: view_decl) (prog: prog_decl)
@@ -2604,33 +2612,102 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
   let data_decls = prog.prog_data_decls in
   let view_decls = prog.prog_view_decls in
   let build_branch_graph (branch: CF.formula) : ViewGraph.t = (
-    let vg = ViewGraph.create () in
+    let bg = ViewGraph.create () in
     let (hf,mf,_,_,_) = CF.split_components branch in
-    let tbl_nodes = Hashtbl.create 10 in
-    let self_data = look_up_data_def no_pos data_decls vdecl.view_data_name in
-    let self_node = { ViewGraph.Node.node_name = self;
-                      ViewGraph.Node.node_data = self_data;
-                      ViewGraph.Node.node_view = [vdecl]; } in
-    Hashtbl.add tbl_nodes self self_node;
-    let edges = ref [] in
+    let ddecl_self = look_up_data_def_raw data_decls vdecl.view_data_name in
+    let vdecl_self = ViewSet.singleton vdecl in
+    let vertex_self = ViewGraph.make_vertex self ddecl_self vdecl_self in
+    let _ = ViewGraph.add_vertex bg vertex_self in
+    let _ = List.iter (fun sv ->
+      let vartype = P.type_of_spec_var sv in
+      match vartype with
+      | Named nametype -> (
+          let varname = P.name_of_spec_var sv in
+          try (
+            let ddecl_var = look_up_data_def_raw data_decls nametype in
+            let vdecl_var = ViewSet.singleton vdecl in
+            let vertex_var = ViewGraph.make_vertex varname ddecl_var vdecl_var in
+            let _ = ViewGraph.add_vertex bg vertex_var in
+            let lbl = ViewGraph.FieldAccess (vdecl.view_name, varname) in
+            let edge = ViewGraph.make_edge lbl vertex_self vertex_var in
+            ViewGraph.add_edge bg edge
+          ) with Not_found -> ()
+        )
+      | _ -> ()
+    ) vdecl.view_vars in
     let rec analyze_heap hf = (
       match hf with
       | CF.HTrue | CF.HFalse | CF.HEmp -> () (* just ignore *)
       | CF.DataNode dn ->
           let nname = P.name_of_spec_var dn.CF.h_formula_data_node in
-          let ddecl = look_up_data_def no_pos data_decls dn.CF.h_formula_data_name in
-          let node = { ViewGraph.Node.node_name = nname;
-                       ViewGraph.Node.node_data = ddecl;
-                       ViewGraph.Node.node_view = []; } in
-          Hashtbl.add tbl_nodes nname node
+          let dname = dn.CF.h_formula_data_name in
+          let ddecl = look_up_data_def_raw data_decls dname in
+          let vertex = (
+            try ViewGraph.get_vertex bg nname
+            with Not_found ->
+              let v = ViewGraph.make_vertex nname ddecl ViewSet.empty in
+              let _ = ViewGraph.add_vertex bg v in
+              v
+          ) in
+          List.iter2 (fun sv (field,_)  ->
+            let vartype = P.type_of_spec_var sv in
+            let fieldname = snd field in
+            match vartype with
+            | Named nametype -> (
+                let varname = P.name_of_spec_var sv in
+                try (
+                  let ddecl_var = look_up_data_def_raw data_decls nametype in
+                  let vertex_var = (
+                    try ViewGraph.get_vertex bg varname
+                    with Not_found ->
+                      let v = ViewGraph.make_vertex varname ddecl_var ViewSet.empty in
+                      let _ = ViewGraph.add_vertex bg v in
+                      v
+                  ) in
+                  let lbl = ViewGraph.FieldAccess (dname, fieldname) in
+                  let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
+                  ViewGraph.add_edge bg node_edge
+                ) with Not_found -> ()
+              )
+            | _ -> ()
+          ) dn.CF.h_formula_data_arguments ddecl.data_fields
       | CF.ViewNode vn -> 
           let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
-          let vdecl = look_up_view_def no_pos view_decls vn.CF.h_formula_view_name in
-          let ddecl = look_up_data_def no_pos data_decls vdecl.view_data_name in
-          let node = { ViewGraph.Node.node_name = nname;
-                       ViewGraph.Node.node_data = ddecl;
-                       ViewGraph.Node.node_view = [vdecl]; } in
-          Hashtbl.add tbl_nodes nname node
+          let vname = vn.CF.h_formula_view_name in
+          let vd = look_up_view_def_raw 0 view_decls vname in
+          let ddecl = look_up_data_def_raw data_decls vd.view_data_name in
+          let vertex = (
+            try ViewGraph.get_vertex bg nname
+            with Not_found ->
+              let v = ViewGraph.make_vertex nname ddecl ViewSet.empty in
+              let _ = ViewGraph.add_vertex bg v in
+              v
+          ) in
+          let _ = ViewSet.add vd vertex.ViewGraph.vertex_view in
+          let _ = ViewGraph.add_vertex bg vertex in
+          List.iter2 (fun sv field  ->
+            let vartype = P.type_of_spec_var sv in
+            let fieldname = P.name_of_spec_var field in
+            match vartype with
+            | Named nametype -> (
+                let varname = P.name_of_spec_var sv in
+                try (
+                  let ddecl_var = look_up_data_def_raw data_decls nametype in
+                  let vertex_var = (
+                    try ViewGraph.get_vertex bg varname
+                    with Not_found ->
+                      let v = ViewGraph.make_vertex varname ddecl_var ViewSet.empty in
+                      let _ = ViewGraph.add_vertex bg v in
+                      v
+                  ) in
+                  let _ = ViewSet.add vd vertex_var.ViewGraph.vertex_view in
+                  let lbl = ViewGraph.FieldAccess (vname, fieldname) in
+                  let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
+                  ViewGraph.add_edge bg node_edge
+                ) with Not_found -> ()
+              )
+            | _ -> ()
+          ) vn.CF.h_formula_view_arguments vdecl.view_vars
       | CF.Star sf ->
           analyze_heap sf.CF.h_formula_star_h1;
           analyze_heap sf.CF.h_formula_star_h2
@@ -2639,7 +2716,11 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
                     ^ (!print_h_formula hf) in
           report_error no_pos msg
     ) in
-    vg
+    let rec analyze_pure pf = (
+    ) in
+    let _ = analyze_heap hf in
+    let _ = analyze_pure (MP.pure_of_mix mf) in
+    bg
   ) in
   List.map (fun (branch, lbl) ->
     let bg = build_branch_graph branch in
