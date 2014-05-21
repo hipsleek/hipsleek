@@ -4656,6 +4656,7 @@ and drop_bag_b_formula (bf : b_formula) : b_formula =
   Drop floating-point constraints
 *)
 let rec drop_float_formula (f0 : formula) : formula = match f0 with
+  | Pure_Baga _ -> f0
   | BForm (bf,lbl) -> BForm (drop_float_b_formula bf, lbl)
   | And (f1, f2, pos) -> mkAnd (drop_float_formula f1) (drop_float_formula f2) pos 
   | AndList b -> AndList (map_l_snd drop_float_formula b)
@@ -4941,9 +4942,11 @@ let rec drop_disjunct (f:formula) : formula =
 	| Not (f,_,_) -> f  (* Not ((drop_disjunct f),l) TODO: investigate if f is the proper return value, in conjunction with case inference*)
 	| Forall (q,f,lbl,l) -> Forall (q,(drop_disjunct f),lbl, l)
 	| Exists (q,f,lbl,l) -> Exists (q,(drop_disjunct f),lbl, l) 
-          
+
+(* WN TODO : this floating does not seem to be safe? as there may be clashes and the order
+   between universal and existentential is important! *)      
 and float_out_quantif f = match f with
-  | BForm b-> (f,[],[])
+  | BForm b | Pure_Baga _ -> (f,[],[])
   | And (b1,b2,l) -> 
 		let l1,l2,l3 = float_out_quantif b1 in
 		let q1,q2,q3 = float_out_quantif b2 in
@@ -5670,7 +5673,7 @@ and arith_simplify_x (pf : formula) :  formula =
 	  
 let get_pure_label n =  match n with
   | And _ 
-  | AndList _ ->  None
+  | AndList _ | Pure_Baga _ ->  None
   | BForm (_,l) 
   | Or (_,_,l,_) 
   | Not (_,l,_) 
@@ -6221,7 +6224,7 @@ let rename_labels  e=
 				| Some (_,s) -> (fresh_branch_point_id s) in	
 		match e with
 		| BForm (b,f_l) -> Some (BForm (b,(n_l_f f_l)))
-		| And _
+		| And _ | Pure_Baga _
 		| AndList _ -> None
 		| Or (e1,e2,f_l,l) -> (Some (Or (e1,e2,(n_l_f f_l),l)))
 		| Not (e1,f_l, l) -> (Some (Not (e1,(n_l_f f_l),l)))
@@ -7474,10 +7477,12 @@ and drop_xpure_pformula pf= match pf with
 
 and drop_xpure_bformula (pf, a) =  (drop_xpure_pformula pf, a)
 
+(* WN : what is xpure? why do we need to drop it? *)
 and drop_xpure f0 =
   let rec helper f=
     match f with
       | BForm (bf, ofl) -> BForm (drop_xpure_bformula bf, ofl)
+      | Pure_Baga _ -> f
       | And (f1, f2, p) -> begin
             let nf1 = helper f1 in
             let nf2 = helper f2 in
