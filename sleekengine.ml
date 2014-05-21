@@ -38,6 +38,8 @@ module TP = Tpdispatcher
 
 let sleek_proof_counter = new Gen.counter 0
 
+let unexpected_cmd = ref []
+
 (*
   Global data structures. If we want to support push/pop commands,
   we'll need to make them into a stack of scopes.
@@ -1343,6 +1345,7 @@ let process_validate exp_res ils_es=
             then
               res_str := "Expected.\n"
             else
+              let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
               res_str :=  "Not Expected.\n"
           in
           (**res = Fail*)
@@ -1355,6 +1358,7 @@ let process_validate exp_res ils_es=
                   then
                     res_str := "Expected.\n"
                   else
+                    let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := "Not Expected.\n"
                 in
                 (false, [], [])
@@ -1366,6 +1370,7 @@ let process_validate exp_res ils_es=
                   then
                     res_str := "Expected.\n"
                   else
+                    let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := "Not Expected.\n"
                 in
                 (true, ls_a_es, CP.remove_dups_svl act_vars)

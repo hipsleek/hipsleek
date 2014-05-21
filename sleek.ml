@@ -248,15 +248,12 @@ let parse_file (parse) (source_file : string) =
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
-  (*Long: reset expected_cmd = [] *)
+  (*Long: reset unexpected_cmd = [] *)
+  Sleekengine.unexpected_cmd := [];
   List.iter proc_one_cmd cmds
 
 
-
-
-
-
-let main () = 
+let main () =
   let _ = Globals.is_sleek_running := true in
   let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_include_decls =[];
@@ -401,6 +398,10 @@ let _ =
     (* let _ = print_endline "before main" in *)
     main ();
     (*Long: print unexpected cmds if any (reset expected_cmd != []) *)
+    let _ = print_string "Warning: " in
+    let _ = List.iter (fun id_cmd ->
+        print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+    let _ = print_string "\n\n" in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
