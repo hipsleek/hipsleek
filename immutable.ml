@@ -1266,14 +1266,14 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
             CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
                 h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0);
             } in
-          (* let new_f = maybe_replace_w_empty new_f in *)
+          let new_f = maybe_replace_w_empty new_f in
           new_f
     | CF.ViewNode h -> 
           let f args = restore_tmp_ann args pure0 in
           let new_pimm = apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
           let new_f = CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
               h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg} in
-          (* let new_f = maybe_replace_w_empty new_f in *)
+          let new_f = maybe_replace_w_empty new_f in
           new_f
     | _          -> f
 
@@ -1901,3 +1901,4 @@ let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * 
 
 let initialize_imm_args args =
   List.map (fun _ -> Some (Ipure.ConstAnn(Mutable))) args
+

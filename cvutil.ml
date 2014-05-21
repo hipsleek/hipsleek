@@ -158,6 +158,20 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
 (**************************************************************************)
 (******************************* XPURE *****************************)
 (**************************************************************************)
+(* Transform dlist to pure formula *)
+let dlist_2_pure diff = 
+    let rec merge dlist =
+      match dlist with
+        | [] -> CP.mkTrue no_pos
+        | x::xs -> List.fold_left (fun a y ->
+              CP.mkAnd (CP.mkPure (CP.mkNeq x y no_pos)) a no_pos) (merge xs) xs
+    in 
+    let diff_l = List.map (fun dlist ->
+        let dlist = List.map (fun x -> CP.mkVar x no_pos) dlist in
+        merge dlist) diff.mem_formula_mset in
+    let diff_l = CP.conj_of_list diff_l no_pos in
+    let mf = MCP.mix_of_pure diff_l in
+    mf
 
 (* WN : this calculation on mem_formula need to be revamped *) 
 let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
@@ -1168,18 +1182,8 @@ let xpure_heap_new (prog : prog_decl) (h0 : h_formula) (p0 : mix_formula) (which
   let (mf,svl,diff) as x = xpure_heap_x prog h0 p0 which_xpure in
   if (!Globals.ineq_opt_flag) then x
   else
-    (* Transform dlist to pure formula *)
-    let rec merge dlist =
-      match dlist with
-        | [] -> CP.mkTrue no_pos
-        | x::xs -> List.fold_left (fun a y ->
-              CP.mkAnd (CP.mkPure (CP.mkNeq x y no_pos)) a no_pos) (merge xs) xs
-    in 
-    let diff_l = List.map (fun dlist ->
-        let dlist = List.map (fun x -> CP.mkVar x no_pos) dlist in
-        merge dlist) diff.mem_formula_mset in
-    let diff_l = CP.conj_of_list diff_l no_pos in
-    let mf = MCP.merge_mems mf (MCP.mix_of_pure diff_l) true in
+    let diff_m = dlist_2_pure diff in
+    let mf = MCP.merge_mems mf diff_m true in
     (mf,svl,{mem_formula_mset = []})
 
 (*For fractional permissons, the pure constraint of the LHS is required*)
@@ -1619,3 +1623,99 @@ let prune_pred_struc prog (simp_b:bool) f =
 (********************************************************************)
 (*******************************END PRUNE-PRED **************************)
 (********************************************************************)
+
+  (************* REMOVE @L NODES FROM FORMULA ***************)
+let remove_lend_from_heap_helper f h1 h2  =
+  let h1, x1, m1 = f h1 in 
+  let h2, x2, m2 = f h2 in
+  let x = 
+    match x1,x2 with
+      | Some x, Some y -> Some (CF.add_mix_formula_to_mix_formula x y)
+      | Some x, _ 
+      | _, Some x      -> Some x
+      | None, None     -> None
+  in
+  (* let m =  CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset in *)
+  (h1, h2, x, m1@m2)
+
+let remove_lend_from_heap_formula prog p0 which_xpure fh = (* fh *)
+  let rec remove_lend_from_heap_formula_helper prog p0 which_xpure fh =
+    let fun_help =  (remove_lend_from_heap_formula_helper prog p0 which_xpure) in 
+    match fh with
+      | CF.Star h  -> 
+            let h1, h2 = h.CF.h_formula_star_h1,  h.CF.h_formula_star_h2 in 
+            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let fh = CF.Star {h with h_formula_star_h1 = h1; h_formula_star_h2 = h2;} in
+            (fh, x,m)
+      | CF.Conj h  -> 
+            let h1, h2 =  h.CF.h_formula_conj_h1, h.CF.h_formula_conj_h2 in
+            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let fh = CF.Conj {h with h_formula_conj_h1 = h1; h_formula_conj_h2 = h2;} in
+            (fh, x,m)
+      | CF.ConjStar h  -> 
+            let h1, h2 = h.CF.h_formula_conjstar_h1, h.CF.h_formula_conjstar_h2 in
+            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let fh = CF.ConjStar {h with h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2;} in
+            (fh, x,m)
+      | CF.ConjConj h  ->
+            let h1, h2 = h.CF.h_formula_conjconj_h1, h.CF.h_formula_conjconj_h2 in
+            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let fh = CF.ConjConj {h with h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2;} in
+            (fh, x,m)
+      | CF.Phase h -> 
+            let h1, h2 = h.CF.h_formula_phase_rd, h.CF.h_formula_phase_rw in
+            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let fh = CF.Phase {h with h_formula_phase_rd = h1; h_formula_phase_rw = h2;} in
+            (fh, x,m)
+      | CF.DataNode (h1) -> 
+            if (Immutable.isLend h1.h_formula_data_imm) then
+              (* let xpure, _  = xpure_heap_mem_enum prog fh p0 which_xpure in *)
+              let xpure, _, _  = xpure_heap_symbolic 9 prog fh p0 which_xpure in
+              (HEmp, Some xpure, [h1.h_formula_data_node])
+            else (fh, None, [])
+      | CF.ViewNode (h1) ->
+            if (Immutable.isLend h1.h_formula_view_imm) then
+              (* let xpure, _ = xpure_heap_mem_enum prog fh p0 which_xpure in *)
+              let xpure, _, _  = xpure_heap_symbolic 10 prog fh p0 which_xpure in
+              (HEmp, Some xpure, [h1.h_formula_view_node])
+            else (fh, None, [])
+      | _          -> (fh, None, [])
+  in
+  remove_lend_from_heap_formula_helper prog p0 which_xpure fh
+
+let remove_lend_from_formula prog f = (* f *)
+  let is_intersect_non_empty lst1 lst2 = 
+    not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) in
+  let fun_helper p h = 
+    (* decide below the value for which_xpure (1 or 0) ? *)
+    let _, disj = xpure_heap_mem_enum prog h p 1 in 
+    let fh, x, removed_vars = remove_lend_from_heap_formula prog p 1 h in
+    let pure = match x with
+      | Some pr -> MCP.merge_mems pr p true
+      | None   -> p in
+    (* filter disj so that it will contain only those sets related to the removed nodes *)
+    let disj = List.filter (fun dl -> is_intersect_non_empty dl removed_vars ) disj.mem_formula_mset in
+    let p_disj = dlist_2_pure {mem_formula_mset = disj} in
+    let pure = MCP.merge_mems p_disj pure true in
+    (fh, pure)
+  in  
+  let rec remove_lend_from_formula_helper prog f =
+  match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	  let rf1 = remove_lend_from_formula_helper prog f1 in
+	  let rf2 = remove_lend_from_formula_helper prog f2 in
+	  let resform = mkOr rf1 rf2 pos in
+	  resform
+    | Base fb ->
+          let fh, pure = fun_helper fb.formula_base_pure fb.formula_base_heap in
+          Base({fb with formula_base_heap = fh;  formula_base_pure = pure })
+    | Exists fe ->
+          let fh, pure = fun_helper fe.formula_exists_pure fe.formula_exists_heap in
+          Exists({fe with formula_exists_heap = fh; formula_exists_pure = pure }) 
+  in remove_lend_from_formula_helper prog f
+
+let remove_lend_from_formula prog f =
+  let pr = Cprinter.string_of_formula in 
+  Debug.no_1 "remove_lend_from_formula" pr pr (fun _ -> remove_lend_from_formula prog f) f
+
+  (************* end REMOVE @L NODES FROM FORMULA  ***************)

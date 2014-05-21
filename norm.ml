@@ -602,3 +602,13 @@ let norm_ann_seg_opz iprog cprog cviews=
   let pr2 = pr_list_ln pr1 in
   Debug.no_1 "norm_ann_seg_opz" pr2 (pr_pair string_of_bool pr2)
       (fun _ -> norm_ann_seg_opz_x iprog cprog cviews) cviews
+
+  (************* NORM for the FORMULA USED DURING UNFOLDING ***************)
+
+and norm_formula_for_unfold cprog vdef = 
+  let new_un_formula = List.map (fun (def,l) -> (Cvutil.remove_lend_from_formula cprog def, l)) vdef.C.view_un_struc_formula in
+  {vdef with C.view_un_struc_formula =  new_un_formula;}
+
+  (*********** end NORM for the FORMULA USED DURING UNFOLDING *************)
+  
+
