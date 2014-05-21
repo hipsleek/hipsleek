@@ -28,6 +28,8 @@ rule tokenizer = parse
   | intnum as numstr { INT_LIT (int_of_string numstr) }
   | floatnum as numstr { FLOAT_LIT (float_of_string numstr) }
   | id as idstr { ID idstr }
+  | ':' { COLON }
+  | '"' { QUOTATION }
   | whitespace { tokenizer lexbuf }
 
 

@@ -1121,7 +1121,7 @@ open Z3m
 
 let smt_timeout = ref 5.0
 
-let push_smt_input inp f_get_output timeout f_timeout = 
+let push_smt_input inp timeout f_timeout = 
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -1133,9 +1133,7 @@ let push_smt_input inp f_get_output timeout f_timeout =
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
     let _ = if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
-    flush (!prover_process.outchannel)
-    (* f_get_output (!prover_process.inchannel) (* Collect all output without filtering *) *)
-  ) in
+    flush (!prover_process.outchannel)) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc inp timeout f_timeout in
   let tstoplog = Gen.Profiling.get_time () in
   let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
@@ -1163,30 +1161,22 @@ let get_model is_linear vars assertions =
   
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
-    (* !prover_process.inchannel *)
   ) in
-  (* let model = push_smt_input smt_inp icollect_model !smt_timeout fail_with_timeout in *)
-  let _ = push_smt_input smt_inp idf !smt_timeout fail_with_timeout in
+  let _ = push_smt_input smt_inp !smt_timeout fail_with_timeout in
   let model_chn = !prover_process.inchannel in
   
-  (* let model = (run "" !smtsolver_name smt_inp 5.0).original_output_text in *)
-  
-  (* let _ =                                                                   *)
-  (*   Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;               *)
-  (*   Debug.tinfo_hprint (add_str "z3m input:\n " idf) smt_inp no_pos;        *)
-  (*   Debug.tinfo_hprint (add_str "z3m output: " (pr_list idf)) model no_pos  *)
-  (* in                                                                        *)
-
   let m = 
-    (* try *)
-      (* if ((String.compare (List.hd model) "unsat") != 0) then *)
-        (* let inp = String.concat "\n" (List.tl model) in *)
-        (* let lexbuf = Lexing.from_string inp in          *)
-        let lexbuf = Lexing.from_channel model_chn in
-        let sol = Z3mparser.output Z3mlexer.tokenizer lexbuf in
-        sol
-      (* else Unsat *)
-    (* with _ -> Sat_or_Unk [] *)
+    try
+      let lexbuf = Lexing.from_channel model_chn in
+      let sol = Z3mparser.output Z3mlexer.tokenizer lexbuf in
+      (* let _ = match sol with                          *)
+      (* | Unsat -> input_line !prover_process.inchannel *)
+      (* | _ -> "" in                                    *)
+      sol
+    with _ -> 
+      (* let tok = Lexing.lexeme lexbuf in                                    *)
+      (* let _ = print_endline ((Printexc.to_string e) ^ " token: " ^ tok) in *)
+      Sat_or_Unk []
   in m 
 
 let get_model is_linear vars assertions =

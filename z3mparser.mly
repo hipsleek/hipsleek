@@ -9,13 +9,29 @@
 %token OPAREN CPAREN
 %token MODEL DEFFUN INT REAL TOINT MINUS MULT DIV EOF
 %token SAT UNSAT UNK
+%token COLON QUOTATION
 
 %start output
   %type <Z3m.z3m_res> output
 %%
 
 output:
-  sat_unk model { Z3m.Sat_or_Unk $2 }
+    sat_unk model { Z3m.Sat_or_Unk $2 }
+  /* | UNSAT { Z3m.Unsat } */
+  | UNSAT OPAREN discardable_tokens CPAREN { Z3m.Unsat }
+  ;
+
+discardable_tokens:
+    discardable_tokens discardable_token {}
+  | discardable_token {}
+  ;
+
+discardable_token:
+    MODEL {}
+  | ID {}
+  | INT_LIT {}
+  | COLON {}
+  | QUOTATION {}
   ;
 
 sat_unk:
@@ -29,7 +45,7 @@ model:
 
 sol_list:
     sol { [$1] }
-	| sol sol_list { [$1] @ $2 }
+	| sol_list sol { $1 @ [$2] }
   ;
 
 sol:
