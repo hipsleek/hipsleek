@@ -432,22 +432,31 @@ let rec icollect_output chn accumulated_output : string list =
     with | End_of_file -> accumulated_output in
   output
 
-let line_stream_of_channel channel =
-  Stream.from (fun _ ->
-    try Some (input_line channel) 
-    with End_of_file -> None)
+let count_paren str =
+  let len = String.length str in
+  let rec helper i =
+    if i == len then (0, 0)
+    else
+      let o, c = helper (i + 1) in
+      if str.[i] == '(' then (o + 1, c)
+      else if str.[i] == ')' then (o, c + 1)
+      else (o, c)
+  in helper 0  
 
 let icollect_model chn: string list =
-  let rec helper accumulated_output =
+  let rec helper cnt accumulated_output =
     try
-      let line = Scanf.fscanf chn "%[^\r\n]\n" idf in
-      let _ = print_endline ("line: " ^ line) in
-      if ((String.compare line "") != 0) then
-        helper (accumulated_output @ [line])
-      else accumulated_output @ [line]
+      let line = input_line chn in
+      let cnt_open, cnt_close = count_paren line in
+      let cnt = cnt + cnt_open - cnt_close in
+      if (cnt == 0) then
+        accumulated_output @ [line]
+      else helper cnt (accumulated_output @ [line])
     with _ -> accumulated_output
-  in helper []
-
+  in
+  let first_line = input_line chn in
+  helper 0 [first_line]
+  
 let rec collect_output chn accumulated_output : string list =
   let output =
     try
