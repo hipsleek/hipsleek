@@ -22,7 +22,7 @@
 
 
 
-(define-fun ListO ((?x GTyp) (?y GTyp)) Space
+(define-fun List0 ((?x GTyp) (?y GTyp)) Space
 (tospace (or
 
         (and (distinct nil ?x)
@@ -62,11 +62,11 @@
 
 ;;;ListE_1(x,y) \/ ListO_1(x,y) |- List_2(x,y)
 
-(define-fun alpha2 () SetLoc)
-(define-fun alpha3 () SetLoc)
+(declare-fun alpha2 () SetLoc)
+(declare-fun alpha3 () SetLoc)
 
-(define-fun x () GenTyp)
-(define-fun y () GenTyp)
+(declare-fun x () GenTyp)
+(declare-fun y () GenTyp)
 
 (assert (or
 	(tobool (index alpha1 (ListE x y)))
