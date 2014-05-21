@@ -8,7 +8,6 @@ open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-type n
 
 
 module F = Cformula
@@ -2478,7 +2477,7 @@ let get_emp_map cprog=
  *      then the view is nontouching
  *)
 let is_touching_view_x (vdecl: view_decl) : bool =
-  (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
   let cont_vars = vdecl.view_cont_vars in
@@ -2542,7 +2541,7 @@ let is_touching_view (vdecl: view_decl) : bool =
  *      then the view is nonsegmented
  *)
 let is_segmented_view_x (vdecl: view_decl) : bool =
-  (* requires: vdef must be preprocessed to fill the view_cont_vars field *)
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let pos = vdecl.view_pos in
   let cont_vars = vdecl.view_cont_vars in
   let is_nonsegmented_branch branch = (
@@ -2562,7 +2561,94 @@ let is_segmented_view (vdecl: view_decl) : bool =
   let pr_out = string_of_bool in
   Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
 
+module ViewGraph = struct
+  module Node = struct
+    type t = { node_name: string;
+               node_data: data_decl;
+               node_view: view_decl list; }
+    let compare x y = String.compare x.node_name y.node_name
+    let hash = Hashtbl.hash
+    let equal x y = (String.compare x.node_name y.node_name) == 0
+  end
+  
+  module Edge = struct
+    type t = | FieldAccess of (string * string)   (* view/data name + field name *)
+             | Equality
+             | Unknown
+    let compare x y = match (x, y) with
+      | Unknown, Unknown -> 0
+      | Unknown, _ -> -1
+      | _, Unknown -> 1
+      | Equality, Equality -> 0
+      | Equality, FieldAccess _ -> -1
+      | FieldAccess _, Equality -> 1
+      | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
+          let compare_host = String.compare x1 y1 in
+          if (compare_host != 0) then compare_host
+          else String.compare x2 y2
+    let hash x y = Hashtbl.hash
+    let equal x y = match (x, y) with
+      | Unknown, Unknown -> true
+      | Equality, Equality -> true
+      | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
+          ((String.compare x1 y1) == 0) && ((String.compare x2 y2) == 0)
+      | _ -> false
+    let default = Unknown
+  end
+  
+  include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Node) (Edge)
+end
+
+let build_view_graph (vdecl: view_decl) (prog: prog_decl)
+    : (ViewGraph.t * formula_label) list =
+  let data_decls = prog.prog_data_decls in
+  let view_decls = prog.prog_view_decls in
+  let build_branch_graph (branch: CF.formula) : ViewGraph.t = (
+    let vg = ViewGraph.create () in
+    let (hf,mf,_,_,_) = CF.split_components branch in
+    let tbl_nodes = Hashtbl.create 10 in
+    let self_data = look_up_data_def no_pos data_decls vdecl.view_data_name in
+    let self_node = { ViewGraph.Node.node_name = self;
+                      ViewGraph.Node.node_data = self_data;
+                      ViewGraph.Node.node_view = [vdecl]; } in
+    Hashtbl.add tbl_nodes self self_node;
+    let edges = ref [] in
+    let rec analyze_heap hf = (
+      match hf with
+      | CF.HTrue | CF.HFalse | CF.HEmp -> () (* just ignore *)
+      | CF.DataNode dn ->
+          let nname = P.name_of_spec_var dn.CF.h_formula_data_node in
+          let ddecl = look_up_data_def no_pos data_decls dn.CF.h_formula_data_name in
+          let node = { ViewGraph.Node.node_name = nname;
+                       ViewGraph.Node.node_data = ddecl;
+                       ViewGraph.Node.node_view = []; } in
+          Hashtbl.add tbl_nodes nname node
+      | CF.ViewNode vn -> 
+          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
+          let vdecl = look_up_view_def no_pos view_decls vn.CF.h_formula_view_name in
+          let ddecl = look_up_data_def no_pos data_decls vdecl.view_data_name in
+          let node = { ViewGraph.Node.node_name = nname;
+                       ViewGraph.Node.node_data = ddecl;
+                       ViewGraph.Node.node_view = [vdecl]; } in
+          Hashtbl.add tbl_nodes nname node
+      | CF.Star sf ->
+          analyze_heap sf.CF.h_formula_star_h1;
+          analyze_heap sf.CF.h_formula_star_h2
+      | _ ->
+          let msg = "build_view_graph: unsupported formula"
+                    ^ (!print_h_formula hf) in
+          report_error no_pos msg
+    ) in
+    vg
+  ) in
+  List.map (fun (branch, lbl) ->
+    let bg = build_branch_graph branch in
+    (bg, lbl) 
+  ) vdecl.view_un_struc_formula
+
+
 let categorize_view (prog: prog_decl) : prog_decl =
+  (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vdecls = prog.prog_view_decls in
   let new_vdecls = List.map (fun vd ->
     let touching = is_touching_view vd in
