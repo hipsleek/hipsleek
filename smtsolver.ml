@@ -432,31 +432,31 @@ let rec icollect_output chn accumulated_output : string list =
     with | End_of_file -> accumulated_output in
   output
 
-let count_paren str =
-  let len = String.length str in
-  let rec helper i =
-    if i == len then (0, 0)
-    else
-      let o, c = helper (i + 1) in
-      if str.[i] == '(' then (o + 1, c)
-      else if str.[i] == ')' then (o, c + 1)
-      else (o, c)
-  in helper 0  
+(* let count_paren str =                                *)
+(*   let len = String.length str in                     *)
+(*   let rec helper i =                                 *)
+(*     if i == len then (0, 0)                          *)
+(*     else                                             *)
+(*       let o, c = helper (i + 1) in                   *)
+(*       if str.[i] == '(' then (o + 1, c)              *)
+(*       else if str.[i] == ')' then (o, c + 1)         *)
+(*       else (o, c)                                    *)
+(*   in helper 0                                        *)
 
-let icollect_model chn: string list =
-  let rec helper cnt accumulated_output =
-    try
-      let line = input_line chn in
-      (* let _ = print_endline line in *)
-      let cnt_open, cnt_close = count_paren line in
-      let cnt = cnt + cnt_open - cnt_close in
-      if (cnt == 0) then accumulated_output @ [line]
-      else helper cnt (accumulated_output @ [line])
-    with _ -> accumulated_output
-  in
-  let first_line = input_line chn in
-  (* let _ = print_endline first_line in *)
-  helper 0 [first_line]
+(* let icollect_model chn: string list =                *)
+(*   let rec helper cnt accumulated_output =            *)
+(*     try                                              *)
+(*       let line = input_line chn in                   *)
+(*       (* let _ = print_endline line in *)            *)
+(*       let cnt_open, cnt_close = count_paren line in  *)
+(*       let cnt = cnt + cnt_open - cnt_close in        *)
+(*       if (cnt == 0) then accumulated_output @ [line] *)
+(*       else helper cnt (accumulated_output @ [line])  *)
+(*     with _ -> accumulated_output                     *)
+(*   in                                                 *)
+(*   let first_line = input_line chn in                 *)
+(*   (* let _ = print_endline first_line in *)          *)
+(*   helper 0 [first_line]                              *)
   
 let rec collect_output chn accumulated_output : string list =
   let output =
@@ -1121,7 +1121,7 @@ open Z3m
 
 let smt_timeout = ref 5.0
 
-let get_smt_output inp timeout f_timeout = 
+let push_smt_input inp f_get_output timeout f_timeout = 
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -1133,8 +1133,8 @@ let get_smt_output inp timeout f_timeout =
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
     let _ = if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
-    flush (!prover_process.outchannel);
-    icollect_model (!prover_process.inchannel) (* Collect all output without filtering *)
+    flush (!prover_process.outchannel)
+    (* f_get_output (!prover_process.inchannel) (* Collect all output without filtering *) *)
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc inp timeout f_timeout in
   let tstoplog = Gen.Profiling.get_time () in
@@ -1161,29 +1161,32 @@ let get_model is_linear vars assertions =
     (* "(check-sat)\n" ^ *)
     "(get-model)" in
   
-  let fail_with_timeout () = (
-    restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout));
-    []
+  let fail_with_timeout _ = (
+    restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+    (* !prover_process.inchannel *)
   ) in
-  let model = get_smt_output smt_inp !smt_timeout fail_with_timeout in
+  (* let model = push_smt_input smt_inp icollect_model !smt_timeout fail_with_timeout in *)
+  let _ = push_smt_input smt_inp idf !smt_timeout fail_with_timeout in
+  let model_chn = !prover_process.inchannel in
   
   (* let model = (run "" !smtsolver_name smt_inp 5.0).original_output_text in *)
   
-  let _ = 
-    Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;
-    Debug.tinfo_hprint (add_str "z3m input:\n " idf) smt_inp no_pos;
-    Debug.tinfo_hprint (add_str "z3m output: " (pr_list idf)) model no_pos 
-  in
+  (* let _ =                                                                   *)
+  (*   Debug.tinfo_pprint ">>>>>>> get_model_z3 <<<<<<<" no_pos;               *)
+  (*   Debug.tinfo_hprint (add_str "z3m input:\n " idf) smt_inp no_pos;        *)
+  (*   Debug.tinfo_hprint (add_str "z3m output: " (pr_list idf)) model no_pos  *)
+  (* in                                                                        *)
 
   let m = 
-    try
-      if ((String.compare (List.hd model) "unsat") != 0) then
-        let inp = String.concat "\n" (List.tl model) in
-        let lexbuf = Lexing.from_string inp in
-        let sol = Z3mparser.input Z3mlexer.tokenizer lexbuf in
-        Sat_or_Unk sol
-      else Unsat
-    with _ -> Sat_or_Unk []
+    (* try *)
+      (* if ((String.compare (List.hd model) "unsat") != 0) then *)
+        (* let inp = String.concat "\n" (List.tl model) in *)
+        (* let lexbuf = Lexing.from_string inp in          *)
+        let lexbuf = Lexing.from_channel model_chn in
+        let sol = Z3mparser.output Z3mlexer.tokenizer lexbuf in
+        sol
+      (* else Unsat *)
+    (* with _ -> Sat_or_Unk [] *)
   in m 
 
 let get_model is_linear vars assertions =

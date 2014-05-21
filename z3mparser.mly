@@ -8,13 +8,23 @@
 %token <string> ID
 %token OPAREN CPAREN
 %token MODEL DEFFUN INT REAL TOINT MINUS MULT DIV EOF
+%token SAT UNSAT UNK
 
-%start input
-  %type <(string * Z3m.z3m_val) list> input
+%start output
+  %type <Z3m.z3m_res> output
 %%
 
-input:
-  OPAREN MODEL sol_list CPAREN { $3 }
+output:
+  sat_unk model { Z3m.Sat_or_Unk $2 }
+  ;
+
+sat_unk:
+    SAT {}
+  | UNK {}
+  ;
+
+model:
+    OPAREN MODEL sol_list CPAREN { $3 }
   ;
 
 sol_list:

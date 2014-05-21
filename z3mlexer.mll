@@ -12,6 +12,9 @@ let whitespace = [' ' '\t' '\n']
 
 rule tokenizer = parse
     "model" { MODEL }
+  | "sat" { SAT }
+  | "unsat" { UNSAT }
+  | "unknown" { UNK }
   | '(' { OPAREN }
   | ')' { CPAREN }
   | "define-fun" { DEFFUN }
