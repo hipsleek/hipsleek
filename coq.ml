@@ -300,7 +300,7 @@ let rec send_formula (f : string) (nr : int) : bool =
     with 
       | Procutils.PrvComms.Timeout -> 
           begin
-            print_string("\n[coq.ml]:Timeout expcetion\n");flush stdout;
+            print_string("\n[coq.ml]:Timeout exception\n");flush stdout;
             false;
           end
   with
