@@ -967,6 +967,21 @@ let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   ) defs in
   ext_views
 
+
+let extract_view_x_invs transed_views=
+  List.fold_left (fun r vdcl ->
+      if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_x_formula) then
+        if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_user_inv) then r
+        else
+          r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_user_inv))]
+      else
+      r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_x_formula))]
+  ) [] transed_views
+
 let look_up_view_inv defs act_args name inv_compute_fnc =
   let vdcl = look_up_view_def_raw 46 defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
@@ -980,7 +995,7 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
         try
           (*case Globals.do_infer_inv = false*)
           let _ = Globals.do_infer_inv := true in
-          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula p1 in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula defs p1 in
           let _ = Globals.do_infer_inv := false in
           new_pf
         with _ -> p1

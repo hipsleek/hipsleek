@@ -579,7 +579,10 @@ let convert_data_and_pred_to_cast_x () =
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
   let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
-  let cviews0 = List.map (Astsimp.trans_view iprog []) tmp_views in
+  let cviews0 = List.fold_left (fun transed_views view ->
+      let nview = Astsimp.trans_view iprog transed_views [] view in
+      transed_views@[nview]
+) [] tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in

@@ -205,6 +205,60 @@ let rec fixcalc_of_formula e = match e with
 
 (******************************************************************************)
 
+let subst_inv_lower_view_x view_invs f0=
+   (*****************************************)
+  let rec subst_h (hf: h_formula)=
+     match hf with
+      | Star s -> begin
+          let nh1, ps1 = subst_h s.h_formula_star_h1 in
+          let nh2, ps2 = subst_h s.h_formula_star_h2 in
+          match nh1,nh2 with
+            | HEmp,HEmp -> HEmp,ps1@ps2
+            | HEmp,_ -> nh2,ps1@ps2
+            | _ , HEmp -> nh1,ps1@ps2
+            | _ ->
+                  (Star {s with h_formula_star_h1 = nh1;
+                      h_formula_star_h2 = nh2
+                  }, ps1@ps2)
+        end
+      | ViewNode vn -> begin
+          try
+            let (_,(form_args, inv)) = List.find (fun (s1,_) -> String.compare s1 vn.h_formula_view_name = 0) view_invs in
+            let sst = List.combine form_args (vn.h_formula_view_node::vn.h_formula_view_arguments) in
+            (HEmp, [ (CP.subst sst (MCP.pure_of_mix inv))])
+          with _ -> hf,[]
+        end
+      | _ -> hf,[]
+  in
+  let rec subst_helper f=
+    match f with
+      | Base fb ->
+            let nh,ps = subst_h fb.formula_base_heap in
+            let p = CP.conj_of_list ((MCP.pure_of_mix fb.formula_base_pure)::ps) (pos_of_formula f) in
+             Base {fb with formula_base_pure = MCP.mix_of_pure p;
+                     formula_base_heap = nh;} 
+      | Exists _ ->
+            let quans,bare = split_quantifiers f in
+            let nf = subst_helper  bare in
+            (add_quantifiers quans nf)
+      | Or orf ->
+            let nf1= (subst_helper orf.formula_or_f1) in
+            let nf2 = (subst_helper orf.formula_or_f2) in
+            (Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;
+            })
+  in
+  (*****************************************)
+  if view_invs = [] then f0 else subst_helper f0
+
+let subst_inv_lower_view view_invs f=
+  let pr1= Cprinter.string_of_formula in
+  let pr2 = pr_pair pr_id (pr_pair !CP.print_svl Cprinter.string_of_mix_formula) in
+  Debug.no_2 "subst_inv_lower_view" (pr_list_ln pr2) pr1 pr1
+      (fun _ _ -> subst_inv_lower_view_x view_invs f)
+      view_invs f
+(******************************************************************************)
+
 (* let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc " *)
 let fixcalc_exe = "fixcalc "
 let fixcalc_options = " -v:-1"
@@ -301,14 +355,15 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 
 (******************************************************************************)
 (* TODO: TO MERGE WITH ABOVE *)
-let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.formula =
+let compute_heap_pure_inv_x fml (name:ident) (para_names:CP.spec_var list) transed_views: CP.formula =
   let vars = para_names in
   (* Prepare the input for the fixpoint calculation *)
+  let lower_invs = Cast.extract_view_x_invs transed_views in
   let input_fixcalc = 
     try
       name ^ ":={[" ^ self ^ "," ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
       "] -> [] -> []: " ^ 
-      (string_of_elems fml (fun (c,_)-> fixcalc_of_formula c) op_or) ^
+      (string_of_elems fml (fun (c,_)-> fixcalc_of_formula (subst_inv_lower_view lower_invs c)) op_or) ^
       "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
     with _ -> report_error no_pos "Error in translating the input for fixcalc"
   in 
@@ -319,7 +374,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inp" in
+  let output_of_sleek =  Globals.fresh_any_name "fixcalc.inp" in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -336,13 +391,20 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in
   inv
 
+let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list) lower_invs: CP.formula =
+  let pr1 = !CP.print_formula in
+  let pr2 (f, _) = Cprinter.string_of_formula f in
+  Debug.no_3 "compute_heap_pure_inv" (pr_list_ln pr2) pr_id !CP.print_svl pr1
+      (fun _ _ _ ->  compute_heap_pure_inv_x fml name para_names lower_invs)
+      fml name para_names
+
 (******************************************************************************)
 
-let compute_inv_x name vars fml pf =
+let compute_inv_x name vars fml lower_views pf =
 if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
 else 
   if not !Globals.do_infer_inv then pf
-  else let new_pf = compute_heap_pure_inv fml name vars in
+  else let new_pf = compute_heap_pure_inv fml name vars lower_views in
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then 
       let _ = DD.info_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
@@ -350,17 +412,17 @@ else
       new_pf
     else pf
 
-let compute_inv name vars fml pf =
+let compute_inv name vars fml lower_views pf =
   let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
   let pr2 = !CP.print_formula in
   Debug.no_4 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) pr2 pr2
-      (fun _ _ _ _ -> compute_inv_x name vars fml pf)
+      (fun _ _ _ _ -> compute_inv_x name vars fml lower_views pf)
       name vars fml pf
 (******************************************************************************)
 
 (******************************************************************************)
 
-let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
+let compute_pure_inv_x (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
   let vars = para_names in
   let fmls = List.map (fun p -> 
     let exists_vars = CP.diff_svl (CP.fv_wo_rel p) para_names in
@@ -381,7 +443,7 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   in
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inp" in
+  let output_of_sleek = Globals.fresh_any_name "fixcalc.inp" in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -395,6 +457,12 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   (* Parse result *)
   let inv = List.hd (Parse_fix.parse_fix res) in
   inv
+
+let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
+  let pr1 = !CP.print_formula in
+  Debug.no_3 "compute_pure_inv" (pr_list_ln pr1) pr_id !CP.print_svl pr1
+      (fun _ _ _ ->  compute_pure_inv_x fmls name para_names)
+      fmls name para_names
 
 (******************************************************************************)
 

@@ -1402,7 +1402,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
       Debug.tinfo_hprint (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
           let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
-          let cviewsa = List.map (trans_view prog []) tmp_views in
+          let cviewsa = List.fold_left (fun transed_views v ->
+              let nview = trans_view prog transed_views [] v in
+              transed_views@[nview]
+          ) [] tmp_views in
            let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
            let cviews_derv = List.fold_left (fun norm_views v ->
                let der_view = Derive.trans_view_dervs prog Rev_ast.rev_trans_formula trans_view norm_views v in
@@ -1884,12 +1887,12 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   let pr =  Cprinter.string_of_struc_formula in
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
-and trans_view (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
+and trans_view (prog : I.prog_decl) transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog ann_typs vdef) vdef
+  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog transed_views ann_typs vdef) vdef
 
-and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl =
+and trans_view_x (prog : I.prog_decl) transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let _ = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
@@ -2006,7 +2009,7 @@ and trans_view_x (prog : I.prog_decl) ann_typs (vdef : I.view_decl): C.view_decl
       let _ = Debug.ninfo_hprint (add_str "cf 2" Cprinter.string_of_struc_formula) cf no_pos in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str inv_pf in
+      let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str transed_views inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -9266,7 +9269,10 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
         | None -> res
         | Some tis -> res@[(vdcl,tis)]
   ) [] tmp_views in
-  let cviews0a = List.map (fun (vdecl,tis) -> trans_view iprog tis vdecl) tmp_new_views in
+  let cviews0a = List.fold_left (fun transed_views (vdecl,tis) ->
+      let nview = trans_view iprog transed_views tis vdecl in
+      transed_views@[nview]
+  ) [] tmp_new_views in
   (*derv and spec views*)
   let cviews0 = if do_pure_extn then
     let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
