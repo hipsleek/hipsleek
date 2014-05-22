@@ -491,7 +491,7 @@ else
   else let new_pf = compute_heap_pure_inv fml name data_name vars lower_views in
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then 
-      let _ = DD.info_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
+      let _ = DD.info_hprint (add_str ("new inv("^name^")") !CP.print_formula) new_pf no_pos in
       let _ = print_endline "" in
       new_pf
     else pf
@@ -521,7 +521,7 @@ let compute_inv_mutrec_x mutrec_vnames views =
       let pf =  MCP.pure_of_mix view.Cast.view_user_inv in
       let check_imply = TP.imply_raw new_pf pf in
       if check_imply then 
-        let _ = DD.info_hprint (add_str ("new inv= " ^ vname) !CP.print_formula) new_pf no_pos in
+        let _ = DD.info_hprint (add_str ("new inv(" ^ vname^")") !CP.print_formula) new_pf no_pos in
         let _ = print_endline "" in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
