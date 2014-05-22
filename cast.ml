@@ -2583,122 +2583,155 @@ module ViewSet = Set.Make (struct
   end )
 
 module ViewGraph = struct
-  type vertex = { vertex_name: ident;
-                  vertex_data: data_decl;
-                  mutable vertex_view: ViewSet.t; }
+  module Vertex = struct
+    type t = { name: ident;
+               data: data_decl;
+               mutable view: ViewSet.t; }
+    let compare v1 v2 = String.compare v1.name v2.name
+    let hash = Hashtbl.hash
+    let equal v1 v2 = (String.compare v1.name v2.name == 0)
+  end
 
-  type label = | FieldAccess of (ident * ident)   (* view/data name + field name *)
-               | Equality
+  module EdgeLabel = struct
+    type t = | FieldAccess of (ident * ident)   (* view/data name + field name *)
+             | Equality
 
-  type edge = { edge_label: label;
-                edge_begin_vertex: vertex;
-                edge_end_vertex: vertex }
+    let compare e1 e2 = match e1, e2 with
+      | Equality, Equality -> 0
+      | Equality, FieldAccess _ -> -1
+      | FieldAccess _, Equality -> 1
+      | FieldAccess (h1,f1), FieldAccess (h2,f2) ->
+          let compare_host = (String.compare h1 h2) in
+          if (compare_host != 0) then compare_host
+          else String.compare f1 f2
 
-  type t = { vertices: (string, vertex) Hashtbl.t;
-             mutable edges: edge list }
+    let default = FieldAccess ("","")
+  end
 
-  module VertexSet = Set.Make (struct
-      type t = vertex
-      let compare x y =
-        String.compare x.vertex_name y.vertex_name
-    end )
+  include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Vertex) (EdgeLabel)
+  
+  (* type vertex = { vertex_name: ident;                                               *)
+  (*                 vertex_data: data_decl;                                           *)
+  (*                 mutable vertex_view: ViewSet.t; }                                 *)
 
-  module LabelSet = Set.Make (struct
-      type t = label
-      let compare x y = match x, y with
-        | Equality, Equality -> 0
-        | Equality, _ -> 1
-        | _, Equality -> -1
-        | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
-            let compare_host = String.compare x1 y1 in
-            if (compare_host == 0) then
-              String.compare x2 y2
-            else compare_host
-    end )
+  (* type label =                                                                      *)
 
-  let create () =
-    { vertices = Hashtbl.create 3;
-      edges = []; }
+  (* type edge = { edge_label: label;                                                  *)
+  (*               edge_begin_vertex: vertex;                                          *)
+  (*               edge_end_vertex: vertex }                                           *)
 
-  let add_vertex (g: t) (v: vertex) = Hashtbl.add g.vertices v.vertex_name v
+  (* type t = { vertices: (string, vertex) Hashtbl.t;                                  *)
+  (*            mutable edges: edge list }                                             *)
 
-  let add_edge (g: t) (e: edge) = g.edges <- g.edges @ [e]
+  (* module VertexSet = Set.Make (struct                                               *)
+  (*     type t = vertex                                                               *)
+  (*     let compare x y =                                                             *)
+  (*       String.compare x.vertex_name y.vertex_name                                  *)
+  (*   end )                                                                           *)
 
-  let equal_label x y = match x, y with
-    | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
-        (String.compare x1 y1 == 0) && (String.compare x2 y2 == 0)
-    | Equality, Equality -> true
-    | _ -> false
+  (* module LabelSet = Set.Make (struct                                                *)
+  (*     type t = label                                                                *)
+  (*     let compare x y = match x, y with                                             *)
+  (*       | Equality, Equality -> 0                                                   *)
+  (*       | Equality, _ -> 1                                                          *)
+  (*       | _, Equality -> -1                                                         *)
+  (*       | FieldAccess (x1,x2), FieldAccess (y1,y2) ->                               *)
+  (*           let compare_host = String.compare x1 y1 in                              *)
+  (*           if (compare_host == 0) then                                             *)
+  (*             String.compare x2 y2                                                  *)
+  (*           else compare_host                                                       *)
+  (*   end )                                                                           *)
 
-  let get_vertex (g: t) (vertex_name: string) = Hashtbl.find g.vertices vertex_name
+  (* let create () =                                                                   *)
+  (*   { vertices = Hashtbl.create 3;                                                  *)
+  (*     edges = []; }                                                                 *)
 
-  let get_edge_label (g: t) (lbl: label) =
-    List.find_all (fun e -> equal_label e.edge_label lbl) g.edges
+  (* let add_vertex (g: t) (v: vertex) = Hashtbl.add g.vertices v.vertex_name v        *)
 
-  let get_edge_begin_vertex (g: t) (vertex_name: ident) : edge list  =
-    List.find_all (fun e ->
-      let begin_name = e.edge_begin_vertex.vertex_name in
-      (String.compare begin_name vertex_name == 0)
-    ) g.edges
+  (* let add_edge (g: t) (e: edge) = g.edges <- g.edges @ [e]                          *)
 
-  let get_edge_end_vertex (g: t) (vertex_name: ident) : edge list =
-    List.find_all (fun e ->
-      let end_name = e.edge_end_vertex.vertex_name in
-      (String.compare end_name vertex_name == 0)
-    ) g.edges
+  (* let equal_label x y = match x, y with                                             *)
+  (*   | FieldAccess (x1,x2), FieldAccess (y1,y2) ->                                   *)
+  (*       (String.compare x1 y1 == 0) && (String.compare x2 y2 == 0)                  *)
+  (*   | Equality, Equality -> true                                                    *)
+  (*   | _ -> false                                                                    *)
 
-  let get_incomming_labels (g: t) (vertex_name: ident) : LabelSet.t =
-    let es = get_edge_end_vertex g vertex_name in
-    List.fold_left (fun set ed ->
-      LabelSet.add ed.edge_label set
-    ) LabelSet.empty es
+  let get_vertex (g: t) (vname: string) =
+    let res = ref None in
+    let _ = iter_vertex (fun v ->
+      if (String.compare v.Vertex.name vname == 0) then res := Some v
+    ) g in
+    match !res with
+    | None -> raise Not_found
+    | Some e -> e
+    
 
-  let get_outgoing_labels (g: t) (vertex_name: ident) : LabelSet.t =
-    let es = get_edge_begin_vertex g vertex_name in
-    List.fold_left (fun set ed ->
-      LabelSet.add ed.edge_label set
-    ) LabelSet.empty es
+  (* let get_edge_label (g: t) (lbl: label) =                                          *)
+  (*   List.find_all (fun e -> equal_label e.edge_label lbl) g.edges                   *)
 
-  let get_incoming_vertices (g: t) (vertex_name: ident) : VertexSet.t =
-    let es = get_edge_end_vertex g vertex_name in
-    List.fold_left (fun set ed ->
-      VertexSet.add ed.edge_begin_vertex set
-    ) VertexSet.empty es
+  (* let get_edge_begin_vertex (g: t) (vertex_name: ident) : edge list  =              *)
+  (*   List.find_all (fun e ->                                                         *)
+  (*     let begin_name = e.edge_begin_vertex.vertex_name in                           *)
+  (*     (String.compare begin_name vertex_name == 0)                                  *)
+  (*   ) g.edges                                                                       *)
 
-  let get_outgoing_vertices (g: t) (vertex_name: ident) : VertexSet.t =
-    let es = get_edge_begin_vertex g vertex_name in
-    List.fold_left (fun set ed ->
-      VertexSet.add ed.edge_end_vertex set
-    ) VertexSet.empty es
+  (* let get_edge_end_vertex (g: t) (vertex_name: ident) : edge list =                 *)
+  (*   List.find_all (fun e ->                                                         *)
+  (*     let end_name = e.edge_end_vertex.vertex_name in                               *)
+  (*     (String.compare end_name vertex_name == 0)                                    *)
+  (*   ) g.edges                                                                       *)
 
-  let make_vertex name vdata vview = { vertex_name = name;
-                                       vertex_data = vdata;
-                                       vertex_view = vview; }
+  (* let get_incomming_labels (g: t) (vertex_name: ident) : LabelSet.t =               *)
+  (*   let es = get_edge_end_vertex g vertex_name in                                   *)
+  (*   List.fold_left (fun set ed ->                                                   *)
+  (*     LabelSet.add ed.edge_label set                                                *)
+  (*   ) LabelSet.empty es                                                             *)
 
-  let make_edge lbl vbegin vend = { edge_label = lbl;
-                                    edge_begin_vertex = vbegin;
-                                    edge_end_vertex = vend; }
+  (* let get_outgoing_labels (g: t) (vertex_name: ident) : LabelSet.t =                *)
+  (*   let es = get_edge_begin_vertex g vertex_name in                                 *)
+  (*   List.fold_left (fun set ed ->                                                   *)
+  (*     LabelSet.add ed.edge_label set                                                *)
+  (*   ) LabelSet.empty es                                                             *)
 
-  let add_view_to_vertex vtx vdecl =
-    vtx.vertex_view <- ViewSet.add vdecl vtx.vertex_view
+  (* let get_incoming_vertices (g: t) (vertex_name: ident) : VertexSet.t =             *)
+  (*   let es = get_edge_end_vertex g vertex_name in                                   *)
+  (*   List.fold_left (fun set ed ->                                                   *)
+  (*     VertexSet.add ed.edge_begin_vertex set                                        *)
+  (*   ) VertexSet.empty es                                                            *)
 
-  let string_of_label lbl =  match lbl with
-    | Equality -> "equality"
-    | FieldAccess (x,y) -> x^"."^y
+  (* let get_outgoing_vertices (g: t) (vertex_name: ident) : VertexSet.t =             *)
+  (*   let es = get_edge_begin_vertex g vertex_name in                                 *)
+  (*   List.fold_left (fun set ed ->                                                   *)
+  (*     VertexSet.add ed.edge_end_vertex set                                          *)
+  (*   ) VertexSet.empty es                                                            *)
+
+  let make_vertex vname vdata vview = { Vertex.name = vname;
+                                        Vertex.data = vdata;
+                                        Vertex.view = vview; }
+
+  let make_edge lbl vbegin vend = (vbegin, lbl, vend)
+
+  (* let add_view_to_vertex vtx vdecl =                                                *)
+  (*   vtx.vertex_view <- ViewSet.add vdecl vtx.vertex_view                            *)
+
+  let string_of_vertex v = v.Vertex.name
+
+  let string_of_edge_label e =  match e with
+    | EdgeLabel.Equality -> "equality"
+    | EdgeLabel.FieldAccess (h,f) -> h^"."^f
 
   let string_of_graph g =
     let str = ref "view_graph:\n" in
     str := !str ^ "  vertices: ";
-    let _ = Hashtbl.iter (fun _ v ->
-      str := !str ^ v.vertex_name ^ ", "
-    ) g.vertices in
+    let _ = iter_vertex (fun v ->
+      str := !str ^ (string_of_vertex v) ^ ", "
+    ) g in
     str := !str ^ "\n  edges:\n";
-    let _ = List.iter (fun e ->
-      let x = e.edge_begin_vertex.vertex_name in
-      let y = e.edge_end_vertex.vertex_name in
-      str := !str ^ "       " ^ (string_of_label e.edge_label)
-             ^ ": " ^ x ^ " --> " ^ y ^ "\n";
-    ) g.edges in
+    let _ = iter_edges_e (fun e ->
+      let (s,l,d)  = e in 
+      str := !str ^ "       " ^ "<" ^ (string_of_edge_label l) ^ "> : "
+             ^ (string_of_vertex s) ^ " --> " ^ (string_of_vertex d) ^ "\n";
+    ) g in
     !str
 end
 
@@ -2720,12 +2753,11 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
           let varname = P.name_of_spec_var sv in
           try (
             let ddecl_var = look_up_data_def_raw data_decls nametype in
-            let vdecl_var = ViewSet.singleton vdecl in
-            let vertex_var = ViewGraph.make_vertex varname ddecl_var vdecl_var in
+            let vertex_var = ViewGraph.make_vertex varname ddecl_var ViewSet.empty in
             let _ = ViewGraph.add_vertex bg vertex_var in
-            let lbl = ViewGraph.FieldAccess (vdecl.view_name, varname) in
+            let lbl = ViewGraph.EdgeLabel.FieldAccess (vdecl.view_name, varname) in
             let edge = ViewGraph.make_edge lbl vertex_self vertex_var in
-            ViewGraph.add_edge bg edge
+            ViewGraph.add_edge_e bg edge
           ) with Not_found -> ()
         )
       | _ -> ()
@@ -2759,9 +2791,9 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
                       let _ = ViewGraph.add_vertex bg v in
                       v
                   ) in
-                  let lbl = ViewGraph.FieldAccess (dname, fieldname) in
-                  let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
-                  ViewGraph.add_edge bg node_edge
+                  let lbl = ViewGraph.EdgeLabel.FieldAccess (dname, fieldname) in
+                  let edge = ViewGraph.make_edge lbl vertex vertex_var in
+                  ViewGraph.add_edge_e bg edge
                 ) with Not_found -> ()
               )
             | _ -> ()
@@ -2795,7 +2827,6 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
                       let _ = ViewGraph.add_vertex bg v in
                       v
                   ) in
-                  let _ = ViewGraph.add_view_to_vertex vertex_var vd in
                   let lbl = ViewGraph.FieldAccess (vname, fieldname) in
                   let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
                   ViewGraph.add_edge bg node_edge
