@@ -10,36 +10,46 @@ let process_data_def ddef =
       s1 ^ ("(declare-fun " ^ id ^ " () (Field " ^ ddef.I.data_name ^ " " ^ (Globals.string_of_typ typ) ^ "))\n")) s1 ddef.I.data_fields in
   s2
 
+let rec process_exp e =
+  match e with
+    | Ipure.Var _ -> "?" ^ Iprinter.string_of_formula_exp e
+    | _ ->
+          let s = Iprinter.string_of_formula_exp e in
+          if s = "null" then "nil" else s
+
+
+let rec process_p_formula pf =
+  match pf with
+    | Ipure.Eq (e1, e2, _) ->
+          "(= " ^ (process_exp e1) ^ " " ^ (process_exp e2) ^ ")\n"
+    | _ -> "later (base)\n"
+
 let rec process_pure_formula pf =
   match pf with
-    | Ipure.BForm ((pf, _), _) -> (
-          match pf with
-            | Ipure.Eq (e1, e2, _) ->
-                  let s1 = match e1 with
-                    | Ipure.Var _ -> "?" ^ Iprinter.string_of_formula_exp e1
-                    | _ -> Iprinter.string_of_formula_exp e1
-                  in
-                  let s2 = match e2 with
-                    | Ipure.Var _ -> "?" ^ Iprinter.string_of_formula_exp e2
-                    | _ -> Iprinter.string_of_formula_exp e2
-                  in
-                  let s1 = if (s1 = "null") then "nil" else s1 in
-                  let s2 = if (s2 = "null") then "nil" else s2 in
-                  "(= " ^ s1 ^ " " ^ s2 ^ ")\n"
-            | _ -> "later (base)\n"
-      )
+    | Ipure.BForm ((pf, _), _) ->
+          process_p_formula pf
     | _ -> ""
 
 let rec process_h_formula hf =
   match hf with
-    | Iformula.Star _ -> " (ssep )"
+    | Iformula.Star s ->
+          " (ssep " ^ (process_h_formula s.Iformula.h_formula_star_h1) ^ " " ^ (process_h_formula s.Iformula.h_formula_star_h2) ^ ")"
     | Iformula.Conj _ -> " (conj )"
-    | Iformula.ConjStar _ -> " (conj )"
-    | Iformula.ConjConj _ -> " (conj )"
-    | Iformula.HeapNode _ -> " (heapnode )"
+    | Iformula.ConjStar _ -> " (conjstar )"
+    | Iformula.ConjConj _ -> " (conjconj )"
+    | Iformula.HeapNode hn ->
+          let heap_name = hn.Iformula.h_formula_heap_name in
+          let (id,_) = hn.Iformula.h_formula_heap_node in
+          if heap_name = "node"
+          then
+            (* let _ = print_endline id in *)
+            "(pto ?" ^ id ^ (List.fold_left (fun s exp -> s ^ " (ref " ^ (process_exp exp) ^ ")") "" hn.Iformula.h_formula_heap_arguments) ^ " )"
+          else
+            "(" ^ heap_name ^ " ?" ^ id ^ (List.fold_left (fun s exp -> s ^ " " ^ (process_exp exp)) "" hn.Iformula.h_formula_heap_arguments) ^ ")"
     | Iformula.HeapNode2 _ -> " (heapnode2 )"
     | Iformula.HRel _ -> " (hrel )"
-    | Iformula.Phase p -> " (phase )"
+    | Iformula.Phase p ->
+          process_h_formula p.Iformula.h_formula_phase_rw
     | _ -> " (later )"
 
 let rec process_formula f =
@@ -66,8 +76,8 @@ let process_pred_def pdef =
   let s1 = ("(declare-fun " ^ pdef.I.view_name ^ " ((?self )" ^ (List.fold_left (fun s v -> s ^ "(?" ^ v ^ " )") "" pdef.I.view_vars) ^ ")\n") in
   let s2 = s1 ^ "Space (tospace " in
   let s3 = s2 ^ (process_struct_formula pdef.I.view_formula) ^ "))" in
-  let _ = print_endline (Iprinter.string_of_struc_formula pdef.I.view_formula) in
-  let _ = List.iter (fun tid -> print_endline (Iprinter.string_of_typed_var tid)) pdef.I.view_typed_vars in
+  (* let _ = print_endline (Iprinter.string_of_struc_formula pdef.I.view_formula) in *)
+  (* let _ = List.iter (fun tid -> print_endline (Iprinter.string_of_typed_var tid)) pdef.I.view_typed_vars in *)
   s3
 
 let process_cmd cmd =
