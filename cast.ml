@@ -995,7 +995,7 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
         try
           (*case Globals.do_infer_inv = false*)
           let _ = Globals.do_infer_inv := true in
-          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula defs p1 in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula  vdcl.view_data_name defs p1 in
           let _ = Globals.do_infer_inv := false in
           new_pf
         with _ -> p1
@@ -2810,11 +2810,14 @@ let categorize_view (prog: prog_decl) : prog_decl =
               view_is_segmented = segmented; }
   ) vdecls in
   let _ = List.iter (fun vd ->
-    let _ = print_endline ("== view: " ^ vd.view_name) in
+      let _ = Debug.ninfo_hprint (add_str "== view " pr_id) vd.view_name no_pos in
+    (* let _ = print_endline ("== view: " ^ vd.view_name) in *)
     let vgs = build_view_graph vd prog in
     List.iter (fun (vg, lbl) ->
-      print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"
-                             ^ (ViewGraph.string_of_graph vg));
+      (* print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":" *)
+      (*                        ^ (ViewGraph.string_of_graph vg)); *)
+        let _ = Debug.ninfo_hprint (add_str "    -- lbl  " (pr_pair string_of_formula_label ViewGraph.string_of_graph)) (lbl, vg) no_pos in
+        ()
     ) vgs
   ) vdecls in 
   { prog with prog_view_decls = new_vdecls }

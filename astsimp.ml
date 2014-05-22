@@ -2018,7 +2018,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
          should be stronger than pf *)
       let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
         vdef.I.view_name  mutrec_vnames then inv_pf
-      else Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str transed_views inv_pf in
+      else Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str data_name transed_views inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -2078,7 +2078,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   )
 
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ=
-  let _ = Debug.info_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
+  let _ = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
   (*******************************)
   let cmp_id s1 s2=  String.compare s1 s2 = 0 in
