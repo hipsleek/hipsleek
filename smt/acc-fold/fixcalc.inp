@@ -1,3 +1,3 @@
-ll:={[self,n] -> [] -> []: (0=0 && (NODself<=0 && n=0)) ||  exists (flted_8_15,NODAnon_12,NODr: (self>0 && ll(NODr,flted_8_15)) && flted_8_15+1=n)
+ll:={[self,n] -> [] -> []: (0=0 && (NODself<=0 && n=0)) ||  exists (flted_8_18,NODAnon_12,NODr: (self>0 && ll(NODr,flted_8_18)) && flted_8_18+1=n)
 };
 bottomupgen([ll], [1], SimHeur);
