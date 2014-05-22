@@ -1153,11 +1153,13 @@ let get_model is_linear vars assertions =
     "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
+    (* "(push)\n" ^  *)
     ";Variables Declarations\n" ^ smt_var_decls ^
     ";Assertion Declations\n" ^ smt_asserts ^
-    (if is_linear then "(check-sat)\n" else "(check-sat-using qfnra-nlsat)\n") ^
+    (if is_linear then "(check-sat)" else "(check-sat-using qfnra-nlsat)") ^ "\n" ^
     (* "(check-sat)\n" ^ *)
-    "(get-model)" in
+    "(get-model)"
+  in
   
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
@@ -1165,7 +1167,19 @@ let get_model is_linear vars assertions =
   let _ = push_smt_input smt_inp !smt_timeout fail_with_timeout in
   let model_chn = !prover_process.inchannel in
   
-  let m = 
+  (* let res = input_line model_chn in                                                   *)
+  (* if ((String.compare res "unsat") == 0) then                                         *)
+  (*   let _ = push_smt_input "(pop)\n" !smt_timeout fail_with_timeout in                *)
+  (*   Unsat                                                                             *)
+  (* else                                                                                *)
+  (*   try                                                                               *)
+  (*     let _ = push_smt_input "(get-model)\n(pop)\n" !smt_timeout fail_with_timeout in *)
+  (*     let lexbuf = Lexing.from_channel model_chn in                                   *)
+  (*     let sol = Z3mparser.output Z3mlexer.tokenizer lexbuf in                         *)
+  (*     Sat_or_Unk sol                                                                  *)
+  (*   with _ -> Sat_or_Unk []                                                           *)
+  
+  let m =
     try
       let lexbuf = Lexing.from_channel model_chn in
       let sol = Z3mparser.output Z3mlexer.tokenizer lexbuf in
@@ -1173,11 +1187,11 @@ let get_model is_linear vars assertions =
       (* | Unsat -> input_line !prover_process.inchannel *)
       (* | _ -> "" in                                    *)
       sol
-    with _ -> 
+    with _ ->
       (* let tok = Lexing.lexeme lexbuf in                                    *)
       (* let _ = print_endline ((Printexc.to_string e) ^ " token: " ^ tok) in *)
       Sat_or_Unk []
-  in m 
+  in m
 
 let get_model is_linear vars assertions =
   let pr1 = pr_list !CP.print_formula in

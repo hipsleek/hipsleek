@@ -18,7 +18,6 @@
 
 output:
     sat_unk model { Z3m.Sat_or_Unk $2 }
-  /* | UNSAT { Z3m.Unsat } */
   | UNSAT OPAREN discardable_tokens CPAREN { Z3m.Unsat }
   ;
 
@@ -39,6 +38,11 @@ sat_unk:
     SAT {}
   | UNK {}
   ;
+
+/*
+output: model { $1 }
+  ;
+*/
 
 model:
     OPAREN MODEL sol_list CPAREN { $3 }
