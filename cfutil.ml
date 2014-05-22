@@ -1401,14 +1401,83 @@ let force_elim_exists_x f quans=
         | true, false -> r1@[(sv1,sv2)], r2@[(sv1,sv2)]
         | _ -> r1,r2
   ) ([],[]) eqs in
-  let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in
-  simplify_pure_f (subst sst f),  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos)
+  (* let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in *)
+  simplify_pure_f (subst sst f)(* ,  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos ) *)
 
 let force_elim_exists f quans=
   let pr1 = !print_formula in
   let pr2 = !CP.print_svl in
-  Debug.no_2 "force_elim_exists" pr1 pr2 (pr_pair pr1  Cprinter.string_of_mix_formula)
+  Debug.no_2 "force_elim_exists" pr1 pr2 pr1
       (fun _ _ -> force_elim_exists_x f quans) f quans
+
+(*
+  rename clash argument of views
+*)
+let norm_rename_clash_args_node_x init_args0 f0=
+  (******************************************************)
+  let mkPtrEqns sst=
+    let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) sst in
+     Mcpure.mix_of_pure (CP.conj_of_list ps no_pos)
+  in
+  let rec hn_rename args quans hf=
+    match hf with
+      | Star s ->
+            let nh1, args1, quans1,sst1 =  hn_rename args [] s.h_formula_star_h1 in
+            let nh2, args2, quans2,sst2 =  hn_rename args1 [] s.h_formula_star_h2 in
+            (Star {s with h_formula_star_h1 = nh1;
+                h_formula_star_h2 = nh2
+            }, args2, quans@quans1@quans2,sst1@sst2)
+      | ViewNode vn ->
+             let _ = Debug.ninfo_hprint (add_str "args" !CP.print_svl) args no_pos in
+             let _ = Debug.ninfo_hprint (add_str "vn.h_formula_view_arguments args" !CP.print_svl) vn.h_formula_view_arguments no_pos in
+            let inter = CP.intersect_svl vn.h_formula_view_arguments args in
+            if inter = [] then
+              (hf, args@vn.h_formula_view_arguments,quans,[])
+            else
+              let fr_inter = CP.fresh_spec_vars inter in
+              let sst = List.combine inter fr_inter in
+              let vn1 = {vn with h_formula_view_arguments = CP.subst_var_list sst
+              vn.h_formula_view_arguments} in
+              (ViewNode vn1, args@(CP.diff_svl vn.h_formula_view_arguments args), quans@fr_inter,sst)
+      | DataNode dn ->
+            let _ = Debug.ninfo_hprint (add_str "args" !CP.print_svl) args no_pos in
+            let _ = Debug.ninfo_hprint (add_str "dn.h_formula_data_arguments args" !CP.print_svl) dn.h_formula_data_arguments no_pos in
+            let inter = CP.intersect_svl dn.h_formula_data_arguments args in
+            if inter = [] then
+              (hf, args@ dn.h_formula_data_arguments,quans,[])
+            else
+              let fr_inter = CP.fresh_spec_vars inter in
+              let _ = Debug.ninfo_hprint (add_str "fr_inter" !CP.print_svl) fr_inter no_pos in
+              let sst = List.combine inter fr_inter in
+              let dn1 = {dn with h_formula_data_arguments = CP.subst_var_list sst
+              dn.h_formula_data_arguments} in
+              (DataNode dn1, args@(CP.diff_svl dn.h_formula_data_arguments args), quans@fr_inter,sst)
+      | _ -> (hf,args,quans,[])
+  in
+  let rec rename_helper init_args f=
+    match f with
+      | Base fb ->
+            let nh,args,quans,sst =  hn_rename init_args [] fb.formula_base_heap in
+            let bare = Base {fb with formula_base_heap = nh} in
+            (add_quantifiers quans (mkAnd_pure bare (mkPtrEqns sst) no_pos),args)
+      | Exists _ ->
+            let quans,bare = split_quantifiers f in
+            let nf,args = rename_helper init_args bare in
+            (add_quantifiers quans nf, args)
+      | Or orf ->
+            let nf1,args1= (rename_helper init_args orf.formula_or_f1) in
+            let nf2,args2 = (rename_helper init_args orf.formula_or_f2) in
+            (Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;
+            }, args1@args2)
+  in
+  (******************************************************)
+  rename_helper init_args0 f0
+
+ let norm_rename_clash_args_node init_quans f=
+   let pr1 = !print_formula in
+   Debug.no_2 "norm_rename_clash_args_node" !CP.print_svl pr1 (pr_pair pr1 !CP.print_svl)
+       (fun _ _ -> norm_rename_clash_args_node_x init_quans f) init_quans f
 
 (*******************************************************************)
 (************************END GRAPH*****************************************)
