@@ -418,6 +418,23 @@ let compute_inv name vars fml lower_views pf =
   Debug.no_4 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) pr2 pr2
       (fun _ _ _ _ -> compute_inv_x name vars fml lower_views pf)
       name vars fml pf
+
+(*compute invs of views in one loop*)
+let compute_inv_mutrec mutrec_views views =
+  if  not !Globals.do_infer_inv then
+    views
+  else
+    (*get all views of the loop*)
+    (*subst inv of their depent (lower) views
+      (remember to remove member of the loop)
+    *)
+    (*gen cf of each view*)
+    (*rename to avoid clashing, capture rev_subst also*)
+    (*pass to fixcalc*)
+    (*get result and revert back*)
+    (*set invs + flags*)
+    views
+
 (******************************************************************************)
 
 (******************************************************************************)

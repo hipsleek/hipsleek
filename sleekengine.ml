@@ -570,7 +570,7 @@ let convert_data_and_pred_to_cast_x () =
     let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
     new_pdef
   ) iprog.I.prog_view_decls in
-  let tmp_views = (Astsimp.order_views tmp_views) in
+  let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in
   Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
@@ -579,11 +579,15 @@ let convert_data_and_pred_to_cast_x () =
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
   let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
-  let cviews0 = List.fold_left (fun transed_views view ->
-      let nview = Astsimp.trans_view iprog transed_views [] view in
-      transed_views@[nview]
-) [] tmp_views in
-  Debug.tinfo_pprint "after trans_view" no_pos;
+  (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)
+(*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)
+(*       let nview = Astsimp.trans_view iprog mutrec_vnames *)
+(*         transed_views [] view in *)
+(*       transed_views@[nview] *)
+(* ) ([]) tmp_views in *)
+(*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
+   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
