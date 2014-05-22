@@ -265,7 +265,7 @@ let maybe_replace_w_empty h =
             match !Globals.allow_field_ann, !Globals.allow_imm with
               | true, _     -> if (isAccsList param_imm) then HEmp else h
               | false, true -> if (isAccs node_imm) then HEmp else h
-              | _,_         -> HEmp
+              | _,_         -> if (isAccs node_imm) then HEmp else h
           in new_h
     | CF.ViewNode vn -> h 
           (* let node_imm = vn.CF.h_formula_view_imm in *)
@@ -1261,7 +1261,7 @@ and restore_tmp_ann_list_ctx (ctx : list_context) : list_context =
 	  SuccCtx(List.map restore_tmp_ann_ctx cl)
 
 and restore_tmp_ann_ctx (ctx : context) : context = 
-  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+  (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
     let rec helper ctx = 
       match ctx with
         | Ctx(es) -> Ctx(restore_tmp_ann_es es)
@@ -1270,7 +1270,7 @@ and restore_tmp_ann_ctx (ctx : context) : context =
 	      let nc2 = helper c2 in
 	      OCtx(nc1, nc2)
     in helper ctx
-  else ctx
+  (* else ctx *)
 
 and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
   match f with

@@ -563,16 +563,16 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
               es_heap = mkStarH  n_ch  estate.es_heap no_pos;
               (* es_gen_impl_vars =estate.es_gen_impl_vars@niv *) } in
           (n_es, constr)
-        else if(!Globals.allow_imm) then
+        else (* if(!Globals.allow_imm) then *)
           if not(produces_hole  dr.h_formula_data_imm) then
             let n_f, niv, constr = update_imm l_node dl.h_formula_data_imm dr.h_formula_data_imm estate in
             let n_es = {estate with es_formula = mkStar (formula_of_heap n_f no_pos) estate.es_formula Flow_combine no_pos;
                 (* es_gen_impl_vars = estate.es_gen_impl_vars@niv  *)} in
             (n_es, constr)
-          else 
+          else
             (estate,(([],[],[]),[]))
-        else
-          (estate,(([],[],[]),[]))
+        (* else *)
+        (*   (estate,(([],[],[]),[])) *)
   | (ViewNode vl), ViewNode vr ->
         if (!Globals.allow_field_ann) then
           let l_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args l_node) in

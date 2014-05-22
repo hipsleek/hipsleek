@@ -4117,10 +4117,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             else
               (* ... = o.f => read_only = true *)
               let r = 
-	        if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos (* ok to have it lend instead of Imm? *)
-                else
-                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Mutable)) true pos
+	        (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
+                (*   flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos (\* ok to have it lend instead of Imm? *\) *)
+                (* else *)
+                  flatten_to_bind prog proc e (List.rev fs) None pid (CP.ConstAnn(Lend)) true pos
               in
               (* let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in *)
               r

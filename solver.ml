@@ -8996,7 +8996,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
     
-    let (subtyp, add_to_lhs, add_to_rhs, add_to_rhs_ex) = if ((*not(!allow_field_ann) &&*) (!allow_imm)) then subtype_ann_gen es_impl_vars es_evars l_ann r_ann else (true, [], [],[])  (*ignore node ann is field ann enable*) in
+    let (subtyp, add_to_lhs, add_to_rhs, add_to_rhs_ex) = (* if ((\*not(!allow_field_ann) &&*\) (!allow_imm)) then subtype_ann_gen es_impl_vars es_evars l_ann r_ann else (true, [], [],[])  (\*ignore node ann is field ann enable*\) in *)
+      subtype_ann_gen es_impl_vars es_evars l_ann r_ann in
     Debug.tinfo_hprint (add_str "add_to_lhs" (pr_list Cprinter.string_of_pure_formula)) add_to_lhs pos;
     Debug.tinfo_hprint (add_str "add_to_rhs" (pr_list Cprinter.string_of_pure_formula)) add_to_rhs pos;
     Debug.tinfo_hprint (add_str "Imm annotation mismatch (node lvl)" (string_of_bool)) (not(subtyp)) pos;
@@ -9303,9 +9304,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let _ = DD.ninfo_zprint (lazy ((" tmp_conseq: " ^ (Cprinter.prtt_string_of_formula tmp_conseq)))) no_pos in
               let rhs_eqset = estate.es_rhs_eqset in
               let subs_rhs_eqset = 
-                if !Globals.allow_imm_subs_rhs then
-                  subst_eqset e_subs rhs_eqset 
-                else rhs_eqset in
+                (* if !Globals.allow_imm_subs_rhs then *)
+                  subst_eqset e_subs rhs_eqset in
+                (* else rhs_eqset in *)
               let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
@@ -9330,12 +9331,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let poly_consumes = isPoly r_ann && (isMutable l_ann || isImm l_ann) in *)
               Debug.tinfo_hprint (add_str "r_ann" (Cprinter.string_of_imm)) r_ann pos;
               let new_consumed = 
-                if not(!Globals.allow_imm) && not(!Globals.allow_field_ann) then mkStarH consumed_h estate.es_heap pos
-                else if (!Globals.allow_imm) && not(!Globals.allow_field_ann) then
+                (* if not(!Globals.allow_imm) && not(!Globals.allow_field_ann) then mkStarH consumed_h estate.es_heap pos *)
+                (* else  *)
+                  (* if (!Globals.allow_imm) && not(!Globals.allow_field_ann) then *)
+                if not(!Globals.allow_field_ann) then
                   begin
                     if (CP.isLend r_ann || CP.isAccs r_ann || (CP.isPoly r_ann (* && (isLend l_ann || isAccs l_ann) *)) (* || (isPoly r_ann && isPoly l_ann) *)) (*&& not(!allow_field_ann)*) 
                     then estate.es_heap (*do not consume*)
-                    else mkStarH consumed_h estate.es_heap pos end 
+                    else mkStarH consumed_h estate.es_heap pos 
+                  end 
                 else  
                   (* if (!Globals.allow_field_ann) then estate.es_heap *)
                   (* else *) mkStarH consumed_h estate.es_heap pos 
@@ -10086,9 +10090,10 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let rhs_xpure,_,_ = xpure prog conseq in
      let _ = Globals.allow_imm := old_imm_flag in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-    let p_lhs_xpure= if not !Globals.allow_imm then
-      Cpure.overapp_ptrs p_lhs_xpure
-    else p_lhs_xpure in  
+    let p_lhs_xpure= (* if not !Globals.allow_imm then *)
+      (* Cpure.overapp_ptrs p_lhs_xpure *)
+      (* else  *)
+      p_lhs_xpure in  
     let contr, _ = Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
     contr in
   let r_inf_contr,relass = 
@@ -11217,8 +11222,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		(* add the guard to the consequent  - however, the guard check is delayed *)
                 (* ?? *)
 		let formula,to_aux_conseq = 
-                  if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new)
-                  else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos) in
+                  (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
+                  (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
+                    (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
+                in 
                 (* let _ = print_endline ("do_universal:"  *)
                 (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
                 (*                        ^ "\n ### formula = " ^ (Cprinter.string_of_formula formula) *)
