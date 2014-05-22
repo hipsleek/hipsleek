@@ -13,6 +13,7 @@
 
 %start output
   %type <Z3m.z3m_res> output
+  /* %type <(string * Z3m.z3m_val) list> output */
 %%
 
 output:
