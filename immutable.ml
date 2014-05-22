@@ -278,6 +278,29 @@ let maybe_replace_w_empty h =
           (* in new_h *)
     | _ -> h
 
+(* let maybe_replace_w_empty h = *)
+(*   match h with *)
+(*     | CF.DataNode dn ->  *)
+(*           let node_imm = dn.CF.h_formula_data_imm in *)
+(*           let param_imm = dn.CF.h_formula_data_param_imm in *)
+(*           let new_h, xpure =  *)
+(*             match !Globals.allow_field_ann, !Globals.allow_imm with *)
+(*               | true, _     -> if (isAccsList param_imm) then (HEmp, Some (xpure) ) else (h,None) *)
+(*               | false, true -> if (isAccs node_imm) then (HEmp, Some (xpure)) else (h,None) *)
+(*               | _,_         -> (h, None) *)
+(*           in new_h *)
+(*     | CF.ViewNode vn -> h  *)
+(*           (\* let node_imm = vn.CF.h_formula_view_imm in *\) *)
+(*           (\* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *\) *)
+(*           (\* let new_h =  *\) *)
+(*           (\*   match !Globals.allow_field_ann, !Globals.allow_imm with *\) *)
+(*           (\*     | true, _     -> if (isAccsList param_imm) then HEmp else h *\) *)
+(*           (\*     | false, true -> if (isAccs node_imm) then HEmp else h *\) *)
+(*           (\*     | _,_         -> HEmp *\) *)
+(*           (\* in new_h *\) *)
+(*     | _ -> h *)
+
+
 let ann_opt_to_ann (ann_opt: Ipure.ann option) (default_ann: Ipure.ann): Ipure.ann = 
   match ann_opt with
     | Some ann0 -> ann0
@@ -1289,6 +1312,18 @@ and restore_tmp_ann_es (es : Cformula.entail_state) : Cformula.entail_state =
   {  es with
       es_formula = restore_tmp_ann_formula es.es_formula;
   }
+
+and restore_tmp_ann_struc_formula sf = 
+  let rec helper sf  = 
+    match sf with
+      | EBase f   -> EBase {f with formula_struc_base = restore_tmp_ann_formula f.formula_struc_base }
+      | EList l   -> EList (map_l_snd helper l)
+      | ECase c   -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
+      | EAssume b -> EAssume {b with
+	    formula_assume_simpl = restore_tmp_ann_formula b.formula_assume_simpl;
+	    formula_assume_struc = helper b.formula_assume_struc;}
+      | EInfer b  -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
+  in helper sf
 
 (* substitute *)
 and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 

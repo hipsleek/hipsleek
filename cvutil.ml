@@ -1625,7 +1625,7 @@ let prune_pred_struc prog (simp_b:bool) f =
 (********************************************************************)
 
   (************* REMOVE @L NODES FROM FORMULA ***************)
-let remove_lend_from_heap_helper f h1 h2  =
+let remove_imm_from_heap_helper f h1 h2  =
   let h1, x1, m1 = f h1 in 
   let h2, x2, m2 = f h2 in
   let x = 
@@ -1638,58 +1638,60 @@ let remove_lend_from_heap_helper f h1 h2  =
   (* let m =  CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset in *)
   (h1, h2, x, m1@m2)
 
-let remove_lend_from_heap_formula prog p0 which_xpure fh = (* fh *)
-  let rec remove_lend_from_heap_formula_helper prog p0 which_xpure fh =
-    let fun_help =  (remove_lend_from_heap_formula_helper prog p0 which_xpure) in 
+let remove_imm_from_heap_formula prog p0 which_xpure imml fh = (* fh *)
+  let rec remove_imm_from_heap_formula_helper prog p0 which_xpure imml fh =
+    let fun_help =  (remove_imm_from_heap_formula_helper prog p0 which_xpure imml) in 
     match fh with
       | CF.Star h  -> 
             let h1, h2 = h.CF.h_formula_star_h1,  h.CF.h_formula_star_h2 in 
-            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let h1, h2, x, m = remove_imm_from_heap_helper fun_help h1 h2 in
             let fh = CF.Star {h with h_formula_star_h1 = h1; h_formula_star_h2 = h2;} in
             (fh, x,m)
       | CF.Conj h  -> 
             let h1, h2 =  h.CF.h_formula_conj_h1, h.CF.h_formula_conj_h2 in
-            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let h1, h2, x, m = remove_imm_from_heap_helper fun_help h1 h2 in
             let fh = CF.Conj {h with h_formula_conj_h1 = h1; h_formula_conj_h2 = h2;} in
             (fh, x,m)
       | CF.ConjStar h  -> 
             let h1, h2 = h.CF.h_formula_conjstar_h1, h.CF.h_formula_conjstar_h2 in
-            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let h1, h2, x, m = remove_imm_from_heap_helper fun_help h1 h2 in
             let fh = CF.ConjStar {h with h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2;} in
             (fh, x,m)
       | CF.ConjConj h  ->
             let h1, h2 = h.CF.h_formula_conjconj_h1, h.CF.h_formula_conjconj_h2 in
-            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let h1, h2, x, m = remove_imm_from_heap_helper fun_help h1 h2 in
             let fh = CF.ConjConj {h with h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2;} in
             (fh, x,m)
       | CF.Phase h -> 
             let h1, h2 = h.CF.h_formula_phase_rd, h.CF.h_formula_phase_rw in
-            let h1, h2, x, m = remove_lend_from_heap_helper fun_help h1 h2 in
+            let h1, h2, x, m = remove_imm_from_heap_helper fun_help h1 h2 in
             let fh = CF.Phase {h with h_formula_phase_rd = h1; h_formula_phase_rw = h2;} in
             (fh, x,m)
       | CF.DataNode (h1) -> 
-            if (Immutable.isLend h1.h_formula_data_imm) then
+            (* if (Immutable.isLend h1.h_formula_data_imm) then *)
+            if (CP.eq_ann imml h1.h_formula_data_imm) then
               (* let xpure, _  = xpure_heap_mem_enum prog fh p0 which_xpure in *)
               let xpure, _, _  = xpure_heap_symbolic 9 prog fh p0 which_xpure in
               (HEmp, Some xpure, [h1.h_formula_data_node])
             else (fh, None, [])
       | CF.ViewNode (h1) ->
-            if (Immutable.isLend h1.h_formula_view_imm) then
+            (* if (Immutable.isLend h1.h_formula_view_imm) then *)
+            if (CP.eq_ann imml h1.h_formula_view_imm) then
               (* let xpure, _ = xpure_heap_mem_enum prog fh p0 which_xpure in *)
               let xpure, _, _  = xpure_heap_symbolic 10 prog fh p0 which_xpure in
               (HEmp, Some xpure, [h1.h_formula_view_node])
             else (fh, None, [])
       | _          -> (fh, None, [])
   in
-  remove_lend_from_heap_formula_helper prog p0 which_xpure fh
+  remove_imm_from_heap_formula_helper prog p0 which_xpure imml fh
 
-let remove_lend_from_formula prog f = (* f *)
+let remove_imm_from_formula_x prog f imml = (* f *)
   let is_intersect_non_empty lst1 lst2 = 
     not(Gen.is_empty (Gen.BList.intersect_eq CP.eq_spec_var lst1 lst2)) in
   let fun_helper p h = 
     (* decide below the value for which_xpure (1 or 0) ? *)
-    let _, disj = xpure_heap_mem_enum prog h p 1 in 
-    let fh, x, removed_vars = remove_lend_from_heap_formula prog p 1 h in
+    let disj = if not (CP.isAccs imml) then snd (xpure_heap_mem_enum prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
+    let fh, x, removed_vars = remove_imm_from_heap_formula prog p 1 imml h in (* remove @L and retrieve xpure of removed nodes *)
     let pure = match x with
       | Some pr -> MCP.merge_mems pr p true
       | None   -> p in
@@ -1699,11 +1701,11 @@ let remove_lend_from_formula prog f = (* f *)
     let pure = MCP.merge_mems p_disj pure true in
     (fh, pure)
   in  
-  let rec remove_lend_from_formula_helper prog f =
+  let rec remove_imm_from_formula_helper prog f imml =
   match f with
     | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	  let rf1 = remove_lend_from_formula_helper prog f1 in
-	  let rf2 = remove_lend_from_formula_helper prog f2 in
+	  let rf1 = remove_imm_from_formula_helper prog f1 imml in
+	  let rf2 = remove_imm_from_formula_helper prog f2 imml in
 	  let resform = mkOr rf1 rf2 pos in
 	  resform
     | Base fb ->
@@ -1712,10 +1714,22 @@ let remove_lend_from_formula prog f = (* f *)
     | Exists fe ->
           let fh, pure = fun_helper fe.formula_exists_pure fe.formula_exists_heap in
           Exists({fe with formula_exists_heap = fh; formula_exists_pure = pure }) 
-  in remove_lend_from_formula_helper prog f
+  in remove_imm_from_formula_helper prog f imml
 
-let remove_lend_from_formula prog f =
+let remove_imm_from_formula prog f imml =
   let pr = Cprinter.string_of_formula in 
-  Debug.no_1 "remove_lend_from_formula" pr pr (fun _ -> remove_lend_from_formula prog f) f
+  Debug.no_1 "remove_imm_from_formula" pr pr (fun _ -> remove_imm_from_formula_x prog f imml) f
+
+let remove_imm_from_struc_formula prog f imml = (* f *)
+  let rec helper sf  = 
+    match sf with
+      | EBase f   -> EBase {f with formula_struc_base = remove_imm_from_formula prog f.formula_struc_base imml }
+      | EList l   -> EList (map_l_snd helper l)
+      | ECase c   -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
+      | EAssume b -> EAssume {b with
+	    formula_assume_simpl = remove_imm_from_formula prog b.formula_assume_simpl imml;
+	    formula_assume_struc = helper b.formula_assume_struc;}
+      | EInfer b  -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
+  in helper f
 
   (************* end REMOVE @L NODES FROM FORMULA  ***************)

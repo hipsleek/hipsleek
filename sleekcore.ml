@@ -111,6 +111,12 @@ let sleek_unsat_check isvl cprog ante=
 
 let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr = Cprinter.string_of_struc_formula in
+  let ante = Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) in
+  let _ = Debug.ninfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in 
+  let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in
+  let _ = Debug.ninfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
+ (* Immutable.restore_tmp_ann_formula ante in *)
+  (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
   let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
   (* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
@@ -199,14 +205,14 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
 (*
 proof_traces: (formula*formula) list===> for cyclic proofs
 *)
-and sleek_entail_check isvl (cprog: C.prog_decl) proof_traces ante conseq=
+and sleek_entail_check i isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = Cprinter.string_of_struc_formula in
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
-  Debug.no_4 "sleek_entail_check" !CP.print_svl pr1 pr2 pr4 pr3
-      (fun _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
-      isvl ante conseq proof_traces
+  Debug.no_5 "sleek_entail_check" string_of_int !CP.print_svl pr1 pr2 pr4 pr3
+      (fun _ _ _ _ _ -> sleek_entail_check_x isvl cprog proof_traces ante conseq)
+      i isvl ante conseq proof_traces
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
@@ -217,8 +223,8 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let ante0a = Cfutil.force_elim_exists ante0b ante_quans in
   let conseq_quans, conseq0b = CF.split_quantifiers conseq0 in
   let conseq0a = Cfutil.force_elim_exists conseq0b conseq_quans in
-  let _ = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
-  let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
+  let _ = Debug.binfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
+  let _ = Debug.binfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)
   let prove_conj_conseq_conj_ante ante ante_nemps1 f=
     let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
@@ -229,7 +235,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
       (* let f2 = CF.add_quantifiers conseq_quans (CF.mkAnd_pure f1 conseq_quan_p no_pos) in *)
       let ante1, ante_args = Cfutil.norm_rename_clash_args_node [] ante in
       let f2, _ = Cfutil.norm_rename_clash_args_node ante_args f1 in
-      let r, lc,_ = sleek_entail_check [] (prog: C.prog_decl) proof_traces ante1 (CF.struc_formula_of_formula f2 no_pos) in
+      let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces ante1 (CF.struc_formula_of_formula f2 no_pos) in
       let _ = Debug.info_hprint (add_str "r" string_of_bool) r no_pos in
       let _ = Globals.graph_norm := true in
       (r, lc)
@@ -329,9 +335,9 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
     else ([],[])
     in
     let r =
-      let b1, _, _ = (sleek_entail_check [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
+      let b1, _, _ = (sleek_entail_check 2 [] cprog proof_traces f1 (CF.struc_formula_of_formula f2 no_pos)) in
       if b1 then
-        let b2,_,_ = (sleek_entail_check [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
+        let b2,_,_ = (sleek_entail_check 3 [] cprog (List.map (fun (f1,f2) -> (f2,f1)) proof_traces)
             f2 (CF.struc_formula_of_formula f1 no_pos)) in
         b2
       else
