@@ -55,7 +55,7 @@ let gen_fixcalc_file str_fc=
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
+  | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id
   | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
 (* TODO: Handle mixture of non-numerical and numerical variables *)
 (* Still have problem with the order of parameters of relation *)
