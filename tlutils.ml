@@ -344,6 +344,11 @@ let rec set_solver solver_name =
     else if solver_name = "lps" then lp_solver := LPSolve
     else if solver_name = "glpk" then lp_solver := Glpk
     else lp_solver := Z3
+    
+let is_z3_solver _ = 
+  match !lp_solver with
+  | Z3 -> true
+  | _ -> false
 
 let print_solver_res = function
   | Unsat -> "Unsat"
@@ -424,7 +429,8 @@ let get_model solver is_linear templ_unks vars assertions =
   | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
 
 let get_opt_model is_linear templ_unks vars assertions =
-  if is_linear then get_model !lp_solver is_linear templ_unks vars assertions
+  if is_linear (* || is_z3_solver () *) then 
+    get_model !lp_solver is_linear templ_unks vars assertions
   else
     (* Linearize constraints *)
     let res = Smtsolver.get_model true vars assertions in
