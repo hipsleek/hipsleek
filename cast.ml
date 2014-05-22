@@ -2592,11 +2592,6 @@ let is_segmented_view (vdecl: view_decl) : bool =
   let pr_out = string_of_bool in
   Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
 
-module ViewSet = Set.Make (struct
-    type t = view_decl
-    let compare x y = String.compare x.view_name y.view_name
-  end )
-
 module ViewGraph = struct
   module Vertex = struct
     type t = ident
@@ -2630,6 +2625,12 @@ module ViewGraph = struct
       (String.compare v vname == 0) && (String.compare t vtype == 0)
     ) env) then env
     else env @ [(vname, vtype)]
+
+  let get_type_of_vertex env vname =
+    List.filter (fun (v,t) -> String.compare v vname == 0) env
+
+  let get_vertex_of_type env typ =
+    List.filter (fun (v,t) -> String.compare t typ == 0) env
 
   let make_edge lbl v1 v2 = (v1, lbl, v2)
 
@@ -2726,9 +2727,28 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
     ) in
     (* analyze pure formula to detect equality between 2 heap node *)
     (* be careful with the case: not(a=b)  ~~> a != b              *)
+    (* should normalize the pure formula before processing???      *)
     let rec analyze_pure pf = (
-    (*   match pf with *)
-    (* |               *)
+      let f_f f = None in
+      let f_b b = (
+        let p, _ = b in
+        match p with
+        | P.Eq (P.Var (v1,_), P.Var (v2,_), _) ->
+            let vn1 = P.name_of_spec_var v1 in
+            let vn2 = P.name_of_spec_var v2 in
+            if (ViewGraph.mem_vertex bg vn1) && (ViewGraph.mem_vertex bg vn2) then
+              let lbl = ViewGraph.Label.Equality in
+              let edge1 = ViewGraph.make_edge lbl vn1 vn2 in
+              let _ = ViewGraph.add_edge_e bg edge1 in
+              let edge2 = ViewGraph.make_edge lbl vn2 vn1 in
+              let _ = ViewGraph.add_edge_e bg edge2 in
+              Some b
+            else Some b 
+        | _ -> Some b 
+      ) in
+      let f_e e = Some e in
+      let _ = P.transform_formula ((fun _-> None),(fun _-> None), f_f,f_b,f_e) pf in
+      ()
     ) in
     let _ = analyze_heap hf in
     let _ = analyze_pure (MP.pure_of_mix mf) in
@@ -2736,48 +2756,19 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
   ) in
   List.map build_branch_graph vdecl.view_un_struc_formula
 
-(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl)                                 *)
-(*     : view_direction list =                                                                             *)
-(*   let compute_view_direction vg = (                                                                     *)
-(*     let forward_ptrs, backward_ptrs = ref ViewGraph.VertexSet.empty, ref ViewGraph.VertexSet.empty in   *)
-(*     let forward_fields, backward_fields = ref ViewGraph.LabelSet.empty, ref ViewGraph.LabelSet.empty in *)
-(*     let update_fp, update_bp = ref true, ref true in                                                    *)
-(*     let update_ff, update_bf = ref true, ref true in                                                    *)
-(*     while (!update_fp || !update_bp || !update_ff || !update_bf) do                                     *)
-(*       let fw_ptrs = ViewGraph.get_outgoing_vertices vg self in                                          *)
-(*       let _ =                                                                                           *)
-(*         if not (ViewGraph.VertexSet.subset fw_ptrs !forward_ptrs) then (                                *)
-(*           update_fp := true;                                                                            *)
-(*           forward_ptrs := ViewGraph.VertexSet.union !forward_ptrs fw_ptrs;                              *)
-(*         ) else update_fp := false                                                                       *)
-(*       in                                                                                                *)
-(*       let fw_fields = ViewGraph.get_outgoing_fields vg self in                                          *)
-(*       let _ =                                                                                           *)
-(*         if not (ViewGraph.LabelSet.subset fw_fields !forward_fields) then (                             *)
-(*           update_ff := true;                                                                            *)
-(*           forward_fields := ViewGraph.VertexSet.union !forward_fields fw_fields;                        *)
-(*         ) else update_ff := false                                                                       *)
-(*       in                                                                                                *)
-(*       let bw_ptrs = ViewGraph.get_incoming_vertices vg self in                                          *)
-(*       let _ =                                                                                           *)
-(*         if not (ViewGraph.VertexSet.subset bw_ptrs !backward_ptrs) then (                               *)
-(*           update_bp := true;                                                                            *)
-(*           backward_ptrs := ViewGraph.VertexSet.union !backward_ptrs bw_ptrs;                            *)
-(*         ) else update_bp := false                                                                       *)
-(*       in                                                                                                *)
-(*       let bw_fields = ViewGraph.get_incoming_fields vg self in                                          *)
-(*       let _ =                                                                                           *)
-(*         if not (ViewGraph.LabelSet.subset bw_fields !backward_fields) then (                            *)
-(*           update_bf := true;                                                                            *)
-(*           backward_fields := ViewGraph.VertexSet.union !backward_fields bw_fields;                      *)
-(*         ) else update_bf := false                                                                       *)
-(*       in                                                                                                *)
-(*     done                                                                                                *)
-(*   ) in                                                                                                  *)
-(*   let vgraphs = build_view_graph vdecl prog in                                                          *)
-(*   List.map (fun (vg, lbl) ->                                                                            *)
-(*     []                                                                                                  *)
-(*   ) vgraphs                                                                                             *)
+(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl) *)
+(*     : view_direction list =                                             *)
+(*   let compute_view_direction vg env = (                                 *)
+(*     let forward_ptrs, backward_ptrs = ref [], ref [] in                 *)
+(*     let forward_fields, backward_fields = ref [], ref [] in             *)
+(*     while () do                                                         *)
+(*     done                                                                *)
+
+(*   ) in                                                                  *)
+(*   let vgraphs = build_view_graph vdecl prog in                          *)
+(*   List.map (fun (vg, lbl) ->                                            *)
+(*     []                                                                  *)
+(*   ) vgraphs                                                             *)
 
 
 let categorize_view (prog: prog_decl) : prog_decl =
@@ -2789,15 +2780,15 @@ let categorize_view (prog: prog_decl) : prog_decl =
     { vd with view_is_touching = touching;
               view_is_segmented = segmented; }
   ) vdecls in
-  let _ = List.iter (fun vd ->
-    let _ = print_endline ("== view: " ^ vd.view_name) in
-    let vgs = build_view_graph vd prog in
-    List.iter (fun (vg, env, lbl) ->
-      print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"
-                             ^ (ViewGraph.string_of_graph vg));
-      let str = ref "  == env: " in
-      let _ = List.iter (fun (v,t) -> str := !str ^ "(" ^ v ^ "," ^t ^ ")") env in
-      print_endline !str;
-    ) vgs
-  ) vdecls in 
+  (* let _ = List.iter (fun vd ->                                                     *)
+  (*   let _ = print_endline ("== view: " ^ vd.view_name) in                          *)
+  (*   let vgs = build_view_graph vd prog in                                          *)
+  (*   List.iter (fun (vg, env, lbl) ->                                               *)
+  (*     print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"           *)
+  (*                            ^ (ViewGraph.string_of_graph vg));                    *)
+  (*     let str = ref "  == env: " in                                                *)
+  (*     let _ = List.iter (fun (v,t) -> str := !str ^ "(" ^ v ^ "," ^t ^ ")") env in *)
+  (*     print_endline !str;                                                          *)
+  (*   ) vgs                                                                          *)
+  (* ) vdecls in                                                                      *)
   { prog with prog_view_decls = new_vdecls }
