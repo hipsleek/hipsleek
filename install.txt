@@ -1,5 +1,11 @@
 fixcalc
 
+sudo apt-get install bison
+
+sudo apt-get install flex
+
+sudo apt-get install happy
+
 - install libgmp.so.3
 http://petio.org/tools/gmp.html
 

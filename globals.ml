@@ -1216,6 +1216,9 @@ let sleek_timeout_limit = ref 0.
 
 let branch_point_id = ref 0
 
+(* generate smt from slk *)
+let gen_smt = ref false
+
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 
 let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label*loc) list)*loc) list)

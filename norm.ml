@@ -606,7 +606,7 @@ let norm_ann_seg_opz iprog cprog cviews=
   (************* NORM for the FORMULA USED DURING UNFOLDING ***************)
 
 and norm_formula_for_unfold cprog vdef = 
-  let new_un_formula = List.map (fun (def,l) -> (Cvutil.remove_lend_from_formula cprog def, l)) vdef.C.view_un_struc_formula in
+  let new_un_formula = List.map (fun (def,l) -> ((Cvutil.remove_imm_from_formula cprog def (CP.ConstAnn(Lend))), l)) vdef.C.view_un_struc_formula in
   {vdef with C.view_un_struc_formula =  new_un_formula;}
 
   (*********** end NORM for the FORMULA USED DURING UNFOLDING *************)
