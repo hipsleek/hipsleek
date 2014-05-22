@@ -2577,17 +2577,15 @@ let is_segmented_view (vdecl: view_decl) : bool =
   let pr_out = string_of_bool in
   Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
 
-module ViewSet = Set.Make (
-  struct
+module ViewSet = Set.Make (struct
     type t = view_decl
-
     let compare x y = String.compare x.view_name y.view_name
   end )
 
 module ViewGraph = struct
   type vertex = { vertex_name: ident;
                   vertex_data: data_decl;
-                  vertex_view: ViewSet.t; }
+                  mutable vertex_view: ViewSet.t; }
 
   type label = | FieldAccess of (ident * ident)   (* view/data name + field name *)
                | Equality
@@ -2596,14 +2594,33 @@ module ViewGraph = struct
                 edge_begin_vertex: vertex;
                 edge_end_vertex: vertex }
 
-  type t = { tbl_vertices: (string, vertex) Hashtbl.t;
+  type t = { vertices: (string, vertex) Hashtbl.t;
              mutable edges: edge list }
 
+  module VertexSet = Set.Make (struct
+      type t = vertex
+      let compare x y =
+        String.compare x.vertex_name y.vertex_name
+    end )
+
+  module LabelSet = Set.Make (struct
+      type t = label
+      let compare x y = match x, y with
+        | Equality, Equality -> 0
+        | Equality, _ -> 1
+        | _, Equality -> -1
+        | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
+            let compare_host = String.compare x1 y1 in
+            if (compare_host == 0) then
+              String.compare x2 y2
+            else compare_host
+    end )
+
   let create () =
-    { tbl_vertices = Hashtbl.create 3;
+    { vertices = Hashtbl.create 3;
       edges = []; }
 
-  let add_vertex (g: t) (v: vertex) = Hashtbl.add g.tbl_vertices v.vertex_name v
+  let add_vertex (g: t) (v: vertex) = Hashtbl.add g.vertices v.vertex_name v
 
   let add_edge (g: t) (e: edge) = g.edges <- g.edges @ [e]
 
@@ -2613,22 +2630,46 @@ module ViewGraph = struct
     | Equality, Equality -> true
     | _ -> false
 
-  let get_vertex (g: t) (vname: string) = Hashtbl.find g.tbl_vertices vname
+  let get_vertex (g: t) (vertex_name: string) = Hashtbl.find g.vertices vertex_name
 
   let get_edge_label (g: t) (lbl: label) =
     List.find_all (fun e -> equal_label e.edge_label lbl) g.edges
 
-  let get_edge_begin_vertex (g: t) (vname: ident) =
+  let get_edge_begin_vertex (g: t) (vertex_name: ident) : edge list  =
     List.find_all (fun e ->
       let begin_name = e.edge_begin_vertex.vertex_name in
-      (String.compare begin_name vname == 0)
+      (String.compare begin_name vertex_name == 0)
     ) g.edges
 
-  let get_edge_end_vertex (g: t) (vname: ident) =
+  let get_edge_end_vertex (g: t) (vertex_name: ident) : edge list =
     List.find_all (fun e ->
       let end_name = e.edge_end_vertex.vertex_name in
-      (String.compare end_name vname == 0)
+      (String.compare end_name vertex_name == 0)
     ) g.edges
+
+  let get_incomming_labels (g: t) (vertex_name: ident) : LabelSet.t =
+    let es = get_edge_end_vertex g vertex_name in
+    List.fold_left (fun set ed ->
+      LabelSet.add ed.edge_label set
+    ) LabelSet.empty es
+
+  let get_outgoing_labels (g: t) (vertex_name: ident) : LabelSet.t =
+    let es = get_edge_begin_vertex g vertex_name in
+    List.fold_left (fun set ed ->
+      LabelSet.add ed.edge_label set
+    ) LabelSet.empty es
+
+  let get_incoming_vertices (g: t) (vertex_name: ident) : VertexSet.t =
+    let es = get_edge_end_vertex g vertex_name in
+    List.fold_left (fun set ed ->
+      VertexSet.add ed.edge_begin_vertex set
+    ) VertexSet.empty es
+
+  let get_outgoing_vertices (g: t) (vertex_name: ident) : VertexSet.t =
+    let es = get_edge_begin_vertex g vertex_name in
+    List.fold_left (fun set ed ->
+      VertexSet.add ed.edge_end_vertex set
+    ) VertexSet.empty es
 
   let make_vertex name vdata vview = { vertex_name = name;
                                        vertex_data = vdata;
@@ -2637,6 +2678,9 @@ module ViewGraph = struct
   let make_edge lbl vbegin vend = { edge_label = lbl;
                                     edge_begin_vertex = vbegin;
                                     edge_end_vertex = vend; }
+
+  let add_view_to_vertex vtx vdecl =
+    vtx.vertex_view <- ViewSet.add vdecl vtx.vertex_view
 
   let string_of_label lbl =  match lbl with
     | Equality -> "equality"
@@ -2647,7 +2691,7 @@ module ViewGraph = struct
     str := !str ^ "  vertices: ";
     let _ = Hashtbl.iter (fun _ v ->
       str := !str ^ v.vertex_name ^ ", "
-    ) g.tbl_vertices in
+    ) g.vertices in
     str := !str ^ "\n  edges:\n";
     let _ = List.iter (fun e ->
       let x = e.edge_begin_vertex.vertex_name in
@@ -2657,29 +2701,6 @@ module ViewGraph = struct
     ) g.edges in
     !str
 end
-
-module VGVertexSet = Set.Make (
-  struct
-    type t = ViewGraph.vertex
-
-    let compare x y =
-      String.compare x.ViewGraph.vertex_name y.ViewGraph.vertex_name
-  end )
-
-module VGLabelSet = Set.Make (
-  struct
-    type t = ViewGraph.label
-
-    let compare x y = match x, y with
-      | ViewGraph.Equality, ViewGraph.Equality -> 0
-      | ViewGraph.Equality, _ -> 1
-      | _, ViewGraph.Equality -> -1
-      | ViewGraph.FieldAccess (x1,x2), ViewGraph.FieldAccess (y1,y2) ->
-          let compare_host = String.compare x1 y1 in
-          if (compare_host == 0) then
-            String.compare x2 y2
-          else compare_host
-  end )
 
 let build_view_graph (vdecl: view_decl) (prog: prog_decl)
     : (ViewGraph.t * formula_label) list =
@@ -2757,7 +2778,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
               let _ = ViewGraph.add_vertex bg v in
               v
           ) in
-          let _ = ViewSet.add vd vertex.ViewGraph.vertex_view in
+          let _ = ViewGraph.add_view_to_vertex vertex vd in
           let _ = ViewGraph.add_vertex bg vertex in
           List.iter2 (fun sv field  ->
             let vartype = P.type_of_spec_var sv in
@@ -2774,7 +2795,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
                       let _ = ViewGraph.add_vertex bg v in
                       v
                   ) in
-                  let _ = ViewSet.add vd vertex_var.ViewGraph.vertex_view in
+                  let _ = ViewGraph.add_view_to_vertex vertex_var vd in
                   let lbl = ViewGraph.FieldAccess (vname, fieldname) in
                   let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
                   ViewGraph.add_edge bg node_edge
@@ -2801,22 +2822,48 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
     (bg, lbl)
   ) vdecl.view_un_struc_formula
 
-(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl)         *)
-(*     (* : view_direction list  *)                                                *)
-(*     =                                                                           *)
-(*   let compute_view_direction vg = (                                             *)
-(*     let forward_ptrs, backward_ptrs = VGVertexSet.empty, VGVertexSet.empty in   *)
-(*     let forward_fields, backward_fields = VGLabelSet.empty, VGLabelSet.empty in *)
-(*     let update_fp, update_bp = ref true, ref true in                            *)
-(*     let update_ff, update_bf = ref true, ref true in                            *)
-(*     while (!update_fp || !update_bp || !update_ff || !update_bf) do             *)
-(*       let forward                                                               *)
-(*     done                                                                        *)
-(*   ) in                                                                          *)
-(*   let vgraphs = build_view_graph vdecl prog in                                  *)
-(*   List.map (fun (vg, lbl) ->                                                    *)
-(*     []                                                                          *)
-(*   ) vgraphs                                                                     *)
+(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl)                                 *)
+(*     : view_direction list =                                                                             *)
+(*   let compute_view_direction vg = (                                                                     *)
+(*     let forward_ptrs, backward_ptrs = ref ViewGraph.VertexSet.empty, ref ViewGraph.VertexSet.empty in   *)
+(*     let forward_fields, backward_fields = ref ViewGraph.LabelSet.empty, ref ViewGraph.LabelSet.empty in *)
+(*     let update_fp, update_bp = ref true, ref true in                                                    *)
+(*     let update_ff, update_bf = ref true, ref true in                                                    *)
+(*     while (!update_fp || !update_bp || !update_ff || !update_bf) do                                     *)
+(*       let fw_ptrs = ViewGraph.get_outgoing_vertices vg self in                                          *)
+(*       let _ =                                                                                           *)
+(*         if not (ViewGraph.VertexSet.subset fw_ptrs !forward_ptrs) then (                                *)
+(*           update_fp := true;                                                                            *)
+(*           forward_ptrs := ViewGraph.VertexSet.union !forward_ptrs fw_ptrs;                              *)
+(*         ) else update_fp := false                                                                       *)
+(*       in                                                                                                *)
+(*       let fw_fields = ViewGraph.get_outgoing_fields vg self in                                          *)
+(*       let _ =                                                                                           *)
+(*         if not (ViewGraph.LabelSet.subset fw_fields !forward_fields) then (                             *)
+(*           update_ff := true;                                                                            *)
+(*           forward_fields := ViewGraph.VertexSet.union !forward_fields fw_fields;                        *)
+(*         ) else update_ff := false                                                                       *)
+(*       in                                                                                                *)
+(*       let bw_ptrs = ViewGraph.get_incoming_vertices vg self in                                          *)
+(*       let _ =                                                                                           *)
+(*         if not (ViewGraph.VertexSet.subset bw_ptrs !backward_ptrs) then (                               *)
+(*           update_bp := true;                                                                            *)
+(*           backward_ptrs := ViewGraph.VertexSet.union !backward_ptrs bw_ptrs;                            *)
+(*         ) else update_bp := false                                                                       *)
+(*       in                                                                                                *)
+(*       let bw_fields = ViewGraph.get_incoming_fields vg self in                                          *)
+(*       let _ =                                                                                           *)
+(*         if not (ViewGraph.LabelSet.subset bw_fields !backward_fields) then (                            *)
+(*           update_bf := true;                                                                            *)
+(*           backward_fields := ViewGraph.VertexSet.union !backward_fields bw_fields;                      *)
+(*         ) else update_bf := false                                                                       *)
+(*       in                                                                                                *)
+(*     done                                                                                                *)
+(*   ) in                                                                                                  *)
+(*   let vgraphs = build_view_graph vdecl prog in                                                          *)
+(*   List.map (fun (vg, lbl) ->                                                                            *)
+(*     []                                                                                                  *)
+(*   ) vgraphs                                                                                             *)
 
 
 let categorize_view (prog: prog_decl) : prog_decl =
