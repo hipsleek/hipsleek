@@ -205,12 +205,13 @@ let rec fixcalc_of_formula e = match e with
 
 (******************************************************************************)
 
-let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc "
+(* let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc " *)
 let fixcalc_exe = "fixcalc "
 let fixcalc_options = " -v:-1"
 (* to suppress some printing *)
 
 let syscall cmd =
+  let _ = Debug.ninfo_hprint (add_str  "cmd" pr_id) cmd no_pos in
   let ic, oc = Unix.open_process cmd in
   let buf = Buffer.create 16 in
   (try
@@ -330,6 +331,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
   DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
+  let _ = DD.info_hprint (add_str "res(parsed)= " pr_id) res no_pos in
   let inv = List.hd (Parse_fix.parse_fix res) in
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in
   inv

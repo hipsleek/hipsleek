@@ -1,0 +1,10 @@
+fixcalc
+
+- install libgmp.so.3
+http://petio.org/tools/gmp.html
+
+- install libffi.so.5
+
+sudo ap-get install libffi6
+sudo cp /usr/lib/x86_64-linux-gnu/libffi.so.6.0.1 /usr/lib/libffi.so.5
+
