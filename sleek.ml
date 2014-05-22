@@ -310,6 +310,7 @@ let main () =
                           else try
                                    let cmd = parse cts in
                                    proc_gen_cmd cmd;
+                                   let _ = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in
                                    Buffer.clear buffer;
                                    if !inter then
                                      prompt := "SLEEK> "
@@ -397,7 +398,6 @@ let _ =
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
-    (*Long: print unexpected cmds if any (reset expected_cmd != []) *)
     let _ =
       if ((List.length !unexpected_cmd) > 0)
       then (
@@ -408,6 +408,8 @@ let _ =
       ) else
         ()
     in
+    (*Long: gen smt *)
+    let _ = if !Globals.gen_smt then Slk2smt.trans_smt Sleekengine.iprog !Sleekengine.cprog !Slk2smt.cmds else false in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
