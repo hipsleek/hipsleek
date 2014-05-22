@@ -49,8 +49,63 @@ print residue.
 
 not working for unfolding..
 ====================================================================
+# inv1.slk --inv
+
+Can we print name of predicate tgt
+with the inferred invariant?
+
+!!! new inv: : n>=0
+
+!!! new inv: : n>=1 & self!=null
+
+!!! new inv: : n>=0
 ====================================================================
+# inv3.slk
+
+pred ll<n> == self = null & n=0
+    or self::node2<_,r> * r::ll<n-1>
+ inv true.
+
+pred ll3<n> == self::node2<_,null> & n=1
+    or self::node2<_,r> * r::ll<n-1>
+ inv true.
+
+aux recursive but detected as bad mutual recursion??
+
+!!! new inv: : n>=0
+fixcalc: bad mutual recursion detected :"ll"
+Fatal error: exception Loc.Exc_located(_, _)
+
+
+// Seems there is no bottom-up processing of predicates
+// where aux predicates are processed before parent predicaets
+
+ll3:={[self,n] -> [] -> []:  exists (NODflted_11_18,NODAnon_13: self>0 && (NODflted_11_18<=0 && n=1)) ||  exists (flted_12_19,NODAnon_14,NODr: (self>0 && ll(NODr,flted_12_19)) && flted_12_19+1=n)
+};
+bottomupgen([ll3], [1], SimHeur);
 ====================================================================
+inv2.slk --inv mutual recursion?
+
+pred ll2<n> == self = null & n=0
+    or self::node2<_,r> * r::ll3<n-1>
+ inv true.
+
+pred ll3<n> == self::node2<_,null> & n=1
+    or self::node2<_,r> * r::ll2<n-1>
+ inv true.
+
+Why fixcalc think this is a bad mutual recursion?
+
+WARNING: _0:0_0:0:View definitions [[ll3,ll]] are mutually recursive
+fixcalc: bad mutual recursion detected :"ll"
+Fatal error: exception Loc.Exc_located(_, _)
+
+
+// seems there is no identification of mutual-recursive predicates
+
+ll3:={[self,n] -> [] -> []:  exists (NODflted_11_18,NODAnon_13: self>0 && (NODflted_11_18<=0 && n=1)) ||  exists (flted_12_19,NODAnon_14,NODr: (self>0 && ll(NODr,flted_12_19)) && flted_12_19+1=n)
+};
+bottomupgen([ll3], [1], SimHeur);
 ====================================================================
 ====================================================================
 ====================================================================
