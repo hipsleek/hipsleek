@@ -513,8 +513,16 @@ let process_list_lemma ldef_lst  =
 
 let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
-      
+
 let process_data_def ddef =
+  if !Globals.gen_smt
+  then (
+      print_string "\n";
+      print_string ("(declare-sort " ^ ddef.I.data_name ^ " 0)\n");
+      List.iter (fun ((typ,id),_,_,_) ->
+          print_string ("(declare-fun " ^ id ^ " () (Field " ^ ddef.I.data_name ^ " " ^ (Globals.string_of_typ typ) ^ "))\n")) ddef.I.data_fields;
+      print_string "\n";
+  ) else ();
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
     iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
@@ -525,7 +533,7 @@ let process_data_def ddef =
   end
 
 let process_data_def ddef =
-  Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
+  Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef
 
 (*should merge with astsimp.convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
@@ -542,7 +550,7 @@ let convert_data_and_pred_to_cast_x () =
   List.iter (fun ddef ->
     let cddef = Astsimp.trans_data iprog ddef in
     !cprog.Cast.prog_data_decls <- cddef :: !cprog.Cast.prog_data_decls;
-    if !perm=NoPerm || not !enable_split_lemma_gen then () 
+    if !perm=NoPerm || not !enable_split_lemma_gen then ()
     else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef)) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
   ) iprog.I.prog_data_decls;
 

@@ -55,7 +55,7 @@ let gen_fixcalc_file str_fc=
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
+  | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id
   | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
 (* TODO: Handle mixture of non-numerical and numerical variables *)
 (* Still have problem with the order of parameters of relation *)
@@ -331,7 +331,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
   DD.ninfo_zprint (lazy (("res = " ^ res ^ "\n"))) no_pos;
 
   (* Parse result *)
-  let _ = DD.info_hprint (add_str "res(parsed)= " pr_id) res no_pos in
+  let _ = DD.ninfo_hprint (add_str "res(parsed)= " pr_id) res no_pos in
   let inv = List.hd (Parse_fix.parse_fix res) in
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in
   inv
