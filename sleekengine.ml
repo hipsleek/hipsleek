@@ -515,21 +515,13 @@ let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
 
 let process_data_def ddef =
-  if !Globals.gen_smt
-  then (
-      print_string "\n";
-      print_string ("(declare-sort " ^ ddef.I.data_name ^ " 0)\n");
-      List.iter (fun ((typ,id),_,_,_) ->
-          print_string ("(declare-fun " ^ id ^ " () (Field " ^ ddef.I.data_name ^ " " ^ (Globals.string_of_typ typ) ^ "))\n")) ddef.I.data_fields;
-      print_string "\n";
-  ) else ();
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
     iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
   else begin
     dummy_exception() ;
     (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
-	report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
+    report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
   end
 
 let process_data_def ddef =
