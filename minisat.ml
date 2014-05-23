@@ -615,7 +615,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 			(* let _=Gen.Profiling.push_time("stat_CNF_generation_of_B") in *)
 			let (ante_str,ge,gd,gr_e)=rtc_generate_B cnf_ante in
 			 (*start generating cnf for the given CNF formula*)
-				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
+				  let temp= if(ante_str <> "0" && ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
 				  	let final_res= temp(*result*)^"\n" in
 						(* let _=Gen.Profiling.pop_time("stat_CNF_generation_of_B") in  *)
 							(true,final_res,ge,gd,gr_e)

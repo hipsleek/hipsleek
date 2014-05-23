@@ -1734,4 +1734,27 @@ let remove_imm_from_struc_formula prog f imml = (* f *)
 
   (************* end REMOVE @L NODES FROM FORMULA  ***************)
 
+(*
+node_name is node_name of view_name,
+assumption:
+ - |view_seg_args| = 1
+ - node_args = view_seg_args
+*)
+let get_oa_node_view_x prog seg_vnames=
+  let get_oa res vname=
+    let vdecl = Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
+    let ddecl = Cast.look_up_data_def_raw prog.Cast.prog_data_decls vdecl.Cast.view_data_name in
+    if List.length vdecl.Cast.view_cont_vars = 1 &&
+      List.length vdecl.Cast.view_vars = List.length (List.filter (fun ((t,_),_) ->
+          match t with
+            | Named _ -> true
+            | _ -> false
+      ) ddecl.Cast.data_fields)
+    then res@[(vname, vdecl.Cast.view_data_name)] else res
+  in
+  List.fold_left get_oa [] seg_vnames
 
+let get_oa_node_view prog seg_vnames=
+  let pr1 = pr_list pr_id in
+  Debug.no_1 "get_oa_node_view" pr1 (pr_list (pr_pair pr_id pr_id))
+      (fun _ -> get_oa_node_view_x prog seg_vnames) seg_vnames

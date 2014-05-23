@@ -272,8 +272,8 @@ let is_neg_equality_b neq_bf eq_bf=
   let (pf1,_) = neq_bf in
   let (pf2,_) = eq_bf in
   match (pf1,pf2) with
-    |  (Neq(e1, e2, _), Eq(e3, e4, _)) -> ((eqExp e1 e3) & (eqExp e2 e4)) ||
-           ((eqExp e1 e4) & (eqExp e2 e3))
+    |  (Neq(e1, e2, _), Eq(e3, e4, _)) -> ((eqExp e1 e3) && (eqExp e2 e4)) ||
+           ((eqExp e1 e4) && (eqExp e2 e3))
     | _ -> false
 
 let is_neg_equality neq eq=

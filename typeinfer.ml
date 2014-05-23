@@ -180,7 +180,7 @@ and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
       ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent")
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
-  let pr = (* string_of_typ *) pr_none in
+  (* let pr = (\* string_of_typ *\) pr_none in *)
   Debug.no_3 "must_unify_expect" string_of_typ string_of_typ string_of_tlist string_of_tlist_type (fun _ _ _ -> must_unify_expect_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
@@ -1052,7 +1052,7 @@ and get_spec_var_type_list (v : ident) tlist pos =
                                       Err.error_text = v ^ " is undefined"; }
 
 and get_spec_var_type_list_infer (v : ident * primed) fvs pos =
-  let pr_sv = Cprinter.string_of_spec_var in
+  (* let pr_sv = Cprinter.string_of_spec_var in *)
   Debug.no_2 "get_spec_var_type_list_infer" 
     pr_none (* (pr_list pr_sv) *) pr_none pr_none
     (fun _ _ -> get_spec_var_type_list_infer_x v fvs pos) v fvs
