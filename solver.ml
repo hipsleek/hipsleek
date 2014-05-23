@@ -3483,6 +3483,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
           ([false_ctx pos], UnsatAnte)
           else*)
         let result, prf = heap_entail_after_sat_struc 1 prog is_folding  has_post ctx conseq tid delayed_f join_id pos pid []  in
+        let result = subs_crt_holes_list_ctx result in
         (result, prf)
 
 and need_unfold_rhs prog vn=
