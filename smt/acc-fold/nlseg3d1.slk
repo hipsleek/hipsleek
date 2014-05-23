@@ -8,6 +8,11 @@ data node {
 //(3) nlseg3d.slk
 checkentail x::node<_>@A * x::node<_>@A   |-  false.
 print residue.
+
+
+checkentail x::node<_>@A * x::node<_>@A   |-  x!=null.
+print residue.
+
 // this cause a false context but is unsound
 // for both --imm and --dis-imm
 

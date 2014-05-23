@@ -10,6 +10,7 @@ open Cast
 open Gen.Basic
 
 open Label
+open Expure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure

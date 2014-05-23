@@ -190,7 +190,7 @@ let string_of_loc p =
   ^ (string_of_int (p.end_pos.Lexing.pos_cnum - p.end_pos.Lexing.pos_bol))
 
 (* pretty printing for an expression for a formula *)
-let rec string_of_formula_exp = function 
+let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
   | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":"^(string_of_typ t) ^ ")"
   | P.Var (x, l)        -> string_of_id x
@@ -201,24 +201,24 @@ let rec string_of_formula_exp = function
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
-  | P.Add (e1, e2, l)	      -> (match e1 with 
-	  | P.Null _ 
-	  | P.Var _ 
-	  | P.IConst _ 
-	  | P.Max _ 
-	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
-	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
-		^ (match e2 with 
+  | P.Add (e1, e2, l)	      -> (match e1 with
+	  | P.Null _
+	  | P.Var _
+	  | P.IConst _
+	  | P.Max _
+	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"
+	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+")
+		^ (match e2 with
 		  | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
 		  | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
   | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
-    then 
+    then
       if need_parenthesis e2
-      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"
 	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
-    else 
-	  (string_of_formula_exp e1) 
-	  ^ "-" ^ (string_of_formula_exp e2)										    
+    else
+	  (string_of_formula_exp e1)
+	  ^ "-" ^ (string_of_formula_exp e2)
   | P.Mult (e1, e2, _) ->
         "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->

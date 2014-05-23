@@ -1278,9 +1278,9 @@ let fresh_int2 () =
 let reset_int2 () =
   seq_number2 := 0
 
-let fresh_int () =
-  seq_number := !seq_number + 1;
-  !seq_number
+(* let fresh_int () = *)
+(*   seq_number := !seq_number + 1; *)
+(*   !seq_number *)
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in

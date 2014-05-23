@@ -967,6 +967,21 @@ let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   ) defs in
   ext_views
 
+
+let extract_view_x_invs transed_views=
+  List.fold_left (fun r vdcl ->
+      if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_x_formula) then
+        if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_user_inv) then r
+        else
+          r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_user_inv))]
+      else
+      r@[(vdcl.view_name,
+      ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+      vdcl.view_x_formula))]
+  ) [] transed_views
+
 let look_up_view_inv defs act_args name inv_compute_fnc =
   let vdcl = look_up_view_def_raw 46 defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
@@ -980,7 +995,7 @@ let look_up_view_inv defs act_args name inv_compute_fnc =
         try
           (*case Globals.do_infer_inv = false*)
           let _ = Globals.do_infer_inv := true in
-          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula p1 in
+          let new_pf = inv_compute_fnc name vdcl.view_vars vdcl.view_un_struc_formula  vdcl.view_data_name defs p1 in
           let _ = Globals.do_infer_inv := false in
           new_pf
         with _ -> p1
@@ -2577,135 +2592,85 @@ let is_segmented_view (vdecl: view_decl) : bool =
   let pr_out = string_of_bool in
   Debug.no_1 "is_segmented_view" pr pr_out is_segmented_view_x vdecl
 
-module ViewSet = Set.Make (
-  struct
-    type t = view_decl
-
-    let compare x y = String.compare x.view_name y.view_name
-  end )
-
 module ViewGraph = struct
-  type vertex = { vertex_name: ident;
-                  vertex_data: data_decl;
-                  vertex_view: ViewSet.t; }
+  module Vertex = struct
+    type t = ident
+    let compare = String.compare
+    let hash = Hashtbl.hash
+    let equal v1 v2 = (String.compare v1 v2 == 0)
+  end
 
-  type label = | FieldAccess of (ident * ident)   (* view/data name + field name *)
-               | Equality
+  type vertex_env = (string * string) list (* list of vertex name & its typename *)
 
-  type edge = { edge_label: label;
-                edge_begin_vertex: vertex;
-                edge_end_vertex: vertex }
+  module Label = struct
+    type t = | FieldAccess of (ident * ident)   (* view/data name + field name *)
+             | Equality
 
-  type t = { tbl_vertices: (string, vertex) Hashtbl.t;
-             mutable edges: edge list }
+    let compare e1 e2 = match e1, e2 with
+      | Equality, Equality -> 0
+      | Equality, FieldAccess _ -> -1
+      | FieldAccess _, Equality -> 1
+      | FieldAccess (h1,f1), FieldAccess (h2,f2) ->
+          let compare_host = (String.compare h1 h2) in
+          if (compare_host != 0) then compare_host
+          else String.compare f1 f2
 
-  let create () =
-    { tbl_vertices = Hashtbl.create 3;
-      edges = []; }
+    let default = FieldAccess ("","")
+  end
+  
+  include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Vertex) (Label)
 
-  let add_vertex (g: t) (v: vertex) = Hashtbl.add g.tbl_vertices v.vertex_name v
+  let update_vertex_env env vname vtype =
+    if (List.exists (fun (v,t) ->
+      (String.compare v vname == 0) && (String.compare t vtype == 0)
+    ) env) then env
+    else env @ [(vname, vtype)]
 
-  let add_edge (g: t) (e: edge) = g.edges <- g.edges @ [e]
+  let get_type_of_vertex env vname =
+    List.filter (fun (v,t) -> String.compare v vname == 0) env
 
-  let equal_label x y = match x, y with
-    | FieldAccess (x1,x2), FieldAccess (y1,y2) ->
-        (String.compare x1 y1 == 0) && (String.compare x2 y2 == 0)
-    | Equality, Equality -> true
-    | _ -> false
+  let get_vertex_of_type env typ =
+    List.filter (fun (v,t) -> String.compare t typ == 0) env
 
-  let get_vertex (g: t) (vname: string) = Hashtbl.find g.tbl_vertices vname
+  let make_edge lbl v1 v2 = (v1, lbl, v2)
 
-  let get_edge_label (g: t) (lbl: label) =
-    List.find_all (fun e -> equal_label e.edge_label lbl) g.edges
-
-  let get_edge_begin_vertex (g: t) (vname: ident) =
-    List.find_all (fun e ->
-      let begin_name = e.edge_begin_vertex.vertex_name in
-      (String.compare begin_name vname == 0)
-    ) g.edges
-
-  let get_edge_end_vertex (g: t) (vname: ident) =
-    List.find_all (fun e ->
-      let end_name = e.edge_end_vertex.vertex_name in
-      (String.compare end_name vname == 0)
-    ) g.edges
-
-  let make_vertex name vdata vview = { vertex_name = name;
-                                       vertex_data = vdata;
-                                       vertex_view = vview; }
-
-  let make_edge lbl vbegin vend = { edge_label = lbl;
-                                    edge_begin_vertex = vbegin;
-                                    edge_end_vertex = vend; }
-
-  let string_of_label lbl =  match lbl with
-    | Equality -> "equality"
-    | FieldAccess (x,y) -> x^"."^y
+  let string_of_label e =  match e with
+    | Label.Equality -> "equality"
+    | Label.FieldAccess (h,f) -> h^"."^f
 
   let string_of_graph g =
     let str = ref "view_graph:\n" in
-    str := !str ^ "  vertices: ";
-    let _ = Hashtbl.iter (fun _ v ->
-      str := !str ^ v.vertex_name ^ ", "
-    ) g.tbl_vertices in
-    str := !str ^ "\n  edges:\n";
-    let _ = List.iter (fun e ->
-      let x = e.edge_begin_vertex.vertex_name in
-      let y = e.edge_end_vertex.vertex_name in
-      str := !str ^ "       " ^ (string_of_label e.edge_label)
-             ^ ": " ^ x ^ " --> " ^ y ^ "\n";
-    ) g.edges in
+    str := !str ^ "  = vertices: ";
+    let _ = iter_vertex (fun v -> str := !str ^ v ^ ", ") g in
+    str := !str ^ "\n  = edges:\n";
+    let _ = iter_edges_e (fun e ->
+      let (s,l,d)  = e in 
+      str := !str ^ "       " ^ "<" ^ (string_of_label l) ^ "> : "
+             ^ s ^ " --> " ^ d ^ "\n";
+    ) g in
     !str
 end
 
-module VGVertexSet = Set.Make (
-  struct
-    type t = ViewGraph.vertex
-
-    let compare x y =
-      String.compare x.ViewGraph.vertex_name y.ViewGraph.vertex_name
-  end )
-
-module VGLabelSet = Set.Make (
-  struct
-    type t = ViewGraph.label
-
-    let compare x y = match x, y with
-      | ViewGraph.Equality, ViewGraph.Equality -> 0
-      | ViewGraph.Equality, _ -> 1
-      | _, ViewGraph.Equality -> -1
-      | ViewGraph.FieldAccess (x1,x2), ViewGraph.FieldAccess (y1,y2) ->
-          let compare_host = String.compare x1 y1 in
-          if (compare_host == 0) then
-            String.compare x2 y2
-          else compare_host
-  end )
-
 let build_view_graph (vdecl: view_decl) (prog: prog_decl)
-    : (ViewGraph.t * formula_label) list =
+    : (ViewGraph.t * ViewGraph.vertex_env * formula_label) list =
+  let vertex_env = ref [] in
   let data_decls = prog.prog_data_decls in
   let view_decls = prog.prog_view_decls in
-  let build_branch_graph (branch: CF.formula) : ViewGraph.t = (
+  let build_branch_graph (branch, lbl) = (
     let bg = ViewGraph.create () in
     let (hf,mf,_,_,_) = CF.split_components branch in
-    let ddecl_self = look_up_data_def_raw data_decls vdecl.view_data_name in
-    let vdecl_self = ViewSet.singleton vdecl in
-    let vertex_self = ViewGraph.make_vertex self ddecl_self vdecl_self in
-    let _ = ViewGraph.add_vertex bg vertex_self in
+    let _ = ViewGraph.add_vertex bg self in
+    vertex_env := ViewGraph.update_vertex_env !vertex_env self vdecl.view_name;
     let _ = List.iter (fun sv ->
-      let vartype = P.type_of_spec_var sv in
-      match vartype with
-      | Named nametype -> (
-          let varname = P.name_of_spec_var sv in
-          try (
-            let ddecl_var = look_up_data_def_raw data_decls nametype in
-            let vdecl_var = ViewSet.singleton vdecl in
-            let vertex_var = ViewGraph.make_vertex varname ddecl_var vdecl_var in
-            let _ = ViewGraph.add_vertex bg vertex_var in
-            let lbl = ViewGraph.FieldAccess (vdecl.view_name, varname) in
-            let edge = ViewGraph.make_edge lbl vertex_self vertex_var in
-            ViewGraph.add_edge bg edge
-          ) with Not_found -> ()
+      let svname = P.name_of_spec_var sv in
+      let svtype = P.type_of_spec_var sv in
+      match svtype with
+      | Named svtypename -> (
+          let _ = ViewGraph.add_vertex bg svname in
+          vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
+          let lbl = ViewGraph.Label.FieldAccess (vdecl.view_name, svname) in
+          let edge = ViewGraph.make_edge lbl self svname in
+          ViewGraph.add_edge_e bg edge
         )
       | _ -> ()
     ) vdecl.view_vars in
@@ -2715,73 +2680,43 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
       | CF.DataNode dn ->
           let nname = P.name_of_spec_var dn.CF.h_formula_data_node in
           let dname = dn.CF.h_formula_data_name in
+          let _ = ViewGraph.add_vertex bg nname in
+          vertex_env := ViewGraph.update_vertex_env !vertex_env nname dname;
           let ddecl = look_up_data_def_raw data_decls dname in
-          let vertex = (
-            try ViewGraph.get_vertex bg nname
-            with Not_found ->
-              let v = ViewGraph.make_vertex nname ddecl ViewSet.empty in
-              let _ = ViewGraph.add_vertex bg v in
-              v
-          ) in
           List.iter2 (fun sv (field,_)  ->
-            let vartype = P.type_of_spec_var sv in
+            let svtype = P.type_of_spec_var sv in
+            let svname = P.name_of_spec_var sv in
             let fieldname = snd field in
-            match vartype with
-            | Named nametype -> (
-                let varname = P.name_of_spec_var sv in
-                try (
-                  let ddecl_var = look_up_data_def_raw data_decls nametype in
-                  let vertex_var = (
-                    try ViewGraph.get_vertex bg varname
-                    with Not_found ->
-                      let v = ViewGraph.make_vertex varname ddecl_var ViewSet.empty in
-                      let _ = ViewGraph.add_vertex bg v in
-                      v
-                  ) in
-                  let lbl = ViewGraph.FieldAccess (dname, fieldname) in
-                  let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
-                  ViewGraph.add_edge bg node_edge
-                ) with Not_found -> ()
+            match svtype with
+            | Named svtypename -> (
+                let _ = ViewGraph.add_vertex bg svname in
+                vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
+                let lbl = ViewGraph.Label.FieldAccess (dname, fieldname) in
+                let edge = ViewGraph.make_edge lbl nname svname in
+                ViewGraph.add_edge_e bg edge
               )
             | _ -> ()
           ) dn.CF.h_formula_data_arguments ddecl.data_fields
       | CF.ViewNode vn -> 
           let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
           let vname = vn.CF.h_formula_view_name in
+          let _ = ViewGraph.add_vertex bg nname in
+          vertex_env := ViewGraph.update_vertex_env !vertex_env nname vname;
           let vd = look_up_view_def_raw 0 view_decls vname in
-          let ddecl = look_up_data_def_raw data_decls vd.view_data_name in
-          let vertex = (
-            try ViewGraph.get_vertex bg nname
-            with Not_found ->
-              let v = ViewGraph.make_vertex nname ddecl ViewSet.empty in
-              let _ = ViewGraph.add_vertex bg v in
-              v
-          ) in
-          let _ = ViewSet.add vd vertex.ViewGraph.vertex_view in
-          let _ = ViewGraph.add_vertex bg vertex in
           List.iter2 (fun sv field  ->
-            let vartype = P.type_of_spec_var sv in
+            let svtype = P.type_of_spec_var sv in
+            let svname = P.name_of_spec_var sv in
             let fieldname = P.name_of_spec_var field in
-            match vartype with
-            | Named nametype -> (
-                let varname = P.name_of_spec_var sv in
-                try (
-                  let ddecl_var = look_up_data_def_raw data_decls nametype in
-                  let vertex_var = (
-                    try ViewGraph.get_vertex bg varname
-                    with Not_found ->
-                      let v = ViewGraph.make_vertex varname ddecl_var ViewSet.empty in
-                      let _ = ViewGraph.add_vertex bg v in
-                      v
-                  ) in
-                  let _ = ViewSet.add vd vertex_var.ViewGraph.vertex_view in
-                  let lbl = ViewGraph.FieldAccess (vname, fieldname) in
-                  let node_edge = ViewGraph.make_edge lbl vertex vertex_var in
-                  ViewGraph.add_edge bg node_edge
-                ) with Not_found -> ()
+            match svtype with
+            | Named svtypename -> (
+                let _ = ViewGraph.add_vertex bg svname in
+                vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
+                let lbl = ViewGraph.Label.FieldAccess (vname, fieldname) in
+                let edge = ViewGraph.make_edge lbl nname svname in
+                ViewGraph.add_edge_e bg edge
               )
             | _ -> ()
-          ) vn.CF.h_formula_view_arguments vdecl.view_vars
+          ) vn.CF.h_formula_view_arguments vd.view_vars
       | CF.Star sf ->
           analyze_heap sf.CF.h_formula_star_h1;
           analyze_heap sf.CF.h_formula_star_h2
@@ -2790,33 +2725,50 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
                     ^ (!print_h_formula hf) in
           report_error no_pos msg
     ) in
+    (* analyze pure formula to detect equality between 2 heap node *)
+    (* be careful with the case: not(a=b)  ~~> a != b              *)
+    (* should normalize the pure formula before processing???      *)
     let rec analyze_pure pf = (
+      let f_f f = None in
+      let f_b b = (
+        let p, _ = b in
+        match p with
+        | P.Eq (P.Var (v1,_), P.Var (v2,_), _) ->
+            let vn1 = P.name_of_spec_var v1 in
+            let vn2 = P.name_of_spec_var v2 in
+            if (ViewGraph.mem_vertex bg vn1) && (ViewGraph.mem_vertex bg vn2) then
+              let lbl = ViewGraph.Label.Equality in
+              let edge1 = ViewGraph.make_edge lbl vn1 vn2 in
+              let _ = ViewGraph.add_edge_e bg edge1 in
+              let edge2 = ViewGraph.make_edge lbl vn2 vn1 in
+              let _ = ViewGraph.add_edge_e bg edge2 in
+              Some b
+            else Some b 
+        | _ -> Some b 
+      ) in
+      let f_e e = Some e in
+      let _ = P.transform_formula ((fun _-> None),(fun _-> None), f_f,f_b,f_e) pf in
+      ()
     ) in
     let _ = analyze_heap hf in
     let _ = analyze_pure (MP.pure_of_mix mf) in
-    bg
+    (bg, !vertex_env, lbl)
   ) in
-  List.map (fun (branch, lbl) ->
-    let bg = build_branch_graph branch in
-    (bg, lbl)
-  ) vdecl.view_un_struc_formula
+  List.map build_branch_graph vdecl.view_un_struc_formula
 
-(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl)         *)
-(*     (* : view_direction list  *)                                                *)
-(*     =                                                                           *)
-(*   let compute_view_direction vg = (                                             *)
-(*     let forward_ptrs, backward_ptrs = VGVertexSet.empty, VGVertexSet.empty in   *)
-(*     let forward_fields, backward_fields = VGLabelSet.empty, VGLabelSet.empty in *)
-(*     let update_fp, update_bp = ref true, ref true in                            *)
-(*     let update_ff, update_bf = ref true, ref true in                            *)
-(*     while (!update_fp || !update_bp || !update_ff || !update_bf) do             *)
-(*       let forward                                                               *)
-(*     done                                                                        *)
-(*   ) in                                                                          *)
-(*   let vgraphs = build_view_graph vdecl prog in                                  *)
-(*   List.map (fun (vg, lbl) ->                                                    *)
-(*     []                                                                          *)
-(*   ) vgraphs                                                                     *)
+(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl) *)
+(*     : view_direction list =                                             *)
+(*   let compute_view_direction vg env = (                                 *)
+(*     let forward_ptrs, backward_ptrs = ref [], ref [] in                 *)
+(*     let forward_fields, backward_fields = ref [], ref [] in             *)
+(*     while () do                                                         *)
+(*     done                                                                *)
+
+(*   ) in                                                                  *)
+(*   let vgraphs = build_view_graph vdecl prog in                          *)
+(*   List.map (fun (vg, lbl) ->                                            *)
+(*     []                                                                  *)
+(*   ) vgraphs                                                             *)
 
 
 let categorize_view (prog: prog_decl) : prog_decl =
@@ -2828,4 +2780,15 @@ let categorize_view (prog: prog_decl) : prog_decl =
     { vd with view_is_touching = touching;
               view_is_segmented = segmented; }
   ) vdecls in
+  (* let _ = List.iter (fun vd ->                                                     *)
+  (*   let _ = print_endline ("== view: " ^ vd.view_name) in                          *)
+  (*   let vgs = build_view_graph vd prog in                                          *)
+  (*   List.iter (fun (vg, env, lbl) ->                                               *)
+  (*     print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"           *)
+  (*                            ^ (ViewGraph.string_of_graph vg));                    *)
+  (*     let str = ref "  == env: " in                                                *)
+  (*     let _ = List.iter (fun (v,t) -> str := !str ^ "(" ^ v ^ "," ^t ^ ")") env in *)
+  (*     print_endline !str;                                                          *)
+  (*   ) vgs                                                                          *)
+  (* ) vdecls in                                                                      *)
   { prog with prog_view_decls = new_vdecls }

@@ -104,7 +104,7 @@ and formula_or = { formula_or_f1 : formula;
 
 and h_formula = (* heap formula *)
   | Phase of h_formula_phase
-  | Conj of h_formula_conj  
+  | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj
   | Star of h_formula_star
@@ -121,7 +121,7 @@ and h_formula = (* heap formula *)
     e.g. t::thread(0.5)<x::node<>> *)
   | ThreadNode of h_formula_thread
   | HRel of (ident * (P.exp list) * loc)
-  | HTrue 
+  | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
 
@@ -132,18 +132,18 @@ and h_formula_star = { h_formula_star_h1 : h_formula;
 and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
 		       h_formula_starminus_h2 : h_formula;
 		       h_formula_starminus_pos : loc }
-		       
+
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 		       h_formula_conj_h2 : h_formula;
 		       h_formula_conj_pos : loc }
-		       
+
 and h_formula_conjstar = { h_formula_conjstar_h1 : h_formula;
 		       h_formula_conjstar_h2 : h_formula;
 		       h_formula_conjstar_pos : loc }
-		       
+
 and h_formula_conjconj = { h_formula_conjconj_h1 : h_formula;
 		       h_formula_conjconj_h2 : h_formula;
-		       h_formula_conjconj_pos : loc }		       		       
+		       h_formula_conjconj_pos : loc }
 
 and h_formula_phase = { h_formula_phase_rd : h_formula;
 			h_formula_phase_rw : h_formula;

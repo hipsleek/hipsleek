@@ -1,5 +1,5 @@
 =================================================
-data-01.smt2:
+data-01.slk: DONE
 
 data node {
      node next;
@@ -11,7 +11,7 @@ EXPECT:
 (declare-fun next () (Field node node))
 
 =================================================
-data-02.smt2:
+data-02.slk: DONE
 
 data node {
      node next;
@@ -25,7 +25,7 @@ EXPECT:
 (declare-fun prev () (Field node node))
 
 =================================================
-data-03.smt2:
+data-03.slk: DONE
 
 data node1 {
      node1 next;
