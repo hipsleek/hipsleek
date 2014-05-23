@@ -5,8 +5,8 @@ data node {
    node nxt;
 }.
 
-pred nlseg<p> == self=p
- or  (exists a: self::node<a> * a::nlseg<p> & self!=p)
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
  inv true.
 
 lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).

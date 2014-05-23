@@ -338,26 +338,34 @@ let get_args_h_formula aset (h:h_formula) =
           (*   Some (root, arg,new_arg, [av], *)
           (*   DataNode {h with h_formula_data_arguments=new_arg; *)
           (*     h_formula_data_imm = mkPolyAnn av}) *)
-          if (!Globals.allow_imm) then
-            Some (root, arg,new_arg, [av],
-            DataNode {h with h_formula_data_arguments=new_arg;
-              h_formula_data_imm = CP.mkPolyAnn av;
-              h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
-          else
+          (* if (!Globals.allow_imm) then *)
+            (* Some (root, arg,new_arg, [av], *)
+            (* DataNode {h with h_formula_data_arguments=new_arg; *)
+            (*   h_formula_data_imm =  CP.mkPolyAnn av;  *)
+            (*   h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm }) *)
+          (* else *)
+          (*   Some (root, arg,new_arg, [], *)
+          (*   DataNode {h with h_formula_data_arguments=new_arg}) *)
             Some (root, arg,new_arg, [],
-            DataNode {h with h_formula_data_arguments=new_arg})
+            DataNode {h with h_formula_data_arguments=new_arg;
+              h_formula_data_imm =  CP.ConstAnn(Mutable); 
+              h_formula_data_param_imm = List.map (fun c -> CP.mkConstAnn 0) h.h_formula_data_param_imm })
+
     | ViewNode h -> 
           let h = to_unprimed_view_root aset h in
           let root = h.h_formula_view_node in
           let arg = h.h_formula_view_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
-          if (!Globals.allow_imm) then
-            Some (root, arg,new_arg, [av],
-            ViewNode {h with h_formula_view_arguments=new_arg; 
-              h_formula_view_imm = mkPolyAnn av} )
-          else
-            Some (root, arg,new_arg, [],
-            ViewNode {h with h_formula_view_arguments=new_arg})
+          (* if (!Globals.allow_imm) then *)
+            (* Some (root, arg,new_arg, [av], *)
+            (* ViewNode {h with h_formula_view_arguments=new_arg; *)
+            (*   h_formula_view_imm = mkPolyAnn av} ) *)
+          (* else *)
+          (*   Some (root, arg,new_arg, [], *)
+          (*   ViewNode {h with h_formula_view_arguments=new_arg}) *)
+          Some (root, arg,new_arg, [],
+              ViewNode {h with h_formula_view_arguments=new_arg;
+              h_formula_view_imm = CP.ConstAnn(Mutable)} )
     | _ -> None
 
 (*
@@ -3313,6 +3321,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS contains hp_rel*)
     let lhrs = CF.get_hp_rel_name_formula lhs in
+    (* Andreea: is below check ok? *)
     if CP.intersect ivs lhrs = [] then
       (false,es)
     else begin
