@@ -140,7 +140,7 @@ and barrier_decl = {
 
 
 and enum_decl = { enum_name : ident;
-enum_fields : (ident * int option) list } 
+enum_fields : (ident * int option) list }
     (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
@@ -150,10 +150,10 @@ and param_modifier =
     (* TODO : need to be captured in both parser + cast.ml and hip verifier *)
 
 and jump_label_type =
-  | NoJumpLabel 
+  | NoJumpLabel
   | JumpLabel of ident
-        
-and rise_type = 
+
+and rise_type =
   | Const_flow of constant_flow
   | Var_flow of ident
 
@@ -165,7 +165,7 @@ param_loc : loc }
 (*
   and multi_spec = spec list
 
-  and spec = 
+  and spec =
   | SCase of scase_spec
   | SRequires of srequires_spec
   | SEnsure of sensures_spec
