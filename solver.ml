@@ -6844,7 +6844,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
                               (*use global var is dangerous, should pass as parameter*)
                               if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp 
-                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) && not(is_lend_h_formula(prep_h1))
+                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) 
+                                  && not(is_lend_h_formula(prep_h1)) && not(is_hformula_hole(prep_h1))
                                   && (h2 = HEmp)) then (
                                 if  not (Infer.no_infer_hp_rel estate) then
                                   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in

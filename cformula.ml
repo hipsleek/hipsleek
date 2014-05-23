@@ -1754,6 +1754,11 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   | HFalse
   | HEmp -> false
 
+and is_hformula_hole (h: h_formula) : bool =
+  match h with
+  | Hole _ | FrmHole _ -> true
+  | _ -> false
+
 and is_formula_contain_htrue (h: formula) : bool =
   match h with
   | Base { formula_base_heap = h1; } -> is_hformula_contain_htrue h1
