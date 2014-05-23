@@ -1,0 +1,29 @@
+data node{
+  int val;
+  node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//instantiation
+checkentail x=null |- x::ll<n>.
+print residue.
+
+
+//fold
+checkentail x::node<_,q> * q::ll<2> |- x::ll<n>.
+print residue.
+
+//unfold
+checkentail x::ll<n> & n>2 |- x::node<_,q>.
+print residue. 
+
+
+//may failure
+checkentail x::ll<n> |- x::node<_,q>.
+
+//must failure
+checkentail x::ll<n> & n>2 |- x=null.
