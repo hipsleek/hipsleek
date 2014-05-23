@@ -101,14 +101,20 @@ let ef_unsat  (f:ef_pure) : bool =
 let ef_unsat_disj  (disj:ef_pure_disj) : ef_pure_disj =
   List.filter (fun f -> not(ef_unsat f)) disj
 
+(* using Cformula *)
+
+(* build_ef_formula : map -> cformula --> ef_pure_disj *)
+(* (b1,p1) * (b2,p2) --> (b1 U b2, p1/\p2) *)
+(* (b1,p1) & ([],p2) --> (b1, p1/\p2) *)
+(* x->node(..)       --> ([x],true) *)
+(* p(...)            --> inv(p(..)) *)
+
 (* using Cast *)
 
-
-(* build : map -> view_decl -->  map --> ef_pure_disj *)
-(* view  ls<self,p> == cformula *)
-(* map   ls<self,p> == [([],true)] *)
-(*       ls1<self,p> == [([],true)] *)
-
+(* build_ef_view : map -> view_decl --> ef_pure_disj *)
+(* view  ls1<self,p> == ..ls1<..>..ls2<..>... *)
+(* map   ls1<self,p> == [(b1,f1)] *)
+(*       ls2<self,p> == [(b2,f2)] *)
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
 (* does view(inv) --> inv *)
@@ -119,25 +125,18 @@ let ef_unsat_disj  (disj:ef_pure_disj) : ef_pure_disj =
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply a c) pair_list in *)
 
-
-
 (* ef_find_equiv :  (spec_var) list -> ef_pure -> (spec_var) list *)
 (* find equivalent id in the formula *)
 (* e.g. [a,b] -> ([a,b,c], b=c ---> [a,c] *)
 (*      to rename b with c *)
 
-
 (* ef_elim_exists :  (spec_var) list -> ef_pure -> ef_pure *)
 (* remove unsat terms *)
-
 
 (* sel_hull_ef : f:[ef_pure_disj] -> disj_num (0 -> precise) 
    -> [ef_pure_disj] *)
 (* pre: 0<=disj_num<=100 & disj_num=0 -> len(f)<=100  *)
 
-
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
-
-
