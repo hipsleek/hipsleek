@@ -80,14 +80,20 @@ let ef_unsat  (f:ef_pure) : bool =
 let ef_unsat_disj  (disj:ef_pure_disj) : ef_pure_disj = 
   List.filter (fun f -> not(ef_unsat f)) disj
 
+(* using Cformula *)
+
+(* build_ef_formula : map -> cformula --> ef_pure_disj *)
+(* (b1,p1) * (b2,p2) --> (b1 U b2, p1/\p2) *)
+(* (b1,p1) & ([],p2) --> (b1, p1/\p2) *)
+(* x->node(..)       --> ([x],true) *)
+(* p(...)            --> inv(p(..)) *)
+
 (* using Cast *)
 
-
-(* build : map -> view_decl -->  map --> ef_pure_disj *)
-(* view  ls<self,p> == cformula *)
-(* map   ls<self,p> == [([],true)] *)
-(*       ls1<self,p> == [([],true)] *)
-
+(* build_ef_view : map -> view_decl --> ef_pure_disj *)
+(* view  ls1<self,p> == ..ls1<..>..ls2<..>... *)
+(* map   ls1<self,p> == [(b1,f1)] *)
+(*       ls2<self,p> == [(b2,f2)] *)
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
 (* does view(inv) --> inv *)
