@@ -12444,8 +12444,8 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
           let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
           let rhs_node = ln2 in
           let rhs_rest = resth2 in
-          let _ = Debug.tinfo_hprint (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
-          let _ = Debug.tinfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+          let _ = Debug.binfo_hprint (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+          let _ = Debug.binfo_hprint (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
           let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
           (a,[b])
           (* why do_fold use proof & apply_right_coercion is proof list *)
@@ -12453,7 +12453,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
 and apply_right_coercion_b estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let _,rhs_p,rhs_t,rhs_fl, rhs_a = CF.extr_formula_base rhs_b in
   let f = mkBase resth2 rhs_p rhs_t rhs_fl rhs_a pos in
-  let _ = Debug.tinfo_zprint (lazy ("do_right_coercion : c2 = "
+  let _ = Debug.binfo_zprint (lazy ("do_right_coercion : c2 = "
   ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
