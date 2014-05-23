@@ -1491,13 +1491,13 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = if (!Globals.allow_imm) || (!Globals.allow_field_ann) then (CP.fv_ann (h.h_formula_data_imm)) else [] in
+        let ann_vars = (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then ( *) CP.fv_ann (h.h_formula_data_imm) (* ) else []  *) in
         let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (CP.fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
         perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars =  if ((!Globals.allow_imm) || (!Globals.allow_field_ann)) then CP.fv_ann (h.h_formula_view_imm)  else [] in
+        let ann_vars =  (* if ((!Globals.allow_imm) || (!Globals.allow_field_ann)) then *) CP.fv_ann (h.h_formula_view_imm)  (* else [] *) in
         perm_vars@ann_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
     | _ -> []
 
@@ -4963,14 +4963,14 @@ and get_all_sv (f: h_formula): CP.spec_var list = match f with
              h_formula_data_imm = imm;
              h_formula_data_param_imm = param_imm;
     } ->  
-        let fv_ann_list = if (!Globals.allow_imm) then CP.fv_ann imm else [] in
+        let fv_ann_list = (* if (!Globals.allow_imm) then *) CP.fv_ann imm (* else [] *) in
         let fv_ann_list = if (!Globals.allow_field_ann) then fv_ann_list@(CP.fv_ann_lst param_imm) else fv_ann_list in
         [c]@(List.filter CP.is_node_typ args)@fv_ann_list
   | ViewNode {h_formula_view_node = c;
              h_formula_view_arguments = args;
             h_formula_view_imm = imm;
     } -> 
-         let fv_ann_list = if (!Globals.allow_imm) then CP.fv_ann imm else [] in
+         let fv_ann_list = (* if (!Globals.allow_imm) then *) CP.fv_ann imm (* else [] *) in
          [c]@(List.filter CP.is_node_typ args)@fv_ann_list
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
