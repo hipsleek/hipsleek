@@ -14,8 +14,9 @@ lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
 lemma_safe self::nlseg<p> <- 
       (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
 
-
+/*
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
        |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
 print residue.
+*/
