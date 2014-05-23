@@ -247,6 +247,17 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+
+(* extended pure formula *)
+type ef_pure = ( 
+    spec_var list (* baga *)
+    * formula (* pure formula *)
+    )
+
+(* disjunctive extended pure formula *)
+(* [] denotes false *)
+type ef_pure_disj = ef_pure list
+
 let is_False cp = match cp with
   | BForm (p,_) -> 
         begin

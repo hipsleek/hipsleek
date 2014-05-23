@@ -2071,6 +2071,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_prune_branches = [];
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
+          C.view_ef_pure_disj = None;
           C.view_prune_invariants = []} in
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
