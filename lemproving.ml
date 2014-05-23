@@ -360,7 +360,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   let pr3 = Cprinter.string_of_formula in
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
-  let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in (* actually this removes @L nodes from the body of right lemma for proving sake *)
+  (* let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in *) (* actually this removes @L nodes from the body of right lemma for proving sake *)
   Debug.tinfo_pprint "Verify Right Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
