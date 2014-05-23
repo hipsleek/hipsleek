@@ -29,6 +29,7 @@ node reverse (node l)
   requires l::clist<n>
   ensures false;
 // unsound to be verified..
+// should be sound since this is an infinite loop ..
 /*
   requires l::ll<n>
   ensures res::ll<n>;

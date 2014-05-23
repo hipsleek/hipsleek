@@ -19,27 +19,27 @@ type mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_exact : bool;
 			mem_formula_field_values : (ident * (P.exp list)) list;
 			mem_formula_field_layout : (ident * (P.ann list)) list;
-			mem_formula_guards : P.formula list; 
+			mem_formula_guards : P.formula list;
 		}
 
-and assume_formula = 
+and assume_formula =
 	{
-		formula_assume_simpl : formula; 
+		formula_assume_simpl : formula;
 		formula_assume_struc : struc_formula;
 		formula_assume_lbl : formula_label;
 		formula_assume_ensures_type : ensures_type;
 	}
-		
-and struc_formula = 
+
+and struc_formula =
 	| ECase of struc_case_formula
 	| EBase of struc_base_formula
 	| EAssume of assume_formula (*(formula*formula_label*ensures_type)*)
 		(*could be generalized to have a struc_formula type instead of simple formula*)
 		(* spec feature to induce inference *)
 	| EInfer of struc_infer_formula
-	| EList of (spec_label_def*struc_formula) list 
+	| EList of (spec_label_def*struc_formula) list
 
-	
+
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
@@ -53,7 +53,7 @@ and struc_infer_formula =
 and struc_case_formula =
 	{
 		formula_case_branches : (P.formula * struc_formula ) list;
-		formula_case_pos : loc 		
+		formula_case_pos : loc
 	}
 
 and struc_base_formula =

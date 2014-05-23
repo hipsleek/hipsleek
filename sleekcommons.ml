@@ -2,21 +2,21 @@
   let $a = <formula>.
   let $b = compose.
   let $c = <formula>.
-  
+
   Nested composition? How to perform the composition and keep the simplified result?
-  
+
   let $a = compose ...
   let $b = compose[x]($a, ...).
 
   checkentail $a |- $b.
   What problem: not really, just do the composition.
-  
-  Is it better to keep the mapping as 
+
+  Is it better to keep the mapping as
   var -> (CF.formula, IF.formula option)
 
   let $a = <formula>. --> translate with no quantification
   let $b = compose($a, ...) --> compose with no quantification, don't allow $b to be used in consequent position
-  
+
   residue will not be used in consequent position.
 *)
 
@@ -73,12 +73,12 @@ type command =
   | PrintCmd of print_cmd
   | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
-  | EmptyCmd 
+  | EmptyCmd
 
 and print_cmd =
   | PVar of ident
   | PCmd of ident
-	  
+
 and meta_formula =
   | MetaVar of ident
   | MetaForm of IF.formula

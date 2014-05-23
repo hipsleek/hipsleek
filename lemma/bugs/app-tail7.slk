@@ -12,18 +12,29 @@ pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
 	inv self!=null & tx!=null & n>=1.
 
 
-lemma_unsafe "lseg2" self::lseg2<p, n> 
+lemma_safe "lseg2" self::lseg2<p, n> 
    <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
 
-lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
+lemma_safe "ll_tail2" self::ll_tail2<t, n> 
    <-> self::lseg2<t, n-1> * t::node<_, null>.
 
-
+/*
 checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
 flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
 flted=null & n=flted1+1
  |-  (exists q: x::ll_tail2<ty1,q>).
 print residue.
+*/
+
+checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & tx=tx1 & ty1 & 
+flted=null & n=flted1+1
+ |-  x::ll_tail2<ty1,qqq>.
+print residue.
+
+/*
+ <1>emp&m=flted_19_480+1 & flted_19_479=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & Anon_16=Anon_512 & r_513=y' & exists(ty1_457:ty1=ty1_457) & exists(n2_508:n2_508=flted_19_480+1) & exists(flted_19_465:flted_19_465=flted_19_480+1+flted1) & exists(ty1_457:ty1=ty1_457) & exists(ty1_457:ty1=ty1_457) & qqq=flted_19_480+1+flted1+1&{FLOW,(21,22)=__norm}[]
+*/
 
 /*
 checkentail_exact x::lseg2<tx1,flted1>@M 

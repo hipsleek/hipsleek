@@ -2036,7 +2036,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_prim = is_prim_v;
           C.view_is_touching = false;      (* temporarily assigned *)
           C.view_is_segmented = false;     (* temporarily assigned *)
-          C.view_direction_info = [];
+          C.view_forward_ptrs = [];
+          C.view_forward_fields = [];
+          C.view_backward_ptrs = [];
+          C.view_backward_fields = [];
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
@@ -2071,6 +2074,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_prune_branches = [];
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
+          C.view_ef_pure_disj = None;
           C.view_prune_invariants = []} in
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)

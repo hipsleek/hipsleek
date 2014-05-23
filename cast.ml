@@ -82,14 +82,6 @@ and view_kind =
   | View_SPEC
   | View_DERV
 
-and view_direction = {
-    view_forward_ptr: P.spec_var list;
-    view_forward_field: (ident * ident) list;
-    view_backward_ptr: P.spec_var list;
-    view_backward_field: (ident * ident) list;
-    view_branch: formula_label 
-  }
-
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -102,7 +94,10 @@ and view_decl = {
     view_is_prim : bool;
     view_is_touching : bool;
     view_is_segmented : bool;
-    view_direction_info : view_direction list;
+    view_forward_ptrs: P.spec_var list;
+    view_forward_fields: (data_decl * ident) list;
+    view_backward_ptrs: P.spec_var list;
+    view_backward_fields: (data_decl * ident) list;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
@@ -135,7 +130,9 @@ and view_decl = {
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
     view_pos : loc;
-    view_raw_base_case: Cformula.formula option;}
+    view_raw_base_case: Cformula.formula option;
+    view_ef_pure_disj : P.ef_pure_disj option
+}
 
 (* An Hoa : relation *)					
 and rel_decl = { 
@@ -2603,19 +2600,38 @@ module ViewGraph = struct
   type vertex_env = (string * string) list (* list of vertex name & its typename *)
 
   module Label = struct
-    type t = | FieldAccess of (ident * ident)   (* view/data name + field name *)
+    type t = | DataField of (ident * ident)   (* data name + field name *)
+             | ViewField of (ident * ident)   (* view name + field name *)
              | Equality
 
     let compare e1 e2 = match e1, e2 with
-      | Equality, Equality -> 0
-      | Equality, FieldAccess _ -> -1
-      | FieldAccess _, Equality -> 1
-      | FieldAccess (h1,f1), FieldAccess (h2,f2) ->
-          let compare_host = (String.compare h1 h2) in
+      | DataField (d1,f1), DataField (d2,f2) ->
+          let compare_host = (String.compare d1 d2) in
           if (compare_host != 0) then compare_host
           else String.compare f1 f2
+      | DataField _, _ -> -1
+      | ViewField _, DataField _ -> 1
+      | ViewField (v1,f1), ViewField (v2,f2) -> 
+          let compare_host = (String.compare v1 v2) in
+          if (compare_host != 0) then compare_host
+          else String.compare f1 f2
+      | ViewField _, Equality -> -1
+      | Equality, Equality -> 0
+      | Equality, _ -> 1
 
-    let default = FieldAccess ("","")
+    let default = Equality
+  end
+  
+  module Weight = struct
+    type label = Label.t
+    type t = int
+    let weight lbl = match lbl with
+      | Label.Equality -> 0       (* to make sure the shortest always choose *)
+      | Label.DataField _ -> 1    (* equality, then data field, then view field *)
+      | Label.ViewField _ -> 100
+    let zero = 0
+    let add =  (+)
+    let compare = compare
   end
   
   include Graph.Imperative.Digraph.ConcreteBidirectionalLabeled (Vertex) (Label)
@@ -2627,16 +2643,59 @@ module ViewGraph = struct
     else env @ [(vname, vtype)]
 
   let get_type_of_vertex env vname =
-    List.filter (fun (v,t) -> String.compare v vname == 0) env
+    List.fold_left (fun types (v,t) ->
+      if (String.compare v vname == 0) then types @ [t]
+      else types
+    ) [] env
 
   let get_vertex_of_type env typ =
-    List.filter (fun (v,t) -> String.compare t typ == 0) env
+    List.fold_left (fun vertices (v,t) ->
+      if (String.compare t typ == 0) then vertices @ [v]
+      else vertices
+    ) [] env
 
   let make_edge lbl v1 v2 = (v1, lbl, v2)
+  
+  let get_label e =
+    let (_, lbl, _) = e in
+    lbl
+
+  let is_field_label lbl =
+    match lbl with
+    | Label.DataField _ -> true
+    | Label.ViewField _ -> true
+    | _ -> false
+
+  let is_equality_label lbl =
+    match lbl with
+    | Label.Equality -> true
+    | _ -> false
+  
+  let is_data_field_label lbl =
+    match lbl with
+    | Label.DataField _ -> true
+    | _ -> false
+
+  let is_view_field_label lbl =
+    match lbl with
+    | Label.ViewField _ -> true
+    | _ -> false
+
+  let equal_label lbl1 lbl2 =
+    match lbl1, lbl2 with
+    | Label.Equality, Label.Equality -> true
+    | Label.Equality, _ -> false
+    | Label.DataField (x1, x2), Label.DataField (y1, y2) ->
+        (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0) 
+    | Label.DataField _, _ -> false
+    | Label.ViewField (x1, x2), Label.ViewField (y1, y2) ->
+        (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0) 
+    | Label.ViewField _, _ -> false
 
   let string_of_label e =  match e with
     | Label.Equality -> "equality"
-    | Label.FieldAccess (h,f) -> h^"."^f
+    | Label.DataField (h,f) -> "data:" ^ h^"."^f
+    | Label.ViewField (h,f) -> "view:" ^ h^"."^f
 
   let string_of_graph g =
     let str = ref "view_graph:\n" in
@@ -2650,6 +2709,8 @@ module ViewGraph = struct
     ) g in
     !str
 end
+
+module Dijkstra = Graph.Path.Dijkstra (ViewGraph) (ViewGraph.Weight)
 
 let build_view_graph (vdecl: view_decl) (prog: prog_decl)
     : (ViewGraph.t * ViewGraph.vertex_env * formula_label) list =
@@ -2668,7 +2729,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
       | Named svtypename -> (
           let _ = ViewGraph.add_vertex bg svname in
           vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
-          let lbl = ViewGraph.Label.FieldAccess (vdecl.view_name, svname) in
+          let lbl = ViewGraph.Label.ViewField (vdecl.view_name, svname) in
           let edge = ViewGraph.make_edge lbl self svname in
           ViewGraph.add_edge_e bg edge
         )
@@ -2691,7 +2752,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
             | Named svtypename -> (
                 let _ = ViewGraph.add_vertex bg svname in
                 vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
-                let lbl = ViewGraph.Label.FieldAccess (dname, fieldname) in
+                let lbl = ViewGraph.Label.DataField (dname, fieldname) in
                 let edge = ViewGraph.make_edge lbl nname svname in
                 ViewGraph.add_edge_e bg edge
               )
@@ -2711,7 +2772,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
             | Named svtypename -> (
                 let _ = ViewGraph.add_vertex bg svname in
                 vertex_env := ViewGraph.update_vertex_env !vertex_env svname svtypename;
-                let lbl = ViewGraph.Label.FieldAccess (vname, fieldname) in
+                let lbl = ViewGraph.Label.ViewField (vname, fieldname) in
                 let edge = ViewGraph.make_edge lbl nname svname in
                 ViewGraph.add_edge_e bg edge
               )
@@ -2756,20 +2817,150 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
   ) in
   List.map build_branch_graph vdecl.view_un_struc_formula
 
-(* let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl) *)
-(*     : view_direction list =                                             *)
-(*   let compute_view_direction vg env = (                                 *)
-(*     let forward_ptrs, backward_ptrs = ref [], ref [] in                 *)
-(*     let forward_fields, backward_fields = ref [], ref [] in             *)
-(*     while () do                                                         *)
-(*     done                                                                *)
+let compute_forward_backward_chain (vdecl: view_decl) (prog: prog_decl)
+    (* : view_direction list *)
+   =
+  let equal_str x y = String.compare x y = 0 in
+  let equal_pair_str (x1,x2) (y1,y2) = (
+    (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0)
+  ) in
+  let compute_view_direction vg env fw_ptrs fw_fields bw_ptrs bw_fields = (
+    (*
+     * Find forward pointers
+     *)
+    (* self is always the forward pointers *)
+    let forward_ptrs = ref [self] in
+    forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
+    (* find forward poiters from equality path *)
+    List.iter (fun v1 ->
+      List.iter (fun sv ->
+        let v2 = P.name_of_spec_var sv in
+        try 
+          let path, _ = Dijkstra.shortest_path vg v1 v2 in
+          if (List.for_all (fun (_, lbl, _) -> ViewGraph.is_equality_label lbl) path) then
+            forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
+        with Not_found -> ()
+      ) vdecl.view_vars
+    ) !forward_ptrs;
+    
+    (*
+     * find forward_fields: the data-field edge from self to the views have same type
+     *)
+    let self_view = vdecl.view_name in
+    let forward_fields = ref [] in
+    let possible_fw_views = ViewGraph.get_vertex_of_type env self_view in
+    let fw_views = List.concat (List.map (fun v ->
+      try
+        let path, _ = Dijkstra.shortest_path vg self v in
+        let fw_fields = List.concat (List.map (fun (_, lbl, _) ->
+          match lbl with
+          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
+          | _ -> []
+        ) path) in
+        if (List.length fw_fields > 0) then (
+          forward_fields := Gen.BList.remove_dups_eq equal_pair_str
+                                (!forward_fields @ fw_fields);
+          [v]
+        ) else []
+      with Not_found -> []
+    ) possible_fw_views) in
 
-(*   ) in                                                                  *)
-(*   let vgraphs = build_view_graph vdecl prog in                          *)
-(*   List.map (fun (vg, lbl) ->                                            *)
-(*     []                                                                  *)
-(*   ) vgraphs                                                             *)
+    (*
+     * find backward ptrs: field of the edge from forward_ptrs back to self
+     *)
+    let backward_ptrs = ref bw_ptrs in
+    let _ = List.iter (fun v ->
+      try
+        let path, _ = Dijkstra.shortest_path vg v self in
+        let bw_ptrs = List.concat (List.map (fun e ->
+          let lbl = ViewGraph.get_label e in
+          match lbl with
+          | ViewGraph.Label.ViewField (_,f) -> [f]
+          | _ -> []
+        ) path) in
+        if (List.length bw_ptrs > 0) then (
+          backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ bw_ptrs);
+        )
+      with Not_found -> ()
+    ) fw_views in
+    (* find backward poiters from equality path *)
+    List.iter (fun v1 ->
+      List.iter (fun sv ->
+        let v2 = P.name_of_spec_var sv in
+        try 
+          let path, _ = Dijkstra.shortest_path vg v1 v2 in
+          if (List.for_all (fun (_, lbl, _) -> ViewGraph.is_equality_label lbl) path) then
+            backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);
+        with Not_found -> ()
+      ) vdecl.view_vars
+    ) !backward_ptrs;
 
+    (*
+     * find backward fields: the data-field edge from self to backward ptrs
+     *)
+    let backward_fields = List.concat (List.map (fun v ->
+      try
+        let path, _ = Dijkstra.shortest_path vg self v in
+        List.concat (List.map (fun (_, lbl, _) ->
+          match lbl with
+          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
+          | _ -> []
+        ) path)
+      with Not_found -> []
+    ) !backward_ptrs) in
+    (!forward_ptrs, !forward_fields, !backward_ptrs, backward_fields)
+  ) in
+  let vgraphs = build_view_graph vdecl prog in
+  (* let _ = print_endline ("== view: " ^ vdecl.view_name) in                       *)
+  (* let _ = List.iter (fun (vg, env, lbl) ->                                       *)
+  (*   print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"           *)
+  (*                          ^ (ViewGraph.string_of_graph vg));                    *)
+  (*   let str = ref "  == env: " in                                                *)
+  (*   let _ = List.iter (fun (v,t) -> str := !str ^ "(" ^ v ^ "," ^t ^ ")") env in *)
+  (*   print_endline !str;                                                          *)
+  (* ) vgraphs in                                                                   *)
+  let forward_ptrs, forward_fields, backward_ptrs, backward_fields =
+      ref [], ref [], ref [], ref [] in
+  let update_fwp, update_fwf, update_bwp, update_bwf =
+      ref true, ref true, ref true, ref true in 
+  (* let count = ref 0 in *)
+  while (!update_fwp || !update_fwf || !update_bwp || !update_bwf) do
+    (* let _ = print_endline ("*** iterator: " ^ (string_of_int !count)) in *)
+    List.iter (fun (vg, env, lbl) ->
+      let fw_p, fw_f, bw_p, bw_f = (compute_view_direction vg env !forward_ptrs 
+          !forward_fields !backward_ptrs !backward_fields) in
+
+      let old1 = List.length !forward_ptrs in
+      forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_p);
+      let new1 = List.length !forward_ptrs in
+      update_fwp := (old1 != new1);
+      
+      let old2 = List.length !forward_fields in
+      forward_fields := Gen.BList.remove_dups_eq equal_pair_str (!forward_fields @ fw_f);
+      let new2 = List.length !forward_fields in
+      update_fwf := (old2 != new2);
+
+      let old3 = List.length !backward_ptrs in
+      backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ bw_p);
+      let new3 = List.length !backward_ptrs in
+      update_bwp := (old3 != new3);
+
+      let old4 = List.length !backward_fields in
+      backward_fields := Gen.BList.remove_dups_eq equal_pair_str (!backward_fields @ bw_f);
+      let new4 = List.length !backward_fields in
+      update_bwf := (old4 != new4);
+    ) vgraphs;
+    (* let str_fwp = "  * fw_ptrs: " ^ (String.concat ", " !forward_ptrs) in                                           *)
+    (* let _ = print_endline (str_fwp) in                                                                              *)
+    (* let str_fwf = "  * fw_fields: " ^ (String.concat ", " (List.map (fun (h,f) -> h^"."^f) !forward_fields)) in  *)
+    (* let _ = print_endline (str_fwf) in                                                                              *)
+    (* let str_bwp = "  * bw_ptrs: " ^ (String.concat ", " !backward_ptrs) in                                          *)
+    (* let _ = print_endline (str_bwp) in                                                                              *)
+    (* let str_bwf = "  * bw_fields: " ^ (String.concat ", " (List.map (fun (h,f) -> h^"."^f) !backward_fields)) in *)
+    (* let _ = print_endline (str_bwf) in                                                                              *)
+    (* count := !count + 1; *)
+  done;
+  (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
 
 let categorize_view (prog: prog_decl) : prog_decl =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
@@ -2777,18 +2968,49 @@ let categorize_view (prog: prog_decl) : prog_decl =
   let new_vdecls = List.map (fun vd ->
     let touching = is_touching_view vd in
     let segmented = is_segmented_view vd in
+    let (fw_p, fw_f, bw_p, bw_f) = compute_forward_backward_chain vd prog in
+    let forward_ptrs = List.map (fun v ->
+      try 
+        List.find (fun sv -> String.compare (P.name_of_spec_var sv) v == 0) vd.view_vars
+      with Not_found ->
+        (* self var *)
+        P.SpecVar (Named vd.view_data_name, v, Unprimed)
+    ) fw_p in
+    let backward_ptrs = List.map (fun v ->
+      try 
+        List.find (fun sv -> String.compare (P.name_of_spec_var sv) v == 0) vd.view_vars
+      with Not_found ->
+        (* self var *)
+        P.SpecVar (Named vd.view_data_name, v, Unprimed)
+    ) bw_p in
+    let forward_fields = List.map (fun (dname,fname) ->
+      try 
+        let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
+        (ddecl,fname)
+      with Not_found ->
+        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
+    ) fw_f in
+    let backward_fields = List.map (fun (dname,fname) ->
+      try 
+        let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
+        (ddecl,fname)
+      with Not_found ->
+        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
+    ) bw_f in
+    (* let _ = print_endline ("== view: " ^ vd.view_name) in                                                   *)
+    (* let str_fwp = "      - fw_ptrs: " ^ (String.concat ", " fw_p) in                                        *)
+    (* let _ = print_endline (str_fwp) in                                                                      *)
+    (* let str_fwf = "      - fw_fields: " ^ (String.concat ", " (List.map ViewGraph.string_of_label fw_f)) in *)
+    (* let _ = print_endline (str_fwf) in                                                                      *)
+    (* let str_bwp = "      - bw_ptrs: " ^ (String.concat ", " bw_p) in                                        *)
+    (* let _ = print_endline (str_bwp) in                                                                      *)
+    (* let str_bwf = "      - bw_fields: " ^ (String.concat ", " (List.map ViewGraph.string_of_label bw_f)) in *)
+    (* let _ = print_endline (str_bwf) in                                                                      *)
     { vd with view_is_touching = touching;
-              view_is_segmented = segmented; }
+              view_is_segmented = segmented;
+              view_forward_ptrs = forward_ptrs;
+              view_backward_ptrs = backward_ptrs;
+              view_forward_fields = forward_fields;
+              view_backward_fields = backward_fields; }
   ) vdecls in
-  (* let _ = List.iter (fun vd ->                                                     *)
-  (*   let _ = print_endline ("== view: " ^ vd.view_name) in                          *)
-  (*   let vgs = build_view_graph vd prog in                                          *)
-  (*   List.iter (fun (vg, env, lbl) ->                                               *)
-  (*     print_endline ("    -- lbl " ^ (string_of_formula_label lbl) ^ ":"           *)
-  (*                            ^ (ViewGraph.string_of_graph vg));                    *)
-  (*     let str = ref "  == env: " in                                                *)
-  (*     let _ = List.iter (fun (v,t) -> str := !str ^ "(" ^ v ^ "," ^t ^ ")") env in *)
-  (*     print_endline !str;                                                          *)
-  (*   ) vgs                                                                          *)
-  (* ) vdecls in                                                                      *)
   { prog with prog_view_decls = new_vdecls }
