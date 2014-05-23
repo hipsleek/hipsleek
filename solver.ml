@@ -6724,7 +6724,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     Debug.tinfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
                     Debug.tinfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
                     Debug.tinfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
-                    let estate = if (* !Globals.allow_imm || *) (!Globals.allow_field_ann) then estate else
+                    let estate = if !Globals.allow_imm || (!Globals.allow_field_ann) then estate else
                       let null_p = CP.get_null_formula (MCP.pure_of_mix p2) in
                       let ctx_with_rhs es=
                         let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) p2 no_pos in
@@ -9480,9 +9480,10 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
 and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
   let pure = 
-    if (estate.es_imm_pure_stk!=[])
-    then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk)
-    else MCP.pure_of_mix rhs_p in
+    (* if (estate.es_imm_pure_stk!=[]) *)
+    (* then MCP.pure_of_mix (List.hd estate.es_imm_pure_stk) *)
+    (* else  *)
+      MCP.pure_of_mix rhs_p in
   let ptr_eq = MCP.ptr_equations_with_null rhs_p in
 
   (* below are equality in RHS taken away during --imm option *)
@@ -11224,7 +11225,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
 		let formula,to_aux_conseq = 
                   (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
                   (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
-                    (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
+                      (formula_of_pure_N lhs_guard_new pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
                 in 
                 (* let _ = print_endline ("do_universal:"  *)
                 (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
