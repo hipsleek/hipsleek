@@ -114,22 +114,22 @@ and struc_case_formula =
 	{
 		formula_case_branches : (Cpure.formula * struc_formula ) list;
 		(* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
-		formula_case_pos : loc 		
+		formula_case_pos : loc
 	}
 
 and struc_base_formula =
 	{
 		formula_struc_explicit_inst : Cpure.spec_var list;
 		formula_struc_implicit_inst : Cpure.spec_var list;
-        (* 
-           vars_free, vars_linking, vars_astextracted 
+        (*
+           vars_free, vars_linking, vars_astextracted
         *)
 		formula_struc_exists : Cpure.spec_var list;
 		formula_struc_base : formula;
 		formula_struc_continuation : struc_formula option;
 		formula_struc_pos : loc
 	}
-	
+
 and formula =
   | Base of formula_base
   | Or of formula_or
@@ -235,7 +235,7 @@ h_formula_phase_pos : loc }
   e.g. t::thread(0.5)<x::node<>> *)
 and h_formula_thread = {  h_formula_thread_node : CP.spec_var;
                         h_formula_thread_name : ident;
-			            h_formula_thread_derv : bool;
+			h_formula_thread_derv : bool;
                         h_formula_thread_perm : cperm; (* option; *) (*LDK: permission*)
                         (*added to support fractional splitting of thread nodes*)
                         h_formula_thread_origins : ident list;
