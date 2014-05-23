@@ -148,7 +148,7 @@ and bf_annot = (bool * int * (exp list))
 
 (* Boolean constraints *)
 and b_formula = p_formula * (bf_annot option)
-	
+
 and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
 
 (* should migrate to form below *)
@@ -2178,6 +2178,9 @@ and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
     mkFalse pos
   else
     BForm ((Neq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+
+and mkGtVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Gt (Var (sv, pos), IConst (i, pos), pos), None),None)
 
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)

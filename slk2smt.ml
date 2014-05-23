@@ -150,11 +150,14 @@ let process_data_def ddef =
   let _ = Hashtbl.add tbl_datadef ddef.I.data_name stl in
   s2
 
-let process_iante iante =
+let process_iante iante iprog =
   let s1 = "(assert (tobool\n" in
   let s2 = match iante with
     | Sleekcommons.MetaVar id -> "(?" ^ id ^ ")"
-    | Sleekcommons.MetaForm f -> process_formula f
+    | Sleekcommons.MetaForm f ->
+          let spl = Typeinfer.gather_type_info_formula iprog f [] true in
+          let _ = print_endline (Typeinfer.string_of_tlist spl) in
+          process_formula f
     | Sleekcommons.MetaEForm ef -> process_struct_formula ef
     | _ -> ""
   in
@@ -172,8 +175,8 @@ let process_iconseq iconseq =
   let s3 = "\n)))\n" in
   s1 ^ s2 ^ s3
 
-let process_entail (iante, iconseq, etype) =
-  let s1 = process_iante iante in
+let process_entail (iante, iconseq, etype) iprog =
+  let s1 = process_iante iante iprog in
   let s2 = process_iconseq iconseq in
   "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
@@ -181,7 +184,7 @@ let process_cmd cmd iprog =
   match cmd with
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def pdef iprog
-    | EntailCheck eche -> process_entail eche
+    | EntailCheck eche -> process_entail eche iprog
     | _ -> "other command\n"
 
 let trans_smt iprog cprog cmds =

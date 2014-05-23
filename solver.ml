@@ -2624,7 +2624,7 @@ and find_unsat prog f =
   let pr_f =  Cprinter.string_of_formula in
   let pr_l = pr_list pr_f in
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
-      
+
 and unsat_base_x prog (sat_subno:  int ref) f  : bool= 
   let tp_call_wrapper npf = 
     if !Globals.simpl_unfold2 then 
