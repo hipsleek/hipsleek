@@ -3321,6 +3321,7 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS contains hp_rel*)
     let lhrs = CF.get_hp_rel_name_formula lhs in
+    (* Andreea: is below check ok? *)
     if CP.intersect ivs lhrs = [] then
       (false,es)
     else begin
