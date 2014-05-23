@@ -16,20 +16,30 @@ tree<T> == self = null
         or self::node<v,l,r> * l::tree<T> * r::tree<T>
         & lookup(T,self,v,l,r);
 
-relation subset_reach(abstract D, node x, abstract D1).
-relation eq_notreach(abstract D, node x, abstract D1).
+relation subset_edges(abstract T, abstract D).
+relation reach_eq(abstract T, node x, abstract D).
 
-rlemma x::dag<D1> * x::dag<D> --@ (x::dag<D> U* y::dag<D>)
-      & subset_reach(D,x,D1) & eq_notreach(D,x,D1)
-      -> x::dag<D1> U* y::dag<D1>;
+relation pr(abstract D, node x, bag(node) S).
 
-relation unmarked(abstract D).
+axiom true ==> pr(D,null,{}).
+
+axiom pr(D,l,Sl) & pr(D,r,Sr) & lookup(D,x,0,l,r) & S = union(Sl,Sr) ==> pr(D,x,S).
+
+axiom lookup(D,x,0,null,null) ==> pr(D,x,{x}).
+ 
+rlemma x::tree<T> * x::dag<D> --@ (x::dag<D> U* y::dag<D>)
+      &	subset_edges(T,D) & reach_eq(T,x,D)
+      -> x::tree<T> * x::dag<T> U* y::dag<T>;
+
+relation unmarked(abstract D, node x).
+
+axiom unmarked(D,x) ==> lookup(D,x,0,_,_).
 
 */
 
 void spanning(struct node *x)
 /*@
-requires x::dag<D> & unmarked(D);
+requires x::dag<D> & unmarked(D,x);
 ensures x::tree<T> & subset_edges(T,D) & reach_eq(T,x,D);
 */
 {
