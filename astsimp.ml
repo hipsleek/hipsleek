@@ -2036,7 +2036,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_prim = is_prim_v;
           C.view_is_touching = false;      (* temporarily assigned *)
           C.view_is_segmented = false;     (* temporarily assigned *)
-          C.view_direction_info = [];
+          C.view_forward_ptrs = [];
+          C.view_forward_fields = [];
+          C.view_backward_ptrs = [];
+          C.view_backward_fields = [];
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
