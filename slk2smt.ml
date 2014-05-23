@@ -12,7 +12,6 @@ let rec process_exp e =
           let s = Iprinter.string_of_formula_exp e in
           if s = "null" then "nil" else s
 
-
 let rec process_p_formula pf =
   match pf with
     | Ipure.Frm _ ->
@@ -134,8 +133,8 @@ let process_pred_def pdef iprog =
   let s1 = ("\n(declare-fun " ^ pdef.I.view_name ^ " ((?self )" ^ (List.fold_left (fun s v -> s ^ "(?" ^ v ^ " )") "" pdef.I.view_vars) ^ ")\n") in
   let s2 = s1 ^ "Space (tospace\n" in
   let s3 = s2 ^ (process_struct_formula pdef.I.view_formula) ^ "))\n" in
-  let spl = Typeinfer.gather_type_info_struc_f iprog pdef.I.view_formula [] in
-  let _ = print_endline (Typeinfer.string_of_tlist spl) in
+  (* let spl = Typeinfer.gather_type_info_struc_f iprog pdef.I.view_formula [] in *)
+  (* let _ = print_endline (Typeinfer.string_of_tlist spl) in *)
   s3
 
 let process_data_def ddef =
@@ -150,14 +149,11 @@ let process_data_def ddef =
   let _ = Hashtbl.add tbl_datadef ddef.I.data_name stl in
   s2
 
-let process_iante iante iprog =
+let process_iante iante =
   let s1 = "(assert (tobool\n" in
   let s2 = match iante with
     | Sleekcommons.MetaVar id -> "(?" ^ id ^ ")"
-    | Sleekcommons.MetaForm f ->
-          let spl = Typeinfer.gather_type_info_formula iprog f [] true in
-          let _ = print_endline (Typeinfer.string_of_tlist spl) in
-          process_formula f
+    | Sleekcommons.MetaForm f -> process_formula f
     | Sleekcommons.MetaEForm ef -> process_struct_formula ef
     | _ -> ""
   in
@@ -176,9 +172,24 @@ let process_iconseq iconseq =
   s1 ^ s2 ^ s3
 
 let process_entail (iante, iconseq, etype) iprog =
-  let s1 = process_iante iante iprog in
+  let spl1 = match iante with
+    | Sleekcommons.MetaForm f ->
+          Typeinfer.gather_type_info_formula iprog f [] true
+    | _ -> []
+  in
+  let spl2 = match iconseq with
+    | Sleekcommons.MetaForm f ->
+          Typeinfer.gather_type_info_formula iprog f [] true
+    | _ -> []
+  in
+  let spl = spl1@spl2 in
+  let _ = print_endline (Typeinfer.string_of_tlist spl) in
+  let s0 = List.fold_left (fun s0 (id,sv_info) ->
+      s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n"
+  ) "" spl in
+  let s1 = process_iante iante in
   let s2 = process_iconseq iconseq in
-  "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
+  "\n" ^ s0 ^ "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
 let process_cmd cmd iprog =
   match cmd with

@@ -6836,7 +6836,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               ) in
                               (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
                               (* let _ = DD.info_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in *)
+                              let _ = DD.info_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
                               (* let _ = DD.info_hprint (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                               (* let _ = DD.info_hprint (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
                               (* let _ = DD.info_hprint (add_str "!Globals.do_classic_frame_rule" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
@@ -6844,7 +6844,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
                               (*use global var is dangerous, should pass as parameter*)
                               if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp 
-                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) && not(is_lend_h_formula(prep_h1))
+                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) 
+                                  && not(is_lend_h_formula(prep_h1)) && not(is_hformula_hole(prep_h1))
                                   && (h2 = HEmp)) then (
                                 if  not (Infer.no_infer_hp_rel estate) then
                                   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in

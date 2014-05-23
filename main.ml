@@ -54,7 +54,7 @@ let parse_file_full file_name (primitive: bool) =
         let index = try String.rindex file_name '.' with _ -> 0 in
         let length = (String.length file_name) - index in
         let ext = String.lowercase(String.sub file_name index length) in
-        if (ext = ".c") or (ext = ".cc") or (ext = ".cpp") or (ext = ".h") then
+        if (ext = ".c") || (ext = ".cc") || (ext = ".cpp") || (ext = ".h") then
           "cil"
         else
           "default"

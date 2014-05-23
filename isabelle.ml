@@ -245,7 +245,7 @@ and isabelle_of_formula f =
           else ""
 	| CP.AndList _ -> Gen.report_error no_pos "isabelle.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) ->
-	  if (is_bag_formula p1) & (is_bag_formula p2) then
+	  if (is_bag_formula p1) && (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " & " ^ (isabelle_of_formula p2) ^ ")"
           else
 	      if (is_bag_formula p1) then
@@ -255,7 +255,7 @@ and isabelle_of_formula f =
 		  "(" ^ (isabelle_of_formula p2) ^ ")"
                 else ""
     | CP.Or (p1, p2,_, _) ->
-	if (is_bag_formula p1) & (is_bag_formula p2) then
+	if (is_bag_formula p1) && (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " | " ^ (isabelle_of_formula p2) ^ ")"
           else
 	      if (is_bag_formula p1) then

@@ -1225,7 +1225,7 @@ let slice_framing_heaps_x hf0 framing_svl =
 let slice_framing_heaps hf0 framing_svl =
   let pr1 = !print_h_formula in
   let pr2 = !CP.print_svl in
-  let pr3 = pr_list pr1 in
+  (* let pr3 = pr_list pr1 in *)
   Debug.no_2 "slice_framing_heaps" pr1 pr2 pr1
       (fun _ _ -> slice_framing_heaps_x hf0 framing_svl) hf0 framing_svl
 
@@ -1353,9 +1353,14 @@ let update_f f drop_hvns inferred_ps=
   Debug.no_2 "CF.update_f" pr1 pr2  pr1
       (fun _ _ -> update_f_x f drop_hvns inferred_ps) f drop_hvns
 
-(*pto consistent, nemps*)
-let xpure_graph_pto_x prog seg_datas f=
+(*pto consistent, nemps
+*)
+let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
   (******************************)
+(*
+ x::pto<_> * x::pto<_> -> false
+  x::pto<a> * x::lseg<a> -> false
+*)
   let rec check_inconsistent dns=
     match dns with
       | [] -> false
@@ -1364,31 +1369,89 @@ let xpure_graph_pto_x prog seg_datas f=
         ) rest then true else
           check_inconsistent rest
   in
+  let dn2vn dn vname=
+    let args = List.filter (CP.is_node_typ) dn.h_formula_data_arguments in
+    let args_orig,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.SVArg sv, i)], i+1)) ([],0) args in
+    let args_annot,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.ImmAnn (CP.ConstAnn Mutable),i)], i+1) ) ([],0) args in
+    {
+        h_formula_view_node = dn.h_formula_data_node;
+        h_formula_view_name = vname;
+        h_formula_view_derv = dn.h_formula_data_derv;
+        h_formula_view_imm = dn.h_formula_data_imm;
+        h_formula_view_perm = dn.h_formula_data_perm;
+        h_formula_view_arguments = args;
+        h_formula_view_annot_arg = args_annot;
+        h_formula_view_args_orig = args_orig;
+        h_formula_view_modes = [];
+        h_formula_view_coercible = false;
+        h_formula_view_origins = dn.h_formula_data_origins;
+        h_formula_view_original = false;
+        h_formula_view_lhs_case = false;
+        h_formula_view_unfold_num = 0;
+        h_formula_view_remaining_branches = dn.h_formula_data_remaining_branches;
+        h_formula_view_pruning_conditions = dn.h_formula_data_pruning_conditions;
+        h_formula_view_label = None;
+        h_formula_view_pos = dn. h_formula_data_pos;
+    }
+  in
+  let rec oa_node2view hf=
+    match hf with
+      | DataNode dn -> begin
+            try
+              let oa_vname, dname = List.find (fun (_, dname1) ->
+                  String.compare dname1 dn.h_formula_data_name = 0
+              ) oamap_view_datas in
+              ViewNode (dn2vn dn oa_vname)
+            with _ -> hf
+        end
+      | _ -> hf
+  in
   (*****************************)
   let dns, hvs,_ = get_hp_rel_formula f in
   let seg_dns = List.filter (fun dn -> List.exists (fun vn ->
       String.compare dn.h_formula_data_name vn == 0
   ) seg_datas) dns in
   let nemps = List.fold_left (fun r dn ->
-      r@(List.map (fun a -> (dn. h_formula_data_node,a))
+      r@(List.map (fun a -> (dn.h_formula_data_node,a))
           (List.filter CP.is_node_typ dn.h_formula_data_arguments))
   ) [] seg_dns in
   let is_inconst = check_inconsistent dns in
+  (*********abstract x!=y ******)
   let view_ptrs = List.fold_left (fun r vn ->
       r@(vn.h_formula_view_node::vn.h_formula_view_arguments)
   ) [] hvs in
-  let nemps1 = List.filter (fun (sv1,sv2) -> CP.mem_svl sv1 view_ptrs &&
-      CP.mem_svl sv2 view_ptrs
-  ) nemps in
-  let ps = List.map (fun (sv1, sv2) -> CP.mkPtrNeqEqn sv1 sv2 no_pos) nemps1 in
-  is_inconst,nemps, (CP.conj_of_list ps no_pos)
+  (* let nemps1 = List.filter (fun (sv1,sv2) -> CP.mem_svl sv1 view_ptrs && *)
+  (*     CP.mem_svl sv2 view_ptrs *)
+  (* ) nemps in *)
+  let ps = List.map (fun (sv1, sv2) -> CP.mkPtrNeqEqn sv1 sv2 no_pos) nemps in
+  let oa_p = (CP.conj_of_list ps no_pos) in
+  let oa_f = formula_trans_heap_node oa_node2view f in
+  let oa_f2 = mkAnd_pure oa_f (MCP.mix_of_pure oa_p) no_pos in
+  oa_f2,is_inconst,nemps, oa_p
 
-let xpure_graph_pto prog seg_datas f=
+let xpure_graph_pto prog seg_datas oamap_data_views f=
   let pr1 = !print_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  Debug.no_2 "xpure_graph_pto" (pr_list pr_id) pr1
-      (pr_triple string_of_bool pr2 !CP.print_formula)
-      (fun _ _ -> xpure_graph_pto_x prog seg_datas f) seg_datas f
+  Debug.no_3 "xpure_graph_pto" (pr_list pr_id) (pr_list (pr_pair pr_id pr_id)) pr1
+      (pr_quad pr1 string_of_bool pr2 !CP.print_formula)
+      (fun _ _ _ -> xpure_graph_pto_x prog seg_datas oamap_data_views f) seg_datas oamap_data_views f
+
+
+
+(* todo:
+  x::pto<p> --> x::vname<p>: if
+  - data_name of vname is pto
+  - p is segment
+
+Assumption: work with the first segment parameter
+*)
+let oa_node2view_x prog f vname=
+  f
+
+let oa_node2view prog f vname=
+  let pr1 = !print_formula in
+  Debug.no_2 "oa_node2view" pr1 pr_id pr1
+      (fun _ _ -> oa_node2view_x prog f vname) f vname
 
 let force_elim_exists_x f quans=
   let ( _,mf,_,_,_) = split_components f in

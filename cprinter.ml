@@ -841,9 +841,10 @@ let pr_var_measures (t_ann, ls1,ls2) =
   pr_s "" pr_formula_exp ls1;
   if ls2!=[] then
     pr_set pr_formula_exp ls2
-  else ()
+ else ()
 
-let sort_exp a b =
+(*Loc: why we neet to sort? it shows diff order of variables and may mislead to users*)
+let sort_exp_old a b =
   match a with
     | P.Var (v1,_) ->
           begin
@@ -860,6 +861,8 @@ let sort_exp a b =
               | P.Var v2 -> (b,a)
               | _ -> (a,b)
           end
+
+let sort_exp a b = (a,b)
 
 let pr_xpure_view xp = match xp with
     { 

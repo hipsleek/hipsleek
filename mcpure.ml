@@ -10,23 +10,23 @@ module AnnoS = MCP_Util (Syn_Label_AnS)
 
 (*
  eprune = espec + ememo + eslice
- -espec enables specialization 
+ -espec enables specialization
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-  
+
 let print_mp_f = ref (fun (c: memo_pure) -> "printing not initialized")
 let print_mp_full = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mg_f = ref (fun (c: memoised_group) -> "printing not initialized")
 let print_mc_f = ref (fun (c: memoised_constraint) -> "printing not initialized")
 let print_sv_f = ref (fun (c: spec_var) -> "spec_var printing not initialized")
 let print_sv_l_f = ref (fun (c: spec_var list) -> "spec_var list printing not initialized")
-let print_sv = print_sv_f 
-let print_svl = print_svl 
+let print_sv = print_sv_f
+let print_svl = print_svl
 let print_bf_f = ref (fun (c: b_formula) -> "b_formula printing not initialized")
 let print_p_f_f = ref (fun (c: formula) -> "formula printing not initialized")
-let print_pure_f = print_p_f_f 
-let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized") 
+let print_pure_f = print_p_f_f
+let print_exp_f = ref(fun (c: exp) -> "exp printing not initialized")
 (* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
@@ -35,21 +35,21 @@ let print_alias_set aset = EMapSV.string_of aset
 
 (* with const for get_equiv_eq + form_formula_eq *)
 (* converts an equiv set into a formula *)
-let fold_aset (f: var_aset) : formula = 
-  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
+let fold_aset (f: var_aset) : formula =
+  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos)
     (mkTrue no_pos) (get_equiv_eq_with_const f)
 
 let fold_aset (f: var_aset) : formula =
-  Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f 
+  Debug.no_1 "fold_aset" print_alias_set !print_p_f_f fold_aset f
 
-let fv_memoised_constraint ({ memo_formula = bf }: memoised_constraint) : spec_var list 
+let fv_memoised_constraint ({ memo_formula = bf }: memoised_constraint) : spec_var list
   = bfv bf
-                                
+
 let fv_memoised_group (m: memoised_group) : spec_var list =
   match m with
   { memo_group_cons = mc_ls;
     memo_group_slice = f_ls;
-    memo_group_aset = eq_set }  ->  
+    memo_group_aset = eq_set }  ->
     let v1 = List.concat (List.map fv_memoised_constraint mc_ls) in
     let v2 = List.concat (List.map fv f_ls) in
     let v3 = List.filter (fun x -> not (is_const x)) (fv_var_aset eq_set) in
@@ -57,7 +57,7 @@ let fv_memoised_group (m: memoised_group) : spec_var list =
 
 let repatch_memoised_group (m: memoised_group) : memoised_group =
   let new_vars = fv_memoised_group m in
-  { m with memo_group_fv = new_vars } 
+  { m with memo_group_fv = new_vars }
 
 let repatch_memo_pure (ms: memo_pure) : memo_pure =
   List.map repatch_memoised_group ms
@@ -74,7 +74,7 @@ let consistent_memoised_group (m: memoised_group) : bool =
      (* let s = ("WARNING: FreeVars unused :"^(!print_svl r2)) in
       let _ = report_warning no_pos s in*)
       true
-  else 
+  else
     let s = ("ERROR: FreeVars not captured: " ^ (!print_svl r)) in
     let _ = report_warning no_pos s in
     false
