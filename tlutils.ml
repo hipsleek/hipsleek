@@ -429,14 +429,14 @@ let get_model solver is_linear templ_unks vars assertions =
   | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
 
 let get_opt_model is_linear templ_unks vars assertions =
-  if is_linear (* || is_z3_solver () *) then 
+  if is_linear || is_z3_solver () && !Globals.dis_ln_z3 then 
     get_model !lp_solver is_linear templ_unks vars assertions
   else
     (* Linearize constraints *)
     let res = Smtsolver.get_model true vars assertions in
     match res with
     | Z3m.Unsat -> Unsat
-    | Z3m.Sat_or_Unk model -> 
+    | Z3m.Sat_or_Unk model -> if model = [] then Unknown else 
       let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
       let subst_nl_vars = most_common_nonlinear_vars nl_var_list in
       

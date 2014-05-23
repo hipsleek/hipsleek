@@ -928,6 +928,8 @@ let allow_norm = ref true
 
 let dis_norm = ref false
 
+let dis_ln_z3 = ref false
+
 let allow_ls = ref false (*enable lockset during verification*)
 
 let allow_locklevel = ref false (*enable locklevel during verification*)

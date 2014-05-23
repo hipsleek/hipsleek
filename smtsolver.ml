@@ -516,9 +516,7 @@ let is_z3_running = ref false
 
 let smtsolver_name = ref ("z3": string)
 
-let smtsolver_path = 
-  (* "/home/chanhle/tools/z3-4.3.2/z3" *)
-  "z3"
+let smtsolver_path = "z3-4.3.2" (* "z3" *)
 
 (***********)
 let test_number = ref 0
@@ -534,8 +532,8 @@ let set_process (proc: prover_process_t) =
 (*for z3-2.19*)
 let command_for prover = (
   match !smtsolver_name with
-  | "z3" -> (smtsolver_path, [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
-  | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3" -> (smtsolver_path, [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
+  | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
 
@@ -578,9 +576,9 @@ and start() =
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
       else
-        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path;"-smt2"; "-in"|]) set_process prelude
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, smtsolver_path, [|smtsolver_path; "-smt2"; "-in"|]) set_process prelude
     ) in
     is_z3_running := true;
   )
@@ -1131,12 +1129,12 @@ let push_smt_input inp timeout f_timeout =
   let fnc f = (
     let _ = incr z3_call_count in
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-    let _ = if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
+    let _ = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel)) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc inp timeout f_timeout in
   let tstoplog = Gen.Profiling.get_time () in
-  let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
+  let _ = Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
   res
 
 let get_model is_linear vars assertions =
@@ -1159,16 +1157,15 @@ let get_model is_linear vars assertions =
     (* "(check-sat)\n" ^ *)
     "(get-model)\n"
   in
-  
+
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
   ) in
   let _ = push_smt_input smt_inp !smt_timeout fail_with_timeout in
-  let model_chn = !prover_process.inchannel in
-  
+
   let r =
     try
-      let lexbuf = Lexing.from_channel model_chn in
+      let lexbuf = Lexing.from_channel !prover_process.inchannel in
       Z3mparser.output Z3mlexer.tokenizer lexbuf
     with _ -> Sat_or_Unk []
   in r
