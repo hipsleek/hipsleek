@@ -10,7 +10,7 @@ ll<n> ==
   self::node<v, q> * q::ll<n-1>
   inv n >= 0;
 
-lemma_safe self::lseg<n,r> <- self::lseg<m,q>*q::node<_,r> & n=m+1;
+//lemma_safe self::lseg<n,r> <- self::lseg<m,q>*q::node<_,r> & n=m+1;
 
 //lemma_safe self::ll<n> <- self::lseg<n, null>;
 
