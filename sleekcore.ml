@@ -223,19 +223,20 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let ante0a = Cfutil.force_elim_exists ante0b ante_quans in
   let conseq_quans, conseq0b = CF.split_quantifiers conseq0 in
   let conseq0a = Cfutil.force_elim_exists conseq0b conseq_quans in
-  let _ = Debug.binfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
-  let _ = Debug.binfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
+  let _ = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
+  let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)
-  let prove_conj_conseq_conj_ante ante ante_nemps1 f=
-    let _ = Debug.info_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) ante no_pos in
-    let is_unsat, f1 = Frame.norm_dups_pred prog ante_nemps1 f in
+  let prove_conj_conseq_conj_ante (conj_ante, a_hg) ante_nemps1 conj_conseq=
+    let _ = Debug.info_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
+    let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps1 conj_conseq in
     if is_unsat then false,f_ctx else
+      let _ = Frame.check_imply_w_norm prog a_hg conj_conseq_hg in
       let _ = Globals.graph_norm := false in
       (* let ante1 = CF.add_quantifiers ante_quans (CF.mkAnd_pure ante ante_quan_p no_pos) in *)
       (* let f2 = CF.add_quantifiers conseq_quans (CF.mkAnd_pure f1 conseq_quan_p no_pos) in *)
-      let ante1, ante_args = Cfutil.norm_rename_clash_args_node [] ante in
-      let f2, _ = Cfutil.norm_rename_clash_args_node ante_args f1 in
-      let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces ante1 (CF.struc_formula_of_formula f2 no_pos) in
+      let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] conj_ante in
+      let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args norm_conj_conseq in
+      let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
       let _ = Debug.info_hprint (add_str "r" string_of_bool) r no_pos in
       let _ = Globals.graph_norm := true in
       (r, lc)
@@ -263,10 +264,10 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> false, res_fs
       | f::rest ->
-            let unsat,f1 = Frame.norm_dups_pred prog [](*ante_nemps*) f in
+            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f in
             if unsat then
-              (unsat, res_fs@rest)
-            else check_unsat_ante rest (res_fs@[f])
+              (unsat, res_fs@(List.map (fun f -> (f, Hgraph.mk_empty_hgraph ())) rest))
+            else check_unsat_ante rest (res_fs@[(f,hg1)])
   in
   (******************************************************)
   let ante1a, conseq1, ante_unsat0, conseq_unsat0 = Syn_checkeq.syntax_nodes_match

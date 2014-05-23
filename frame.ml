@@ -1309,26 +1309,27 @@ let norm_dups_pred_new_x cprog ante_non_emps f=
   (*find initial non-emp constraints from pure*)
   let eqs0,non_emps0a = get_non_emp p view_ptrs_map view_emp_map in
   let non_emps0 = ante_non_emps@non_emps0a in
-  if eqs0 =[] && non_emps0 = [] then (false, f) else
+  if eqs0 =[] && non_emps0 = [] then (false, f, Hgraph.mk_empty_hgraph()) else
     (*find chains from duplicate pred roots*)
     let maybe_emps = List.fold_left (fun ls vn -> ls@(abs_maybe eqs0 vn)) [] vns in
-    let is_conflict,emps1 = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
-    if is_conflict then (true,f) else
+    let (is_conflict,emps1,graph) = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
+    if is_conflict then (true,f,graph) else
       let ps = revert_emp_abs emps1 view_ptrs_map view_emp_map in
       (*remove hvns in non emp*)
       let drop_hvns = CP.remove_dups_svl (List.map fst emps1) in
       let f1 = Cfutil.update_f f drop_hvns ps in
-      (false,f1)
+      (false,f1,graph)
 
 let norm_dups_pred_new_a cprog ante_non_emps f=
   if not (Cfutil.is_empty_heap_f f) && !seg_opz then
     norm_dups_pred_new_x cprog ante_non_emps f
-  else false,f
+  else false,f,(Hgraph.mk_empty_hgraph ())
 
 let norm_dups_pred prog ante_non_emps f=
   let pr1 = Cprinter.string_of_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_pair string_of_bool pr1)
+  let pr3 = Hgraph.print_hgraph in
+  Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_triple string_of_bool pr1 pr3)
       (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f) f ante_non_emps
 
 let heap_normal_form_x prog f0=
@@ -1370,7 +1371,7 @@ let heap_normal_form_ctx prog c=
 
 let check_unsat_w_norm prog f0=
   let helper f=
-    let is_heap_conflict,_ = norm_dups_pred prog [] (CF.elim_exists f) in
+    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) in
     is_heap_conflict
   in
   if not !seg_opz then false,None else
@@ -1391,3 +1392,6 @@ let check_unsat_w_norm prog f0=
     r,fail_of
 
 
+let check_imply_w_norm prog ante_hg conseq_hg=
+  let is_implied, vertex_map = Hgraph.check_homomorphism conseq_hg ante_hg in
+  is_implied

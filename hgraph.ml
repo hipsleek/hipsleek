@@ -55,7 +55,25 @@ type adj = {
     a_nexts: int list;
 }
 
+type heap_graph = {
+    hg_sccs : (int*((int * (int list) * (int list)) list)) list;
+    hg_vertexs: heap_vertex list;
+    hg_adjg2: adj list;
+    hg_adj1: adj list;
+    hg_adj0: adj list;
+}
 
+let mk_hgraph sccs hvs adjg2 adj1 adj0= {
+    hg_sccs = sccs;
+    hg_vertexs = hvs;
+    hg_adjg2 = adjg2;
+    hg_adj1 = adj1;
+    hg_adj0 = adj0;
+}
+
+let mk_empty_hgraph () =  mk_hgraph [] [] [] [] []
+
+(******************printer********************************)
 let print_hv hv=
   (string_of_int hv.hv_id) ^ ": " ^ (!CP.print_svl hv.hv_lbl)
 
@@ -65,6 +83,20 @@ let print_he he=
 let print_adj a=
   let pr1 = pr_list string_of_int in
   (string_of_int a.a_root) ^ "-->"^(pr1 a.a_nexts)
+
+let print_hgraph g=
+  let pr0 = pr_list string_of_int in
+  let pr1 = pr_list_ln (pr_pair string_of_int (pr_list (pr_triple string_of_int pr0 pr0) )) in
+  let pr2 = pr_list print_adj in
+  let pr3 = pr_list print_hv in
+  let string_sscs = "sscs:" ^ (pr1 g.hg_sccs) in
+  let string_hvs = "\nvertexs:" ^ (pr3 g.hg_vertexs) in
+  let string_adjg2 = "\nadj >= 2:" ^ (pr2 g.hg_adjg2) in
+  let string_adj1 = "\nadj = 1:" ^ (pr2 g.hg_adj1) in
+  let string_adj0 = "\nadj >= 0:" ^ (pr2 g.hg_adj0) in
+  string_sscs ^ string_hvs ^ string_adjg2 ^ string_adj1 ^ string_adj0
+
+(*****************end*printer********************************)
 
 let rec look_up_adj root_id ls_adj=
   match ls_adj with
@@ -1545,6 +1577,10 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
       (* let _ = Debug.info_pprint (" loop: rule 2-3-4" ) no_pos in *)
       force_inter_predicate_rules new_vertexs new_adjsg1 new_adjs1 ls_non_emp
 
+(*
+  (new_comps, vertexs1, ls_adjg12, lsadj12,ls_adj0)
+*)
+
 let norm_graph_x ls_may_eq ls_must_eq ls_must_diff=
   let vertexs, ini_maps = build_init_ls_vertex ls_may_eq ls_must_eq in
   let edges = build_init_edges ls_may_eq ini_maps in
@@ -1559,12 +1595,77 @@ let norm_graph_x ls_may_eq ls_must_eq ls_must_diff=
   (* in *)
   let is_conflict, new_comps, vertexs1, ls_adjg12, lsadj12 = force_inter_predicate_rules
      vertexs ls_adjg1 ls_adj1 ls_must_diff in
-  if is_conflict then (true, []) else
+  let final_graph =  mk_hgraph new_comps vertexs1 ls_adjg12 lsadj12 ls_adj0 in
+  if is_conflict then (true, [],final_graph) else
     (*build emp from vertexs*)
-    build_emp vertexs1 ls_must_diff
+    let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in
+    (is_conflict, final_emps,final_graph)
 
 let norm_graph ls_may_eq ls_must_eq ls_must_diff=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  Debug.no_3 "norm_graph" pr1 pr1 pr1 (pr_pair string_of_bool pr1)
+  let pr2 =  print_hgraph in
+  Debug.no_3 "norm_graph" pr1 pr1 pr1 (pr_triple string_of_bool pr1 pr2)
       (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff)
       ls_may_eq ls_must_eq ls_must_diff
+
+(****************************************************************)
+    (*********************homomorphism**********************)
+(****************************************************************)
+
+(*
+  find map from hg2 of each vertex of hg1
+  map(v1,v2): v1.lbl is subset of v2.lbl
+*)
+
+let find_homo_vetex_map_x vs01 vs02=
+  (*******************************************)
+  let rec look_up_homo_vertex vs2 v1 rest_vs2=
+    match vs2 with
+      | [] -> raise Not_found
+      | v2::rest -> if List.length v2.hv_lbl = List.length v1.hv_lbl &&
+          CP.diff_svl v2.hv_lbl v1.hv_lbl = [] then
+            ((v1.hv_id, v2.hv_id), rest_vs2@rest)
+        else look_up_homo_vertex rest v1 (rest_vs2@[v2])
+  in
+  (*******************************************)
+  if List.length vs02 < List.length vs01 then (false, [], vs02) else
+    begin
+      try
+        let vertex_map, frame_vertex = List.fold_left (fun (map,rest_vs2) v1->
+            let emap, rest_vs2 = look_up_homo_vertex rest_vs2 v1 [] in
+            (map@[emap], rest_vs2)
+        ) ([], vs02) vs01
+        in
+        (true, vertex_map, frame_vertex)
+      with Not_found -> false,[], vs02
+    end
+
+let find_homo_vetex_map vs01 vs02=
+  let pr1 = pr_list print_hv in
+  let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_2 "find_homo_vetex_map" pr1 pr1 (pr_triple string_of_bool pr2 pr1)
+      (fun _ _ -> find_homo_vetex_map_x vs01 vs02) vs01 vs02
+(*
+ purpose: is hg_src homomorphism to hg_tar
+
+out:
+  - yes/no
+  - maping vertexs
+  - need to generate lemma wo graph to prove the entailment
+*)
+let check_homomorphism_x hg_src hg_tar=
+  (*find vertexs mapping from src to tar*)
+  let is_vertex_homo, map, frame_vertex_hg_tar = find_homo_vetex_map hg_src.hg_vertexs hg_tar.hg_vertexs in
+  if not is_vertex_homo then (false, []) else
+    true,map
+
+let check_homomorphism hg_src hg_tar=
+  let pr1 = print_hgraph in
+  let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_2 "check_homomorphism" pr1 pr1 (pr_pair string_of_bool pr2)
+      (fun _ _ -> check_homomorphism_x hg_src hg_tar) hg_src hg_tar
+
+
+(****************************************************************)
+   (*******************END homomorphism**********************)
+(****************************************************************)
