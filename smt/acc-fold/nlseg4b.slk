@@ -20,6 +20,8 @@ print residue.
 <1>(exists q_344: emp&p!=null & p!=q_344 & p!=self_lem_12 & q_344!=self_lem_12 & q_344!=self_lem_12&{FLOW,(21,22)=__norm})
 */
 
+
+
 //2 Fail.(must) cause:UnionR[residue is forbidden.(2),residue is forbidden.(2)]
 checkentail_exact (exists q_48,a_49: self_lem_12::node<a_49> * a_49::nlseg<q_48> *
     q_48::nlseg<p> & p!=null & p!=q_48 & p!=self_lem_12 & self_lem_12!=q_48)
