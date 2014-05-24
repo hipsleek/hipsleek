@@ -10,6 +10,15 @@ checkentail_exact
        |- x::node<uu>.
 print residue.
 
+checkentail_exact
+    x::node<q>*q::node<r>@L*r::node<null>@L
+       |- x::node<uu>.
+print residue.
+
+checkentail_exact
+    x::node<q>*q::node<r>@L*r::node<null>
+       |- x::node<uu>.
+print residue.
 /*
 # nlseg4d2.slk
 
