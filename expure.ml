@@ -27,7 +27,11 @@ open Cpure
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
 let baga_conv (baga : spec_var list) : formula =
-  if (List.length baga = 0) then mkFalse no_pos else
+  if (List.length baga = 0) then
+    mkTrue no_pos
+  else if (List.length baga = 1) then
+    mkGtVarInt (List.hd baga) 0 no_pos
+  else
     let rec helper i j baga len fl =
       if i = len - 2 && j = len - 1 then
         fl@[(mkNeqVar (List.nth baga i) (List.nth baga j) no_pos)]
@@ -51,7 +55,7 @@ let ef_conv ((baga,f) : ef_pure) : formula =
 
 (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
 let baga_enum (baga : spec_var list) : formula =
-  if (List.length baga = 0) then mkFalse no_pos else
+  if (List.length baga = 0) then mkTrue no_pos else
     let i = ref 0 in
     let fl = List.map (fun sv ->
         i := !i + 1; mkEqVarInt sv !i no_pos) baga in
@@ -217,6 +221,8 @@ let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.
 (* view  ls1<self,p> == ..ls1<..>..ls2<..>... *)
 (* map   ls1<self,p> == [(b1,f1)] *)
 (*       ls2<self,p> == [(b2,f2)] *)
+let build_ef_view (map : (ident, ef_pure_disj) Hashtbl.t) (view_decl : Cast.view_decl) : ef_pure_disj =
+  List.flatten (List.map (fun (cf,_) -> build_ef_formula map cf) view_decl.Cast.view_un_struc_formula)
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
 (* does view(inv) --> inv *)
@@ -226,7 +232,7 @@ let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.
 (* let rhs_list = inv_list in *)
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply a c) pair_list in *)
-let fix_text (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
   let lhs_list = List.map (fun vd ->
       Hashtbl.find map vd.Cast.view_name) view_list in
   let rhs_list = inv_list in
@@ -252,3 +258,20 @@ let fix_text (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
+let fix_ef (view_list : Cast.view_decl list) (disjunct_num : int) : ef_pure_disj list =
+  let map = Hashtbl.create 1 in
+  let _ = List.iter (fun vd -> Hashtbl.add map vd.Cast.view_name []) view_list in
+  let inv_list = List.fold_left (fun inv_list vd ->
+      inv_list@[(build_ef_view map vd)]) [] view_list in
+  let rec helper map view_list inv_list =
+    if fix_test map view_list inv_list
+    then
+      inv_list
+    else
+      let _ = List.iter (fun (vd,inv) ->
+          Hashtbl.replace map vd.Cast.view_name inv) (List.combine view_list inv_list) in
+      let inv_list = List.fold_left (fun inv_list vd ->
+          inv_list@[(build_ef_view map vd)]) [] view_list in
+      helper map view_list inv_list
+  in
+  helper map view_list inv_list
