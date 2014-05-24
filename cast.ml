@@ -120,7 +120,7 @@ and view_decl = {
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
-    (* if view has only a single eqn, then place complex subpart into complex_inv *)  
+    (* if view has only a single eqn, then place complex subpart into complex_inv *)
     view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
     view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
@@ -135,7 +135,7 @@ and view_decl = {
     view_ef_pure_disj : P.ef_pure_disj option
 }
 
-(* An Hoa : relation *)					
+(* An Hoa : relation *)
 and rel_decl = { 
     rel_name : ident; 
     rel_vars : P.spec_var list;
@@ -266,26 +266,26 @@ and sharp_val =
 
 (* An Hoa : The exp_assign in core representation does not allow lhs to be another expression so array modification statement is necessary *)
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
-   exp_arraymod_rhs : exp; 
+   exp_arraymod_rhs : exp;
    exp_arraymod_pos : loc } *)
-	
-and exp_assert = { 
+
+and exp_assert = {
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
     exp_assert_path_id : formula_label;
     exp_assert_type : assert_type;
     exp_assert_pos : loc }
 
-and exp_assign = 
+and exp_assign =
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
     exp_assign_pos : loc }
-	
-and exp_bconst = { 
+
+and exp_bconst = {
     exp_bconst_val : bool;
     exp_bconst_pos : loc }
 
-and exp_bind = { 
+and exp_bind = {
     exp_bind_type : typ; (* the type of the entire bind construct, i.e. the type of the body *)
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
