@@ -94,10 +94,11 @@ and view_decl = {
     view_is_prim : bool;
     view_is_touching : bool;
     view_is_segmented : bool;
-    view_forward_ptrs: P.spec_var list;
-    view_forward_fields: (data_decl * ident) list;
+    view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)
+    view_forward_fields: (data_decl * ident) list;               (* definition of the view          *) 
     view_backward_ptrs: P.spec_var list;
     view_backward_fields: (data_decl * ident) list;
+    view_aux_formula : (Cformula.formula * formula_label) list;  (* aux formula for each branch of view *)
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list; (*for extn views*)
     view_parent_name: ident option; (*for view_spec*)
@@ -2953,59 +2954,84 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   done;
   (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
 
-(* (* requires view's forward, backward info to be computed first *)            *)
-(* let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)               *)
-(*     (vgraphs : (ViewGraph.t * ViewGraph.vertex_env * formula_label) list) =  *)
-(*   let prim_ptrs = vd.view_forward_ptrs @ vd.view_backward_ptrs in            *)
-(*   List.map2 (fun (f,lbl) (vg, env, lbl)->                                    *)
-(*     let (hf,mf,_,_,_) = CF.split_components f in                             *)
-(*     let aux_hf = (                                                           *)
-(*       let rec get_aux_hf hf  = (match hf with                                *)
-(*         | CF.HTrue | CF.HFalse | CF.HEmp -> Some hf                          *)
-(*         | CF.DataNode {CF.h_formula_data_node = sv}                          *)
-(*         | CF.ViewNode {CF.h_formula_view_node = sv} ->                       *)
-(*             let vn = P.name_of_spec_var sv in                                *)
-(*             if (ViewGraph.mem_vertex vg vn) then                             *)
-(*               None                                                           *)
-(*             else Some hf                                                     *)
-(*         | CF.Star sf -> (                                                    *)
-(*             let h1opt = get_aux_hf sf.CF.h_formula_formula_h1 in             *)
-(*             let h2opt = get_aux_hf sf.CF.h_formula_formula_h2 in             *)
-(*             match h1opt, h2opt with                                          *)
-(*             | None, None -> None                                             *)
-(*             | None, Some _ -> h2opt                                          *)
-(*             | Some _, None -> h1opt                                          *)
-(*             | Some h1, Some h2 ->                                            *)
-(*                 let flow = sf.CF.h_formula_formula_flow in                   *)
-(*                 let pos = sf.CF.h_formula_formula_pos in                     *)
-(*                 let aux = CF.mkStar h1 h2 flow pos in                        *)
-(*                 Some aux                                                     *)
-(*           )                                                                  *)
-(*         | _ ->                                                               *)
-(*             let msg = "compute_view_aux_formula: unsupported h_formula"      *)
-(*                       ^ (!print_h_formula hf) in                             *)
-(*             report_error no_pos msg                                          *)
-(*       ) in                                                                   *)
-(*       get_aux_hf hf                                                          *)
-(*     ) in                                                                     *)
-(*     let pf = MP.pure_of_mix mf in                                            *)
-(*     let aux_pf = (                                                           *)
-(*       let rec get_aux_pf pf = (match pf with                                 *)
-(*         | P.BForm ((P.Eq (e1, e2, pos), ann), lbl) -> (                      *)
-(*         | P.And (pf1, pf2, pos)                                              *)
-(*         | _ -> Some pf                                                       *)
-(*       ) in                                                                   *)
-(*       get_aux_pf pf                                                          *)
-(*     ) in                                                                     *)
-(*   ) vd.view_un_struc_formula vgraphs                                         *)
+(* requires view's forward, backward info to be computed first *)
+let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
+    (vgraphs : (ViewGraph.t * ViewGraph.vertex_env * formula_label) list) =
+  List.map2 (fun (f,lbl) (vg, env, lbl)->
+    let pos = CF.pos_of_formula f in
+    let (hf,mf,fl,t,a) = CF.split_components f in
+    let aux_hf = (
+      let rec get_aux_hf hf  = (match hf with
+        | CF.HTrue | CF.HFalse | CF.HEmp -> Some hf
+        | CF.DataNode {CF.h_formula_data_node = sv}
+        | CF.ViewNode {CF.h_formula_view_node = sv} ->
+            let vn = P.name_of_spec_var sv in
+            if (ViewGraph.mem_vertex vg vn) then
+              None
+            else Some hf
+        | CF.Star sf -> (
+            let h1opt = get_aux_hf sf.CF.h_formula_star_h1 in
+            let h2opt = get_aux_hf sf.CF.h_formula_star_h2 in
+            match h1opt, h2opt with
+            | None, None -> None
+            | None, Some _ -> h2opt
+            | Some _, None -> h1opt
+            | Some h1, Some h2 ->
+                let pos = sf.CF.h_formula_star_pos in
+                let aux = CF.mkStarH h1 h2 pos in
+                Some aux
+          )
+        | _ ->
+            let msg = "compute_view_aux_formula: unsupported h_formula"
+                      ^ (!print_h_formula hf) in
+            report_error no_pos msg
+      ) in
+      get_aux_hf hf
+    ) in
+    let pf = MP.pure_of_mix mf in
+    let aux_pf = (
+      let rec get_aux_pf pf = (match pf with
+        | P.BForm ((P.Eq (P.Var (sv1, pos1), P.Var (sv2, pos2), pos3), ann), lbl) -> (
+            let vn1 = P.name_of_spec_var sv1 in
+            let vn2 = P.name_of_spec_var sv2 in
+            if ((ViewGraph.mem_vertex vg vn1) && (ViewGraph.mem_vertex vg vn2)) then
+              None
+            else Some pf
+          )
+        | P.And (pf1, pf2, pos) -> (
+            let pf1opt = get_aux_pf pf1 in
+            let pf2opt = get_aux_pf pf2 in
+            match pf1opt, pf2opt with
+            | None, None -> None
+            | None, Some _ -> pf2opt
+            | Some _, None -> pf1opt
+            | Some p1, Some p2 -> Some (P.mkAnd p1 p2 pos)
+          ) 
+        | _ -> Some pf
+      ) in
+      get_aux_pf pf
+    ) in
+    let new_hf = match aux_hf with
+      | None -> CF.HEmp
+      | Some hf -> hf
+    in
+    let new_mf = match aux_pf with
+      | None -> MP.mix_of_pure(P.mkTrue pos)
+      | Some pf -> MP.mix_of_pure(pf)
+    in
+    let auxf = (CF.mkBase new_hf new_mf t fl a pos) in
+    (auxf, lbl)
+  ) vd.view_un_struc_formula vgraphs
 
 
 let categorize_view (prog: prog_decl) : prog_decl =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vdecls = prog.prog_view_decls in
   let new_vdecls = List.map (fun vd ->
+    (* touching & segmented *)
     let touching = is_touching_view vd in
     let segmented = is_segmented_view vd in
+    (* forward & backward pointers, fields *)
     let vgraphs = build_view_graph vd prog in
     let (fw_p, fw_f, bw_p, bw_f) = compute_view_forward_backward_info vd prog vgraphs in
     let forward_ptrs = List.map (fun v ->
@@ -3036,6 +3062,8 @@ let categorize_view (prog: prog_decl) : prog_decl =
       with Not_found ->
         report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
     ) bw_f in
+    (* aux formula *)
+    let view_aux = compute_view_aux_formula vd prog vgraphs in
     (* let _ = print_endline ("== view: " ^ vd.view_name) in                                                   *)
     (* let str_fwp = "      - fw_ptrs: " ^ (String.concat ", " fw_p) in                                        *)
     (* let _ = print_endline (str_fwp) in                                                                      *)
@@ -3050,6 +3078,7 @@ let categorize_view (prog: prog_decl) : prog_decl =
               view_forward_ptrs = forward_ptrs;
               view_backward_ptrs = backward_ptrs;
               view_forward_fields = forward_fields;
-              view_backward_fields = backward_fields; }
+              view_backward_fields = backward_fields;
+              view_aux_formula = view_aux; }
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
