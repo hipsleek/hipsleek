@@ -1613,6 +1613,7 @@ let norm_graph ls_may_eq ls_must_eq ls_must_diff=
 (****************************************************************)
 
 (*
+  h: hg1 --> hg2
   find map from hg2 of each vertex of hg1
   map(v1,v2): v1.lbl is subset of v2.lbl
 *)
@@ -1622,8 +1623,7 @@ let find_homo_vetex_map_x vs01 vs02=
   let rec look_up_homo_vertex vs2 v1 rest_vs2=
     match vs2 with
       | [] -> raise Not_found
-      | v2::rest -> if List.length v2.hv_lbl = List.length v1.hv_lbl &&
-          CP.diff_svl v2.hv_lbl v1.hv_lbl = [] then
+      | v2::rest -> if CP.diff_svl v1.hv_lbl v2.hv_lbl = [] then
             ((v1.hv_id, v2.hv_id), rest_vs2@rest)
         else look_up_homo_vertex rest v1 (rest_vs2@[v2])
   in

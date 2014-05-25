@@ -6,8 +6,9 @@
 #norm_rename_clash_args_node
 #get_oa_node_view
 #build_ls_adj
-#heap_normal_form
-#norm_graph
+heap_normal_form
+norm_graph
 #norm_dups_pred
 find_homo_vetex_map
 check_homomorphism
+find_close_chains

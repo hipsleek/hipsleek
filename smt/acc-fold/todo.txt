@@ -149,7 +149,7 @@ Entail 5: Valid.
 [[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==> (left: lem_11) ==>  Match ==> ]]
 */
 ====================================================================
-# nlseg3c1.slk --inv
+# nlseg3c1.slk --inv: FIXED
 
 this is non-recursive. why is there a bad mutual
 recursion detected
