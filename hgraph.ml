@@ -15,7 +15,7 @@ module MCP = Mcpure
 module CF = Cformula
 
 let loc_number = ref (0:int)
-let heap_size = ref (25:int)
+let heap_size = ref (50:int)
 
 let reset_fress_addr () =
   loc_number :=0
@@ -58,27 +58,29 @@ type adj = {
 type heap_graph = {
     hg_sccs : (int*((int * (int list) * (int list)) list)) list;
     hg_vertexs: heap_vertex list;
+    hg_edges: heap_edge list;
     hg_adjg2: adj list;
     hg_adj1: adj list;
     hg_adj0: adj list;
 }
 
-let mk_hgraph sccs hvs adjg2 adj1 adj0= {
+let mk_hgraph sccs hvs hes adjg2 adj1 adj0= {
     hg_sccs = sccs;
     hg_vertexs = hvs;
+    hg_edges = hes;
     hg_adjg2 = adjg2;
     hg_adj1 = adj1;
     hg_adj0 = adj0;
 }
 
-let mk_empty_hgraph () =  mk_hgraph [] [] [] [] []
+let mk_empty_hgraph () =  mk_hgraph [] [] [] [] [] []
 
 (******************printer********************************)
 let print_hv hv=
   (string_of_int hv.hv_id) ^ ": " ^ (!CP.print_svl hv.hv_lbl)
 
 let print_he he=
-  (string_of_int he.he_b_id) ^ "-->"^(string_of_int he.he_e_id)
+  (if he.he_kind then "(r) " else "b") ^ (string_of_int he.he_b_id) ^ "-->"^(string_of_int he.he_e_id)
 
 let print_adj a=
   let pr1 = pr_list string_of_int in
@@ -91,18 +93,72 @@ let print_hgraph g=
   let pr3 = pr_list print_hv in
   let string_sscs = "sscs:" ^ (pr1 g.hg_sccs) in
   let string_hvs = "\nvertexs:" ^ (pr3 g.hg_vertexs) in
+  let string_hes = "\nedges:" ^ ((pr_list print_he) g.hg_edges) in
   let string_adjg2 = "\nadj >= 2:" ^ (pr2 g.hg_adjg2) in
   let string_adj1 = "\nadj = 1:" ^ (pr2 g.hg_adj1) in
   let string_adj0 = "\nadj >= 0:" ^ (pr2 g.hg_adj0) in
-  string_sscs ^ string_hvs ^ string_adjg2 ^ string_adj1 ^ string_adj0
+  string_sscs ^ string_hvs ^ string_hes ^ string_adjg2 ^ string_adj1 ^ string_adj0
 
 (*****************end*printer********************************)
+ let cmp_edge e1 e2 = e1.he_b_id - e2.he_b_id
+
+ let rec look_up_edge edges b_id e_id=
+   match edges with
+     | e::rest -> if e.he_b_id = b_id && e.he_e_id = e_id then e
+       else look_up_edge rest b_id e_id
+     | [] -> raise Not_found
 
 let rec look_up_adj root_id ls_adj=
   match ls_adj with
     | [] -> []
     | a::rest -> if a.a_root = root_id then a.a_nexts else
         look_up_adj root_id rest
+
+
+let look_up_children v hg_adjg2 hg_adj1 adj0=
+  if List.exists (fun a -> a.a_root = v) adj0 then [] else
+    begin
+      try
+        let children = List.find (fun a -> a.a_root = v) (hg_adj1@hg_adjg2) in
+        children.a_nexts
+      with _ -> []
+    end
+
+let set_pto_edges_x vertexs eds diff_pair=
+  let cmp_pair (id1, _) (id2,_) = id1 -id2 in
+  let rec var2add vs sv=
+    match vs with
+      | []-> raise Not_found
+      | v::rest -> if CP.mem_svl sv v.hv_lbl then v.hv_id
+        else var2add rest sv
+  in
+  let rec look_up ptos id1 id2 rest_ptos=
+    match ptos with
+      | [] -> false,rest_ptos
+      | (id3,id4)::rest ->
+            if id1= id3 && id2 = id4 then (true, rest_ptos@rest) else
+              look_up rest id1 id2 (rest_ptos@[(id3,id4)])
+  in
+  let ptos = List.map (fun (sv1,sv2) -> (var2add vertexs sv1, var2add vertexs sv2)) diff_pair in
+  let _ = Debug.ninfo_hprint (add_str "ptos" (pr_list (pr_pair string_of_int string_of_int))) ptos no_pos in
+  let sort_eds = List.sort cmp_edge eds in
+  let sort_ptos = List.sort cmp_pair ptos in
+  let sort_eds2,_ = List.fold_left (fun (r,ptos) e ->
+      let b, rest_ptos = look_up ptos e.he_b_id e.he_e_id [] in
+      let _ = Debug.ninfo_hprint (add_str "e" print_he) e no_pos in
+      let _ = Debug.ninfo_hprint (add_str "b" string_of_bool) b no_pos in
+      let ne = if b then {e with he_kind = true} else e in
+      (r@[ne],rest_ptos)
+  ) ([],sort_ptos) sort_eds in
+  sort_eds2
+
+let set_pto_edges vertexs eds diff_pair=
+  let pr1 = pr_list print_hv in
+  let pr2 = pr_list print_he in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_3 "set_pto_edges" pr1 pr2 pr3 pr2
+      (fun _ _ _ -> set_pto_edges_x vertexs eds diff_pair)
+      vertexs eds diff_pair
 
 (*******************************************************)
 (*AUX methods - non graph*)
@@ -1581,7 +1637,7 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
   (new_comps, vertexs1, ls_adjg12, lsadj12,ls_adj0)
 *)
 
-let norm_graph_x ls_may_eq ls_must_eq ls_must_diff=
+let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos=
   let vertexs, ini_maps = build_init_ls_vertex ls_may_eq ls_must_eq in
   let edges = build_init_edges ls_may_eq ini_maps in
   let ls_adjg1,ls_adj1,ls_adj0 = build_ls_adj edges in
@@ -1595,17 +1651,25 @@ let norm_graph_x ls_may_eq ls_must_eq ls_must_diff=
   (* in *)
   let is_conflict, new_comps, vertexs1, ls_adjg12, lsadj12 = force_inter_predicate_rules
      vertexs ls_adjg1 ls_adj1 ls_must_diff in
-  let final_graph =  mk_hgraph new_comps vertexs1 ls_adjg12 lsadj12 ls_adj0 in
-  if is_conflict then (true, [],final_graph) else
+  if is_conflict then
+    let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 lsadj12 ls_adj0  in
+    (true, [],final_graph) else
+      let n_edges = if set_ptos then
+        let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) &&
+        List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in
+        set_pto_edges vertexs1 edges1 ls_must_diff
+      else edges
+      in
     (*build emp from vertexs*)
     let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in
+    let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0  in
     (is_conflict, final_emps,final_graph)
 
-let norm_graph ls_may_eq ls_must_eq ls_must_diff=
+let norm_graph ls_may_eq ls_must_eq ls_must_diff set_ptos=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 =  print_hgraph in
   Debug.no_3 "norm_graph" pr1 pr1 pr1 (pr_triple string_of_bool pr1 pr2)
-      (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff)
+      (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos)
       ls_may_eq ls_must_eq ls_must_diff
 
 (****************************************************************)
@@ -1618,7 +1682,7 @@ let norm_graph ls_may_eq ls_must_eq ls_must_diff=
   map(v1,v2): v1.lbl is subset of v2.lbl
 *)
 
-let find_homo_vetex_map_x vs01 vs02=
+let find_homo_vertex_map_x vs01 vs02=
   (*******************************************)
   let rec look_up_homo_vertex vs2 v1 rest_vs2=
     match vs2 with
@@ -1640,11 +1704,73 @@ let find_homo_vetex_map_x vs01 vs02=
       with Not_found -> false,[], vs02
     end
 
-let find_homo_vetex_map vs01 vs02=
+let find_homo_vertex_map vs01 vs02=
   let pr1 = pr_list print_hv in
   let pr2 = pr_list (pr_pair string_of_int string_of_int) in
-  Debug.no_2 "find_homo_vetex_map" pr1 pr1 (pr_triple string_of_bool pr2 pr1)
-      (fun _ _ -> find_homo_vetex_map_x vs01 vs02) vs01 vs02
+  Debug.no_2 "find_homo_vertex_map" pr1 pr1 (pr_triple string_of_bool pr2 pr1)
+      (fun _ _ -> find_homo_vertex_map_x vs01 vs02) vs01 vs02
+
+(*
+  - for each non pto edge og h1, find a corr. path pi of h2
+   and nontouch checking for each edge of pi
+  - lemma synthesis checking here (todo)
+*)
+
+let rec subst sst id=
+  match sst with
+    | (id1,id2)::rest -> if id1 = id then id2
+      else subst rest id
+    | [] -> id
+
+let check_homo_edges_x map non_tough_check hg_src hg_tar=
+  (*******************************)
+  (*waiting = (v1...vi * vi) list *)
+  let rec dfs e waiting done_vs=
+    match waiting with
+      | (path, v)::rest -> (*v != e*)
+            let v_children = look_up_children v hg_tar.hg_adjg2 hg_tar.hg_adj1 hg_tar.hg_adj0 in
+            if List.mem e  v_children then
+              (true, path@[(v,e)])
+            else
+              let not_trav = Gen.BList.difference_eq (=) v_children done_vs in
+              let path_children = List.map (fun v_child -> (path@[(v,v_child)], v_child)) not_trav in
+              dfs e (path_children@rest) (done_vs@not_trav)
+      | [] -> false,[]
+  in
+  let is_pto edges (b_id,e_id)=
+    let e = look_up_edge edges b_id e_id in
+    e.he_kind
+  in
+  (*for each edge of src*)
+  let check_one_src_edge sedge=
+    (*map to id of tar edge*)
+    let tar_b = subst map sedge.he_b_id in
+    let tar_e = subst map sedge.he_e_id in
+    if sedge.he_kind then
+       (* if it is pto: check tar edge is a pto*)
+      let tedge = look_up_edge hg_tar.hg_edges tar_b tar_e in
+      tedge.he_kind
+    else
+      (*otherwise: check it is a path pi*)
+      let is_path, path = dfs tar_e [([], tar_e)] [tar_e] in
+      if not is_path then false else
+        let _ = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
+        if not non_tough_check then true else
+          (*if non_touch is enable, all edge of pi must be pto*)
+          let is_non_tough = List.for_all (is_pto hg_tar.hg_edges) path in
+          let _ = Debug.ninfo_hprint (add_str "is_non_tough" string_of_bool) is_non_tough no_pos in
+          is_non_tough
+  in
+  (*******************************)
+  List.for_all check_one_src_edge hg_src.hg_edges
+
+let check_homo_edges map non_tough_check hg_src hg_tar=
+  let pr1 = print_hgraph in
+  let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_4 "check_homo_edges" pr2 string_of_bool pr1 pr1 string_of_bool
+      (fun _ _ _ _ -> check_homo_edges_x map non_tough_check hg_src hg_tar)
+      map non_tough_check hg_src hg_tar
+
 (*
  purpose: is hg_src homomorphism to hg_tar
 
@@ -1653,17 +1779,19 @@ out:
   - maping vertexs
   - need to generate lemma wo graph to prove the entailment
 *)
-let check_homomorphism_x hg_src hg_tar=
+let check_homomorphism_x non_tough_check hg_src hg_tar=
   (*find vertexs mapping from src to tar*)
-  let is_vertex_homo, map, frame_vertex_hg_tar = find_homo_vetex_map hg_src.hg_vertexs hg_tar.hg_vertexs in
+  let is_vertex_homo, map, frame_vertex_hg_tar = find_homo_vertex_map hg_src.hg_vertexs hg_tar.hg_vertexs in
   if not is_vertex_homo then (false, []) else
+    let is_edge_homo = check_homo_edges map non_tough_check hg_src hg_tar in
+    if not is_edge_homo then (false, map) else
     true,map
 
-let check_homomorphism hg_src hg_tar=
+let check_homomorphism non_tough_check hg_src hg_tar=
   let pr1 = print_hgraph in
   let pr2 = pr_list (pr_pair string_of_int string_of_int) in
   Debug.no_2 "check_homomorphism" pr1 pr1 (pr_pair string_of_bool pr2)
-      (fun _ _ -> check_homomorphism_x hg_src hg_tar) hg_src hg_tar
+      (fun _ _ -> check_homomorphism_x non_tough_check hg_src hg_tar) hg_src hg_tar
 
 
 (****************************************************************)

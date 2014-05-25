@@ -1299,7 +1299,7 @@ let norm_dups_pred_x cprog f=
   let f1 = Cfutil.update_f f drop_hvns ps in
   f1
 
-let norm_dups_pred_new_x cprog ante_non_emps f=
+let norm_dups_pred_new_x cprog ante_non_emps f set_ptos=
   (*each find emp branch - now assume emp branches are base cases*)
   (*return = (view name, view arguments, emp condition)*)
   let view_emp_map = Cast.get_emp_map cprog in
@@ -1312,7 +1312,7 @@ let norm_dups_pred_new_x cprog ante_non_emps f=
   if eqs0 =[] && non_emps0 = [] then (false, f, Hgraph.mk_empty_hgraph()) else
     (*find chains from duplicate pred roots*)
     let maybe_emps = List.fold_left (fun ls vn -> ls@(abs_maybe eqs0 vn)) [] vns in
-    let (is_conflict,emps1,graph) = Hgraph.norm_graph maybe_emps eqs0 non_emps0 in
+    let (is_conflict,emps1,graph) = Hgraph.norm_graph maybe_emps eqs0 non_emps0 set_ptos in
     if is_conflict then (true,f,graph) else
       let ps = revert_emp_abs emps1 view_ptrs_map view_emp_map in
       (*remove hvns in non emp*)
@@ -1320,17 +1320,17 @@ let norm_dups_pred_new_x cprog ante_non_emps f=
       let f1 = Cfutil.update_f f drop_hvns ps in
       (false,f1,graph)
 
-let norm_dups_pred_new_a cprog ante_non_emps f=
+let norm_dups_pred_new_a cprog ante_non_emps f set_ptos=
   if not (Cfutil.is_empty_heap_f f) && !seg_opz then
-    norm_dups_pred_new_x cprog ante_non_emps f
+    norm_dups_pred_new_x cprog ante_non_emps f set_ptos
   else false,f,(Hgraph.mk_empty_hgraph ())
 
-let norm_dups_pred prog ante_non_emps f=
+let norm_dups_pred prog ante_non_emps f set_ptos=
   let pr1 = Cprinter.string_of_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 = Hgraph.print_hgraph in
   Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_triple string_of_bool pr1 pr3)
-      (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f) f ante_non_emps
+      (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f set_ptos) f ante_non_emps
 
 let heap_normal_form_x prog f0=
   let f = CF.elim_exists f0 in
@@ -1369,9 +1369,9 @@ let heap_normal_form_ctx prog c=
     | CF.OCtx (c1,c2) -> report_error no_pos "frame.slice_frame_ectx: not handle yet"
 
 
-let check_unsat_w_norm prog f0=
+let check_unsat_w_norm prog f0 set_ptos=
   let helper f=
-    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) in
+    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) set_ptos in
     is_heap_conflict
   in
   if not !seg_opz then false,None else
@@ -1392,6 +1392,6 @@ let check_unsat_w_norm prog f0=
     r,fail_of
 
 
-let check_imply_w_norm prog ante_hg conseq_hg=
-  let is_implied, vertex_map = Hgraph.check_homomorphism conseq_hg ante_hg in
+let check_imply_w_norm prog non_tough_check ante_hg conseq_hg=
+  let is_implied, vertex_map = Hgraph.check_homomorphism non_tough_check conseq_hg ante_hg in
   is_implied

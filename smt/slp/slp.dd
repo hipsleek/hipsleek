@@ -9,6 +9,6 @@
 heap_normal_form
 norm_graph
 #norm_dups_pred
-find_homo_vetex_map
+find_homo_vertex_map
 check_homomorphism
-find_close_chains
+set_pto_edges
