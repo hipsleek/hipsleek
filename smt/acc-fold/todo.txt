@@ -32,24 +32,25 @@ pred nlseg<p> ==
 checkentail x::node<y>*y::node<p> |- x::nlseg<p>.
 print residue.
 
+
 /*
  <1>emp&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
  why @L eaten node up?
 */
 ====================================================================
-# nlseg3d.slk not working for @A
+# nlseg3d.slk not working for @A (OK - should fail)
 
 checkentail x::node<_>@A * x::node<_>@A   |-  false.
 print residue.
 // fail but should have aucceeede..
 
 ====================================================================
-# nlseg3c.slk not working for @A
+# nlseg3c.slk not working for @A (FIXED)
 
 not working for unfolding..
 ====================================================================
-# inv1.slk --inv
+# inv1.slk --inv (FIXED)
 
 Can we print name of predicate tgt
 with the inferred invariant?
@@ -60,7 +61,7 @@ with the inferred invariant?
 
 !!! new inv: : n>=0
 ====================================================================
-# inv3.slk
+# inv3.slk (FIXED)
 
 pred ll<n> == self = null & n=0
     or self::node2<_,r> * r::ll<n-1>
@@ -84,7 +85,7 @@ ll3:={[self,n] -> [] -> []:  exists (NODflted_11_18,NODAnon_13: self>0 && (NODfl
 };
 bottomupgen([ll3], [1], SimHeur);
 ====================================================================
-inv2.slk --inv mutual recursion?
+inv2.slk --inv mutual recursion? (FIXED)
 
 pred ll2<n> == self = null & n=0
     or self::node2<_,r> * r::ll3<n-1>
@@ -107,7 +108,7 @@ ll3:={[self,n] -> [] -> []:  exists (NODflted_11_18,NODAnon_13: self>0 && (NODfl
 };
 bottomupgen([ll3], [1], SimHeur);
 ====================================================================
-# nlseg4.slk
+# nlseg4.slk (FIXED)
 
 lemma_safe self::nlseg<p> <- 
       (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
@@ -115,7 +116,51 @@ lemma_safe self::nlseg<p> <-
  rev lemma cannot be proven yet!
 
 ====================================================================
+# nlseg4e2.slk
+
+// two problems with lemma application
+
+// (1)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
+       |- self::nlseg<uu>.
+print residue.
+// valid with @L residue
+// problem : answers but first one did not have p=uu?.
+/*
+ <1>p::node<_>@L&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
+<2>p::node<_>@L&p=uu&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+*/
+
+// (2)
+checkentail
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>)
+       |- self::nlseg<p>.
+print residue.
+/*
+Why an extra residue?
+
+Entail 5: Valid. 
+ <1>p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>u_608::nlseg<p> * p::node<_>&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==> (left: lem_11) ==>  Match ==> ]]
+*/
 ====================================================================
+# nlseg3c1.slk --inv
+
+this is non-recursive. why is there a bad mutual
+recursion detected
+
+../../sleek nlseg3c1.slk --inv
+Starting Omega...oc
+fixcalc: bad mutual recursion detected :"node"
+
+ERROR: at _0:0_0:0 
+Message: something wrong with fixcalc
+ Fatal error: exception Failure("something wrong with fixcalc")
 ====================================================================
 ====================================================================
 ====================================================================

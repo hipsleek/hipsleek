@@ -326,6 +326,24 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
   List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (Ipure.ConstAnn(Mutable)))
 
+(* check lending property (@L) in classic reasoning. Hole is treated like @L *)
+let rec is_classic_lending_hformula (f: h_formula) : bool =
+  match f with
+  | DataNode dn -> isLend dn.h_formula_data_imm
+  | ViewNode vn -> isLend vn.h_formula_view_imm
+  | Hole _ | FrmHole _ -> true      (* a Hole behaves like @L *)
+  | Conj ({h_formula_conj_h1 = h1;
+           h_formula_conj_h2 = h2})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+               h_formula_conjstar_h2 = h2})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+               h_formula_conjconj_h2 = h2})
+  | Phase ({h_formula_phase_rd = h1;
+            h_formula_phase_rw = h2})
+  | Star ({h_formula_star_h1 = h1;
+           h_formula_star_h2 = h2}) ->
+      ((is_classic_lending_hformula h1) && (is_classic_lending_hformula h2))
+  | _ -> false
 
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 

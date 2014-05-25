@@ -32,6 +32,16 @@ checkentail_exact
        |- (exists uu: self::node<uu> * uu::node<_>@L).
 print residue.
 
+checkentail
+    self::node<q>*q::node<_>
+       |- (exists uu: self::node<uu> * uu::node<_>@L).
+print residue.
+
+checkentail_exact
+    self::node<q>*q::node<_>
+       |- (exists uu: self::node<uu> * uu::node<_>@L).
+print residue.
+
 /*
 @L should not be considered as residue for classic..
 

@@ -27,19 +27,25 @@ open Cpure
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
 let baga_conv (baga : spec_var list) : formula =
-  if (List.length baga = 0) then mkFalse no_pos else
-    let rec helper i j baga len fl =
+  if (List.length baga = 0) then
+    mkTrue no_pos
+  else if (List.length baga = 1) then
+    mkGtVarInt (List.hd baga) 0 no_pos
+  else
+    let rec helper i j baga len =
+      let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
       if i = len - 2 && j = len - 1 then
-        fl@[(mkNeqVar (List.nth baga i) (List.nth baga j) no_pos)]
+        f1
       else if j = len - 1 then
-        helper (i + 1) (i + 2) baga len (fl@[(mkNeqVar (List.nth baga i) (List.nth baga j) no_pos)])
+        let f2 = helper (i + 1) (i + 2) baga len in
+        mkAnd f1 f2 no_pos
       else
-        helper i (j + 1) baga len (fl@[(mkNeqVar (List.nth baga i) (List.nth baga j) no_pos)])
+        let f2 = helper i (j + 1) baga len in
+        mkAnd f1 f2 no_pos
     in
-    let fl1 = helper 0 1 baga (List.length baga) [] in
-    let f1 = List.fold_left (fun f1 f2 -> mkAnd f1 f2 no_pos) (List.hd fl1) (List.tl fl1) in
-    let fl2 = List.map (fun sv -> mkGtVarInt sv 0 no_pos) baga in
-    let f2 = List.fold_left (fun f1 f2 -> mkAnd f1 f2 no_pos) (List.hd fl2) (List.tl fl2) in
+    let f1 = helper 0 1 baga (List.length baga) in
+    let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos)
+      (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
     mkAnd f1 f2 no_pos
 
 (* ef_conv :  ef_pure -> formula *)
@@ -51,11 +57,14 @@ let ef_conv ((baga,f) : ef_pure) : formula =
 
 (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
 let baga_enum (baga : spec_var list) : formula =
-  if (List.length baga = 0) then mkFalse no_pos else
-    let i = ref 0 in
-    let fl = List.map (fun sv ->
-        i := !i + 1; mkEqVarInt sv !i no_pos) baga in
-    List.fold_left (fun f1 f2 -> mkAnd f1 f2 no_pos) (List.hd fl) (List.tl fl)
+  if (List.length baga = 0) then
+    mkTrue no_pos
+  else
+    let i = ref 1 in
+    List.fold_left (fun f sv ->
+        i := !i + 1;
+        mkAnd f (mkEqVarInt sv !i no_pos) no_pos
+    ) (mkEqVarInt (List.hd baga) !i no_pos) (List.tl baga)
 
 (* ef_conv_enum :  ef_pure -> formula *)
 (* provide an enumeration that can be used by ante *)
@@ -65,21 +74,27 @@ let ef_conv_enum ((baga,f) : ef_pure) : formula =
   mkAnd bf f no_pos
 
 let ef_conv_disj (disj : ef_pure_disj) : formula =
-  if (List.length disj = 0) then mkFalse no_pos else
-    let fl = List.map (fun epf -> ef_conv epf) disj in
-    List.fold_left (fun f1 f2 -> mkOr f1 f2 None no_pos) (List.hd fl) (List.tl fl)
+  if (List.length disj = 0) then
+    mkFalse no_pos
+  else
+    List.fold_left (fun f efp ->
+        mkOr f (ef_conv efp) None no_pos
+    ) (ef_conv (List.hd disj)) (List.tl disj)
 
 let ef_conv_enum_disj (disj : ef_pure_disj) : formula =
-  if (List.length disj = 0) then mkFalse no_pos else
-    let fl = List.map (fun epf -> ef_conv_enum epf) disj in
-    List.fold_left (fun f1 f2 -> mkOr f1 f2 None no_pos) (List.hd fl) (List.tl fl)
-
+  if (List.length disj = 0) then
+    mkFalse no_pos
+  else
+    List.fold_left (fun f efp ->
+        mkOr f (ef_conv_enum efp) None no_pos
+    ) (ef_conv_enum (List.hd disj)) (List.tl disj)
+ 
 (* ef_imply :  ante:ef_pure_disj -> conseq:ef_pure_disj -> bool *)
 (* does ante --> conseq *)
 (* convert ante with ef_conv_enum *)
 (* convert conseq with ef_conv *)
 
-let ef_imply (ante:ef_pure_disj) (conseq:ef_pure_disj) : bool =
+let ef_imply (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
   let a_f = ef_conv_enum_disj ante in
   let c_f = ef_conv_disj conseq in
   (* a_f --> c_f *)
@@ -89,7 +104,7 @@ let ef_imply (ante:ef_pure_disj) (conseq:ef_pure_disj) : bool =
 (* ef_unsat :  ef_pure -> bool *)
 (* remove unsat terms *)
 (* convert unsat with ef_conv_enum *)
-let ef_unsat  (f:ef_pure) : bool =
+let ef_unsat (f : ef_pure) : bool =
   (* use ef_conv_enum *)
   let cf = ef_conv_enum f in
   (* if unsat(cf) return true *)
@@ -98,7 +113,7 @@ let ef_unsat  (f:ef_pure) : bool =
 (* ef_unsat_disj :  ef_pure_disj -> ef_pure_disj *)
 (* remove unsat terms *)
 (* convert unsat with ef_conv_enum *)
-let ef_unsat_disj  (disj:ef_pure_disj) : ef_pure_disj =
+let ef_unsat_disj (disj : ef_pure_disj) : ef_pure_disj =
   List.filter (fun f -> not(ef_unsat f)) disj
 
 (* using Cformula *)
@@ -166,6 +181,7 @@ let rec build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cfor
 (*   build_ef_p_formula map pf *)
 
 let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : formula) : ef_pure_disj =
+  [([],pf)]
   (* match pf with *)
   (*   | BForm (bf, _) -> *)
   (*         build_ef_b_formula map bf *)
@@ -184,8 +200,6 @@ let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : form
   (*   | Forall (_, f, _, _) *)
   (*   | Exists (_, f, _, _) -> *)
   (*         build_ef_pure_formula map f *)
-  [([],pf)]
-
 
 (* build_ef_formula : map -> cformula --> ef_pure_disj *)
 (* (b1,p1) * (b2,p2) --> (b1 U b2, p1/\p2) *)
@@ -217,6 +231,9 @@ let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.
 (* view  ls1<self,p> == ..ls1<..>..ls2<..>... *)
 (* map   ls1<self,p> == [(b1,f1)] *)
 (*       ls2<self,p> == [(b2,f2)] *)
+let build_ef_view (map : (ident, ef_pure_disj) Hashtbl.t) (view_decl : Cast.view_decl) : ef_pure_disj =
+  List.flatten (List.map (fun (cf,_) ->
+      build_ef_formula map cf) view_decl.Cast.view_un_struc_formula)
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
 (* does view(inv) --> inv *)
@@ -226,7 +243,7 @@ let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.
 (* let rhs_list = inv_list in *)
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply a c) pair_list in *)
-let fix_text (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
   let lhs_list = List.map (fun vd ->
       Hashtbl.find map vd.Cast.view_name) view_list in
   let rhs_list = inv_list in
@@ -245,10 +262,43 @@ let fix_text (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
 (* ef_elim_exists :  (spec_var) list -> ef_pure -> ef_pure *)
 (* remove unsat terms *)
 
-(* sel_hull_ef : f:[ef_pure_disj] -> disj_num (0 -> precise) 
+(* sel_hull_ef : f:[ef_pure_disj] -> disj_num (0 -> precise)
    -> [ef_pure_disj] *)
 (* pre: 0<=disj_num<=100 & disj_num=0 -> len(f)<=100  *)
+let sel_hull_ef (f : ef_pure_disj list) (disj_num : int) : ef_pure_disj list =
+  let rec helper epd =
+    if (List.length epd) > disj_num
+    then
+      let f1 = List.hd epd in
+      let f2 = List.nth epd 1 in
+      let fl = List.tl (List.tl epd) in
+      helper ((build_ef_ef_pures f1 f2)::fl)
+    else
+      epd
+  in
+  List.map (fun epd -> ef_unsat_disj (helper epd)) f
 
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
+let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj list =
+  let map = Hashtbl.create 1 in
+  let _ = List.iter (fun vd -> Hashtbl.add map vd.Cast.view_name []) view_list in
+  let inv_list = List.fold_left (fun inv_list vd ->
+      inv_list@[(build_ef_view map vd)]) [] view_list in
+  let inv_list = List.map (fun epd -> ef_unsat_disj epd) inv_list in
+  let inv_list = sel_hull_ef inv_list disj_num in
+  let rec helper map view_list inv_list =
+    if fix_test map view_list inv_list
+    then
+      inv_list
+    else
+      let _ = List.iter (fun (vd,inv) ->
+          Hashtbl.replace map vd.Cast.view_name inv) (List.combine view_list inv_list) in
+      let inv_list = List.fold_left (fun inv_list vd ->
+          inv_list@[(build_ef_view map vd)]) [] view_list in
+      let inv_list = List.map (fun epd -> ef_unsat_disj epd) inv_list in
+      let inv_list = sel_hull_ef inv_list disj_num in
+      helper map view_list inv_list
+  in
+  helper map view_list inv_list

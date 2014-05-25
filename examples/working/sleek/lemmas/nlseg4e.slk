@@ -17,10 +17,6 @@ lemma_safe self::nlseg<p> <-
 /*
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
-       |- self::nlseg<p> .
-*/
-
-checkentail_exact
-    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
        |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
-
+print residue.
+*/

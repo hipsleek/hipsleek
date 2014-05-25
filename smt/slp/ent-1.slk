@@ -17,10 +17,13 @@ checkentail x2::ls<x7> * x6::Sll_t<f = x1> * x4::Sll_t<f = x9> * x3::Sll_t<f = x
 expect Valid.
 */
 
+/* run very slow with lemma ls1
 checkentail x2::ls<x7> * x3::ls<x2> * x10::ls<x2> * x5::ls<x7> * x7::ls<x2>&
       x_emp!=null & z_emp!=null &
        x3!=x2 & x5!=x7 & x3!=x2 & x5!=x7
  |-  x10::ls<x2> * x3::ls<x2> * x5::ls<x7> * x2::ls<x7> * x7::ls<x2>&x3!=x2 & x5!=x7.
+
+*/
 
 /*
 //need lemma ls1
@@ -59,13 +62,12 @@ checkentail x1::Sll_t<f = x11> * x3::Sll_t<f = x1> * x6::Sll_t<f = x2> * x9::Sll
 expect Fail.
 */
 
-/*
+
 //3  bolognesa-12-e01.slk sat
 checkentail x10::Sll_t<f = x6> * x2::Sll_t<f = x1> * x8::Sll_t<f = x5> * x4::Sll_t<f = x7> * x1::Sll_t<f = x6> * x9::Sll_t<f = x3> * x6::Sll_t<f = x4> * x12::ls<x8> * x5::Sll_t<f = x1> * x7::Sll_t<f = x6> * x3::Sll_t<f = x5> * x11::ls<x8> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & null = null
          |- x10::ls<x6> * x12::ls<x8> * x11::ls<x5> * x9::ls<x5> * x5::ls<x1> * x2::ls<x4> * x4::ls<x6> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 expect Fail.
 
-*/
 
 /*
 //3  bolognesa-12-e01.slk sat
