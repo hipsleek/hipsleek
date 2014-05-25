@@ -578,7 +578,7 @@ let string_of_typed_annot_arg ann =
 
 let string_of_view_arg arg = 
   match arg with
-    | CP.SVArg sv     -> string_of_spec_var sv
+   | CP.SVArg sv     -> string_of_spec_var sv
     | CP.AnnotArg ann -> string_of_annot_arg ann
 
 let string_of_view_arg_list arg_list = 
