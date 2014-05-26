@@ -862,6 +862,107 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
       (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
       f1 f2 hpdefs
 
+let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  if (vd.C.view_is_segmented) then
+    (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
+    (*    2 posibilities about P:                            *)
+    (*       + P = P1  =  P2   unifying operation            *)
+    (*       + P = P1 (+) P2   combining operation           *)
+    let pos = vd.C.view_pos in
+    let lemma_name = "lemma__" ^ vd.C.view_name in
+    let ihead = (
+      let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        IP.Var ((id,p), pos)
+      ) vd.C.view_vars ) in
+      let head = (
+        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params [] None pos
+      ) in
+      Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos
+    ) in
+    let ibody = (
+      let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        let vp = id ^ "_1" in
+        IP.Var ((vp,p), pos)
+      ) vd.C.view_vars) in
+      let body1 = (
+        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params1 [] None pos
+      ) in
+      let forward_ptr = match vd.C.view_forward_ptrs with
+        | [sv] -> CP.name_of_spec_var sv
+        | _ -> report_error pos "generate_lemma_sll: expect 1 forward pointer"
+      in
+      let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        let vp = id ^ "_2" in
+        IP.Var ((vp,p), pos)
+      ) vd.C.view_vars) in
+      let body2 = (
+        IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params2 [] None pos
+      ) in
+      let body = Iformula.mkStar body1 body2 pos in
+      let pure_constraint = 
+        Ipure.mkEqVarExp (forward_ptr, Unprimed) (forward_ptr^"_2", Unprimed) pos
+      in
+      let param_constraints = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        let vp = id ^ "_2" in
+        IP.Var ((vp,p), pos)
+      ) vd.C.view_vars
+      ) in
+      Iformula.mkBase body pure_constraint Iformula.top_flow [] pos
+    ) in
+    let icoercion = Iast.mk_lemma lemma_name LEM_SAFE Iast.Equiv [] ihead ibody in
+    [icoercion] 
+  else ([])
+
+let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  ([])
+
+let generate_lemma_tree_simple (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  ([])
+
+let generate_lemma_tree_pointer_back (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  ([])
+(*
+ * assume that the prerequisite information of view is computed
+ * (touching, segmented, forward, backward, aux...)
+ *)
+let generate_lemma (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl) 
+    : (I.coercion_decl list) =
+  let forward_fields = vd.C.view_forward_fields in
+  let backward_fields = vd.C.view_backward_fields in
+  (* singly linked list *)
+  if ((List.length forward_fields = 1) && (List.length backward_fields = 0)) then
+    generate_lemma_sll vd iprog cprog
+  (* doubly linked list *)
+  else if ((List.length forward_fields = 1) && (List.length backward_fields = 1)) then
+    generate_lemma_dll vd iprog cprog
+  (* simple tree *)
+  else if ((List.length forward_fields = 2) && (List.length backward_fields = 0)) then
+    generate_lemma_tree_simple vd iprog cprog
+  (* tree with pointer back *)
+  else if ((List.length forward_fields = 2) && (List.length backward_fields = 1)) then
+    generate_lemma_tree_pointer_back vd iprog cprog
+  (* what else ? *)
+  else
+    ([])
+
+let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : unit =
+  let vdecls = cprog.C.prog_view_decls in
+  let lemmas = List.concat (List.map (fun vd ->
+    generate_lemma vd iprog cprog
+  ) cprog.C.prog_view_decls) in
+  let _ = manage_safe_lemmas lemmas iprog cprog in
+  ()
 
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
