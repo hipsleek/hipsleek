@@ -22,7 +22,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 
 type typed_ident = (typ * ident)
 
-and prog_decl = { 
+and prog_decl = {
     mutable prog_data_decls : data_decl list;
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
@@ -36,8 +36,8 @@ and prog_decl = {
     (*mutable prog_right_coercions : coercion_decl list;*)
     prog_barrier_decls : barrier_decl list
 }
-    
-and prog_or_branches = (prog_decl * 
+
+and prog_or_branches = (prog_decl *
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
 
 and data_field_ann =
@@ -45,7 +45,7 @@ and data_field_ann =
   | REC
   | F_NO_ANN
 
-and data_decl = { 
+and data_decl = {
     data_name : ident;
     data_pos : loc;
     data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
@@ -73,7 +73,7 @@ and barrier_decl = {
     barrier_prune_conditions_perm: (Tree_shares.Ts.t_sh* (formula_label list)) list ;
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-}  
+}
 
 and view_kind =
   | View_PRIM
@@ -82,8 +82,8 @@ and view_kind =
   | View_SPEC
   | View_DERV
 
-and view_decl = { 
-    view_name : ident; 
+and view_decl = {
+    view_name : ident;
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
     view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
@@ -136,12 +136,12 @@ and view_decl = {
 }
 
 (* An Hoa : relation *)
-and rel_decl = { 
-    rel_name : ident; 
+and rel_decl = {
+    rel_name : ident;
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
 
-and hp_decl = { 
+and hp_decl = {
     hp_name : ident;
     mutable hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
     hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
@@ -3083,3 +3083,77 @@ let categorize_view (prog: prog_decl) : prog_decl =
               view_aux_formula = view_aux; }
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
+
+let generate_lemma_sll (vd: view_decl) (prog: prog_decl)
+    : (coercion_decl list * coercion_decl list) =
+  if (vd.view_is_segmented) then
+    (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
+    (*    2 posibilities about P:                            *)
+    (*       + P = P1  =  P2   unifying operation            *)
+    (*       + P = P1 (+) P2   combining operation           *)
+
+    (* let l2r_lemma = {                                                                       *)
+    (*   coercion_type = Iast.Left;                                                            *)
+    (*   coercion_exact = false;                                                               *)
+    (*   coercion_name = "lemma_left_" ^ vd.view_name;                                         *)
+    (*   coercion_head : F.formula; (* used as antecedent during --elp *)                      *)
+    (*   coercion_head_norm : F.formula; (* used as consequent during --elp *)                 *)
+    (*   coercion_body : F.formula; (* used as antecedent during --elp *)                      *)
+    (*   coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)           *)
+    (*   coercion_impl_vars : P.spec_var list; (* list of implicit vars *)                     *)
+    (*   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *) *)
+    (*   coercion_infer_vars :  P.spec_var list;                                               *)
+    (*   coercion_fold_def : view_decl Gen.mut_option;                                         *)
+    (*   coercion_head_view : ident;                                                           *)
+    (*   coercion_body_view : ident;  (* used for cycles checking *)                           *)
+    (*   coercion_mater_vars : mater_property list;                                            *)
+    (*   coercion_case : coercion_case; (*Simple or Complex*)                                  *)
+    (*   coercion_type_orig: coercion_type option;                                             *)
+    (*   coercion_kind: lemma_kind; } in                                                       *)
+    (* }                                                                                       *)
+    ([],[])
+  else ([], [])
+
+let generate_lemma_dll (vd: view_decl) (prog: prog_decl)
+    : (coercion_decl list * coercion_decl list) =
+  ([], [])
+
+let generate_lemma_tree_simple (vd: view_decl) (prog: prog_decl)
+    : (coercion_decl list * coercion_decl list) =
+  ([], [])
+
+let generate_lemma_tree_pointer_back (vd: view_decl) (prog: prog_decl)
+    : (coercion_decl list * coercion_decl list) =
+  ([], [])
+(*
+ * assume that the prerequisite information of view is computed
+ * (touching, segmented, forward, backward, aux...)
+ *)
+let generate_lemma (vd: view_decl) (prog: prog_decl) 
+    : (coercion_decl list * coercion_decl list) =
+  let forward_fields = vd.view_forward_fields in
+  let backward_fields = vd.view_backward_fields in
+  (* singly linked list *)
+  if ((List.length forward_fields = 1) && (List.length backward_fields = 0)) then
+    generate_lemma_sll vd prog
+  (* doubly linked list *)
+  else if ((List.length forward_fields = 1) && (List.length backward_fields = 1)) then
+    generate_lemma_dll vd prog
+  (* simple tree *)
+  else if ((List.length forward_fields = 2) && (List.length backward_fields = 0)) then
+    generate_lemma_tree_simple vd prog
+  (* tree with pointer back *)
+  else if ((List.length forward_fields = 2) && (List.length backward_fields = 1)) then
+    generate_lemma_tree_pointer_back vd prog
+  (* what else ? *)
+  else
+    ([], [])
+
+let generate_all_lemmas (prog: prog_decl)
+    : (coercion_decl list * coercion_decl list) =
+  let vdecls = prog.prog_view_decls in
+  let lemmas = List.map (fun vd -> generate_lemma vd prog) prog.prog_view_decls in
+  let l2r_lemmas, r2l_lemmas = List.split lemmas in
+  let l2r = List.concat l2r_lemmas in
+  let r2l = List.concat r2l_lemmas in
+  (l2r, r2l)

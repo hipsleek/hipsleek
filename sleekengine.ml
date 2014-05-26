@@ -635,9 +635,7 @@ let convert_data_and_pred_to_cast_x () =
   let cprog6 = Cast.categorize_view cprog5 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
-  let l2r, r2l = (* if !Globals.lemma_syn then LEM.generate_lemma_4_views iprog cprog6 else *) [],[] in
-  let _ = Lem_store.all_lemma # add_left_coercion l2r in
-  let _ = Lem_store.all_lemma # add_right_coercion r2l in
+  let _ =  if (!Globals.lemma_gen) then Lemma.generate_all_lemmas iprog cprog6 in
   cprog := cprog6
 
 let convert_data_and_pred_to_cast () = 

@@ -7,7 +7,7 @@ pred ls<out> ==
  self = out
 or (exists u: self::Sll_t<f = u> * u::ls<out>).
 
-//lemma_unsafe "ls1" self::ls<a> <-> self::ls<b> * b::ls<a>.
+lemma_unsafe "ls1" self::ls<a> <-> self::ls<b> * b::ls<a>.
 
 /*
 //1 bolognesa-10-e01.slk unsat
@@ -54,20 +54,20 @@ x_emp!=null & z_emp!=null & x3!=x2 & x5!=x7 & x3!=x2 & x5!=x7
 expect Valid.
 */
 
-/*
+
 //2  bolognesa-11-e01.slk sat
 checkentail x1::Sll_t<f = x11> * x3::Sll_t<f = x1> * x6::Sll_t<f = x2> * x9::Sll_t<f = x6> * x4::Sll_t<f = x1> * x8::Sll_t<f = x3> * x5::Sll_t<f = x11> * x7::ls<x9> * x11::Sll_t<f = x3> * x2::Sll_t<f = x11> * x10::ls<x11> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & null = null
          |- x8::ls<x3> * x7::ls<x9> * x3::ls<x1> * x4::ls<x1> * x9::ls<x11> * x10::ls<x11> * x5::ls<x11> * x1::ls<x3> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
 expect Fail.
-*/
 
 
+/*
 //3  bolognesa-12-e01.slk sat
 checkentail x10::Sll_t<f = x6> * x2::Sll_t<f = x1> * x8::Sll_t<f = x5> * x4::Sll_t<f = x7> * x1::Sll_t<f = x6> * x9::Sll_t<f = x3> * x6::Sll_t<f = x4> * x12::ls<x8> * x5::Sll_t<f = x1> * x7::Sll_t<f = x6> * x3::Sll_t<f = x5> * x11::ls<x8> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & null = null
          |- x10::ls<x6> * x12::ls<x8> * x11::ls<x5> * x9::ls<x5> * x5::ls<x1> * x2::ls<x4> * x4::ls<x6> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 expect Fail.
-
+*/
 
 /*
 //3  bolognesa-12-e01.slk sat

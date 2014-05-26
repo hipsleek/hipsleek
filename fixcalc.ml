@@ -173,9 +173,10 @@ let rec fixcalc_of_h_formula f = match f with
                    (string_of_elems [] fixcalc_of_spec_var ",") ^ ")"
   | DataNode {h_formula_data_node = sv; h_formula_data_name = c; 
               h_formula_data_arguments = svs} -> 
-    if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
-                   (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+    (* if CP.is_self_spec_var sv then self ^ op_gt ^ "0" *)
+    (* else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^  *)
+    (*                (string_of_elems svs fixcalc_of_spec_var ",") ^ ")" *)
+        (fixcalc_of_spec_var sv)  ^ op_gt ^ "0"
   | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; 
               h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
@@ -421,7 +422,7 @@ let compute_invs_fixcalc input_fixcalc=
   let _ = DD.ninfo_hprint (add_str "res(parsed)= " (pr_list !CP.print_formula)) invs no_pos in
   invs
 
-let lookup_inv invs fr_vars rev_sst=
+let lookup_inv invs pos fr_vars rev_sst=
   let rec helper rest_invs=
     match rest_invs with
       | inv::tail ->
@@ -429,9 +430,13 @@ let lookup_inv invs fr_vars rev_sst=
             if CP.intersect_svl svl fr_vars != [] then
               CP.subst rev_sst inv
             else helper tail
-      | [] -> report_error no_pos "something wrong with fixcalc"
+      | [] -> (* report_error no_pos "something wrong with fixcalc" *)
+            raise Not_found
   in
-  helper invs
+  try
+    helper invs
+  with _ ->
+      List.nth invs pos
 
 (* TODO: TO MERGE WITH ABOVE *)
 let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
@@ -473,7 +478,7 @@ let compute_heap_pure_inv_x fml (name:ident) data_name (para_names:CP.spec_var l
   (* let _ = DD.info_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in *)
   (* inv *)
   let invs = (compute_invs_fixcalc input_fixcalc) in
-  lookup_inv invs fr_vars rev_sst
+  lookup_inv invs 0 fr_vars rev_sst
 
 let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) lower_invs: CP.formula =
   let pr1 = !CP.print_formula in
@@ -514,10 +519,10 @@ let compute_inv_mutrec_x mutrec_vnames views =
           (vname,b,c) else
             lookup_map rest vname0
   in
-  let update_view invs vmaps view all_rev_sst=
+  let update_view invs pos vmaps view all_rev_sst=
     try
       let (vname, fr_vars, rev_sst) = lookup_map vmaps view.Cast.view_name in
-      let new_pf = lookup_inv invs fr_vars rev_sst in
+      let new_pf = lookup_inv invs pos fr_vars rev_sst in
       let pf =  MCP.pure_of_mix view.Cast.view_user_inv in
       let check_imply = TP.imply_raw new_pf pf in
       if check_imply then 
@@ -559,7 +564,11 @@ let compute_inv_mutrec_x mutrec_vnames views =
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in
-    List.map (fun view -> update_view invs vmaps view all_rev_sst) views
+    let r,_ = List.fold_left (fun (res,pos) view ->
+        let nview = update_view invs pos vmaps view all_rev_sst in
+        (res@[nview], pos+1)
+    ) ([], 0) views in
+    r
 
 let compute_inv_mutrec mutrec_views views =
   let pr1 = pr_list pr_id in

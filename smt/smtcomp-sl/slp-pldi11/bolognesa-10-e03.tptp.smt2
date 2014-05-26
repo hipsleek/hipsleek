@@ -1,4 +1,5 @@
 (set-logic QF_S)
+
 (set-info :source |
 A. Rybalchenko and J. A. Navarro Pérez.
 [Separation Logic + Superposition Calculus = Heap Theorem Prover]
@@ -8,7 +9,6 @@ http://navarroj.com/research/papers.html#pldi11
 (set-info :smt-lib-version 2.0)
 (set-info :category "random") 
 (set-info :status unsat)
-
 
 (declare-sort Sll_t 0)
 
