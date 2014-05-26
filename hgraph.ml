@@ -1552,14 +1552,14 @@ let rec force_loop_helper_x vertexs ls_adjg1 ls_adj1 ls_non_emp grps=
           (*     cur_emps *)
           (*   else loop_helper (cur_emps@new_emps1) new_grps *)
 
-and force_loop_helper vertexs ls_adjg1 ls_adj1 ls_non_emp grps=
+and force_loop_helper vertexs ls_adjg1 ls_adj1 ls_non_emp grps =
   let pr0 = pr_list string_of_int in
   let pr1 = pr_list print_hv in
   let pr2 = pr_list print_adj in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr4 = pr_list (pr_pair string_of_int (pr_list (pr_triple string_of_int pr0 pr0))) in
   Debug.no_5 "force_loop_helper" pr1 pr2 pr2 pr3 pr4 (pr_penta string_of_bool pr4 pr1 pr2 pr2)
-      (fun _ _ _ _ _ -> force_loop_helper_x vertexs ls_adjg1 ls_adj1 ls_non_emp grps)
+      (fun _ _ _ _ _ -> force_loop_helper_x vertexs ls_adjg1 ls_adj1 ls_non_emp grps )
       vertexs ls_adjg1 ls_adj1 ls_non_emp grps
 
 (* let force_no_dups vertexs ls_adjg1 ls_adj1 ls_non_emp comps= *)
@@ -1617,8 +1617,7 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
       List.fold_left (fun ls1 grp ->
           let eqs = (force_spatial non_emps0 grp) in
           (ls1@eqs)
-      )
-          ([]) comps
+      ) [] comps
     in
     (* let pr0 = pr_list string_of_int in *)
     (* let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in *)
@@ -1728,7 +1727,7 @@ let rec subst sst id=
       else subst rest id
     | [] -> id
 
-let check_homo_edges_x map non_tough_check hg_src hg_tar=
+let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_touch_sccs=
   (*******************************)
   (*waiting = (v1...vi * vi) list *)
   let rec dfs e waiting done_vs=
@@ -1743,42 +1742,44 @@ let check_homo_edges_x map non_tough_check hg_src hg_tar=
               dfs e (path_children@rest) (done_vs@not_trav)
       | [] -> false,[]
   in
-  let get_non_tough_constr_from_pto edges (b_id,e_id)=
+  let get_non_touch_constr_from_pto edges (b_id,e_id)=
     let e = look_up_edge edges b_id e_id in
     if e.he_kind then [(b_id)] else []
   in
-  let check_non_tough tar_non_tough required_b_non_tough_ids e_non_tough_id=
-    let b_non_tough_ids = List.fold_left (fun r (b_id, e_id)->
-        if e_id = e_non_tough_id then r@[b_id] else r
-    ) [] tar_non_tough in
-    Gen.BList.difference_eq (=) required_b_non_tough_ids b_non_tough_ids = []
+  let check_non_touch tar_non_touch required_b_non_touch_ids e_non_touch_id=
+    let b_non_touch_ids = List.fold_left (fun r (b_id, e_id)->
+        if e_id = e_non_touch_id then r@[b_id] else r
+    ) [] tar_non_touch in
+    Gen.BList.difference_eq (=) required_b_non_touch_ids b_non_touch_ids = []
   in
   (* three conditions:
      if (b_id, e_id) is a pto
-      - (e_id, b_id) is non-tough also (if exist an edge, this edge is also pto)
-      - (b_id, tar_e_seg) is non-tough (..)
+     if required_touch then false else
+      - (e_id, b_id) is non-touch also (if exist an edge, this edge is also pto)
+      - (b_id, tar_e_seg) is non-touch (..)
       - (tar_e_seg, b_id)
   *)
-  let is_non_tough_two_way_pto tar_edges tar_e_seg (b_id, e_id)=
+  let is_non_touch_two_way_pto required_touch tar_edges tar_e_seg (b_id, e_id)=
     let _ = Debug.info_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
-      let pto_nontough =
-        try
-          (*if exist an rev, it should be non-tough also: a!=b <-> b!=a *)
-          let rev_e = look_up_edge tar_edges e_id b_id in
-          rev_e.he_kind
-        with _ -> (*not exist is OK*) true
-      in
-      if pto_nontough then
-        try
-           let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
-          (* (tar_e_seg, b_id) is non_tough also*)
-          let seg_e = look_up_edge tar_edges tar_e_seg b_id in
-          seg_e.he_kind
-        with _ -> (*not exist is OK*) true
-      else
-         pto_nontough
+      if required_touch then false else
+        let pto_nontouch =
+          try
+            (*if exist an rev, it should be non-touch also: a!=b <-> b!=a *)
+            let rev_e = look_up_edge tar_edges e_id b_id in
+            rev_e.he_kind
+          with _ -> (*not exist is OK*) true
+        in
+        if pto_nontouch then
+          try
+            let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
+            (* (tar_e_seg, b_id) is non_touch also*)
+            let seg_e = look_up_edge tar_edges tar_e_seg b_id in
+            seg_e.he_kind
+          with _ -> (*not exist is OK*) true
+        else
+          pto_nontouch
     else true
   in
   (*for each edge of src*)
@@ -1792,21 +1793,47 @@ let check_homo_edges_x map non_tough_check hg_src hg_tar=
       tedge.he_kind
     else
       (*otherwise: check it is a path pi*)
-      let is_path, path = dfs tar_e [([], tar_b)] [tar_e] in
-      if not is_path then false else
+      let has_path, path = dfs tar_e [([], tar_b)] [tar_e] in
+      if not has_path then false else
         let _ = Debug.info_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
-        if not non_tough_check then true else
-          (*if non_touch is enable, all edge of pi must be pto*)
-          (* let required_tar_non_tough_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
-          (*     r@(get_non_tough_constr_from_pto hg_tar.hg_edges (b_id,e_id)) *)
-          (* ) [] path in *)
-          (* let _ = Debug.info_hprint (add_str "required_tar_non_tough_b_ids" (pr_list string_of_int)) required_tar_non_tough_b_ids no_pos in *)
-          (*  let is_non_tough = check_non_tough hg_tar.hg_non_tough_edges required_tar_non_tough_b_ids tar_e in *)
-          let is_non_tough = List.for_all (fun (b_id, e_id) ->
-              (is_non_tough_two_way_pto hg_tar.hg_edges tar_e (b_id, e_id))
-          ) path in
-          let _ = Debug.info_hprint (add_str "is_non_tough" string_of_bool) is_non_tough no_pos in
-          is_non_tough
+        if not non_touch_check then true else
+          (*has cycle -touchable*)
+          let has_cycle, scc =
+            if tar_touch_sccs = [] then (false,[]) else
+              try
+                let path_vertexs = match path with
+                  | [] -> []
+                  | (id1,id2)::rest -> id1::(List.map (fun (_,id) -> id) path)
+                in
+                let _ = Debug.info_hprint (add_str "path_vertexs" (pr_list string_of_int)) path_vertexs no_pos in
+                let inter_scc = List.find (fun scc -> (Gen.BList.difference_eq (=) scc path_vertexs) = [] ) tar_touch_sccs in
+                let _ = Debug.info_hprint (add_str " inter_scc" (pr_list string_of_int)) inter_scc no_pos in
+                let is_touch = inter_scc != [] &&
+                  (*at least one pto*)
+                   List.exists (fun a -> (get_non_touch_constr_from_pto hg_tar.hg_edges a) !=[]) path
+                in
+                (is_touch,inter_scc)
+              with _ -> (false,[])
+          in
+          if has_cycle then
+            let _ = Debug.info_hprint (add_str "has cycle" (pr_list string_of_int)) scc no_pos in
+            false
+          else
+            (*todo: sedge and its inversion have the same feature: touch and non-touch.*)
+            let required_touch = List.exists (fun (b_id,e_id) ->
+                b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
+            let _ = Debug.info_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
+            (*if non_touch is enable, all edge of pi must be pto*)
+            (* let required_tar_non_touch_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
+            (*     r@(get_non_touch_constr_from_pto hg_tar.hg_edges (b_id,e_id)) *)
+            (* ) [] path in *)
+            (* let _ = Debug.info_hprint (add_str "required_tar_non_touch_b_ids" (pr_list string_of_int)) required_tar_non_touch_b_ids no_pos in *)
+            (*  let is_non_touch = check_non_touch hg_tar.hg_non_touch_edges required_tar_non_touch_b_ids tar_e in *)
+            let is_non_touch = List.for_all (fun (b_id, e_id) ->
+                (is_non_touch_two_way_pto required_touch hg_tar.hg_edges tar_e (b_id, e_id))
+            ) path in
+            let _ = Debug.info_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
+            is_non_touch
   in
   let check_one_src_edge sedge=
     let pr1 = print_he in
@@ -1816,12 +1843,15 @@ let check_homo_edges_x map non_tough_check hg_src hg_tar=
   (*******************************)
   List.for_all check_one_src_edge hg_src.hg_edges
 
-let check_homo_edges map non_tough_check hg_src hg_tar=
+let check_homo_edges map non_touch_check hg_src hg_tar src_cycle_edges tar_touch_sccs=
   let pr1 = print_hgraph in
   let pr2 = pr_list (pr_pair string_of_int string_of_int) in
-  Debug.no_4 "check_homo_edges" pr2 string_of_bool pr1 pr1 string_of_bool
-      (fun _ _ _ _ -> check_homo_edges_x map non_tough_check hg_src hg_tar)
-      map non_tough_check hg_src hg_tar
+  let pr3 = pr_list_ln (pr_list string_of_int) in
+  Debug.no_6 "check_homo_edges" pr2 string_of_bool pr1 pr1
+      (pr_list (pr_pair string_of_int string_of_int)) pr3 string_of_bool
+      (fun _ _ _ _ _ _ -> check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_touch_sccs)
+      map non_touch_check hg_src hg_tar src_cycle_edges tar_touch_sccs
+
 
 (*
  purpose: is hg_src homomorphism to hg_tar
@@ -1831,19 +1861,55 @@ out:
   - maping vertexs
   - need to generate lemma wo graph to prove the entailment
 *)
-let check_homomorphism_x non_tough_check hg_src hg_tar=
+let check_homomorphism_x non_touch_check hg_src hg_tar=
+  let is_touch src_edges b_id e_id=
+    try
+      let e = look_up_edge src_edges b_id e_id in
+      not e.he_kind
+    with _ -> false
+  in
+  let rec check_loop first_sv cur_sv rest src_edges res=
+    match rest with
+      | [] ->
+            if is_touch src_edges cur_sv first_sv then res@[(cur_sv, first_sv)] else
+              []
+      | sv1::rest1 ->
+            if is_touch src_edges cur_sv sv1 then
+               check_loop first_sv sv1 rest1 src_edges (res@[(cur_sv, sv1)])
+            else []
+  in
+  let look_up_touch_chains src_edges scc=
+    match scc with
+      | [] | [_] -> []
+      | v1::v2::rest -> begin
+            try
+              if not (is_touch src_edges v1 v2) then [] else
+                check_loop v1 v2 rest src_edges [(v1,v2)]
+            with _ -> []
+        end
+  in
   (*find vertexs mapping from src to tar*)
   let is_vertex_homo, map, frame_vertex_hg_tar = find_homo_vertex_map hg_src.hg_vertexs hg_tar.hg_vertexs in
   if not is_vertex_homo then (false, []) else
-    let is_edge_homo = check_homo_edges map non_tough_check hg_src hg_tar in
+    let src_cycle_touch_edges,tar_touch_sccs = if non_touch_check then
+      let _,src_sccs,_ = build_scc (hg_src.hg_adjg2@hg_src.hg_adj1) in
+      let src = List.fold_left (fun r scc -> r@(look_up_touch_chains hg_src.hg_edges scc)) [] src_sccs in
+      let _,tar_sccs,_ = build_scc (hg_tar.hg_adjg2@hg_tar.hg_adj1) in
+      (*10-07*)
+      let tar_touch_sccs = List.filter (fun scc -> (look_up_touch_chains hg_tar.hg_edges scc) != []) tar_sccs in
+      let _ = Debug.info_hprint (add_str "tar_touch_sccs" (pr_list_ln (pr_list string_of_int))) tar_touch_sccs no_pos in
+      (src,tar_touch_sccs)
+    else [],[]
+    in
+    let is_edge_homo = check_homo_edges map non_touch_check hg_src hg_tar src_cycle_touch_edges tar_touch_sccs in
     if not is_edge_homo then (false, map) else
     true,map
 
-let check_homomorphism non_tough_check hg_src hg_tar=
+let check_homomorphism non_touch_check hg_src hg_tar=
   let pr1 = print_hgraph in
   let pr2 = pr_list (pr_pair string_of_int string_of_int) in
   Debug.no_2 "check_homomorphism" pr1 pr1 (pr_pair string_of_bool pr2)
-      (fun _ _ -> check_homomorphism_x non_tough_check hg_src hg_tar) hg_src hg_tar
+      (fun _ _ -> check_homomorphism_x non_touch_check hg_src hg_tar) hg_src hg_tar
 
 
 (****************************************************************)
