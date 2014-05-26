@@ -75,6 +75,9 @@ my ($atom, $entail) = @{ $format{$fmt} };
 my $vars = join(", ", map { "x$_" } (1..$n));
 
 for my $i (1..$N) {
+  if($fmt eq 'slk') {
+    print "//Entail($i)\n";
+  }
   print make_formula("ex$i", $n, $d, $p), "\n\n";
 }
 
