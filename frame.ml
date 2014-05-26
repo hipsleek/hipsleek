@@ -1395,3 +1395,10 @@ let check_unsat_w_norm prog f0 set_ptos=
 let check_imply_w_norm prog non_tough_check ante_hg conseq_hg=
   let is_implied, vertex_map = Hgraph.check_homomorphism non_tough_check conseq_hg ante_hg in
   is_implied
+
+
+(*
+  find the residue syntactically
+*)
+let prune_match ante=
+  ante

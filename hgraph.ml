@@ -62,18 +62,20 @@ type heap_graph = {
     hg_adjg2: adj list;
     hg_adj1: adj list;
     hg_adj0: adj list;
+    hg_non_tough_edges: (int * int) list;
 }
 
-let mk_hgraph sccs hvs hes adjg2 adj1 adj0= {
+let mk_hgraph sccs hvs hes adjg2 adj1 adj0 nt_edges= {
     hg_sccs = sccs;
     hg_vertexs = hvs;
     hg_edges = hes;
     hg_adjg2 = adjg2;
     hg_adj1 = adj1;
     hg_adj0 = adj0;
+    hg_non_tough_edges = nt_edges;
 }
 
-let mk_empty_hgraph () =  mk_hgraph [] [] [] [] [] []
+let mk_empty_hgraph () =  mk_hgraph [] [] [] [] [] [] []
 
 (******************printer********************************)
 let print_hv hv=
@@ -91,13 +93,15 @@ let print_hgraph g=
   let pr1 = pr_list_ln (pr_pair string_of_int (pr_list (pr_triple string_of_int pr0 pr0) )) in
   let pr2 = pr_list print_adj in
   let pr3 = pr_list print_hv in
+  let pr4 = pr_list (pr_pair string_of_int string_of_int) in
   let string_sscs = "sscs:" ^ (pr1 g.hg_sccs) in
   let string_hvs = "\nvertexs:" ^ (pr3 g.hg_vertexs) in
   let string_hes = "\nedges:" ^ ((pr_list print_he) g.hg_edges) in
   let string_adjg2 = "\nadj >= 2:" ^ (pr2 g.hg_adjg2) in
   let string_adj1 = "\nadj = 1:" ^ (pr2 g.hg_adj1) in
   let string_adj0 = "\nadj >= 0:" ^ (pr2 g.hg_adj0) in
-  string_sscs ^ string_hvs ^ string_hes ^ string_adjg2 ^ string_adj1 ^ string_adj0
+  let string_non_tough_edges = "\nnt-edges:" ^ (pr4 g.hg_non_tough_edges) in
+  string_sscs ^ string_hvs ^ string_hes ^ string_adjg2 ^ string_adj1 ^ string_adj0 ^ string_non_tough_edges
 
 (*****************end*printer********************************)
  let cmp_edge e1 e2 = e1.he_b_id - e2.he_b_id
@@ -150,13 +154,14 @@ let set_pto_edges_x vertexs eds diff_pair=
       let ne = if b then {e with he_kind = true} else e in
       (r@[ne],rest_ptos)
   ) ([],sort_ptos) sort_eds in
-  sort_eds2
+  sort_eds2,sort_ptos
 
 let set_pto_edges vertexs eds diff_pair=
   let pr1 = pr_list print_hv in
   let pr2 = pr_list print_he in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  Debug.no_3 "set_pto_edges" pr1 pr2 pr3 pr2
+  let pr4 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_3 "set_pto_edges" pr1 pr2 pr3 (pr_pair pr2 pr4)
       (fun _ _ _ -> set_pto_edges_x vertexs eds diff_pair)
       vertexs eds diff_pair
 
@@ -1652,17 +1657,18 @@ let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos=
   let is_conflict, new_comps, vertexs1, ls_adjg12, lsadj12 = force_inter_predicate_rules
      vertexs ls_adjg1 ls_adj1 ls_must_diff in
   if is_conflict then
-    let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 lsadj12 ls_adj0  in
-    (true, [],final_graph) else
-      let n_edges = if set_ptos then
-        let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) &&
-        List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in
-        set_pto_edges vertexs1 edges1 ls_must_diff
-      else edges
-      in
+    let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 lsadj12 ls_adj0 [] in
+    (true, [],final_graph)
+  else
+    let n_edges, non_tough_edges = if set_ptos then
+      let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) &&
+          List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in
+      set_pto_edges vertexs1 edges1 ls_must_diff
+    else edges,[]
+    in
     (*build emp from vertexs*)
     let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in
-    let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0  in
+    let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0 non_tough_edges in
     (is_conflict, final_emps,final_graph)
 
 let norm_graph ls_may_eq ls_must_eq ls_must_diff set_ptos=
@@ -1737,12 +1743,46 @@ let check_homo_edges_x map non_tough_check hg_src hg_tar=
               dfs e (path_children@rest) (done_vs@not_trav)
       | [] -> false,[]
   in
-  let is_pto edges (b_id,e_id)=
+  let get_non_tough_constr_from_pto edges (b_id,e_id)=
     let e = look_up_edge edges b_id e_id in
-    e.he_kind
+    if e.he_kind then [(b_id)] else []
+  in
+  let check_non_tough tar_non_tough required_b_non_tough_ids e_non_tough_id=
+    let b_non_tough_ids = List.fold_left (fun r (b_id, e_id)->
+        if e_id = e_non_tough_id then r@[b_id] else r
+    ) [] tar_non_tough in
+    Gen.BList.difference_eq (=) required_b_non_tough_ids b_non_tough_ids = []
+  in
+  (* three conditions:
+     if (b_id, e_id) is a pto
+      - (e_id, b_id) is non-tough also (if exist an edge, this edge is also pto)
+      - (b_id, tar_e_seg) is non-tough (..)
+      - (tar_e_seg, b_id)
+  *)
+  let is_non_tough_two_way_pto tar_edges tar_e_seg (b_id, e_id)=
+    let _ = Debug.info_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
+    let e = look_up_edge tar_edges b_id e_id in
+    if e.he_kind then
+      let pto_nontough =
+        try
+          (*if exist an rev, it should be non-tough also: a!=b <-> b!=a *)
+          let rev_e = look_up_edge tar_edges e_id b_id in
+          rev_e.he_kind
+        with _ -> (*not exist is OK*) true
+      in
+      if pto_nontough then
+        try
+           let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
+          (* (tar_e_seg, b_id) is non_tough also*)
+          let seg_e = look_up_edge tar_edges tar_e_seg b_id in
+          seg_e.he_kind
+        with _ -> (*not exist is OK*) true
+      else
+         pto_nontough
+    else true
   in
   (*for each edge of src*)
-  let check_one_src_edge sedge=
+  let check_one_src_edge_x sedge=
     (*map to id of tar edge*)
     let tar_b = subst map sedge.he_b_id in
     let tar_e = subst map sedge.he_e_id in
@@ -1752,14 +1792,26 @@ let check_homo_edges_x map non_tough_check hg_src hg_tar=
       tedge.he_kind
     else
       (*otherwise: check it is a path pi*)
-      let is_path, path = dfs tar_e [([], tar_e)] [tar_e] in
+      let is_path, path = dfs tar_e [([], tar_b)] [tar_e] in
       if not is_path then false else
-        let _ = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
+        let _ = Debug.info_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
         if not non_tough_check then true else
           (*if non_touch is enable, all edge of pi must be pto*)
-          let is_non_tough = List.for_all (is_pto hg_tar.hg_edges) path in
-          let _ = Debug.ninfo_hprint (add_str "is_non_tough" string_of_bool) is_non_tough no_pos in
+          (* let required_tar_non_tough_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
+          (*     r@(get_non_tough_constr_from_pto hg_tar.hg_edges (b_id,e_id)) *)
+          (* ) [] path in *)
+          (* let _ = Debug.info_hprint (add_str "required_tar_non_tough_b_ids" (pr_list string_of_int)) required_tar_non_tough_b_ids no_pos in *)
+          (*  let is_non_tough = check_non_tough hg_tar.hg_non_tough_edges required_tar_non_tough_b_ids tar_e in *)
+          let is_non_tough = List.for_all (fun (b_id, e_id) ->
+              (is_non_tough_two_way_pto hg_tar.hg_edges tar_e (b_id, e_id))
+          ) path in
+          let _ = Debug.info_hprint (add_str "is_non_tough" string_of_bool) is_non_tough no_pos in
           is_non_tough
+  in
+  let check_one_src_edge sedge=
+    let pr1 = print_he in
+    Debug.no_1 "check_one_src_edge" pr1 string_of_bool
+        (fun _ -> check_one_src_edge_x sedge) sedge
   in
   (*******************************)
   List.for_all check_one_src_edge hg_src.hg_edges

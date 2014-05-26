@@ -253,7 +253,12 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
       | [] -> false,res_conj_ante_fs,last_lc
       | ante::rest ->
             let b,lc = prove_conj_conseq_conj_ante ante ante_nemps1 f in
-            if b then (true, res_conj_ante_fs@rest, lc)
+            if b then
+              (*to remove matched node in ante and put the remain back
+                testcase: 10e04
+              *)
+              let res_ante = Frame.prune_match ante in
+              (true, res_conj_ante_fs@rest@[res_ante], lc)
             else prove_conj_conseq rest ante_nemps1 f (res_conj_ante_fs@[ante]) lc
   in
   let rec prove_list_conseqs ante_fs2 ante_nemps0 fs ctx=
