@@ -1691,7 +1691,7 @@ let remove_imm_from_formula_x prog f imml = (* f *)
   let fun_helper p h = 
     (* decide below the value for which_xpure (1 or 0) ? *)
     let disj = if not (CP.isAccs imml) then snd (xpure_heap_mem_enum prog h p 1) else {mem_formula_mset = []} in (* get the dijointness information *)
-    let fh, x, removed_vars = remove_imm_from_heap_formula prog p 1 imml h in (* remove @L and retrieve xpure of removed nodes *)
+    let fh, x, removed_vars = remove_imm_from_heap_formula prog p 1 imml h in (* remove @L and retrieve xpure of removed nodes *)    
     let pure = match x with
       | Some pr -> MCP.merge_mems pr p true
       | None   -> p in

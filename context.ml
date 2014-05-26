@@ -1342,9 +1342,18 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)
                   (* leads to unsoundness of sh-rev3a.slk *)
-                  let r_lem = 
+                  let r_lem =
+                    (* ==========andreea: to fix this possibly lemma app ========== *)
+                  (* let a2 =  *)
+                    (* let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)  *)
+                    (*     dl.h_formula_data_name vr_name) in *)
+                    (* (\* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *\) *)
+                    (* let right_act = if (not(!ann_derv) || new_orig) then  *)
+                    (*   List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in *)
+                    (* right_act in *)
+                    (* ==================== *)
                     if (Lem_store.all_lemma # any_coercion
-                    && !Globals.allow_rd_lemma) 
+                    && !Globals.allow_rd_lemma)
                     then
                       [
                           (1,M_rd_lemma m_res)

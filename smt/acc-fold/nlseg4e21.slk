@@ -1,0 +1,65 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+//lemma_unsafe "L1" self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+lemma_unsafe "L2" self::nlseg<j> <- 
+      (exists u :self::nlseg<u> * u::nlseg<j> * j::node<_>@L).
+
+//# nlseg4e2.slk
+
+// two problems with lemma application
+
+// (1)
+checkentail_exact
+    (exists u :self::nlseg<u> * u::nlseg<p> * p::node<rr>@L)
+       |- self::nlseg<uu>.
+print residue.
+/**
+ ../../sleek nlseg4e21.slk  -dre "do_coercion\|do_match\|sleek_entail"
+
+where does below match come from? 
+do_match@18@16@15@8@7@1
+do_match inp1 : p::node<rr>@L
+do_match inp2 : p::node<a_135>
+do_match inp3 : es_formula: emp&{FLOW,(21,22)=__norm}[]
+ es_heap: u_57::nlseg<p> * self::nlseg<u_57>
+ es_evars: [q_134; a_135; u_126; aa_127; p_128; u_107; aa_108; p_109; uu]
+ es_ante_evars: [u_57]
+ es_gen_impl_vars: [uu]
+ es_rhs_eqset: [q_134:p_128]
+ es_trace: 
+   SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== L2) ==>  Match ==>  SEARCH ==>  (Lemma <== L2) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==> 
+ es_infer_vars_rel: []
+ es_proof_traces: [p::node<rr>@L:p::nlseg<p_128> * p_109::node<aa_127>@L&
+                   {FLOW,(21,22)=__norm}[]]
+do_match inp4 : a_135::nlseg<q_134>&p!=p_128 & q_134=p_128&{FLOW,(1,24)=__flow}[]
+do_match inp5 :[]
+do_match@18 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: separation entailment
+                   fe_locs: {
+                             fc_message: Imm annotation mismatches
+                             fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== L2) ==>  Match ==>  SEARCH ==>  (Lemma <== L2) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==> ]]
+
+*/
+
+
+// valid with @L residue
+// problem : answers but first one did not have p=uu?.
+/*
+ <1>p::node<_>@L&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
+<2>p::node<_>@L&p=uu&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  (Lemma <== lem_13) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==> ]]
+*/
