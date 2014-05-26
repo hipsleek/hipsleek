@@ -148,6 +148,113 @@ Entail 5: Valid.
 <2>u_608::nlseg<p> * p::node<_>&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_13) ==>  COND ==>  Match ==>  COND ==>  Match ==>  SEARCH ==>  (Lemma ==> lem_11) ==> (left: lem_11) ==>  Match ==> ]]
 */
+
+# nlseg4e4.slk
+
+This example shows successful fold + implicit instantiation
+which is also existential
+
+do_match@1
+do_match inp1 : self::node<u_29>
+do_match inp2 : self::node<a_45>
+do_match inp3 : es_formula: u_29::nlseg<p> * p::node<_>@L&{FLOW,(21,22)=__norm}[]
+ es_evars: [q_44; a_45; uu]
+ es_ante_evars: [u_29]
+ es_gen_impl_vars: [uu]
+ es_rhs_eqset: [q_44:uu]
+ es_trace:  SEARCH ==>  Fold ==>  Match ==> 
+ es_infer_vars_rel: []
+ es_proof_traces: [self::node<u_29> * u_29::nlseg<p> * 
+                   p::node<_>@L:self::nlseg<uu>&{FLOW,(21,22)=__norm}[]]
+do_match inp4 : a_45::nlseg<q_44>&self!=uu & q_44=uu&{FLOW,(1,24)=__flow}[]
+do_match inp5 :[]
+do_match@1 EXIT: 
+Good Context: length= 1 [es_formula: p::node<_>@L&self!=p&{FLOW,(21,22)=__norm}[]
+                         es_pure: self!=uu & p=uu
+                         es_heap: u_29::nlseg<p> * self::node<u_29>
+                         es_evars: [q_44; a_45; uu]
+                         es_ante_evars: [u_29; uu; q_44; a_45; uu]
+                         es_gen_impl_vars: [uu]
+                         es_rhs_eqset: [p:uu; p:uu; p:uu]
+                         es_subst (from): [q_44; a_45]
+                         es_subst (to): [p; u_29]
+                         es_trace:  SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> 
+                         es_infer_vars_rel: []
+                         es_unsat_flag: false
+                         es_proof_traces: [self::node<u_29> * 
+                                           u_29::nlseg<p> * 
+                                           p::node<_>@L:self::nlseg<uu>&
+                                           {FLOW,(21,22)=__norm}[]]] <1>p::node<_>@L&self!=uu & p=uu & self!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  COND ==>  Match ==> ]]
+
+e4.slk (just folding)
+
+1:1706:!!! move_impl(l_inst):[uu]
+1:1707:!!! move_impl(to_elim_evars):[uu]
+1:1708:!!! move_impl(inst_to_keep):[]
+1:1709:!!! move_impl(f): self=uu
+1:1710:!!! move_impl(new_to_elim):[uu]
+1:3766:!!! move_impl(l_inst):[uu]
+1:3767:!!! move_impl(to_elim_evars):[q_44,a_45,uu]
+1:3768:!!! move_impl(inst_to_keep):[]
+1:3769:!!! move_impl(f): self!=uu & p=uu
+1:3770:!!! move_impl(new_to_elim):[uu]
+1:5024:!!! move_impl(l_inst):[]
+1:5025:!!! move_impl(to_elim_evars):[]
+1:5026:!!! move_impl(inst_to_keep):[]
+1:5027:!!! move_impl(f): true
+1:5028:!!! move_impl(new_to_elim):[]
+
+
+e3.slk (lemma and folding)
+
+2:7865:!!! move_impl(l_inst):[uu]
+2:7866:!!! move_impl(to_elim_evars):[u_108,Anon_109,uu]
+2:7867:!!! move_impl(inst_to_keep):[uu]
+2:7868:!!! move_impl(f): true
+2:7869:!!! move_impl(new_to_elim):[]
+2:10501:!!! move_impl(l_inst):[uu]
+2:10502:!!! move_impl(to_elim_evars):[u_108,Anon_109,uu]
+2:10503:!!! move_impl(inst_to_keep):[uu]
+2:10504:!!! move_impl(f): true
+2:10505:!!! move_impl(new_to_elim):[]
+2:12128:!!! move_impl(l_inst):[uu]
+2:12129:!!! move_impl(to_elim_evars):[u_108,Anon_109,uu]
+2:12130:!!! move_impl(inst_to_keep):[uu]
+2:12131:!!! move_impl(f): true
+2:12132:!!! move_impl(new_to_elim):[]
+2:14751:!!! move_impl(l_inst):[uu]
+2:14752:!!! move_impl(to_elim_evars):[u_152,Anon_153,u_108,Anon_109,uu]
+2:14753:!!! move_impl(inst_to_keep):[]
+2:14754:!!! move_impl(f): p=uu
+2:14755:!!! move_impl(new_to_elim):[uu]
+2:16710:!!! move_impl(l_inst):[uu]
+2:16711:!!! move_impl(to_elim_evars):[u_152,Anon_153,u_108,Anon_109,uu]
+2:16712:!!! move_impl(inst_to_keep):[]
+2:16713:!!! move_impl(f): p=uu
+2:16714:!!! move_impl(new_to_elim):[uu]
+2:17932:!!! move_impl(l_inst):[uu]
+2:17933:!!! move_impl(to_elim_evars):[u_108,Anon_109,uu]
+2:17934:!!! move_impl(inst_to_keep):[]
+2:17935:!!! move_impl(f): p=uu
+2:17936:!!! move_impl(new_to_elim):[uu]
+2:19340:!!! move_impl(l_inst):[uu]
+2:19341:!!! move_impl(to_elim_evars):[]
+2:19342:!!! move_impl(inst_to_keep):[uu]
+2:19343:!!! move_impl(f): true
+2:19344:!!! move_impl(new_to_elim):[]
+2:19846:!!! move_impl(l_inst):[uu]
+2:19847:!!! move_impl(to_elim_evars):[]
+2:19848:!!! move_impl(inst_to_keep):[uu]
+2:19849:!!! move_impl(f): true
+2:19850:!!! move_impl(new_to_elim):[]
+2:20765:!!! move_impl(l_inst):[]
+2:20766:!!! move_impl(to_elim_evars):[]
+2:20767:!!! move_impl(inst_to_keep):[]
+2:20768:!!! move_impl(f): true
+2:20769:!!! move_impl(new_to_elim):[]
+
+
 ====================================================================
 # nlseg3c1.slk --inv: FIXED
 

@@ -31,11 +31,12 @@ print residue.
 */
 
 
+/*
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
        |- (exists v :self::nlseg<v> * v::nlseg<uu> * uu::node<_>@L).
 print residue.
-/*
+
  <1>p::node<_>@L&uu=p & Anon_16=Anon_15&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  COND ==>  SEARCH ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
 <2>p::node<_>@L&p=uu & Anon_16=Anon_15&{FLOW,(21,22)=__norm}[]
@@ -45,6 +46,7 @@ print residue.
 */
 
 
+/*
 checkentail_exact
     (exists u :self::node<u> * u::nlseg<p> * p::node<_>@L)
        |- self::nlseg<uu>.
@@ -59,3 +61,4 @@ checkentail_exact
     self::node<_> 
        |- self::node<_>@L * self::node<_>@L.
 print residue.
+*/
