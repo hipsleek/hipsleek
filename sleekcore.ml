@@ -239,7 +239,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
         let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] conj_ante in
         let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args norm_conj_conseq in
         let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
-        let _ = Debug.info_hprint (add_str "r" string_of_bool) r no_pos in
+        let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
         let _ = Globals.graph_norm := true in
         (r, lc)
       in
@@ -265,7 +265,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> true, ctx
       | f::rest ->
-            let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
+            let _ = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
             let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 f [] ctx in
             if not r then false ,lc else
                prove_list_conseqs rest_ante_fs ante_nemps0 rest lc
