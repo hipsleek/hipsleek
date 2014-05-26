@@ -1,0 +1,23 @@
+data node {
+    int val;
+    node next
+}.
+
+//=========== correct
+pred lseg_bool<p,b> == self = p & b
+    or self::node<v,r> * r::lseg_bool<p,b1> & self!= p & b.
+
+lemma_safe self::lseg_bool<z,b> ->
+    self::lseg_bool<y,b1> * y::lseg_bool<z,b2> & (b=b1) & (b1=b2).
+// expect: valid
+// actual: ok
+
+
+//=========== bug
+pred lseg_bool2<p,b> == self = p & b
+    or self::node<v,r> * r::lseg_bool2<p,b1> & self!= p & b=b1.
+
+lemma_safe self::lseg_bool2<z,b> ->
+    self::lseg_bool2<y,b1> * y::lseg_bool2<z,b2> & (b=b1) & (b1=b2).
+// expect: valid
+// actual: faild
