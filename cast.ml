@@ -2952,6 +2952,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     (* let _ = print_endline (str_bwf) in                                                                              *)
     (* count := !count + 1; *)
   done;
+  forward_ptrs := List.filter (fun ptr -> String.compare ptr self != 0) !forward_ptrs;
   (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
 
 (* requires view's forward, backward info to be computed first *)

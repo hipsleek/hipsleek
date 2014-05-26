@@ -1837,6 +1837,13 @@ and mkBagInExp v exp pos =
   let bf = mkBagIn v exp pos in
   BForm ((bf, None),None)
 
+(* e1 is subset of e2 *)
+and mkBagSub e1 e2 pos = BagSub (e1,e2,pos)
+
+and mkBagSubExp e1 e2 pos =
+  let bf = mkBagSub e1 e2 pos in
+  BForm ((bf, None),None)
+
 (******************************************)
 
 and mkRes t = SpecVar (t, res_name, Unprimed)

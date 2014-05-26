@@ -6,15 +6,16 @@ data node {
 pred lseg<p> == self = p
     or self::node<v,r> * r::lseg<p> & self!= p.
 
-lemma_safe self::lseg<z> * z::node<_,_>@L <- self::lseg<y> * y::lseg<z> * z::node<_,_>@L.
+//lemma_safe self::lseg<z> * z::node<_,_>@L <- self::lseg<y> * y::lseg<z> * //z::node<_,_>@L.
 
 checkentail x::lseg<y> * y::lseg<z> |- x::lseg<z>.
 
-/*
+
 pred lseg_length<p,n> == self = p & n = 0
     or self::node<v,r> * r::lseg_length<p,m> & self!= p & n = m+1
 inv n >= 0.
 
 //lemma_safe self::lseg_length<z,n> ->
 //    self::lseg_length<y,n1> * y::lseg_length<z,n2> & n=n1+n2.
-*/
+
+checkentail x::lseg_length<y,n> * y::lseg_length<z,m> |- x::lseg_length<z,n+m>.

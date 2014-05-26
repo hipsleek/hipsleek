@@ -862,6 +862,74 @@ let checkeq_sem iprog cprog f1 f2 hpdefs=
       (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
       f1 f2 hpdefs
 
+(* Trung: need rename *)
+type lemma_param_property =
+  | LemmaParamEqual
+  | LemmaParamDistributive
+  | LemmaParamUnknown
+
+let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
+    : (CP.spec_var * lemma_param_property) list =
+  let pos = vd.C.view_pos in
+  let rec collect_recursive_view hf = (match hf with
+    | CF.ViewNode vn ->
+        if (String.compare vn.CF.h_formula_view_name vd.C.view_name = 0) then
+          [vn]
+        else []
+    | CF.Star sf ->
+        let h1 = sf.CF.h_formula_star_h1 in
+        let h2 = sf.CF.h_formula_star_h2 in
+        (collect_recursive_view h1) @ (collect_recursive_view h2)
+    | _ -> report_error pos "compute_lemma_params_property: unexpected formula"
+  ) in
+  let param_branches = List.map2 (fun (branch,_) (aux_f,_) ->
+    let (hf,_,_,_,_) = CF.split_components branch in
+    let views = collect_recursive_view hf in
+    match views with
+    | [] -> []
+    | [vn] ->
+        let (_,aux_mf,_,_,_) = CF.split_components aux_f in
+        let aux_pf = MCP.pure_of_mix aux_mf in
+        List.map2 (fun sv1 sv2 ->
+          let e1 = CP.mkVar sv1 pos in
+          let e2 = CP.mkVar sv2 pos in
+          let equal_cond = CP.mkEqExp e1 e2 pos in
+          if (Tpdispatcher.imply_raw aux_pf equal_cond) then
+            LemmaParamEqual
+          else match (CP.type_of_spec_var sv1) with
+          | BagT _ ->
+              let subset_cond = CP.mkBagSubExp e2 e1 pos in
+              if (Tpdispatcher.imply_raw aux_pf equal_cond) then
+                LemmaParamDistributive
+              else LemmaParamUnknown
+          | Int ->
+              (* exists k: forall sv1, sv2: aux_pf implies (sv1 - sv2 = k) *)
+              let distributive_cond = (
+                let diff_var = CP.SpecVar(Int, fresh_name (), Unprimed) in
+                let diff_exp = CP.mkVar diff_var pos in
+                let imply_cond = 
+                  CP.mkOr (CP.mkNot aux_pf None pos)
+                          (CP.mkEqExp (CP.mkSubtract e1 e2 pos) diff_exp pos)
+                          None pos
+                in
+                CP.mkExists [diff_var] (CP.mkForall [sv1;sv2] imply_cond None pos) None pos 
+              ) in
+              if not(Tpdispatcher.imply_raw distributive_cond (CP.mkFalse pos)) then
+                LemmaParamDistributive
+              else LemmaParamUnknown
+          | _ -> LemmaParamUnknown
+        ) vd.C.view_vars vn.CF.h_formula_view_arguments
+    | _ -> report_error pos "compute_lemma_params_property: expect at most 1 view node"
+  ) vd.C.view_un_struc_formula vd.C.view_aux_formula in
+  let param_properties = List.fold_left (fun res param_branch ->
+    match res with
+    | [] -> param_branch
+    | _ -> 
+        try List.map2 (fun x y -> if (x=y) then x else LemmaParamUnknown) res param_branch
+        with _ -> report_error pos "compute_lemma_params_property: expect 2 list has same size"
+  ) [] param_branches in
+  List.map2 (fun sv p -> (sv,p)) vd.C.view_vars param_properties 
+
 let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
   if (vd.C.view_is_segmented) then
@@ -894,7 +962,10 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
       ) in
       let forward_ptr = match vd.C.view_forward_ptrs with
         | [sv] -> CP.name_of_spec_var sv
-        | _ -> report_error pos "generate_lemma_sll: expect 1 forward pointer"
+        | _ ->
+            let msg = "generate_lemma_sll: expect 1 forward pointer in view " 
+                      ^ vd.C.view_name in
+            report_error pos msg
       in
       let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
         let vp = id ^ "_2" in
@@ -906,13 +977,33 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
             view_params2 [] None pos
       ) in
       let body = Iformula.mkStar body1 body2 pos in
-      let pure_constraint = 
-        Ipure.mkEqVarExp (forward_ptr, Unprimed) (forward_ptr^"_2", Unprimed) pos
-      in
-      let param_constraints = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp = id ^ "_2" in
-        IP.Var ((vp,p), pos)
-      ) vd.C.view_vars
+      let pure_constraint = (
+        let fw_ptr_cond =
+          Ipure.mkEqVarExp (forward_ptr, Unprimed) (forward_ptr^"_2", Unprimed) pos
+        in
+        let param_properties = compute_lemma_params_property vd cprog in
+        let param_constraints = List.fold_left(
+          fun res (CP.SpecVar (typ,id,p), param_prop) ->
+            let sv_cond = (match param_prop with
+              | LemmaParamEqual ->
+                  let e = Ipure_D.Var ((id,p), pos) in
+                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
+                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
+              | LemmaParamDistributive -> (
+                  let e = Ipure_D.Var ((id,p), pos) in
+                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
+                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  match typ with
+                  | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
+                  | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
+                  | _ -> report_error pos "generate_lemma_sll: unexpect typ"
+                )
+              | _ -> IP.mkTrue pos
+            ) in
+            IP.mkAnd sv_cond res pos
+        ) (IP.mkTrue pos) param_properties in
+        IP.mkAnd fw_ptr_cond param_constraints pos
       ) in
       Iformula.mkBase body pure_constraint Iformula.top_flow [] pos
     ) in
