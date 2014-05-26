@@ -3150,6 +3150,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
+  (* let cs_body_norm = CF.add_struc_original true cs_body_norm in *)
+  (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
@@ -3223,9 +3225,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
           | v -> 
                 let c_hd, c_guard ,c_fl ,c_t, c_a = CF.split_components c.C.coercion_head in
                 let new_body = CF.normalize 1 c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
+                let _ = Debug.info_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
+                let _ = Debug.info_hprint (add_str "new_body_norm (after push exists)" Cprinter.string_of_formula) new_body no_pos in
                 let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
-                let _ = Debug.tinfo_hprint (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+                let _ = Debug.info_hprint (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+                let _ = Debug.info_hprint (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
                 (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
                 (*   (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
                 (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
@@ -3235,7 +3240,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
-                    C.coercion_body_norm = new_body_norm;
+                    C.coercion_body_norm = new_body_norm;(*why replace the previously normalized body with thsi unormalized one?*)
                     C.coercion_univ_vars = [];} in
         match coer_type with
           | I.Left -> 
