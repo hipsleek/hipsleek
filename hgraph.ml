@@ -128,6 +128,15 @@ let look_up_children v hg_adjg2 hg_adj1 adj0=
       with _ -> []
     end
 
+let look_up_end_of_edges_x edges v=
+  List.filter (fun e -> e.he_e_id = v)  edges
+
+let look_up_end_of_edges edges v=
+  let pr1 = pr_list print_he in
+  Debug.no_2 "look_up_end_of_edges" pr1 string_of_int pr1
+      (fun _ _ -> look_up_end_of_edges_x edges v)
+      edges v
+
 let set_pto_edges_x vertexs eds diff_pair=
   let cmp_pair (id1, _) (id2,_) = id1 -id2 in
   let rec var2add vs sv=
@@ -1803,15 +1812,32 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             let e = look_up_edge edges b e in
             if e.he_kind then is_touchable rest edges else true
   in
-  let consistent_two_way_touch fwd_path tar_edges fwd_edge rev_edge=
+  let rec look_up_touch_edges edges vs res=
+    match vs with
+      | [] -> res
+      | v::rest ->
+            let e_vs = look_up_end_of_edges edges v in
+            look_up_touch_edges edges rest (res@e_vs)
+  in
+  let consistent_two_way_touch fwd_path tar_edges src_edges fwd_edge rev_edge=
     let rev_tar_b = subst map rev_edge.he_b_id in
     let rev_tar_e = subst map rev_edge.he_e_id in
     let has_rev_path, rev_path = dfs rev_tar_e [([], rev_tar_b)] [rev_tar_e] in
     if not has_rev_path then false else
       let fwd_touchable = is_touchable fwd_path tar_edges in
       let rev_touchable = is_touchable rev_path tar_edges in
-      ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
-          ((fwd_touchable && rev_touchable)||(not fwd_touchable && not rev_touchable)))
+      let _ = Debug.info_hprint (add_str "fwd_touchable" (string_of_bool)) fwd_touchable no_pos in
+      let _ = Debug.info_hprint (add_str "rev_touchable" (string_of_bool)) rev_touchable no_pos in
+      let both_non_touch = not fwd_touchable && not rev_touchable in
+      let is_consistent = ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
+          ((fwd_touchable && rev_touchable)|| both_non_touch))
+      in
+      if not is_consistent then false else
+        if both_non_touch then
+          let touch_edges = look_up_touch_edges src_edges [rev_edge.he_b_id;rev_edge.he_e_id] [] in
+          let _ = Debug.info_hprint (add_str "touch_edges" (pr_list print_he)) touch_edges no_pos in
+          touch_edges = []
+        else true
   in
   (*for each edge of src*)
   let check_one_src_edge_x sedge=
@@ -1872,7 +1898,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               if not direct_loop then true else begin
                 try
                   let rev_edge = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
-                  let cons_two_way = consistent_two_way_touch path hg_tar.hg_edges sedge rev_edge in
+                  let cons_two_way = consistent_two_way_touch path hg_tar.hg_edges hg_src.hg_edges sedge rev_edge in
                   let _ = Debug.info_hprint (add_str "cons_two_way" string_of_bool) cons_two_way no_pos in
                   cons_two_way
                 with Not_found -> true
