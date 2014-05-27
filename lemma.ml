@@ -937,6 +937,7 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
     : (I.coercion_decl list) =
   let dname = vd.C.view_data_name in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
+  (* generate segmented singly linked list lemma *)
   if (vd.C.view_is_segmented) then
     (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
     (*    2 posibilities about P:                            *)
