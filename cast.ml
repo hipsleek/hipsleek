@@ -2839,8 +2839,9 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
       List.iter (fun sv ->
         let v2 = P.name_of_spec_var sv in
         try 
-          let path, _ = Dijkstra.shortest_path vg v1 v2 in
-          if (List.for_all (fun (_, lbl, _) -> ViewGraph.is_equality_label lbl) path) then
+          let path, plength = Dijkstra.shortest_path vg v1 v2 in
+          (* path contains only equality edges *)
+          if (plength = 0) then
             forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
         with Not_found -> ()
       ) vdecl.view_vars
@@ -2954,12 +2955,22 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     (* let _ = print_endline (str_bwf) in                                                                              *)
     (* count := !count + 1; *)
   done;
-  forward_ptrs := List.filter (fun ptr -> String.compare ptr self != 0) !forward_ptrs;
+  forward_ptrs := List.filter (fun pt -> String.compare pt self != 0) !forward_ptrs;
   (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
 
 (* requires view's forward, backward info to be computed first *)
 let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
     (vgraphs : (ViewGraph.t * ViewGraph.vertex_env * formula_label) list) =
+  let is_alias_fw_bw v vg = (List.exists (fun pt ->
+    let ptname = P.name_of_spec_var pt in
+    if (String.compare ptname v = 0) then true
+    else
+      try
+        let _, _ = Dijkstra.shortest_path vg v ptname in
+        true
+      with Not_found -> false
+    ) (vd.view_forward_ptrs @ vd.view_backward_ptrs)
+  ) in
   List.map2 (fun (f,lbl) (vg, env, lbl)->
     let pos = CF.pos_of_formula f in
     let (hf,mf,fl,t,a) = CF.split_components f in
@@ -2969,8 +2980,7 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
         | CF.DataNode {CF.h_formula_data_node = sv}
         | CF.ViewNode {CF.h_formula_view_node = sv} ->
             let vn = P.name_of_spec_var sv in
-            if (ViewGraph.mem_vertex vg vn) then
-              None
+            if (is_alias_fw_bw vn vg) then None
             else Some hf
         | CF.Star sf -> (
             let h1opt = get_aux_hf sf.CF.h_formula_star_h1 in
@@ -2997,8 +3007,7 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
         | P.BForm ((P.Eq (P.Var (sv1, pos1), P.Var (sv2, pos2), pos3), ann), lbl) -> (
             let vn1 = P.name_of_spec_var sv1 in
             let vn2 = P.name_of_spec_var sv2 in
-            if ((ViewGraph.mem_vertex vg vn1) && (ViewGraph.mem_vertex vg vn2)) then
-              None
+            if (is_alias_fw_bw vn1 vg) || (is_alias_fw_bw vn2 vg) then None
             else Some pf
           )
         | P.And (pf1, pf2, pos) -> (
@@ -3066,7 +3075,13 @@ let categorize_view (prog: prog_decl) : prog_decl =
         report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
     ) bw_f in
     (* aux formula *)
-    let view_aux = compute_view_aux_formula vd prog vgraphs in
+    let newvd = { vd with view_is_touching = touching;
+                          view_is_segmented = segmented;
+                          view_forward_ptrs = forward_ptrs;
+                          view_backward_ptrs = backward_ptrs;
+                          view_forward_fields = forward_fields;
+                          view_backward_fields = backward_fields; } in
+    let view_aux = compute_view_aux_formula newvd prog vgraphs in
     (* let _ = print_endline ("== view: " ^ vd.view_name) in                                                   *)
     (* let str_fwp = "      - fw_ptrs: " ^ (String.concat ", " fw_p) in                                        *)
     (* let _ = print_endline (str_fwp) in                                                                      *)
@@ -3076,86 +3091,6 @@ let categorize_view (prog: prog_decl) : prog_decl =
     (* let _ = print_endline (str_bwp) in                                                                      *)
     (* let str_bwf = "      - bw_fields: " ^ (String.concat ", " (List.map ViewGraph.string_of_label bw_f)) in *)
     (* let _ = print_endline (str_bwf) in                                                                      *)
-    { vd with view_is_touching = touching;
-              view_is_segmented = segmented;
-              view_forward_ptrs = forward_ptrs;
-              view_backward_ptrs = backward_ptrs;
-              view_forward_fields = forward_fields;
-              view_backward_fields = backward_fields;
-              view_aux_formula = view_aux; }
+    { newvd with view_aux_formula = view_aux; }
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
-
-let generate_lemma_sll (vd: view_decl) (prog: prog_decl)
-    : (coercion_decl list * coercion_decl list) =
-  if (vd.view_is_segmented) then
-    (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
-    (*    2 posibilities about P:                            *)
-    (*       + P = P1  =  P2   unifying operation            *)
-    (*       + P = P1 (+) P2   combining operation           *)
-
-    (* let l2r_lemma = {                                                                       *)
-    (*   coercion_type = Iast.Left;                                                            *)
-    (*   coercion_exact = false;                                                               *)
-    (*   coercion_name = "lemma_left_" ^ vd.view_name;                                         *)
-    (*   coercion_head : F.formula; (* used as antecedent during --elp *)                      *)
-    (*   coercion_head_norm : F.formula; (* used as consequent during --elp *)                 *)
-    (*   coercion_body : F.formula; (* used as antecedent during --elp *)                      *)
-    (*   coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)           *)
-    (*   coercion_impl_vars : P.spec_var list; (* list of implicit vars *)                     *)
-    (*   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *) *)
-    (*   coercion_infer_vars :  P.spec_var list;                                               *)
-    (*   coercion_fold_def : view_decl Gen.mut_option;                                         *)
-    (*   coercion_head_view : ident;                                                           *)
-    (*   coercion_body_view : ident;  (* used for cycles checking *)                           *)
-    (*   coercion_mater_vars : mater_property list;                                            *)
-    (*   coercion_case : coercion_case; (*Simple or Complex*)                                  *)
-    (*   coercion_type_orig: coercion_type option;                                             *)
-    (*   coercion_kind: lemma_kind; } in                                                       *)
-    (* }                                                                                       *)
-    ([],[])
-  else ([], [])
-
-let generate_lemma_dll (vd: view_decl) (prog: prog_decl)
-    : (coercion_decl list * coercion_decl list) =
-  ([], [])
-
-let generate_lemma_tree_simple (vd: view_decl) (prog: prog_decl)
-    : (coercion_decl list * coercion_decl list) =
-  ([], [])
-
-let generate_lemma_tree_pointer_back (vd: view_decl) (prog: prog_decl)
-    : (coercion_decl list * coercion_decl list) =
-  ([], [])
-(*
- * assume that the prerequisite information of view is computed
- * (touching, segmented, forward, backward, aux...)
- *)
-let generate_lemma (vd: view_decl) (prog: prog_decl) 
-    : (coercion_decl list * coercion_decl list) =
-  let forward_fields = vd.view_forward_fields in
-  let backward_fields = vd.view_backward_fields in
-  (* singly linked list *)
-  if ((List.length forward_fields = 1) && (List.length backward_fields = 0)) then
-    generate_lemma_sll vd prog
-  (* doubly linked list *)
-  else if ((List.length forward_fields = 1) && (List.length backward_fields = 1)) then
-    generate_lemma_dll vd prog
-  (* simple tree *)
-  else if ((List.length forward_fields = 2) && (List.length backward_fields = 0)) then
-    generate_lemma_tree_simple vd prog
-  (* tree with pointer back *)
-  else if ((List.length forward_fields = 2) && (List.length backward_fields = 1)) then
-    generate_lemma_tree_pointer_back vd prog
-  (* what else ? *)
-  else
-    ([], [])
-
-let generate_all_lemmas (prog: prog_decl)
-    : (coercion_decl list * coercion_decl list) =
-  let vdecls = prog.prog_view_decls in
-  let lemmas = List.map (fun vd -> generate_lemma vd prog) prog.prog_view_decls in
-  let l2r_lemmas, r2l_lemmas = List.split lemmas in
-  let l2r = List.concat l2r_lemmas in
-  let r2l = List.concat r2l_lemmas in
-  (l2r, r2l)
