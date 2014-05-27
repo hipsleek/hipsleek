@@ -258,6 +258,7 @@ type ef_pure = (
 (* [] denotes false *)
 type ef_pure_disj = ef_pure list
 
+
 let is_False cp = match cp with
   | BForm (p,_) -> 
         begin

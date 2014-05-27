@@ -24,6 +24,7 @@ open Cpure
 (* [] denotes false *)
 (* type ef_pure_disj = ef_pure list *)
 
+
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
 let baga_conv (baga : spec_var list) : formula =

@@ -538,6 +538,8 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
 
   (* use classical reasoning in separation logic *)
   ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
@@ -645,8 +647,7 @@ let common_arguments = [
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
-  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
-  ("--gen-baga-inv",Arg.Set Globals.gen_baga_inv,"generate baga inv from view")
+  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 
 (* arguments/flags used only by hip *)	

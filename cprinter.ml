@@ -388,6 +388,22 @@ let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
     pr_vwrap_nocut hdr f x
   end
 
+(** call pr_wrap_op : suppress printing for None **)
+let pr_vwrap_opt hdr (f: 'a -> unit) (x:'a option) =
+  begin
+    match x with
+      | None -> ()
+      | Some x -> pr_vwrap hdr f x
+  end
+
+(** call pr_vwrap : suppress printing for [] **)
+let pr_vwrap_list hdr (f: 'a -> unit) (x:'a list) =
+  begin
+    match x with
+      | [] -> ()
+      | _ -> pr_vwrap hdr (List.iter f) x
+  end
+
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
 (*     (fun () -> (\* fmt_open 1; *\) fmt_string open_str) *)
@@ -970,6 +986,7 @@ let string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label
 let pr_spec_label_def l  = fmt_string (LO2.string_of l)
 let pr_spec_label_def_opt l = fmt_string (LO2.string_of_opt l)
 let pr_spec_label l  = fmt_string (LO.string_of l)
+
 
 (** print a pure formula to formatter *)
 let rec pr_pure_formula  (e:P.formula) = 
@@ -2042,6 +2059,14 @@ and pr_formula_guard_list (es: formula_guard list)=
 
 and string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
+let string_of_ef_pure = pr_pair P.string_of_spec_var_list string_of_pure_formula
+
+let string_of_ef_pure_disj = pr_list string_of_ef_pure
+
+let pr_ef_pure e = fmt_string (string_of_ef_pure e)
+
+let pr_ef_pure_disj e = fmt_string (string_of_ef_pure_disj e)
+
 let string_of_hrel_formula hrel: string = poly_string_of_pr pr_hrel_formula hrel
 
 let prtt_string_of_formula_guard ((e,g):formula_guard) : string 
@@ -2545,7 +2570,8 @@ let rec string_of_spec_var_list_noparen l = match l with
   | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
 ;;
 
-let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+let string_of_spec_var_list l = P.string_of_spec_var_list l;;
+(* "["^(string_of_spec_var_list_noparen l)^"]" ;; *)
 
 let string_of_typed_spec_var_list l = "["^(Gen.Basic.pr_list string_of_typed_spec_var l)^"]" ;;
 
@@ -3311,6 +3337,7 @@ let pr_view_decl v =
   pr_vwrap  "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
+  pr_vwrap_opt  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;

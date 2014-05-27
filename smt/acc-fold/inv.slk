@@ -26,5 +26,19 @@ pred ll<n> == self = null & n=0
    inv: true
    xform: (self!=null | (n=0 & self=null))
 
+   (1) self::ll<n> == ([],false)
+   (2) self::ll<n> == ([],self=null & n=0) \/ ([self],false)
+                   == ([],self=null & n=0) 
+   (3) self::ll<n> == ([],self=null & n=0) \/ ([self],(ex r: r=null & n=1)
+                   == ([],self=null & n=0) \/ ([self],n=1)
+   (4) self::ll<n> == ([],self=null & n=0) \/ ([self],n>=1)
+
+   // fixcalc
+   (1) self::ll<n> == (false)
+   (2) self::ll<n> == (self=null & n=0) \/ false)
+   (3) self::ll<n> == (self=null & n=0) \/ (self!=null & n=1)
+   (4) self::ll<n> == (self=null & n=0) \/ (self!=null & n>=1)
+       self::ll<n> == n>=0
+
 Can we have more accurate pred inv inference?
 */

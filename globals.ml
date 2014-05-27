@@ -1224,7 +1224,7 @@ let branch_point_id = ref 0
 let gen_smt = ref false
 
 (* generate baga inv from view *)
-let gen_baga_inv = ref false
+let gen_baga_inv = ref true
 
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 
