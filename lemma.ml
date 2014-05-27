@@ -937,7 +937,7 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
     : (I.coercion_decl list) =
   let dname = vd.C.view_data_name in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
-  (* generate segmented singly linked list lemma *)
+  (* generate lemmas for segmented predicates *)
   if (vd.C.view_is_segmented) then
     (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
     (*    2 posibilities about P:                            *)
@@ -986,14 +986,19 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
             0 false  (IP.ConstAnn Mutable) false false false None
             view_params2 [] None pos
       ) in
-      let lending_node = 
-        IF.mkHeapNode (forward_ptr, Unprimed) dname
-            0 false  (IP.ConstAnn Lend) false false false None
-            (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
-            [] None pos
-      in
       let left_hbody = Iformula.mkStar body1 body2 pos in
-      let right_hbody = Iformula.mkStar (Iformula.mkStar body1 body2 pos) lending_node pos in
+      let right_hbody = (
+        if (vd.C.view_is_touching) then left_hbody
+        else
+          (* lemma for non-touching predicates also borrow a @L node *)
+          let lending_node = 
+            IF.mkHeapNode (forward_ptr, Unprimed) dname
+                0 false  (IP.ConstAnn Lend) false false false None
+                (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
+                [] None pos
+          in
+          Iformula.mkStar left_hbody lending_node pos
+      ) in
       let pure_constraint = (
         let param_properties = compute_lemma_params_property vd cprog in
         let param_constraints = List.fold_left(
@@ -1025,7 +1030,8 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
     ) in
     let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
     let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
-    [left_coercion; right_coercion] 
+    [left_coercion; right_coercion]
+  (* no need to generate lemma for non-segmented predicates *) 
   else ([])
 
 let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
