@@ -880,6 +880,9 @@ let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
         let h1 = sf.CF.h_formula_star_h1 in
         let h2 = sf.CF.h_formula_star_h2 in
         (collect_recursive_view h1) @ (collect_recursive_view h2)
+    
+    | CF.HTrue | CF.HFalse | CF.HEmp -> []
+    | CF.DataNode _ -> []
     | _ -> report_error pos "compute_lemma_params_property: unexpected formula"
   ) in
   let param_branches = List.map2 (fun (branch,_) (aux_f,_) ->
@@ -899,7 +902,7 @@ let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
           else match (CP.type_of_spec_var sv1) with
           | BagT _ ->
               let subset_cond = CP.mkBagSubExp e2 e1 pos in
-              if (Tpdispatcher.imply_raw aux_pf equal_cond) then
+              if (Tpdispatcher.imply_raw aux_pf subset_cond) then
                 LemmaParamDistributive
               else LemmaParamUnknown
           | Int ->
@@ -932,13 +935,16 @@ let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
 
 let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
+  let dname = vd.C.view_data_name in
+  let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
   if (vd.C.view_is_segmented) then
     (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
     (*    2 posibilities about P:                            *)
     (*       + P = P1  =  P2   unifying operation            *)
     (*       + P = P1 (+) P2   combining operation           *)
     let pos = vd.C.view_pos in
-    let lemma_name = "lemma__" ^ vd.C.view_name in
+    let llemma_name = "lemma_l_" ^ vd.C.view_name in
+    let rlemma_name = "lemma_r_" ^ vd.C.view_name in
     let ihead = (
       let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
         IP.Var ((id,p), pos)
@@ -950,7 +956,7 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
       ) in
       Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos
     ) in
-    let ibody = (
+    let (left_body, right_body) = (
       let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->
         let vp = id ^ "_1" in
         IP.Var ((vp,p), pos)
@@ -976,7 +982,14 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
             0 false  (IP.ConstAnn Mutable) false false false None
             view_params2 [] None pos
       ) in
-      let body = Iformula.mkStar body1 body2 pos in
+      let lending_node = 
+        IF.mkHeapNode (forward_ptr, Unprimed) dname
+            0 false  (IP.ConstAnn Lend) false false false None
+            (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
+            [] None pos
+      in
+      let left_hbody = Iformula.mkStar body1 body2 pos in
+      let right_hbody = Iformula.mkStar (Iformula.mkStar body1 body2 pos) lending_node pos in
       let pure_constraint = (
         let fw_ptr_cond =
           Ipure.mkEqVarExp (forward_ptr, Unprimed) (forward_ptr^"_2", Unprimed) pos
@@ -1005,10 +1018,13 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
         ) (IP.mkTrue pos) param_properties in
         IP.mkAnd fw_ptr_cond param_constraints pos
       ) in
-      Iformula.mkBase body pure_constraint Iformula.top_flow [] pos
+      let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in
+      let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in
+      (l_body, r_body)
     ) in
-    let icoercion = Iast.mk_lemma lemma_name LEM_SAFE Iast.Equiv [] ihead ibody in
-    [icoercion] 
+    let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
+    let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
+    [left_coercion; right_coercion] 
   else ([])
 
 let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
