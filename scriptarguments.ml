@@ -645,7 +645,8 @@ let common_arguments = [
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
-  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
+  ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
+  ("--gen-baga-inv",Arg.Set Globals.gen_baga_inv,"generate baga inv from view")
   ]
 
 (* arguments/flags used only by hip *)	

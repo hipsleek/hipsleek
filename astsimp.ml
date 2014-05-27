@@ -2059,6 +2059,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_data_name = data_name;
           C.view_formula = cf;
           C.view_x_formula = memo_pf_P;
+          C.view_baga_inv = None;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
           C.view_baga = [];
@@ -2113,6 +2114,15 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ=
   in
   (*******************************)
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
+  let cviews0 =
+    if !Globals.gen_baga_inv then
+      let baga_invs = Expure.fix_ef cviews0 10 in
+      List.map (fun (cv,inv) ->
+          {cv with C.view_baga_inv = Some inv}
+      ) (List.combine cviews0 baga_invs)
+     else
+      cviews0
+  in
   cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
