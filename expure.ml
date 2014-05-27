@@ -302,7 +302,10 @@ let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
       Hashtbl.find map vd.Cast.view_name) view_list in
   let rhs_list = inv_list in
   let pair_list = List.combine lhs_list rhs_list in
-  let r_list = List.map (fun (a, c) -> ef_imply a c) pair_list in
+  let r_list = List.map (fun (a, c) ->
+      (* let _ = print_endline (Cprinter.string_of_pure_formula (ef_conv_enum_disj a)) in *)
+      (* let _ = print_endline (Cprinter.string_of_pure_formula (ef_conv_disj c)) in *)
+      ef_imply a c) pair_list in
   try
     let _ = List.find (fun r -> r = false) r_list in
     false
@@ -345,16 +348,24 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
       Hashtbl.add args_map vd.Cast.view_name args;
   ) view_list in
   let inv_list = List.fold_left (fun inv_list vd ->
+      (* let _ = List.iter (fun (cf,_) -> *)
+      (*     print_endline (Cprinter.string_of_formula cf)) vd.Cast.view_un_struc_formula in  *)
       inv_list@[(build_ef_view map args_map vd)]) [] view_list in
   (* let ex_pure_disj = List.hd inv_list in *)
   (* let formula = ef_conv_disj ex_pure_disj in *)
   (* let _ = print_endline (Cprinter.string_of_pure_formula formula) in *)
   let inv_list = List.map (fun epd -> ef_unsat_disj epd) inv_list in
   let inv_list = sel_hull_ef inv_list disj_num in
+  (* let ex_pure_disj = List.hd inv_list in *)
+  (* let formula = ef_conv_disj ex_pure_disj in *)
+  (* let _ = print_endline (Cprinter.string_of_pure_formula formula) in *)
   let rec helper map view_list inv_list =
+    (* let _ = print_endline "loop" in *)
     if fix_test map view_list inv_list
     then
-      inv_list
+      let r_list = List.fold_left (fun r_list vd ->
+          r_list@[Hashtbl.find map vd.Cast.view_name]) [] view_list in
+      r_list
     else
       let _ = List.iter (fun (vd,inv) ->
           Hashtbl.replace map vd.Cast.view_name inv) (List.combine view_list inv_list) in
@@ -362,6 +373,9 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
           inv_list@[(build_ef_view map args_map vd)]) [] view_list in
       let inv_list = List.map (fun epd -> ef_unsat_disj epd) inv_list in
       let inv_list = sel_hull_ef inv_list disj_num in
+      (* let ex_pure_disj = List.hd inv_list in *)
+      (* let formula = ef_conv_disj ex_pure_disj in *)
+      (* let _ = print_endline (Cprinter.string_of_pure_formula formula) in *)
       helper map view_list inv_list
   in
   let inv_list = helper map view_list inv_list in
