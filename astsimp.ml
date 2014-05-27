@@ -3150,7 +3150,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
-  (* let cs_body_norm = CF.add_struc_original true cs_body_norm in *)
+  let cs_body_norm = CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] true in
+  let cs_body_norm = CF.add_struc_original false cs_body_norm in
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in 
@@ -3172,6 +3173,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
   let (n_tl,c_head_norm) = trans_head new_head fnames quant n_tl in
+  let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
     let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos)  c_fl0 [] no_pos in
     snd (trans_head new_head (Gen.BList.remove_dups_eq (=)  rhs_fnames) quant n_tl)
@@ -3228,7 +3230,11 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm (after push exists)" Cprinter.string_of_formula) new_body no_pos in
-                let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
+                let new_body_norm =  c.C.coercion_body_norm in
+                (* let new_body_norm = CF.struc_formula_of_formula new_body no_pos in *)
+                let new_body_norm = CF.normalize_struc c.C.coercion_body_norm (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
+                let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
+(*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
                 let _ = Debug.ninfo_hprint (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
                 (* let new_body_norm = CF.normalize_struc c.C.coercion_body_norm *)
@@ -3240,7 +3246,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     (* C.coercion_head_norm = new_head_norm; *)
                     C.coercion_body = new_body;
                     C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
-                    C.coercion_body_norm = new_body_norm;(*why replace the previously normalized body with thsi unormalized one?*)
+                    C.coercion_body_norm = new_body_norm;
                     C.coercion_univ_vars = [];} in
         match coer_type with
           | I.Left -> 

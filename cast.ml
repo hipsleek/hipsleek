@@ -1949,7 +1949,7 @@ let vdef_lemma_fold prog coer  =
   let lhs = coer.coercion_head in
   (* body contains orig=false but not body_norm*)
   (* let rhs = CF.formula_to_struc_formula coer.coercion_body in *)
-  let rhs = CF.formula_to_struc_formula coer.coercion_body(* _norm *) in
+  let rhs = (* CF.formula_to_struc_formula *) coer.coercion_body_norm in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
   let _ = Debug.ninfo_hprint (add_str "body" !print_struc_formula) rhs no_pos in
   if cfd # is_init then cfd # get

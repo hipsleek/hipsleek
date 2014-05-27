@@ -2112,6 +2112,18 @@ and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs original =
       pr_id pr_id !print_formula !print_formula
       (fun _ _ _ -> add_origs_to_first_node_x v ln f origs original) v ln f
 
+and struc_add_origs_to_first_node (v:string) (ln:string)(f : struc_formula) origs original = 
+  let rec helper f = match f with
+    | EList b-> EList (map_l_snd  helper b)
+    | ECase b -> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches;}
+    | EBase b -> EBase {b with formula_struc_base =  add_origs_to_first_node v ln b.formula_struc_base origs original; 
+          formula_struc_continuation = map_opt helper b.formula_struc_continuation}
+    | EAssume b ->  EAssume {b with
+	  formula_assume_simpl = add_origs_to_first_node v ln b.formula_assume_simpl origs original;
+	  formula_assume_struc = helper b.formula_assume_struc;}
+    | EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation}
+ in helper f
+
 and add_origins (f : formula) origs = 
   let pr = !print_formula in
   let pr2 = !print_ident_list in
@@ -10943,9 +10955,10 @@ let rec normalize_struc cont base: struc_formula = match cont with
       List.map (fun (p,c) -> (p, normalize_struc c base)) b.formula_case_branches}
   | EBase b ->
     let new_base = normalize_combine base.formula_struc_base b.formula_struc_base base.formula_struc_pos in
-    (match b.formula_struc_continuation with
-      | None -> EBase base
-      | Some c -> normalize_struc c {b with formula_struc_base = new_base})
+    EBase {b with formula_struc_base = new_base}
+    (* (match b.formula_struc_continuation with *)
+    (*   | None -> EBase base *)
+    (*   | Some c -> normalize_struc c {b with formula_struc_base = new_base}) *)
   | EAssume _ -> EBase base
   | EInfer b -> 
     EInfer {b with formula_inf_continuation = normalize_struc b.formula_inf_continuation base}
