@@ -1779,6 +1779,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           rev_e.he_kind
         with _ -> (*not exist is OK*) true
       in
+      let _ = Debug.info_hprint (add_str "pto_nontouch" string_of_bool) pto_nontouch no_pos in
       if pto_nontouch then
         try
           let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
@@ -1807,10 +1808,11 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
   in
   let rec is_touchable path edges=
     match path with
-      | [] -> false
+      | [] -> false (* true *) (*all edge are touchable*)
       | (b,e)::rest ->
             let e = look_up_edge edges b e in
             if e.he_kind then is_touchable rest edges else true
+            (* if e.he_kind then false else is_touchable rest edges *)
   in
   let rec look_up_touch_edges edges vs res=
     match vs with
@@ -1828,16 +1830,20 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       let rev_touchable = is_touchable rev_path tar_edges in
       let _ = Debug.info_hprint (add_str "fwd_touchable" (string_of_bool)) fwd_touchable no_pos in
       let _ = Debug.info_hprint (add_str "rev_touchable" (string_of_bool)) rev_touchable no_pos in
-      let both_non_touch = not fwd_touchable && not rev_touchable in
-      let is_consistent = ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
-          ((fwd_touchable && rev_touchable)|| both_non_touch))
-      in
-      if not is_consistent then false else
-        if both_non_touch then
-          let touch_edges = look_up_touch_edges src_edges [rev_edge.he_b_id;rev_edge.he_e_id] [] in
-          let _ = Debug.info_hprint (add_str "touch_edges" (pr_list print_he)) touch_edges no_pos in
-          touch_edges = []
-        else true
+      ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
+          ((fwd_touchable && rev_touchable)|| (not fwd_touchable && not rev_touchable)))
+      (*11-01*)
+      (* let both_non_touch = not fwd_touchable && not rev_touchable in *)
+      (* let is_consistent = ((not fwd_edge.he_kind) && (not rev_edge.he_kind) && *)
+      (*     ((fwd_touchable && rev_touchable)|| both_non_touch)) *)
+      (* in *)
+      (* if not is_consistent then false else *)
+      (*   if both_non_touch then *)
+      (*     let touch_edges = look_up_touch_edges src_edges [rev_edge.he_b_id;rev_edge.he_e_id] [] in *)
+      (*     let _ = Debug.info_hprint (add_str "touch_edges" (pr_list print_he)) touch_edges no_pos in *)
+      (*     touch_edges = [] *)
+      (*   else true *)
+      (*end 11-01*)
   in
   (*for each edge of src*)
   let check_one_src_edge_x sedge=
@@ -1882,9 +1888,18 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             (* ) [] path in *)
             (* let _ = Debug.info_hprint (add_str "required_tar_non_touch_b_ids" (pr_list string_of_int)) required_tar_non_touch_b_ids no_pos in *)
             (*  let is_non_touch = check_non_touch hg_tar.hg_non_touch_edges required_tar_non_touch_b_ids tar_e in *)
-            let is_non_touch = List.for_all (fun (b_id, e_id) ->
-                (is_non_touch_two_way hg_tar.hg_edges tar_e (b_id, e_id))
-            ) path in
+            let check_rev =
+              try
+                let _ = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
+                true
+              with _ -> false
+            in
+            let is_non_touch = if check_rev then
+              List.for_all (fun (b_id, e_id) ->
+                  (is_non_touch_two_way_pto hg_tar.hg_edges tar_e (b_id, e_id))
+              ) path
+            else true
+            in
             (* let is_non_touch = true in *)
             let _ = Debug.info_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
             if not is_non_touch then false else

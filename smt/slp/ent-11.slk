@@ -14,7 +14,7 @@ lemma_unsafe "ls1" self::ls<a> <-> self::ls<b> * b::ls<a>.
 checkentail x1::Sll_t<f = x11> * x3::Sll_t<f = x1> * x6::Sll_t<f = x2> * x9::Sll_t<f = x6> * x4::Sll_t<f = x1> * x8::Sll_t<f = x3> * x5::Sll_t<f = x11> * x7::ls<x9> * x11::Sll_t<f = x3> * x2::Sll_t<f = x11> * x10::ls<x11> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp> & null = null
          |- x8::ls<x3> * x7::ls<x9> * x3::ls<x1> * x4::ls<x1> * x9::ls<x11> * x10::ls<x11> * x5::ls<x11> * x1::ls<x3> * x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
-expect Fail.
+expect Valid. // spen
 
 
 // 11-02
@@ -41,7 +41,7 @@ expect Valid.
 checkentail x8::Sll_t<f = x7> *  x7::ls<x2> *  x11::Sll_t<f = x9> *  x4::Sll_t<f = x1> *  x1::Sll_t<f = x8> *  x6::ls<x9> *  x3::Sll_t<f = x11> *  x5::Sll_t<f = x7> *  x9::ls<x1> *  x10::Sll_t<f = x7> *  x2::ls<x7> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>
          |-  x10::ls<x7> *  x6::ls<x9> *  x2::ls<x7> *  x4::ls<x1> *  x3::ls<x7> *  x5::ls<x2> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
-expect Valid.
+expect Fail. //spen
 
 //11-06
 checkentail x2::Sll_t<f = x9> *  x4::ls<x7> *  x11::Sll_t<f = x8> *  x9::ls<x1> *  x7::Sll_t<f = x11> *  x10::ls<x7> *  x6::Sll_t<f = x9> *  x8::ls<x11> *  x3::Sll_t<f = x9> *  x1::Sll_t<f = x5> *  x5::Sll_t<f = x2> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>
@@ -55,7 +55,7 @@ checkentail  x7::Sll_t<f = x11> *  x5::Sll_t<f = x10> *  x10::Sll_t<f = x6> *  x
          |-  x5::ls<x10> *  x2::ls<x6> *  x4::ls<x9> *  x3::ls<x7> *  x7::ls<x1> *  x1::ls<x11> *  x10::ls<x2> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
 
-expect Fail.
+expect Valid. //spen
 
 //11-08
 checkentail x8::Sll_t<f = x11> *  x3::ls<x8> *  x6::ls<x4> *  x10::Sll_t<f = x6> *  x1::Sll_t<f = x7> *  x2::Sll_t<f = x7> *  x5::Sll_t<f = x3> *  x11::ls<x1> *  x9::Sll_t<f = x7> *  x7::Sll_t<f = x6> *  x4::Sll_t<f = x9> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>
@@ -69,11 +69,12 @@ checkentail x5::Sll_t<f = x7> *  x7::Sll_t<f = x8> *  x8::Sll_t<f = x4> *  x10::
          |-  x10::ls<x5> *  x4::ls<x8> *  x3::ls<x6> *  x9::ls<x8> *  x2::ls<x7> *  x1::ls<x4> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
 
-expect Fail.
+expect Valid. //spen
 
 //11-10
-checkentail null = null & x1::ls<x3> *  x8::Sll_t<f = x11> *  x5::Sll_t<f = x8> *  x11::Sll_t<f = x10> *  x3::ls<x1> *  x10::ls<x9> *  x4::Sll_t<f = x6> *  x6::Sll_t<f = x4> *  x9::Sll_t<f = x10> *  x7::Sll_t<f = x1> *  x2::ls<x6> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>
+checkentail x1::ls<x3> *  x8::Sll_t<f = x11> *  x5::Sll_t<f = x8> *  x11::Sll_t<f = x10> *  x3::ls<x1> *  x10::ls<x9> *  x4::Sll_t<f = x6> *  x6::Sll_t<f = x4> *  x9::Sll_t<f = x10> *  x7::Sll_t<f = x1> *  x2::ls<x6> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>
          |-  x2::ls<x4> *  x9::ls<x10> *  x7::ls<x3> *  x4::ls<x6> *  x3::ls<x1> *  x5::ls<x11> *  x11::ls<x9> *  x_emp::Sll_t<f = y_emp> * z_emp::Sll_t<f = t_emp>.
 
 
-expect Valid.
+expect Fail.  //spen
+
