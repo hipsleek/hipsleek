@@ -11,6 +11,10 @@ checkentail x::lseg<y> * y::lseg<z> * z::node<_,_>@L
             |- x::lseg<z>.
             
 checkentail x::lseg<z> |- x::lseg<y> * y::lseg<z>.
+print residue.
+
+checkentail_exact x::lseg<z> * z::node<_,_>@L|- x::lseg<u>.
+print residue.
 
 //== linked list segment with constant
 pred lseg_const<p,c> == self = p
