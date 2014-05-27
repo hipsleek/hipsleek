@@ -1299,7 +1299,7 @@ let norm_dups_pred_x cprog f=
   let f1 = Cfutil.update_f f drop_hvns ps in
   f1
 
-let norm_dups_pred_new_x cprog ante_non_emps f set_ptos=
+let norm_dups_pred_new_x cprog ante_non_emps f set_ptos build_graph=
   (*each find emp branch - now assume emp branches are base cases*)
   (*return = (view name, view arguments, emp condition)*)
   let view_emp_map = Cast.get_emp_map cprog in
@@ -1309,7 +1309,8 @@ let norm_dups_pred_new_x cprog ante_non_emps f set_ptos=
   (*find initial non-emp constraints from pure*)
   let eqs0,non_emps0a = get_non_emp p view_ptrs_map view_emp_map in
   let non_emps0 = ante_non_emps@non_emps0a in
-  if eqs0 =[] && non_emps0 = [] then (false, f, Hgraph.mk_empty_hgraph()) else
+  (*10-06*)
+  if not build_graph && eqs0 =[] && non_emps0 = [] then (false, f, Hgraph.mk_empty_hgraph()) else
     (*find chains from duplicate pred roots*)
     let maybe_emps = List.fold_left (fun ls vn -> ls@(abs_maybe eqs0 vn)) [] vns in
     let (is_conflict,emps1,graph) = Hgraph.norm_graph maybe_emps eqs0 non_emps0 set_ptos in
@@ -1320,17 +1321,17 @@ let norm_dups_pred_new_x cprog ante_non_emps f set_ptos=
       let f1 = Cfutil.update_f f drop_hvns ps in
       (false,f1,graph)
 
-let norm_dups_pred_new_a cprog ante_non_emps f set_ptos=
+let norm_dups_pred_new_a cprog ante_non_emps f set_ptos build_graph=
   if not (Cfutil.is_empty_heap_f f) && !seg_opz then
-    norm_dups_pred_new_x cprog ante_non_emps f set_ptos
+    norm_dups_pred_new_x cprog ante_non_emps f set_ptos build_graph
   else false,f,(Hgraph.mk_empty_hgraph ())
 
-let norm_dups_pred prog ante_non_emps f set_ptos=
+let norm_dups_pred prog ante_non_emps f set_ptos build_graph=
   let pr1 = Cprinter.string_of_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 = Hgraph.print_hgraph in
   Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_triple string_of_bool pr1 pr3)
-      (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f set_ptos) f ante_non_emps
+      (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f set_ptos build_graph) f ante_non_emps
 
 let heap_normal_form_x prog f0=
   let f = CF.elim_exists f0 in
@@ -1371,7 +1372,7 @@ let heap_normal_form_ctx prog c=
 
 let check_unsat_w_norm prog f0 set_ptos=
   let helper f=
-    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) set_ptos in
+    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) set_ptos false in
     is_heap_conflict
   in
   if not !seg_opz then false,None else

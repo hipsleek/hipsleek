@@ -1759,28 +1759,59 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       - (b_id, tar_e_seg) is non-touch (..)
       - (tar_e_seg, b_id)
   *)
-  let is_non_touch_two_way_pto required_touch tar_edges tar_e_seg (b_id, e_id)=
+  let is_non_touch_two_way_pto tar_edges tar_e_seg (b_id, e_id)=
     let _ = Debug.info_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
-      if required_touch then false else
-        let pto_nontouch =
-          try
-            (*if exist an rev, it should be non-touch also: a!=b <-> b!=a *)
-            let rev_e = look_up_edge tar_edges e_id b_id in
-            rev_e.he_kind
-          with _ -> (*not exist is OK*) true
-        in
-        if pto_nontouch then
-          try
-            let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
-            (* (tar_e_seg, b_id) is non_touch also*)
-            let seg_e = look_up_edge tar_edges tar_e_seg b_id in
-            seg_e.he_kind
-          with _ -> (*not exist is OK*) true
-        else
-          pto_nontouch
+      let pto_nontouch =
+        try
+          (*if exist an rev, it should be non-touch also: a!=b <-> b!=a *)
+          let rev_e = look_up_edge tar_edges e_id b_id in
+          rev_e.he_kind
+        with _ -> (*not exist is OK*) true
+      in
+      if pto_nontouch then
+        try
+          let _ = Debug.info_hprint (add_str "exam seg: tar_e_seg" string_of_int) tar_e_seg no_pos in
+          (* (tar_e_seg, b_id) is non_touch also*)
+          let seg_e = look_up_edge tar_edges tar_e_seg b_id in
+          seg_e.he_kind
+        with _ -> (*not exist is OK*) true
+      else
+        pto_nontouch
     else true
+  in
+  let is_non_touch_two_way tar_edges tar_e_seg (b_id, e_id)=
+    let _ = Debug.info_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
+    let e = look_up_edge tar_edges b_id e_id in
+    if e.he_kind then
+      let pto_nontouch =
+        try
+          (*if exist an rev, it should be non-touch also: a!=b <-> b!=a *)
+          let rev_e = look_up_edge tar_edges e_id b_id in
+          rev_e.he_kind
+        with _ -> (*not exist is OK*) true
+      in
+       pto_nontouch
+    else
+      true
+  in
+  let rec is_touchable path edges=
+    match path with
+      | [] -> false
+      | (b,e)::rest ->
+            let e = look_up_edge edges b e in
+            if e.he_kind then is_touchable rest edges else true
+  in
+  let consistent_two_way_touch fwd_path tar_edges fwd_edge rev_edge=
+    let rev_tar_b = subst map rev_edge.he_b_id in
+    let rev_tar_e = subst map rev_edge.he_e_id in
+    let has_rev_path, rev_path = dfs rev_tar_e [([], rev_tar_b)] [rev_tar_e] in
+    if not has_rev_path then false else
+      let fwd_touchable = is_touchable fwd_path tar_edges in
+      let rev_touchable = is_touchable rev_path tar_edges in
+      ((not fwd_edge.he_kind) && (not rev_edge.he_kind) &&
+          ((fwd_touchable && rev_touchable)||(not fwd_touchable && not rev_touchable)))
   in
   (*for each edge of src*)
   let check_one_src_edge_x sedge=
@@ -1819,10 +1850,6 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             let _ = Debug.info_hprint (add_str "has cycle" (pr_list string_of_int)) scc no_pos in
             false
           else
-            (*todo: sedge and its inversion have the same feature: touch and non-touch.*)
-            let required_touch = List.exists (fun (b_id,e_id) ->
-                b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
-            let _ = Debug.info_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
             (*if non_touch is enable, all edge of pi must be pto*)
             (* let required_tar_non_touch_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
             (*     r@(get_non_touch_constr_from_pto hg_tar.hg_edges (b_id,e_id)) *)
@@ -1830,10 +1857,26 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             (* let _ = Debug.info_hprint (add_str "required_tar_non_touch_b_ids" (pr_list string_of_int)) required_tar_non_touch_b_ids no_pos in *)
             (*  let is_non_touch = check_non_touch hg_tar.hg_non_touch_edges required_tar_non_touch_b_ids tar_e in *)
             let is_non_touch = List.for_all (fun (b_id, e_id) ->
-                (is_non_touch_two_way_pto required_touch hg_tar.hg_edges tar_e (b_id, e_id))
+                (is_non_touch_two_way hg_tar.hg_edges tar_e (b_id, e_id))
             ) path in
+            (* let is_non_touch = true in *)
             let _ = Debug.info_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
-            is_non_touch
+            if not is_non_touch then false else
+              (* cycle in conseq: sedge and its inversion have the same feature: touch and non-touch.*)
+              let required_touch = List.exists (fun (b_id,e_id) ->
+                  b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
+              let _ = Debug.info_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
+              let direct_loop = required_touch && ( List.exists (fun (b_id,e_id) ->
+                b_id = sedge.he_e_id && e_id = sedge.he_b_id) src_cycle_edges)
+              in
+              if not direct_loop then true else begin
+                try
+                  let rev_edge = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
+                  let cons_two_way = consistent_two_way_touch path hg_tar.hg_edges sedge rev_edge in
+                  let _ = Debug.info_hprint (add_str "cons_two_way" string_of_bool) cons_two_way no_pos in
+                  cons_two_way
+                with Not_found -> true
+              end
   in
   let check_one_src_edge sedge=
     let pr1 = print_he in

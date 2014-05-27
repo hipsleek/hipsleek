@@ -228,44 +228,44 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
   let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)
-  let prove_conj_conseq_conj_ante (conj_ante, a_hg) ante_nemps1 conj_conseq=
+  let prove_conj_conseq_conj_ante (conj_ante, a_hg) ante_nemps1 (norm_conj_conseq,conj_conseq_hg)=
     let _ = Debug.info_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
-    let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps1 conj_conseq false in
-    if is_unsat then false,f_ctx else
-      let r = Frame.check_imply_w_norm prog true a_hg conj_conseq_hg in
-      (************use sleek for testing**********)
-      let call_sleek ()=
-        let _ = Globals.graph_norm := false in
-        let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] conj_ante in
-        let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args norm_conj_conseq in
-        let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
-        let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
-        let _ = Globals.graph_norm := true in
-        (r, lc)
-      in
-      (* let r,lc = call_sleek () *)
-      (************use sleek for testing**********)
-      let lc = if r then s_ctx else f_ctx in
+    let r = Frame.check_imply_w_norm prog true a_hg conj_conseq_hg in
+    (************use sleek for testing**********)
+    let call_sleek ()=
+      let _ = Globals.graph_norm := false in
+      let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] conj_ante in
+      let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args norm_conj_conseq in
+      let r, lc,_ = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
+      let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
+      let _ = Globals.graph_norm := true in
       (r, lc)
+    in
+    (* let r,lc = call_sleek () *)
+    (************use sleek for testing**********)
+    let lc = if r then s_ctx else f_ctx in
+    (r, lc)
   in
   let rec prove_conj_conseq ante_fs1 ante_nemps1 f res_conj_ante_fs last_lc=
     match ante_fs1 with
       | [] -> false,res_conj_ante_fs,last_lc
       | ante::rest ->
-            let b,lc = prove_conj_conseq_conj_ante ante ante_nemps1 f in
-            if b then
-              (*to remove matched node in ante and put the remain back
-                testcase: 10e04
-              *)
-              let res_ante = Frame.prune_match ante in
-              (true, res_conj_ante_fs@rest@[res_ante], lc)
-            else prove_conj_conseq rest ante_nemps1 f (res_conj_ante_fs@[ante]) lc
+            let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps1 f false true in
+             if is_unsat then (false,res_conj_ante_fs, f_ctx) else
+               let b,lc = prove_conj_conseq_conj_ante ante ante_nemps1 (norm_conj_conseq,conj_conseq_hg) in
+               if b then
+                 (*to remove matched node in ante and put the remain back
+                   testcase: 10e04
+                 *)
+                 let res_ante = Frame.prune_match ante in
+                 (true, res_conj_ante_fs@rest@[res_ante], lc)
+               else prove_conj_conseq rest ante_nemps1 f (res_conj_ante_fs@[ante]) lc
   in
   let rec prove_list_conseqs ante_fs2 ante_nemps0 fs ctx=
     match fs with
       | [] -> true, ctx
       | f::rest ->
-            let _ = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
+            let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
             let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 f [] ctx in
             if not r then false ,lc else
                prove_list_conseqs rest_ante_fs ante_nemps0 rest lc
@@ -276,7 +276,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> false, res_fs
       | f::rest ->
-            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true in
+            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true false in
             if unsat then
               (unsat, res_fs@(List.map (fun f -> (f, Hgraph.mk_empty_hgraph ())) rest))
             else check_unsat_conj_ante rest (res_fs@[(f,hg1)])
