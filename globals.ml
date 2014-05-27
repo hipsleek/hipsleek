@@ -755,7 +755,9 @@ let print_relassume  = ref true
 
 let lemma_syn = ref false
 
-let lemma_gen = ref false       (* automatically generate lemma for special views *)
+let lemma_gen_safe = ref false       (* automatically generate with proving lemma for special views *)
+
+let lemma_gen_unsafe = ref false     (* automatically generate without proving lemmas for special views *)
 
 let sa_en_split = ref false
 
