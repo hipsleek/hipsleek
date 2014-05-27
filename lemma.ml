@@ -943,8 +943,8 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
     (*       + P = P1  =  P2   unifying operation            *)
     (*       + P = P1 (+) P2   combining operation           *)
     let pos = vd.C.view_pos in
-    let llemma_name = "lemma_l_" ^ vd.C.view_name in
-    let rlemma_name = "lemma_r_" ^ vd.C.view_name in
+    let llemma_name = "llem_" ^ vd.C.view_name in
+    let rlemma_name = "rlem_" ^ vd.C.view_name in
     let ihead = (
       let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
         IP.Var ((id,p), pos)
@@ -974,7 +974,10 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
             report_error pos msg
       in
       let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp = id ^ "_2" in
+        let vp =
+          if (String.compare id forward_ptr = 0) then forward_ptr
+          else id ^ "_2"
+        in
         IP.Var ((vp,p), pos)
       ) vd.C.view_vars) in
       let body2 = (
@@ -991,9 +994,6 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
       let left_hbody = Iformula.mkStar body1 body2 pos in
       let right_hbody = Iformula.mkStar (Iformula.mkStar body1 body2 pos) lending_node pos in
       let pure_constraint = (
-        let fw_ptr_cond =
-          Ipure.mkEqVarExp (forward_ptr, Unprimed) (forward_ptr^"_2", Unprimed) pos
-        in
         let param_properties = compute_lemma_params_property vd cprog in
         let param_constraints = List.fold_left(
           fun res (CP.SpecVar (typ,id,p), param_prop) ->
@@ -1016,7 +1016,7 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
             ) in
             IP.mkAnd sv_cond res pos
         ) (IP.mkTrue pos) param_properties in
-        IP.mkAnd fw_ptr_cond param_constraints pos
+        param_constraints
       ) in
       let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in
       let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in
@@ -1064,12 +1064,14 @@ let generate_lemma (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
 
 let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     : unit =
-  let vdecls = cprog.C.prog_view_decls in
   let lemmas = List.concat (List.map (fun vd ->
     generate_lemma vd iprog cprog
   ) cprog.C.prog_view_decls) in
-  let _ = manage_safe_lemmas lemmas iprog cprog in
-  ()
+  if (!Globals.lemma_gen_unsafe) then
+    let _ = manage_unsafe_lemmas lemmas iprog cprog in ()
+  else if (!Globals.lemma_gen_safe) then
+    let _ = manage_safe_lemmas lemmas iprog cprog in ()
+  else ()
 
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;

@@ -591,7 +591,8 @@ let common_arguments = [
   ("--inf-dis-split-ante", Arg.Clear Globals.infer_deep_ante_flag, "disable deep split of ante for pure inference");
   ("--pred-dis-infer", Arg.Clear Globals.sa_syn, "disable the shape inference stage");
   ("--lem-en-syn", Arg.Set Globals.lemma_syn, "enable the lemma synthesis");
-  ("--lem-en-gen", Arg.Set Globals.lemma_gen, "enable generating lemma for special predicates");
+  ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating without proving lemma for special predicates");
+  ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating and proving lemma for special predicates");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
