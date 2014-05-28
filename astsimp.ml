@@ -2126,21 +2126,57 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
-      let baga_invs = Expure.fix_ef cviews0 10 in
-      List.map (fun (cv,inv) ->
+      let args_map = Hashtbl.create 1 in
+      let _ = List.iter (fun vd ->
+          let self_var = Cpure.SpecVar(UNK, self, Unprimed) in
+          let args = self_var::vd.Cast.view_vars in
+          Hashtbl.add args_map vd.Cast.view_name args;
+      ) cviews0 in
+      let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
+      let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
+          if List.mem cv.C.view_name (List.flatten ls) then
+            ls
+          else
+            [cv.C.view_name]::ls
+      ) ls_mut_rec_views1 cviews0 in
+      let map_invs = Hashtbl.create 1 in
+      let _ = List.iter (fun idl ->
+          let views_list = List.filter (fun vd ->
+              List.mem vd.Cast.view_name idl
+          ) cviews0 in
+          let new_invs_list = Expure.fix_ef views_list 10 args_map map_invs in
+          let new_map = List.combine views_list new_invs_list in
+          List.iter (fun (cv,inv) -> Hashtbl.add map_invs cv.C.view_name inv) new_map
+          (*     let _ = Hashtbl.add map_invs cv.C.view_name inv in *)
+          (*     let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in *)
+          (*     let _ = print_string "\n" in *)
+          (*     {cv with C.view_baga_inv = Some inv} *)
+          (* ) *)
+          (* Hashtbl.add map_invs ( *)
+          (* let new_map = List.combine views_list new_invs_list in *)
+          (* map_invs@new_map *)
+      ) ls_mut_rec_views1 in
+      let cviews1 = List.map (fun cv ->
+          let inv = Hashtbl.find map_invs cv.C.view_name in
           let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
-          let _ = print_string "\n" in
           {cv with C.view_baga_inv = Some inv}
-      ) (List.combine cviews0 baga_invs)
+      ) cviews0 in
+      cviews1
+      (* let baga_invs = Expure.fix_ef cviews0 10 in *)
+      (* List.map (fun (cv,inv) -> *)
+      (*     let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in *)
+      (*     let _ = print_string "\n" in *)
+      (*     {cv with C.view_baga_inv = Some inv} *)
+      (* ) (List.combine cviews0 baga_invs) *)
      else
       cviews0
   in
   cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
-  
+
 and fill_one_base_case_x prog vd =
-  if vd.C.view_is_prim then 
+  if vd.C.view_is_prim then
     (Debug.ninfo_zprint (lazy ("fill_one_base - prim")) no_pos;
     {vd with C.view_base_case = None; C.view_raw_base_case = None})
   else

@@ -236,39 +236,42 @@ let build_ef_ef_pure_disjs (efpd1 : ef_pure_disj) (efpd2 : ef_pure_disj) : ef_pu
     ) [] efpd1
 
 let rec build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cformula.h_formula)
-      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   match hf with
     | Cformula.Star sf ->
-          let efpd1 = build_ef_heap_formula map sf.Cformula.h_formula_star_h1 args args_map in
-          let efpd2 = build_ef_heap_formula map sf.Cformula.h_formula_star_h2 args args_map in
+          let efpd1 = build_ef_heap_formula map sf.Cformula.h_formula_star_h1 args args_map init_map in
+          let efpd2 = build_ef_heap_formula map sf.Cformula.h_formula_star_h2 args args_map init_map in
           let efpd = build_ef_ef_pure_disjs efpd1 efpd2 in
           efpd
     | Cformula.StarMinus smf ->
-          let efpd1 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h1 args args_map in
-          let efpd2 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h2 args args_map in
+          let efpd1 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h1 args args_map init_map in
+          let efpd2 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h2 args args_map init_map in
           build_ef_ef_pure_disjs efpd1 efpd2
     | Cformula.Conj cf ->
-          let efpd1 = build_ef_heap_formula map cf.Cformula.h_formula_conj_h1 args args_map in
-          let efpd2 = build_ef_heap_formula map cf.Cformula.h_formula_conj_h2 args args_map in
+          let efpd1 = build_ef_heap_formula map cf.Cformula.h_formula_conj_h1 args args_map init_map in
+          let efpd2 = build_ef_heap_formula map cf.Cformula.h_formula_conj_h2 args args_map init_map in
           build_ef_ef_pure_disjs efpd1 efpd2
     | Cformula.ConjStar csf ->
-          let efpd1 = build_ef_heap_formula map csf.Cformula.h_formula_conjstar_h1 args args_map in
-          let efpd2 = build_ef_heap_formula map csf.Cformula.h_formula_conjstar_h2 args args_map in
+          let efpd1 = build_ef_heap_formula map csf.Cformula.h_formula_conjstar_h1 args args_map init_map in
+          let efpd2 = build_ef_heap_formula map csf.Cformula.h_formula_conjstar_h2 args args_map init_map in
           build_ef_ef_pure_disjs efpd1 efpd2
     | Cformula.ConjConj ccf ->
-          let efpd1 = build_ef_heap_formula map ccf.Cformula.h_formula_conjconj_h1 args args_map in
-          let efpd2 = build_ef_heap_formula map ccf.Cformula.h_formula_conjconj_h2 args args_map in
+          let efpd1 = build_ef_heap_formula map ccf.Cformula.h_formula_conjconj_h1 args args_map init_map in
+          let efpd2 = build_ef_heap_formula map ccf.Cformula.h_formula_conjconj_h2 args args_map init_map in
           build_ef_ef_pure_disjs efpd1 efpd2
     | Cformula.Phase pf ->
-          let efpd1 = build_ef_heap_formula map pf.Cformula.h_formula_phase_rd args args_map in
-          let efpd2 = build_ef_heap_formula map pf.Cformula.h_formula_phase_rw args args_map in
+          let efpd1 = build_ef_heap_formula map pf.Cformula.h_formula_phase_rd args args_map init_map in
+          let efpd2 = build_ef_heap_formula map pf.Cformula.h_formula_phase_rw args args_map init_map in
           build_ef_ef_pure_disjs efpd1 efpd2
     | Cformula.DataNode dnf ->
           let sv = dnf.Cformula.h_formula_data_node in
           [(elim_baga [sv] args, mkTrue no_pos)]
     | Cformula.ViewNode vnf ->
           let svl = vnf.Cformula.h_formula_view_node::vnf.Cformula.h_formula_view_arguments in
-          let efpd = Hashtbl.find map vnf.Cformula.h_formula_view_name in
+          let efpd =
+            try Hashtbl.find map vnf.Cformula.h_formula_view_name
+            with Not_found -> Hashtbl.find init_map vnf.Cformula.h_formula_view_name
+          in
           let view_args = Hashtbl.find args_map vnf.Cformula.h_formula_view_name in
           List.map (fun (baga, pf) ->
               let new_baga = elim_baga (subst_baga (List.combine view_args svl) baga) args in
@@ -293,10 +296,10 @@ let rec build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cfor
 (*   build_ef_p_formula map pf *)
 
 let build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.h_formula)
-      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
-      Cprinter.string_of_ef_pure_disj (fun _ -> 
-      build_ef_heap_formula map cf args args_map) cf 
+      Cprinter.string_of_ef_pure_disj (fun _ ->
+      build_ef_heap_formula map cf args args_map init_map) cf
 
 let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : formula) (args : spec_var list) : ef_pure_disj =
   [([], elim_clause pf args)]
@@ -326,33 +329,34 @@ let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : form
 (* x->node(..)       --> ([x],true) *)
 (* p(...)            --> inv(p(..)) *)
 let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
-      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t)
+      (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   match cf with
     | Cformula.Base bf ->
           let bh = bf.Cformula.formula_base_heap in
           let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
-          let efpd1 = build_ef_heap_formula map bh args args_map in
+          let efpd1 = build_ef_heap_formula map bh args args_map init_map in
           let efpd2 = build_ef_pure_formula map bp args in
           let efpd = build_ef_ef_pure_disjs efpd1 efpd2 in
           efpd
     | Cformula.Or orf ->
-          let efpd1 = build_ef_formula map orf.Cformula.formula_or_f1 args args_map in
-          let efpd2 = build_ef_formula map orf.Cformula.formula_or_f2 args args_map in
+          let efpd1 = build_ef_formula map orf.Cformula.formula_or_f1 args args_map init_map in
+          let efpd2 = build_ef_formula map orf.Cformula.formula_or_f2 args args_map init_map in
           let efpd = build_ef_ef_pure_disjs efpd1 efpd2 in
           efpd
     | Cformula.Exists ef ->
           let eh = ef.Cformula.formula_exists_heap in
           let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
-          let efpd1 = build_ef_heap_formula map eh args args_map in
+          let efpd1 = build_ef_heap_formula map eh args args_map init_map in
           let efpd2 = build_ef_pure_formula map ep args in
           let efpd = build_ef_ef_pure_disjs efpd1 efpd2 in
           efpd
 
 let build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
-      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
-      Cprinter.string_of_ef_pure_disj (fun _ -> 
-      build_ef_formula map cf args args_map) cf 
+      Cprinter.string_of_ef_pure_disj (fun _ ->
+      build_ef_formula map cf args args_map init_map) cf
 
 (* using Cast *)
 
@@ -360,12 +364,11 @@ let build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.form
 (* view  ls1<self,p> == ..ls1<..>..ls2<..>... *)
 (* map   ls1<self,p> == [(b1,f1)] *)
 (*       ls2<self,p> == [(b2,f2)] *)
-let build_ef_view (map : (ident, ef_pure_disj) Hashtbl.t) (args_map : (ident, spec_var list) Hashtbl.t)
-      (view_decl : Cast.view_decl) : ef_pure_disj =
+let build_ef_view (map : (ident, ef_pure_disj) Hashtbl.t) (args_map : (ident, spec_var list) Hashtbl.t) (view_decl : Cast.view_decl) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   let self_var = SpecVar(UNK, self, Unprimed) in
   let args = self_var::view_decl.Cast.view_vars in
   List.flatten (List.map (fun (cf,_) ->
-      build_ef_formula map cf args args_map) view_decl.Cast.view_un_struc_formula)
+      build_ef_formula map cf args args_map init_map) view_decl.Cast.view_un_struc_formula)
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
 (* does view(inv) --> inv *)
@@ -416,19 +419,20 @@ let sel_hull_ef (f : ef_pure_disj list) (disj_num : int) : ef_pure_disj list =
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
-let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj list =
+let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
   let map = Hashtbl.create 1 in
-  let args_map = Hashtbl.create 1 in
+  (* let args_map = Hashtbl.create 1 in *)
   let _ = List.iter (fun vd ->
       Hashtbl.add map vd.Cast.view_name [];
-      let self_var = SpecVar(UNK, self, Unprimed) in
-      let args = self_var::vd.Cast.view_vars in
-      Hashtbl.add args_map vd.Cast.view_name args;
-  ) view_list in
+  ) view_list in 
+  (*     let self_var = SpecVar(UNK, self, Unprimed) in *)
+  (*     let args = self_var::vd.Cast.view_vars in *)
+  (*     Hashtbl.add args_map vd.Cast.view_name args; *)
+  (* ) view_list in *)
   let inv_list = List.fold_left (fun inv_list vd ->
       (* let _ = List.iter (fun (cf,_) -> *)
       (*     print_endline (Cprinter.string_of_formula cf)) vd.Cast.view_un_struc_formula in *)
-      inv_list@[(build_ef_view map args_map vd)]) [] view_list in
+      inv_list@[(build_ef_view map args_map vd init_map)]) [] view_list in
   let inv_list = List.map (fun epd -> elim_unsat_disj epd) inv_list in
   let inv_list = List.map (fun epd -> elim_trivial_disj epd) inv_list in
   let inv_list = sel_hull_ef inv_list disj_num in
@@ -442,7 +446,7 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
       let _ = List.iter (fun (vd,inv) ->
           Hashtbl.replace map vd.Cast.view_name inv) (List.combine view_list inv_list) in
       let inv_list = List.fold_left (fun inv_list vd ->
-          inv_list@[(build_ef_view map args_map vd)]) [] view_list in
+          inv_list@[(build_ef_view map args_map vd init_map)]) [] view_list in
       let inv_list = List.map (fun epd -> elim_unsat_disj epd) inv_list in
       let inv_list = List.map (fun epd -> elim_trivial_disj epd) inv_list in
       let inv_list = sel_hull_ef inv_list disj_num in
@@ -453,9 +457,8 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
   (*     print_endline (Cprinter.string_of_ef_pure_disj epd)) inv_list in *)
   inv_list
 
-let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj list =
-  let pr_1 = pr_list (fun v -> v.Cast.view_name) 
-    (* Cprinter.string_of_view_decl_short *) in
+let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
+  let pr_1 = pr_list (fun v -> v.Cast.view_name)  in
   Debug.no_2 "fix_ef" pr_1 string_of_int (pr_list Cprinter.string_of_ef_pure_disj)
-      fix_ef view_list disj_num 
+      (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num 
 
