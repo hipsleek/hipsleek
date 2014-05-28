@@ -11,6 +11,7 @@ open Gen.Basic
 open Label
 
 open Cpure
+open Cprinter
 
 (* in cpure.ml *)
 
@@ -26,7 +27,7 @@ open Cpure
 
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
-let baga_conv (baga : spec_var list) : formula =
+let baga_conv_x (baga : spec_var list) : formula =
   if (List.length baga = 0) then
     mkTrue no_pos
   else if (List.length baga = 1) then
@@ -48,15 +49,23 @@ let baga_conv (baga : spec_var list) : formula =
       (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
     mkAnd f1 f2 no_pos
 
+let baga_conv (baga : spec_var list) : formula =
+  Debug.no_1 "baga" (pr_list string_of_typed_spec_var) string_of_pure_formula
+      baga_conv_x baga
+
 (* ef_conv :  ef_pure -> formula *)
 (* conseq must use this *)
 (* ([a,a,b],pure)  --> baga[a,ab] & a>0 & a>0 & b>01 & pure *)
-let ef_conv ((baga,f) : ef_pure) : formula =
+let ef_conv_x ((baga,f) : ef_pure) : formula =
   let bf = baga_conv baga in
   mkAnd bf f no_pos
 
+let ef_conv ((baga,f) : ef_pure) : formula =
+  Debug.no_1 "ef_conv" string_of_ef_pure string_of_pure_formula
+      ef_conv_x (baga,f)
+
 (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
-let baga_enum (baga : spec_var list) : formula =
+let baga_enum_x (baga : spec_var list) : formula =
   if (List.length baga = 0) then
     mkTrue no_pos
   else
@@ -66,14 +75,22 @@ let baga_enum (baga : spec_var list) : formula =
         mkAnd f (mkEqVarInt sv !i no_pos) no_pos
     ) (mkEqVarInt (List.hd baga) !i no_pos) (List.tl baga)
 
+let baga_enum (baga : spec_var list) : formula =
+  Debug.no_1 "baga_enum" (pr_list string_of_typed_spec_var) string_of_pure_formula
+      baga_enum_x baga
+
 (* ef_conv_enum :  ef_pure -> formula *)
 (* provide an enumeration that can be used by ante *)
 (* ([a,a,b],pure)  --> a=1 & a=2 & a=3 & pure *)
-let ef_conv_enum ((baga,f) : ef_pure) : formula =
+let ef_conv_enum_x ((baga,f) : ef_pure) : formula =
   let bf = baga_enum baga in
   mkAnd bf f no_pos
 
-let ef_conv_disj (disj : ef_pure_disj) : formula =
+let ef_conv_enum ((baga,f) : ef_pure) : formula =
+  Debug.no_1 "ef_conv_enum" string_of_ef_pure string_of_pure_formula
+      ef_conv_enum_x (baga,f)
+
+let ef_conv_disj_x (disj : ef_pure_disj) : formula =
   if (List.length disj = 0) then
     mkTrue no_pos
   else
@@ -86,7 +103,11 @@ let ef_conv_disj (disj : ef_pure_disj) : formula =
     ) (ef_conv (List.hd disj)) (List.tl disj) in
     rf
 
-let ef_conv_enum_disj (disj : ef_pure_disj) : formula =
+let ef_conv_disj (disj : ef_pure_disj) : formula =
+  Debug.no_1 "ef_conv_disj" string_of_ef_pure_disj string_of_pure_formula
+      ef_conv_disj_x disj
+
+let ef_conv_enum_disj_x (disj : ef_pure_disj) : formula =
   if (List.length disj = 0) then
     mkTrue no_pos
   else
@@ -94,41 +115,61 @@ let ef_conv_enum_disj (disj : ef_pure_disj) : formula =
         mkOr f (ef_conv_enum efp) None no_pos
     ) (ef_conv_enum (List.hd disj)) (List.tl disj)
 
+let ef_conv_enum_disj (disj : ef_pure_disj) : formula =
+  Debug.no_1 "ef_conv_enum_disj" string_of_ef_pure_disj string_of_pure_formula
+      ef_conv_enum_disj_x disj
+
 (* ef_imply :  ante:ef_pure_disj -> conseq:ef_pure_disj -> bool *)
 (* does ante --> conseq *)
 (* convert ante with ef_conv_enum *)
 (* convert conseq with ef_conv *)
 
-let ef_imply (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
+let ef_imply_x (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
   let a_f = ef_conv_enum_disj ante in
   let c_f = ef_conv_disj conseq in
   (* a_f --> c_f *)
   let f = mkAnd a_f (mkNot_s c_f) no_pos in
   not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
+let ef_imply (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
+  Debug.no_2 "ef_imply" string_of_ef_pure_disj string_of_ef_pure_disj string_of_bool
+      ef_imply_x ante conseq
+
 (* ef_unsat :  ef_pure -> bool *)
 (* remove unsat terms *)
 (* convert unsat with ef_conv_enum *)
-let ef_unsat (f : ef_pure) : bool =
+let ef_unsat_x (f : ef_pure) : bool =
   (* use ef_conv_enum *)
   let cf = ef_conv_enum f in
   (* if unsat(cf) return true *)
   not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure cf))
 
+let ef_unsat (f : ef_pure) : bool =
+  Debug.no_1 "ef_unsat" string_of_ef_pure string_of_bool
+      ef_unsat_x f
+
 (* ef_unsat_disj :  ef_pure_disj -> ef_pure_disj *)
 (* remove unsat terms *)
 (* convert unsat with ef_conv_enum *)
-let elim_unsat_disj (disj : ef_pure_disj) : ef_pure_disj =
+let elim_unsat_disj_x (disj : ef_pure_disj) : ef_pure_disj =
   List.filter (fun f -> not(ef_unsat f)) disj
 
+let elim_unsat_disj (disj : ef_pure_disj) : ef_pure_disj =
+  Debug.no_1 "elim_unsat_disj" string_of_ef_pure_disj string_of_ef_pure_disj
+      elim_unsat_disj_x disj
+
 (* remove trivial term in disj *)
-let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
+let elim_trivial_disj_x (disj : ef_pure_disj) : ef_pure_disj =
   List.filter (fun ep ->
       not (isConstTrue (ef_conv ep))) disj
 
+let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
+  Debug.no_1 "elim_trivial_disj" string_of_ef_pure_disj string_of_ef_pure_disj
+      elim_trivial_disj_x disj
+
 (* elim clause with not relevant spec var *)
 (* self > 0 & x = y -> [self,y] -> self > 0 *)
-let elim_clause (pf : formula) (args : spec_var list) : formula =
+let elim_clause_x (pf : formula) (args : spec_var list) : formula =
   let conj_list = list_of_conjs pf in
   let filtered_conj_list = List.filter (fun pf ->
       let svl = fv pf in
@@ -141,16 +182,24 @@ let elim_clause (pf : formula) (args : spec_var list) : formula =
   ) conj_list in
   List.fold_left (fun r pf -> mkAnd r pf no_pos) (mkTrue no_pos) filtered_conj_list
 
+let elim_clause (pf : formula) (args : spec_var list) : formula =
+  Debug.no_2 "elim_clause" string_of_pure_formula (pr_list string_of_typed_spec_var) string_of_pure_formula
+      elim_clause_x pf args
+
 (* elim not relevant spec var from baga *)
 (* [a,b,c] -> [a,d] -> [a] *)
-let elim_baga (svl : spec_var list) (args : spec_var list) : spec_var list =
+let elim_baga_x (svl : spec_var list) (args : spec_var list) : spec_var list =
   List.filter (fun sv ->
       let SpecVar(_, name, _) = sv in
       (name = "self") || (List.mem sv args)) svl
 
+let elim_baga (svl : spec_var list) (args : spec_var list) : spec_var list =
+  Debug.no_2 "elim_baga" (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var)
+      elim_baga_x svl args
+
 (* substitute baga *)
 (* [self,y] -> [x,y] -> [self] -> [x] *)
-let subst_baga (sst : (spec_var * spec_var) list) (baga : spec_var list) : spec_var list =
+let subst_baga_x (sst : (spec_var * spec_var) list) (baga : spec_var list) : spec_var list =
   let r = List.map (fun sv1 ->
       try
         let (_,sv2) = List.find (fun (arg,_) ->
@@ -161,6 +210,10 @@ let subst_baga (sst : (spec_var * spec_var) list) (baga : spec_var list) : spec_
       with Not_found -> sv1
   ) baga in
   r
+
+let subst_baga (sst : (spec_var * spec_var) list) (baga : spec_var list) : spec_var list =
+  Debug.no_2 "subst_baga" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var)) (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var)
+      subst_baga_x sst baga
 
 (* using Cformula *)
 
