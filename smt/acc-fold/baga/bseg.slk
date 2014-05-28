@@ -1,0 +1,34 @@
+
+data node {
+     node next;
+}.
+
+pred bsll<y> ==
+     self = y
+     or (exists u: self::bsll<u> * u::node<y>).
+
+pred b1<y> ==
+     (self:node) = y
+     or (exists u: self::b1<u> * u::node<y>).
+
+pred b2<y> ==
+     self = y
+     or (exists u: self::node<u> * u::b2<u>).
+
+/*
+# bseg.slk --pcp
+
+(1) Why is node duplicated?
+data node {
+  node nextREC_11;
+}
+data node {
+  node nextREC_11;
+}
+
+b2 type can be determined but not bsll
+I wonder why. They look similar.
+For b2, y is determined indirectly from self.
+
+For bsll, self should be determined indirectly from y.
+*/
