@@ -24,9 +24,6 @@ open Cpure
 (* [] denotes false *)
 (* type ef_pure_disj = ef_pure list *)
 
-
-
-
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
 let baga_conv (baga : spec_var list) : formula =
@@ -81,11 +78,11 @@ let ef_conv_disj (disj : ef_pure_disj) : formula =
     mkTrue no_pos
   else
     let rf = List.fold_left (fun f1 efp ->
-        let f2 = ef_conv efp in
-        if isConstTrue f2 then
-          f1
-        else
-          mkOr f1 (ef_conv efp) None no_pos
+        (* let f2 = ef_conv efp in *)
+        (* if isConstTrue f2 then *)
+        (*   f1 *)
+        (* else *)
+        mkOr f1 (ef_conv efp) None no_pos
     ) (ef_conv (List.hd disj)) (List.tl disj) in
     rf
 
