@@ -1,7 +1,7 @@
 ========================================
 
 Now we don't use SCC but infer inv for all views together.
-===> Use SCC
+===> Use SCC: DONE
 
 ========================================
 
