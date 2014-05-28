@@ -633,11 +633,12 @@ let convert_data_and_pred_to_cast_x () =
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
   let cprog6 = Cast.categorize_view cprog5 in
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
-  let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe) then
+  let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
+               || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
     Lemma.generate_all_lemmas iprog cprog6
   in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
 
 let convert_data_and_pred_to_cast () = 

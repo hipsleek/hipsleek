@@ -1030,13 +1030,114 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
     ) in
     let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
     let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
-    [left_coercion; right_coercion]
+    if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
+      [right_coercion]
+    else [left_coercion; right_coercion]
   (* no need to generate lemma for non-segmented predicates *) 
   else ([])
 
 let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
-  ([])
+  let dname = vd.C.view_data_name in
+  let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
+  (* generate lemmas for segmented dll *)
+  if (vd.C.view_is_segmented) then
+    (* self::dll(pr,last,out) <--> sefl::dll(pr,last1,out1) * out1::dll(last1,last,out) *)
+    (*    2 posibilities about P:                            *)
+    (*       + P = P1  =  P2   unifying operation            *)
+    (*       + P = P1 (+) P2   combining operation           *)
+    let pos = vd.C.view_pos in
+    let llemma_name = "llem_" ^ vd.C.view_name in
+    let rlemma_name = "rlem_" ^ vd.C.view_name in
+    let ihead = (
+      let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        IP.Var ((id,p), pos)
+      ) vd.C.view_vars ) in
+      let head = (
+        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params [] None pos
+      ) in
+      Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos
+    ) in
+    let (left_body, right_body) = (
+      let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        let vp = id ^ "_1" in
+        IP.Var ((vp,p), pos)
+      ) vd.C.view_vars) in
+      let body1 = (
+        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params1 [] None pos
+      ) in
+      let forward_ptr = match vd.C.view_forward_ptrs with
+        | [sv] -> CP.name_of_spec_var sv
+        | _ ->
+            let msg = "generate_lemma_sll: expect 1 forward pointer in view " 
+                      ^ vd.C.view_name in
+            report_error pos msg
+      in
+      let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
+        let vp =
+          if (String.compare id forward_ptr = 0) then forward_ptr
+          else id ^ "_2"
+        in
+        IP.Var ((vp,p), pos)
+      ) vd.C.view_vars) in
+      let body2 = (
+        IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)
+            0 false  (IP.ConstAnn Mutable) false false false None
+            view_params2 [] None pos
+      ) in
+      let left_hbody = Iformula.mkStar body1 body2 pos in
+      let right_hbody = (
+        if (vd.C.view_is_touching) then left_hbody
+        else
+          (* lemma for non-touching predicates also borrow a @L node *)
+          let lending_node = 
+            IF.mkHeapNode (forward_ptr, Unprimed) dname
+                0 false  (IP.ConstAnn Lend) false false false None
+                (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
+                [] None pos
+          in
+          Iformula.mkStar left_hbody lending_node pos
+      ) in
+      let pure_constraint = (
+        let param_properties = compute_lemma_params_property vd cprog in
+        let param_constraints = List.fold_left(
+          fun res (CP.SpecVar (typ,id,p), param_prop) ->
+            let sv_cond = (match param_prop with
+              | LemmaParamEqual ->
+                  let e = Ipure_D.Var ((id,p), pos) in
+                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
+                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
+              | LemmaParamDistributive -> (
+                  let e = Ipure_D.Var ((id,p), pos) in
+                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
+                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  match typ with
+                  | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
+                  | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
+                  | _ -> report_error pos "generate_lemma_sll: unexpect typ"
+                )
+              | _ -> IP.mkTrue pos
+            ) in
+            IP.mkAnd sv_cond res pos
+        ) (IP.mkTrue pos) param_properties in
+        param_constraints
+      ) in
+      let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in
+      let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in
+      (l_body, r_body)
+    ) in
+    let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
+    let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
+    if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
+      [right_coercion]
+    else [left_coercion; right_coercion]
+  (* no need to generate lemma for non-segmented predicates *) 
+  else ([])
 
 let generate_lemma_tree_simple (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
@@ -1074,12 +1175,19 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   let lemmas = List.concat (List.map (fun vd ->
     generate_lemma vd iprog cprog
   ) cprog.C.prog_view_decls) in
-  Debug.binfo_hprint (add_str "gen_lemmas" (pr_list pr_none)) lemmas no_pos;
-  if (!Globals.lemma_gen_unsafe) then
+  if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then
     let _ = manage_unsafe_lemmas lemmas iprog cprog in ()
-  else if (!Globals.lemma_gen_safe) then
+  else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then
     let _ = manage_safe_lemmas lemmas iprog cprog in ()
-  else ()
+  else ();
+  let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
+     "    " ^ (Cprinter.string_of_coerc_med lem)
+  ) lemmas) in
+  let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)
+      (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion)
+      no_pos in
+  ()
+
 
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
