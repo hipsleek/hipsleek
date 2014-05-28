@@ -2083,7 +2083,17 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   )
   )
 
-and trans_views iprog ls_mut_rec_views ls_pr_view_typ=
+and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
+  let pr = pr_list (fun v -> v.Cast.view_name) in
+  let pr2 = pr_list (fun (v,_) -> v.Iast.view_name) in
+  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
+
+(* type: I.prog_decl ->
+  String.t list list ->
+  (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list ->
+  C.view_decl list *)
+
+and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let _ = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
   (*******************************)

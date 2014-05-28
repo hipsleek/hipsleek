@@ -232,6 +232,12 @@ let rec build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cfor
 (*   let (pf, _) = bf in *)
 (*   build_ef_p_formula map pf *)
 
+let build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.h_formula)
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+  Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
+      Cprinter.string_of_ef_pure_disj (fun _ -> 
+      build_ef_heap_formula map cf args args_map) cf 
+
 let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : formula) (args : spec_var list) : ef_pure_disj =
   [([], elim_clause pf args)]
   (* [([], filter_var pf args)] *)
@@ -314,6 +320,13 @@ let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
     false
   with Not_found -> true
 
+
+let build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+  Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
+      Cprinter.string_of_ef_pure_disj (fun _ -> 
+      build_ef_formula map cf args args_map) cf 
+
 (* ef_find_equiv :  (spec_var) list -> ef_pure -> (spec_var) list *)
 (* find equivalent id in the formula *)
 (* e.g. [a,b] -> ([a,b,c], b=c ---> [a,c] *)
@@ -386,3 +399,11 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
   (* let formula = ef_conv_disj ex_pure_disj in *)
   (* let _ = print_endline (pr_list string_of_ef_pure_disj inv_list) in *)
   inv_list
+
+
+let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj list =
+  let pr_1 = pr_list (fun v -> v.Cast.view_name) 
+    (* Cprinter.string_of_view_decl_short *) in
+  Debug.no_2 "fix_ef" pr_1 string_of_int (pr_list Cprinter.string_of_ef_pure_disj)
+      fix_ef view_list disj_num 
+
