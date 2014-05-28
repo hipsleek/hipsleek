@@ -2839,11 +2839,11 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
       List.iter (fun sv ->
         let v2 = P.name_of_spec_var sv in
         try 
-          let path, plength = Dijkstra.shortest_path vg v1 v2 in
+          let _, length = Dijkstra.shortest_path vg v1 v2 in
           (* path contains only equality edges *)
-          if (plength = 0) then
+          if (length = 0) then
             forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
-        with Not_found -> ()
+        with _ -> ()
       ) vdecl.view_vars
     ) !forward_ptrs;
     
@@ -2885,17 +2885,17 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         if (List.length bw_ptrs > 0) then (
           backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ bw_ptrs);
         )
-      with Not_found -> ()
+      with _ -> ()
     ) fw_views in
     (* find backward poiters from equality path *)
     List.iter (fun v1 ->
       List.iter (fun sv ->
         let v2 = P.name_of_spec_var sv in
         try 
-          let path, _ = Dijkstra.shortest_path vg v1 v2 in
-          if (List.for_all (fun (_, lbl, _) -> ViewGraph.is_equality_label lbl) path) then
+          let _, length = Dijkstra.shortest_path vg v1 v2 in
+          if (length = 0) then (* path contains only Equality edges *)
             backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);
-        with Not_found -> ()
+        with _ -> ()
       ) vdecl.view_vars
     ) !backward_ptrs;
 
@@ -2910,7 +2910,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
           | ViewGraph.Label.DataField (d,f) -> [(d,f)]
           | _ -> []
         ) path)
-      with Not_found -> []
+      with _ -> []
     ) !backward_ptrs) in
     (!forward_ptrs, !forward_fields, !backward_ptrs, backward_fields)
   ) in
@@ -2966,9 +2966,9 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
     if (String.compare ptname v = 0) then true
     else
       try
-        let _, _ = Dijkstra.shortest_path vg v ptname in
+        let _ = Dijkstra.shortest_path vg v ptname in
         true
-      with Not_found -> false
+      with _ -> false
     ) (vd.view_forward_ptrs @ vd.view_backward_ptrs)
   ) in
   List.map2 (fun (f,lbl) (vg, env, lbl)->
