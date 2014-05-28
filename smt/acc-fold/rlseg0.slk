@@ -1,0 +1,32 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+
+/*
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+
+lemma_safe "two" self::rlseg<p1> * p1::node<_,p> -> self::rlseg<p>.
+*/
+
+//lemma_safe "three" self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,p>.
+
+lemma_safe "three0" self::node<_,q>*q::rlseg<p>  -> self::rlseg<p1>* p1::node<_,p>.
+
+//lemma_safe "three1" self::node<_,q>*q::rlseg<p>  <- self::rlseg<p1>* p1::node<_,p>.
+
+/*
+Entailing lemma three: Fail. Details below:
+         "==>" implication: : Fail. (may) cause: OrR[UnionR[ q_509::node<Anon_505,q_506> * q_506::rlseg<p_504>&p_504=p_507 & p_507=p&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),UnionR[ q_528::rlseg<p_526>&p_526=p_529 & p_529=p & Anon_477=Anon_530 & q_478=q_531&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2), q_606::rlseg<p_604>&p_604=p_526 & p_526=p_529 & p_529=p &
+Anon_477=Anon_530 & q_478=q_531 & Anon_536=Anon_527 & q_537=q_528&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2)]],valid]
+         "==>" implication: : Valid.
+*/

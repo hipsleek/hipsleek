@@ -3493,6 +3493,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
           else*)
         let result, prf = heap_entail_after_sat_struc 1 prog is_folding  has_post ctx conseq tid delayed_f join_id pos pid []  in
         let result = subs_crt_holes_list_ctx result in
+        let result = Norm.merge_contexts result in
         (result, prf)
 
 and need_unfold_rhs prog vn=
@@ -9472,13 +9473,15 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
-  Debug.no_4  "heap_entail_non_empty_rhs_heap" 
-      Cprinter.string_of_context
-      Cprinter.string_of_formula_base 
-      Cprinter.string_of_formula
-      Cprinter.string_of_spec_var_list 
+  Debug.no_6  "heap_entail_non_empty_rhs_heap" 
+      Cprinter.string_of_entail_state_short
+      (add_str "LHS base" Cprinter.string_of_formula_base )
+      (add_str "RHS base" Cprinter.string_of_formula_base )
+      (add_str "ante    " Cprinter.string_of_formula)
+      (add_str "conseq  " Cprinter.string_of_formula)
+      (add_str "matched_set" Cprinter.string_of_spec_var_list)
       (pr_pair Cprinter.string_of_list_context string_of_proof) 
-      (fun _ _ _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) ctx0 lhs_b conseq rhs_h_matched_set
+      (fun _ _ _ _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) estate lhs_b rhs_b ante conseq rhs_h_matched_set
 
 (* Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula *)
 (*     Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set *)

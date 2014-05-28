@@ -610,5 +610,37 @@ and norm_formula_for_unfold cprog vdef =
   {vdef with C.view_un_struc_formula =  new_un_formula;}
 
   (*********** end NORM for the FORMULA USED DURING UNFOLDING *************)
-  
 
+  (************* MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)
+let octx_2_es_list (ctx: CF.context): CF.entail_state list =
+  let rec helper ctx =
+    match ctx with
+      | CF.Ctx es       -> [es]
+      | CF.OCtx (c1,c2) -> (helper c1)@(helper c2)
+  in helper ctx
+
+let eq_estate (es1: CF.entail_state) (es2: CF.entail_state): bool =
+  let equals = 
+    try 
+      fst (Checkeq.checkeq_formulas [] es1.CF.es_formula es2.CF.es_formula)
+    with _ -> false in
+  equals
+
+let eq_context (ctx1: CF.context) (ctx2: CF.context): bool =
+  match ctx1, ctx2 with
+    | CF.Ctx es1, CF.Ctx es2 -> eq_estate es1 es2
+    | CF.OCtx _, CF.OCtx _   ->
+          let es_l1, es_l2 = octx_2_es_list ctx1, octx_2_es_list ctx2 in
+          Gen.BList.list_setequal_eq  eq_estate es_l1 es_l2
+    | _, _ -> false
+
+let merge_contexts_x (ctx: CF.list_context): CF.list_context =
+  match ctx with
+    | FailCtx _        -> ctx
+    | SuccCtx ctx_list -> SuccCtx (Gen.BList.remove_dups_eq eq_context ctx_list)
+
+let merge_contexts (ctx: CF.list_context): CF.list_context =
+  let pr = Cprinter.string_of_list_context in
+  Debug.no_1 "merge_contexts" pr pr  merge_contexts_x ctx
+
+  (********** end MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)

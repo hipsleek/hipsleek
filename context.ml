@@ -1342,16 +1342,17 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)
                   (* leads to unsoundness of sh-rev3a.slk *)
-                  let r_lem =
+               
                     (* ==========andreea: to fix this possibly lemma app ========== *)
-                  (* let a2 =  *)
-                    (* let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)  *)
-                    (*     dl.h_formula_data_name vr_name) in *)
-                    (* (\* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *\) *)
-                    (* let right_act = if (not(!ann_derv) || new_orig) then  *)
-                    (*   List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in *)
-                    (* right_act in *)
+                  let a3 =
+                    let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
+                        dl.h_formula_data_name vr_name) in
+                    (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
+                    let right_act = if (not(!ann_derv) || new_orig) then
+                      List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
+                    right_act in
                     (* ==================== *)
+                  let r_lem =
                     if (Lem_store.all_lemma # any_coercion
                     && !Globals.allow_rd_lemma)
                     then
@@ -1361,7 +1362,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     else [] in
                   let a2 = if (new_orig) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
-                  let a = a1@a2 in
+                  let a = a1@a2@a3 in
                   if a != [] then (-1,Search_action a)
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res m_res)))
             | ViewNode vl, DataNode dr -> 

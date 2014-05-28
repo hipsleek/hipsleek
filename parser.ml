@@ -831,7 +831,7 @@ non_empty_command:
       | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
-      | t=checkeq_cmd         -> EqCheck t
+      | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
