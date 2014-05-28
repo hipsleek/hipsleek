@@ -295,6 +295,12 @@ let rec build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.
           let efpd = build_ef_ef_pure_disjs efpd1 efpd2 in
           efpd
 
+let build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
+  Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
+      Cprinter.string_of_ef_pure_disj (fun _ -> 
+      build_ef_formula map cf args args_map) cf 
+
 (* using Cast *)
 
 (* build_ef_view : map -> view_decl --> ef_pure_disj *)
@@ -329,11 +335,6 @@ let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
   with Not_found -> true
 
 
-let build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
-      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) : ef_pure_disj =
-  Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
-      Cprinter.string_of_ef_pure_disj (fun _ -> 
-      build_ef_formula map cf args args_map) cf 
 
 (* ef_find_equiv :  (spec_var) list -> ef_pure -> (spec_var) list *)
 (* find equivalent id in the formula *)
