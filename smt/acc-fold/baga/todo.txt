@@ -66,5 +66,11 @@ bintree : [([],self=null),([self],true)]
 bintreeseg : [([],self=y),([self],true),([self],true)]
 
 ========================================
+# sleek2.slk
+
+baga computation gave a Not_found exception.
+
+this error disappears with --dis-inv-baga
+
 ========================================
 ========================================
