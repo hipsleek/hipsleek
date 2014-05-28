@@ -1074,6 +1074,7 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   let lemmas = List.concat (List.map (fun vd ->
     generate_lemma vd iprog cprog
   ) cprog.C.prog_view_decls) in
+  Debug.binfo_hprint (add_str "gen_lemmas" (pr_list pr_none)) lemmas no_pos;
   if (!Globals.lemma_gen_unsafe) then
     let _ = manage_unsafe_lemmas lemmas iprog cprog in ()
   else if (!Globals.lemma_gen_safe) then

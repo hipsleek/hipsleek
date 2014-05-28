@@ -618,9 +618,9 @@ let smart_string_of_spec_var x =
     | CP.SpecVar(t,id,p) ->
           let n=String.length id in
           if n>=4 then 
-            let s=String.sub id 0 4 in
-            if s="Anon" then "_"
-            else string_of_spec_var x
+            (* let s=String.sub id 0 4 in *)
+            (* if s="Anon" && !Globals.print_en_tidy then "_" *)
+            (* else *) string_of_spec_var x
           else string_of_spec_var x
 
 let pr_spec_var x = fmt_string (smart_string_of_spec_var x)

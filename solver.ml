@@ -2636,7 +2636,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   (* let _ = print_endline "test expure" in *)
-  (* let _ = Expure.fix_ef prog.Cast.prog_view_decls 10 in *)
+  let _ = Expure.fix_ef prog.Cast.prog_view_decls 10 in
   let tp_call_wrapper npf = 
     if !Globals.simpl_unfold2 then 
       let r = 

@@ -25,6 +25,8 @@ open Cpure
 (* type ef_pure_disj = ef_pure list *)
 
 
+
+
 (* convert ptr to integer constraints *)
 (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
 let baga_conv (baga : spec_var list) : formula =
@@ -382,5 +384,5 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) : ef_pure_disj lis
   let inv_list = helper map view_list inv_list in
   (* let ex_pure_disj = List.hd inv_list in *)
   (* let formula = ef_conv_disj ex_pure_disj in *)
-  (* let _ = print_endline (Cprinter.string_of_pure_formula formula) in *)
+  (* let _ = print_endline (pr_list string_of_ef_pure_disj inv_list) in *)
   inv_list
