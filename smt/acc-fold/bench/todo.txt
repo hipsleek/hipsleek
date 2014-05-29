@@ -3,6 +3,7 @@
   unsound lemma proving example
    self::elseg<p> -> (ex u: self::elseg<u>*u::elseg<p>)
 
+// this is actually sound, so lemma proving OK here.
 =========================================================================
 # append.ss
 
@@ -14,7 +15,27 @@ sll,dll
 tree with linked-leaves
 
 =========================================================================
+# odd-lseg1.slk
+
+lemma proving incomplete
+// seems that deep unfold is missing ..
+
+lemma_safe self::olseg<p> <- (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+
 =========================================================================
+checkentail_exact
+ self::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<u_48> * 
+    u_48::node<p>
+ |- self::olseg<p>.
+print residue.
+/*
+# odd-lseg2.slk
+
+why self triggered lemma but not non-self
+
+<1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_11) ==>  COND ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
 =========================================================================
 =========================================================================
 =========================================================================
