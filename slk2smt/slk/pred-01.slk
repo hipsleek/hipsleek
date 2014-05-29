@@ -5,11 +5,13 @@
 //        (ll ?x))
 // )))))
 
-data node {
-     node next;
-     node prev;
+data node1 {
+     node1 next;
+     node1 prev;
 }.
 
 pred dll<p> ==
      self = null
-     or (exists q: self::node<p,q> * q::dll<self>).
+     or (exists q: self::node1<p,q> * q::dll<self>).
+
+checkentail x::node1<null,null> |- x::dll<null>.

@@ -231,7 +231,7 @@ let process_cmd cmd iprog =
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def pdef iprog
     | EntailCheck eche -> process_entail eche iprog
-    | _ -> "other command\n"
+    | _ -> ";other command\n"
 
 let trans_smt iprog cprog cmds =
   let s = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog)) "" cmds in
