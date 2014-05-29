@@ -1853,13 +1853,13 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     if sedge.he_kind then
        (* if it is pto: check tar edge is a pto*)
       let tedge = look_up_edge hg_tar.hg_edges tar_b tar_e in
-      tedge.he_kind
+      (tedge.he_kind, [])
     else
       (*otherwise: check it is a path pi*)
       let has_path, path = dfs tar_e [([], tar_b)] [tar_e] in
-      if not has_path then false else
+      if not has_path then (false,[]) else
         let _ = Debug.info_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
-        if not non_touch_check then true else
+        if not non_touch_check then (true,path) else
           (*has cycle -touchable*)
           let has_cycle, scc =
             if tar_touch_sccs = [] then (false,[]) else
@@ -1880,7 +1880,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           in
           if has_cycle then
             let _ = Debug.info_hprint (add_str "has cycle" (pr_list string_of_int)) scc no_pos in
-            false
+            (false,path)
           else
             (*if non_touch is enable, all edge of pi must be pto*)
             (* let required_tar_non_touch_b_ids = List.fold_left (fun r (b_id,e_id) -> *)
@@ -1902,7 +1902,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             in
             (* let is_non_touch = true in *)
             let _ = Debug.info_hprint (add_str "is_non_touch" string_of_bool) is_non_touch no_pos in
-            if not is_non_touch then false else
+            if not is_non_touch then (false,path) else
               (* cycle in conseq: sedge and its inversion have the same feature: touch and non-touch.*)
               let required_touch = List.exists (fun (b_id,e_id) ->
                   b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
@@ -1910,22 +1910,54 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               let direct_loop = required_touch && ( List.exists (fun (b_id,e_id) ->
                 b_id = sedge.he_e_id && e_id = sedge.he_b_id) src_cycle_edges)
               in
-              if not direct_loop then true else begin
+              if not direct_loop then (true,path) else begin
                 try
                   let rev_edge = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
                   let cons_two_way = consistent_two_way_touch path hg_tar.hg_edges hg_src.hg_edges sedge rev_edge in
                   let _ = Debug.info_hprint (add_str "cons_two_way" string_of_bool) cons_two_way no_pos in
-                  cons_two_way
-                with Not_found -> true
+                  (cons_two_way,path)
+                with Not_found -> (true,path)
               end
   in
+  (******************)
   let check_one_src_edge sedge=
     let pr1 = print_he in
-    Debug.no_1 "check_one_src_edge" pr1 string_of_bool
+    let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+    (* let pr3 = pr_list_ln (pr_pair pr1 pr2) *)
+    Debug.no_1 "check_one_src_edge" pr1 (pr_pair string_of_bool pr2)
         (fun _ -> check_one_src_edge_x sedge) sedge
   in
+  (******************)
+  let rec loop_helper sedges acc_sedges_path=
+    match sedges with
+      | [] -> true,acc_sedges_path
+      | sedge::rest -> let b, path = check_one_src_edge sedge in
+        if b then
+          loop_helper rest (acc_sedges_path@[(sedge,path)])
+        else (false,acc_sedges_path)
+  in
+  (******************)
+  (*testcase: ?*)
+  let rec check_non_overlap_paths map_sedge_paths=
+    match map_sedge_paths with
+      | [_] -> true
+      | (_,path1)::rest ->
+            let _ = Debug.info_hprint (add_str "path1" (pr_list (pr_pair string_of_int string_of_int) )) path1 no_pos in
+            if List.exists (fun (_,path2) ->
+                let _ = Debug.info_hprint (add_str "path2" (pr_list (pr_pair string_of_int string_of_int) )) path2 no_pos in
+                List.exists (fun id -> List.mem id path2) path1
+            ) rest
+            then false
+            else check_non_overlap_paths rest
+      | [] -> true
+  in
   (*******************************)
-  List.for_all check_one_src_edge hg_src.hg_edges
+  (* List.for_all check_one_src_edge hg_src.hg_edges *)
+  let b, map_src_edge_path = loop_helper hg_src.hg_edges [] in
+  b
+  (* if b then *)
+  (*   check_non_overlap_paths map_src_edge_path *)
+  (* else false *)
 
 let check_homo_edges map non_touch_check hg_src hg_tar src_cycle_edges tar_touch_sccs=
   let pr1 = print_hgraph in
