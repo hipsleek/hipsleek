@@ -224,6 +224,12 @@ let slk_sleek_log_entry e =
   | Some res -> 
     let conseq = e.sleek_proving_conseq in
     let r = CF.formula_of_list_context res in
+    let hole_matching = match res with
+    | CF.FailCtx _ -> []
+    | CF.SuccCtx ls -> List.concat (List.map CF.collect_hole ls)
+    in
+    let hole_matching = List.map (fun (h, i) -> (i, h)) hole_matching in
+    let r = CF.restore_hole_formula r hole_matching in
     let comb_conseq = CF.mkStar_combine conseq r 
       CF.Flow_combine (CF.pos_of_formula conseq) in
     let ante_fv = CF.fv e.sleek_proving_ante in

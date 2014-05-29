@@ -9368,7 +9368,12 @@ let rec collect_pre_heap ctx =
 let rec collect_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_rel 
-  | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2)
+
+let rec collect_hole ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_crt_holes 
+  | OCtx (ctx1, ctx2) -> (collect_hole ctx1) @ (collect_hole ctx2) 
 
 let rec collect_hp_rel ctx = 
   match ctx with
@@ -15705,3 +15710,22 @@ let shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let ann_of_h_formula h =
+  match h with
+  | DataNode dn -> Some dn.h_formula_data_imm
+  | ViewNode vn -> Some vn.h_formula_view_imm
+  | _ -> None
+
+let restore_hole_formula f hole_matching =
+  let f_h_f h = match h with
+  | Hole i ->
+    (try 
+      let rep_h = List.assoc i hole_matching in
+      let ann = ann_of_h_formula rep_h in
+      match ann with
+      | Some CP.ConstAnn(Lend) -> Some h
+      | _ -> Some rep_h
+    with _ -> Some h)
+  | _ -> Some h in
+  transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f
