@@ -228,7 +228,13 @@ let slk_sleek_log_entry e =
   in
   fmt_open_box 1;
   fmt_string("\n");
-  fmt_string ("// Kind: " ^ (e.sleek_proving_kind)) ;
+  let src = e.sleek_src_no in
+  let par_id = e.sleek_parent_no in
+  let rest = if src!=3 then " src:"^(string_of_int src) else "" in
+  let rest = if par_id>=(0) then "<:"^(string_of_int par_id)^rest else rest in
+  fmt_string ("// id: " ^ (string_of_int e.sleek_proving_id)^rest);
+  fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos));
+  fmt_string ("; kind: " ^ (e.sleek_proving_kind));
   fmt_string "\n checkentail_exact";
   if (!Globals.print_en_tidy)
   then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula e.sleek_proving_ante))
