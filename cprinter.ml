@@ -2776,6 +2776,24 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_helper c) b
   in
   res
+  
+let rec slk_struc_formula_view (e:struc_formula) = 
+  let res = match e with
+  | ECase { formula_case_branches = case_list } ->
+    pr_args (Some ("V", 1)) (Some "A") "case " "{" "}" "" 
+    (fun (c1, c2) -> wrap_box ("B", 0) 
+      (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> [] ")
+      (fun () -> slk_struc_formula_view c2; fmt_string ";")) case_list
+  | EBase { formula_struc_base = fb; formula_struc_continuation = cont } ->
+    slk_formula fb;
+    (match cont with 
+      | None -> ()
+      | Some l -> slk_struc_formula_view l; );
+  | EAssume _
+  | EInfer _ -> ()
+  | EList b -> if b == [] then fmt_string "" else 
+      pr_list_op_none " or\n" (fun (l, c) -> slk_struc_formula_view c) b
+  in res
 
 (*let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e
 
@@ -3451,7 +3469,7 @@ let slk_view_decl v =
   fmt_open_vbox 1;
   wrap_box ("B", 0) (fun () -> pr_angle ("pred " ^ v.view_name) pr_typed_spec_var_lbl
     (List.combine v.view_labels v.view_vars); fmt_string " == ") ();
-  fmt_cut (); wrap_box ("B", 0) pr_struc_formula_for_spec v.view_formula; 
+  fmt_cut (); wrap_box ("B", 0) slk_struc_formula_view v.view_formula; 
   pr_vwrap  "inv "  pr_mix_formula v.view_user_inv;
   fmt_string ".";
   fmt_close_box ();
@@ -3712,8 +3730,8 @@ let rec string_of_exp = function
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
-let string_of_field_ann ann=
-  if not !print_ann then ""
+let string_of_field_ann ann =
+  if not !print_ann || !Globals.sleek_gen_vc then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)

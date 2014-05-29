@@ -772,9 +772,10 @@ let process_proof_logging src_files prog =
     end
   else ()
 
-let process_proof_logging src_files  =
+let process_proof_logging src_files prog =
   let pr = pr_list pr_id in
-  Debug.no_1 "process_proof_logging" pr pr_none process_proof_logging src_files
+  Debug.no_1 "process_proof_logging" pr pr_none 
+    (fun _ -> process_proof_logging src_files prog) src_files
 
 
 (* let add_sleek_log_entry e= *)
