@@ -166,6 +166,11 @@ let rec cmp_typ t1 t2=
     | Pointer t11, Pointer t22 -> cmp_typ t11 t22
     | _ -> false
 
+let is_type_var t =
+  match t with
+  | TVar _ -> true
+  | _ -> false
+
 let ann_var_sufix = "_ann"
 
 let is_program_pointer (name:ident) = 
@@ -517,15 +522,6 @@ let subs_tvar_in_typ t (i:int) nt =
     | _ -> t
   in helper t
 ;;
-
-let null_type = Named ""
-;;
-
-let is_null_type t=
-  match t with
-    | Named "" -> true
-    | _ -> false
-
 
 let rec s_i_list l c = match l with 
   | [] -> ""
