@@ -6674,7 +6674,7 @@ let normalise_eq_debug (aset : var_aset) : EMapSV.emap =
 			var_aset - normalized eq *)
 let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset =
 	let (ax, _, conflict) = normalise_eq_aux aset in (conflict, ax) 
-	
+
 (* print if false detected - when debugging *)
 let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = 
   let (ax, _, conflict) = normalise_eq_aux aset in
