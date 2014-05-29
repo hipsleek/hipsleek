@@ -1,0 +1,15 @@
+// (declare-fun ll ((?self node))
+//   Space (tospace (or (= ?self nil)
+//     (exists ((?x node)) (tobool (ssep
+//        (pto ?self (ref next ?x))
+//        (ll ?x))
+// )))))
+
+data node {
+     node next;
+     node prev;
+}.
+
+pred dll<p> ==
+     self = null
+     or (exists q: self::node<p,q> * q::dll<self>).
