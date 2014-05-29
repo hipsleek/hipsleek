@@ -224,7 +224,14 @@ let slk_sleek_log_entry e =
   | Some res -> 
     let conseq = e.sleek_proving_conseq in
     let r = CF.formula_of_list_context res in
-    CF.mkStar_combine conseq r CF.Flow_combine (CF.pos_of_formula conseq)
+    let comb_conseq = CF.mkStar_combine conseq r 
+      CF.Flow_combine (CF.pos_of_formula conseq) in
+    let ante_fv = CF.fv e.sleek_proving_ante in
+    let cons_fv = CF.fv conseq in
+    let comb_cons_fv = CF.fv comb_conseq in
+    let ex_vars = Gen.BList.difference_eq CP.eq_spec_var comb_cons_fv ante_fv in
+    let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
+    CF.push_exists ex_vars comb_conseq
   in
   fmt_open_box 1;
   fmt_string("\n");
@@ -244,6 +251,7 @@ let slk_sleek_log_entry e =
   then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula conseq_w_res))
   else fmt_string (Cprinter.sleek_of_formula conseq_w_res);
   fmt_string ".\n";
+  (* fmt_string "print residue.\n"; *)
   (if !print_clean_flag then 
 	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
 	  fmt_string ("\n clean checkentail" ^ (Cprinter.sleek_of_formula ante)
@@ -690,7 +698,7 @@ let sleek_log_to_text_file slfn (src_files) =
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
     close_out oc
     
-let sleek_log_to_sleek_file slfn src_files prog =
+let sleek_log_to_sleek_file slfn src_files prog prim_names =
     (* let tstartlog = Gen.Profiling.get_time () in *)
   let lgs = sleek_log_stk # len in
   let _ = Debug.info_zprint  (lazy  ("Number of sleek log entries "^(string_of_int (lgs)))) no_pos in
@@ -709,8 +717,10 @@ let sleek_log_to_sleek_file slfn src_files prog =
       else ls
     in
     let ls = List.sort (fun e1 e2 -> compare e1.sleek_proving_id e2.sleek_proving_id) ls in
-    let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl prog.Cast.prog_data_decls) in
-    let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl prog.Cast.prog_view_decls) in
+    let str_data = String.concat "\n" (List.map Cprinter.sleek_of_data_decl 
+      (List.filter (fun d -> not (Gen.BList.mem_eq (=) d.Cast.data_name prim_names)) prog.Cast.prog_data_decls)) in
+    let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl 
+      (List.filter (fun v -> not (Gen.BList.mem_eq (=) v.Cast.view_name prim_names)) prog.Cast.prog_view_decls)) in
     let str_ent = String.concat "\n" (List.map sleek_of_sleek_log_entry ls) in
     let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_ent in
     let _= fprintf oc "%s" str in
@@ -725,7 +735,7 @@ let sleek_log_to_text_file2 (src_files) =
   let pr = pr_list pr_id in
   Debug.no_1 "sleek_log_to_text_file" pr pr_none (sleek_log_to_text_file fn) (src_files)
 
-let process_proof_logging src_files prog =
+let process_proof_logging src_files prog prim_names =
   (* Debug.info_zprint  (lazy  ("process_proof_logging\n")) no_pos; *)
   if !Globals.proof_logging_txt (* || !Globals.proof_logging_txt || !Globals.sleek_logging_txt *) then 
     begin
@@ -760,7 +770,7 @@ let process_proof_logging src_files prog =
       let _ = if (!Globals.sleek_gen_vc) 
       then 
         begin
-          sleek_log_to_sleek_file slkfn src_files prog;
+          sleek_log_to_sleek_file slkfn src_files prog prim_names;
         end
       else try Sys.remove slkfn 
         (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
@@ -772,10 +782,10 @@ let process_proof_logging src_files prog =
     end
   else ()
 
-let process_proof_logging src_files prog =
+let process_proof_logging src_files prog prim_names =
   let pr = pr_list pr_id in
   Debug.no_1 "process_proof_logging" pr pr_none 
-    (fun _ -> process_proof_logging src_files prog) src_files
+    (fun _ -> process_proof_logging src_files prog prim_names) src_files
 
 
 (* let add_sleek_log_entry e= *)
