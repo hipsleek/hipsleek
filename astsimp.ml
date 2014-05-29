@@ -401,24 +401,23 @@ and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EAssume b -> IF.EAssume {b with 
         IF.formula_assume_simpl = convert_heap2 prog b.IF.formula_assume_simpl;
-        IF.formula_assume_struc = convert_struc2 prog b.IF.formula_assume_struc;}       
+        IF.formula_assume_struc = convert_struc2 prog b.IF.formula_assume_struc;}
   | IF.ECase b -> IF.ECase {b with IF.formula_case_branches = map_l_snd (convert_struc2_x prog) b.IF.formula_case_branches};
   | IF.EBase b -> IF.EBase{b with 
         IF.formula_struc_base = convert_heap2 prog b.IF.formula_struc_base;
         IF.formula_struc_continuation = map_opt (convert_struc2_x prog) b.IF.formula_struc_continuation}
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
-  
-      
+
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
-      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } 
-      | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } 
-      | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } 
-      | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }       
+      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 }
+      | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 }
+      | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 }
+      | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }
       | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } ->
             (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
       | IF.HeapNode { IF.h_formula_heap_name = c } ->
@@ -436,18 +435,18 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
             gen_name_pairs_heap vname h
       | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
             gen_name_pairs_heap vname h in
-  
+
   let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with
     | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl)
     | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches
-    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}-> 
+    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}->
         (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont)
     | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation
     | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b
   in
- 
+
   let gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list =
-    Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
+    Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id))
         (fun _ -> gen_name_pairs_struc vname f) vname in
 
   let build_graph vdefs =
@@ -471,7 +470,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    if not(mr==[]) 
+    if not(mr==[])
     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
         (* if DfsNG.has_cycle g *)
@@ -500,7 +499,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
             (* n_view should contain only one views *)
             ((n_view @ rest_views), new_rest_decls)
       | [] -> ([], view_decls) in
-  let (r1, r2) = reorder_views view_decls0 !view_names 
+  let (r1, r2) = reorder_views view_decls0 !view_names
   in
   (r1 @ r2,List.filter (fun ls -> List.length ls > 1) !view_scc)
 
@@ -508,15 +507,15 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in
   let pr2 = (pr_list (pr_list pr_id)) in
   Debug.no_1 "order_views" pr (pr_pair pr pr2) order_views  view_decls0
-  
+
 let loop_procs : (C.proc_decl list) ref = ref []
-   
+
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
   | C.Assert _ -> e
     (*| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)*)
-    (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*) 
-  | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
+    (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*)
+  | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }
   | C.Bind b -> C.Bind {b with C.exp_bind_body = (seq_elim b.C.exp_bind_body);}
   | C.Barrier _ -> e
   | C.ICall _ -> e
@@ -2123,6 +2122,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (transed_views2,mutrec_views)
   in
   (*******************************)
+  (* check whether this view call other views or not *)
+  let check_view (view_decl : Cast.view_decl) : bool = true
+  in
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
@@ -2137,7 +2139,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
           else
-            [cv.C.view_name]::ls
+            ls@[[cv.C.view_name]]
       ) ls_mut_rec_views1 cviews0 in
       let map_invs = Hashtbl.create 1 in
       let _ = List.iter (fun idl ->
@@ -2147,14 +2149,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           let new_invs_list = Expure.fix_ef views_list 10 args_map map_invs in
           let new_map = List.combine views_list new_invs_list in
           List.iter (fun (cv,inv) -> Hashtbl.add map_invs cv.C.view_name inv) new_map
-          (*     let _ = Hashtbl.add map_invs cv.C.view_name inv in *)
-          (*     let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in *)
-          (*     let _ = print_string "\n" in *)
-          (*     {cv with C.view_baga_inv = Some inv} *)
-          (* ) *)
-          (* Hashtbl.add map_invs ( *)
-          (* let new_map = List.combine views_list new_invs_list in *)
-          (* map_invs@new_map *)
       ) ls_mut_rec_views1 in
       let cviews1 = List.map (fun cv ->
           let inv = Hashtbl.find map_invs cv.C.view_name in
@@ -2162,12 +2156,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           {cv with C.view_baga_inv = Some inv}
       ) cviews0 in
       cviews1
-      (* let baga_invs = Expure.fix_ef cviews0 10 in *)
-      (* List.map (fun (cv,inv) -> *)
-      (*     let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in *)
-      (*     let _ = print_string "\n" in *)
-      (*     {cv with C.view_baga_inv = Some inv} *)
-      (* ) (List.combine cviews0 baga_invs) *)
      else
       cviews0
   in

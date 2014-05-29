@@ -421,17 +421,10 @@ let sel_hull_ef (f : ef_pure_disj list) (disj_num : int) : ef_pure_disj list =
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
 let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
   let map = Hashtbl.create 1 in
-  (* let args_map = Hashtbl.create 1 in *)
   let _ = List.iter (fun vd ->
       Hashtbl.add map vd.Cast.view_name [];
-  ) view_list in 
-  (*     let self_var = SpecVar(UNK, self, Unprimed) in *)
-  (*     let args = self_var::vd.Cast.view_vars in *)
-  (*     Hashtbl.add args_map vd.Cast.view_name args; *)
-  (* ) view_list in *)
+  ) view_list in
   let inv_list = List.fold_left (fun inv_list vd ->
-      (* let _ = List.iter (fun (cf,_) -> *)
-      (*     print_endline (Cprinter.string_of_formula cf)) vd.Cast.view_un_struc_formula in *)
       inv_list@[(build_ef_view map args_map vd init_map)]) [] view_list in
   let inv_list = List.map (fun epd -> elim_unsat_disj epd) inv_list in
   let inv_list = List.map (fun epd -> elim_trivial_disj epd) inv_list in
@@ -453,12 +446,10 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident
       helper map view_list inv_list
   in
   let inv_list = helper map view_list inv_list in
-  (* let _ = List.iter (fun epd -> *)
-  (*     print_endline (Cprinter.string_of_ef_pure_disj epd)) inv_list in *)
   inv_list
 
 let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
   let pr_1 = pr_list (fun v -> v.Cast.view_name)  in
   Debug.no_2 "fix_ef" pr_1 string_of_int (pr_list Cprinter.string_of_ef_pure_disj)
-      (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num 
+      (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num
 
