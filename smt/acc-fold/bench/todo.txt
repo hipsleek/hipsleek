@@ -37,6 +37,13 @@ why self triggered lemma but not non-self
 <1>emp&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  COND ==>  SEARCH ==>  (Lemma <== lem_11) ==>  COND ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  Match ==> ]]
 =========================================================================
+# printing of lem proving formula enabled
+
+  lsegex_last0 unfold only LHS
+  odd-lseg0 unfolded both LHS and RHS
+
+Why this discrepancy?
+
 =========================================================================
 =========================================================================
 =========================================================================
