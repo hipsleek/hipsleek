@@ -2376,16 +2376,16 @@ and find_trans_view_name_x ff self pos =
       else
         let has = param_alias_sets pf p in
         let eq_f = (is_member has) in
-        let (ls,vs) = find_node_vars eq_f hf in
-        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in
-        cycle rs (rs@p@acc_p) (vs@v_p)
+        let (ls,vs) = find_node_vars eq_f hf in (* returns: (args, [data/view_name]) *)
+        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in 
+        cycle rs (rs@p@acc_p) (vs@v_p)  (* why the arguments become the targeted search param? *)
     in cycle params [] [] in
   let find_m_one f = match f with
-    | CF.Base b ->    
+    | CF.Base b ->
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
     | CF.Exists b->
-          find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap      
-    | _ -> Error.report_error 
+          find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap
+    | _ -> Error.report_error
           {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: unexpected disjunction"} in
   let lm = find_m_one ff in
   lm
@@ -3236,6 +3236,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       try (List.hd xx)
         (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
       with | _ -> "" in
+  let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
   if lhs_name = "" then
     Error.report_error
         {

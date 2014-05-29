@@ -450,15 +450,16 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = l_vname) then None
   else
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
-    let _ = DD.tinfo_hprint (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
+    let _ = DD.binfo_hprint (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
     match l_vargs with
       | [] -> None
       | _  -> 
             let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
-            let _ = Debug.tinfo_hprint (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
+            let _ = Debug.binfo_hprint (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
             try
-              let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
-              let _ = Debug.tinfo_hprint (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
+              let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in 
+              (* above goes awry when we're using self var in the entailment! andreea *)
+              let _ = Debug.binfo_hprint (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
               Some (Coerc_mater c,mv)
             with  _ ->  (* andreeac below test is inefficient. to be replaced *)
                 if(( List.length (Cformula.get_HRels_f c.coercion_body)) > 0) then
@@ -710,12 +711,13 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
             cmm
     | _ -> []
 
-and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) = 
+and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:P.spec_var list)  l_asset*) r_aset (lhs_f:Cformula.h_formula) = 
   let coerc_left = Lem_store.all_lemma # get_left_coercion in
   let cmml = coerc_mater_match coerc_left l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in 
   let coerc_right = Lem_store.all_lemma # get_right_coercion in
+  (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in *)
   let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in
-  cmml@cmmr
+  cmml(* @cmmr *)
 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
@@ -1346,7 +1348,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     (* ==========andreea: to fix this possibly lemma app ========== *)
                   let a3 =
                     let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
-                        dl.h_formula_data_name vr_name) in
+                        vr_name dl.h_formula_data_name) in
                     (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
                     let right_act = if (not(!ann_derv) || new_orig) then
                       List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
@@ -1362,7 +1364,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     else [] in
                   let a2 = if (new_orig) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
-                  let a = a1@a2(* @a3 *) in
+                  let a = a1@a2@a3 in
                   if a != [] then (-1,Search_action a)
                   else (1,M_Nothing_to_do (" matched data with derived self-rec RHS node "^(string_of_match_res m_res)))
             | ViewNode vl, DataNode dr -> 

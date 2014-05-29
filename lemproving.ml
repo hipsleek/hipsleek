@@ -120,10 +120,10 @@ let print_exc (check_id: string) =
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
-  let _ = Debug.tinfo_pprint "process_coercion_check" no_pos in
-  let _ = Debug.tinfo_pprint "======================" no_pos in
-  let _ = Debug.tinfo_hprint (add_str "i-ante" string_of_lem_formula) iante no_pos in
-  let _ = Debug.tinfo_hprint (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in
+  let _ = Debug.binfo_pprint "process_coercion_check" no_pos in
+  let _ = Debug.binfo_pprint "======================" no_pos in
+  let _ = Debug.binfo_hprint (add_str "i-ante" string_of_lem_formula) iante no_pos in
+  let _ = Debug.binfo_hprint (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in
   let dummy_ctx = CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos] in  
   try 
     let (b,lc) as res = run_entail_check dummy_ctx iante iconseq inf_vars cprog (if iexact then Some true else None) in
@@ -238,7 +238,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
   (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
-    !Globals.enable_lemma_rhs_unfold then ([],[]) else
+    !Globals.enable_lemma_rhs_unfold then ([],[]) else (* must re-check this -if- {**} *)
+      (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
       let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
       let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
       if is_singl sv_self lhs_unfold_ptrs then
@@ -295,7 +296,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
         if !Globals.allow_lemma_deep_unfold then
           CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
-      else rhs_unfold_ptrs0
+      else  []                          (* rhs_unfold_ptrs0  *) (*cancelling the effect of computing the pointers in the -if- {**} above *)
       in
     let unfolded_rhs = List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
@@ -316,8 +317,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_struc_original true rhs in
   let rhs = CF.reset_struc_origins rhs in
-  let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-  let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+  let self_sv_lst = [sv_self] in
+  let self_sv_renamed_lst = [CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   (* let rhs = CF.case_to_disjunct rhs in *)

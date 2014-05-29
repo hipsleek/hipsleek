@@ -1,0 +1,12 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+checkentail
+    uu_49::node<a_66> * b_67::olseg<u_48> 
+ |- self::olseg<p>.
+print residue.

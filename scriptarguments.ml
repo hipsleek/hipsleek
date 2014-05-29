@@ -568,6 +568,8 @@ let common_arguments = [
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--lem-dis-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--en-ctx-norm", Arg.Set Globals.en_norm_ctx,    "Enable  - merge identical residual states based on syntactic checking");
+  ("--dis-ctx-norm", Arg.Clear Globals.en_norm_ctx, "Disable - merge identical residual states based on syntactic checking");
   ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
