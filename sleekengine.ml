@@ -1317,6 +1317,7 @@ let process_shape_rec sel_hps=
   ()
 
 let process_validate exp_res ils_es=
+  if !Globals.smt_compete_mode then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
     let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
@@ -1749,11 +1750,17 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
             | false -> (*expect normal (OK) here*) ""
         else ""
       in
-      if t_valid then (silenced_print print_string (num_id^": Valid. "^s^"\n"^term_output^"\n"); true)
-      else 
+      if t_valid then
+         let _ = (* if !Globals.smt_compete_mode then print_string "UNSAT" else *)
+          silenced_print print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
+        in
+        true
+      else
         begin
-          Log.last_cmd # dumping "sleek_dump(fail2)";
-          silenced_print print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
+          let _ = (* if !Globals.smt_compete_mode then print_string "SAT" else *)
+            Log.last_cmd # dumping "sleek_dump(fail2)";
+            silenced_print print_string (num_id^": Fail. "^s^"\n"^term_output^"\n")
+          in
           false
         end
 

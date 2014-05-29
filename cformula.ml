@@ -15437,6 +15437,11 @@ let set_residue b lc =
 let clear_residue () =
   residues := None
 
+let get_res_residue () =
+  match !residues with
+    | Some (_, res) -> res
+    | None -> false
+
   (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
   a heap var as that would break the linearization..., used in the cast simplifications *)
 let elim_e_var to_keep (f0 : formula) : formula = 

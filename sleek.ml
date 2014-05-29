@@ -400,7 +400,7 @@ let _ =
     (* let _ = print_endline "before main" in *)
     main ();
     let _ =
-      if ((List.length !unexpected_cmd) > 0)
+      if not !Globals.smt_compete_mode && ((List.length !unexpected_cmd) > 0)
       then (
           let _ = print_string "Unexpected: " in
           let _ = List.iter (fun id_cmd ->
@@ -444,7 +444,13 @@ let _ =
           else ()
     in
     let _ = sleek_epilogue () in
-    let _ = if !Globals.smt_compete_mode then print_endline "SMT Compete OUTCOME" in 
+    let _ = if !Globals.smt_compete_mode then
+      let _ = print_endline "SMT Compete OUTCOME" in
+      let r = Cformula.get_res_residue () in
+      let str_res = if r then "UNSAT" else "SAT" in
+      print_endline (" " ^ str_res)
+    else ()
+    in
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let _ = if !Globals.enable_time_stats then
       begin

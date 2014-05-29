@@ -229,7 +229,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)
   let prove_conj_conseq_conj_ante (conj_ante, a_hg) ante_nemps1 (norm_conj_conseq,conj_conseq_hg)=
-    let _ = Debug.info_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
+    let _ = Debug.tinfo_hprint (add_str "sub ante" Cprinter.prtt_string_of_formula) conj_ante no_pos in
     let r = Frame.check_imply_w_norm prog true a_hg conj_conseq_hg in
     (************use sleek for testing**********)
     let call_sleek ()=
@@ -265,7 +265,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> true, ctx
       | f::rest ->
-            let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
+            let _ = Debug.tinfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
             let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 f [] ctx in
             if not r then false ,lc else
                prove_list_conseqs rest_ante_fs ante_nemps0 rest lc
