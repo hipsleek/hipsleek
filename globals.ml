@@ -980,6 +980,8 @@ let move_exist_to_LHS = ref false
 
 let max_renaming = ref false
 
+let smt_compete_mode = ref false
+
 let anon_exist = ref true
 
 let simplify_pure = ref false

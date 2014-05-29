@@ -529,7 +529,7 @@ let run st prover input timeout =
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
           Printexc.print_backtrace stdout;
-          print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
+          print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted; }
@@ -546,7 +546,7 @@ let rec prelude () = ()
 (* start z3 system in a separated process and load redlog package *)
 and start() =
   if not !is_z3_running then (
-    print_string "Starting z3... \n"; flush stdout;
+    print_string_if (not !Globals.smt_compete_mode) "Starting z3... \n"; flush stdout;
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then

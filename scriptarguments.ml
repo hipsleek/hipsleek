@@ -654,6 +654,16 @@ let common_arguments = [
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
+  ("--smt-compete", 
+     Arg.Unit
+      (fun _ -> 
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.smt_compete_mode:=true),
+   "SMT competition mode - essential printing only");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

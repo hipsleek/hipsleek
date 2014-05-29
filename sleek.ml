@@ -444,6 +444,8 @@ let _ =
           else ()
     in
     let _ = sleek_epilogue () in
+    let _ = if !Globals.smt_compete_mode then print_endline "SMT Compete OUTCOME" in 
+    (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let _ = if !Globals.enable_time_stats then
       begin
         let ptime4 = Unix.times () in
@@ -462,5 +464,5 @@ let _ =
     let _ =
       if (!Globals.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string "\n"
+    print_string_if (not !Globals.smt_compete_mode)  "\n"
   )

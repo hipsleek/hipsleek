@@ -204,18 +204,22 @@ let tinfo_zprint m p = trace_zprint m p
 let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
-let info_pprint (msg:string) (pos:loc) : unit = 
-	ho_print true (fun a -> " "^a) msg
+let info_pprint (msg:string) (pos:loc) : unit =
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print true (fun x -> " "^(pr x)) m
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-	if !Globals.sap then ho_print true (fun x -> " "^(pr x)) m
-        else ()
+  let flag = not(!Globals.smt_compete_mode) in
+  if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
+  else ()
 
 let info_zprint m (pos:loc) = 
-	ho_print true (fun x -> Lazy.force x) m
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
 (* 	lazy_print (prior_msg pos) msg *)
