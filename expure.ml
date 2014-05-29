@@ -161,12 +161,31 @@ let ef_unsat (f : ef_pure) : bool =
 
 *)
 (* remove unsat terms *)
-let ef_elim_exists_x (svl : spec_var list) (epf : ef_pure) : ef_pure =
-  epf
+let ef_elim_exists (svl : spec_var list) (epf : ef_pure) : ef_pure =
+  let (baga,pure) = epf in
+  let _ = Debug.binfo_pprint "ef_elim_exists" no_pos in
+  let _ = Debug.binfo_pprint "==============" no_pos in
+  let _ = Debug.binfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in
+  let _ = Debug.binfo_hprint (add_str "baga" string_of_spec_var_list) baga no_pos in
+  let _ = Debug.binfo_hprint (add_str "pure" Cprinter.string_of_pure_formula) pure no_pos in
+  let p_aset = pure_ptr_equations pure in
+  let p_aset = EMapSV.build_eset p_aset in
+  let eset2 = EMapSV.elim_elems p_aset svl in
+  let _ = Debug.binfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in
+  let new_pure = EMapSV.domain eset2 in
+  let eq_all = List.map (fun v -> 
+      let lst = EMapSV.find_equiv_all v p_aset in
+      List.filter (fun v -> not(List.exists (eq_spec_var v) svl)) lst
+  ) baga in
+  let new_baga = List.fold_left (fun acc lst -> match lst with
+    | [] -> acc
+    | h::_ -> h::acc) [] eq_all in
+  let _ = Debug.binfo_hprint (add_str "new baga" string_of_spec_var_list) new_baga no_pos in
+   (new_baga,pure)
 
 let ef_elim_exists (svl : spec_var list) (epf : ef_pure) : ef_pure =
   Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list string_of_ef_pure string_of_ef_pure
-      ef_elim_exists_x svl epf
+      ef_elim_exists svl epf
 
 (* ef_unsat_disj :  ef_pure_disj -> ef_pure_disj *)
 (* remove unsat terms *)
@@ -449,7 +468,7 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident
   let inv_list = List.map (fun epd -> elim_unsat_disj epd) inv_list in
   let inv_list = List.map (fun epd -> elim_trivial_disj epd) inv_list in
   let inv_list = sel_hull_ef inv_list disj_num in
-  let _ = Debug.binfo_hprint (pr_list string_of_ef_pure_disj) inv_list no_pos in
+  let _ = Debug.binfo_hprint (add_str "fix_iter" (pr_list string_of_ef_pure_disj)) inv_list no_pos in
   let rec helper map view_list inv_list =
     if fix_test map view_list inv_list
     then
@@ -464,7 +483,7 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident
       let inv_list = List.map (fun epd -> elim_unsat_disj epd) inv_list in
       let inv_list = List.map (fun epd -> elim_trivial_disj epd) inv_list in
       let inv_list = sel_hull_ef inv_list disj_num in
-      let _ = Debug.binfo_hprint (pr_list string_of_ef_pure_disj) inv_list no_pos in
+      let _ = Debug.binfo_hprint (add_str "fix_iter2" (pr_list string_of_ef_pure_disj)) inv_list no_pos in
       helper map view_list inv_list
   in
   let inv_list = helper map view_list inv_list in
