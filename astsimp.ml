@@ -2122,9 +2122,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (transed_views2,mutrec_views)
   in
   (*******************************)
-  (* check whether this view call other views or not *)
-  let check_view (view_decl : Cast.view_decl) : bool = true
-  in
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
