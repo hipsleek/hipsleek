@@ -45,6 +45,14 @@ why self triggered lemma but not non-self
 Why this discrepancy?
 
 =========================================================================
+# odd-lseg9a.slk
+
+lemma_unsafe self::olseg<p> *p::node<z> <-> 
+    (exists uu: self::node<uu>*uu::olseg<z>).
+
+(1) add a message that unsafe lemma dded
+(2) complex lemma cannot be proven
+(3) complex lemma cannot be applied
 =========================================================================
 =========================================================================
 =========================================================================

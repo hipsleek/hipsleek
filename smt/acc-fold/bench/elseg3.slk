@@ -11,13 +11,25 @@ lemma_safe self::elseg<p> <- (exists u: self::elseg<u>*u::elseg<p>).
 lemma_safe self::elseg<p> -> (exists u: self::elseg<u>*u::elseg<p>).
 
 checkentail_exact x::node<a>* a::node<b>*b::elseg<p> |- x::elseg<p>.
-print residue.
+expect Valid.
+//print residue.
 
 checkentail_exact x::node<a>* a::node<p> |- x::elseg<p>.
-print residue.
+expect Valid.
+//print residue.
 
 checkentail_exact x::node<a>* a::elseg<p> |- x::elseg<p>.
-print residue.
+expect Fail.
+//print residue.
 
 checkentail_exact x::node<a>* a::node<b>*b::node<p> |- x::elseg<p>.
+expect Fail.
 print residue.
+
+checkentail_exact x::elseg<q>*q::node<q2>*q2::node<p> |- x::elseg<p>.
+expect Valid.
+//print residue.
+
+checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |- z::elseg<p>.
+expect Valid.
+//print residue.
