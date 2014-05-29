@@ -92,7 +92,7 @@ let ef_conv_enum ((baga,f) : ef_pure) : formula =
 
 let ef_conv_disj_x (disj : ef_pure_disj) : formula =
   if (List.length disj = 0) then
-    mkTrue no_pos
+    mkFalse no_pos
   else
     let rf = List.fold_left (fun f1 efp ->
         (* let f2 = ef_conv efp in *)
@@ -109,7 +109,7 @@ let ef_conv_disj (disj : ef_pure_disj) : formula =
 
 let ef_conv_enum_disj_x (disj : ef_pure_disj) : formula =
   if (List.length disj = 0) then
-    mkTrue no_pos
+    mkFalse no_pos
   else
     List.fold_left (fun f efp ->
         mkOr f (ef_conv_enum efp) None no_pos
@@ -428,9 +428,9 @@ let build_ef_view (map : (ident, ef_pure_disj) Hashtbl.t) (args_map : (ident, sp
 (* let pair_list = List.combine lhs_list rhs_list in *)
 (* let r_list = List.map (fun (a,c) -> ef_imply a c) pair_list in *)
 let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
-  let lhs_list = List.map (fun vd ->
+  let lhs_list = inv_list in
+  let rhs_list = List.map (fun vd ->
       Hashtbl.find map vd.Cast.view_name) view_list in
-  let rhs_list = inv_list in
   let pair_list = List.combine lhs_list rhs_list in
   let r_list = List.map (fun (a, c) ->
       ef_imply a c) pair_list in
