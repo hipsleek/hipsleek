@@ -2305,7 +2305,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
   wrap_proving_kind PK_Compute_Base_Case compute_base_case_x_op ()
       
 and set_materialized_prop_x cdef =
-  let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
+  let args = (CP.SpecVar (Named cdef.C.view_data_name, self, Unprimed))::cdef.C.view_vars in
   let mvars = find_materialized_prop args cdef.C.view_materialized_vars (C.formula_of_unstruc_view_f cdef) in
   (cdef.C.view_materialized_vars <- mvars; cdef)
       

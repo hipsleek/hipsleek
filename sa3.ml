@@ -2768,7 +2768,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
             | Named id -> if String.compare id "" = 0  then
                 let svl = (CF.h_fv hp_def.CF.def_lhs)@(List.fold_left (fun l (f,_) -> l@(CF.fv f)) [] hp_def.CF.def_rhs) in
                 let r_svl = List.filter (fun ((CP.SpecVar (rt1, r_id1, rp1))) ->
-                    String.compare r_id r_id1 = 0 && not (is_null_type rt1)
+                    String.compare r_id r_id1 = 0
                 ) svl in
                 if r_svl = [] then hp_def else
                   let nr = (CP.SpecVar (CP.type_of_spec_var (List.hd r_svl), r_id, rp)) in
