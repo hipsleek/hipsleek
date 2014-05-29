@@ -976,7 +976,6 @@ let move_exist_to_LHS = ref false
 
 let max_renaming = ref false
 
-let smt_compete_mode = ref false
 
 let anon_exist = ref true
 
@@ -1161,6 +1160,18 @@ let do_infer_inv = ref false
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+let smt_compete_mode = ref false
+
+let _ = if !smt_compete_mode then
+  begin
+          (* Debug.trace_on := false; *)
+          (* Debug.devel_debug_on:= false; *)
+          silence_output:=true;
+          enable_count_stats:=false;
+          enable_time_stats:=false;
+          print_core:=false;
+          print_core_all:=false;
+  end
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)

@@ -34,8 +34,14 @@ struct
   let pr_id x = x
   let pr_string x = "\""^x^"\""
   
+  let print_endline_quiet s = 
+    if !Globals.smt_compete_mode then () 
+    else print_endline s 
   let print_endline_if b s = if b then print_endline s else ()
   let print_string_if b s = if b then print_string s else ()
+  let print_string_quiet s = 
+    if !Globals.smt_compete_mode then () 
+    else print_string s 
 
   let pr_var_prime (id,p) = match p with
     | Globals.Primed -> id^"'"
@@ -686,7 +692,7 @@ struct
 
   let warn msg = 
     warning_no #inc;
-    print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
+    Basic.print_string_quiet ("*** Warning: "^ msg ^ "\n"); flush_all()
 
   let warn_if_none ov msg = match ov with
     | None -> warn msg

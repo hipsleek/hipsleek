@@ -5,6 +5,10 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
+let _ = if !smt_compete_mode then
+  begin
+    trace_on := false;
+  end
 let log_devel_debug = ref false
 let debug_log = Buffer.create 5096
 
