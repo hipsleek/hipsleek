@@ -39,7 +39,7 @@ void main_fail()
   ensures emp;
 {
   barrier b1 = newBarrier(2);
-  int id1 = fork(participant1,b1);
+  thrd id1 = fork(participant1,b1);
   join(id1); //inconsistent detected when join()
   // as two nodes of barrier b1 have different phase numbers
   destroyBarrier(b1);
@@ -55,8 +55,8 @@ void main()
 {
   barrier b1 = newBarrier(2);
   barrier b2 = newBarrier(2);
-  int id1 = fork(participant_fail,b1,b1);//participant_fail failed
-  int id2 = fork(participant_fail,b2,b2);
+  thrd id1 = fork(participant_fail,b1,b1);//participant_fail failed
+  thrd id2 = fork(participant_fail,b2,b2);
   join(id1);
   join(id2);
   destroyBarrier(b1);

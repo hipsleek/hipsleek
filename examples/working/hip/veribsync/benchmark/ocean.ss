@@ -220,8 +220,8 @@ void main()
   /* initialize constants and variables
      id is a global shared variable that has fetch-and-add operations
      performed on it by processes to obtain their pids.   */
-  int id1 = fork(slave,barr);
-  int id2 = fork(slave,barr);
+  thrd id1 = fork(slave,barr);
+  thrd id2 = fork(slave,barr);
   //
   join(id1);
   join(id2);

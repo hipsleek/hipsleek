@@ -33,8 +33,8 @@ void main()
   int n;
   int bs;
   assume(exists r: n'=r*bs' & n'>0 & bs'>0);//'
-  int id1 = fork(thread,b,n,bs);
-  int id2 = fork(thread,b,n,bs);
+  thrd id1 = fork(thread,b,n,bs);
+  thrd id2 = fork(thread,b,n,bs);
   join(id1);
   join(id2);
   dprint;

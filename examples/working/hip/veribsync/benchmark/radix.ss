@@ -144,7 +144,7 @@ void main()
 
 
   /* Fill the random-number array. */
-  int id1,id2;
+  thrd id1,id2;
   id1 = fork(slave_sort,barrier_rank,barrier_key,max_num_digits);
   id2 = fork(slave_sort,barrier_rank,barrier_key,max_num_digits);
 

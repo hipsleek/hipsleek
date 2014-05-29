@@ -4019,7 +4019,7 @@ formula*)
 and compose_formula_join (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let pr1 = !print_formula in
   let pr3 = !print_svl in
-   Debug.no_3 "compose_formula" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_join_x delta phi x flow_tr pos) delta phi x
+   Debug.no_3 "compose_formula_join" pr1 pr1 pr3 pr1 (fun _ _ _ -> compose_formula_join_x delta phi x flow_tr pos) delta phi x
 
 and view_node_types (f:formula):ident list = 
   let rec helper (f:h_formula):ident list =  match f with
@@ -13761,8 +13761,9 @@ let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
       (fun _ _ _ _ -> prepost_of_release_x var sort args inv lbl pos) var sort args inv
 
 (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
-(* Put post into formula_*_and of f instread*)
-let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+(* post is the post-state of the newly spawn thread *)
+(* Put post into either formula_*_and or a thread node of f instread*)
+let compose_formula_w_thrd_x (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
   (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
   (*Rename ref_vars for later join*)
   let rs = CP.fresh_spec_vars ref_vars in
@@ -13800,30 +13801,43 @@ let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_fo
           Or ({formula_or_f1 = helper f f1; formula_or_f2 =  helper f f2; formula_or_pos = pos}) (*This case can not happen*)
       | _ ->
           (*Base or Exists*)
-          let qvars,base = split_quantifiers post in
-          let one_f = one_formula_of_formula base id delayed_f in
-          let one_f = {one_f with formula_ref_vars = ref_vars;} in
-          (*add thread id*)
-          (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
-          let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
-          let f1 = add_quantifiers evars f in
-          let f2 = add_formula_and [one_f] f1 in
-          f2
+            if (!Globals.allow_threads_as_resource) then
+              begin
+                (* --en-thrd-resource *)
+                let dl = CP.remove_redundant (MCP.pure_of_mix delayed_f) in
+                let ht = mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true post dl None pos in
+                let ht_f = formula_of_heap ht no_pos in
+                normalize_x f ht_f pos
+              end
+            else
+              begin
+                (* --en-thrd-and-conj *)
+                let qvars,base = split_quantifiers post in
+                let one_f = one_formula_of_formula base id delayed_f in
+                let one_f = {one_f with formula_ref_vars = ref_vars;} in
+                (*add thread id*)
+                (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
+                let evars = (* ref_vars@ *)qvars in (*TO CHECK*)
+                let f1 = add_quantifiers evars f in
+                let f2 = add_formula_and [one_f] f1 in
+                f2
+              end
   in
   helper new_f3 new_post2
 
-let compose_formula_and (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
-  Debug.no_3 "compose_formula_and"
+let compose_formula_w_thrd (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+  Debug.no_3 "compose_formula_w_thrd"
       !print_formula 
       !print_formula
       !print_mix_formula
       !print_formula
-      (fun _ _ _ -> compose_formula_and_x f post delayed_f id ref_vars val_vars pos) f post delayed_f
+      (fun _ _ _ -> compose_formula_w_thrd_x f post delayed_f id ref_vars val_vars pos) f post delayed_f
 
-(*add the post condition (phi) into formul_*_and *)
-(*special compose_context_formula for concurrency*)
-(*Ctx es o (f1 or f2) -> OCtx (es o f1) (es o f2)*)
-let compose_context_formula_and (ctx : context) (phi : formula) (delayed_f: MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) pos =
+(* post is the post-state of the newly spawn thread *)
+(* add the post condition (phi) into either formul_*_and or a thread node *)
+(* special compose_context_formula for concurrency*)
+(* Ctx es o (f1 or f2) -> OCtx (es o f1) (es o f2)*)
+let compose_context_formula_w_thrd (ctx : context) (phi : formula) (delayed_f: MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) pos =
   let rec helper ctx phi = 
     (match ctx with
       | Ctx es -> begin
@@ -13841,7 +13855,7 @@ let compose_context_formula_and (ctx : context) (phi : formula) (delayed_f: MCP.
                 let es = clear_entailment_history_es_es es in
                 let f = es.es_formula in
                 (*   (\*IMITATE CF.COMPOSE but do not compose 2 formulas*\) *)
-                let f2 = compose_formula_and f phi delayed_f id ref_vars val_vars pos in
+                let f2 = compose_formula_w_thrd f phi delayed_f id ref_vars val_vars pos in
                 let new_es = {es with
                     es_formula = f2;
                     es_unsat_flag =false;}

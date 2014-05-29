@@ -253,8 +253,8 @@ void main()
   initoutput();
   tab_init();
   //
-  int id1 = fork(SlaveStart,b,tnow,dtime,tstop);
-  int id2 = fork(SlaveStart,b,tnow,dtime,tstop);
+  thrd id1 = fork(SlaveStart,b,tnow,dtime,tstop);
+  thrd id2 = fork(SlaveStart,b,tnow,dtime,tstop);
   //
   join(id1);
   join(id2);

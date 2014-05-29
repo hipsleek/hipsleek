@@ -37,8 +37,8 @@ void main()
 {
   barrier b1 = newBarrier(2);
   barrier b2 = newBarrier(2);
-  int id1 = fork(participant,b1,b2);
-  int id2 = fork(participant,b1,b2);
+  thrd id1 = fork(participant,b1,b2);
+  thrd id2 = fork(participant,b1,b2);
   join(id1);
   join(id2);
   destroyBarrier(b1);
@@ -54,8 +54,8 @@ void main_fail()
 {
   barrier b1 = newBarrier(2);
   barrier b2 = newBarrier(2);
-  int id1 = fork(participant_fail,b1,b1);//participant_fail failed
-  int id2 = fork(participant_fail,b2,b2);
+  thrd id1 = fork(participant_fail,b1,b1);//participant_fail failed
+  thrd id2 = fork(participant_fail,b2,b2);
   join(id1);
   join(id2);
   destroyBarrier(b1);

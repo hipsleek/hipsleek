@@ -146,8 +146,8 @@ void Compute_Octree(barrier SlaveBarrier)
   //...
   Allocate_Pyramid_Level();
   //...
-  int id1 = fork(Compute_Base,SlaveBarrier);//+1
-  int id2 = fork(Compute_Base,SlaveBarrier);//
+  thrd id1 = fork(Compute_Base,SlaveBarrier);//+1
+  thrd id2 = fork(Compute_Base,SlaveBarrier);//
   join(id1);
   join(id2);
   //...
@@ -203,8 +203,8 @@ void Compute_Opacity(barrier SlaveBarrier)
   //...
   Allocate_Opacity();
   //...
-  int id1 = fork(Opacity_Compute,SlaveBarrier);//+1
-  int id2 = fork(Opacity_Compute,SlaveBarrier);//+1
+  thrd id1 = fork(Opacity_Compute,SlaveBarrier);//+1
+  thrd id2 = fork(Opacity_Compute,SlaveBarrier);//+1
   join(id1);
   join(id2);
 }
@@ -241,8 +241,8 @@ void Compute_Normal(barrier SlaveBarrier)
   //...
   Allocate_Normal();
   //...
-  int id1 = fork(Normal_Compute,SlaveBarrier);//+1
-  int id2 = fork(Normal_Compute,SlaveBarrier);//+1
+  thrd id1 = fork(Normal_Compute,SlaveBarrier);//+1
+  thrd id2 = fork(Normal_Compute,SlaveBarrier);//+1
   join(id1);
   join(id2);
 }
@@ -329,7 +329,7 @@ int getRotateSteps()
 }
 
 //main.C
- void Frame(ref barrier TimeBarrier, ref barrier SlaveBarrier, int adaptive, int num_nodes, ref int id1, ref int id2, ref int highest_sampling_boxlen, int HBOXLEN,int ROTATE_STEPS)
+ void Frame(ref barrier TimeBarrier, ref barrier SlaveBarrier, int adaptive, int num_nodes, ref thrd id1, ref thrd id2, ref int highest_sampling_boxlen, int HBOXLEN,int ROTATE_STEPS)
   requires ROTATE_STEPS>0 & num_nodes=2
   ensures  SlaveBarrier'::barrier(2,2,0)<pt1> * TimeBarrier'::barrier(2,2,0)<p1> & adaptive=0 & highest_sampling_boxlen' > 1 & p1=5*ROTATE_STEPS & pt1=4+2*ROTATE_STEPS & highest_sampling_boxlen'=HBOXLEN
            or  SlaveBarrier'::barrier(2,2,0)<pt1> * TimeBarrier'::barrier(2,2,0)<p1> & adaptive=0 & highest_sampling_boxlen' <= 1 & p1=3*ROTATE_STEPS & pt1=4+2*ROTATE_STEPS & highest_sampling_boxlen'=HBOXLEN
@@ -413,7 +413,7 @@ void main()
   adaptive = getAdaptive();
   //...
 
-  int id1,id2;
+  thrd id1,id2;
   Frame(TimeBarrier, SlaveBarrier, adaptive, num_nodes, id1, id2,highest_sampling_boxlen, HBOXLEN,ROTATE_STEPS);
 
   //...move join() into Frame

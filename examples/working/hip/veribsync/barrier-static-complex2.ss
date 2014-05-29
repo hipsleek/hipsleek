@@ -55,8 +55,8 @@ void main()
 {
   barrier b = newBarrier(2);
   int N=10;
-  int id1 = fork(thread1,b,N);
-  int id2 = fork(thread2,b,N);
+  thrd id1 = fork(thread1,b,N);
+  thrd id2 = fork(thread2,b,N);
   join(id1);
   join(id2);
   destroyBarrier(b);

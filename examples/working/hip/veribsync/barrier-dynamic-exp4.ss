@@ -28,8 +28,8 @@ void thread2(barrier b)
   waitBarrier(b);
   //phase 1
   addParticipant(b,1);
-  int id1 = fork(childthread1,b);
-  int id2 = fork(childthread2,b);
+  thrd id1 = fork(childthread1,b);
+  thrd id2 = fork(childthread2,b);
   //...
   join(id1);
   join(id2);
@@ -59,8 +59,8 @@ void main()
   ensures true;
 {
   barrier b = newBarrier(2);
-  int id1 = fork(thread1,b);
-  int id2 = fork(thread2,b);
+  thrd id1 = fork(thread1,b);
+  thrd id2 = fork(thread2,b);
   //dprint;
   join(id1);
   join(id2);

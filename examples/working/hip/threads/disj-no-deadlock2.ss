@@ -15,9 +15,9 @@ lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)
 
 void func(bool b, lock l1,lock l2)
  case {
-  b -> requires l1::LOCK(0.6)<> & [waitlevel<l1.mu # l1 notin LS] & b 
+  b -> requires l1::LOCK(0.6)<> & [waitlevel<l1.mu # l1 notin LS]
        ensures LS'=LS;
-  !b -> requires l2::LOCK(0.6)<> & [waitlevel<l2.mu # l2 notin LS] & !b 
+  !b -> requires l2::LOCK(0.6)<> & [waitlevel<l2.mu # l2 notin LS] 
        ensures LS'=LS;
   }
 

@@ -377,8 +377,8 @@ void main()
    *  Now create slave processes.
    */
 
-  int id1 = fork(StartRayTrace,start);
-  int id2 = fork(StartRayTrace,start);
+  thrd id1 = fork(StartRayTrace,start);
+  thrd id2 = fork(StartRayTrace,start);
   //
 
   join(id1);

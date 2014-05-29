@@ -1128,7 +1128,7 @@ let disable_pre_sat = ref true
 let do_infer_inv = ref false
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref true                (* option --classic is turned on or not? *)
+let opt_classic = ref false               (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 
 (** for type of frame inference rule that will be used in specs commands *)

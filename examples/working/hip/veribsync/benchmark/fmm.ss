@@ -356,8 +356,8 @@ void main()
   InitExpTables();
   CreateDistribution();
   //
-  int id1 = fork(ParallelExecute,synch,time_steps);
-  int id2 = fork(ParallelExecute,synch,time_steps);
+  thrd id1 = fork(ParallelExecute,synch,time_steps);
+  thrd id2 = fork(ParallelExecute,synch,time_steps);
   //
   join(id1);
   join(id2);

@@ -172,8 +172,8 @@ void main()
   }
 
   //
-  int id1 = fork(SlaveStart,start,n,block_size);
-  int id2 = fork(SlaveStart,start,n,block_size);
+  thrd id1 = fork(SlaveStart,start,n,block_size);
+  thrd id2 = fork(SlaveStart,start,n,block_size);
   //
   join(id1);
   join(id2);

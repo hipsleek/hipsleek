@@ -220,8 +220,8 @@ void main()
   InitU2();
 
   /* fire off P processes */
-  int id1 = fork(SlaveStart,start,test_result);
-  int id2 = fork(SlaveStart,start,test_result);
+  thrd id1 = fork(SlaveStart,start,test_result);
+  thrd id2 = fork(SlaveStart,start,test_result);
   //
   join(id1);
   join(id2);

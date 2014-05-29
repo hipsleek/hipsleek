@@ -24,8 +24,8 @@ void main()
   ensures emp & flow __norm;
 {
   barrier b = newBarrier(2);
-  int id1 = fork(thread1,b);
-  int id2 = fork(thread2,b);
+  thrd id1 = fork(thread1,b);
+  thrd id2 = fork(thread2,b);
   //dprint;
   join(id1);
   join(id2); //ERROR

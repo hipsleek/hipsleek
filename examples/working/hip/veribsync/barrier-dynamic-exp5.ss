@@ -39,13 +39,13 @@ void main()
   removeParticipant(b,1);
 
   /* Now launch 4 parallel actions to serve as 4 participants */
-  int id1 = fork(thread,b);
+  thrd id1 = fork(thread,b);
 
-  int id2 = fork(thread,b);
+  thrd id2 = fork(thread,b);
 
-  int id3 = fork(thread,b);
+  thrd id3 = fork(thread,b);
 
-  int id4 = fork(thread,b);
+  thrd id4 = fork(thread,b);
 
   join(id1);
   join(id2);

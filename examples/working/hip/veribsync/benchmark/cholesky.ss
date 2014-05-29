@@ -361,8 +361,8 @@ void main()
   ComputeRemainingFO();
   ComputeReceivedFO();
 
-  int id1 = fork(Go,start);
-  int id2 = fork(Go,start);
+  thrd id1 = fork(Go,start);
+  thrd id2 = fork(Go,start);
   //
   join(id1);
   join(id2);

@@ -5863,17 +5863,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             ) ref_vars in
                                             let rs2 = if (!Globals.allow_threads_as_resource) then
                                                   (*Threas as resource*)
-                                                  let dl = CP.remove_redundant (MCP.pure_of_mix df) in
-                                                  let ht = CF.mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true new_post dl None pos in
-                                                  let f = CF.formula_of_heap ht no_pos in
-	                                              let rs1 = compose_context_formula ctx11 f new_ref_vars true Flow_replace pos in
-                                                  rs1
+                                                  let rs2 = compose_context_formula_w_thrd ctx11 new_post df id new_ref_vars pos in
+                                                  rs2
                                                 else
                                                   (*Threads as AND-conj*)
                                                   let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
-	                                              let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
+	                                          let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
                                                   (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
-                                                  let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
+                                                  let rs2 = compose_context_formula_w_thrd rs1 new_post df id new_ref_vars pos in
                                                   rs2
                                             in
 

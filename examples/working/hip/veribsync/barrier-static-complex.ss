@@ -43,8 +43,8 @@ void main()
   barrier b = newBarrier(2);
   int i=0;
   int j=i+10;
-  int id1 = fork(thread1,b,i);
-  int id2 = fork(thread2,b,j);
+  thrd id1 = fork(thread1,b,i);
+  thrd id2 = fork(thread2,b,j);
   //dprint;
   join(id1);
   assert(i'=10);//'

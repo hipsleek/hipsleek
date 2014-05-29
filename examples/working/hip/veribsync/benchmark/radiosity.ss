@@ -294,8 +294,8 @@ void main()
   if(batch_mode==1){
     /* In batch mode, create child processes and start immediately */
     //...
-    int id1 = fork(radiosity,barr);
-    int id2 = fork(radiosity,barr);
+    thrd id1 = fork(radiosity,barr);
+    thrd id2 = fork(radiosity,barr);
     //
     join(id1);
     join(id2);

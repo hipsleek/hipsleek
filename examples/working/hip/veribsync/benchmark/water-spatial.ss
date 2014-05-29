@@ -348,8 +348,8 @@ void main()
   //... printf
 
   /* spawn helper processes */
-  int id1 = fork(WorkStart,start,InterfBar,PotengBar,NSTEP,NSAVE,NPRINT);
-  int id2 = fork(WorkStart,start,InterfBar,PotengBar,NSTEP,NSAVE,NPRINT);
+  thrd id1 = fork(WorkStart,start,InterfBar,PotengBar,NSTEP,NSAVE,NPRINT);
+  thrd id2 = fork(WorkStart,start,InterfBar,PotengBar,NSTEP,NSAVE,NPRINT);
 
   /* macro to make main process wait for all others to finish */
   join(id1);

@@ -52,9 +52,9 @@ void main()
   cell x = newCell(2,0);//only 2 threads are allowed to access x
   int y,z,t;
   x.val = 5;
-  int id1 = fork(thread1,x,y);//thread1 accesses x
-  int id2 = fork(thread2,x,z);//thread2 accesses x
-  int id3 = fork(thread3,x,t);//thread3 DOES NOT
+  thrd id1 = fork(thread1,x,y);//thread1 accesses x
+  thrd id2 = fork(thread2,x,z);//thread2 accesses x
+  thrd id3 = fork(thread3,x,t);//thread3 DOES NOT
   join(id1);
   join(id2);
   join(id3);

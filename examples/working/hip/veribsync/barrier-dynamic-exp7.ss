@@ -25,8 +25,8 @@ void main()
   int numberTasks = 2;
   barrier b = newBarrier(numberTasks+1);
 
-  int id1 = fork(CalculationInTask,b);
-  int id2 = fork(CalculationInTask,b);
+  thrd id1 = fork(CalculationInTask,b);
+  thrd id2 = fork(CalculationInTask,b);
 
   //wait for all tasks to complete
   waitBarrier(b);
