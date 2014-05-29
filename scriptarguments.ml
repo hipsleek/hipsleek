@@ -532,6 +532,11 @@ let common_arguments = [
       Globals.sleek_logging_txt:=true;
       Globals.dump_sleek_proof:=true
   ), "Dump sleek proof log at end of command");
+  ("--gen-vc", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true;
+      Globals.sleek_gen_vc:=true
+  ), "Shorthand for --en-slk-logging");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)

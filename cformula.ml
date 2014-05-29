@@ -1730,6 +1730,10 @@ and is_thread (h : h_formula) = match h with
   | ThreadNode _ -> true
   | _ -> false
 
+and is_hole (h : h_formula) = match h with
+  | Hole _ -> true
+  | _ -> false
+
 and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;

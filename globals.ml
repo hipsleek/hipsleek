@@ -379,6 +379,7 @@ let proof_logging_time = ref 0.000
 let sleek_logging_txt = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
+let sleek_gen_vc = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
