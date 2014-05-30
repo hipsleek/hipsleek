@@ -2832,20 +2832,20 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
      * Find forward pointers
      *)
     (* self is always the forward pointers *)
-    let forward_ptrs = ref [self] in
+    let forward_ptrs = ref [] in
     forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
-    (* find forward poiters from equality path *)
-    List.iter (fun v1 ->
-      List.iter (fun sv ->
-        let v2 = P.name_of_spec_var sv in
-        try 
-          let _, length = Dijkstra.shortest_path vg v1 v2 in
-          (* path contains only equality edges *)
-          if (length = 0) then
-            forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
-        with _ -> ()
-      ) vdecl.view_vars
-    ) !forward_ptrs;
+    (* (* find forward poiters from equality path *)                                      *)
+    (* List.iter (fun v1 ->                                                               *)
+    (*   List.iter (fun sv ->                                                             *)
+    (*     let v2 = P.name_of_spec_var sv in                                              *)
+    (*     try                                                                            *)
+    (*       let _, length = Dijkstra.shortest_path vg v1 v2 in                           *)
+    (*       (* path contains only equality edges *)                                      *)
+    (*       if (length = 0) then                                                         *)
+    (*         forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]); *)
+    (*     with _ -> ()                                                                   *)
+    (*   ) vdecl.view_vars                                                                *)
+    (* ) !forward_ptrs;                                                                   *)
     
     (*
      * find forward_fields: the data-field edge from self to the views have same type
@@ -2891,7 +2891,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     List.iter (fun v1 ->
       List.iter (fun sv ->
         let v2 = P.name_of_spec_var sv in
-        try 
+        try
           let _, length = Dijkstra.shortest_path vg v1 v2 in
           if (length = 0) then (* path contains only Equality edges *)
             backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);

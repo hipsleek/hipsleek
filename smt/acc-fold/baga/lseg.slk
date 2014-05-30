@@ -5,22 +5,5 @@ data node {
 
 
 pred klseg<p> == self=p
-  or (exists a: self::node<a> * a::knlseg<p>)
+  or (exists a: self::node<a> * a::klseg<p>)
  inv true.
-
-
-pred lseg<p> == self=p
-  or (exists a: self::node<a> * a::nlseg<p>)
- inv true.
-
-pred knlseg<p> == self=p
-  or (exists a: self::node<a> * a::klseg<p>  * a::nlseg<p> & self!=p)
- inv true.
-
-pred nlseg<p> == self=p
-  or (exists a: self::node<a> * a::lseg<p> & self!=p)
- inv true.
-
-lemma_safe self::lseg<p> <-> (exists u: self::lseg<u> * u::lseg<p>).
-
-checkentail_exact x::node<a>*a::lseg<p> |- x::lseg<p>.
