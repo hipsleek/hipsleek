@@ -529,21 +529,16 @@ let process_data_def ddef =
 
 (*should merge with astsimp.convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
-  (*annotate field*)
-  let idatas = List.map (fun ddef ->
-      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-          let n_ann = if ann = [] then [gen_field_ann t] else ann in
-          ((t, c), pos, il, n_ann)
-      ) ddef.I.data_fields in
-      {ddef with I.data_fields = ndfields}
-  ) iprog.I.prog_data_decls in
-  let _ = iprog.I.prog_data_decls <- idatas in
   (* convert data *)
+  let _ = I.annotate_field_pure_ext iprog in
   List.iter (fun ddef ->
     let cddef = Astsimp.trans_data iprog ddef in
     !cprog.Cast.prog_data_decls <- cddef :: !cprog.Cast.prog_data_decls;
     if !perm=NoPerm || not !enable_split_lemma_gen then ()
-    else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef)) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
+    else (
+      process_lemma (Iast.gen_normalize_lemma_split ddef);
+      process_lemma (Iast.gen_normalize_lemma_comb ddef)
+    ) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
   ) iprog.I.prog_data_decls;
 
   (* convert pred *)
