@@ -40,7 +40,8 @@ and mater_source =
 and match_type =
   | Root
   | MaterializedArg of (mater_property*mater_source) 
-  | WArg
+        (* materialized match which can reveal some nodes when defn unfolded *)
+  | WArg (* indirect matching with other parameter *)
   
 and action = 
   | M_match of match_res
@@ -400,11 +401,15 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
 
 (* type: Cast.prog_decl ->
    Globals.ident ->
-   Cast.P.spec_var list ->
-   Cformula.CP.spec_var list ->
-   bool ->
-   Cformula.h_formula *)
-
+  Immutable.CP.spec_var list ->
+  Immutable.CP.spec_var list ->
+  Immutable.CP.ann ->
+  Cformula.h_formula ->
+  Cformula.CP.annot_arg list ->
+  (Cformula.h_formula * Cformula.h_formula *
+   (Cformula.h_formula * int) list * match_type)
+  list
+*)
 and view_mater_match prog c vs1 aset imm f anns =
   let pr1 = (fun x -> x) in
   let pr2 = !print_svl in
@@ -413,7 +418,9 @@ and view_mater_match prog c vs1 aset imm f anns =
   let pro3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pro4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
-  Debug.no_3 "view_mater_match" pr1 pr2 pr2 pr (fun _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) c vs1 aset
+  Debug.no_4 "view_mater_match" (add_str "heap_f" Cprinter.string_of_h_formula)
+      (add_str "c" pr1) (add_str "vs1" pr2) 
+      (add_str "aset" pr2) pr (fun _ _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) f c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f anns =
   let vdef = look_up_view_def_raw 11 prog.prog_view_decls c in
