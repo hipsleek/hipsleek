@@ -1395,18 +1395,21 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   in look_up_all_fields prog ddef
 
 and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
-  List.map (fun (id, t) ->
-    if not (is_type_var old_typ) then (
-      let msg = "type substitution error: cannot substitute '"
-                ^ (string_of_typ old_typ) ^ "' by '"
-                ^ (string_of_typ new_typ) ^ "'" in
-      report_error no_pos msg
-    )
-    else (
-      if (cmp_typ t old_typ) then (id, new_typ)
-      else (id, old_typ)
-    )
-  ) henv
+  if (cmp_typ old_typ new_typ) then henv
+  else (
+    List.map (fun (id, t) ->
+      if not (is_type_var old_typ) then (
+        let msg = "type substitution error: cannot substitute '"
+                  ^ (string_of_typ old_typ) ^ "' by '"
+                  ^ (string_of_typ new_typ) ^ "'" in
+        report_error no_pos msg
+      )
+      else (
+        if (cmp_typ t old_typ) then (id, new_typ)
+        else (id, old_typ)
+      )
+    ) henv
+  )
 
 and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
   try
