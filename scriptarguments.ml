@@ -161,6 +161,10 @@ let common_arguments = [
           Globals.dump_lemmas_med := true;
           Globals.dump_lemmas := true;),
    "enable lemma printing (short version)");
+  ("--dump-lem-processing-info", Arg.Set Globals.dump_lem_proc,
+   "Turn on printing during lemma processing (incl lemma proving) ");
+  ("--dlpi", Arg.Set Globals.dump_lem_proc,
+   "same as --dump-lem-processing-info ");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,

@@ -529,21 +529,16 @@ let process_data_def ddef =
 
 (*should merge with astsimp.convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
-  (*annotate field*)
-  let idatas = List.map (fun ddef ->
-      let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-          let n_ann = if ann = [] then [gen_field_ann t] else ann in
-          ((t, c), pos, il, n_ann)
-      ) ddef.I.data_fields in
-      {ddef with I.data_fields = ndfields}
-  ) iprog.I.prog_data_decls in
-  let _ = iprog.I.prog_data_decls <- idatas in
   (* convert data *)
+  let _ = I.annotate_field_pure_ext iprog in
   List.iter (fun ddef ->
     let cddef = Astsimp.trans_data iprog ddef in
     !cprog.Cast.prog_data_decls <- cddef :: !cprog.Cast.prog_data_decls;
     if !perm=NoPerm || not !enable_split_lemma_gen then ()
-    else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef)) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
+    else (
+      process_lemma (Iast.gen_normalize_lemma_split ddef);
+      process_lemma (Iast.gen_normalize_lemma_comb ddef)
+    ) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
   ) iprog.I.prog_data_decls;
 
   (* convert pred *)
@@ -895,73 +890,6 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let pr = Cprinter.string_of_struc_formula in
   let _ = Debug.tinfo_hprint (add_str "conseq(after meta-)" pr) conseq no_pos in 
-  (* let conseq = Solver.prune_pred_struc !cprog true conseq in *)
-  (* let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in  *)
-  (* (\* let _ = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *\) *)
-  (* (\* let _ = Debug.info_pprint "=============================================================" no_pos in *\) *)
-  (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in *)
-  (* let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in  *)
-  (* (\* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *\) *)
-  (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:" *)
-  (*                       ^"\n ### ivars = "^(pr_list pr_id ivars) *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n")) no_pos in *)
-  (* let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
-  (* let left_co = Lem_store.all_lemma # get_left_coercion in *)
-  (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante left_co in *)
-  (* let ante = Solver.normalize_formula_w_coers 11 !cprog es ante !cprog.Cast.prog_left_coercions in *)
-  (* let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in *)
-  (* let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization" *)
-  (*                       ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-  (*                       ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-  (*                       ^"\n\n")) no_pos in *)
-  (* let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in *)
-  (* let ctx = CF.build_context ectx ante no_pos in *)
-  (* let ctx = Solver.elim_exists_ctx ctx in *)
-  (* (\* List of vars appearing in original formula *\) *)
-  (* let orig_vars = CF.fv ante @ CF.struc_fv conseq in *)
-  (* (\* List of vars needed for abduction process *\) *)
-  (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
-  (* (\* Init context with infer_vars and orig_vars *\) *)
-  (* let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(\*  ||  *\) *)
-  (*             (\* CP.type_of_spec_var v == FuncT *\)) vars in *)
-  (* let (v_hp_rel,iv) = List.partition (fun v -> CP.type_of_spec_var v == HpT(\*  ||  *\) *)
-  (*             (\* CP.type_of_spec_var v == FuncT *\)) iv in *)
-  (* (\* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *\) *)
-  (* (\* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *\) *)
-  (* (\* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *\) *)
-  (* let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in *)
-  (* (\* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *\) *)
-  (* let _ = if !Globals.print_core || !Globals.print_core_all *)
-  (*   then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante) *)
-  (*       ^" "^(pr_list pr_id ivars) *)
-  (*     ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n")  *)
-  (*   else ()  *)
-  (* in *)
-  (* let ctx =  *)
-  (*   if !Globals.delay_proving_sat then ctx *)
-  (*   else CF.transform_context (Solver.elim_unsat_es 9 !cprog (ref 1)) ctx in *)
-  (* let _ = if (CF.isAnyFalseCtx ctx) then *)
-  (*       print_endline ("[Warning] False ctx") *)
-  (* in *)
-  (* let rs1, _ =  *)
-  (*   if not !Globals.disable_failure_explaining then *)
-  (*     Solver.heap_entail_struc_init_bug_inv !cprog false false  *)
-  (*       (CF.SuccCtx[ctx]) conseq no_pos None *)
-  (*   else *)
-  (*     Solver.heap_entail_struc_init !cprog false false  *)
-  (*       (CF.SuccCtx[ctx]) conseq no_pos None *)
-  (* in *)
-  (* (\* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *\) *)
-  (* let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in *)
-  (* (\*  let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in  *\) *)
-  (* (\* flush stdout; *\) *)
-  (* let res = *)
-  (*   if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
-  (*   else ((not (CF.isFailCtx rs))) in *)
-  (* CF.residues := Some (rs, res); *)
-  (* (res, rs,v_hp_rel) *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v ->
@@ -973,7 +901,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   ) ivars in
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
-  (res, rs,v_hp_rel)
+  ((res, rs,v_hp_rel), (ante,conseq))
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
@@ -981,7 +909,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let nn = (sleek_proof_counter#get) in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass ivars iante0) x in
-  Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
+  Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
 
 let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)
@@ -1687,7 +1615,14 @@ let process_shape_extract sel_vnames=
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  wrap_classic etype (run_infer_one_pass [] iante0) iconseq0
+  wrap_classic etype (fun conseq ->
+      let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
+       let _ = if !Globals.gen_smt then
+         let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq)] in
+         ()
+       else () in
+      r
+  ) iconseq0
   
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout = 
@@ -1921,7 +1856,7 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
     try 
-      let valid, rs, sel_hps = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
+      let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass ivars iante0) iconseq0 in
       print_entail_result sel_hps valid rs num_id
     with ex -> 
         (* print_exc num_id *)

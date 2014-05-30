@@ -192,6 +192,12 @@ let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
 (* elim clause with not relevant spec var *)
 (* self > 0 & x = y -> [self,y] -> self > 0 *)
 let elim_clause_x (pf : formula) (args : spec_var list) : formula =
+  (* let svl = fv pf in *)
+  (* let filtered_svl = List.filter (fun sv -> *)
+  (*     let SpecVar(_,name,_) = sv in *)
+  (*     not (name="self" or (List.mem sv args))) svl in *)
+  (* let _ = Debug.tinfo_hprint (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
+  (* drop_svl_pure pf filtered_svl *)
   let conj_list = list_of_conjs pf in
   let filtered_conj_list = List.filter (fun pf ->
       let svl = fv pf in
@@ -392,7 +398,6 @@ and build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula
 
 let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : formula) (args : spec_var list) : ef_pure_disj =
   [([], elim_clause pf args)]
-  (* [([], filter_var pf args)] *)
   (* match pf with *)
   (*   | BForm (bf, _) -> *)
   (*         build_ef_b_formula map bf *)

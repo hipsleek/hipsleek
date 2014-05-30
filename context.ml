@@ -450,16 +450,16 @@ and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = l_vname) then None
   else
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
-    let _ = DD.binfo_hprint (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
+    let _ = DD.ninfo_hprint (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
     match l_vargs with
       | [] -> None
       | _  -> 
             let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
-            let _ = Debug.binfo_hprint (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
+            let _ = Debug.ninfo_hprint (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
             try
               let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in 
               (* above goes awry when we're using self var in the entailment! andreea *)
-              let _ = Debug.binfo_hprint (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
+              let _ = Debug.ninfo_hprint (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
               Some (Coerc_mater c,mv)
             with  _ ->  (* andreeac below test is inefficient. to be replaced *)
                 if(( List.length (Cformula.get_HRels_f c.coercion_body)) > 0) then
