@@ -55,6 +55,14 @@ lemma_unsafe self::olseg<p> *p::node<z> <->
 (2) complex lemma cannot be proven
 (3) complex lemma cannot be applied
 =========================================================================
+../../../sleek lsegex3.slk --gen-smt
+
+Why exception below? Which smt file generated?
+
+ <1>emp&x!=p&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> lem_12) ==> (left: lem_12) ==>  Match ==>  Match ==> ]]
+
+Fatal error: exception Not_found
 =========================================================================
 =========================================================================
 =========================================================================
