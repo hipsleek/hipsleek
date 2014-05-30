@@ -640,6 +640,9 @@ let is_eq_view_spec a b =
   Debug.no_2 "is_eq_view_spec" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_spec a b) 
       a.h_formula_view_name b.h_formula_view_name
 
+let mk_mem_formula vs =
+  { mem_formula_mset = CP.DisjSetSV.one_list_dset vs}
+
 (* returns false if unsatisfiable *)
 let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in

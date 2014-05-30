@@ -363,6 +363,8 @@ let star_ef_pure_disjs (efpd1 : ef_pure_disj) (efpd2 : ef_pure_disj) : ef_pure_d
   Debug.no_2 "star_ef_pure_disjs" string_of_ef_pure_disj string_of_ef_pure_disj string_of_ef_pure_disj
       star_ef_pure_disjs_x efpd1 efpd2
 
+(* WN : what is the purpose of args and args_map? *)
+(*      why do we need init_map? can we assume false at beginning? *)
 let rec build_ef_heap_formula_x (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cformula.h_formula)
       (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
   match hf with

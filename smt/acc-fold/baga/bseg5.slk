@@ -8,15 +8,33 @@ pred b1<y,z> ==
      or (exists u: self::node<u> * u::b1<y,z> & u=z ).
 
 /*
-# bseg5.slk
+# bseg5.slk -dre "conj_from"
+
+conv_from_ef_disj@12
+conv_from_ef_disj inp1 :[([z], x=y),([x,z], z=y)]
+conv_from_ef_disj@12 EXIT: x=y #  [[z]]
+
+should be:
+   x=y & z!=null \/ z=y & x!=null & z!=null,  [[z],[x,z]]
+
+
+In general:
+(([a,b],pure1) \/ [c],pure2) 
+   ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
 
 
 */
 
 
+checkentail x::b1<y,z> * z::node<_> |- false.
+expect Fail.
+
 checkentail x::b1<y,z> * z::node<_> & x!=y & y!=z |- false.
-print residue.
 expect Valid.
+
+checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
+expect Fail.
+
 
 
 /*

@@ -35,6 +35,8 @@ module LP = CP.Label_Pure
 type trans_exp_type =
   (C.exp * typ)
 
+let view_args_map = CP.view_args_map
+
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
 (* let strip_exists_pure f = *)
@@ -2092,6 +2094,7 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
   (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list ->
   C.view_decl list *)
 
+
 and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let _ = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
@@ -2125,7 +2128,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
-      let args_map = Hashtbl.create 1 in
+      let args_map = view_args_map in
       let _ = List.iter (fun vd ->
           let self_var = Cpure.SpecVar(UNK, self, Unprimed) in
           let args = self_var::vd.Cast.view_vars in
