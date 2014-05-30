@@ -1016,6 +1016,8 @@ let check_coercions = ref false
 let dump_lemmas = ref false
 let dump_lemmas_med = ref false
 
+let dump_lem_proc = ref false
+
 let num_self_fold_search = ref 0
 
 let self_fold_search_flag = ref false
