@@ -7,13 +7,17 @@ pred b1<y,z> ==
      self=y
      or (exists u: self::node<u> * u::b1<y,z> & u=z ).
 
-//[([], self=y),([self], true),([z,self], true)]
-// expecting  [([],self=y),([self],y=z),([self,z], y=z)].
+/*
+# bseg5.slk
+
+
+*/
 
 
 checkentail x::b1<y,z> * z::node<_> & x!=y & y!=z |- false.
 print residue.
 expect Valid.
+
 
 /*
 

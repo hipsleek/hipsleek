@@ -2138,17 +2138,18 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           else
             ls@[[cv.C.view_name]]
       ) ls_mut_rec_views1 cviews0 in
-      let map_invs = Hashtbl.create 1 in
+      (* let map_baga_invs = Hashtbl.create 1 in *)
+      (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           let views_list = List.filter (fun vd ->
               List.mem vd.Cast.view_name idl
           ) cviews0 in
-          let new_invs_list = Expure.fix_ef views_list 10 args_map map_invs in
+          let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
           let new_map = List.combine views_list new_invs_list in
-          List.iter (fun (cv,inv) -> Hashtbl.add map_invs cv.C.view_name inv) new_map
+          List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
       ) ls_mut_rec_views1 in
       let cviews1 = List.map (fun cv ->
-          let inv = Hashtbl.find map_invs cv.C.view_name in
+          let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
           let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
           {cv with C.view_baga_inv = Some inv}
       ) cviews0 in

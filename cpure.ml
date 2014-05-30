@@ -258,6 +258,7 @@ type ef_pure = (
 (* [] denotes false *)
 type ef_pure_disj = ef_pure list
 
+let map_baga_invs : ((string,ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 
 let is_False cp = match cp with
   | BForm (p,_) -> 
