@@ -8,7 +8,8 @@
 # append.ss
 
 sll,dll
-handle Hole
+
+to check sleek for append_sll_cll (2 entailments fail due to "residue is forbidden")
 
 =========================================================================
 # tll.ss
