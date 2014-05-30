@@ -10,6 +10,13 @@ let subst_pred_self = ref (true: bool)
 let smt_self =  ("in": string)
 let pred_pre_fix_var =  ref ("?": string)
 
+let smt_string_of_primed p =
+  match p with
+    | Primed -> "prm"
+    | Unprimed -> ""
+
+let string_of_sv (id,p) = id ^ (smt_string_of_primed p)
+
 let reset_smt_number () =
   smt_number :=0
 
@@ -113,7 +120,8 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
           "(ssep " ^ (nhf1) ^ " " ^ (nhf2) ^ ")", n2
     | Iformula.StarMinus _ -> "(starminus )",pred_abs_num
     | Iformula.HeapNode hn ->
-          let (id,_) = hn.Iformula.h_formula_heap_node in
+          let (n,p) = hn.Iformula.h_formula_heap_node in
+          let id = string_of_sv (n,p) in
           let heap_name = hn.Iformula.h_formula_heap_name in
           let s_vnode, n_pred_abs_num = (* if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)  heap_name all_view_names then *)
             (* "index alpha" ^ (string_of_int  pred_abs_num) ^ " ",  pred_abs_num+1 else *) "", pred_abs_num in
@@ -126,7 +134,7 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
                   "(sref " ^ (List.fold_left (fun s (id, exp) -> s ^ "(ref " ^ id ^ " "  ^ (recf_e exp) ^ ") ") "" (List.combine stl hn.Iformula.h_formula_heap_arguments)) ^ ")"
                 else
                   (List.fold_left (fun s (id, exp) -> s ^ " (ref " ^ id ^ " "  ^ (recf_e exp) ^ ")") "" (List.combine stl hn.Iformula.h_formula_heap_arguments))
-              in "(pto " ^ pre_fix_var  ^ id ^ args  ^ ")"
+              in "(pto " ^ pre_fix_var  ^ id ^ " " ^ args  ^ ")"
             with Not_found -> "(" ^ heap_name ^ " " ^ pre_fix_var ^ id ^ (List.fold_left (fun s exp -> s ^ " " ^ (recf_e exp)) "" hn.Iformula.h_formula_heap_arguments) ^ ")"
           in (  s_vnode ^ s ),n_pred_abs_num
     | Iformula.HeapNode2 hn2 -> "HeapNode2",pred_abs_num
@@ -312,8 +320,8 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
   (* let s0 = List.fold_left (fun s0 (id,sv_info) -> *)
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
-  let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,_)) ->
-      s0 ^ "(declare-fun " ^ (id) ^ " () " ^ (string_of_typ t) ^ ")\n"
+  let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,p)) ->
+      s0 ^ "(declare-fun " ^ ( string_of_sv (id,p)) ^ " () " ^ (string_of_typ t) ^ ")\n"
   ) "" all_svl in
   (* declare abstraction for predicate instance *)
   (* let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in *)
