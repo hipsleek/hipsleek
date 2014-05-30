@@ -268,7 +268,7 @@ let ef_elim_exists (svl : spec_var list) (epf : ef_pure) : ef_pure =
   let equiv_pairs = EMapSV.get_equiv new_paset in
   let ps = string_of_spec_var in
   Debug.binfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos;
-  let new_pure = mk_eq_pure equiv_pairs in
+  (* let new_pure = mk_eq_pure equiv_pairs in *)
   let new_pure = elim_clause pure new_baga in
   (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
   (new_baga, new_pure)

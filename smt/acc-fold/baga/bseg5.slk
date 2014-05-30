@@ -11,6 +11,9 @@ pred b1<y,z> ==
 // expecting  [([],self=y),([self],y=z),([self,z], y=z)].
 
 
+checkentail x::b1<y,z> * z::node<_> & x!=y & y!=z |- false.
+print residue.
+expect Valid.
 
 /*
 
