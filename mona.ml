@@ -1242,7 +1242,7 @@ let set_process (proc: prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
+    let _ = print_string_if (not !Globals.smt_compete_mode)  ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
@@ -1277,11 +1277,12 @@ let stop () =
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
-	let _ = print_endline ("\nMona is restarting ... " ^ reason); flush stdout; in
+	let _ = print_endline_if (not !Globals.smt_compete_mode) ("\nMona is restarting ... " ^ reason); flush stdout; in
         Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let restart reason =
   (* Log.logtime_wrapper "restart mona" restart reason  *)
+  if (not !Globals.smt_compete_mode) then
   Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
@@ -1337,7 +1338,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from failure - formula too complex --> Mona aborted)\n");
-	    print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
+	    print_endline_if (not !Globals.smt_compete_mode) ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure - formula too complex --> Mona aborted)\n");
             is_sat_b
       | s ->
             let _ = create_failure_file mona_file_content in

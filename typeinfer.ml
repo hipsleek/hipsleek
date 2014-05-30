@@ -167,7 +167,7 @@ let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let pr = (* string_of_typ *) pr_none in
+  let pr = string_of_typ in
   let pr_out (_, t) = string_of_typ t in
   Debug.no_2 "must_unify" pr pr pr_out (fun _ _ -> must_unify_x k1 k2 tlist pos) k1 k2
 
@@ -193,7 +193,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 = (* pr_option pr *) pr_none in
+  let pr2 (_, t) = pr_option pr t in
   Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
@@ -212,8 +212,10 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
       | Float, Int -> (tl,Some Float) (*LDK*)
       | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) -> (tl, Some (Named n2))
-      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) -> (tl, Some (Named n1))
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
+          (tl, Some (Named n2))
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
+          (tl, Some (Named n1))
       | t1, t2  -> (
           if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
           else if sub_type t2 t1 then (tlist,Some k1)
@@ -466,9 +468,8 @@ and gather_type_info_exp a0 tlist et =
 and gather_type_info_exp_x a0 tlist et =
   match a0 with
   | IP.Null pos -> 
-      let t = null_type in
-      let (n_tl,n_typ) = must_unify_expect t et tlist pos in
-      (n_tl,n_typ)
+      let (new_et,n_tl) = fresh_tvar tlist in
+      (n_tl, new_et)
   | IP.Ann_Exp (e,t, _) -> 
       (* TODO WN : check if t<:et *)
       let (n_tl,n_typ) = gather_type_info_exp_x e tlist t in
@@ -776,7 +777,10 @@ and gather_type_info_b_formula_x prog b0 tlist =
 
 and guess_type_of_exp_arith a0 tlist =
   match a0 with
-    | IP.Null _ -> (tlist,UNK)
+    | IP.Null _ ->
+        let (new_et,n_tl) = fresh_tvar tlist in
+        (n_tl, new_et)
+        (* (tlist,UNK) *)
     | IP.Var ((sv, sp), pos) ->
           begin
             try
@@ -810,7 +814,9 @@ and guess_type_of_exp_arith a0 tlist =
 
 and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) (tlist:spec_var_type_list) : (spec_var_type_list*typ) =
   match e0 with
-  | IP.Null _ -> (tlist,null_type)
+  | IP.Null _ ->
+      let (new_et,n_tl) = fresh_tvar tlist in
+      (n_tl, new_et)
   | IP.Var ((sv, sp), pos) -> gather_type_info_var sv tlist k pos
   | _ -> Err.report_error { Err.error_loc = IP.pos_of_exp e0;
                             Err.error_text = "arithmetic is not allowed in pointer term"; }
@@ -958,9 +964,7 @@ and fill_view_param_types (vdef : I.view_decl) =
 and try_unify_view_type_args prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if not (dname = "") then (*asankhs: Changed this as I think when danme = "" you need to check for dereference names with __star else revert back ...*)
-     let (n_tl,_) = gather_type_info_var v tlist ( (Named dname)) pos in
-      n_tl
+    if (String.compare dname "" = 0) then tlist
     else 
       let expect_dname = (
           let s = ref "" in
@@ -969,9 +973,6 @@ and try_unify_view_type_args prog c vdef v deref ies tlist pos =
           done;
           dname ^ !s
       ) in
-     (*      Named expect_dname *)
-  (* ) in *)
-      (* let (n_tl,_) = gather_type_info_var v tlist expect_type pos in *)
       let (n_tl,_) = gather_type_info_var v tlist ( (Named expect_dname)) pos in
       n_tl
   ) in

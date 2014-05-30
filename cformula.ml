@@ -1730,6 +1730,10 @@ and is_thread (h : h_formula) = match h with
   | ThreadNode _ -> true
   | _ -> false
 
+and is_hole (h : h_formula) = match h with
+  | Hole _ -> true
+  | _ -> false
+
 and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;
@@ -9364,7 +9368,12 @@ let rec collect_pre_heap ctx =
 let rec collect_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_rel 
-  | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_rel ctx1) @ (collect_rel ctx2)
+
+let rec collect_hole ctx = 
+  match ctx with
+  | Ctx estate -> estate.es_crt_holes 
+  | OCtx (ctx1, ctx2) -> (collect_hole ctx1) @ (collect_hole ctx2) 
 
 let rec collect_hp_rel ctx = 
   match ctx with
@@ -15428,6 +15437,11 @@ let set_residue b lc =
 let clear_residue () =
   residues := None
 
+let get_res_residue () =
+  match !residues with
+    | Some (_, res) -> res
+    | None -> false
+
   (*eliminates a fv that is otherwise to be existentially quantified, it does so only if the substitution is not
   a heap var as that would break the linearization..., used in the cast simplifications *)
 let elim_e_var to_keep (f0 : formula) : formula = 
@@ -15701,3 +15715,22 @@ let shorten_formula f =
 
 (* let rearrange_failesc_context_list fcl = *)
 (*   List.map rearrange_failesc_context fcl *)
+
+let ann_of_h_formula h =
+  match h with
+  | DataNode dn -> Some dn.h_formula_data_imm
+  | ViewNode vn -> Some vn.h_formula_view_imm
+  | _ -> None
+
+let restore_hole_formula f hole_matching =
+  let f_h_f h = match h with
+  | Hole i ->
+    (try 
+      let rep_h = List.assoc i hole_matching in
+      let ann = ann_of_h_formula rep_h in
+      match ann with
+      | Some CP.ConstAnn(Lend) -> Some h
+      | _ -> Some rep_h
+    with _ -> Some h)
+  | _ -> Some h in
+  transform_formula (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) f

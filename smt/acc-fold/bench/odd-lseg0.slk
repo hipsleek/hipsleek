@@ -1,0 +1,13 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+lemma_safe self::olseg<p> <- (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+// above lemma should be provable
+// lack of deep unfold ..
+
+

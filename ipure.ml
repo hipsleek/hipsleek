@@ -124,6 +124,7 @@ include Ipure_D
 
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 

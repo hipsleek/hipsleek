@@ -729,9 +729,8 @@ let h_formula_wo_paren (e:h_formula) =
     | DataNode _ 
     | ViewNode _ 
     | Star _ 
-	| HRel _ -> true
+	  | HRel _ -> true
     | _ -> false
-
 
 let formula_assoc_op (e:formula) : (string * formula list) option = 
   match e with
@@ -1140,7 +1139,10 @@ let rec pr_h_formula h =
     | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
-          let args = arg1@arg2 in
+          let args =
+            if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
+            then List.filter (fun h -> not (CF.is_hole h)) (arg1@arg2)
+            else arg1@arg2 in
           pr_list_op op_star f_b args
     | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
                   h_formula_starminus_pos = pos}) -> 
@@ -1918,6 +1920,21 @@ and pr_formula_base e =
           else
             fmt_string ("\nAND "); pr_one_formula_list a
 
+and slk_formula_base e =
+  match e with
+    | ({formula_base_heap = h;
+	      formula_base_pure = p;
+	      formula_base_type = t;
+	      formula_base_flow = fl;
+	      formula_base_and = a;
+        formula_base_label = lbl;
+	      formula_base_pos = pos}) ->
+          pr_h_formula h; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&"; pr_mix_formula p));
+          if (a==[]) then ()
+          else (fmt_string ("\nAND "); pr_one_formula_list a)
+
 and prtt_pr_formula_base e =
   match e with
     | ({formula_base_heap = h;
@@ -1981,6 +1998,32 @@ and pr_formula e =
           ;if (a==[]) then ()
           else
             fmt_string ("\nAND "); pr_one_formula_list a
+
+and slk_formula e =
+  let f_b e =  pr_bracket formula_wo_paren slk_formula e in
+  match e with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
+          let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
+          let args = arg1@arg2 in
+	      pr_list_vbox_wrap "or " f_b args
+    | Base e -> slk_formula_base e
+    | Exists ({
+        formula_exists_qvars = svs;
+	      formula_exists_heap = h;
+	      formula_exists_pure = p;
+	      formula_exists_type = t;
+	      formula_exists_flow = fl;
+	      formula_exists_and = a;
+        formula_exists_label = lbl;
+	      formula_exists_pos = pos}) ->
+          fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
+          pr_h_formula h; 
+          (if not(MP.isConstMTrue p) then 
+            (pr_cut_after "&" ; pr_mix_formula p));
+          fmt_string ")"; 
+          if (a==[]) then ()
+          else (fmt_string ("\nAND "); pr_one_formula_list a)
 
 and prtt_pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren prtt_pr_formula e in
@@ -2057,7 +2100,9 @@ and pr_formula_guard ((e,g):formula_guard)=
 and pr_formula_guard_list (es: formula_guard list)=
   pr_seq "" pr_formula_guard es
 
-and string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
+and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
+
+and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 
 let string_of_ef_pure = pr_pair P.string_of_spec_var_list string_of_pure_formula
 
@@ -2732,6 +2777,24 @@ let rec pr_struc_formula_for_spec_inst prog (e:struc_formula) =
   | EList b -> if b==[] then fmt_string "" else pr_list_op_none "|| " (fun (l,c) -> pr_helper c) b
   in
   res
+  
+let rec slk_struc_formula_view (e:struc_formula) = 
+  let res = match e with
+  | ECase { formula_case_branches = case_list } ->
+    pr_args (Some ("V", 1)) (Some "A") "case " "{" "}" "" 
+    (fun (c1, c2) -> wrap_box ("B", 0) 
+      (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> [] ")
+      (fun () -> slk_struc_formula_view c2; fmt_string ";")) case_list
+  | EBase { formula_struc_base = fb; formula_struc_continuation = cont } ->
+    slk_formula fb;
+    (match cont with 
+      | None -> ()
+      | Some l -> slk_struc_formula_view l; );
+  | EAssume _
+  | EInfer _ -> ()
+  | EList b -> if b == [] then fmt_string "" else 
+      pr_list_op_none " or\n" (fun (l, c) -> slk_struc_formula_view c) b
+  in res
 
 (*let string_of_ext_formula (e:ext_formula) : string =  poly_string_of_pr  pr_ext_formula e
 
@@ -3401,6 +3464,17 @@ let pr_view_decl_short v =
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
   fmt_close_box ();
   pr_mem:=true
+  
+let slk_view_decl v =
+  pr_mem := false;
+  fmt_open_vbox 1;
+  wrap_box ("B", 0) (fun () -> pr_angle ("pred " ^ v.view_name) pr_typed_spec_var_lbl
+    (List.combine v.view_labels v.view_vars); fmt_string " == ") ();
+  fmt_cut (); wrap_box ("B", 0) slk_struc_formula_view v.view_formula; 
+  pr_vwrap  "inv "  pr_mix_formula v.view_user_inv;
+  fmt_string ".";
+  fmt_close_box ();
+  pr_mem:=true
 
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
@@ -3416,6 +3490,8 @@ let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
 let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
+
+let sleek_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr slk_view_decl v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 
@@ -3655,8 +3731,8 @@ let rec string_of_exp = function
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
-let string_of_field_ann ann=
-  if not !print_ann then ""
+let string_of_field_ann ann =
+  if not !print_ann || !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)
@@ -3697,6 +3773,9 @@ let rec string_of_data_decl_list l c = match l with
 (* pretty printing for a data declaration *)
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"
 ;;
+
+let sleek_of_data_decl d = 
+  (string_of_data_decl d) ^ ".";;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Left -> "==>"

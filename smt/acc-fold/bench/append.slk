@@ -1,0 +1,85 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_7_21: self::node<Anon_12,q> * 
+  q::ll<flted_7_21>&flted_7_21+1=n)
+  inv 0<=n.
+ 
+// id: 0; line: 6; kind: Pred_Check_Inv
+ checkentail_exact emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n & (((self=null & n=0) | (1<=n & self!=null))).
+
+ 
+// id: 1; line: 38; kind: BIND
+ checkentail_exact (exists flted_7_958,Anon_959,q_960: x'::node<Anon_959,q_960> * 
+q_960::ll<flted_7_958> * y::ll<n2>&flted_7_958+1=n1 & 0<n1 & y'=y & x'=x)
+ |-  (exists flted_7_962,Anon_963,q_964: x'::node<val_38_922',next_38_923'>@L * 
+q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & 
+val_38_922'=Anon_963 & next_38_923'=q_964).
+
+ 
+// id: 3; line: 38; kind: PRE
+ checkentail_exact x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_924'=q_964 & v_node_38_924'=null
+ |-  x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_924'=q_964 & v_node_38_924'=null.
+
+ 
+// id: 5; line: 38; kind: PRE
+ checkentail_exact x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_924'=q_964 & v_node_38_924'!=null
+ |-  x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_924'=q_964 & v_node_38_924'!=null.
+
+ 
+// id: 7; line: 39; kind: BIND
+ checkentail_exact x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & v_bool_38_930' & q_964!=null & 
+v_bool_38_930'
+ |-  x'::node<val_39_925',next_39_926'>@L * q_964::ll<flted_7_962> * y::ll<n2>&
+flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & v_bool_38_930' & 
+q_964!=null & v_bool_38_930' & val_39_925'=Anon_963 & next_39_926'=q_964.
+
+ 
+// id: 9; line: 39; kind: PRE_REC
+ checkentail_exact x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & v_bool_38_930' & q_964!=null & 
+v_bool_38_930' & v_node_39_927'=q_964
+ |-  v_node_39_927'::ll<n1_975> * y'::ll<n2_976> * x'::node<Anon_963,q_964>&
+0<n1_975 & 0<n1_975 & flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & 
+v_bool_38_930' & q_964!=null & v_bool_38_930' & v_node_39_927'=q_964 & 
+n1_975=flted_7_962 & n2_976=n2.
+
+ 
+// id: 13; line: 43; kind: BIND
+ checkentail_exact x'::node<Anon_963,q_964> * q_964::ll<flted_7_962> * y::ll<n2>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & q_964=null & !(v_bool_38_930') & q_964=null & 
+!(v_bool_38_930')
+ |-  x'::node<val_43_928',next_43_929'> * q_964::ll<flted_7_962> * y::ll<n2>&
+flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & q_964=null & !(v_bool_38_930') & 
+q_964=null & !(v_bool_38_930') & val_43_928'=Anon_963 & next_43_929'=q_964.
+
+ 
+// id: 15; line: 35; kind: POST
+ checkentail_exact (exists flted_35_981: x'::node<Anon_963,q_964> * q_964::ll<flted_35_981>&
+flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & v_bool_38_930' & 
+q_964!=null & v_bool_38_930' & n1_975=flted_7_962 & n2_976=n2 & 0<=n2 & 
+0<=flted_7_962 & flted_35_981=n2_976+n1_975 & 0<=n1_975 & 0<=n2_976)
+ |-  (exists flted_35_40,flted_35_985,Anon_987,q_988: x::ll<flted_35_40>&
+flted_35_40=n2+n1 & flted_7_962+1=n1 & 0<n1 & y'=y & x'=x & q_964!=null & 
+v_bool_38_930' & q_964!=null & v_bool_38_930' & n1_975=flted_7_962 & 
+n2_976=n2 & 0<=n2 & 0<=flted_7_962 & flted_35_985=n2_976+n1_975 & 
+0<=n1_975 & 0<=n2_976 & Anon_987=Anon_963 & q_988=q_964).
+
+ 
+// id: 20; line: 35; kind: POST
+ checkentail_exact q_964::ll<flted_7_962> * y::ll<n2> * x'::node<Anon_963,y'>&flted_7_962+
+1=n1 & 0<n1 & y'=y & x'=x & q_964=null & !(v_bool_38_930') & q_964=null & 
+!(v_bool_38_930') & next_43_984=q_964
+ |-  (exists flted_35_40,Anon_995,q_996: x::ll<flted_35_40> * 
+q_964::ll<flted_7_962>&flted_35_40=n2+n1 & flted_7_962+1=n1 & 0<n1 & y'=y & 
+x'=x & q_964=null & !(v_bool_38_930') & q_964=null & !(v_bool_38_930') & 
+next_43_984=q_964 & Anon_995=Anon_963 & q_996=y').

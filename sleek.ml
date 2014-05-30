@@ -223,7 +223,7 @@ let parse_file (parse) (source_file : string) =
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
       | EmptyCmd -> () in
   let cmds = parse_first [] in
-  let _ = Slk2smt.cmds := cmds in
+  let _ = Slk2smt.smt_cmds := cmds in
   List.iter proc_one_def cmds;
   (* An Hoa : Parsing is completed. If there is undefined type, report error.
    * Otherwise, we perform second round checking!
@@ -400,9 +400,9 @@ let _ =
     (* let _ = print_endline "before main" in *)
     main ();
     let _ =
-      if ((List.length !unexpected_cmd) > 0)
+      if not !Globals.smt_compete_mode && ((List.length !unexpected_cmd) > 0)
       then (
-          let _ = print_string "Warning: " in
+          let _ = print_string "Unexpected: " in
           let _ = List.iter (fun id_cmd ->
               print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
           print_string "\n\n"
@@ -410,7 +410,8 @@ let _ =
         ()
     in
     (*Long: gen smt *)
-    let _ = if !Globals.gen_smt then Slk2smt.trans_smt Sleekengine.iprog !Sleekengine.cprog !Slk2smt.cmds else false in
+    let _ = if !Globals.gen_smt then
+      Slk2smt.trans_smt Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
@@ -443,6 +444,14 @@ let _ =
           else ()
     in
     let _ = sleek_epilogue () in
+    let _ = if !Globals.smt_compete_mode then
+      let _ = print_endline "SMT Compete OUTCOME" in
+      let r = Cformula.get_res_residue () in
+      let str_res = if r then "UNSAT" else "SAT" in
+      print_endline (" " ^ str_res)
+    else ()
+    in
+    (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let _ = if !Globals.enable_time_stats then
       begin
         let ptime4 = Unix.times () in
@@ -461,5 +470,5 @@ let _ =
     let _ =
       if (!Globals.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string "\n"
+    print_string_if (not !Globals.smt_compete_mode)  "\n"
   )

@@ -401,24 +401,23 @@ and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EAssume b -> IF.EAssume {b with 
         IF.formula_assume_simpl = convert_heap2 prog b.IF.formula_assume_simpl;
-        IF.formula_assume_struc = convert_struc2 prog b.IF.formula_assume_struc;}       
+        IF.formula_assume_struc = convert_struc2 prog b.IF.formula_assume_struc;}
   | IF.ECase b -> IF.ECase {b with IF.formula_case_branches = map_l_snd (convert_struc2_x prog) b.IF.formula_case_branches};
   | IF.EBase b -> IF.EBase{b with 
         IF.formula_struc_base = convert_heap2 prog b.IF.formula_struc_base;
         IF.formula_struc_continuation = map_opt (convert_struc2_x prog) b.IF.formula_struc_continuation}
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
-  
-      
+
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
-      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } 
-      | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } 
-      | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } 
-      | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }       
+      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 }
+      | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 }
+      | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 }
+      | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }
       | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } ->
             (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
       | IF.HeapNode { IF.h_formula_heap_name = c } ->
@@ -436,18 +435,18 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
             gen_name_pairs_heap vname h
       | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
             gen_name_pairs_heap vname h in
-  
+
   let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with
     | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl)
     | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches
-    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}-> 
+    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}->
         (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont)
     | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation
     | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b
   in
- 
+
   let gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list =
-    Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
+    Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id))
         (fun _ -> gen_name_pairs_struc vname f) vname in
 
   let build_graph vdefs =
@@ -471,7 +470,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    if not(mr==[]) 
+    if not(mr==[])
     then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
     g
         (* if DfsNG.has_cycle g *)
@@ -500,7 +499,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
             (* n_view should contain only one views *)
             ((n_view @ rest_views), new_rest_decls)
       | [] -> ([], view_decls) in
-  let (r1, r2) = reorder_views view_decls0 !view_names 
+  let (r1, r2) = reorder_views view_decls0 !view_names
   in
   (r1 @ r2,List.filter (fun ls -> List.length ls > 1) !view_scc)
 
@@ -508,15 +507,15 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in
   let pr2 = (pr_list (pr_list pr_id)) in
   Debug.no_1 "order_views" pr (pr_pair pr pr2) order_views  view_decls0
-  
+
 let loop_procs : (C.proc_decl list) ref = ref []
-   
+
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
   | C.Assert _ -> e
     (*| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)*)
-    (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*) 
-  | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
+    (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*)
+  | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }
   | C.Bind b -> C.Bind {b with C.exp_bind_body = (seq_elim b.C.exp_bind_body);}
   | C.Barrier _ -> e
   | C.ICall _ -> e
@@ -2126,20 +2125,43 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
-      let baga_invs = Expure.fix_ef cviews0 10 in
-      List.map (fun (cv,inv) ->
+      let args_map = Hashtbl.create 1 in
+      let _ = List.iter (fun vd ->
+          let self_var = Cpure.SpecVar(UNK, self, Unprimed) in
+          let args = self_var::vd.Cast.view_vars in
+          Hashtbl.add args_map vd.Cast.view_name args;
+      ) cviews0 in
+      let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
+      let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
+          if List.mem cv.C.view_name (List.flatten ls) then
+            ls
+          else
+            ls@[[cv.C.view_name]]
+      ) ls_mut_rec_views1 cviews0 in
+      let map_invs = Hashtbl.create 1 in
+      let _ = List.iter (fun idl ->
+          let views_list = List.filter (fun vd ->
+              List.mem vd.Cast.view_name idl
+          ) cviews0 in
+          let new_invs_list = Expure.fix_ef views_list 10 args_map map_invs in
+          let new_map = List.combine views_list new_invs_list in
+          List.iter (fun (cv,inv) -> Hashtbl.add map_invs cv.C.view_name inv) new_map
+      ) ls_mut_rec_views1 in
+      let cviews1 = List.map (fun cv ->
+          let inv = Hashtbl.find map_invs cv.C.view_name in
           let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
           {cv with C.view_baga_inv = Some inv}
-      ) (List.combine cviews0 baga_invs)
+      ) cviews0 in
+      cviews1
      else
       cviews0
   in
   cviews0
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
-  
+
 and fill_one_base_case_x prog vd =
-  if vd.C.view_is_prim then 
+  if vd.C.view_is_prim then
     (Debug.ninfo_zprint (lazy ("fill_one_base - prim")) no_pos;
     {vd with C.view_base_case = None; C.view_raw_base_case = None})
   else
@@ -2283,7 +2305,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
   wrap_proving_kind PK_Compute_Base_Case compute_base_case_x_op ()
       
 and set_materialized_prop_x cdef =
-  let args = (CP.SpecVar (Named "", self, Unprimed))::cdef.C.view_vars in
+  let args = (CP.SpecVar (Named cdef.C.view_data_name, self, Unprimed))::cdef.C.view_vars in
   let mvars = find_materialized_prop args cdef.C.view_materialized_vars (C.formula_of_unstruc_view_f cdef) in
   (cdef.C.view_materialized_vars <- mvars; cdef)
       
@@ -2354,16 +2376,16 @@ and find_trans_view_name_x ff self pos =
       else
         let has = param_alias_sets pf p in
         let eq_f = (is_member has) in
-        let (ls,vs) = find_node_vars eq_f hf in
-        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in
-        cycle rs (rs@p@acc_p) (vs@v_p)
+        let (ls,vs) = find_node_vars eq_f hf in (* returns: (args, [data/view_name]) *)
+        let rs = Gen.BList.difference_eq CP.eq_spec_var ls acc_p in 
+        cycle rs (rs@p@acc_p) (vs@v_p)  (* why the arguments become the targeted search param? *)
     in cycle params [] [] in
   let find_m_one f = match f with
-    | CF.Base b ->    
+    | CF.Base b ->
           find_m_prop_heap_aux params b.CF.formula_base_pure b.CF.formula_base_heap
     | CF.Exists b->
-          find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap      
-    | _ -> Error.report_error 
+          find_m_prop_heap_aux params b.CF.formula_exists_pure b.CF.formula_exists_heap
+    | _ -> Error.report_error
           {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: unexpected disjunction"} in
   let lm = find_m_one ff in
   lm
@@ -3171,7 +3193,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let quant = true in
   let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
     true (*check_pre*) in
-  let cs_body_norm = CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] true in
+  let cs_body_norm = CF.struc_add_origs_to_first_node self lhs_view_name cs_body_norm [coer.I.coercion_name] false in
   let cs_body_norm = CF.add_struc_original false cs_body_norm in
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
@@ -3214,6 +3236,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       try (List.hd xx)
         (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
       with | _ -> "" in
+  let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
   if lhs_name = "" then
     Error.report_error
         {

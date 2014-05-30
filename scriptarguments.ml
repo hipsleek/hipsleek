@@ -532,6 +532,16 @@ let common_arguments = [
       Globals.sleek_logging_txt:=true;
       Globals.dump_sleek_proof:=true
   ), "Dump sleek proof log at end of command");
+  ("--gen-vc", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true;
+      Globals.sleek_gen_vc:=true
+  ), "Generate verification condition with frame in sleek format");
+  ("--gen-vc-exact", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true;
+      Globals.sleek_gen_vc_exact:=true
+  ), "Generate exact verification condition in sleek format");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)
@@ -563,6 +573,8 @@ let common_arguments = [
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--lem-dis-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--en-ctx-norm", Arg.Set Globals.en_norm_ctx,    "Enable  - merge identical residual states based on syntactic checking");
+  ("--dis-ctx-norm", Arg.Clear Globals.en_norm_ctx, "Disable - merge identical residual states based on syntactic checking");
   ("--dis-show-diff", Arg.Set Globals.dis_show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--en-cp-trace", Arg.Set Globals.cond_path_trace, "Enable the tracing of conditional paths");
@@ -649,6 +661,16 @@ let common_arguments = [
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
+  ("--smt-compete", 
+     Arg.Unit
+      (fun _ -> 
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.smt_compete_mode:=true),
+   "SMT competition mode - essential printing only");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

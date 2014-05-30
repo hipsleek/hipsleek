@@ -3,7 +3,7 @@ open Sleekcommons
 
 let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1
 
-let cmds = ref ([] : command list)
+let smt_cmds = ref ([] : command list)
 
 let find_typ spl name =
   let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
@@ -231,9 +231,15 @@ let process_cmd cmd iprog =
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def pdef iprog
     | EntailCheck eche -> process_entail eche iprog
-    | _ -> "other command\n"
+    | _ -> ";other command\n"
 
 let trans_smt iprog cprog cmds =
-  let s = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog)) "" cmds in
-  let _ = print_endline (s ^ "\n") in
+  let ent_cmds, other_cmds = List.partition (fun cmd -> match cmd with
+    | EntailCheck _ -> true
+    | _ -> false
+  ) cmds in
+  (*declaration*)
+  let decl_s = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog)) "" other_cmds in
+  (*each ent check -> one file*)
+  let _ = print_endline (decl_s ^ "\n") in
   true
