@@ -1,10 +1,10 @@
-// tll with parent working example
+// tll with parent
 
 data node{
-	node parent;
-	node left;
-	node right;
-	node next;
+  node parent;
+  node left;
+  node right;
+  node next;
 }
 
 /* predicate for a non-empty tree  */
@@ -18,20 +18,9 @@ tll<p,ll,lr> == self::node<p,D1,null,lr> & self = ll
 	inv self!=null;
 
 
-// initializes the linked list fields
-
-  HeapPred H(node a, node@NI p, node@NI b).
-  HeapPred G(node a, node p, node b, node c).
-
-HeapPred H1(node a, node@NI p, node@NI b).
-    HeapPred G1(node a, node p, node b, node c).
 
 node set_right (node p, node x, node t)
-  /*  infer [H,G] 
-  requires H(x,p,t) 
-  ensures G(x,p,res,t) ;
-  */
-   requires x::tree<> ensures x::tll<p,res,t>;
+  requires x::tree<> ensures x::tll<p,res,t>;
 {
   x.parent=p;
   if (x.right==null) 
@@ -42,7 +31,7 @@ node set_right (node p, node x, node t)
   else 
     {
       node l_most = set_right(x,x.right, t);
-      return set_right(x,x.left, l_most);  		
+      return set_right(x,x.left, l_most);
     }
 }
 

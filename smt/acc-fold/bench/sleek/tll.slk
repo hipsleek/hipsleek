@@ -19,109 +19,67 @@ self::node<Anon_16,l,r,D2> * l::tree<> * r::tree<>&
   self_29=self & ll_30=ll & self_31=self & z_32=z & lr_33=lr)
   inv self!=null.
 
-/*
-// id: 0; line: 11; kind: Pred_Check_Inv
- checkentail emp&(self!=null | self!=null)
- |-  emp&self!=null.
+// id: 2; line: 25; kind: BIND
+ checkentail (exists flted_11_1116,Anon_1117,D1_1118,
+Anon_1119: x'::node<Anon_1117,D1_1118,flted_11_1116,Anon_1119>&
+flted_11_1116=null)
+ |-  x'::node<parent_25_1060',left_25_1061',right_25_1062',next_25_1063'>.
 expect Valid.
  
-// id: 1; line: 16; kind: Pred_Check_Inv
- checkentail emp&((self=ll & self!=null) | self!=null)
- |-  emp&self!=null.
+// id: 4; line: 25; kind: BIND
+ checkentail (exists Anon_1120,D2_1121,l_1122,
+r_1123: x'::node<Anon_1120,l_1122,r_1123,D2_1121> * l_1122::tree<> * 
+r_1123::tree<>&r_1123!=null)
+ |-  x'::node<parent_25_1060',left_25_1061',right_25_1062',next_25_1063'>.
 expect Valid.
-*/
 
-// id: 2; line: 36; kind: BIND
- checkentail (exists flted_11_1130,Anon_1131,D1_1132,
-Anon_1133: x'::node<Anon_1131,D1_1132,flted_11_1130,Anon_1133>&
-flted_11_1130=null)
- |-  x'::node<parent_36_1074',left_36_1075',right_36_1076',next_36_1077'>.
+ 
+// id: 14; line: 28; kind: BIND
+ checkentail x'::node<p',D1_1127,flted_11_1125,Anon_1128>&flted_11_1125=null & t'=t & 
+x'=x & p'=p & parent_25_1134=Anon_1126 & v_bool_26_1084'
+ |-  x'::node<parent_28_1069',left_28_1070',right_28_1071',next_28_1072'>.
 expect Valid.
  
-// id: 4; line: 36; kind: BIND
- checkentail (exists Anon_1134,D2_1135,l_1136,
-r_1137: x'::node<Anon_1134,l_1136,r_1137,D2_1135> * l_1136::tree<> * 
-r_1137::tree<>&r_1137!=null)
- |-  x'::node<parent_36_1074',left_36_1075',right_36_1076',next_36_1077'>.
+// id: 16; line: 33; kind: BIND
+ checkentail l_1131::tree<> * r_1132::tree<> * x'::node<p',l_1131,r_1132,D2_1130>&
+r_1132!=null & t'=t & x'=x & p'=p & parent_25_1133=Anon_1129 & !(v_bool_26_1084')
+ |-  x'::node<parent_33_1073',left_33_1074',right_33_1075',next_33_1076'>@L.
 expect Valid.
  
-// id: 6; line: 37; kind: BIND
- checkentail x'::node<p',D1_1141,flted_11_1139,Anon_1142>&flted_11_1139=null
- |-  x'::node<parent_37_1078',left_37_1079',right_37_1080',next_37_1081'>@L.
+// id: 18; line: 33; kind: PRE_REC
+ checkentail l_1131::tree<> * r_1132::tree<> * x'::node<p',l_1131,r_1132,D2_1130>&
+r_1132!=null & t'=t & x'=x & p'=p & parent_25_1133=Anon_1129 & 
+ !(v_bool_26_1084') & v_node_33_1077'=r_1132
+ |- l_1131::tree<> * v_node_33_1077'::tree<> * x'::node<p',l_1131,r_1132,D2_1130>.
 expect Valid.
  
-// id: 8; line: 37; kind: BIND
- checkentail l_1145::tree<> * r_1146::tree<> * x'::node<p',l_1145,r_1146,D2_1144>&
-r_1146!=null & t'=t & x'=x & p'=p & parent_36_1147=Anon_1143
- |-  x'::node<parent_37_1078',left_37_1079',right_37_1080',next_37_1081'>@L.
+// id: 21; line: 34; kind: BIND
+ checkentail l_1131::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>&r_1132!=null & t'=t & x'=x & p'=p & 
+parent_25_1133=Anon_1129 & !(v_bool_26_1084')
+ |-  l_1131::tree<> * x'::node<parent_34_1078',left_34_1079',right_34_1080',next_34_1081'> //@L
+ * r_1132::tll<x',l_87',t'>.
 expect Valid.
  
-// id: 10; line: 37; kind: PRE
- checkentail x'::node<p',D1_1141,flted_11_1139,Anon_1142>&flted_11_1139=null & t'=t & 
-x'=x & p'=p & parent_36_1148=Anon_1140 & v_node_37_1082'=flted_11_1139 & 
-v_node_37_1082'=null
- |-  emp.
+// id: 23; line: 34; kind: PRE_REC
+ checkentail l_1131::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>&r_1132!=null & t'=t & x'=x & p'=p & 
+parent_25_1133=Anon_1129 & !(v_bool_26_1084') & v_node_34_1082'=l_1131
+ |-  v_node_34_1082'::tree<> * x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'>.
 expect Valid.
  
-// id: 12; line: 37; kind: PRE
- checkentail l_1145::tree<> * r_1146::tree<> * x'::node<p',l_1145,r_1146,D2_1144>&
-r_1146!=null & t'=t & x'=x & p'=p & parent_36_1147=Anon_1143 & 
-v_node_37_1082'=r_1146 & v_node_37_1082'!=null
- |-  emp.
-expect Valid.
- 
-// id: 14; line: 39; kind: BIND
- checkentail x'::node<p',D1_1141,flted_11_1139,Anon_1142>&flted_11_1139=null & t'=t & 
-x'=x & p'=p & parent_36_1148=Anon_1140 & flted_11_1139=null & 
-v_bool_37_1098' & flted_11_1139=null & v_bool_37_1098'
- |-  x'::node<parent_39_1083',left_39_1084',right_39_1085',next_39_1086'>.
-expect Valid.
- 
-// id: 16; line: 44; kind: BIND
- checkentail l_1145::tree<> * r_1146::tree<> * x'::node<p',l_1145,r_1146,D2_1144>&
-r_1146!=null & t'=t & x'=x & p'=p & parent_36_1147=Anon_1143 & 
-r_1146!=null & !(v_bool_37_1098') & r_1146!=null & !(v_bool_37_1098')
- |-  x'::node<parent_44_1087',left_44_1088',right_44_1089',next_44_1090'>@L.
-expect Valid.
- 
-// id: 18; line: 44; kind: PRE_REC
- checkentail l_1145::tree<> * r_1146::tree<> * x'::node<p',l_1145,r_1146,D2_1144>&
-r_1146!=null & t'=t & x'=x & p'=p & parent_36_1147=Anon_1143 & 
-r_1146!=null & !(v_bool_37_1098') & r_1146!=null & !(v_bool_37_1098') & 
-v_node_44_1091'=r_1146
- |-  v_node_44_1091'::tree<>.
-expect Valid.
- 
-// id: 21; line: 45; kind: BIND
- checkentail l_1145::tree<> * x'::node<p',l_1145,r_1146,D2_1144> * 
-r_1146::tll<x',l_87',t'>&r_1146!=null & t'=t & x'=x & p'=p & 
-parent_36_1147=Anon_1143 & r_1146!=null & !(v_bool_37_1098') & 
-r_1146!=null & !(v_bool_37_1098') & r_1146!=null & r_1146!=null
- |-  x'::node<parent_45_1092',left_45_1093',right_45_1094',next_45_1095'>@L.
-expect Valid.
- 
-// id: 23; line: 45; kind: PRE_REC
- checkentail l_1145::tree<> * x'::node<p',l_1145,r_1146,D2_1144> * 
-r_1146::tll<x',l_87',t'>&r_1146!=null & t'=t & x'=x & p'=p & 
-parent_36_1147=Anon_1143 & r_1146!=null & !(v_bool_37_1098') & 
-r_1146!=null & !(v_bool_37_1098') & r_1146!=null & r_1146!=null & 
-v_node_45_1096'=l_1145
- |-  v_node_45_1096'::tree<>.
-expect Valid.
- 
-// id: 26; line: 34; kind: POST
- checkentail x'::node<p',D1_1141,flted_11_1139,t'>&flted_11_1139=null & t'=t & x'=x & 
-p'=p & parent_36_1148=Anon_1140 & flted_11_1139=null & v_bool_37_1098' & 
-flted_11_1139=null & v_bool_37_1098' & next_39_1161=Anon_1142 & res=x'
+// id: 26; line: 23; kind: POST
+ checkentail x'::node<p',D1_1127,flted_11_1125,t'>&flted_11_1125=null & t'=t & x'=x & 
+p'=p & parent_25_1134=Anon_1126 & flted_11_1125=null & v_bool_26_1084' & 
+ next_28_1147=Anon_1128 & res=x'
  |-  (exists p_85,t_86: x::tll<p_85,res,t_86>&p_85=p & t_86=t).
 expect Valid.
  
-// id: 32; line: 34; kind: POST
- checkentail (exists l_87': x'::node<p',l_1145,r_1146,D2_1144> * 
-r_1146::tll<x',l_87',t'> * l_1145::tll<x',v_node_45_1097',l_87'>&
-r_1146!=null & t'=t & x'=x & p'=p & parent_36_1147=Anon_1143 & 
-r_1146!=null & !(v_bool_37_1098') & r_1146!=null & !(v_bool_37_1098') & 
-r_1146!=null & r_1146!=null & l_1145!=null & l_1145!=null & 
-res=v_node_45_1097')
+// id: 32; line: 23; kind: POST
+ checkentail (exists l_87': x'::node<p',l_1131,r_1132,D2_1130> * 
+r_1132::tll<x',l_87',t'> * l_1131::tll<x',v_node_34_1083',l_87'>&
+r_1132!=null & t'=t & x'=x & p'=p & parent_25_1133=Anon_1129 & 
+ !(v_bool_26_1084') & l_1131!=null & res=v_node_34_1083')
  |-  (exists p_85,t_86: x::tll<p_85,res,t_86>&p_85=p & t_86=t).
 expect Valid.

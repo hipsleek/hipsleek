@@ -27,19 +27,6 @@ Space (tospace
 )))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 (declare-fun xprm () node)
 
 
