@@ -9,7 +9,7 @@ pred b1<y,z> ==
      or (exists u,uz: self::node<y> * z::node<u>*u::b1<y,uz>).
 
 
-/*
+
 checkentail false |- true.
 print residue.
 expect Valid.
@@ -17,7 +17,7 @@ expect Valid.
 checkentail true |- false.
 print residue.
 expect Valid.
-*/
+
 
 /*
 # bseg3.slk
