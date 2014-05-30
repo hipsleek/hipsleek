@@ -408,6 +408,7 @@ let process_lemma ldef =
   Debug.no_1 "process_lemma" Iprinter.string_of_coerc_decl (fun _ -> "?") process_lemma ldef
 
 let print_residue residue =
+  if (not !Globals.smt_compete_mode) then
           match residue with
             | None -> 
                   let _ = Debug.ninfo_pprint "inside p res" no_pos in
