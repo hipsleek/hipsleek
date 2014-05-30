@@ -231,7 +231,9 @@ let process_iante iante iprog all_view_names start_pred_abs_num=
   let s1 = "(assert (tobool\n" in
   let s2, n2 = match iante with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
-    | MetaForm f -> process_formula "" f [] all_view_names start_pred_abs_num
+    | MetaForm f ->
+          let spl = Typeinfer.gather_type_info_formula iprog f [] true in
+          process_formula "" f spl all_view_names start_pred_abs_num
     | MetaEForm ef ->
           let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
           process_struct_formula "" ef spl all_view_names start_pred_abs_num
@@ -244,7 +246,9 @@ let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
   let s1 = "(assert (not (tobool\n" in
   let s2,n2 = match iconseq with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
-    | MetaForm f -> process_formula "" f [] all_view_names start_pred_abs_num
+    | MetaForm f ->
+          let spl = Typeinfer.gather_type_info_formula iprog f [] true in
+          process_formula "" f spl all_view_names start_pred_abs_num
     | MetaEForm ef ->
           let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
           process_struct_formula "" ef spl all_view_names start_pred_abs_num
