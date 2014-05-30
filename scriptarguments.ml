@@ -536,7 +536,12 @@ let common_arguments = [
       Globals.proof_logging_txt:=true; 
       Globals.sleek_logging_txt:=true;
       Globals.sleek_gen_vc:=true
-  ), "Shorthand for --en-slk-logging");
+  ), "Generate verification condition with frame in sleek format");
+  ("--gen-vc-exact", Arg.Unit (fun _ ->
+      Globals.proof_logging_txt:=true; 
+      Globals.sleek_logging_txt:=true;
+      Globals.sleek_gen_vc_exact:=true
+  ), "Generate exact verification condition in sleek format");
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
   (* incremental spec *)

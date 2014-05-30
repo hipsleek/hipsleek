@@ -385,6 +385,7 @@ let sleek_logging_txt = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
+let sleek_gen_vc_exact = ref false
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
@@ -522,6 +523,15 @@ let subs_tvar_in_typ t (i:int) nt =
     | _ -> t
   in helper t
 ;;
+
+ 
+(* let null_type = Named "" *)
+(* ;;                       *)
+
+(* let is_null_type t=      *)
+(*   match t with           *)
+(*     | Named "" -> true   *)
+(*     | _ -> false         *)
 
 let rec s_i_list l c = match l with 
   | [] -> ""
@@ -1022,7 +1032,7 @@ let print_mvars = ref false
 
 let print_type = ref false
 
-let print_en_tidy = ref false
+let print_en_tidy = ref true
 
 let print_html = ref false
 

@@ -218,26 +218,39 @@ let pr_sleek_log_entry e=
 
 let string_of_sleek_log_entry e = Cprinter.poly_string_of_pr pr_sleek_log_entry e
 
+let sleek_tidy_formula f = 
+  (* if (!Globals.print_en_tidy)                                              *)
+  (* then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula f)) *)
+  (* else fmt_string (Cprinter.sleek_of_formula f)                            *)
+  fmt_string (Cprinter.sleek_of_formula f)
+
 let slk_sleek_log_entry e =
-  let conseq_w_res = match e.sleek_proving_res with
-  | None -> e.sleek_proving_conseq
-  | Some res -> 
-    let conseq = e.sleek_proving_conseq in
+  let frm = match e.sleek_proving_res with
+  | None -> None
+  | Some res ->
     let r = CF.formula_of_list_context res in
     let hole_matching = match res with
     | CF.FailCtx _ -> []
     | CF.SuccCtx ls -> List.concat (List.map CF.collect_hole ls)
     in
     let hole_matching = List.map (fun (h, i) -> (i, h)) hole_matching in
-    let r = CF.restore_hole_formula r hole_matching in
-    let comb_conseq = CF.mkStar_combine conseq r 
-      CF.Flow_combine (CF.pos_of_formula conseq) in
-    let ante_fv = CF.fv e.sleek_proving_ante in
-    let cons_fv = CF.fv conseq in
-    let comb_cons_fv = CF.fv comb_conseq in
-    let ex_vars = Gen.BList.difference_eq CP.eq_spec_var comb_cons_fv ante_fv in
-    let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
-    CF.push_exists ex_vars comb_conseq
+    Some (CF.restore_hole_formula r hole_matching)
+  in
+  let conseq = 
+    if !Globals.sleek_gen_vc then e.sleek_proving_conseq
+    else (* !Globals.sleek_gen_vc_exact *)
+      match frm with
+      | None -> e.sleek_proving_conseq
+      | Some r -> 
+        let conseq = e.sleek_proving_conseq in
+        let comb_conseq = CF.mkStar_combine conseq r 
+          CF.Flow_combine (CF.pos_of_formula conseq) in
+        let ante_fv = CF.fv e.sleek_proving_ante in
+        let cons_fv = CF.fv conseq in
+        let comb_cons_fv = CF.fv comb_conseq in
+        let ex_vars = Gen.BList.difference_eq CP.eq_spec_var comb_cons_fv ante_fv in
+        let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
+        CF.push_exists ex_vars comb_conseq
   in
   fmt_open_box 1;
   fmt_string("\n");
@@ -248,20 +261,27 @@ let slk_sleek_log_entry e =
   fmt_string ("// id: " ^ (string_of_int e.sleek_proving_id)^rest);
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos));
   fmt_string ("; kind: " ^ (e.sleek_proving_kind));
-  fmt_string "\n checkentail_exact";
-  if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula e.sleek_proving_ante))
-  else fmt_string (Cprinter.sleek_of_formula e.sleek_proving_ante);
+  fmt_string (if !Globals.sleek_gen_vc_exact then "\n checkentail_exact" else "\n checkentail");
+  sleek_tidy_formula e.sleek_proving_ante;
   fmt_string "\n |- ";
-  if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.sleek_of_formula (Cformula.shorten_formula conseq_w_res))
-  else fmt_string (Cprinter.sleek_of_formula conseq_w_res);
+  sleek_tidy_formula conseq;
   fmt_string ".\n";
-  (* fmt_string "print residue.\n"; *)
+  (* (if (!Globals.sleek_gen_vc) then *)
+  (*   match frm with                 *)
+  (*   | None -> ()                   *)
+  (*   | Some r -> begin              *)
+  (*     fmt_string "expect Frame(";  *)
+  (*     sleek_tidy_formula r;        *)
+  (*     fmt_string ")." end          *)
+  (* else ());                        *)
+  match frm with
+    | None -> fmt_string "expect Fail."
+    | Some _ -> fmt_string "expect Valid."
+  ;
   (if !print_clean_flag then 
-	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante e.sleek_proving_conseq in
+	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante conseq in
 	  fmt_string ("\n clean checkentail" ^ (Cprinter.sleek_of_formula ante)
-      ^ "\n |- " ^ (Cprinter.sleek_of_formula conseq_w_res)^".\n")
+      ^ "\n |- " ^ (Cprinter.sleek_of_formula conseq)^".\n")
    else ());
   fmt_close()
 
@@ -773,7 +793,7 @@ let process_proof_logging src_files prog prim_names =
         (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd src_files))^".txt") *)
       with _ -> ()
       in
-      let _ = if (!Globals.sleek_gen_vc) 
+      let _ = if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
       then 
         begin
           sleek_log_to_sleek_file slkfn src_files prog prim_names;

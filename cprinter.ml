@@ -1140,7 +1140,8 @@ let rec pr_h_formula h =
 	      let arg1 = bin_op_to_list op_star_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args =
-            if (!Globals.sleek_gen_vc) then List.filter (fun h -> not (CF.is_hole h)) (arg1@arg2)
+            if (!Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact) 
+            then List.filter (fun h -> not (CF.is_hole h)) (arg1@arg2)
             else arg1@arg2 in
           pr_list_op op_star f_b args
     | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
@@ -3731,7 +3732,7 @@ let rec string_of_exp = function
 ;;
 
 let string_of_field_ann ann =
-  if not !print_ann || !Globals.sleek_gen_vc then ""
+  if not !print_ann || !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
     (* | REC -> "@REC" *)
