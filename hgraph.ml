@@ -1,10 +1,9 @@
 (*this module supports graph on physical heap*)
 
-module DD = Debug
 open Globals
 open Gen
 open Exc.GTable
-open Perm
+ (* open Perm *)
 open Label_only
 open Label
 

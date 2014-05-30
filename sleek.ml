@@ -411,7 +411,7 @@ let _ =
     in
     (*Long: gen smt *)
     let _ = if !Globals.gen_smt then
-      Slk2smt.trans_smt Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
+      Slk2smt.trans_smt (List.hd !Globals.source_files) Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
