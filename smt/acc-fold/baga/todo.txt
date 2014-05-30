@@ -5,6 +5,8 @@ Now we don't use SCC but infer inv for all views together.
 
 ========================================
 
+FIXED
+
 sleek:
 
 pred dll<y,z,w> ==
@@ -24,6 +26,8 @@ nil!=x * x->z',w * DLL_1(z',y,z,x) => DLL(x,y,z,w) has base {({x,z}, nil!=x * ni
 x=y * z=w => DLL(x,y,z,w) has base {({}, x=y * z=w)}
 
 ========================================
+
+FIXED
 
 sleek:
 
@@ -45,6 +49,8 @@ x=y => BSLL(x,y) has base {({}, x=y)}
 
 ========================================
 
+FIXED
+
 data node {
      node left;
      node right;
@@ -63,14 +69,18 @@ expected:
 
 bintree : [([],self=null),([self],true)]
 
-bintreeseg : [([],self=y),([self],true),([self],true)]
+bintreeseg : [([],self=y),([self],true)]
 
 ========================================
-# sleek2.slk
+# sleek2.slk: FIXED
 
 baga computation gave a Not_found exception.
 
 this error disappears with --dis-inv-baga
 
 ========================================
+# bseg3.slk: FIXED
+
+Normalization.
+
 ========================================
