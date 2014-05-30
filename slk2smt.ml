@@ -232,7 +232,9 @@ let process_iante iante iprog all_view_names start_pred_abs_num=
   let s2, n2 = match iante with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f -> process_formula "" f [] all_view_names start_pred_abs_num
-    | MetaEForm ef -> process_struct_formula "" ef [] all_view_names start_pred_abs_num
+    | MetaEForm ef ->
+          let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
+          process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
   let s3 = "\n))\n" in
@@ -243,7 +245,9 @@ let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
   let s2,n2 = match iconseq with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f -> process_formula "" f [] all_view_names start_pred_abs_num
-    | MetaEForm ef -> process_struct_formula "" ef [] all_view_names start_pred_abs_num
+    | MetaEForm ef ->
+          let spl = Typeinfer.gather_type_info_struc_f iprog ef [] in
+          process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
   let s3 = "\n)))\n" in
