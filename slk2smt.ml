@@ -53,8 +53,8 @@ let rec process_p_formula pre_fix_var pf =
           "gt"
     | Ipure.Gte _ ->
           "gte"
-    | Ipure.Neq _ ->
-          "neq"
+    | Ipure.Neq (e1, e2, _) ->
+           "(distinct " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure.EqMax _ ->
           "eqmax"
     | Ipure.EqMin _ ->
@@ -89,9 +89,13 @@ let rec process_p_formula pre_fix_var pf =
           "(" ^ id ^ ")"
 
 let rec process_pure_formula pre_fix_var pf =
+  let recf = process_pure_formula pre_fix_var in
   match pf with
     | Ipure.BForm ((pf, _), _) ->
           process_p_formula pre_fix_var pf
+    | Ipure.And (p1,p2,_) -> let s1 = recf p1 in
+      let s2 = recf p2 in
+      ("and ("^ s1 ^ " " ^ s2 ^ ")" )
     | _ -> ""
 
 let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
@@ -111,8 +115,8 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
     | Iformula.HeapNode hn ->
           let (id,_) = hn.Iformula.h_formula_heap_node in
           let heap_name = hn.Iformula.h_formula_heap_name in
-          let s_vnode, n_pred_abs_num = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)  heap_name all_view_names then
-            "index alpha" ^ (string_of_int  pred_abs_num) ^ " ",  pred_abs_num+1 else "", pred_abs_num in
+          let s_vnode, n_pred_abs_num = (* if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)  heap_name all_view_names then *)
+            (* "index alpha" ^ (string_of_int  pred_abs_num) ^ " ",  pred_abs_num+1 else *) "", pred_abs_num in
           let _ = Debug.ninfo_hprint (add_str "HeapNode" pr_id) (heap_name ^ s_vnode) no_pos in
            let s =
             try
@@ -124,7 +128,7 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
                   (List.fold_left (fun s (id, exp) -> s ^ " (ref " ^ id ^ " "  ^ (recf_e exp) ^ ")") "" (List.combine stl hn.Iformula.h_formula_heap_arguments))
               in "(pto " ^ pre_fix_var  ^ id ^ args  ^ ")"
             with Not_found -> "(" ^ heap_name ^ " " ^ pre_fix_var ^ id ^ (List.fold_left (fun s exp -> s ^ " " ^ (recf_e exp)) "" hn.Iformula.h_formula_heap_arguments) ^ ")"
-          in ("(" ^ s_vnode ^ s ^ ")"),n_pred_abs_num
+          in (  s_vnode ^ s ),n_pred_abs_num
     | Iformula.HeapNode2 hn2 -> "HeapNode2",pred_abs_num
           (* let heap_name = hn2.Iformula.h_formula_heap2_name in *)
           (* let _ = Debug.ninfo_hprint (add_str "HeapNode2" pr_id) heap_name no_pos in *)
@@ -144,14 +148,29 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
     | Iformula.HRel _ -> "(hrel )",pred_abs_num
     | Iformula.HTrue -> "(htrue )",pred_abs_num
     | Iformula.HFalse -> "(hfalse )",pred_abs_num
-    | Iformula.HEmp -> "",pred_abs_num
+    | Iformula.HEmp -> "emp",pred_abs_num
 
 let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
   match f with
     | Iformula.Base fb ->
-          let fbs1,n2 = process_h_formula pre_fix_var fb.Iformula.formula_base_heap all_view_names start_pred_abs_num in
-          let fbs2 = process_pure_formula pre_fix_var fb.Iformula.formula_base_pure in
-          fbs1 ^ fbs2,n2
+          let hfs = Iformula.get_heaps fb.formula_base_heap in
+          let hfs1 = if String.compare pre_fix_var "" =0 then (hfs@[Iformula.HEmp])
+          else hfs in
+          let fbs1,n2 =List.fold_left (fun (s,n) hf ->
+              let s1,n1 = process_h_formula pre_fix_var hf  all_view_names n in
+              (s ^ s1 ^ "\n", n1)
+          ) ("", start_pred_abs_num) (hfs1) in
+          let s_heap = if hfs1 = [] || fb.formula_base_heap = Iformula.HEmp then
+            "" else  "(tobool (ssep \n" ^ fbs1 ^ ") )" in
+          (* let fbs1,n2 = process_h_formula pre_fix_var fb.Iformula.formula_base_heap all_view_names start_pred_abs_num in *)
+          let ps = Ipure.list_of_conjs fb.Iformula.formula_base_pure in
+          let fbs2 = List.fold_left (fun s p -> s^ (process_pure_formula pre_fix_var p)) "" ps in
+          let s_start_and,s_end_and =
+            if ( hfs1 != [] && fb.formula_base_heap != Iformula.HEmp)
+              && List.length ps >= 1 then
+            "(and \n", "\n)" else "",""
+          in
+          s_start_and ^ fbs2 ^ s_heap ^ s_end_and,n2
     | Iformula.Exists fe ->
           let fes1 = "(exists " in
           let fes2 = "(" ^ (List.fold_left (fun s (id, p) ->
@@ -228,7 +247,7 @@ let process_data_def ddef =
   s1 ^ s2
 
 let process_iante iante iprog all_view_names start_pred_abs_num=
-  let s1 = "(assert (tobool\n" in
+  let s1 = "(assert \n" in
   let s2, n2 = match iante with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f ->
@@ -239,11 +258,11 @@ let process_iante iante iprog all_view_names start_pred_abs_num=
           process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
-  let s3 = "\n))\n" in
+  let s3 = "\n)\n" in
   (s1 ^ s2 ^ s3,n2)
 
 let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
-  let s1 = "(assert (not (tobool\n" in
+  let s1 = "(assert (not \n" in
   let s2,n2 = match iconseq with
     | MetaVar id -> "(?" ^ id ^ ")",start_pred_abs_num
     | MetaForm f ->
@@ -254,7 +273,7 @@ let process_iconseq iconseq iprog all_view_names start_pred_abs_num =
           process_struct_formula "" ef spl all_view_names start_pred_abs_num
     | _ -> "",start_pred_abs_num
   in
-  let s3 = "\n)))\n" in
+  let s3 = "\n))\n" in
   s1 ^ s2 ^ s3,n2
 
 let process_entail (iante, iconseq, etype) iprog cprog =
@@ -277,7 +296,7 @@ let process_entail (iante, iconseq, etype) iprog cprog =
   let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
   "\n" ^ s0 ^ "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
-let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, cante,cconse) =
+let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, cante,cconseq) =
   let spl1 = match iante with
     | MetaForm f ->
           Typeinfer.gather_type_info_formula iprog f [] true
@@ -289,17 +308,25 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
     | _ -> []
   in
   let spl = spl1@spl2 in
-  let s0 = List.fold_left (fun s0 (id,sv_info) ->
-      s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n"
-  ) "" spl in
+  let all_svl = CP.remove_dups_svl ((Cformula.fv cante)@(Cformula.struc_fv cconseq)) in
+  (* let s0 = List.fold_left (fun s0 (id,sv_info) -> *)
+  (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
+  (* ) "" spl in *)
+  let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,_)) ->
+      s0 ^ "(declare-fun " ^ (id) ^ " () " ^ (string_of_typ t) ^ ")\n"
+  ) "" all_svl in
   (* declare abstraction for predicate instance *)
-  let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in
+  (* let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in *)
+  let all_vnodes = [] in
   let  s_pred_abs,num_vnodes  = List.fold_left (fun ( s, n) _ ->
       (s ^ ("(declare-fun alpha" ^ (string_of_int n) ^ "()  SetLoc)\n" ), n+1)
   ) ( "",start_pred_abs_num) all_vnodes in
   let all_view_names = List.map (fun vdecl -> vdecl.Cast.view_name) cprog.Cast.prog_view_decls in
   let s1, n1 = process_iante iante iprog all_view_names start_pred_abs_num in
-  let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
+  let s2= if Cformula.isAnyConstFalse_struc cconseq then "" else
+    let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
+    s2
+  in
   "\n" ^ s0 ^ "\n" ^ s_pred_abs  ^ "\n"  ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
 let process_cmd cmd iprog cprog=
@@ -307,7 +334,7 @@ let process_cmd cmd iprog cprog=
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def (!subst_pred_self) pdef iprog
     | EntailCheck eche -> process_entail eche iprog cprog
-    | _ -> ";other command\n"
+    | _ -> "\n" (*";other command\n"*)
 
 let save_smt file_name s=
    let org_out_chnl = open_out file_name in
@@ -326,7 +353,7 @@ let trans_smt slk_fname iprog cprog cmds =
     | _ -> false
   ) cmds in
   let ent_cmds = !smt_ent_cmds in
-  let logic_header = "(set-logic QF_SLRD)\n" in
+  let logic_header = "(set-logic QF_S)\n" in
   (*declaration*)
   let decl_s0 = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog cprog)) "" other_cmds in
   let decl_s = logic_header ^ decl_s0 in
