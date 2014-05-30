@@ -189,6 +189,11 @@ let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
   Debug.no_1 "elim_trivial_disj" string_of_ef_pure_disj string_of_ef_pure_disj
       elim_trivial_disj_x disj
 
+(*  
+    ex v. x=v & v!=y  --> x!=y
+    ex v. x=v & v=k & v!=y  --> x=k & x!=y
+*)
+
 (* elim clause with not relevant spec var *)
 (* self > 0 & x = y -> [self,y] -> self > 0 *)
 let elim_clause_x (pf : formula) (args : spec_var list) : formula =
@@ -248,8 +253,8 @@ let ef_elim_exists (svl : spec_var list) (epf : ef_pure) : ef_pure =
   let p_aset = pure_ptr_equations pure in
   (* let _ = Debug.binfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in *)
   let p_aset = EMapSV.build_eset p_aset in
-  (* let eset2 = EMapSV.elim_elems p_aset svl in *)
-  (* let _ = Debug.binfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in *)
+  let new_paset = EMapSV.elim_elems p_aset svl in
+  let _ = Debug.binfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in
   (* let new_pure = EMapSV.domain eset2 in *)
   let eq_all = List.map (fun v ->
       let lst = EMapSV.find_equiv_all v p_aset in
@@ -260,6 +265,10 @@ let ef_elim_exists (svl : spec_var list) (epf : ef_pure) : ef_pure =
     | [] -> acc
     | h::_ -> h::acc) [] eq_all in
   (* let _ = Debug.binfo_hprint (add_str "new baga" string_of_spec_var_list) new_baga no_pos in *)
+  let equiv_pairs = EMapSV.get_equiv new_paset in
+  let ps = string_of_spec_var in
+  Debug.binfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos;
+  let new_pure = mk_eq_pure equiv_pairs in
   let new_pure = elim_clause pure new_baga in
   (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
   (new_baga, new_pure)
