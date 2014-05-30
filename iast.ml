@@ -1662,31 +1662,30 @@ and collect_data_view_from_pure_bformula (bf : P.b_formula) (data_decls: data_de
   | P.ListIn _ | P.ListNotIn _ | P.ListAllN _ | P.ListPerm _ -> ([], [], henv)
   | P.VarPerm _ | P.RelForm _ -> ([], [], henv)
 
-and find_data_view_x (f:Iformula.struc_formula) (data_decls: data_decl list) pos 
+and find_data_view_x (vdecl: view_decl) (data_decls: data_decl list) pos 
     : (ident list) * (ident list) =
   let henv = [] in
-  let (dl,el,henv) = collect_data_view_from_struc f data_decls henv in
+  let (dl,el,henv) = collect_data_view_from_struc vdecl.view_formula data_decls henv in
   match dl with
   | [] -> (
-      let (_, typ) = List.find (fun (id, t) ->
-        String.compare id self = 0
-      ) henv in
-      let tname = string_of_typ typ in
-      try 
+      try
+        (* find type of self in the heap type env *)
+        let typ, _ = get_heap_type henv self in
+        let tname = string_of_typ typ in
         let _ = look_up_data_def_raw data_decls tname in
         ([tname], el)
       with Not_found ->
-        report_error pos ("self has invalid type: " ^ tname)
+        ([], el)
     )
   | [hd] -> (dl,el)
   | _ -> report_error pos ("self points to different data node types")
 
-and find_data_view (f:Iformula.struc_formula) (data_decls: data_decl list) pos
+and find_data_view (vdecl: view_decl) (data_decls: data_decl list) pos
     : (ident list) * (ident list) =
   let pr1 a= String.concat  "," a in
-  let pr2 = !print_struc_formula in
+  let pr2 = !print_view_decl in
   Debug.no_1 "find_data_view" pr2 (pr_pair pr1 pr1)
-      (fun _ -> find_data_view_x f data_decls pos) f
+      (fun _ -> find_data_view_x vdecl data_decls pos) vdecl
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   Debug.no_1 "syn_data_name" pr_no pr_no
@@ -1696,7 +1695,10 @@ and syn_data_name_x  (data_decls : data_decl list)  (view_decls : view_decl list
   let view_decls_org = view_decls in
   (* Restore the original list of view_decls and continue with the previous implementation *)
   let view_decls = view_decls_org in
-  let rl = List.map (fun v -> let (a,b)=(find_data_view v.view_formula data_decls no_pos) in (v, a, b)) view_decls in
+  let rl = List.map (fun v ->
+    let (a,b)=(find_data_view v data_decls no_pos) in
+    (v, a, b)
+  ) view_decls in
   rl
 
 and fixpt_data_name (view_ans)  =

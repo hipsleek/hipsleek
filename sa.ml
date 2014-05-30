@@ -3993,7 +3993,7 @@ let build_horm_view templ_view_decls horm_dd=
 let compute_view_data_name templ_ddefs templ_vdefs vdef=
   let data_name =
     if (String.length vdef.Iast.view_data_name) = 0 then
-      let (cands,_)= Iast.find_data_view vdef.Iast.view_formula templ_ddefs no_pos in
+      let (cands,_)= Iast.find_data_view vdef templ_ddefs no_pos in
       (* let _ = print_endline ("Feasible self type: " ^ (String.concat "," cands)) in *)
       List.hd cands
     else vdef.Iast.view_data_name
