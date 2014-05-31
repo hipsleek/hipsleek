@@ -25,7 +25,8 @@ Anon_1119: x'::node<Anon_1117,D1_1118,flted_11_1116,Anon_1119>&
 flted_11_1116=null)
  |-  x'::node<parent_25_1060',left_25_1061',right_25_1062',next_25_1063'>.
 expect Valid.
- 
+
+/*
 // id: 4; line: 25; kind: BIND
  checkentail (exists Anon_1120,D2_1121,l_1122,
 r_1123: x'::node<Anon_1120,l_1122,r_1123,D2_1121> * l_1122::tree<> * 
@@ -83,3 +84,5 @@ r_1132!=null & t'=t & x'=x & p'=p & parent_25_1133=Anon_1129 &
  !(v_bool_26_1084') & l_1131!=null & res=v_node_34_1083')
  |-  (exists p_85,t_86: x::tll<p_85,res,t_86>&p_85=p & t_86=t).
 expect Valid.
+
+*/
