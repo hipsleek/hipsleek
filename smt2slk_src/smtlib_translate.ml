@@ -313,7 +313,8 @@ and trans_term t =
           ) else if not ( op = "tobool" ||
                   op = "tospace" ||
                   op = "sref" ||
-                  op = "not"
+                  op = "not" ||
+                  op = "loop"
           )
           then (
               (* try *)
