@@ -65,6 +65,14 @@ Why exception below? Which smt file generated?
 
 Fatal error: exception Not_found
 =========================================================================
+../../../sleek odd-lseg3.slk  --inv-baga -tp om
+
+performance issue with Omega ..
+
+ log(bigger)(>4s)(1):(10.,[(SAT:1303<139:TIMEOUT:OMEGA CALCULATOR,10.)])
+Total verification time: 12.02075 second(s)
+	Time spent in main process: 0.576035 second(s)
+	Time spent in child processes: 11.444715 second(s)
 =========================================================================
 =========================================================================
 =========================================================================

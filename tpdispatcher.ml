@@ -42,7 +42,8 @@ type result_type = Timeout | Result of string | Failure of string
 let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" printing not initialized"*))
 
 (* let prover_arg = ref "oc" *)
-let prover_arg = ref "om"
+let prover_arg = ref "z3"
+(* let prover_arg = ref "om" *)
 let external_prover = ref false
 let tp_batch_mode = ref true
 let external_host_ports = ref []
@@ -409,6 +410,8 @@ let set_tp tp_str =
   else
 	();
   check_prover_existence !prover_str
+
+let _ = set_tp "z3"
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
