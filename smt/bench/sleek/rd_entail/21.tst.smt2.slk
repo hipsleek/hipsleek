@@ -1,0 +1,21 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred ListO<y> ==
+ self::GTyp<f0 = y,f1 = _> & null != self
+or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::ListE<y> & null != self).
+
+pred ListE<y> ==
+(exists xp: self::GTyp<f0 = xp,f1 = _> * xp::ListO<y> & null != self).
+
+pred List<y> ==
+ self::GTyp<f0 = y,f1 = _> & null != self
+or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::List<y> & null != self).
+
+checkentail  x::ListE<y>
+or x::ListO<y>
+         |- x::List<y>.
+
