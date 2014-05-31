@@ -4,12 +4,12 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node) (?n int))
+(define-fun ll ((?in node) (?n int))
 Space (tospace
 (or
 (= ?in nil)
 (= ?n 0)
-(exists ((?flted_7_21 int)) (tobool (ssep (pto ?in (sref (ref val ?Anon_12) (ref next ?q) )) (ll ?q ?flted_7_21)))
+(exists ((?flted_7_21 int)) (tobool (ssep (pto ?in (sref (ref val ?Anon_12) (ref next ?q) )) (ll ?q ?flted_7_21))))
 )))
 
 
@@ -21,8 +21,8 @@ Space (tospace
 
 
 (declare-fun n1 () int)
-(declare-fun yprm () TVar[274])
-(declare-fun y () TVar[274])
+(declare-fun yprm () node)
+(declare-fun y () node)
 (declare-fun xprm () node)
 (declare-fun x () node)
 (declare-fun v_bool_15_987prm () boolean)
@@ -35,12 +35,12 @@ Space (tospace
 
 
 (assert 
-(exists ((flted_12_1038 int)) (tobool (ssep (pto xprm (sref (ref val Anon_1020) (ref next q_1021) )) (ll q_1021 flted_12_1038)))
+(exists ((flted_12_1038 int)) (tobool (ssep (pto xprm (sref (ref val Anon_1020) (ref next q_1021) )) (ll q_1021 flted_12_1038))))
 
 )
 
 (assert (not 
-(exists ((flted_12_44 int)(flted_12_1042 int)(Anon_1044 TVar[672])(q_1045 TVar[673])) (tobool (ll x flted_12_44))
+(exists ((flted_12_44 int)(flted_12_1042 int)(Anon_1044 int)(q_1045 node)) (tobool (ll x flted_12_44)))
 
 ))
 

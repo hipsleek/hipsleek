@@ -4,14 +4,14 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun lseg ((?in node) (?p node))
+(define-fun lseg ((?in node) (?p node))
 Space (tospace
 (or
 (= ?in ?p)
-(exists ((?p_23 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_23)))
+(exists ((?p_23 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_23))))
 )))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -22,9 +22,9 @@ Space (tospace
 ) )
 ))))
 
-(declare-fun clist ((?in node))
+(define-fun clist ((?in node))
 Space (tospace
-(exists ((?self_22 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_14) (ref next ?p) )) (lseg ?p ?self_22)))
+(exists ((?self_22 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_14) (ref next ?p) )) (lseg ?p ?self_22))))
 ))
 
 
@@ -46,8 +46,8 @@ Space (tospace
 
 
 (declare-fun xprm () node)
-(declare-fun yprm () TVar[198])
-(declare-fun y () TVar[198])
+(declare-fun yprm () node)
+(declare-fun y () node)
 (declare-fun x () node)
 (declare-fun v_bool_20_1003prm () boolean)
 (declare-fun Anon_1029 () int)
@@ -57,8 +57,8 @@ Space (tospace
 (assert 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (= q_1030 nil)
 (= q_1030 nil)
 (tobool (ssep 
@@ -72,14 +72,14 @@ emp
 (assert (not 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (= q_1030 nil)
 (= q_1030 nil)
-(= val_25_1001' Anon_1029)
-(= next_25_1002' q_1030)
+(= val_25_1001prm Anon_1029)
+(= next_25_1002prm q_1030)
 (tobool (ssep 
-(pto xprm (sref (ref val val_25_1001') (ref next next_25_1002') ))
+(pto xprm (sref (ref val val_25_1001prm) (ref next next_25_1002prm) ))
 (ll q_1030)
 emp
 ) )

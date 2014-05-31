@@ -4,7 +4,7 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -36,11 +36,11 @@ Space (tospace
 (assert 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (distinct q_993 nil)
 bvar(distinct q_993 nil)
-bvar(= v_node_14_963' q_993)
+bvar(= v_node_14_963prm q_993)
 (tobool (ssep 
 (pto xprm (sref (ref val Anon_992) (ref next q_993) ))
 (ll q_993)
@@ -52,15 +52,15 @@ emp
 
 (assert (not 
 (and 
-(distinct v_node_14_963' nil)
-(distinct v_node_14_963' nil)
+(distinct v_node_14_963prm nil)
+(distinct v_node_14_963prm nil)
 (= y nil)
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (distinct q_993 nil)
 bvar(distinct q_993 nil)
-bvar(= v_node_14_963' q_993)
+bvar(= v_node_14_963prm q_993)
 (= y nil)
 (tobool (ssep 
 (ll v_node_14_963prm)

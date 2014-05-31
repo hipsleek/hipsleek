@@ -4,7 +4,7 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -30,12 +30,12 @@ Space (tospace
 
 
 (assert 
-(exists ((Anon_989 int)(q_990 node)) (tobool (ssep (ssep (pto xprm (sref (ref val Anon_989) (ref next q_990) )) (ll q_990)) (ll y)))
+(exists ((Anon_989 int)(q_990 node)) (tobool (ssep (ssep (pto xprm (sref (ref val Anon_989) (ref next q_990) )) (ll q_990)) (ll y))))
 
 )
 
 (assert (not 
-(exists ((Anon_992 int)(q_993 node)) (tobool (ssep (ssep (pto xprm (sref (ref val val_13_958') (ref next next_13_959') )) (ll q_993)) (ll y)))
+(exists ((Anon_992 int)(q_993 node)) (tobool (ssep (ssep (pto xprm (sref (ref val val_13_958prm) (ref next next_13_959prm) )) (ll q_993)) (ll y))))
 
 ))
 

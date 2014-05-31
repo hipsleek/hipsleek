@@ -5,11 +5,11 @@
 (declare-fun prev () (Field node2 node2))
 (declare-fun next () (Field node2 node2))
 
-(declare-fun dll ((?in node2) (?p node2))
+(define-fun dll ((?in node2) (?p node2))
 Space (tospace
 (or
 (= ?in nil)
-(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22)))
+(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22))))
 )))
 
 
@@ -42,10 +42,10 @@ Space (tospace
 (assert 
 (and 
 (= p_1029 q)
-(= self_1030 x')
+(= self_1030 xprm)
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (distinct q_1032 nil)
 (distinct q_1032 nil)
 (= q_1137 self_1030)
@@ -59,7 +59,7 @@ emp
 )
 
 (assert (not 
-(exists ((q_48 node2)(Anon_1177 TVar[1414])(q_1178 TVar[1415])) (tobool (dll x q_48))
+(exists ((q_48 node2)(Anon_1177 TVar[1414])(q_1178 TVar[1415])) (tobool (dll x q_48)))
 
 ))
 

@@ -4,7 +4,7 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -23,11 +23,11 @@ Space (tospace
 
 
 
-(declare-fun yprm () TVar[204])
+(declare-fun yprm () node)
 (declare-fun xprm () node)
 (declare-fun x () node)
 (declare-fun v_bool_13_966prm () boolean)
-(declare-fun y () TVar[204])
+(declare-fun y () node)
 (declare-fun Anon_992 () int)
 (declare-fun q_993 () node)
 
@@ -36,8 +36,8 @@ Space (tospace
 (and 
 (= y nil)
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (distinct q_993 nil)
 bvar(distinct q_993 nil)
 bvar(= y nil)
@@ -50,7 +50,7 @@ emp
 )
 
 (assert (not 
-(exists ((Anon_1012 TVar[506])(q_1013 TVar[507])) (tobool (ll x))
+(exists ((Anon_1012 int)(q_1013 node)) (tobool (ll x)))
 
 ))
 

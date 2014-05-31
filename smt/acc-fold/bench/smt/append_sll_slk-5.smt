@@ -4,7 +4,7 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -35,8 +35,8 @@ Space (tospace
 (assert 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (= q_993 nil)
 (= q_993 nil)
 (tobool (ssep 
@@ -51,14 +51,14 @@ emp
 (assert (not 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (= q_993 nil)
 (= q_993 nil)
-(= val_18_964' Anon_992)
-(= next_18_965' q_993)
+(= val_18_964prm Anon_992)
+(= next_18_965prm q_993)
 (tobool (ssep 
-(pto xprm (sref (ref val val_18_964') (ref next next_18_965') ))
+(pto xprm (sref (ref val val_18_964prm) (ref next next_18_965prm) ))
 (ll q_993)
 (ll y)
 emp

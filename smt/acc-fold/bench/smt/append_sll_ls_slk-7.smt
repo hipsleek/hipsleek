@@ -4,7 +4,7 @@
 (declare-fun val () (Field node int))
 (declare-fun next () (Field node node))
 
-(declare-fun ll ((?in node))
+(define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
@@ -15,11 +15,11 @@ Space (tospace
 ) )
 ))))
 
-(declare-fun lseg ((?in node) (?p node))
+(define-fun lseg ((?in node) (?p node))
 Space (tospace
 (or
 (= ?in ?p)
-(exists ((?p_21 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_21)))
+(exists ((?p_21 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_21))))
 )))
 
 
@@ -43,21 +43,21 @@ Space (tospace
 (assert 
 (and 
 (distinct x nil)
-(= y' y)
-(= x' x)
+(= yprm y)
+(= xprm x)
 (= q_1014 nil)
 (= q_1014 nil)
 (= next_20_1032 q_1014)
 (tobool (ssep 
 (ll q_1014)
-(pto xprm (sref (ref val Anon_1013) (ref next y') ))
+(pto xprm (sref (ref val Anon_1013) (ref next yprm) ))
 emp
 ) )
 )
 )
 
 (assert (not 
-(exists ((y_48 node)(Anon_1042 TVar[567])(q_1043 node)) (tobool (ssep (lseg x y_48) (ll q_1014)))
+(exists ((y_48 node)(Anon_1042 int)(q_1043 node)) (tobool (ssep (lseg x y_48) (ll q_1014))))
 
 ))
 
