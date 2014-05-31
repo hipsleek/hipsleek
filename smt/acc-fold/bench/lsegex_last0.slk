@@ -10,6 +10,7 @@ pred lseg<p> == self=p
 
 //lemma_safe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>*p::node<_>@L).
 
-lemma_unsafe self::lseg<p> & self!=p 
-        -> (exists u: self::lseg<u>*u::node<p>).
+lemma_safe self::lseg<p> & self!=p 
+        -> (exists u: self::lseg<u>*u::node<p>) .
+
 
