@@ -40,7 +40,7 @@ Space (tospace
 
 
 (assert 
-(exists ((flted_11_1116 node)(Anon_1117 node)(D1_1118 node)(Anon_1119 node)) (tobool (pto xprm (sref (ref parent Anon_1117) (ref left D1_1118) (ref right flted_11_1116) (ref next Anon_1119) ))))
+(exists ((Anon_1120 node)(D2_1121 node)(l_1122 node)(r_1123 node)) (tobool (ssep (ssep (pto xprm (sref (ref parent Anon_1120) (ref left l_1122) (ref right r_1123) (ref next D2_1121) )) (tree l_1122)) (tree r_1123))))
 
 )
 

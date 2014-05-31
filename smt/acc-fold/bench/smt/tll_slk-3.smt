@@ -37,17 +37,26 @@ Space (tospace
 
 
 (declare-fun xprm () node)
+(declare-fun pprm () node)
+(declare-fun D1_1127 () node)
+(declare-fun Anon_1128 () node)
+(declare-fun flted_11_1125 () node)
 
 
 (assert 
-(exists ((flted_11_1116 node)(Anon_1117 node)(D1_1118 node)(Anon_1119 node)) (tobool (pto xprm (sref (ref parent Anon_1117) (ref left D1_1118) (ref right flted_11_1116) (ref next Anon_1119) ))))
-
+(and 
+(= flted_11_1125 nil)
+(tobool (ssep 
+(pto xprm (sref (ref parent pprm) (ref left D1_1127) (ref right flted_11_1125) (ref next Anon_1128) ))
+emp
+) )
+)
 )
 
 (assert (not 
 (and 
 (tobool (ssep 
-(pto xprm (sref (ref parent parent_25_1060prm) (ref left left_25_1061prm) (ref right right_25_1062prm) (ref next next_25_1063prm) ))
+(pto xprm (sref (ref parent parent_28_1069prm) (ref left left_28_1070prm) (ref right right_28_1071prm) (ref next next_28_1072prm) ))
 emp
 ) )
 )

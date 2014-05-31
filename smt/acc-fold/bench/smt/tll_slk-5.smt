@@ -37,17 +37,32 @@ Space (tospace
 
 
 (declare-fun xprm () node)
+(declare-fun pprm () node)
+(declare-fun v_node_33_1077prm () node)
+(declare-fun l_1131 () node)
+(declare-fun r_1132 () node)
+(declare-fun D2_1130 () node)
 
 
 (assert 
-(exists ((flted_11_1116 node)(Anon_1117 node)(D1_1118 node)(Anon_1119 node)) (tobool (pto xprm (sref (ref parent Anon_1117) (ref left D1_1118) (ref right flted_11_1116) (ref next Anon_1119) ))))
-
+(and 
+(distinct r_1132 nil)
+(= v_node_33_1077prm r_1132)
+(tobool (ssep 
+(tree l_1131)
+(tree r_1132)
+(pto xprm (sref (ref parent pprm) (ref left l_1131) (ref right r_1132) (ref next D2_1130) ))
+emp
+) )
+)
 )
 
 (assert (not 
 (and 
 (tobool (ssep 
-(pto xprm (sref (ref parent parent_25_1060prm) (ref left left_25_1061prm) (ref right right_25_1062prm) (ref next next_25_1063prm) ))
+(tree l_1131)
+(tree v_node_33_1077prm)
+(pto xprm (sref (ref parent pprm) (ref left l_1131) (ref right r_1132) (ref next D2_1130) ))
 emp
 ) )
 )
