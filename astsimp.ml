@@ -472,8 +472,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    if not(mr==[])
-    then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    (* if not(mr==[]) *)
+    (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     g
         (* if DfsNG.has_cycle g *)
         (* then failwith "View definitions are mutually recursive" *)
