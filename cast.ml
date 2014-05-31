@@ -2828,44 +2828,35 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0)
   ) in
   let compute_view_direction vg env fw_ptrs fw_fields bw_ptrs bw_fields = (
-    Debug.ninfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
+    Debug.tinfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
     (*
      * Find forward pointers
      *)
     (* self is always the forward pointers *)
-    let forward_ptrs = ref [] in
+    let forward_ptrs = ref [self] in
     forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
-    (* (* find forward poiters from equality path *)                                      *)
-    (* List.iter (fun v1 ->                                                               *)
-    (*   List.iter (fun sv ->                                                             *)
-    (*     let v2 = P.name_of_spec_var sv in                                              *)
-    (*     try                                                                            *)
-    (*       let _, length = Dijkstra.shortest_path vg v1 v2 in                           *)
-    (*       (* path contains only equality edges *)                                      *)
-    (*       if (length = 0) then                                                         *)
-    (*         forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]); *)
-    (*     with _ -> ()                                                                   *)
-    (*   ) vdecl.view_vars                                                                *)
-    (* ) !forward_ptrs;                                                                   *)
-    
+    (* find forward poiters from equality path *)
+    List.iter (fun v1 ->
+      List.iter (fun sv ->
+        let v2 = P.name_of_spec_var sv in
+        try
+          let _, length = Dijkstra.shortest_path vg v1 v2 in
+          (* path contains only equality edges *)
+          if (length = 0) then
+            forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
+        with _ -> ()
+      ) vdecl.view_vars
+    ) !forward_ptrs;
+
     (*
      * find forward_fields: the data-field edge from self to the views have same type
      *)
-    let self_view = vdecl.view_name in
-    let self_data = vdecl.view_data_name in
     let forward_fields = ref [] in
-    let possible_fw_ptrs = (
-      (ViewGraph.get_vertex_of_type env self_view)
-      @ (ViewGraph.get_vertex_of_type env self_data) 
-    ) in
-    Debug.ninfo_hprint 
-        (add_str ("possible_fw_ptrs:") (pr_list (fun s -> s)))
-        possible_fw_ptrs no_pos;
     let fw_views = List.concat (List.map (fun v ->
       try
-        Debug.ninfo_pprint ("find path from self to " ^ v) no_pos;
+        Debug.tinfo_pprint ("find path from self to " ^ v) no_pos;
         let path, weight = Dijkstra.shortest_path vg self v in
-        Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+        Debug.tinfo_pprint ("found path: length " ^ (string_of_int (List.length path))
                             ^ ", weight: " ^ (string_of_int weight)) no_pos;
         let fw_fields = List.concat (List.map (fun (_, lbl, _) ->
           match lbl with
@@ -2878,54 +2869,64 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
           [v]
         ) else []
       with Not_found ->
-        Debug.ninfo_pprint ("not found! " ^ v) no_pos;
+        Debug.tinfo_pprint ("not found! " ^ v) no_pos;
         []
-    ) possible_fw_ptrs) in
-    Debug.ninfo_hprint (add_str "forward_fields:" (pr_list (fun (x,y) -> x^"."^y)))
+    ) !forward_ptrs) in
+    Debug.tinfo_hprint (add_str "forward_fields:" (pr_list (fun (x,y) -> x^"."^y)))
         !forward_fields no_pos;
+
     (*
      * find backward ptrs: field of the edge from forward_ptrs back to self
      *)
+    let self_view = vdecl.view_name in
+    let self_data = vdecl.view_data_name in
+    let possible_ptrs = (
+      (ViewGraph.get_vertex_of_type env self_view)
+      @ (ViewGraph.get_vertex_of_type env self_data)
+    ) in
     let backward_ptrs = ref bw_ptrs in
-    (* let _ = List.iter (fun v ->                                                           *)
-    (*   try                                                                                 *)
-    (*     let path, _ = Dijkstra.shortest_path vg v self in                                 *)
-    (*     let bw_ptrs = List.concat (List.map (fun e ->                                     *)
-    (*       let lbl = ViewGraph.get_label e in                                              *)
-    (*       match lbl with                                                                  *)
-    (*       | ViewGraph.Label.ViewField (_,f) -> [f]                                        *)
-    (*       | _ -> []                                                                       *)
-    (*     ) path) in                                                                        *)
-    (*     if (List.length bw_ptrs > 0) then (                                               *)
-    (*       backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ bw_ptrs); *)
-    (*     )                                                                                 *)
-    (*   with _ -> ()                                                                        *)
-    (* ) fw_views in                                                                         *)
-    (* (* find backward poiters from equality path *)                                        *)
-    (* List.iter (fun v1 ->                                                                  *)
-    (*   List.iter (fun sv ->                                                                *)
-    (*     let v2 = P.name_of_spec_var sv in                                                 *)
-    (*     try                                                                               *)
-    (*       let _, length = Dijkstra.shortest_path vg v1 v2 in                              *)
-    (*       if (length = 0) then (* path contains only Equality edges *)                    *)
-    (*         backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);  *)
-    (*     with _ -> ()                                                                      *)
-    (*   ) vdecl.view_vars                                                                   *)
-    (* ) !backward_ptrs;                                                                     *)
+    let _ = List.iter (fun v ->
+      try
+        let path, _ = Dijkstra.shortest_path vg v self in
+        let bw_ptrs = List.concat (List.map (fun e ->
+          let lbl = ViewGraph.get_label e in
+          match lbl with
+          | ViewGraph.Label.ViewField (_,f) -> [f]
+          | _ -> []
+        ) path) in
+        if (List.length bw_ptrs > 0) then (
+          backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ bw_ptrs);
+        )
+      with _ -> ()
+    ) possible_ptrs in
+    (* find backward poiters from equality path *)
+    List.iter (fun v1 ->
+      List.iter (fun sv ->
+        let v2 = P.name_of_spec_var sv in
+        try
+          let _, length = Dijkstra.shortest_path vg v1 v2 in
+          if (length = 0) then (* path contains only Equality edges *)
+            backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);
+        with _ -> ()
+      ) vdecl.view_vars
+    ) !backward_ptrs;
 
     (*
      * find backward fields: the data-field edge from self to backward ptrs
      *)
     let backward_fields = List.concat (List.map (fun v ->
       try
-        let path, _ = Dijkstra.shortest_path vg self v in
+        Debug.tinfo_pprint ("find path from " ^ v ^ " to self") no_pos;
+        let path, weight = Dijkstra.shortest_path vg self v in
+        Debug.tinfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+                            ^ ", weight: " ^ (string_of_int weight)) no_pos;
         List.concat (List.map (fun (_, lbl, _) ->
           match lbl with
           | ViewGraph.Label.DataField (d,f) -> [(d,f)]
           | _ -> []
         ) path)
       with _ -> []
-    ) possible_fw_ptrs) in
+    ) !backward_ptrs) in
     (!forward_ptrs, !forward_fields, !backward_ptrs, backward_fields)
   ) in
   let forward_ptrs, forward_fields, backward_ptrs, backward_fields =
