@@ -22,13 +22,6 @@ v_node_13_960'=q_993 & v_node_13_960'=null
 v_node_13_960'=q_993 & v_node_13_960'=null.
 expect Valid.
  
-// id: 4; line: 13; kind: PRE
- checkentail_exact x'::node<Anon_992,q_993> * q_993::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
-v_node_13_960'=q_993 & v_node_13_960'!=null
- |-  x'::node<Anon_992,q_993> * q_993::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
-v_node_13_960'=q_993 & v_node_13_960'!=null.
-expect Valid.
- 
 // id: 6; line: 14; kind: BIND
  checkentail_exact x'::node<Anon_992,q_993> * q_993::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
 q_993!=null & v_bool_13_966' & q_993!=null & v_bool_13_966'

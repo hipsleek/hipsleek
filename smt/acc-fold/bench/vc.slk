@@ -1,0 +1,71 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_7_21: self::node<Anon_12,q> * 
+  q::ll<flted_7_21>&flted_7_21+1=n)
+  inv 0<=n.
+ 
+// id: 0; line: 6; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&0<=n.
+expect Valid.
+ 
+// id: 1; line: 38; kind: BIND
+ checkentail (exists flted_7_1015,Anon_1016,q_1017: x'::node<Anon_1016,q_1017> * 
+q_1017::ll<flted_7_1015> * y::ll<n2>&flted_7_1015+1=n1 & 0<n1 & y'=y & x'=x)
+ |-  x'::node<val_38_979',next_38_980'>@L.
+expect Valid.
+ 
+// id: 3; line: 38; kind: PRE
+ checkentail x'::node<Anon_1020,q_1021> * q_1021::ll<flted_7_1019> * y::ll<n2>&
+flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_981'=q_1021 & 
+v_node_38_981'=null
+ |-  emp.
+expect Valid.
+ 
+// id: 5; line: 38; kind: PRE
+ checkentail x'::node<Anon_1020,q_1021> * q_1021::ll<flted_7_1019> * y::ll<n2>&
+flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & v_node_38_981'=q_1021 & 
+v_node_38_981'!=null
+ |-  emp.
+expect Valid.
+ 
+// id: 7; line: 39; kind: BIND
+ checkentail x'::node<Anon_1020,q_1021> * q_1021::ll<flted_7_1019> * y::ll<n2>&
+flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & q_1021!=null & v_bool_38_987' & 
+q_1021!=null & v_bool_38_987'
+ |-  x'::node<val_39_982',next_39_983'>@L.
+expect Valid.
+ 
+// id: 9; line: 39; kind: PRE_REC
+ checkentail x'::node<Anon_1020,q_1021> * q_1021::ll<flted_7_1019> * y::ll<n2>&
+flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & q_1021!=null & v_bool_38_987' & 
+q_1021!=null & v_bool_38_987' & v_node_39_984'=q_1021
+ |-  v_node_39_984'::ll<n1_1032> * y'::ll<n2_1033>&0<n1_1032.
+expect Valid.
+ 
+// id: 13; line: 43; kind: BIND
+ checkentail x'::node<Anon_1020,q_1021> * q_1021::ll<flted_7_1019> * y::ll<n2>&
+flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & q_1021=null & !(v_bool_38_987') & 
+q_1021=null & !(v_bool_38_987')
+ |-  x'::node<val_43_985',next_43_986'>.
+expect Valid.
+ 
+// id: 15; line: 35; kind: POST
+ checkentail (exists flted_35_1038: x'::node<Anon_1020,q_1021> * 
+q_1021::ll<flted_35_1038>&flted_7_1019+1=n1 & 0<n1 & y'=y & x'=x & 
+q_1021!=null & v_bool_38_987' & q_1021!=null & v_bool_38_987' & 
+n1_1032=flted_7_1019 & n2_1033=n2 & 0<=n2 & 0<=flted_7_1019 & 
+flted_35_1038=n2_1033+n1_1032 & 0<=n1_1032 & 0<=n2_1033)
+ |-  (exists flted_35_44: x::ll<flted_35_44>&flted_35_44=n2+n1).
+expect Valid.
+ 
+// id: 20; line: 35; kind: POST
+ checkentail q_1021::ll<flted_7_1019> * y::ll<n2> * x'::node<Anon_1020,y'>&flted_7_1019+
+1=n1 & 0<n1 & y'=y & x'=x & q_1021=null & !(v_bool_38_987') & q_1021=null & 
+!(v_bool_38_987') & next_43_1041=q_1021
+ |-  (exists flted_35_44: x::ll<flted_35_44>&flted_35_44=n2+n1).
+expect Valid.

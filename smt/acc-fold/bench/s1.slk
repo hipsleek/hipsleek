@@ -1,0 +1,71 @@
+data node {
+  int val;
+  node next;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_7_21: self::node<Anon_12,q> * 
+  q::ll<flted_7_21>&flted_7_21+1=n)
+  inv 0<=n.
+ 
+// id: 0; line: 6; kind: Pred_Check_Inv
+ checkentail_exact emp&((self=null & n=0) | (1<=n & self!=null))
+ |-  emp&(((self=null & n=0) | (1<=n & self!=null))) & 0<=n.
+
+ 
+// id: 1; line: 38; kind: BIND
+ checkentail_exact (exists flted,Anon,q: x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&x'=x & 
+y'=y & 0<n1 & flted+1=n1)
+ |-  (exists flted,Anon,q: x'::node<val',next'>@L * q::ll<flted> * y::ll<n2>&
+next'=q & val'=Anon & x'=x & y'=y & 0<n1 & flted+1=n1).
+
+ 
+// id: 3; line: 38; kind: PRE
+ checkentail_exact x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v'=null & v'=q & x'=x & y'=y & 
+0<n1 & flted+1=n1
+ |-  x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v'=null & v'=q & x'=x & y'=y & 
+0<n1 & flted+1=n1.
+
+ 
+// id: 5; line: 38; kind: PRE
+ checkentail_exact x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v'!=null & v'=q & x'=x & y'=y & 
+0<n1 & flted+1=n1
+ |-  x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v'!=null & v'=q & x'=x & y'=y & 
+0<n1 & flted+1=n1.
+
+ 
+// id: 7; line: 39; kind: BIND
+ checkentail_exact x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v' & q!=null & x'=x & y'=y & 
+0<n1 & flted+1=n1
+ |-  x'::node<val',next'>@L * q::ll<flted> * y::ll<n2>&next'=q & val'=Anon & 
+v' & q!=null & x'=x & y'=y & 0<n1 & flted+1=n1.
+
+ 
+// id: 9; line: 39; kind: PRE_REC
+ checkentail_exact x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&v'=q & v1' & q!=null & x'=x & 
+y'=y & 0<n1 & flted+1=n1
+ |-  v'::ll<n1> * y'::ll<n> * x'::node<Anon,q>&n=n2 & n1=flted & v'=q & v1' & 
+q!=null & x'=x & y'=y & 0<n1 & flted+1=n1 & 0<n1.
+
+ 
+// id: 13; line: 43; kind: BIND
+ checkentail_exact x'::node<Anon,q> * q::ll<flted> * y::ll<n2>&!(v') & q=null & x'=x & y'=y & 
+0<n1 & flted+1=n1
+ |-  x'::node<val',next'> * q::ll<flted> * y::ll<n2>&next'=q & val'=Anon & 
+!(v') & q=null & x'=x & y'=y & 0<n1 & flted+1=n1.
+
+ 
+// id: 15; line: 35; kind: POST
+ checkentail_exact (exists flted1: x'::node<Anon,q> * q::ll<flted1>&0<=n & 0<=n1 & flted1=n+
+n1 & 0<=flted & 0<=n2 & n=n2 & n1=flted & v' & q!=null & x'=x & y'=y & 
+0<n1 & flted+1=n1)
+ |-  (exists flted1,flted2,Anon1,q1: x::ll<flted1>&q1=q & Anon1=Anon & 0<=n & 
+0<=n1 & flted2=n+n1 & 0<=flted & 0<=n2 & n=n2 & n1=flted & v' & q!=null & 
+x'=x & y'=y & 0<n1 & flted+1=n1 & flted1=n2+n1).
+
+ 
+// id: 20; line: 35; kind: POST
+ checkentail_exact q::ll<flted> * y::ll<n2> * x'::node<Anon,y'>&next=q & !(v') & q=null & 
+x'=x & y'=y & 0<n1 & flted+1=n1
+ |-  (exists flted1,Anon1,q1: x::ll<flted1> * q::ll<flted>&q1=y' & Anon1=Anon & 
+next=q & !(v') & q=null & x'=x & y'=y & 0<n1 & flted+1=n1 & flted1=n2+n1).
