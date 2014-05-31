@@ -1505,7 +1505,7 @@ and collect_data_view_from_formula_x (f0 : F.formula) (data_decls: data_decl lis
         let dl2, vl2, henv = helper h2 henv in
         let d1 = List.length (dl1 @ vl1) in
         let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
+        if false (* d1>0 & d2>0 *) then
           let msg = "self occurs as heap nodes multiple times in one branch" in
           report_error pos msg
         else (
@@ -1520,7 +1520,7 @@ and collect_data_view_from_formula_x (f0 : F.formula) (data_decls: data_decl lis
         let dl2, vl2, henv = helper h2 henv in
         let d1 = List.length (dl1 @ vl1) in
         let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
+        if false (* d1>0 & d2>0 *) then
           let msg = "self occurs as heap nodes multiple times in one branch" in
           report_error pos msg
         else (
@@ -1535,7 +1535,7 @@ and collect_data_view_from_formula_x (f0 : F.formula) (data_decls: data_decl lis
         let dl2, vl2, henv = helper h2 henv in
         let d1 = List.length (dl1 @ vl1) in
         let d2 = List.length (dl2 @ vl2) in
-        if d1>0 & d2>0 then
+        if false (* d1>0 & d2>0 *) then
           let msg = "self occurs as heap nodes multiple times in one branch" in
           report_error pos msg
         else (
