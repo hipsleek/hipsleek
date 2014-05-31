@@ -2148,6 +2148,17 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               List.mem vd.Cast.view_name idl
           ) cviews0 in
           let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
+          let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> 
+              Cprinter.string_of_mix_formula v.Cast.view_user_inv))) views_list no_pos in
+          let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
+          (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
+          let lst = List.combine views_list new_invs_list  in
+          let baga_stronger = List.for_all 
+            (fun (vd,bi) ->
+                let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
+                Expure.ef_imply_disj bi uv
+            ) lst  in
+          let _ = if (not baga_stronger) then Globals.dis_inv_baga() in
           let new_map = List.combine views_list new_invs_list in
           List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
       ) ls_mut_rec_views1 in

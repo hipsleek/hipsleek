@@ -671,6 +671,7 @@ let common_arguments = [
           Globals.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
+          Globals.gen_baga_inv := true;
           Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")

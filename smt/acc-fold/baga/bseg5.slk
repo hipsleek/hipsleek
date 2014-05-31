@@ -32,10 +32,14 @@ expect Fail.
 checkentail x::b1<y,z> * z::node<_> & x!=y & y!=z |- false.
 expect Valid.
 
+
+//!!! baga inv(b1):[([], x=y),([x], z=y),([y,x], z=y)]
+checkentail x::b1<y,z> * z::node<_> & x!=y |- x::node<y> & y=z.
+expect Valid.
+
+
 checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
 expect Fail.
-
-
 
 /*
 
