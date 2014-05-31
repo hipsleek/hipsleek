@@ -18,13 +18,12 @@ self::notg<y1>
 // * self::xorg<x2,y2> * self::andg<x2,z3> 
 // * z3::xorg<x3,y3> * z3::andg<x3,z4> * x4::xorg<y4,z4> * z4::andg<x4,z5> 
 // * x5::xorg<y5,z5> * z5::andg<x5,z6> * x6::xorg<y6,z6> * z6::andg<x6,z7> 
- * x7::xorg<y7,z7> * z7::andg<x7,z8> * x8::xorg<y8,z8> 
+// * x7::xorg<y7,z7> * z7::andg<x7,z8> * x8::xorg<y8,z8> 
 * z8::andg<x8,z9> 
 * x9::xorg<y9,z9> 
 * z9::andg<x9,z10> * x10::xorg<y10,z10>
 ).
 */
-
 
 pred notg<y> ==
  self::zero<> * y::one<>
@@ -36,8 +35,7 @@ or self::zero<> * y::one<> * z::one<>
 or self::one<> * y::zero<> * z::one<>
 or self::one<> * y::one<> * z::zero<>.
 
-
-pred andg<y,z> ==
+pred andg<y,z> =
  self::zero<> * z::zero<>
 or y::zero<> * z::zero<>
 or self::one<> * y::one<> * z::one<>.
@@ -51,4 +49,19 @@ null = self.
 /*
 checkentail x0::P<x1,x2,x3,x4,x5,x6,x7,x8,x9>
          |- false.
+*/
+
+/*
+how to handle --inv-baga
+
+ - can we avoid fixpoint for non-recursive views?
+ - can we avoid calling Omega simplify?
+
+!!! baga inv(one):[([], null!=self)]
+!!! baga inv(zero):[([], null=self)]
+!!! baga inv(andg):[([], null=self & null=z),
+   ([], null=y & null=z),
+   ([], null!=self & null!=y & null!=z)]
+!!! baga inv(xorg):[([], null=self & null=y & null=z),([], null=self & null!=y & null!=z),([], null!=self & null=y & null!=z),([], null!=self & null!=y & null=z)]
+!!! baga inv(notg):[([], null=self & null!=y),([], null!=self & null=y)]
 */

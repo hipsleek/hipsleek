@@ -205,7 +205,10 @@ struct
   let report_error pos msg = Error.report_error
      { Error.error_loc = pos; Error.error_text = msg}
 
-  let report_warning pos msg = Error.report_warning
+  let report_warning pos msg = 
+    if !Globals.smt_compete_mode then ()
+    else 
+      Error.report_warning
      { Error.error_loc = pos; Error.error_text = msg}
 
 end;;

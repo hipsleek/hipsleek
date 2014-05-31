@@ -92,6 +92,7 @@ and view_decl = {
     view_labels : LO.t list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_type_of_self : typ option;
     view_is_touching : bool;
     view_is_segmented : bool;
     view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)

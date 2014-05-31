@@ -2043,6 +2043,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_backward_fields = [];
           C.view_aux_formula = [];
           C.view_kind = view_kind;
+          C.view_type_of_self = vdef.I.view_type_of_self;
           C.view_prop_extns = view_prop_extns;
           C.view_parent_name = None;
           C.view_domains = [];
@@ -2181,8 +2182,11 @@ and fill_one_base_case_x prog vd =
     {vd with C.view_base_case = None; C.view_raw_base_case = None})
   else
     begin
-      {vd with C.view_base_case = 
-              compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
+      {vd with C.view_base_case = (* WN : smt-compete problem : can be large! *)
+              if !Globals.smt_compete_mode then None
+              else
+                compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
+      }
     end
 
 and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }    
@@ -5477,21 +5481,25 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
       let ve_info = snd(List.find (fun (v,en)->v=ve) tlist)
       in
       (match ve_info.sv_info_kind with
-        | UNK ->
-              Err.report_error
-                  {
-                      Err.error_loc = pos;
-                      Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n";
-                  }
+          (* | UNK -> *)
+        (*       Err.report_error *)
+        (*           { *)
+        (*               Err.error_loc = pos; *)
+        (*               Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n"; *)
+        (*           } *)
         | t -> CP.SpecVar (t, ve, pe)
 
       )
     with Not_found ->   
-        Err.report_error
-            {
-                Err.error_loc = pos;
-                Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n, could it be an unused var?\n";
-            }           
+            (* relaxing type inferring for smt-compete *)
+        CP.SpecVar (UNK, ve, pe)
+        (* if !Globals.smt_compete_mode then CP.SpecVar (UNK, ve, pe) *)
+        (* else *)
+        (* Err.report_error *)
+        (*     { *)
+        (*         Err.error_loc = pos; *)
+        (*         Err.error_text = "type table does not contain an entry for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_tlist tlist)^"\n, could it be an unused var?\n"; *)
+        (*     } *)
             
 and trans_var_safe (ve, pe) et tlist pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)

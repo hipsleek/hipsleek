@@ -79,6 +79,7 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
     mutable view_derv: bool;
+    view_type_of_self : typ option;
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -1824,7 +1825,8 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
                   let _ = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in
                    v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
-          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+          () (* self has unknown type *)
+          (* report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else v.view_data_name <- List.hd a) vl
 

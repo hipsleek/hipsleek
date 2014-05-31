@@ -3373,7 +3373,7 @@ let pr_barrier_decl v =
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
-  let f bc =
+  let f_base_case bc =
     match bc with
 	  | None -> ()
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
@@ -3426,7 +3426,7 @@ let pr_view_decl v =
   (match v.view_raw_base_case with 
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
-  f v.view_base_case;
+  f_base_case v.view_base_case;
   pr_vwrap  "view_complex_inv: " (pr_opt pr_mix_formula) v.view_complex_inv;
   pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;

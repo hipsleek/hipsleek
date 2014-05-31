@@ -204,6 +204,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                 let n_iview = {  I.view_name = vname;
                                          I.view_pos = no_pos;
 		I.view_data_name = "";
+                I.view_type_of_self = None;
 		I.view_vars = vars;
                 I.view_imm_map = [];
                 I.view_parent_name = None;

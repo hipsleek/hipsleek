@@ -3960,6 +3960,7 @@ let build_horm_view_x templ_view_decls horm_dd=
     { Iast.view_name = n_view_name;
     Iast.view_pos = no_pos;
     Iast.view_data_name = data_name;
+    Iast.view_type_of_self = None;
     Iast.view_vars = view.Iast.view_vars;
     Iast.view_imm_map = view.Iast.view_imm_map;
     Iast.view_labels = view.Iast.view_labels;

@@ -75,7 +75,7 @@ let rec smt_of_typ t =
   | Tree_sh -> "Int"
   | Int -> "Int"
   | AnnT -> "Int"
-  | UNK ->  illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
+  | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
   | BagT _ -> "Int"
   | TVar _ -> "Int"

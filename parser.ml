@@ -1174,6 +1174,7 @@ view_header:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_type_of_self = None;
           view_imm_map = [];
           view_vars = (* List.map fst *) cids;
           view_derv = false;
@@ -1213,6 +1214,7 @@ view_header_ext:
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_imm_map = [];
+          view_type_of_self = None;
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;

@@ -960,11 +960,36 @@ and fill_view_param_types (vdef : I.view_decl) =
     report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty")
   else ()
 
-(* ident, args, table *)
 and try_unify_view_type_args prog c vdef v deref ies tlist pos =
+  let pr1 = add_str "is_prim_pred" string_of_bool in
+  let pr2 = add_str "name,var" (pr_pair pr_id pr_id) in
+  let pr3 = string_of_tlist in
+  let pr4 = pr_list Iprinter.string_of_formula_exp in
+  Debug.no_4 "try_unify_view_type_args" pr1 pr2 pr3 pr4 pr3
+      (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies tlist pos)
+      vdef.I.view_is_prim (c,v) tlist ies
+(*
+type: I.prog_decl ->
+  c: view_name : Globals.ident ->
+  I.view_decl ->
+  v : var ptr : Globals.ident ->
+  int ->
+  tlist : arg list : Iprinter.P.exp list ->
+  spec_var_type_list -> Globals.loc -> spec_var_type_list
+*)
+(* ident, args, table *)
+and try_unify_view_type_args_x prog c vdef v deref ies tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
     if (String.compare dname "" = 0) then tlist
+    else if vdef.I.view_is_prim then
+      begin
+        match vdef.I.view_type_of_self with
+          | None -> tlist
+          | Some self_typ ->
+                let (n_tl,_) = gather_type_info_var v tlist self_typ pos in
+                n_tl
+      end
     else 
       let expect_dname = (
           let s = ref "" in
@@ -1120,7 +1145,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_arguments = ies; (* arguments *)
                   IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
-                  IF.h_formula_heap_name = c; (* data/pred name *)
+                  IF.h_formula_heap_name = v_name; (* data/pred name *)
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
@@ -1149,7 +1174,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let n_tl = gather_type_info_ann ann n_tl in
       let n_tl = (* if (!Globals.allow_field_ann) then *) gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
       (*Deal with the generic pointer! *)
-      if (c = Parser.generic_pointer_type_name) then 
+      if (v_name = Parser.generic_pointer_type_name) then 
         (* Assumptions:
          * (i)  ies to contain a single argument, namely the value of the pointer
          * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
@@ -1209,16 +1234,17 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       else (* End dealing with generic ptr, continue what the original system did *)
         let n_tl = 
         (try
-          let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls c in
+          let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+          (* let _ = if vdef.I.view_is_prim then Debug.binfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
           (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
             let _ = if not (IF.is_param_ann_list_empty ann_param) then
           (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
             report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog c vdef v deref ies n_tl pos 
+            try_unify_view_type_args prog v_name vdef v deref ies n_tl pos 
         with
         | Not_found ->
           (try
-            let n_tl = try_unify_data_type_args prog c v deref ies n_tl pos in 
+            let n_tl = try_unify_data_type_args prog v_name v deref ies n_tl pos in 
             n_tl
           with
           | Not_found ->
@@ -1226,7 +1252,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
             Err.report_error
             {
               Err.error_loc = pos;
-              Err.error_text = c ^ " is neither 2 a data nor view name";
+              Err.error_text = v_name ^ " is neither 2 a data nor view name";
             }))
         in n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
