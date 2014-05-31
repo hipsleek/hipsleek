@@ -644,11 +644,13 @@ and checkeq_p_formula_x (hvars: ident list)(p1: CP.formula) (p2: CP.formula)(mtl
       if(res) then checkeq_p_formula hvars f2 pf2 mtl1 
       else (res, []) 
     )
-    | AndList _ -> report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet"
+    | AndList _ ->
+          false,mtl
+          (* report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet" *)
     | Or f -> match_equiv_orform hvars f pf2 mtl
     | Not(f,_,_) -> match_equiv_notform hvars f pf2 mtl
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> false,mtl (* report_error no_pos "not handle checkeq 2 formula that have forall and exists yet" *)
 
 and checkeq_p_formula  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in
@@ -912,7 +914,8 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
       | Or f -> (false,[mt])
       | Not(f2,_,_) -> report_error no_pos "temp: not handle not yet" (* checkeq_p_formula hvars f1 f2 mtl *)
       | Forall _ 
-      | Exists _ -> report_error no_pos "not handle forall and exists yet"
+      | Exists _ -> (false,[mt])
+            (* report_error no_pos "not handle forall and exists yet" *)
   in
   let res_list = List.map (fun mt ->  match_equiv_notform_helper hvars f1 pf2 mt) mtl in
   let (bs, mtls) = List.split res_list in
@@ -1404,7 +1407,7 @@ and checkeq_p_formula_with_diff_x (hvars: ident list)(p1: CP.formula) (p2: CP.fo
     | Not(f,_,_) ->  let (a,b) = match_equiv_notform hvars f pf2 mtl in 
 		     if (a) then (a, modify b (CP.mkTrue no_pos)) else (a,modify b pf1)
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> (false,[]) (* report_error no_pos "not handle checkeq 2 formula that have forall and exists yet" *)
 
 and checkeq_p_formula_with_diff  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in
