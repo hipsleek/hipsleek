@@ -37,7 +37,8 @@ let find_typ spl name =
 
 let rec process_exp pre_fix_var e =
   match e with
-    | Ipure.Var _ -> pre_fix_var ^ Iprinter.string_of_formula_exp e
+    | Ipure.Var ((id,p),_) -> pre_fix_var ^ (string_of_sv (id,p))
+          (* Iprinter.string_of_formula_exp e *)
     | _ ->
           let s = Iprinter.string_of_formula_exp e in
           if s = "null" then "nil" else s
@@ -180,12 +181,12 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
           in
           s_start_and ^ fbs2 ^ s_heap ^ s_end_and,n2
     | Iformula.Exists fe ->
-          let fes1 = "(exists " in
+          let fes1 = "exists " in
           let fes2 = "(" ^ (List.fold_left (fun s (id, p) ->
               s ^ "(" ^ pre_fix_var ^ id ^ " " ^ (find_typ spl id)  ^ ")") "" fe.Iformula.formula_exists_qvars)  ^ ")" in
           let fes3,n2 = process_h_formula pre_fix_var fe.Iformula.formula_exists_heap all_view_names start_pred_abs_num in
-          let fes4 =  " (tobool " ^ fes3 ^  ")\n" in
-          fes1 ^ fes2 ^ fes4,n2
+          let fes4 =  " (tobool " ^ fes3 ^  ")" in
+          "(" ^ fes1 ^ fes2 ^ fes4 ^ ")\n",n2
     | Iformula.Or _ -> "(for )\n",start_pred_abs_num
 
 let rec process_struct_formula pre_fix_var sf spl all_view_names start_pred_abs_num=
@@ -203,7 +204,7 @@ let rec process_struct_formula pre_fix_var sf spl all_view_names start_pred_abs_
           "(or\n" ^ (s) ^ ")", n2
 
 let process_pred_name pred_name =
-  "\n(declare-fun " ^ pred_name
+  "\n(define-fun " ^ pred_name
 
 let find_typ spl name =
   let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
@@ -321,7 +322,7 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
   let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,p)) ->
-      s0 ^ "(declare-fun " ^ ( string_of_sv (id,p)) ^ " () " ^ (string_of_typ t) ^ ")\n"
+      s0 ^ "(declare-fun " ^ (string_of_sv (id,p)) ^ " () " ^ (string_of_typ t) ^ ")\n"
   ) "" all_svl in
   (* declare abstraction for predicate instance *)
   (* let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in *)
