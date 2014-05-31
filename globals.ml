@@ -6,6 +6,7 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+
 let debug_precise_trace = ref false
 
 type formula_type =
@@ -1178,6 +1179,17 @@ let opt_classic = ref false                (* option --classic is turned on or n
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let smt_compete_mode = ref false
 
+  let print_endline_q s = 
+    if !smt_compete_mode then () 
+    else print_endline s 
+
+(* generate baga inv from view *)
+let gen_baga_inv = ref false
+
+let dis_inv_baga () = 
+  print_endline_q "Disabling baga inv gen .."; 
+  gen_baga_inv := false
+
 let _ = if !smt_compete_mode then
   begin
           (* Debug.trace_on := false; *)
@@ -1187,6 +1199,7 @@ let _ = if !smt_compete_mode then
           enable_time_stats:=false;
           print_core:=false;
           print_core_all:=false;
+          gen_baga_inv := true;
   end
 
 (** for type of frame inference rule that will be used in specs commands *)
@@ -1251,8 +1264,6 @@ let branch_point_id = ref 0
 (* generate smt from slk *)
 let gen_smt = ref false
 
-(* generate baga inv from view *)
-let gen_baga_inv = ref true
 
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 

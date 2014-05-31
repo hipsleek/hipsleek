@@ -1403,6 +1403,37 @@ let get_heap_nodes (f0:h_formula) =
   in
   helper f0
 
+let get_heaps (f0:h_formula) =
+  let rec helper f =match f with
+    | Conj ({h_formula_conj_h1 = h1; 
+      h_formula_conj_h2 = h2; 
+      h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+      h_formula_conjstar_h2 = h2; 
+      h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+      h_formula_conjconj_h2 = h2;
+      h_formula_conjconj_pos = pos})
+    | Phase ({h_formula_phase_rd = h1;
+      h_formula_phase_rw = h2;
+      h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+      h_formula_starminus_h2 = h2; 
+      h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+      h_formula_star_h2 = h2; 
+      h_formula_star_pos = pos}) ->
+         (helper h1)@(helper h2)
+    | HeapNode _
+    | HeapNode2 _
+    | ThreadNode _
+    | HRel _
+    | HTrue
+    | HFalse -> [f]
+    | HEmp -> []
+  in
+  helper f0
+
 (*======for generate tmp view=========*)
 let rec one_formula_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) =
   let h,p,dl,id,pos = split_one_formula f in

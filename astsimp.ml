@@ -35,6 +35,8 @@ module LP = CP.Label_Pure
 type trans_exp_type =
   (C.exp * typ)
 
+let view_args_map = CP.view_args_map
+
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
 (* let strip_exists_pure f = *)
@@ -470,8 +472,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    if not(mr==[])
-    then report_warning no_pos ("View definitions "^str^" are mutually recursive") ;
+    (* if not(mr==[]) *)
+    (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     g
         (* if DfsNG.has_cycle g *)
         (* then failwith "View definitions are mutually recursive" *)
@@ -2092,6 +2094,7 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
   (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list ->
   C.view_decl list *)
 
+
 and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let _ = Debug.ninfo_hprint (add_str "ls_mut_rec_views" (pr_list (pr_list pr_id))) ls_mut_rec_views no_pos in
   let all_mutrec_vnames = (List.concat ls_mut_rec_views) in
@@ -2125,7 +2128,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let cviews0 =
     if !Globals.gen_baga_inv then
-      let args_map = Hashtbl.create 1 in
+      let args_map = view_args_map in
       let _ = List.iter (fun vd ->
           let self_var = Cpure.SpecVar(UNK, self, Unprimed) in
           let args = self_var::vd.Cast.view_vars in
@@ -2138,17 +2141,29 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           else
             ls@[[cv.C.view_name]]
       ) ls_mut_rec_views1 cviews0 in
-      let map_invs = Hashtbl.create 1 in
+      (* let map_baga_invs = Hashtbl.create 1 in *)
+      (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           let views_list = List.filter (fun vd ->
               List.mem vd.Cast.view_name idl
           ) cviews0 in
-          let new_invs_list = Expure.fix_ef views_list 10 args_map map_invs in
+          let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
+          let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> 
+              Cprinter.string_of_mix_formula v.Cast.view_user_inv))) views_list no_pos in
+          let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
+          (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
+          let lst = List.combine views_list new_invs_list  in
+          let baga_stronger = List.for_all 
+            (fun (vd,bi) ->
+                let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
+                Expure.ef_imply_disj bi uv
+            ) lst  in
+          let _ = if (not baga_stronger) then Globals.dis_inv_baga() in
           let new_map = List.combine views_list new_invs_list in
-          List.iter (fun (cv,inv) -> Hashtbl.add map_invs cv.C.view_name inv) new_map
+          List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
       ) ls_mut_rec_views1 in
       let cviews1 = List.map (fun cv ->
-          let inv = Hashtbl.find map_invs cv.C.view_name in
+          let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
           let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
           {cv with C.view_baga_inv = Some inv}
       ) cviews0 in

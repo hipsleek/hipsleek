@@ -4,23 +4,26 @@ data node {
 }.
 
 pred b1<y,z> ==
-     (self:node) = y
+     self= y
      or self::node<y>
      or (exists u,uz: self::node<y> * z::node<u>*u::b1<y,uz>).
 
+//[([], self=y),([self], true),([z,self], true)]
 
 
-checkentail false |- true.
-print residue.
-expect Valid.
-
-checkentail true |- false.
+checkentail x::b1<y,z> * z::node<_> & x!=y|- false.
 print residue.
 expect Valid.
 
 
 /*
 # bseg3.slk
+
+
+checkentail true |- false.
+print residue.
+expect Valid.
+
 
 !!! [[([], self=y),([self], true),([z,self], true)]]
 !!! [[([], self=y),([self], true),([z,self], true)

@@ -1,0 +1,16 @@
+
+data DLL_t {
+  DLL_t prev;
+  DLL_t next;
+}.
+
+pred points_to<b,c> ==
+self::DLL_t<next = b,prev = c>.
+
+pred DLL_plus<p,tl,n> ==
+ self::DLL_t<next = n,prev = p> & self = tl
+or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
+
+checkentail x::DLL_plus<null,c,null>
+         |- (exists y,a: x::points_to<y,null> * y::points_to<a,x> * a::DLL_plus<y,c,null>).
+

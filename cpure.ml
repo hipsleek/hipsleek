@@ -17,6 +17,8 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+let view_args_map:(string,spec_var list) Hashtbl.t 
+      = Hashtbl.create 10
 (* immutability annotations *)
 type ann = ConstAnn of heap_ann | PolyAnn of spec_var |
         TempAnn of ann | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
@@ -258,6 +260,7 @@ type ef_pure = (
 (* [] denotes false *)
 type ef_pure_disj = ef_pure list
 
+let map_baga_invs : ((string,ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 
 let is_False cp = match cp with
   | BForm (p,_) -> 

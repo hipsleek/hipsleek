@@ -1,0 +1,49 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2,x3,x4,x5,x6,x7> ==
+self::one<> * x2::one<> * x3::one<> * x4::one<> * x5::one<> * x6::one<> * x7::one<> * self::Q<x2,x3,x4,x5,x6,x7>.
+
+pred Q<y2,y3,y4,y5,y6,y7> ==
+ self::zero<> * y2::zero<> * y3::zero<> * y4::zero<> * y5::zero<> * y6::zero<> * y7::zero<>
+or (exists x1,x2,x3,x4,x5,x6,x7: x1::succ7rec<x2,x3,x4,x5,x6,x7,self,y2,y3,y4,y5,y6,y7> * x1::Q<x2,x3,x4,x5,x6,x7>).
+
+pred succ7rec<x2,x3,x4,x5,x6,x7,y1,y2,y3,y4,y5,y6,y7> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3 & x4 = y4 & x5 = y5 & x6 = y6 & x7 = y7
+or x2::succ6rec<x3,x4,x5,x6,x7,y2,y3,y4,y5,y6,y7> * self::one<> * y1::zero<>.
+
+pred succ6rec<x2,x3,x4,x5,x6,y1,y2,y3,y4,y5,y6> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3 & x4 = y4 & x5 = y5 & x6 = y6
+or x2::succ5rec<x3,x4,x5,x6,y2,y3,y4,y5,y6> * self::one<> * y1::zero<>.
+
+pred succ5rec<x2,x3,x4,x5,y1,y2,y3,y4,y5> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3 & x4 = y4 & x5 = y5
+or x2::succ4rec<x3,x4,x5,y2,y3,y4,y5> * self::one<> * y1::zero<>.
+
+pred succ4rec<x2,x3,x4,y1,y2,y3,y4> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3 & x4 = y4
+or x2::succ3rec<x3,x4,y2,y3,y4> * self::one<> * y1::zero<>.
+
+pred succ3rec<x2,x3,y1,y2,y3> ==
+ self::zero<> * y1::one<> & x2 = y2 & x3 = y3
+or x2::succ2rec<x3,y2,y3> * self::one<> * y1::zero<>.
+
+pred succ2rec<x2,y1,y2> ==
+ self::zero<> * y1::one<> & x2 = y2
+or x2::succ1rec<y2> * self::one<> * y1::zero<>.
+
+pred succ1rec<y1> ==
+self::zero<> * y1::one<>.
+
+pred zero<> ==
+null = self.
+
+pred one<> ==
+null != self.
+
+checkentail x0::P<x1,x2,x3,x4,x5,x6>
+         |- false.
+

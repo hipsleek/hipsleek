@@ -444,10 +444,10 @@ let _ =
     in
     let _ = sleek_epilogue () in
     let _ = if !Globals.smt_compete_mode then
-      let _ = print_endline "SMT Compete OUTCOME" in
+      (* let _ = print_endline "SMT Compete OUTCOME" in *)
       let r = Cformula.get_res_residue () in
       let str_res = if r then "UNSAT" else "SAT" in
-      print_endline (" " ^ str_res)
+      print_endline (str_res)
     else ()
     in
     (* based on last residue - Valid -> UNSAT, Fail -> SAT *)

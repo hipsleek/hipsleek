@@ -225,16 +225,16 @@ let sleek_tidy_formula f =
   fmt_string (Cprinter.sleek_of_formula f)
 
 let slk_sleek_log_entry e =
-  let frm = match e.sleek_proving_res with
-  | None -> None
+  let frm, expected = match e.sleek_proving_res with
+  | None -> None, "Fail"
   | Some res ->
     let r = CF.formula_of_list_context res in
-    let hole_matching = match res with
-    | CF.FailCtx _ -> []
-    | CF.SuccCtx ls -> List.concat (List.map CF.collect_hole ls)
+    let hole_matching, expected = match res with
+    | CF.FailCtx _ -> [], "Fail"
+    | CF.SuccCtx ls -> (List.concat (List.map CF.collect_hole ls)), "Valid"
     in
     let hole_matching = List.map (fun (h, i) -> (i, h)) hole_matching in
-    Some (CF.restore_hole_formula r hole_matching)
+    Some (CF.restore_hole_formula r hole_matching), expected
   in
   let conseq = 
     if !Globals.sleek_gen_vc then e.sleek_proving_conseq
@@ -274,10 +274,7 @@ let slk_sleek_log_entry e =
   (*     sleek_tidy_formula r;        *)
   (*     fmt_string ")." end          *)
   (* else ());                        *)
-  match frm with
-    | None -> fmt_string "expect Fail."
-    | Some _ -> fmt_string "expect Valid."
-  ;
+  fmt_string ("expect " ^ expected ^ ".");
   (if !print_clean_flag then 
 	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante conseq in
 	  fmt_string ("\n clean checkentail" ^ (Cprinter.sleek_of_formula ante)

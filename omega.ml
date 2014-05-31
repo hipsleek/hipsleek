@@ -63,7 +63,9 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (sv, _) -> omega_of_spec_var sv
+  | Var (SpecVar(_,n,_) as sv, _) -> 
+        if n="null" then "0"
+        else (omega_of_spec_var sv)
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 

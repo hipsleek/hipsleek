@@ -262,7 +262,7 @@ let manage_safe_lemmas repo iprog cprog =
           in
           Lem_store.all_lemma # pop_coercion;
           let _ = if !Globals.lemma_ep then
-            print_endline ("Removing invalid lemma ---> lemma store restored.")
+            print_endline_quiet ("Removing invalid lemma ---> lemma store restored.")
           else ()
           in
           Some([List.hd(nctx)])
@@ -270,7 +270,7 @@ let manage_safe_lemmas repo iprog cprog =
           let lem_str = pr_list pr_id (List.map (fun i -> 
               i.I.coercion_name^":"^(Cprinter.string_of_coercion_type i.I.coercion_type)) repo) in
           let _ = if !Globals.lemma_ep then
-            print_endline ("\nValid Lemmas : "^lem_str^" added to lemma store.")
+            print_endline_quiet ("\nValid Lemmas : "^lem_str^" added to lemma store.")
           else ()
           in
           None
