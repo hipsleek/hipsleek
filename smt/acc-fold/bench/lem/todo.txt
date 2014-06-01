@@ -18,6 +18,17 @@ Why isn't lem-gen-unsafe working here?
 
 !!! Updated lemma store with unsafe repo::[]
 ===========================================================
+# dllseg0e1.slk
+
+lemma_safe self::dllseg<p,pr,last> & self!=p 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+
+Entailing lemma lem_14: Fail. (must) cause: base case unfold failed
+
+Failed to prove lem_14:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Why is lemma not provable?
 ===========================================================
 ===========================================================
 ===========================================================

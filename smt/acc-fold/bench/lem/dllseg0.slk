@@ -1,0 +1,61 @@
+data node {
+   node prev;
+   node nxt;
+}.
+
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+
+lemma_safe self::dllseg<p,pr,last> <- 
+    (exists u,l2: self::dllseg<u,pr,l2>*u::dllseg<p,l2,last>).
+
+lemma_safe self::dllseg<p,pr,last> 
+  -> (exists u,l2: self::dllseg<u,pr,l2>*u::dllseg<p,l2,last>).
+
+
+lemma_safe self::dllseg<p,pr,last> & self!=p 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+// why lemma cannot be proven?
+
+
+checkentail_exact x::node<pr,n>*n::dllseg<p,x,last> 
+ |- x::dllseg<p,pr,last>.
+expect Valid.
+
+checkentail_exact x::dllseg<p,pr,last> & x!=p
+ |- x::node<pr,n>*n::dllseg<p,x,last>.
+expect Valid.
+
+checkentail_exact x::dllseg<p,pr,last> & pr!=last
+ |- x::node<pr,n>*n::dllseg<p,x,last>.
+expect Valid.
+
+checkentail_exact x::dllseg<p,pr,last> 
+ |- x::node<pr,n>*n::dllseg<p,x,last>.
+expect Fail.
+
+checkentail_exact x::dllseg<u,pr,l2> * u::dllseg<p,l2,last> 
+      |- x::dllseg<p,pr,last>.
+expect Valid.
+
+checkentail_exact 
+  x::dllseg<p,pr,last>
+ |- (exists u,l2: x::dllseg<u,pr,l2> * u::dllseg<p,l2,last>).
+expect Valid.
+
+checkentail_exact x::dllseg<last,pr,l2> * last::node<l2,p> 
+      |- x::dllseg<p,pr,last>.
+expect Valid.
+
+
+
+/*
+checkentail_exact x::dllseg<u> * u::dllseg<p> |- x::dllseg<p>.
+expect Valid.
+
+checkentail_exact x::dllseg<u> * u::node<u2>*u2::dllseg<p> |- x::dllseg<p>.
+expect Valid.
+*/
+
