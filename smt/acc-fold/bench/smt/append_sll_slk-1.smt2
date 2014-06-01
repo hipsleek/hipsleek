@@ -8,12 +8,9 @@
 Space (tospace
 (or
 (= ?in nil)
-(and 
-(tobool (ssep 
-(pto ?in (sref (ref val ?Anon_12) (ref next ?q) ))
-(ll ?q)
-) )
-))))
+(exists ((?v_19 int)(?q_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?q_20) )) (ll ?q_20))))
+)))
+
 
 
 
@@ -30,12 +27,12 @@ Space (tospace
 
 
 (assert 
-(exists ((Anon_989 int)(q_990 node)) (tobool (ssep (ssep (pto xprm (sref (ref val Anon_989) (ref next q_990) )) (ll q_990)) (ll y))))
+(exists ((v_990 int)(q_991 node)) (tobool (ssep (ssep (pto xprm (sref (ref val v_990) (ref next q_991) )) (ll q_991)) (ll y))))
 
 )
 
 (assert (not 
-(exists ((Anon_992 int)(q_993 node)) (tobool (ssep (ssep (pto xprm (sref (ref val val_13_958prm) (ref next next_13_959prm) )) (ll q_993)) (ll y))))
+(exists ((v_993 int)(q_994 node)) (tobool (ssep (ssep (pto xprm (sref (ref val val_14_959prm) (ref next next_14_960prm) )) (ll q_994)) (ll y))))
 
 ))
 

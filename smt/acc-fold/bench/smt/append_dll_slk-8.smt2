@@ -9,7 +9,7 @@
 Space (tospace
 (or
 (= ?in nil)
-(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22))))
+(exists ((?p_22 node2)(?self_23 node2)(?v_20 int)(?q_21 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_20) (ref prev ?p_22) (ref next ?q_21) )) (dll ?q_21 ?self_23))))
 )))
 
 
@@ -24,33 +24,32 @@ Space (tospace
 
 
 
-(declare-fun yprm () node2)
+
 (declare-fun xprm () node2)
-(declare-fun v_node2_26_993prm () node2)
 (declare-fun q () node2)
+(declare-fun yprm () node2)
 (declare-fun y () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_994prm () boolean)
-(declare-fun self_1030 () node2)
+(declare-fun v_bool_20_995prm () boolean)
+(declare-fun v_1032 () int)
+(declare-fun p_1030 () node2)
+(declare-fun q_1033 () node2)
+(declare-fun self_1031 () node2)
 (declare-fun p () node2)
-(declare-fun Anon_1031 () int)
-(declare-fun p_1029 () node2)
-(declare-fun q_1032 () node2)
 
 
 (assert 
 (and 
-(= p_1029 q)
-(= self_1030 xprm)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(distinct q_1032 nil)
-(distinct q_1032 nil)
-(= v_node2_26_993prm q_1032)
+(distinct q_1033 nil)
+(distinct q_1033 nil)
 (tobool (ssep 
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next q_1032) ))
-(dll q_1032 self_1030)
+(pto xprm (sref (ref val v_1032) (ref prev p_1030) (ref next q_1033) ))
+(dll q_1033 self_1031)
 (dll y p)
 emp
 ) )
@@ -59,22 +58,20 @@ emp
 
 (assert (not 
 (and 
-(distinct v_node2_26_993prm nil)
-(distinct v_node2_26_993prm nil)
-(= p_1029 q)
-(= self_1030 xprm)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(distinct q_1032 nil)
-(distinct q_1032 nil)
-(= v_node2_26_993prm q_1032)
-(= q_1137 self_1030)
-(= p_1138 p)
+(distinct q_1033 nil)
+(distinct q_1033 nil)
+(= val_26_991prm v_1032)
+(= prev_26_992prm p_1030)
+(= next_26_993prm q_1033)
 (tobool (ssep 
-(dll v_node2_26_993prm q_1137)
-(dll yprm p_1138)
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next q_1032) ))
+(pto xprm (sref (ref val val_26_991prm) (ref prev prev_26_992prm) (ref next next_26_993prm) ))
+(dll q_1033 self_1031)
+(dll y p)
 emp
 ) )
 )

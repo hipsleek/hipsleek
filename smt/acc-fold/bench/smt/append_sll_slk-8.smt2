@@ -20,12 +20,13 @@ Space (tospace
 
 
 
-(declare-fun xprm () node)
+(declare-fun v_993 () int)
 (declare-fun yprm () node)
 (declare-fun y () node)
+(declare-fun xprm () node)
 (declare-fun x () node)
-(declare-fun v_node_14_961prm () node)
-(declare-fun v_993 () int)
+(declare-fun v_bool_14_967prm () boolean)
+(declare-fun next_19_1011 () node)
 (declare-fun q_994 () node)
 
 
@@ -34,12 +35,13 @@ Space (tospace
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= v_node_14_961prm q_994)
-(distinct v_node_14_961prm nil)
+(= q_994 nil)
+(= q_994 nil)
+(= next_19_1011 q_994)
 (tobool (ssep 
-(pto xprm (sref (ref val v_993) (ref next q_994) ))
 (ll q_994)
 (ll y)
+(pto xprm (sref (ref val v_993) (ref next yprm) ))
 emp
 ) )
 )
@@ -50,12 +52,12 @@ emp
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= v_node_14_961prm q_994)
-(distinct v_node_14_961prm nil)
+(= q_994 nil)
+(= q_994 nil)
+(= next_19_1011 q_994)
 (tobool (ssep 
-(pto xprm (sref (ref val v_993) (ref next q_994) ))
+(ll x)
 (ll q_994)
-(ll y)
 emp
 ) )
 )

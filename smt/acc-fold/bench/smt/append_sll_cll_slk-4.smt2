@@ -8,23 +8,19 @@
 Space (tospace
 (or
 (= ?in ?p)
-(exists ((?p_23 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_23))))
+(exists ((?p_24 node)(?v_22 int)(?q_23 node)) (tobool (ssep (pto ?in (sref (ref val ?v_22) (ref next ?q_23) )) (lseg ?q_23 ?p_24))))
 )))
 
 (define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
-(and 
-(tobool (ssep 
-(pto ?in (sref (ref val ?Anon_12) (ref next ?q) ))
-(ll ?q)
-) )
-))))
+(exists ((?v_25 int)(?q_26 node)) (tobool (ssep (pto ?in (sref (ref val ?v_25) (ref next ?q_26) )) (ll ?q_26))))
+)))
 
 (define-fun clist ((?in node))
 Space (tospace
-(exists ((?self_22 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_14) (ref next ?p) )) (lseg ?p ?self_22))))
+(exists ((?self_21 node)(?v_19 int)(?p_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?p_20) )) (lseg ?p_20 ?self_21))))
 ))
 
 
@@ -45,14 +41,15 @@ Space (tospace
 
 
 
+
+
 (declare-fun xprm () node)
-(declare-fun v_node_21_1000prm () node)
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun x () node)
-(declare-fun v_bool_20_1003prm () boolean)
-(declare-fun Anon_1029 () int)
-(declare-fun q_1030 () node)
+(declare-fun v_node_22_1000prm () node)
+(declare-fun v_1032 () int)
+(declare-fun q_1033 () node)
 
 
 (assert 
@@ -60,12 +57,11 @@ Space (tospace
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(distinct q_1030 nil)
-bvar(distinct q_1030 nil)
-bvar(= v_node_21_1000prm q_1030)
+(= v_node_22_1000prm q_1033)
+(distinct v_node_22_1000prm nil)
 (tobool (ssep 
-(pto xprm (sref (ref val Anon_1029) (ref next q_1030) ))
-(ll q_1030)
+(pto xprm (sref (ref val v_1032) (ref next q_1033) ))
+(ll q_1033)
 emp
 ) )
 )
@@ -73,17 +69,14 @@ emp
 
 (assert (not 
 (and 
-(distinct v_node_21_1000prm nil)
-(distinct v_node_21_1000prm nil)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(distinct q_1030 nil)
-bvar(distinct q_1030 nil)
-bvar(= v_node_21_1000prm q_1030)
+(= v_node_22_1000prm q_1033)
+(distinct v_node_22_1000prm nil)
 (tobool (ssep 
-(ll v_node_21_1000prm)
-(pto xprm (sref (ref val Anon_1029) (ref next q_1030) ))
+(pto xprm (sref (ref val v_1032) (ref next q_1033) ))
+(ll q_1033)
 emp
 ) )
 )

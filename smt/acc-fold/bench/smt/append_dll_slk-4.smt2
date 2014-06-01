@@ -9,7 +9,7 @@
 Space (tospace
 (or
 (= ?in nil)
-(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22))))
+(exists ((?p_22 node2)(?self_23 node2)(?v_20 int)(?q_21 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_20) (ref prev ?p_22) (ref next ?q_21) )) (dll ?q_21 ?self_23))))
 )))
 
 
@@ -24,34 +24,33 @@ Space (tospace
 
 
 
+
 (declare-fun xprm () node2)
-(declare-fun yprm () node2)
 (declare-fun q () node2)
-(declare-fun self_1030 () node2)
+(declare-fun yprm () node2)
 (declare-fun y () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_994prm () boolean)
-(declare-fun next_21_1042 () node2)
-(declare-fun q_1032 () node2)
-(declare-fun Anon_1031 () int)
-(declare-fun p_1029 () node2)
+(declare-fun v_bool_20_995prm () boolean)
+(declare-fun v_1032 () int)
+(declare-fun p_1030 () node2)
+(declare-fun q_1033 () node2)
+(declare-fun self_1031 () node2)
+(declare-fun p () node2)
 
 
 (assert 
 (and 
-(= q_1032 nil)
-(= q_1032 nil)
-(= p_1029 q)
-(= self_1030 xprm)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= q_1032 nil)
-bvar(= q_1032 nil)
-bvar(= next_21_1042 q_1032)
-(= yprm nil)
-(tobool (ssep 
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next yprm) ))
+(= q_1033 nil)
+bvar(= q_1033 nil)
+bvar(tobool (ssep 
+(pto xprm (sref (ref val v_1032) (ref prev p_1030) (ref next q_1033) ))
+(dll q_1033 self_1031)
+(dll y p)
 emp
 ) )
 )
@@ -59,19 +58,20 @@ emp
 
 (assert (not 
 (and 
-(= q_1032 nil)
-(= q_1032 nil)
-(= p_1029 q)
-(= self_1030 xprm)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= q_1032 nil)
-bvar(= q_1032 nil)
-bvar(= next_21_1042 q_1032)
-(= yprm nil)
+(= q_1033 nil)
+bvar(= q_1033 nil)
+bvar(= val_21_984prm v_1032)
+(= prev_21_985prm p_1030)
+(= next_21_986prm q_1033)
 (tobool (ssep 
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next yprm) ))
+(pto xprm (sref (ref val val_21_984prm) (ref prev prev_21_985prm) (ref next next_21_986prm) ))
+(dll q_1033 self_1031)
+(dll y p)
 emp
 ) )
 )

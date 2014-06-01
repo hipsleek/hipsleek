@@ -9,11 +9,6 @@ data node {
   inv 0<=n.
 
  
-// id: 0; line: 6; kind: Pred_Check_Inv
- checkentail_exact emp&((self=null & n=0) | (1<=n & self!=null))
- |-  emp&0<=n & (((self=null & n=0) | (1<=n & self!=null))).
-expect Valid.
- 
 // id: 1; line: 15; kind: BIND
  checkentail_exact (exists flted_7_1016,v_1017,q_1018: x'::node<v_1017,q_1018> * 
 q_1018::ll<flted_7_1016> * y::ll<n2>&flted_7_1016+1=n1 & 0<n1 & y'=y & x'=x)

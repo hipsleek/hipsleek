@@ -9,8 +9,9 @@
 Space (tospace
 (or
 (= ?in nil)
-(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22))))
+(exists ((?p_22 node2)(?self_23 node2)(?v_20 int)(?q_21 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_20) (ref prev ?p_22) (ref next ?q_21) )) (dll ?q_21 ?self_23))))
 )))
+
 
 
 
@@ -27,32 +28,31 @@ Space (tospace
 (declare-fun xprm () node2)
 (declare-fun yprm () node2)
 (declare-fun q () node2)
+(declare-fun self_1031 () node2)
 (declare-fun y () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_994prm () boolean)
-(declare-fun next_21_1042 () node2)
-(declare-fun q_1032 () node2)
-(declare-fun self_1030 () node2)
-(declare-fun p () node2)
-(declare-fun Anon_1031 () int)
-(declare-fun p_1029 () node2)
+(declare-fun v_bool_20_995prm () boolean)
+(declare-fun next_21_1043 () node2)
+(declare-fun q_1033 () node2)
+(declare-fun v_1032 () int)
+(declare-fun p_1030 () node2)
 
 
 (assert 
 (and 
-(= p_1029 q)
-(= self_1030 xprm)
+(= q_1033 nil)
+(= q_1033 nil)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= q_1032 nil)
-bvar(= q_1032 nil)
-bvar(= next_21_1042 q_1032)
-(distinct yprm nil)
+(= q_1033 nil)
+bvar(= q_1033 nil)
+bvar(= next_21_1043 q_1033)
+(= yprm nil)
 (tobool (ssep 
-(dll q_1032 self_1030)
-(dll y p)
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next yprm) ))
+(pto xprm (sref (ref val v_1032) (ref prev p_1030) (ref next yprm) ))
 emp
 ) )
 )
@@ -60,19 +60,19 @@ emp
 
 (assert (not 
 (and 
-(= p_1029 q)
-(= self_1030 xprm)
+(= q_1033 nil)
+(= q_1033 nil)
+(= p_1030 q)
+(= self_1031 xprm)
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= q_1032 nil)
-bvar(= q_1032 nil)
-bvar(= next_21_1042 q_1032)
-(distinct yprm nil)
+(= q_1033 nil)
+bvar(= q_1033 nil)
+bvar(= next_21_1043 q_1033)
+(= yprm nil)
 (tobool (ssep 
-(dll q_1032 self_1030)
-(dll y p)
-(pto xprm (sref (ref val Anon_1031) (ref prev p_1029) (ref next yprm) ))
+(pto xprm (sref (ref val v_1032) (ref prev p_1030) (ref next yprm) ))
 emp
 ) )
 )

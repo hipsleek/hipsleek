@@ -10,8 +10,9 @@ Space (tospace
 (or
 (= ?in nil)
 (= ?n 0)
-(exists ((?p_23 node2)(?self_24 node2)(?flted_12_22 int)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_23) (ref next ?q) )) (dll ?q ?self_24 ?flted_12_22))))
+(exists ((?p_24 node2)(?self_25 node2)(?flted_12_21 int)(?v_22 int)(?q_23 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_22) (ref prev ?p_24) (ref next ?q_23) )) (dll ?q_23 ?self_25 ?flted_12_21))))
 )))
+
 
 
 
@@ -27,36 +28,37 @@ Space (tospace
 
 (declare-fun xprm () node2)
 (declare-fun yprm () node2)
+(declare-fun n () int)
+(declare-fun flted_12_1059 () int)
 (declare-fun q () node2)
+(declare-fun self_1058 () node2)
 (declare-fun m () int)
 (declare-fun y () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_1015prm () boolean)
-(declare-fun next_21_1070 () node2)
-(declare-fun q_1060 () node2)
-(declare-fun self_1057 () node2)
-(declare-fun flted_12_1058 () int)
-(declare-fun p () node2)
-(declare-fun n () int)
-(declare-fun Anon_1059 () int)
-(declare-fun p_1056 () node2)
+(declare-fun v_bool_20_1016prm () boolean)
+(declare-fun next_21_1071 () node2)
+(declare-fun q_1061 () node2)
+(declare-fun v_1060 () int)
+(declare-fun p_1057 () node2)
 
 
 (assert 
 (and 
-(= flted_12_1058+1 m)
-(= p_1056 q)
-(= self_1057 xprm)
+(= q_1061 nil)
+(= flted_12_1059 0)
+(= q_1061 nil)
+(= n 0)
+(= flted_12_1059+1 m)
+(= p_1057 q)
+(= self_1058 xprm)
 lt(= yprm y)
 (= xprm x)
-(= q_1060 nil)
-bvar(= q_1060 nil)
-bvar(= next_21_1070 q_1060)
-(distinct yprm nil)
+(= q_1061 nil)
+bvar(= q_1061 nil)
+bvar(= next_21_1071 q_1061)
+(= yprm nil)
 (tobool (ssep 
-(dll q_1060 self_1057 flted_12_1058)
-(dll y p n)
-(pto xprm (sref (ref val Anon_1059) (ref prev p_1056) (ref next yprm) ))
+(pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next yprm) ))
 emp
 ) )
 )
@@ -64,19 +66,21 @@ emp
 
 (assert (not 
 (and 
-(= flted_12_1058+1 m)
-(= p_1056 q)
-(= self_1057 xprm)
+(= q_1061 nil)
+(= flted_12_1059 0)
+(= q_1061 nil)
+(= n 0)
+(= flted_12_1059+1 m)
+(= p_1057 q)
+(= self_1058 xprm)
 lt(= yprm y)
 (= xprm x)
-(= q_1060 nil)
-bvar(= q_1060 nil)
-bvar(= next_21_1070 q_1060)
-(distinct yprm nil)
+(= q_1061 nil)
+bvar(= q_1061 nil)
+bvar(= next_21_1071 q_1061)
+(= yprm nil)
 (tobool (ssep 
-(dll q_1060 self_1057 flted_12_1058)
-(dll y p n)
-(pto xprm (sref (ref val Anon_1059) (ref prev p_1056) (ref next yprm) ))
+(pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next yprm) ))
 emp
 ) )
 )

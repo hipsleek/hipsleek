@@ -10,8 +10,9 @@ Space (tospace
 (or
 (= ?in nil)
 (= ?n 0)
-(exists ((?p_23 node2)(?self_24 node2)(?flted_12_22 int)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_23) (ref next ?q) )) (dll ?q ?self_24 ?flted_12_22))))
+(exists ((?p_24 node2)(?self_25 node2)(?flted_12_21 int)(?v_22 int)(?q_23 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_22) (ref prev ?p_24) (ref next ?q_23) )) (dll ?q_23 ?self_25 ?flted_12_21))))
 )))
+
 
 
 
@@ -27,30 +28,59 @@ Space (tospace
 
 (declare-fun xprm () node2)
 (declare-fun yprm () node2)
-(declare-fun n () int)
-(declare-fun p () node2)
 (declare-fun q () node2)
 (declare-fun m () int)
 (declare-fun y () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_1015prm () boolean)
-(declare-fun next_21_1070 () node2)
-(declare-fun q_1060 () node2)
-(declare-fun v_bool_22_1010prm () boolean)
-(declare-fun self_1057 () node2)
-(declare-fun flted_12_1058 () int)
-(declare-fun Anon_1059 () int)
-(declare-fun p_1056 () node2)
+(declare-fun v_bool_20_1016prm () boolean)
+(declare-fun next_21_1071 () node2)
+(declare-fun q_1061 () node2)
+(declare-fun self_1058 () node2)
+(declare-fun flted_12_1059 () int)
+(declare-fun p () node2)
+(declare-fun n () int)
+(declare-fun v_1060 () int)
+(declare-fun p_1057 () node2)
 
 
 (assert 
-(exists ((p_1170 node2)(self_1171 node2)(flted_12_1172 int)(Anon_1173 int)(q_1174 node2)) (tobool (ssep (ssep (ssep (dll q_1060 self_1057 flted_12_1058) (pto yprm (sref (ref val Anon_1173) (ref prev p_1170) (ref next q_1174) ))) (dll q_1174 self_1171 flted_12_1172)) (pto xprm (sref (ref val Anon_1059) (ref prev p_1056) (ref next yprm) )))))
-
+(and 
+(= flted_12_1059+1 m)
+(= p_1057 q)
+(= self_1058 xprm)
+lt(= yprm y)
+(= xprm x)
+(= q_1061 nil)
+bvar(= q_1061 nil)
+bvar(= next_21_1071 q_1061)
+(distinct yprm nil)
+(tobool (ssep 
+(dll q_1061 self_1058 flted_12_1059)
+(dll y p n)
+(pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next yprm) ))
+emp
+) )
+)
 )
 
 (assert (not 
-(exists ((flted_12_1178 int)(self_1177 node2)(Anon_1179 int)(p_1176 node2)(q_1180 node2)) (tobool (ssep (ssep (ssep (pto yprm (sref (ref val val_23_1007prm) (ref prev prev_23_1008prm) (ref next next_23_1009prm) )) (dll q_1060 self_1057 flted_12_1058)) (dll q_1180 self_1177 flted_12_1178)) (pto xprm (sref (ref val Anon_1059) (ref prev p_1056) (ref next yprm) )))))
-
+(and 
+(= flted_12_1059+1 m)
+(= p_1057 q)
+(= self_1058 xprm)
+lt(= yprm y)
+(= xprm x)
+(= q_1061 nil)
+bvar(= q_1061 nil)
+bvar(= next_21_1071 q_1061)
+(distinct yprm nil)
+(tobool (ssep 
+(dll q_1061 self_1058 flted_12_1059)
+(dll y p n)
+(pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next yprm) ))
+emp
+) )
+)
 ))
 
 (check-sat)

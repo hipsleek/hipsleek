@@ -8,23 +8,19 @@
 Space (tospace
 (or
 (= ?in ?p)
-(exists ((?p_23 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref next ?q) )) (lseg ?q ?p_23))))
+(exists ((?p_24 node)(?v_22 int)(?q_23 node)) (tobool (ssep (pto ?in (sref (ref val ?v_22) (ref next ?q_23) )) (lseg ?q_23 ?p_24))))
 )))
 
 (define-fun ll ((?in node))
 Space (tospace
 (or
 (= ?in nil)
-(and 
-(tobool (ssep 
-(pto ?in (sref (ref val ?Anon_12) (ref next ?q) ))
-(ll ?q)
-) )
-))))
+(exists ((?v_25 int)(?q_26 node)) (tobool (ssep (pto ?in (sref (ref val ?v_25) (ref next ?q_26) )) (ll ?q_26))))
+)))
 
 (define-fun clist ((?in node))
 Space (tospace
-(exists ((?self_22 node)) (tobool (ssep (pto ?in (sref (ref val ?Anon_14) (ref next ?p) )) (lseg ?p ?self_22))))
+(exists ((?self_21 node)(?v_19 int)(?p_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?p_20) )) (lseg ?p_20 ?self_21))))
 ))
 
 
@@ -45,13 +41,16 @@ Space (tospace
 
 
 
-(declare-fun yprm () node)
+
+
+(declare-fun v_1084 () int)
 (declare-fun y () node)
 (declare-fun xprm () node)
 (declare-fun x () node)
-(declare-fun v_bool_20_1003prm () boolean)
-(declare-fun Anon_1073 () int)
-(declare-fun q_1074 () node)
+(declare-fun v_bool_22_1006prm () boolean)
+(declare-fun v_node_23_1003prm () node)
+(declare-fun q_1085 () node)
+(declare-fun yprm () node)
 
 
 (assert 
@@ -60,19 +59,26 @@ Space (tospace
 (= y x)
 (= yprm y)
 (= xprm x)
-(distinct q_1074 nil)
-bvar(distinct q_1074 nil)
-bvar(tobool (ssep 
-(pto xprm (sref (ref val Anon_1073) (ref next q_1074) ))
-(lseg q_1074 yprm)
+(distinct q_1085 nil)
+bvar(distinct q_1085 nil)
+bvar(= v_node_23_1003prm q_1085)
+(tobool (ssep 
+(pto xprm (sref (ref val v_1084) (ref next q_1085) ))
+(ll q_1085)
 emp
 ) )
 )
 )
 
 (assert (not 
-(exists ((Anon_1096 int)(p_1097 node)) (tobool (clist x)))
-
+(and 
+(= yprm v_node_23_1003prm)
+(distinct v_node_23_1003prm nil)
+(tobool (ssep 
+(ll v_node_23_1003prm)
+emp
+) )
+)
 ))
 
 (check-sat)

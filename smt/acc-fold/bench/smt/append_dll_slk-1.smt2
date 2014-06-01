@@ -9,8 +9,9 @@
 Space (tospace
 (or
 (= ?in nil)
-(exists ((?p_21 node2)(?self_22 node2)) (tobool (ssep (pto ?in (sref (ref val ?Anon_13) (ref prev ?p_21) (ref next ?q) )) (dll ?q ?self_22))))
+(exists ((?p_22 node2)(?self_23 node2)(?v_20 int)(?q_21 node2)) (tobool (ssep (pto ?in (sref (ref val ?v_20) (ref prev ?p_22) (ref next ?q_21) )) (dll ?q_21 ?self_23))))
 )))
+
 
 
 
@@ -33,12 +34,12 @@ Space (tospace
 
 
 (assert 
-(exists ((p_1024 node2)(self_1025 node2)(Anon_1026 int)(q_1027 node2)) (tobool (ssep (ssep (pto xprm (sref (ref val Anon_1026) (ref prev p_1024) (ref next q_1027) )) (dll q_1027 self_1025)) (dll y p))))
+(exists ((p_1025 node2)(self_1026 node2)(v_1027 int)(q_1028 node2)) (tobool (ssep (ssep (pto xprm (sref (ref val v_1027) (ref prev p_1025) (ref next q_1028) )) (dll q_1028 self_1026)) (dll y p))))
 
 )
 
 (assert (not 
-(exists ((self_1030 node2)(Anon_1031 int)(p_1029 node2)(q_1032 node2)) (tobool (ssep (ssep (pto xprm (sref (ref val val_20_979prm) (ref prev prev_20_980prm) (ref next next_20_981prm) )) (dll q_1032 self_1030)) (dll y p))))
+(exists ((self_1031 node2)(v_1032 int)(p_1030 node2)(q_1033 node2)) (tobool (ssep (ssep (pto xprm (sref (ref val val_20_980prm) (ref prev prev_20_981prm) (ref next next_20_982prm) )) (dll q_1033 self_1031)) (dll y p))))
 
 ))
 

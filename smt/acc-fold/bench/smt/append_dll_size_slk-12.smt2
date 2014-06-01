@@ -27,47 +27,32 @@ Space (tospace
 
 
 (declare-fun v_1060 () int)
-(declare-fun n () int)
-(declare-fun flted_12_1059 () int)
 (declare-fun q () node2)
-(declare-fun self_1058 () node2)
 (declare-fun m () int)
+(declare-fun yprm () node2)
 (declare-fun y () node2)
 (declare-fun xprm () node2)
 (declare-fun x () node2)
-(declare-fun v_bool_20_1016prm () boolean)
-(declare-fun next_21_1071 () node2)
 (declare-fun q_1061 () node2)
-(declare-fun yprm () node2)
-(declare-fun v_bool_22_1011prm () boolean)
+(declare-fun v_bool_20_1016prm () boolean)
+(declare-fun q_1188 () node2)
+(declare-fun self_1058 () node2)
+(declare-fun p_1190 () node2)
+(declare-fun p () node2)
+(declare-fun n () int)
+(declare-fun flted_12_1059 () int)
+(declare-fun m_1189 () int)
+(declare-fun n_1191 () int)
 (declare-fun p_1057 () node2)
 
 
 (assert 
-(and 
-(= q_1061 nil)
-(= flted_12_1059 0)
-(= q_1061 nil)
-(= n 0)
-(= flted_12_1059+1 m)
-(= p_1057 q)
-(= self_1058 xprm)
-lt(= yprm y)
-(= xprm x)
-(= q_1061 nil)
-bvar(= q_1061 nil)
-bvar(= next_21_1071 q_1061)
-(= yprm nil)
-(= yprm nil)
-(tobool (ssep 
-(pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next yprm) ))
-emp
-) )
-)
+(exists ((flted_18_1197 int)) (tobool (ssep (pto xprm (sref (ref val v_1060) (ref prev p_1057) (ref next q_1061) )) (dll q_1061 q_1188 flted_18_1197))))
+
 )
 
 (assert (not 
-(exists ((flted_18_52 int)(q_55 node2)) (tobool (dll x q_55 flted_18_52)))
+(exists ((flted_18_52 int)(q_55 node2)(flted_18_1255 int)) (tobool (dll x q_55 flted_18_52)))
 
 ))
 

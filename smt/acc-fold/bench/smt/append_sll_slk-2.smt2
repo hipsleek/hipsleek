@@ -8,12 +8,9 @@
 Space (tospace
 (or
 (= ?in nil)
-(and 
-(tobool (ssep 
-(pto ?in (sref (ref val ?Anon_12) (ref next ?q) ))
-(ll ?q)
-) )
-))))
+(exists ((?v_19 int)(?q_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?q_20) )) (ll ?q_20))))
+)))
+
 
 
 
@@ -27,9 +24,9 @@ Space (tospace
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun x () node)
-(declare-fun v_node_13_960prm () node)
-(declare-fun Anon_992 () int)
-(declare-fun q_993 () node)
+(declare-fun v_node_14_961prm () node)
+(declare-fun v_993 () int)
+(declare-fun q_994 () node)
 
 
 (assert 
@@ -37,11 +34,11 @@ Space (tospace
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= v_node_13_960prm q_993)
-(= v_node_13_960prm nil)
+(= v_node_14_961prm q_994)
+(= v_node_14_961prm nil)
 (tobool (ssep 
-(pto xprm (sref (ref val Anon_992) (ref next q_993) ))
-(ll q_993)
+(pto xprm (sref (ref val v_993) (ref next q_994) ))
+(ll q_994)
 (ll y)
 emp
 ) )
@@ -53,11 +50,11 @@ emp
 (distinct x nil)
 (= yprm y)
 (= xprm x)
-(= v_node_13_960prm q_993)
-(= v_node_13_960prm nil)
+(= v_node_14_961prm q_994)
+(= v_node_14_961prm nil)
 (tobool (ssep 
-(pto xprm (sref (ref val Anon_992) (ref next q_993) ))
-(ll q_993)
+(pto xprm (sref (ref val v_993) (ref next q_994) ))
+(ll q_994)
 (ll y)
 emp
 ) )

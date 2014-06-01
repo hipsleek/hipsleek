@@ -11,11 +11,6 @@ data node2 {
   inv 0<=n.
 
  
-// id: 0; line: 11; kind: Pred_Check_Inv
- checkentail_exact emp&((self=null & n=0) | (1<=n & self!=null))
- |-  emp&0<=n & (((self=null & n=0) | (1<=n & self!=null))).
-expect Valid.
- 
 // id: 1; line: 20; kind: BIND
  checkentail_exact (exists p_1051,self_1052,flted_12_1053,v_1054,
 q_1055: x'::node2<v_1054,p_1051,q_1055> * 
