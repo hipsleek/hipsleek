@@ -13,7 +13,7 @@ then
     if ((String.length in_file_name) >= 5) &&
       (String.sub in_file_name ((String.length in_file_name) - 4) 4) = "smt2"
     then
-      let out_file_name = in_file_name ^ ".sle" in
+      let out_file_name = in_file_name ^ ".slk" in
       let in_channel = open_in in_file_name in
       let lexbuf = Lexing.from_channel in_channel in
       let parsed  = Smtlib_parse.main Smtlib_lex.token lexbuf in
