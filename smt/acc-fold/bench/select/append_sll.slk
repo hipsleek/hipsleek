@@ -8,9 +8,8 @@ data node {
 
  
 // id: 0; line: 13; kind: BIND
- checkentail_exact (exists q: q::ll<> * x'::node<q> * y::ll<>&x'=x & y'=y & x!=null)
- |-  (exists q1: x'::node<next'> * q1::ll<> * y::ll<>&next'=q1 & x'=x & y'=y & 
-x!=null).
+checkentail_exact q::ll<> * x'::node<q> * y::ll<>&x'=x & y'=y & x!=null
+ |-  x'::node<next'> * q1::ll<> * y::ll<>&next'=q1 & x'=x & y'=y & x!=null.
 expect Valid.
  
 // id: 2; line: 13; kind: PRE

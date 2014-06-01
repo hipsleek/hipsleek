@@ -65,7 +65,7 @@ let rec process_p_formula pre_fix_var pf =
     | Ipure.BConst _ ->
           ""
     | Ipure.BVar _ ->
-          "bvar"
+          ""
     | Ipure.SubAnn _ ->
           "subann"
     | Ipure.Lt (e1, e2, _) ->
