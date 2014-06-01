@@ -1395,7 +1395,7 @@ and look_up_all_fields_cname (prog : prog_decl) (c : ident) =
   let ddef = look_up_data_def_raw prog.prog_data_decls c
   in look_up_all_fields prog ddef
 
-and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+and subs_heap_type_env_x (henv: (ident * typ) list) old_typ new_typ =
   if (cmp_typ old_typ new_typ) then henv
   else (
     List.map (fun (id, t) ->
@@ -1407,10 +1407,19 @@ and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
       )
       else (
         if (cmp_typ t old_typ) then (id, new_typ)
-        else (id, old_typ)
+        else (id, t)
       )
     ) henv
   )
+
+and subs_heap_type_env (henv: (ident * typ) list) old_typ new_typ =
+  let pr_typ = string_of_typ in
+  let pr_henv = pr_list (fun (id,t) ->
+    "(" ^ id ^ "," ^ (string_of_typ t) ^ ")"
+  ) in 
+  Debug.no_3 "subs_heap_type_env" pr_henv pr_typ pr_typ pr_henv
+    (fun _ _ _ -> subs_heap_type_env_x henv old_typ new_typ)
+    henv old_typ new_typ
 
 and get_heap_type (henv: (ident * typ) list) id : (typ * (ident * typ) list) =
   try
@@ -1531,9 +1540,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
       done;
       let c = c ^ !deref_str in
       try
-        (* let _ = print_endline ("== lookup ddecl, c = " ^ c) in *)
         let ddecl = look_up_data_def_raw data_decls c in
-        (* let _ = print_endline ("== found ddecl: " ^ ddecl.data_name) in *)
         let dl, vl = (
           if (String.compare v self = 0) then ([c], [])
           else ([], [])
