@@ -1,15 +1,21 @@
 (set-logic QF_S)
 
 (declare-sort node 0)
-(declare-fun val () (Field node int))
+(declare-fun val () (Field node Int))
 (declare-fun next () (Field node node))
 
 (define-fun ll ((?in node))
 Space (tospace
 (or
+(and 
 (= ?in nil)
-(exists ((?v_19 int)(?q_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?q_20) )) (ll ?q_20))))
-)))
+
+)(exists ((?v_19 Int)(?q_20 node))(and 
+(tobool (ssep 
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(ll ?q_20)
+) )
+)))))
 
 
 
@@ -20,9 +26,9 @@ Space (tospace
 
 
 
-(declare-fun v_993 () int)
-(declare-fun yprm () node)
-(declare-fun y () node)
+(declare-fun v_993 () Int)
+(declare-fun yprm () Int)
+(declare-fun y () Int)
 (declare-fun xprm () node)
 (declare-fun x () node)
 (declare-fun q_994 () node)
