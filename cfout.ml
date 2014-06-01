@@ -38,6 +38,44 @@ let shorten_svl fv  n_tbl =
   ) fv in
   (n_svl,  n_tbl)
 
+let get_all_data_fields prog=
+  let fields = List.fold_left (fun r d ->
+      let fields = List.fold_left (fun r ((_,id), _) -> r@[id]) [] d.Cast.data_fields in
+      r@fields
+  ) [] prog.Cast.prog_data_decls in
+  fields
+
+let shorten_svl_avoid_field prog fv n_tbl =
+  let fields = get_all_data_fields prog in
+   let _ = Debug.ninfo_hprint (add_str "fields" (pr_list pr_id)) fields no_pos in
+  let pad = "0" in
+  (* let n_tbl = Hashtbl.create 1 in *)
+  let reg = Str.regexp "[0-9]*_.*" in 
+  let n_svl = List.map (fun sv ->
+      match sv with
+          CP.SpecVar(t,id,pr) ->
+               let cut_id0 = Str.global_replace reg "" (id ) in
+              let cut_id = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) cut_id0 fields then
+                cut_id0 ^ pad 
+              else cut_id0
+              in
+              let new_id =
+                if Hashtbl.mem n_tbl (cut_id,pr)
+                then
+                  begin
+                    Hashtbl.add n_tbl (cut_id,pr) ((Hashtbl.find n_tbl (cut_id,pr)) + 1);
+                    cut_id ^ string_of_int(Hashtbl.find n_tbl (cut_id,pr))
+                  end
+                else
+                  begin
+                    Hashtbl.add n_tbl (cut_id,pr) 0;
+                    cut_id
+                  end
+              in
+              CP.SpecVar(t,(*(Str.global_replace reg "" id)^ "_" ^Globals.fresh_inf_number()*) new_id,pr)
+  ) fv in
+  (n_svl,  n_tbl)
+
 let rearrange_h_formula_x args0 hf0 =
   let rec helper fv hfl =
     match fv with
@@ -175,7 +213,7 @@ let rearrange_rel (rel: hprel) =
   }
 
 
-let rearrange_entailment_x lhs0 rhs0=
+let rearrange_entailment_x prog lhs0 rhs0=
   let lhs = simplify_pure_f lhs0 in
   let rhs = simplify_pure_f rhs0 in
   let tbl0 = Hashtbl.create 1 in
@@ -184,7 +222,7 @@ let rearrange_entailment_x lhs0 rhs0=
   let l_svl = (CP.remove_dups_svl (fv l_bare)) in
   let r_svl = (CP.remove_dups_svl (fv r_bare)) in
   let all_svl = CP.remove_dups_svl (l_svl@r_svl@l_quans@r_quans) in
-  let new_svl,_ = shorten_svl all_svl tbl0 in
+  let new_svl,_ = shorten_svl_avoid_field prog all_svl tbl0 in
   let sst0 = List.combine all_svl new_svl in
   let _ = Debug.ninfo_hprint (add_str "sst0" (pr_list (pr_pair !CP.print_sv !CP.print_sv) )) sst0 no_pos in
   let n_lhs = subst_avoid_capture all_svl new_svl (rearrange_formula l_svl l_bare) in
@@ -201,11 +239,11 @@ let rearrange_entailment_x lhs0 rhs0=
   (n_lhs2, n_rhs2)
   (* (lhs, rhs) *)
 
-let rearrange_entailment lhs rhs=
+let rearrange_entailment prog lhs rhs=
   let pr1 = !print_formula in
   let pr2 = pr_pair pr1 pr1 in
   Debug.no_2 "rearrange_entailment" pr1 pr1 pr2
-      (fun _ _ -> rearrange_entailment_x lhs rhs)
+      (fun _ _ -> rearrange_entailment_x prog lhs rhs)
       lhs rhs
 
 let shorten_formula f =

@@ -172,14 +172,14 @@ let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
     | Iformula.HRel _ -> "(hrel )",pred_abs_num
     | Iformula.HTrue -> "(htrue )",pred_abs_num
     | Iformula.HFalse -> "(hfalse )",pred_abs_num
-    | Iformula.HEmp -> "emp",pred_abs_num
+    | Iformula.HEmp -> "(emp)",pred_abs_num
 
 let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
   match f with
     | Iformula.Base fb ->
           let hfs = Iformula.get_heaps fb.Iformula.formula_base_heap in
           let hfs1 = if String.compare pre_fix_var "" =0 then (hfs@[Iformula.HEmp])
-          else hfs in
+          else if List.length hfs = 1 then (hfs@[Iformula.HEmp]) else hfs in
           let fbs1,n2 =List.fold_left (fun (s,n) hf ->
               let s1,n1 = process_h_formula pre_fix_var hf  all_view_names n in
               (s ^ s1 ^ "\n", n1)
@@ -190,8 +190,8 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
           let ps = Ipure.list_of_conjs fb.Iformula.formula_base_pure in
           let fbs2 = List.fold_left (fun s p -> s^ (process_pure_formula pre_fix_var p)) "" ps in
           let s_start_and,s_end_and =
-            if ( hfs1 != [] && fb.Iformula.formula_base_heap != Iformula.HEmp)
-              || List.length ps >= 1 then
+            if (( hfs1 != [] && fb.Iformula.formula_base_heap != Iformula.HEmp)
+              && List.length ps >= 1) || List.length ps >= 2 then
             "(and \n", "\n)" else "",""
           in
           s_start_and ^ fbs2 ^ s_heap ^ s_end_and,n2

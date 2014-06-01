@@ -6,27 +6,14 @@
 (define-fun elseg ((?in node) (?p node))
 Space (tospace
 (or
-(and 
 (= ?in ?p)
-
-)(exists ((?a node)(?b node))(and 
+(exists ((?a node)(?b node))
 (tobool (ssep 
 (pto ?in  (ref nxt ?a))
 (pto ?a  (ref nxt ?b))
 (elseg ?b ?p)
 ) )
-)))))
-
-
-
-
-
-
-
-
-
-
-
+))))
 
 
 
@@ -36,21 +23,19 @@ Space (tospace
 
 
 (assert 
-(and 
 (tobool (ssep 
 (pto x  (ref nxt a))
 (pto a  (ref nxt p))
 emp
-) )
+ )
 )
 )
 
 (assert (not 
-(and 
 (tobool (ssep 
 (elseg x p)
 emp
-) )
+ )
 )
 ))
 

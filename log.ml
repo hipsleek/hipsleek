@@ -224,7 +224,7 @@ let sleek_tidy_formula f =
   (* else fmt_string (Cprinter.sleek_of_formula f)                            *)
   fmt_string (Cprinter.sleek_of_formula f)
 
-let slk_sleek_log_entry e =
+let slk_sleek_log_entry prog e =
   let frm, expected = match e.sleek_proving_res with
   | None -> None, "Fail"
   | Some res ->
@@ -252,7 +252,7 @@ let slk_sleek_log_entry e =
         let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
         CF.push_exists ex_vars comb_conseq
   in
-  let tidy_ante,tidy_conseq = Cfout.rearrange_entailment e.sleek_proving_ante conseq in
+  let tidy_ante,tidy_conseq = Cfout.rearrange_entailment prog e.sleek_proving_ante conseq in
   fmt_open_box 1;
   fmt_string("\n");
   let src = e.sleek_src_no in
@@ -283,7 +283,7 @@ let slk_sleek_log_entry e =
    else ());
   fmt_close()
 
-let sleek_of_sleek_log_entry e = Cprinter.poly_string_of_pr slk_sleek_log_entry e
+let sleek_of_sleek_log_entry prog e = Cprinter.poly_string_of_pr (slk_sleek_log_entry prog) e
 
 class last_commands =
 object (self)
@@ -750,7 +750,7 @@ let sleek_log_to_sleek_file slfn src_files prog prim_names =
       if lem = [] then "" 
       else "/*\n" ^ (Cprinter.string_of_coerc_decl_list lem) ^ "\n*/"
     in
-    let str_ent = String.concat "\n" (List.map sleek_of_sleek_log_entry ls) in
+    let str_ent = String.concat "\n" (List.map (sleek_of_sleek_log_entry prog) ls) in
     let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_lem ^ "\n" ^ str_ent in
     let _= fprintf oc "%s" str in
     if !Globals.dump_sleek_proof then printf "%s" str;

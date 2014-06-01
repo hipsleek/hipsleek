@@ -1,0 +1,16 @@
+let get_all_data_fields prog=
+  let fields = List.fold_left (fun r d ->
+      let fields = List.fold_left (fun r (_, ls) -> r@ls) [] d.Cast.data_fields in
+      r@fields
+  ) [] prog.Cast.prog_data_decls in
+
+
+ let fields = get_all_data_fields prog in
+  let pad = "0" in
+
+
+ let cut_id0 = Str.global_replace reg "" (id ) in
+              let cut_id = if Gen.BList.mem_eq () cut_id0 fields then
+                cut_id0 ^ pad 
+              else cut_id0
+              in
