@@ -3,13 +3,20 @@
 (declare-sort node 0)
 (declare-fun nxt () (Field node node))
 
-(define-fun ll ((?in node) (?n int))
+(define-fun ll ((?in node) (?n Int))
 Space (tospace
 (or
+(and 
 (= ?in nil)
 (= ?n 0)
-(exists ((?a node)) (tobool (ssep (pto ?in  (ref nxt ?a)) (ll ?a n-1))))
-)))
+
+)(exists ((?a node)(?m Int))(and 
+(= ?n (+ ?m 1))
+(tobool (ssep 
+(pto ?in  (ref nxt ?a))
+(ll ?a ?m)
+) )
+)))))
 
 
 
@@ -28,7 +35,7 @@ Space (tospace
 
 (declare-fun q () node)
 (declare-fun q2 () node)
-(declare-fun n () int)
+(declare-fun n () Int)
 (declare-fun x () node)
 
 
@@ -44,8 +51,12 @@ emp
 )
 
 (assert (not 
-(exists ((m int)) (tobool (ll x m)))
-
+(exists ((m Int))(and 
+(tobool (ssep 
+(ll x m)
+emp
+) )
+))
 ))
 
 (check-sat)

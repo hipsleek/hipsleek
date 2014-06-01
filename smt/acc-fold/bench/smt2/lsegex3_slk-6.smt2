@@ -6,9 +6,15 @@
 (define-fun lseg ((?in node) (?p node))
 Space (tospace
 (or
+(and 
 (= ?in ?p)
-(exists ((?a node)) (tobool (ssep (pto ?in  (ref nxt ?a)) (lseg ?a ?p))))
-)))
+
+)(exists ((?a node))(and 
+(tobool (ssep 
+(pto ?in  (ref nxt ?a))
+(lseg ?a ?p)
+) )
+)))))
 
 
 
@@ -34,8 +40,12 @@ emp
 )
 
 (assert (not 
-(exists ((w node)) (tobool (lseg x w)))
-
+(exists ((w node))(and 
+(tobool (ssep 
+(lseg x w)
+emp
+) )
+))
 ))
 
 (check-sat)
