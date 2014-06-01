@@ -6,10 +6,17 @@
 (define-fun ll ((?in node) (?n Int))
 Space (tospace
 (or
+(and 
 (= ?in nil)
 (= ?n 0)
-(exists ((?a node)(?m Int)) (tobool (ssep (pto ?in  (ref nxt ?a)) (ll ?a ?m))))
-)))
+
+)(exists ((?a node)(?m Int))(and 
+(= ?n (+ ?m 1))
+(tobool (ssep 
+(pto ?in  (ref nxt ?a))
+(ll ?a ?m)
+) )
+)))))
 
 
 
