@@ -8,6 +8,15 @@ lemma_safe self::lseg<p>
         <- (exists u: self::lseg<u>*u::node<p> & self!=p).
 // cannot be proven?
 ===========================================================
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+# dllseg.slk
+
+Why isn't lem-gen-unsafe working here?
+
+!!! Updated lemma store with unsafe repo::[]
 ===========================================================
 ===========================================================
 ===========================================================

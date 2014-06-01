@@ -2,7 +2,7 @@ data node {
    node nxt;
 }.
 
-pred lseg<p> == self=p
+pred lseg<p,pr,last> == self=p 
   or (exists a: self::node<a> * a::lseg<p>)
  inv true.
 
