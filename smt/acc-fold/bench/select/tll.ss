@@ -34,3 +34,10 @@ node set_right (node p, node x, node t)
     }
 }
 
+/*
+smt2check elseg3_slk-2.smt2
+smtlib2sl: Parse input file
+Warning in sl_var_record: look outside vector size.
+sat
+*/
+
