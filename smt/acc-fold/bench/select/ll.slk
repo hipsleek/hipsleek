@@ -3,7 +3,7 @@ data node {
 }.
 
 pred ll<n> == self=null & n=0
-  or (exists a: self::node<a> * a::ll<n-1>)
+  or (exists a,m: self::node<a> * a::ll<m> & n=m+1)
  inv n>=0.
 
 checkentail_exact x::ll<n> & n=0 |- x=null.
