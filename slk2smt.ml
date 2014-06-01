@@ -199,7 +199,7 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
           let quan,bare = Iformula.split_quantifiers f in
           let fes1 = "exists " in
           let fes2 = "(" ^ (List.fold_left (fun s (id, p) ->
-              s ^ "(" ^ pre_fix_var ^ id ^ " " ^ (find_typ spl id)  ^ ")") "" fe.Iformula.formula_exists_qvars)  ^ ")" in
+              s ^ "(" ^ pre_fix_var ^ (string_of_sv (id,p)) ^ " " ^ (find_typ spl id)  ^ ")") "" fe.Iformula.formula_exists_qvars)  ^ ")" in
           (* let fes3,n2 = process_h_formula pre_fix_var fe.Iformula.formula_exists_heap all_view_names start_pred_abs_num in *)
           (* let fes4 = " (tobool " ^ fes3 ^ ")" in *)
           let fes5,n2 = process_formula pre_fix_var bare spl all_view_names start_pred_abs_num in

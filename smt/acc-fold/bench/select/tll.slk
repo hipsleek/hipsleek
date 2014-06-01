@@ -108,9 +108,22 @@ expect Valid.
  
 // id: 32; line: 23; kind: POST
  checkentail_exact (exists l': r::tll<x',l',t'> * x'::node<p',l,r,D> * l::tll<x',v1',l'>&
-r!=null & t'=t & x'=x & p'=p & parent=p1 & r!=null & !(v') & r!=null & 
+r!=null & t'=t & x'=x & p'=p & parent=p1 & r!=null & r!=null & 
 !(v') & r!=null & r!=null & l!=null & l!=null & res=v1')
  |-  (exists p2,t1: x::tll<p2,res,t1>&p2=p & t1=t & r!=null & t'=t & x'=x & 
 p'=p & parent=p1 & r!=null & !(v') & r!=null & !(v') & r!=null & r!=null & 
-l!=null & l!=null & res=v1' & v1'=res & exists(t_1221:t'=t_1221)).
+l!=null & l!=null & res=v1' & v1'=res).
 expect Valid.
+
+/*
+// id: 32; line: 23; kind: POST
+ checkentail_exact (exists l_93': r_1136::tll<x',l_93',t'> * 
+x'::node<p',l_1135,r_1136,D2_1137> * l_1135::tll<x',v_node_34_1088',l_93'>&
+res=v_node_34_1088' & l_1135!=null & r_1136!=null & !(v_bool_26_1089') & 
+parent_25_1138=p_1134 & p'=p & x'=x & t'=t)
+ |-  (exists p_91,t_92: x::tll<p_91,res,t_92>&exists(p_1220:p'=p_1220) & 
+exists(t_1221:t'=t_1221) & v_node_34_1088'=res & l_1135!=null & 
+r_1136!=null & !(v_bool_26_1089') & parent_25_1138=p_1134 & p'=p & x'=x & 
+t'=t & t_92=t & p_91=p).
+expect Valid.
+*/

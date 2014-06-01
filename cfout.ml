@@ -20,7 +20,7 @@ let shorten_svl fv  n_tbl =
   let n_svl = List.map (fun sv ->
       match sv with
           CP.SpecVar(t,id,pr) ->
-              let cut_id = Str.global_replace reg "" id in
+              let cut_id = Str.global_replace reg "" (id ) in
               let new_id =
                 if Hashtbl.mem n_tbl (cut_id,pr)
                 then
@@ -175,7 +175,9 @@ let rearrange_rel (rel: hprel) =
   }
 
 
-let rearrange_entailment_x lhs rhs=
+let rearrange_entailment_x lhs0 rhs0=
+  let lhs = simplify_pure_f lhs0 in
+  let rhs = simplify_pure_f rhs0 in
   let tbl0 = Hashtbl.create 1 in
   let l_quans, l_bare =  split_quantifiers lhs in
   let r_quans, r_bare =  split_quantifiers rhs in
@@ -197,6 +199,7 @@ let rearrange_entailment_x lhs rhs=
   let _ = Debug.ninfo_hprint (add_str "nr_quans" (!CP.print_svl) ) nr_quans no_pos in
   let n_rhs2 = add_quantifiers nr_quans n_rhs in
   (n_lhs2, n_rhs2)
+  (* (lhs, rhs) *)
 
 let rearrange_entailment lhs rhs=
   let pr1 = !print_formula in

@@ -62,50 +62,56 @@ Space (tospace
 
 
 
-(declare-fun pprm () node)
-(declare-fun xprm () node)
+(declare-fun D () node)
 (declare-fun vprm () node)
+(declare-fun l () node)
+(declare-fun r () node)
+(declare-fun v1prm () boolean)
 (declare-fun parent () node)
 (declare-fun p () node)
-(declare-fun p1 () node)
+(declare-fun pprm () node)
+(declare-fun xprm () node)
 (declare-fun x () node)
-(declare-fun tprm () Int)
-(declare-fun t () Int)
-(declare-fun D () node)
-(declare-fun r () node)
-(declare-fun n () node)
+(declare-fun tprm () node)
+(declare-fun t () node)
+(declare-fun p1 () node)
+(declare-fun res () node)
 
 
 (assert 
-(and 
-(= vprm nil)
-(= vprm r)
-(= parent p)
+(exists ((lprm node))(and 
+(= res vprm)
+(distinct l nil)
+(distinct r nil)
+other(= parent p)
 (= pprm p1)
 (= xprm x)
 (= tprm t)
-(= r nil)
 (tobool (ssep 
-(pto xprm (sref (ref parent pprm) (ref left D) (ref right r) (ref next n) ))
+(tll r xprm lprm tprm)
+(pto xprm (sref (ref parent pprm) (ref left l) (ref right r) (ref next D) ))
+(tll l xprm vprm lprm)
 emp
 ) )
-)
+))
 )
 
 (assert (not 
-(and 
-(= vprm nil)
-(= vprm r)
-(= parent p)
+(exists ((p2 node)(t1 node))(and 
+(= vprm res)
+(distinct l nil)
+(distinct r nil)
+other(= parent p)
 (= pprm p1)
 (= xprm x)
 (= tprm t)
-(= r nil)
+(= t1 t)
+(= p2 p1)
 (tobool (ssep 
-(pto xprm (sref (ref parent pprm) (ref left D) (ref right r) (ref next n) ))
+(tll x p2 res t1)
 emp
 ) )
-)
+))
 ))
 
 (check-sat)
