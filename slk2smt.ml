@@ -61,13 +61,13 @@ let rec process_exp pre_fix_var e =
 let rec process_p_formula pre_fix_var pf =
   match pf with
     | Ipure.Frm _ ->
-          "frm"
+          ";frm"
     | Ipure.BConst _ ->
           ""
-    | Ipure.BVar _ ->
-          ""
+    | Ipure.BVar _ -> ""
+          (* "bvar" *)
     | Ipure.SubAnn _ ->
-          "subann"
+          ";(subann)"
     | Ipure.Lt (e1, e2, _) ->
           "(< " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure. Lte (e1, e2, _) ->
@@ -79,35 +79,35 @@ let rec process_p_formula pre_fix_var pf =
     | Ipure.Neq (e1, e2, _) ->
           "(distinct " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure.EqMax _ ->
-          "eqmax"
+          ";eqmax"
     | Ipure.EqMin _ ->
-          "eqmin"
+          ";eqmin"
     | Ipure.LexVar _ ->
-          "lexvar"
+          ";lexvar"
     | Ipure.BagIn _ ->
-          "bagin"
+          ";bagin"
     | Ipure.BagNotIn _ ->
-          "bagnotin"
+          ";bagnotin"
     | Ipure.BagSub _ ->
-          "bagsub"
+          ";bagsub"
     | Ipure.BagMin _ ->
-          "bagmin"
+          ";bagmin"
     | Ipure.BagMax _ ->
-          "bagmax"
+          ";bagmax"
     | Ipure.VarPerm _ ->
-          "varperm"
+          ";varperm"
     | Ipure.ListIn _ ->
-          "listin"
+          ";listin"
     | Ipure.ListNotIn _ ->
-          "listnotin"
+          ";listnotin"
     | Ipure.ListAllN _ ->
-          "listalln"
+          ";listalln"
     | Ipure.ListPerm _ ->
-          "listperm"
+          ";listperm"
     | Ipure.Eq (e1, e2, _) ->
           "(= " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure.XPure _ ->
-          "(xpure)"
+          ";(xpure)"
     | Ipure.RelForm (id, el, _) ->
           "(" ^ id ^ ")"
 
@@ -190,7 +190,8 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
           let ps = Ipure.list_of_conjs fb.Iformula.formula_base_pure in
           let fbs2 = List.fold_left (fun s p -> s^ (process_pure_formula pre_fix_var p)) "" ps in
           let s_start_and,s_end_and =
-            if (( hfs1 != [] && fb.Iformula.formula_base_heap != Iformula.HEmp)
+            if (( hfs1 != [] && fb.Iformula.formula_base_heap != Iformula.HEmp
+            )
               && List.length ps >= 1) || List.length ps >= 2 then
             "(and \n", "\n)" else "",""
           in

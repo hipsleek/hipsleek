@@ -6,21 +6,13 @@
 (define-fun ll ((?in node))
 Space (tospace
 (or
-(and 
 (= ?in nil)
-
-)(exists ((?q_18 node))(and 
+(exists ((?q_18 node))(and 
 (tobool (ssep 
 (pto ?in  (ref next ?q_18))
 (ll ?q_18)
 ) )
 )))))
-
-
-
-
-
-
 
 
 
@@ -40,7 +32,6 @@ Space (tospace
 (ll q)
 (pto xprm  (ref next q))
 (ll y)
-emp
 ) )
 ))
 )
@@ -55,7 +46,6 @@ emp
 (pto xprm  (ref next nextprm))
 (ll q1)
 (ll y)
-emp
 ) )
 ))
 ))
