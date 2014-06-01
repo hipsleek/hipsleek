@@ -191,7 +191,8 @@ and trans_command c cl =
           let _ = Hashtbl.add tbl_selfdef self_name "self" in
           let _ = Hashtbl.add tbl_vardef self_name (get_str_sort (get_sort (List.hd vl))) in
           let s3 = "<" in
-          let s4 = trans_var_list (List.tl vl) in
+          (* let s4 = trans_var_list (List.tl vl) in *)
+          let s4 = trans_para_list (List.tl vl) in
           let s5 = "> ==\n" in
           let s6 = trans_term t in
           let s7 = ".\n" in
@@ -342,6 +343,24 @@ and trans_term_list tl =
       let s1 = trans_term (List.hd tl) in
       let s2 = List.fold_left (fun s t ->
           s ^ "," ^ (trans_term t)) "" (List.tl tl) in
+      s1 ^ s2
+  ) else
+    ""
+
+and trans_para p =
+   match p with
+    | SortedVarSymSort (_,sy,so) ->
+          Hashtbl.add tbl_vardef (get_str_symbol sy) (get_str_sort so);
+          let s1 = trans_symbol sy in
+          let s2 = ":" in
+          let s3 = trans_sort so in
+          s1 ^ s2 ^ s3
+
+and trans_para_list pl =
+  if (List.length pl > 0) then (
+      let s1 = trans_para (List.hd pl) in
+      let s2 = List.fold_left (fun s p ->
+        s ^ "," ^ (trans_para p)) "" (List.tl pl) in
       s1 ^ s2
   ) else
     ""
