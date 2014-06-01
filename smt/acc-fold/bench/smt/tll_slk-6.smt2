@@ -36,28 +36,34 @@ Space (tospace
 
 
 
-(declare-fun D2_1130 () node)
-(declare-fun l_87prm () node)
+
+
+
+(declare-fun xprm () node)
 (declare-fun tprm () node)
 (declare-fun t () node)
-(declare-fun xprm () node)
 (declare-fun x () node)
-(declare-fun pprm () node)
 (declare-fun p () node)
-(declare-fun l_1131 () node)
-(declare-fun r_1132 () node)
+(declare-fun parent_25_1134 () node)
+(declare-fun Anon_1126 () node)
+(declare-fun v_bool_26_1084prm () boolean)
+(declare-fun pprm () node)
+(declare-fun D1_1127 () node)
+(declare-fun flted_11_1125 () node)
+(declare-fun Anon_1128 () node)
 
 
 (assert 
 (and 
-(distinct r_1132 nil)
+(= flted_11_1125 nil)
 (= tprm t)
 (= xprm x)
 (= pprm p)
-(tobool (ssep 
-(tree l_1131)
-(pto xprm (sref (ref parent pprm) (ref left l_1131) (ref right r_1132) (ref next D2_1130) ))
-(tll r_1132 xprm l_87prm tprm)
+(= parent_25_1134 Anon_1126)
+(= flted_11_1125 nil)
+bvar(= flted_11_1125 nil)
+bvar(tobool (ssep 
+(pto xprm (sref (ref parent pprm) (ref left D1_1127) (ref right flted_11_1125) (ref next Anon_1128) ))
 emp
 ) )
 )
@@ -65,10 +71,19 @@ emp
 
 (assert (not 
 (and 
+(= flted_11_1125 nil)
+(= tprm t)
+(= xprm x)
+(= pprm p)
+(= parent_25_1134 Anon_1126)
+(= flted_11_1125 nil)
+bvar(= flted_11_1125 nil)
+bvar(= parent_28_1069prm pprm)
+(= left_28_1070prm D1_1127)
+(= right_28_1071prm flted_11_1125)
+(= next_28_1072prm Anon_1128)
 (tobool (ssep 
-(tree l_1131)
-(pto xprm (sref (ref parent parent_34_1078prm) (ref left left_34_1079prm) (ref right right_34_1080prm) (ref next next_34_1081prm) ))
-(tll r_1132 xprm l_87prm tprm)
+(pto xprm (sref (ref parent parent_28_1069prm) (ref left left_28_1070prm) (ref right right_28_1071prm) (ref next next_28_1072prm) ))
 emp
 ) )
 )

@@ -36,7 +36,15 @@ Space (tospace
 
 
 
+
+
+
 (declare-fun xprm () node)
+(declare-fun tprm () node)
+(declare-fun t () node)
+(declare-fun x () node)
+(declare-fun pprm () node)
+(declare-fun p () node)
 
 
 (assert 
@@ -45,12 +53,8 @@ Space (tospace
 )
 
 (assert (not 
-(and 
-(tobool (ssep 
-(pto xprm (sref (ref parent parent_25_1060prm) (ref left left_25_1061prm) (ref right right_25_1062prm) (ref next next_25_1063prm) ))
-emp
-) )
-)
+(exists ((Anon_1129 node)(l_1131 node)(r_1132 node)(D2_1130 node)) (tobool (ssep (ssep (pto xprm (sref (ref parent parent_25_1060prm) (ref left left_25_1061prm) (ref right right_25_1062prm) (ref next next_25_1063prm) )) (tree l_1131)) (tree r_1132))))
+
 ))
 
 (check-sat)
