@@ -7,7 +7,7 @@ foreach $file (@files) {
 
     system("sleek --gen-smt " . $file);
 }
-system("mkdir -f smt");
+system("mkdir smt");
 system("mv *.smt2 smt");
 
 
