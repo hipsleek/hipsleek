@@ -40,3 +40,12 @@ $(NAME)_lex.ml: $(NAME)_lex.mll $(NAME)_parse.cmi
 clean:
 	rm -f $(NAME)_lex.ml $(NAME)_parse.mli $(NAME)_parse.ml *.cmo *.cmi *.output smt2slk
 
+install:
+	chmod uog+x trans.plx
+	chmod uog+x trans2smt.plx
+	sudo cp compile /usr/local/bin
+	sudo cp ../sleek /usr/local/bin
+	sudo cp trans.plx /usr/local/bin
+	sudo cp trans2smt.plx /usr/local/bin
+
+
