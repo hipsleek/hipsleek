@@ -8,13 +8,13 @@ data node{
 }
 
 /* predicate for a non-empty tree  */
-tree<> == self::node<_,D1,null,_>
-  or self::node<_,l,r,D2> * l::tree<> * r::tree<> & r!=null
+tree<> == (exists p, D1, r, n: self::node<p,D1,r,n> & r=null)
+  or (exists p,l,r,D2: self::node<p,l,r,D2> * l::tree<> * r::tree<> & r!=null)
 	inv self!=null;
 
 /* predicate for a non-empty tree with chained leaf list */
-tll<p,ll,lr> == self::node<p,D1,null,lr> & self = ll
-    or self::node<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null
+tll<p,ll,lr> == (exists p,D1, l : self::node<p,D1,l,lr> & l=null & self = ll)
+  or (exists l,r,D2,z : self::node<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null)
 	inv self!=null;
 
 
