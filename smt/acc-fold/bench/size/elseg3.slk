@@ -38,10 +38,10 @@ checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |-
     (exists u: z::elseg<u> * u::elseg<p>).
 expect Valid.
 
-checkentail_exact z::elseg<p> |- (exists u:
-          z::elseg<u> * u::elseg<p>).
+checkentail_exact z::elseg<p> |- 
+     (exists u: z::elseg<u> * u::elseg<p>).
 expect Valid.
 
-checkentail_exact z::node<a>*a::node<b>*b::elseg<p> |- (exists u:
-          z::elseg<u> * u::elseg<p>).
+checkentail_exact z::node<a>*a::node<b>*b::elseg<p> |- 
+     (exists u: z::elseg<u> * u::elseg<p>).
 expect Valid.
