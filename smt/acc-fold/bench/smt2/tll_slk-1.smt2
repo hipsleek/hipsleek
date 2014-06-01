@@ -13,6 +13,7 @@ Space (tospace
 (= ?r_37 nil)
 (tobool (ssep 
 (pto ?in (sref (ref parent ?p_35) (ref left ?D1_36) (ref right ?r_37) (ref next ?n_38) ))
+emp
 ) )
 ))(exists ((?p_39 node)(?l_40 node)(?r_41 node)(?D2_42 node))(and 
 (distinct ?r_41 nil)
@@ -32,6 +33,7 @@ Space (tospace
 (= ?lr_28 ?lr)
 (tobool (ssep 
 (pto ?in (sref (ref parent ?p_21) (ref left ?D1_22) (ref right ?l_23) (ref next ?lr_28) ))
+emp
 ) )
 ))(exists ((?p_29 node)(?self_30 node)(?ll_31 node)(?self_32 node)(?z_33 node)(?lr_34 node)(?l_24 node)(?r_25 node)(?D2_26 node)(?z_27 node))(and 
 (distinct ?r_25 nil)
@@ -63,11 +65,11 @@ Space (tospace
 
 
 (declare-fun xprm () node)
-(declare-fun pprm () Int)
-(declare-fun p () Int)
+(declare-fun pprm () node)
+(declare-fun p () node)
 (declare-fun x () node)
-(declare-fun tprm () Int)
-(declare-fun t () Int)
+(declare-fun tprm () node)
+(declare-fun t () node)
 
 
 (assert 
