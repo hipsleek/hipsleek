@@ -1,75 +1,55 @@
 data node {
-  int val;
   node next;
 }.
  pred ll<> == 
   emp&self=null or
-(exists v_22,q_23: self::node<v_22,q_23> * q_23::ll<>)
+(exists q_20: self::node<q_20> * q_20::ll<>)
   inv true.
  pred lseg<p:node> == 
   emp&self=p or
-(exists p_21,v_19,q_20: self::node<v_19,q_20> * 
-  q_20::lseg<p_21>&p_21=p)
+(exists p_19,q_18: self::node<q_18> * q_18::lseg<p_19>&
+  p_19=p)
   inv true.
 
  
-// id: 0; line: 17; kind: BIND
- checkentail_exact (exists v_1012,q_1013: x'::node<v_1012,q_1013> * q_1013::ll<>&x!=null & 
-y'=y & x'=x)
- |-  (exists v_1015,q_1016: x'::node<val_17_981',next_17_982'> * q_1016::ll<>&
-x!=null & y'=y & x'=x & val_17_981'=v_1015 & next_17_982'=q_1016).
+// id: 0; line: 16; kind: BIND
+ checkentail_exact (exists q: q::ll<> * x'::node<q>&x'=x & y'=y & x!=null)
+ |-  (exists q1: x'::node<next'> * q1::ll<>&next'=q1 & x'=x & y'=y & x!=null).
 expect Valid.
  
-// id: 2; line: 17; kind: PRE
- checkentail_exact q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-v_node_17_983'=q_1016 & v_node_17_983'=null
- |-  q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-v_node_17_983'=q_1016 & v_node_17_983'=null.
+// id: 2; line: 16; kind: PRE
+ checkentail_exact q::ll<> * x'::node<q>&v'=null & v'=q & x'=x & y'=y & x!=null
+ |-  q::ll<> * x'::node<q>&v'=null & v'=q & x'=x & y'=y & x!=null.
 expect Valid.
  
-// id: 4; line: 17; kind: PRE
- checkentail_exact q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-v_node_17_983'=q_1016 & v_node_17_983'!=null
- |-  q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-v_node_17_983'=q_1016 & v_node_17_983'!=null.
+// id: 4; line: 16; kind: PRE
+ checkentail_exact q::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null
+ |-  q::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null.
 expect Valid.
  
-// id: 6; line: 18; kind: BIND
- checkentail_exact q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-q_1016!=null & v_bool_17_989' & q_1016!=null & v_bool_17_989'
- |-  x'::node<val_18_984',next_18_985'> * q_1016::ll<>&x!=null & y'=y & x'=x & 
-q_1016!=null & v_bool_17_989' & q_1016!=null & v_bool_17_989' & 
-val_18_984'=v_1015 & next_18_985'=q_1016.
+// id: 6; line: 17; kind: BIND
+ checkentail_exact q::ll<> * x'::node<q>&v' & q!=null & x'=x & y'=y & x!=null
+ |-  x'::node<next'> * q::ll<>&next'=q & v' & q!=null & x'=x & y'=y & x!=null.
 expect Valid.
  
-// id: 8; line: 18; kind: PRE_REC
- checkentail_exact q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-q_1016!=null & v_bool_17_989' & q_1016!=null & v_bool_17_989' & 
-v_node_18_986'=q_1016
- |-  v_node_18_986'::ll<> * x'::node<v_1015,q_1016>&v_node_18_986'!=null & 
-v_node_18_986'!=null & x!=null & y'=y & x'=x & q_1016!=null & 
-v_bool_17_989' & q_1016!=null & v_bool_17_989' & v_node_18_986'=q_1016.
+// id: 8; line: 17; kind: PRE_REC
+ checkentail_exact q::ll<> * x'::node<q>&v1'=q & v' & q!=null & x'=x & y'=y & x!=null
+ |-  v1'::ll<> * x'::node<q>&v1'=q & v' & q!=null & x'=x & y'=y & x!=null & 
+v1'!=null.
 expect Valid.
  
-// id: 11; line: 22; kind: BIND
- checkentail_exact q_1016::ll<> * x'::node<v_1015,q_1016>&x!=null & y'=y & x'=x & 
-q_1016=null & !(v_bool_17_989') & q_1016=null & !(v_bool_17_989')
- |-  x'::node<val_22_987',next_22_988'> * q_1016::ll<>&x!=null & y'=y & x'=x & 
-q_1016=null & !(v_bool_17_989') & q_1016=null & !(v_bool_17_989') & 
-val_22_987'=v_1015 & next_22_988'=q_1016.
+// id: 11; line: 21; kind: BIND
+ checkentail_exact q::ll<> * x'::node<q>&!(v') & q=null & x'=x & y'=y & x!=null
+ |-  x'::node<next'> * q::ll<>&next'=q & !(v') & q=null & x'=x & y'=y & x!=null.
 expect Valid.
  
-// id: 13; line: 14; kind: POST
- checkentail_exact x'::node<v_1015,q_1016> * q_1016::lseg<y'>&x!=null & y'=y & x'=x & 
-q_1016!=null & v_bool_17_989' & q_1016!=null & v_bool_17_989'
- |-  (exists y_50: x::lseg<y_50>&y_50=y & x!=null & y'=y & x'=x & q_1016!=null & 
-v_bool_17_989' & q_1016!=null & v_bool_17_989').
+// id: 13; line: 13; kind: POST
+ checkentail_exact x'::node<q> * q::lseg<y'>&v' & q!=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1>&v' & q!=null & x'=x & y'=y & x!=null & y1=y).
 expect Valid.
  
-// id: 20; line: 14; kind: POST
- checkentail_exact q_1016::ll<> * x'::node<v_1015,y'>&x!=null & y'=y & x'=x & q_1016=null & 
-!(v_bool_17_989') & q_1016=null & !(v_bool_17_989') & next_22_1032=q_1016
- |-  (exists y_50: x::lseg<y_50> * q_1016::ll<>&y_50=y & x!=null & y'=y & x'=x & 
-q_1016=null & !(v_bool_17_989') & q_1016=null & !(v_bool_17_989') & 
-next_22_1032=q_1016).
+// id: 20; line: 13; kind: POST
+ checkentail_exact q::ll<> * x'::node<y'>&next=q & !(v') & q=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1> * q::ll<>&next=q & !(v') & q=null & x'=x & y'=y & 
+x!=null & y1=y).
 expect Valid.

@@ -3,12 +3,12 @@ data node {
 }
 
 ll<> == self=null or 
-  (exists v, q: self::node<v, q> * q::ll<>);
+  (exists q: self::node<q> * q::ll<>);
 
 lseg<p> == self=p or 
-  (exists v, q: self::node<v, q> * q::lseg<p>);
+  (exists q: self::node<q> * q::lseg<p>);
 
-clist<> == (exists v, p: self::node<v,p> * p::lseg<self>)
+clist<> == (exists p: self::node<p> * p::lseg<self>)
   inv self != null;
 
 void append(node x, node y)

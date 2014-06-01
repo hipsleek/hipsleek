@@ -1,7 +1,6 @@
 (set-logic QF_S)
 
 (declare-sort node 0)
-(declare-fun val () (Field node Int))
 (declare-fun next () (Field node node))
 
 (define-fun ll ((?in node))
@@ -10,10 +9,10 @@ Space (tospace
 (and 
 (= ?in nil)
 
-)(exists ((?v_19 Int)(?q_20 node))(and 
+)(exists ((?q_18 node))(and 
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
-(ll ?q_20)
+(pto ?in  (ref next ?q_18))
+(ll ?q_18)
 ) )
 )))))
 
@@ -27,25 +26,24 @@ Space (tospace
 
 
 (declare-fun xprm () node)
+(declare-fun vprm () node)
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun x () node)
-(declare-fun v_node_14_961prm () node)
-(declare-fun v_993 () Int)
-(declare-fun q_994 () node)
+(declare-fun q () node)
 
 
 (assert 
 (and 
-(distinct x nil)
-(= yprm y)
+(distinct vprm nil)
+(= vprm q)
 (= xprm x)
-(= v_node_14_961prm q_994)
-(distinct v_node_14_961prm nil)
+(= yprm y)
+(distinct x nil)
 (tobool (ssep 
-(ll q_994)
+(ll q)
 (ll y)
-(pto xprm (sref (ref val v_993) (ref next q_994) ))
+(pto xprm  (ref next q))
 emp
 ) )
 )
@@ -53,15 +51,15 @@ emp
 
 (assert (not 
 (and 
-(distinct x nil)
-(= yprm y)
+(distinct vprm nil)
+(= vprm q)
 (= xprm x)
-(= v_node_14_961prm q_994)
-(distinct v_node_14_961prm nil)
+(= yprm y)
+(distinct x nil)
 (tobool (ssep 
-(ll q_994)
+(ll q)
 (ll y)
-(pto xprm (sref (ref val v_993) (ref next q_994) ))
+(pto xprm  (ref next q))
 emp
 ) )
 )

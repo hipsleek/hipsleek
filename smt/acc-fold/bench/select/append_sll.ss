@@ -3,7 +3,7 @@ data node {
 }
 
 ll<> == self=null or 
-  (exists v, q: self::node<v, q> * q::ll<>);
+  (exists q: self::node<q> * q::ll<>);
 
 void append(node x, node y)
   requires x::ll<> * y::ll<> & x != null 

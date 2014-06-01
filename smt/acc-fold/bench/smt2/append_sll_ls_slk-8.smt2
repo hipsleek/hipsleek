@@ -1,7 +1,6 @@
 (set-logic QF_S)
 
 (declare-sort node 0)
-(declare-fun val () (Field node Int))
 (declare-fun next () (Field node node))
 
 (define-fun ll ((?in node))
@@ -10,10 +9,10 @@ Space (tospace
 (and 
 (= ?in nil)
 
-)(exists ((?v_22 Int)(?q_23 node))(and 
+)(exists ((?q_20 node))(and 
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_22) (ref next ?q_23) ))
-(ll ?q_23)
+(pto ?in  (ref next ?q_20))
+(ll ?q_20)
 ) )
 )))))
 
@@ -23,11 +22,11 @@ Space (tospace
 (and 
 (= ?in ?p)
 
-)(exists ((?p_21 node)(?v_19 Int)(?q_20 node))(and 
-(= ?p_21 ?p)
+)(exists ((?p_19 node)(?q_18 node))(and 
+(= ?p_19 ?p)
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
-(lseg ?q_20 ?p_21)
+(pto ?in  (ref next ?q_18))
+(lseg ?q_18 ?p_19)
 ) )
 )))))
 
@@ -40,44 +39,41 @@ Space (tospace
 
 
 
-(declare-fun v_1015 () Int)
-(declare-fun yprm () node)
-(declare-fun y () node)
+(declare-fun next () node)
+(declare-fun vprm () boolean)
+(declare-fun q () node)
 (declare-fun xprm () node)
+(declare-fun yprm () node)
 (declare-fun x () node)
-(declare-fun v_bool_17_989prm () boolean)
-(declare-fun next_22_1032 () node)
-(declare-fun q_1016 () node)
+(declare-fun y () node)
 
 
 (assert 
 (and 
-(distinct x nil)
-(= yprm y)
+(= next q)
+other(= q nil)
 (= xprm x)
-(= q_1016 nil)
-other(= q_1016 nil)
-other(= next_22_1032 q_1016)
+(= yprm y)
+(distinct x nil)
 (tobool (ssep 
-(ll q_1016)
-(pto xprm (sref (ref val v_1015) (ref next yprm) ))
+(ll q)
+(pto xprm  (ref next yprm))
 emp
 ) )
 )
 )
 
 (assert (not 
-(exists ((y_50 node))(and 
-(= y_50 y)
-(distinct x nil)
-(= yprm y)
+(exists ((y1 node))(and 
+(= next q)
+other(= q nil)
 (= xprm x)
-(= q_1016 nil)
-other(= q_1016 nil)
-other(= next_22_1032 q_1016)
+(= yprm y)
+(distinct x nil)
+(= y1 y)
 (tobool (ssep 
-(lseg x y_50)
-(ll q_1016)
+(lseg x y1)
+(ll q)
 emp
 ) )
 ))
