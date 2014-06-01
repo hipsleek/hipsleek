@@ -682,6 +682,7 @@ let common_arguments = [
           Globals.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
           Globals.gen_baga_inv := true;
           Globals.do_infer_inv := true;
           Globals.lemma_gen_unsafe := true;
