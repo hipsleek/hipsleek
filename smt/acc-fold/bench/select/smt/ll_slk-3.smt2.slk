@@ -1,0 +1,13 @@
+
+data node {
+  node nxt;
+}.
+
+pred ll<n:Int> ==
+ self = null
+or n = const
+
+or (exists a,m: self::node<nxt = a> * a::ll<m>).
+
+checkentail x::node<nxt = q> * q::ll<n> * emp
+         |- (exists m: x::ll<m>).
