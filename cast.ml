@@ -2828,12 +2828,14 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   let equal_pair_str (x1,x2) (y1,y2) = (
     (String.compare x1 y1 = 0) && (String.compare x2 y2 = 0)
   ) in
+  let self_view = vdecl.view_name in
+  let self_data = vdecl.view_data_name in
   let compute_view_direction vg env fw_ptrs fw_fields bw_ptrs bw_fields = (
     Debug.tinfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
     (*
      * Find forward pointers
      *)
-    (* self is always the forward pointers *)
+    (* in the segmented predicates, we can use equality graph to find the forward pointers *)
     let forward_ptrs = ref [self] in
     forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
     (* find forward poiters from equality path *)
@@ -2848,6 +2850,28 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         with _ -> ()
       ) vdecl.view_vars
     ) !forward_ptrs;
+
+    let possible_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
+    Debug.binfo_hprint (add_str "possible_ptrs 1:" (pr_list pr_id)) possible_ptrs no_pos;
+    let _ = List.iter (fun v ->
+      try
+        Debug.binfo_pprint ("find path from self to " ^ v) no_pos;
+        let path, weight = Dijkstra.shortest_path vg self v in
+        Debug.binfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+                            ^ ", weight: " ^ (string_of_int weight)) no_pos;
+        let fw_ptrs = List.concat (List.map (fun e ->
+          let lbl = ViewGraph.get_label e in
+          match lbl with
+          | ViewGraph.Label.ViewField (_,f) -> [f]
+          | _ -> []
+        ) path) in
+        if (List.length bw_ptrs > 0) then (
+          forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
+        )
+      with Not_found ->
+        Debug.binfo_pprint ("not found! " ^ v) no_pos;
+        ()
+    ) possible_ptrs in
 
     (*
      * find forward_fields: the data-field edge from self to the views have same type
@@ -2877,10 +2901,8 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         !forward_fields no_pos;
 
     (*
-     * find backward ptrs: field of the edge from forward_ptrs back to self
+     * find backward ptrs: field of the view-edge from ptrs having same type with self back to self
      *)
-    let self_view = vdecl.view_name in
-    let self_data = vdecl.view_data_name in
     let possible_ptrs = (
       (ViewGraph.get_vertex_of_type env self_view)
       @ (ViewGraph.get_vertex_of_type env self_data)
@@ -2900,17 +2922,17 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         )
       with _ -> ()
     ) possible_ptrs in
-    (* find backward poiters from equality path *)
-    List.iter (fun v1 ->
-      List.iter (fun sv ->
-        let v2 = P.name_of_spec_var sv in
-        try
-          let _, length = Dijkstra.shortest_path vg v1 v2 in
-          if (length = 0) then (* path contains only Equality edges *)
-            backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);
-        with _ -> ()
-      ) vdecl.view_vars
-    ) !backward_ptrs;
+    (* (* find backward poiters from equality path *)                                       *)
+    (* List.iter (fun v1 ->                                                                 *)
+    (*   List.iter (fun sv ->                                                               *)
+    (*     let v2 = P.name_of_spec_var sv in                                                *)
+    (*     try                                                                              *)
+    (*       let _, length = Dijkstra.shortest_path vg v1 v2 in                             *)
+    (*       if (length = 0) then (* path contains only Equality edges *)                   *)
+    (*         backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]); *)
+    (*     with _ -> ()                                                                     *)
+    (*   ) vdecl.view_vars                                                                  *)
+    (* ) !backward_ptrs;                                                                    *)
 
     (*
      * find backward fields: the data-field edge from self to backward ptrs
@@ -2987,6 +3009,11 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
       with _ -> false
     ) (vd.view_forward_ptrs @ vd.view_backward_ptrs)
   ) in
+  (* let is_alias_fw_bw v vg =                             *)
+  (*   let ptrs = List.map (fun sv ->                      *)
+  (*     P.name_of_spec_var sv                             *)
+  (*   ) (vd.view_forward_ptrs @ vd.view_backward_ptrs) in *)
+  (*   not (List.mem v ptrs) in                            *)
   List.map2 (fun (f,lbl) (vg, env, lbl)->
     let pos = CF.pos_of_formula f in
     let (hf,mf,fl,t,a) = CF.split_components f in
@@ -3023,7 +3050,8 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
         | P.BForm ((P.Eq (P.Var (sv1, pos1), P.Var (sv2, pos2), pos3), ann), lbl) -> (
             let vn1 = P.name_of_spec_var sv1 in
             let vn2 = P.name_of_spec_var sv2 in
-            if (is_alias_fw_bw vn1 vg) || (is_alias_fw_bw vn2 vg) then None
+            (* a eq-formula "x=y" is aux if one of two variables x, y is not fw,bw pointers *) 
+            if (is_alias_fw_bw vn1 vg) && (is_alias_fw_bw vn2 vg) then None
             else Some pf
           )
         | P.And (pf1, pf2, pos) -> (

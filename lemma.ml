@@ -1012,12 +1012,18 @@ let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_dec
               | LemmaParamEqual ->
                   let e = Ipure_D.Var ((id,p), pos) in
                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  let e2 = 
+                    if (String.compare id forward_ptr = 0) then
+                      Ipure_D.Var ((forward_ptr,p), pos)
+                    else Ipure_D.Var ((id^"_2",p), pos) in
                   IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
               | LemmaParamDistributive -> (
                   let e = Ipure_D.Var ((id,p), pos) in
                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  let e2 = 
+                    if (String.compare id forward_ptr = 0) then
+                      Ipure_D.Var ((forward_ptr,p), pos)
+                    else Ipure_D.Var ((id^"_2",p), pos) in
                   match typ with
                   | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
                   | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
@@ -1115,12 +1121,18 @@ let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_de
               | LemmaParamEqual ->
                   let e = Ipure_D.Var ((id,p), pos) in
                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  let e2 = 
+                    if (String.compare id forward_ptr = 0) then
+                      Ipure_D.Var ((forward_ptr,p), pos)
+                    else Ipure_D.Var ((id^"_2",p), pos) in
                   IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
               | LemmaParamDistributive -> (
                   let e = Ipure_D.Var ((id,p), pos) in
                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = Ipure_D.Var ((id^"_2",p), pos) in
+                  let e2 = 
+                    if (String.compare id forward_ptr = 0) then
+                      Ipure_D.Var ((forward_ptr,p), pos)
+                    else Ipure_D.Var ((id^"_2",p), pos) in
                   match typ with
                   | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
                   | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
