@@ -1002,6 +1002,9 @@ and filter_norm_lemmas l =
     | Normalize b-> if b || !use_split_match then false else true 
     | _ -> true) l 
 
+and filter_lemmas_by_kind l k = 
+  List.filter (fun c-> if c.coercion_case == k then true else false) l 
+
 and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f = 
   let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name lhs_name) in
   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name rhs_name) in
@@ -1303,12 +1306,16 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  let dl_orig = dl.h_formula_data_original in
+                  let dl_derv = dl.h_formula_data_derv in
+                         (* CF.h_formula_data_origins = dr_origins; *)
                   (*Is it LOCKED state*)
                   let is_r_lock = match vr_vdef.view_inv_lock with
                     | Some _ -> true
                     | None -> false
                   in
-                  let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
                   let sub_ann  = if (!Globals.allow_field_ann) then 
                     let r,_,_,_ = Immutable.subtype_ann_list [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in
                     let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in
@@ -1316,13 +1323,13 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else true in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
-                  let _ = Debug.ninfo_hprint (add_str "new_orig" string_of_bool) new_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                   let _ = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
                   let a1 = 
                     if is_r_lock then [] else
-                      if ((new_orig || vr_self_pts==[]) && sub_ann) then
+                      if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
                         let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
                         let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                         let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
@@ -1337,8 +1344,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                else
                                  let vl = List.hd lvs in
                                  if check_lemma_not_exist vl vr then
-                                   let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                                   let uf_i = if new_orig then 0 else 1 in
+                                   let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                                   let uf_i = if new_orig_r then 0 else 1 in
                                    (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
                                    [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, Some (CF.ViewNode vl)))]
                                  else [(1,M_fold m_res)]
@@ -1352,14 +1359,18 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   (* WN : why do we apply lemma blindly here!! *)
                   (* leads to unsoundness of sh-rev3a.slk *)
                
-                    (* ==========andreea: to fix this possibly lemma app ========== *)
+                    (* ==========andreea: a naive fix for left compelx lemma -- to be refined ========== *)
                   let a3 =
                     let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
                         vr_name dl.h_formula_data_name) in
+                    let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
+                        dl.h_formula_data_name vr_name) in
+                    (* for left lemmas, only a complex one might trigger a match data --> view *)
+                    let left_ls = filter_lemmas_by_kind left_ls Complex in 
                     (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
-                    let right_act = if (not(!ann_derv) || new_orig) then
-                      List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
-                    right_act in
+                    let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
+                    let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
+                    left_act@right_act in
                     (* ==================== *)
                   let r_lem =
                     if (Lem_store.all_lemma # any_coercion
@@ -1369,7 +1380,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                           (1,M_rd_lemma m_res)
                       ]
                     else [] in
-                  let a2 = if (new_orig) then r_lem else [] in
+                  let a2 = if (new_orig_r) then r_lem else [] in
                   (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
                   let a = a1@a2@a3 in
                   if a != [] then (-1,Search_action a)
@@ -1381,6 +1392,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vl_view_derv = vl.h_formula_view_derv in
+                  let dr_orig = dr.h_formula_data_original in
+                  let dr_derv = dr.h_formula_data_derv in
                   let _ = pr_debug "pred<..> |- node<..>" in
                   (*Is it LOCKED state*)
                   let is_l_lock = match vl_vdef.view_inv_lock with
@@ -1388,8 +1401,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | None -> false
                   in
                   let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
-                  let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-                  let uf_i = if new_orig then 0 else 1 in
+                  let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
+                  let uf_i = if new_orig_l then 0 else 1 in
                   (* WN_all_lemma - is this overriding of lemmas? *)
                   let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
@@ -1400,7 +1414,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else true in
                   let a1 = 
                     if is_l_lock then [] else
-                      if ((new_orig || vl_self_pts==[]) && sub_ann) then 
+                      if ((new_orig_l || vl_self_pts==[]) && sub_ann) then 
                       (*then [(1,M_unfold (m_res,uf_i))] else [] in*)
                         if vl_vdef.view_is_prim then []
                         else
@@ -1415,7 +1429,21 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                           else
                           [(1,M_unfold (m_res,uf_i))] 
                       else [] in
-                  let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in
+                  let a2 = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in
+
+                    (* ==========andreea: a naive fix for right compelx lemma -- to be refined ========== *)
+                  let a3 =
+                    let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
+                        dr.h_formula_data_name vl_name) in
+                    let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
+                        vl_name dr.h_formula_data_name) in
+                    (* for right lemmas, only a complex one might trigger a match view --> data *)
+                    let right_ls = filter_lemmas_by_kind right_ls Complex in 
+                    (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
+                    let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
+                    let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
+                    left_act@right_act in
+                    (* ==================== *)
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
                   let a = a1@a2 in

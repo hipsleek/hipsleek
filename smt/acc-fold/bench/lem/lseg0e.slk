@@ -7,7 +7,7 @@ pred lseg<p> == self=p
  inv true.
 
 lemma_unsafe self::node<u1>* u1::lseg<p> 
-       <-> (exists last: self::lseg<last>*last::node<p>).
+       -> (exists last: self::lseg<last>*last::node<p>).
 
 checkentail_exact self::node<u1>* u1::lseg<p> 
         |- (exists last: self::lseg<last>*last::node<p>)
