@@ -9,7 +9,7 @@ data node2 {
 
 /* view for a doubly linked list with size */
 dll<p> == self = null 
-  or self::node2<_, p, q> * q::dll<self>;
+  or (exists v, q: self::node2<v, p, q> * q::dll<self>);
 
 /* append 2 doubly linked lists */
 void append(node2 x, node2 y)

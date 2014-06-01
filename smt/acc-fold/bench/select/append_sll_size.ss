@@ -4,7 +4,7 @@ data node {
 }
 
 ll<n> == self=null & n=0
-  or self::node<_, q> * q::ll<n-1>
+  or (exists v, q: self::node<v, q> * q::ll<n-1>)
   inv n>=0;
 
 void append(node x, node y)
