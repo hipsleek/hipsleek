@@ -178,14 +178,16 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
   match f with
     | Iformula.Base fb ->
           let hfs = Iformula.get_heaps fb.Iformula.formula_base_heap in
-          let hfs1 = if String.compare pre_fix_var "" =0 then (hfs@[Iformula.HEmp])
-          else if List.length hfs = 1 then (hfs@[Iformula.HEmp]) else hfs in
+          (* let hfs1 = if String.compare pre_fix_var "" =0 then (hfs@[Iformula.HEmp]) *)
+          (* else if List.length hfs = 1 then (hfs@[Iformula.HEmp]) else hfs in *)
+          let hfs1 = hfs in
+          let sep_s_start,sep_s_end  = if List.length hfs1 > 1 then "(ssep", ")" else "","" in
           let fbs1,n2 =List.fold_left (fun (s,n) hf ->
               let s1,n1 = process_h_formula pre_fix_var hf  all_view_names n in
               (s ^ s1 ^ "\n", n1)
           ) ("", start_pred_abs_num) (hfs1) in
           let s_heap = if hfs1 = [] || fb.Iformula.formula_base_heap = Iformula.HEmp then
-            "" else  "(tobool (ssep \n" ^ fbs1 ^ ") )" in
+            "" else  "(tobool " ^ sep_s_start ^" \n" ^ fbs1 ^ sep_s_end ^" )" in
           (* let fbs1,n2 = process_h_formula pre_fix_var fb.Iformula.formula_base_heap all_view_names start_pred_abs_num in *)
           let ps = Ipure.list_of_conjs fb.Iformula.formula_base_pure in
           let fbs2 = List.fold_left (fun s p -> s^ (process_pure_formula pre_fix_var p)) "" ps in

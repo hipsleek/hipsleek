@@ -38,7 +38,6 @@ Space (tospace
 (ll q)
 (pto xprm  (ref next q))
 (ll y)
-(emp)
 ) )
 ))
 )
