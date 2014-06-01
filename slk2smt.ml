@@ -371,7 +371,7 @@ let trans_smt slk_fname iprog cprog cmds =
   let norm_slk_fname =  Globals.norm_file_name slk_fname in
   let _ = List.iter (fun s ->
       let n= fresh_number () in
-      save_smt (norm_slk_fname ^ "-" ^ (string_of_int n) ^ ".smt") s
+      save_smt (norm_slk_fname ^ "-" ^ (string_of_int n) ^ ".smt2") s
       (* print_endline (s ^ "\n") *)
   ) str_ents in
   let _ = smt_cmds := [] in
