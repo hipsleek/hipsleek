@@ -27,6 +27,7 @@ let fresh_number () =
 let smt_string_of_typ x=
   match x with
     | Int -> "Int"
+    | TVar _ -> "Int"
     | _ -> string_of_typ x
 
 let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1

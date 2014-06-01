@@ -440,7 +440,7 @@ let process_list_lemma ldef_lst  =
         (*           if (CP.mem_svl hp sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d]) *)
         (*       | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in *)
         (* let defs = pre_preds@post_pred@rem in *)
-        let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs0 else defs0 in
+        let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs0 else defs0 in
         print_endline "";
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
@@ -1086,7 +1086,7 @@ let process_shape_infer pre_hps post_hps=
                   if (CP.mem_svl hp sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs = pre_preds@post_pred@rem in
-        let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def defs else defs in
+        let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs else defs in
         print_endline "";
       print_endline "\n*************************************";
       print_endline "*******relational definition ********";

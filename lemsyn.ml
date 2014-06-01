@@ -209,7 +209,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     (*add lemma*)
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ = print_endline "\n*******relational definition ********" in
-    let defs1 = if !Globals.print_en_tidy then List.map CF.rearrange_def (CF.rel_def_stk # get_stk) else
+    let defs1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_def (CF.rel_def_stk # get_stk) else
       (CF.rel_def_stk # get_stk) in
     let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
     let _ = print_endline (pr1 defs1) in

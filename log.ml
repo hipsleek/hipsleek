@@ -190,11 +190,11 @@ let pr_sleek_log_entry e=
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_ante))
+  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_ante))
   else fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
   fmt_string "\n |- ";
   if (!Globals.print_en_tidy)
-  then fmt_string (Cprinter.string_of_formula (Cformula.shorten_formula e.sleek_proving_conseq))
+  then fmt_string (Cprinter.string_of_formula (Cfout.shorten_formula e.sleek_proving_conseq))
   else fmt_string (Cprinter.string_of_formula e.sleek_proving_conseq);
   fmt_string ". \n";
   (if !print_clean_flag then 
@@ -252,6 +252,7 @@ let slk_sleek_log_entry e =
         let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
         CF.push_exists ex_vars comb_conseq
   in
+  let tidy_ante,tidy_conseq = Cfout.rearrange_entailment e.sleek_proving_ante conseq in
   fmt_open_box 1;
   fmt_string("\n");
   let src = e.sleek_src_no in

@@ -2210,7 +2210,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = Infer.scc_rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
-                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
+                          let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                           (* let pr = if !Globals.print_html then Cprinter.string_of_html_hprel_short *)
@@ -2624,7 +2624,7 @@ let proc_mutual_scc_shape_infer iprog prog scc_procs =
               | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs1 = pre_preds@post_pred@rem in
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs" pr_id) "" no_pos in *)
-        let defs = if !Globals.print_en_tidy then List.map CF.rearrange_def defs1 else defs1 in
+        let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
         (* let _ = Debug.info_hprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in *)
         print_endline "\n*************************************";
         print_endline "*******relational definition ********";
@@ -2804,7 +2804,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                           let _ = Infer.rel_ass_stk # reset in
                           if (* !Globals.sap *) true then begin
                           let ras = List.rev(ras) in
-                          let ras1 = if !Globals.print_en_tidy then List.map CF.rearrange_rel ras else ras in
+                          let ras1 = if !Globals.print_en_tidy then List.map Cfout.rearrange_rel ras else ras in
 			  if !Globals.testing_flag then print_endline ("<rstart>"^(string_of_int (List.length ras)));
 			  let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog x) in
                           (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)
