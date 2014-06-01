@@ -141,10 +141,18 @@ and is_pure t =
           let op =
             ( match qualId with
               | QualIdentifierId (_, id) -> get_str_id id
-              | QualIdentifierAs (_, id, so) -> get_str_id id
+              | QualIdentifierAs (_, id, _) -> get_str_id id
             )
           in
           not (op = "tobool")
+    (* | TermQualIdentifier (_, qualId) -> *)
+    (*       let id = *)
+    (*         ( match qualId with *)
+    (*           | QualIdentifierId (_, id) -> get_str_id id *)
+    (*           | QualIdentifierAs (_, id, _) -> get_str_id id *)
+    (*         ) *)
+    (*       in *)
+    (*       not (id = "emp") *)
     | _ -> false
 
 and is_heap t =
@@ -153,10 +161,18 @@ and is_heap t =
           let op =
             ( match qualId with
               | QualIdentifierId (_, id) -> get_str_id id
-              | QualIdentifierAs (_, id, so) -> get_str_id id
+              | QualIdentifierAs (_, id, _) -> get_str_id id
             )
           in
           op = "tobool"
+    (* | TermQualIdentifier (_, qualId) -> *)
+    (*       let id = *)
+    (*         ( match qualId with *)
+    (*           | QualIdentifierId (_, id) -> get_str_id id *)
+    (*           | QualIdentifierAs (_, id, _) -> get_str_id id *)
+    (*         ) *)
+    (*       in *)
+    (*       id = "emp" *)
     | _ -> false
 
 and get_pure_tl tl =
@@ -230,7 +246,7 @@ and trans_term t =
     | TermQualIdentifier (_, qualId) -> (
           match qualId with
             | QualIdentifierId (_, id) ->
-                  trans_id id
+                  (trans_id id)
             | QualIdentifierAs (_, id, so) ->
                   (trans_id id) ^ (trans_sort so)
       )
