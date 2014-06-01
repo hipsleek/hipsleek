@@ -9,26 +9,21 @@ pred lseg<p> == self=p
 lemma_safe self::node<u1>* u1::lseg<p> 
        <-> (exists last: self::lseg<last>*last::node<p>).
 
-/*
-checkentail_exact self::node<u1>* u1::lseg<p> 
-        |- (exists last: self::lseg<last>*last::node<p>)
-           .
-expect Valid.
-*/
-// complex lemma not working..
+// complex lemma proving not working..
 
 /*
 # lseg0e1.slk
 
-Entail 1: Fail.(may) cause:Nothing_to_do? 
-  Type: WArg
-  LHS: u1::lseg<p,self,last>
-  RHS: last::node<l2_138,p_139>
- lhs_rest: self::node<pr,u1>
- rhs_rest: 
-  self::lseg<last_136,pr_137,l2_140>
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! 
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Fail. (may) cause: OrR[UnionR[ u1_79::node<a_77> * a_77::lseg<p_76>&p_76=p_78 & p_78=p&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2), a_77::lseg<p_76>&p_76=p_78 & p_78=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2)],valid]
+	 "==>" implication: : Fail. (may) cause: OrR[ last_161::node<p_160>&p_158=last_161 & p_160=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),val
+id]
 
-Validate 1: Not Expected.
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
 */
 
 

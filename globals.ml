@@ -1201,6 +1201,9 @@ let _ = if !smt_compete_mode then
           print_core_all:=false;
           lemma_gen_unsafe = ref true;
           gen_baga_inv := true;
+          do_infer_inv := true;
+          lemma_gen_unsafe := true;
+          smt_compete_mode:=true
   end
 
 (** for type of frame inference rule that will be used in specs commands *)

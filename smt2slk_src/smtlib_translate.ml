@@ -241,8 +241,8 @@ and trans_command c cl =
 
 and trans_term t =
   match t with
-    | TermSpecConst (_, _) ->
-          "const\n"
+    | TermSpecConst (_, const) ->
+          trans_const const
     | TermQualIdentifier (_, qualId) -> (
           match qualId with
             | QualIdentifierId (_, id) ->
@@ -327,6 +327,9 @@ and trans_term t =
           ) else if op = "index"
           then (
               trans_term (List.hd (List.tl tl))
+          ) else if (op = "+" || op = "-" || op = "*")
+          then (
+              (trans_term (List.hd tl)) ^ op ^ (trans_term_list (List.tl tl))
           ) else if not ( op = "tobool" ||
                   op = "tospace" ||
                   op = "sref" ||
@@ -396,6 +399,14 @@ and trans_var_list vl =
   ) else
     ""
 
+and trans_const const =
+  match const with
+    | SpecConstsDec(_, str) -> str
+    | SpecConstNum(_, str) -> str
+    | SpecConstString(_, str) -> str
+    | SpecConstsHex(_, str) -> str
+    | SpecConstsBinary(_, str) -> str
+
 and trans_symbol sy =
   let str = match sy with
   | Symbol (_ , str) -> str
@@ -418,7 +429,10 @@ and trans_symbol sy =
 and trans_sort so =
   match so with
     | SortIdentifier (pd, id) ->
-          trans_id id
+          let id = trans_id id in
+          if id = "Int"
+          then "int"
+          else id
     | SortIdSortMulti (pd, id, (_, sol)) ->
           let so = List.hd (List.tl sol) in
           "  " ^ (trans_sort so) ^ " "

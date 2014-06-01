@@ -497,7 +497,7 @@ else
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then 
       let _ = DD.info_hprint (add_str ("new inv("^name^")") !CP.print_formula) new_pf no_pos in
-      let _ = print_endline "" in
+      let _ = print_endline_quiet "" in
       new_pf
     else pf
 
