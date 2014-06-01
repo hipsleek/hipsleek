@@ -612,7 +612,7 @@ let common_arguments = [
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
-  ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) fold lemmas for special predicates");
+  ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
