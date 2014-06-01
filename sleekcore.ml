@@ -222,9 +222,9 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let s_ctx = (CF.SuccCtx [init_ctx]) in
   let ante_quans, ante0b = (CF.split_quantifiers ante0) in
   let ante0b = (CF.simplify_pure_f ante0b) in
-  let ante0a = Cfutil.force_elim_exists ante0b ante_quans in
+  let ante0a = Cformula.force_elim_exists ante0b ante_quans in
   let conseq_quans, conseq0b = CF.split_quantifiers conseq0 in
-  let conseq0a = Cfutil.force_elim_exists conseq0b conseq_quans in
+  let conseq0a = Cformula.force_elim_exists conseq0b conseq_quans in
   let _ = Debug.ninfo_hprint (add_str "ante_quans" !CP.print_svl) ante_quans no_pos in
   let _ = Debug.ninfo_hprint (add_str "conseq_quans" !CP.print_svl) conseq_quans no_pos in
   (******************************************************)

@@ -14,7 +14,7 @@ tree<> == (exists p, D1, r, n: self::node<p,D1,r,n> & r=null)
 
 /* predicate for a non-empty tree with chained leaf list */
 tll<p,ll,lr> == (exists p,D1, l : self::node<p,D1,l,lr> & l=null & self = ll)
-  or (exists p,l,r,D2,z : self::node<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null)
+  or (exists l,r,D2,z : self::node<p,l,r,D2> * l::tll<self,ll,z> * r::tll<self,z,lr> & r!=null)
 	inv self!=null;
 
 

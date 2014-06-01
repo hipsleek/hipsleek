@@ -263,9 +263,9 @@ let slk_sleek_log_entry e =
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos));
   fmt_string ("; kind: " ^ (e.sleek_proving_kind));
   fmt_string (if !Globals.sleek_gen_vc_exact then "\n checkentail_exact" else "\n checkentail");
-  sleek_tidy_formula e.sleek_proving_ante;
+  sleek_tidy_formula tidy_ante (* e.sleek_proving_ante *);
   fmt_string "\n |- ";
-  sleek_tidy_formula conseq;
+  sleek_tidy_formula tidy_conseq (* conseq *);
   fmt_string ".\n";
   (* (if (!Globals.sleek_gen_vc) then *)
   (*   match frm with                 *)

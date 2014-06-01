@@ -1453,26 +1453,6 @@ let oa_node2view prog f vname=
   Debug.no_2 "oa_node2view" pr1 pr_id pr1
       (fun _ _ -> oa_node2view_x prog f vname) f vname
 
-let force_elim_exists_x f quans=
-  let ( _,mf,_,_,_) = split_components f in
-  let eqs = (MCP.ptr_equations_without_null mf) in
-  let sst, inter_eqs = List.fold_left (fun (r1,r2) (sv1,sv2) ->
-      let b1 = CP.mem_svl sv1 quans in
-      let b2 = CP.mem_svl sv2 quans in
-      match b1,b2 with
-        | false,true -> (r1@[(sv2,sv1)], r2@[(sv1,sv2)])
-        | true, false -> r1@[(sv1,sv2)], r2@[(sv1,sv2)]
-        | _ -> r1,r2
-  ) ([],[]) eqs in
-  (* let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in *)
-  simplify_pure_f (subst sst f)(* ,  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos ) *)
-
-let force_elim_exists f quans=
-  let pr1 = !print_formula in
-  let pr2 = !CP.print_svl in
-  Debug.no_2 "force_elim_exists" pr1 pr2 pr1
-      (fun _ _ -> force_elim_exists_x f quans) f quans
-
 (*
   rename clash argument of views
 *)

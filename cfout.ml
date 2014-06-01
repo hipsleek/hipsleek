@@ -176,27 +176,27 @@ let rearrange_rel (rel: hprel) =
 
 
 let rearrange_entailment_x lhs rhs=
-  (*shorten quantifiers of f*)
-  let shorten_quantifiers f tbl=
-    let quans, bare = split_quantifiers f in
-    let n_quans, tbl1 = shorten_svl quans tbl in
-    let sst0 = List.combine quans n_quans in
-    let new_f = add_quantifiers n_quans (subst sst0 f) in
-    (new_f, sst0, tbl1)
-  in
   let tbl0 = Hashtbl.create 1 in
-  (*rename quantifiers of lhs*)
-  let lhs1, l_sst, tbl1 = shorten_quantifiers lhs tbl0 in
-  let rhs1 = subst l_sst rhs in
-  (*rename quantifiers of rhs*)
-  let rhs2, _, tbl2 = shorten_quantifiers rhs1 tbl1 in
-  let l_svl = (CP.remove_dups_svl (fv lhs1)) in
-  let r_svl = (CP.remove_dups_svl (fv rhs2)) in
-  let all_svl = CP.remove_dups_svl (l_svl@r_svl) in
-  let new_svl,_ = shorten_svl all_svl tbl2 in
-  let n_lhs = subst_avoid_capture all_svl new_svl (rearrange_formula l_svl lhs1) in
-  let n_rhs = subst_avoid_capture all_svl new_svl (rearrange_formula r_svl rhs2) in
-  (n_lhs, n_rhs)
+  let l_quans, l_bare =  split_quantifiers lhs in
+  let r_quans, r_bare =  split_quantifiers rhs in
+  let l_svl = (CP.remove_dups_svl (fv l_bare)) in
+  let r_svl = (CP.remove_dups_svl (fv r_bare)) in
+  let all_svl = CP.remove_dups_svl (l_svl@r_svl@l_quans@r_quans) in
+  let new_svl,_ = shorten_svl all_svl tbl0 in
+  let sst0 = List.combine all_svl new_svl in
+  let _ = Debug.ninfo_hprint (add_str "sst0" (pr_list (pr_pair !CP.print_sv !CP.print_sv) )) sst0 no_pos in
+  let n_lhs = subst_avoid_capture all_svl new_svl (rearrange_formula l_svl l_bare) in
+  let n_rhs = subst_avoid_capture all_svl new_svl (rearrange_formula r_svl r_bare) in
+  let nl_quans = CP.subst_var_list sst0 l_quans in
+  let _ = Debug.ninfo_hprint (add_str "l_quans" (!CP.print_svl) ) l_quans no_pos in
+  let _ = Debug.ninfo_hprint (add_str "nl_quans" (!CP.print_svl) ) nl_quans no_pos in
+  (*handle quantifiers*)
+  let n_lhs2 = add_quantifiers nl_quans n_lhs in
+  let nr_quans = CP.subst_var_list sst0 r_quans in
+  let _ = Debug.ninfo_hprint (add_str "r_quans" (!CP.print_svl) ) r_quans no_pos in
+  let _ = Debug.ninfo_hprint (add_str "nr_quans" (!CP.print_svl) ) nr_quans no_pos in
+  let n_rhs2 = add_quantifiers nr_quans n_rhs in
+  (n_lhs2, n_rhs2)
 
 let rearrange_entailment lhs rhs=
   let pr1 = !print_formula in
