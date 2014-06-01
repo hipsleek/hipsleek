@@ -119,7 +119,7 @@ let rec process_pure_formula pre_fix_var pf =
     | Ipure.And (p1,p2,_) -> let s1 = recf p1 in
       let s2 = recf p2 in
       ("and ("^ s1 ^ " " ^ s2 ^ ")" )
-    | _ -> "other"
+    | _ -> (* "other" *) ""
 
 let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
   let recf hf1 n =  process_h_formula pre_fix_var hf1 all_view_names n in
@@ -336,7 +336,26 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
     | _ -> []
   in
   let spl = spl1@spl2 in
-  let all_svl = CP.remove_dups_svl ((Cformula.fv cante)@(Cformula.struc_fv cconseq)) in
+  let all_svl0 = CP.remove_dups_svl ((Cformula.fv cante)@(Cformula.struc_fv cconseq)) in
+  let data_name =
+    let used_data = List.fold_left (fun r sv ->
+        let t = Cpure.type_of_spec_var sv in
+        match t with
+          | Named id -> r@[id]
+          | _ -> r
+    ) [] all_svl0 in
+    List.hd (used_data@(List.map (fun d -> d.Cast.data_name) cprog.Cast.prog_data_decls)) in
+  let all_svl = List.fold_left (fun r ((Cpure.SpecVar (t, id, p)) as sv) ->
+      match t with
+        | Bool -> r
+        | TVar _ -> r@[(Cpure.SpecVar (Named data_name, id, p))]
+        | _ -> r@[sv]
+  )  [] all_svl0 in
+  (* let all_svl = List.filter (fun sv -> let t = CP.type_of_spec_var sv in *)
+  (* match t with *)
+  (*   | Bool -> false *)
+  (*   | _ -> true *)
+  (* ) all_svl0 in *)
   (* let s0 = List.fold_left (fun s0 (id,sv_info) -> *)
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
