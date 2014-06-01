@@ -2,7 +2,6 @@
 
 /* representation of a node */
 data node2 {
-  int val; 
   node2 prev;
   node2 next;  
 }
@@ -26,5 +25,4 @@ void append(node2 x, node2 y)
     append(x.next, y);
   }
 }
-
 

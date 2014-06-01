@@ -18,7 +18,6 @@ tll<p,ll,lr> == (exists p,D1, l : self::node<p,D1,l,lr> & l=null & self = ll)
 	inv self!=null;
 
 
-
 node set_right (node p, node x, node t)
   requires x::tree<> ensures x::tll<p,res,t>;
 {
