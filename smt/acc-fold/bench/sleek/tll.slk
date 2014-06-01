@@ -10,6 +10,7 @@ data node {
 self::node<Anon_16,l,r,D2> * l::tree<> * r::tree<>&
   r!=null
   inv self!=null.
+
  pred tll<p:node,ll:node,lr:node> == 
   (exists p_26,lr_27,flted_16_25: self::node<p_26,D1,flted_16_25,lr_27>&
   flted_16_25=null & self=ll & p_26=p & lr_27=lr) or

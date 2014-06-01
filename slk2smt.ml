@@ -24,6 +24,11 @@ let fresh_number () =
   smt_number := !smt_number + 1;
   !smt_number
 
+let smt_string_of_typ x=
+  match x with
+    | Int -> "Int"
+    | _ -> string_of_typ x
+
 let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1
 
 let smt_cmds = ref ([] : command list)
@@ -32,7 +37,7 @@ let smt_ent_cmds = ref ([] : (meta_formula * meta_formula * entail_type * Cformu
 
 let find_typ spl name =
   let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
-  string_of_typ sv_info.Typeinfer.sv_info_kind
+  smt_string_of_typ sv_info.Typeinfer.sv_info_kind
 
 
 let rec process_exp pre_fix_var e =
@@ -214,9 +219,9 @@ let find_typ spl name =
 let process_pred_vars pre_fix_var self_sv self_typ pred_vars pred_formula spl =
   let find_typ spl name =
     let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
-    string_of_typ sv_info.Typeinfer.sv_info_kind
+    smt_string_of_typ sv_info.Typeinfer.sv_info_kind
   in
-  let s1 = " ((" ^ pre_fix_var  ^ self_sv ^ " " ^ ( string_of_typ self_typ) ^ ")" in
+  let s1 = " ((" ^ pre_fix_var  ^ self_sv ^ " " ^ ( smt_string_of_typ self_typ) ^ ")" in
   let s2 = (List.fold_left (fun s v -> s ^ " (" ^ pre_fix_var ^ v ^ " " ^ (find_typ spl v) ^ ")") "" pred_vars) ^ ")\n" in
   s1 ^ s2
 
@@ -241,7 +246,7 @@ let process_data_name data_name =
 
 let process_data_fields data_name data_fields =
   List.fold_left (fun (s,st_list) ((typ,field_name),_,_,_) ->
-      let st = string_of_typ typ in
+      let st = smt_string_of_typ typ in
       let field_name_list = st_list@[field_name] in
       let s = s ^ ("(declare-fun " ^ field_name ^ " () (Field " ^ data_name ^ " " ^ st ^ "))\n")
       in (s,field_name_list)
@@ -298,7 +303,7 @@ let process_entail (iante, iconseq, etype) iprog cprog =
   in
   let spl = spl1@spl2 in
   let s0 = List.fold_left (fun s0 (id,sv_info) ->
-      s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n"
+      s0 ^ "(declare-fun " ^ id ^ " () " ^ (smt_string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n"
   ) "" spl in
   let all_view_names = List.map (fun vdecl -> vdecl.Cast.view_name) cprog.Cast.prog_view_decls in
   let s1,n1 = process_iante iante iprog all_view_names 0 in
@@ -322,7 +327,7 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
   let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,p)) ->
-      s0 ^ "(declare-fun " ^ (string_of_sv (id,p)) ^ " () " ^ (string_of_typ t) ^ ")\n"
+      s0 ^ "(declare-fun " ^ (string_of_sv (id,p)) ^ " () " ^ (smt_string_of_typ t) ^ ")\n"
   ) "" all_svl in
   (* declare abstraction for predicate instance *)
   (* let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in *)
