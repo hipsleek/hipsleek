@@ -116,7 +116,7 @@ lemma_safe self::nlseg<p> <-
  rev lemma cannot be proven yet!
 
 ====================================================================
-# nlseg4e2.slk
+# nlseg4e2.slk - FIXED
 
 // two problems with lemma application
 
@@ -269,6 +269,16 @@ ERROR: at _0:0_0:0
 Message: something wrong with fixcalc
  Fatal error: exception Failure("something wrong with fixcalc")
 ====================================================================
+#chkeq.slk 
+
+loop for:
+checkeq []  
+        emp&p_739=p1_744 & p_742=p & Anon_746=Anon_740 & q_747=q_741 & 
+Anon_769=Anon_743 & p_770=p_742 -|-
+        emp&p_739=p1_744 & p_742=p & Anon_746=Anon_740 & q_747=q_741 & 
+p_925=p_739 & Anon_930=Anon_743 & q_931=p_742.
+
+
 ====================================================================
 ====================================================================
 ====================================================================
