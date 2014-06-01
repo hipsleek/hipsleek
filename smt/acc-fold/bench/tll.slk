@@ -18,21 +18,40 @@ data node {
   l_24::tll<self_30,ll_31,z_27> * r_25::tll<self_32,z_33,lr_34>&r_25!=null & 
   p_29=p & self_30=self & ll_31=ll & self_32=self & z_33=z_27 & lr_34=lr)
   inv self!=null.
+
+pred enode_nil<> ==
+  (exists p,l,r,n: self::node<p,l,r,n> & r = null).
+
+pred enode_nnil<> ==
+  (exists p,l,r,n: self::node<p,l,r,n> * l::tree<> * r::tree<> & r != null).
  
 // id: 2; line: 25; kind: BIND
- checkentail_exact (exists p1,D,r,n: x'::node<p1,D,r,n>&p'=p & x'=x & t'=t & r=null)
+/*
+checkentail_exact (exists p1,D,r,n: x'::node<p1,D,r,n>&p'=p & x'=x & t'=t & r=null)
  |-  (exists p2,D1,r1,n1: x'::node<parent',left',right',next'>&next'=n1 & 
 right'=r1 & left'=D1 & parent'=p2 & p'=p & x'=x & t'=t & r1=null).
 expect Valid.
+*/
+
+ checkentail_exact x'::enode_nil<> & p'=p & x'=x & t'=t
+ |-  x'::enode_nil<> & p'=p & x'=x & t'=t.
+expect Valid.
+
  
 // id: 4; line: 25; kind: BIND
+/*
  checkentail_exact (exists p1,l,r,D: x'::node<p1,l,r,D> * l::tree<> * r::tree<>&p'=p & x'=x & 
 t'=t & r!=null)
  |-  (exists p2,l1,r1,D1: x'::node<parent',left',right',next'> * l1::tree<> * 
 r1::tree<>&next'=D1 & right'=r1 & left'=l1 & parent'=p2 & p'=p & x'=x & 
 t'=t & r1!=null).
 expect Valid.
- 
+*/
+
+ checkentail_exact x'::enode_nnil<> & p'=p & x'=x & t'=t
+ |-  x'::enode_nnil<> & p'=p & x'=x & t'=t.
+expect Valid.
+
 // id: 6; line: 26; kind: BIND
  checkentail_exact x'::node<p',D,r,n>&parent=p & p'=p1 & x'=x & t'=t & r=null
  |-  x'::node<parent',left',right',next'>&next'=n & right'=r & left'=D & 
@@ -93,18 +112,29 @@ parent=p & p'=p1 & x'=x & t'=t
  |-  v'::tree<> * r::tll<x',l',t'> * x'::node<p',l,r,D>&v'=l & r!=null & 
 !(v1') & parent=p & p'=p1 & x'=x & t'=t.
 expect Valid.
- 
+
 // id: 26; line: 23; kind: POST
  checkentail_exact x'::node<p',D,r,t'>&res=x' & next=n & v' & r=null & parent=p & p'=p1 & 
 x'=x & t'=t
- |-  (exists p2,t1: x::tll<p2,res,t1> & x=res & 
-res=x' & next=n & v' & r=null & parent=p & p'=p1 & x'=x & t'=t & t1=t & 
-p2=p1).
+ |-  x::tll<p',res,t'> & x=res & 
+res=x' & next=n & v' & r=null & parent=p & p'=p1 & x'=x & t'=t.
 expect Valid.
- 
+
+pred etll<p,l,r,D,v,t> == 
+	(exists l': self::node<p,l,r,D> * l::tll<self,v,l'> * r::tll<self,l',t>).
+
 // id: 32; line: 23; kind: POST
+/*
  checkentail_exact (exists l': r::tll<x',l',t'> * x'::node<p',l,r,D> * l::tll<x',v',l'>&
 res=v' & l!=null & r!=null & !(v1') & parent=p & p'=p1 & x'=x & t'=t)
- |-  (exists p2,t1: x::tll<p2,res,t1> & v'=res & l!=null & r!=null & !(v1') & parent=p & 
-p'=p1 & x'=x & t'=t & t1=t & p2=p1).
+ |-  x::tll<p',res,t'> & v'=res & l!=null & r!=null & !(v1') & parent=p & 
+p'=p1 & x'=x & t'=t.
 expect Valid.
+*/
+
+ checkentail_exact x'::etll<p',l,r,D,v',t'> &
+res=v' & l!=null & r!=null & !(v1') & parent=p & p'=p1 & x'=x & t'=t
+ |-  x::tll<p',res,t'> & v'=res & l!=null & r!=null & !(v1') & parent=p & 
+p'=p1 & x'=x & t'=t.
+expect Valid.
+
