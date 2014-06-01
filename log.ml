@@ -744,8 +744,13 @@ let sleek_log_to_sleek_file slfn src_files prog prim_names =
       (List.filter (fun d -> not (Gen.BList.mem_eq (=) d.Cast.data_name prim_names)) prog.Cast.prog_data_decls)) in
     let str_view = String.concat "\n" (List.map Cprinter.sleek_of_view_decl 
       (List.filter (fun v -> not (Gen.BList.mem_eq (=) v.Cast.view_name prim_names)) prog.Cast.prog_view_decls)) in
+    let str_lem =  
+      let lem = (Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion) in
+      if lem = [] then "" 
+      else "/*\n" ^ (Cprinter.string_of_coerc_decl_list lem) ^ "\n*/"
+    in
     let str_ent = String.concat "\n" (List.map sleek_of_sleek_log_entry ls) in
-    let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_ent in
+    let str = str_data ^ "\n" ^ str_view ^ "\n" ^ str_lem ^ "\n" ^ str_ent in
     let _= fprintf oc "%s" str in
     if !Globals.dump_sleek_proof then printf "%s" str;
     (* let tstoplog = Gen.Profiling.get_time () in *)
