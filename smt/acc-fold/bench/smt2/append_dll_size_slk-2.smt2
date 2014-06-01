@@ -12,13 +12,13 @@ Space (tospace
 (= ?in nil)
 (= ?n 0)
 
-)(exists ((?p_24 node2)(?self_25 node2)(?flted_12_21 Int)(?v_22 Int)(?q_23 node2))(and 
-(= (+ ?flted_12_21 1) ?n)
-(= ?p_24 ?p)
-(= ?self_25 ?in)
+)(exists ((?p_23 node2)(?self_24 node2)(?v_20 Int)(?q_21 node2)(?m_22 Int))(and 
+(= ?n (+ 1 ?m_22))
+(= ?p_23 ?p)
+(= ?self_24 ?in)
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_22) (ref prev ?p_24) (ref next ?q_23) ))
-(dll ?q_23 ?self_25 ?flted_12_21)
+(pto ?in (sref (ref val ?v_20) (ref prev ?p_23) (ref next ?q_21) ))
+(dll ?q_21 ?self_24 ?m_22)
 ) )
 )))))
 
@@ -47,16 +47,16 @@ Space (tospace
 
 
 (assert 
-(exists ((p_1051 node2)(self_1052 node2)(flted_12_1053 Int)(v_1054 Int)(q_1055 node2))(and 
-(= (+ flted_12_1053 1) m)
-(= p_1051 q)
-(= self_1052 xprm)
+(exists ((p_1050 node2)(self_1051 node2)(v_1052 Int)(q_1053 node2)(m_1054 Int))(and 
+(= m (+ 1 m_1054))
+(= p_1050 q)
+(= self_1051 xprm)
 (< 0 m)
 (= yprm y)
 (= xprm x)
 (tobool (ssep 
-(pto xprm (sref (ref val v_1054) (ref prev p_1051) (ref next q_1055) ))
-(dll q_1055 self_1052 flted_12_1053)
+(pto xprm (sref (ref val v_1052) (ref prev p_1050) (ref next q_1053) ))
+(dll q_1053 self_1051 m_1054)
 (dll y p n)
 emp
 ) )
@@ -64,19 +64,19 @@ emp
 )
 
 (assert (not 
-(exists ((flted_12_1059 Int)(self_1058 node2)(v_1060 Int)(p_1057 node2)(q_1061 node2))(and 
-(= (+ flted_12_1059 1) m)
-(= p_1057 q)
-(= self_1058 xprm)
+(exists ((m_1060 Int)(self_1057 node2)(v_1058 Int)(p_1056 node2)(q_1059 node2))(and 
+(= m (+ 1 m_1060))
+(= p_1056 q)
+(= self_1057 xprm)
 (< 0 m)
 (= yprm y)
 (= xprm x)
-(= val_20_1001prm v_1060)
-(= prev_20_1002prm p_1057)
-(= next_20_1003prm q_1061)
+(= val_20_1000prm v_1058)
+(= prev_20_1001prm p_1056)
+(= next_20_1002prm q_1059)
 (tobool (ssep 
-(pto xprm (sref (ref val val_20_1001prm) (ref prev prev_20_1002prm) (ref next next_20_1003prm) ))
-(dll q_1061 self_1058 flted_12_1059)
+(pto xprm (sref (ref val val_20_1000prm) (ref prev prev_20_1001prm) (ref next next_20_1002prm) ))
+(dll q_1059 self_1057 m_1060)
 (dll y p n)
 emp
 ) )

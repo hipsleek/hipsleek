@@ -12,13 +12,13 @@ Space (tospace
 (= ?in nil)
 (= ?n 0)
 
-)(exists ((?p_24 node2)(?self_25 node2)(?flted_12_21 Int)(?v_22 Int)(?q_23 node2))(and 
-(= (+ ?flted_12_21 1) ?n)
-(= ?p_24 ?p)
-(= ?self_25 ?in)
+)(exists ((?p_23 node2)(?self_24 node2)(?v_20 Int)(?q_21 node2)(?m_22 Int))(and 
+(= ?n (+ 1 ?m_22))
+(= ?p_23 ?p)
+(= ?self_24 ?in)
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_22) (ref prev ?p_24) (ref next ?q_23) ))
-(dll ?q_23 ?self_25 ?flted_12_21)
+(pto ?in (sref (ref val ?v_20) (ref prev ?p_23) (ref next ?q_21) ))
+(dll ?q_21 ?self_24 ?m_22)
 ) )
 )))))
 

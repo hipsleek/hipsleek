@@ -11,11 +11,11 @@ Space (tospace
 (= ?in nil)
 (= ?n 0)
 
-)(exists ((?flted_7_20 Int)(?v_21 Int)(?q_22 node))(and 
-(= (+ ?flted_7_20 1) ?n)
+)(exists ((?v_19 Int)(?q_20 node)(?m_21 Int))(and 
+(= ?n (+ 1 ?m_21))
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_21) (ref next ?q_22) ))
-(ll ?q_22 ?flted_7_20)
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(ll ?q_20 ?m_21)
 ) )
 )))))
 
@@ -38,14 +38,14 @@ Space (tospace
 
 
 (assert 
-(exists ((flted_7_1016 Int)(v_1017 Int)(q_1018 node))(and 
-(= (+ flted_7_1016 1) n1)
+(exists ((v_1015 Int)(q_1016 node)(m_1017 Int))(and 
+(= n1 (+ 1 m_1017))
 (< 0 n1)
 (= yprm y)
 (= xprm x)
 (tobool (ssep 
-(pto xprm (sref (ref val v_1017) (ref next q_1018) ))
-(ll q_1018 flted_7_1016)
+(pto xprm (sref (ref val v_1015) (ref next q_1016) ))
+(ll q_1016 m_1017)
 (ll y n2)
 emp
 ) )
@@ -53,16 +53,16 @@ emp
 )
 
 (assert (not 
-(exists ((flted_7_1020 Int)(v_1021 Int)(q_1022 node))(and 
-(= (+ flted_7_1020 1) n1)
+(exists ((m_1021 Int)(v_1019 Int)(q_1020 node))(and 
+(= n1 (+ 1 m_1021))
 (< 0 n1)
 (= yprm y)
 (= xprm x)
-(= val_15_980prm v_1021)
-(= next_15_981prm q_1022)
+(= val_15_979prm v_1019)
+(= next_15_980prm q_1020)
 (tobool (ssep 
-(pto xprm (sref (ref val val_15_980prm) (ref next next_15_981prm) ))
-(ll q_1022 flted_7_1020)
+(pto xprm (sref (ref val val_15_979prm) (ref next next_15_980prm) ))
+(ll q_1020 m_1021)
 (ll y n2)
 emp
 ) )

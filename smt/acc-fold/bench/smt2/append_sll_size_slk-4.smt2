@@ -11,11 +11,11 @@ Space (tospace
 (= ?in nil)
 (= ?n 0)
 
-)(exists ((?flted_7_20 Int)(?v_21 Int)(?q_22 node))(and 
-(= (+ ?flted_7_20 1) ?n)
+)(exists ((?v_19 Int)(?q_20 node)(?m_21 Int))(and 
+(= ?n (+ 1 ?m_21))
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_21) (ref next ?q_22) ))
-(ll ?q_22 ?flted_7_20)
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(ll ?q_20 ?m_21)
 ) )
 )))))
 
@@ -34,25 +34,25 @@ Space (tospace
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun x () node)
-(declare-fun v_node_15_982prm () node)
-(declare-fun flted_7_1020 () Int)
+(declare-fun v_node_15_981prm () node)
+(declare-fun m_1021 () Int)
 (declare-fun n2 () Int)
-(declare-fun v_1021 () Int)
-(declare-fun q_1022 () node)
+(declare-fun v_1019 () Int)
+(declare-fun q_1020 () node)
 
 
 (assert 
 (and 
-(= (+ flted_7_1020 1) n1)
+(= n1 (+ 1 m_1021))
 (< 0 n1)
 (= yprm y)
 (= xprm x)
-(= v_node_15_982prm q_1022)
-(distinct v_node_15_982prm nil)
+(= v_node_15_981prm q_1020)
+(distinct v_node_15_981prm nil)
 (tobool (ssep 
-(ll q_1022 flted_7_1020)
+(ll q_1020 m_1021)
 (ll y n2)
-(pto xprm (sref (ref val v_1021) (ref next q_1022) ))
+(pto xprm (sref (ref val v_1019) (ref next q_1020) ))
 emp
 ) )
 )
@@ -60,16 +60,16 @@ emp
 
 (assert (not 
 (and 
-(= (+ flted_7_1020 1) n1)
+(= n1 (+ 1 m_1021))
 (< 0 n1)
 (= yprm y)
 (= xprm x)
-(= v_node_15_982prm q_1022)
-(distinct v_node_15_982prm nil)
+(= v_node_15_981prm q_1020)
+(distinct v_node_15_981prm nil)
 (tobool (ssep 
-(ll q_1022 flted_7_1020)
+(ll q_1020 m_1021)
 (ll y n2)
-(pto xprm (sref (ref val v_1021) (ref next q_1022) ))
+(pto xprm (sref (ref val v_1019) (ref next q_1020) ))
 emp
 ) )
 )

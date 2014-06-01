@@ -11,11 +11,11 @@ Space (tospace
 (= ?in nil)
 (= ?n 0)
 
-)(exists ((?flted_7_20 Int)(?v_21 Int)(?q_22 node))(and 
-(= (+ ?flted_7_20 1) ?n)
+)(exists ((?v_19 Int)(?q_20 node)(?m_21 Int))(and 
+(= ?n (+ 1 ?m_21))
 (tobool (ssep 
-(pto ?in (sref (ref val ?v_21) (ref next ?q_22) ))
-(ll ?q_22 ?flted_7_20)
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(ll ?q_20 ?m_21)
 ) )
 )))))
 
