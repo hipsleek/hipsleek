@@ -2,7 +2,7 @@
 
 NAME=smtlib
 $(NAME): $(NAME)_util.cmo $(NAME)_syntax.cmo $(NAME)_parse.cmo $(NAME)_lex.cmo $(NAME)_pp.cmo $(NAME)_translate.cmo $(NAME)_eq.cmo $(NAME)_main.cmo
-	ocamlc -o smt2slk $(NAME)_util.cmo $(NAME)_syntax.cmo $(NAME)_parse.cmo $(NAME)_lex.cmo $(NAME)_pp.cmo $(NAME)_translate.cmo $(NAME)_main.cmo
+	ocamlc -o compile $(NAME)_util.cmo $(NAME)_syntax.cmo $(NAME)_parse.cmo $(NAME)_lex.cmo $(NAME)_pp.cmo $(NAME)_translate.cmo $(NAME)_main.cmo
 
 $(NAME)_main.cmo: $(NAME)_main.ml $(NAME)_parse.cmo $(NAME)_lex.cmo
 	ocamlc -c $(NAME)_main.ml
