@@ -1,22 +1,35 @@
 (set-logic QF_S)
 
 (declare-sort node 0)
-(declare-fun val () (Field node int))
+(declare-fun val () (Field node Int))
 (declare-fun next () (Field node node))
 
 (define-fun ll ((?in node))
 Space (tospace
 (or
+(and 
 (= ?in nil)
-(exists ((?v_22 int)(?q_23 node)) (tobool (ssep (pto ?in (sref (ref val ?v_22) (ref next ?q_23) )) (ll ?q_23))))
-)))
+
+)(exists ((?v_22 Int)(?q_23 node))(and 
+(tobool (ssep 
+(pto ?in (sref (ref val ?v_22) (ref next ?q_23) ))
+(ll ?q_23)
+) )
+)))))
 
 (define-fun lseg ((?in node) (?p node))
 Space (tospace
 (or
+(and 
 (= ?in ?p)
-(exists ((?p_21 node)(?v_19 int)(?q_20 node)) (tobool (ssep (pto ?in (sref (ref val ?v_19) (ref next ?q_20) )) (lseg ?q_20 ?p_21))))
-)))
+
+)(exists ((?p_21 node)(?v_19 Int)(?q_20 node))(and 
+(= ?p_21 ?p)
+(tobool (ssep 
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(lseg ?q_20 ?p_21)
+) )
+)))))
 
 
 
@@ -27,7 +40,7 @@ Space (tospace
 
 
 
-(declare-fun v_1015 () int)
+(declare-fun v_1015 () Int)
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun xprm () node)
@@ -52,8 +65,18 @@ emp
 )
 
 (assert (not 
-(exists ((y_50 node)) (tobool (lseg x y_50)))
-
+(exists ((y_50 node))(and 
+(= y_50 y)
+(distinct x nil)
+(= yprm y)
+(= xprm x)
+(distinct q_1016 nil)
+bvar(distinct q_1016 nil)
+bvar(tobool (ssep 
+(lseg x y_50)
+emp
+) )
+))
 ))
 
 (check-sat)

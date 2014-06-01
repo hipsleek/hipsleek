@@ -10,8 +10,13 @@ Space (tospace
 (tobool (ssep 
 (pto ?in  (ref nxt ?p))
 ) )
-)(exists ((?a node)(?b node)) (tobool (ssep (ssep (pto ?in  (ref nxt ?a)) (pto ?a  (ref nxt ?b))) (olseg ?b ?p))))
-)))
+)(exists ((?a node)(?b node))(and 
+(tobool (ssep 
+(pto ?in  (ref nxt ?a))
+(pto ?a  (ref nxt ?b))
+(olseg ?b ?p)
+) )
+)))))
 
 
 

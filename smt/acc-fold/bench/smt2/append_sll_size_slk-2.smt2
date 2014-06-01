@@ -1,16 +1,24 @@
 (set-logic QF_S)
 
 (declare-sort node 0)
-(declare-fun val () (Field node int))
+(declare-fun val () (Field node Int))
 (declare-fun next () (Field node node))
 
-(define-fun ll ((?in node) (?n int))
+(define-fun ll ((?in node) (?n Int))
 Space (tospace
 (or
+(and 
 (= ?in nil)
 (= ?n 0)
-(exists ((?flted_7_20 int)(?v_21 int)(?q_22 node)) (tobool (ssep (pto ?in (sref (ref val ?v_21) (ref next ?q_22) )) (ll ?q_22 ?flted_7_20))))
-)))
+
+)(exists ((?v_19 Int)(?q_20 node)(?m_21 Int))(and 
+(= ?n (+ 1 ?m_21))
+(tobool (ssep 
+(pto ?in (sref (ref val ?v_19) (ref next ?q_20) ))
+(ll ?q_20 ?m_21)
+) )
+)))))
+
 
 
 
@@ -22,47 +30,43 @@ Space (tospace
 
 
 (declare-fun xprm () node)
-(declare-fun n1 () int)
+(declare-fun n1 () Int)
 (declare-fun yprm () node)
 (declare-fun y () node)
 (declare-fun x () node)
-(declare-fun v_node_15_982prm () node)
-(declare-fun v_1021 () int)
-(declare-fun q_1022 () node)
-(declare-fun flted_7_1020 () int)
-(declare-fun n2 () int)
+(declare-fun n2 () Int)
 
 
 (assert 
-(and 
-(= flted_7_1020+1 n1)
-lt(= yprm y)
+(exists ((v_1015 Int)(q_1016 node)(m_1017 Int))(and 
+(= n1 (+ 1 m_1017))
+(< 0 n1)
+(= yprm y)
 (= xprm x)
-(= v_node_15_982prm q_1022)
-(= v_node_15_982prm nil)
 (tobool (ssep 
-(pto xprm (sref (ref val v_1021) (ref next q_1022) ))
-(ll q_1022 flted_7_1020)
+(pto xprm (sref (ref val v_1015) (ref next q_1016) ))
+(ll q_1016 m_1017)
 (ll y n2)
 emp
 ) )
-)
+))
 )
 
 (assert (not 
-(and 
-(= flted_7_1020+1 n1)
-lt(= yprm y)
+(exists ((m_1021 Int)(v_1019 Int)(q_1020 node))(and 
+(= n1 (+ 1 m_1021))
+(< 0 n1)
+(= yprm y)
 (= xprm x)
-(= v_node_15_982prm q_1022)
-(= v_node_15_982prm nil)
+(= val_15_979prm v_1019)
+(= next_15_980prm q_1020)
 (tobool (ssep 
-(pto xprm (sref (ref val v_1021) (ref next q_1022) ))
-(ll q_1022 flted_7_1020)
+(pto xprm (sref (ref val val_15_979prm) (ref next next_15_980prm) ))
+(ll q_1020 m_1021)
 (ll y n2)
 emp
 ) )
-)
+))
 ))
 
 (check-sat)

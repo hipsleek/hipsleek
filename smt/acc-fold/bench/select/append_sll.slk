@@ -11,34 +11,34 @@ data node {
 // id: 0; line: 14; kind: BIND
  checkentail_exact (exists v_990,q_991: x'::node<v_990,q_991> * q_991::ll<> * y::ll<>&
 x!=null & y'=y & x'=x)
- |-  (exists v_993,q_994: x'::node<val_14_959',next_14_960'>@L * q_994::ll<> * 
+ |-  (exists v_993,q_994: x'::node<val_14_959',next_14_960'> * q_994::ll<> * 
 y::ll<>&x!=null & y'=y & x'=x & val_14_959'=v_993 & next_14_960'=q_994).
 expect Valid.
  
 // id: 2; line: 14; kind: PRE
- checkentail_exact x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 v_node_14_961'=q_994 & v_node_14_961'=null
- |-  x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ |-  q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 v_node_14_961'=q_994 & v_node_14_961'=null.
 expect Valid.
  
 // id: 4; line: 14; kind: PRE
- checkentail_exact x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 v_node_14_961'=q_994 & v_node_14_961'!=null
- |-  x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ |-  q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 v_node_14_961'=q_994 & v_node_14_961'!=null.
 expect Valid.
  
 // id: 6; line: 15; kind: BIND
- checkentail_exact x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 q_994!=null & v_bool_14_967' & q_994!=null & v_bool_14_967'
- |-  x'::node<val_15_962',next_15_963'>@L * q_994::ll<> * y::ll<>&x!=null & 
-y'=y & x'=x & q_994!=null & v_bool_14_967' & q_994!=null & v_bool_14_967' & 
+ |-  x'::node<val_15_962',next_15_963'> * q_994::ll<> * y::ll<>&x!=null & y'=y & 
+x'=x & q_994!=null & v_bool_14_967' & q_994!=null & v_bool_14_967' & 
 val_15_962'=v_993 & next_15_963'=q_994.
 expect Valid.
  
 // id: 8; line: 15; kind: PRE_REC
- checkentail_exact x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 q_994!=null & v_bool_14_967' & q_994!=null & v_bool_14_967' & 
 v_node_15_964'=q_994
  |-  v_node_15_964'::ll<> * y'::ll<> * x'::node<v_993,q_994>&
@@ -48,7 +48,7 @@ v_node_15_964'=q_994.
 expect Valid.
  
 // id: 12; line: 19; kind: BIND
- checkentail_exact x'::node<v_993,q_994> * q_994::ll<> * y::ll<>&x!=null & y'=y & x'=x & 
+ checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,q_994>&x!=null & y'=y & x'=x & 
 q_994=null & !(v_bool_14_967') & q_994=null & !(v_bool_14_967')
  |-  x'::node<val_19_965',next_19_966'> * q_994::ll<> * y::ll<>&x!=null & y'=y & 
 x'=x & q_994=null & !(v_bool_14_967') & q_994=null & !(v_bool_14_967') & 
@@ -65,7 +65,7 @@ expect Valid.
 // id: 19; line: 11; kind: POST
  checkentail_exact q_994::ll<> * y::ll<> * x'::node<v_993,y'>&x!=null & y'=y & x'=x & 
 q_994=null & !(v_bool_14_967') & q_994=null & !(v_bool_14_967') & 
-next_19_1011=q_994
+next_19_1009=q_994
  |-  x::ll<> * q_994::ll<>&x!=null & y'=y & x'=x & q_994=null & 
-!(v_bool_14_967') & q_994=null & !(v_bool_14_967') & next_19_1011=q_994.
+!(v_bool_14_967') & q_994=null & !(v_bool_14_967') & next_19_1009=q_994.
 expect Valid.
