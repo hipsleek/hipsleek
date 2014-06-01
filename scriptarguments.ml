@@ -613,6 +613,15 @@ let common_arguments = [
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
+  ("--dis-lem-gen", 
+     Arg.Unit
+      (fun _ -> 
+          Globals.lemma_gen_unsafe := false;
+          Globals.lemma_gen_unsafe_fold := false;
+          Globals.lemma_gen_safe := false;
+          Globals.lemma_gen_safe_fold := false
+       ),
+   "SMT competition mode - essential printing only");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");
@@ -674,7 +683,8 @@ let common_arguments = [
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.gen_baga_inv := true;
-          Globals.smt_compete_mode:=true),
+          Globals.lemma_gen_unsafe := true;
+           Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]

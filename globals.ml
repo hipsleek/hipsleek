@@ -767,7 +767,7 @@ let lemma_gen_safe = ref false       (* generating (and proving) both fold and u
 
 let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for special predicates *)
 
-let lemma_gen_unsafe = ref false     (* generating (without proving) both fold and unfold lemmas for special predicates *)
+let lemma_gen_unsafe = ref true     (* generating (without proving) both fold and unfold lemmas for special predicates *)
 
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 
@@ -1199,6 +1199,7 @@ let _ = if !smt_compete_mode then
           enable_time_stats:=false;
           print_core:=false;
           print_core_all:=false;
+          lemma_gen_unsafe = ref true;
           gen_baga_inv := true;
   end
 
