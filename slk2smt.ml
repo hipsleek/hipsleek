@@ -44,9 +44,18 @@ let rec process_exp pre_fix_var e =
   match e with
     | Ipure.Var ((id,p),_) -> pre_fix_var ^ (string_of_sv (id,p))
           (* Iprinter.string_of_formula_exp e *)
+    | Ipure.Null _ ->
+          "nil"
+    | Ipure.Add (e1, e2, _) ->
+          "(+ " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2)  ^  ")"
+    | Ipure.Subtract (e1, e2, _) ->
+          "(- " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2)  ^  ")"
+    | Ipure.Mult (e1, e2, _) ->
+          "(* " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2)  ^  ")"
     | _ ->
           let s = Iprinter.string_of_formula_exp e in
-          if s = "null" then "nil" else s
+          s
+          (* if s = "null" then "nil" else s *)
 
 let rec process_p_formula pre_fix_var pf =
   match pf with
@@ -58,16 +67,16 @@ let rec process_p_formula pre_fix_var pf =
           "bvar"
     | Ipure.SubAnn _ ->
           "subann"
-    | Ipure.Lt _ ->
-          "lt"
-    | Ipure. Lte _ ->
-          "lte"
-    | Ipure.Gt _ ->
-          "gt"
-    | Ipure.Gte _ ->
-          "gte"
+    | Ipure.Lt (e1, e2, _) ->
+          "(< " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
+    | Ipure. Lte (e1, e2, _) ->
+          "(<= " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
+    | Ipure.Gt (e1, e2, _) ->
+          "(> " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
+    | Ipure.Gte (e1, e2, _) ->
+          "(>= " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure.Neq (e1, e2, _) ->
-           "(distinct " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
+          "(distinct " ^ (process_exp pre_fix_var e1) ^ " " ^ (process_exp pre_fix_var e2) ^ ")\n"
     | Ipure.EqMax _ ->
           "eqmax"
     | Ipure.EqMin _ ->
@@ -109,7 +118,7 @@ let rec process_pure_formula pre_fix_var pf =
     | Ipure.And (p1,p2,_) -> let s1 = recf p1 in
       let s2 = recf p2 in
       ("and ("^ s1 ^ " " ^ s2 ^ ")" )
-    | _ -> ""
+    | _ -> "other"
 
 let rec process_h_formula pre_fix_var hf all_view_names pred_abs_num=
   let recf hf1 n =  process_h_formula pre_fix_var hf1 all_view_names n in
@@ -181,17 +190,20 @@ let rec process_formula pre_fix_var f spl all_view_names start_pred_abs_num=
           let fbs2 = List.fold_left (fun s p -> s^ (process_pure_formula pre_fix_var p)) "" ps in
           let s_start_and,s_end_and =
             if ( hfs1 != [] && fb.Iformula.formula_base_heap != Iformula.HEmp)
-              && List.length ps >= 1 then
+              || List.length ps >= 1 then
             "(and \n", "\n)" else "",""
           in
           s_start_and ^ fbs2 ^ s_heap ^ s_end_and,n2
     | Iformula.Exists fe ->
+          let quan,bare = Iformula.split_quantifiers f in
           let fes1 = "exists " in
           let fes2 = "(" ^ (List.fold_left (fun s (id, p) ->
               s ^ "(" ^ pre_fix_var ^ id ^ " " ^ (find_typ spl id)  ^ ")") "" fe.Iformula.formula_exists_qvars)  ^ ")" in
-          let fes3,n2 = process_h_formula pre_fix_var fe.Iformula.formula_exists_heap all_view_names start_pred_abs_num in
-          let fes4 =  " (tobool " ^ fes3 ^  ")" in
-          "(" ^ fes1 ^ fes2 ^ fes4 ^ ")\n",n2
+          (* let fes3,n2 = process_h_formula pre_fix_var fe.Iformula.formula_exists_heap all_view_names start_pred_abs_num in *)
+          (* let fes4 = " (tobool " ^ fes3 ^ ")" in *)
+          let fes5,n2 = process_formula pre_fix_var bare spl all_view_names start_pred_abs_num in
+          (* "(" ^ fes1 ^ fes2 ^ fes4 ^ ")" ^ fes5 ^ "\n",n2 *)
+          "(" ^ fes1 ^ fes2 ^ fes5 ^ ")",n2
     | Iformula.Or _ -> "(for )\n",start_pred_abs_num
 
 let rec process_struct_formula pre_fix_var sf spl all_view_names start_pred_abs_num=
