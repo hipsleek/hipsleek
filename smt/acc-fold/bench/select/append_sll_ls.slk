@@ -65,11 +65,24 @@ expect Valid.
 pred lseg_e1<p> == (exists q: self::lseg<p> & p=q).
 
 // (7) id: 13; line: 13; kind: POST
+/*
+ checkentail_exact x'::node<q> * q::lseg<y'>&v' & q!=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1>&v' & q!=null & x'=x & y'=y & x!=null & y1=y).
+expect Valid.
+*/
+
  checkentail_exact x'::node<q> * q::lseg<y'>&v' & q!=null & x'=x & y'=y & x!=null
  |-  x::lseg_e1<y>&v' & q!=null & x'=x & y'=y & x!=null.
 expect Valid.
  
 // (8) id: 20; line: 13; kind: POST
+/*
+ checkentail_exact q::ll<> * x'::node<y'>&next0=q & !(v') & q=null & x'=x & y'=y & x!=null
+ |-  (exists y1: x::lseg<y1> * q::ll<>&next0=q & !(v') & q=null & x'=x & y'=y & 
+x!=null & y1=y).
+expect Valid.
+*/
+
  checkentail_exact q::ll<> * x'::node<y'>&next0=q & !(v') & q=null & x'=x & y'=y & x!=null
  |-  x::lseg_e1<y> * q::ll<>&next0=q & !(v') & q=null & x'=x & y'=y & x!=null.
 expect Valid.
