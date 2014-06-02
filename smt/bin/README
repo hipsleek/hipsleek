@@ -1,0 +1,12 @@
+toolname: SLEEK
+website: http://loris-7.ddns.comp.nus.edu.sg/~project/hip
+
+A) Translation from SMTLIB v2 format for SL into Sleek format
+
+./compile -sleek <file>.smt2
+
+Output in <file>.smt2.slk
+
+B) Sleek execution
+
+./sleek <file>.smt2.slk --smt-compete -tp z3

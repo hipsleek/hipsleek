@@ -5,7 +5,7 @@
 foreach $file (@files) {
     print $file . "\n";
 
-    system("../../../../sleek " . $file . " --smt-compete -tp z3");
+    system("timeout 10s ../../../../sleek " . $file . " --smt-compete");
 }
 
 

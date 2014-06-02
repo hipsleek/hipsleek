@@ -416,4 +416,5 @@ let trans_smt slk_fname iprog cprog cmds =
   ) str_ents in
   let _ = smt_cmds := [] in
   let _ = smt_ent_cmds := [] in
+  (* let _ = Slk2smt1.tmp () in *)
   true

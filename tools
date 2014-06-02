@@ -53,6 +53,14 @@ debugging in sleek/hip:
  - use: 
  - note:
 
+
+---------------------
+verifying C code with hip:
+ - author: Trung
+ - version:
+ - use: hip filename.c
+ - note:
+
 =============================================
 solvers:
 
@@ -70,6 +78,23 @@ solvers:
  - version:
  - use:
  - note:
+
+---------------------
+ redlog
+ - author:
+ - internal: Khanh
+ - version:
+ - use:
+ - note:
+
+---------------------
+ mona
+ - author:
+ - internal: Andreea
+ - version:
+ - use:
+ - note:
+
 --------------------
  asterix
  - author: Separation Logic + Superposition Calculus = Heap Theorem Prover,

@@ -246,10 +246,10 @@ let slk_sleek_log_entry prog e =
         let comb_conseq = CF.mkStar_combine conseq r 
           CF.Flow_combine (CF.pos_of_formula conseq) in
         let ante_fv = CF.fv e.sleek_proving_ante in
-        let cons_fv = CF.fv conseq in
+        (* let cons_fv = CF.fv conseq in *)
         let comb_cons_fv = CF.fv comb_conseq in
         let ex_vars = Gen.BList.difference_eq CP.eq_spec_var comb_cons_fv ante_fv in
-        let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in
+        (* let ex_vars = Gen.BList.difference_eq CP.eq_spec_var ex_vars cons_fv in *)
         CF.push_exists ex_vars comb_conseq
   in
   let tidy_ante,tidy_conseq = Cfout.rearrange_entailment prog e.sleek_proving_ante conseq in
@@ -267,14 +267,6 @@ let slk_sleek_log_entry prog e =
   fmt_string "\n |- ";
   sleek_tidy_formula tidy_conseq (* conseq *);
   fmt_string ".\n";
-  (* (if (!Globals.sleek_gen_vc) then *)
-  (*   match frm with                 *)
-  (*   | None -> ()                   *)
-  (*   | Some r -> begin              *)
-  (*     fmt_string "expect Frame(";  *)
-  (*     sleek_tidy_formula r;        *)
-  (*     fmt_string ")." end          *)
-  (* else ());                        *)
   fmt_string ("expect " ^ expected ^ ".");
   (if !print_clean_flag then 
 	  let ante, conseq = CleanUp.cleanUpFormulas e.sleek_proving_ante conseq in

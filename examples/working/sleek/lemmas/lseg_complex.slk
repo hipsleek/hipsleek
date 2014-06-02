@@ -8,7 +8,10 @@ pred lseg<p> == self=p
 
 lemma_safe "SPLIT" self::lseg<p> <-> (exists u: self::lseg<u>*u::lseg<p>).
 
-lemma_safe "NON_EMPTY" self::node<u1>* u1::lseg<p> 
+lemma_safe "NON_EMPTY1" self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+lemma_safe "NON_EMPTY2" self::lseg<p> & self!=p
        <-> (exists last: self::lseg<last>*last::node<p>).
 
 checkentail_exact x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>.

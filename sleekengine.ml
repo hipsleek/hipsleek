@@ -1805,6 +1805,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
   if(not !Globals.dis_show_diff) then(
+      let _ = Debug.info_hprint (add_str "BEFORE" pr_id) "2" no_pos in
     let (res, mt_list) = CEQ.checkeq_formulas_with_diff ivars f1 f2 in
     let _ = if(res) then(
       print_string (num_id^": Valid.")
@@ -1816,10 +1817,10 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
     ()
   )
   else (
-    let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
-    let _ = if(res) then(
-      print_string (num_id^": Valid.")
-    )
+      let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
+      let _ = if(res) then(
+          print_string (num_id^": Valid.")
+      )
       else
         print_string (num_id^": Fail.\n")
   (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
