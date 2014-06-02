@@ -610,20 +610,6 @@ let convert_data_and_pred_to_cast_x () =
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
-  let cprog2 =
-     if !Globals.norm_cont_analysis then
-     let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog2 cprog2.Cast.prog_view_decls in
-     let _ = if is_need_seg_opz then
-       let _ = Frame.seg_opz := true in
-       ()
-     else
-       let _ = Frame.seg_opz := false in
-       ()
-     in
-     let cprog2a = {cprog2 with Cast.prog_view_decls = cviews3a} in
-     cprog2a
-     else cprog2
-  in
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
@@ -632,6 +618,20 @@ let convert_data_and_pred_to_cast_x () =
   let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
     Lemma.generate_all_lemmas iprog cprog6
+  in
+  let cprog6 =
+     if !Globals.norm_cont_analysis then
+     let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog6 cprog6.Cast.prog_view_decls in
+     let _ = if is_need_seg_opz then
+       let _ = Frame.seg_opz := true in
+       ()
+     else
+       let _ = Frame.seg_opz := false in
+       ()
+     in
+     let cprog2a = {cprog6 with Cast.prog_view_decls = cviews3a} in
+     cprog2a
+     else cprog6
   in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in

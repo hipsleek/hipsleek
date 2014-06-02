@@ -168,7 +168,10 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
   let _ = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
   let _ = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
-  if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq then
+  if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
+    Cast.is_complex_entailment_4graph cprog ante conseq
+  then
+    let _ = Debug.tinfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f

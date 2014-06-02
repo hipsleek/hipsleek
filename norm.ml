@@ -580,9 +580,12 @@ let norm_ann_seg_opz_x iprog cprog cviews=
   (*a view can be applied for seg optimization if:
     - seg
     - exists base case = emp
+    - non-touch
   *)
   let compute_seg_opz view=
-    let is_seg, seg_emp_base = if view.Cast.view_cont_vars = [] then
+    let is_seg, seg_emp_base = if view.Cast.view_cont_vars = [] ||
+      not view.Cast.view_is_segmented || view.Cast.view_is_touching
+    then
       (false, None)
     else
       match view.Cast.view_base_case with
@@ -613,8 +616,12 @@ let norm_ann_seg_opz_x iprog cprog cviews=
 
 let norm_ann_seg_opz iprog cprog cviews=
   let pr1 v =
-    let pr = pr_quad pr_id Cprinter.string_of_struc_formula !CP.print_svl (pr_opt !CP.print_formula) in
-    pr (v.Cast.view_name, v.Cast.view_formula,  v.Cast.view_cont_vars, v.Cast.view_seg_opz)
+    let pr = pr_hexa pr_id Cprinter.string_of_struc_formula
+      !CP.print_svl string_of_bool string_of_bool
+      (pr_opt !CP.print_formula) in
+    pr (v.Cast.view_name, v.Cast.view_formula,
+    v.Cast.view_cont_vars, v.Cast.view_is_segmented, v.Cast.view_is_touching,
+    v.Cast.view_seg_opz)
   in
   let pr2 = pr_list_ln pr1 in
   Debug.no_1 "norm_ann_seg_opz" pr2 (pr_pair string_of_bool pr2)

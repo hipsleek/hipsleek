@@ -1522,6 +1522,7 @@ let norm_rename_clash_args_node_x init_args0 f0=
    Debug.no_2 "norm_rename_clash_args_node" !CP.print_svl pr1 (pr_pair pr1 !CP.print_svl)
        (fun _ _ -> norm_rename_clash_args_node_x init_quans f) init_quans f
 
+
 (*******************************************************************)
 (************************END GRAPH*****************************************)
 (*******************************************************************)
