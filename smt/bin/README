@@ -1,12 +1,17 @@
-toolname: SLEEK
-website: http://loris-7.ddns.comp.nus.edu.sg/~project/hip
+toolname: SLEEK (SL Entailment Checker)
+
+Project Website: 
+   http://loris-7.ddns.comp.nus.edu.sg/~project/hip
 
 A) Translation from SMTLIB v2 format for SL into Sleek format
+   We have a customized pre-processor implemented in OCaml
 
-./compile -sleek <file>.smt2
+     ./smt2slk <file>.smt2
 
-Output in <file>.smt2.slk
+   Output in <file>.smt2.slk
 
 B) Sleek execution
 
-./sleek <file>.smt2.slk --smt-compete -tp z3
+   ./sleek <file>.smt2.slk --smt-compete
+
+   This returns SAT, UNSAT or UNKNOWN

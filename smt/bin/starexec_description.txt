@@ -1,1 +1,1 @@
-./sleek $1 -tp z3 --smt-compete
+./sleek $1 --smt-compete
