@@ -14,6 +14,7 @@ checkentail_exact x::node<a>* a::node<b>*b::elseg<p> |- x::elseg<p>.
 expect Valid.
 //print residue.
 
+//(2)
 checkentail_exact x::node<a>* a::node<p> |- x::elseg<p>.
 expect Valid.
 //print residue.
@@ -22,6 +23,7 @@ checkentail_exact x::node<a>* a::elseg<p> |- x::elseg<p>.
 expect Fail.
 //print residue.
 
+//(4)
 checkentail_exact x::node<a>* a::node<b>*b::node<p> |- x::elseg<p>.
 expect Fail.
 print residue.
@@ -30,6 +32,9 @@ checkentail_exact x::elseg<q>*q::node<q2>*q2::node<p> |- x::elseg<p>.
 expect Valid.
 //print residue.
 
+lemma_unsafe self::node<x>*x::elseg<q>*q::node<p> -> self::elseg<p>.
+
+//(6)
 checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |- z::elseg<p>.
 expect Valid.
 //print residue.
@@ -37,6 +42,7 @@ expect Valid.
 pred right<p> ==
     (exists u: self::elseg<u> * u::elseg<p>).
 
+//(7)
 checkentail_exact z::node<x>*x::elseg<q>*q::node<p> |- 
     z::right<p>.
 expect Valid.
