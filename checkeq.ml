@@ -912,7 +912,9 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
       )
       | AndList _ -> report_error no_pos "not handle ANDLIST yet"
       | Or f -> (false,[mt])
-      | Not(f2,_,_) -> report_error no_pos "temp: not handle not yet" (* checkeq_p_formula hvars f1 f2 mtl *)
+      | Not(f2,_,_) -> 	let res, mtl = match_equiv_notform_helper hvars f1 f2 mt in
+        if res then (true, mtl) else (false, [mt])
+            (* report_error no_pos "temp: not handle not yet" (\* checkeq_p_formula hvars f1 f2 mtl *\) *)
       | Forall _ 
       | Exists _ -> (false,[mt])
             (* report_error no_pos "not handle forall and exists yet" *)
