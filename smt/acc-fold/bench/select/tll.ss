@@ -18,6 +18,7 @@ tll<p,ll,lr> == (exists p,D1, l : self::node<p,D1,l,lr> & l=null & self = ll)
 	inv self!=null;
 
 
+
 node set_right (node p, node x, node t)
   requires x::tree<> ensures x::tll<p,res,t>;
 {
@@ -33,11 +34,4 @@ node set_right (node p, node x, node t)
       return set_right(x,x.left, l_most);
     }
 }
-
-/*
-smt2check elseg3_slk-2.smt2
-smtlib2sl: Parse input file
-Warning in sl_var_record: look outside vector size.
-sat
-*/
 
