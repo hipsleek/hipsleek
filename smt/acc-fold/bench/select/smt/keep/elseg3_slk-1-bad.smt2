@@ -40,7 +40,6 @@ Space (tospace
 (pto x  (ref nxt a))
 (pto a  (ref nxt b))
 (elseg b p)
-(emp)
 ) )
 )
 )
@@ -49,7 +48,7 @@ Space (tospace
 (and 
 (tobool (ssep 
 (elseg x p)
-(emp)
+emp
 ) )
 )
 ))
