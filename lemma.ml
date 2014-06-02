@@ -1206,6 +1206,27 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   ()
 
 
+(* let generate_lemma_temp (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) =  *)
+  
+
+(* (* generate lemmas, using different approach *)                                        *)
+(* let generate_all_lemmas_temp (iprog: I.prog_decl) (cprog: C.prog_decl) : unit =        *)
+(*   let lemmas = List.concat (List.map (fun vd ->                                        *)
+(*     generate_lemma_temp vd iprog cprog                                                 *)
+(*   ) cprog.C.prog_view_decls) in                                                        *)
+(*   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then              *)
+(*     let _ = manage_unsafe_lemmas lemmas iprog cprog in ()                              *)
+(*   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then             *)
+(*     let _ = manage_safe_lemmas lemmas iprog cprog in ()                                *)
+(*   else ();                                                                             *)
+(*   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->                      *)
+(*      "    " ^ (Cprinter.string_of_coerc_med lem)                                       *)
+(*   ) lemmas) in                                                                         *)
+(*   let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)                          *)
+(*       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion) *)
+(*       no_pos in                                                                        *)
+(*   ()                                                                                   *)
+
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
 let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;
