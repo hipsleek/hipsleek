@@ -5,3 +5,9 @@ data node {
 
 pred tlseg<p> == self = p
   or self::tlseg<q> * q::node<_,p>.
+
+pred lseg<p> == self = p
+  or self::node<_,q> * q::lseg<p>.
+
+pred ll<n> == self = null & n=0
+  or self::node<_,q> * q::ll<n-1>.

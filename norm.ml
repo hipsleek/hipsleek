@@ -474,21 +474,28 @@ let cont_para_analysis_view cprog vdef other_vds=
      - reachable from self
      - not defined in inductive branch
   *)
-  let process_branch vname args f=
+  let self_sv = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) in
+  let process_branch_x vname args f=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else
+      let _, reach_dns, reach_vns = look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
       let ( _,mix_f,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
       let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
       (*cont paras are para not changed, just forwarded*)
-      let cont_paras = List.fold_left (fun cur_cont_paras vn ->
-          let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else
-            CF.find_close vn.CF.h_formula_view_arguments eqs
-          in
-          CP.intersect_svl cur_cont_paras closed_rec_args
-      ) args rec_vns
-      in
-      cont_paras
+      (* let cont_paras = List.fold_left (fun cur_cont_paras vn -> *)
+      (*     let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else *)
+      (*       CF.find_close vn.CF.h_formula_view_arguments eqs *)
+      (*     in *)
+      (*     CP.intersect_svl cur_cont_paras closed_rec_args *)
+      (* ) args rec_vns *)
+      (* in *)
+      let root_dn_svl, para_dn_svl = List.fold_left (fun (r1,r2) dn -> (r1@[dn.CF.h_formula_data_node], r2@dn.CF.h_formula_data_arguments) ) ([],[]) reach_dns in
+      let root_vn_svl, para_vn_svl = List.fold_left (fun (r1,r2) vn -> (r1@[vn.CF.h_formula_view_node], r2@vn.CF.h_formula_view_arguments) ) ([],[]) reach_vns in
+      let null_svls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_f) ) in
+      let defined_svl = CF.find_close (root_dn_svl@root_vn_svl@null_svls) eqs in
+      let cont_svl = CP.diff_svl ( CF.find_close (para_dn_svl@para_vn_svl) eqs) defined_svl in
+      CP.intersect_svl args  cont_svl
       (* process other_vns*)
       (* try *)
       (*   let cont_paras1 = List.fold_left (fun cur_cont_paras vn -> *)
@@ -502,6 +509,12 @@ let cont_para_analysis_view cprog vdef other_vds=
       (*   in *)
       (*   cont_paras1 *)
       (* with Not_found -> cont_paras *)
+  in
+  let process_branch vname args f=
+    let pr1 = Cprinter.prtt_string_of_formula in
+    let pr2 = !CP.print_svl in
+    Debug.no_3 "cont_process_branch" pr_id pr2 pr1 pr2
+        (fun _ _ _ -> process_branch_x vname args f) vname args f
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
