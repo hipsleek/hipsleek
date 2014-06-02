@@ -31,7 +31,9 @@ expect Valid.
  checkentail_exact q::ll<> * y::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null
  |-  q::ll<> * y::ll<> * x'::node<q>&v'!=null & v'=q & x'=x & y'=y & x!=null.
 expect Valid.
- 
+
+pred node_e1<q> == (exists p: self::node<p> & p=q).
+
 // (4) id: 6; line: 14; kind: BIND
 /*
  checkentail_exact q::ll<> * y::ll<> * x'::node<q>&v' & q!=null & x'=x & y'=y & x!=null
@@ -39,8 +41,6 @@ expect Valid.
 q!=null & x'=x & y'=y & x!=null).
 expect Valid.
 */
-
-pred node_e1<q> == (exists p: self::node<p> & p=q).
 
  checkentail_exact q::ll<> * y::ll<> * x'::node<q>&v' & q!=null & x'=x & y'=y & x!=null
  |-  x'::node_e1<q> * q::ll<> * y::ll<>& v' & q!=null & x'=x & y'=y & x!=null.
