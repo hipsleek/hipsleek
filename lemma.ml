@@ -619,7 +619,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
   let enable_printing = (!Globals.dump_lem_proc) && ( List.length lst > 0 ) in
-  let _ = if enable_printing then Debug.binfo_pprint "=============== Processing lemmas ===============" no_pos else () in
+  (* let _ = if enable_printing then Debug.binfo_pprint "=============== Processing lemmas ===============" no_pos else () in *)
   let ctx = match !CF.residues with
     | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
     | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
@@ -637,7 +637,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
         let _ = lem_infer_fnct r1 r2 in
         r2
   in
-  let _ = if enable_printing then Debug.binfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in
+  (* let _ = if enable_printing then Debug.binfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
   match res with
     | None | Some [] -> CF.clear_residue ()
     | Some(c::_) -> CF.set_residue true c
