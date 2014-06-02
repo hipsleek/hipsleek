@@ -600,3 +600,27 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident
   Debug.no_2 "fix_ef" pr_1 string_of_int (pr_list Cprinter.string_of_ef_pure_disj)
       (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num
 
+(* check whether the view has arithmetic or not *)
+let rec is_cformula_arith_x (f : Cformula.formula) : bool =
+  match f with
+    | Cformula.Base bf ->
+          let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
+          is_formula_arith bp
+    | Cformula.Or orf ->
+          (is_cformula_arith orf.Cformula.formula_or_f1) || (is_cformula_arith orf.Cformula.formula_or_f2)
+    | Cformula.Exists ef ->
+          let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
+          is_formula_arith ep
+
+and is_cformula_arith (f : Cformula.formula) : bool =
+  Debug.no_1 "is_cformula_arith" Cprinter.string_of_formula string_of_bool
+      is_cformula_arith_x f
+
+let is_view_arith_x (cv : Cast.view_decl) : bool =
+  List.exists (fun (cf,_) -> is_cformula_arith cf)
+      cv.Cast.view_un_struc_formula
+
+let is_view_arith (cv : Cast.view_decl) : bool =
+  let pr_1 = fun cv -> cv.Cast.view_name in
+  Debug.no_1 "is_view_arith" pr_1 string_of_bool
+      is_view_arith_x cv

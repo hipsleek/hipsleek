@@ -2127,6 +2127,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   in
   (*******************************)
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
+  let has_arith = List.exists (fun cv -> 
+      Expure.is_view_arith cv) cviews0 in
+  let _ = if has_arith then Globals.dis_inv_baga () else () in
   let cviews0 =
     if !Globals.gen_baga_inv then
       let args_map = view_args_map in
@@ -2145,29 +2148,36 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
-          let views_list = List.filter (fun vd ->
-              List.mem vd.Cast.view_name idl
-          ) cviews0 in
-          let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
-          let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v -> 
-              Cprinter.string_of_mix_formula v.Cast.view_user_inv))) views_list no_pos in
-          let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
-          (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
-          let lst = List.combine views_list new_invs_list  in
-          let baga_stronger = List.for_all 
-            (fun (vd,bi) ->
-                let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
-                Expure.ef_imply_disj bi uv
-            ) lst  in
-          let _ = if (not baga_stronger) then Globals.dis_inv_baga() in
-          let new_map = List.combine views_list new_invs_list in
-          List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
+          if !Globals.gen_baga_inv then
+            let views_list = List.filter (fun vd ->
+                List.mem vd.Cast.view_name idl
+            ) cviews0 in
+            let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
+            let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v ->
+                Cprinter.string_of_mix_formula v.Cast.view_user_inv))) views_list no_pos in
+            let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
+            (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
+            let lst = List.combine views_list new_invs_list  in
+            let baga_stronger = List.for_all
+              (fun (vd,bi) ->
+                  let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
+                  Expure.ef_imply_disj bi uv
+              ) lst  in
+            if (not baga_stronger) then
+              Globals.dis_inv_baga ()
+            else
+              let new_map = List.combine views_list new_invs_list in
+              List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
       ) ls_mut_rec_views1 in
-      let cviews1 = List.map (fun cv ->
-          let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
-          let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
-          {cv with C.view_baga_inv = Some inv}
-      ) cviews0 in
+      let cviews1 = if !Globals.gen_baga_inv then
+        List.map (fun cv ->
+            let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
+            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            {cv with C.view_baga_inv = Some inv}
+        ) cviews0
+      else
+        cviews0
+      in
       cviews1
      else
       cviews0
@@ -3897,10 +3907,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       C.exp_icall_receiver_type = crecv_t;
                       C.exp_icall_method_name = mingled_mn;
                       C.exp_icall_arguments = arg_vars;
-                      (* Termination: Default value - 
+                      (* Termination: Default value -
                        * it will be set later in trans_prog
                        * by mark_rec_and_call_order *)
-                      C.exp_icall_is_rec = false;                       
+                      C.exp_icall_is_rec = false;
                       C.exp_icall_path_id = pi;
                       C.exp_icall_pos = pos;} in
                   let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -3909,7 +3919,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       C.exp_block_type = ret_ct;
                       C.exp_block_body = seq2;
                       C.exp_block_local_vars = (if new_recv_ident then [ (crecv_t, recv_ident) ] else []) @ local_vars;
-                      C.exp_block_pos = pos;} in 
+                      C.exp_block_pos = pos;} in
                   (blk, ret_ct)))
             with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");}
             )
