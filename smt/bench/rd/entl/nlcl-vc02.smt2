@@ -6,7 +6,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status unsat)
+(set-info :status unknown)
 
 
 (declare-sort NLL_lvl1_t 0)
@@ -22,22 +22,25 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; singly-linked list
 (define-fun lso ((?in NLL_lvl1_t) (?out NLL_lvl1_t))
   Space (tospace (or (= ?in ?out) 
-    (exists ((?u NLL_lvl1_t)) (tobool (ssep
+    (exists ((?u NLL_lvl1_t)) 
+      (and (distinct ?in ?out)
+      (tobool (ssep
       (pto ?in (ref next1 ?u))
       (lso ?u ?out))
-)))))
+))))))
 
 ; singly-linked list of cyclic singly-linked lists
 (define-fun nlcl ((?in NLL_lvl2_t) (?out NLL_lvl2_t))
   Space (tospace (or (= ?in ?out)
     (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) 
+      (and (distinct ?in ?out)
       (tobool (ssep
       (pto ?in (sref
         (ref next2 ?u)
         (ref down ?Z1)))
       (loop (lso ?Z1 ?Z1)) 
       (nlcl ?u ?out))
-)))))
+))))))
 
 (declare-fun x1 () NLL_lvl2_t)
 (declare-fun x1_1 () NLL_lvl1_t)
@@ -51,7 +54,8 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; two unfoldings of nlcl(x1,nil)
 ; exp: unsat
 ;
-(assert (tobool (ssep
+(assert 
+  (tobool (ssep
   (pto x1 (sref
     (ref next2 x2)
     (ref down x1_1)))
