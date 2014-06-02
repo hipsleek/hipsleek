@@ -1,4 +1,4 @@
-checkeq []  
+checkeq [] // [p_739,p1_744,p_742,p,Anon_746,Anon_740]  
         emp&p_739=p1_744 & p_742=p & Anon_746=Anon_740 & q_747=q_741 & 
 Anon_769=Anon_743 & p_770=p_742 -|-
         emp&p_739=p1_744 & p_742=p & Anon_746=Anon_740 & q_747=q_741 & 
