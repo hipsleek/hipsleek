@@ -1560,7 +1560,7 @@ and add_pre_to_cprog cprog =
 and sat_warnings cprog = 
   let sat_warnings_op () =
     let warn n discard = 
-      print_string ("WARNING : the view body for "^n^" contains unsat branch(es) :"^(List.fold_left (fun a c-> a^"\n   "^(Cprinter.string_of_formula c)) "" discard)^"\n") in
+      print_string_quiet ("WARNING : the view body for "^n^" contains unsat branch(es) :"^(List.fold_left (fun a c-> a^"\n   "^(Cprinter.string_of_formula c)) "" discard)^"\n") in
     let trim_unsat (f:CF.formula):(CF.formula* CF.formula list) =  
       let _=proving_loc #set (CF.pos_of_formula f) in
       if CF.is_trivial_f f then (f,[])
