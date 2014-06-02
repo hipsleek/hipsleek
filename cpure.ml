@@ -4,8 +4,6 @@
   core pure constraints, including arithmetic and pure pointer
 *)
 
-
-
 open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)

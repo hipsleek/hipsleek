@@ -328,13 +328,42 @@ let norm_ef_pure_disj (disj : ef_pure_disj) : ef_pure_disj =
 
 (* using Cformula *)
 
+let compare_prime v1 v2 =
+  if v1==v2 then 0
+  else if v1==Unprimed then -1
+  else 1
+  
+let compare_ident v1 v2 = String.compare v1 v2
+
+let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+        let c = compare_ident v1 v2 in
+        if c=0 then
+          compare_prime p1 p2 
+        else c
+          
+let rec merge_baga b1 b2 =
+  match b1,b2 with
+    | [],b | b,[] -> b
+    | x1::t1, x2::t2 ->
+          let c = compare_spec_var x1 x2 in
+          if c<0 then x1::(merge_baga t1 b2)
+          else if c>0 then x2::(merge_baga b1 t2)
+          else failwith "detected false"
+
+let false_ef_pure = ([], mkFalse no_pos) 
+
 let star_ef_pures (efp1 : ef_pure) (efp2 : ef_pure) : ef_pure =
-  let (baga1, pure1) = efp1 in
-  let (baga2, pure2) = efp2 in
-  (baga1@baga2, mkAnd pure1 pure2 no_pos)
+  if (efp1 == false_ef_pure) || (efp2==false_ef_pure) then false_ef_pure
+  else
+    let (baga1, pure1) = efp1 in
+    let (baga2, pure2) = efp2 in
+    try
+      (merge_baga baga1 baga2, mkAnd pure1 pure2 no_pos)
+    with _ -> false_ef_pure
 
 let or_ef_pure_disjs (efpd1 : ef_pure_disj) (efpd2 : ef_pure_disj) : ef_pure_disj =
-  efpd1@efpd2
+  List.filter (fun e -> not(e==false_ef_pure)) (efpd1@efpd2)
 
 let star_ef_pure_disjs_x (efpd1 : ef_pure_disj) (efpd2 : ef_pure_disj) : ef_pure_disj =
   let res =

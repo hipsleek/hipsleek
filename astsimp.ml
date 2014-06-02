@@ -2129,7 +2129,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
   let has_arith = List.exists (fun cv -> 
       Expure.is_view_arith cv) cviews0 in
-  let _ = if has_arith then Globals.dis_inv_baga () else () in
+  (* this is incorrect since spaguetti benchmark disables it *)
+  (* let _ = if has_arith then Globals.dis_inv_baga () else () in *)
   let cviews0 =
     if !Globals.gen_baga_inv then
       let args_map = view_args_map in
