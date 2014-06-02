@@ -470,6 +470,7 @@ let norm_extract_common iprog cprog cviews sel_vns=
    (********END EXTRACT common pattern **********)
 (*****************************************************************)
 let cont_para_analysis_view cprog vdef other_vds=
+  (*cont paras are the paras that are reachable from self and do not defined in inductive branch*)
   let process_branch vname args f=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else

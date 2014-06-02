@@ -1,0 +1,7 @@
+data node {
+     int val;
+     node next;
+}.
+
+pred tlseg<p> == self = p
+  or self::tlseg<q> * q::node<_,p>.
