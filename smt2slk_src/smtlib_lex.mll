@@ -44,6 +44,7 @@ rule token = parse
 |  '"' (([ '!'-'~' ' ' '\n' '\t' '\r' ] # ['\\' '"']) | ('\\' ['!'-'~' ' ' '\n' '\t' '\r'] ))* '"' as str { STRINGLIT(str) }
 |  ( '0' | ['1'-'9'] ['0'-'9']* )  as str { NUMERAL(str) }
 |  ( '0' | ['1'-'9'] ['0'-'9']* ) '.' ['0'-'9']+ as str { DECIMAL(str) }
+|  ['0'-'9']['0'-'9']['0'-'9']['0'-'9'] '-' ['0'-'9']['0'-'9'] '-' ['0'-'9']['0'-'9']   as str { DATE(str) }
 | eof { EOF }
 | _ {failwith((Lexing.lexeme lexbuf) ^
 ": lexing error on line "^(string_of_int !Smtlib_util.line))}{}

@@ -14,15 +14,15 @@ and qualidentifier = | QualIdentifierId of pd * identifier | QualIdentifierAs of
 and sexpr = | SexprSpecConst of pd * specconstant | SexprSymbol of pd * symbol | SexprKeyword of pd * string | SexprInParen of pd * sexprinparen_sexpr_sexpr43
 and sort = | SortIdentifier of pd * identifier | SortIdSortMulti of pd * identifier * sortidsortmulti_sort_sort46
 and sortedvar = | SortedVarSymSort of pd * symbol * sort
-and specconstant = | SpecConstsDec of pd * string | SpecConstNum of pd * string | SpecConstString of pd * string | SpecConstsHex of pd * string | SpecConstsBinary of pd * string
+and specconstant = | SpecConstsDec of pd * string | SpecConstNum of pd * string | SpecConstString of pd * string | SpecConstsHex of pd * string | SpecConstsBinary of pd * string | SpecConstDate of pd * string
 and symbol = | Symbol of pd * string | SymbolWithOr of pd * string
-and term = | TermSpecConst of pd * specconstant | TermQualIdentifier of pd * qualidentifier | TermQualIdTerm of pd * qualidentifier * termqualidterm_term_term58 | TermLetTerm of pd * termletterm_term_varbinding60 * term | TermForAllTerm of pd * termforallterm_term_sortedvar62 * term | TermExistsTerm of pd * termexiststerm_term_sortedvar64 * term | TermExclimationPt of pd * term * termexclimationpt_term_attribute66
+and term = | TermSpecConst of pd * specconstant | TermQualIdentifier of pd * qualidentifier | TermQualIdTerm of pd * qualidentifier * termqualidterm_term_term59 | TermLetTerm of pd * termletterm_term_varbinding61 * term | TermForAllTerm of pd * termforallterm_term_sortedvar63 * term | TermExistsTerm of pd * termexiststerm_term_sortedvar65 * term | TermExclimationPt of pd * term * termexclimationpt_term_attribute67
 and varbinding = | VarBindingSymTerm of pd * symbol * term
-and termexclimationpt_term_attribute66 = pd * ( attribute) list
-and termexiststerm_term_sortedvar64 = pd * ( sortedvar) list
-and termforallterm_term_sortedvar62 = pd * ( sortedvar) list
-and termletterm_term_varbinding60 = pd * ( varbinding) list
-and termqualidterm_term_term58 = pd * ( term) list
+and termexclimationpt_term_attribute67 = pd * ( attribute) list
+and termexiststerm_term_sortedvar65 = pd * ( sortedvar) list
+and termforallterm_term_sortedvar63 = pd * ( sortedvar) list
+and termletterm_term_varbinding61 = pd * ( varbinding) list
+and termqualidterm_term_term59 = pd * ( term) list
 and sortidsortmulti_sort_sort46 = pd * ( sort) list
 and sexprinparen_sexpr_sexpr43 = pd * ( sexpr) list
 and idunderscoresymnum_identifier_numeral35 = pd * ( string) list
@@ -136,6 +136,8 @@ and pd_specconstant = function
 
   | SpecConstsBinary(d,_) -> d
 
+  | SpecConstDate(d,_) -> d
+
 and pd_symbol = function 
   | Symbol(d,_) -> d
 
@@ -159,27 +161,27 @@ and pd_term = function
 and pd_varbinding = function 
   | VarBindingSymTerm(d,_,_) -> d
 
-and pd_termexclimationpt_term_attribute66 = function 
+and pd_termexclimationpt_term_attribute67 = function 
   | (d,[]) -> d
 
   | (d,( _ )::f1239o2) -> d
 
-and pd_termexiststerm_term_sortedvar64 = function 
+and pd_termexiststerm_term_sortedvar65 = function 
   | (d,[]) -> d
 
   | (d,( _ )::f1239o2) -> d
 
-and pd_termforallterm_term_sortedvar62 = function 
+and pd_termforallterm_term_sortedvar63 = function 
   | (d,[]) -> d
 
   | (d,( _ )::f1239o2) -> d
 
-and pd_termletterm_term_varbinding60 = function 
+and pd_termletterm_term_varbinding61 = function 
   | (d,[]) -> d
 
   | (d,( _ )::f1239o2) -> d
 
-and pd_termqualidterm_term_term58 = function 
+and pd_termqualidterm_term_term59 = function 
   | (d,[]) -> d
 
   | (d,( _ )::f1239o2) -> d

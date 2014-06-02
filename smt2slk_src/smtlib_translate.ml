@@ -406,6 +406,7 @@ and trans_const const =
     | SpecConstString(_, str) -> str
     | SpecConstsHex(_, str) -> str
     | SpecConstsBinary(_, str) -> str
+    | SpecConstDate(_, str) -> str
 
 and trans_symbol sy =
   let str = match sy with

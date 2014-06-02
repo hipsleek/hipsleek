@@ -59,34 +59,35 @@ and pp_specconstant = function
    |SpecConstString (_ , str1) ->  print_string str1; () 
    |SpecConstsHex (_ , str1) ->  print_string str1; () 
    |SpecConstsBinary (_ , str1) ->  print_string str1; () 
+   |SpecConstDate (_ , str1) ->  print_string str1; () 
 and pp_symbol = function 
    |Symbol (_ , str1) ->  print_string str1; () 
    |SymbolWithOr (_ , str1) ->  print_string str1; () 
 and pp_term = function 
    |TermSpecConst (_ , specconstant1) ->  pp_specconstant specconstant1; () 
    |TermQualIdentifier (_ , qualidentifier1) ->  pp_qualidentifier qualidentifier1; () 
-   |TermQualIdTerm (_ , qualidentifier2 , termqualidterm_term_term583) ->  print_string "(";print_string " "; pp_qualidentifier qualidentifier2;print_string " "; pp_termqualidterm_term_term58 termqualidterm_term_term583;print_string " "; print_string ")"; () 
-   |TermLetTerm (_ , termletterm_term_varbinding604 , term6) ->  print_string "(";print_string " "; print_string "let";print_string " "; print_string "(";print_string " "; pp_termletterm_term_varbinding60 termletterm_term_varbinding604;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
-   |TermForAllTerm (_ , termforallterm_term_sortedvar624 , term6) ->  print_string "(";print_string " "; print_string "forall";print_string " "; print_string "(";print_string " "; pp_termforallterm_term_sortedvar62 termforallterm_term_sortedvar624;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
-   |TermExistsTerm (_ , termexiststerm_term_sortedvar644 , term6) ->  print_string "(";print_string " "; print_string "exists";print_string " "; print_string "(";print_string " "; pp_termexiststerm_term_sortedvar64 termexiststerm_term_sortedvar644;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
-   |TermExclimationPt (_ , term3 , termexclimationpt_term_attribute664) ->  print_string "(";print_string " "; print_string "!";print_string " "; pp_term term3;print_string " "; pp_termexclimationpt_term_attribute66 termexclimationpt_term_attribute664;print_string " "; print_string ")"; () 
+   |TermQualIdTerm (_ , qualidentifier2 , termqualidterm_term_term593) ->  print_string "(";print_string " "; pp_qualidentifier qualidentifier2;print_string " "; pp_termqualidterm_term_term59 termqualidterm_term_term593;print_string " "; print_string ")"; () 
+   |TermLetTerm (_ , termletterm_term_varbinding614 , term6) ->  print_string "(";print_string " "; print_string "let";print_string " "; print_string "(";print_string " "; pp_termletterm_term_varbinding61 termletterm_term_varbinding614;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
+   |TermForAllTerm (_ , termforallterm_term_sortedvar634 , term6) ->  print_string "(";print_string " "; print_string "forall";print_string " "; print_string "(";print_string " "; pp_termforallterm_term_sortedvar63 termforallterm_term_sortedvar634;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
+   |TermExistsTerm (_ , termexiststerm_term_sortedvar654 , term6) ->  print_string "(";print_string " "; print_string "exists";print_string " "; print_string "(";print_string " "; pp_termexiststerm_term_sortedvar65 termexiststerm_term_sortedvar654;print_string " "; print_string ")";print_string " "; pp_term term6;print_string " "; print_string ")"; () 
+   |TermExclimationPt (_ , term3 , termexclimationpt_term_attribute674) ->  print_string "(";print_string " "; print_string "!";print_string " "; pp_term term3;print_string " "; pp_termexclimationpt_term_attribute67 termexclimationpt_term_attribute674;print_string " "; print_string ")"; () 
 and pp_varbinding = function 
    |VarBindingSymTerm (_ , symbol2 , term3) ->  print_string "(";print_string " "; pp_symbol symbol2;print_string " "; pp_term term3;print_string " "; print_string ")"; () 
-and pp_termexclimationpt_term_attribute66 = function 
+and pp_termexclimationpt_term_attribute67 = function 
    |(_,[]) ->   () 
-   | (d , (attribute1)::termexclimationpt_term_attribute662) ->  pp_attribute attribute1;print_string " "; pp_termexclimationpt_term_attribute66 (d,termexclimationpt_term_attribute662); () 
-and pp_termexiststerm_term_sortedvar64 = function 
+   | (d , (attribute1)::termexclimationpt_term_attribute672) ->  pp_attribute attribute1;print_string " "; pp_termexclimationpt_term_attribute67 (d,termexclimationpt_term_attribute672); () 
+and pp_termexiststerm_term_sortedvar65 = function 
    |(_,[]) ->   () 
-   | (d , (sortedvar1)::termexiststerm_term_sortedvar642) ->  pp_sortedvar sortedvar1;print_string " "; pp_termexiststerm_term_sortedvar64 (d,termexiststerm_term_sortedvar642); () 
-and pp_termforallterm_term_sortedvar62 = function 
+   | (d , (sortedvar1)::termexiststerm_term_sortedvar652) ->  pp_sortedvar sortedvar1;print_string " "; pp_termexiststerm_term_sortedvar65 (d,termexiststerm_term_sortedvar652); () 
+and pp_termforallterm_term_sortedvar63 = function 
    |(_,[]) ->   () 
-   | (d , (sortedvar1)::termforallterm_term_sortedvar622) ->  pp_sortedvar sortedvar1;print_string " "; pp_termforallterm_term_sortedvar62 (d,termforallterm_term_sortedvar622); () 
-and pp_termletterm_term_varbinding60 = function 
+   | (d , (sortedvar1)::termforallterm_term_sortedvar632) ->  pp_sortedvar sortedvar1;print_string " "; pp_termforallterm_term_sortedvar63 (d,termforallterm_term_sortedvar632); () 
+and pp_termletterm_term_varbinding61 = function 
    |(_,[]) ->   () 
-   | (d , (varbinding1)::termletterm_term_varbinding602) ->  pp_varbinding varbinding1;print_string " "; pp_termletterm_term_varbinding60 (d,termletterm_term_varbinding602); () 
-and pp_termqualidterm_term_term58 = function 
+   | (d , (varbinding1)::termletterm_term_varbinding612) ->  pp_varbinding varbinding1;print_string " "; pp_termletterm_term_varbinding61 (d,termletterm_term_varbinding612); () 
+and pp_termqualidterm_term_term59 = function 
    |(_,[]) ->   () 
-   | (d , (term1)::termqualidterm_term_term582) ->  pp_term term1;print_string " "; pp_termqualidterm_term_term58 (d,termqualidterm_term_term582); () 
+   | (d , (term1)::termqualidterm_term_term592) ->  pp_term term1;print_string " "; pp_termqualidterm_term_term59 (d,termqualidterm_term_term592); () 
 and pp_sortidsortmulti_sort_sort46 = function 
    |(_,[]) ->   () 
    | (d , (sort1)::sortidsortmulti_sort_sort462) ->  pp_sort sort1;print_string " "; pp_sortidsortmulti_sort_sort46 (d,sortidsortmulti_sort_sort462); () 

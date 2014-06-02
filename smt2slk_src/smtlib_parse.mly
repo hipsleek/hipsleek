@@ -13,7 +13,7 @@ let parse_error s =
 %start main
 
 %token EOF AS ASSERT BAR CHECKSAT DECLAREFUN DECLARESORT DEFINEFUN DEFINESORT EXCLIMATIONPT EXISTS EXIT FORALL GETASSERT GETASSIGN GETINFO GETOPTION GETPROOF GETUNSATCORE GETVALUE LET LPAREN POP PUSH RPAREN SETINFO SETLOGIC SETOPTION UNDERSCORE
-%token <string> ASCIIWOR BINARY DECIMAL HEXADECIMAL KEYWORD NUMERAL STRINGLIT SYMBOL
+%token <string> ASCIIWOR BINARY DATE DECIMAL HEXADECIMAL KEYWORD NUMERAL STRINGLIT SYMBOL
 
 %type <Smtlib_syntax.commands option> main
 
@@ -65,15 +65,15 @@ let parse_error s =
 
 %type <Smtlib_syntax.term> term
 
-%type <Smtlib_syntax.termexclimationpt_term_attribute66> termexclimationpt_term_attribute66
+%type <Smtlib_syntax.termexclimationpt_term_attribute67> termexclimationpt_term_attribute67
 
-%type <Smtlib_syntax.termexiststerm_term_sortedvar64> termexiststerm_term_sortedvar64
+%type <Smtlib_syntax.termexiststerm_term_sortedvar65> termexiststerm_term_sortedvar65
 
-%type <Smtlib_syntax.termforallterm_term_sortedvar62> termforallterm_term_sortedvar62
+%type <Smtlib_syntax.termforallterm_term_sortedvar63> termforallterm_term_sortedvar63
 
-%type <Smtlib_syntax.termletterm_term_varbinding60> termletterm_term_varbinding60
+%type <Smtlib_syntax.termletterm_term_varbinding61> termletterm_term_varbinding61
 
-%type <Smtlib_syntax.termqualidterm_term_term58> termqualidterm_term_term58
+%type <Smtlib_syntax.termqualidterm_term_term59> termqualidterm_term_term59
 
 %type <Smtlib_syntax.varbinding> varbinding
 
@@ -220,6 +220,9 @@ specconstant:
 specconstant:
 | cur_position BINARY { SpecConstsBinary($1, $2) }
 
+specconstant:
+| cur_position DATE { SpecConstDate($1, $2) }
+
 symbol:
 | cur_position SYMBOL { Symbol($1, $2) }
 
@@ -233,52 +236,52 @@ term:
 | qualidentifier { TermQualIdentifier(pd_qualidentifier $1, $1) }
 
 term:
-| cur_position LPAREN qualidentifier termqualidterm_term_term58 RPAREN { TermQualIdTerm($1, $3, $4) }
+| cur_position LPAREN qualidentifier termqualidterm_term_term59 RPAREN { TermQualIdTerm($1, $3, $4) }
 
 term:
-| cur_position LPAREN LET LPAREN termletterm_term_varbinding60 RPAREN term RPAREN { TermLetTerm($1, $5, $7) }
+| cur_position LPAREN LET LPAREN termletterm_term_varbinding61 RPAREN term RPAREN { TermLetTerm($1, $5, $7) }
 
 term:
-| cur_position LPAREN FORALL LPAREN termforallterm_term_sortedvar62 RPAREN term RPAREN { TermForAllTerm($1, $5, $7) }
+| cur_position LPAREN FORALL LPAREN termforallterm_term_sortedvar63 RPAREN term RPAREN { TermForAllTerm($1, $5, $7) }
 
 term:
-| cur_position LPAREN EXISTS LPAREN termexiststerm_term_sortedvar64 RPAREN term RPAREN { TermExistsTerm($1, $5, $7) }
+| cur_position LPAREN EXISTS LPAREN termexiststerm_term_sortedvar65 RPAREN term RPAREN { TermExistsTerm($1, $5, $7) }
 
 term:
-| cur_position LPAREN EXCLIMATIONPT term termexclimationpt_term_attribute66 RPAREN { TermExclimationPt($1, $4, $5) }
+| cur_position LPAREN EXCLIMATIONPT term termexclimationpt_term_attribute67 RPAREN { TermExclimationPt($1, $4, $5) }
 
 varbinding:
 | cur_position LPAREN symbol term RPAREN { VarBindingSymTerm($1, $3, $4) }
 
-termexclimationpt_term_attribute66:
+termexclimationpt_term_attribute67:
 | attribute { (pd_attribute $1, ($1)::[]) }
 
-termexclimationpt_term_attribute66:
-| attribute termexclimationpt_term_attribute66 { let (p, ( l1 )) = $2 in (pd_attribute $1, ($1)::(l1)) }
+termexclimationpt_term_attribute67:
+| attribute termexclimationpt_term_attribute67 { let (p, ( l1 )) = $2 in (pd_attribute $1, ($1)::(l1)) }
 
-termexiststerm_term_sortedvar64:
+termexiststerm_term_sortedvar65:
 | sortedvar { (pd_sortedvar $1, ($1)::[]) }
 
-termexiststerm_term_sortedvar64:
-| sortedvar termexiststerm_term_sortedvar64 { let (p, ( l1 )) = $2 in (pd_sortedvar $1, ($1)::(l1)) }
+termexiststerm_term_sortedvar65:
+| sortedvar termexiststerm_term_sortedvar65 { let (p, ( l1 )) = $2 in (pd_sortedvar $1, ($1)::(l1)) }
 
-termforallterm_term_sortedvar62:
+termforallterm_term_sortedvar63:
 | sortedvar { (pd_sortedvar $1, ($1)::[]) }
 
-termforallterm_term_sortedvar62:
-| sortedvar termforallterm_term_sortedvar62 { let (p, ( l1 )) = $2 in (pd_sortedvar $1, ($1)::(l1)) }
+termforallterm_term_sortedvar63:
+| sortedvar termforallterm_term_sortedvar63 { let (p, ( l1 )) = $2 in (pd_sortedvar $1, ($1)::(l1)) }
 
-termletterm_term_varbinding60:
+termletterm_term_varbinding61:
 | varbinding { (pd_varbinding $1, ($1)::[]) }
 
-termletterm_term_varbinding60:
-| varbinding termletterm_term_varbinding60 { let (p, ( l1 )) = $2 in (pd_varbinding $1, ($1)::(l1)) }
+termletterm_term_varbinding61:
+| varbinding termletterm_term_varbinding61 { let (p, ( l1 )) = $2 in (pd_varbinding $1, ($1)::(l1)) }
 
-termqualidterm_term_term58:
+termqualidterm_term_term59:
 | term { (pd_term $1, ($1)::[]) }
 
-termqualidterm_term_term58:
-| term termqualidterm_term_term58 { let (p, ( l1 )) = $2 in (pd_term $1, ($1)::(l1)) }
+termqualidterm_term_term59:
+| term termqualidterm_term_term59 { let (p, ( l1 )) = $2 in (pd_term $1, ($1)::(l1)) }
 
 sortidsortmulti_sort_sort46:
 | sort { (pd_sort $1, ($1)::[]) }
