@@ -4,6 +4,7 @@ data node {
   node right;
   node next;
 }.
+ 
  pred tree<> == 
   (exists p_35,D1_36,r_37,n_38: self::node<p_35,D1_36,r_37,n_38>&r_37=null)
    or
@@ -18,123 +19,168 @@ data node {
   l_24::tll<self_30,ll_31,z_27> * r_25::tll<self_32,z_33,lr_34>&r_25!=null & 
   p_29=p & self_30=self & ll_31=ll & self_32=self & z_33=z_27 & lr_34=lr)
   inv self!=null.
-
-pred enode_nil<> ==
-  (exists p,l,r,n: self::node<p,l,r,n> & r = null).
-
-pred enode_nnil<> ==
-  (exists p,l,r,n: self::node<p,l,r,n> * l::tree<> * r::tree<> & r != null).
  
-// id: 2; line: 25; kind: BIND
+// (1) id: 2; line: 25; kind: BIND
 /*
-checkentail_exact (exists p1,D,r,n: x'::node<p1,D,r,n>&p'=p & x'=x & t'=t & r=null)
- |-  (exists p2,D1,r1,n1: x'::node<parent',left',right',next'>&next'=n1 & 
-right'=r1 & left'=D1 & parent'=p2 & p'=p & x'=x & t'=t & r1=null).
+ checkentail_exact (exists p1,D,r,n: x'::node<p1,D,r,n>&p'=p & x'=x & t'=t & r=null)
+ |-  (exists parent0',p2,left0',D1,right0',r1,next0',
+n1: x'::node<parent0',left0',right0',next0'>&next0'=n1 & right0'=r1 & 
+left0'=D1 & parent0'=p2 & p'=p & x'=x & t'=t & r1=null).
 expect Valid.
 */
 
- checkentail_exact x'::enode_nil<> & p'=p & x'=x & t'=t
- |-  x'::enode_nil<> & p'=p & x'=x & t'=t.
+pred right_nil<> == 
+  (exists p,l,r,n: self::node<p,l,r,n> & r = null).
+
+pred eright_nil<> == 
+  (exists p0,l0,r0,n0,p1,l1,r1,n1: 
+	  self::node<p0,l0,r0,n0> & p0=p1 & l0=l1 & r0=r1 & l0=l1 & r1 = null).
+
+checkentail_exact x'::right_nil<> & p'=p & x'=x & t'=t
+ |- x'::right_nil<> & p'=p & x'=x & t'=t.
 expect Valid.
 
- 
-// id: 4; line: 25; kind: BIND
+// (2) id: 4; line: 25; kind: BIND
 /*
  checkentail_exact (exists p1,l,r,D: x'::node<p1,l,r,D> * l::tree<> * r::tree<>&p'=p & x'=x & 
 t'=t & r!=null)
- |-  (exists p2,l1,r1,D1: x'::node<parent',left',right',next'> * l1::tree<> * 
-r1::tree<>&next'=D1 & right'=r1 & left'=l1 & parent'=p2 & p'=p & x'=x & 
-t'=t & r1!=null).
+ |-  (exists parent0',p2,left0',l1,right0',r1,next0',
+D1: x'::node<parent0',left0',right0',next0'> * l1::tree<> * r1::tree<>&
+next0'=D1 & right0'=r1 & left0'=l1 & parent0'=p2 & p'=p & x'=x & t'=t & 
+r1!=null).
 expect Valid.
 */
 
- checkentail_exact x'::enode_nnil<> & p'=p & x'=x & t'=t
- |-  x'::enode_nnil<> & p'=p & x'=x & t'=t.
+pred right_nnil<> == 
+  (exists p,l,r,n: self::node<p,l,r,n> * l::tree<> * r::tree<> & r != null).
+
+pred eright_nnil<> == 
+  (exists p0,l0,r0,n0,p1,l1,r1,n1: 
+	  self::node<p0,l0,r0,n0> * l1::tree<> * r1::tree<> & 
+		p0=p1 & l0=l1 & r0=r1 & l0=l1 & r1 = null).
+
+checkentail_exact x'::right_nil<> & p'=p & x'=x & t'=t
+ |- x'::right_nil<> & p'=p & x'=x & t'=t.
 expect Valid.
 
-// id: 6; line: 26; kind: BIND
- checkentail_exact x'::node<p',D,r,n>&parent=p & p'=p1 & x'=x & t'=t & r=null
- |-  x'::node<parent',left',right',next'>&next'=n & right'=r & left'=D & 
-parent'=p' & parent=p & p'=p1 & x'=x & t'=t & r=null.
+// (3) id: 6; line: 26; kind: BIND
+/*
+ checkentail_exact x'::node<p',D,r,n>&parent0=p & p'=p1 & x'=x & t'=t & r=null
+ |-  (exists parent0',left0',right0',
+next0': x'::node<parent0',left0',right0',next0'>&next0'=n & right0'=r & 
+left0'=D & parent0'=p' & parent0=p & p'=p1 & x'=x & t'=t & r=null).
+expect Valid.
+*/
+
+pred enode<p,l,r,n> == (exists p0,l0,r0,n0: 
+  self::node<p0,l0,r0,n0> & p0=p & l0=l & r0=r & n0=n).
+
+ checkentail_exact x'::node<p',D,r,n>&parent0=p & p'=p1 & x'=x & t'=t & r=null
+ |-  x'::enode<p',D,r,n> & parent0=p & p'=p1 & x'=x & t'=t & r=null.
+expect Valid.
+
+// (4) id: 8; line: 26; kind: BIND
+/*
+ checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&parent0=p & p'=p1 & x'=x & 
+t'=t & r!=null
+ |-  (exists parent0',left0',right0',
+next0': x'::node<parent0',left0',right0',next0'> * l::tree<> * r::tree<>&
+next0'=D & right0'=r & left0'=l & parent0'=p' & parent0=p & p'=p1 & x'=x & 
+t'=t & r!=null).
+expect Valid.
+*/
+
+ checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&parent0=p & p'=p1 & x'=x & 
+t'=t & r!=null
+ |-  x'::enode<p',l,r,D> * l::tree<> * r::tree<>& parent0=p & p'=p1 & x'=x & t'=t & r!=null.
+expect Valid.
+
+// (5) id: 10; line: 26; kind: PRE
+ checkentail_exact x'::node<p',D,r,n>&v'=null & v'=r & parent0=p & p'=p1 & x'=x & t'=t & r=null
+ |-  x'::node<p',D,r,n>&v'=null & v'=r & parent0=p & p'=p1 & x'=x & t'=t & r=null.
 expect Valid.
  
-// id: 8; line: 26; kind: BIND
- checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&parent=p & p'=p1 & x'=x & t'=t & 
-r!=null
- |-  x'::node<parent',left',right',next'> * l::tree<> * r::tree<>&next'=D & 
-right'=r & left'=l & parent'=p' & parent=p & p'=p1 & x'=x & t'=t & r!=null.
-expect Valid.
- 
-// id: 10; line: 26; kind: PRE
- checkentail_exact x'::node<p',D,r,n>&v'=null & v'=r & parent=p & p'=p1 & x'=x & t'=t & r=null
- |-  x'::node<p',D,r,n>&v'=null & v'=r & parent=p & p'=p1 & x'=x & t'=t & r=null.
-expect Valid.
- 
-// id: 12; line: 26; kind: PRE
- checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&v'!=null & v'=r & parent=p & 
+// (6) id: 12; line: 26; kind: PRE
+ checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&v'!=null & v'=r & parent0=p & 
 p'=p1 & x'=x & t'=t & r!=null
- |-  l::tree<> * r::tree<> * x'::node<p',l,r,D>&v'!=null & v'=r & parent=p & 
+ |-  l::tree<> * r::tree<> * x'::node<p',l,r,D>&v'!=null & v'=r & parent0=p & 
 p'=p1 & x'=x & t'=t & r!=null.
 expect Valid.
  
-// id: 14; line: 28; kind: BIND
- checkentail_exact x'::node<p',D,r,n>&v' & r=null & parent=p & p'=p1 & x'=x & t'=t
- |-  x'::node<parent',left',right',next'>&next'=n & right'=r & left'=D & 
-parent'=p' & v' & r=null & parent=p & p'=p1 & x'=x & t'=t.
+// (7) id: 14; line: 28; kind: BIND
+ checkentail_exact x'::node<p',D,r,n>&v' & r=null & parent0=p & p'=p1 & x'=x & t'=t
+ |-  x'::enode<p',D,r,n>& v' & r=null & parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
  
-// id: 16; line: 33; kind: BIND
- checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&!(v') & r!=null & parent=p & 
+// (8) id: 16; line: 33; kind: BIND
+ checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&!(v') & r!=null & parent0=p & 
 p'=p1 & x'=x & t'=t
- |-  x'::node<parent',left',right',next'> * l::tree<> * r::tree<>&next'=D & 
-right'=r & left'=l & parent'=p' & !(v') & r!=null & parent=p & p'=p1 & 
-x'=x & t'=t.
+ |-  x'::enode<p',l,r,D> * l::tree<> * r::tree<>& !(v') & r!=null & parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
  
-// id: 18; line: 33; kind: PRE_REC
+// (9) id: 18; line: 33; kind: PRE_REC
  checkentail_exact l::tree<> * r::tree<> * x'::node<p',l,r,D>&v'=r & !(v1') & r!=null & 
-parent=p & p'=p1 & x'=x & t'=t
+parent0=p & p'=p1 & x'=x & t'=t
  |-  l::tree<> * v'::tree<> * x'::node<p',l,r,D>&v'=r & !(v1') & r!=null & 
-parent=p & p'=p1 & x'=x & t'=t.
+parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
  
-// id: 21; line: 34; kind: BIND
+// (10) id: 21; line: 34; kind: BIND
  checkentail_exact l::tree<> * x'::node<p',l,r,D> * r::tll<x',l',t'>&r!=null & !(v') & 
-parent=p & p'=p1 & x'=x & t'=t
- |-  x'::node<parent',left',right',next'> * l::tree<> * r::tll<x',l',t'>&
-next'=D & right'=r & left'=l & parent'=p' & r!=null & !(v') & parent=p & 
-p'=p1 & x'=x & t'=t.
+parent0=p & p'=p1 & x'=x & t'=t
+ |-  x'::node<p',l,r,D> * l::tree<> * r::tll<x',l',t'>& r!=null & !(v') & parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
  
-// id: 23; line: 34; kind: PRE_REC
+// (11) id: 23; line: 34; kind: PRE_REC
  checkentail_exact l::tree<> * r::tll<x',l',t'> * x'::node<p',l,r,D>&v'=l & r!=null & !(v1') & 
-parent=p & p'=p1 & x'=x & t'=t
+parent0=p & p'=p1 & x'=x & t'=t
  |-  v'::tree<> * r::tll<x',l',t'> * x'::node<p',l,r,D>&v'=l & r!=null & 
-!(v1') & parent=p & p'=p1 & x'=x & t'=t.
+!(v1') & parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
-
-// id: 26; line: 23; kind: POST
- checkentail_exact x'::node<p',D,r,t'>&res=x' & next=n & v' & r=null & parent=p & p'=p1 & 
+ 
+// (12) id: 26; line: 23; kind: POST
+/*
+ checkentail_exact x'::node<p',D,r,t'>&res=x' & next0=n & v' & r=null & parent0=p & p'=p1 & 
 x'=x & t'=t
- |-  x::tll<p',res,t'> & x=res & 
-res=x' & next=n & v' & r=null & parent=p & p'=p1 & x'=x & t'=t.
+ |-  (exists p2,t1: x::tll<p2,res,t1>&exists(t_1178:t'=t_1178) & x=res & 
+res=x' & next0=n & v' & r=null & parent0=p & p'=p1 & x'=x & t'=t & t1=t & 
+p2=p1).
+expect Valid.
+*/
+
+pred etll<p,t,r> == (exists p1,t1: self::tll<p1,r,t1> & p1=p & t1=t).
+
+ checkentail_exact x'::node<p',D,r,t'>&res=x' & next0=n & v' & r=null & parent0=p & p'=p1 & 
+x'=x & t'=t
+ |-  x::etll<p1,t,res>& x=res & res=x' & next0=n & v' & r=null & parent0=p & p'=p1 & x'=x & t'=t.
 expect Valid.
 
-pred etll<p,l,r,D,v,t> == 
-	(exists l': self::node<p,l,r,D> * l::tll<self,v,l'> * r::tll<self,l',t>).
-
-// id: 32; line: 23; kind: POST
+// (13) id: 32; line: 23; kind: POST
 /*
  checkentail_exact (exists l': r::tll<x',l',t'> * x'::node<p',l,r,D> * l::tll<x',v',l'>&
-res=v' & l!=null & r!=null & !(v1') & parent=p & p'=p1 & x'=x & t'=t)
- |-  x::tll<p',res,t'> & v'=res & l!=null & r!=null & !(v1') & parent=p & 
+res=v' & l!=null & r!=null & !(v1') & parent0=p & p'=p1 & x'=x & t'=t)
+ |-  (exists p2,t1: x::tll<p2,res,t1>&exists(p_1220:p'=p_1220) & 
+exists(t_1221:t'=t_1221) & v'=res & l!=null & r!=null & !(v1') & parent0=p & 
+p'=p1 & x'=x & t'=t & t1=t & p2=p1).
+expect Valid.
+*/
+
+/*
+pred lr<x,v,t,r> == (exists l1: self::tll<x,v,l1> * r::tll<x,l1,t>).
+
+ checkentail_exact x'::node<p',l,r,D> * l::lr<x',v',t',r> &
+res=v' & l!=null & r!=null & !(v1') & parent0=p & p'=p1 & x'=x & t'=t
+ |-  x::etll<p1,t,res>& v'=res & l!=null & r!=null & !(v1') & parent0=p & 
 p'=p1 & x'=x & t'=t.
 expect Valid.
 */
 
- checkentail_exact x'::etll<p',l,r,D,v',t'> &
-res=v' & l!=null & r!=null & !(v1') & parent=p & p'=p1 & x'=x & t'=t
- |-  x::tll<p',res,t'> & v'=res & l!=null & r!=null & !(v1') & parent=p & 
+pred ltll<p,l,r,D,v,t> == 
+  (exists l1: self::node<p,l,r,D> * l::tll<self,v,l1> * r::tll<self,l1,t>).
+
+ checkentail_exact x'::ltll<p',l,r,D,v',t'>&
+res=v' & l!=null & r!=null & !(v1') & parent0=p & p'=p1 & x'=x & t'=t
+ |-  x::etll<p1,t,res>& v'=res & l!=null & r!=null & !(v1') & parent0=p & 
 p'=p1 & x'=x & t'=t.
 expect Valid.
 
