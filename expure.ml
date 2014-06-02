@@ -189,6 +189,32 @@ let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
   Debug.no_1 "elim_trivial_disj" string_of_ef_pure_disj string_of_ef_pure_disj
       elim_trivial_disj_x disj
 
+(*
+    x = x -> true
+    x != x -> false (exception)
+    x = ev -> true
+*)
+let filter_formula ex_vars lst  =
+  try 
+    Some (List.filter 
+        (fun pf -> 
+            let flag =
+              match pf with
+                | BForm((p,_),_) ->
+                      (match p with
+                        | Eq (e1,e2,_) -> eqExp e1 e2
+                        | Neq(e1,e2,_) -> 
+                              if eqExp e1 e2 then failwith "exception -> mkFalse"
+                              else false
+                        | _ -> false)
+                | _ -> false in
+            if flag then false
+            else
+              let svl = fv pf in
+              not(List.exists (fun v -> List.exists (eq_spec_var v) ex_vars) svl)
+        ) lst)
+  with _ -> None
+
 (*  
     ex v. x=v & v!=y  --> x!=y
     ex v. x=v & v=k & v!=y  --> x=k & x!=y
@@ -204,19 +230,23 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
   (* let _ = Debug.tinfo_hprint (pr_list (string_of_typed_spec_var)) filtered_svl no_pos in *)
   (* drop_svl_pure pf filtered_svl *)
   let conj_list = list_of_conjs pf in
-  let filtered_conj_list = List.filter (fun pf ->
-      let svl = fv pf in
-      not(List.exists (fun v -> List.exists (eq_spec_var v) ex_vars) svl)
-      (* try *)
-      (*   let _ = List.find (fun sv -> *)
-      (*       let SpecVar(_, name, _)  = sv in *)
-      (*       (not (name = "self")) && (not (List.mem sv args)) *)
-      (*   ) svl in false *)
-      (* with Not_found -> true *)
-  ) conj_list in
-  let f = List.fold_left (fun r pf -> mkAnd r pf no_pos) (mkTrue no_pos) filtered_conj_list in
-  (* WN : should we use Omega? will x!=y cause disjunct *)
-  Omega.simplify f
+  match filter_formula ex_vars conj_list with
+    | None -> mkFalse no_pos
+    | Some lst -> 
+          List.fold_left (fun r pf -> mkAnd r pf no_pos) (mkTrue no_pos) lst
+ (* let filtered_conj_list = List.filter (fun pf -> *)
+ (*      let svl = fv pf in *)
+ (*      not(List.exists (fun v -> List.exists (eq_spec_var v) ex_vars) svl) *)
+ (*      (\* try *\) *)
+ (*      (\*   let _ = List.find (fun sv -> *\) *)
+ (*      (\*       let SpecVar(_, name, _)  = sv in *\) *)
+ (*      (\*       (not (name = "self")) && (not (List.mem sv args)) *\) *)
+ (*      (\*   ) svl in false *\) *)
+ (*      (\* with Not_found -> true *\) *)
+ (*  ) conj_list in *)
+ (*   (\* WN : should we use Omega? will x!=y cause disjunct *\) *)
+ (*  arith_simplify_new f *)
+ (*  (\* Omega.simplify f *\) *)
 
 let elim_clause (pf : formula) (args : spec_var list) : formula =
   Debug.no_2 "elim_clause" string_of_pure_formula (pr_list string_of_typed_spec_var) string_of_pure_formula
