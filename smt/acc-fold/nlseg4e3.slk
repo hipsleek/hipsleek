@@ -8,9 +8,10 @@ pred nlseg<q> == self=q
  or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
  inv true.
 
-lemma_unsafe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
+lemma_safe self::nlseg<p> -> (exists u :self::nlseg<u> * u::nlseg<p>).
 
-lemma_unsafe self::nlseg<p> <- (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
+lemma_safe self::nlseg<p>  
+   <- (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
 
 // nlseg4e2.slk
 
