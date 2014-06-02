@@ -836,7 +836,7 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
-let en_norm_ctx = ref true
+let en_norm_ctx = ref false
 
 (*context: (1, M_cyclic c) *)
 let cyc_proof_syn = ref true
