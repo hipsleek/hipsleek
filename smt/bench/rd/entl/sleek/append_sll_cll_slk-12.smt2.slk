@@ -1,0 +1,30 @@
+
+data node {
+  node next;
+}.
+
+pred lseg<p:node> ==
+ self = p
+or (exists p_21,q_20: self::node<next = q_20> * q_20::lseg<p_21> & p_21 = p).
+
+pred ll<> ==
+ self = null
+or (exists q_22: self::node<next = q_22> * q_22::ll<>).
+
+pred clist<> ==
+(exists self_19,p_18: self::node<next = p_18> * p_18::lseg<self_19> & self_19 = self).
+
+pred ll_e1<> ==
+(exists q: self::node<next = q> * q::ll<>).
+
+pred ll_e2<> ==
+(exists p,q: self::node<next = p> * q::ll<> & p = q).
+
+pred node_e1<q:node> ==
+(exists p: self::node<next = p> & p = q).
+
+pred lseg_e1<p:node> ==
+(exists q: self::lseg<p> & p = q).
+
+checkentail q::ll<> * xprm::node<next = q> & vprm != null & vprm = q & xprm = x & yprm = y & y = x & x != null
+         |- q::ll<> * xprm::node<next = q> & vprm != null & vprm = q & xprm = x & yprm = y & y = x & x != null.

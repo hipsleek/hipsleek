@@ -5,7 +5,7 @@
 foreach $file (@files) {
     print $file . "\n";
 
-    system("smt2slk " . $file);
+    system("../smt2slk " . $file);
 }
 
 
