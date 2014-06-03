@@ -591,7 +591,7 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   let bp = (Mcpure.pure_of_mix p0) in
   let efpd1 = Expure.build_ef_heap_formula baga_map h0 [] arg_map baga_map in
   let efpd2 = Expure.build_ef_pure_formula baga_map bp [] in
-  let efpd = Expure.star_ef_pure_disjs efpd1 efpd2 in
+  let efpd = Expure.EPureI.mk_star_disj efpd1 efpd2 in
   efpd
   
 and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
