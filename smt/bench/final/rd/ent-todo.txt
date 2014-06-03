@@ -1,11 +1,128 @@
 
 1. parser:
-2. adding expect (from spen):
+2. adding expect (from cyclic):
 3. sleek run
   - date:
   - date:
 
+01-22.tst.smt2: lemma proving
 
+=========================================
+parser:
+
+22.tst.smt2: FIXED (by Mihaela)
+syntax error on line 56
+Fatal error: exception Parsing.Parse_error
+
+(assert (tobool (ssep
+        (ls x y)
+	(pto y (ref f0 z))
+        (ls z nil)
+))))
+   ^^^
+should remove the last )
+============
+
+dll2.smt2
+: lexing error on line 1")lure("
+
+=========================================
+add expectation: (Chanh)
+
+   - append_dll*
+   - append_sll*
+   - lsegx4*
+   - elseg
+   - odd*
+
+=========================================
+sleek run: 03 Jun
+
+entl 
+1-22.tst.smt2.slk: wrong
+
+todo:
+ gen-lem (Trung)
+
+--------------
+dll2-entails-dll
+  -rev.smt2.lsk: wrong
+  0+.smt2.slk: wrong
+
+dll-rev-entails-dll2.smt2.slk: wrong
+
+todo:
+ improve solver.ml
+
+----------
+dll-entails-dll0+.smt2.slk
+dll-entails-dll-rev.smt2.slk
+dll-entails-node-dll-rev.smt2.slk
+dll-entails-node-node-dll.smt2.slk
+dll-mid-entails-dll-rev.smt2.slk
+dll-rev-entails-dll-mid.smt2.slk
+dll-rev-entails-dll.smt2.slk
+dll-spaghetti-existential.smt2.slk
+dll-spaghetti.smt2.slk
+
+
+todo:
+---------------
+dll-vc01.smt2.slk -- dll-vc13.smt2.slk
+
+todo:
+---------------
+lss-vc01.smt2.slk
+lss-vc02.smt2.slk
+lss-vc03.smt2.slk
+
+todo:
+---------------
+node-dll-rev-dll-entails-dll.smt2.slk
+node-node-dll-entails-dll.smt2.slk
+node-tll-tll-entails-tll.smt2.slk
+
+todo: 
+
+---------------
+tll-entails-node-tll-tll.smt2.slk
+tll-pp-entails-tll-pp-rev.smt2.slk
+tll-ravioli-existential.smt2.slk
+tll-ravioli.smt2.slk
+
+tll_slk-1.smt2.slk --> tll_slk-13.smt2.slk
+
+todo:
+
+
+---------------
+tree-pp-entails-tree-pp-rev.smt2.slk
+tree-pp-rev-entails-tree-pp.smt2.slk
+
+todo:
+
+---------------
+nlcl-vc01.smt2.slk --> nlcl-vc05.smt2.slk
+
+todo: (Long) check with those files in nlcl0a
+
+---------------
+nll-vc01.smt2.slk --> nll-vc16.smt2.slk
+
+todo: (Long) check with those files in nll
+
+--------------
+skl2-vc01.smt2.slk --> skl2-vc04.smt2.slk
+skl3-vc01.smt2.slk --> skl3-vc10.smt2.slk
+
+todo: (Long) check with those files in skl3
+
+--------------
+
+=========================================
+=========================================
+=========================================
+=========================================
 =========================================
 =========================================
 =========================================

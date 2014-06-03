@@ -1247,7 +1247,7 @@ let process_shape_rec sel_hps=
   ()
 
 let process_validate exp_res ils_es=
-  if !Globals.smt_compete_mode then () else
+  if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
     let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in

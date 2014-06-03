@@ -1,3 +1,9 @@
+bolo: 10x10
+clone: 10x10
+ls-vc: 5 files
+smallfoot: 75 files
+spaga: 10 x10 (duplicates with sat)
+
 
 1. parser:
 2. adding expect (from spen):
@@ -5,6 +11,14 @@
   - date:
   - date:
 
+
+=========================================
+adding expect from slp (Loc)
+
+=========================================
+sleek run, list all inconsistent results (Loc)
+
+./run-all.plx
 
 =========================================
 =========================================

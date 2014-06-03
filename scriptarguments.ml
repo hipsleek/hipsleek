@@ -681,7 +681,8 @@ let common_arguments = [
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--smt-compete", 
      Arg.Unit
-      (fun _ -> 
+      (fun _ ->
+          Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.silence_output:=true;
@@ -693,6 +694,21 @@ let common_arguments = [
           Globals.lemma_gen_unsafe := true;
            Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
+  ("--smt-compete-test", 
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          Globals.gen_baga_inv := true;
+          (* Globals.do_infer_inv := true; *)
+          Globals.lemma_gen_unsafe := true;
+           Globals.smt_compete_mode :=true), (*this flag is one that is  diff with compared to --smt-compete *)
+   "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 
