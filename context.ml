@@ -694,7 +694,7 @@ and coerc_mater_match_with_unk_hp_right prog (l_vname: ident) (r_vname: ident) (
 and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let cmml = coerc_mater_match_with_unk_hp_left prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in
   let cmmr = coerc_mater_match_with_unk_hp_right prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in 
-  cmml@cmmr
+  cmml(* @cmmr *)
 
 and coerc_mater_match_with_unk_hp prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list)  (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -1056,6 +1056,14 @@ and check_lemma_not_exist vl vr=
     else false in
     b_left && b_right &&(left_ls@right_ls)=[]
 
+and search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
+  if flag_lem then 
+    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
+    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
+    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
+    left_act@right_act 
+  else  []
 
 and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest): action_wt =
   let pr_debug s = DD.tinfo_pprint s no_pos in
@@ -1180,6 +1188,21 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let flag = (s_eq && 
                         ((vl_view_orig==false && vl_b) 
                         || ((vr_view_orig==false && vr_b)))) in
+                  let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let flag_lem = 
+                    if !ann_derv  then (not(vl_view_derv) && not(vr_view_derv)) 
+                      (* else (vl_view_orig || vr_view_orig) *)
+                    else
+                      (*only apply a SPLIT lemma to a lock
+                        if both sides are original*)
+                      (* if (is_l_lock) then *)
+                      (*   (vl_view_orig && vr_view_orig) *)
+                      (*if RHS is original --> SPLIT*)
+                      if (is_l_lock && is_r_lock && vr_view_orig) then          true
+                      else if (is_l_lock && is_r_lock && not vr_view_orig) then false
+                      else (vl_view_orig || vr_view_orig)
+                  in
                   let _ = Debug.tinfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
                   let _ = Debug.tinfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
                   let _ = Debug.tinfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
@@ -1190,6 +1213,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     if flag  then 
                       [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else
+                      (* using || results in some repeated answers but still terminates *)
                       let a1 = (1,M_base_case_unfold m_res) in
                       let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
 		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
@@ -1241,7 +1265,13 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                   match a5 with
                                     | None -> a3
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
-                      match a6 with
+                      let a7 = 
+                        let lem_act = search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
+                        match a6 with
+                          | Some a ->  Some (1, Cond_action (lem_act@[a]))
+                          | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
+                      in
+                      match a7 with
                         | Some a -> [a]
                         | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
                               (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
@@ -1262,40 +1292,6 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                               (*L2: change here for cyclic*)
                               [(1,Cond_action lst)]
                   in
-                  (* using || results in some repeated answers but still terminates *)
-                  let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-                  let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-                  let flag = 
-                    if !ann_derv 
-                    then (not(vl_view_derv) && not(vr_view_derv)) 
-                      (* else (vl_view_orig || vr_view_orig) *)
-                    else
-                      (*only apply a SPLIT lemma to a lock
-                        if both sides are original*)
-                      (* if (is_l_lock) then *)
-                      (*   (vl_view_orig && vr_view_orig) *)
-                      (*if RHS is original --> SPLIT*)
-                      if (is_l_lock && is_r_lock && vr_view_orig) then
-                        true
-                      else if (is_l_lock && is_r_lock && not vr_view_orig) then
-                        false
-                      else
-                        (vl_view_orig || vr_view_orig)
-                  in
-                  let l3 = if flag
-                  then begin
-                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
-                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
-                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
-                    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
-                    (* let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in *)
-                    (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in *)
-                    (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (m_res,None))] *\) (\* only targetted lemma *\) *)
-                    (* else *)
-                    (* if not (!Globals.smart_lem_search) then  *)left_act@right_act  
-                    (* else [] *)
-                  end
-                  else  [] in
                   (*let l4 = 
                   (* TODO WN : what is original?? *)
                   (* Without it, run-fast-test of big imm runs faster while
@@ -1305,13 +1301,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     [(2,M_base_case_fold m_res)] 
                     else [] in*)
                   (* [] in *)
-                  let src = if not (!Globals.smart_lem_search) then (-1,norm_search_action (l2@l3  (* @l4 *) )) 
-                  else 
-                    let src = (-1,norm_search_action l2) in
-                    let src = (-1,norm_cond_action (l3@[src])) in
-                    src
-                  in
-                  (* let src =  *)
+                  (* let src = (-1,norm_search_action (l2@l3  (\* @l4 *\) )) in *)
+                  let src = (-1,norm_search_action l2 ) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   pr_debug "DATA vs VIEW\n";
