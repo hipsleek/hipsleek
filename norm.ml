@@ -648,7 +648,8 @@ let eq_estate (es1: CF.entail_state) (es2: CF.entail_state): bool =
     try 
       let fv1 = CF.fv es1.CF.es_formula in
       let fv2 = CF.fv es2.CF.es_formula in
-      let intrs =  Gen.BList.intersect_eq CP.eq_spec_var fv1 fv2 in
+      (* let intrs =  Gen.BList.intersect_eq CP.eq_spec_var fv1 fv2 in *)
+      let intrs = fv1@fv2 in
       let intrs = List.map CP.name_of_spec_var intrs in
       fst (Checkeq.checkeq_formulas intrs es1.CF.es_formula es2.CF.es_formula)
     with _ -> false in

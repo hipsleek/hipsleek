@@ -1405,9 +1405,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
                   let uf_i = if new_orig_l then 0 else 1 in
                   (* WN_all_lemma - is this overriding of lemmas? *)
-                  let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in
+                  (* let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) vl_name dr.h_formula_data_name) in *)
                   (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
-                  let _ = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in
+                  (* let _ = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in *)
                   let sub_ann  = if (!Globals.allow_field_ann) then 
                     let r,_,_,_ = Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
                     r
@@ -1429,20 +1429,13 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                           else
                           [(1,M_unfold (m_res,uf_i))] 
                       else [] in
-                  let a2 = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in
+                  (* let a2 = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
 
-                    (* ==========andreea: a naive fix for right compelx lemma -- to be refined ========== *)
-                  let a3 =
-                    let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
-                        dr.h_formula_data_name vl_name) in
+                  let a2 =
                     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
                         vl_name dr.h_formula_data_name) in
-                    (* for right lemmas, only a complex one might trigger a match view --> data *)
-                    let right_ls = filter_lemmas_by_kind right_ls Complex in 
-                    (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
                     let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
-                    let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
-                    left_act@right_act in
+                    left_act in
                     (* ==================== *)
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
