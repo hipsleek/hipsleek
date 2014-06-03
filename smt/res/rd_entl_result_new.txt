@@ -7,7 +7,7 @@ SAT
 04.tst.smt2.slk
 SAT
 05.tst.smt2.slk
-SAT
+UNSAT
 06.tst.smt2.slk
 UNSAT
 07.tst.smt2.slk
@@ -35,7 +35,7 @@ SAT
 18.tst.smt2.slk
 SAT
 19.tst.smt2.slk
-UNSAT
+SAT
 20.tst.smt2.slk
 SAT
 21.tst.smt2.slk
@@ -159,7 +159,7 @@ SAT
 dll-vc04.smt2.slk
 SAT
 dll-vc05.smt2.slk
-SAT
+UNSAT
 dll-vc06.smt2.slk
 SAT
 dll-vc07.smt2.slk
@@ -171,7 +171,7 @@ UNSAT
 dll-vc10.smt2.slk
 SAT
 dll-vc11.smt2.slk
-SAT
+UNSAT
 dll-vc12.smt2.slk
 SAT
 dll-vc13.smt2.slk
@@ -265,8 +265,12 @@ SAT
 node-node-dll-entails-dll.smt2.slk
 UNSAT
 node-tll-tll-entails-tll.smt2.slk
-UNSAT
-odd-lseg3_slk-1.smt2.slk
+
+Last Proving Location: 1 File "node-tll-tll-entails-tll.smt2.slk",Line:11,Col:4
+
+ERROR: at node-tll-tll-entails-tll.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ odd-lseg3_slk-1.smt2.slk
 SAT
 odd-lseg3_slk-2.smt2.slk
 UNSAT
@@ -302,113 +306,114 @@ skl3-vc09.smt2.slk
 skl3-vc10.smt2.slk
 UNSAT
 tll-entails-node-tll-tll.smt2.slk
-SAT
-tll-pp-entails-tll-pp-rev.smt2.slk
+
+Last Proving Location: 1 File "tll-entails-node-tll-tll.smt2.slk",Line:11,Col:4
+
+ERROR: at tll-entails-node-tll-tll.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll-pp-entails-tll-pp-rev.smt2.slk
 
 Last Proving Location: 1 File "tll-pp-entails-tll-pp-rev.smt2.slk",Line:19,Col:4
 
-ERROR: at tll-pp-entails-tll-pp-rev.smt2.slk_13:5_13:63 
-Message: compute_lemma_params_property: expect 2 list has same size
+ERROR: at tll-pp-entails-tll-pp-rev.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
  tll-pp-rev-entails-tll-pp.smt2.slk
 
 Last Proving Location: 1 File "tll-pp-rev-entails-tll-pp.smt2.slk",Line:19,Col:4
 
-ERROR: at tll-pp-rev-entails-tll-pp.smt2.slk_13:5_13:63 
-Message: compute_lemma_params_property: expect 2 list has same size
+ERROR: at tll-pp-rev-entails-tll-pp.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
  tll-ravioli-existential.smt2.slk
-tll-ravioli.smt2.slk
-tll_slk-1.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-10.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-11.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-12.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-13.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-2.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-3.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-4.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-5.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-6.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-7.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-8.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tll_slk-9.smt2.slk
-WARNING : the view body for eright_nnil contains unsat branch(es) :
-    (* lbl: *){6}->(exists p0_32,l0_33,r0_34,n0_35,p1_36,l1_37,r1_38,
-n1_39: self::node<p0_32,l0_33,r0_34,n0_35> * l1_37::tree<> * r1_38::tree<>&
-p0_32=p1_36 & l0_33=l1_37 & r0_34=r1_38 & n0_35=n1_39 & r1_38=null&
-{FLOW,(1,24)=__flow})[]
-UNSAT
-tree-pp-entails-tree-pp-rev.smt2.slk
+
+Last Proving Location: 1 File "tll-ravioli-existential.smt2.slk",Line:11,Col:4
+
+ERROR: at tll-ravioli-existential.smt2.slk_13:5_13:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll-ravioli.smt2.slk
+
+Last Proving Location: 1 File "tll-ravioli.smt2.slk",Line:11,Col:4
+
+ERROR: at tll-ravioli.smt2.slk_13:5_13:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-1.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-1.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-1.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-10.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-10.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-10.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-11.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-11.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-11.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-12.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-12.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-12.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-13.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-13.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-13.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-2.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-2.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-2.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-3.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-3.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-3.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-4.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-4.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-4.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-5.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-5.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-5.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-6.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-6.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-6.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-7.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-7.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-7.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-8.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-8.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-8.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tll_slk-9.smt2.slk
+
+Last Proving Location: 1 File "tll_slk-9.smt2.slk",Line:18,Col:1
+
+ERROR: at tll_slk-9.smt2.slk_13:5_13:32 
+Message: compute_lemma_params_property: expect at most 1 view node
+ tree-pp-entails-tree-pp-rev.smt2.slk
 SAT
 tree-pp-rev-entails-tree-pp.smt2.slk
 SAT
