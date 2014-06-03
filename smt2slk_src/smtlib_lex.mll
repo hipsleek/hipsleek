@@ -10,6 +10,7 @@ rule token = parse
 | "(set-logic" (_ # ')')* ')' { token lexbuf }
 | "(set-info" (_ # ')')* ')' { token lexbuf }
 | ['\n']+ as str { Smtlib_util.line := (!Smtlib_util.line + (String.length str)); token lexbuf }
+| ['\r''\n']+ as str { Smtlib_util.line := (!Smtlib_util.line + (String.length str)); token lexbuf }
 | "|" { BAR }
 | "_" { UNDERSCORE }
 | "(" { LPAREN }
