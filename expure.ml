@@ -661,7 +661,8 @@ and build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.form
 (* map   ls1<self,p> == [(b1,f1)] *)
 (*       ls2<self,p> == [(b2,f2)] *)
 let build_ef_view_x (map : (ident, ef_pure_disj) Hashtbl.t) (args_map : (ident, spec_var list) Hashtbl.t) (view_decl : Cast.view_decl) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
-  let self_var = SpecVar(UNK, self, Unprimed) in
+  (* let self_var = SpecVar(UNK, self, Unprimed) in *)
+  let self_var = SpecVar(Named view_decl.Cast.view_data_name, self, Unprimed) in
   let args = self_var::view_decl.Cast.view_vars in
   let disj = List.flatten (List.map (fun (cf,_) ->
       let disj = build_ef_formula map cf args args_map init_map in
