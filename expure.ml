@@ -395,6 +395,7 @@ sig
   val string_of : t -> string
   val conv_var : t list -> spec_var list
   val from_var : spec_var list -> t list
+  val merge_baga : t list -> t list -> t list
 end;;
 
 module EPURE =
@@ -410,14 +411,8 @@ struct
   let is_false (e:epure) = (e == mk_false)
   let string_of (x:epure) = pr_pair (pr_list Elt.string_of) Cprinter.string_of_pure_formula x
   let string_of_disj lst = pr_list string_of lst
-  let rec merge_baga b1 b2 =
-    match b1,b2 with
-      | [],b | b,[] -> b
-      | x1::t1, x2::t2 ->
-            let c = Elt.compare x1 x2 in
-            if c<0 then x1::(merge_baga t1 b2)
-            else if c>0 then x2::(merge_baga b1 t2)
-            else failwith "detected false"
+  let merge_baga b1 b2 = Elt.merge_baga b1 b2
+
   let mk_star efp1 efp2 = 
     if (is_false efp1) || (is_false efp2) then mk_false
     else
@@ -517,6 +512,86 @@ struct
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let f = List.map (fun (b,f) -> (Elt.conv_var b,f)) in
     ef_imply_disj_0 (f ante) (f conseq)
+
+end
+
+
+module EPUREN =
+    functor (Elt : SV_TYPE) ->
+struct
+  module EM = Gen.EqMap(Elt)
+  type elem = Elt.t
+  type emap = EM.emap
+  (* baga, eq_map, ineq_list *)
+  type epure = (elem list * (elem * elem) list * (elem * elem) list)
+  type epure_disj = epure list
+
+  let mk_false = ([Elt.zero], [], [])
+  let is_false (e:epure) = (e == mk_false)
+  let pr1 = pr_list Elt.string_of
+  let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
+  let string_of (x:epure) = 
+    pr_triple (add_str "BAGA" pr1) (add_str "EQ" pr2) (add_str "INEQ" pr2) x
+
+  let string_of_disj (x:epure_disj) = pr_list string_of x
+
+  let merge_baga b1 b2 = Elt.merge_baga b1 b2
+
+  let mk_star efp1 efp2 =
+    if (is_false efp1) || (is_false efp2) then mk_false
+    else
+      let (baga1, eq1, neq1) = efp1 in
+      let (baga2, eq2, neq2) = efp2 in
+      try
+        (merge_baga baga1 baga2, eq1@eq2, neq1@neq2)
+      with _ -> mk_false
+
+  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
+    let res =
+      List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
+    List.concat res
+
+  let mk_or_disj t1 t2 = t1@t2
+
+(* 
+    given (baga,eq,inq)
+    contra if 
+       null \in baga
+       duplicate (in baga - detected by merge)
+       exists (a,b) in inq & eq
+       exists (a,a) in eq (detected by norm,subs )
+
+  how to detect: 
+       ([b], b=null, ..)?
+
+*)
+  let unsat (b,e,inq) = false
+
+  let norm (efp) =
+    if unsat efp then mk_false
+    else efp
+
+  let elim_unsat_disj disj =
+    List.filter (fun f -> not(unsat f)) disj
+
+  (* (\* reducing duplicate? *\) *)
+  (* let norm_disj disj = *)
+  (*       List.filter (fun v -> not(is_false v)) (List.map norm disj) *)
+
+  (* let is_false_disj disj = disj==[] *)
+
+  (* let mk_false_disj = [] *)
+
+  (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
+  (*   let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in *)
+  (*   (Elt.from_var b,f) *)
+
+  (* let imply ((b1,f1) as ante : epure) ((b2,f2) as conseq : epure) : bool = *)
+  (*   ef_imply_0 (Elt.conv_var b1,f1) (Elt.conv_var b2,f2) *)
+
+  (* let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool = *)
+  (*   let f = List.map (fun (b,f) -> (Elt.conv_var b,f)) in *)
+  (*   ef_imply_disj_0 (f ante) (f conseq) *)
 
 end
 

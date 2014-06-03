@@ -4298,6 +4298,15 @@ struct
   let string_of = string_of_spec_var
   let conv_var x = x
   let from_var x = x
+  (* throws exception when duplicate detected during merge *)
+  let rec merge_baga b1 b2 =
+    match b1,b2 with
+      | [],b | b,[] -> b
+      | x1::t1, x2::t2 ->
+            let c = compare x1 x2 in
+            if c<0 then x1::(merge_baga t1 b2)
+            else if c>0 then x2::(merge_baga b1 t2)
+            else failwith "detected false"
 end;;
 
 module Ptr =
