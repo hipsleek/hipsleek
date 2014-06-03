@@ -4296,6 +4296,8 @@ struct
   let eq = eq_spec_var
   let compare = compare_spec_var
   let string_of = string_of_spec_var
+  let conv_var x = x
+  let from_var x = x
 end;;
 
 module Ptr =
