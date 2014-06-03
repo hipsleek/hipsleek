@@ -135,51 +135,95 @@ and get_pto_fields t =
             []
     | _ -> []
 
-and is_pure t =
-  match t with
-    | TermQualIdTerm (_, qualId, (_, tl)) ->
-          let op =
-            ( match qualId with
-              | QualIdentifierId (_, id) -> get_str_id id
-              | QualIdentifierAs (_, id, _) -> get_str_id id
-            )
-          in
-          not (op = "tobool")
-    (* | TermQualIdentifier (_, qualId) -> *)
-    (*       let id = *)
-    (*         ( match qualId with *)
-    (*           | QualIdentifierId (_, id) -> get_str_id id *)
-    (*           | QualIdentifierAs (_, id, _) -> get_str_id id *)
-    (*         ) *)
-    (*       in *)
-    (*       not (id = "emp") *)
-    | _ -> false
+(* and is_pure t = *)
+(*   match t with *)
+(*     | TermQualIdTerm (_, qualId, (_, tl)) -> *)
+(*           let op = *)
+(*             ( match qualId with *)
+(*               | QualIdentifierId (_, id) -> get_str_id id *)
+(*               | QualIdentifierAs (_, id, _) -> get_str_id id *)
+(*             ) *)
+(*           in *)
+(*           not (op = "tobool") *)
+(*     (\* | TermQualIdentifier (_, qualId) -> *\) *)
+(*     (\*       let id = *\) *)
+(*     (\*         ( match qualId with *\) *)
+(*     (\*           | QualIdentifierId (_, id) -> get_str_id id *\) *)
+(*     (\*           | QualIdentifierAs (_, id, _) -> get_str_id id *\) *)
+(*     (\*         ) *\) *)
+(*     (\*       in *\) *)
+(*     (\*       not (id = "emp") *\) *)
+(*     | _ -> false *)
 
-and is_heap t =
-  match t with
-    | TermQualIdTerm (_, qualId, (_, tl)) ->
-          let op =
-            ( match qualId with
-              | QualIdentifierId (_, id) -> get_str_id id
-              | QualIdentifierAs (_, id, _) -> get_str_id id
-            )
-          in
-          op = "tobool"
-    (* | TermQualIdentifier (_, qualId) -> *)
-    (*       let id = *)
-    (*         ( match qualId with *)
-    (*           | QualIdentifierId (_, id) -> get_str_id id *)
-    (*           | QualIdentifierAs (_, id, _) -> get_str_id id *)
-    (*         ) *)
-    (*       in *)
-    (*       id = "emp" *)
-    | _ -> false
+(* and is_heap t = *)
+(*   match t with *)
+(*     | TermQualIdTerm (_, qualId, (_, tl)) -> *)
+(*           let op = *)
+(*             ( match qualId with *)
+(*               | QualIdentifierId (_, id) -> get_str_id id *)
+(*               | QualIdentifierAs (_, id, _) -> get_str_id id *)
+(*             ) *)
+(*           in *)
+(*           op = "tobool" *)
+(*     (\* | TermQualIdentifier (_, qualId) -> *\) *)
+(*     (\*       let id = *\) *)
+(*     (\*         ( match qualId with *\) *)
+(*     (\*           | QualIdentifierId (_, id) -> get_str_id id *\) *)
+(*     (\*           | QualIdentifierAs (_, id, _) -> get_str_id id *\) *)
+(*     (\*         ) *\) *)
+(*     (\*       in *\) *)
+(*     (\*       id = "emp" *\) *)
+(*     | _ -> false *)
 
 and get_pure_tl tl =
-  List.filter (fun t -> is_pure t) tl
+  let rec helper tl =
+    match tl with
+      | [] -> []
+      | fst_t::other_t ->
+            match fst_t with
+              | TermQualIdTerm (_, qualId, (_, new_tl)) ->
+                    let op =
+                      ( match qualId with
+                        | QualIdentifierId (_, id) -> get_str_id id
+                        | QualIdentifierAs (_, id, _) -> get_str_id id
+                      )
+                    in
+                    if (op = "tobool") then
+                      helper other_t
+                    else if (op = "and") then
+                      (helper new_tl)@(helper other_t)
+                    else
+                      fst_t::(helper other_t)
+              | _ -> fst_t::(helper other_t)
+  (*     | _ -> tl *)
+  (* List.filter (fun t -> is_pure t) tl *)
+  in
+  helper tl
 
 and get_heap_tl tl =
-  List.filter (fun t -> is_heap t) tl
+  let rec helper tl =
+    match tl with
+      | [] -> []
+      | fst_t::other_t ->
+            match fst_t with
+              | TermQualIdTerm (_, qualId, (_, new_tl)) ->
+                    let op =
+                      ( match qualId with
+                        | QualIdentifierId (_, id) -> get_str_id id
+                        | QualIdentifierAs (_, id, _) -> get_str_id id
+                      )
+                    in
+                    if (op = "tobool") then
+                      fst_t::(helper other_t)
+                    else if (op = "and") then
+                      (helper new_tl)@(helper other_t)
+                    else
+                      helper other_t
+               | _ -> helper other_t
+  in
+  helper tl
+(* and get_heap_tl tl = *)
+(*   List.filter (fun t -> is_heap t) tl *)
 
 and trans_command c cl =
   match c with
