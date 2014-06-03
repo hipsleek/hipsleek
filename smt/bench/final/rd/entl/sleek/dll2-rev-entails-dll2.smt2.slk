@@ -21,5 +21,3 @@ or (exists x: self::DLL2_t<next = x,prev = p,prev2 = _,next2 = _,down = _> * x::
 
 checkentail x::DLL2_plus_rev<y,u,v>
          |- x::DLL2_plus<y,u,v>.
-
-expect Valid.

@@ -14,5 +14,3 @@ or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
 
 checkentail a::DLL_plus<null,c,null>
          |- a::DLL<null,c,null>.
-
-expect Valid.
