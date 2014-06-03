@@ -2162,7 +2162,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
                   let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
-                  Expure.ef_imply_disj bi uv
+                  Expure.EPureI.imply_disj bi uv
               ) lst  in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()
