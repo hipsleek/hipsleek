@@ -264,7 +264,8 @@ and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_
 and string_of_data_param_list params anns = match (params, anns) with 
   | ([], [])                   -> ""
   | (h::[], a::[])             -> string_of_data_param h a
-  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ ", " ^ (string_of_data_param_list t1 t2)
+  | (h::t1, [])                -> (string_of_formula_exp h) ^ "," ^ (string_of_data_param_list t1 [])
+  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ "," ^ (string_of_data_param_list t1 t2)
   | (_, _)                     -> ""
 ;;
 
