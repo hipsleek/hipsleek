@@ -1627,6 +1627,7 @@ $output_file = "log";
         ["lemmas/dseg1.slk", " --elp --dis-lem-gen ", "Valid.Fail.", ""],
         ["lemmas/odd-lseg.slk", " --elp --dis-lem-gen ", "Valid.Valid.", "Fail.Valid.Valid.Fail.Valid.Fail.Valid"],
         ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen ", "Valid.Valid.Valid", "Valid.Valid.Fail."],
+        ["lemmas/odd-lseg-app.slk", "", "", "Valid.Valid."],
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
 				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]

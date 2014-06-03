@@ -724,7 +724,7 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:
   let coerc_right = Lem_store.all_lemma # get_right_coercion in
   (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in *)
   let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cformula.h_formula) in
-  cmml(* @cmmr *)
+  cmml@cmmr
 
 
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
@@ -1035,6 +1035,11 @@ and norm_search_action ls = match ls with
   | [(_,a)] -> a
   | lst -> Search_action lst
 
+and norm_cond_action ls = match ls with
+  | [] -> M_Nothing_to_do ("cond action is empty")
+  | [(_,a)] -> a
+  | lst -> Cond_action lst
+
 and check_lemma_not_exist vl vr=
   if not !Globals.lemma_syn then false else
     let vl_name = vl.h_formula_view_name in
@@ -1129,7 +1134,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                       let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
                       let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in
                       if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
-                      else left_act@right_act
+                      else
+                        (* if not (!Globals.smart_lem_search) then *)  left_act@right_act   (*andreeac temp - remove lemma act from here*)
+                        (* else [] *)
                     end
                   else [] in
                   let src = (-1,Search_action (l2@l3)) in
@@ -1285,7 +1292,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in *)
                     (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (m_res,None))] *\) (\* only targetted lemma *\) *)
                     (* else *)
-                    left_act@right_act
+                    (* if not (!Globals.smart_lem_search) then  *)left_act@right_act  
+                    (* else [] *)
                   end
                   else  [] in
                   (*let l4 = 
@@ -1297,7 +1305,13 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     [(2,M_base_case_fold m_res)] 
                     else [] in*)
                   (* [] in *)
-                  let src = (-1,norm_search_action (l2@l3  (* @l4 *) )) in
+                  let src = if not (!Globals.smart_lem_search) then (-1,norm_search_action (l2@l3  (* @l4 *) )) 
+                  else 
+                    let src = (-1,norm_search_action l2) in
+                    let src = (-1,norm_cond_action (l3@[src])) in
+                    src
+                  in
+                  (* let src =  *)
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   pr_debug "DATA vs VIEW\n";
@@ -1370,7 +1384,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
                     let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
                     let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
-                    left_act@right_act in
+                    (* if not (!Globals.smart_lem_search) then *) left_act@right_act  (*andreeac temp - remove lemma act from here*)
+                    (* else [] *)
+                  in
                     (* ==================== *)
                   let r_lem =
                     if (Lem_store.all_lemma # any_coercion
@@ -1435,8 +1451,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
                         vl_name dr.h_formula_data_name) in
                     let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
-                    left_act in
-                    (* ==================== *)
+                    (* if not (!Globals.smart_lem_search) then  *)left_act  (*andreeac temp - remove lemma act from here*)
+                    (* else [] *)  in
+                  (* ==================== *)
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
                   let a = a1@a2 in

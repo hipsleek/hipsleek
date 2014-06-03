@@ -165,6 +165,10 @@ let common_arguments = [
    "Turn on printing during lemma processing (incl lemma proving) ");
   ("--dlpi", Arg.Set Globals.dump_lem_proc,
    "same as --dump-lem-processing-info ");
+  ("--en-smart-lem-search", Arg.Set Globals.smart_lem_search,
+   "Activate a smart heuristic for lemma search");
+  ("--dis-smart-lem-search", Arg.Clear Globals.smart_lem_search,
+   "Use naive heuristic for lemma search");
   ("--trace", Arg.Set Debug.trace_on,
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
