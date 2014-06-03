@@ -12,3 +12,4 @@ pred right<p:node> ==
 
 checkentail x::node<nxt = a> * a::elseg<p>
          |- x::elseg<p>.
+expect Fail.

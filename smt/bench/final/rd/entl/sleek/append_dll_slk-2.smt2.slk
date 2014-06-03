@@ -22,3 +22,4 @@ pred dll_e3<p:node2> ==
 
 checkentail q::dll<self> * y::dll<p> * xprm::node2<prev = p1,next = q> & vprm = null & vprm = q & xprm = x & yprm = y & x != null & self = xprm & p1 = q1
          |- q::dll<self> * y::dll<p> * xprm::node2<prev = p1,next = q> & vprm = null & vprm = q & xprm = x & yprm = y & x != null & self = xprm & p1 = q1.
+expect Valid.

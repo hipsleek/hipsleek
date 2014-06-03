@@ -25,3 +25,4 @@ pred lseg_e1<p:node> ==
 
 checkentail q::ll<> * xprm::node<next = q> & q = null & xprm = x & yprm = y & x != null
          |- xprm::node_e1<q> * q::ll<> & q = null & xprm = x & yprm = y & x != null.
+expect Valid.

@@ -24,3 +24,4 @@ pred right5<> ==
 
 checkentail x::lseg<p> & x != p
          |- x::right1<p>.
+expect Valid.

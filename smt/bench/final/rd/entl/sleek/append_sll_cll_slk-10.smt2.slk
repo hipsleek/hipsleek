@@ -28,3 +28,4 @@ pred lseg_e1<p:node> ==
 
 checkentail xprm::ll_e1<> & xprm = x & yprm = y & y = x & x != null
          |- xprm::ll_e2<> & xprm = x & yprm = y & y = x & x != null.
+expect Valid.

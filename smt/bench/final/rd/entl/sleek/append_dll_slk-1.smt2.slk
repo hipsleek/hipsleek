@@ -22,3 +22,4 @@ pred dll_e3<p:node2> ==
 
 checkentail xprm::dll_e1<q> * y::dll<p> & xprm = x & yprm = y & x != null
          |- xprm::dll_e2<q> * y::dll<p> & xprm = x & yprm = y & x != null.
+expect Valid.

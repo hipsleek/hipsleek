@@ -12,3 +12,4 @@ pred right<p:node> ==
 
 checkentail z::node<nxt = a> * a::node<nxt = b> * b::elseg<p>
          |- z::right<p>.
+expect Valid.
