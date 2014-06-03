@@ -7,7 +7,7 @@
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status unknown)
+(set-info :status unsat)
 
 
 
@@ -45,7 +45,7 @@
  )
 
 (define-fun ListE ((?x GTyp) (?y GTyp)) Space
-
+(tospace
 
         (exists ((?xp GTyp))
 
@@ -57,8 +57,17 @@
 
                 )))
 
+ ))
+
+(define-fun ListX ((?x GTyp) (?y GTyp)) Space
+(tospace (or
+        (tobool (ListO ?x ?y))
+        (tobool (ListE ?x ?y))
+
+) )
  )
 
+ 
 (define-fun List ((?x GTyp) (?y GTyp)) Space
 (tospace (or
 
@@ -72,7 +81,7 @@
 
                  (and (distinct nil ?x)
                         (tobool
-        (sep (pto ?x  (ref f0 ?xp) )
+        (ssep (pto ?x  (ref f0 ?xp) )
                 (List ?xp ?y)
         )
 
@@ -89,10 +98,9 @@
 (declare-fun x () GTyp)
 (declare-fun y () GTyp)
 
-(assert (or
-	(tobool (ListE x y))
-        (tobool (ListO x y))
-))
+(assert 
+	(tobool (ListX x y))
+)
 
 (assert (not (tobool
         (List x y)
