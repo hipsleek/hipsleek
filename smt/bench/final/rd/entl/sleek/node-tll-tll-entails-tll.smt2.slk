@@ -1,4 +1,4 @@
-
+        
 data TLL_t {
   TLL_t left;
   TLL_t right;
@@ -12,3 +12,5 @@ or (exists l,r,z: self::TLL_t<left = l,right = r,parent = par,next = null> * l::
 
 checkentail (exists l,r,z: a::TLL_t<left = l,right = r,parent = null,next = null> * l::TLL_plus<a,c,z> * r::TLL_plus<a,z,null>)
          |- a::TLL_plus<null,c,null>.
+
+expect Valid.

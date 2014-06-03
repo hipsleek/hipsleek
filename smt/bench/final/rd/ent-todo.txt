@@ -22,12 +22,14 @@ Fatal error: exception Parsing.Parse_error
    ^^^
 should remove the last )
 ============
-
-dll2.smt2
+dll2.smt2: REMOVED
 : lexing error on line 1")lure("
 
+ (by Mihaela)
+Indeed, this is a slide benchmark that should not be there ... I'll remove it.
+
 =========================================
-add expectation: (Chanh)
+add expectation: (Chanh): DONE
 
    - append_dll*
    - append_sll*
@@ -44,65 +46,230 @@ entl
 todo:
  gen-lem (Trung)
 
---------------
-dll2-entails-dll
-  -rev.smt2.lsk: wrong
-  0+.smt2.slk: wrong
-
-dll-rev-entails-dll2.smt2.slk: wrong
-
-todo:
- improve solver.ml
-
-----------
-dll-entails-dll0+.smt2.slk
-dll-entails-dll-rev.smt2.slk
-dll-entails-node-dll-rev.smt2.slk
-dll-entails-node-node-dll.smt2.slk
-dll-mid-entails-dll-rev.smt2.slk
-dll-rev-entails-dll-mid.smt2.slk
-dll-rev-entails-dll.smt2.slk
-dll-spaghetti-existential.smt2.slk
-dll-spaghetti.smt2.slk
+======================================================================
+# dll2-entails-dll-rev.smt2.lsk: wrong
 
 
-todo:
----------------
-dll-vc01.smt2.slk -- dll-vc13.smt2.slk
 
-todo:
----------------
-lss-vc01.smt2.slk
-lss-vc02.smt2.slk
-lss-vc03.smt2.slk
+======================================================================
+# dll2-entails-dll0+.smt2.slk: wrong
 
-todo:
----------------
-node-dll-rev-dll-entails-dll.smt2.slk
-node-node-dll-entails-dll.smt2.slk
-node-tll-tll-entails-tll.smt2.slk
+
+======================================================================
+#dll-rev-entails-dll2.smt2.slk:
 
 todo: 
 
----------------
-tll-entails-node-tll-tll.smt2.slk
-tll-pp-entails-tll-pp-rev.smt2.slk
-tll-ravioli-existential.smt2.slk
-tll-ravioli.smt2.slk
+======================================================================
+#dll-entails-dll0+.smt2.slk:
 
-tll_slk-1.smt2.slk --> tll_slk-13.smt2.slk
+todo: gen lemma:
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+           self::DLL<p,tl,tl> * tl::DLL_t<next = n,prev = self>.
+
+- pred-en-split
+
+======================================================================
+# dll-entails-dll-rev.smt2.slk :
+
+todo: need to gen lemma:
+lemma_unsafe self::DLL_plus<p,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+======================================================================
+#dll-entails-node-dll-rev.smt2.slk
+
+todo:  need to gen lemma:
+
+lemma_unsafe  self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+            self::DLL_plus_rev<p,tl1,n1> * n1::DLL_plus<tl1,tl,n>.
+
+======================================================================
+#dll-entails-node-node-dll.smt2.slk
+
+1. syntactically subst
+     self::points_to<b:DLL_t,c:DLL_t> <-> self::DLL_t<c,b>.
+  - view defs:
+  - ante + conseq
+2. fix bug (Trung)
+   checkentail x::DLL_plus<null,c,null>
+         |- (exists y,a: x::DLL_t<null,y> * y::DLL_t<x,a> * a::DLL_plus<y,c,null>).
+should valid
+
+======================================================================
+#dll-mid-entails-dll-rev.smt2.slk
+
+1. syntactically subst
+     self::points_to<b:DLL_t,c:DLL_t> <-> self::DLL_t<c,b>.
+  - view defs:
+  - ante + conseq
+
+2. fix bug
+  checkentail x::DLL_t<next = tl,prev = null> * tl::DLL_t<self,null>
+   |- x::DLL_plus_rev<null,y,null>.
+should be valid
+
+3. gen lemma
+ lemma_unsafe self::DLL_plus_rev<p,tl1,n1>*n1::DLL_plus<tl1,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+
+======================================================================
+#dll-rev-entails-dll-mid.smt2.slk
+
+correlate to #dll-mid-entails-dll-rev.smt2.slk
+
+======================================================================
+#dll-rev-entails-dll.smt2.slk
+
+correlate to #dll-entails-node-dll-rev.smt2.slk
+
+todo: need to gen lemma:
+lemma_unsafe self::DLL_plus<p,tl,n> <-> self::DLL_plus_rev<p,tl,n>.
+
+
+======================================================================
+#dll-spaghetti-existential.smt2.slk
+
+ - matching quantifiers of rhs with heap lhs
+
+======================================================================
+#dll-spaghetti.smt2.slk
 
 todo:
+ - gen lemma/ statically subst DLL_plus_rev/DLL_plus
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+           self::DLL_plus_rev<p,tl,n>.
+ - graph matching
 
 
----------------
-tree-pp-entails-tree-pp-rev.smt2.slk
-tree-pp-rev-entails-tree-pp.smt2.slk
+======================================================================
+#dll2-spaghetti-existential.smt2.slk 
+
+
+======================================================================
+#dll2-spaghetti.smt2.slk
+
+
+======================================================================
+#dll-vc01.smt2.slk: OK
+
+#dll-vc02.smt2.slk: OK
+
+#dll-vc03.smt2.slk: OK
+
+#dll-vc04.smt2.slk: OK
+
+#dll-vc05.smt2.slk: OK
+
+#dll-vc06.smt2.slk: OK
+
+#dll-vc07.smt2.slk: OK
+
+#dll-vc08.smt2.slk:
+
+todo: gen lemma
+lemma_unsafe self::dll<n1,p,n1> * n1::Dll_t<n,self> <-> self::dll<n1,p,n>.
+
+#dll-vc09.smt2.slk: OK
+
+#dll-vc10.smt2.slk
+todo: gen lemma
+lemma_unsafe self::dll<n1,p,n1> * n1::Dll_t<n,self> <-> self::dll<n1,p,n>.
+
+
+#dll-vc11.smt2.slk: OK
+
+#dll-vc12.smt2.slk: OK
+
+#dll-vc13.smt2.slk: OK
+
+
+======================================================================
+#lss-vc01.smt2.slk: OK
+
+#lss-vc02.smt2.slk: OK
+
+#lss-vc03.smt2.slk: OK
+
+
+
+======================================================================
+#node-dll-rev-dll-entails-dll.smt2.slk
+
+relate to #dll-entails-node-dll-rev.smt2.slk
+
+gen lemma:
+lemma_unsafe  self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
+            self::DLL_plus_rev<p,tl1,n1> * n1::DLL_plus<tl1,tl,n>.
+
+======================================================================
+#node-node-dll-entails-dll.smt2.slk: OK
+
+
+======================================================================
+#node-tll-tll-entails-tll.smt2.slk
+
+ERROR: at node-tll-tll-entails-tll.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+
+======================================================================
+#tll-entails-node-tll-tll.smt2.slk
+
+ERROR: at tll-entails-node-tll-tll.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+======================================================================
+#tll-pp-entails-tll-pp-rev.smt2.slk
+
+ERROR: at tll-pp-entails-tll-pp-rev.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+======================================================================
+#tll-pp-rev-entails-tll-pp.smt2.slk
+
+ERROR: at tll-pp-rev-entails-tll-pp.smt2.slk_9:5_9:42 
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+======================================================================
+#tll-ravioli-existential.smt2.slk
+
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+graph
+======================================================================
+#tll-ravioli.smt2.slk
+
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
+
+graph
+======================================================================
+#tll_slk-1.smt2.slk --> #tll_slk-13.smt2.slk
 
 todo:
+Message: compute_lemma_params_property: expect at most 1 view node
+ Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
 
----------------
-nlcl-vc01.smt2.slk --> nlcl-vc05.smt2.slk
+
+======================================================================
+#tree-pp-entails-tree-pp-rev.smt2.slk
+
+todo: lemma?
+
+
+======================================================================
+#tree-pp-rev-entails-tree-pp.smt2.slk
+
+todo: lemma?
+
+======================================================================
+#nlcl-vc01.smt2.slk --> #nlcl-vc05.smt2.slk
+
 
 todo: (Long) check with those files in nlcl0a
 
@@ -117,8 +284,8 @@ skl3-vc01.smt2.slk --> skl3-vc10.smt2.slk
 
 todo: (Long) check with those files in skl3
 
---------------
-
+======================================================================
+======================================================================
 =========================================
 =========================================
 =========================================
