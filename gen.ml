@@ -9,7 +9,10 @@ end;;
 module type EQ_TYPE =
 sig
   type t
+  val zero : t
+  val is_zero : t -> bool
   val eq : t -> t -> bool
+  val compare : t -> t -> int
   val string_of : t -> string
 end;;
 
@@ -401,14 +404,22 @@ struct
   type elist = elem list
   let eq = Elt.eq
   let string_of_elem = Elt.string_of
-
+  (* let rec compare (l1:elist) (l2:elist) = *)
+  (*   begin *)
+  (*     match l1,l2 with *)
+  (*       | [],[] -> 0 *)
+  (*       | [],x::_ -> -1 *)
+  (*       | x::_,[] -> 1 *)
+  (*       | a::t1,b::t2 ->  *)
+  (*             let c = Elt.compare a b in *)
+  (*             if c==0 then *)
+  (*               compare t1 t2 *)
+  (*             else c *)
+    (* end *)
   include BList
-
   let mem x l = List.exists (eq x) l
-
   let string_of (ls:'a list) : string 
         = string_of_f string_of_elem ls
-
 
   let rec check_dups n = 
     match n with
@@ -974,8 +985,11 @@ end;;
 module ID =
 struct 
   type t = string
+  let zero = ""
+  let is_zero t = (t="")
   let eq = fun s1 s2 -> String.compare s1 s2 = 0
   let string_of = fun s -> s
+  let compare = String.compare
 end;;
 
 module EMapID = EqMap(ID);;
@@ -1131,10 +1145,13 @@ sig
   type t
   type ef = t -> t -> bool
   type tlist = t list
+  val zero : t
+  val is_zero : t -> bool
   val eq : ef
   val intersect_eq : ef -> tlist -> tlist -> tlist
   val intersect : tlist -> tlist -> tlist
   val string_of : t -> string
+  val compare : t -> t -> int
 end;;
 
 module type EQ_PTR_TYPE =

@@ -13,6 +13,8 @@ open Label
 open Cpure
 open Cprinter
 
+
+
 (* in cpure.ml *)
 
 (* extended pure formula *)
@@ -381,6 +383,8 @@ let rec merge_baga b1 b2 =
           else if c>0 then x2::(merge_baga b1 t2)
           else failwith "detected false"
 
+(* denote false/contradiction *)
+(* ([], [], ("_"!="_")) *)
 let false_ef_pure = ([], mkFalse no_pos) 
 
 let star_ef_pures (efp1 : ef_pure) (efp2 : ef_pure) : ef_pure =
@@ -559,6 +563,55 @@ and build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.form
       Cprinter.string_of_ef_pure_disj (fun _ ->
       build_ef_formula_x map cf args args_map init_map) cf
 
+
+module EPURE =
+    functor (Elt : Gen.EQ_TYPE) ->
+struct
+  type elem = Elt.t
+  (* type epure = (elem list * (elem * elem) list * (elem * elem) list) *)
+  type epure = (elem list * formula)
+  type epure_disj = epure list
+  (* type baga_ty = .. *)
+  let mk_false = ([], mkFalse no_pos)
+  let is_false (e:epure) = (e == mk_false)
+  let string_of (x:epure) = pr_pair (pr_list Elt.string_of) Cprinter.string_of_pure_formula x
+  let string_of_disj lst = pr_list string_of lst
+  let rec merge_baga b1 b2 =
+    match b1,b2 with
+      | [],b | b,[] -> b
+      | x1::t1, x2::t2 ->
+            let c = Elt.compare x1 x2 in
+            if c<0 then x1::(merge_baga t1 b2)
+            else if c>0 then x2::(merge_baga b1 t2)
+            else failwith "detected false"
+  let mk_star efp1 efp2 = 
+    if (is_false efp1) || (is_false efp2) then mk_false
+    else
+      let (baga1, pure1) = efp1 in
+      let (baga2, pure2) = efp2 in
+      try
+        (merge_baga baga1 baga2, mkAnd pure1 pure2 no_pos)
+      with _ -> mk_false
+
+  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = 
+    let res =
+      List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
+    List.concat res
+    (* List.filter (fun v -> not(is_false v)) res *)
+  let mk_or_disj t1 t2 = t1@t2
+  let norm efp = efp
+    (* normalization, use prover? *)
+
+  let unsat efp = is_false (norm efp)
+  let norm_disj disj = 
+        List.filter (fun v -> not(is_false v)) (List.map norm disj)
+  let is_false_disj disj = disj==[]
+  let mk_false_disj = []
+  let unsat_disj disj = is_false_disj (norm_disj disj)
+end
+
+module X = EPURE(SV)
+
 (* using Cast *)
 
 (* build_ef_view : map -> view_decl --> ef_pure_disj *)
@@ -596,6 +649,12 @@ let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
   let r_list = List.map (fun (a, c) ->
       ef_imply_disj a c) pair_list in
   not (List.exists (fun r -> r = false) r_list)
+
+let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
+  let pr1 x = string_of_int (List.length x) in 
+  let pr2 = pr_list Cprinter.string_of_ef_pure_disj in
+  Debug.no_2 "fix_test" pr1 pr2 string_of_bool (fun _ _ -> (fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
+
 
 (* ef_find_equiv :  (spec_var) list -> ef_pure -> (spec_var) list *)
 (* find equivalent id in the formula *)

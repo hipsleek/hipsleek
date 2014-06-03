@@ -15,6 +15,8 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+let mk_spec_var id = SpecVar (UNK,id,Unprimed)
+
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
@@ -246,7 +248,6 @@ and rounding_func =
   | Floor
 
 and infer_rel_type =  (rel_cat * formula * formula)
-
 
 (* extended pure formula *)
 type ef_pure = ( 
@@ -4273,11 +4274,27 @@ let add_gte0_for_mona (f0 : formula): (formula)=
 (*   | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot) *)
 (*   | Array (et, _) -> (string_of_typ et) ^ "[]" (\* An Hoa *\) *)
 
+let compare_prime v1 v2 =
+  if v1==v2 then 0
+  else if v1==Unprimed then -1
+  else 1
+  
+let compare_ident v1 v2 = String.compare v1 v2
+
+let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+        let c = compare_ident v1 v2 in
+        if c=0 then
+          compare_prime p1 p2 
+        else c
 
 module SV =
 struct 
   type t = spec_var
+  let zero = mk_spec_var "_" (* to denote null value *)
+  let is_zero x = x==zero
   let eq = eq_spec_var
+  let compare = compare_spec_var
   let string_of = string_of_spec_var
 end;;
 

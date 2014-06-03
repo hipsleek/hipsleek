@@ -20,3 +20,24 @@ norm_ef_pure_disj
  (ii) Devise algo to avoid Omega simplify
  (iii) Use MiniSAT solver?
   
+
+(baga, pure)
+
+ (null --> "null")
+
+==> (sorted, [f_eq], [f_ineq])
+
+x!=y & y!=x
+
+Optimize ef_pure
+================
+
+ (baga1,eq1,inq1) * (baga2,eq2,inq2)
+ ==> (merge baga1 baga2, eq1/\eq2, inq1@inq2)
+     sorted eq_spec_var, emap, (var * var) list
+
+baga - duplicate, null 
+inq - v!=v
+      v!=w & v=w
+
+([a,b],eq1,in1) \/ ([a,b],eq2,in2)
