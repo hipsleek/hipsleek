@@ -2544,7 +2544,7 @@ let is_complex_entailment_4graph prog ante conseq=
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
- *    - generated disequality constrains between cont_vars and heap vars
+ *    - generated disequality constrains between forward_poiters and heap vars
  *    - if all the constrains are implied by the pure part of view's definietion,
  *      then the view is nontouching
  *)
@@ -2552,7 +2552,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
-  let cont_vars = vdecl.view_cont_vars in
+  let forward_ptrs = vdecl.view_forward_ptrs in
   let is_nontouching_branch branch = (
     let rec get_possible_touching_vars hf = (match hf with
       (* base case *)
@@ -2583,7 +2583,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
       | [] -> P.mkTrue pos
       | _ ->
           let condss = List.map (fun x ->
-            List.map (fun y -> P.mkNeqVar x y pos) cont_vars
+            List.map (fun y -> P.mkNeqVar x y pos) forward_ptrs
           ) possible_vars in
           let conds = List.concat condss in
           List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
@@ -3124,9 +3124,6 @@ let categorize_view (prog: prog_decl) : prog_decl =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vdecls = prog.prog_view_decls in
   let new_vdecls = List.map (fun vd ->
-    (* touching & segmented *)
-    let touching = is_touching_view vd in
-    let segmented = is_segmented_view vd in
     (* forward & backward pointers, fields *)
     let vgraphs = build_view_graph vd prog in
     let (fw_p, fw_f, bw_p, bw_f) = compute_view_forward_backward_info vd prog vgraphs in
@@ -3158,14 +3155,19 @@ let categorize_view (prog: prog_decl) : prog_decl =
       with Not_found ->
         report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
     ) bw_f in
-    (* aux formula *)
-    let newvd = { vd with view_is_touching = touching;
-                          view_is_segmented = segmented;
-                          view_forward_ptrs = forward_ptrs;
-                          view_backward_ptrs = backward_ptrs;
-                          view_forward_fields = forward_fields;
-                          view_backward_fields = backward_fields; } in
-    let view_aux = compute_view_aux_formula newvd prog vgraphs in
+    let vd = { vd with view_forward_ptrs = forward_ptrs;
+                       view_backward_ptrs = backward_ptrs;
+                       view_forward_fields = forward_fields;
+                       view_backward_fields = backward_fields; } in
+
+    (* touching & segmented is computed only when the forward and backward pointers is available *)
+    let touching = is_touching_view vd in
+    let segmented = is_segmented_view vd in
+
+    (* aux formula is computed after all *)
+    let vd = { vd with view_is_touching = touching;
+                       view_is_segmented = segmented; } in
+    let view_aux = compute_view_aux_formula vd prog vgraphs in
     (* let _ = print_endline ("== view: " ^ vd.view_name) in                                                   *)
     (* let str_fwp = "      - fw_ptrs: " ^ (String.concat ", " fw_p) in                                        *)
     (* let _ = print_endline (str_fwp) in                                                                      *)
@@ -3175,6 +3177,6 @@ let categorize_view (prog: prog_decl) : prog_decl =
     (* let _ = print_endline (str_bwp) in                                                                      *)
     (* let str_bwf = "      - bw_fields: " ^ (String.concat ", " (List.map ViewGraph.string_of_label bw_f)) in *)
     (* let _ = print_endline (str_bwf) in                                                                      *)
-    { newvd with view_aux_formula = view_aux; }
+    { vd with view_aux_formula = view_aux; }
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
