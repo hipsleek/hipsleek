@@ -515,7 +515,7 @@ struct
 
 end
 
-
+(* this is meant as more efficient baga module *)
 module EPUREN =
     functor (Elt : SV_TYPE) ->
 struct
@@ -523,15 +523,16 @@ struct
   type elem = Elt.t
   type emap = EM.emap
   (* baga, eq_map, ineq_list *)
-  type epure = (elem list * (elem * elem) list * (elem * elem) list)
+  (* type epure = (elem list * (elem * elem) list * (elem * elem) list) *)
+  type epure = (elem list * emap * (elem * elem) list)
   type epure_disj = epure list
 
-  let mk_false = ([Elt.zero], [], [])
+  let mk_false = ([Elt.zero], EM.mkEmpty, [])
   let is_false (e:epure) = (e == mk_false)
   let pr1 = pr_list Elt.string_of
   let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
   let string_of (x:epure) = 
-    pr_triple (add_str "BAGA" pr1) (add_str "EQ" pr2) (add_str "INEQ" pr2) x
+    pr_triple (add_str "BAGA" pr1) (add_str "EQ" EM.string_of) (add_str "INEQ" pr2) x
 
   let string_of_disj (x:epure_disj) = pr_list string_of x
 
@@ -543,7 +544,7 @@ struct
       let (baga1, eq1, neq1) = efp1 in
       let (baga2, eq2, neq2) = efp2 in
       try
-        (merge_baga baga1 baga2, eq1@eq2, neq1@neq2)
+        (merge_baga baga1 baga2, EM.merge_eset eq1 eq2, neq1@neq2)
       with _ -> mk_false
 
   let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
@@ -552,6 +553,22 @@ struct
     List.concat res
 
   let mk_or_disj t1 t2 = t1@t2
+
+  let conv_eq eq = mkTrue no_pos
+
+  let conv_ineq eq = mkTrue no_pos
+
+  let conv_enum ((baga,eq,inq) : epure) : formula =
+    let f1 = conv_eq eq in
+    let f2 = conv_ineq inq in
+    let bf = baga_enum (Elt.conv_var baga) in
+    mkAnd bf (mkAnd f1 f2 no_pos) no_pos
+
+  (* to be completed : naive implementation *)
+  let unsat f = 
+    let cf = conv_enum f in
+    (* if unsat(cf) return true *)
+    not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure cf))
 
 (* 
     given (baga,eq,inq)
@@ -565,7 +582,6 @@ struct
        ([b], b=null, ..)?
 
 *)
-  let unsat (b,e,inq) = false
 
   let norm (efp) =
     if unsat efp then mk_false
@@ -575,12 +591,12 @@ struct
     List.filter (fun f -> not(unsat f)) disj
 
   (* (\* reducing duplicate? *\) *)
-  (* let norm_disj disj = *)
-  (*       List.filter (fun v -> not(is_false v)) (List.map norm disj) *)
+  let norm_disj disj =
+        List.filter (fun v -> not(is_false v)) (List.map norm disj)
 
-  (* let is_false_disj disj = disj==[] *)
+  let is_false_disj disj = disj==[]
 
-  (* let mk_false_disj = [] *)
+  let mk_false_disj = []
 
   (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
   (*   let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in *)
