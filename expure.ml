@@ -193,7 +193,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
   let conj_list = list_of_conjs pf in
   match filter_formula ex_vars conj_list with
     | None -> mkFalse no_pos
-    | Some lst -> 
+    | Some lst ->
           List.fold_left (fun r pf -> mkAnd r pf no_pos) (mkTrue no_pos) lst
  (* let filtered_conj_list = List.filter (fun pf -> *)
  (*      let svl = fv pf in *)
@@ -465,10 +465,6 @@ struct
   let elim_unsat_disj disj = 
     List.filter (fun f -> not(unsat f)) disj
 
-  (* reducing duplicate? *)
-  let norm_disj disj =
-        List.filter (fun v -> not(is_false v)) (List.map norm disj)
-
   let is_false_disj disj = disj==[]
 
   let mk_false_disj = []
@@ -497,6 +493,18 @@ struct
 
   let imply ((b1,f1) as ante : epure) ((b2,f2) as conseq : epure) : bool =
     ef_imply_0 (Elt.conv_var b1,f1) (Elt.conv_var b2,f2)
+
+  (* reducing duplicate? *)
+  let norm_disj disj =
+    let rec remove_duplicate (disj : epure_disj) : epure_disj =
+      match disj with
+        | [] -> []
+        | hd::tl ->
+              let new_tl = remove_duplicate ((List.filter (fun ep ->
+                  not ((imply hd ep) && (imply ep hd)))) tl) in
+              hd::new_tl
+    in
+    remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj))
 
   let ef_imply_disj_x (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
     let a_f = ef_conv_enum_disj ante in
@@ -627,7 +635,7 @@ struct
     let f = mkAnd a_f (mkNot_s c_f) no_pos in
     not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
-(* TODO 
+(* TODO
 
   1. complete conv_eq & conv_neq
   2. complete elim_exists
