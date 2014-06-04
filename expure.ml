@@ -93,7 +93,7 @@ let ef_conv_enum ((baga,f) : ef_pure) : formula =
   Debug.no_1 "ef_conv_enum" string_of_ef_pure string_of_pure_formula
       ef_conv_enum_x (baga,f)
 
-let ef_conv_disj_ho conv (disj : ef_pure_disj) : formula =
+let ef_conv_disj_ho conv disj : formula =
   match disj with
     | [] -> mkFalse no_pos
     | h::ts ->
@@ -554,8 +554,10 @@ struct
 
   let mk_or_disj t1 t2 = t1@t2
 
+  (* to be completed *)
   let conv_eq eq = mkTrue no_pos
 
+  (* to be completed *)
   let conv_ineq eq = mkTrue no_pos
 
   let conv_enum ((baga,eq,inq) : epure) : formula =
@@ -564,7 +566,13 @@ struct
     let bf = baga_enum (Elt.conv_var baga) in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  (* to be completed : naive implementation *)
+  let conv ((baga,eq,inq) : epure) : formula =
+    let f1 = conv_eq eq in
+    let f2 = conv_ineq inq in
+    let bf = baga_conv (Elt.conv_var baga) in
+    mkAnd bf (mkAnd f1 f2 no_pos) no_pos
+
+  (* naive implementation *)
   let unsat f = 
     let cf = conv_enum f in
     (* if unsat(cf) return true *)
@@ -602,12 +610,22 @@ struct
   (*   let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in *)
   (*   (Elt.from_var b,f) *)
 
-  (* let imply ((b1,f1) as ante : epure) ((b2,f2) as conseq : epure) : bool = *)
-  (*   ef_imply_0 (Elt.conv_var b1,f1) (Elt.conv_var b2,f2) *)
+  let imply (ante : epure) (conseq : epure) : bool =
+    let a_f = conv_enum ante in
+    let c_f = conv conseq in
+    (* a_f --> c_f *)
+    let f = mkAnd a_f (mkNot_s c_f) no_pos in
+    not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
-  (* let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool = *)
-  (*   let f = List.map (fun (b,f) -> (Elt.conv_var b,f)) in *)
-  (*   ef_imply_disj_0 (f ante) (f conseq) *)
+  let conv_enum_disj = ef_conv_disj_ho conv_enum
+  let conv_disj      = ef_conv_disj_ho conv
+
+  let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
+    let a_f = conv_enum_disj ante in
+    let c_f = conv_disj conseq in
+    (* a_f --> c_f *)
+    let f = mkAnd a_f (mkNot_s c_f) no_pos in
+    not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
 end
 
