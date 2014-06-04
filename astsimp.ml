@@ -2140,21 +2140,21 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           Hashtbl.add args_map vd.Cast.view_name args;
       ) cviews0 in
       let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
-      let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
-          if List.mem cv.C.view_name (List.flatten ls) then
-            ls
-          else
-            ls@[[cv.C.view_name]]
-      ) ls_mut_rec_views1 cviews0 in
       (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
       (*     if List.mem cv.C.view_name (List.flatten ls) then *)
       (*       ls *)
-      (*     else if (List.mem cv.C.view_name (List.flatten ls_mut_rec_views)) then *)
-      (*       let mut_rec_views = List.find (fun mr_views -> *)
-      (*           List.mem cv.C.view_name mr_views) ls_mut_rec_views in *)
-      (*       ls@[mut_rec_views] *)
       (*     else *)
       (*       ls@[[cv.C.view_name]] *)
+      (* ) ls_mut_rec_views1 cviews0 in *)
+      let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
+          if List.mem cv.C.view_name (List.flatten ls) then
+            ls
+          else if (List.mem cv.C.view_name (List.flatten ls_mut_rec_views)) then
+            let mut_rec_views = List.find (fun mr_views ->
+                List.mem cv.C.view_name mr_views) ls_mut_rec_views in
+            ls@[mut_rec_views]
+          else
+            ls@[[cv.C.view_name]]
       ) [] cviews0 in
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
