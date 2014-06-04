@@ -1,4 +1,4 @@
-#abduced00.defs.smt2.slk --inv-baga (Long)
+#abduced00.defs.smt2.slk --inv-baga (Long): FIXED
 
 build_ef_heap_formula@2@1
 build_ef_heap_formula inp1 : g::GTyp<a00_156,Anon_12>
