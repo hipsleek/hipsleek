@@ -4307,6 +4307,14 @@ struct
             if c<0 then x1::(merge_baga t1 b2)
             else if c>0 then x2::(merge_baga b1 t2)
             else failwith "detected false"
+  let rec is_eq_baga b1 b2 =
+    match b1,b2 with
+      | [],[] -> true
+      | x1::t1, x2::t2 ->
+            let c = compare x1 x2 in
+            if c=0 then is_eq_baga t1 t2
+            else false
+      |_,_ -> false
 end;;
 
 module Ptr =

@@ -2573,10 +2573,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
           else if ((String.compare (P.name_of_spec_var hvnode) self) == 0) then
             [hvnode]
           else []
-      | _ ->
-          let msg = "is_touching_pred: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error pos msg
+      | _ -> [] (* just ignore *)
     ) in
     let (hf,mf,_,_,_) = CF.split_components branch in
     let possible_vars = get_possible_touching_vars hf in
@@ -2826,10 +2823,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
       | CF.Star sf ->
           analyze_heap sf.CF.h_formula_star_h1;
           analyze_heap sf.CF.h_formula_star_h2
-      | _ ->
-          let msg = "build_view_graph: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error no_pos msg
+      | _ -> () (* just ignore *)
     ) in
     (* analyze pure formula to detect equality between 2 heap node *)
     (* be careful with the case: not(a=b)  ~~> a != b              *)
@@ -3069,10 +3063,7 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
                 let aux = CF.mkStarH h1 h2 pos in
                 Some aux
           )
-        | _ ->
-            let msg = "compute_view_aux_formula: unsupported h_formula"
-                      ^ (!print_h_formula hf) in
-            report_error no_pos msg
+        | _ -> Some hf (* just ignore *)
       ) in
       get_aux_hf hf
     ) in
@@ -3169,20 +3160,18 @@ let categorize_view (prog: prog_decl) : prog_decl =
         (* self var *)
         P.SpecVar (Named vd.view_data_name, v, Unprimed)
     ) bw_p in
-    let forward_fields = List.map (fun (dname,fname) ->
+    let forward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) fw_f in
-    let backward_fields = List.map (fun (dname,fname) ->
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) fw_f) in
+    let backward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) bw_f in
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) bw_f) in
     let vd = { vd with view_forward_ptrs = forward_ptrs;
                        view_backward_ptrs = backward_ptrs;
                        view_forward_fields = forward_fields;

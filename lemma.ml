@@ -1581,6 +1581,7 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
      "    " ^ (Cprinter.string_of_coerc_med lem)
   ) lemmas) in
+  let _ = print_endline "gen lemmas" in
   let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)
       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion)
       no_pos in

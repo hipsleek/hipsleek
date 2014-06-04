@@ -193,7 +193,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
   let conj_list = list_of_conjs pf in
   match filter_formula ex_vars conj_list with
     | None -> mkFalse no_pos
-    | Some lst -> 
+    | Some lst ->
           List.fold_left (fun r pf -> mkAnd r pf no_pos) (mkTrue no_pos) lst
  (* let filtered_conj_list = List.filter (fun pf -> *)
  (*      let svl = fv pf in *)
@@ -280,7 +280,7 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
  (*  let _ = Debug.binfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
  (* let _ = Debug.binfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
  (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
-  (new_baga, new_pure)
+  (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
   Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list string_of_ef_pure string_of_ef_pure
@@ -396,6 +396,7 @@ sig
   val conv_var : t list -> spec_var list
   val from_var : spec_var list -> t list
   val merge_baga : t list -> t list -> t list
+  val is_eq_baga : t list -> t list -> bool
 end;;
 
 module EPURE =
@@ -465,10 +466,6 @@ struct
   let elim_unsat_disj disj = 
     List.filter (fun f -> not(unsat f)) disj
 
-  (* reducing duplicate? *)
-  let norm_disj disj =
-        List.filter (fun v -> not(is_false v)) (List.map norm disj)
-
   let is_false_disj disj = disj==[]
 
   let mk_false_disj = []
@@ -497,6 +494,23 @@ struct
 
   let imply ((b1,f1) as ante : epure) ((b2,f2) as conseq : epure) : bool =
     ef_imply_0 (Elt.conv_var b1,f1) (Elt.conv_var b2,f2)
+
+  let is_eq_epure ((b1,f1) as ep1) ((b2,f2) as ep2) =
+    if Elt.is_eq_baga b1 b2 then
+      (imply ep1 ([],f2)) && (imply ep2 ([],f1))
+    else false
+    
+  (* reducing duplicate? *)
+  let norm_disj disj =
+    let rec remove_duplicate (disj : epure_disj) : epure_disj =
+      match disj with
+        | [] -> []
+        | hd::tl ->
+              let new_tl = remove_duplicate (List.filter (fun ep ->
+                  not (is_eq_epure hd ep)) tl) in
+              hd::new_tl
+    in
+    remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj))
 
   let ef_imply_disj_x (ante : ef_pure_disj) (conseq : ef_pure_disj) : bool =
     let a_f = ef_conv_enum_disj ante in
@@ -627,6 +641,15 @@ struct
     let f = mkAnd a_f (mkNot_s c_f) no_pos in
     not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
+(* TODO
+
+  1. complete conv_eq & conv_neq
+  2. complete elim_exists
+  3. eq_epure ep1 ep2 (detect if two epures are equal, after norm)
+  4. sort_epure_disj  (baga,...)
+  5. strong_norm_epure (* must detect false, no x=x *)
+
+*)
 end
 
 module EPureI = EPURE(SV)

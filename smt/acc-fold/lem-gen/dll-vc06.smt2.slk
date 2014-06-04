@@ -19,4 +19,5 @@ checkentail x_emp::Dll_t<next = w_emp,prev = null> *
 
 expect Valid.
 
+//missing x_emp != z_emp
 
