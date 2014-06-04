@@ -1309,7 +1309,7 @@ let replace_view_node_by_base_formula (f: CF.formula) (vn: CF.h_formula_view)
       CF.mkBase new_hf new_mf t fl a pos
 
 (* generalize generated coercion *) 
-let refine_generated_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
+let refine_nontail_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
   (* replace self in view_vars by a fresh var *)
   let rec refine_heap (hf: IF.h_formula) (fr_var: ident)
       : IF.h_formula = (
@@ -1361,7 +1361,64 @@ let refine_generated_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
   let new_var = fresh_name () in
   let new_hf = refine_heap hf new_var in
   new_hf
+
+(* generalize generated coercion *) 
+let refine_tail_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
+  (* replace self in view_vars by a fresh var *)
+  let rec refine_heap (hf: IF.h_formula) (fr_var: ident)
+      : IF.h_formula = (
+    match hf with
+    | IF.Phase phase ->
+        let new_rd = refine_heap phase.IF.h_formula_phase_rd fr_var in
+        let new_rw = refine_heap phase.IF.h_formula_phase_rw fr_var in
+        IF.Phase { phase with IF.h_formula_phase_rd = new_rd;
+                              IF.h_formula_phase_rw = new_rw; }
+    | IF.Conj conj ->
+        let new_h1 = refine_heap conj.IF.h_formula_conj_h1 fr_var in
+        let new_h2 = refine_heap conj.IF.h_formula_conj_h2 fr_var in
+        IF.Conj { conj with IF.h_formula_conj_h1 = new_h1;
+                            IF.h_formula_conj_h2 = new_h2; }
+    | IF.ConjStar conjstar ->
+        let new_h1 = refine_heap conjstar.IF.h_formula_conjstar_h1 fr_var in
+        let new_h2 = refine_heap conjstar.IF.h_formula_conjstar_h2 fr_var in
+        IF.ConjStar { conjstar with IF.h_formula_conjstar_h1 = new_h1;
+                                    IF.h_formula_conjstar_h2 = new_h2; }
+    | IF.ConjConj conjconj ->
+        let new_h1 = refine_heap conjconj.IF.h_formula_conjconj_h1 fr_var in
+        let new_h2 = refine_heap conjconj.IF.h_formula_conjconj_h2 fr_var in
+        IF.ConjConj { conjconj with IF.h_formula_conjconj_h1 = new_h1;
+                                    IF.h_formula_conjconj_h2 = new_h2; }
+    | IF.Star star ->
+        let new_h1 = refine_heap star.IF.h_formula_star_h1 fr_var in
+        let new_h2 = refine_heap star.IF.h_formula_star_h2 fr_var in
+        IF.Star { star with IF.h_formula_star_h1 = new_h1;
+                            IF.h_formula_star_h2 = new_h2; }
+    | IF.StarMinus starminus ->
+        let new_h1 = refine_heap starminus.IF.h_formula_starminus_h1 fr_var in
+        let new_h2 = refine_heap starminus.IF.h_formula_starminus_h2 fr_var in
+        IF.StarMinus { starminus with IF.h_formula_starminus_h1 = new_h1;
+                                      IF.h_formula_starminus_h2 = new_h2; }
+    | IF.HeapNode hn ->
+        let args = hn.IF.h_formula_heap_arguments in
+        let new_args = List.map (fun e -> match e with
+          | IP.Var ((vname, vprim), pos) ->
+              if (String.compare vname self != 0) then e
+              else IP.Var ((fr_var, Unprimed), pos)
+          | _ -> e
+        ) args in
+        IF.HeapNode { hn with IF.h_formula_heap_arguments = new_args }
+    | IF.HeapNode2 _  | IF.ThreadNode _ | IF.HRel _ ->
+       let msg = "refine_heap: unexpected h_formula" ^ (!IF.print_h_formula hf) in
+       report_error no_pos msg
+    | IF.HTrue | IF.HFalse | IF.HEmp -> hf
+  ) in
+  let new_var = fresh_name () in
+  let new_hf = refine_heap hf new_var in
+  new_hf
+
+(* let generate_distributive_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) = *)
   
+
 let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
   (* find base branch and inductive branch *)
@@ -1451,7 +1508,13 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         ) in
         let body_heap = Iformula.mkStar pred1 pred2 vpos in
         (* now, refine the lemma body *)
-        refine_generated_coerc_body_heap body_heap
+        let refined_body_heap = (
+          if (vd.CF.view_is_tail_recursive) then
+            refine_tail_coerc_body_heap body_heap
+          else
+            refine_nontail_coerc_body_heap body_heap
+        ) in
+        refined_body_heap
       ) in
       let llem_body_heap = lem_body_heap in
       let rlem_body_heap = (

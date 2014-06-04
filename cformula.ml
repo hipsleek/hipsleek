@@ -11417,7 +11417,6 @@ let transform_formula_x f (e:formula):formula =
   in helper f e
 
 
-
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
   Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
