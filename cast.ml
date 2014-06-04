@@ -2572,10 +2572,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
           else if ((String.compare (P.name_of_spec_var hvnode) self) == 0) then
             [hvnode]
           else []
-      | _ ->
-          let msg = "is_touching_pred: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error pos msg
+      | _ -> [] (* just ignore *)
     ) in
     let (hf,mf,_,_,_) = CF.split_components branch in
     let possible_vars = get_possible_touching_vars hf in
@@ -2825,10 +2822,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
       | CF.Star sf ->
           analyze_heap sf.CF.h_formula_star_h1;
           analyze_heap sf.CF.h_formula_star_h2
-      | _ ->
-          let msg = "build_view_graph: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error no_pos msg
+      | _ -> () (* just ignore *)
     ) in
     (* analyze pure formula to detect equality between 2 heap node *)
     (* be careful with the case: not(a=b)  ~~> a != b              *)
@@ -3077,10 +3071,7 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
                 let aux = CF.mkStarH h1 h2 pos in
                 Some aux
           )
-        | _ ->
-            let msg = "compute_view_aux_formula: unsupported h_formula"
-                      ^ (!print_h_formula hf) in
-            report_error no_pos msg
+        | _ -> Some hf (* just ignore *)
       ) in
       get_aux_hf hf
     ) in
