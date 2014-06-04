@@ -8,6 +8,14 @@ data node {
 //Valid.Fail.Fail.
 //Valid.Fail.Fail.Valid.Valid.Valid.
 
+/*
+!!! baga inv(l7):[([], self=null & q=null),([q,self], true)]
+!!! baga inv(l6):[([q], self=null),([q,self], true)]
+!!! baga inv(l5):[([k,self], self!=k)]
+!!! baga inv(l4):[([q,self], true)]
+!!! baga inv(l3a):[]
+!!! baga inv(l3):[([self], true)]
+*/
 pred l3<> == 
   self::node<q>*q::node<_> 
 inv self!=null.

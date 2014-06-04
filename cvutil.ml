@@ -606,11 +606,12 @@ conv_from_ef_disj@2 EXIT: u_14=y_15 & u_14=z & y_15=y & z_16=z #  [[self]]
 (([a,b],pure1) \/ [c],pure2) ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
 *)
 
+(* using the enum technique with epure *)
 and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
   (* WN : this conversion is incomplete *)
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-    | _ -> let f = Expure.ef_conv_disj disj in
+    | _ -> let f = Expure.ef_conv_enum_disj disj in
       (MCP.mix_of_pure f,CF.mk_mem_formula [])
 
 and conv_from_ef_disj disj =
@@ -625,10 +626,12 @@ and xpure_heap_mem_enum_new
     xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) 
   else
     (* to call xpure_heap_enum_baga *)
-    (* let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
-    (* let ans = conv_from_ef_disj disj in *)
-    (* ans *)
-    xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
+    if !Globals.baga_xpure then
+      let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+      let ans = conv_from_ef_disj disj in
+      ans
+    else
+      xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
 
 
 and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =

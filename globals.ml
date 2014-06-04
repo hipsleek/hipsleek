@@ -1187,6 +1187,7 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
+let baga_xpure = ref true
 
 let dis_inv_baga () = 
   print_endline_q "Disabling baga inv gen .."; 

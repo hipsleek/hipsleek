@@ -36,6 +36,10 @@ sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
 Valid
 
 ====================================
+--inv-baga
+Starting hip-sleek tests:
+Total number of errors: 6 in files:
+  baga-test.slk({E15#Fail}) infer/infer16.slk({E2#Valid},{E5#Valid}) lemmas/sort2.slk({L1#Fail},{L2#Valid},{L3#Valid},{L6#Fail},{L8#Valid},{L9#Fail}) lemmas/app-tail.slk({L2#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/dseg-new.slk({L1#Valid},{L2#Fail},{L3#Valid}).
 ====================================
 ====================================
 ====================================
