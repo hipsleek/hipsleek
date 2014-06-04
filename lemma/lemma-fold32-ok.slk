@@ -10,18 +10,28 @@ pred lseg<p, n> == self=p & n=0
 lemma_unsafe "ll_tail2" self::lseg<p, n> 
    <- self::lseg<t, n-1> * t::node<_, p>.
 
-
+/*
 checkentail 
     self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
     |- self_ll_tail2::lseg<p,n>.
 expect Valid.
 print residue.
-
+*/
 
 // fold
+/*
 checkentail  
      self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- (exists r1: self_ll_tail2::node<_, r1> * r1::lseg<p,n-1>).
+    |- (exists r1: self_ll_tail2::node<_, r1> * r::lseg<p,n-1>).
+expect Valid.
+print residue.
+*/
+
+checkentail  
+      self_ll_tail2::node<Anon_14,r> * r::lseg<t,flted_26_85> * 
+      t::node<Anon_15,p>&flted_26_85+2=n
+    |- (exists Anon_88,r_89,p_95,flted_7_96:
+    self_ll_tail2::node<Anon_88,r_89> * r_89::lseg<p_95,flted_7_96>&flted_7_96+1=n & p_95=p).
 expect Valid.
 print residue.
 

@@ -17,14 +17,24 @@ checkentail
 expect Valid.
 print residue.
 
-
+/*
 // fold
 checkentail  
      self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- (exists r1: self_ll_tail2::node<_, r1> * r1::lseg<p,n-1>).
+    |- (exists r1: self_ll_tail2::node<_, r1> * r::lseg<p,n-1>).
 expect Valid.
 print residue.
 
+//
+checkentail  
+      self_ll_tail2::node<Anon_14,r> * r::lseg<t,flted_26_85> * 
+      t::node<Anon_15,p>&flted_26_85+2=n
+    |- 
+    self_ll_tail2::node<Anon_88,r_89> * r_89::lseg<p_95,flted_7_96>&flted_7_96+1=n & p_95=p.
+expect Valid.
+print residue.
+
+*/
 /**
 
 Entail 1: Fail.(must) cause:UnionR[ (((1<=flted_15_88 & r!=null) | (8=r & flted_15_88=0))) & flted_15_88+2=n |-  n_90=0 & n_90=n. LOCS:[1;0;15;6;16] (must-bug), exists(n_90:flted_15_88+1=n_90) & flted_15_88+2=n |-  flted_15_88+1=n_90 & n_90=n. LOCS:[15;7;16] (must-bug)]
