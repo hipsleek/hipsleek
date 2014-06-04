@@ -1201,30 +1201,23 @@ let collect_inductive_view_nodes (hf: CF.h_formula) (vd: C.view_decl)
   let _ = CF.transform_h_formula f_hf hf in
   !view_nodes
 
-let replace_view_node_by_base_formula (f: CF.formula) (vn: CF.h_formula_view)
-    (base_f: CF.formula) : CF.formula =
-  match base_f with
-  | CF.Exists _ | CF.Or _ -> base_f
-  | CF.Base _ ->
-      let (b_hf,b_mf,b_fl,b_a,b_t) = CF.split_components base_f in
-      let (hf, mf, fl, t, a) = CF.split_components f in
-      let pos = CF.pos_of_formula f in
-      let f_hf hf = (match hf with
-        | CF.ViewNode { CF.h_formula_view_name = vname } ->
-            if (String.compare vname vn.CF.h_formula_view_name = 0) then
-              Some b_hf
-            else Some hf
-        | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
-        | _ -> None
-      ) in
-      let new_hf =  CF.transform_h_formula f_hf hf in
-      let new_mf = (
-        let b_pf = MCP.pure_of_mix b_mf in
-        let pf = MCP.pure_of_mix mf in
-        let pos = CP.pos_of_formula pf in
-        MCP.mix_of_pure (CP.mkAnd b_pf pf pos) 
-      ) in 
-      CF.mkBase new_hf new_mf t fl a pos
+let remove_view_node_from_formula (f: CF.formula) (vn: CF.h_formula_view) : CF.formula =
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_hf hf = (match hf with
+    | CF.ViewNode { CF.h_formula_view_name = vname } ->
+        if (String.compare vname vn.CF.h_formula_view_name = 0) then
+          Some CF.HEmp
+        else Some hf
+    | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
+    | _ -> None
+  ) in
+  let f_m mp = Some mp in
+  let f_a a = Some a in
+  let f_pf pf = Some pf in
+  let f_b bf = Some bf in
+  let f_e e = Some e in
+  CF.transform_formula (f_e_f, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f
 
 (* generalize generated coercion *) 
 let refine_nontail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
@@ -1388,8 +1381,9 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         let induct_vnode = List.hd induct_vnodes in
         let v_subs = collect_subs_from_view_node induct_vnode vd in
         let new_base_f = CF.subst_one_by_one v_subs base_f in
+        Debug.ninfo_hprint (add_str "new_base_f" (!CF.print_formula)) new_base_f vpos;
         let b_subs = collect_subs_from_view_base_case new_base_f vd in
-        let reduced_induct_f = replace_view_node_by_base_formula induct_f induct_vnode new_base_f in
+        let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in
 
         (* compute pred1 *)
         let pred1_node = (
@@ -1411,7 +1405,11 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           ) vd.C.view_vars in
           let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vparams no_pos in
           let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in
-          let (r,_,_) = Sleekcore.sleek_entail_check 9 [] cprog [] reduced_induct_f tmp_f in
+          Debug.ninfo_hprint (add_str "reduced_induct_f" (!CF.print_formula)) reduced_induct_f vpos;
+          Debug.ninfo_hprint (add_str "tmp_f" (!CF.print_struc_formula)) tmp_f vpos;
+          let (r,_,_) = wrap_classic (Some true) 
+              (Sleekcore.sleek_entail_check 9 [] cprog [] reduced_induct_f) tmp_f in
+          Debug.ninfo_pprint ("reduced_induct_f |- tmp_f: " ^ (string_of_bool r)) vpos;
           r
         ) in
         if not (is_pred1_ok) then None
@@ -1517,7 +1515,7 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
      "    " ^ (Cprinter.string_of_coerc_med lem)
   ) lemmas) in
   (* let _ = print_endline "gen lemmas" in *)
-  let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)
+  let _ = Debug.ninfo_hprint (add_str "gen_lemmas" pr_lemmas)
       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion)
       no_pos in
   ()
