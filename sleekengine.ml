@@ -619,7 +619,7 @@ let convert_data_and_pred_to_cast_x () =
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
     Lemma.generate_all_lemmas iprog cprog6
   in
-  let cprog6 =
+  let cprog6a =
      if !Globals.norm_cont_analysis then
      let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog6 cprog6.Cast.prog_view_decls in
      let _ = if is_need_seg_opz then
@@ -633,6 +633,7 @@ let convert_data_and_pred_to_cast_x () =
      cprog2a
      else cprog6
   in
+  let cprog6 = Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
