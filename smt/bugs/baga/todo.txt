@@ -14,7 +14,27 @@ VALID
 EXPECTED: FAIL
 
 ====================================
+#nlcl-vc01.smt2.slk --inv-baga
+
+expected: VALID
+
 ====================================
+#nlcl-vc01.smt2.slk
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe
+
+Valid
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+
+Fail
+
+==============
+Expect
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+Valid
+
 ====================================
 ====================================
 ====================================

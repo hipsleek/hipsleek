@@ -20,3 +20,14 @@ checkentail a::DLL_plus<null,c,null>
          |- a::DLL<null,c,c> * c::DLL_t<_,null>.
 
 expect Valid.
+
+/*
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> ->  self::DLL<p,tl,n>.
+*/
+
+checkentail a::DLL_plus<null,c,null>
+         |- a::DLL<null,c,null>.
+
+expect Valid.
+
+

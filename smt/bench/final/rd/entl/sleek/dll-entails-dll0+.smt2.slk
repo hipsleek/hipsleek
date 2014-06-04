@@ -12,13 +12,12 @@ pred DLL<p:DLL_t,tl:DLL_t,n:DLL_t> ==
  emp & p = tl & self = n
 or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
 
-/* do not need
-lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
-           self::DLL<p,tl,tl> * tl::DLL_t<next = n,prev = self>.
+/*
+lemma_unsafe self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> -> self::DLL<p,tl,n>.
 */
 
 checkentail a::DLL_plus<null,c,null>
          |- a::DLL<null,c,null>.
 
-expect Fail.
+expect Valid.
 

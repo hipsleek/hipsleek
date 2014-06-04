@@ -707,7 +707,7 @@ let common_arguments = [
           Globals.gen_baga_inv := true;
           (* Globals.do_infer_inv := true; *)
           Globals.lemma_gen_unsafe := true;
-           Globals.smt_compete_mode :=true), (*this flag is one that is  diff with compared to --smt-compete *)
+           Globals.smt_compete_mode :=true),
    "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
