@@ -3132,20 +3132,18 @@ let categorize_view (prog: prog_decl) : prog_decl =
         (* self var *)
         P.SpecVar (Named vd.view_data_name, v, Unprimed)
     ) bw_p in
-    let forward_fields = List.map (fun (dname,fname) ->
+    let forward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) fw_f in
-    let backward_fields = List.map (fun (dname,fname) ->
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) fw_f) in
+    let backward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) bw_f in
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) bw_f) in
     let vd = { vd with view_forward_ptrs = forward_ptrs;
                        view_backward_ptrs = backward_ptrs;
                        view_forward_fields = forward_fields;
