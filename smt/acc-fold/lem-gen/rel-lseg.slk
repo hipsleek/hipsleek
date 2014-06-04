@@ -11,9 +11,7 @@ pred SLL_rev<p:SLL_t> ==
 or (exists x: tl::SLL_t<p> * self::SLL_rev<x>).
 
 
-/*
-lemma_unsafe self::SLL<p:SLL_t> <-> self::SLL_rev<p>.
-*/
+lemma_safe self::SLL_rev<p> <-> self::SLL<p:SLL_t> .
 
 checkentail a::SLL<null>
          |- a::SLL_rev<null>.
