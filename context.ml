@@ -1268,7 +1268,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                       let a7 = 
                         let lem_act = search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
                         match a6 with
-                          | Some a ->  Some (1, Cond_action (lem_act@[a]))
+                          | Some a ->  Some (1, Cond_action ([a]@lem_act))
                           | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
                       in
                       match a7 with
