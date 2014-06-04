@@ -10,6 +10,7 @@ lemma_unsafe self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
 
 lemma_unsafe self::lseg<p> -> (exists u: self::lseg<u>*u::lseg<p>).
 
+//Trung: how to generate this lemmas?
 lemma_unsafe self::lseg<p> & self!=p 
         -> (exists u: self::lseg<u>*u::node<p>).
 

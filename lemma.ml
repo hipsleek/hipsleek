@@ -1509,7 +1509,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         let body_heap = Iformula.mkStar pred1 pred2 vpos in
         (* now, refine the lemma body *)
         let refined_body_heap = (
-          if (vd.CF.view_is_tail_recursive) then
+          if (vd.C.view_is_tail_recursive) then
             refine_tail_coerc_body_heap body_heap
           else
             refine_nontail_coerc_body_heap body_heap
