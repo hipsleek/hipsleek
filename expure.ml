@@ -627,6 +627,15 @@ struct
     let f = mkAnd a_f (mkNot_s c_f) no_pos in
     not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
 
+(* TODO 
+
+  1. complete conv_eq & conv_neq
+  2. complete elim_exists
+  3. eq_epure ep1 ep2 (detect if two epures are equal, after norm)
+  4. sort_epure_disj  (baga,...)
+  5. strong_norm_epure (* must detect false, no x=x *)
+
+*)
 end
 
 module EPureI = EPURE(SV)
