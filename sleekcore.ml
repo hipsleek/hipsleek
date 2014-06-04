@@ -268,7 +268,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> true, ctx
       | f::rest ->
-            let _ = Debug.tinfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
+            let _ = Debug.info_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) f no_pos in
             let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 f [] ctx in
             if not r then false ,lc else
                prove_list_conseqs rest_ante_fs ante_nemps0 rest lc
@@ -303,7 +303,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     (* let ante1 = (\* Cfutil.oa_node2view prog ante1a vname *\) ante1a in *)
     (* let ante2 = (CF.mkAnd_pure ante1 *)
     (*     (Mcpure.mix_of_pure ante_neq) no_pos) in *)
-    let ante_fs0 = Frame.heap_normal_form prog ante1 in
+    let ante_fs0 = Frame.heap_normal_form prog ante1 Hgraph.hgraph_grp_min_size_entail in
     (*  let ante_unsat = List.exists (fun f -> *)
     (*       (\*todo: abs ptos -> seg predicate + add neqs (x3!=x2) also add x2!=x3 if x2::lseg<x3>*\) *)
     (*       (\*to return a list of ante_fs2 if ante is not unsat to pair with conseq_fs later*\) *)
@@ -340,7 +340,8 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
         let _ = Debug.ninfo_hprint (add_str "ante_neq1" !CP.print_formula) ante_neq1 no_pos in
         (*partition components on conseq1*)
         let ante_norm_conseq = Frame.heap_normal_form prog
-          (CF.mkAnd_pure conseq1 (Mcpure.mix_of_pure ante_neq1) no_pos) in
+          (CF.mkAnd_pure conseq1 (Mcpure.mix_of_pure ante_neq1) no_pos)
+          Hgraph.hgraph_grp_min_size_entail in
         (*for each comp, do norm, matching with ante + add emp if neccessary*)
         let r, f_ctx= prove_list_conseqs ante_fs (* ante_nemps *)[] ante_norm_conseq
           (CF.SuccCtx [init_ctx]) in

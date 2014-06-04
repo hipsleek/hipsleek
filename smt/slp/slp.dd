@@ -2,8 +2,8 @@
 #norm_rename_clash_args_node
 #get_oa_node_view
 #build_ls_adj
-#heap_normal_form
-#norm_graph
+heap_normal_form
+norm_graph
 #norm_dups_pred
 #find_homo_vertex_map
 #check_homo_edges
@@ -12,5 +12,7 @@
 #check_one_src_edge
 #build_scc
 #look_up_end_of_edges
-is_complex_entailment_4graph
-norm_ann_seg_opz
+#is_complex_entailment_4graph
+#norm_ann_seg_opz
+#CF.get_ptrs_connected_w_args_f
+#CF.slice_frame

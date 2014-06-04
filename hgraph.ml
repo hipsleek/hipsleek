@@ -16,6 +16,10 @@ module CF = Cformula
 let loc_number = ref (0:int)
 let heap_size = ref (50:int)
 
+let hgraph_grp_min_size_unsat = 3
+
+let hgraph_grp_min_size_entail = 2
+
 let reset_fress_addr () =
   loc_number :=0
 
@@ -1795,7 +1799,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     else true
   in
   let is_non_touch_two_way tar_edges tar_e_seg (b_id, e_id)=
-    let _ = Debug.info_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
+    let _ = Debug.ninfo_hprint (add_str "(b_id, e_id)" ((pr_pair string_of_int string_of_int))) (b_id, e_id) no_pos in
     let e = look_up_edge tar_edges b_id e_id in
     if e.he_kind then
       let pto_nontouch =
@@ -1861,7 +1865,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       (*otherwise: check it is a path pi*)
       let has_path, path = dfs_pair tar_e [([], tar_b)] [tar_e] in
       if not has_path then (false,[]) else
-        let _ = Debug.info_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
+        let _ = Debug.ninfo_hprint (add_str "path" (pr_list (pr_pair string_of_int string_of_int))) path no_pos in
         if not non_touch_check then (true,path) else
           (*has cycle -touchable*)
           let has_cycle, scc =
@@ -1909,7 +1913,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               (* cycle in conseq: sedge and its inversion have the same feature: touch and non-touch.*)
               let required_touch = List.exists (fun (b_id,e_id) ->
                   b_id = sedge.he_b_id && e_id = sedge.he_e_id) src_cycle_edges in
-              let _ = Debug.info_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
+              let _ = Debug.ninfo_hprint (add_str "required_touch" string_of_bool) required_touch no_pos in
               let direct_loop = required_touch && ( List.exists (fun (b_id,e_id) ->
                 b_id = sedge.he_e_id && e_id = sedge.he_b_id) src_cycle_edges)
               in
@@ -1948,6 +1952,8 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     ) path
   in
   let rec find_first_non_emp waiting done_vertexs=
+    let _ = Debug.ninfo_hprint (add_str "waiting" (pr_list string_of_int)) waiting no_pos in
+    let _ = Debug.ninfo_hprint (add_str "done_vertexs" (pr_list string_of_int)) done_vertexs no_pos in
     match waiting with
       | [] -> false
       | e::rest ->
@@ -1993,7 +1999,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       end
   in
   (*rule 2:
-    if has direct loop, both mapping src_paths must be non empty
+    if has direct loop, both mapping of src_paths must be non empty
   *)
   let check_non_empty_direct_loop sedge tar_path=
     if not non_touch_check || not check_direct_loop then (true) else
