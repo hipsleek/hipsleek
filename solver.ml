@@ -2202,9 +2202,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
               let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
               (*let form = Cformula.case_to_disjunct brs in *)
-              let _ = Debug.ninfo_hprint (add_str "do_fold: form" Cprinter.string_of_struc_formula) form no_pos in
+              let _ = Debug.tinfo_hprint (add_str "do_fold: form" Cprinter.string_of_struc_formula) form no_pos in
               let renamed_view_formula = rename_struc_bound_vars form in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
+              let _ = Debug.tinfo_hprint (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
 	      (****)  
               (* let renamed_view_formula =  propagate_imm_struc_formula renamed_view_formula imm anns in *)
 	      (*   if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (\*&& not(!Globals.allow_field_ann)*\) then  *)
@@ -2223,11 +2223,11 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                     | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f))
                 else renamed_view_formula
               in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula 2" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
+              let _ = Debug.tinfo_hprint (add_str "do_fold: renamed_view_formula 2" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
               let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
               let to_vars = p :: vs in
               let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
+              let _ = Debug.tinfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
               let anns = List.map fst anns in
               let fr_ann = List.map fst vdef.view_ann_params in
               let to_ann = anns in
@@ -6868,7 +6868,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   && not (is_classic_lending_hformula(prep_h1))
                                   && (h2 = HEmp)) then (
                                 if  not (Infer.no_infer_hp_rel estate) then
-                                  let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+                                  let fail_ctx = mkFailContext "classical separation logic1" estate conseq None pos in
                                   let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden.(1)" "" , estate.es_trace)) in
                                   let proof = mkClassicSepLogic ctx0 conseq in
                                   let _ = DD.ninfo_hprint (add_str "ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos in
@@ -6877,7 +6877,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
                                   let r, new_es = Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                                   if not r then
-                                    let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
+                                    let fail_ctx = mkFailContext "classical separation logic2" estate conseq None pos in
                                     let es_string = Cprinter.string_of_formula estate.es_formula in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (es_string^ ": residue is forbidden.(2)") "", new_es.es_trace)) in
                                     let proof = mkClassicSepLogic ctx0 conseq in

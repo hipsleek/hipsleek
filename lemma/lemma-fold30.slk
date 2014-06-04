@@ -1,0 +1,47 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+lemma_unsafe "ll_tail2" self::lseg<p, n> 
+   <- self::lseg<t, n-1> * t::node<_, p>.
+
+
+// unfold body
+/*
+checkentail (exists p_80,flted_7_81,Anon_82,r_83,p_65,Anon_66,flted_11_67,
+    t_68: self_ll_tail2::node<Anon_82,r_83> * r_83::lseg<p_80,flted_7_81> *
+    t_68::node<Anon_66,p_65>&flted_7_81+1=flted_11_67 & p_80=t_68 &
+    flted_11_67+1=n & p_65=p)
+    |- (exists p_53,n_54: self_ll_tail2::lseg<p_53,n_54>&p_53=p & n_54=n).
+expect Valid.
+print residue.
+*/
+
+checkentail 
+    self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- self_ll_tail2::lseg<p,n>.
+expect Valid.
+print residue.
+
+
+// fold
+/*
+checkentail  
+     self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- (exists r1: self_ll_tail2::node<_, r1> * r::lseg<p,n-1>).
+expect Valid.
+print residue.
+*/
+// fold
+/*
+checkentail  (exists r_83,t_68: 
+    self_ll_tail2::node<_,r_83> * r_83::lseg<t_68,n-2> *
+    t_68::node<_,p>)
+    |- (exists r: self_ll_tail2::node<_, r> * r::lseg<p,n-1>).
+expect Valid.
+*/

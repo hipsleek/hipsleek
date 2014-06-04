@@ -1,0 +1,34 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+lemma_unsafe "ll_tail2" self::lseg<p, n> 
+   <- self::lseg<t, n-1> * t::node<_, p>.
+
+//1
+checkentail_exact 
+    self1::node<_,r_86> * r_86::lseg<t_71,n-2> * t_71::node<_,p>
+    |- self1::lseg<p,n_57>.
+expect Valid.
+print residue.
+
+//2 -unfold (1)
+checkentail_exact 
+    self1::node<_,r_86> * r_86::lseg<t_71,n-2> * t_71::node<_,p>
+    |-  (exists r2: self1::node<_, r1> * r1::lseg<p, n_57-1>).
+expect Valid.
+print residue.
+
+
+//3
+/*
+checkentail_exact  
+	self::node<_, r> * r::lseg<t, n-2> * t::node<_, p> |- self::lseg<p, n>.
+expect Valid.
+print residue.
+*/

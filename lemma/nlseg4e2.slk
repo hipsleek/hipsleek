@@ -1,0 +1,37 @@
+// nlseg3a.slk --imm
+// folding with @L node needs to be fixed.
+
+data node {
+   node nxt;
+}.
+
+pred nlseg<q> == self=q
+ or  (exists a: self::node<a> * a::nlseg<q> & self!=q)
+ inv true.
+
+lemma_unsafe "L1" self::nlseg<p> <-> (exists u :self::nlseg<u> * u::nlseg<p>).
+
+checkentail_exact s::nlseg<x>*x::nlseg<p>|- s::nlseg<y>*y::nlseg<p>.
+expect Valid.
+print residue.
+
+/*
+ <1>emp&y=x&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  COND ==>  Match ==>  COND ==>  COND ==>  Match ==> ]]
+
+vs
+
+ <1>emp&y=x&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  COND ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma ==> L1_left) ==> (left: L1_left) ==>  Match ==>  SEARCH ==>  (Lemma <== L1_left_right) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<3>emp&p=y&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== L1_left_right) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==>  COND ==>  BaseCaseFold ==> ]]
+<4>emp&u_174=y&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== L1_left_right) ==>  Match ==>  SEARCH ==>  (Lemma ==> L1_left) ==> (left: L1_left) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+
+*/
+
+checkentail_exact s::nlseg<x>*x::nlseg<p> & p=q |-s::nlseg<y>*y::nlseg<q>.
+expect Valid.
+print residue.

@@ -1,0 +1,128 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+lemma "ll_tail2" self::lseg<p, n> 
+   <- self::lseg<t, n-1> * t::node<_, p>.
+
+//1
+checkentail_exact (exists p_68,Anon_69,flted_11_70,t_71: t_71::node<Anon_69,p_68>&
+ self_ll_tail2=t_71 & flted_11_70=0 & flted_11_70+1=n & p_68=p)
+|- (exists p_56,n_57: self_ll_tail2::lseg<p_56,n_57>&p_56=p & n_57=n).
+expect Valid.
+print residue.
+
+//2
+checkentail_exact 
+    self1::node<_,r_86> * r_86::lseg<t_71,n-2> * t_71::node<_,p>
+|- self1::lseg<p,n_57>.
+expect Valid.
+print residue.
+
+//3
+checkentail_exact  
+        t::node<_, p>  & self=t & n-1=0 |- self::lseg<p, n>.
+expect Valid.
+print residue.
+
+//4
+checkentail_exact  
+	self::node<_, r> * r::lseg<t, n-2> * t::node<_, p> |- self::lseg<p, n>.
+expect Valid.
+print residue.
+/*
+//(1)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  x::lseg<p, qq> & qq = nn+1.
+print residue.
+expect Valid.
+// <1>emp&qq=nn+1&{FLOW,(21,22)=__norm}[]
+
+
+//(2)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  x::lseg<p, qq> & qq = nn+2.
+print residue.
+
+//(3)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  [qq] x::lseg<p, qq> & qq = nn+1.
+print residue.
+//<1>emp&qq=nn+1 & qq=1+nn & qq=nn+1&{FLOW,(21,22)=__norm}[]
+
+//(4)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  [qq] x::lseg<p, qq> & qq = nn+2.
+print residue.
+
+//(5)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  (exists qq: x::lseg<p, qq> & qq = nn+1).
+print residue.
+// <1>emp&{FLOW,(21,22)=__norm}[]
+
+//(6)
+checkentail x::lseg<tx,nn>@M 
+  * tx::node<_,p>@M 
+ |-  (exists qq: x::lseg<p, qq> & qq = nn+2).
+print residue.
+// UNSOUND
+*/
+/*
+# app-tl2c1.slk
+
+ unsoundness in lemma application with 
+  existentials & explicit existential.
+
+Expect: Valid.Fail.Valid.Fail.Valid.Fail.
+
+
+loris@loris-desktop:/home2/loris/hg/sl_default$ hg bisect -g
+The first bad revision is:
+changeset:   10711:b9e1afcfcf66
+branch:      sa_logging
+parent:      10706:dfb9128b3bba
+user:        locle <locle@suna>
+date:        Sat Feb 22 18:32:46 2014 +0800
+summary:     fixed bugs of lseg.slk. run-fast-test is OK
+
+
+Correct Answers below:
+
+Entail 1: Valid. 
+
+ <1>emp&qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 2: Fail.(must) cause:UnionR[ 0<=nn & nn=qq |-  qq=nn+2. LOCS:[8;37] (must-bug), true |-  qq=nn+2 & qq=1+nn. LOCS:[0;37;11] (RHS: contradiction)]
+
+
+Entail 3: Valid. 
+
+ <1>emp&qq=nn+1 & qq=1+nn & qq=nn+1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 4: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;50] (RHS: contradiction), true |-  exists(qq:qq=1+nn & qq=nn+2). LOCS:[0] (RHS: contradiction)]
+
+
+Entail 5: Valid. 
+
+ <1>emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+
+
+Entail 6: Fail.(must) cause:UnionR[ true |-  nn=nn+2. LOCS:[0;64] (RHS: contradiction), true |-  1+nn=nn+2. LOCS:[0;11] (RHS: contradiction)]
+*/
+
