@@ -2913,7 +2913,7 @@ let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
 and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
     : h_formula =
   let pr = !print_h_formula in
-  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula f e) e
+  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
 
 let transform_formula_x f (e:formula):formula =
   let rec helper f e = (

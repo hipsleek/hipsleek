@@ -703,6 +703,11 @@ and b_apply_one ((fr, t) as p) bf =
           LexVar (t_ann, args1,args2,pos)
   in (npf,il)
 
+and subst_exp sst (e: exp) : exp =
+  match sst with
+  | s :: rest -> subst_exp rest (e_apply_one s e)
+  | [] -> e 
+
 and e_apply_one ((fr, t) as p) e = match e with
   | Null _ 
   | IConst _ 

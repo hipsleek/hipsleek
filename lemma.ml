@@ -1215,8 +1215,11 @@ let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: C.view_decl)
 
 let collect_subs_from_view_base_case_x (f: CF.formula) (vd: C.view_decl)
     : (CP.spec_var * CP.spec_var) list =
-  let view_vars = vd.C.view_vars in
-  let eq_vars = ref [] in
+  let is_view_var v = (
+    List.exists (fun sv -> CP.eq_spec_var v sv) vd.C.view_vars
+  ) in
+  let is_self v = String.compare (CP.name_of_spec_var v) self = 0 in
+  let subs_list = ref [] in
   let f_e_f _ = None in
   let f_f _ = None in
   let f_h_f _ = None in
@@ -1227,21 +1230,30 @@ let collect_subs_from_view_base_case_x (f: CF.formula) (vd: C.view_decl)
     let pf, a = bf in
     match pf with
     | CP.Eq (CP.Var (sv1, _), CP.Var(sv2, _), _) ->
-        let _ = (
-          (* only subs a view var by a non-view var *)
-          (* TODO Trung: what if sv1 and sv2 are both view vars ??? *)
-          if (List.mem sv1 view_vars) && (not (List.mem sv2 view_vars)) then
-            eq_vars := !eq_vars @ [(sv1,sv2)]
-          else if (List.mem sv2 view_vars) && (not (List.mem sv1 view_vars)) then
-            eq_vars := !eq_vars @ [(sv2,sv1)]
-          else ()
+        let new_subs = (
+          (* in tail-recursive predicates, self must be substituted *)
+          if (is_self sv1) then (
+            if (vd.C.view_is_tail_recursive) then [(sv1,sv2)]
+            else [(sv2,sv1)]
+          )
+          else if (is_self sv2) then (
+            if (vd.C.view_is_tail_recursive) then [(sv2,sv1)]
+            else [(sv1,sv2)]
+          )
+          (* otherwise only subs a view var by a non-view var *)
+          else if (is_view_var sv1) && (not (is_view_var sv2)) then
+            [(sv1,sv2)]
+          else if (is_view_var sv2) && (not (is_view_var sv1)) then
+            [(sv2,sv1)]
+          else []
         ) in
+        let _ = subs_list := !subs_list @ new_subs in
         (Some (pf,a))
     | _ -> None
   ) in
   let f_e _ = None in
   let _ = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
-  !eq_vars
+  !subs_list
 
 let collect_subs_from_view_base_case (f: CF.formula) (vd: C.view_decl)
     : (CP.spec_var * CP.spec_var) list =
@@ -1281,12 +1293,7 @@ let collect_inductive_view_nodes (hf: CF.h_formula) (vd: C.view_decl)
 let replace_view_node_by_base_formula (f: CF.formula) (vn: CF.h_formula_view)
     (base_f: CF.formula) : CF.formula =
   match base_f with
-  | CF.Exists { CF.formula_exists_pos = pos } ->
-      let msg = "base formula: found Exists but expect Base formula" in
-      report_error pos msg
-  | CF.Or { CF.formula_or_pos = pos } ->
-      let msg = "base formula: found Or but expect Base formula" in
-      report_error pos msg
+  | CF.Exists _ | CF.Or _ -> base_f
   | CF.Base _ ->
       let (b_hf,b_mf,b_fl,b_a,b_t) = CF.split_components base_f in
       let (hf, mf, fl, t, a) = CF.split_components f in
@@ -1309,112 +1316,109 @@ let replace_view_node_by_base_formula (f: CF.formula) (vn: CF.h_formula_view)
       CF.mkBase new_hf new_mf t fl a pos
 
 (* generalize generated coercion *) 
-let refine_nontail_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
+let refine_nontail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
   (* replace self in view_vars by a fresh var *)
   let rec refine_heap (hf: IF.h_formula) (fr_var: ident)
       : IF.h_formula = (
-    match hf with
-    | IF.Phase phase ->
-        let new_rd = refine_heap phase.IF.h_formula_phase_rd fr_var in
-        let new_rw = refine_heap phase.IF.h_formula_phase_rw fr_var in
-        IF.Phase { phase with IF.h_formula_phase_rd = new_rd;
-                              IF.h_formula_phase_rw = new_rw; }
-    | IF.Conj conj ->
-        let new_h1 = refine_heap conj.IF.h_formula_conj_h1 fr_var in
-        let new_h2 = refine_heap conj.IF.h_formula_conj_h2 fr_var in
-        IF.Conj { conj with IF.h_formula_conj_h1 = new_h1;
-                            IF.h_formula_conj_h2 = new_h2; }
-    | IF.ConjStar conjstar ->
-        let new_h1 = refine_heap conjstar.IF.h_formula_conjstar_h1 fr_var in
-        let new_h2 = refine_heap conjstar.IF.h_formula_conjstar_h2 fr_var in
-        IF.ConjStar { conjstar with IF.h_formula_conjstar_h1 = new_h1;
-                                    IF.h_formula_conjstar_h2 = new_h2; }
-    | IF.ConjConj conjconj ->
-        let new_h1 = refine_heap conjconj.IF.h_formula_conjconj_h1 fr_var in
-        let new_h2 = refine_heap conjconj.IF.h_formula_conjconj_h2 fr_var in
-        IF.ConjConj { conjconj with IF.h_formula_conjconj_h1 = new_h1;
-                                    IF.h_formula_conjconj_h2 = new_h2; }
-    | IF.Star star ->
-        let new_h1 = refine_heap star.IF.h_formula_star_h1 fr_var in
-        let new_h2 = refine_heap star.IF.h_formula_star_h2 fr_var in
-        IF.Star { star with IF.h_formula_star_h1 = new_h1;
-                            IF.h_formula_star_h2 = new_h2; }
-    | IF.StarMinus starminus ->
-        let new_h1 = refine_heap starminus.IF.h_formula_starminus_h1 fr_var in
-        let new_h2 = refine_heap starminus.IF.h_formula_starminus_h2 fr_var in
-        IF.StarMinus { starminus with IF.h_formula_starminus_h1 = new_h1;
-                                      IF.h_formula_starminus_h2 = new_h2; }
-    | IF.HeapNode hn ->
-        let args = hn.IF.h_formula_heap_arguments in
-        let new_args = List.map (fun e -> match e with
-          | IP.Var ((vname, vprim), pos) ->
-              if (String.compare vname self != 0) then e
-              else IP.Var ((fr_var, Unprimed), pos)
-          | _ -> e
-        ) args in
-        IF.HeapNode { hn with IF.h_formula_heap_arguments = new_args }
-    | IF.HeapNode2 _  | IF.ThreadNode _ | IF.HRel _ ->
-       let msg = "refine_heap: unexpected h_formula" ^ (!IF.print_h_formula hf) in
-       report_error no_pos msg
-    | IF.HTrue | IF.HFalse | IF.HEmp -> hf
+    let new_var = (fresh_name (), Unprimed) in
+    let subs_list = [((self,Unprimed), new_var)] in
+    let f_hf hf = (match hf with
+      | IF.HeapNode hn ->
+          let args = hn.IF.h_formula_heap_arguments in
+          let new_args = List.map (fun e ->
+            IP.subst_exp subs_list e
+          ) args in
+          let new_hf = IF.HeapNode { hn with IF.h_formula_heap_arguments = new_args } in
+          Some new_hf
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    IF.transform_h_formula f_hf hf
   ) in
   let new_var = fresh_name () in
   let new_hf = refine_heap hf new_var in
   new_hf
 
+let refine_nontail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  let pr = !IF.print_h_formula in
+  Debug.no_1 "refine_nontail_coerc_body_heap" pr pr
+      (fun _ -> refine_nontail_coerc_body_heap_x hf vd) hf
+
 (* generalize generated coercion *) 
-let refine_tail_coerc_body_heap (hf: IF.h_formula) : IF.h_formula =
-  (* replace self in view_vars by a fresh var *)
-  let rec refine_heap (hf: IF.h_formula) (fr_var: ident)
+let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  (* replace a heap node which is a view var of a view_decl by a fresh var *)
+  let rec refine_heap (hf: IF.h_formula)
       : IF.h_formula = (
-    match hf with
-    | IF.Phase phase ->
-        let new_rd = refine_heap phase.IF.h_formula_phase_rd fr_var in
-        let new_rw = refine_heap phase.IF.h_formula_phase_rw fr_var in
-        IF.Phase { phase with IF.h_formula_phase_rd = new_rd;
-                              IF.h_formula_phase_rw = new_rw; }
-    | IF.Conj conj ->
-        let new_h1 = refine_heap conj.IF.h_formula_conj_h1 fr_var in
-        let new_h2 = refine_heap conj.IF.h_formula_conj_h2 fr_var in
-        IF.Conj { conj with IF.h_formula_conj_h1 = new_h1;
-                            IF.h_formula_conj_h2 = new_h2; }
-    | IF.ConjStar conjstar ->
-        let new_h1 = refine_heap conjstar.IF.h_formula_conjstar_h1 fr_var in
-        let new_h2 = refine_heap conjstar.IF.h_formula_conjstar_h2 fr_var in
-        IF.ConjStar { conjstar with IF.h_formula_conjstar_h1 = new_h1;
-                                    IF.h_formula_conjstar_h2 = new_h2; }
-    | IF.ConjConj conjconj ->
-        let new_h1 = refine_heap conjconj.IF.h_formula_conjconj_h1 fr_var in
-        let new_h2 = refine_heap conjconj.IF.h_formula_conjconj_h2 fr_var in
-        IF.ConjConj { conjconj with IF.h_formula_conjconj_h1 = new_h1;
-                                    IF.h_formula_conjconj_h2 = new_h2; }
-    | IF.Star star ->
-        let new_h1 = refine_heap star.IF.h_formula_star_h1 fr_var in
-        let new_h2 = refine_heap star.IF.h_formula_star_h2 fr_var in
-        IF.Star { star with IF.h_formula_star_h1 = new_h1;
-                            IF.h_formula_star_h2 = new_h2; }
-    | IF.StarMinus starminus ->
-        let new_h1 = refine_heap starminus.IF.h_formula_starminus_h1 fr_var in
-        let new_h2 = refine_heap starminus.IF.h_formula_starminus_h2 fr_var in
-        IF.StarMinus { starminus with IF.h_formula_starminus_h1 = new_h1;
-                                      IF.h_formula_starminus_h2 = new_h2; }
-    | IF.HeapNode hn ->
-        let args = hn.IF.h_formula_heap_arguments in
-        let new_args = List.map (fun e -> match e with
-          | IP.Var ((vname, vprim), pos) ->
-              if (String.compare vname self != 0) then e
-              else IP.Var ((fr_var, Unprimed), pos)
-          | _ -> e
-        ) args in
-        IF.HeapNode { hn with IF.h_formula_heap_arguments = new_args }
-    | IF.HeapNode2 _  | IF.ThreadNode _ | IF.HRel _ ->
-       let msg = "refine_heap: unexpected h_formula" ^ (!IF.print_h_formula hf) in
-       report_error no_pos msg
-    | IF.HTrue | IF.HFalse | IF.HEmp -> hf
+    let subs_list = ref [] in
+    let view_vars = List.map (fun v ->
+      CP.name_of_spec_var v
+    ) vd.C.view_vars in
+    (* substitute heap node first *)
+    let collect_subs_list hf = (match hf with
+      | IF.HeapNode hn ->
+          let (hnode,prim) = hn.IF.h_formula_heap_node in
+          (* heap node is a view var, substitute this heap node *)
+          let _ = (
+            if List.exists (fun v -> String.compare v hnode = 0) view_vars then (
+              try 
+                let _ = List.find (fun subs ->
+                    let v = fst subs in IP.eq_var (hnode,prim) v
+                  ) !subs_list in
+                ()
+              with Not_found -> (
+                let new_var = (fresh_name (), Unprimed) in
+                subs_list := ((hnode,prim),new_var) :: !subs_list;
+              )
+            )
+            else ()
+          ) in
+          None
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    let _ = IF.transform_h_formula collect_subs_list hf in
+    let subs_heap_node hf = (match hf with
+      | IF.HeapNode hn ->
+          let (hnode,prim) = hn.IF.h_formula_heap_node in
+          let view_vars = List.map (fun v ->
+            CP.name_of_spec_var v
+          ) vd.C.view_vars in
+          (* heap node is a view var, substitute this heap node *)
+          if List.exists (fun v -> String.compare v hnode = 0) view_vars then (
+            let (subs_node, subs_prim) = (
+              try 
+                let subs = List.find (fun subs ->
+                  let v = fst subs in 
+                  IP.eq_var (hnode,prim) v
+                ) !subs_list in
+                snd subs
+              with Not_found -> (
+                let msg = "refine_tail_coerc_body_heap: subs_list must be computed before" in
+                report_error no_pos msg
+              )
+            ) in
+            let new_hf = IF.HeapNode {hn with IF.h_formula_heap_node = (subs_node, subs_prim)} in
+            Some new_hf
+          )
+          else (
+            let subs_args = List.map (fun arg ->
+              IP.subst_exp !subs_list arg
+            ) hn.IF.h_formula_heap_arguments in
+            let new_hf = IF.HeapNode {hn with IF.h_formula_heap_arguments = subs_args} in
+            Some new_hf
+          )
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    IF.transform_h_formula subs_heap_node hf
   ) in
-  let new_var = fresh_name () in
-  let new_hf = refine_heap hf new_var in
+  let new_hf = refine_heap hf in
   new_hf
+
+let refine_tail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  let pr = !IF.print_h_formula in
+  Debug.no_1 "refine_tail_coerc_body_heap" pr pr
+      (fun _ -> refine_tail_coerc_body_heap_x hf vd) hf
 
 (* let generate_distributive_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) = *)
   
@@ -1435,10 +1439,15 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     let views = collect_inductive_view_nodes hf vd in
     (List.length views = 0)
   ) processed_branches in
+  (* consider only the view has 1 base case and 1 inductive case *)
   if ((List.length base_branches != 1) || (List.length inductive_branches != 1)) then
-    let msg = "generate_view_lemmas: expect view has only 1 inductive case and 1 base case" in
-    report_error vpos msg
+    []
+  (* consider only the view has 1 forward pointer *)
+  else if (List.length vd.C.view_forward_ptrs != 1) then
+    []
+  (* statisfying view *)
   else (
+    let forward_ptr = List.hd vd.C.view_forward_ptrs in
     let base_f, base_lbl = List.hd base_branches in
     let induct_f, induct_lbl = List.hd inductive_branches in
     let (induct_hf, _, _, _, _) = CF.split_components induct_f in
@@ -1446,9 +1455,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     let induct_vnodes = List.filter (fun vn ->
       String.compare vn.CF.h_formula_view_name vname = 0
     ) view_nodes in
-    if (List.length induct_vnodes != 1) then
-      let msg = "generate_view_lemmas: expect 1 inductive view nodes in inductive case" in
-      report_error vpos msg
+    if (List.length induct_vnodes != 1) then []
     else (
       (* create distributive lemma like: 
               pred -> pred1 * pred2
@@ -1476,7 +1483,14 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         let new_base_f = CF.subst_one_by_one v_subs base_f in
         let b_subs = collect_subs_from_view_base_case new_base_f vd in
         (* let new_induct_f = replace_view_node_by_base_formula f induct_vnode new_base_f in *)
-        let pred1_node = (self, Unprimed) in
+        let pred1_node = (
+          if not (vd.C.view_is_tail_recursive) then (self, Unprimed)
+          else (
+            let subs_sv = CF.subst_one_by_one_var v_subs forward_ptr in
+            match subs_sv with
+            | CP.SpecVar (_,name,prim) -> (name,prim)
+          )
+        ) in
         let pred1_params = List.map (fun sv ->
           let param = (
             try 
@@ -1488,8 +1502,9 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           | CP.SpecVar (_,vname,vprim) -> IP.Var ((vname,vprim), vpos)
         ) vd.C.view_vars in
         let pred1 = (
+          (* this is a derived hformula view *)
           IF.mkHeapNode pred1_node (vd.C.view_name)
-              0 false (IP.ConstAnn Mutable) false false false None
+              0 false (IP.ConstAnn Mutable) true false false None
               pred1_params [] None vpos 
         ) in
 
@@ -1502,17 +1517,21 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           IP.Var ((vname,vprim), vpos)
         ) induct_vnode.CF.h_formula_view_arguments in
         let pred2 = (
+          (* this is the original hformula view *)
           IF.mkHeapNode pred2_node (vd.C.view_name)
               0 false (IP.ConstAnn Mutable) false false false None
               pred2_params [] None vpos 
         ) in
-        let body_heap = Iformula.mkStar pred1 pred2 vpos in
+        let body_heap = (
+          if vd.C.view_is_tail_recursive then Iformula.mkStar pred2 pred1 vpos
+          else Iformula.mkStar pred1 pred2 vpos
+        ) in
         (* now, refine the lemma body *)
         let refined_body_heap = (
           if (vd.C.view_is_tail_recursive) then
-            refine_tail_coerc_body_heap body_heap
+            refine_tail_coerc_body_heap body_heap vd
           else
-            refine_nontail_coerc_body_heap body_heap
+            refine_nontail_coerc_body_heap body_heap vd
         ) in
         refined_body_heap
       ) in
@@ -1520,19 +1539,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       let rlem_body_heap = (
         if (vd.C.view_is_touching) then lem_body_heap
         else (
-          let forward_ptr = match vd.C.view_forward_ptrs with
-            | [sv] -> CP.name_of_spec_var sv
-            | lst -> 
-                (* this is temporarily *)
-                let msg = "generate_view_lemmas: found " 
-                    ^ (string_of_int (List.length lst))
-                    ^ " but expect only 1 forward pointer in view " 
-                    ^ vd.C.view_name in
-                report_error vpos msg
-          in
+          let fwp_name = CP.name_of_spec_var forward_ptr in
           (* lemma for non-touching predicates also borrow a @L node *)
           let lending_node = 
-            IF.mkHeapNode (forward_ptr, Unprimed) dname
+            IF.mkHeapNode (fwp_name, Unprimed) dname
                 0 false  (IP.ConstAnn Lend) false false false None
                 (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), vpos)) ddecl.I.data_fields)
                 [] None vpos

@@ -3100,6 +3100,11 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
   | [] -> f
 
+and subst_one_by_one_var sst (v : CP.spec_var) =
+  match sst with
+  | s :: rest -> subst_one_by_one_var rest (subst_var s v)
+  | [] -> v
+
 and apply_one_imm (fr,t) a = match a with
   | CP.ConstAnn _ | CP.NoAnn -> a
   | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm (fr,t) t1)
