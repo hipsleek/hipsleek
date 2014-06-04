@@ -1372,8 +1372,6 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
               pred -> pred1 * pred2
               pred <- pred1 * pred2          *)
       (* this part is applicable to non-tail recursive lemmas *)
-      let llemma_name = "llem_" ^ vd.C.view_name in
-      let rlemma_name = "rlem_" ^ vd.C.view_name in
       let lem_head = (
         let head_node = (self, Unprimed) in
         let head_params = List.map (fun (CP.SpecVar (_,id,p)) ->
@@ -1388,12 +1386,12 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       ) in
       let lem_body_heap = (
         let induct_vnode = List.hd induct_vnodes in
-
-        (* compute pred1 *)
         let v_subs = collect_subs_from_view_node induct_vnode vd in
         let new_base_f = CF.subst_one_by_one v_subs base_f in
         let b_subs = collect_subs_from_view_base_case new_base_f vd in
-        (* let new_induct_f = replace_view_node_by_base_formula f induct_vnode new_base_f in *)
+        let reduced_induct_f = replace_view_node_by_base_formula induct_f induct_vnode new_base_f in
+
+        (* compute pred1 *)
         let pred1_node = (
           if not (vd.C.view_is_tail_recursive) then (self, Unprimed)
           else (
@@ -1402,72 +1400,98 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
             | CP.SpecVar (_,name,prim) -> (name,prim)
           )
         ) in
-        let pred1_params = List.map (fun sv ->
-          let param = (
-            try 
-              let svs = List.find (fun (x,_) -> CP.eq_spec_var sv x) b_subs in
-              snd svs
-            with _ -> sv
-          ) in
-          match param with
-          | CP.SpecVar (_,vname,vprim) -> IP.Var ((vname,vprim), vpos)
-        ) vd.C.view_vars in
-        let pred1 = (
-          (* this is a derived hformula view *)
-          IF.mkHeapNode pred1_node (vd.C.view_name)
-              0 false (IP.ConstAnn Mutable) true false false None
-              pred1_params [] None vpos 
+        (* check if reduced_induct_f can imply a view node *)
+        (* we can have the distributive lemma only when the reduced_induct_f can form a view node *)
+        let is_pred1_ok = (
+          let tmp_nname, tmp_nprim = pred1_node in
+          let tmp_vnode = CP.SpecVar (Named dname, tmp_nname, tmp_nprim) in
+          let tmp_vparams = List.map (fun sv -> 
+            match sv with
+            | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)
+          ) vd.C.view_vars in
+          let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vparams no_pos in
+          let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in
+          let (r,_,_) = Sleekcore.sleek_entail_check 9 [] cprog [] reduced_induct_f tmp_f in
+          r
         ) in
-
-        (* compute pred2 *)
-        let pred2_node = (match induct_vnode.CF.h_formula_view_node with
-          | CP.SpecVar (_,vname,vprim) -> (vname,vprim)
-        ) in
-        let pred2_params = List.map (fun sv ->
-          let vname, vprim = CP.name_of_spec_var sv, CP.primed_of_spec_var sv in
-          IP.Var ((vname,vprim), vpos)
-        ) induct_vnode.CF.h_formula_view_arguments in
-        let pred2 = (
-          (* this is the original hformula view *)
-          IF.mkHeapNode pred2_node (vd.C.view_name)
-              0 false (IP.ConstAnn Mutable) false false false None
-              pred2_params [] None vpos 
-        ) in
-        let body_heap = (
-          if vd.C.view_is_tail_recursive then Iformula.mkStar pred2 pred1 vpos
-          else Iformula.mkStar pred1 pred2 vpos
-        ) in
-        (* now, refine the lemma body *)
-        let refined_body_heap = (
-          if (vd.C.view_is_tail_recursive) then
-            refine_tail_coerc_body_heap body_heap vd
-          else
-            refine_nontail_coerc_body_heap body_heap vd
-        ) in
-        refined_body_heap
-      ) in
-      let llem_body_heap = lem_body_heap in
-      let rlem_body_heap = (
-        if (vd.C.view_is_touching) then lem_body_heap
+        if not (is_pred1_ok) then None
         else (
-          let fwp_name = CP.name_of_spec_var forward_ptr in
-          (* lemma for non-touching predicates also borrow a @L node *)
-          let lending_node = 
-            IF.mkHeapNode (fwp_name, Unprimed) dname
-                0 false  (IP.ConstAnn Lend) false false false None
-                (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), vpos)) ddecl.I.data_fields)
-                [] None vpos
-          in
-          Iformula.mkStar lem_body_heap lending_node vpos
+          let pred1_params = List.map (fun sv ->
+            let param = (
+              try 
+                let svs = List.find (fun (x,_) -> CP.eq_spec_var sv x) b_subs in
+                snd svs
+              with _ -> sv
+            ) in
+            match param with
+            | CP.SpecVar (_,vname,vprim) -> IP.Var ((vname,vprim), vpos)
+          ) vd.C.view_vars in
+          let pred1 = (
+            (* this is a derived hformula view *)
+            IF.mkHeapNode pred1_node (vd.C.view_name)
+                0 false (IP.ConstAnn Mutable) true false false None
+                pred1_params [] None vpos 
+          ) in
+  
+          (* compute pred2 *)
+          let pred2_node = (match induct_vnode.CF.h_formula_view_node with
+            | CP.SpecVar (_,vname,vprim) -> (vname,vprim)
+          ) in
+          let pred2_params = List.map (fun sv ->
+            let vname, vprim = CP.name_of_spec_var sv, CP.primed_of_spec_var sv in
+            IP.Var ((vname,vprim), vpos)
+          ) induct_vnode.CF.h_formula_view_arguments in
+          let pred2 = (
+            (* this is the original hformula view *)
+            IF.mkHeapNode pred2_node (vd.C.view_name)
+                0 false (IP.ConstAnn Mutable) false false false None
+                pred2_params [] None vpos 
+          ) in
+          let body_heap = (
+            if vd.C.view_is_tail_recursive then Iformula.mkStar pred2 pred1 vpos
+            else Iformula.mkStar pred1 pred2 vpos
+          ) in
+          (* now, refine the lemma body *)
+          let refined_body_heap = (
+            if (vd.C.view_is_tail_recursive) then
+              refine_tail_coerc_body_heap body_heap vd
+            else
+              refine_nontail_coerc_body_heap body_heap vd
+          ) in
+          Some refined_body_heap
         )
       ) in
-      let llem_body = Iformula.mkBase llem_body_heap (Ipure.mkTrue vpos) Iformula.top_flow [] vpos in
-      let rlem_body = Iformula.mkBase rlem_body_heap (Ipure.mkTrue vpos) Iformula.top_flow [] vpos in
-      let left_coerc = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] lem_head llem_body in
-      let right_coerc = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] lem_head rlem_body in
-      if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-        [right_coerc]
-      else [left_coerc; right_coerc]
+      match lem_body_heap with
+      | None -> []
+      | Some lem_body_hf -> (
+          let llem_body_hf = lem_body_hf in
+          let rlem_body_hf = (
+            if (vd.C.view_is_touching) then lem_body_hf
+            else (
+              let fwp_name = CP.name_of_spec_var forward_ptr in
+              (* lemma for non-touching predicates also borrow a @L node *)
+              let lending_node =
+                let params = List.map (fun _ ->
+                  Ipure_D.Var((fresh_name (), Unprimed), vpos)
+                ) ddecl.I.data_fields in
+                IF.mkHeapNode (fwp_name, Unprimed) dname
+                    0 false  (IP.ConstAnn Lend) false false false None
+                    params [] None vpos
+              in
+              Iformula.mkStar lem_body_hf lending_node vpos
+            )
+          ) in
+          let llemma_name = "llem_" ^ vd.C.view_name in
+          let rlemma_name = "rlem_" ^ vd.C.view_name in
+          let true_pf = Ipure.mkTrue vpos in
+          let llem_body = Iformula.mkBase llem_body_hf true_pf Iformula.top_flow [] vpos in
+          let rlem_body = Iformula.mkBase rlem_body_hf true_pf Iformula.top_flow [] vpos in
+          let left_coerc = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] lem_head llem_body in
+          let right_coerc = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] lem_head rlem_body in
+          if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
+            [right_coerc]
+          else [left_coerc; right_coerc]
+        )
     )
   )
 

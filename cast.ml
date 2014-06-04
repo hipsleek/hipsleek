@@ -2887,12 +2887,12 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
     ) !forward_ptrs;
 
     let possible_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
-    Debug.ninfo_hprint (add_str "possible_ptrs 1:" (pr_list pr_id)) possible_ptrs no_pos;
+    Debug.binfo_hprint (add_str "possible_ptrs 1:" (pr_list pr_id)) possible_ptrs no_pos;
     let _ = List.iter (fun v ->
       try
-        Debug.ninfo_pprint ("find path from self to " ^ v) no_pos;
+        Debug.binfo_pprint ("find path from self to " ^ v) no_pos;
         let path, weight = Dijkstra.shortest_path vg self v in
-        Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+        Debug.binfo_pprint ("found path: length " ^ (string_of_int (List.length path))
                             ^ ", weight: " ^ (string_of_int weight)) no_pos;
         let fw_ptrs = List.concat (List.map (fun e ->
           let lbl = ViewGraph.get_label e in
@@ -2904,7 +2904,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
           forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
         )
       with Not_found ->
-        Debug.ninfo_pprint ("not found! " ^ v) no_pos;
+        Debug.binfo_pprint ("not found! " ^ v) no_pos;
         ()
     ) possible_ptrs in
 
