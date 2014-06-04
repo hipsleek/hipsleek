@@ -6,7 +6,7 @@ pred SLL<p:node> ==
  self = p
 or (exists x: self::node<x> * x::SLL<p>).
 
-lemma_safe  self::node<x1> * x1::SLL<p:node> 
+lemma_unsafe  self::node<x1> * x1::SLL<p:node> 
           <-> (exists x: self::SLL<x>*x::node<p>).
 
 /*
@@ -22,3 +22,34 @@ Entailing lemma lem_11: Fail. Details below:
 Failed to prove lem_11:<==> in current context.
 Removing invalid lemma ---> lemma store restored.
 */
+
+checkentail_exact 
+      self::node<x1> * x1::SLL<p:node> 
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+
+checkentail_exact 
+      self::node<p>
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+
+checkentail_exact 
+      self::node<x1> * x1::node<u>*u::SLL<p:node> 
+      |- (exists x: self::SLL<x>*x::node<p>).
+
+checkentail_exact 
+      (exists x: self::SLL<x>*x::node<p>)
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+ .
+
+
+checkentail_exact 
+      x::node<p> & self=x
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+ .
+
+
+checkentail_exact 
+      (exists x: self::node<q>*q::SLL<x>*x::node<p>)
+      |- (exists x1: self::node<x1> * x1::SLL<p:node>)
+.
