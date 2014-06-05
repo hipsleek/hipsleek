@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 use File::Basename;
+use Tie::File;
 
 $asterix_path = "/home/locle/tools/pldi11";
 
@@ -16,9 +17,9 @@ if ($num_args == 0) {
   exit;
 }
 
-@slk_files = <$ARGV[0]*.slk>; 
+$bench_name = $ARGV[0]; 
 
-@sl_files = <$asterix_path/benchmarks/benchs/sl/$ARGV[0]*.sl>;
+@sl_files = <$asterix_path/benchmarks/benchs/sl/$bench_name*.sl>;
 
 foreach $sl_file (@sl_files) {
   print $sl_file . "\n";
@@ -45,17 +46,26 @@ foreach $sl_file (@sl_files) {
       $index = $i;
     }
     $slk_file = $prefix . $index . ".tptp.smt2.slk";
-    open(my $fh, '>>', $slk_file) or die "Could not open file '$slk_file' $!";
     print $slk_file;
+    
+    #open(my $fh, '>>', $slk_file) or die "Could not open file '$slk_file' $!";
+    tie my @slk_lines, 'Tie::File', $slk_file or die "Could not open file '$slk_file' $!";
+    
+    # Remove expect command, if any
+    #@slk_lines = grep(!/expect/, @slk_lines);
+    @slk_lines = grep {$_ !~ /expect/} @slk_lines;
+    
     if ($lines[$i-1] =~ /invalid/) {
       print ": Invalid\n"; 
-      $expect = "\nexpect Fail.";
+      $expect = "expect Fail.";
     } else {
       print ": Valid\n";
-      $expect = "\nexpect Valid.";
+      $expect = "expect Valid.";
     }
-    say $fh $expect;
-    close $fh;
+    #say $fh $expect;
+    #close $fh;
+    push (@slk_lines, $expect);
+    untie @slk_lines;
   }
 }
 
