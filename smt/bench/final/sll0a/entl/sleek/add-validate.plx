@@ -16,9 +16,9 @@ if ($num_args == 0) {
   exit;
 }
 
-@slk_files = <$ARGV[0]*.slk>; 
+$bench_name = $ARGV[0]; 
 
-@sl_files = <$asterix_path/benchmarks/benchs/sl/$ARGV[0]*.sl>;
+@sl_files = <$asterix_path/benchmarks/benchs/sl/$bench_name*.sl>;
 
 foreach $sl_file (@sl_files) {
   print $sl_file . "\n";
