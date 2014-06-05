@@ -31,13 +31,20 @@ foreach $sl_file (@sl_files) {
   
   $prefix = basename($sl_file, ".sl");
   
-  for ($i = 1; $i <= 10; $i++) {
+  if ($ARGV[0] =~ /smallfoot/) {
+    $max_index = 77;
+  } else {
+    $max_index = 10;
+    $prefix = $prefix . "-e";
+  }
+  
+  for ($i = 1; $i <= $max_index; $i++) {
     if ($i < 10) {
       $index = "0" . $i;
     } else {
       $index = $i;
     }
-    $slk_file = $prefix . "-e" . $index . ".tptp.smt2.slk";
+    $slk_file = $prefix . $index . ".tptp.smt2.slk";
     open(my $fh, '>>', $slk_file) or die "Could not open file '$slk_file' $!";
     print $slk_file;
     if ($lines[$i-1] =~ /invalid/) {
