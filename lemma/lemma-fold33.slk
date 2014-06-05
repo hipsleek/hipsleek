@@ -8,22 +8,35 @@ pred lseg<p, n> == self=p & n=0
 	inv n>=0.
 
 /*
-lemma_unsafe "ll_tail2" self::lseg<p, n> 
-   <- self::lseg<t, n-1> * t::node<_, p>.
+pred ll<n> == self=null & n=0
+     or self::node<_,r>*r::ll<n-1>
+inv n>=0.
 */
 
+lemma_unsafe "lem_tail" self::lseg<p, n> 
+   <- self::lseg<t, n-1> * t::node<_, p>.
+
+
 checkentail 
-    self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- self_ll_tail2::lseg<p,n>.
+    self_lem_tail::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- self_lem_tail::lseg<p,n>.
 expect Valid.
 print residue.
 
 
 /*
+checkentail 
+    self_lem_tail::node<_,r> * r::ll<n>*t::node<_,_> & a=b
+    |- self_lem_tail::ll<n> &a=b.
+expect Fail.
+print residue.
+*/
+
 // fold
+/*
 checkentail  
-     self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- (exists r1: self_ll_tail2::node<_, r1> * r1::lseg<p,n-1>).
+     self_lem_tail::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- (exists r1: self_lem_tail::node<_, r1> * r1::lseg<p,n-1>).
 expect Valid.
 print residue.
 */

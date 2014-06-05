@@ -6735,14 +6735,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
               | _ -> (
                     let h1, p1, fl1, t1, a1 = split_components ante in
                     let h2, p2, fl2, t2, a2 = split_components conseq in
-                    Debug.ninfo_hprint (add_str "h1" (Cprinter.string_of_h_formula)) h1 no_pos;
-                    Debug.ninfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
-                    Debug.ninfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
-                    Debug.ninfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
+                    Debug.tinfo_hprint (add_str "h1" (Cprinter.string_of_h_formula)) h1 no_pos;
+                    Debug.tinfo_hprint (add_str "h2" (Cprinter.string_of_h_formula)) h2 no_pos;
+                    Debug.tinfo_hprint (add_str "p1" (Cprinter.string_of_mix_formula)) p1 no_pos;
+                    Debug.tinfo_hprint (add_str "p2" (Cprinter.string_of_mix_formula)) p2 no_pos;
                     let estate = if !Globals.allow_imm || (!Globals.allow_field_ann) then estate else
                       let null_p = CP.get_null_formula (MCP.pure_of_mix p2) in
                       let ctx_with_rhs es=
-                        let _ = DD.ninfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) p2 no_pos in
+                        let _ = DD.tinfo_hprint (add_str "rhs_pure" Cprinter.string_of_mix_formula) p2 no_pos in
                         let eqns = (MCP.ptr_equations_without_null p2) in
                         {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}
                       in
@@ -6981,8 +6981,9 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               formula_base_pos = pos } in
                               (*ctx0 and b1 is identical*)
                               Debug.ninfo_hprint (add_str "estate.es_heap match_" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
-                              Debug.tinfo_hprint (add_str "ctx0 match_" (Cprinter.string_of_context)) ctx0 no_pos;
-                              let ctx_lst, prf = heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos in
+                              Debug.binfo_hprint (add_str "ctx0 match_" (Cprinter.string_of_context)) ctx0 no_pos;
+                              Debug.binfo_hprint (add_str "estate match_" (Cprinter.string_of_entail_state)) estate no_pos;
+                              let ctx_lst, prf = heap_entail_non_empty_rhs_heap prog is_folding  (* ctx0 *) estate ante conseq b1 b2 rhs_h_matched_set pos in
                               Debug.tinfo_hprint (add_str "ctx0_lst match_" (Cprinter.string_of_list_context)) ctx_lst no_pos;
                               (ctx_lst, prf)
                             )
@@ -7080,8 +7081,8 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
 and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
   let pr = Cprinter.string_of_mix_formula in
   Debug.no_3_num i "heap_entail_build_mix_formula_check"  
-      (add_str "evars" (fun l -> Cprinter.string_of_spec_var_list l)) 
-      (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
+      (add_str "EVARS" (fun l -> Cprinter.string_of_spec_var_list l)) 
+      (add_str "ANTE" pr) (add_str "CONSEQ" pr) (pr_pair (add_str "new ANTE" pr) (add_str "new CONSEQ" pr))
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq       
 
 and heap_entail_build_pure_check ev an cq pos =
@@ -7579,6 +7580,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         else tmp3
       in
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+      let _ = Debug.info_hprint (add_str "estate" (Cprinter.string_of_estate)) estate pos in
+      (* let rhs_p =  *)
+      (* let fv = MCP.mfv rhs_p in *)
+      (* let rhs_p = List.fold_left (fun a (p1,p2) -> *)
+      (*     if (Gen.BList.mem_eq CP.eq_spec_var p1 fv (\* || Gen.BList.mem_eq CP.eq_spec_var p2 fv *\) ) then *)
+      (*     (MCP.memoise_add_pure a (CP.mkEqExp (CP.mkVar p1 pos) (CP.mkVar p2 pos) pos) ) *)
+      (*     else a ) rhs_p (estate.es_rhs_eqset) in *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
         if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
@@ -8025,7 +8033,7 @@ and detect_false_x (ante : MCP.mix_formula) (memset : CF.mem_formula) : bool =
       match l with
         | h::r -> 
 	          if (r!=[]) then
-	            (List.fold_left 
+            (List.fold_left 
 		            (fun x y -> x || CP.EMapSV.is_equiv eqset h y) false r) || (helper r)
 	          else false
         | [] -> false
@@ -9424,8 +9432,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           CF.mk_failure_must "99" Globals.sl_error, estate.es_trace)), NoAlias)
 
 (* (andreeac) you don't use ctx0, is there any point to have it as a parameter?  *)
-and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
+and heap_entail_non_empty_rhs_heap_x prog is_folding  (* ctx0 *) estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+  Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:"
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
     let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
     let _ = DD.ninfo_hprint (add_str " ante" Cprinter.prtt_string_of_formula) ante no_pos in
@@ -9471,17 +9479,17 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       let _ = Debug.tinfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate pos in
       process_action 1 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
-and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
+and heap_entail_non_empty_rhs_heap prog is_folding  (* ctx0 *) estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
   Debug.no_6  "heap_entail_non_empty_rhs_heap" 
-      Cprinter.string_of_entail_state_short
+      Cprinter.string_of_entail_state(* _short *)
       (add_str "LHS base" Cprinter.string_of_formula_base )
       (add_str "RHS base" Cprinter.string_of_formula_base )
       (add_str "ante    " Cprinter.string_of_formula)
       (add_str "conseq  " Cprinter.string_of_formula)
       (add_str "matched_set" Cprinter.string_of_spec_var_list)
       (pr_pair Cprinter.string_of_list_context string_of_proof) 
-      (fun _ _ _ _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) estate lhs_b rhs_b ante conseq rhs_h_matched_set
+      (fun _ _ _ _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  (* ctx0 *) estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) estate lhs_b rhs_b ante conseq rhs_h_matched_set
 
 (* Debug.loop_3_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula *)
 (*     Cprinter.string_of_spec_var_list (fun _ -> "?") (fun _ _ _-> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b rhs_h_matched_set pos) lhs_b conseq rhs_h_matched_set *)
@@ -11065,7 +11073,7 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_Nothing_to_do _ -> false
     | _ -> true in 
   Debug.no_5_all i "process_action" (Some filter) None [] pr1 
-      (add_str "estate" Cprinter.string_of_entail_state_short)
+      (add_str "estate" Cprinter.string_of_entail_state(* _short *))
       (add_str "conseq" Cprinter.string_of_formula) 
       (add_str "lhs_b" pr3) 
       (add_str "rhs_b" pr3) pr2

@@ -7,21 +7,21 @@ pred lseg<p, n> == self=p & n=0
 	or self::node<_, r> * r::lseg<p, n-1>
 	inv n>=0.
 
-lemma_unsafe "ll_tail2" self::lseg<p, n> 
+lemma_unsafe "lem_tail" self::lseg<p, n> 
    <- self::lseg<t, n-1> * t::node<_, p>.
 
 
-checkentail 
-    self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- self_ll_tail2::lseg<p,n>.
+checkentail_exact 
+    self_lem_tail::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- self_lem_tail::lseg<p,n>.
 expect Valid.
 print residue.
 
 
 // fold
-checkentail  
-     self_ll_tail2::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
-    |- (exists r1: self_ll_tail2::node<_, r1> * r1::lseg<p,n-1>).
+checkentail_exact
+     self_lem_tail::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
+    |- (exists r1: self_lem_tail::node<_, r1> * r1::lseg<p,n-1>).
 expect Valid.
 print residue.
 
@@ -37,6 +37,6 @@ Validate 2: Expected.
 
 
  <1>(exists flted_23_125: emp&flted_23_125+2=n & Anon_18=Anon_16 & t_132=t & exists(p_126:p=p_126) & exists(flted_24_127:flted_23_125+1=flted_24_127)&{FLOW,(21,22)=__norm})[]
-[[ Match ==>  COND ==>  (Lemma <== ll_tail2) ==>  Match ==>  Match ==> ]]
+[[ Match ==>  COND ==>  (Lemma <== lem_tail) ==>  Match ==>  Match ==> ]]
 
 */

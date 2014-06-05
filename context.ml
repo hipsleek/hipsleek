@@ -1266,10 +1266,12 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                     | None -> a3
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
                       let a7 = 
-                        let lem_act = search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
-                        match a6 with
-                          | Some a ->  Some (1, Cond_action ([a]@lem_act))
-                          | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
+                        if (!Globals.smart_lem_search) then
+                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
+                          match a6 with
+                            | Some a ->  Some (1, Cond_action ([a]@lem_act))
+                            | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
+                        else a6 
                       in
                       match a7 with
                         | Some a -> [a]
@@ -1302,7 +1304,9 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     else [] in*)
                   (* [] in *)
                   (* let src = (-1,norm_search_action (l2@l3  (\* @l4 *\) )) in *)
-                  let src = (-1,norm_search_action l2 ) in
+                  let l3 = if not (!Globals.smart_lem_search) then 
+                    search_lemma_candidates flag_lem ann_derv (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res else [] in
+                  let src = (-1,norm_search_action (l2@l3) ) in
                   src (*Seq_action [l1;src]*)
             | DataNode dl, ViewNode vr -> 
                   pr_debug "DATA vs VIEW\n";
