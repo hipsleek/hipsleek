@@ -3789,6 +3789,11 @@ let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Ramify -> "Ramify"
   | Cast.Normalize b-> "Normalize "^(string_of_bool b)
 
+let string_of_coercion_origin orig =
+  match orig with
+  | LEM_USER -> "user-given"
+  | LEM_GEN -> "generated"
+
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
@@ -3805,6 +3810,7 @@ let string_of_coerc_opt op c =
     ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)
     ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
     ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
+    ^"\n coercion_origin: "^(string_of_coercion_origin c.Cast.coercion_origin)
     ^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

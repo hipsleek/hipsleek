@@ -3311,6 +3311,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_mater_vars = m_vars;
         C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
         C.coercion_kind = coer.I.coercion_kind;
+        C.coercion_origin = coer.I.coercion_origin;
         } in
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
@@ -7391,15 +7392,15 @@ and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
   { Iast.coercion_type = cd.Iast.coercion_type;
-  Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
-  Iast.coercion_exact = cd.Iast.coercion_exact;
-  Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
-  Iast.coercion_name = cd.Iast.coercion_name;
-  Iast.coercion_head = nch;
-  Iast.coercion_body = ncb;
-  Iast.coercion_proof = cd.Iast.coercion_proof;
-  I.coercion_kind = cd.I.coercion_kind;
-  }
+    Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
+    Iast.coercion_exact = cd.Iast.coercion_exact;
+    Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
+    Iast.coercion_name = cd.Iast.coercion_name;
+    Iast.coercion_head = nch;
+    Iast.coercion_body = ncb;
+    Iast.coercion_proof = cd.Iast.coercion_proof;
+    I.coercion_kind = cd.I.coercion_kind;
+    I.coercion_origin = cd.I.coercion_origin; }
 
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd

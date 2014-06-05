@@ -85,8 +85,8 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (*gen lemma*)
     let lemma_name = "cyc" in
     let l_coer = match lem_type with
-      | 0 -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] lf2 rf2
-      | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Right [] rf2 lf2
+      | 0 -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left [] lf2 rf2
+      | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Right [] rf2 lf2
     in
     (*add lemma*)
     let iprog = I.get_iprog () in
@@ -186,7 +186,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   let rf2 = formula_rev_fnc rf1 in
   (*gen lemma*)
   let lemma_name = "cyci" in
-  let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
+  let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left [(CP.name_of_spec_var n_hp)] lf2 rf2 in
   (*backup*)
   let cur_ass = ass_stk# get_stk in
   let _ = ass_stk # reset in
@@ -205,7 +205,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
        chprels_decl hp_defs [] rf1 in
     let rf4 = formula_rev_fnc rf3 in
     let lem_name = fresh_any_name lemma_name in
-    let l_coer = I.mk_lemma (lem_name) LEM_UNSAFE I.Left [] lf2 rf4 in
+    let l_coer = I.mk_lemma (lem_name) LEM_UNSAFE LEM_GEN I.Left [] lf2 rf4 in
     (*add lemma*)
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ = print_endline "\n*******relational definition ********" in

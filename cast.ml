@@ -243,6 +243,7 @@ and coercion_decl = {
     coercion_case : coercion_case; (*Simple or Complex*)
     coercion_type_orig: coercion_type option; 
     coercion_kind: lemma_kind;
+    coercion_origin: lemma_origin;
 }
 
 and coercion_type = Iast.coercion_type

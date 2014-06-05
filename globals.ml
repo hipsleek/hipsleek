@@ -40,6 +40,10 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
 
+type lemma_origin =
+  | LEM_USER          (* user-given lemma *)
+  | LEM_GEN           (* automatically generated/inferred lemma *)
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
 	  Flag_str of string
