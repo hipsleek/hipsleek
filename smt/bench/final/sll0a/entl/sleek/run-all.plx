@@ -1,10 +1,16 @@
 #!/usr/bin/perl
 
-@files = <*.slk>;
+$num_args = $#ARGV + 1;
+
+if ($num_args == 0) {
+  @files = <*.slk>;
+} else {
+  @files = <$ARGV[0]*.slk>;
+}
 
 foreach $file (@files) {
-    print $file . "\n";
+  print $file . "\n";
 
-    system("sleek " . $file ." --smt-compete-test");
+  system("sleek " . $file ." --smt-compete-test");
 }
 
