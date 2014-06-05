@@ -11,5 +11,5 @@ checkentail x14::Sll_t<next = x12> * x2::ls<x15> * x17::ls<x13> * x11::Sll_t<nex
          |- x1::ls<x17> * x9::ls<x5> * x7::ls<x14> * x17::ls<x13> * x16::ls<x15> * x3::ls<x4> * x10::ls<x17> * emp.
 
 
-expect  Fail.
 
+expect Fail.

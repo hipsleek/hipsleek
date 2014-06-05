@@ -11,6 +11,6 @@ checkentail x1::Sll_t<next = x11> * x3::Sll_t<next = x1> * x6::Sll_t<next = x2> 
          |- x8::ls<x3> * x7::ls<x9> * x3::ls<x1> * x4::ls<x1> * x9::ls<x11> * x10::ls<x11> * x5::ls<x11> * x1::ls<x3> * emp.
 
 
-expect  Valid.
 
 
+expect Valid.
