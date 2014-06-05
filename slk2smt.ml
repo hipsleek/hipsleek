@@ -34,7 +34,8 @@ let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1
 
 let smt_cmds = ref ([] : command list)
 
-let smt_ent_cmds = ref ([] : (meta_formula * meta_formula * entail_type * Cformula.formula * Cformula.struc_formula ) list)
+let smt_ent_cmds = ref ([]: 
+  (meta_formula * meta_formula * entail_type * Cformula.formula * Cformula.struc_formula * bool) list)
 
 let find_typ spl name =
   let (_, sv_info) = List.find (fun (id,sv_info) -> id = name) spl in
@@ -326,7 +327,8 @@ let process_entail (iante, iconseq, etype) iprog cprog =
   let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
   "\n" ^ s0 ^ "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
-let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, cante,cconseq) =
+let process_entail_new cprog iprog start_pred_abs_num 
+  (iante, iconseq, etype, cante, cconseq, res) header data_decl =
   let spl1 = match iante with
     | MetaForm f ->
           Typeinfer.gather_type_info_formula iprog f [] true
@@ -361,22 +363,24 @@ let process_entail_new cprog iprog start_pred_abs_num (iante, iconseq, etype, ca
   (* let s0 = List.fold_left (fun s0 (id,sv_info) -> *)
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
+  let status = "(set-info :status " ^ (if res then "unsat" else "sat") ^ ")\n" in 
   let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,p)) ->
       s0 ^ "(declare-fun " ^ (string_of_sv (id,p)) ^ " () " ^ (smt_string_of_typ t) ^ ")\n"
   ) "" all_svl in
   (* declare abstraction for predicate instance *)
   (* let all_vnodes = (Cformula.get_views cante)@(Cformula.get_views_struc cconse) in *)
   let all_vnodes = [] in
-  let  s_pred_abs,num_vnodes  = List.fold_left (fun ( s, n) _ ->
+  let  s_pred_abs, num_vnodes  = List.fold_left (fun ( s, n) _ ->
       (s ^ ("(declare-fun alpha" ^ (string_of_int n) ^ "()  SetLoc)\n" ), n+1)
-  ) ( "",start_pred_abs_num) all_vnodes in
+  ) ( "", start_pred_abs_num) all_vnodes in
   let all_view_names = List.map (fun vdecl -> vdecl.Cast.view_name) cprog.Cast.prog_view_decls in
   let s1, n1 = process_iante iante iprog all_view_names start_pred_abs_num in
   let s2= if Cformula.isAnyConstFalse_struc cconseq then "" else
     let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
     s2
   in
-  "\n" ^ s0 ^ "\n" ^ s_pred_abs  ^ "\n"  ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
+  header ^ status ^ "\n" ^ data_decl ^ "\n" ^ 
+  s0 ^ "\n" ^ s_pred_abs  ^ "\n"  ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
 let process_cmd cmd iprog cprog=
   match cmd with
@@ -402,12 +406,20 @@ let trans_smt slk_fname iprog cprog cmds =
     | _ -> false
   ) cmds in
   let ent_cmds = !smt_ent_cmds in
-  let logic_header = "(set-logic QF_S)\n" in
+  let logic_header = 
+    "(set-logic QF_S)\n" ^ 
+    "(set-info :source |" ^
+    "  Sleek solver\n" ^
+    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^  
+    "|)\n\n" ^ 
+    "(set-info :smt-lib-version 2.0)\n" ^
+    "(set-info :category \"crafted\")\n" 
+  in
   (*declaration*)
   let decl_s0 = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog cprog)) "" other_cmds in
-  let decl_s = logic_header ^ decl_s0 in
+  (* let decl_s = logic_header ^ decl_s0 in *)
   (*each ent check -> one file*)
-  let str_ents = List.map (fun cmd -> decl_s ^ "\n" ^(process_entail_new cprog iprog 0 cmd)) ent_cmds in
+  let str_ents = List.map (fun cmd -> (process_entail_new cprog iprog 0 cmd logic_header decl_s0)) ent_cmds in
   let norm_slk_fname =  Globals.norm_file_name slk_fname in
   let _ = List.iter (fun s ->
       let n= fresh_number () in

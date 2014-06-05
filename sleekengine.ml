@@ -1619,8 +1619,9 @@ let process_shape_extract sel_vnames=
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
-       let _ = if !Globals.gen_smt then
-         let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq)] in
+      let res, _, _ = r in
+      let _ = if !Globals.gen_smt then
+         let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
          ()
        else () in
       r
