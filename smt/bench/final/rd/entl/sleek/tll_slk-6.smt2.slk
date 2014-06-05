@@ -37,3 +37,5 @@ pred ltll<p:node,l:node,r:node,D:node,v:node,t:node> ==
 
 checkentail l::tree<> * r::tree<> * xprm::node<parent = pprm,left = l,right = r,next = D> & vprm != null & vprm = r & parent0 = p & pprm = p1 & xprm = x & tprm = t & r != null
          |- l::tree<> * r::tree<> * xprm::node<parent = pprm,left = l,right = r,next = D> & vprm != null & vprm = r & parent0 = p & pprm = p1 & xprm = x & tprm = t & r != null.
+
+expect Valid.

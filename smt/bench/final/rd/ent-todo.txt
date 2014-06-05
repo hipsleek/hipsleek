@@ -249,9 +249,33 @@ Message: compute_lemma_params_property: expect at most 1 view node
 
 graph
 ======================================================================
-#tll_slk-1.smt2.slk --> #tll_slk-13.smt2.slk
+#tll_slk-1.smt2.slk: OK
 
-todo:
+#tll_slk-2.smt2.slk: OK
+
+#tll_slk-3.smt2.slk: OK
+
+#tll_slk-4.smt2.slk: OK
+
+#tll_slk-5.smt2.slk : OK
+
+#tll_slk-6.smt2.slk: OK
+
+#tll_slk-7.smt2.slk : OK
+
+#tll_slk-8.smt2.slk: OK
+
+#tll_slk-9.smt2.slk : OK
+
+#tll_slk-10.smt2.slk : OK
+
+#tll_slk-11.smt2.slk : OK
+
+#tll_slk-12.smt2.slk : OK
+
+ #tll_slk-13.smt2.slk: OK
+
+todo: FIXED
 Message: compute_lemma_params_property: expect at most 1 view node
  Fatal error: exception Failure("compute_lemma_params_property: expect at most 1 view node")
 

@@ -37,3 +37,5 @@ pred ltll<p:node,l:node,r:node,D:node,v:node,t:node> ==
 
 checkentail xprm::ltll<pprm,l,r,D,vprm,tprm> & res = vprm & l != null & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t
          |- x::etll<p1,t,res> & vprm = res & l != null & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t.
+
+expect Valid.
