@@ -633,7 +633,10 @@ let convert_data_and_pred_to_cast_x () =
      cprog2a
      else cprog6
   in
-  let cprog6 = Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls in
+  let cprog6 = if !Globals.lemma_gen_unsafe || !Globals.lemma_gen_safe then
+    Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls
+  else cprog6a
+  in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
