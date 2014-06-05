@@ -923,5 +923,6 @@ let is_view_arith_x (cv : Cast.view_decl) : bool =
 
 let is_view_arith (cv : Cast.view_decl) : bool =
   let pr_1 = fun cv -> cv.Cast.view_name in
+  let pr_1 = Cprinter.string_of_view_decl_short in
   Debug.no_1 "is_view_arith" pr_1 string_of_bool
       is_view_arith_x cv
