@@ -1244,7 +1244,7 @@ cid:
 	   else (t,Unprimed)
     | `RES _                 	->  (res_name, Unprimed)
     | `SELFT _               	->  (self, Unprimed)
-    | `NULL                     ->  ((Globals.fresh_any_name null_name), Unprimed)
+    | `NULL                      ->  (null_name, Unprimed)
     | `THIS _         		->  (this, Unprimed)]];
 
 

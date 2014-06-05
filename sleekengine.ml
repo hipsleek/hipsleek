@@ -642,7 +642,9 @@ let convert_data_and_pred_to_cast_x () =
   cprog := cprog6
 
 let convert_data_and_pred_to_cast () = 
-  Debug.no_1 "convert_data_and_pred_to_cast" pr_no pr_no convert_data_and_pred_to_cast_x ()
+  let pr _ = pr_list Iprinter.string_of_view_decl iprog.I.prog_view_decls in
+  let pr2 _ = pr_list Cprinter.string_of_view_decl !cprog.Cast.prog_view_decls in
+  Debug.no_1 "convert_data_and_pred_to_cast" pr pr2 convert_data_and_pred_to_cast_x ()
 
 let process_barrier_def bd = 
     if !Globals.print_core || !Globals.print_core_all then print_string (Iprinter.string_of_barrier_decl bd) else () ;
