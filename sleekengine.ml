@@ -747,9 +747,25 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+      (* let svl = Cformula.fv r in *)
+      (* let null_vars0 = List.find_all (fun sv -> *)
+      (*     match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in *)
+      (* let null_vars = Cpure.remove_dups_svl null_vars0 in *)
+      (* let subst_vars = List.map (fun sv -> *)
+      (*     match sv with Cpure.SpecVar(typ,name,pr) -> *)
+      (*     Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in *)
+      (* let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in *)
+      (* let new_const0 = List.map (fun sv -> *)
+      (*     Cpure.mkNull sv no_pos) subst_vars in *)
+      (* let new_const = List.fold_left (fun f0 f1 -> *)
+      (*     Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in *)
+      (* let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components new_r in *)
+      (* let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in *)
+      (* let new_r = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in *)
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula new_r)^"\n") in *)
       (n_tl,r)
   | MetaVar mvar -> begin
-      try 
+      try
 	let mf = get_var mvar in
 	meta_to_formula mf quant fv_idents tlist
       with
@@ -771,7 +787,7 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_v
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr2 (_,f) = pr_f f in
-  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr2
+  Debug.no_1 "Sleekengine.meta_to_formula" pr_meta pr2
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
@@ -782,7 +798,6 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
-     
       let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
       (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
