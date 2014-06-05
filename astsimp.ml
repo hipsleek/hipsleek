@@ -2128,8 +2128,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   in
   (*******************************)
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
-  let has_arith = List.exists (fun cv -> 
-      Expure.is_view_arith cv) cviews0 in
+  let has_arith = not(!Globals.smt_compete_mode) && List.exists (fun cv -> 
+      Expure.is_ep_view_arith cv) cviews0 in
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
   let _ = if has_arith then 
     begin

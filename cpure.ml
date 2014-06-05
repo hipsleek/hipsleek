@@ -1777,9 +1777,9 @@ and is_exp_arith (e:exp) : bool=
   match e with
   | Var (sv,pos) ->        (*waitlevel is a kind of bag constraints*)
       if (name_of_spec_var sv = Globals.waitlevel_name) then false else true
-  | Null _  | IConst _ | AConst _ | InfConst _ | FConst _ 
+  | Null _  | IConst _ | AConst _ | InfConst _ | FConst _
   | Level _ -> true
-  | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+  | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_)
   | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
   | TypeCast(_, e1, _) -> is_exp_arith e1
   (* bag expressions *)
@@ -1791,9 +1791,9 @@ and is_exp_arith (e:exp) : bool=
     | Bptriple _ -> false
   | Func _ -> true
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
-          
+
 and is_formula_arith_x (f:formula) :bool = match f with
-  | BForm (b,_) -> is_b_form_arith b 
+  | BForm (b,_) -> is_b_form_arith b
   | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
   | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
   | AndList l -> all_l_snd  is_formula_arith l
@@ -7567,7 +7567,7 @@ module ArithNormalizer = struct
 	  | None -> ""
 	  | _ -> "$[]"
 	in sil ^ spf
-		
+
   type add_term = int * mult_term_list
 
   type add_term_list = add_term list (* default [] means 0 *)

@@ -902,27 +902,115 @@ let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident
       (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num
 
 (* check whether the view has arithmetic or not *)
-let rec is_cformula_arith_x (f : Cformula.formula) : bool =
+let is_ep_exp_arith_x (e : Cpure.exp) : bool =
+  match e with
+    | Var (sv,_) ->
+          if (name_of_spec_var sv = Globals.waitlevel_name) then true else false
+    | Null _ -> false
+    | _ -> true
+    (* | IConst _ *)
+    (* | AConst _ *)
+    (* | InfConst _ *)
+    (* | FConst _ *)
+    (* | Level _ *)
+    (* | Add _ *)
+    (* | Subtract _ *)
+    (* | Mult _ *)
+    (* | Div _ *)
+    (* | Max _ *)
+    (* | Min _ *)
+    (* | TypeCast _ *)
+    (* | Bag _ *)
+    (* | BagUnion _ *)
+    (* | BagIntersect _ *)
+    (* | BagDiff _ *)
+    (* | List _ *)
+    (* | ListCons _ *)
+    (* | ListHead _ *)
+    (* | ListTail _ *)
+    (* | ListLength _ *)
+    (* | ListAppend _ *)
+    (* | ListReverse _ *)
+    (* | Tsconst _ *)
+    (* | Bptriple _ *)
+    (* | Func _ *)
+    (* | ArrayAt _ -> true *)
+
+let is_ep_exp_arith (e : Cpure.exp) : bool =
+  Debug.no_1 "is_ep_exp_arith" string_of_formula_exp string_of_bool
+      is_ep_exp_arith_x e
+
+let is_ep_b_form_arith_x (b: b_formula) :bool =
+  let (pf,_) = b in
+  match pf with
+    | Eq (e1,e2,_)
+    | Neq (e1,e2,_) -> (is_ep_exp_arith e1) || (is_ep_exp_arith e2)
+    | BConst _ -> false
+    | _ -> true
+    (* | Frm _ *)
+    (* | BVar _ *)
+    (* | SubAnn _ *)
+    (* | LexVar _ *)
+    (* | XPure _ *)
+    (* | Lt _ *)
+    (* | Lte _ *)
+    (* | Gt _ *)
+    (* | Gte _ *)
+    (* | Eq _ *)
+    (* | Neq _ *)
+    (* | EqMax _ *)
+    (* | EqMin _ *)
+    (* | BagIn _ *)
+    (* | BagNotIn _ *)
+    (* | BagSub _ *)
+    (* | BagMin _ *)
+    (* | BagMax _ *)
+    (* | VarPerm _ *)
+    (* | ListIn _ *)
+    (* | ListNotIn _ *)
+    (* | ListAllN _ *)
+    (* | ListPerm _ *)
+    (* | RelForm _ -> true *)
+
+let is_ep_b_form_arith (b: b_formula) : bool =
+  Debug.no_1 "is_ep_b_form_arith" string_of_b_formula string_of_bool
+      is_ep_b_form_arith_x b
+
+let rec is_ep_pformula_arith_x (pf : Cpure.formula) : bool =
+  match pf with
+    | BForm (b,_) -> is_ep_b_form_arith b
+    | And (f1,f2,_)
+    | Or (f1,f2,_,_) -> (is_ep_pformula_arith f1) || (is_ep_pformula_arith f2)
+    | Not (f,_,_)
+    | Forall (_,f,_,_)
+    | Exists (_,f,_,_) -> (is_ep_pformula_arith f)
+    | AndList l -> List.exists (fun (_,pf) -> is_ep_pformula_arith pf) l
+
+and is_ep_pformula_arith (pf : Cpure.formula) : bool =
+  Debug.no_1 "is_ep_pformula_arith" string_of_pure_formula string_of_bool
+      is_ep_pformula_arith_x pf
+
+let rec is_ep_cformula_arith_x (f : Cformula.formula) : bool =
   match f with
     | Cformula.Base bf ->
           let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
-          is_formula_arith bp
+          is_ep_pformula_arith bp
     | Cformula.Or orf ->
-          (is_cformula_arith orf.Cformula.formula_or_f1) || (is_cformula_arith orf.Cformula.formula_or_f2)
+          (is_ep_cformula_arith orf.Cformula.formula_or_f1) || (is_ep_cformula_arith orf.Cformula.formula_or_f2)
     | Cformula.Exists ef ->
           let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
-          is_formula_arith ep
+          is_ep_pformula_arith ep
 
-and is_cformula_arith (f : Cformula.formula) : bool =
-  Debug.no_1 "is_cformula_arith" Cprinter.string_of_formula string_of_bool
-      is_cformula_arith_x f
+and is_ep_cformula_arith (f : Cformula.formula) : bool =
+  Debug.no_1 "is_ep_cformula_arith" Cprinter.string_of_formula string_of_bool
+      is_ep_cformula_arith_x f
 
-let is_view_arith_x (cv : Cast.view_decl) : bool =
-  List.exists (fun (cf,_) -> is_cformula_arith cf)
+let is_ep_view_arith_x (cv : Cast.view_decl) : bool =
+  List.exists (fun (cf,_) -> is_ep_cformula_arith cf)
       cv.Cast.view_un_struc_formula
 
-let is_view_arith (cv : Cast.view_decl) : bool =
+let is_ep_view_arith (cv : Cast.view_decl) : bool =
   let pr_1 = fun cv -> cv.Cast.view_name in
   let pr_1 = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "is_view_arith" pr_1 string_of_bool
-      is_view_arith_x cv
+  Debug.no_1 "is_ep_view_arith" pr_1 string_of_bool
+      is_ep_view_arith_x cv
