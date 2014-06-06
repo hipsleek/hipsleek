@@ -21,3 +21,5 @@ or (exists x,up: x::TPP_t<left = null,right = null,parent = up> * up::TPP_aux<x,
 
 checkentail x::TPP_plus<y>
          |- x::TPP_plus_rev<y>.
+
+expect Valid.
