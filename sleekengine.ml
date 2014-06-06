@@ -735,7 +735,26 @@ IN THE FUNCTION GIVE AN EXCEPTION
 TODO Check the 3 functions above!!!
 *)
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
-  : (Typeinfer.spec_var_type_list*CF.formula) = 
+  : (Typeinfer.spec_var_type_list*CF.formula) =
+  let rec helper (f : Cformula.formula) (subst_vars : Cpure.spec_var list) : Cformula.formula =
+    match f with
+      | Cformula.Or fo ->
+            let f1 = fo.Cformula.formula_or_f1 in
+            let f2 = fo.Cformula.formula_or_f2 in
+            let pos = fo.Cformula.formula_or_pos in
+            Cformula.mkOr (helper f1 subst_vars) (helper f2 subst_vars) pos
+      | _ ->
+            let svl = Cformula.fv f in
+            let subst_vars = List.filter (fun sv -> List.mem sv svl) subst_vars in
+            let new_const0 = List.map (fun sv ->
+                Cpure.mkNull sv no_pos) subst_vars in
+            let new_const = List.fold_left (fun f0 f1 ->
+                Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
+            let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components f in
+            let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
+            let new_f = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in
+            new_f
+  in
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
@@ -747,27 +766,35 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
-      (* let svl = Cformula.fv r in *)
-      (* let null_vars0 = List.find_all (fun sv -> *)
-      (*     match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in *)
-      (* let null_vars = Cpure.remove_dups_svl null_vars0 in *)
-      (* let subst_vars = List.map (fun sv -> *)
-      (*     match sv with Cpure.SpecVar(typ,name,pr) -> *)
-      (*     Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in *)
-      (* let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in *)
-      (* let new_const0 = List.map (fun sv -> *)
-      (*     Cpure.mkNull sv no_pos) subst_vars in *)
-      (* let new_const = List.fold_left (fun f0 f1 -> *)
-      (*     Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in *)
-      (* let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components new_r in *)
-      (* let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in *)
-      (* let new_r = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in *)
+      let svl = Cformula.fv r in
+      let null_vars0 = List.find_all (fun sv ->
+          match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in
+      let null_vars = Cpure.remove_dups_svl null_vars0 in
+      let subst_vars = List.map (fun sv ->
+          match sv with Cpure.SpecVar(typ,name,pr) ->
+              Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in
+      let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in
+      let new_r = helper new_r subst_vars in
+      let sst = List.combine null_vars subst_vars in
+      let new_n_tl = List.map (fun (id,svi) ->
+          if id = "null" then
+            let subst_sv = List.find (fun sv ->
+                match sv with Cpure.SpecVar(t1,id1,pr1) ->
+                    Cpure.are_same_types t1 svi.Typeinfer.sv_info_kind
+            ) subst_vars in
+            let Cpure.SpecVar(_,new_id,_) = subst_sv in
+            (new_id,svi)
+          else
+            (id,svi)
+      ) n_tl in
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula new_r)^"\n") in *)
-      (n_tl,r)
+      (* let _ = print_string (" n_tl: " ^ (Typeinfer.string_of_tlist new_n_tl)^"\n") in *)
+      (new_n_tl,new_r)
   | MetaVar mvar -> begin
       try
 	let mf = get_var mvar in
 	meta_to_formula mf quant fv_idents tlist
+
       with
 	| Not_found ->
 	  dummy_exception() ;

@@ -3532,24 +3532,24 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* and Presburger constraints *)
 and split_components (f: formula) =
   Debug.no_1 "split_components" !print_formula (fun _ -> "")
-  split_components_x f 
+  split_components_x f
 
-and split_components_x (f : formula) = 
+and split_components_x (f : formula) =
   if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),TypeFalse, [])
   else match f with
-    | Base ({formula_base_heap = h; 
-	  formula_base_pure = p; 
+    | Base ({formula_base_heap = h;
+	  formula_base_pure = p;
 	  formula_base_flow =fl;
 	  formula_base_and =a; (*TO CHECK: omit at the moment*)
 	  formula_base_type = t}) -> (h, p(*, imm*), fl, t, a)
-    | Exists ({formula_exists_heap = h; 
-	  formula_exists_pure = p; 
+    | Exists ({formula_exists_heap = h;
+	  formula_exists_pure = p;
 	  formula_exists_flow = fl;
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
-    | Or ({formula_or_pos = pos}) -> 
+    | Or ({formula_or_pos = pos}) ->
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
-			 
+
 and get_rel_args f0=
   let rec helper f=
     match f with
