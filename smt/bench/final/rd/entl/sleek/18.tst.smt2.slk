@@ -15,3 +15,5 @@ or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinTree<> * yp::BinTreeSeg<y
 
 checkentail x::BinTreeSeg<y> * y::BinTree<>
          |- x::BinTree<>.
+
+expect Valid.

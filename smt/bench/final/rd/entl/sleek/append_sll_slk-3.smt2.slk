@@ -18,4 +18,5 @@ pred node_e1<q:node> ==
 
 checkentail q::ll<> * y::ll<> * xprm::node<next = q> & vprm != null & vprm = q & xprm = x & yprm = y & x != null
          |- q::ll<> * y::ll<> * xprm::node<next = q> & vprm != null & vprm = q & xprm = x & yprm = y & x != null.
+
 expect Valid.

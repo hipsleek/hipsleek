@@ -22,3 +22,5 @@ null != self.
 
 checkentail x0::P<>
          |- false.
+
+expect Fail.

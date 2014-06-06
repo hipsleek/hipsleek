@@ -124,3 +124,5 @@ pred I001<> ==
 
 checkentail x0::ls<>
          |- false.
+
+expect Fail.

@@ -9,4 +9,5 @@ or (exists a,b: self::node<nxt = a> * a::node<nxt = b> * b::olseg<p>).
 
 checkentail k::node<nxt = b> * b::olseg<p> * p::node<nxt = a> * a::node<nxt = b>
          |- k::olseg<b>.
+
 expect Fail.

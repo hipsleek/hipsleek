@@ -22,5 +22,3 @@ or (exists x,y,z: x::DLL_t<next = y,prev = z> * y::DLL_plus<x,tl,n> * self::DLL_
 
 checkentail x::DLL_plus_rev<null,y,null>
          |- x::DLL_plus_mid<null,y,null>.
-
-expect Valid.

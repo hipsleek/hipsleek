@@ -21,3 +21,5 @@ or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::List<y> & null != self).
 
 checkentail x::ListX<y>
          |- x::List<y>.
+
+expect Valid.

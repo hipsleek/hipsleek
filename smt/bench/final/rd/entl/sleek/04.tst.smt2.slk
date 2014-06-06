@@ -10,3 +10,5 @@ or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::List<y> & null != self).
 
 checkentail x::List<y> * y::List<z>
          |- x::List<z>.
+
+expect Valid.

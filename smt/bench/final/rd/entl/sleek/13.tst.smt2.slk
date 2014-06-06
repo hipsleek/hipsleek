@@ -14,3 +14,5 @@ or (exists yp,xp: self::GTyp<f0 = yp,f1 = xp> * yp::BinTree<> * xp::BinTree<> & 
 
 checkentail x::BinListFirst<>
          |- x::BinTree<>.
+
+expect Valid.

@@ -13,3 +13,5 @@ pred ListE<y:GTyp> ==
 
 checkentail x::ListE<y> * y::ListE<z>
          |- x::ListE<z>.
+
+expect Valid.

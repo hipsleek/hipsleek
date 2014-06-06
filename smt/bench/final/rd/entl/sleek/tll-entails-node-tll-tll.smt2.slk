@@ -12,5 +12,3 @@ or (exists l,r,z: self::TLL_t<left = l,right = r,parent = par,next = null> * l::
 
 checkentail a::TLL_plus<null,c,null>
          |- (exists l,r,z: a::TLL_t<left = l,right = r,parent = null,next = null> * l::TLL_plus<a,c,z> * r::TLL_plus<a,z,null>).
-
-expect Valid.

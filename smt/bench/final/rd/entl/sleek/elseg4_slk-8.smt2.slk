@@ -12,4 +12,5 @@ pred right<p:node> ==
 
 checkentail z::elseg<p>
          |- z::right<p>.
+
 expect Valid.

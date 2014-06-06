@@ -12,4 +12,5 @@ pred right<p:node> ==
 
 checkentail x::node<nxt = a> * a::node<nxt = p>
          |- x::elseg<p>.
+
 expect Valid.
