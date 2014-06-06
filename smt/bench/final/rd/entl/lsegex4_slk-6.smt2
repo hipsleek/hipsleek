@@ -1,4 +1,12 @@
 (set-logic QF_S)
+(set-info :source |  Sleek solver
+  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/
+|)
+
+(set-info :smt-lib-version 2.0)
+(set-info :category "crafted")
+(set-info :status unsat)
+
 
 (declare-sort node 0)
 (declare-fun nxt () (Field node node))
@@ -66,7 +74,6 @@ Space (tospace
 (lseg ?in ?w)
  )
 ))))
-
 
 
 (declare-fun p () node)
