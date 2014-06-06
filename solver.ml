@@ -1233,6 +1233,12 @@ and split_linear_node (h : h_formula) : (h_formula * h_formula) list = split_lin
 (*                   end in *)
 (*         helper h *)
 
+(*
+ * Trung, delete later:
+ *   - This function is used to split the RHS. The split results will be used
+ *     to compute actions
+ *   - To do acc-fold, maybe need to interfere here
+ *)
 and split_linear_node_guided (vars : CP.spec_var list) (h : h_formula) : (h_formula * h_formula) list = 
   let prh = Cprinter.string_of_h_formula in
   let pr l= String.concat "," (List.map (fun (h1,h2)->"("^(prh h1)^","^(prh h2)^")") l) in
@@ -9445,7 +9451,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     in
     (* let _ = print_endline "CA:1" in *)
     (* let _ = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
-    let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
+    let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+        posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
     (* !!!!!!!!
        (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
        caller a estate conseq (Base lhs_b) (Base rhs_b)
@@ -9891,12 +9898,14 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let lhs_b = extr_lhs_b estate in
   let lhs_h,lhs_p,_,_,_ = extr_formula_base lhs_b in
   let rhs_h,rhs_p,_,_,_ = extr_formula_base rhs_b in
-  let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+  let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
   (* let _ = print_endline "CA:2" in *)
-  (0,Context.compute_actions_x prog estate rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos)
+  let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+      posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos in
+  (0, actions)
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
