@@ -775,7 +775,6 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
               Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in
       let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in
       let new_r = helper new_r subst_vars in
-      let sst = List.combine null_vars subst_vars in
       let new_n_tl = List.map (fun (id,svi) ->
           if id = "null" then
             let subst_sv = List.find (fun sv ->
@@ -794,7 +793,6 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       try
 	let mf = get_var mvar in
 	meta_to_formula mf quant fv_idents tlist
-
       with
 	| Not_found ->
 	  dummy_exception() ;
