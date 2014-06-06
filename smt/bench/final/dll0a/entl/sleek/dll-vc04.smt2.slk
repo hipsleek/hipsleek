@@ -8,7 +8,8 @@ pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
  self = nx & bk = pr
 or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
 
-checkentail x_emp::Dll_t<next = w_emp,prev = null> * w_emp::dll<y_emp,null,z_emp> & x_emp != w_emp
+checkentail x_emp::Dll_t<next = w_emp,prev = null> *
+            w_emp::dll<y_emp,null,z_emp> & x_emp != w_emp
          |- x_emp::dll<y_emp,null,z_emp>.
 
-expect Fail.
+expect Fail. //  missing (bk) y_emp = w_emp
