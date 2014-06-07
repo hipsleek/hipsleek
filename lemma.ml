@@ -1415,13 +1415,15 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
             | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)
           ) vd.C.view_vars in
           let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vars no_pos in
-          let tmp_f = CF.struc_formula_of_formula (CF.mkExists tmp_vars tmp_vnode (MCP.mkMTrue vpos) CF.TypeTrue (CF.mkTrueFlow ()) [] vpos) vpos in 
+          let tmp_f = CF.mkExists tmp_vars tmp_vnode (MCP.mkMTrue vpos)
+              CF.TypeTrue (CF.mkTrueFlow ()) [] vpos in 
+          let tmp_sf = CF.struc_formula_of_formula tmp_f vpos in 
           (* let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in *)
           Debug.binfo_hprint (add_str "new_induct_f" (!CF.print_formula)) new_induct_f vpos;
-          Debug.binfo_hprint (add_str "tmp_f" (!CF.print_struc_formula)) tmp_f vpos;
+          Debug.binfo_hprint (add_str "tmp_sf" (!CF.print_struc_formula)) tmp_sf vpos;
           let (r,_,_) = wrap_classic (Some true) 
-              (Sleekcore.sleek_entail_check 9 [] cprog [] new_induct_f) tmp_f in
-          Debug.binfo_pprint ("new_induct_f |- tmp_f: " ^ (string_of_bool r)) vpos;
+              (Sleekcore.sleek_entail_check 9 [] cprog [] new_induct_f) tmp_sf in
+          Debug.binfo_pprint ("new_induct_f |- tmp_sf: " ^ (string_of_bool r)) vpos;
           r
         ) in
         if not (is_pred1_ok) then None
