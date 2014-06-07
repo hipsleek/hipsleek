@@ -5,7 +5,145 @@
   - date:
   - date:
 
-01-22.tst.smt2: lemma proving
+=========================================
+01-22.tst.smt2: lemma synthesis
+
+01.tst.smt2:
+
+/*
+lemma_unsafe  self::GTyp<f0 = y,f1 = _> * y::RList<z>
+         -> self::RList<z>.
+*/
+
+=========================================
+02.tst.smt2:
+
+lemma_unsafe  self::RList<y> * y::RList<z>
+         -> self::RList<z>.
+
+=========================================
+03.tst.smt2:
+
+lemma_unsafe  self::List<y> * y::GTyp<f0 = z,f1 = _> -> self::List<z>.
+
+
+=========================================
+04.tst.smt2:
+
+lemma_unsafe  self::List<y> * y::List<z>
+         -> self::List<z>.
+
+=========================================
+05.tst.smt2: (~ 03.)
+
+OK with lem-en-syn
+
+lemma_unsafe  self::PeList<y> * y::GTyp<f0 = z,f1 = _> -> self::PeList<z>.
+
+
+=========================================
+06.tst.smt2: (~ 04.)
+
+OK with lem-en-syn
+
+=========================================
+07.tst.smt2: 
+
+lemma_unsafe  self::DLL<y,z,w> |- self::SLL<y>.
+
+OK with lem-en-syn
+
+=========================================
+08.tst.smt2: ~07, but the preds are in reverse order
+
+
+loop with lem-en-syn
+
+=========================================
+09.tst.smt2: ~ 04.06, but for dll OK
+
+
+=========================================
+10.tst.smt2: mutual rec:
+OK: --lem-en-syn
+ listo and liste
+
+
+=========================================
+11.tst.smt2:
+
+ (loop with --lem-en-syn)
+
+ listo and liste
+
+
+
+=========================================
+12.tst.smt2:
+
+OK: --lem-en-syn
+ listo and liste
+
+=========================================
+13.tst.smt2:
+
+List -> Tree
+
+OK: --lem-en-syn
+
+
+=========================================
+14.tst.smt2:
+
+List -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+15.tst.smt2:
+
+Concat (Tree * Tree) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+16.tst.smt2:
+
+
+loop wit h--lem-en-syn
+
+=========================================
+17.tst.smt2:
+
+Concat (TreeSeg * TreeSeg) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+18.tst.smt2:
+
+Concat (TreeSeg * TreeSeg) -> Tree
+
+OK: --lem-en-syn
+
+=========================================
+19.tst.smt2: OK
+
+=========================================
+20.tst.smt2:
+
+fix bug: --lem-en-syn
+
+=========================================
+21.tst.smt2:
+
+(loop with --lem-en-syn)
+
+=========================================
+22.tst.smt2:
+
+lemma_unsafe self::ls<p> * p::GTyp<f0 = z,f1 = _> -> self::ls<z>.
+
 
 =========================================
 parser:
