@@ -619,7 +619,7 @@ let convert_data_and_pred_to_cast_x () =
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
     Lemma.generate_all_lemmas iprog cprog6
   in
-  let cprog6 =
+  let cprog6a =
      if !Globals.norm_cont_analysis then
      let is_need_seg_opz, cviews3a = Norm.norm_ann_seg_opz iprog cprog6 cprog6.Cast.prog_view_decls in
      let _ = if is_need_seg_opz then
@@ -633,12 +633,18 @@ let convert_data_and_pred_to_cast_x () =
      cprog2a
      else cprog6
   in
+  let cprog6 = if !Globals.lemma_gen_unsafe || !Globals.lemma_gen_safe then
+    Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls
+  else cprog6a
+  in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
 
 let convert_data_and_pred_to_cast () = 
-  Debug.no_1 "convert_data_and_pred_to_cast" pr_no pr_no convert_data_and_pred_to_cast_x ()
+  let pr _ = pr_list Iprinter.string_of_view_decl iprog.I.prog_view_decls in
+  let pr2 _ = pr_list Cprinter.string_of_view_decl !cprog.Cast.prog_view_decls in
+  Debug.no_1 "convert_data_and_pred_to_cast" pr pr2 convert_data_and_pred_to_cast_x ()
 
 let process_barrier_def bd = 
     if !Globals.print_core || !Globals.print_core_all then print_string (Iprinter.string_of_barrier_decl bd) else () ;
@@ -729,7 +735,26 @@ IN THE FUNCTION GIVE AN EXCEPTION
 TODO Check the 3 functions above!!!
 *)
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list) 
-  : (Typeinfer.spec_var_type_list*CF.formula) = 
+  : (Typeinfer.spec_var_type_list*CF.formula) =
+  let rec helper (f : Cformula.formula) (subst_vars : Cpure.spec_var list) : Cformula.formula =
+    match f with
+      | Cformula.Or fo ->
+            let f1 = fo.Cformula.formula_or_f1 in
+            let f2 = fo.Cformula.formula_or_f2 in
+            let pos = fo.Cformula.formula_or_pos in
+            Cformula.mkOr (helper f1 subst_vars) (helper f2 subst_vars) pos
+      | _ ->
+            let svl = Cformula.fv f in
+            let subst_vars = List.filter (fun sv -> List.mem sv svl) subst_vars in
+            let new_const0 = List.map (fun sv ->
+                Cpure.mkNull sv no_pos) subst_vars in
+            let new_const = List.fold_left (fun f0 f1 ->
+                Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
+            let new_h, new_p, new_fl, new_t, new_a = Cformula.split_components f in
+            let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
+            let new_f = Cformula.mkExists subst_vars new_h new_p new_t new_fl new_a no_pos in
+            new_f
+  in
 	match mf0 with
   | MetaFormCF mf -> (tlist,mf)
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
@@ -741,9 +766,31 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
-      (n_tl,r)
+      let svl = Cformula.fv r in
+      let null_vars0 = List.find_all (fun sv ->
+          match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in
+      let null_vars = Cpure.remove_dups_svl null_vars0 in
+      let subst_vars = List.map (fun sv ->
+          match sv with Cpure.SpecVar(typ,name,pr) ->
+              Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in
+      let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in
+      let new_r = helper new_r subst_vars in
+      let new_n_tl = List.map (fun (id,svi) ->
+          if id = "null" then
+            let subst_sv = List.find (fun sv ->
+                match sv with Cpure.SpecVar(t1,id1,pr1) ->
+                    Cpure.are_same_types t1 svi.Typeinfer.sv_info_kind
+            ) subst_vars in
+            let Cpure.SpecVar(_,new_id,_) = subst_sv in
+            (new_id,svi)
+          else
+            (id,svi)
+      ) n_tl in
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula new_r)^"\n") in *)
+      (* let _ = print_string (" n_tl: " ^ (Typeinfer.string_of_tlist new_n_tl)^"\n") in *)
+      (new_n_tl,new_r)
   | MetaVar mvar -> begin
-      try 
+      try
 	let mf = get_var mvar in
 	meta_to_formula mf quant fv_idents tlist
       with
@@ -765,7 +812,7 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_v
   let pr_meta = string_of_meta_formula in
   let pr_f = Cprinter.string_of_formula in
   let pr2 (_,f) = pr_f f in
-  Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr2
+  Debug.no_1 "Sleekengine.meta_to_formula" pr_meta pr2
              (fun mf -> meta_to_formula mf quant fv_idents tlist) mf0
 
 let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.spec_var_type_list)
@@ -776,7 +823,6 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
-     
       let n_tl = Typeinfer.gather_type_info_formula iprog wf tlist false in
       (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
       let (n_tl,r) = Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
@@ -1247,7 +1293,7 @@ let process_shape_rec sel_hps=
   ()
 
 let process_validate exp_res ils_es=
-  if !Globals.smt_compete_mode then () else
+  if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
     let (n_tl,lhs) = meta_to_formula ilhs false act_idents act_ti in
@@ -1618,8 +1664,9 @@ let process_shape_extract sel_vnames=
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   wrap_classic etype (fun conseq ->
       let (r, (cante, cconseq)) = run_infer_one_pass [] iante0 conseq in
-       let _ = if !Globals.gen_smt then
-         let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq)] in
+      let res, _, _ = r in
+      let _ = if !Globals.gen_smt then
+         let _ = Slk2smt.smt_ent_cmds := !Slk2smt.smt_ent_cmds@[(iante0, iconseq0, etype, cante, cconseq, res)] in
          ()
        else () in
       r

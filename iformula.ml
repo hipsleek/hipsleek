@@ -2867,3 +2867,113 @@ let struc_formula_collect_pre_hprel f0 =
   let pr2 = pr_list (pr_pair pr_id (pr_list pr_id)) in
   Debug.no_1 "struc_formula_collect_pre_hprel" pr1 pr2
       (fun _ -> struc_formula_collect_pre_hprel_x f0) f0
+
+
+let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
+    : h_formula = 
+  let r =  f e in 
+  match r with
+  | Some e1 -> e1
+  | None  -> (
+      match e with  
+      | Star s ->
+          let new_h1 = transform_h_formula f s.h_formula_star_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_star_h2 in
+          Star {s with h_formula_star_h1 = new_h1;
+                       h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+          let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
+          StarMinus {s with h_formula_starminus_h1 = new_h1;
+                            h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conj_h1 in
+          Conj {s with h_formula_conj_h1 = new_h1;
+                       h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
+          ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                           h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
+          ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                          h_formula_conjconj_h2 = new_h2;}
+      | Phase s ->
+          let new_rd = transform_h_formula f s.h_formula_phase_rd in
+          let new_rw = transform_h_formula f s.h_formula_phase_rw in
+          Phase {s with h_formula_phase_rd = new_rd;
+                        h_formula_phase_rw = new_rw;}
+      | HeapNode _ | HeapNode2 _ | ThreadNode _
+      | HRel _ | HTrue | HFalse | HEmp -> e
+    )
+
+and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
+    : h_formula =
+  let pr = !print_h_formula in
+  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
+
+let transform_formula_x f (e:formula):formula =
+  let rec helper f e = (
+    let (_, f_f, f_h_f, f_p_t) = f in
+    let r =  f_f e in 
+    match r with
+    | Some e1 -> e1
+    | None  -> (
+        match e with     
+        | Base b ->
+            let new_heap = transform_h_formula f_h_f b.formula_base_heap in
+            let new_pure = P.transform_formula f_p_t b.formula_base_pure in
+            Base { b with formula_base_heap = new_heap;
+                          formula_base_pure = new_pure; }
+        | Or o -> 
+            Or {o with formula_or_f1 = helper f o.formula_or_f1;
+                       formula_or_f2 = helper f o.formula_or_f2;}
+        | Exists e ->
+            let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
+            let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
+            Exists { e with formula_exists_heap = new_heap;
+                            formula_exists_pure = new_pure;}
+      )
+  ) in
+  helper f e
+
+
+let transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
+
+let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
+  let (f_e_f, f_f, f_h_f, f_p_t) = f in
+  let r = f_e_f e in 
+  match r with
+  | Some e1 -> e1
+  | None -> (
+      match e with
+      | ECase c -> 
+          let br' = List.map (fun (c1,c2)->
+            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
+          ) c.formula_case_branches in
+          ECase {c with formula_case_branches = br';}
+      | EBase b ->
+          let new_base = transform_formula f b.formula_struc_base in
+          let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
+          EBase{b with formula_struc_base = new_base;
+                       formula_struc_continuation = new_cont;}
+      | EAssume b->
+          let new_simpl = transform_formula f b.formula_assume_simpl in
+          let new_struc = transform_struc_formula f b.formula_assume_struc in
+          EAssume {b with formula_assume_simpl = new_simpl;
+                          formula_assume_struc = new_struc;}
+      | EInfer b ->
+          let new_cont = transform_struc_formula f b.formula_inf_continuation in
+          EInfer {b with formula_inf_continuation = new_cont;}
+      | EList b -> EList (map_l_snd (transform_struc_formula f) b)
+    )
+
+and transform_struc_formula f (e:struc_formula) : struc_formula =
+  let pr = !print_struc_formula in
+  Debug.no_1 "IF.transform_struc_formula" pr pr
+      (fun _ -> transform_struc_formula_x f e) e

@@ -1333,7 +1333,12 @@ let norm_dups_pred prog ante_non_emps f set_ptos build_graph=
   Debug.no_2 "norm_dups_pred" pr1 pr2 (pr_triple string_of_bool pr1 pr3)
       (fun _ _ -> norm_dups_pred_new_a prog ante_non_emps f set_ptos build_graph) f ante_non_emps
 
-let heap_normal_form_x prog f0=
+(*
+min_grp_size
+check sat = 3
+check ent = 2
+*)
+let heap_normal_form_x prog f0 min_grp_size=
   let f = CF.elim_exists f0 in
   let comps = Cfutil.get_ptrs_connected_w_args_f f in
   let _ =
@@ -1342,7 +1347,7 @@ let heap_normal_form_x prog f0=
       ()
     else ()
   in
-  let comps1 = List.filter (fun ls ->( List.length ls) > 2) comps in
+  let comps1 = List.filter (fun ls ->( List.length ls) >2(* >= min_grp_size *)) comps in
   let fs =
     (* if List.length comps1 > 1 then *)
       Cfutil.slice_frame f comps1
@@ -1351,22 +1356,22 @@ let heap_normal_form_x prog f0=
   in
   (* List.map (norm_dups_pred prog) *) fs
 
-let heap_normal_form cprog f=
+let heap_normal_form cprog f min_grp_size=
   let pr1 = Cprinter.string_of_formula in
   Debug.no_1 "heap_normal_form" pr1 (pr_list pr1)
-      (fun _ -> heap_normal_form_x cprog f) f
+      (fun _ -> heap_normal_form_x cprog f min_grp_size) f
 
-let heap_normal_form_es prog es=
+let heap_normal_form_es prog min_grp_size es=
   let form_ctx f = CF.Ctx {es with CF.es_formula = f} in
-  let n_es_fs = heap_normal_form prog es.CF.es_formula in
+  let n_es_fs = heap_normal_form prog es.CF.es_formula min_grp_size in
   let n_es_fs1 = List.map (norm_dups_pred prog []) n_es_fs in
   match n_es_fs1 with
     | [] -> [form_ctx (CF.mkTrue_nf no_pos)]
     | _ -> List.map (fun f -> form_ctx f) n_es_fs
 
-let heap_normal_form_ctx prog c=
+let heap_normal_form_ctx prog min_grp_size c=
   match c with
-    | CF.Ctx e -> (heap_normal_form_es prog e)
+    | CF.Ctx e -> (heap_normal_form_es prog min_grp_size e)
     | CF.OCtx (c1,c2) -> report_error no_pos "frame.slice_frame_ectx: not handle yet"
 
 
@@ -1376,7 +1381,7 @@ let check_unsat_w_norm prog f0 set_ptos=
     is_heap_conflict
   in
   if not !seg_opz then false,None else
-    let fs = (heap_normal_form prog f0) in
+    let fs = (heap_normal_form prog f0 Hgraph.hgraph_grp_min_size_unsat) in
     let rec loop_helper fs=
       match fs with
         | [] -> false, None

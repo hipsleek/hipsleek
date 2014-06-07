@@ -3100,6 +3100,11 @@ and subst_one_by_one_h_x sst (f : h_formula) = match sst with
   | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
   | [] -> f
 
+and subst_one_by_one_var sst (v : CP.spec_var) =
+  match sst with
+  | s :: rest -> subst_one_by_one_var rest (subst_var s v)
+  | [] -> v
+
 and apply_one_imm (fr,t) a = match a with
   | CP.ConstAnn _ | CP.NoAnn -> a
   | CP.TempAnn t1 -> CP.TempAnn(apply_one_imm (fr,t) t1)
@@ -3527,24 +3532,24 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* and Presburger constraints *)
 and split_components (f: formula) =
   Debug.no_1 "split_components" !print_formula (fun _ -> "")
-  split_components_x f 
+  split_components_x f
 
-and split_components_x (f : formula) = 
+and split_components_x (f : formula) =
   if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),TypeFalse, [])
   else match f with
-    | Base ({formula_base_heap = h; 
-	  formula_base_pure = p; 
+    | Base ({formula_base_heap = h;
+	  formula_base_pure = p;
 	  formula_base_flow =fl;
 	  formula_base_and =a; (*TO CHECK: omit at the moment*)
 	  formula_base_type = t}) -> (h, p(*, imm*), fl, t, a)
-    | Exists ({formula_exists_heap = h; 
-	  formula_exists_pure = p; 
+    | Exists ({formula_exists_heap = h;
+	  formula_exists_pure = p;
 	  formula_exists_flow = fl;
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
 	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
-    | Or ({formula_or_pos = pos}) -> 
+    | Or ({formula_or_pos = pos}) ->
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
-			 
+
 and get_rel_args f0=
   let rec helper f=
     match f with
@@ -11415,7 +11420,6 @@ let transform_formula_x f (e:formula):formula =
                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
   in helper f e
-
 
 
 let transform_formula f (e:formula):formula =

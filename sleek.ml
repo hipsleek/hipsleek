@@ -399,7 +399,7 @@ let _ =
     (* let _ = print_endline "before main" in *)
     main ();
     let _ =
-      if not !Globals.smt_compete_mode && ((List.length !unexpected_cmd) > 0)
+      if !Globals.show_unexpected_ents && ((List.length !unexpected_cmd) > 0)
       then (
           let _ = print_string "Unexpected: " in
           let _ = List.iter (fun id_cmd ->

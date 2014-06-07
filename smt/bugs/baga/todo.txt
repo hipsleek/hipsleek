@@ -1,9 +1,65 @@
 Problems with Inv Baga 
 ====================================
+#dll-vc05.smt2.slk
+
+../../../sleek dll-vc05.smt2.slk
+
+FAIL
+
+../../../sleek dll-vc05.smt2.slk --inv-baga
+
+VALID
+
+---------
+EXPECTED: FAIL
+
 ====================================
+#nlcl-vc01.smt2.slk --inv-baga
+
+expected: VALID
+
 ====================================
+#nlcl-vc01.smt2.slk
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe
+
+Valid
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+
+Fail
+
+==============
+Expect
+
+sleek nlcl-vc01.smt2.slk --lem-gen-unsafe --inv-baga
+Valid
+
 ====================================
+--inv-baga
+Starting hip-sleek tests:
+Total number of errors: 6 in files:
+  baga-test.slk({E15#Fail}) infer/infer16.slk({E2#Valid},{E5#Valid}) lemmas/sort2.slk({L1#Fail},{L2#Valid},{L3#Valid},{L6#Fail},{L8#Valid},{L9#Fail}) lemmas/app-tail.slk({L2#Valid}) lemmas/sll_tailL.slk({L1#Valid}) lemmas/dseg-new.slk({L1#Valid},{L2#Fail},{L3#Valid}).
 ====================================
+# baga-test.slk --inv-baga -dre "is_view_a"
+
+What is view17? why did this have arithmetic?
+
+is_view_arith@1
+is_view_arith inp1 : viewl7<q:node>=
+  :EBase (* lbl: *){1}->emp&self=null & q=null&{FLOW,(1,24)=__flow}[]
+  || :EBase exists (Expl)[](Impl)[r;
+            Anon_25](ex)[](* lbl: *){2}->self::node<r> * r::node<Anon_25>&
+            r=q&{FLOW,(1,24)=__flow}[]
+  cont vars:
+  inv: true
+  unstructured formula:
+   (* lbl: *){1}->emp&self=null & q=null&{FLOW,(1,24)=__flow}[]
+   || (* lbl: *){2}->(exists r,Anon_25: self::node<r> * r::node<Anon_25>&r=q&
+      {FLOW,(1,24)=__flow})[]
+  xform: true
+  is_recursive?: false
+  view_data_name: node
 ====================================
 ====================================
 ====================================

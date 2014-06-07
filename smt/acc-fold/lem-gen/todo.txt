@@ -88,11 +88,55 @@ id]
 Failed to prove lem_11:<==> in current context.
 Removing invalid lemma ---> lemma store restored.
 ================================================================
+# rel-lseg0.slk
+
+lemma_safe  self::SLL<p:node> <-> self::SLL_rev<p> .
+
+cannot be proven, why?
+
+
 ================================================================
+# rel-lseg1.slk
+
+lemma_safe  self::node<x1> * x1::SLL<p:node> 
+          <-> (exists x: self::SLL<x>*x::node<p>).
+
+
+1. Why reverse direction cannot be proven?
+2. Can we print <==
+
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "==>" implication: : Fail. (may) cause: OrR[ x_230::node<p_229>&p_227=x_230 & p_229=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),valid]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
 ================================================================
+#rel*.slk
+
+implement lemma synthesis relate two views
+
 ================================================================
+# dll-vc06.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,nx> * nx::Dll_t<n,bk1> -> self::dll<nx,pr,n>.
+
 ================================================================
+=========================================
+# dll-vc08.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> -> self::dll<bk,pr,n>.
+
 ================================================================
+#nlcl-vc03.smt2.slk: DONE (wo --inv-baga)
+
+todo: gen lemma
+lemma_unsafe self::nlcl<p> * p::nlcl<q> -> self::nlcl<q>.
+
 ================================================================
 ================================================================
 ================================================================

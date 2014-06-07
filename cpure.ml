@@ -640,9 +640,9 @@ let rec exp_contains_spec_var (e : exp) : bool =
 
 let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	    (* translation has ensured well-typedness.
-		   We need only to compare names and primedness *)
-	    v1 = v2 & p1 = p2
+      (* translation has ensured well-typedness.
+         We need only to compare names and primedness *)
+      (String.compare v1 v2 = 0) && (p1 = p2)
 
 let eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
@@ -1777,9 +1777,9 @@ and is_exp_arith (e:exp) : bool=
   match e with
   | Var (sv,pos) ->        (*waitlevel is a kind of bag constraints*)
       if (name_of_spec_var sv = Globals.waitlevel_name) then false else true
-  | Null _  | IConst _ | AConst _ | InfConst _ | FConst _ 
+  | Null _  | IConst _ | AConst _ | InfConst _ | FConst _
   | Level _ -> true
-  | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+  | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_)
   | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
   | TypeCast(_, e1, _) -> is_exp_arith e1
   (* bag expressions *)
@@ -1791,9 +1791,9 @@ and is_exp_arith (e:exp) : bool=
     | Bptriple _ -> false
   | Func _ -> true
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
-          
+
 and is_formula_arith_x (f:formula) :bool = match f with
-  | BForm (b,_) -> is_b_form_arith b 
+  | BForm (b,_) -> is_b_form_arith b
   | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
   | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
   | AndList l -> all_l_snd  is_formula_arith l
@@ -4296,6 +4296,25 @@ struct
   let eq = eq_spec_var
   let compare = compare_spec_var
   let string_of = string_of_spec_var
+  let conv_var x = x
+  let from_var x = x
+  (* throws exception when duplicate detected during merge *)
+  let rec merge_baga b1 b2 =
+    match b1,b2 with
+      | [],b | b,[] -> b
+      | x1::t1, x2::t2 ->
+            let c = compare x1 x2 in
+            if c<0 then x1::(merge_baga t1 b2)
+            else if c>0 then x2::(merge_baga b1 t2)
+            else failwith "detected false"
+  let rec is_eq_baga b1 b2 =
+    match b1,b2 with
+      | [],[] -> true
+      | x1::t1, x2::t2 ->
+            let c = compare x1 x2 in
+            if c=0 then is_eq_baga t1 t2
+            else false
+      |_,_ -> false
 end;;
 
 module Ptr =
@@ -7548,7 +7567,7 @@ module ArithNormalizer = struct
 	  | None -> ""
 	  | _ -> "$[]"
 	in sil ^ spf
-		
+
   type add_term = int * mult_term_list
 
   type add_term_list = add_term list (* default [] means 0 *)

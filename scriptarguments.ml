@@ -557,6 +557,9 @@ let common_arguments = [
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
+  ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
 
   (* use classical reasoning in separation logic *)
@@ -685,9 +688,11 @@ let common_arguments = [
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--smt-compete", 
      Arg.Unit
-      (fun _ -> 
+      (fun _ ->
+          Globals.show_unexpected_ents := false;
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
           Globals.silence_output:=true;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
@@ -697,6 +702,22 @@ let common_arguments = [
           Globals.lemma_gen_unsafe := true;
            Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
+  ("--smt-compete-test", 
+     Arg.Unit
+      (fun _ ->
+          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := false;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          Globals.gen_baga_inv := true;
+          (* Globals.do_infer_inv := true; *)
+          Globals.lemma_gen_unsafe := true;
+           Globals.smt_compete_mode :=true),
+   "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

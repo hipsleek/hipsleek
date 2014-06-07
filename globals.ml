@@ -40,6 +40,10 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED
 
+type lemma_origin =
+  | LEM_USER          (* user-given lemma *)
+  | LEM_GEN           (* automatically generated/inferred lemma *)
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
 	  Flag_str of string
@@ -1181,12 +1185,15 @@ let opt_classic = ref false                (* option --classic is turned on or n
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let smt_compete_mode = ref false
 
+let show_unexpected_ents = ref true
+
   let print_endline_q s = 
     if !smt_compete_mode then () 
     else print_endline s 
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
+let baga_xpure = ref true
 
 let dis_inv_baga () = 
   print_endline_q "Disabling baga inv gen .."; 

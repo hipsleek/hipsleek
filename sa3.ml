@@ -1804,7 +1804,7 @@ let match_one_hp_views_x iprog prog cur_m (vdcls: CA.view_decl list) def:(CP.spe
         let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
           (vdcl.CA.view_vars) no_pos in
         let f2 = CF.formula_of_heap vnode no_pos in
-        if Lemma.checkeq_sem iprog prog f1 f2 [def] then
+        if Lemutil.checkeq_sem iprog prog f1 f2 [def] [] [] then
           (* let self_ss = [(self_sv,r)] in *)
           (* [CF.h_subst self_ss vnode] *)
           let matched_vnode = CF.mkViewNode r vdcl.CA.view_name paras no_pos in

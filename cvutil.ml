@@ -590,9 +590,9 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   let arg_map = CP.view_args_map in
   let bp = (Mcpure.pure_of_mix p0) in
   let efpd1 = Expure.build_ef_heap_formula baga_map h0 [] arg_map baga_map in
-  let efpd2 = Expure.build_ef_pure_formula baga_map bp [] in
-  let efpd = Expure.star_ef_pure_disjs efpd1 efpd2 in
-  efpd
+  (* let efpd2 = Expure.build_ef_pure_formula baga_map bp [] in *)
+  (* let efpd = Expure.EPureI.mk_star_disj efpd1 efpd2 in *)
+  efpd1
   
 and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
   Debug.no_2 "xpure_heap_enum_baga" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_ef_pure_disj
@@ -606,11 +606,12 @@ conv_from_ef_disj@2 EXIT: u_14=y_15 & u_14=z & y_15=y & z_16=z #  [[self]]
 (([a,b],pure1) \/ [c],pure2) ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
 *)
 
+(* using the enum technique with epure *)
 and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
   (* WN : this conversion is incomplete *)
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-    | _ -> let f = Expure.ef_conv_disj disj in
+    | _ -> let f = Expure.ef_conv_enum_disj disj in
       (MCP.mix_of_pure f,CF.mk_mem_formula [])
 
 and conv_from_ef_disj disj =
@@ -625,11 +626,12 @@ and xpure_heap_mem_enum_new
     xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) 
   else
     (* to call xpure_heap_enum_baga *)
-    let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
-    let ans = conv_from_ef_disj disj in
-    ans
-    (* xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) *)
-
+    if !Globals.baga_xpure then
+      let disj = xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in
+      let ans = conv_from_ef_disj disj in
+      ans
+    else
+      xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
 
 and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in

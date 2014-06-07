@@ -2035,8 +2035,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
-          C.view_is_touching = false;      (* temporarily assigned *)
-          C.view_is_segmented = false;     (* temporarily assigned *)
+          C.view_is_touching = false;           (* temporarily assigned *)
+          C.view_is_segmented = false;          (* temporarily assigned *)
+          C.view_is_tail_recursive = false;     (* temporarily assigned *)
           C.view_forward_ptrs = [];
           C.view_forward_fields = [];
           C.view_backward_ptrs = [];
@@ -2127,10 +2128,15 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   in
   (*******************************)
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
-  let has_arith = List.exists (fun cv -> 
-      Expure.is_view_arith cv) cviews0 in
-  (* this is incorrect since spaguetti benchmark disables it *)
-  (* let _ = if has_arith then Globals.dis_inv_baga () else () in *)
+  let has_arith = not(!Globals.smt_compete_mode) && List.exists (fun cv -> 
+      Expure.is_ep_view_arith cv) cviews0 in
+  (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
+  let _ = if has_arith then 
+    begin
+      Debug.binfo_pprint "Disabling --inv-baga due to arith" no_pos;
+      Globals.dis_inv_baga ()
+    end
+  else () in
   let cviews0 =
     if !Globals.gen_baga_inv then
       let args_map = view_args_map in
@@ -2140,12 +2146,22 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
           Hashtbl.add args_map vd.Cast.view_name args;
       ) cviews0 in
       let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
+      (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
+      (*     if List.mem cv.C.view_name (List.flatten ls) then *)
+      (*       ls *)
+      (*     else *)
+      (*       ls@[[cv.C.view_name]] *)
+      (* ) ls_mut_rec_views1 cviews0 in *)
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then
             ls
+          else if (List.mem cv.C.view_name (List.flatten ls_mut_rec_views)) then
+            let mut_rec_views = List.find (fun mr_views ->
+                List.mem cv.C.view_name mr_views) ls_mut_rec_views in
+            ls@[mut_rec_views]
           else
             ls@[[cv.C.view_name]]
-      ) ls_mut_rec_views1 cviews0 in
+      ) [] cviews0 in
       (* let map_baga_invs = Hashtbl.create 1 in *)
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
@@ -2162,7 +2178,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
                   let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
-                  Expure.ef_imply_disj bi uv
+                  Expure.EPureI.imply_disj bi uv
               ) lst  in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()
@@ -3295,6 +3311,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         C.coercion_mater_vars = m_vars;
         C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
         C.coercion_kind = coer.I.coercion_kind;
+        C.coercion_origin = coer.I.coercion_origin;
         } in
         let change_univ c = match c.C.coercion_univ_vars with
             (* move LHS guard to RHS regardless of universal lemma *)
@@ -7375,15 +7392,15 @@ and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
   { Iast.coercion_type = cd.Iast.coercion_type;
-  Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
-  Iast.coercion_exact = cd.Iast.coercion_exact;
-  Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
-  Iast.coercion_name = cd.Iast.coercion_name;
-  Iast.coercion_head = nch;
-  Iast.coercion_body = ncb;
-  Iast.coercion_proof = cd.Iast.coercion_proof;
-  I.coercion_kind = cd.I.coercion_kind;
-  }
+    Iast.coercion_type_orig = cd.Iast.coercion_type_orig;
+    Iast.coercion_exact = cd.Iast.coercion_exact;
+    Iast.coercion_infer_vars = cd.Iast.coercion_infer_vars;
+    Iast.coercion_name = cd.Iast.coercion_name;
+    Iast.coercion_head = nch;
+    Iast.coercion_body = ncb;
+    Iast.coercion_proof = cd.Iast.coercion_proof;
+    I.coercion_kind = cd.I.coercion_kind;
+    I.coercion_origin = cd.I.coercion_origin; }
 
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   Debug.no_1 "case_normalize_coerc" pr_none pr_none (fun _ ->  case_normalize_coerc_x prog cd) cd

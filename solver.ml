@@ -6820,7 +6820,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                              carry on normally and the concurrent threads
                              in the ante will be passed throught the entailment*)
                           match h2 with
-                          | HFalse | HEmp | HTrue -> (
+                          | HFalse | HEmp | HTrue | HRel _ -> (
                               Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                               ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
@@ -6836,7 +6836,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 (* in *)
                                 let is_rhs_emp = not is_folding && !rhs_rest_emp in
                                 (*consume htrue in RHS*)
-                                if h2=HTrue && !Globals.do_classic_frame_rule && is_rhs_emp (* not(is_folding) *) then
+                                if (h2=HTrue || Cformula.is_HRel h2) && !Globals.do_classic_frame_rule && is_rhs_emp (* not(is_folding) *) then
                                   let n_h1, n_h2, n_es,n_rhs_h_matched_set = Classic.heap_entail_rhs_htrue prog estate h1 h2 rhs_h_matched_set in
                                   let new_ctx = Ctx n_es in
                                   let n_conseq = CF.mkBase n_h2 p2 t2 fl2 a2 (CF.pos_of_formula conseq) in
@@ -6852,8 +6852,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 ) 
                                 else h1
                               ) in
-                              (* let _ = DD.info_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in *)
-                              (* let _ = DD.info_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in *)
+                              let _ = DD.ninfo_hprint (add_str "h1: " !CF.print_h_formula) h1 no_pos in
+                              let _ = DD.ninfo_hprint (add_str "h2: " !CF.print_h_formula) h2 no_pos in
                               let _ = DD.ninfo_hprint (add_str "prep_h1: " !CF.print_h_formula) prep_h1 no_pos in
                               (* let _ = DD.info_hprint (add_str "rhs_rest_emp: " string_of_bool) (!rhs_rest_emp) no_pos in *)
                               (* let _ = DD.info_hprint (add_str "is_folding: " string_of_bool) (is_folding) no_pos in *)
@@ -6864,7 +6864,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                               (* let _ = DD.info_hprint (add_str "" pr_id) ("\n") no_pos in *)
                               (*use global var is dangerous, should pass as parameter*)
                               if (!rhs_rest_emp && !Globals.do_classic_frame_rule && is_rhs_emp 
-                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse) 
+                                  && (prep_h1 != HEmp) && (prep_h1 != HFalse)
+                                  && (not ( Cformula.is_HRel prep_h1))
                                   && not (is_classic_lending_hformula(prep_h1))
                                   && (h2 = HEmp)) then (
                                 if  not (Infer.no_infer_hp_rel estate) then
@@ -7582,11 +7583,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
       let _ = Debug.info_hprint (add_str "estate" (Cprinter.string_of_estate)) estate pos in
       (* let rhs_p =  *)
-      (* let fv = MCP.mfv rhs_p in *)
-      (* let rhs_p = List.fold_left (fun a (p1,p2) -> *)
-      (*     if (Gen.BList.mem_eq CP.eq_spec_var p1 fv (\* || Gen.BList.mem_eq CP.eq_spec_var p2 fv *\) ) then *)
-      (*     (MCP.memoise_add_pure a (CP.mkEqExp (CP.mkVar p1 pos) (CP.mkVar p2 pos) pos) ) *)
-      (*     else a ) rhs_p (estate.es_rhs_eqset) in *)
+      let fv = MCP.mfv rhs_p in
+      let rhs_p = List.fold_left (fun a (p1,p2) ->
+          if (Gen.BList.mem_eq CP.eq_spec_var p1 fv (* || Gen.BList.mem_eq CP.eq_spec_var p2 fv *) ) then
+          (MCP.memoise_add_pure a (CP.mkEqExp (CP.mkVar p1 pos) (CP.mkVar p2 pos) pos) )
+          else a ) rhs_p (estate.es_rhs_eqset) in
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
         if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos

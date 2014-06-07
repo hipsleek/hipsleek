@@ -1,5 +1,35 @@
+loris-7
 
+sudo apt-get install ocaml-interp
+sudo apt-get install libocamlgraph-ocaml-dev
+sudo apt-get install ocaml-batteries-included
+#MAkefile change path of ocaml-batteries
+(rename share_prover_w.ml --> share_prover_w2.ml)
+sudo apt-get install camlp4
+sudo apt-get install camlp4-extra
+update xml-light_2.2.orig.tar.gz (manually copied)
+sudo apt-get install libextlib-ocaml
+sudo apt-get install libextlib-ocaml-dev
+#Makefile change path of extlib LIBELIB = $(ELIB), LIBBATLIB = $(BATLIB)
+sudo mkdir /usr/lib/ocaml/site-lib
+sudo cp -R /usr/lib/ocaml/batteries /usr/lib/ocaml/site-lib/batteries
+sudo cp -R /usr/lib/ocaml/extlib /usr/lib/ocaml/site-lib/extlib
+run-fast-test
+sudo cpan File::NCopy
+sudo cpan Spreadsheet::ParseExcel
+sudo cpan Spreadsheet::ParseExcel::SaveParser
+sudo cpan Spreadsheet::WriteExcel
 
+==================================
+Omega
+sudo apt-get install g++
+cd omega_modified
+make oc
+sudo cp omega_calc/obj/oc /usr/bin/
+z3: z3-4.3.2 (doesnt work). cp  Z3 version 3.2
+sudo cp /media/hdd_os/usr/local/bin/z3 /usr/bin/
+
+=========================================
 fixcalc
 
 sudo apt-get install bison

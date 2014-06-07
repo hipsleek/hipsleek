@@ -3449,7 +3449,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let _ = Debug.ninfo_hprint (add_str  "ilhs " Iprinter.string_of_formula) ilhs no_pos in
     let _ = Debug.ninfo_hprint (add_str  "irhs " Iprinter.string_of_formula) irhs no_pos in
     (*construct lemma_safe*)
-    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE IA.Right
+    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE LEM_GEN IA.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let _ = Debug.info_hprint (add_str "\nRight. ilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
@@ -3566,7 +3566,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   in
   let _ = Debug.ninfo_hprint (add_str  "infer_vars " (pr_list pr_id)) infer_vars no_pos in
   let _ = Debug.ninfo_hprint (add_str  "need_find_new_split " (string_of_bool)) need_find_new_split no_pos in
-  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE
+  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE LEM_GEN
     IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
   let _ = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in

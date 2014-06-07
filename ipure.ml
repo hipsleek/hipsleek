@@ -703,6 +703,11 @@ and b_apply_one ((fr, t) as p) bf =
           LexVar (t_ann, args1,args2,pos)
   in (npf,il)
 
+and subst_exp sst (e: exp) : exp =
+  match sst with
+  | s :: rest -> subst_exp rest (e_apply_one s e)
+  | [] -> e 
+
 and e_apply_one ((fr, t) as p) e = match e with
   | Null _ 
   | IConst _ 
@@ -1584,3 +1589,227 @@ let mkAndList_opt f =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   let pr2 = !print_formula in
   Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 
+
+
+(* (* Expression *)                                                                                                                                         *)
+(* and exp =                                                                                                                                                *)
+(*   | Ann_Exp of (exp * typ * loc)                                                                                                                         *)
+(*   | Null of loc                                                                                                                                          *)
+(*   | Level of ((ident * primed) * loc)                                                                                                                    *)
+(*   | Var of ((ident * primed) * loc)                                                                                                                      *)
+(*   (* variables could be of type pointer, int, bags, lists etc *)                                                                                         *)
+(*   | IConst of (int * loc)                                                                                                                                *)
+(*   | FConst of (float * loc)                                                                                                                              *)
+(*   | AConst of (heap_ann * loc)                                                                                                                           *)
+(*   | InfConst of (ident * loc) (* Constant for Infinity  *)                                                                                               *)
+(*   | Tsconst of (Tree_shares.Ts.t_sh * loc)                                                                                                               *)
+(*   | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)                                                                             *)
+(*   (*| Tuple of (exp list * loc)*)                                                                                                                        *)
+(*   | Add of (exp * exp * loc)                                                                                                                             *)
+(*   | Subtract of (exp * exp * loc)                                                                                                                        *)
+(*   | Mult of (exp * exp * loc)                                                                                                                            *)
+(*   | Div of (exp * exp * loc)                                                                                                                             *)
+(*   | Max of (exp * exp * loc)                                                                                                                             *)
+(*   | Min of (exp * exp * loc)                                                                                                                             *)
+(*   | TypeCast of (typ * exp * loc)                                                                                                                        *)
+(*   (* bag expressions *)                                                                                                                                  *)
+(*   | Bag of (exp list * loc)                                                                                                                              *)
+(*   | BagUnion of (exp list * loc)                                                                                                                         *)
+(*   | BagIntersect of (exp list * loc)                                                                                                                     *)
+(*   | BagDiff of (exp * exp * loc)                                                                                                                         *)
+(*   (* list expressions *)                                                                                                                                 *)
+(*   | List of (exp list * loc)                                                                                                                             *)
+(*   | ListCons of (exp * exp * loc)                                                                                                                        *)
+(*   | ListHead of (exp * loc)                                                                                                                              *)
+(*   | ListTail of (exp * loc)                                                                                                                              *)
+(*   | ListLength of (exp * loc)                                                                                                                            *)
+(*   | ListAppend of (exp list * loc)                                                                                                                       *)
+(*   | ListReverse of (exp * loc)                                                                                                                           *)
+(*   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *) *)
+(*   | Func of (ident * (exp list) * loc)                                                                                                                   *)
+
+let rec transform_exp_x f (e : exp) : exp = 
+  let r =  f e in 
+  match r with
+  | Some ne -> ne
+  | None -> (match e with
+      | Null _  | Var _ | Level _ | IConst _ | AConst _ 
+      | Tsconst _ | Bptriple _ | FConst _ -> e
+      | Ann_Exp (e,t,l) ->
+          let ne = transform_exp f e in
+          Ann_Exp (ne,t,l)
+      | Add (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Add (ne1,ne2,l)
+      | Subtract (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Subtract (ne1,ne2,l)
+      | Mult (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Mult (ne1,ne2,l)
+      | Div (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Div (ne1,ne2,l)
+      | Max (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Max (ne1,ne2,l)
+      | Min (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          Min (ne1,ne2,l)
+      | TypeCast (ty, e1, l) ->
+          let ne1 = transform_exp f e1 in
+          TypeCast (ty, ne1, l)
+      | Bag (le,l) -> 
+          Bag (List.map (fun c-> transform_exp f c) le, l) 
+      | BagUnion (le,l) -> 
+          BagUnion (List.map (fun c-> transform_exp f c) le, l)
+      | BagIntersect (le,l) -> 
+          BagIntersect (List.map (fun c-> transform_exp f c) le, l)
+      | BagDiff (e1,e2,l) ->
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          BagDiff (ne1,ne2,l)
+      | List (e1,l) -> List (( List.map (transform_exp f) e1), l) 
+      | ListCons (e1,e2,l) -> 
+          let ne1 = transform_exp f e1 in
+          let ne2 = transform_exp f e2 in
+          ListCons (ne1,ne2,l)
+      | ListHead (e1,l) -> ListHead ((transform_exp f e1),l)
+      | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
+      | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
+      | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
+      | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
+      | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
+      | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
+      | InfConst _ -> Error.report_no_pattern ()
+    )
+
+and transform_exp f (e : exp) : exp =
+  let pr = !print_formula_exp in
+  Debug.no_1 "transform_exp" pr pr (fun _ -> transform_exp_x f e) e
+
+let transform_b_formula_x f (e : b_formula) : b_formula = 
+  let (f_b_formula, f_exp) = f in
+  let r =  f_b_formula e in 
+  match r with
+  | Some e1 -> e1
+  | None -> (
+      let (pf,il) = e in
+      let npf = (match pf with
+        | Frm _ | BConst _ | XPure _
+        | BVar _ | BagMin _ | SubAnn _ | VarPerm _ | BagMax _ -> pf
+        | Lt (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Lt (ne1,ne2,l)
+        | Lte (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Lte (ne1,ne2,l)
+        | Gt (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Gt (ne1,ne2,l)
+        | Gte (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Gte (ne1,ne2,l)
+        | Eq (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Eq (ne1,ne2,l)
+        | Neq (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            Neq (ne1,ne2,l)
+        | EqMax (e1,e2,e3,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            let ne3 = transform_exp f_exp e3 in
+            EqMax (ne1,ne2,ne3,l)   
+        | EqMin (e1,e2,e3,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            let ne3 = transform_exp f_exp e3 in
+            EqMin (ne1,ne2,ne3,l)
+        | BagIn (v,e,l)->
+            let ne1 = transform_exp f_exp e in
+            BagIn (v,ne1,l)
+        | BagNotIn (v,e,l)->
+            let ne1 = transform_exp f_exp e in
+            BagNotIn (v,ne1,l)
+        | BagSub (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            BagSub (ne1,ne2,l)
+        | ListIn (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            ListIn (ne1,ne2,l)
+        | ListNotIn (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            ListNotIn (ne1,ne2,l)
+        | ListAllN (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            ListAllN (ne1,ne2,l)
+        | ListPerm (e1,e2,l) ->
+            let ne1 = transform_exp f_exp e1 in
+            let ne2 = transform_exp f_exp e2 in
+            ListPerm (ne1,ne2,l)
+        | RelForm (r, args, l) ->
+            let nargs = List.map (transform_exp f_exp) args in
+            RelForm (r,nargs,l)
+        | LexVar (t,es1,es2,l) -> 
+            let nes1 = List.map (transform_exp f_exp) es1 in
+            let nes2 = List.map (transform_exp f_exp) es2 in
+            LexVar (t,nes1,nes2,l)
+      ) in
+      (npf,il)
+    )
+
+let transform_b_formula f (e : b_formula) : b_formula =
+  let pr = !print_b_formula in
+  Debug.no_1 "transform_b_formula" pr pr
+      (fun _ -> transform_b_formula_x f e) e
+  
+let rec transform_formula_x f (e : formula) : formula = 
+  let (_ , _, f_formula, f_b_formula, f_exp) = f in
+  let r = f_formula e in 
+  match r with
+  | Some e1 -> e1
+  | None -> (
+      match e with
+      | BForm (b1,b2) ->
+          let new_b1 = transform_b_formula (f_b_formula, f_exp) b1 in
+          BForm (new_b1, b2)
+      | And (e1,e2,l) -> 
+          let ne1 = transform_formula f e1 in
+          let ne2 = transform_formula f e2 in
+          mkAnd ne1 ne2 l
+      | AndList b -> AndList (map_l_snd (transform_formula f) b) 
+      | Or (e1,e2,fl, l) -> 
+          let ne1 = transform_formula f e1 in
+          let ne2 = transform_formula f e2 in
+          Or (ne1,ne2,fl,l)
+      | Not (e,fl,l) ->
+          let ne1 = transform_formula f e in
+          Not (ne1,fl,l)
+      | Forall (v,e,fl,l) ->
+          let ne = transform_formula f e in
+          Forall(v,ne,fl,l)
+      | Exists (v,e,fl,l) ->
+          let ne = transform_formula f e in
+          Exists(v,ne,fl,l)
+    )
+
+and transform_formula f (e:formula) :formula =
+  Debug.no_1 "IP.transform_formula" !print_formula !print_formula
+      (fun _ -> transform_formula_x f e ) e

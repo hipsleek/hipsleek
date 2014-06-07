@@ -95,6 +95,7 @@ and view_decl = {
     view_type_of_self : typ option;
     view_is_touching : bool;
     view_is_segmented : bool;
+    view_is_tail_recursive: bool;      (* true if view is tail-recursively defined *)
     view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)
     view_forward_fields: (data_decl * ident) list;               (* definition of the view          *) 
     view_backward_ptrs: P.spec_var list;
@@ -242,6 +243,7 @@ and coercion_decl = {
     coercion_case : coercion_case; (*Simple or Complex*)
     coercion_type_orig: coercion_type option; 
     coercion_kind: lemma_kind;
+    coercion_origin: lemma_origin;
 }
 
 and coercion_type = Iast.coercion_type
@@ -2544,7 +2546,7 @@ let is_complex_entailment_4graph prog ante conseq=
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
- *    - generated disequality constrains between cont_vars and heap vars
+ *    - generated disequality constrains between forward_poiters and heap vars
  *    - if all the constrains are implied by the pure part of view's definietion,
  *      then the view is nontouching
  *)
@@ -2552,7 +2554,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
-  let cont_vars = vdecl.view_cont_vars in
+  let forward_ptrs = vdecl.view_forward_ptrs in
   let is_nontouching_branch branch = (
     let rec get_possible_touching_vars hf = (match hf with
       (* base case *)
@@ -2572,10 +2574,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
           else if ((String.compare (P.name_of_spec_var hvnode) self) == 0) then
             [hvnode]
           else []
-      | _ ->
-          let msg = "is_touching_pred: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error pos msg
+      | _ -> [] (* just ignore *)
     ) in
     let (hf,mf,_,_,_) = CF.split_components branch in
     let possible_vars = get_possible_touching_vars hf in
@@ -2583,7 +2582,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
       | [] -> P.mkTrue pos
       | _ ->
           let condss = List.map (fun x ->
-            List.map (fun y -> P.mkNeqVar x y pos) cont_vars
+            List.map (fun y -> P.mkNeqVar x y pos) forward_ptrs
           ) possible_vars in
           let conds = List.concat condss in
           List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
@@ -2825,10 +2824,7 @@ let build_view_graph (vdecl: view_decl) (prog: prog_decl)
       | CF.Star sf ->
           analyze_heap sf.CF.h_formula_star_h1;
           analyze_heap sf.CF.h_formula_star_h2
-      | _ ->
-          let msg = "build_view_graph: unsupported formula"
-                    ^ (!print_h_formula hf) in
-          report_error no_pos msg
+      | _ -> () (* just ignore *)
     ) in
     (* analyze pure formula to detect equality between 2 heap node *)
     (* be careful with the case: not(a=b)  ~~> a != b              *)
@@ -2871,27 +2867,71 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   let self_view = vdecl.view_name in
   let self_data = vdecl.view_data_name in
   let compute_view_direction vg env fw_ptrs fw_fields bw_ptrs bw_fields = (
-    Debug.tinfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
+    Debug.ninfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
+
+    (*
+     * find forward_fields: the data-field edge from self to the views have same type
+     *)
+    let possible_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
+    let forward_fields = ref fw_fields in
+    let fw_views = List.concat (List.map (fun v ->
+      try
+        Debug.ninfo_pprint ("find path from self to " ^ v) no_pos;
+        let path, weight = Dijkstra.shortest_path vg self v in
+        Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+                            ^ ", weight: " ^ (string_of_int weight)) no_pos;
+        let fw_fs = List.concat (List.map (fun (_, lbl, _) ->
+          match lbl with
+          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
+          | _ -> []
+        ) path) in
+        if (List.length fw_fs > 0) then (
+          forward_fields := Gen.BList.remove_dups_eq equal_pair_str
+                                (!forward_fields @ fw_fs);
+          [v]
+        ) else []
+      with Not_found ->
+        Debug.ninfo_pprint ("not found! " ^ v) no_pos;
+        []
+    ) possible_ptrs) in
+    Debug.ninfo_hprint (add_str "forward_fields:" (pr_list (fun (x,y) -> x^"."^y)))
+        !forward_fields no_pos;
+
     (*
      * Find forward pointers
      *)
     (* in the segmented predicates, we can use equality graph to find the forward pointers *)
     let forward_ptrs = ref [self] in
     forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
-    (* find forward poiters from equality path *)
+    (* find forward poiters from equality or forward_field path *)
     List.iter (fun v1 ->
       List.iter (fun sv ->
         let v2 = P.name_of_spec_var sv in
         try
-          let _, length = Dijkstra.shortest_path vg v1 v2 in
-          (* path contains only equality edges *)
-          if (length = 0) then
+          Debug.ninfo_pprint ("fw_ptrs: find path from " ^ v1 ^ " to " ^ v2) no_pos;
+          let path, weight = Dijkstra.shortest_path vg v1 v2 in
+          Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+                            ^ ", weight: " ^ (string_of_int weight)) no_pos;
+          (* path contains only equality edges or forward_fields edges *)
+          let is_fw_ptr = List.for_all (fun e ->
+            let lbl = ViewGraph.get_label e in
+            match lbl with
+            | ViewGraph.Label.Equality -> true
+            | ViewGraph.Label.DataField (d,f) ->
+                List.exists (fun (d1,f1) ->
+                  (String.compare d d1 = 0) && (String.compare f f1 = 0)
+                ) !forward_fields
+            | _ -> false
+          ) path in
+          if (is_fw_ptr) then (
+            Debug.ninfo_pprint ("found a forward pointer" ^ v2) no_pos;
             forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ [v2]);
+          ) 
+          else Debug.ninfo_pprint ("not found forward pointer") no_pos;
         with _ -> ()
       ) vdecl.view_vars
     ) !forward_ptrs;
 
-    let possible_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
     Debug.ninfo_hprint (add_str "possible_ptrs 1:" (pr_list pr_id)) possible_ptrs no_pos;
     let _ = List.iter (fun v ->
       try
@@ -2912,33 +2952,6 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         Debug.ninfo_pprint ("not found! " ^ v) no_pos;
         ()
     ) possible_ptrs in
-
-    (*
-     * find forward_fields: the data-field edge from self to the views have same type
-     *)
-    let forward_fields = ref [] in
-    let fw_views = List.concat (List.map (fun v ->
-      try
-        Debug.tinfo_pprint ("find path from self to " ^ v) no_pos;
-        let path, weight = Dijkstra.shortest_path vg self v in
-        Debug.tinfo_pprint ("found path: length " ^ (string_of_int (List.length path))
-                            ^ ", weight: " ^ (string_of_int weight)) no_pos;
-        let fw_fields = List.concat (List.map (fun (_, lbl, _) ->
-          match lbl with
-          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
-          | _ -> []
-        ) path) in
-        if (List.length fw_fields > 0) then (
-          forward_fields := Gen.BList.remove_dups_eq equal_pair_str
-                                (!forward_fields @ fw_fields);
-          [v]
-        ) else []
-      with Not_found ->
-        Debug.tinfo_pprint ("not found! " ^ v) no_pos;
-        []
-    ) !forward_ptrs) in
-    Debug.tinfo_hprint (add_str "forward_fields:" (pr_list (fun (x,y) -> x^"."^y)))
-        !forward_fields no_pos;
 
     (*
      * find backward ptrs: field of the view-edge from ptrs having same type with self back to self
@@ -2962,26 +2975,27 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         )
       with _ -> ()
     ) possible_ptrs in
-    (* (* find backward poiters from equality path *)                                       *)
-    (* List.iter (fun v1 ->                                                                 *)
-    (*   List.iter (fun sv ->                                                               *)
-    (*     let v2 = P.name_of_spec_var sv in                                                *)
-    (*     try                                                                              *)
-    (*       let _, length = Dijkstra.shortest_path vg v1 v2 in                             *)
-    (*       if (length = 0) then (* path contains only Equality edges *)                   *)
-    (*         backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]); *)
-    (*     with _ -> ()                                                                     *)
-    (*   ) vdecl.view_vars                                                                  *)
-    (* ) !backward_ptrs;                                                                    *)
+    (* find backward poiters from equality path *)
+    List.iter (fun v1 ->
+      List.iter (fun sv ->
+        let v2 = P.name_of_spec_var sv in
+        try
+          let _, length = Dijkstra.shortest_path vg v1 v2 in
+          if (length = 0) then (* path contains only Equality edges *)
+            backward_ptrs := Gen.BList.remove_dups_eq equal_str (!backward_ptrs @ [v2]);
+        with _ -> ()
+      ) vdecl.view_vars
+    ) !backward_ptrs;
 
     (*
      * find backward fields: the data-field edge from self to backward ptrs
      *)
-    let backward_fields = List.concat (List.map (fun v ->
+    let backward_fields = ref bw_fields in
+    let bw_fs = List.concat (List.map (fun v ->
       try
-        Debug.tinfo_pprint ("find path from " ^ v ^ " to self") no_pos;
+        Debug.ninfo_pprint ("find path from " ^ v ^ " to self") no_pos;
         let path, weight = Dijkstra.shortest_path vg self v in
-        Debug.tinfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+        Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
                             ^ ", weight: " ^ (string_of_int weight)) no_pos;
         List.concat (List.map (fun (_, lbl, _) ->
           match lbl with
@@ -2990,7 +3004,9 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         ) path)
       with _ -> []
     ) !backward_ptrs) in
-    (!forward_ptrs, !forward_fields, !backward_ptrs, backward_fields)
+    backward_fields := Gen.BList.remove_dups_eq equal_pair_str
+                                 (!backward_fields @ bw_fs);
+    (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
   ) in
   let forward_ptrs, forward_fields, backward_ptrs, backward_fields =
       ref [], ref [], ref [], ref [] in
@@ -3023,15 +3039,6 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
       let new4 = List.length !backward_fields in
       update_bwf := (old4 != new4);
     ) vgraphs;
-    (* let str_fwp = "  * fw_ptrs: " ^ (String.concat ", " !forward_ptrs) in                                           *)
-    (* let _ = print_endline (str_fwp) in                                                                              *)
-    (* let str_fwf = "  * fw_fields: " ^ (String.concat ", " (List.map (fun (h,f) -> h^"."^f) !forward_fields)) in  *)
-    (* let _ = print_endline (str_fwf) in                                                                              *)
-    (* let str_bwp = "  * bw_ptrs: " ^ (String.concat ", " !backward_ptrs) in                                          *)
-    (* let _ = print_endline (str_bwp) in                                                                              *)
-    (* let str_bwf = "  * bw_fields: " ^ (String.concat ", " (List.map (fun (h,f) -> h^"."^f) !backward_fields)) in *)
-    (* let _ = print_endline (str_bwf) in                                                                              *)
-    (* count := !count + 1; *)
   done;
   forward_ptrs := List.filter (fun pt -> String.compare pt self != 0) !forward_ptrs;
   (!forward_ptrs, !forward_fields, !backward_ptrs, !backward_fields)
@@ -3077,10 +3084,7 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
                 let aux = CF.mkStarH h1 h2 pos in
                 Some aux
           )
-        | _ ->
-            let msg = "compute_view_aux_formula: unsupported h_formula"
-                      ^ (!print_h_formula hf) in
-            report_error no_pos msg
+        | _ -> Some hf (* just ignore *)
       ) in
       get_aux_hf hf
     ) in
@@ -3119,14 +3123,47 @@ let compute_view_aux_formula (vd: view_decl) (prog: prog_decl)
     (auxf, lbl)
   ) vd.view_un_struc_formula vgraphs
 
+(*
+ * a view is tail recursively defined if there is a case
+ * that self points to the view itself
+ *)
+let is_tail_recursive_view_x (vd: view_decl) : bool =
+  let vname = vd.view_name in
+  let collect_view_pointed_by_self f = (
+    let views = ref [] in
+    let (hf,_,_,_,_) = CF.split_components f in
+    let f_hf hf = (match hf with
+      | CF.ViewNode vn ->
+          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
+          let _ = (
+            if (String.compare nname self = 0) then
+              views := vn.CF.h_formula_view_name :: !views
+            else ()
+          ) in
+          Some hf
+      | _ -> None
+    ) in
+    let _ = CF.transform_h_formula f_hf hf in
+    !views
+  ) in
+  let is_tail_recursive_branch (f: CF.formula) = (
+    let views = collect_view_pointed_by_self f in
+    List.exists (fun vn -> String.compare vn vname = 0) views
+  ) in
+  let branches, _ = List.split vd.view_un_struc_formula in
+  let tail_recursive = (List.exists is_tail_recursive_branch branches) in
+  tail_recursive
+
+let is_tail_recursive_view (vd: view_decl) : bool =
+  let pr_view = !print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "is_tail_recursive_view" pr_view pr_out
+      (fun _ -> is_tail_recursive_view_x vd) vd
 
 let categorize_view (prog: prog_decl) : prog_decl =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vdecls = prog.prog_view_decls in
   let new_vdecls = List.map (fun vd ->
-    (* touching & segmented *)
-    let touching = is_touching_view vd in
-    let segmented = is_segmented_view vd in
     (* forward & backward pointers, fields *)
     let vgraphs = build_view_graph vd prog in
     let (fw_p, fw_f, bw_p, bw_f) = compute_view_forward_backward_info vd prog vgraphs in
@@ -3144,28 +3181,35 @@ let categorize_view (prog: prog_decl) : prog_decl =
         (* self var *)
         P.SpecVar (Named vd.view_data_name, v, Unprimed)
     ) bw_p in
-    let forward_fields = List.map (fun (dname,fname) ->
+    let forward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) fw_f in
-    let backward_fields = List.map (fun (dname,fname) ->
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) fw_f) in
+    let backward_fields = List.concat (List.map (fun (dname,fname) ->
       try 
         let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
-        (ddecl,fname)
-      with Not_found ->
-        report_error no_pos ("categorize_view: data_decl not found: " ^ dname)
-    ) bw_f in
-    (* aux formula *)
-    let newvd = { vd with view_is_touching = touching;
-                          view_is_segmented = segmented;
-                          view_forward_ptrs = forward_ptrs;
-                          view_backward_ptrs = backward_ptrs;
-                          view_forward_fields = forward_fields;
-                          view_backward_fields = backward_fields; } in
-    let view_aux = compute_view_aux_formula newvd prog vgraphs in
+        [(ddecl,fname)]
+      with Not_found -> []
+    ) bw_f) in
+    let vd = { vd with view_forward_ptrs = forward_ptrs;
+                       view_backward_ptrs = backward_ptrs;
+                       view_forward_fields = forward_fields;
+                       view_backward_fields = backward_fields; } in
+
+    (* touching & segmented is computed only when the forward and backward pointers is available *)
+    let touching = is_touching_view vd in
+    let segmented = is_segmented_view vd in
+    
+    (* is tail-recursively defined view? *)
+    let tail_recursive = is_tail_recursive_view vd in
+    let vd = { vd with view_is_tail_recursive = tail_recursive } in
+    
+    (* aux formula is computed after all *)
+    let vd = { vd with view_is_touching = touching;
+                       view_is_segmented = segmented; } in
+    let view_aux = compute_view_aux_formula vd prog vgraphs in
     (* let _ = print_endline ("== view: " ^ vd.view_name) in                                                   *)
     (* let str_fwp = "      - fw_ptrs: " ^ (String.concat ", " fw_p) in                                        *)
     (* let _ = print_endline (str_fwp) in                                                                      *)
@@ -3175,6 +3219,6 @@ let categorize_view (prog: prog_decl) : prog_decl =
     (* let _ = print_endline (str_bwp) in                                                                      *)
     (* let str_bwf = "      - bw_fields: " ^ (String.concat ", " (List.map ViewGraph.string_of_label bw_f)) in *)
     (* let _ = print_endline (str_bwf) in                                                                      *)
-    { newvd with view_aux_formula = view_aux; }
+    { vd with view_aux_formula = view_aux; }
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }

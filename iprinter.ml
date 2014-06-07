@@ -264,7 +264,8 @@ and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_
 and string_of_data_param_list params anns = match (params, anns) with 
   | ([], [])                   -> ""
   | (h::[], a::[])             -> string_of_data_param h a
-  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ ", " ^ (string_of_data_param_list t1 t2)
+  | (h::t1, [])                -> (string_of_formula_exp h) ^ "," ^ (string_of_data_param_list t1 [])
+  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ "," ^ (string_of_data_param_list t1 t2)
   | (_, _)                     -> ""
 ;;
 
@@ -845,8 +846,15 @@ let string_of_coerc_type c = match c with
   | Equiv -> "<=>"
   | Right -> "<="
 
-let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
-							 (string_of_formula c.coercion_body)^"\n" 
+let string_of_coerc_origin orig = match orig with
+  | LEM_USER -> "user-given"
+  | LEM_GEN -> "generated"
+
+let string_of_coerc_decl c = 
+  (string_of_coerc_type c.coercion_type) ^ "coerc " ^c.coercion_name ^ "\n"
+  ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin)
+  ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
+  ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
 
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 

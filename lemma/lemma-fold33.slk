@@ -17,6 +17,7 @@ lemma_unsafe "lem_tail" self::lseg<p, n>
    <- self::lseg<t, n-1> * t::node<_, p>.
 
 
+
 checkentail 
     self_lem_tail::node<_,r> * r::lseg<t,n-2> * t::node<_,p>
     |- self_lem_tail::lseg<p,n>.
@@ -39,4 +40,10 @@ checkentail
     |- (exists r1: self_lem_tail::node<_, r1> * r1::lseg<p,n-1>).
 expect Valid.
 print residue.
+*/
+/*
+checkentail  
+      r::lseg<t,n-2> * t::node<_,p>
+    |-  r::lseg<p,n-1>.
+expect Valid.
 */

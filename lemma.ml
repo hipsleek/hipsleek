@@ -31,7 +31,7 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
 
 let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
-    let ilemma = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE coer_type ihps ihead ibody in
+    let ilemma = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN coer_type ihps ihead ibody in
     (*transfrom ilemma to clemma*)
     let ldef = Astsimp.case_normalize_coerc iprog ilemma in
     let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
@@ -777,95 +777,6 @@ let do_unfold_view cprog (f0: CF.formula) =
   Debug.no_1 "LEM.do_unfold_view" pr1 pr1
       (fun _ -> do_unfold_view_x cprog f0) f0
 
-let checkeq_sem_x iprog0 cprog0 f1 f2 hpdefs=
-  (*************INTERNAL******************)
-  let back_up_progs iprog cprog=
-    (iprog.I.prog_view_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls, cprog.C.prog_hp_decls,
-    Lem_store.all_lemma # get_left_coercion, Lem_store.all_lemma # get_right_coercion)
-  in
-  let reset_progs (ivdecls, ihpdecls, cvdecls, chpdecls, left_coers, righ_coers)=
-    let _ = iprog0.I.prog_view_decls <- ivdecls in
-    let _ = iprog0.I.prog_hp_decls <- ihpdecls in
-    let _ = cprog0.C.prog_view_decls <- cvdecls in
-    let _ = cprog0.C.prog_hp_decls <- chpdecls in
-    let _ = Lem_store.all_lemma # set_coercion left_coers righ_coers in
-    ()
-  in
-  let rec look_up_hpdef rem_hpdefs (r_unk_hps, r_hpdefs) hp=
-    match rem_hpdefs with
-      | [] -> (r_unk_hps@[hp], r_hpdefs)
-      | ((* (k, _,_,_) as *) hpdef)::rest -> begin
-          match hpdef.CF.def_cat with
-            | CP.HPRelDefn (hp1,_,_) -> if CP.eq_spec_var hp hp1 then
-                (*to remove after improve the algo with nested*)
-                let _ = List.map (fun (f,_) ->
-                    let hps = CF.get_hp_rel_name_formula f in
-                    if CP.diff_svl hps [hp] != [] then
-                      raise Not_found
-                    else []
-                )  hpdef.CF.def_rhs in
-                (r_unk_hps, r_hpdefs@[hpdef])
-              else look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
-            | _ -> look_up_hpdef rest (r_unk_hps, r_hpdefs) hp
-        end
-  in
-  let heap_remove_unk_hps unk_hps hn = match hn with
-    | CF.HRel (hp,eargs, pos)-> begin
-        if CP.mem_svl hp unk_hps then CF.HTrue else hn
-      end
-    | _ -> hn
-  in
-  (*************END INTERNAL******************)
-  (*for each proving: generate lemma; cyclic proof*)
-  try begin
-  let bc = back_up_progs iprog0 cprog0 in
-  let hps = CP.remove_dups_svl ((CF.get_hp_rel_name_formula f1)@(CF.get_hp_rel_name_formula f2)) in
-  let unk_hps, known_hpdefs = List.fold_left (look_up_hpdef hpdefs) ([],[]) hps in
-  (*remove unk_hps*)
-  let f11,f21 = if unk_hps = [] then (f1, f2) else
-    (CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f1,
-    CF.formula_trans_heap_node (heap_remove_unk_hps unk_hps) f2)
-  in
-  (*transform hpdef to view;
-    if preds are unknown -> HTRUE
-  *)
-  let proc_name = "eqproving" in
-  let n_cview,chprels_decl = Saout.trans_hprel_2_cview iprog0 cprog0 proc_name known_hpdefs in
-  (*trans_hp_view_formula*)
-  let f12 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f11 in
-  let f22 = Saout.trans_formula_hp_2_view iprog0 cprog0 proc_name chprels_decl known_hpdefs [] f21 in
-  (*iform*)
-  let if12 = Rev_ast.rev_trans_formula f12 in
-  let if22 = Rev_ast.rev_trans_formula f22 in
-  (*unfold lhs - rhs*)
-  (* let f13 = do_unfold_view cprog0 f12 in *)
-  (* let f23 = do_unfold_view cprog0 f22 in *)
-  let r=
-    let lemma_name = "tmp" in
-    let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if12 if22 in
-    let r1,_ = manage_test_new_lemmas1 [l_coer] iprog0 cprog0 in
-    (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (CF.struc_formula_of_formula f2 no_pos)) in *)
-    (* let r1,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f13 (CF.struc_formula_of_formula f23 no_pos) in *)
-    (* let r1,_,_ = fnc f13 f23 in *)
-    if not r1 then false else
-      let r_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE I.Left [] if22 if12 in
-      let r2,_ = manage_test_new_lemmas1 [r_coer] iprog0 cprog0 in
-      (* let r2,_,_ = Sleekcore.sleek_entail_check [] cprog0 [(\* (f22,f12) *\)] f23 (CF.struc_formula_of_formula f13 no_pos) in *)
-      (* let r2,_,_ = fnc f23 f13 in *)
-      r2
-  in
-  let _ = reset_progs bc in
-  r
-  end
-  with _ -> (* let _ = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in *)
-  false
-
-let checkeq_sem iprog cprog f1 f2 hpdefs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_3 "LEM.checkeq_sem" pr1 pr1 pr2 string_of_bool
-      (fun _ _ _ ->  checkeq_sem_x iprog cprog f1 f2 hpdefs)
-      f1 f2 hpdefs
 
 (* Trung: need rename *)
 type lemma_param_property =
@@ -876,6 +787,7 @@ type lemma_param_property =
 let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
     : (CP.spec_var * lemma_param_property) list =
   let pos = vd.C.view_pos in
+  (* find recursive view in each branch *)
   let rec collect_recursive_view hf = (match hf with
     | CF.ViewNode vn ->
         if (String.compare vn.CF.h_formula_view_name vd.C.view_name = 0) then
@@ -890,6 +802,12 @@ let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
     | CF.DataNode _ -> []
     | _ -> report_error pos "compute_lemma_params_property: unexpected formula"
   ) in
+  (* find base branch and inductive branch *)
+  let base_branches, inductive_branches = List.partition(fun (branch, _) ->
+    let (hf,_,_,_,_) = CF.split_components branch in
+    let views = collect_recursive_view hf in
+    (List.length views = 0)
+  ) vd.C.view_un_struc_formula in
   let param_branches = List.map2 (fun (branch,_) (aux_f,_) ->
     let (hf,_,_,_,_) = CF.split_components branch in
     let views = collect_recursive_view hf in
@@ -938,259 +856,655 @@ let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
   ) [] param_branches in
   List.map2 (fun sv p -> (sv,p)) vd.C.view_vars param_properties 
 
-let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
+(* let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)                    *)
+(*     : (I.coercion_decl list) =                                                                        *)
+(*   let dname = vd.C.view_data_name in                                                                  *)
+(*   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in                                 *)
+(*   (* generate lemmas for segmented predicates *)                                                      *)
+(*   if (vd.C.view_is_segmented) then                                                                    *)
+(*     (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)                                       *)
+(*     (*    2 posibilities about P:                            *)                                       *)
+(*     (*       + P = P1  =  P2   unifying operation            *)                                       *)
+(*     (*       + P = P1 (+) P2   combining operation           *)                                       *)
+(*     let pos = vd.C.view_pos in                                                                        *)
+(*     let llemma_name = "llem_" ^ vd.C.view_name in                                                     *)
+(*     let rlemma_name = "rlem_" ^ vd.C.view_name in                                                     *)
+(*     let ihead = (                                                                                     *)
+(*       let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->                                       *)
+(*         IP.Var ((id,p), pos)                                                                          *)
+(*       ) vd.C.view_vars ) in                                                                           *)
+(*       let head = (                                                                                    *)
+(*         IF.mkHeapNode (self, Unprimed) (vd.C.view_name)                                               *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params [] None pos                                                                   *)
+(*       ) in                                                                                            *)
+(*       Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos                               *)
+(*     ) in                                                                                              *)
+(*     let (left_body, right_body) = (                                                                   *)
+(*       let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->                                      *)
+(*         let vp = id ^ "_1" in                                                                         *)
+(*         IP.Var ((vp,p), pos)                                                                          *)
+(*       ) vd.C.view_vars) in                                                                            *)
+(*       let body1 = (                                                                                   *)
+(*         IF.mkHeapNode (self, Unprimed) (vd.C.view_name)                                               *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params1 [] None pos                                                                  *)
+(*       ) in                                                                                            *)
+(*       let forward_ptr = match vd.C.view_forward_ptrs with                                             *)
+(*         | [sv] -> CP.name_of_spec_var sv                                                              *)
+(*         | _ ->                                                                                        *)
+(*             let msg = "generate_lemma_sll: expect 1 forward pointer in view "                         *)
+(*                       ^ vd.C.view_name in                                                             *)
+(*             report_error pos msg                                                                      *)
+(*       in                                                                                              *)
+(*       let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->                                      *)
+(*         let vp =                                                                                      *)
+(*           if (String.compare id forward_ptr = 0) then forward_ptr                                     *)
+(*           else id ^ "_2"                                                                              *)
+(*         in                                                                                            *)
+(*         IP.Var ((vp,p), pos)                                                                          *)
+(*       ) vd.C.view_vars) in                                                                            *)
+(*       let body2 = (                                                                                   *)
+(*         IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)                                   *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params2 [] None pos                                                                  *)
+(*       ) in                                                                                            *)
+(*       let left_hbody = Iformula.mkStar body1 body2 pos in                                             *)
+(*       let right_hbody = (                                                                             *)
+(*         if (vd.C.view_is_touching) then left_hbody                                                    *)
+(*         else                                                                                          *)
+(*           (* lemma for non-touching predicates also borrow a @L node *)                               *)
+(*           let lending_node =                                                                          *)
+(*             IF.mkHeapNode (forward_ptr, Unprimed) dname                                               *)
+(*                 0 false  (IP.ConstAnn Lend) false false false None                                    *)
+(*                 (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields) *)
+(*                 [] None pos                                                                           *)
+(*           in                                                                                          *)
+(*           Iformula.mkStar left_hbody lending_node pos                                                 *)
+(*       ) in                                                                                            *)
+(*       let pure_constraint = (                                                                         *)
+(*         let param_properties = compute_lemma_params_property vd cprog in                              *)
+(*         let param_constraints = List.fold_left(                                                       *)
+(*           fun res (CP.SpecVar (typ,id,p), param_prop) ->                                              *)
+(*             let sv_cond = (match param_prop with                                                      *)
+(*               | LemmaParamEqual ->                                                                    *)
+(*                   let e = Ipure_D.Var ((id,p), pos) in                                                *)
+(*                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in                                          *)
+(*                   let e2 =                                                                            *)
+(*                     if (String.compare id forward_ptr = 0) then                                       *)
+(*                       Ipure_D.Var ((forward_ptr,p), pos)                                              *)
+(*                     else Ipure_D.Var ((id^"_2",p), pos) in                                            *)
+(*                   IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos                           *)
+(*               | LemmaParamDistributive -> (                                                           *)
+(*                   let e = Ipure_D.Var ((id,p), pos) in                                                *)
+(*                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in                                          *)
+(*                   let e2 =                                                                            *)
+(*                     if (String.compare id forward_ptr = 0) then                                       *)
+(*                       Ipure_D.Var ((forward_ptr,p), pos)                                              *)
+(*                     else Ipure_D.Var ((id^"_2",p), pos) in                                            *)
+(*                   match typ with                                                                      *)
+(*                   | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos                                      *)
+(*                   | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos                       *)
+(*                   | _ -> report_error pos "generate_lemma_sll: unexpect typ"                          *)
+(*                 )                                                                                     *)
+(*               | _ -> IP.mkTrue pos                                                                    *)
+(*             ) in                                                                                      *)
+(*             IP.mkAnd sv_cond res pos                                                                  *)
+(*         ) (IP.mkTrue pos) param_properties in                                                         *)
+(*         param_constraints                                                                             *)
+(*       ) in                                                                                            *)
+(*       let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in             *)
+(*       let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in            *)
+(*       (l_body, r_body)                                                                                *)
+(*     ) in                                                                                              *)
+(*     let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in            *)
+(*     let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in         *)
+(*     if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then                          *)
+(*       [right_coercion]                                                                                *)
+(*     else [left_coercion; right_coercion]                                                              *)
+(*   (* no need to generate lemma for non-segmented predicates *)                                        *)
+(*   else ([])                                                                                           *)
+
+(* let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)                   *)
+(*     : (I.coercion_decl list) =                                                                        *)
+(*   let dname = vd.C.view_data_name in                                                                  *)
+(*   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in                                 *)
+(*   (* generate lemmas for segmented dll *)                                                             *)
+(*   if (vd.C.view_is_segmented) then                                                                    *)
+(*     (* self::dll(pr,last,out) <--> sefl::dll(pr,last1,out1) * out1::dll(last1,last,out) *)            *)
+(*     (*    2 posibilities about P:                            *)                                       *)
+(*     (*       + P = P1  =  P2   unifying operation            *)                                       *)
+(*     (*       + P = P1 (+) P2   combining operation           *)                                       *)
+(*     let pos = vd.C.view_pos in                                                                        *)
+(*     let llemma_name = "llem_" ^ vd.C.view_name in                                                     *)
+(*     let rlemma_name = "rlem_" ^ vd.C.view_name in                                                     *)
+(*     let ihead = (                                                                                     *)
+(*       let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->                                       *)
+(*         IP.Var ((id,p), pos)                                                                          *)
+(*       ) vd.C.view_vars ) in                                                                           *)
+(*       let head = (                                                                                    *)
+(*         IF.mkHeapNode (self, Unprimed) (vd.C.view_name)                                               *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params [] None pos                                                                   *)
+(*       ) in                                                                                            *)
+(*       Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos                               *)
+(*     ) in                                                                                              *)
+(*     let (left_body, right_body) = (                                                                   *)
+(*       let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->                                      *)
+(*         let vp = id ^ "_1" in                                                                         *)
+(*         IP.Var ((vp,p), pos)                                                                          *)
+(*       ) vd.C.view_vars) in                                                                            *)
+(*       let body1 = (                                                                                   *)
+(*         IF.mkHeapNode (self, Unprimed) (vd.C.view_name)                                               *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params1 [] None pos                                                                  *)
+(*       ) in                                                                                            *)
+(*       let forward_ptr = match vd.C.view_forward_ptrs with                                             *)
+(*         | [sv] -> CP.name_of_spec_var sv                                                              *)
+(*         | _ ->                                                                                        *)
+(*             let msg = "generate_lemma_sll: expect 1 forward pointer in view "                         *)
+(*                       ^ vd.C.view_name in                                                             *)
+(*             report_error pos msg                                                                      *)
+(*       in                                                                                              *)
+(*       let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->                                      *)
+(*         let vp =                                                                                      *)
+(*           if (String.compare id forward_ptr = 0) then forward_ptr                                     *)
+(*           else id ^ "_2"                                                                              *)
+(*         in                                                                                            *)
+(*         IP.Var ((vp,p), pos)                                                                          *)
+(*       ) vd.C.view_vars) in                                                                            *)
+(*       let body2 = (                                                                                   *)
+(*         IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)                                   *)
+(*             0 false  (IP.ConstAnn Mutable) false false false None                                     *)
+(*             view_params2 [] None pos                                                                  *)
+(*       ) in                                                                                            *)
+(*       let left_hbody = Iformula.mkStar body1 body2 pos in                                             *)
+(*       let right_hbody = (                                                                             *)
+(*         if (vd.C.view_is_touching) then left_hbody                                                    *)
+(*         else                                                                                          *)
+(*           (* lemma for non-touching predicates also borrow a @L node *)                               *)
+(*           let lending_node =                                                                          *)
+(*             IF.mkHeapNode (forward_ptr, Unprimed) dname                                               *)
+(*                 0 false  (IP.ConstAnn Lend) false false false None                                    *)
+(*                 (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields) *)
+(*                 [] None pos                                                                           *)
+(*           in                                                                                          *)
+(*           Iformula.mkStar left_hbody lending_node pos                                                 *)
+(*       ) in                                                                                            *)
+(*       let pure_constraint = (                                                                         *)
+(*         let param_properties = compute_lemma_params_property vd cprog in                              *)
+(*         let param_constraints = List.fold_left(                                                       *)
+(*           fun res (CP.SpecVar (typ,id,p), param_prop) ->                                              *)
+(*             let sv_cond = (match param_prop with                                                      *)
+(*               | LemmaParamEqual ->                                                                    *)
+(*                   let e = Ipure_D.Var ((id,p), pos) in                                                *)
+(*                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in                                          *)
+(*                   let e2 =                                                                            *)
+(*                     if (String.compare id forward_ptr = 0) then                                       *)
+(*                       Ipure_D.Var ((forward_ptr,p), pos)                                              *)
+(*                     else Ipure_D.Var ((id^"_2",p), pos) in                                            *)
+(*                   IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos                           *)
+(*               | LemmaParamDistributive -> (                                                           *)
+(*                   let e = Ipure_D.Var ((id,p), pos) in                                                *)
+(*                   let e1 = Ipure_D.Var ((id^"_1",p), pos) in                                          *)
+(*                   let e2 =                                                                            *)
+(*                     if (String.compare id forward_ptr = 0) then                                       *)
+(*                       Ipure_D.Var ((forward_ptr,p), pos)                                              *)
+(*                     else Ipure_D.Var ((id^"_2",p), pos) in                                            *)
+(*                   match typ with                                                                      *)
+(*                   | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos                                      *)
+(*                   | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos                       *)
+(*                   | _ -> report_error pos "generate_lemma_sll: unexpect typ"                          *)
+(*                 )                                                                                     *)
+(*               | _ -> IP.mkTrue pos                                                                    *)
+(*             ) in                                                                                      *)
+(*             IP.mkAnd sv_cond res pos                                                                  *)
+(*         ) (IP.mkTrue pos) param_properties in                                                         *)
+(*         param_constraints                                                                             *)
+(*       ) in                                                                                            *)
+(*       let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in             *)
+(*       let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in            *)
+(*       (l_body, r_body)                                                                                *)
+(*     ) in                                                                                              *)
+(*     let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in            *)
+(*     let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in         *)
+(*     if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then                          *)
+(*       [right_coercion]                                                                                *)
+(*     else [left_coercion; right_coercion]                                                              *)
+(*   (* no need to generate lemma for non-segmented predicates *)                                        *)
+(*   else ([])                                                                                           *)
+
+(* let generate_lemma_tree_simple (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)           *)
+(*     : (I.coercion_decl list) =                                                                        *)
+(*   ([])                                                                                                *)
+
+(* let generate_lemma_tree_pointer_back (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)     *)
+(*     : (I.coercion_decl list) =                                                                        *)
+(*   ([])                                                                                                *)
+(* (*                                                                                                    *)
+(*  * assume that the prerequisite information of view is computed                                       *)
+(*  * (touching, segmented, forward, backward, aux...)                                                   *)
+(*  *)                                                                                                   *)
+(* let generate_lemma (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)                       *)
+(*     : (I.coercion_decl list) =                                                                        *)
+(*   let forward_fields = vd.C.view_forward_fields in                                                    *)
+(*   let backward_fields = vd.C.view_backward_fields in                                                  *)
+(*   (* singly linked list *)                                                                            *)
+(*   if ((List.length forward_fields = 1) && (List.length backward_fields = 0)) then                     *)
+(*     generate_lemma_sll vd iprog cprog                                                                 *)
+(*   (* doubly linked list *)                                                                            *)
+(*   else if ((List.length forward_fields = 1) && (List.length backward_fields = 1)) then                *)
+(*     generate_lemma_dll vd iprog cprog                                                                 *)
+(*   (* simple tree *)                                                                                   *)
+(*   else if ((List.length forward_fields = 2) && (List.length backward_fields = 0)) then                *)
+(*     generate_lemma_tree_simple vd iprog cprog                                                         *)
+(*   (* tree with pointer back *)                                                                        *)
+(*   else if ((List.length forward_fields = 2) && (List.length backward_fields = 1)) then                *)
+(*     generate_lemma_tree_pointer_back vd iprog cprog                                                   *)
+(*   (* what else ? *)                                                                                   *)
+(*   else                                                                                                *)
+(*     ([])                                                                                              *)
+
+let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let view_type = Named vd.C.view_data_name in
+  let self_var = CP.SpecVar (view_type, self, Unprimed) in
+  let subs = [(self_var, vn.CF.h_formula_view_node)] in
+  let subs = List.fold_left2 (fun subs sv1 sv2 ->
+    subs @ [(sv1, sv2)]
+  ) subs vd.C.view_vars vn.CF.h_formula_view_arguments in
+  subs
+
+let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_subs = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  let pr_vn vn = !CF.print_h_formula (CF.ViewNode vn) in
+  Debug.no_1 "collect_subs_from_view_node" pr_vn pr_subs
+    (fun _ -> collect_subs_from_view_node_x vn vd) vn
+
+let collect_subs_from_view_base_case_x (f: CF.formula) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let is_view_var v = (
+    List.exists (fun sv -> CP.eq_spec_var v sv) vd.C.view_vars
+  ) in
+  let is_self v = String.compare (CP.name_of_spec_var v) self = 0 in
+  let subs_list = ref [] in
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_h_f _ = None in
+  let f_m mp = Some mp in
+  let f_a _ = None in
+  let f_pf pf = None in
+  let f_b bf= (
+    let pf, a = bf in
+    match pf with
+    | CP.Eq (CP.Var (sv1, _), CP.Var(sv2, _), _) ->
+        let new_subs = (
+          (* in tail-recursive predicates, self must be substituted *)
+          if (is_self sv1) then (
+            if (vd.C.view_is_tail_recursive) then [(sv1,sv2)]
+            else [(sv2,sv1)]
+          )
+          else if (is_self sv2) then (
+            if (vd.C.view_is_tail_recursive) then [(sv2,sv1)]
+            else [(sv1,sv2)]
+          )
+          (* otherwise only subs a view var by a non-view var *)
+          else if (is_view_var sv1) && (not (is_view_var sv2)) then
+            [(sv1,sv2)]
+          else if (is_view_var sv2) && (not (is_view_var sv1)) then
+            [(sv2,sv1)]
+          else []
+        ) in
+        let _ = subs_list := !subs_list @ new_subs in
+        (Some (pf,a))
+    | _ -> None
+  ) in
+  let f_e _ = None in
+  let _ = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
+  !subs_list
+
+let collect_subs_from_view_base_case (f: CF.formula) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_f = !CF.print_formula in
+  let pr_out = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  Debug.no_1 "collect_subs_from_view_base_case" pr_f pr_out
+      (fun _ -> collect_subs_from_view_base_case_x f vd) f
+
+let normalize_view_branch_x (branch: CF.formula) (vd: C.view_decl) : CF.formula =
+  (* let sst = collect_eq_vars branch in *)
+  (* CF.subst_one_by_one sst branch      *)
+  CF.elim_exists branch
+
+let normalize_view_branch (branch: CF.formula) (vd: C.view_decl) : CF.formula =
+  let pr_f = !CF.print_formula in
+  Debug.no_1 "normalize_view_branch" pr_f pr_f
+      (fun _ -> normalize_view_branch_x branch vd) branch
+
+let collect_inductive_view_nodes (hf: CF.h_formula) (vd: C.view_decl) 
+    : CF.h_formula_view list =
+  let view_nodes = ref [] in
+  let f_hf hf = (match hf with
+    | CF.ViewNode vn ->
+        let _ = (
+          if (String.compare vn.CF.h_formula_view_name vd.C.view_name = 0) then
+            view_nodes := !view_nodes @ [vn];
+        ) in
+        Some hf
+    | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
+    | _ -> None
+  ) in
+  let _ = CF.transform_h_formula f_hf hf in
+  !view_nodes
+
+let remove_view_node_from_formula (f: CF.formula) (vn: CF.h_formula_view) : CF.formula =
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_hf hf = (match hf with
+    | CF.ViewNode { CF.h_formula_view_name = vname } ->
+        if (String.compare vname vn.CF.h_formula_view_name = 0) then
+          Some CF.HEmp
+        else Some hf
+    | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
+    | _ -> None
+  ) in
+  let f_m mp = Some mp in
+  let f_a a = Some a in
+  let f_pf pf = Some pf in
+  let f_b bf = Some bf in
+  let f_e e = Some e in
+  CF.transform_formula (f_e_f, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f
+
+(* generalize generated coercion *) 
+let refine_nontail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  (* replace self in view_vars by a fresh var *)
+  let rec refine_heap (hf: IF.h_formula) (fr_var: ident)
+      : IF.h_formula = (
+    let new_var = (fresh_name (), Unprimed) in
+    let subs_list = [((self,Unprimed), new_var)] in
+    let f_hf hf = (match hf with
+      | IF.HeapNode hn ->
+          let args = hn.IF.h_formula_heap_arguments in
+          let new_args = List.map (fun e ->
+            IP.subst_exp subs_list e
+          ) args in
+          let new_hf = IF.HeapNode { hn with IF.h_formula_heap_arguments = new_args } in
+          Some new_hf
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    IF.transform_h_formula f_hf hf
+  ) in
+  let new_var = fresh_name () in
+  let new_hf = refine_heap hf new_var in
+  new_hf
+
+let refine_nontail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  let pr = !IF.print_h_formula in
+  Debug.no_1 "refine_nontail_coerc_body_heap" pr pr
+      (fun _ -> refine_nontail_coerc_body_heap_x hf vd) hf
+
+(* generalize generated coercion *) 
+let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  (* replace a heap node which is a view var of a view_decl by a fresh var *)
+  let rec refine_heap (hf: IF.h_formula)
+      : IF.h_formula = (
+    let subs_list = ref [] in
+    let view_vars = List.map (fun v ->
+      CP.name_of_spec_var v
+    ) vd.C.view_vars in
+    (* substitute heap node first *)
+    let collect_subs_list hf = (match hf with
+      | IF.HeapNode hn ->
+          let (hnode,prim) = hn.IF.h_formula_heap_node in
+          (* heap node is a view var, substitute this heap node *)
+          let _ = (
+            if List.exists (fun v -> String.compare v hnode = 0) view_vars then (
+              try 
+                let _ = List.find (fun subs ->
+                    let v = fst subs in IP.eq_var (hnode,prim) v
+                  ) !subs_list in
+                ()
+              with Not_found -> (
+                let new_var = (fresh_name (), Unprimed) in
+                subs_list := ((hnode,prim),new_var) :: !subs_list;
+              )
+            )
+            else ()
+          ) in
+          None
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    let _ = IF.transform_h_formula collect_subs_list hf in
+    let subs_heap_node hf = (match hf with
+      | IF.HeapNode hn ->
+          let (hnode,prim) = hn.IF.h_formula_heap_node in
+          let view_vars = List.map (fun v ->
+            CP.name_of_spec_var v
+          ) vd.C.view_vars in
+          (* heap node is a view var, substitute this heap node *)
+          if List.exists (fun v -> String.compare v hnode = 0) view_vars then (
+            let (subs_node, subs_prim) = (
+              try 
+                let subs = List.find (fun subs ->
+                  let v = fst subs in 
+                  IP.eq_var (hnode,prim) v
+                ) !subs_list in
+                snd subs
+              with Not_found -> (
+                let msg = "refine_tail_coerc_body_heap: subs_list must be computed before" in
+                report_error no_pos msg
+              )
+            ) in
+            let new_hf = IF.HeapNode {hn with IF.h_formula_heap_node = (subs_node, subs_prim)} in
+            Some new_hf
+          )
+          else (
+            let subs_args = List.map (fun arg ->
+              IP.subst_exp !subs_list arg
+            ) hn.IF.h_formula_heap_arguments in
+            let new_hf = IF.HeapNode {hn with IF.h_formula_heap_arguments = subs_args} in
+            Some new_hf
+          )
+      | IF.HeapNode2 _ -> None (* Trung: check later *)
+      | _ -> None
+    ) in
+    IF.transform_h_formula subs_heap_node hf
+  ) in
+  let new_hf = refine_heap hf in
+  new_hf
+
+let refine_tail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_formula =
+  let pr = !IF.print_h_formula in
+  Debug.no_1 "refine_tail_coerc_body_heap" pr pr
+      (fun _ -> refine_tail_coerc_body_heap_x hf vd) hf
+
+(* let generate_distributive_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) = *)
+  
+
+let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
+  (* find base branch and inductive branch *)
+  let vpos = vd.C.view_pos in
+  let vname = vd.C.view_name in
   let dname = vd.C.view_data_name in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
-  (* generate lemmas for segmented predicates *)
-  if (vd.C.view_is_segmented) then
-    (* self::lseg(y,P) <--> sefl::lseg(x,P1) * x::lseg(y,P2) *)
-    (*    2 posibilities about P:                            *)
-    (*       + P = P1  =  P2   unifying operation            *)
-    (*       + P = P1 (+) P2   combining operation           *)
-    let pos = vd.C.view_pos in
-    let llemma_name = "llem_" ^ vd.C.view_name in
-    let rlemma_name = "rlem_" ^ vd.C.view_name in
-    let ihead = (
-      let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        IP.Var ((id,p), pos)
-      ) vd.C.view_vars ) in
-      let head = (
-        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params [] None pos
+  let processed_branches = List.map (fun (f, lbl) ->
+    let new_f = CF.elim_exists f in
+    (new_f, lbl)
+  ) vd.C.view_un_struc_formula in
+  let base_branches, inductive_branches = List.partition(fun (f, _) ->
+    let (hf,_,_,_,_) = CF.split_components f in
+    let views = collect_inductive_view_nodes hf vd in
+    (List.length views = 0)
+  ) processed_branches in
+  (* consider only the view has 1 base case and 1 inductive case *)
+  if ((List.length base_branches != 1) || (List.length inductive_branches != 1)) then
+    []
+  (* consider only the view has 1 forward pointer *)
+  else if (List.length vd.C.view_forward_ptrs != 1) then
+    []
+  (* statisfying view *)
+  else (
+    let forward_ptr = List.hd vd.C.view_forward_ptrs in
+    let base_f, base_lbl = List.hd base_branches in
+    let induct_f, induct_lbl = List.hd inductive_branches in
+    let (induct_hf, _, _, _, _) = CF.split_components induct_f in
+    let view_nodes = collect_inductive_view_nodes induct_hf vd in
+    let induct_vnodes = List.filter (fun vn ->
+      String.compare vn.CF.h_formula_view_name vname = 0
+    ) view_nodes in
+    if (List.length induct_vnodes != 1) then []
+    else (
+      (* create distributive lemma like: 
+              pred -> pred1 * pred2
+              pred <- pred1 * pred2          *)
+      (* this part is applicable to non-tail recursive lemmas *)
+      let lem_head = (
+        let head_node = (self, Unprimed) in
+        let head_params = List.map (fun (CP.SpecVar (_,id,p)) ->
+          IP.Var ((id,p), vpos)
+        ) vd.C.view_vars in
+        let head = (
+          IF.mkHeapNode head_node (vd.C.view_name)
+              0 false  (IP.ConstAnn Mutable) false false false None
+              head_params [] None vpos
+        ) in
+        Iformula.mkBase head (Ipure.mkTrue vpos) Iformula.top_flow [] vpos
       ) in
-      Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos
-    ) in
-    let (left_body, right_body) = (
-      let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp = id ^ "_1" in
-        IP.Var ((vp,p), pos)
-      ) vd.C.view_vars) in
-      let body1 = (
-        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params1 [] None pos
-      ) in
-      let forward_ptr = match vd.C.view_forward_ptrs with
-        | [sv] -> CP.name_of_spec_var sv
-        | _ ->
-            let msg = "generate_lemma_sll: expect 1 forward pointer in view " 
-                      ^ vd.C.view_name in
-            report_error pos msg
-      in
-      let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp =
-          if (String.compare id forward_ptr = 0) then forward_ptr
-          else id ^ "_2"
-        in
-        IP.Var ((vp,p), pos)
-      ) vd.C.view_vars) in
-      let body2 = (
-        IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params2 [] None pos
-      ) in
-      let left_hbody = Iformula.mkStar body1 body2 pos in
-      let right_hbody = (
-        if (vd.C.view_is_touching) then left_hbody
-        else
-          (* lemma for non-touching predicates also borrow a @L node *)
-          let lending_node = 
-            IF.mkHeapNode (forward_ptr, Unprimed) dname
-                0 false  (IP.ConstAnn Lend) false false false None
-                (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
-                [] None pos
-          in
-          Iformula.mkStar left_hbody lending_node pos
-      ) in
-      let pure_constraint = (
-        let param_properties = compute_lemma_params_property vd cprog in
-        let param_constraints = List.fold_left(
-          fun res (CP.SpecVar (typ,id,p), param_prop) ->
-            let sv_cond = (match param_prop with
-              | LemmaParamEqual ->
-                  let e = Ipure_D.Var ((id,p), pos) in
-                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = 
-                    if (String.compare id forward_ptr = 0) then
-                      Ipure_D.Var ((forward_ptr,p), pos)
-                    else Ipure_D.Var ((id^"_2",p), pos) in
-                  IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
-              | LemmaParamDistributive -> (
-                  let e = Ipure_D.Var ((id,p), pos) in
-                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = 
-                    if (String.compare id forward_ptr = 0) then
-                      Ipure_D.Var ((forward_ptr,p), pos)
-                    else Ipure_D.Var ((id^"_2",p), pos) in
-                  match typ with
-                  | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
-                  | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
-                  | _ -> report_error pos "generate_lemma_sll: unexpect typ"
-                )
-              | _ -> IP.mkTrue pos
+      let lem_body_heap = (
+        let induct_vnode = List.hd induct_vnodes in
+        let v_subs = collect_subs_from_view_node induct_vnode vd in
+        let new_base_f = CF.subst_one_by_one v_subs base_f in
+        Debug.ninfo_hprint (add_str "new_base_f" (!CF.print_formula)) new_base_f vpos;
+        let b_subs = collect_subs_from_view_base_case new_base_f vd in
+        let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in
+
+        (* compute pred1 *)
+        let pred1_node = (
+          if not (vd.C.view_is_tail_recursive) then (self, Unprimed)
+          else (
+            let subs_sv = CF.subst_one_by_one_var v_subs forward_ptr in
+            match subs_sv with
+            | CP.SpecVar (_,name,prim) -> (name,prim)
+          )
+        ) in
+        (* check if reduced_induct_f can imply a view node *)
+        (* we can have the distributive lemma only when the reduced_induct_f can form a view node *)
+        let is_pred1_ok = (
+          let tmp_nname, tmp_nprim = pred1_node in
+          let tmp_vnode = CP.SpecVar (Named dname, tmp_nname, tmp_nprim) in
+          let tmp_vparams = List.map (fun sv -> 
+            match sv with
+            | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)
+          ) vd.C.view_vars in
+          let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vparams no_pos in
+          let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in
+          Debug.ninfo_hprint (add_str "reduced_induct_f" (!CF.print_formula)) reduced_induct_f vpos;
+          Debug.ninfo_hprint (add_str "tmp_f" (!CF.print_struc_formula)) tmp_f vpos;
+          let (r,_,_) = wrap_classic (Some true) 
+              (Sleekcore.sleek_entail_check 9 [] cprog [] reduced_induct_f) tmp_f in
+          Debug.ninfo_pprint ("reduced_induct_f |- tmp_f: " ^ (string_of_bool r)) vpos;
+          r
+        ) in
+        if not (is_pred1_ok) then None
+        else (
+          let pred1_params = List.map (fun sv ->
+            let param = (
+              try 
+                let svs = List.find (fun (x,_) -> CP.eq_spec_var sv x) b_subs in
+                snd svs
+              with _ -> sv
             ) in
-            IP.mkAnd sv_cond res pos
-        ) (IP.mkTrue pos) param_properties in
-        param_constraints
+            match param with
+            | CP.SpecVar (_,vname,vprim) -> IP.Var ((vname,vprim), vpos)
+          ) vd.C.view_vars in
+          let pred1 = (
+            (* this is a derived hformula view *)
+            IF.mkHeapNode pred1_node (vd.C.view_name)
+                0 false (IP.ConstAnn Mutable) true false false None
+                pred1_params [] None vpos 
+          ) in
+  
+          (* compute pred2 *)
+          let pred2_node = (match induct_vnode.CF.h_formula_view_node with
+            | CP.SpecVar (_,vname,vprim) -> (vname,vprim)
+          ) in
+          let pred2_params = List.map (fun sv ->
+            let vname, vprim = CP.name_of_spec_var sv, CP.primed_of_spec_var sv in
+            IP.Var ((vname,vprim), vpos)
+          ) induct_vnode.CF.h_formula_view_arguments in
+          let pred2 = (
+            (* this is the original hformula view *)
+            IF.mkHeapNode pred2_node (vd.C.view_name)
+                0 false (IP.ConstAnn Mutable) false false false None
+                pred2_params [] None vpos 
+          ) in
+          let body_heap = (
+            if vd.C.view_is_tail_recursive then Iformula.mkStar pred2 pred1 vpos
+            else Iformula.mkStar pred1 pred2 vpos
+          ) in
+          (* now, refine the lemma body *)
+          let refined_body_heap = (
+            if (vd.C.view_is_tail_recursive) then
+              refine_tail_coerc_body_heap body_heap vd
+            else
+              refine_nontail_coerc_body_heap body_heap vd
+          ) in
+          Some refined_body_heap
+        )
       ) in
-      let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in
-      let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in
-      (l_body, r_body)
-    ) in
-    let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
-    let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
-    if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-      [right_coercion]
-    else [left_coercion; right_coercion]
-  (* no need to generate lemma for non-segmented predicates *) 
-  else ([])
+      match lem_body_heap with
+      | None -> []
+      | Some lem_body_hf -> (
+          let llem_body_hf = lem_body_hf in
+          let rlem_body_hf = (
+            if (vd.C.view_is_touching) then lem_body_hf
+            else (
+              let fwp_name = CP.name_of_spec_var forward_ptr in
+              (* lemma for non-touching predicates also borrow a @L node *)
+              let lending_node =
+                let params = List.map (fun _ ->
+                  Ipure_D.Var((fresh_name (), Unprimed), vpos)
+                ) ddecl.I.data_fields in
+                IF.mkHeapNode (fwp_name, Unprimed) dname
+                    0 false  (IP.ConstAnn Lend) false false false None
+                    params [] None vpos
+              in
+              Iformula.mkStar lem_body_hf lending_node vpos
+            )
+          ) in
+          let llemma_name = "llem_" ^ vd.C.view_name in
+          let rlemma_name = "rlem_" ^ vd.C.view_name in
+          let true_pf = Ipure.mkTrue vpos in
+          let llem_body = Iformula.mkBase llem_body_hf true_pf Iformula.top_flow [] vpos in
+          let rlem_body = Iformula.mkBase rlem_body_hf true_pf Iformula.top_flow [] vpos in
+          let left_coerc = Iast.mk_lemma llemma_name LEM_SAFE LEM_GEN Iast.Left [] lem_head llem_body in
+          let right_coerc = Iast.mk_lemma rlemma_name LEM_SAFE LEM_GEN Iast.Right [] lem_head rlem_body in
+          if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
+            [right_coerc]
+          else [left_coerc; right_coerc]
+        )
+    )
+  )
 
-let generate_lemma_dll (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
+let generate_view_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
-  let dname = vd.C.view_data_name in
-  let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
-  (* generate lemmas for segmented dll *)
-  if (vd.C.view_is_segmented) then
-    (* self::dll(pr,last,out) <--> sefl::dll(pr,last1,out1) * out1::dll(last1,last,out) *)
-    (*    2 posibilities about P:                            *)
-    (*       + P = P1  =  P2   unifying operation            *)
-    (*       + P = P1 (+) P2   combining operation           *)
-    let pos = vd.C.view_pos in
-    let llemma_name = "llem_" ^ vd.C.view_name in
-    let rlemma_name = "rlem_" ^ vd.C.view_name in
-    let ihead = (
-      let view_params = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        IP.Var ((id,p), pos)
-      ) vd.C.view_vars ) in
-      let head = (
-        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params [] None pos
-      ) in
-      Iformula.mkBase head (Ipure.mkTrue pos) Iformula.top_flow []  pos
-    ) in
-    let (left_body, right_body) = (
-      let view_params1 = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp = id ^ "_1" in
-        IP.Var ((vp,p), pos)
-      ) vd.C.view_vars) in
-      let body1 = (
-        IF.mkHeapNode (self, Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params1 [] None pos
-      ) in
-      let forward_ptr = match vd.C.view_forward_ptrs with
-        | [sv] -> CP.name_of_spec_var sv
-        | _ ->
-            let msg = "generate_lemma_sll: expect 1 forward pointer in view " 
-                      ^ vd.C.view_name in
-            report_error pos msg
-      in
-      let view_params2 = (List.map (fun (CP.SpecVar (_,id,p)) ->
-        let vp =
-          if (String.compare id forward_ptr = 0) then forward_ptr
-          else id ^ "_2"
-        in
-        IP.Var ((vp,p), pos)
-      ) vd.C.view_vars) in
-      let body2 = (
-        IF.mkHeapNode (forward_ptr^"_1", Unprimed) (vd.C.view_name)
-            0 false  (IP.ConstAnn Mutable) false false false None
-            view_params2 [] None pos
-      ) in
-      let left_hbody = Iformula.mkStar body1 body2 pos in
-      let right_hbody = (
-        if (vd.C.view_is_touching) then left_hbody
-        else
-          (* lemma for non-touching predicates also borrow a @L node *)
-          let lending_node = 
-            IF.mkHeapNode (forward_ptr, Unprimed) dname
-                0 false  (IP.ConstAnn Lend) false false false None
-                (List.map (fun _ -> Ipure_D.Var((fresh_name (), Unprimed), pos)) ddecl.I.data_fields)
-                [] None pos
-          in
-          Iformula.mkStar left_hbody lending_node pos
-      ) in
-      let pure_constraint = (
-        let param_properties = compute_lemma_params_property vd cprog in
-        let param_constraints = List.fold_left(
-          fun res (CP.SpecVar (typ,id,p), param_prop) ->
-            let sv_cond = (match param_prop with
-              | LemmaParamEqual ->
-                  let e = Ipure_D.Var ((id,p), pos) in
-                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = 
-                    if (String.compare id forward_ptr = 0) then
-                      Ipure_D.Var ((forward_ptr,p), pos)
-                    else Ipure_D.Var ((id^"_2",p), pos) in
-                  IP.mkAnd (IP.mkEqExp e e1 pos) (IP.mkEqExp e1 e2 pos) pos
-              | LemmaParamDistributive -> (
-                  let e = Ipure_D.Var ((id,p), pos) in
-                  let e1 = Ipure_D.Var ((id^"_1",p), pos) in
-                  let e2 = 
-                    if (String.compare id forward_ptr = 0) then
-                      Ipure_D.Var ((forward_ptr,p), pos)
-                    else Ipure_D.Var ((id^"_2",p), pos) in
-                  match typ with
-                  | Int -> IP.mkEqExp e (IP.mkAdd e1 e2 pos) pos
-                  | BagT _ -> IP.mkEqExp e (Ipure_D.BagUnion ([e1;e2],pos)) pos
-                  | _ -> report_error pos "generate_lemma_sll: unexpect typ"
-                )
-              | _ -> IP.mkTrue pos
-            ) in
-            IP.mkAnd sv_cond res pos
-        ) (IP.mkTrue pos) param_properties in
-        param_constraints
-      ) in
-      let l_body = Iformula.mkBase left_hbody pure_constraint Iformula.top_flow [] pos in
-      let r_body = Iformula.mkBase right_hbody pure_constraint Iformula.top_flow [] pos in
-      (l_body, r_body)
-    ) in
-    let left_coercion = Iast.mk_lemma llemma_name LEM_SAFE Iast.Left [] ihead left_body in
-    let right_coercion = Iast.mk_lemma rlemma_name LEM_SAFE Iast.Right [] ihead right_body in
-    if (!Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-      [right_coercion]
-    else [left_coercion; right_coercion]
-  (* no need to generate lemma for non-segmented predicates *) 
-  else ([])
-
-let generate_lemma_tree_simple (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
-    : (I.coercion_decl list) =
-  ([])
-
-let generate_lemma_tree_pointer_back (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl)
-    : (I.coercion_decl list) =
-  ([])
-(*
- * assume that the prerequisite information of view is computed
- * (touching, segmented, forward, backward, aux...)
- *)
-let generate_lemma (vd: C.view_decl)  (iprog: I.prog_decl) (cprog: C.prog_decl) 
-    : (I.coercion_decl list) =
-  let forward_fields = vd.C.view_forward_fields in
-  let backward_fields = vd.C.view_backward_fields in
-  (* singly linked list *)
-  if ((List.length forward_fields = 1) && (List.length backward_fields = 0)) then
-    generate_lemma_sll vd iprog cprog
-  (* doubly linked list *)
-  else if ((List.length forward_fields = 1) && (List.length backward_fields = 1)) then
-    generate_lemma_dll vd iprog cprog
-  (* simple tree *)
-  else if ((List.length forward_fields = 2) && (List.length backward_fields = 0)) then
-    generate_lemma_tree_simple vd iprog cprog
-  (* tree with pointer back *)
-  else if ((List.length forward_fields = 2) && (List.length backward_fields = 1)) then
-    generate_lemma_tree_pointer_back vd iprog cprog
-  (* what else ? *)
-  else
-    ([])
+  let pr_v = !C.print_view_decl in
+  let pr_out = pr_list Iprinter.string_of_coerc_decl in
+  Debug.no_1 "generate_view_lemmas" pr_v pr_out
+      (fun _ -> generate_view_lemmas_x vd iprog cprog) vd
 
 let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     : unit =
   let lemmas = List.concat (List.map (fun vd ->
-    generate_lemma vd iprog cprog
+    (* generate_lemma vd iprog cprog *)
+    generate_view_lemmas vd iprog cprog
   ) cprog.C.prog_view_decls) in
   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then
     let _ = manage_unsafe_lemmas lemmas iprog cprog in ()
@@ -1200,33 +1514,11 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
      "    " ^ (Cprinter.string_of_coerc_med lem)
   ) lemmas) in
-  let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)
+  (* let _ = print_endline "gen lemmas" in *)
+  let _ = Debug.ninfo_hprint (add_str "gen_lemmas" pr_lemmas)
       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion)
       no_pos in
   ()
-
-
-(* let generate_lemma_temp (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) =  *)
-  
-
-(* (* generate lemmas, using different approach *)                                        *)
-(* let generate_all_lemmas_temp (iprog: I.prog_decl) (cprog: C.prog_decl) : unit =        *)
-(*   let lemmas = List.concat (List.map (fun vd ->                                        *)
-(*     generate_lemma_temp vd iprog cprog                                                 *)
-(*   ) cprog.C.prog_view_decls) in                                                        *)
-(*   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then              *)
-(*     let _ = manage_unsafe_lemmas lemmas iprog cprog in ()                              *)
-(*   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then             *)
-(*     let _ = manage_safe_lemmas lemmas iprog cprog in ()                                *)
-(*   else ();                                                                             *)
-(*   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->                      *)
-(*      "    " ^ (Cprinter.string_of_coerc_med lem)                                       *)
-(*   ) lemmas) in                                                                         *)
-(*   let _ = Debug.binfo_hprint (add_str "gen_lemmas" pr_lemmas)                          *)
-(*       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion) *)
-(*       no_pos in                                                                        *)
-(*   ()                                                                                   *)
-
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
 let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;

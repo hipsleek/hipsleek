@@ -1244,7 +1244,8 @@ cid:
 	   else (t,Unprimed)
     | `RES _                 	->  (res_name, Unprimed)
     | `SELFT _               	->  (self, Unprimed)
-    | `THIS _               		->  (this, Unprimed)]];
+    | `NULL                     ->  (null_name, Unprimed)
+    | `THIS _         		->  (this, Unprimed)]];
 
 
 
@@ -2122,7 +2123,7 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
-	coercion_exact = false;
+        coercion_exact = false;
         coercion_infer_vars = [];
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
@@ -2137,7 +2138,10 @@ coercion_decl:
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 });
         coercion_type_orig = None;
-      coercion_kind = LEM_SAFE;};]];
+        coercion_kind = LEM_SAFE;
+        coercion_origin = LEM_USER;
+      };
+  ]];
 
 coercion_decl_list:
     [[
