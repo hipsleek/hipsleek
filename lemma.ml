@@ -1344,11 +1344,15 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (List.length views = 0)
   ) processed_branches in
   (* consider only the view has 1 base case and 1 inductive case *)
-  if ((List.length base_branches != 1) || (List.length inductive_branches != 1)) then
+  if ((List.length base_branches != 1) || (List.length inductive_branches != 1)) then (
+    Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 1") no_pos;
     []
+  )
   (* consider only the view has 1 forward pointer *)
-  else if (List.length vd.C.view_forward_ptrs != 1) then
+  else if (List.length vd.C.view_forward_ptrs != 1) then (
+    Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 2") no_pos;
     []
+  )
   (* statisfying view *)
   else (
     let forward_ptr = List.hd vd.C.view_forward_ptrs in
@@ -1359,7 +1363,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     let induct_vnodes = List.filter (fun vn ->
       String.compare vn.CF.h_formula_view_name vname = 0
     ) view_nodes in
-    if (List.length induct_vnodes != 1) then []
+    if (List.length induct_vnodes != 1) then (
+      Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 3") no_pos;
+      []
+    )
     else (
       (* create distributive lemma like: 
               pred -> pred1 * pred2
@@ -1384,6 +1391,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         Debug.ninfo_hprint (add_str "new_base_f" (!CF.print_formula)) new_base_f vpos;
         let b_subs = collect_subs_from_view_base_case new_base_f vd in
         let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in
+        let new_induct_f = CF.subst b_subs reduced_induct_f in
+        (* let (hf,mf,fl,t,a) = CF.split_components new_induct_f in *)
+        (* let pos = CF.pos_of_formula new_induct_f in              *)
+        (* let new_induct_f = CF.mkBase hf mf t fl a pos in         *)
 
         (* compute pred1 *)
         let pred1_node = (
@@ -1394,22 +1405,23 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
             | CP.SpecVar (_,name,prim) -> (name,prim)
           )
         ) in
-        (* check if reduced_induct_f can imply a view node *)
-        (* we can have the distributive lemma only when the reduced_induct_f can form a view node *)
+        (* check if new_induct_f can imply a view node *)
+        (* we can have the distributive lemma only when the new_induct_f can form a view node *)
         let is_pred1_ok = (
           let tmp_nname, tmp_nprim = pred1_node in
           let tmp_vnode = CP.SpecVar (Named dname, tmp_nname, tmp_nprim) in
-          let tmp_vparams = List.map (fun sv -> 
+          let tmp_vars = List.map (fun sv -> 
             match sv with
             | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)
           ) vd.C.view_vars in
-          let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vparams no_pos in
-          let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in
-          Debug.ninfo_hprint (add_str "reduced_induct_f" (!CF.print_formula)) reduced_induct_f vpos;
-          Debug.ninfo_hprint (add_str "tmp_f" (!CF.print_struc_formula)) tmp_f vpos;
+          let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vars no_pos in
+          let tmp_f = CF.struc_formula_of_formula (CF.mkExists tmp_vars tmp_vnode (MCP.mkMTrue vpos) CF.TypeTrue (CF.mkTrueFlow ()) [] vpos) vpos in 
+          (* let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in *)
+          Debug.binfo_hprint (add_str "new_induct_f" (!CF.print_formula)) new_induct_f vpos;
+          Debug.binfo_hprint (add_str "tmp_f" (!CF.print_struc_formula)) tmp_f vpos;
           let (r,_,_) = wrap_classic (Some true) 
-              (Sleekcore.sleek_entail_check 9 [] cprog [] reduced_induct_f) tmp_f in
-          Debug.ninfo_pprint ("reduced_induct_f |- tmp_f: " ^ (string_of_bool r)) vpos;
+              (Sleekcore.sleek_entail_check 9 [] cprog [] new_induct_f) tmp_f in
+          Debug.binfo_pprint ("new_induct_f |- tmp_f: " ^ (string_of_bool r)) vpos;
           r
         ) in
         if not (is_pred1_ok) then None
@@ -1460,7 +1472,9 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         )
       ) in
       match lem_body_heap with
-      | None -> []
+      | None -> 
+          Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 4") no_pos;
+          []
       | Some lem_body_hf -> (
           let llem_body_hf = lem_body_hf in
           let rlem_body_hf = (
