@@ -524,5 +524,5 @@ and trans_commands e =
 
 let trans e =
   let s = trans_commands e in
-  s
+  s ^ "\n\n"
   (* print_string (s ^ "\n") *)
