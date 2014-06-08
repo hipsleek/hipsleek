@@ -2607,25 +2607,26 @@ let is_touching_view (vdecl: view_decl) : bool =
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
- *    - generated equality constrains between cont_vars and null
+ *    - generated equality constrains between forward_pointers and null
  *    - if all the constrains is implied by the pure part of view's definietion,
  *      then the view is nonsegmented
  *)
+(* TRUNG TODO: check segmented condition *)
 let is_segmented_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let pos = vdecl.view_pos in
-  let cont_vars = vdecl.view_cont_vars in
-  let is_nonsegmented_branch branch = (
+  let forward_ptrs = vdecl.view_forward_ptrs in
+  let is_segmented_branch branch = (
     let (_,mf,_,_,_) = CF.split_components branch in
     let pf = MP.pure_of_mix mf in
-    List.for_all (fun sv ->
+    List.exists (fun sv ->
       let null_cond = P.mkNull sv pos in
-      (!imply_raw pf null_cond)
-    ) cont_vars
+      not (!imply_raw pf null_cond)
+    ) forward_ptrs
   ) in
   let branches, _ = List.split vdecl.view_un_struc_formula in
-  let nonsegmented = (List.for_all is_nonsegmented_branch branches) in
-  not (nonsegmented)
+  let segmented = (List.for_all is_segmented_branch branches) in
+  segmented
 
 let is_segmented_view (vdecl: view_decl) : bool =
   let pr = !print_view_decl in
