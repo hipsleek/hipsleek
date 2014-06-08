@@ -14,9 +14,9 @@ lemma_unsafe self::ls<p> * p::GTyp<f0 = z,f1 = _> -> self::ls<z>.
 
 */
 
-lemma self::ls<z> <- (exists u: self::ls<u>*u::GTyp<f0=z>).
+lemma self::ls<z> <- (exists u: self::ls<u>*u::GTyp<f0=z> * z::ls<).
  
-checkentail x::ls<y> * y::GTyp<f0 = z,f1 = _> * z::ls<null>
+checkentail x::ls<y> * y::GTyp<f0 = z,f1 = _> * z::<null>
          |- x::ls<z> * z::ls<null>.
 
 expect Valid.
