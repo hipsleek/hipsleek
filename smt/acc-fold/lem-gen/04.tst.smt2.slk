@@ -15,5 +15,4 @@ lemma_unsafe  self::List<y> * y::List<z>
 
 checkentail x::List<y> * y::List<z>
          |- x::List<z>.
-
 expect Valid.
