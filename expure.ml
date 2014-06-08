@@ -15,24 +15,26 @@ open Cprinter
 
 let disj_num = ref 0
 
-let is_null_const_exp_for_expure (e : exp) : bool =
-  match e with
-    | Null _ -> true
-    | Var (v,_) -> (name_of_spec_var v) = "null"
-    | _ -> false
+(* let is_null_const_exp_for_expure (e : exp) : bool = *)
+(*   match e with *)
+(*     | Null _ -> true *)
+(*     | Var (v,_) -> (name_of_spec_var v) = "null" *)
+(*     | _ -> false *)
 
 let rec remove_redundant_helper_for_expure ls rs =
   match ls with
     | [] -> rs
     | f::fs -> if List.exists (equalFormula f) fs then
-          remove_redundant_helper_for_expure fs rs
-        else (match f with
-          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) (* || (is_null_const_exp_for_expure e1 && is_null_const_exp_for_expure e2) *) then
-                remove_redundant_helper_for_expure fs rs
-              else remove_redundant_helper_for_expure fs rs@[f]
-          | BForm ((Lte(IConst (0,_), IConst (0,_), _), _) ,_) -> remove_redundant_helper_for_expure fs rs
-          | _ -> remove_redundant_helper_for_expure fs rs@[f]
-        )
+        remove_redundant_helper_for_expure fs rs
+      else
+        remove_redundant_helper_for_expure fs rs@[f]
+(*         else (match f with *)
+(*           | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) (\* || (is_null_const_exp_for_expure e1 && is_null_const_exp_for_expure e2) *\) then *)
+(*                 remove_redundant_helper_for_expure fs rs *)
+(*               else remove_redundant_helper_for_expure fs rs@[f] *)
+(*           | BForm ((Lte(IConst (0,_), IConst (0,_), _), _) ,_) -> remove_redundant_helper_for_expure fs rs *)
+(*           | _ -> remove_redundant_helper_for_expure fs rs@[f] *)
+(*         ) *)
 
 let remove_redundant_for_expure (f:formula):formula =
   let l_conj = split_conjunctions f in
@@ -112,23 +114,24 @@ let ef_conv_enum_x ((baga,f) : ef_pure) : formula =
   let bf = baga_enum baga in
   mkAnd bf f no_pos
 
-
 let ef_conv_enum ((baga,f) : ef_pure) : formula =
   Debug.no_1 "ef_conv_enum" string_of_ef_pure string_of_pure_formula
       ef_conv_enum_x (baga,f)
 
 let ef_conv_disj_ho conv disj : formula =
-  match disj with
-    | [] -> mkFalse no_pos
-    | h::ts ->
-          let rf = List.fold_left (fun f1 efp ->
-              mkOr f1 (conv efp) None no_pos
-          ) (conv h) ts in
-          rf
+  List.fold_left (fun f ep ->
+      mkOr f (conv ep) None no_pos
+  ) (mkFalse no_pos) disj
+  (* match disj with *)
+  (*   | [] -> mkFalse no_pos *)
+  (*   | h::ts -> *)
+  (*         let rf = List.fold_left (fun f1 efp -> *)
+  (*             mkOr f1 (conv efp) None no_pos *)
+  (*         ) (conv h) ts in *)
+  (*         rf *)
 
 let ef_conv_disj_x (disj : ef_pure_disj) : formula =
   ef_conv_disj_ho ef_conv disj
-
 
 let ef_conv_disj (disj : ef_pure_disj) : formula =
   Debug.no_1 "ef_conv_disj" string_of_ef_pure_disj string_of_pure_formula
@@ -145,9 +148,6 @@ let ef_conv_enum_disj (disj : ef_pure_disj) : formula =
 (* does ante --> conseq *)
 (* convert ante with ef_conv_enum_disj *)
 (* convert conseq with ef_conv_disj *)
-
-
-
 
 (* ef_unsat_disj :  ef_pure_disj -> ef_pure_disj *)
 (* remove unsat terms *)
@@ -180,15 +180,15 @@ let elim_trivial_disj (disj : ef_pure_disj) : ef_pure_disj =
     x = ev -> true
 *)
 let filter_formula ex_vars lst  =
-  try 
-    Some (List.filter 
-        (fun pf -> 
+  try
+    Some (List.filter
+        (fun pf ->
             let flag =
               match pf with
                 | BForm((p,_),_) ->
                       (match p with
                         | Eq (e1,e2,_) -> eqExp e1 e2
-                        | Neq(e1,e2,_) -> 
+                        | Neq(e1,e2,_) ->
                               if eqExp e1 e2 then failwith "exception -> mkFalse"
                               else false
                         | _ -> false)
@@ -200,7 +200,7 @@ let filter_formula ex_vars lst  =
         ) lst)
   with _ -> None
 
-(*  
+(*
     ex v. x=v & v!=y  --> x!=y
     ex v. x=v & v=k & v!=y  --> x=k & x!=y
 *)
@@ -276,7 +276,7 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
   (* let new_pure = EMapSV.domain eset2 in *)
   let mk_subs =
       List.map
-        (fun v -> 
+        (fun v ->
             let lst = EMapSV.find_equiv_all v p_aset in
             let free = List.filter (fun v -> not(List.exists (eq_spec_var v) svl)) lst in
             match free with
@@ -289,8 +289,8 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
   (*     let lst = if (List.length lst > 0) then lst else [v] in *)
   (*     List.filter (fun v -> not(List.exists (eq_spec_var v) svl)) lst *)
   (* ) baga in *)
-  let new_baga = List.fold_left (fun acc v -> 
-      try 
+  let new_baga = List.fold_left (fun acc v ->
+      try
         let (a,b) = List.find (fun (vv,_) -> eq_spec_var v vv) mk_subs in
         if a==b then acc
         else b::acc
@@ -300,10 +300,10 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
   let ps = string_of_spec_var in
   (* Debug.binfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos; *)
   let pure1 = apply_subs mk_subs pure in
-  let new_pure = elim_clause pure1 svl in
- (*  let _ = Debug.binfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
- (* let _ = Debug.binfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
- (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
+  let new_pure = remove_redundant_for_expure (elim_clause pure1 svl) in
+  (* let _ = Debug.binfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
+  (* let _ = Debug.binfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
+  (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
@@ -347,7 +347,7 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
 (*   if v1==v2 then 0 *)
 (*   else if v1==Unprimed then -1 *)
 (*   else 1 *)
-  
+
 (* let compare_ident v1 v2 = String.compare v1 v2 *)
 
 (* let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with *)
@@ -356,7 +356,7 @@ let ef_elim_exists_1 (svl : spec_var list) (epf : ef_pure) : ef_pure =
 (*         if c=0 then *)
 (*           compare_prime p1 p2  *)
 (*         else c *)
-          
+
 (* let rec merge_baga b1 b2 = *)
 (*   match b1,b2 with *)
 (*     | [],b | b,[] -> b *)
@@ -444,7 +444,10 @@ struct
       let (baga1, pure1) = efp1 in
       let (baga2, pure2) = efp2 in
       try
-        (merge_baga baga1 baga2, remove_redundant_for_expure (mkAnd pure1 pure2 no_pos))
+        let new_baga = merge_baga baga1 baga2 in
+        let new_pure = mkAnd pure1 pure2 no_pos in
+        (new_baga, new_pure)
+        (* (merge_baga baga1 baga2, mkAnd pure1 pure2 no_pos) *)
       with _ -> mk_false
 
   let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
@@ -504,7 +507,7 @@ struct
 
   let elim_exists (svl:spec_var list) (b,f) : epure =
     let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
-    (Elt.from_var b, remove_redundant_for_expure f)
+    (Elt.from_var b, f)
 
   (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
   (* does ante --> conseq *)
@@ -704,34 +707,32 @@ type ef_pure_disj = EPureI.epure_disj
 (* sel_hull_ef : f:[ef_pure_disj] -> disj_num (0 -> precise)
    -> [ef_pure_disj] *)
 (* pre: 0<=disj_num<=100 & disj_num=0 -> len(f)<=100  *)
-let sel_hull_ef_pure_disj_list (f : ef_pure_disj list) (disj_num : int) : ef_pure_disj list =
-  let rec helper epd =
-    if (List.length epd) > disj_num
-    then
-      let f1 = List.hd epd in
-      let f2 = List.nth epd 1 in
-      let fl = List.tl (List.tl epd) in
-      helper ((EPureI.mk_star f1 f2)::fl)
+let sel_hull_ef_pure_disj (epd : ef_pure_disj) (disj_num : int) : ef_pure_disj =
+  let rec helper epd n = 
+    if n = 0 then
+      []
     else
-      epd
+      (List.hd epd)::(helper (List.tl epd) (n - 1))
   in
-  List.map (fun epd ->
-      let new_epd = EPureI.norm_disj (helper epd) in
-      new_epd
-  ) f
+  if (List.length epd < disj_num) then
+    epd
+  else
+    helper epd disj_num
+  (* let rec helper epd = *)
+  (*   if (List.length epd) > disj_num *)
+  (*   then *)
+  (*     let f1 = List.hd epd in *)
+  (*     let f2 = List.nth epd 1 in *)
+  (*     let fl = List.tl (List.tl epd) in *)
+  (*     helper ((EPureI.mk_star f1 f2)::fl) *)
+  (*   else *)
+  (*     epd *)
+  (* in *)
+  (* EPureI.norm_disj (helper epd) *)
 
-let sel_hull_ef_pure_disj (f : ef_pure_disj) (disj_num : int) : ef_pure_disj =
-  let rec helper epd =
-    if (List.length epd) > disj_num
-    then
-      let f1 = List.hd epd in
-      let f2 = List.nth epd 1 in
-      let fl = List.tl (List.tl epd) in
-      helper ((EPureI.mk_star f1 f2)::fl)
-    else
-      epd
-  in
-  helper f
+let sel_hull_ef_pure_disj_list (epdl : ef_pure_disj list) (disj_num : int) : ef_pure_disj list =
+  List.map (fun epd ->
+      sel_hull_ef_pure_disj epd disj_num) epdl
 
 (* WN : what is the purpose of args and args_map? *)
 (*      why do we need init_map? can we assume false at beginning? *)
@@ -742,9 +743,13 @@ let rec build_ef_heap_formula_x (map : (ident, ef_pure_disj) Hashtbl.t) (hf : Cf
           let efpd1 = build_ef_heap_formula map sf.Cformula.h_formula_star_h1 args args_map init_map in
           let efpd2 = build_ef_heap_formula map sf.Cformula.h_formula_star_h2 args args_map init_map in
           let efpd = EPureI.mk_star_disj efpd1 efpd2 in
-          (* let _ = print_endline (string_of_int (List.length efpd)) in *)
-          (* efpd *)
-          sel_hull_ef_pure_disj (EPureI.norm_disj efpd) !disj_num
+          let _ = print_endline ("length before norm heap: " ^ string_of_int((List.length efpd))) in
+          let efpd = EPureI.norm_disj efpd in
+          let _ = print_endline ("length after norm heap: " ^ string_of_int((List.length efpd))) in
+          let efpd = sel_hull_ef_pure_disj efpd !disj_num in
+          let _ = print_endline ("length after hull heap: " ^ string_of_int((List.length efpd))) in
+          efpd
+          (* sel_hull_ef_pure_disj (EPureI.norm_disj efpd) !disj_num *)
     | Cformula.StarMinus smf ->
           let efpd1 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h1 args args_map init_map in
           let efpd2 = build_ef_heap_formula map smf.Cformula.h_formula_starminus_h2 args args_map init_map in
@@ -814,6 +819,48 @@ and build_ef_heap_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula
       Cprinter.string_of_ef_pure_disj (fun _ ->
       build_ef_heap_formula_x map cf args args_map init_map) cf
 
+
+
+
+let rec build_ef_heap_formula_new (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.h_formula)
+      (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) (pure_efpd : ef_pure_disj) : ef_pure_disj =
+  match cf with
+    | Cformula.Star sf ->
+          let efpd1 = build_ef_heap_formula_new map sf.Cformula.h_formula_star_h1 args args_map init_map pure_efpd in
+          let efpd1_new = EPureI.mk_star_disj efpd1 pure_efpd in
+          let efpd1_norm = EPureI.norm_disj efpd1_new in
+          let efpd2 = build_ef_heap_formula_new map sf.Cformula.h_formula_star_h2 args args_map init_map pure_efpd in
+          let efpd2_new = EPureI.mk_star_disj efpd2 pure_efpd in
+          let efpd2_norm = EPureI.norm_disj efpd2_new in
+          let efpd = EPureI.mk_star_disj efpd1_norm efpd2_norm in
+          let _ = print_endline ("length before norm heap: " ^ string_of_int((List.length efpd))) in
+          let efpd = EPureI.norm_disj efpd in
+          let _ = print_endline ("length after norm heap: " ^ string_of_int((List.length efpd))) in
+          let efpd = sel_hull_ef_pure_disj efpd !disj_num in
+          let _ = print_endline ("length after hull heap: " ^ string_of_int((List.length efpd))) in
+          efpd
+    | Cformula.DataNode dnf ->
+          let sv = dnf.Cformula.h_formula_data_node in
+          (* [(elim_baga [sv] args, mkTrue no_pos)] *)
+          [([sv], mkTrue no_pos)]
+    | Cformula.ViewNode vnf ->
+          let svl = vnf.Cformula.h_formula_view_node::vnf.Cformula.h_formula_view_arguments in
+          let efpd =
+            try Hashtbl.find map vnf.Cformula.h_formula_view_name
+            with Not_found ->
+                try
+                  Hashtbl.find init_map vnf.Cformula.h_formula_view_name
+                with Not_found -> failwith "cannot find in init_map too"
+          in
+          let view_args = Hashtbl.find args_map vnf.Cformula.h_formula_view_name in
+          List.map (fun (baga, pf) ->
+              let new_baga = subst_var_list (List.combine view_args svl) baga in
+              let new_pf = (subst (List.combine view_args svl) pf) in
+              (new_baga, new_pf)
+          ) efpd
+    | _ -> [([], mkTrue no_pos)]
+
+
 let rec build_ef_pure_formula (map : (ident, ef_pure_disj) Hashtbl.t) (pf : formula) (args : spec_var list) : ef_pure_disj =
   [([], pf)]
 
@@ -846,12 +893,18 @@ let rec build_ef_formula_x (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformul
     | Cformula.Exists ef ->
           let eh = ef.Cformula.formula_exists_heap in
           let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
-          let efpd1 = build_ef_heap_formula map eh args args_map init_map in
           let efpd2 = build_ef_pure_formula map ep args in
+          let efpd1 = build_ef_heap_formula_new map eh args args_map init_map efpd2 in
           let efpd = EPureI.mk_star_disj efpd1 efpd2 in
+          let _ = print_endline ("length before norm exists: " ^ string_of_int((List.length efpd))) in
+          let efpd_n = EPureI.norm_disj efpd in
+          let _ = print_endline ("length after norm exists: " ^ string_of_int((List.length efpd_n))) in
           let efpd_e = List.map (fun efp ->
-              (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in
-          EPureI.norm_disj efpd_e
+              (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd_n in
+          let _ = print_endline ("length after elim exists: " ^ string_of_int((List.length efpd_e))) in
+          let efpd_f = EPureI.norm_disj efpd_e in
+          let _ = print_endline ("length final exists: " ^ string_of_int((List.length efpd_f))) in
+          efpd_f
 
 and build_ef_formula (map : (ident, ef_pure_disj) Hashtbl.t) (cf : Cformula.formula)
       (args : spec_var list) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj =
@@ -911,9 +964,9 @@ let fix_test (map : (ident, ef_pure_disj) Hashtbl.t) (view_list : Cast.view_decl
 (* compute fixpoint iteration *)
 (* strict upper bound 100 *)
 (* fix_ef : [view_defn] -> disjunct_num (0 -> precise) -> [ef_pure_disj] *)
-let fix_ef (view_list : Cast.view_decl list) (num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
+let fix_ef_x (view_list : Cast.view_decl list) (num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
   let map = Hashtbl.create 1 in
-  let _ = disj_num := num in
+  let _ = disj_num := 100 in
   let _ = List.iter (fun vd ->
       Hashtbl.add map vd.Cast.view_name [];
   ) view_list in
@@ -948,7 +1001,7 @@ let fix_ef (view_list : Cast.view_decl list) (num : int) (args_map : (ident, spe
 let fix_ef (view_list : Cast.view_decl list) (disj_num : int) (args_map : (ident, spec_var list) Hashtbl.t) (init_map : (ident, ef_pure_disj) Hashtbl.t) : ef_pure_disj list =
   let pr_1 = pr_list (fun v -> v.Cast.view_name)  in
   Debug.no_2 "fix_ef" pr_1 string_of_int (pr_list Cprinter.string_of_ef_pure_disj)
-      (fun _ _ -> fix_ef view_list disj_num args_map init_map) view_list disj_num
+      (fun _ _ -> fix_ef_x view_list disj_num args_map init_map) view_list disj_num
 
 (* check whether the view has arithmetic or not *)
 let is_ep_exp_arith_x (e : Cpure.exp) : bool =
