@@ -4,6 +4,7 @@ use File::Basename;
 use File::Copy;
 use File::Find::Rule;
 use Cwd qw();
+use Path::Tiny qw(path);
 
 my $path = Cwd::cwd();
 
@@ -20,9 +21,18 @@ foreach my $bench (@benchs) {
     my @smt2_files = <$bench_set/*.smt2>;
     my $slk_dir = $bench_set . "/sleek";
     foreach my $smt2_file (@smt2_files) {
-      my $slk_file = $smt2_file . ".slk";
-      system("smt2slk " . $smt2_file);
-      move ($slk_file, $slk_dir) or die "The move operation failed: $!";
+			my $filename = basename($smt2_file, ".smt2"); 
+			my $old_slk_file = $slk_dir . "/" . $filename . ".smt2.slk";
+      if (-e $old_slk_file) {
+				my $slk_file = path($old_slk_file);
+				my $data = $slk_file->slurp_utf8;
+				$data =~ s/checkentail /checkentail_exact /g;
+				$slk_file->spew_utf8($data);
+      } else {
+				my $new_slk_file = $smt2_file . ".slk";
+        system("smt2slk " . $smt2_file);
+        move ($new_slk_file, $slk_dir) or die "The move operation failed: $!";
+      }
     }
   }
 }

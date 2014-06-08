@@ -16,7 +16,7 @@ or (exists zp: self::GTyp<f0 = zp,f1 = w> * zp::DLL<y,z,self> & null != self).
 lemma_unsafe  self::DLL<y,z,w> -> self::SLL<y>.
 */
 
-checkentail x::DLL<y,z,w>
+checkentail_exact x::DLL<y,z,w>
          |- x::SLL<y>.
 
 expect Valid.

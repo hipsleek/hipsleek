@@ -20,7 +20,7 @@ pred node2_e1<p:node2,q:node2> ==
 pred dll_e3<p:node2> ==
 (exists q: self::dll<q> & q = p).
 
-checkentail yprm::dll_e1<p1> * q::dll<self> * xprm::node2<prev = p,next = yprm> & yprm != null & next0 = q & q = null & xprm = x & yprm = y & x != null & self = xprm & p = q1
+checkentail_exact yprm::dll_e1<p1> * q::dll<self> * xprm::node2<prev = p,next = yprm> & yprm != null & next0 = q & q = null & xprm = x & yprm = y & x != null & self = xprm & p = q1
          |- yprm::dll_e2<p1> * q::dll<self> * xprm::node2<prev = p,next = yprm> & yprm != null & next0 = q & q = null & xprm = x & yprm = y & x != null & self = xprm & p = q1.
 
 expect Valid.

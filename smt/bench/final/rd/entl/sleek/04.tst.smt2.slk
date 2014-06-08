@@ -13,7 +13,7 @@ lemma_unsafe  self::List<y> * y::List<z>
          -> self::List<z>.
 */
 
-checkentail x::List<y> * y::List<z>
+checkentail_exact x::List<y> * y::List<z>
          |- x::List<z>.
 
 expect Valid.

@@ -12,7 +12,7 @@ or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::PeList<y> & null != self).
 lemma_unsafe  self::PeList<y> * y::GTyp<f0 = z,f1 = _> -> self::PeList<z>.
 */
 
-checkentail x::PeList<y> * y::GTyp<f0 = z,f1 = _>
+checkentail_exact x::PeList<y> * y::GTyp<f0 = z,f1 = _>
          |- x::PeList<z>.
 
 expect Valid.

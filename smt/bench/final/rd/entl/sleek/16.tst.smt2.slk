@@ -18,7 +18,7 @@ pred BinTreeSeg<y:GTyp> ==
 or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinTreeSeg<y> * yp::BinTree<> & null != self)
 or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinTree<> * yp::BinTreeSeg<y> & null != self).
 
-checkentail x::BinPath<y>
+checkentail_exact x::BinPath<y>
          |- x::BinTreeSeg<y>.
 
 expect Valid.

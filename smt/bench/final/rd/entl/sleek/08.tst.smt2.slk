@@ -12,7 +12,7 @@ pred DLL<y:GTyp,z:GTyp,w:GTyp> ==
  self = y & z = w
 or (exists zp: self::GTyp<f0 = zp,f1 = w> * zp::DLL<y,z,self> & null != self).
 
-checkentail x::DLL<y,z,w>
+checkentail_exact x::DLL<y,z,w>
          |- z::BSLL<w>.
 
 expect Valid.

@@ -13,7 +13,7 @@ lemma_unsafe  self::RList<y> * y::RList<z>
          -> self::RList<z>.
 */
 
-checkentail x::RList<y> * y::RList<z>
+checkentail_exact x::RList<y> * y::RList<z>
          |- x::RList<z>.
 
 expect Valid.
