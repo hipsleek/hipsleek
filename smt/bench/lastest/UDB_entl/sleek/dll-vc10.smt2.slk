@@ -1,0 +1,12 @@
+
+data Dll_t {
+  Dll_t next;
+  Dll_t prev;
+}.
+
+pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
+ self = nx & bk = pr
+or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
+
+checkentail w_emp::Dll_t<next = t_emp,prev = u_emp> * x_emp::dll<u_emp,y_emp,w_emp> * t_emp::dll<y_emp,w_emp,x_emp>
+         |- x_emp::dll<y_emp,y_emp,x_emp>.
