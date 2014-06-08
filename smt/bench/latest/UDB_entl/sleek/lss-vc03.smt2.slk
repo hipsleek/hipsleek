@@ -8,7 +8,8 @@ pred lsso<out:Sll_t> ==
  self = out
 or (exists u: self::Sll_t<next1 = u,next2 = u> * u::lsso<out>).
 
-checkentail x_emp::Sll_t<next1 = y_emp,next2 = y_emp> * y_emp::Sll_t<next1 = u_emp,next2 = u_emp> * u_emp::lsso<w_emp> * w_emp::Sll_t<next1 = z_emp,next2 = z_emp>
+checkentail_exact x_emp::Sll_t<next1 = y_emp,next2 = y_emp> * y_emp::Sll_t<next1 = u_emp,next2 = u_emp> * u_emp::lsso<w_emp> * w_emp::Sll_t<next1 = z_emp,next2 = z_emp>
          |- x_emp::lsso<z_emp>.
 
 expect Valid.
+

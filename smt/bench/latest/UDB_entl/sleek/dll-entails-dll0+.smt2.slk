@@ -12,7 +12,8 @@ pred DLL<p:DLL_t,tl:DLL_t,n:DLL_t> ==
  emp & p = tl & self = n
 or (exists x: self::DLL_t<next = x,prev = p> * x::DLL<self,tl,n>).
 
-checkentail a::DLL_plus<null,c,null>
+checkentail_exact a::DLL_plus<null,c,null>
          |- a::DLL<null,c,null>.
 
 expect Valid.
+

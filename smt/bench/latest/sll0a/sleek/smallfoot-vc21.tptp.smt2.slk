@@ -7,7 +7,8 @@ pred ls<out:Sll_t> ==
  self = out
 or (exists u: self::Sll_t<next = u> * u::ls<out> & self != out).
 
-checkentail x1::ls<null> * emp & null = null & null != x1
+checkentail_exact x1::ls<null> * emp & null = null & null != x1
          |- x1::ls<null> * emp.
 
 expect Valid.
+

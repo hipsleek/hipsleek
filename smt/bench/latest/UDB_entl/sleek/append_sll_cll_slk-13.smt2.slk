@@ -26,7 +26,8 @@ pred node_e1<q:node> ==
 pred lseg_e1<p:node> ==
 (exists q: self::lseg<p> & p = q).
 
-checkentail q::ll<> * xprm::node<next = q> & q != null & xprm = x & yprm = y & y = x & x != null
+checkentail_exact q::ll<> * xprm::node<next = q> & q != null & xprm = x & yprm = y & y = x & x != null
          |- xprm::node_e1<q> * q::ll<> & q != null & xprm = x & yprm = y & y = x & x != null.
 
 expect Valid.
+

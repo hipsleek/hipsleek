@@ -8,7 +8,8 @@ pred PeList<y:GTyp> ==
  self = y
 or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::PeList<y> & null != self).
 
-checkentail x::PeList<y> * y::PeList<z>
+checkentail_exact x::PeList<y> * y::PeList<z>
          |- x::PeList<z>.
 
 expect Valid.
+

@@ -24,7 +24,8 @@ null = self.
 pred one<> ==
 null != self.
 
-checkentail x0::P<x1>
+checkentail_exact x0::P<x1>
          |- false.
 
 expect Fail.
+

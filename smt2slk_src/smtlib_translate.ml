@@ -280,7 +280,7 @@ and trans_command c cl =
           if (!checkentail = 0)
           then (
               checkentail := 1;
-              "\ncheckentail " ^ (trans_term term)
+              "\ncheckentail_exact " ^ (trans_term term)
           ) else (
               checkentail := 2;
               "\n         |- " ^ (trans_term term) ^ ".";

@@ -18,7 +18,8 @@ pred TLL_plus_rev<p:TLL_t,mleft:TLL_t,mright:TLL_t> ==
  self::TLL_t<left = null,right = null,parent = p,next = mright> & self = mleft
 or (exists x,up,lr: x::TLL_t<left = null,right = null,parent = up,next = lr> * up::TLL_aux<p,lr,x,self,mright> & x = mleft).
 
-checkentail x::TLL_plus_rev<y,u,v>
+checkentail_exact x::TLL_plus_rev<y,u,v>
          |- x::TLL_plus<y,u,v>.
 
 expect Valid.
+

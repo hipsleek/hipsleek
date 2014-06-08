@@ -10,7 +10,8 @@ or (exists a,b: self::node<nxt = a> * a::node<nxt = b> * b::elseg<p>).
 pred right<p:node> ==
 (exists u: self::elseg<u> * u::elseg<p>).
 
-checkentail x::node<nxt = a> * a::node<nxt = b> * b::node<nxt = p>
+checkentail_exact x::node<nxt = a> * a::node<nxt = b> * b::node<nxt = p>
          |- x::elseg<p>.
 
 expect Fail.
+

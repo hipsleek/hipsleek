@@ -19,7 +19,8 @@ pred TPP_plus_rev<b:TPP_t> ==
  self::TPP_t<left = null,right = null,parent = b>
 or (exists x,up: x::TPP_t<left = null,right = null,parent = up> * up::TPP_aux<x,self,b>).
 
-checkentail x::TPP_plus<y>
+checkentail_exact x::TPP_plus<y>
          |- x::TPP_plus_rev<y>.
 
 expect Valid.
+

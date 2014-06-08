@@ -35,7 +35,8 @@ pred etll<p:node,t:node,r:node> ==
 pred ltll<p:node,l:node,r:node,D:node,v:node,t:node> ==
 (exists l1: self::node<parent = p,left = l,right = r,next = D> * l::tll<self,v,l1> * r::tll<self,l1,t>).
 
-checkentail xprm::ltll<pprm,l,r,D,vprm,tprm> & res = vprm & l != null & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t
+checkentail_exact xprm::ltll<pprm,l,r,D,vprm,tprm> & res = vprm & l != null & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t
          |- x::etll<p1,t,res> & vprm = res & l != null & r != null & parent0 = p & pprm = p1 & xprm = x & tprm = t.
 
 expect Valid.
+

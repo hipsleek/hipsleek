@@ -16,7 +16,8 @@ pred ll_e2<> ==
 pred node_e1<q:node> ==
 (exists p: self::node<next = p> & p = q).
 
-checkentail xprm::ll_e1<> * y::ll<> & xprm = x & yprm = y & x != null
+checkentail_exact xprm::ll_e1<> * y::ll<> & xprm = x & yprm = y & x != null
          |- xprm::ll_e2<> * y::ll<> & xprm = x & yprm = y & x != null.
 
 expect Valid.
+
