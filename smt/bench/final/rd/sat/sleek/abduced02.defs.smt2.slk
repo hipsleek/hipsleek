@@ -99,3 +99,4 @@ checkentail x0::ls<>
          |- false.
 
 expect Fail.
+
