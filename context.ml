@@ -1323,37 +1323,39 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else true in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
                   (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
-                  let _ = Debug.ninfo_hprint (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
-                  let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-                  let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-                  let _ = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "vr_self_pts" (pr_list pr_id)) vr_self_pts no_pos in
+                  let _ = Debug.tinfo_hprint (add_str "sub_ann" string_of_bool) sub_ann no_pos in
                   let a1 = 
                     if is_r_lock then [] else
                       if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
                         let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
                         let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                         let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
-                         if (syn_lem_typ != -1) then
-                           let acts =
-                             if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
-                             vr_name) >0 then
-                               (*find the first viewnode readable from left datanode*)
-                               let lvs = CF.look_up_reachable_first_reachable_view prog
-                                 (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
-                               if lvs = [] then [(1,M_fold m_res)]
-                               else
-                                 let vl = List.hd lvs in
-                                 if check_lemma_not_exist vl vr then
-                                   let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                                   let uf_i = if new_orig_r then 0 else 1 in
+                        if (syn_lem_typ != -1) then
+                          let acts =
+                            if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
+                                vr_name) >0 then
+                              (*find the first viewnode readable from left datanode*)
+                              let lvs = CF.look_up_reachable_first_reachable_view prog
+                                  (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
+                              if lvs = [] then [(1,M_fold m_res)]
+                              else
+                                let vl = List.hd lvs in
+                                if check_lemma_not_exist vl vr then
+                                  let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                                  let uf_i = if new_orig_r then 0 else 1 in
                                    (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
-                                   [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, Some (CF.ViewNode vl)))]
-                                 else [(1,M_fold m_res)]
-                             else [(1,M_fold m_res)]
-                           in
-                           acts
-                         else
-                        [(1,M_fold m_res)]
+                                  [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, Some (CF.ViewNode vl)))]
+                                else [(1,M_fold m_res)]
+                            else [(1,M_fold m_res)]
+                          in
+                          acts
+                        else [(1,M_fold m_res)]
+                      else if (not new_orig_r) then [(1,M_base_case_fold m_res)]
                       else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)

@@ -11,3 +11,7 @@ pred tlseg<p> == self = p
 checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<q>.
 print residue.
 
+// after first folding, the below is succeeds
+// so why the first entailment is failed?
+// checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<x> * x::node<_,q> & q != r.
+
