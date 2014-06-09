@@ -331,11 +331,11 @@ let rec check_prover_existence prover_cmd_str =
           if exit_code > 0 then
             if  (Sys.file_exists prover) then
               let _ =
-                if prover = "oc" then
+                if String.compare prover "oc" = 0 then
                   let _ = Omega.is_local_solver := true in
                   let _ = Omega.omegacalc := "./oc" in
                   ()
-                else if prover = "z3" then
+                else if String.compare prover "z3" = 0 then
                   let _ = Smtsolver.is_local_solver := true in
                   let _ = Smtsolver.smtsolver_name := "./z3" in
                   ()
