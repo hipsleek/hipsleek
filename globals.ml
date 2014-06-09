@@ -1191,6 +1191,7 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
+let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
 let baga_xpure = ref true
 
 let dis_inv_baga () = 

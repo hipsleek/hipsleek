@@ -56,8 +56,10 @@ if ($test_all) {
     "nll-vc16.smt2",
     
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
-    "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", "skl3-vc04.smt2", "skl3-vc05.smt2",
+  "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"
+  "spaguetti-10-e01.tptp.smt2","spaguetti-10-e02.tptp.smt2","spaguetti-10-e03.tptp.smt2","spaguetti-11-e01.tptp.smt2","spaguetti-11-e02.tptp.smt2","spaguetti-20-e01.tptp.smt2",
+    "bolognesa-10-e01.tptp.smt2","bolognesa-10-e02.tptp.smt2","bolognesa-10-e03.tptp.smt2","bolognesa-11-e01.tptp.smt2","bolognesa-12-e01.tptp.smt2","bolognesa-15-e01.tptp.smt2","bolognesa-20-e01.tptp.smt2"
   );
   foreach my $test_file (@test_files) {
     my @abs_paths;
