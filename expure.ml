@@ -578,7 +578,7 @@ struct
   let is_false (e:epure) = (e == mk_false)
   let pr1 = pr_list Elt.string_of
   let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
-  let string_of (x:epure) = 
+  let string_of (x:epure) =
     pr_triple (add_str "BAGA" pr1) (add_str "EQ" EM.string_of) (add_str "INEQ" pr2) x
 
   let string_of_disj (x:epure_disj) = pr_list string_of x
@@ -602,25 +602,34 @@ struct
   let mk_or_disj t1 t2 = t1@t2
 
   (* to be completed *)
-  let conv_eq (eq : emap) =
-    (* get all elems of eq *)
-    let elems = EM.get_elems eq in
-    (* get all spec_var from elems *)
-    let svl = Elt.conv_var elems in
-    (* [a,b,c] -> a = b && a = c *)
-    (* [] -> true *)
-    (* [a] -> true *)
-    if (List.length svl <= 1) then
-      mkTrue no_pos
-    else
-      let fst_sv = List.hd svl in
-      let oth_sv = List.tl svl in
-      let eql = List.map (fun sv -> mkEqVar fst_sv sv no_pos) oth_sv in
-      let f = List.fold_left (fun f1 f2 -> mkAnd f1 f2 no_pos) (mkTrue no_pos) eql in
-      f
+  (* [(a,[b,c])] --> a=b & a=c *)
+  let conv_eq (eq : emap) : formula =
+    let fl = List.map (fun (e,k) ->
+        let svl = Elt.conv_var (e::k) in
+        if (List.length svl <= 1) then (* do we need this condition *)
+          mkTrue no_pos
+        else
+          let v1 = List.hd svl in
+          let eql = List.map (fun v2 ->
+              mkEqVar v1 v2 no_pos
+          ) (List.tl svl)
+          in
+          List.fold_left (fun f1 f2 ->
+              mkAnd f1 f2 no_pos
+          ) (mkTrue no_pos) eql
+    ) eq in
+    List.fold_left (fun f1 f2 ->
+        mkAnd f1 f2 no_pos
+    ) (mkTrue no_pos) fl
 
   (* to be completed *)
-  let conv_ineq eq = mkTrue no_pos
+  (* [(a,b);(b,c)] --> a!=b & b!=c *)
+  let conv_ineq (ieq : (elem * elem) list) : formula  =
+    List.fold_left (fun f1 (v1, v2) ->
+        let svl = Elt.conv_var (v1::[v2]) in
+        let f2 = mkNeqVar (List.hd svl) (List.nth svl 1) no_pos in
+        mkAnd f1 f2 no_pos
+    ) (mkTrue no_pos) ieq
 
   let conv_enum ((baga,eq,inq) : epure) : formula =
     let f1 = conv_eq eq in
@@ -635,20 +644,33 @@ struct
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
   (* naive implementation *)
-  let unsat f = 
-    let cf = conv_enum f in
-    (* if unsat(cf) return true *)
-    not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure cf))
+  let unsat (f : epure) : bool =
+    let (baga,eq,ieq) = f in
+    let baga_svl = Elt.conv_var baga in
+    (* check if baga contains null *)
+    if List.exists (fun sv -> (name_of_spec_var sv) = "null") baga_svl then
+      true
+    else
+      (* check if there exists (a,b) in inq and eq *)
+      List.exists (fun (e1, e2) ->
+          List.exists (fun (e, k) ->
+              let eq_el = (e::k) in
+              List.mem e1 eq_el && List.mem e2 eq_el
+          ) eq
+      ) ieq
+    (* let cf = conv_enum f in *)
+    (* (\* if unsat(cf) return true *\) *)
+    (* not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure cf)) *)
 
-(* 
+(*
     given (baga,eq,inq)
-    contra if 
+    contra if
        null \in baga
        duplicate (in baga - detected by merge)
        exists (a,b) in inq & eq
        exists (a,a) in eq (detected by norm,subs )
 
-  how to detect: 
+  how to detect:
        ([b], b=null, ..)?
 
 *)
@@ -662,11 +684,32 @@ struct
 
   (* (\* reducing duplicate? *\) *)
   let norm_disj disj =
-        List.filter (fun v -> not(is_false v)) (List.map norm disj)
+    List.filter (fun v -> not(is_false v)) (List.map norm disj)
 
   let is_false_disj disj = disj==[]
 
   let mk_false_disj = []
+
+  (* to be completed *)
+  let elim_exists (qel : elem list) (f : epure) : epure =
+    let (baga,eq,ieq) = f in
+    let new_eq = List.map (fun (e,k) ->
+        let el = e::k in
+        let filt_el = List.filter (fun e ->
+            not (List.mem e qel)
+        ) el in
+        (* if List.length filt_el <= 1 then *)
+        (*   () *)
+        (* else *)
+        (List.hd filt_el, List.tl filt_el) (* need to revised, maybe List.length filt_ef <= 1 *)
+    ) eq in
+    let new_ieq = List.filter (fun (e1, e2) ->
+        not (List.mem e1 qel || List.mem e2 qel) (* need to revised, maybe we have to subs with new element in new_eq *)
+    ) ieq in
+    let new_baga = List.filter (fun e ->
+        not (List.mem e qel)
+    ) baga in (* need to revised, maybe we have to subs with new element in new_eq *)
+    (new_baga,new_eq,new_ieq)
 
   (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
   (*   let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in *)
