@@ -80,3 +80,8 @@ checkentail
 print residue.
 // self!=p repeated
 // <1>emp&self!=p & self!=p&{FLOW,(21,22)=__norm}[]
+
+//(8)
+checkentail x::nlseg<y> * y::nlseg<z> * z::node<a>
+         |- x::nlseg<z> * z::node<a>.
+expect Valid.
