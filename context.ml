@@ -1356,7 +1356,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                            in
                            acts
                          else
-                        [(1,M_fold m_res)]
+                           (* fold to activate/change  *)
+                           [(1,M_fold m_res)]
                       else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)
