@@ -695,7 +695,7 @@ let common_arguments = [
           Globals.lemma_gen_unsafe:=true;
           Globals.gen_baga_inv := true;
           (* Globals.do_infer_inv := true; *)
-          Globals.lemma_gen_unsafe := true;
+          (* Globals.lemma_gen_unsafe := true; *)
            Globals.graph_norm := true;
            Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
@@ -712,7 +712,7 @@ let common_arguments = [
           Globals.lemma_gen_unsafe:=true;
           Globals.gen_baga_inv := true;
           (* Globals.do_infer_inv := true; *)
-          Globals.lemma_gen_unsafe := true;
+          (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
            Globals.smt_compete_mode :=true),
    "SMT competition mode - essential printing only + show unexpected ents");

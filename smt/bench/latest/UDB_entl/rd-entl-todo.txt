@@ -430,8 +430,46 @@ todo: lemma?
 todo: lemma?
 
 ======================================================================
-#nlcl-vc01.smt2.slk --> #nlcl-vc05.smt2.slk
+#nlcl-vc01.smt2:
 
+ERROR: at _0:0_0:0 
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types NLL_lvl1_t and NLL_lvl2_t are inconsistent
+
+======================================================================
+#nlcl-vc02.smt2:
+
+
+Last Proving Location: 1 File "nlcl-vc02.smt2.slk",Line:17,Col:4
+
+ERROR: at _0:0_0:0 
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types NLL_lvl1_t and NLL_lvl2_t are inconsistent
+ 
+Last Proving Location: 1 File "nlcl-vc02.smt2.slk",Line:17,Col:4
+
+ERROR: at _0:0_0:0 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(0,0),(0,0)} types NLL_lvl1_t and NLL_lvl2_t are inconsistent")
+ SAT
+
+======================================================================
+#nlcl-vc03.smt2:
+
+======================================================================
+#nlcl-vc04.smt2:
+
+with smt-compete
+
+ERROR: at _0:0_0:0 
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types NLL_lvl1_t and NLL_lvl2_t are inconsistent
+ 
+Last Proving Location: 1 File "nlcl-vc04.smt2.slk",Line:17,Col:4
+
+ERROR: at _0:0_0:0 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(0,0),(0,0)} types NLL_lvl1_t and NLL_lvl2_t are inconsistent")
+ SAT
+
+
+======================================================================
+#nlcl-vc05.smt2:
 
 todo: (Long) check with those files in nlcl0a
 
