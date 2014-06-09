@@ -693,16 +693,30 @@ struct
   (* to be completed *)
   let elim_exists (qel : elem list) (f : epure) : epure =
     let (baga,eq,ieq) = f in
-    let new_eq = List.map (fun (e,k) ->
+    let filt_eq = List.map (fun (e,k) ->
         let el = e::k in
         let filt_el = List.filter (fun e ->
             not (List.mem e qel)
         ) el in
-        (* if List.length filt_el <= 1 then *)
-        (*   () *)
-        (* else *)
-        (List.hd filt_el, List.tl filt_el) (* need to revised, maybe List.length filt_ef <= 1 *)
+        filt_el
     ) eq in
+    let comb_eq = List.combine eq filt_eq in
+    let new_eq0 = List.filter (fun el ->
+        List.length el > 1
+    ) filt_eq in
+    let new_eq = List.map (fun el ->
+        (List.hd el, List.tl el)
+    ) new_eq0 in
+    (* let new_eq = List.map (fun (e,k) -> *)
+    (*     let el = e::k in *)
+    (*     let filt_el = List.filter (fun e -> *)
+    (*         not (List.mem e qel) *)
+    (*     ) el in *)
+    (*     (\* if List.length filt_el <= 1 then *\) *)
+    (*     (\*   () *\) *)
+    (*     (\* else *\) *)
+    (*     (List.hd filt_el, List.tl filt_el) (\* need to revised, maybe List.length filt_ef <= 1 *\) *)
+    (* ) eq in *)
     let new_ieq = List.filter (fun (e1, e2) ->
         not (List.mem e1 qel || List.mem e2 qel) (* need to revised, maybe we have to subs with new element in new_eq *)
     ) ieq in
