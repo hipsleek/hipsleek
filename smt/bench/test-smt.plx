@@ -25,7 +25,7 @@ my $not_found_files = "";
 my $timeout_count = 0;
 my $timeout_files = "";
 
-my $timeout = 5;
+my $timeout = 0;
 
 my $test_all;
   
@@ -92,15 +92,19 @@ foreach my $smt2_file (@smt2_files) {
   my $smt2_name = basename($slk_file, ".slk");
   my $output = "";
   print " $rel_path: ";
-  try {
-    local $SIG{ALRM} = sub { die "alarm\n" };
-    alarm $timeout;
+  if ($timeout > 0) {
+    try {
+      local $SIG{ALRM} = sub { die "alarm\n" };
+      alarm $timeout;
+      $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
+      alarm 0;
+    } catch {
+      die $_ unless $_ eq "alarm\n";
+      $output = "timeout";
+    };
+  } else { # No timeout
     $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
-    alarm 0;
-  } catch {
-    die $_ unless $_ eq "alarm\n";
-    $output = "timeout";
-  };
+  }
   if ($output =~ "Unexpected") {
     print "Fail\n";
     
