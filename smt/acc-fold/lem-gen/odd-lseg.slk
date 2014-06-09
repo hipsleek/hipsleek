@@ -10,4 +10,7 @@ pred olseg<p> == self::node<p>
 // above lemma should be provable
 // lack of deep unfold ..
 
+checkentail_exact emp & self=p |- (exists u: self::olseg<u>*u::olseg<p>).
 
+checkentail_exact self::node<a>*a::node<b>*b::olseg<p> 
+      |- (exists u: self::olseg<u>*u::olseg<p>).

@@ -280,7 +280,7 @@ and trans_command c cl =
           if (!checkentail = 0)
           then (
               checkentail := 1;
-              "\ncheckentail " ^ (trans_term term)
+              "\ncheckentail_exact " ^ (trans_term term)
           ) else (
               checkentail := 2;
               "\n         |- " ^ (trans_term term) ^ ".";
@@ -524,5 +524,5 @@ and trans_commands e =
 
 let trans e =
   let s = trans_commands e in
-  s
+  s ^ "\n\n"
   (* print_string (s ^ "\n") *)

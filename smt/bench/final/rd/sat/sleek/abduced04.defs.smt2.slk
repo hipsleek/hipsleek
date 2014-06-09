@@ -112,5 +112,7 @@ or self::I007<b> & null != b.
 pred I001<> ==
 (exists a00: self::GTyp<f0 = a00,f1 = _> * self::I003<a00> & null != self).
 
-checkentail x0::ls<>
+checkentail_exact x0::ls<>
          |- false.
+
+expect Fail.

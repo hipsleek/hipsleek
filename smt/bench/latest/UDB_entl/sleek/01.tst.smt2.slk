@@ -1,0 +1,15 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred RList<y:GTyp> ==
+ self::GTyp<f0 = y,f1 = _> & null != self
+or (exists xp: xp::GTyp<f0 = y,f1 = _> * self::RList<xp> & xp != null).
+
+checkentail_exact x::GTyp<f0 = y,f1 = _> * y::RList<z>
+         |- x::RList<z>.
+
+expect Valid.
+

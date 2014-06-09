@@ -35,5 +35,7 @@ null != self.
 pred zero<> ==
 null = self.
 
-checkentail x0::P<x1,x2>
+checkentail_exact x0::P<x1,x2>
          |- false.
+
+expect Fail.

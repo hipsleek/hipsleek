@@ -41,11 +41,11 @@ clean:
 	rm -f $(NAME)_lex.ml $(NAME)_parse.mli $(NAME)_parse.ml *.cmo *.cmi *.output smt2slk
 
 install:
-	chmod uog+x trans.plx
+	chmod uog+x trans2slk.plx
 	chmod uog+x trans2smt.plx
-	sudo cp compile /usr/local/bin
+	sudo cp smt2slk /usr/local/bin
 	sudo cp ../sleek /usr/local/bin
-	sudo cp trans.plx /usr/local/bin
+	sudo cp trans2slk.plx /usr/local/bin
 	sudo cp trans2smt.plx /usr/local/bin
 
 

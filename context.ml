@@ -1138,7 +1138,10 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         ((dl_flag==false && (dl_origins!=[])) 
                         || ((dr_flag==false && dr_origins!=[])))) then [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else 
-                      if (String.compare dl_name dr_name)==0 then [(0,M_match m_res)]
+                      if (String.compare dl_name dr_name)==0 
+                      then 
+                        (* temp change to 0 to give fold higher priority *)
+                        [(1,M_match m_res)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
                   in
 		  let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in

@@ -1,0 +1,18 @@
+data node {
+  node f0;
+}.
+
+
+pred foo<y:node> ==
+  self::node<y> * y::node<_>@L.
+
+checkentail x::node<a>*a::node<b> |- x::foo<a> * a::node<_>.
+print residue.
+// fail due to x::node<..> being matched first?
+
+/*
+# 22-lend1.slk
+
+
+*/
+

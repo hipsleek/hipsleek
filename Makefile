@@ -38,6 +38,8 @@ PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
 GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fPIC,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-fPIE 
+SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fPIC,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
 #FLAGS = $(INCLUDES),-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
@@ -47,7 +49,10 @@ GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
 OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
  
 OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
-OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+
+#static - incl C libs
+OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
 OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
@@ -61,6 +66,7 @@ gbyte: sleek.gbyte hip.gbyte
  
 # hsprinter.byte
 native: hip.native sleek.native
+static: ship.native ssleek.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte
 
@@ -99,6 +105,11 @@ hip.native: xml
 	cp -u _build/main.native hip
 	cp -u _build/main.native n-hip
 
+ship.native: xml
+	@ocamlbuild $(OBNS_FLAGS) main.native
+	cp -u _build/main.native hip
+	cp -u _build/main.native s-hip
+
 hsprinter.byte: xml
 	@ocamlbuild $(OB_FLAGS) hsprinter.byte
 
@@ -106,6 +117,11 @@ sleek.native: xml
 	@ocamlbuild $(OBN_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek
+
+ssleek.native: xml
+	@ocamlbuild $(OBNS_FLAGS) sleek.native
+	cp -u _build/sleek.native sleek
+	cp -u _build/sleek.native s-sleek
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte

@@ -19,5 +19,5 @@ pred DLL1_plus<p:DLL2_t> ==
  self::DLL2_t<next = null,prev = p,prev2 = _,next2 = _,down = _>
 or (exists x: self::DLL2_t<next = x,prev = p,prev2 = _,next2 = _,down = _> * x::DLL1_plus<self>).
 
-checkentail x::DLL2_plus_rev<y,u,v>
+checkentail_exact x::DLL2_plus_rev<y,u,v>
          |- x::DLL2_plus<y,u,v>.
