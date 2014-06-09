@@ -2298,6 +2298,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let new_ctx = Ctx new_es in
               let _ = Debug.ninfo_hprint (add_str "view_form" Cprinter.string_of_struc_formula) view_form no_pos in
               (*let new_ctx = set_es_evars ctx vs in*)
+              (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
               let rels = Infer.collect_rel_list_context rs0 in
               let _ = Infer.infer_rel_stk # push_list rels in
@@ -2369,6 +2370,7 @@ and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
   Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro (fun _ _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       estate fold_rs0 (p2::vs2) base2
+
 and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
@@ -7574,6 +7576,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     begin
       let m_lhs = lhs_new in
       Debug.tinfo_hprint (add_str "m_lhs" (Cprinter.string_of_mix_formula)) m_lhs pos;
+      Debug.tinfo_hprint (add_str "rhs_p" (Cprinter.string_of_mix_formula)) rhs_p pos;
       let tmp3 = MCP.merge_mems m_lhs xpure_lhs_h1 true in
       Debug.tinfo_hprint (add_str "tmp3" (Cprinter.string_of_mix_formula)) tmp3 pos;
       let tmp2 = 
@@ -7584,10 +7587,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let _ = Debug.info_hprint (add_str "estate" (Cprinter.string_of_estate)) estate pos in
       (* let rhs_p =  *)
       let fv = MCP.mfv rhs_p in
-      let rhs_p = List.fold_left (fun a (p1,p2) ->
-          if (Gen.BList.mem_eq CP.eq_spec_var p1 fv (* || Gen.BList.mem_eq CP.eq_spec_var p2 fv *) ) then
-          (MCP.memoise_add_pure a (CP.mkEqExp (CP.mkVar p1 pos) (CP.mkVar p2 pos) pos) )
-          else a ) rhs_p (estate.es_rhs_eqset) in
+      (* let rhs_p = List.fold_left (fun a (p1,p2) -> *)
+      (*     if (is_folding && Gen.BList.mem_eq CP.eq_spec_var p1 fv && *)
+      (*         not(Gen.BList.mem_eq CP.eq_spec_var p1 (estate.es_ivars)) *)
+      (*         (\* || Gen.BList.mem_eq CP.eq_spec_var p2 fv *\) ) then *)
+      (*     (MCP.memoise_add_pure a (CP.mkEqExp (CP.mkVar p1 pos) (CP.mkVar p2 pos) pos) ) *)
+      (*     else a ) rhs_p (estate.es_rhs_eqset) in *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
         if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
