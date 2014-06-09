@@ -720,9 +720,31 @@ struct
     let new_ieq = List.filter (fun (e1, e2) ->
         not (List.mem e1 qel || List.mem e2 qel) (* need to revised, maybe we have to subs with new element in new_eq *)
     ) ieq in
-    let new_baga = List.filter (fun e ->
-        not (List.mem e qel)
-    ) baga in (* need to revised, maybe we have to subs with new element in new_eq *)
+    (* need to revised, maybe we have to subs with new element in new_eq *)
+    let new_baga0 = List.map (fun b ->
+        if (List.mem b qel) then
+          try
+            let eqe = List.find (fun (e,k) ->
+                let el = e::k in
+                List.mem b el
+            ) eq in
+            let (_, new_eqe) = List.find (fun (old_eqe, filt_eqe) ->
+                eqe = old_eqe (* check two emaps equal *)
+            ) comb_eq in
+            if (List.length new_eqe > 1) then
+              Some (List.hd new_eqe)
+            else
+              None
+          with Not_found -> None
+        else
+          Some b
+        (* not (List.mem e qel) *)
+    ) baga in
+    let new_baga = List.fold_left (fun new_baga b ->
+        match b with
+          | Some b -> new_baga@[b]
+          | None -> new_baga
+    ) [] new_baga0 in
     (new_baga,new_eq,new_ieq)
 
   (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
