@@ -639,7 +639,7 @@ let convert_data_and_pred_to_cast_x () =
      cprog2a
      else cprog6
   in
-  let cprog6 = if !Globals.lemma_gen_unsafe || !Globals.lemma_gen_safe then
+  let cprog6 = if (* !Globals.lemma_gen_unsafe || !Globals.lemma_gen_safe *)false then
     Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls
   else cprog6a
   in
