@@ -14,6 +14,8 @@ checkentail x::ls<y> * y::ls<z> * z::node<a>
          |- x::ls<z> * z::node<a>.
 expect Valid.
 /*
+# 22-vs08.slk
+
 Entail 1: Fail.(may) cause:UnionR[ z=1 & (((x!=null & y!=x) | y=x)) & (((y!=null & z!=y) | z=y)) |-  y=z. LOCS:[14;1;0;15] (may-bug),Nothing_to_do? 
   Type: WArg
   LHS: y::ls<z>
