@@ -479,17 +479,20 @@ let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let z3_sat_timeout_limit = 2.0
 let prover_pid = ref 0
+
+let z3_call_count: int ref = ref 0
+let is_z3_running = ref false
+let is_local_solver = ref (false: bool)
+
+let smtsolver_name = ref ("z3": string)
+
 let prover_process = ref {
-  name = "z3";
+  name = !smtsolver_name;
   pid = 0;
   inchannel = stdin;
   outchannel = stdout;
   errchannel = stdin 
 }
-
-let z3_call_count: int ref = ref 0
-let is_z3_running = ref false
-let smtsolver_name = ref ("z3": string)
 
 (***********)
 let test_number = ref 0
@@ -506,6 +509,7 @@ let set_process (proc: prover_process_t) =
 let command_for prover = (
   match !smtsolver_name with
   | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
