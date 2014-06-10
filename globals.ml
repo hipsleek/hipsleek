@@ -884,6 +884,8 @@ let allow_frame = ref false
 
 let graph_norm = ref false
 
+let graph_norm_threshold = ref 1
+
 let slice_one = ref (0:int)
 
 let allow_imm = ref false (*imm will delay checking guard conditions*)

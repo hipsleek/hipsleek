@@ -574,10 +574,19 @@ let convert_data_and_pred_to_cast_x () =
 (*       transed_views@[nview] *)
 (* ) ([]) tmp_views in *)
 (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
-  let _ = if !Globals.smt_compete_mode && !Globals.gen_baga_inv &&
-    List.length tmp_views <= gen_baga_inv_threshold then
-      let _ = Globals.gen_baga_inv := false in
+  let _ = if !Globals.smt_compete_mode then
+    let num_vdecls = List.length tmp_views  in
+    let _ = if !Globals.gen_baga_inv && num_vdecls <= gen_baga_inv_threshold then
+        let _ = Globals.gen_baga_inv := false in
+        ()
+    else ()
+    in
+    let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_threshold then
+      let _ = Globals.graph_norm := false in
       ()
+    else ()
+    in
+    ()
   else ()
   in
    let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
