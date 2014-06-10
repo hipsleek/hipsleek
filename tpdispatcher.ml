@@ -423,9 +423,18 @@ let set_tp tp_str =
     (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
 	();
-  check_prover_existence !prover_str
+  if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
 
-let _ = set_tp "z3"
+let _ =
+  let _ = (if !Globals.is_solver_local then
+  let _ = Smtsolver.is_local_solver := true in
+  let _ = Smtsolver.smtsolver_name := "./z3" in
+  let _ = Omega.is_local_solver := true in
+  let _ = Omega.omegacalc := "./oc" in
+  ()
+  else ())
+  in
+  set_tp "z3"
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"

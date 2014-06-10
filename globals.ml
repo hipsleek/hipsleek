@@ -1182,6 +1182,7 @@ let do_infer_inv = ref false
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let smt_compete_mode = ref false
+let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
 
