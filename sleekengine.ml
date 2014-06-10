@@ -579,7 +579,9 @@ let convert_data_and_pred_to_cast_x () =
     let _ = if !Globals.gen_baga_inv && num_vdecls <= gen_baga_inv_threshold then
         let _ = Globals.gen_baga_inv := false in
         ()
-    else ()
+    else
+      let _ = Globals.lemma_gen_unsafe := false in
+      ()
     in
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_threshold then
       let _ = Globals.graph_norm := false in

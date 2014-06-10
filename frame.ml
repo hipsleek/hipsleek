@@ -1347,7 +1347,7 @@ let heap_normal_form_x prog f0 min_grp_size=
       ()
     else ()
   in
-  let comps1 = List.filter (fun ls ->( List.length ls) >2(* >= min_grp_size *)) comps in
+  let comps1 = List.filter (fun ls ->( List.length ls) >= min_grp_size ) comps in
   let fs =
     (* if List.length comps1 > 1 then *)
       Cfutil.slice_frame f comps1

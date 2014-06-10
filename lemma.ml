@@ -1332,9 +1332,12 @@ let refine_tail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_form
 let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
   (* find base branch and inductive branch *)
+try
   let vpos = vd.C.view_pos in
   let vname = vd.C.view_name in
   let dname = vd.C.view_data_name in
+  if String.compare dname "" = 0 then [] else
+  let _ = Debug.ninfo_hprint (add_str "dname" pr_id) dname no_pos in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
   let processed_branches = List.map (fun (f, lbl) ->
     (* TRUNG: TODO remove it later *)
@@ -1527,6 +1530,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         )
     )
   )
+with _ -> []
 
 let generate_view_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
@@ -1553,7 +1557,8 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   let _ = Debug.ninfo_hprint (add_str "gen_lemmas" pr_lemmas)
       (Lem_store.all_lemma#get_left_coercion @ Lem_store.all_lemma#get_right_coercion)
       no_pos in
-  ()
+  (
+)
 
 let _ = Sleekcore.generate_lemma := generate_lemma_helper;;
 let _ = Solver.manage_unsafe_lemmas := manage_unsafe_lemmas;;

@@ -254,10 +254,12 @@ Validate 1: Expected.
 
 UNSAT
 bolognesa-15-e02.tptp.smt2.slk
-Validate 1: Expected.
+Validate 1: Not Expected.
 
 
-UNSAT
+Unexpected: 1 
+
+SAT
 bolognesa-15-e03.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -304,24 +306,20 @@ Validate 1: Expected.
 
 UNSAT
 bolognesa-16-e02.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-16-e03.tptp.smt2.slk
 Validate 1: Expected.
 
 
 SAT
 bolognesa-16-e04.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-16-e05.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -358,12 +356,10 @@ Validate 1: Expected.
 
 UNSAT
 bolognesa-17-e02.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-17-e03.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -410,19 +406,15 @@ Validate 1: Expected.
 
 UNSAT
 bolognesa-18-e02.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-18-e03.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-18-e04.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -444,12 +436,10 @@ Validate 1: Expected.
 
 SAT
 bolognesa-18-e08.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-18-e09.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -521,12 +511,10 @@ Validate 1: Expected.
 
 SAT
 bolognesa-20-e03.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-UNSAT
+SAT
 bolognesa-20-e04.tptp.smt2.slk
 Validate 1: Expected.
 

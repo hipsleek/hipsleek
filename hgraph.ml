@@ -1939,6 +1939,12 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
               dfs e (path_children@rest) (done_vs@not_trav)
       | [] -> false,[]
   in
+  let has_non_emp_path path=
+    List.exists (fun (b,e) ->
+        let tedge = look_up_edge hg_tar.hg_edges b e in
+        tedge.he_kind
+    ) path
+  in
   let has_non_emp_src_path src_e=
     let tar_b = subst map src_e.he_b_id in
     let tar_e = subst map src_e.he_e_id in
@@ -1946,10 +1952,18 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     if not has_path then false
     else
       (*check whether at least one non empty*)
-      List.exists (fun (b,e) ->
-        let tedge = look_up_edge hg_tar.hg_edges b e in
-        tedge.he_kind
-    ) path
+       has_non_emp_path path
+           (*  List.exists (fun (b,e) -> *)
+           (*     let tedge = look_up_edge hg_tar.hg_edges b e in *)
+           (*     tedge.he_kind *)
+           (* ) path *)
+  in
+  let has_non_emp_src_path1 tar_b tar_e=
+    let has_path, path = dfs_pair tar_e [([], tar_b)] [tar_e] in
+    if not has_path then raise Not_found
+    else
+      (*check whether at least one non empty*)
+      has_non_emp_path path
   in
   let rec find_first_non_emp waiting done_vertexs=
     let _ = Debug.ninfo_hprint (add_str "waiting" (pr_list string_of_int)) waiting no_pos in
@@ -1962,7 +1976,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
             if List.exists (fun e -> e.he_kind) next_edges then true else
               (*remove vertexes which travesed*)
               let next_edges_wo = List.filter (fun e ->
-                not (Gen.BList.mem_eq (=) e.he_e_id done_vertexs)) next_edges in
+                  not (Gen.BList.mem_eq (=) e.he_e_id done_vertexs)) next_edges in
               find_first_non_emp (rest@(List.map (fun e -> e.he_e_id) next_edges_wo)) (done_vertexs@[e])
   in
   (*
@@ -1979,7 +1993,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           let tar_edge = look_up_edge hg_tar.hg_edges tar_b tar_e in
           let rev_tar_edge = look_up_edge hg_tar.hg_edges tar_e tar_b in
           let non_empty_direct_loop = tar_edge.he_kind && rev_tar_edge.he_kind in
-          let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop" string_of_bool) non_empty_direct_loop no_pos in
+          let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop 1" string_of_bool) non_empty_direct_loop no_pos in
           non_empty_direct_loop
         with _ -> true
       else true
@@ -1987,7 +2001,7 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       begin
         (* let (_,last_tar_e_edge) = Gen.BList.list_last path in *)
         let done_vs,last_tar_e_edge = List.fold_left (fun (r,last) (b,e) -> (r@[b],e)) ([], snd (List.hd path)) (List.tl path) in
-        find_first_non_emp [last_tar_e_edge] done_vs
+        find_first_non_emp [last_tar_e_edge] (done_vs)
         (* try *)
         (*   let (_,last_tar_e_edge) = Gen.BList.list_last path in *)
         (*   let tar_next_edges = look_up_next_edges hg_tar.hg_edges last_tar_e_edge in *)
@@ -1998,10 +2012,34 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         (* with _ -> false *)
       end
   in
+  let check_two_way_may_emp_tar_paths sedge tar_path=
+    (*rev:*)
+    let tar_b = sedge.he_e_id in
+    let tar_e = sedge.he_b_id in
+    let has_rev_path, rev_path = dfs_pair tar_e [([], tar_b)] [tar_e] in
+    if not has_rev_path then true
+    else
+      let non_emp = has_non_emp_path tar_path in
+      let rev_non_emp = (has_non_emp_path rev_path) in
+      ((non_emp && rev_non_emp) || (not non_emp && not rev_non_emp))
+  in
+  (* let check_direct_two_way_may_emp_tar_paths sedge tar_path= *)
+  (*   match tar_path with *)
+  (*     | [(t_b, t_e)] -> begin *)
+  (*         try *)
+  (*           let t_edge = look_up_edge hg_tar.hg_edges t_b t_e in *)
+  (*           let t_rev_edge = look_up_edge hg_tar.hg_edges t_e t_b in *)
+  (*           let non_emp = t_edge.he_kind in *)
+  (*           let rev_non_emp = t_rev_edge.he_kind in *)
+  (*           ((non_emp && rev_non_emp) || (not non_emp && not rev_non_emp)) *)
+  (*         with _ -> true *)
+  (*       end *)
+  (*     | _ -> true *)
+  (* in *)
   (*rule 2:
     if has direct loop, both mapping of src_paths must be non empty
   *)
-  let check_non_empty_direct_loop sedge tar_path=
+  let check_non_empty_direct_loop_x sedge tar_path=
     if not non_touch_check || not check_direct_loop then (true) else
       try
         let rev_edge = look_up_edge hg_src.hg_edges sedge.he_e_id sedge.he_b_id in
@@ -2012,7 +2050,27 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
           let rev_valid = has_non_emp_src_path rev_edge in
           rev_valid
         else false
-      with _ -> true
+      with _ ->  (*dont have direct path 16-02*)
+          begin
+            match tar_path with
+              | [(tar_b, tar_e)] -> begin
+                  try
+                    let tar_edge = look_up_edge hg_tar.hg_edges tar_b tar_e in
+                    let rev_non_emp = has_non_emp_src_path1 tar_e tar_b in
+                    let non_empty_direct_loop = (tar_edge.he_kind && rev_non_emp) || (not tar_edge.he_kind && not rev_non_emp) in
+                    let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop 2" string_of_bool) non_empty_direct_loop no_pos in
+                    non_empty_direct_loop
+                  with _ -> true
+                end
+              | _ -> true
+          end
+  in
+  let check_non_empty_direct_loop sedge tar_path=
+    let pr1 = print_he in
+    let pr2 = pr_list (pr_pair string_of_int string_of_int) in
+    Debug.no_2 "check_non_empty_direct_loop" pr1 pr2 string_of_bool
+        (fun _ _ -> check_non_empty_direct_loop_x sedge tar_path)
+        sedge tar_path
   in
   let check_one_src_edge_x sedge=
     (*map to id of tar edge*)

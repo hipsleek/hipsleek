@@ -40,7 +40,7 @@ GetOptions (
   "fail" => \$test_fail,
   "over10" => \$test_10s,
   "tidy" => \$print_short,
-  "timeout=i"  => \$timeout)
+  "timeout"  => \$timeout)
 or die("Error in command line arguments\n");
 
 my @smt2_files;
@@ -58,13 +58,7 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "bolognesa-16-e02.tptp.smt2",
-    "bolognesa-16-e04.tptp.smt2",
-    "bolognesa-17-e02.tptp.smt2",
-    "bolognesa-18-e02.tptp.smt2",
-    "bolognesa-18-e03.tptp.smt2",
-    "bolognesa-18-e08.tptp.smt2",
-    "bolognesa-20-e03.tptp.smt2",
+    "bolognesa-15-e02.tptp.smt2",
     "clones-01-e07.tptp.smt2",
     "clones-01-e08.tptp.smt2",
     "clones-01-e09.tptp.smt2",
@@ -163,17 +157,6 @@ if ($test_all) {
     "inconsistent-ls-of-ls.defs.smt2",
     
     # Exception
-    "abduced02.defs.smt2",
-    "abduced03.defs.smt2",
-    "abduced04.defs.smt2",
-    "abduced07.defs.smt2",
-    "abduced08.defs.smt2",
-    "abduced10.defs.smt2",
-    "abduced14.defs.smt2",
-    "abduced15.defs.smt2",
-    "abduced16.defs.smt2",
-    "abduced17.defs.smt2",
-    "abduced18.defs.smt2",
     "succ-circuit01.defs.smt2",
     "succ-circuit02.defs.smt2",
     "succ-rec01.defs.smt2",
@@ -258,8 +241,23 @@ if ($test_all) {
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
     "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", 
     "bolognesa-20-e01.tptp.smt2",
-    
-    "abduced15.defs.smt2"
+    "bolognesa-16-e04.tptp.smt2",
+    "bolognesa-17-e02.tptp.smt2",
+    "bolognesa-18-e02.tptp.smt2",
+    "bolognesa-18-e03.tptp.smt2",
+    "bolognesa-18-e08.tptp.smt2",
+    "bolognesa-20-e03.tptp.smt2",
+    "abduced02.defs.smt2",
+    "abduced03.defs.smt2",
+    "abduced04.defs.smt2",
+    "abduced07.defs.smt2",
+    "abduced08.defs.smt2",
+    "abduced10.defs.smt2",
+    "abduced14.defs.smt2",
+    "abduced15.defs.smt2",
+    "abduced16.defs.smt2",
+    "abduced17.defs.smt2",
+    "abduced18.defs.smt2",
     );
   }
   foreach my $test_file (@test_files) {
