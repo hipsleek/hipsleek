@@ -576,7 +576,7 @@ let convert_data_and_pred_to_cast_x () =
 (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
   let _ = if !Globals.smt_compete_mode then
     let num_vdecls = List.length tmp_views  in
-    let _ = if !Globals.gen_baga_inv && num_vdecls <= gen_baga_inv_threshold then
+    let _ = if num_vdecls <= gen_baga_inv_threshold then
         let _ = Globals.gen_baga_inv := false in
         ()
     else

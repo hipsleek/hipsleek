@@ -1384,11 +1384,15 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                if lvs = [] then [(1,M_fold m_res)]
                                else
                                  let vl = List.hd lvs in
-                                 if check_lemma_not_exist vl vr then
+                                 if syn_lem_typ=0 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
                                    let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                    let uf_i = if new_orig_r then 0 else 1 in
                                    (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
-                                   [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, Some (CF.ViewNode vl)))]
+                                   let unfold_view_opt = if syn_lem_typ = 0 then
+                                     None
+                                   else Some (CF.ViewNode vl)
+                                   in
+                                   [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
                                  else [(1,M_fold m_res)]
                              else [(1,M_fold m_res)]
                            in
@@ -1442,7 +1446,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | Some _ -> true
                     | None -> false
                   in
-                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 4" no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
                   let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
                   let uf_i = if new_orig_l then 0 else 1 in
