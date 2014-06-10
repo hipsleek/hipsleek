@@ -29,11 +29,17 @@ my $timeout_count = 0;
 my $timeout_files = "";
 
 my $timeout = 0;
+my $print_short;
 
 my $test_all;
+my $test_10s;
+my $test_fail;
   
 GetOptions (
   "all" => \$test_all,
+  "fail" => \$test_fail,
+  "over10" => \$test_10s,
+  "tidy" => \$print_short,
   "timeout"  => \$timeout)
 or die("Error in command line arguments\n");
 
@@ -47,8 +53,190 @@ if ($test_all) {
     my @bench_files = <$bench/*.smt2>;
     push (@smt2_files, @bench_files);
   }
-} else {
-  my @test_files = (
+} else {  
+  my @test_files;
+  if ($test_fail) {
+    @test_files = (
+    # Unexpected
+    "bolognesa-16-e02.tptp.smt2",
+    "bolognesa-16-e04.tptp.smt2",
+    "bolognesa-17-e02.tptp.smt2",
+    "bolognesa-18-e02.tptp.smt2",
+    "bolognesa-18-e03.tptp.smt2",
+    "bolognesa-18-e08.tptp.smt2",
+    "bolognesa-20-e03.tptp.smt2",
+    "clones-01-e07.tptp.smt2",
+    "clones-01-e08.tptp.smt2",
+    "clones-01-e09.tptp.smt2",
+    "clones-01-e10.tptp.smt2",
+    "clones-02-e07.tptp.smt2",
+    "clones-02-e09.tptp.smt2",
+    "clones-02-e10.tptp.smt2",
+    "clones-03-e07.tptp.smt2",
+    "clones-03-e09.tptp.smt2",
+    "clones-03-e10.tptp.smt2",
+    "clones-04-e07.tptp.smt2",
+    "clones-04-e09.tptp.smt2",
+    "clones-04-e10.tptp.smt2",
+    "clones-05-e07.tptp.smt2",
+    "clones-05-e09.tptp.smt2",
+    "clones-05-e10.tptp.smt2",
+    "clones-06-e07.tptp.smt2",
+    "clones-06-e09.tptp.smt2",
+    "clones-06-e10.tptp.smt2",
+    "clones-07-e07.tptp.smt2",
+    "clones-07-e09.tptp.smt2",
+    "clones-07-e10.tptp.smt2",
+    "clones-08-e07.tptp.smt2",
+    "clones-08-e09.tptp.smt2",
+    "clones-08-e10.tptp.smt2",
+    "clones-09-e07.tptp.smt2",
+    "clones-09-e09.tptp.smt2",
+    "clones-09-e10.tptp.smt2",
+    "clones-10-e07.tptp.smt2",
+    "clones-10-e09.tptp.smt2",
+    "clones-10-e10.tptp.smt2",
+    "smallfoot-vc04.tptp.smt2",
+    "smallfoot-vc05.tptp.smt2",
+    "smallfoot-vc10.tptp.smt2",
+    "smallfoot-vc11.tptp.smt2",
+    "smallfoot-vc24.tptp.smt2",
+    "smallfoot-vc28.tptp.smt2",
+    "smallfoot-vc29.tptp.smt2",
+    "smallfoot-vc30.tptp.smt2",
+    "smallfoot-vc31.tptp.smt2",
+    "smallfoot-vc32.tptp.smt2",
+    "smallfoot-vc33.tptp.smt2",
+    "smallfoot-vc35.tptp.smt2",
+    "smallfoot-vc37.tptp.smt2",
+    "smallfoot-vc41.tptp.smt2",
+    "smallfoot-vc42.tptp.smt2",
+    "spaguetti-13-e03.tptp.smt2",
+    "01.tst.smt2",
+    "07.tst.smt2",
+    "08.tst.smt2",
+    "10.tst.smt2",
+    "11.tst.smt2",
+    "12.tst.smt2",
+    "13.tst.smt2",
+    "14.tst.smt2",
+    "15.tst.smt2",
+    "16.tst.smt2",
+    "17.tst.smt2",
+    "18.tst.smt2",
+    "20.tst.smt2",
+    "21.tst.smt2",
+    "22.tst.smt2",
+    "dll-entails-dll-rev.smt2",
+    "dll-entails-dll0+.smt2",
+    "dll-mid-entails-dll-rev.smt2",
+    "dll-rev-entails-dll-mid.smt2",
+    "dll-rev-entails-dll.smt2",
+    "dll-spaghetti-existential.smt2",
+    "dll-vc02.smt2",
+    "dll-vc06.smt2",
+    "dll-vc07.smt2",
+    "dll-vc08.smt2",
+    "dll-vc11.smt2",
+    "dll2-entails-dll2-rev.smt2",
+    "dll2-rev-entails-dll2.smt2",
+    "dll2-spaghetti-existential.smt2",
+    "dll2-spaghetti.smt2",
+    "elseg4_slk-6.smt2",
+    "elseg4_slk-7.smt2",
+    "lsegex4_slk-1.smt2",
+    "nlcl-vc05.smt2",
+    "node-dll-rev-dll-entails-dll.smt2",
+    "odd-lseg3_slk-5.smt2",
+    "tll-pp-entails-tll-pp-rev.smt2",
+    "tll-pp-rev-entails-tll-pp.smt2",
+    "tll-ravioli-existential.smt2",
+    "tree-pp-entails-tree-pp-rev.smt2",
+    "tree-pp-rev-entails-tree-pp.smt2",
+    "dll-vc02.smt2",
+    "dll-vc06.smt2",
+    "dll-vc07.smt2",
+    "dll-vc08.smt2",
+    "dll-vc11.smt2",
+    "nlcl-vc05.smt2",
+    "inconsistent-ls-of-ls.defs.smt2",
+    
+    # Exception
+    "abduced02.defs.smt2",
+    "abduced03.defs.smt2",
+    "abduced04.defs.smt2",
+    "abduced07.defs.smt2",
+    "abduced08.defs.smt2",
+    "abduced10.defs.smt2",
+    "abduced14.defs.smt2",
+    "abduced15.defs.smt2",
+    "abduced16.defs.smt2",
+    "abduced17.defs.smt2",
+    "abduced18.defs.smt2",
+    "succ-circuit01.defs.smt2",
+    "succ-circuit02.defs.smt2",
+    "succ-rec01.defs.smt2",
+    "succ-rec02.defs.smt2",
+    "succ-rec03.defs.smt2"
+    );
+  } elsif ($test_10s) {
+    @test_files = (
+    "clones-02-e08.tptp.smt2",
+    "clones-03-e08.tptp.smt2",
+    "dll-spaghetti.smt2",
+    "skl2-vc03.smt2",
+    "skl3-vc04.smt2",
+    "skl3-vc05.smt2",
+    "skl3-vc06.smt2",
+    "skl3-vc07.smt2",
+    "skl3-vc08.smt2",
+    "skl3-vc09.smt2",
+    "tll-ravioli.smt2",
+    "tll_slk-13.smt2",
+    "skl2-vc03.smt2",
+    "skl3-vc04.smt2",
+    "skl3-vc05.smt2",
+    "skl3-vc06.smt2",
+    "skl3-vc07.smt2",
+    "skl3-vc08.smt2",
+    "skl3-vc09.smt2",
+    "succ-circuit03.defs.smt2",
+    "succ-circuit04.defs.smt2",
+    "succ-circuit05.defs.smt2",
+    "succ-circuit06.defs.smt2",
+    "succ-circuit07.defs.smt2",
+    "succ-circuit08.defs.smt2",
+    "succ-circuit09.defs.smt2",
+    "succ-circuit10.defs.smt2",
+    "succ-circuit11.defs.smt2",
+    "succ-circuit12.defs.smt2",
+    "succ-circuit13.defs.smt2",
+    "succ-circuit14.defs.smt2",
+    "succ-circuit15.defs.smt2",
+    "succ-circuit16.defs.smt2",
+    "succ-circuit17.defs.smt2",
+    "succ-circuit18.defs.smt2",
+    "succ-circuit19.defs.smt2",
+    "succ-circuit20.defs.smt2",
+    "succ-rec05.defs.smt2",
+    "succ-rec06.defs.smt2",
+    "succ-rec07.defs.smt2",
+    "succ-rec08.defs.smt2",
+    "succ-rec09.defs.smt2",
+    "succ-rec10.defs.smt2",
+    "succ-rec11.defs.smt2",
+    "succ-rec12.defs.smt2",
+    "succ-rec13.defs.smt2",
+    "succ-rec14.defs.smt2",
+    "succ-rec15.defs.smt2",
+    "succ-rec16.defs.smt2",
+    "succ-rec17.defs.smt2",
+    "succ-rec18.defs.smt2",
+    "succ-rec19.defs.smt2",
+    "succ-rec20.defs.smt2"
+    );
+  } else {
+    @test_files = (
     "dll-vc01.smt2", "dll-vc02.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
     "dll-vc06.smt2", "dll-vc07.smt2", "dll-vc08.smt2", "dll-vc09.smt2", "dll-vc10.smt2", 
     "dll-vc11.smt2", "dll-vc12.smt2", "dll-vc13.smt2",
@@ -64,10 +252,12 @@ if ($test_all) {
     "spaguetti-10-e01.tptp.smt2", "spaguetti-10-e02.tptp.smt2", "spaguetti-10-e03.tptp.smt2",
     "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
-    "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", "bolognesa-20-e01.tptp.smt2",
+    "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", 
+    "bolognesa-20-e01.tptp.smt2",
     
     "abduced15.defs.smt2"
-  );
+    );
+  }
   foreach my $test_file (@test_files) {
     my @abs_paths;
     find({
@@ -93,7 +283,12 @@ if (-d $tmp_dir) {
 make_path $tmp_dir or die "Failed to create temp folder";
 
 foreach my $smt2_file (@smt2_files) {
-  my $rel_path = " latest/" . File::Spec->abs2rel($smt2_file, $test_path);
+  my $rel_path = "";
+  if ($print_short) {
+    $rel_path = basename($smt2_file, "");
+  } else {
+    $rel_path = " latest/" . File::Spec->abs2rel($smt2_file, $test_path);
+  }
   my $slk_file = $smt2_file . ".slk";
   system("smt2slk " . $smt2_file);
   move ($slk_file, $tmp_dir) or die "The move operation failed: $!";
