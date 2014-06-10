@@ -40,7 +40,7 @@ GetOptions (
   "fail" => \$test_fail,
   "over10" => \$test_10s,
   "tidy" => \$print_short,
-  "timeout"  => \$timeout)
+  "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
 
 my @smt2_files;
@@ -70,6 +70,7 @@ if ($test_all) {
     "clones-01-e09.tptp.smt2",
     "clones-01-e10.tptp.smt2",
     "clones-02-e07.tptp.smt2",
+    "clones-02-e08.tptp.smt2",
     "clones-02-e09.tptp.smt2",
     "clones-02-e10.tptp.smt2",
     "clones-03-e07.tptp.smt2",
@@ -177,31 +178,34 @@ if ($test_all) {
     "succ-circuit02.defs.smt2",
     "succ-rec01.defs.smt2",
     "succ-rec02.defs.smt2",
-    "succ-rec03.defs.smt2"
+    "succ-rec03.defs.smt2",
+    "succ-circuit03.defs.smt2",
+    "succ-circuit04.defs.smt2",
+    "succ-rec05.defs.smt2",
     );
   } elsif ($test_10s) {
     @test_files = (
-    "clones-02-e08.tptp.smt2",
+    #"clones-02-e08.tptp.smt2",
     "clones-03-e08.tptp.smt2",
     "dll-spaghetti.smt2",
-    "skl2-vc03.smt2",
-    "skl3-vc04.smt2",
+    #"skl2-vc03.smt2",
+    #"skl3-vc04.smt2",
     "skl3-vc05.smt2",
     "skl3-vc06.smt2",
     "skl3-vc07.smt2",
     "skl3-vc08.smt2",
     "skl3-vc09.smt2",
-    "tll-ravioli.smt2",
-    "tll_slk-13.smt2",
-    "skl2-vc03.smt2",
-    "skl3-vc04.smt2",
+    #"tll-ravioli.smt2",
+    #"tll_slk-13.smt2",
+    #"skl2-vc03.smt2",
+    #"skl3-vc04.smt2",
     "skl3-vc05.smt2",
     "skl3-vc06.smt2",
     "skl3-vc07.smt2",
     "skl3-vc08.smt2",
     "skl3-vc09.smt2",
-    "succ-circuit03.defs.smt2",
-    "succ-circuit04.defs.smt2",
+    #"succ-circuit03.defs.smt2",
+    #"succ-circuit04.defs.smt2",
     "succ-circuit05.defs.smt2",
     "succ-circuit06.defs.smt2",
     "succ-circuit07.defs.smt2",
@@ -218,7 +222,7 @@ if ($test_all) {
     "succ-circuit18.defs.smt2",
     "succ-circuit19.defs.smt2",
     "succ-circuit20.defs.smt2",
-    "succ-rec05.defs.smt2",
+    #"succ-rec05.defs.smt2",
     "succ-rec06.defs.smt2",
     "succ-rec07.defs.smt2",
     "succ-rec08.defs.smt2",
@@ -310,9 +314,9 @@ foreach my $smt2_file (@smt2_files) {
     if (my $pid = fork) { # Parent
       try {
         local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
-        alarm $timeout;
+        alarm($timeout);
         waitpid($pid, 0);
-        alarm 0;
+        alarm(0);
         close(WRITEME);
         while (<README>) {
           $output .= $_;
