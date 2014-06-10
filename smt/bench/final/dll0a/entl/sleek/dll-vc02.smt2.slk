@@ -14,3 +14,4 @@ checkentail_exact x_emp::Dll_t<next = w_emp,prev = z_emp> *
          |- x_emp::dll<y_emp,z_emp,z_emp>.
 
 expect Fail. //lsh miss non-touch condition w_emp != z_emp
+

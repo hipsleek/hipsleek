@@ -108,10 +108,7 @@ if ($test_all) {
     "dll-rev-entails-dll-mid.smt2",
     "dll-rev-entails-dll.smt2",
     "dll-spaghetti-existential.smt2",
-    "dll-vc02.smt2",
     "dll-vc06.smt2",
-    "dll-vc07.smt2",
-    "dll-vc08.smt2",
     "dll-vc11.smt2",
     "dll2-entails-dll2-rev.smt2",
     "dll2-rev-entails-dll2.smt2",
@@ -256,7 +253,10 @@ if ($test_all) {
     "clones-09-e10.tptp.smt2",
     "clones-10-e07.tptp.smt2",
     "clones-10-e09.tptp.smt2",
-    "clones-10-e10.tptp.smt2"
+    "clones-10-e10.tptp.smt2",
+    "dll-vc02.smt2",
+    "dll-vc07.smt2",
+    "dll-vc08.smt2",
     );
   }
   foreach my $test_file (@test_files) {
