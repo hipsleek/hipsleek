@@ -36,3 +36,5 @@ when the 2nd and 3rd exntailment succeeds?
 
 */
 
+checkentail x::node<a>*a::node<b> |- (exists c: x::foo<c> * c::node<_>).
+print residue.

@@ -2383,11 +2383,11 @@ and find_m_prop_heap_x params eq_f h =
             let res = List.map (fun v -> C.mk_mater_prop v true []) l in
             res (*TOCHECK: currently ignore resource*)
       | CF.DataNode h ->
-            let l = eq_f h.CF.h_formula_data_node in
+            let l = if (Immutable.isLend h.CF.h_formula_data_imm) then [] else eq_f h.CF.h_formula_data_node in
             Debug.tinfo_hprint (add_str "data:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             List.map (fun v -> C.mk_mater_prop v true []) l 
       | CF.ViewNode h -> 
-            let l = eq_f h.CF.h_formula_view_node in
+            let l = if (Immutable.isLend h.CF.h_formula_view_imm) then [] else eq_f h.CF.h_formula_view_node in
             Debug.tinfo_hprint (add_str "view:l" (Cprinter.string_of_spec_var_list)) l no_pos;
             if l==[] then []
             else
