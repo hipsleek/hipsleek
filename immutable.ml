@@ -779,7 +779,7 @@ and propagate_imm_formula (f : formula) (view_name: ident) (imm : CP.ann) (imm_p
    Debug.no_4 "propagate_imm_formula" 
       (add_str "formula" (Cprinter.string_of_formula)) 
       (add_str "view_name" pr_id) 
-      (add_str "imm" (Cprinter.string_of_imm)) 
+      (add_str "imm" (Cprinter.string_of_imm_ann)) 
       (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
       (Cprinter.string_of_formula) 
        propagate_imm_formula_x f view_name imm imm_p
@@ -820,7 +820,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
 			ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);})
           else
             let new_node_imm = imm in
-            let new_args_imm = List.fold_left (fun acc (fr,t) -> 
+            let new_args_imm = List.fold_left (fun acc (fr,t) ->
                 if (Gen.BList.mem_eq CP.eq_annot_arg fr (CF.get_node_annot_args f)) then acc@[t] else acc) []  imm_p in
             (* andreeac: why was below needed? *)
           (* match f1.Cformula.h_formula_view_imm with *)
@@ -831,7 +831,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
 	  (*             | CP.ConstAnn _ -> imm *)
 	  (*             | _ -> f1.Cformula.h_formula_view_imm  *)
 	  (*         end *)
-          ViewNode({f1 with h_formula_view_imm = new_node_imm;
+          ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
               h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
           })
     | DataNode f1 -> 

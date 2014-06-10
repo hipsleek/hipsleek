@@ -568,8 +568,8 @@ let rec string_of_imm_helper imm =
     | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 let rec string_of_imm imm = 
-  if not !print_ann then ""
-  else string_of_imm_helper imm
+  (* if not !print_ann then "" *)
+  (* else *) string_of_imm_helper imm
 
 let rec string_of_imm_ann imm = 
   match imm with

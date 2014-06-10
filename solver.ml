@@ -2204,8 +2204,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                       end
                 | Some vd -> vd in
               (* is there a benefit for using case-construct during folding? *)
-              let view_formula =  Cvutil.remove_imm_from_struc_formula prog vdef.Cast.view_formula (CP.ConstAnn(Lend)) in
-              let brs = filter_branches r_brs (* vdef.Cast. *)view_formula in
+              let brs = filter_branches r_brs vdef.Cast.view_formula in
               (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
               let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
               (*let form = Cformula.case_to_disjunct brs in *)
@@ -2243,7 +2242,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let uni_vars = vdef.view_uni_vars in
               let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
               let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
-              let view_form = add_mix_formula_to_struc_formula to_fold_view view_form 
+              let view_form = add_mix_formula_to_struc_formula to_fold_view view_form  
               in
               (*propagate*)
               let view_form = 
@@ -2303,7 +2302,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let _ = Debug.ninfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
               let _ = Debug.ninfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
               let new_ctx = Ctx new_es in
-              let _ = Debug.ninfo_hprint (add_str "view_form" Cprinter.string_of_struc_formula) view_form no_pos in
+              let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
               (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
               let rels = Infer.collect_rel_list_context rs0 in
