@@ -321,8 +321,16 @@ let filter_match_res_list lst rhs_node =
   match rhs_node with
     | HRel _ ->    List.filter (fun m -> is_match_res_from_coerc_or_root m) lst
     | _      ->  lst
-(*  (resth1, anode, r_flag, phase, ctx) *)   
-let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
+(*  (resth1, anode, r_flag, phase, ctx) *)
+
+(* 
+ * Trung, delete later: 
+ *   - Choose context, requires rhs_node is either a HRel or a Node (Data, View, Thread)
+ *   - In acc-fold: choose_context must allow rhs_node is a general heap formula
+ *     (or a chain of heap nodes and views )
+ *)
+let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos
+    : match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
     | HRel _  
@@ -382,7 +390,8 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
     (* | HRel _ -> [] *) (* spatial_ctx_extract prog lhs_h paset CF.ConstAnn(Mutable) [] rhs_node rhs_rest *)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
-and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
+and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos
+    :  match_res list =
   let psv =  Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
   let pr1 = Cprinter.string_of_h_formula in
@@ -520,6 +529,7 @@ and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cfo
   rn - right node
   rr - right rest
 *)
+(* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
 and spatial_ctx_extract p f a i pi rn rr lhs_p = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -727,152 +737,171 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:
   cmml(* @cmmr *)
 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap: match_res list  =
-  let rec helper f = match f with
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list)
+    (imm : CP.ann) (pimm : CP.ann list) rhs_node rhs_rest emap
+    : match_res list  =
+  let rec helper f = match f with    (* f is formula in LHS *)
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
-    | ThreadNode ({h_formula_thread_node = p1;}) ->
-        begin
-            match rhs_node with
-              | HRel _ -> []
-              | ThreadNode _ -> (*TOCHECK*)
-                  [(HEmp, f, [], Root)]
-              | _      ->
-                  if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-                    if (not !Globals.allow_field_ann) then (* not consuming the node *)
-	                  let hole_no = Globals.fresh_int() in 
-	                  [((Hole hole_no), f, [(f, hole_no)], Root)]
-                    else
-                      [(HEmp, f, [], Root)]
-                  else []
-        end
+    | ThreadNode ({h_formula_thread_node = p1;}) -> (
+        match rhs_node with
+        | HRel _ -> []
+        | ThreadNode _ -> (*TOCHECK*)
+            [(HEmp, f, [], Root)]
+        | _      ->
+            if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+              if (not !Globals.allow_field_ann) then
+                (* not consuming the node *)
+                let hole_no = Globals.fresh_int() in 
+                [((Hole hole_no), f, [(f, hole_no)], Root)]
+              else
+                [(HEmp, f, [], Root)]
+            else []
+      )
     | DataNode ({h_formula_data_node = p1; 
-      h_formula_data_imm = imm1;
-      h_formula_data_param_imm = pimm1}) ->
-          begin
-            match rhs_node with
-              | HRel _ -> []
-              | _      ->
-	  (* imm1 = imm annotation on the LHS
-	     imm = imm annotation on the RHS *) 
-	  (* let subtyp = subtype_ann imm1 imm in *)
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	    (* let field_ann = false in *)
-	    
-                      if ( (not !Globals.allow_field_ann) && produces_hole imm) then (* not consuming the node *)
-	          let hole_no = Globals.fresh_int() in 
-	          [((Hole hole_no), f, [(f, hole_no)], Root)]
-            else
-              (*if (!Globals.allow_field_ann) then
-                let new_f = update_ann f pimm1 pimm in
-	        [(new_f,f,[],Root)]
-	        else*)
-              [(HEmp, f, [], Root)]
-          else []
-          end
+                 h_formula_data_imm = imm1;
+                 h_formula_data_param_imm = pimm1}) -> (
+        match rhs_node with
+        | HRel _ -> []
+        | _      ->
+            if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+              if ( (not !Globals.allow_field_ann) && produces_hole imm) then
+                (* not consuming the node *)
+                let hole_no = Globals.fresh_int() in 
+                [((Hole hole_no), f, [(f, hole_no)], Root)]
+              else
+                (*if (!Globals.allow_field_ann) then
+                  let new_f = update_ann f pimm1 pimm in
+                  [(new_f,f,[],Root)]
+                  else*)
+                [(HEmp, f, [], Root)]
+            else []
+      )
     | ViewNode ({h_formula_view_node = p1;
-      h_formula_view_imm = imm1;
-      h_formula_view_perm = perm1;
-      h_formula_view_arguments = vs1;
-      h_formula_view_name = c}) as v ->
-          let anns = get_node_annot_args f in
-          begin
-            match rhs_node with
-              | HRel (hp,_,_) ->  
-                    let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
-                    let p1_eq = p1::p1_eq in
-                    let cmm = coerc_mater_match_with_unk_hp prog c (CP.name_of_spec_var hp) vs1 [] aset f f0 p1_eq in 
-                    cmm
-              | _ -> 
-                    (* if (subtype_ann imm1 imm) then *)
-                    if (CP.mem p1 aset) then
-                      (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-                      if produces_hole imm && not(!Globals.allow_field_ann) then
-	                (* let _ = print_string("imm = Lend " ^ "\n") in *)
-                        let hole_no = Globals.fresh_int() in
-                        (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-                        [(Hole hole_no, f, [(f, hole_no)], Root)]
-                      else
-                        [(HEmp, f, [], Root)]
-                    else
-                      let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
-                      let cmm = coerc_mater_match_gen c vs1 aset f in 
-                      (*LDK: currently, assume that frac perm does not effect 
-                        the choice of lemmas (coercions)*)
-                      vmm@cmm
-          end
-              (* else [] *)
+                 h_formula_view_imm = imm1;
+                 h_formula_view_perm = perm1;
+                 h_formula_view_arguments = vs1;
+                 h_formula_view_name = c}) as v -> (
+        let anns = get_node_annot_args f in
+        match rhs_node with
+        | HRel (hp,_,_) ->  
+            let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
+            let p1_eq = p1::p1_eq in
+            let cmm = coerc_mater_match_with_unk_hp prog c 
+                (CP.name_of_spec_var hp) vs1 [] aset f f0 p1_eq in 
+            cmm
+        | _ -> 
+            (* if (subtype_ann imm1 imm) then *)
+            if (CP.mem p1 aset) then
+              (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
+              if produces_hole imm && not(!Globals.allow_field_ann) then
+              (* let _ = print_string("imm = Lend " ^ "\n") in *)
+                let hole_no = Globals.fresh_int() in
+                (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
+                [(Hole hole_no, f, [(f, hole_no)], Root)]
+              else
+                [(HEmp, f, [], Root)]
+            else
+              let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
+              let cmm = coerc_mater_match_gen c vs1 aset f in 
+              (*LDK: currently, assume that frac perm does not effect 
+                the choice of lemmas (coercions)*)
+              vmm@cmm
+      )
     | HRel (hp,e,_) -> 
-          (* let e =  *)
-          spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap
+        spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset f f0 emap
     | Star ({h_formula_star_h1 = f1;
-      h_formula_star_h2 = f2;
-      h_formula_star_pos = pos}) ->
-          let l1 = helper f1 in
-          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
-          let l2 = helper f2 in
-          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
-          res1 @ res2
-    | StarMinus ({h_formula_starminus_h1 = f1;
-      h_formula_starminus_h2 = f2;
-      h_formula_starminus_aliasing = al;
-      h_formula_starminus_pos = pos}) ->
-          let l1 = helper f1 in
-          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)) l1 in  
-          let l2 = helper f2 in
-          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)) l2 in
-          res1 @ res2
-    | Conj({h_formula_conj_h1 = f1;
-      h_formula_conj_h2 = f2;
-      h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 
+             h_formula_star_h2 = f2;
+             h_formula_star_pos = pos}) ->
         let l1 = helper f1 in
-        let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
+        let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
+          (mkStarH lhs1 f2 pos, node1, hole1, match1)
+        ) l1 in  
+        let l2 = helper f2 in
+        let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
+          (mkStarH f1 lhs2 pos, node2, hole2, match2)
+        ) l2 in
+        res1 @ res2
+    | StarMinus ({h_formula_starminus_h1 = f1;
+                  h_formula_starminus_h2 = f2;
+                  h_formula_starminus_aliasing = al;
+                  h_formula_starminus_pos = pos}) ->
+        let l1 = helper f1 in
+        let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
+          (mkStarMinusH lhs1 f2 al pos 12 , node1, hole1, match1)
+        ) l1 in  
+        let l2 = helper f2 in
+        let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
+          (mkStarMinusH f1 lhs2 al pos 13, node2, hole2, match2)
+        ) l2 in
+        res1 @ res2
+    | Conj({h_formula_conj_h1 = f1;
+            h_formula_conj_h2 = f2;
+            h_formula_conj_pos = pos}) ->
+        if (!Globals.allow_mem) then 
+          let l1 = helper f1 in
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
             if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
               let ramify_f2 = mkStarMinusH f2 node1 May_Aliased pos 37 in
               (mkConjH lhs1 ramify_f2 pos , node1, hole1, match1)
-            else (mkConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
-        let l2 = helper f2 in
-        let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
+            else (mkConjH lhs1 f2 pos , node1, hole1, match1)
+          ) l1 in  
+          let l2 = helper f2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
             if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
               let ramify_f1 = mkStarMinusH f1 node2 May_Aliased pos 38 in
               (mkConjH ramify_f1 lhs2 pos , node2, hole2, match2)
             else
-              (mkConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
-        (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
-      	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
-	  let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)
-        res1 @ res2
-      else 
-	let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
-        failwith("[context.ml]: There should be no conj/phase in the lhs at this level 1\n")
-            
+              (mkConjH f1 lhs2 pos , node2, hole2, match2)
+          ) l2 in
+          (*let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in 
+            let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in
+            let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in *)
+          res1 @ res2
+        else 
+          let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
+              ^ (string_of_h_formula f) ^ "\n") in
+          failwith("[context.ml]: There should be no conj/phase in the lhs at this level 1\n")
     | ConjStar({h_formula_conjstar_h1 = f1;
-      h_formula_conjstar_h2 = f2;
-      h_formula_conjstar_pos = pos}) ->  if (!Globals.allow_mem) then 
-        let l1 = helper f1 in
-        let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkConjStarH lhs1 f2 pos , node1, hole1, match1)) l1 in  
-        let l2 = helper f2 in
-        let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkConjStarH f1 lhs2 pos , node2, hole2, match2)) l2 in
-        res1 @ res2
-      else 
-	let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
-        failwith("[context.ml]: There should be no conj/phase in the lhs at this level 2\n")
+                h_formula_conjstar_h2 = f2;
+                h_formula_conjstar_pos = pos}) ->
+        if (!Globals.allow_mem) then 
+          let l1 = helper f1 in
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
+            (mkConjStarH lhs1 f2 pos , node1, hole1, match1)
+          ) l1 in  
+          let l2 = helper f2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
+            (mkConjStarH f1 lhs2 pos , node2, hole2, match2)
+          ) l2 in
+          res1 @ res2
+        else 
+          let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
+              ^ (string_of_h_formula f) ^ "\n") in
+          failwith("[context.ml]: There should be no conj/phase in the lhs at this level 2\n")
             
     | ConjConj({h_formula_conjconj_h1 = f1;
-      h_formula_conjconj_h2 = f2;
-      h_formula_conjconj_pos = pos}) ->  if (!Globals.allow_mem) then 
-        let l1 = helper f1 in
-        let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkConjConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
-        let l2 = helper f2 in
-        let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkConjConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
-        res1 @ res2
-      else 
-	let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
-        failwith("[context.ml]: There should be no conj/phase in the lhs at this level 3\n")          	          					
+                h_formula_conjconj_h2 = f2;
+                h_formula_conjconj_pos = pos}) ->
+        if (!Globals.allow_mem) then 
+          let l1 = helper f1 in
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) ->
+            (mkConjConjH lhs1 f2 pos , node1, hole1, match1)
+          ) l1 in  
+          let l2 = helper f2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) ->
+            (mkConjConjH f1 lhs2 pos , node2, hole2, match2)
+          ) l2 in
+          res1 @ res2
+        else 
+          let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = "
+              ^ (string_of_h_formula f) ^ "\n") in
+          failwith("[context.ml]: There should be no conj/phase in the lhs at this level 3\n")
     | _ -> 
-          let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = "
+              ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
   in
   let l = helper f0 in
@@ -885,11 +914,12 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
-      match_res_lhs_rest = lhs_rest;
-      match_res_holes = holes;
-      match_res_type = mt;
-      match_res_rhs_node = rhs_node;
-      match_res_rhs_rest = rhs_rest;}) l
+        match_res_lhs_rest = lhs_rest;
+        match_res_holes = holes;
+        match_res_type = mt;
+        match_res_rhs_node = rhs_node;
+        match_res_rhs_rest = rhs_rest;}
+  ) l
 
 (*
   In the presence of permissions,
@@ -1121,7 +1151,10 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         ((dl_flag==false && (dl_origins!=[])) 
                         || ((dr_flag==false && dr_origins!=[])))) then [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else 
-                      if (String.compare dl_name dr_name)==0 then [(0,M_match m_res)]
+                      if (String.compare dl_name dr_name)==0 
+                      then 
+                        (* temp change to 0 to give fold higher priority *)
+                        [(1,M_match m_res)]
                       else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
                   in
 		  let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
@@ -1203,18 +1236,11 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                       else if (is_l_lock && is_r_lock && not vr_view_orig) then false
                       else (vl_view_orig || vr_view_orig)
                   in
-                  let _ = Debug.tinfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                   let l2 = 
                     if flag  then 
                       [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else
-                      (* using || results in some repeated answers but still terminates *)
-                      let a1 = (1,M_base_case_unfold m_res) in
+                      let a1 = (2,M_base_case_unfold m_res) in
                       let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
 		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
@@ -1288,12 +1314,49 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                   let uf_i = if new_orig then 0 else 1 in
                                   [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                                 else
-                                  [(1,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
+                                  [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
                               in
                               (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                               (*L2: change here for cyclic*)
                               [(1,Cond_action lst)]
                   in
+                  (* using || results in some repeated answers but still terminates *)
+                  let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                  let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
+                  let flag = 
+                    if !ann_derv 
+                    then (not(vl_view_derv) && not(vr_view_derv)) 
+                      (* else (vl_view_orig || vr_view_orig) *)
+                    else
+                      (*only apply a SPLIT lemma to a lock
+                        if both sides are original*)
+                      (* if (is_l_lock) then *)
+                      (*   (vl_view_orig && vr_view_orig) *)
+                      (*if RHS is original --> SPLIT*)
+                      if (is_l_lock && is_r_lock && vr_view_orig) then
+                        true
+                      else if (is_l_lock && is_r_lock && not vr_view_orig) then
+                        false
+                      else
+                        (vl_view_orig || vr_view_orig)
+                  in
+                  let l3 = if flag
+                  then begin
+                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
+                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
+                        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
+                        else (1,M_lemma (m_res,Some l))) left_ls else [] in
+                    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
+                    let right_act =  
+                      List.fold_left (fun acc l -> 
+                          if  (vr_new_orig || (non_loop_candidate l)) then
+                            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
+                            acc@[(prio,M_lemma (m_res,Some l))]
+                          else acc) [] right_ls
+                    in
                   (*let l4 = 
                   (* TODO WN : what is original?? *)
                   (* Without it, run-fast-test of big imm runs faster while
@@ -1362,7 +1425,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                            in
                            acts
                          else
-                        [(1,M_fold m_res)]
+                           (* fold to activate/change  *)
+                           [(1,M_fold m_res)]
                       else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)
@@ -1495,7 +1559,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | Coerc_mater s -> 
                           let _ = pr_debug "selected lemma XX\n" in  
                           M_lemma (m_res,Some s)) in
-                  let l1 = if !dis_base_case_unfold then  [] else [(1,M_base_case_unfold m_res)] in
+                  let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
                   (-1, (Search_action ((1,a1)::l1)))
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
@@ -1521,7 +1585,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let a2 = 
                     (match ms with
                       | View_mater -> (uf_i,M_unfold (m_res,uf_i))
-                      | Coerc_mater s -> (uf_i,M_lemma (m_res,Some s))) in
+                      | Coerc_mater s -> (* (uf_i,M_lemma (m_res,Some s))) in *)
+                            (1,M_lemma (m_res,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
                   let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
                   let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
@@ -1541,7 +1606,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         (-1, (Cond_action (a2::l1)))
                     else
                       let _ = pr_debug ("Sel (cond) 3:"^(string_of_int uf_i)) in
-                      let l1 = if !dis_base_case_unfold then [] else [(1,M_base_case_unfold m_res)] in
+                      let l1 = if !dis_base_case_unfold then [] else [(5,M_base_case_unfold m_res)] in
                       (* (-1, (Search_action (a2::l1))) *)
                       (5, (Cond_action (a2::l1)))
                   in a1
@@ -1907,7 +1972,10 @@ and pick_unfold_only ((w,a):action_wt) : action_wt list =
 
 (* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
 
-and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos :action =
+and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
+    (rhs_lst : (CF.h_formula * CF.h_formula) list)
+    is_normalizing conseq pos
+    : action =
   let opt = 
     if not(must_action_stk # is_empty) then
       let a = must_action_stk # top in
@@ -1915,7 +1983,9 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_
     else None
   in
   (* let _ = print_string ("\n(andreeac) context.ml l_h:"  ^ (Cprinter.string_of_h_formula lhs_h)) in *)
-  let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
+  let r = List.map (fun (c1,c2)->
+    (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos , (c1,c2))
+  ) rhs_lst in
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
   (*   | x::[]-> process_matches lhs_h x *)
@@ -1966,13 +2036,13 @@ and drop_low ys =
 
 
 and compute_actions prog estate es (* list of right aliases *)
-      lhs_h (*lhs heap *) 
-      lhs_p (*lhs pure*) 
-      rhs_p (*rhs pure*)
-      posib_r_alias (*possible rhs variables*)
-      rhs_lst is_normalizing 
-      (conseq:CF.formula)
-      pos =
+    lhs_h (*lhs heap *) 
+    lhs_p (*lhs pure*) 
+    rhs_p (*rhs pure*)
+    posib_r_alias (*possible rhs variables*)
+    (rhs_lst : (CF.h_formula * CF.h_formula) list)
+    is_normalizing (conseq:CF.formula) pos
+    : action =
   let psv = Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
   (* let pr_rhs_lst = pr_list (pr_pair Cprinter.string_of_h_formula Cprinter.string_of_h_formula) in *)
@@ -2107,7 +2177,9 @@ let rec pr_node_res (e:deprecated_find_node_result) =
 let string_of_node_res e = poly_string_of_pr pr_node_res e
 
 let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
-  let node = match node with | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v} | _ -> report_error pos "deprecated_find_node_one error" in
+  let node = match node with 
+  | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v}
+  | _ -> report_error pos "deprecated_find_node_one error" in
   let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HEmp pos in
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches

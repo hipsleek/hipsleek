@@ -2273,16 +2273,16 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
       let push_v v f_with_fv =
         let rel_f, nonrel_f = List.partition (fun (fvs, f) -> mem v fvs) f_with_fv in
         let rel_fvs, rel_f = List.split rel_f in
-        ((Gen.BList.difference_eq eq_spec_var (List.concat rel_fvs) [v]), 
+        ((Gen.BList.difference_eq eq_spec_var (List.concat rel_fvs) [v]),
         (Exists (v, join_conjunctions rel_f, lbel, pos)))::nonrel_f
-      in join_conjunctions (snd (List.split 
+      in join_conjunctions (snd (List.split
         ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
-and mkExists vs f lbel pos = 
+and mkExists vs f lbel pos =
 	Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs f lbel pos) vs f
-      
+
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
-      
+
 and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest ->
@@ -2479,8 +2479,10 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
   let rec helper e1 e2 =
     match (e1, e2) with
       | (Null(_), Null(_)) -> true
+      | (Null(_), Var(sv, _)) -> (name_of_spec_var sv) = "null"
+      | (Var(sv, _), Null(_)) -> (name_of_spec_var sv) = "null"
       | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
-    | (Level(sv1, _), Level(sv2, _)) -> (eq sv1 sv2)
+      | (Level(sv1, _), Level(sv2, _)) -> (eq sv1 sv2)
       | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
       | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
       | (Tsconst(t1,_), Tsconst(t2,_)) -> Tree_shares.Ts.eq t1 t2
@@ -4297,6 +4299,7 @@ struct
   let compare = compare_spec_var
   let string_of = string_of_spec_var
   let conv_var x = x
+  let conv_var_pairs x = x
   let from_var x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =

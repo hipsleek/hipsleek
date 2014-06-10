@@ -8,7 +8,7 @@ pred dll<bk:Dll_t,pr:Dll_t,nx:Dll_t> ==
  self = nx & bk = pr
 or (exists u: self::Dll_t<next = u,prev = pr> * u::dll<bk,self,nx> & self != nx).
 
-checkentail x::Dll_t<next = x1,prev = null> *
+checkentail_exact x::Dll_t<next = x1,prev = null> *
             x1::Dll_t<next = x2,prev = x> *
             x2::Dll_t<next = x3,prev = x1> *
             x3::Dll_t<next = x4,prev = x2> *

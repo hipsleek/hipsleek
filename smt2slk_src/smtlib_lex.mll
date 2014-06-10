@@ -8,7 +8,7 @@ rule token = parse
 | ['\t' ' ' ]+ { token lexbuf }
 | ';'  (_ # '\n')* { token lexbuf }
 | "(set-logic" (_ # ')')* ')' { token lexbuf }
-| "(set-info" (_ # ')')* ')' { token lexbuf }
+(* | "(set-info" (_ # ')')* ')' { token lexbuf } *)
 | ['\n']+ as str { Smtlib_util.line := (!Smtlib_util.line + (String.length str)); token lexbuf }
 | ['\r''\n']+ as str { Smtlib_util.line := (!Smtlib_util.line + (String.length str)); token lexbuf }
 | "|" { BAR }
@@ -41,7 +41,8 @@ rule token = parse
 | "exit" { EXIT }
 |  '#' 'x' ['0'-'9' 'A'-'F' 'a'-'f']+  as str { HEXADECIMAL(str) }
 |  '#' 'b' ['0'-'1']+  as str { BINARY(str) }
-|  '|' ([ '!'-'~' ' ' '\n' '\t' '\r'] # ['\\' '|'])* '|'  as str { ASCIIWOR(str) }
+(* |  '|' ([ ',' '!'-'~' ' ' '\n' '\t' '\r'] # ['\\' '|'])* '|'  as str { ASCIIWOR(str) } *)
+|  '|' (_ # '|')* '|'  as str { ASCIIWOR(str) }
 |  ':' ['a'-'z' 'A'-'Z' '0'-'9' '+' '-' '/' '*' '=' '%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']+  as str { KEYWORD(str) }
 |  ['a'-'z' 'A'-'Z' '+' '-' '/' '*' '=''%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@'] ['a'-'z' 'A'-'Z' '0'-'9' '+' '-' '/' '*' '=''%' '?' '!' '.' '$' '_' '~' '&' '^' '<' '>' '@']*  as str { SYMBOL(str) }
 |  '"' (([ '!'-'~' ' ' '\n' '\t' '\r' ] # ['\\' '"']) | ('\\' ['!'-'~' ' ' '\n' '\t' '\r'] ))* '"' as str { STRINGLIT(str) }

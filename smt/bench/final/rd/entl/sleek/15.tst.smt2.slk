@@ -9,5 +9,7 @@ pred BinPath<y:GTyp> ==
 or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * xp::BinPath<y> & null != self)
 or (exists xp,yp: self::GTyp<f0 = xp,f1 = yp> * yp::BinPath<y> & null != self).
 
-checkentail x::BinPath<z> * z::BinPath<y>
+checkentail_exact x::BinPath<z> * z::BinPath<y>
          |- x::BinPath<y>.
+
+expect Valid.

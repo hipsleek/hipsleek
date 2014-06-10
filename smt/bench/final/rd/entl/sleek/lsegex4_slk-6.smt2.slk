@@ -22,6 +22,7 @@ pred right4<> ==
 pred right5<> ==
 (exists w: self::lseg<w>).
 
-checkentail x::lseg<p>
+checkentail_exact x::lseg<p>
          |- x::right5<>.
+
 expect Valid.

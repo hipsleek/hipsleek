@@ -11,5 +11,7 @@ or (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::ListE<y> & null != self).
 pred ListE<y:GTyp> ==
 (exists xp: self::GTyp<f0 = xp,f1 = _> * xp::ListO<y> & null != self).
 
-checkentail x::ListE<y> * y::ListO<z>
+checkentail_exact x::ListE<y> * y::ListO<z>
          |- x::ListO<z>.
+
+expect Valid.

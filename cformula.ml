@@ -305,6 +305,7 @@ approx_formula_and_a2 : approx_formula }
 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
 let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
 let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
@@ -10930,13 +10931,19 @@ let type_of_formula (f: formula) : formula_type =
   let pr2 = !print_formula_type in
   Debug.no_1 "type_of_formula" pr1 pr2 type_of_formula f
 
-let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
+let struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
   let ifo = (struc_to_formula_gen f0) in
   List.map (fun (c1,c2)-> 
 	let c2 = List.fold_left (fun a c2-> match c2 with | None -> a | Some s-> s::a) [] c2 in
 	match c2 with
 	| [x] -> (c1,x)
+        (* | []  -> (c1,fresh_formula_label "") (\* andreea: To check if this is correct *\) *)
 	| _ ->  Err.report_error {Err.error_loc = no_pos;  Err.error_text = " mismatch in view labeling \n"} ) ifo
+
+let struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
+  let pr1 = !print_struc_formula in
+  let pr2 = pr_list (pr_pair !print_formula !print_formula_label) in
+  Debug.no_1 "struc_to_view_un_s" pr1 pr2  struc_to_view_un_s f0
 
 (* proc will convert implicit/explicit vars to existential *)
 let rec struc_to_formula_x (f:struc_formula):formula = match f with
@@ -15742,14 +15749,15 @@ let restore_hole_formula f hole_matching =
 let force_elim_exists_x f quans=
   let ( _,mf,_,_,_) = split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
-  let sst, inter_eqs = List.fold_left (fun (r1,r2) (sv1,sv2) ->
-      let b1 = CP.mem_svl sv1 quans in
-      let b2 = CP.mem_svl sv2 quans in
-      match b1,b2 with
-        | false,true -> (r1@[(sv2,sv1)], r2@[(sv1,sv2)])
-        | true, false -> r1@[(sv1,sv2)], r2@[(sv1,sv2)]
-        | _ -> r1,r2
-  ) ([],[]) eqs in
+  let sst, inter_eqs = if quans = [] then eqs,[] else
+    List.fold_left (fun (r1,r2) (sv1,sv2) ->
+        let b1 = CP.mem_svl sv1 quans in
+        let b2 = CP.mem_svl sv2 quans in
+        match b1,b2 with
+          | false,true -> (r1@[(sv2,sv1)], r2@[(sv1,sv2)])
+          | true, false -> r1@[(sv1,sv2)], r2@[(sv1,sv2)]
+          | _ -> r1,r2
+    ) ([],[]) eqs in
   (* let ps = List.map  (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) inter_eqs in *)
   simplify_pure_f (subst sst f)(* ,  Mcpure.mix_of_pure (CP.conj_of_list ps no_pos ) *)
 

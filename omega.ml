@@ -212,8 +212,11 @@ let omega_of_formula_old i f  =
 (*   let pr = !print_formula in *)
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
+let is_local_solver = ref (false: bool)
 
- let omegacalc = ref ("oc":string)
+(* let omegacalc = if (Sys.file_exists "oc") then ref ("./oc":string) *)
+(* else ref ("oc":string) *)
+let omegacalc = ref ("oc":string)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
 (* let omegacalc = ref ("/home/locle/workspace/hg/cparser-1/sleekex/omega_modified/omega_calc/obj/oc": string) *)

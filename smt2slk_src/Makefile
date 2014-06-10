@@ -5,28 +5,28 @@ $(NAME): $(NAME)_util.cmo $(NAME)_syntax.cmo $(NAME)_parse.cmo $(NAME)_lex.cmo $
 	ocamlc -o smt2slk $(NAME)_util.cmo $(NAME)_syntax.cmo $(NAME)_parse.cmo $(NAME)_lex.cmo $(NAME)_pp.cmo $(NAME)_translate.cmo $(NAME)_main.cmo
 
 $(NAME)_main.cmo: $(NAME)_main.ml $(NAME)_parse.cmo $(NAME)_lex.cmo
-	ocamlc -c $(NAME)_main.ml
+	ocamlc -c -annot $(NAME)_main.ml
 
 $(NAME)_syntax.cmo: $(NAME)_syntax.ml $(NAME)_util.cmo
-	ocamlc -c $(NAME)_syntax.ml
+	ocamlc -c -annot $(NAME)_syntax.ml
 
 $(NAME)_pp.cmo: $(NAME)_pp.ml $(NAME)_syntax.cmo
-	ocamlc -c $(NAME)_pp.ml
+	ocamlc -c -annot $(NAME)_pp.ml
 
 $(NAME)_translate.cmo: $(NAME)_translate.ml $(NAME)_syntax.cmo
-	ocamlc -c $(NAME)_translate.ml
+	ocamlc -c -annot $(NAME)_translate.ml
 
 $(NAME)_eq.cmo: $(NAME)_eq.ml $(NAME)_syntax.cmo
-	ocamlc -c $(NAME)_eq.ml
+	ocamlc -c -annot $(NAME)_eq.ml
 
 $(NAME)_util.cmo: $(NAME)_util.ml
-	ocamlc -c $(NAME)_util.ml
+	ocamlc -c -annot $(NAME)_util.ml
 
 $(NAME)_lex.cmo: $(NAME)_lex.ml
-	ocamlc -c $(NAME)_lex.ml
+	ocamlc -c -annot $(NAME)_lex.ml
 
 $(NAME)_parse.cmo: $(NAME)_parse.ml $(NAME)_parse.cmi
-	ocamlc -c $(NAME)_parse.ml
+	ocamlc -c -annot $(NAME)_parse.ml
 
 $(NAME)_parse.cmi: $(NAME)_parse.mli
 	ocamlc -c $(NAME)_parse.mli
@@ -41,11 +41,11 @@ clean:
 	rm -f $(NAME)_lex.ml $(NAME)_parse.mli $(NAME)_parse.ml *.cmo *.cmi *.output smt2slk
 
 install:
-	chmod uog+x trans.plx
+	chmod uog+x trans2slk.plx
 	chmod uog+x trans2smt.plx
-	sudo cp compile /usr/local/bin
+	sudo cp smt2slk /usr/local/bin
 	sudo cp ../sleek /usr/local/bin
-	sudo cp trans.plx /usr/local/bin
+	sudo cp trans2slk.plx /usr/local/bin
 	sudo cp trans2smt.plx /usr/local/bin
 
 

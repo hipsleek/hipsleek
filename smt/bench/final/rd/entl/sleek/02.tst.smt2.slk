@@ -8,5 +8,12 @@ pred RList<y:GTyp> ==
  self::GTyp<f0 = y,f1 = _> & null != self
 or (exists xp: xp::GTyp<f0 = y,f1 = _> * self::RList<xp> & xp != null).
 
-checkentail x::RList<y> * y::RList<z>
+/*
+lemma_unsafe  self::RList<y> * y::RList<z>
+         -> self::RList<z>.
+*/
+
+checkentail_exact x::RList<y> * y::RList<z>
          |- x::RList<z>.
+
+expect Valid.

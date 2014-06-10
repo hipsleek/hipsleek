@@ -886,6 +886,8 @@ let allow_frame = ref false
 
 let graph_norm = ref false
 
+let graph_norm_threshold = ref 1
+
 let slice_one = ref (0:int)
 
 let allow_imm = ref false (*imm will delay checking guard conditions*)
@@ -1184,6 +1186,7 @@ let do_infer_inv = ref false
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let smt_compete_mode = ref false
+let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
 
@@ -1193,6 +1196,7 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
+let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
 let baga_xpure = ref true
 
 let dis_inv_baga () = 
@@ -1201,17 +1205,18 @@ let dis_inv_baga () =
 
 let _ = if !smt_compete_mode then
   begin
-          (* Debug.trace_on := false; *)
-          (* Debug.devel_debug_on:= false; *)
-          silence_output:=true;
-          enable_count_stats:=false;
-          enable_time_stats:=false;
-          print_core:=false;
-          print_core_all:=false;
-          gen_baga_inv := true;
-          (* do_infer_inv := true; *)
-          lemma_gen_unsafe := true;
-          smt_compete_mode:=true
+    (* Debug.trace_on := false; *)
+    (* Debug.devel_debug_on:= false; *)
+    silence_output:=true;
+    enable_count_stats:=false;
+    enable_time_stats:=false;
+    print_core:=false;
+    print_core_all:=false;
+    gen_baga_inv := true;
+    (* do_infer_inv := true; *)
+    lemma_gen_unsafe := true;
+    graph_norm := true;
+    smt_compete_mode:=true
   end
 
 (** for type of frame inference rule that will be used in specs commands *)

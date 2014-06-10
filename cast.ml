@@ -1955,8 +1955,8 @@ let vdef_lemma_fold prog coer  =
   (* let rhs = CF.formula_to_struc_formula coer.coercion_body in *)
   let rhs = (* CF.formula_to_struc_formula *) coer.coercion_body_norm in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
-  let _ = Debug.ninfo_hprint (add_str "body" !print_struc_formula) rhs no_pos in
-  if cfd # is_init then cfd # get
+  if cfd # is_init then                 (* how do we use cfd? why do we need it? *)
+    cfd # get
   else
     let vd2 = match lhs with
       | CF.Base bf ->
@@ -1972,14 +1972,16 @@ let vdef_lemma_fold prog coer  =
                         (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
                         let rhs = CF.subst_struc subs rhs in
-                        Some {vd with view_formula = rhs}
+                        (* let un_struc =  CF.struc_to_view_un_s (CF.label_view rhs) in *)
+                        let un_struc =  CF.get_view_branches (CF.label_view rhs) in
+                        Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
                       with  
                         | Not_found -> None
                       )
                 | _ -> None 
             end
       | _ -> None in
-    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
+    (* let _ = Debug.info_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
     let _ = cfd # set vd2 in
     vd2
 
@@ -2546,7 +2548,7 @@ let is_complex_entailment_4graph prog ante conseq=
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
- *    - generated disequality constrains between forward_poiters and heap vars
+ *    - generated disequality constrains between forward_poiters and self
  *    - if all the constrains are implied by the pure part of view's definietion,
  *      then the view is nontouching
  *)
@@ -2555,46 +2557,20 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   let vname = vdecl.view_name in
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
-  let is_nontouching_branch branch = (
-    let rec get_possible_touching_vars hf = (match hf with
-      (* base case *)
-      | CF.HEmp | CF.HFalse -> []
-      (* how should HTrue be handled? currently, assuming it is non-touching *)
-      | CF.HTrue -> []
-      (* inductive case *)
-      | CF.Star sf ->
-          let vs1 = get_possible_touching_vars sf.CF.h_formula_star_h1 in
-          let vs2 = get_possible_touching_vars sf.CF.h_formula_star_h2 in
-          Gen.BList.remove_dups_eq P.eq_spec_var (vs1 @ vs2)
-      | CF.DataNode dn -> [dn.CF.h_formula_data_node]
-      | CF.ViewNode { CF.h_formula_view_name = hvname;
-                      CF.h_formula_view_node = hvnode } ->
-          if (String.compare hvname vname) != 0 then
-            [hvnode]
-          else if ((String.compare (P.name_of_spec_var hvnode) self) == 0) then
-            [hvnode]
-          else []
-      | _ -> [] (* just ignore *)
-    ) in
-    let (hf,mf,_,_,_) = CF.split_components branch in
-    let possible_vars = get_possible_touching_vars hf in
-    let nontouching_cond = ( match possible_vars with
-      | [] -> P.mkTrue pos
-      | _ ->
-          let condss = List.map (fun x ->
-            List.map (fun y -> P.mkNeqVar x y pos) forward_ptrs
-          ) possible_vars in
-          let conds = List.concat condss in
-          List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
+  let is_touching_branch branch = (
+    let (_,mf,_,_,_) = F.split_components branch in
+    let self_sv = P.SpecVar (Named vdecl.view_data_name, self, Unprimed) in
+    let nontouching_cond = (
+      let conds = List.map (fun y -> P.mkNeqVar self_sv y pos) forward_ptrs in
+      List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
     ) in
     let pf = MP.pure_of_mix mf in
     (* to ensure nontouching property, the pure part of a branch must *)
     (* imply the nontouching condition                                *)
-    (!imply_raw pf nontouching_cond)
+    not (!imply_raw pf nontouching_cond)
   ) in
   let branches, _ = List.split vdecl.view_un_struc_formula in
-  let nontouching = (List.for_all is_nontouching_branch branches) in
-  not (nontouching)
+  List.for_all is_touching_branch branches
 
 let is_touching_view (vdecl: view_decl) : bool =
   let pr = !print_view_decl in
@@ -2607,25 +2583,26 @@ let is_touching_view (vdecl: view_decl) : bool =
  *     - otherwise return false 
  * + Note: 
  *    - check only inductive cases (contain heap nodes)
- *    - generated equality constrains between cont_vars and null
+ *    - generated equality constrains between forward_pointers and null
  *    - if all the constrains is implied by the pure part of view's definietion,
  *      then the view is nonsegmented
  *)
+(* TRUNG TODO: check segmented condition *)
 let is_segmented_view_x (vdecl: view_decl) : bool =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let pos = vdecl.view_pos in
-  let cont_vars = vdecl.view_cont_vars in
-  let is_nonsegmented_branch branch = (
+  let forward_ptrs = vdecl.view_forward_ptrs in
+  let is_segmented_branch branch = (
     let (_,mf,_,_,_) = CF.split_components branch in
     let pf = MP.pure_of_mix mf in
-    List.for_all (fun sv ->
+    List.exists (fun sv ->
       let null_cond = P.mkNull sv pos in
-      (!imply_raw pf null_cond)
-    ) cont_vars
+      not (!imply_raw pf null_cond)
+    ) forward_ptrs
   ) in
   let branches, _ = List.split vdecl.view_un_struc_formula in
-  let nonsegmented = (List.for_all is_nonsegmented_branch branches) in
-  not (nonsegmented)
+  let segmented = (List.for_all is_segmented_branch branches) in
+  segmented
 
 let is_segmented_view (vdecl: view_decl) : bool =
   let pr = !print_view_decl in
@@ -2869,10 +2846,12 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   let compute_view_direction vg env fw_ptrs fw_fields bw_ptrs bw_fields = (
     Debug.ninfo_hprint (add_str "view graphs: " ViewGraph.string_of_graph) vg no_pos;
 
+    let forward_ptrs = ref [self] in
+    forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
+
     (*
      * find forward_fields: the data-field edge from self to the views have same type
      *)
-    let possible_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
     let forward_fields = ref fw_fields in
     let fw_views = List.concat (List.map (fun v ->
       try
@@ -2893,16 +2872,13 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
       with Not_found ->
         Debug.ninfo_pprint ("not found! " ^ v) no_pos;
         []
-    ) possible_ptrs) in
+    ) !forward_ptrs) in
     Debug.ninfo_hprint (add_str "forward_fields:" (pr_list (fun (x,y) -> x^"."^y)))
         !forward_fields no_pos;
 
     (*
      * Find forward pointers
      *)
-    (* in the segmented predicates, we can use equality graph to find the forward pointers *)
-    let forward_ptrs = ref [self] in
-    forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
     (* find forward poiters from equality or forward_field path *)
     List.iter (fun v1 ->
       List.iter (fun sv ->
@@ -2932,7 +2908,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
       ) vdecl.view_vars
     ) !forward_ptrs;
 
-    Debug.ninfo_hprint (add_str "possible_ptrs 1:" (pr_list pr_id)) possible_ptrs no_pos;
+    let possible_view_ptrs = (ViewGraph.get_vertex_of_type env self_view) in
     let _ = List.iter (fun v ->
       try
         Debug.ninfo_pprint ("find path from self to " ^ v) no_pos;
@@ -2945,13 +2921,37 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
           | ViewGraph.Label.ViewField (_,f) -> [f]
           | _ -> []
         ) path) in
-        if (List.length bw_ptrs > 0) then (
+        if (List.length fw_ptrs > 0) then (
           forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
         )
       with Not_found ->
         Debug.ninfo_pprint ("not found! " ^ v) no_pos;
         ()
-    ) possible_ptrs in
+    ) possible_view_ptrs in
+    
+    (* special case when view_decl haves only 1 cont_vars *)
+    if (List.length vdecl.view_cont_vars = 1) then (
+      let possible_data_ptrs = (ViewGraph.get_vertex_of_type env self_data) in
+      List.iter (fun v ->
+        try
+          Debug.ninfo_pprint ("find path from self to " ^ v) no_pos;
+          let path, weight = Dijkstra.shortest_path vg self v in
+          Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
+                              ^ ", weight: " ^ (string_of_int weight)) no_pos;
+          let fw_ptrs = List.concat (List.map (fun e ->
+            let lbl = ViewGraph.get_label e in
+            match lbl with
+            | ViewGraph.Label.ViewField (_,f) -> [f]
+            | _ -> []
+          ) path) in
+          if (List.length fw_ptrs > 0) then (
+            forward_ptrs := Gen.BList.remove_dups_eq equal_str (!forward_ptrs @ fw_ptrs);
+          )
+        with Not_found ->
+          Debug.ninfo_pprint ("not found! " ^ v) no_pos;
+          ()
+      ) possible_data_ptrs
+    );
 
     (*
      * find backward ptrs: field of the view-edge from ptrs having same type with self back to self

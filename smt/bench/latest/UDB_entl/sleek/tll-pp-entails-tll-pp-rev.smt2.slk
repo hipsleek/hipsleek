@@ -1,0 +1,25 @@
+
+data TLL_t {
+  TLL_t left;
+  TLL_t right;
+  TLL_t next;
+  TLL_t parent;
+}.
+
+pred TLL_plus<par:TLL_t,ll:TLL_t,lr:TLL_t> ==
+ self::TLL_t<left = null,right = null,parent = par,next = lr> & self = ll
+or (exists l,r,z: self::TLL_t<left = l,right = r,parent = par,next = null> * l::TLL_plus<self,ll,z> * r::TLL_plus<self,z,lr>).
+
+pred TLL_aux<p:TLL_t,z:TLL_t,back:TLL_t,top:TLL_t,mright:TLL_t> ==
+ (exists up,r,lr: self::TLL_t<left = back,right = r,parent = up,next = null> * up::TLL_aux<p,lr,self,top,mright> * r::TLL_plus<self,z,lr>)
+or (exists r: self::TLL_t<left = back,right = r,parent = p,next = null> * r::TLL_plus<self,z,mright> & top = self).
+
+pred TLL_plus_rev<p:TLL_t,mleft:TLL_t,mright:TLL_t> ==
+ self::TLL_t<left = null,right = null,parent = p,next = mright> & self = mleft
+or (exists x,up,lr: x::TLL_t<left = null,right = null,parent = up,next = lr> * up::TLL_aux<p,lr,x,self,mright> & x = mleft).
+
+checkentail_exact x::TLL_plus<y,u,v>
+         |- x::TLL_plus_rev<y,u,v>.
+
+expect Valid.
+

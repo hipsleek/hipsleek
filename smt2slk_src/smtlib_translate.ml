@@ -14,6 +14,15 @@ let tbl_vardef  : (string, string) Hashtbl.t = Hashtbl.create 1
 
 let checkentail = ref 0
 
+type status = | Valid | Fail | Unknown
+
+let expected_res = ref Unknown
+
+let string_of_status = function
+  | Valid -> "Valid"
+  | Fail -> "Fail"
+  | _ -> ""
+
 let rec dummy () = ()
 
 and same_symbol sy1 so =
@@ -229,7 +238,8 @@ and trans_command c cl =
   match c with
     | CommandSetLogic _ -> ""
     | CommandSetOption _ -> ""
-    | CommandSetInfo _ -> ""
+    | CommandSetInfo (_, attr) -> 
+          let _ = trans_attr attr in "" 
     | CommandDeclareSort (_, sy, _) ->
           let s1 =  "\ndata " in
           let sy_str = get_str_symbol sy in
@@ -270,18 +280,37 @@ and trans_command c cl =
           if (!checkentail = 0)
           then (
               checkentail := 1;
-              "\ncheckentail " ^ (trans_term term)
+              "\ncheckentail_exact " ^ (trans_term term)
           ) else (
               checkentail := 2;
               "\n         |- " ^ (trans_term term) ^ ".";
           )
     | CommandCheckSat _ ->
-          if (!checkentail = 1)
-          then
-            "\n         |- false."
-          else
-            ""
+          (if (!checkentail = 1)
+          then "\n         |- false."
+          else "") ^ (
+            match !expected_res with
+            | Unknown -> ""
+            | _ -> "\n\n" ^ "expect " ^ (string_of_status !expected_res) ^ "."
+          )
     | _ -> "translate later\n"
+
+and trans_attr attr = 
+  match attr with
+  | AttributeKeywordValue (_, ":status", value) ->
+    begin match value with
+    | AttributeValSymbol (_, symb) ->
+      begin match symb with
+      | Symbol (_, status)
+      | SymbolWithOr (_, status) ->
+        if ((String.compare status "unsat") == 0) then
+          expected_res := Valid
+        else if ((String.compare status "sat") == 0) then
+          expected_res := Fail
+        else ()
+      end
+    | _ -> () end
+  | _ -> ()
 
 and trans_term t =
   match t with
@@ -495,5 +524,5 @@ and trans_commands e =
 
 let trans e =
   let s = trans_commands e in
-  s
+  s ^ "\n\n"
   (* print_string (s ^ "\n") *)

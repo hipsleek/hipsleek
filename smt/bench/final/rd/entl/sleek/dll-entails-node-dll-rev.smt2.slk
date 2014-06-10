@@ -17,7 +17,7 @@ lemma_unsafe  self::DLL_plus<p:DLL_t,tl:DLL_t,n:DLL_t> <->
             self::DLL_plus_rev<p,tl1,n> * n::DLL_plus<tl1,tl,n>.
 */
 
-checkentail a::DLL_plus<null,c,null>
+checkentail_exact a::DLL_plus<null,c,null>
          |- (exists x,n,b: x::DLL_t<next = n,prev = b> * a::DLL_plus_rev<null,b,x> * n::DLL_plus<x,c,null>).
 
 expect Valid.
