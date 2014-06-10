@@ -649,16 +649,16 @@ struct
     let bf = baga_conv (Elt.conv_var baga) in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  let unsat ((baga,eq,ieq) : epure) : bool =
-    (* check null in baga *)
-    (List.exists Elt.is_zero baga) ||
-        (* check if there exists (a,b) in inq and eq *)
-      	List.exists (fun (e1, e2) -> EM.is_equiv eq e1 e2) ieq ||
-        (* check ([b], b=null) *)
-        (List.exists (fun b ->
-            let equiv_b = EM.find_equiv_all b eq in
-            List.exists Elt.is_zero equiv_b
-        ) baga)
+  (* let unsat ((baga,eq,ieq) : epure) : bool = *)
+  (*   (\* check null in baga *\) *)
+  (*   (List.exists Elt.is_zero baga) || *)
+  (*       (\* check if there exists (a,b) in inq and eq *\) *)
+  (*     	List.exists (fun (e1, e2) -> EM.is_equiv eq e1 e2) ieq || *)
+  (*       (\* check ([b], b=null) *\) *)
+  (*       (List.exists (fun b -> *)
+  (*           let equiv_b = EM.find_equiv_all b eq in *)
+  (*           List.exists Elt.is_zero equiv_b *)
+  (*       ) baga) *)
 
   let is_zero b = match b with
     | [] -> false
@@ -924,10 +924,43 @@ struct
     let zs = List.filter (fun x -> not(unsat x)) xs in
     List.sort epure_compare zs 
 
-  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
-    let res =
-      List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
-    List.concat res
+  (* xs --> ys? *)
+  let lst_imply cmp xs ys =
+    let rec aux xs ys =
+      match xs,ys with
+        | _,[] -> true
+        | [],_ -> false
+        | x::xs2,y::ys2 -> 
+              let c = cmp x y in
+              if c==0 then aux xs2 ys2 
+              else if c<0 then aux xs2 ys 
+              else false
+    in aux xs ys
+
+  let pair_compare cmp (a1,a2) (b1,b2) =
+    let c = cmp a1 b1 in
+    if c==0 then cmp a2 b2
+    else c
+
+  (* epure syntactic imply *)
+  let epure_syn_imply (b1,e1,i1) (b2,e2,i2) =
+    let f1 = lst_imply Elt.compare b1 b2 in
+    if f1 then
+      let f2 = lst_imply (pair_compare Elt.compare) i1 i2 in
+      if f2 then true(* TODO : e1 --> e2? *)
+      else false
+    else false
+
+  let syn_imply ep lst =
+    List.exists (fun ep2 -> epure_syn_imply ep ep2) lst
+
+  let epure_disj_syn_imply lst1 lst2 =
+    List.for_all (fun ep -> syn_imply ep lst1) lst1
+
+  (* let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = *)
+  (*   let res = *)
+  (*     List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in *)
+  (*   List.concat res *)
 
   let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
     let res =
