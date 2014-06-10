@@ -1206,13 +1206,13 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let flag = (s_eq && 
                         ((vl_view_orig==false && vl_b) 
                         || ((vr_view_orig==false && vr_b)))) in
-                  let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
-                  let _ = Debug.info_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
-                  let _ = Debug.info_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-                  let _ = Debug.info_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
                   let l2 = 
                     if flag  then 
                       [(0,M_match m_res)] (*force a MATCH after each lemma*)
@@ -1292,8 +1292,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   (* using || results in some repeated answers but still terminates *)
                   let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-                  let _ = Debug.info_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
-                  let _ = Debug.info_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
