@@ -6,8 +6,8 @@ http://www.liafa.univ-paris-diderot.fr/spen
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status unknown)
-(set-info :version "2014-05-28")
+(set-info :status unsat)
+(set-info :version "2014-06-09")
 
 
 (declare-sort Dll_t 0)

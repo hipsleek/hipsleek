@@ -6,8 +6,8 @@ http://www.liafa.univ-paris-diderot.fr/spen
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status unknown)
-(set-info :version "2014-05-28")
+(set-info :status unsat)
+(set-info :version "2014-06-09")
 
 
 (declare-sort Dll_t 0)
@@ -18,7 +18,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; doubly-linked list
 (define-fun dll ((?fr Dll_t) (?bk Dll_t) (?pr Dll_t) (?nx Dll_t))
   Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr)) 
-    (exists ((?u Dll_t)) (and (distinct ?fr ?nx)
+    (exists ((?u Dll_t)) (and (distinct ?fr ?nx)  (distinct ?bk ?pr)
       (tobool (ssep
       (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
       (dll ?u ?bk ?fr ?nx))
@@ -34,11 +34,12 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; unfolding at start of a circular dll(x,y,y,x)
 ;
 (assert
+    (and (distinct w_emp x_emp) (distinct w_emp t_emp)
     (tobool (ssep (pto w_emp (sref (ref next t_emp) (ref prev u_emp))) 
                   (dll x_emp u_emp y_emp w_emp)
                   (dll t_emp y_emp w_emp x_emp)
             )
-    )
+    ))
 )
 (assert
   (not

@@ -6,7 +6,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status unknown)
+(set-info :status unsat)
 (set-info :version "2014-05-28")
 
 (declare-sort Dll_t 0)
@@ -16,7 +16,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 
 ; doubly-linked list
 (define-fun dll ((?fr Dll_t) (?bk Dll_t) (?pr Dll_t) (?nx Dll_t))
-  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr)) 
+  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr))  (distinct ?bk ?pr)
     (exists ((?u Dll_t)) (and (distinct ?fr ?nx)
       (tobool (ssep
       (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
@@ -33,7 +33,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; unfoding at begin and end of dll(x,y,nil,z)
 ;
 (assert
-    (and (distinct x_emp z_emp)
+    (and (distinct x_emp w_emp) (distinct x_emp z_emp) (distinct y_emp z_emp)
     (tobool (ssep (pto x_emp (sref (ref next w_emp) (ref prev nil))) 
                   (dll w_emp u_emp x_emp y_emp)
                   (pto y_emp (sref (ref next z_emp) (ref prev u_emp)))
