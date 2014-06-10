@@ -1337,6 +1337,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
   let dname = vd.C.view_data_name in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
   let processed_branches = List.map (fun (f, lbl) ->
+    (* TRUNG: TODO remove it later *)
+    let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in
+    let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in
+
     let new_f = CF.elim_exists f in
     (new_f, lbl)
   ) vd.C.view_un_struc_formula in
@@ -1360,9 +1364,6 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     let forward_ptr = List.hd vd.C.view_forward_ptrs in
     let base_f, base_lbl = List.hd base_branches in
     let induct_f, induct_lbl = List.hd inductive_branches in
-    (* TRUNG: TODO remove it later *)
-    let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in
-    let heap_chains = Acc_fold.collect_heap_chains induct_f self_sv vd cprog in
     let (induct_hf, _, _, _, _) = CF.split_components induct_f in
     let view_nodes = collect_inductive_view_nodes induct_hf vd in
     let induct_vnodes = List.filter (fun vn ->

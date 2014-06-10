@@ -185,18 +185,14 @@ let collect_heap_chains_x (f: CF.formula) (root_sv: CP.spec_var)
     with Not_found -> built_chains
   ) in
   let atomic_chains = collect_atomic_heap_chain f root_view prog in
-  let root_chain = (
-    try
-      List.find (fun (hf,sv1,sv2) ->
-        (TP.imply_raw pf (CP.mkEqVar sv1 root_sv pos))
-      ) atomic_chains
-    with Not_found ->
-      let msg = "collect_heap_chains: root chain not found!" in
-      report_error pos msg
-  ) in
-  let heap_chains = build_heap_chains [root_chain] atomic_chains in
-  let heap_chains = List.rev heap_chains in
-  heap_chains
+  try
+    let root_chain = List.find (fun (hf,sv1,sv2) ->
+      (TP.imply_raw pf (CP.mkEqVar sv1 root_sv pos))
+    ) atomic_chains in
+    let heap_chains = build_heap_chains [root_chain] atomic_chains in
+    let heap_chains = List.rev heap_chains in
+    heap_chains
+  with Not_found -> []
 
 let collect_heap_chains (f: CF.formula) (root_sv: CP.spec_var)
     (root_view: C.view_decl) prog
