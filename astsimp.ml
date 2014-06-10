@@ -1707,7 +1707,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
       (     
+          let old_baga_imm_flag = !Globals.baga_imm in
+          let _ = Globals.baga_imm := true in
 	  let (xform', addr_vars', ms) = Cvutil.xpure_symbolic 1 prog (C.formula_of_unstruc_view_f vdef) in	
+          let _ = Globals.baga_imm := old_baga_imm_flag in
 	  let addr_vars = CP.remove_dups_svl addr_vars' in
 	  let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
@@ -1763,7 +1766,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   let check_and_compute () = 
     let vn = vdef.C.view_name in
     if not(vdef.C.view_is_prim) then
-      let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in	
+      let old_baga_imm_flag = !Globals.baga_imm in
+      let _ = Globals.baga_imm := true in
+      let (xform', _ (*addr_vars'*), ms) = Cvutil.xpure_symbolic 2 prog (C.formula_of_unstruc_view_f vdef) in
+      let _ = Globals.baga_imm := old_baga_imm_flag in
       (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
       let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (TP.simplify_a 10) in
       let xform1 =

@@ -5164,6 +5164,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
         | true -> handle_disjunctive_conseq ctx conseq
         | false -> ctx, conseq 
       ) in
+      let _ = Debug.ninfo_hprint (add_str "[heap_entail_conjunct_lhs_x]:: conseq 2: " Cprinter.string_of_formula) conseq no_pos in
       match conseq with
       | Or ({formula_or_f1 = f1;
         formula_or_f2 = f2;
@@ -10125,7 +10126,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let old_imm_flag = !Globals.allow_imm in
     let _ = Globals.allow_imm := true in
+    let _ = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
     let rhs_xpure,_,_ = xpure prog conseq in
+    let _ = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
      let _ = Globals.allow_imm := old_imm_flag in
     let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
     let p_lhs_xpure= (* if not !Globals.allow_imm then *)

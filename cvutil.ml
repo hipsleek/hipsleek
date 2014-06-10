@@ -175,7 +175,10 @@ let dlist_2_pure diff =
 
 (* WN : this calculation on mem_formula need to be revamped *) 
 let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
-    let rec helper f =
+  let  baga_helper imm sv = 
+    if ((Immutable.isLend imm) && !Globals.baga_imm) then CP.DisjSetSV.mkEmpty
+    else CP.DisjSetSV.singleton_dset sv in
+  let rec helper f =
     (* for h_formula *)
     match f with
       | Star ({h_formula_star_h1 = h1;
@@ -199,6 +202,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
               match h1 with
                 | CF.DataNode { (* CF.h_formula_data_name = name1; *)
  		      CF.h_formula_data_node = v1;
+                      CF.h_formula_data_imm  = imm1;
  		      CF.h_formula_data_param_imm = param_ann1;
  		  } -> 
                       Debug.tinfo_hprint (add_str "h1" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) h1 pos;
@@ -206,11 +210,12 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                         match h2 with
                           | CF.DataNode { (* CF.h_formula_data_name = name2; *)
  		                CF.h_formula_data_node = v2;
+                                CF.h_formula_data_imm  = imm2;
  		                CF.h_formula_data_param_imm = param_ann2; }  -> 
                                 Debug.tinfo_hprint (add_str "h2" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) h2 pos;
                                 let compatible = compatible_ann param_ann1 param_ann2 in
-                                let sg1 = CP.DisjSetSV.singleton_dset v1 in
-                                let sg2 = CP.DisjSetSV.singleton_dset v2 in
+                                let sg1 = baga_helper imm1 v1 in
+                                let sg2 = baga_helper imm2 v2 in
                                 let mset = if compatible then CP.DisjSetSV.merge_disj_set sg1 sg2
                                 else CP.DisjSetSV.star_disj_set sg1 sg2 in
 	                        {mem_formula_mset = mset;}
@@ -315,6 +320,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
             {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | DataNode ({h_formula_data_node = p;
 	h_formula_data_perm = perm;
+	h_formula_data_imm = imm;
 	h_formula_data_pos = pos}) ->
             Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
           (*In the presence of fractional permission,
@@ -336,7 +342,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                             CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                           else [])
                 | None ->
-	                if List.mem p evars || perm<> None then CP.DisjSetSV.mkEmpty
+                        let cond_empty = ((Immutable.isLend imm) && !Globals.baga_imm) || List.mem p evars || perm<> None in
+	                if cond_empty then CP.DisjSetSV.mkEmpty
 	                else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
             in
 	        {mem_formula_mset = new_mset;}
@@ -419,7 +426,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	      let m2 = helper_simpl h2 in
 	      {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
         | ThreadNode _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
-	| DataNode ({h_formula_data_node = p;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
+	| DataNode ({h_formula_data_node = p;h_formula_data_imm = imm;h_formula_data_perm = perm;h_formula_data_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* if List.mem p evars || perm<> None then *)
 	      (*   {mem_formula_mset = CP.DisjSetSV.mkEmpty;} *)
@@ -444,7 +451,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                                   CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                                 else [])
                   | None ->
-	                if List.mem p evars || perm<> None then CP.DisjSetSV.mkEmpty
+                        let cond_empty = ((Immutable.isLend imm) && !Globals.baga_imm) || List.mem p evars || perm<> None in
+	                if cond_empty then CP.DisjSetSV.mkEmpty
 	                else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
               in
 	      {mem_formula_mset = new_mset;}

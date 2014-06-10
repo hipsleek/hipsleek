@@ -11,21 +11,23 @@ print residue.
 // why fail with contra when below succeed?
 expect Valid.
 
-/*
+
+
 checkentail x::node<a>*a::node<b> |- x::foo<c>.
 print residue.
 expect Valid.
-*/
+
 /*
  <1>a::node<b>&x!=a & a!=null & x!=c & c!=null & a=c&{FLOW,(21,22)=__norm}[]
 [[ SEARCH ==>  Fold ==>  SEARCH ==>  Match ==> ]]
 */
 
-/*
+
 checkentail x::node<a>*a::node<b> |- x::foo<a> * a::node<_>.
 print residue.
 expect Valid.
-*/
+
+
 /*
 # 22-lend1a.slk
 

@@ -1196,6 +1196,7 @@ let show_unexpected_ents = ref true
 let gen_baga_inv = ref false
 let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
 let baga_xpure = ref true
+let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 let dis_inv_baga () = 
   print_endline_q "Disabling baga inv gen .."; 
