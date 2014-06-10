@@ -1322,7 +1322,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     let right_act =  
                       List.fold_left (fun acc l -> 
                           if  (vr_new_orig || (non_loop_candidate l)) then
-                            let prio = if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else 1 in
+                            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
                             acc@[(prio,M_lemma (m_res,Some l))]
                           else acc) [] right_ls
                     in

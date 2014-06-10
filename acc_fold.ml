@@ -83,33 +83,39 @@ let collect_atomic_heap_chain_x (f: CF.formula) (root_view: C.view_decl) (prog: 
     let f_hf hf = (match hf with
       | CF.DataNode dn ->
           if (String.compare dn.CF.h_formula_data_name root_dname = 0) then (
-            let ddecl = C.look_up_data_def_raw prog.C.prog_data_decls root_dname in
-            let entry_sv = dn.CF.h_formula_data_node in
-            let exit_sv = (
-              let svs = List.fold_left2 (fun res arg field ->
-                let ((_,fname),_) = field in
-                if (String.compare fname fw_field = 0) then res @ [arg]
-                else res
-              ) [] dn.CF.h_formula_data_arguments ddecl.C.data_fields in
-              if (List.length svs != 1) then
-                report_error pos "collect_atomic_heap_chain: expect 1 exit sv"
-              else List.hd svs
-            ) in
-            heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)];
+            try 
+              let ddecl = C.look_up_data_def_raw prog.C.prog_data_decls root_dname in
+              let entry_sv = dn.CF.h_formula_data_node in
+              let exit_sv = (
+                let svs = List.fold_left2 (fun res arg field ->
+                  let ((_,fname),_) = field in
+                  if (String.compare fname fw_field = 0) then res @ [arg]
+                  else res
+                ) [] dn.CF.h_formula_data_arguments ddecl.C.data_fields in
+                if (List.length svs != 1) then
+                  report_error pos "collect_atomic_heap_chain: expect 1 exit sv"
+                else List.hd svs
+              ) in
+              heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)];
+            with _ -> ()
           );
           None
       | CF.ViewNode vn ->
-          let entry_sv = vn.CF.h_formula_view_node in
-          let exit_sv = (
-            let svs = List.fold_left2 (fun res arg var ->
-              if (CP.eq_spec_var var fw_ptr) then res @ [arg]
-              else res
-            ) [] vn.CF.h_formula_view_arguments root_view.C.view_vars in
-            if (List.length svs != 1) then
-              report_error pos "collect_atomic_heap_chain: expect 1 exit sv"
-            else List.hd svs
-          ) in
-          heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)];
+          if (String.compare vn.CF.h_formula_view_name root_vname = 0) then (
+            try 
+              let entry_sv = vn.CF.h_formula_view_node in
+              let exit_sv = (
+                let svs = List.fold_left2 (fun res arg var ->
+                  if (CP.eq_spec_var var fw_ptr) then res @ [arg]
+                  else res
+                ) [] vn.CF.h_formula_view_arguments root_view.C.view_vars in
+                if (List.length svs != 1) then
+                  report_error pos "collect_atomic_heap_chain: expect 1 exit sv"
+                else List.hd svs
+              ) in
+              heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)];
+            with _ -> ()
+          );
           None
       | CF.Star _ -> None
       | _ -> Some hf
@@ -209,3 +215,6 @@ let collect_heap_chains (f: CF.formula) (root_sv: CP.spec_var)
   Debug.no_3 "collect_heap_chains" pr_f pr_sv pr_vname pr_out
       (fun _ _ _ -> collect_heap_chains_x f root_sv root_view prog)
       f root_sv root_view
+
+(* let detect_fold_sequence (hc: heap_chain) (root_view: C.view_decl) = *)
+  
