@@ -697,6 +697,7 @@ let common_arguments = [
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
            Globals.graph_norm := true;
+           Globals.is_solver_local := true;
            Globals.smt_compete_mode:=true),
    "SMT competition mode - essential printing only");
   ("--smt-compete-test", 
