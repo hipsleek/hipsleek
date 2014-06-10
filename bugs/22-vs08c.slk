@@ -1,0 +1,45 @@
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<xp> * xp::ls<y> //& null != self 
+   & self != y).
+
+
+//lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+
+lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::ls<null>@L).
+
+//lemma self::ls<null> <- (exists u: self::ls<u>*u::ls<null>).
+
+
+checkentail_exact x::ls<y> & x=y
+         |- emp.
+expect Valid.
+// why above fails?
+
+/*
+# 22-vs08b.slk
+
+Why is base-case unfold triggered?
+
+!!!22-vs08b.slk:19: 12: process_action :
+ ### action =  BaseCaseUnfold =>
+                   Type: Root
+                   LHS: x::ls<y>
+                   RHS: x::ls<z_69>
+ lhs_rest: y::ls<z> * 
+                   z::ls<flted_18_53>
+ rhs_rest: z::ls<flted_19_70>
+ ### estate =  x::ls<y> * y::ls<z> * z::ls<flted_18_53>&flted_18_53=null&{F
+
+Why is base-case unfold triggered? The base-case cond
+do not hold at all!
+
+  raw base case: (* lbl: *){1}->emp&self=y&{FLOW,(1,24)=__flow}[]
+  base case: self=y->self=y
+
+*/
+

@@ -26,9 +26,11 @@ Entail 1: Fail.(may) cause:UnionR[ z=1 & (((x!=null & y!=x) | y=x)) & (((y!=null
 Validate 1: Not Expected.
 */
 
+/*
 checkentail x::ls<y> * y::node<z> & y!=x
          |- x::ls<z> .
 expect Valid.
+*/
 
 /*
 # 22-tst.slk

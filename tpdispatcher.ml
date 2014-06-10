@@ -327,11 +327,25 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
-        let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
-        if exit_code > 0 then
-          let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
-          exit 0
-        else check_prover_existence rest
+          let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
+          if exit_code > 0 then
+            if  (Sys.file_exists prover) then
+              let _ =
+                if String.compare prover "oc" = 0 then
+                  let _ = Omega.is_local_solver := true in
+                  let _ = Omega.omegacalc := "./oc" in
+                  ()
+                else if String.compare prover "z3" = 0 then
+                  let _ = Smtsolver.is_local_solver := true in
+                  let _ = Smtsolver.smtsolver_name := "./z3" in
+                  ()
+                else ()
+              in
+              check_prover_existence rest
+            else
+              let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
+              exit 0
+          else check_prover_existence rest
 
 let set_tp tp_str =
   prover_arg := tp_str;

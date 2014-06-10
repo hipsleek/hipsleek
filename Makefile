@@ -8,6 +8,9 @@ ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
 
+#CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
+#CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
+
 ifdef OCAML_TOPLEVEL_PATH
  INCLPRE = $(OPREP)
  LIBBATLIB = $(OPREP)/$(BATLIB)
@@ -36,10 +39,11 @@ INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPR
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
+
 GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
-SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fPIC,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-fPIE 
-SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fPIC,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
+SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE 
+SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
 #FLAGS = $(INCLUDES),-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
 #GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 

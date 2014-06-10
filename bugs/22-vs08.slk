@@ -14,17 +14,24 @@ checkentail x::ls<y> * y::ls<z> * z::node<a>
          |- x::ls<z> * z::node<a>.
 expect Valid.
 
+checkentail x::ls<y> * y::node<z> * z::node<a>
+         |- x::ls<z> * z::node<a>.
+expect Valid.
+
 checkentail z::node<a>
          |- z::node<_>@L.
 print residue.
+expect Valid.
 
 checkentail z::ls<y> & z!=y
          |- z::node<_>@L.
 print residue.
+expect Valid.
 
 checkentail z::node<a>@L
          |- z::node<_>@L.
 print residue.
+expect Valid.
 
 checkentail z::ls<y>
          |- z::node<_>@L.
@@ -34,27 +41,24 @@ checkentail x::ls<y> * y::ls<z> * z::node<a>
          |- x::ls<z> .
 print residue.
 // valid
+expect Valid.
 
 checkentail x::ls<y> * y::ls<z> * z::node<a>@L
          |- x::ls<z> .
 print residue.
 // valid
+expect Valid.
 
 checkentail x::ls<y> * y::ls<z> * z::node<a>
          |- x::ls<z> * z::node<_>@L.
 print residue.
 // expect valid, but failed with Hole problem..
-
-
-pred foo<y:node> ==
-  self::node<y> * y::node<_>@L.
-
-checkentail x::node<a>*a::node<b> |- x::foo<k>.
-print residue.
-//<1>a::node<b>&b=k&{FLOW,(21,22)=__norm}[]
 expect Valid.
 
-checkentail x::node<a>*a::node<b> |- x::foo<k> * k::node<_>.
+
+checkentail x::node<q>*q::ls<y> & x!=y
+         |- x::ls<y>@L .
+expect Valid.
 print residue.
 
 /*

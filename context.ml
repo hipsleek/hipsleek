@@ -1206,17 +1206,18 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let flag = (s_eq && 
                         ((vl_view_orig==false && vl_b) 
                         || ((vr_view_orig==false && vr_b)))) in
-                  let _ = Debug.tinfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-                  let _ = Debug.tinfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+                  let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                  let _ = Debug.info_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
+                  let _ = Debug.info_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
+                  let _ = Debug.info_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
                   let l2 = 
                     if flag  then 
                       [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else
-                      let a1 = (1,M_base_case_unfold m_res) in
+                      let a1 = (2,M_base_case_unfold m_res) in
                       let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
 		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
@@ -1282,7 +1283,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                   let uf_i = if new_orig then 0 else 1 in
                                   [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                                 else
-                                  [(1,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
+                                  [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
                               in
                               (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                               (*L2: change here for cyclic*)
@@ -1291,6 +1292,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   (* using || results in some repeated answers but still terminates *)
                   let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                  let _ = Debug.info_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
+                  let _ = Debug.info_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
@@ -1312,12 +1315,17 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   then begin
                     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
                     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
-                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
-                    let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
-                    (* let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in *)
-                    (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in *)
-                    (* if (left_act==[] && right_act==[]) then [] (\* [(1,M_lemma (m_res,None))] *\) (\* only targetted lemma *\) *)
-                    (* else *)
+                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
+                        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
+                        else (1,M_lemma (m_res,Some l))) left_ls else [] in
+                    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
+                    let right_act =  
+                      List.fold_left (fun acc l -> 
+                          if  (vr_new_orig || (non_loop_candidate l)) then
+                            let prio = if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else 1 in
+                            acc@[(prio,M_lemma (m_res,Some l))]
+                          else acc) [] right_ls
+                    in
                     left_act@right_act
                   end
                   else  [] in
@@ -1386,7 +1394,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                            in
                            acts
                          else
-                        [(1,M_fold m_res)]
+                           (* fold to activate/change  *)
+                           [(1,M_fold m_res)]
                       else [] in
                   (* WN : what is M_rd_lemma for?? *)
                   (* WN : why do we apply lemma blindly here!! *)
@@ -1516,7 +1525,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | Coerc_mater s -> 
                           let _ = pr_debug "selected lemma XX\n" in  
                           M_lemma (m_res,Some s)) in
-                  let l1 = if !dis_base_case_unfold then  [] else [(1,M_base_case_unfold m_res)] in
+                  let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
                   (-1, (Search_action ((1,a1)::l1)))
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
@@ -1542,7 +1551,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let a2 = 
                     (match ms with
                       | View_mater -> (uf_i,M_unfold (m_res,uf_i))
-                      | Coerc_mater s -> (uf_i,M_lemma (m_res,Some s))) in
+                      | Coerc_mater s -> (* (uf_i,M_lemma (m_res,Some s))) in *)
+                            (1,M_lemma (m_res,Some s))) in
                   (* WHY do we need LHS_CASE_ANALYSIS? *)
                   let vdef = C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
                   let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
@@ -1562,7 +1572,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         (-1, (Cond_action (a2::l1)))
                     else
                       let _ = pr_debug ("Sel (cond) 3:"^(string_of_int uf_i)) in
-                      let l1 = if !dis_base_case_unfold then [] else [(1,M_base_case_unfold m_res)] in
+                      let l1 = if !dis_base_case_unfold then [] else [(5,M_base_case_unfold m_res)] in
                       (* (-1, (Search_action (a2::l1))) *)
                       (5, (Cond_action (a2::l1)))
                   in a1
