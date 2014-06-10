@@ -23,7 +23,8 @@ http://www.liafa.univ-paris-diderot.fr/spen
     (tobool (ssep
       (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
       (dll ?u ?bk ?fr ?nx))
-))))))
+)))
+)))
 
 (declare-fun x_emp () Dll_t)
 (declare-fun w_emp () Dll_t)

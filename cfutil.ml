@@ -841,7 +841,7 @@ let poss_prune_pred prog vnode f=
   res = 1: syn Right lemma
 *)
 let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
     (*check root has unfold information??*)
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
@@ -880,7 +880,8 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
     else -1
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
+    || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
     (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
     (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
     (* (\* let lnlength = List.length l_reach_dns in *\) *)
@@ -899,7 +900,8 @@ let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
       lhs rhs
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
-  if not !Globals.lemma_syn || (check_separation_unsat rhs) || (check_separation_unsat lhs)  then -1 else
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
+    || (check_separation_unsat rhs) || (check_separation_unsat lhs)  then -1 else
     let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
     let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rdnode.h_formula_data_node] 3 in
     (* let lnlength = List.length l_reach_dns in *)
