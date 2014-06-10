@@ -4299,6 +4299,7 @@ struct
   let compare = compare_spec_var
   let string_of = string_of_spec_var
   let conv_var x = x
+  let conv_var_pairs x = x
   let from_var x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
