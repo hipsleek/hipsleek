@@ -1,0 +1,33 @@
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<xp> * xp::ls<y> //& null != self 
+   & self != y).
+
+pred foo<y:node> ==
+  self::node<y> * y::ls<null>@L.
+
+//lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+
+lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::ls<null>@L).
+
+//lemma self::ls<null> <- (exists u: self::ls<u>*u::ls<null>).
+
+
+checkentail x::node<a>*a::ls<null>@L |- x::foo<a> * a::ls<null>@L.
+print residue.
+expect Valid.
+
+
+/*
+# 22-lend2.slk
+
+This works ok, but why did lemma version 22-vs08c.slk fails?
+
+normalized body form for lemma seems OK..
+
+*/
+

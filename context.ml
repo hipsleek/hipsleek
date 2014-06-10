@@ -1187,7 +1187,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     if flag  then 
                       [(0,M_match m_res)] (*force a MATCH after each lemma*)
                     else
-                      let a1 = (1,M_base_case_unfold m_res) in
+                      let a1 = (2,M_base_case_unfold m_res) in
                       let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
 		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
@@ -1253,7 +1253,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                   let uf_i = if new_orig then 0 else 1 in
                                   [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                                 else
-                                  [(1,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
+                                  [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
                               in
                               (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                               (*L2: change here for cyclic*)
@@ -1495,7 +1495,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | Coerc_mater s -> 
                           let _ = pr_debug "selected lemma XX\n" in  
                           M_lemma (m_res,Some s)) in
-                  let l1 = if !dis_base_case_unfold then  [] else [(1,M_base_case_unfold m_res)] in
+                  let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
                   (-1, (Search_action ((1,a1)::l1)))
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
@@ -1542,7 +1542,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                         (-1, (Cond_action (a2::l1)))
                     else
                       let _ = pr_debug ("Sel (cond) 3:"^(string_of_int uf_i)) in
-                      let l1 = if !dis_base_case_unfold then [] else [(1,M_base_case_unfold m_res)] in
+                      let l1 = if !dis_base_case_unfold then [] else [(5,M_base_case_unfold m_res)] in
                       (* (-1, (Search_action (a2::l1))) *)
                       (5, (Cond_action (a2::l1)))
                   in a1
