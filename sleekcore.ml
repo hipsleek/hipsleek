@@ -183,18 +183,19 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-  let ctx = 
-    if !Globals.delay_proving_sat then ctx
-    else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-  let _ = if (CF.isAnyFalseCtx ctx) then
-        print_endline_quiet ("[Warning] False ctx")
-  in
+    let ctx = 
+      if !Globals.delay_proving_sat then ctx
+      else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
+    let _ = if (CF.isAnyFalseCtx ctx) then
+      print_endline_quiet ("[Warning] False ctx")
+    in
   (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
   (*   let _ = print_endline ("[Warning] False ctx") in *)
   (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
   (* else ctx *)
   (* in *)
   (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
+    let conseq = Cfutil.elim_null_vnodes cprog conseq in
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv cprog false false 

@@ -22,6 +22,29 @@ let rec is_empty_heap_f f0=
   in
   helper f0
 
+let elim_null_vnodes_x prog sf=
+  let null_detect_trans eq_nulls hf=
+    match hf with
+      | ViewNode vn ->
+            if String.compare (CP.name_of_spec_var vn.h_formula_view_node) null_name = 0 then
+              let vdcecl = Cast.look_up_view_def_raw 58 prog.Cast.prog_view_decls vn.h_formula_view_name in
+              if vdcecl.Cast.view_is_segmented && CP.diff_svl vn.h_formula_view_arguments eq_nulls = [] then
+                HEmp
+              else hf
+            else hf
+      | _ -> hf
+  in
+  let is_base, f = base_formula_of_struc_formula sf in
+  if not is_base then sf else
+    let ( _,mix_f,_,_,_) = split_components f in
+    let eq_nulls = ( MCP.get_null_ptrs mix_f) in
+    struc_formula_trans_heap_node (formula_trans_heap_node (null_detect_trans eq_nulls)) sf
+
+let elim_null_vnodes prog sf=
+  let pr1 = !print_struc_formula in
+  Debug.no_1 "elim_null_vnodes" pr1 pr1
+      (fun _ -> elim_null_vnodes_x prog sf) sf
+
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=
   (*********INTERNAL***************)
