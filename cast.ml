@@ -1955,8 +1955,8 @@ let vdef_lemma_fold prog coer  =
   (* let rhs = CF.formula_to_struc_formula coer.coercion_body in *)
   let rhs = (* CF.formula_to_struc_formula *) coer.coercion_body_norm in
   (* let _ = Debug.info_hprint (add_str "head" Cprinter.string_of_formula) lhs no_pos in *)
-  let _ = Debug.ninfo_hprint (add_str "body" !print_struc_formula) rhs no_pos in
-  if cfd # is_init then cfd # get
+  if cfd # is_init then                 (* how do we use cfd? why do we need it? *)
+    cfd # get
   else
     let vd2 = match lhs with
       | CF.Base bf ->
@@ -1972,14 +1972,16 @@ let vdef_lemma_fold prog coer  =
                         (* let _ = Debug.tinfo_hprint (add_str "from_vars" pr)  from_vars no_pos in *)
                         (* let _ = Debug.tinfo_hprint (add_str "to_vars" pr) to_vars no_pos in *)
                         let rhs = CF.subst_struc subs rhs in
-                        Some {vd with view_formula = rhs}
+                        (* let un_struc =  CF.struc_to_view_un_s (CF.label_view rhs) in *)
+                        let un_struc =  CF.get_view_branches (CF.label_view rhs) in
+                        Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
                       with  
                         | Not_found -> None
                       )
                 | _ -> None 
             end
       | _ -> None in
-    (* let _ = Debug.tinfo_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
+    (* let _ = Debug.info_hprint (add_str "vd2" (pr_option Cprinter.string_of_view_decl_short)) vd2 no_pos in *)
     let _ = cfd # set vd2 in
     vd2
 

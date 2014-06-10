@@ -2204,7 +2204,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                       end
                 | Some vd -> vd in
               (* is there a benefit for using case-construct during folding? *)
-              let brs = filter_branches r_brs vdef.Cast.view_formula in
+              let view_formula =  Cvutil.remove_imm_from_struc_formula prog vdef.Cast.view_formula (CP.ConstAnn(Lend)) in
+              let brs = filter_branches r_brs (* vdef.Cast. *)view_formula in
               (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
               let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
               (*let form = Cformula.case_to_disjunct brs in *)
@@ -12461,8 +12462,10 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
   let vd = Cast.vdef_lemma_fold prog coer in
   match vd with
     | None ->
-        apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
+          apply_right_coercion_b estate coer prog conseq resth2 ln2 lhs_b rhs_b c2 is_folding pos
     | Some vd ->
+        let view_for_unfold = Norm.norm_formula_for_unfold prog vd in
+        let vd = view_for_unfold in
         let can_fold = (
           if (Perm.allow_perm ()) then false else
           if not(!Globals.allow_lemma_fold) then false

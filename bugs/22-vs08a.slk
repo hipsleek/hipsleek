@@ -8,17 +8,18 @@ or (exists xp: self::node<xp> * xp::ls<y> //& null != self
    & self != y).
 
 
-lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+//lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
 
 lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::ls<null>@L).
 
-lemma self::ls<null> <- (exists u: self::ls<u>*u::ls<null>).
+//lemma self::ls<null> <- (exists u: self::ls<u>*u::ls<null>).
 
 
 checkentail x::ls<y> * y::ls<z> * z::ls<null>
          |- x::ls<z> * z::ls<null>.
 expect Valid.
 // why above fails?
+
 
 checkentail x::ls<y> * y::ls<null>
          |- x::ls<null> .
