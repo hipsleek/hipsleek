@@ -1442,7 +1442,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                     | Some _ -> true
                     | None -> false
                   in
-                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
+                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 4" no_pos in
                   let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
                   let uf_i = if new_orig_l then 0 else 1 in
@@ -1471,7 +1471,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                           else
                           [(1,M_unfold (m_res,uf_i))] 
                       else [] in
-                  (* let a2 = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
+                  (* let a2_syn = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
 
                   let a2 =
                     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)

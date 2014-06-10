@@ -581,6 +581,7 @@ let convert_data_and_pred_to_cast_x () =
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
+      let _ = Globals.lemma_syn := false in
       ()
     in
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_threshold then
