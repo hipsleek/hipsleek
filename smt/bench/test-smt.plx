@@ -12,11 +12,12 @@ use File::Spec;
 use Cwd qw();
 use Try::Tiny;
 use Getopt::Long;
+use POSIX qw(:sys_wait_h);
 
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
-my $sleek = "../../sleek ";
+my $sleek = "../../sleek";
 
 my $error_count = 0;
 my $error_files = "";
@@ -56,10 +57,12 @@ if ($test_all) {
     "nll-vc16.smt2",
     
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
-  "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
+    "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"
-  "spaguetti-10-e01.tptp.smt2","spaguetti-10-e02.tptp.smt2","spaguetti-10-e03.tptp.smt2","spaguetti-11-e01.tptp.smt2","spaguetti-11-e02.tptp.smt2","spaguetti-20-e01.tptp.smt2",
-    "bolognesa-10-e01.tptp.smt2","bolognesa-10-e02.tptp.smt2","bolognesa-10-e03.tptp.smt2","bolognesa-11-e01.tptp.smt2","bolognesa-12-e01.tptp.smt2","bolognesa-15-e01.tptp.smt2","bolognesa-20-e01.tptp.smt2"
+    "spaguetti-10-e01.tptp.smt2", "spaguetti-10-e02.tptp.smt2", "spaguetti-10-e03.tptp.smt2",
+    "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
+    "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
+    "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", "bolognesa-20-e01.tptp.smt2"
   );
   foreach my $test_file (@test_files) {
     my @abs_paths;
@@ -95,15 +98,38 @@ foreach my $smt2_file (@smt2_files) {
   my $output = "";
   print " $rel_path: ";
   if ($timeout > 0) {
-    try {
-      local $SIG{ALRM} = sub { die "alarm\n" };
-      alarm $timeout;
-      $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
-      alarm 0;
-    } catch {
-      die $_ unless $_ eq "alarm\n";
-      $output = "timeout";
-    };
+		#try {
+		#  local $SIG{ALRM} = sub { die "alarm\n" };
+		#  alarm $timeout;
+		#  $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
+		#  alarm 0;
+		#} catch {
+		#  die $_ unless $_ eq "alarm\n";
+		#  $output = "timeout";
+		#};
+		pipe(README, WRITEME);
+    if (my $pid = fork) { # Parent
+      try {
+        local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
+        alarm $timeout;
+        waitpid($pid, 0);
+        alarm 0;
+        close(WRITEME);
+        while (<README>) {
+          $output .= $_;
+        }
+        close(README);
+      } catch {
+        die $_ unless $_ eq "TIMEOUT!\n";
+        $output = "timeout";
+      }
+    } else { # Child
+      die "cannot fork: $!" unless defined $pid;
+      open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
+      close(README);
+      exec($sleek, "--smt-compete-test", "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
+      exit(0);
+    }
   } else { # No timeout
     $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
   }
