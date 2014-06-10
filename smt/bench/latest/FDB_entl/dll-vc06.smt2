@@ -16,8 +16,8 @@ http://www.liafa.univ-paris-diderot.fr/spen
 
 ; doubly-linked list
 (define-fun dll ((?fr Dll_t) (?bk Dll_t) (?pr Dll_t) (?nx Dll_t))
-  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr))  (distinct ?bk ?pr)
-    (exists ((?u Dll_t)) (and (distinct ?fr ?nx)
+  Space (tospace (or (and (= ?fr ?nx) (= ?bk ?pr)) 
+    (exists ((?u Dll_t)) (and (distinct ?fr ?nx) (distinct ?bk ?pr)
       (tobool (ssep
       (pto ?fr (sref (ref next ?u) (ref prev ?pr)))
       (dll ?u ?bk ?fr ?nx))
