@@ -420,6 +420,7 @@ sig
   val conv_var : t list -> spec_var list
   val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list
   val from_var : spec_var list -> t list
+  val from_var_pairs : (spec_var * spec_var) list -> (t*t) list
   val merge_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
 end;;
@@ -722,27 +723,43 @@ struct
     let p_aset = eq in
     let mk_subs =
       List.map
-        (fun v ->
-            let lst = EM.find_equiv_all v p_aset in
-            let lst = List.sort Elt.compare lst in
-            let free = List.filter (fun v -> not(List.exists (Elt.eq v) svl)) lst in
-            match free with
-              | [] -> (v,v)
-              | f::_ -> (v,f)
-        ) svl in
+          (fun v ->
+              let lst = EM.find_equiv_all v p_aset in
+              let lst = List.sort Elt.compare lst in
+              let free = List.filter (fun v -> not(List.exists (Elt.eq v) svl)) lst in
+              match free with
+                | [] -> (v,v)
+                | f::_ -> (v,f)
+          ) svl in
+    let mk_subs = Elt.conv_var_pairs mk_subs in
+    let svl_lst = Elt.conv_var svl in
+    let locate v =
+      (* throws exception if existential present *)
+      if List.exists (fun e -> eq_spec_var e v) svl_lst then
+        let (a,b) = List.find (fun (vv,_) -> eq_spec_var v vv) mk_subs 
+        in b
+      else v (* free *) in
     let new_baga0 = Elt.from_var (List.fold_left (fun acc v ->
         try
-          let (a,b) = List.find (fun (vv,_) -> eq_spec_var v vv) (Elt.conv_var_pairs mk_subs) in
-          if a==b then acc
-          else b::acc
-        with _ -> v::acc) [] (Elt.conv_var baga)) in
+          let b = locate v in
+          b::acc
+        with _ -> acc) [] (Elt.conv_var baga)) in
+    (* duplicates possible? *)
     let new_baga = List.sort Elt.compare new_baga0 in
-    let eq_pairs = EM.get_equiv eq in
-    let subs_eq = List.map (subs_pair mk_subs) eq_pairs in
-    let subs_neq = List.map (subs_pair mk_subs) neq in
-    let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in
-    let new_neq = List.filter (fun (e1, e2) ->
-        not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) new_neq0 in
+    let new_eq = EM.elim_elems eq svl in
+    (* let eq_pairs = EM.get_equiv eq in *)
+    (* let subs_eq = List.map (subs_pair mk_subs) eq_pairs in *)
+    let new_neq = Elt.from_var_pairs (List.fold_left (fun acc (v1,v2) ->
+        try
+          let b1 = locate v1 in
+          let b2 = locate v2 in
+          (* re-order? *)
+           (b1,b2)::acc
+        with _ -> acc) [] (Elt.conv_var_pairs neq)) in
+    (* let subs_neq = List.map (subs_pair mk_subs) neq in *)
+    (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
+    (* let new_neq = List.filter (fun (e1, e2) -> *)
+    (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) new_neq0 in *)
     (new_baga, new_eq, new_neq)
 
   (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
