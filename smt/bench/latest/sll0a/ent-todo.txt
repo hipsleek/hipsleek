@@ -41,7 +41,9 @@ expect  Fail.
 
 
 ==================================================================================
-#bolognesa-16-e02.tptp.smt2.slk FIXED
+#bolognesa-16-e02.tptp.smt2.slk:
+
+test-date: Jun10: open
 
 diff RHS between orignal and comp2014 versions
 
@@ -60,41 +62,55 @@ expect  Fail.
 smtcomp2014:
 expected Valid
 
+
 //16-02 smtcomp
 checkentail x3::Sll_t<next = x4> * x8::Sll_t<next = x14> * x2::Sll_t<next = x11> * x5::ls<x15> * x14::Sll_t<next = x1> * x12::Sll_t<next = x11> * x13::Sll_t<next = x1> * x9::Sll_t<next = x11> * x16::Sll_t<next = x14> * x1::Sll_t<next = x2> * x4::ls<x15> * x7::Sll_t<next = x11> * x10::Sll_t<next = x6> * x6::ls<x5> * x11::Sll_t<next = x1> * x15::Sll_t<next = x6> * emp & null = null
          |- x13::ls<x1> * x12::ls<x11> * x8::ls<x14> * x16::ls<x14> * x3::ls<x15> * x2::ls<x11> * x9::ls<x11> * x14::ls<x1> * x15::ls<x6> * x10::ls<x15> * x7::ls<x2> * emp.
 
 expect Valid.
 ==================================================================================
-#bolognesa-16-e04.tptp.smt2.slk: FIXED
+#bolognesa-16-e04.tptp.smt2.slk:
+
+test-date: Jun10: open
+
 
 Expected FAIL
 
 ==================================================================================
-# bolognesa-17-e02.tptp.smt2.slk: FIXED
+# bolognesa-17-e02.tptp.smt2.slk:
+
+test-date: Jun10: open
 
 Expected FAIL
 
 ==================================================================================
-#bolognesa-18-e02.tptp.smt2.slk: FIXED
+#bolognesa-18-e02.tptp.smt2.slk:
 
-Expected FAIL
-
-
-==================================================================================
-#bolognesa-18-e03.tptp.smt2.slk: FIXED
-
-Expected FAIL
-
-==================================================================================
-#bolognesa-18-e08.tptp.smt2.slk: FIXED
+test-date: Jun10: open
 
 Expected FAIL
 
 
 ==================================================================================
-#bolognesa-20-e03.tptp.smt2.slk: FIXED
+#bolognesa-18-e03.tptp.smt2.slk:
 
+test-date: Jun10: open
+
+Expected FAIL
+
+==================================================================================
+#bolognesa-18-e08.tptp.smt2.slk:
+
+
+test-date: Jun10: open
+
+Expected FAIL
+
+
+==================================================================================
+#bolognesa-20-e03.tptp.smt2.slk:
+
+test-date: Jun10: open
 
 Expected FAIL
 

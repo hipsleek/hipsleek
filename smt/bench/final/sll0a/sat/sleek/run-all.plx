@@ -5,6 +5,6 @@
 foreach $file (@files) {
     print $file . "\n";
 
-    system("sleek " . $file ." --smt-compete-test --seg-opt");
+    system("sleek " . $file ." --smt-compete-test");
 }
 
