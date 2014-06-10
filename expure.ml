@@ -586,6 +586,7 @@ struct
 
   let merge_baga b1 b2 = Elt.merge_baga b1 b2
 
+  (* TODO : norm ineq1@ineq2 *)
   let mk_star efp1 efp2 =
     if (is_false efp1) || (is_false efp2) then mk_false
     else
@@ -708,6 +709,7 @@ struct
       List.map
         (fun v ->
             let lst = EM.find_equiv_all v p_aset in
+            let lst = List.sort Elt.compare lst in
             let free = List.filter (fun v -> not(List.exists (Elt.eq v) svl)) lst in
             match free with
               | [] -> (v,v)
@@ -781,6 +783,53 @@ struct
 
   let conv_enum_disj = ef_conv_disj_ho conv_enum
   let conv_disj      = ef_conv_disj_ho conv
+
+  let eq_epure (ante : epure) (conseq : epure) : bool =
+    imply ante conseq && imply conseq ante
+
+  let rec baga_eq b1 b2 =
+    match b1,b2 with
+      | [],[] -> true
+      | [],_ -> false
+      | _,[] -> false
+      | (x::xs),(y::ys) -> 
+            if Elt.eq x y then baga_eq xs ys
+            else false
+
+  let emap_eq em1 em2 =
+    let ps1 = EM.get_equiv em1 in
+    let ps2 = EM.get_equiv em2 in
+    let imp em ps =
+      List.for_all (fun (v1,v2) -> EM.is_equiv em v1 v2) ps in
+      imp em1 ps2 && imp em2 ps1
+
+  (* pre : v1 < v2 *)
+  (* baga ==> v1!=v2 *)
+  let baga_imp baga v1 v2 =
+    let rec find lst v =
+      match lst with
+        | [] -> None
+        | x::xs -> if Elt.eq v x then Some xs
+          else find xs v in
+    match find baga v1 with
+      | None -> false
+      | Some rst -> not((find rst v2) == None)
+
+  (* assumes ine2 is non-redundant *)
+  let ineq_imp (* b1 *) ine1 ine2 =
+    List.for_all (fun (v1,v2) ->
+    (* (baga_imp b1 v1 v2) || *) 
+        List.exists (fun (a1,a2) -> (Elt.eq a1 v1) && (Elt.eq a2 v2) ) ine1) ine2
+
+  let ineq_eq (* b1 b2 *) ine1 ine2 =
+    ineq_imp (* b1 *) ine1 ine2 && ineq_imp (* b2 *) ine2 ine1
+
+  let eq_epure_syn ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : bool =
+    (* assume non-false *)
+      if (baga_eq b1 b2) then
+        if emap_eq e1 e2 then true
+        else ineq_eq in1 in2
+      else false
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let a_f = conv_enum_disj ante in
