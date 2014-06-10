@@ -21,6 +21,7 @@ http://navarroj.com/research/papers.html#pldi11
 (ssep (pto ?in (ref next ?u)) (ls ?u ?out)
 )))))))
 
+(declare-fun const_1 () Sll_t)
 (declare-fun x0 () Sll_t)
 (declare-fun x1 () Sll_t)
 (declare-fun x2 () Sll_t)
