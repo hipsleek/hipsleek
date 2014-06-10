@@ -787,14 +787,39 @@ struct
   let eq_epure (ante : epure) (conseq : epure) : bool =
     imply ante conseq && imply conseq ante
 
-  let rec baga_eq b1 b2 =
+  let compare_list cmp b1 b2 =
+    let rec aux b1 b2 =
+    match b1,b2 with
+      | [],[] -> 0
+      | [],_ -> -1
+      | _,[] ->1
+      | (x::xs),(y::ys) -> 
+            let c = cmp x y in
+            if c==0 then aux xs ys
+            else c
+    in aux b1 b2
+
+  let eq_list f b1 b2 =
+    let rec aux b1 b2 =
     match b1,b2 with
       | [],[] -> true
       | [],_ -> false
       | _,[] -> false
       | (x::xs),(y::ys) -> 
-            if Elt.eq x y then baga_eq xs ys
+            if f x y then aux xs ys
             else false
+    in aux b1 b2
+
+  let rec baga_eq b1 b2 = eq_list Elt.eq b1 b2
+
+  let rec baga_cmp b1 b2 = compare_list Elt.compare b1 b2
+    (* match b1,b2 with *)
+    (*   | [],[] -> true *)
+    (*   | [],_ -> false *)
+    (*   | _,[] -> false *)
+    (*   | (x::xs),(y::ys) ->  *)
+    (*         if Elt.eq x y then baga_eq xs ys *)
+    (*         else false *)
 
   let emap_eq em1 em2 =
     let ps1 = EM.get_equiv em1 in
@@ -824,12 +849,52 @@ struct
   let ineq_eq (* b1 b2 *) ine1 ine2 =
     ineq_imp (* b1 *) ine1 ine2 && ineq_imp (* b2 *) ine2 ine1
 
+  let eq_diff (x1,x2) (y1,y2) = Elt.eq x1 y1 && Elt.eq x2 y2
+
+  (* more efficient in_eq assuming diff list is sorted *)
+  let rec ineq_eq (* b1 b2 *) ine1 ine2 = eq_list eq_diff ine1 ine2
+    (* match ine1,ine2 with *)
+    (*   | [], [] -> true *)
+    (*   | [], _ -> false *)
+    (*   | _,[] -> false *)
+    (*   | x::xs,y::ys ->  *)
+    (*         if eq_diff x y then ineq_eq xs ys *)
+    (*         else false *)
+
+  let pair_cmp (x1,x2) (y1,y2) = 
+    let c = Elt.compare x1 y1 in
+    if c==0 then Elt.compare x2 y2
+    else c
+
+  let rec ineq_compare (* b1 b2 *) ine1 ine2 = 
+    compare_list pair_cmp ine1 ine2
+
   let eq_epure_syn ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : bool =
     (* assume non-false *)
       if (baga_eq b1 b2) then
         if emap_eq e1 e2 then true
         else ineq_eq in1 in2
       else false
+
+  let emap_compare e1 e2 =
+    let lst1 = EM.get_equiv e1 in
+    let lst2 = EM.get_equiv e2 in
+    compare_list pair_cmp lst1 lst2
+
+  (* get norm_eq from eqmap *)
+  (* get domain; choose smallest *)
+  (* filter as they are taken out *)
+  let emap_extract e1 e2 = []
+  
+  let epure_compare ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : int =
+    (* assume non-false *)
+    let c1 = baga_cmp b1 b2 in
+    if c1==0 then
+      let c2 = ineq_compare in1 in2 in
+      if c2==0 then 
+        emap_compare e1 e2 
+      else c2
+    else c1
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let a_f = conv_enum_disj ante in
