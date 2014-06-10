@@ -19,6 +19,8 @@ my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
 
+my $unexpected_count = 0;
+my $unexpected_files = "";
 my $error_count = 0;
 my $error_files = "";
 my $not_found_count = 0;
@@ -67,7 +69,7 @@ if ($test_all) {
   foreach my $test_file (@test_files) {
     my @abs_paths;
     find({
-      wanted   => sub { push @abs_paths, $_ if -f and -r and basename($_, "") eq $test_file},
+      wanted   => sub { push @abs_paths, $_ if -f and -r and basename($_, "") eq $test_file },
       no_chdir => 1,
     }, $test_path);
     if (@abs_paths) {
@@ -96,18 +98,20 @@ foreach my $smt2_file (@smt2_files) {
   
   my $smt2_name = basename($slk_file, ".slk");
   my $output = "";
+  my $error = "";
   print " $rel_path: ";
   if ($timeout > 0) {
-		#try {
-		#  local $SIG{ALRM} = sub { die "alarm\n" };
-		#  alarm $timeout;
-		#  $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
-		#  alarm 0;
-		#} catch {
-		#  die $_ unless $_ eq "alarm\n";
-		#  $output = "timeout";
-		#};
-		pipe(README, WRITEME);
+    #try {
+    #  local $SIG{ALRM} = sub { die "alarm\n" };
+    #  alarm $timeout;
+    #  $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
+    #  alarm 0;
+    #} catch {
+    #  die $_ unless $_ eq "alarm\n";
+    #  $output = "timeout";
+    #};
+    pipe(README, WRITEME);
+    pipe(READERR, WRITEERR);
     if (my $pid = fork) { # Parent
       try {
         local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
@@ -115,51 +119,69 @@ foreach my $smt2_file (@smt2_files) {
         waitpid($pid, 0);
         alarm 0;
         close(WRITEME);
+        close(WRITEERR);
         while (<README>) {
           $output .= $_;
         }
         close(README);
+        while (<READERR>) {
+          $error .= $_;
+        }
+        close(READERR);
       } catch {
         die $_ unless $_ eq "TIMEOUT!\n";
         $output = "timeout";
       }
     } else { # Child
       die "cannot fork: $!" unless defined $pid;
+      setpgrp(0,0);
       open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
+      open(STDERR, ">&=WRITEERR") or die "Couldn't redirect STDERR: $!";
       close(README);
+      close(READERR);
       exec($sleek, "--smt-compete-test", "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
       exit(0);
     }
-  } else { # No timeout
+  } else { # No timeout setting
     $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
   }
+  
   if ($output =~ "Unexpected") {
-    print "Fail\n";
+    print "Unexpected\n";
     
-    $error_count++;
-    $error_files = $error_files . $rel_path . "\n";
-  } else {
-    if ($output eq "timeout") {
-      print "Timeout\n";
+    $unexpected_count++;
+    $unexpected_files = $unexpected_files . $rel_path . "\n";
+  } elsif ($output eq "timeout") {
+    print "Timeout\n";
       
-      $timeout_count++;
-      $timeout_files = $timeout_files . $rel_path . "\n";
-    } else {
-      print "OK\n";
-    }
+    $timeout_count++;
+    $timeout_files = $timeout_files . $rel_path . "\n";
+  } elsif ($error =~ "exception") {
+    print "$error\n";
+      
+    $error_count++;
+    $error_files = $error_files . "$rel_path: $error\n";
+  } else {
+    print "OK\n";
   }
 }
 
-if ($error_count > 0) {
-  print "\nTotal number of errors: $error_count in files:\n$error_files\n";
+if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
+  if ($not_found_count > 0) {
+    print "\nTotal number of not found files: $not_found_count in:\n$not_found_files\n";
+  }
+  
+  if ($unexpected_count > 0) {
+    print "\nTotal number of unexpected results: $unexpected_count in files:\n$unexpected_files\n";
+  }
+  
+  if ($error_count > 0) {
+    print "\nTotal number of errors: $error_count in files:\n$error_files\n";
+  }
+
+  if ($timeout_count > 0) {
+    print "\nTotal number of timeout files: $timeout_count in:\n$timeout_files\n";
+  }
 } else {
   print "\n All test results were as expected.\n";
-}
-
-if ($not_found_count > 0) {
-  print "\nNot found files:\n$not_found_files\n";
-}
-
-if ($timeout_count > 0) {
-  print "\nTimeout files:\n$timeout_files\n";
 }
