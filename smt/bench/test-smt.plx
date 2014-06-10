@@ -157,14 +157,7 @@ if ($test_all) {
     "inconsistent-ls-of-ls.defs.smt2",
     
     # Exception
-    "succ-circuit01.defs.smt2",
-    "succ-circuit02.defs.smt2",
-    "succ-rec01.defs.smt2",
-    "succ-rec02.defs.smt2",
-    "succ-rec03.defs.smt2",
-    "succ-circuit03.defs.smt2",
-    "succ-circuit04.defs.smt2",
-    "succ-rec05.defs.smt2",
+
     );
   } elsif ($test_10s) {
     @test_files = (
@@ -187,8 +180,8 @@ if ($test_all) {
     "skl3-vc07.smt2",
     "skl3-vc08.smt2",
     "skl3-vc09.smt2",
-    #"succ-circuit03.defs.smt2",
-    #"succ-circuit04.defs.smt2",
+    "succ-circuit03.defs.smt2",
+    "succ-circuit04.defs.smt2",
     "succ-circuit05.defs.smt2",
     "succ-circuit06.defs.smt2",
     "succ-circuit07.defs.smt2",
@@ -205,7 +198,7 @@ if ($test_all) {
     "succ-circuit18.defs.smt2",
     "succ-circuit19.defs.smt2",
     "succ-circuit20.defs.smt2",
-    #"succ-rec05.defs.smt2",
+    "succ-rec05.defs.smt2",
     "succ-rec06.defs.smt2",
     "succ-rec07.defs.smt2",
     "succ-rec08.defs.smt2",
@@ -258,6 +251,11 @@ if ($test_all) {
     "abduced16.defs.smt2",
     "abduced17.defs.smt2",
     "abduced18.defs.smt2",
+    "succ-circuit01.defs.smt2",
+    "succ-circuit02.defs.smt2",
+    "succ-rec01.defs.smt2",
+    "succ-rec02.defs.smt2",
+    "succ-rec03.defs.smt2",
     );
   }
   foreach my $test_file (@test_files) {
