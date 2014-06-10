@@ -64,7 +64,9 @@ if ($test_all) {
     "spaguetti-10-e01.tptp.smt2", "spaguetti-10-e02.tptp.smt2", "spaguetti-10-e03.tptp.smt2",
     "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
-    "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", "bolognesa-20-e01.tptp.smt2"
+    "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", "bolognesa-20-e01.tptp.smt2",
+    
+    "abduced15.defs.smt2"
   );
   foreach my $test_file (@test_files) {
     my @abs_paths;
@@ -98,7 +100,6 @@ foreach my $smt2_file (@smt2_files) {
   
   my $smt2_name = basename($slk_file, ".slk");
   my $output = "";
-  my $error = "";
   print " $rel_path: ";
   if ($timeout > 0) {
     #try {
@@ -111,7 +112,6 @@ foreach my $smt2_file (@smt2_files) {
     #  $output = "timeout";
     #};
     pipe(README, WRITEME);
-    pipe(READERR, WRITEERR);
     if (my $pid = fork) { # Parent
       try {
         local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
@@ -119,15 +119,10 @@ foreach my $smt2_file (@smt2_files) {
         waitpid($pid, 0);
         alarm 0;
         close(WRITEME);
-        close(WRITEERR);
         while (<README>) {
           $output .= $_;
         }
         close(README);
-        while (<READERR>) {
-          $error .= $_;
-        }
-        close(READERR);
       } catch {
         die $_ unless $_ eq "TIMEOUT!\n";
         $output = "timeout";
@@ -136,9 +131,8 @@ foreach my $smt2_file (@smt2_files) {
       die "cannot fork: $!" unless defined $pid;
       setpgrp(0,0);
       open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
-      open(STDERR, ">&=WRITEERR") or die "Couldn't redirect STDERR: $!";
+      open(STDERR, ">&=WRITEME") or die "Couldn't redirect STDERR: $!";
       close(README);
-      close(READERR);
       exec($sleek, "--smt-compete-test", "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
       exit(0);
     }
@@ -156,7 +150,15 @@ foreach my $smt2_file (@smt2_files) {
       
     $timeout_count++;
     $timeout_files = $timeout_files . $rel_path . "\n";
-  } elsif ($error =~ "exception") {
+  } elsif ($output =~ "exception") {
+    my @lines = split /\n/, $output;
+    my $error = "";
+    foreach my $line (@lines) {
+      if ($line =~ "exception") {
+        $error .= $line;
+      }
+    }
+  
     print "$error\n";
       
     $error_count++;
