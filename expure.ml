@@ -584,8 +584,19 @@ struct
     pr_triple (add_str "BAGA" pr1) (add_str "EQ" EM.string_of) (add_str "INEQ" pr2) x
 
   let string_of_disj (x:epure_disj) = pr_list string_of x
-
   let merge_baga b1 b2 = Elt.merge_baga b1 b2
+
+
+  let merge cmp b1 b2 =
+    let rec aux b1 b2 =
+    match b1,b2 with
+      | [],b | b,[] -> b
+      | x1::t1, x2::t2 ->
+            let c = compare x1 x2 in
+            if c<0 then x1::(aux t1 b2)
+            else if c>0 then x2::(aux b1 t2)
+            else x1::(aux t1 t2) in
+    aux b1 b2
 
   (* TODO : norm ineq1@ineq2 *)
   let mk_star efp1 efp2 =
@@ -602,10 +613,6 @@ struct
         (* (merge_baga baga1 baga2, EM.merge_eset eq1 eq2, neq1@neq2) *)
       with _ -> mk_false
 
-  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
-    let res =
-      List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
-    List.concat res
 
   let mk_or_disj t1 t2 = t1@t2
 
@@ -653,6 +660,17 @@ struct
             List.exists Elt.is_zero equiv_b
         ) baga)
 
+  let is_zero b = match b with
+    | [] -> false
+    | x::_ -> Elt.is_zero x
+
+  (* assume normalized *)
+  let unsat ((baga,eq,ieq) : epure) : bool =
+    let zf = is_zero baga in
+    if zf then true
+    else List.exists (fun (v1,v2) -> 
+        (* Elt.eq v1 v2 || *) EM.is_equiv eq v1 v2) ieq
+
 (*
     given (baga,eq,inq)
     contra if
@@ -663,7 +681,7 @@ struct
 
   how to detect:
        ([b], b=null, ..)?
-  null is captured as _null which is the smallest
+  null is captured as _ which is the smallest
   value that is always used in baga.
 
 *)
@@ -897,6 +915,25 @@ struct
         emap_compare e1 e2 
       else c2
     else c1
+
+  let merge_disj lst1 lst2 =
+    merge epure_compare lst1 lst2
+
+  let add_star ep lst =
+    let xs = List.map (fun v -> mk_star ep v) lst in
+    let zs = List.filter (fun x -> not(unsat x)) xs in
+    List.sort epure_compare zs 
+
+  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
+    let res =
+      List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in
+    List.concat res
+
+  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
+    let res =
+      List.map (fun efp1 -> add_star efp1 efpd2) efpd1 in
+    List.fold_left merge_disj [] res
+    (* List.concat res *)
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let a_f = conv_enum_disj ante in
