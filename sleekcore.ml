@@ -34,6 +34,8 @@ module SY_CEQ = Syn_checkeq
 let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 let sleek_unsat_check isvl cprog ante=
+  let _ = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
+  (* let _ =  print_endline "check unsat with graph \n" in *)
   let _ = Hgraph.reset_fress_addr () in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in

@@ -333,7 +333,7 @@ let rec subst_cs_w_other_cs prog sel_hps post_hps dang_hps link_hps frozen_hps f
 
 let subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   (*subst by constrs*)
-  DD.ninfo_pprint "\n subst with other assumptions" no_pos;
+  (* DD.ninfo_pprint "\n subst with other assumptions" no_pos; *)
   let is_changed, new_cs1,unfrozen_hps = subst_cs_w_other_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs
     complex_hps constrs in
   (is_changed, new_cs1, unfrozen_hps)
