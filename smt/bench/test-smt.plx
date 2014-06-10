@@ -18,6 +18,7 @@ my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
+my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
@@ -328,7 +329,7 @@ foreach my $smt2_file (@smt2_files) {
       open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
       open(STDERR, ">&=WRITEME") or die "Couldn't redirect STDERR: $!";
       close(README);
-      exec($sleek, "--smt-compete-test", "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
+      exec($sleek, $options, "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
       exit(0);
     }
   } else { # No timeout setting
