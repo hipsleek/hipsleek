@@ -40,7 +40,7 @@ GetOptions (
   "fail" => \$test_fail,
   "over10" => \$test_10s,
   "tidy" => \$print_short,
-  "timeout"  => \$timeout)
+  "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
 
 my @smt2_files;
