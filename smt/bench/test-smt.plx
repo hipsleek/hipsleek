@@ -70,10 +70,8 @@ if ($test_all) {
     "20.tst.smt2",
     "22.tst.smt2",
     "dll-entails-dll-rev.smt2",
-    "dll-entails-dll0+.smt2",
     "dll-mid-entails-dll-rev.smt2",
     "dll-rev-entails-dll-mid.smt2",
-    "dll-rev-entails-dll.smt2",
     "dll-spaghetti-existential.smt2",
     "dll2-entails-dll2-rev.smt2",
     "dll2-rev-entails-dll2.smt2",
@@ -160,7 +158,8 @@ if ($test_all) {
     @test_files = (
     "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
       "dll-vc09.smt2", "dll-vc10.smt2", 
-     "dll-vc12.smt2", "dll-vc13.smt2",
+     "dll-vc12.smt2", "dll-vc13.smt2","dll-entails-dll0+.smt2",
+     "dll-rev-entails-dll.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
