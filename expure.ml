@@ -785,8 +785,11 @@ struct
     let locate v =
       (* throws exception if existential present *)
       if List.exists (fun e -> eq_spec_var e v) svl_lst then
-        let (a,b) = List.find (fun (vv,_) -> eq_spec_var v vv) mk_subs
-        in b
+        let (a,b) = List.find (fun (vv,_) -> eq_spec_var v vv) mk_subs in
+        if a = b then
+          failwith "exist var"
+        else
+          b
       else v (* free *) in
     let new_baga0 = Elt.from_var (List.fold_left (fun acc v ->
         try
@@ -820,7 +823,13 @@ struct
       (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
       (* let new_neq = List.filter (fun (e1, e2) -> *)
       (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) new_neq0 in *)
+      let _ = print_endline "elim exists" in
       (new_baga, new_eq, new_neq)
+
+  let elim_exists (svl : elem list) (f : epure) : epure =
+    let pr1 = pr_list Elt.string_of in
+    Debug.no_2 "elim_exists_new" pr1 (string_of) (string_of)
+        (fun _ _ -> elim_exists svl f) svl f
 
   let imply (ante : epure) (conseq : epure) : bool =
     let a_f = conv_enum ante in
