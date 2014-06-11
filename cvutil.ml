@@ -456,7 +456,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	                else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
               in
 	      {mem_formula_mset = new_mset;}
-	| ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs;
+	| ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs; 
+          h_formula_view_imm = imm;
 	  h_formula_view_remaining_branches = lbl_lst;h_formula_view_perm = perm;	h_formula_view_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
@@ -484,37 +485,40 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
               let to_svs = p :: vs in
               (*TO DO: Temporarily ignore LOCK*)
 	      let new_mset = 
-                (match perm with
-                  | Some var ->
-                        (*******************PERM>>*****************)
-                        (*In the presence of fractional permission,
-                          p in memset only if frac=1.0 
-                          Therefore, we need pure information to prove*)
-                        let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
-                        (*prove that p0 |- var=full_perm*)
-                        let f0 = MCP.pure_of_mix p0 in
-                        Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                        let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
-                        Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
-                        if (res) then
+                let cond_empty = ((Immutable.isLend imm) && !Globals.baga_imm) in
+                if cond_empty then CP.BagaSV.mkEmpty (* this gives priority to imm over perm. *)
+                else
+                  (match perm with
+                    | Some var ->
+                          (*******************PERM>>*****************)
+                          (*In the presence of fractional permission,
+                            p in memset only if frac=1.0 
+                            Therefore, we need pure information to prove*)
+                          let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
+                          (*prove that p0 |- var=full_perm*)
+                          let f0 = MCP.pure_of_mix p0 in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          if (res) then
+                            (match lbl_lst with
+                              |None ->
+                                   if List.mem p evars then CP.BagaSV.mkEmpty
+	                           else ba 
+                              | Some ls -> 
+                                    lookup_view_baga_with_subs ls vdef from_svs to_svs)
+                          else []
+                            (*******************<<PERM*****************)
+                    | None ->
+                          (* (match vdef.view_inv_lock with *)
+                          (*   | Some f -> CP.BagaSV.mkEmpty *)
+                          (*   | None -> *)
                           (match lbl_lst with
                             |None ->
                                  if List.mem p evars then CP.BagaSV.mkEmpty
 	                         else ba 
                             | Some ls -> 
-                                  lookup_view_baga_with_subs ls vdef from_svs to_svs)
-                        else []
-                          (*******************<<PERM*****************)
-                  | None ->
-                        (* (match vdef.view_inv_lock with *)
-                        (*   | Some f -> CP.BagaSV.mkEmpty *)
-                        (*   | None -> *)
-                        (match lbl_lst with
-                          |None ->
-                               if List.mem p evars then CP.BagaSV.mkEmpty
-	                       else ba 
-                          | Some ls -> 
-                                lookup_view_baga_with_subs ls vdef from_svs to_svs))
+                                  lookup_view_baga_with_subs ls vdef from_svs to_svs))
               in
 	      {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
 	| Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in

@@ -1558,6 +1558,8 @@ $output_file = "log";
                       # slow in sleek8.slk due to search
                       ["sleek8.slk", " --dis-lem-gen ", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["sleek9.slk", " --dis-lem-gen ", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+                      ["sleek12-lend.slk", "", "", "Valid.Fail.Valid."],
+                      ["sleek13-lend.slk", "", "", "Valid.Valid.Valid.Fail."],
                       ["baga-test-eps.slk", "--eps", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
                       ["baga-test.slk", "", "","Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
               ["symb-diff.slk", "", "", "Valid.Valid.Valid."],
