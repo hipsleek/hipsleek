@@ -61,6 +61,12 @@ is_view_arith inp1 : viewl7<q:node>=
   is_recursive?: false
   view_data_name: node
 ====================================
+bug in /smt/bugs/baga/succ-circuit06.defs.smt2.slk:
+
+(null,null) in INEQ
+
+still run too slow.
+
 ====================================
 ====================================
 ====================================
