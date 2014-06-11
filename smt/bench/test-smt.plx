@@ -332,7 +332,13 @@ foreach my $smt2_file (@smt2_files) {
   }
   
   if ($output =~ "Unexpected") {
-    print "Unexpected\n";
+    print "Unexpected";
+    
+    if ($output =~ "UNSAT") {
+      print ": UNSOUND\n";
+    } else {
+      print "\n";
+    }
     
     $unexpected_count++;
     $unexpected_files = $unexpected_files . $rel_path . "\n";
