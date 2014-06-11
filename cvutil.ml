@@ -603,9 +603,9 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   let bp = (Mcpure.pure_of_mix p0) in
   let p_aset = CP.pure_ptr_equations bp in
   let p_aset = CP.EMapSV.build_eset p_aset in
-  let efpd1 = Expure.build_ef_heap_formula h0 [([], p_aset, [])] (prog.Cast.prog_view_decls) in
-  (* let efpd2 = Expure.build_ef_pure_formula baga_map bp [] in *)
-  (* let efpd = Expure.EPureI.mk_star_disj efpd1 efpd2 in *)
+  let efpd1 = Expure.build_ef_heap_formula h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
+  let efpd2 = Expure.build_ef_pure_formula bp in
+  let efpd = Expure.EPureI.norm_disj (Expure.EPureI.mk_star_disj efpd1 efpd2) in
   efpd1
 
 and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
