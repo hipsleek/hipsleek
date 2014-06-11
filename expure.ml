@@ -823,7 +823,6 @@ struct
       (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
       (* let new_neq = List.filter (fun (e1, e2) -> *)
       (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) new_neq0 in *)
-      let _ = print_endline "elim exists" in
       (new_baga, new_eq, new_neq)
 
   let elim_exists (svl : elem list) (f : epure) : epure =
