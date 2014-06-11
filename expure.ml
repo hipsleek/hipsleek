@@ -682,8 +682,9 @@ struct
   (* assume normalized *)
   let unsat ((baga,eq,ieq) : epure) : bool =
     let zf = is_zero baga in
-    if zf then true
-    else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq
+    zf
+    (* if zf then true *)
+    (* else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq *)
 
 (*
     given (baga,eq,inq)

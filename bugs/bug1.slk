@@ -1,0 +1,44 @@
+
+data node {
+ node next;
+}.
+
+pred ls<out:node> ==
+ self = out
+or (exists u: self::node<next = u> * u::ls<out> & self != out).
+
+/*
+checkentail_exact x1::ls<x2> 
+* x2::node<next = x1> * emp & null =null & null != x1 & null != x2
+ |- x3::ls<x2> * x2::node<next = x3> * emp.
+print residue.
+
+checkentail_exact x1::ls<x2> 
+* x2::node<next = x1> * emp & null =null & null != x1 & null != x2
+ |- false.
+print residue.
+*/
+
+checkentail_exact x1::ls<x2> 
+* x2::node<next = x1> 
+//* emp & null =null & null != x1 & null != x2
+ |- x3::ls<x2> * x2::node<next = x3> .
+print residue.
+
+/*
+run_infer:
+ x1::ls<x2> * x2::node<x1>&{FLOW,(21,22)=__norm}[] [] |-  EBase exists (Expl)[](Impl)[x3](ex)[](exists x2_28: x3::ls<x2_28> * 
+       x2::node<x3>&x2_28=x2&{FLOW,(21,22)=__norm})[]
+
+*/
+
+checkentail_exact x1::ls<x2> 
+* x2::node<next = x1> 
+//* emp & null =null & null != x1 & null != x2
+ |- (exists x3: x3::ls<x2> * x2::node<next = x3>).
+print residue.
+/*
+run_infer:
+ x1::ls<x2> * x2::node<x1>&{FLOW,(21,22)=__norm}[] [] |-  EBase (exists x2_38,x3_37: x3_37::ls<x2_38> * x2::node<x3_37>&x2_38=x2&
+       {FLOW,(21,22)=__norm})[]
+*/
