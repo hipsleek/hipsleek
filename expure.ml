@@ -525,7 +525,6 @@ struct
         | hd::tl ->
               let new_tl = remove_duplicate (List.filter (fun ep ->
                   not (is_eq_epure hd ep)) tl) in
-                  (* not ((imply hd ep) && (imply ep hd))) tl) in *)
               hd::new_tl
     in
     remove_duplicate (List.filter (fun v -> not(is_false v)) (List.map norm disj))
@@ -725,10 +724,6 @@ struct
 
   let elim_unsat_disj disj =
     List.filter (fun f -> not(unsat f)) disj
-
-  (* reducing duplicate? *)
-  let norm_disj disj =
-    List.filter (fun v -> not(is_false v)) (List.map norm disj)
 
   let is_false_disj disj = disj==[]
 
@@ -1003,6 +998,19 @@ struct
     (* a_f --> c_f *)
     let f = mkAnd a_f (mkNot_s c_f) no_pos in
     not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
+
+  (* reducing duplicate? *)
+  let norm_disj disj =
+    let rec remove_duplicate (disj : epure_disj) : epure_disj =
+      match disj with
+        | [] -> []
+        | hd::tl ->
+              let new_tl = remove_duplicate (List.filter (fun ep ->
+                  not (eq_epure_syn hd ep)) tl) in
+              hd::new_tl
+    in
+    let disj0 = List.filter (fun v -> not(is_false v)) (List.map norm disj) in
+    remove_duplicate disj0
 
 (* TODO
 
