@@ -918,10 +918,7 @@ struct
 
   let eq_epure_syn ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : bool =
     (* assume non-false *)
-      if (baga_eq b1 b2) then
-        if emap_eq e1 e2 then true
-        else ineq_eq in1 in2
-      else false
+      (baga_eq b1 b2) && (emap_eq e1 e2) (ineq_eq in1 in2)
 
 
   (* get norm_eq from eqmap *)
