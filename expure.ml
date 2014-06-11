@@ -1137,6 +1137,27 @@ type ef_pure_disj = EPureI.epure_disj
 (*       Cprinter.string_of_ef_pure_disj (fun _ -> *)
 (*       build_ef_heap_formula_x map cf args args_map init_map) cf *)
 
+let get_ineq (ineq : formula) =
+  let rec helper lconj = match lconj with
+    | [] -> []
+    | hd::tl -> ( match hd with
+        | BForm ((Neq (e1, e2, _), _), _) ->
+              ( match (e1,e2) with
+                | (Var (sv1, _), Var (sv2, _)) ->
+                      let c = compare_spec_var sv1 sv2 in
+                      if c < 0 then
+                        (sv1, sv2)::(helper tl)
+                      else if c > 0 then
+                        (sv2, sv1)::(helper tl)
+                      else
+                        failwith "fail in ineq"
+                | _ -> helper tl
+              )
+        | _ -> helper tl
+      )
+  in
+  List.sort EPureI.pair_cmp (helper (split_conjunctions ineq))
+
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
     | Cformula.Star _ ->
@@ -1172,8 +1193,11 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
               let new_eqf = subst sst eqf in
               let p_aset = pure_ptr_equations new_eqf in
               let new_eq = EMapSV.build_eset p_aset in
+              let ineqf = EPureI.conv_ineq ineq in
+              let new_ineqf = subst sst ineqf in
+              let new_ineq = get_ineq new_ineqf in
               (* let new_pf = subst (List.combine view_args svl) pf in *)
-              (new_baga, new_eq, ineq)
+              (new_baga, new_eq, new_ineq)
           ) efpd in
           (* let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in *)
           let efpd_n = EPureI.norm_disj efpd_h in
@@ -1188,8 +1212,9 @@ and build_ef_heap_formula (cf : Cformula.h_formula) (* (efpd_p : ef_pure_disj) *
 let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
   let p_aset = pure_ptr_equations pf in
   let p_aset = EMapSV.build_eset p_aset in
+  let ineq = get_ineq pf in
   (* [([], pf)] *)
-  [([], p_aset, [])] (* new expure, need to add ineq *)
+  [([], p_aset, ineq)] (* new expure, need to add ineq *)
 
 let build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
