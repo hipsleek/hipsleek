@@ -592,7 +592,7 @@ struct
     match b1,b2 with
       | [],b | b,[] -> b
       | x1::t1, x2::t2 ->
-            let c = compare x1 x2 in
+            let c = cmp x1 x2 in
             if c<0 then x1::(aux t1 b2)
             else if c>0 then x2::(aux b1 t2)
             else x1::(aux t1 t2) in
@@ -639,16 +639,11 @@ struct
         let new_baga = merge_baga baga1 baga2 in
         let new_eq = EM.merge_eset eq1 eq2 in
         let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
-        (* let new_neq = List.filter (fun (e1, e2) -> *)
-        (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) (neq1@neq2) in *)
         (new_baga, new_eq, new_neq)
-        (* (merge_baga baga1 baga2, EM.merge_eset eq1 eq2, neq1@neq2) *)
       with _ -> mk_false
-
 
   let mk_or_disj t1 t2 = t1@t2
 
-  (* to be completed *)
   (* [(a,[b,c])] --> a=b & a=c *)
   (* [(a,[b,c]),(d,[e])] --> a=b & a=c & d=e *)
   let conv_eq (eq : emap) : formula =
@@ -660,7 +655,6 @@ struct
         mkAnd f1 f2 no_pos
     ) (mkTrue no_pos) fl
 
-  (* to be completed *)
   (* [(a,b);(b,c)] --> a!=b & b!=c *)
   let conv_ineq (ieq : (elem * elem) list) : formula  =
     let pairs = Elt.conv_var_pairs ieq  in
@@ -681,17 +675,6 @@ struct
     let bf = baga_conv (Elt.conv_var baga) in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  (* let unsat ((baga,eq,ieq) : epure) : bool = *)
-  (*   (\* check null in baga *\) *)
-  (*   (List.exists Elt.is_zero baga) || *)
-  (*       (\* check if there exists (a,b) in inq and eq *\) *)
-  (*     	List.exists (fun (e1, e2) -> EM.is_equiv eq e1 e2) ieq || *)
-  (*       (\* check ([b], b=null) *\) *)
-  (*       (List.exists (fun b -> *)
-  (*           let equiv_b = EM.find_equiv_all b eq in *)
-  (*           List.exists Elt.is_zero equiv_b *)
-  (*       ) baga) *)
-
   let is_zero b = match b with
     | [] -> false
     | x::_ -> Elt.is_zero x
@@ -700,8 +683,7 @@ struct
   let unsat ((baga,eq,ieq) : epure) : bool =
     let zf = is_zero baga in
     if zf then true
-    else List.exists (fun (v1,v2) -> 
-        (* Elt.eq v1 v2 || *) EM.is_equiv eq v1 v2) ieq
+    else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq
 
 (*
     given (baga,eq,inq)
@@ -725,7 +707,7 @@ struct
   let elim_unsat_disj disj =
     List.filter (fun f -> not(unsat f)) disj
 
-  (* (* reducing duplicate? *) *)
+  (* reducing duplicate? *)
   let norm_disj disj =
     List.filter (fun v -> not(is_false v)) (List.map norm disj)
 
@@ -733,7 +715,6 @@ struct
 
   let mk_false_disj = []
 
-  (* to be completed *)
   (* this should follow ef_elim_exists_1 closely *)
   let elim_exists (svl : elem list) (f : epure) : epure =
     (* let subs_pair sst (e1,e2) = *)
@@ -822,10 +803,6 @@ struct
       (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) new_neq0 in *)
       (new_baga, new_eq, new_neq)
 
-  (* let elim_exists (svl:spec_var list) (b,f) : epure = *)
-  (*   let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in *)
-  (*   (Elt.from_var b,f) *)
-
   let imply (ante : epure) (conseq : epure) : bool =
     let a_f = conv_enum ante in
     let c_f = conv conseq in
@@ -845,7 +822,7 @@ struct
       | [],[] -> 0
       | [],_ -> -1
       | _,[] ->1
-      | (x::xs),(y::ys) -> 
+      | (x::xs),(y::ys) ->
             let c = cmp x y in
             if c==0 then aux xs ys
             else c
@@ -857,7 +834,7 @@ struct
       | [],[] -> true
       | [],_ -> false
       | _,[] -> false
-      | (x::xs),(y::ys) -> 
+      | (x::xs),(y::ys) ->
             if f x y then aux xs ys
             else false
     in aux b1 b2
@@ -875,14 +852,13 @@ struct
 
   let emap_compare e1 e2 =
     (* DONE : is get_equiv in sorted order? *)
-    let lst1 = EM.get_equiv e1 in 
+    let lst1 = EM.get_equiv e1 in
     let lst2 = EM.get_equiv e2 in
     (* let lst1 = List.sort pair_cmp lst1 in *)
     (* let lst2 = List.sort pair_cmp lst2 in *)
     compare_list pair_cmp lst1 lst2
 
-  let emap_eq em1 em2 =
-    (emap_compare em1 em2) == 0
+  let emap_eq em1 em2 = (emap_compare em1 em2) == 0
     (* let ps1 = EM.get_equiv em1 in *)
     (* let ps2 = EM.get_equiv em2 in *)
     (* let imp em ps = *)
@@ -900,8 +876,7 @@ struct
 
   let eq_diff (x1,x2) (y1,y2) = Elt.eq x1 y1 && Elt.eq x2 y2
 
-  let ineq_compare (* b1 b2 *) ine1 ine2 = 
-    compare_list pair_cmp ine1 ine2
+  let ineq_compare (* b1 b2 *) ine1 ine2 = compare_list pair_cmp ine1 ine2
 
   (* more efficient in_eq assuming diff list is sorted *)
   let ineq_eq (* b1 b2 *) ine1 ine2 = (ineq_compare ine1 ine2) == 0
@@ -914,25 +889,22 @@ struct
     (*         if eq_diff x y then ineq_eq xs ys *)
     (*         else false *)
 
-
-
   let eq_epure_syn ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : bool =
     (* assume non-false *)
       (baga_eq b1 b2) && (emap_eq e1 e2) && (ineq_eq in1 in2)
-
 
   (* get norm_eq from eqmap *)
   (* get domain; choose smallest *)
   (* filter as they are taken out *)
   let emap_extract e1 e2 = []
-  
+
   let epure_compare ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : int =
     (* assume non-false *)
     let c1 = baga_cmp b1 b2 in
     if c1==0 then
       let c2 = ineq_compare in1 in2 in
-      if c2==0 then 
-        emap_compare e1 e2 
+      if c2==0 then
+        emap_compare e1 e2
       else c2
     else c1
 
@@ -942,7 +914,7 @@ struct
   let add_star ep lst =
     let xs = List.map (fun v -> mk_star ep v) lst in
     let zs = List.filter (fun x -> not(unsat x)) xs in
-    List.sort epure_compare zs 
+    List.sort epure_compare zs
 
   (* xs --> ys? *)
   let lst_imply cmp xs ys =
@@ -950,10 +922,10 @@ struct
       match xs,ys with
         | _,[] -> true
         | [],_ -> false
-        | x::xs2,y::ys2 -> 
+        | x::xs2,y::ys2 ->
               let c = cmp x y in
-              if c==0 then aux xs2 ys2 
-              else if c<0 then aux xs2 ys 
+              if c==0 then aux xs2 ys2
+              else if c<0 then aux xs2 ys
               else false
     in aux xs ys
 
@@ -980,7 +952,7 @@ struct
     List.exists (fun ep2 -> epure_syn_imply ep ep2) lst
 
   let epure_disj_syn_imply lst1 lst2 =
-    List.for_all (fun ep -> syn_imply ep lst1) lst1
+    List.for_all (fun ep -> syn_imply ep lst2) lst1
 
   (* let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = *)
   (*   let res = *)
