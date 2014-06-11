@@ -684,6 +684,8 @@ let common_arguments = [
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
+  ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
+  ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
   ("--smt-compete", 
      Arg.Unit
       (fun _ ->
@@ -699,9 +701,10 @@ let common_arguments = [
           Globals.gen_baga_inv := true;
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
-           Globals.graph_norm := true;
-           Globals.is_solver_local := true;
-           Globals.smt_compete_mode:=true),
+          Globals.graph_norm := true;
+          Globals.is_solver_local := true;
+          Globals.smt_compete_mode:=true;
+          Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
   ("--smt-compete-test", 
      Arg.Unit
@@ -719,7 +722,8 @@ let common_arguments = [
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
-           Globals.smt_compete_mode :=true),
+          Globals.smt_compete_mode :=true;
+          Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
