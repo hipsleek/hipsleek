@@ -85,15 +85,17 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     (*gen lemma*)
     let lemma_name = "cyc" in
     let l_coer = match lem_type with
-      | 0 -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left [] lf2 rf2
+      | 0
+         (*3 is for syn Left lemma for tail-rec and non tail rec*)
+      | 3 -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Left [] lf2 rf2
       | _ (*1*) -> I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Right [] rf2 lf2
     in
     (*add lemma*)
     let iprog = I.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ =
-      if not !Globals.smt_compete_mode then
-      print_endline (" \n gen lemma:" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
+      if (* not !Globals.smt_compete_mode *) true then
+      print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
     ^ (Cprinter.string_of_formula rf1))
       else ()
     in

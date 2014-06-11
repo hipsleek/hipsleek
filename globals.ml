@@ -768,6 +768,7 @@ let print_relassume  = ref true
 let lemma_syn = ref false
 
 let lemma_syn_count = ref 0
+let lemma_tail_rec_count = ref 0
 
 let lemma_syn_bound = 5
 
@@ -890,7 +891,9 @@ let allow_frame = ref false
 
 let graph_norm = ref false
 
-let graph_norm_threshold = ref 1
+let graph_norm_instance_threshold = 0
+
+let graph_norm_decl_threshold = ref 1
 
 let slice_one = ref (0:int)
 
@@ -1189,6 +1192,7 @@ let do_infer_inv = ref false
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+let dis_impl_var = ref true (* Disable implicit vars *)
 let smt_compete_mode = ref false
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
@@ -1201,7 +1205,7 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
 let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
-let baga_xpure = ref true
+let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 let dis_inv_baga () = 

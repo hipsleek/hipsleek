@@ -575,6 +575,7 @@ let convert_data_and_pred_to_cast_x () =
 (* ) ([]) tmp_views in *)
 (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
   let _ = if !Globals.smt_compete_mode then
+    let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         let _ = Globals.gen_baga_inv := false in
@@ -584,15 +585,23 @@ let convert_data_and_pred_to_cast_x () =
       let _ = Globals.lemma_syn := false in
       ()
     in
-    let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_threshold then
+    let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
       let _ = Globals.graph_norm := false in
       ()
     else ()
     in
+    let _ = if ls_mut_rec_views != [] || num_vdecls > 2 then
+      (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
+      let _ = Globals.lemma_syn := false in
+      ()
+    else () in
     ()
   else ()
   in
-   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let cur_lem_syn = !Globals.lemma_syn in
+  (*turn off generate lemma during trans views*)
+  let _ = Globals.lemma_syn := false in
+  let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
@@ -655,6 +664,7 @@ let convert_data_and_pred_to_cast_x () =
     Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls
   else cprog6a
   in
+  let _ = Globals.lemma_syn := cur_lem_syn in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
@@ -947,7 +957,14 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let fv_idents = 
+    if !Globals.dis_impl_var then
+      let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
+      Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
+    else fv_idents
+  in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in

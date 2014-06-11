@@ -2104,7 +2104,7 @@ and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 
 and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 
-let string_of_ef_pure = pr_pair P.string_of_spec_var_list string_of_pure_formula
+let string_of_ef_pure = pr_triple (add_str "BAGA" P.string_of_spec_var_list) (add_str "EQ" P.EMapSV.string_of) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
 
 let string_of_ef_pure_disj = pr_list string_of_ef_pure
 
@@ -2114,7 +2114,7 @@ let pr_ef_pure_disj e = fmt_string (string_of_ef_pure_disj e)
 
 let string_of_hrel_formula hrel: string = poly_string_of_pr pr_hrel_formula hrel
 
-let prtt_string_of_formula_guard ((e,g):formula_guard) : string 
+let prtt_string_of_formula_guard ((e,g):formula_guard) : string
       =  poly_string_of_pr  prtt_pr_formula e
 
 let prtt_string_of_formula (e:formula) : string =  poly_string_of_pr  prtt_pr_formula e

@@ -733,15 +733,19 @@ struct
   let eq = Elt.eq 
   let string_of_elem = Elt.string_of 
 
+  let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
 
+  (* TODO : can we get in sorted order? *)
   let partition (s: emap) : epart =
+    let s = emap_sort s in
     let rec insert (a,k) lst = match lst with
       | [] -> [(k,[a])]
       | (k2,ls)::xs -> 
             if k==k2 then (k,a::ls)::xs
             else (k2,ls)::(insert (a,k) xs) in
     let r = List.fold_left (fun lst x ->  insert x lst) [] s in
-    List.map ( fun (_,b) -> b) r
+    let r = List.rev r in
+    List.map ( fun (_,b) -> List.rev b) r
 
   let string_of (e: emap) : string =
     let f = string_of_elem in

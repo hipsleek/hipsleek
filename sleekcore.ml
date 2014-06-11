@@ -227,8 +227,8 @@ and sleek_entail_check i isvl (cprog: C.prog_decl) proof_traces ante conseq=
       i isvl ante conseq proof_traces
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
-   let _ = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
-  let _ = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
+  let _ = Debug.info_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
+  let _ = Debug.info_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
   let s_ctx = (CF.SuccCtx [init_ctx]) in

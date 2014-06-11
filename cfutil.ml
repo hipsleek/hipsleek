@@ -843,56 +843,9 @@ let check_separation_unsat f0=
       (fun _ -> check_separation_unsat f0)
       f0
 
-(*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
-let poss_prune_pred_x prog vnode f=
-  let pure_svl = List.filter (fun sv -> not (CP.is_node_typ sv)) vnode.h_formula_view_arguments in
-  let pure_constr = CP.filter_var (get_pure f) pure_svl in
-  let ps = List.filter (fun p -> not (CP.is_eq_between_vars p) &&
-      not (CP.isConstTrue p)) (CP.list_of_conjs pure_constr) in
-  (ps != [])
-
-let poss_prune_pred prog vnode f=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in
-  Debug.no_2 "poss_prune_pred" pr2 pr1 string_of_bool
-      (fun _ _ -> poss_prune_pred_x prog vnode f)
-      vnode f
-
-(*
-  res = -1: NO cyclic - not syn lemma
-  res = 0: syn Left lemma
-  res = 1: syn Right lemma
-*)
-let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
-  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
-    (*check root has unfold information??*)
-    (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
-    (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
-      let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
-      let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
-      let lnlength = List.length l_reach_dns in
-      let lvlength = List.length l_reach_vns in
-      let rnlength = List.length r_reach_dns in
-      let rvlength = List.length r_reach_vns in
-      if lvlength = rvlength then
-        if (lnlength != rnlength) then 0 else
-          let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-          let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
-          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
-            1
-          else
-            -1
-      else
-        if (lvlength > rvlength) then 0 else -1
-
-let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
-  let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "need_cycle_checkpoint" pr1 pr1 string_of_int
-      (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
-      lhs rhs
-
-let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
-  (****************************)
+let check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns =
+  (* rhs is is_tail_recursive, lhs is non tail rec form*)
+   (****************************)
   let rec is_horm_h_formula_x hfs1 hfs2 =
     match hfs1,hfs2 with
       | [],[] -> true
@@ -920,6 +873,111 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
     List.fold_left (fun r f1 -> r@(split_star_conjunctions f1)) [] (heap_of f0)
   in
   (****************************)
+  if r_reach_dns != [] then -1 else
+    match r_reach_vns with
+      | [rvn] ->
+            let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
+            let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
+            let rec_def_heaps = List.fold_left (fun r (f,_) ->
+                let views = Cformula.get_views f in
+                if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
+                  let hfs = heaps_of_formula [self_sv] f in
+                  r@[hfs]
+                else r
+            ) [] rvdcl.Cast.view_un_struc_formula in
+            let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in
+            if List.exists (fun hfs -> (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
+              3 (* gen -> lemma: right lemma application is not working properly.
+                   todo: should be <- *)
+            else -1
+      | _ -> -1
+
+(*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
+let poss_prune_pred_x prog vnode f=
+  let pure_svl = List.filter (fun sv -> not (CP.is_node_typ sv)) vnode.h_formula_view_arguments in
+  let pure_constr = CP.filter_var (get_pure f) pure_svl in
+  let ps = List.filter (fun p -> not (CP.is_eq_between_vars p) &&
+      not (CP.isConstTrue p)) (CP.list_of_conjs pure_constr) in
+  (ps != [])
+
+let poss_prune_pred prog vnode f=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in
+  Debug.no_2 "poss_prune_pred" pr2 pr1 string_of_bool
+      (fun _ _ -> poss_prune_pred_x prog vnode f)
+      vnode f
+
+(*
+  res = -1: NO cyclic - not syn lemma
+  res = 0: syn Left lemma
+  res = 1: syn Right lemma
+  res = 2 : syn lemma_infer
+  res = 3: syn Left lemma for tail-rec and non tail rec
+*)
+let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+    (*check root has unfold information??*)
+    (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
+    (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
+      let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
+      let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+      let lnlength = List.length l_reach_dns in
+      let lvlength = List.length l_reach_vns in
+      let rnlength = List.length r_reach_dns in
+      let rvlength = List.length r_reach_vns in
+      if lvlength = rvlength then
+        if (lnlength != rnlength) then
+          if lvlength = rvlength then
+            let lem_type =  check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns in
+            if lem_type = -1 then 0 else lem_type
+          else 0
+        else
+          let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+          let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
+          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+            1
+          else
+            1
+      else
+        if (lvlength > rvlength) then
+          0
+        else -1
+
+let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_2 "need_cycle_checkpoint" pr1 pr1 string_of_int
+      (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
+      lhs rhs
+
+let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
+  (****************************)
+  (* let rec is_horm_h_formula_x hfs1 hfs2 = *)
+  (*   match hfs1,hfs2 with *)
+  (*     | [],[] -> true *)
+  (*     | hf1::rest1,hf2::rest2 -> begin *)
+  (*         match hf1,hf2 with *)
+  (*           | DataNode dn1, DataNode dn2 -> *)
+  (*                 if String.compare dn1.h_formula_data_name dn2.h_formula_data_name = 0 then *)
+  (*                   is_horm_h_formula_x rest1 rest2 *)
+  (*                 else false *)
+  (*           | ViewNode vn1, ViewNode vn2 -> *)
+  (*                  if String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0 then *)
+  (*                   is_horm_h_formula_x rest1 rest2 *)
+  (*                 else false *)
+  (*           | _ -> false *)
+  (*       end *)
+  (*     | _ -> false *)
+  (* in *)
+  (* let is_horm_h_formula hfs1 hfs2= *)
+  (*   let pr1 = pr_list !print_h_formula in *)
+  (*   Debug.no_2 "is_horm_h_formula" pr1 pr1 string_of_bool *)
+  (*       (fun _ _ -> is_horm_h_formula_x hfs1 hfs2) hfs1 hfs2 *)
+  (* in *)
+  (* let heaps_of_formula args f = *)
+  (*   let f0 = Cfout.rearrange_formula args f in *)
+  (*   List.fold_left (fun r f1 -> r@(split_star_conjunctions f1)) [] (heap_of f0) *)
+  (* in *)
+  (****************************)
   let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs lroots 3 in
   let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs rroots 3 in
     (* let lnlength = List.length l_reach_dns in *)
@@ -930,24 +988,25 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
       1 (* gen <- lemma *)
     else
       (* rhs is is_tail_recursive, lhs is non tail rec form*)
-      if r_reach_dns != [] then -1 else
-      match r_reach_vns with
-        | [rvn] ->
-              let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
-              let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
-              let rec_def_heaps = List.fold_left (fun r (f,_) ->
-                  let views = Cformula.get_views f in
-                  if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
-                    let hfs = heaps_of_formula [self_sv] f in
-                    r@[hfs]
-                  else r
-              ) [] rvdcl.Cast.view_un_struc_formula in
-              let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in
-              if List.exists (fun hfs -> (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
-                0 (* gen -> lemma: right lemma application is not working properly.
-                  todo: should be <- *)
-              else -1
-        | _ -> -1
+      check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns
+      (* if r_reach_dns != [] then -1 else *)
+      (* match r_reach_vns with *)
+      (*   | [rvn] -> *)
+      (*         let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in *)
+      (*         let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in *)
+      (*         let rec_def_heaps = List.fold_left (fun r (f,_) -> *)
+      (*             let views = Cformula.get_views f in *)
+      (*             if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then *)
+      (*               let hfs = heaps_of_formula [self_sv] f in *)
+      (*               r@[hfs] *)
+      (*             else r *)
+      (*         ) [] rvdcl.Cast.view_un_struc_formula in *)
+      (*         let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in *)
+      (*         if List.exists (fun hfs -> (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then *)
+      (*           0 (\* gen -> lemma: right lemma application is not working properly. *)
+      (*             todo: should be <- *\) *)
+      (*         else -1 *)
+      (*   | _ -> -1 *)
 
 let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )

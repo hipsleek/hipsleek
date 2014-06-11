@@ -1262,16 +1262,20 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   let _ = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                   let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-                  let l2 = 
+                  let l2,syn_lem_typ = 
                     if flag  then 
-                      [(0,M_match m_res)] (*force a MATCH after each lemma*)
+                      [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
                     else
                       let a1 = (2,M_base_case_unfold m_res) in
                       let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
-		      let a2 = if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
+                      (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
+                      (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
+		      let a2 = if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
+                        (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
                           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                           let uf_i = if new_orig then 0 else 1 in
                           let a21 = (1,M_match m_res) in
+                          let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
                           let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                           (* (1,Cond_action [a21;a22]) *) a22
                       else (1,M_match m_res)
@@ -1318,7 +1322,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                     | None -> a3
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
                       match a6 with
-                        | Some a -> [a]
+                        | Some a -> [a],syn_lem_typ
                         | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
                               (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
                               (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
@@ -1336,7 +1340,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                               in
                               (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                               (*L2: change here for cyclic*)
-                              [(1,Cond_action lst)]
+                              [(1,Cond_action lst)],syn_lem_typ
                   in
                   (* using || results in some repeated answers but still terminates *)
                   let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
@@ -1433,11 +1437,11 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                                if lvs = [] then [(1,M_fold m_res)]
                                else
                                  let vl = List.hd lvs in
-                                 if syn_lem_typ=0 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
+                                 if syn_lem_typ=3 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
                                    let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                    let uf_i = if new_orig_r then 0 else 1 in
                                    (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
-                                   let unfold_view_opt = if syn_lem_typ = 0 then
+                                   let unfold_view_opt = if syn_lem_typ = 3 then
                                      None
                                    else Some (CF.ViewNode vl)
                                    in

@@ -48,7 +48,7 @@ let is_inter_deference_spec_var sv = match sv with
 
 	(** An Hoa : Array whose elements are all of type typ.
       In principle, this is 1D array. To have higher 
-			dimensional array, but we need to use nested arrays.
+			diensional array, but we need to use nested arrays.
 			It seems inefficient to me; but simpler to do!
 	 *)
   (* | Array of typ  *)
@@ -250,16 +250,10 @@ and rounding_func =
 and infer_rel_type =  (rel_cat * formula * formula)
 
 (* extended pure formula *)
-type ef_pure = ( 
-    spec_var list (* baga *)
-    * formula (* pure formula *)
-    )
-
-(* disjunctive extended pure formula *)
-(* [] denotes false *)
-type ef_pure_disj = ef_pure list
-
-let map_baga_invs : ((string,ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
+(* type ef_pure = ( *)
+(*     spec_var list (\* baga *\) *)
+(*     * formula (\* pure formula *\) *)
+(*     ) *)
 
 let is_False cp = match cp with
   | BForm (p,_) -> 
@@ -4359,6 +4353,20 @@ module DisjSetSV = Gen.DisjSet(PtrSV);;
 type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap
+
+
+type ef_pure = (
+    spec_var list
+    * var_aset
+    * (spec_var * spec_var) list
+)
+
+(* disjunctive extended pure formula *)
+(* [] denotes false *)
+type ef_pure_disj = ef_pure list
+
+let map_baga_invs : ((string,ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
+
 
 (* need to remove constants and null *)
 let fv_var_aset (e:var_aset) = EMapSV.get_elems e

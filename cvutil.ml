@@ -456,7 +456,8 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
 	                else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 
               in
 	      {mem_formula_mset = new_mset;}
-	| ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs;
+	| ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs; 
+          h_formula_view_imm = imm;
 	  h_formula_view_remaining_branches = lbl_lst;h_formula_view_perm = perm;	h_formula_view_pos = pos}) ->
 	      Debug.tinfo_hprint (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	      (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
@@ -484,37 +485,40 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
               let to_svs = p :: vs in
               (*TO DO: Temporarily ignore LOCK*)
 	      let new_mset = 
-                (match perm with
-                  | Some var ->
-                        (*******************PERM>>*****************)
-                        (*In the presence of fractional permission,
-                          p in memset only if frac=1.0 
-                          Therefore, we need pure information to prove*)
-                        let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
-                        (*prove that p0 |- var=full_perm*)
-                        let f0 = MCP.pure_of_mix p0 in
-                        Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-                        let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
-                        Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
-                        if (res) then
+                let cond_empty = ((Immutable.isLend imm) && !Globals.baga_imm) in
+                if cond_empty then CP.BagaSV.mkEmpty (* this gives priority to imm over perm. *)
+                else
+                  (match perm with
+                    | Some var ->
+                          (*******************PERM>>*****************)
+                          (*In the presence of fractional permission,
+                            p in memset only if frac=1.0 
+                            Therefore, we need pure information to prove*)
+                          let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
+                          (*prove that p0 |- var=full_perm*)
+                          let f0 = MCP.pure_of_mix p0 in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f (TP.imply_one 25) imp_no in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          if (res) then
+                            (match lbl_lst with
+                              |None ->
+                                   if List.mem p evars then CP.BagaSV.mkEmpty
+	                           else ba 
+                              | Some ls -> 
+                                    lookup_view_baga_with_subs ls vdef from_svs to_svs)
+                          else []
+                            (*******************<<PERM*****************)
+                    | None ->
+                          (* (match vdef.view_inv_lock with *)
+                          (*   | Some f -> CP.BagaSV.mkEmpty *)
+                          (*   | None -> *)
                           (match lbl_lst with
                             |None ->
                                  if List.mem p evars then CP.BagaSV.mkEmpty
 	                         else ba 
                             | Some ls -> 
-                                  lookup_view_baga_with_subs ls vdef from_svs to_svs)
-                        else []
-                          (*******************<<PERM*****************)
-                  | None ->
-                        (* (match vdef.view_inv_lock with *)
-                        (*   | Some f -> CP.BagaSV.mkEmpty *)
-                        (*   | None -> *)
-                        (match lbl_lst with
-                          |None ->
-                               if List.mem p evars then CP.BagaSV.mkEmpty
-	                       else ba 
-                          | Some ls -> 
-                                lookup_view_baga_with_subs ls vdef from_svs to_svs))
+                                  lookup_view_baga_with_subs ls vdef from_svs to_svs))
               in
 	      {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
 	| Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
@@ -532,7 +536,7 @@ let h_formula_2_mem (f : h_formula) (p : mix_formula) (evars : CP.spec_var list)
       (fun f p evars -> h_formula_2_mem_x f p evars prog) f p evars
 
 let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula = 
-  (* for formula *)	
+  (* for formula *)
   (* let _ = print_string("f = " ^ (Cprinter.string_of_formula f) ^ "\n") in *)
   let rec helper f =
     match f with
@@ -551,9 +555,9 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
       | Or ({formula_or_f1 = f1;
 	    formula_or_f2 = f2;
 	    formula_or_pos = pos}) ->
-	        let m1 = helper f1  in
-	        let m2 = helper f2  in 
-	        {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
+	    let m1 = helper f1  in
+	    let m2 = helper f2  in 
+	    {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
   in helper f
 
 let formula_2_mem (f : formula) prog : CF.mem_formula = 
@@ -589,19 +593,21 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
             let (pqh,_) = xpure_heap_mem_enum prog qh qp 1 in
             let tmp1 = MCP.merge_mems qp pqh true in
             MCP.memo_pure_push_exists qvars tmp1
-  in 
+  in
   (xpure_helper prog f0, formula_2_mem f0 prog)
 
   (* using baga_inv, e.g. bseg4.slk *)
 and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
-  let baga_map = CP.map_baga_invs in
-  let arg_map = CP.view_args_map in
+  (* let baga_map = CP.map_baga_invs in *)
+  (* let arg_map = CP.view_args_map in *)
   let bp = (Mcpure.pure_of_mix p0) in
-  let efpd1 = Expure.build_ef_heap_formula_new baga_map h0 [] arg_map baga_map [([], bp)]   in
-  (* let efpd2 = Expure.build_ef_pure_formula baga_map bp [] in *)
-  (* let efpd = Expure.EPureI.mk_star_disj efpd1 efpd2 in *)
+  let p_aset = CP.pure_ptr_equations bp in
+  let p_aset = CP.EMapSV.build_eset p_aset in
+  let efpd1 = Expure.build_ef_heap_formula h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
+  let efpd2 = Expure.build_ef_pure_formula bp in
+  let efpd = Expure.EPureI.norm_disj (Expure.EPureI.mk_star_disj efpd1 efpd2) in
   efpd1
-  
+
 and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
   Debug.no_2 "xpure_heap_enum_baga" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_ef_pure_disj
       (fun _ _ -> xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)) h0 p0
@@ -619,7 +625,8 @@ and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formu
   (* WN : this conversion is incomplete *)
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-    | _ -> let f = Expure.ef_conv_enum_disj disj in
+    | _ -> let f = Expure.EPureI.conv_enum_disj disj in
+    (* | _ -> let f = Expure.ef_conv_enum_disj disj in *)
       (MCP.mix_of_pure f,CF.mk_mem_formula [])
 
 and conv_from_ef_disj disj =

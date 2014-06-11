@@ -16,5 +16,5 @@ check_one_src_edge
 #norm_ann_seg_opz
 #CF.get_ptrs_connected_w_args_f
 #CF.slice_frame
-#force_elim_exists
+force_elim_exists
 check_non_empty_direct_loop

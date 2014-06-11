@@ -22,6 +22,8 @@ my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
+my $unsound_count = 0;
+my $unsound_files = "";
 my $error_count = 0;
 my $error_files = "";
 my $not_found_count = 0;
@@ -60,24 +62,6 @@ if ($test_all) {
     @test_files = (
     # Unexpected
     "bolognesa-15-e02.tptp.smt2",
-    "clones-01-e07.tptp.smt2",
-    "clones-01-e08.tptp.smt2",
-    "clones-01-e09.tptp.smt2",
-    "clones-01-e10.tptp.smt2",
-    "clones-02-e07.tptp.smt2",
-    "clones-02-e08.tptp.smt2",
-    "clones-02-e09.tptp.smt2",
-    "clones-02-e10.tptp.smt2",
-    "clones-03-e07.tptp.smt2",
-    "clones-03-e09.tptp.smt2",
-    "clones-03-e10.tptp.smt2",
-    "smallfoot-vc28.tptp.smt2",
-    "smallfoot-vc29.tptp.smt2",
-    "smallfoot-vc30.tptp.smt2",
-    "smallfoot-vc32.tptp.smt2",
-    "smallfoot-vc33.tptp.smt2",
-    "smallfoot-vc35.tptp.smt2",
-    "smallfoot-vc37.tptp.smt2",
     "smallfoot-vc41.tptp.smt2",
     "smallfoot-vc42.tptp.smt2",
     "spaguetti-13-e03.tptp.smt2",
@@ -86,10 +70,8 @@ if ($test_all) {
     "20.tst.smt2",
     "22.tst.smt2",
     "dll-entails-dll-rev.smt2",
-    "dll-entails-dll0+.smt2",
     "dll-mid-entails-dll-rev.smt2",
     "dll-rev-entails-dll-mid.smt2",
-    "dll-rev-entails-dll.smt2",
     "dll-spaghetti-existential.smt2",
     "dll2-entails-dll2-rev.smt2",
     "dll2-rev-entails-dll2.smt2",
@@ -120,7 +102,6 @@ if ($test_all) {
   } elsif ($test_10s) {
     @test_files = (
     #"clones-02-e08.tptp.smt2",
-    "clones-03-e08.tptp.smt2",
     "dll-spaghetti.smt2",
     #"skl2-vc03.smt2",
     #"skl3-vc04.smt2",
@@ -175,9 +156,10 @@ if ($test_all) {
     );
   } else {
     @test_files = (
-    "dll-vc01.smt2", "dll-vc02.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
-    "dll-vc06.smt2", "dll-vc07.smt2", "dll-vc08.smt2", "dll-vc09.smt2", "dll-vc10.smt2", 
-    "dll-vc11.smt2", "dll-vc12.smt2", "dll-vc13.smt2",
+    "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
+      "dll-vc09.smt2", "dll-vc10.smt2", 
+     "dll-vc12.smt2", "dll-vc13.smt2","dll-entails-dll0+.smt2",
+     "dll-rev-entails-dll.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
@@ -198,6 +180,24 @@ if ($test_all) {
     "bolognesa-18-e03.tptp.smt2",
     "bolognesa-18-e08.tptp.smt2",
     "bolognesa-20-e03.tptp.smt2",
+    "clones-01-e07.tptp.smt2",
+    "clones-01-e08.tptp.smt2",
+    "clones-01-e09.tptp.smt2",
+    "clones-01-e10.tptp.smt2",
+    "clones-02-e07.tptp.smt2",
+    "clones-02-e08.tptp.smt2",
+    "clones-02-e09.tptp.smt2",
+    "clones-02-e10.tptp.smt2",
+    "clones-03-e07.tptp.smt2",
+    "clones-03-e08.tptp.smt2",
+    "clones-03-e09.tptp.smt2",
+    "clones-03-e10.tptp.smt2",
+    "smallfoot-vc29.tptp.smt2",
+    "smallfoot-vc30.tptp.smt2",
+    "smallfoot-vc32.tptp.smt2",
+    "smallfoot-vc33.tptp.smt2",
+    "smallfoot-vc35.tptp.smt2",
+    "smallfoot-vc37.tptp.smt2",
     "abduced02.defs.smt2",
     "abduced03.defs.smt2",
     "abduced04.defs.smt2",
@@ -240,6 +240,7 @@ if ($test_all) {
     "smallfoot-vc10.tptp.smt2",
     "smallfoot-vc11.tptp.smt2",
     "smallfoot-vc24.tptp.smt2",
+    "smallfoot-vc28.tptp.smt2",
     "smallfoot-vc31.tptp.smt2",
     "01.tst.smt2",
     "07.tst.smt2",
@@ -332,7 +333,15 @@ foreach my $smt2_file (@smt2_files) {
   }
   
   if ($output =~ "Unexpected") {
-    print "Unexpected\n";
+    print "Unexpected";
+    
+    if ($output =~ "UNSAT") {
+      print ": UNSOUND\n";
+      $unsound_count++;
+      $unsound_files = $unsound_files . $rel_path . "\n";
+    } else {
+      print "\n";
+    }
     
     $unexpected_count++;
     $unexpected_files = $unexpected_files . $rel_path . "\n";
@@ -366,6 +375,10 @@ if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
   
   if ($unexpected_count > 0) {
     print "\nTotal number of unexpected results: $unexpected_count in files:\n$unexpected_files\n";
+  }
+  
+  if ($unsound_count > 0) {
+    print "\nTotal number of unsound results: $unsound_count in files:\n$unsound_files\n";
   }
   
   if ($error_count > 0) {

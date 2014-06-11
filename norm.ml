@@ -578,13 +578,28 @@ let compute_base_case_raw branches=
 let norm_ann_seg_opz_x iprog cprog cviews=
   (*************INTERNAL***************)
   (*a view can be applied for seg optimization if:
-    - seg
+    - seg (form smt-compete, only with 1 segment para + data node has one pointer)
     - exists base case = emp
     - non-touch
   *)
+  let check_seg_view_smt_compete vdcl=
+    if !Globals.smt_compete_mode then
+      let is_one_dir = try
+        let ddclr = Cast.look_up_data_def_raw cprog.Cast.prog_data_decls vdcl.Cast.view_data_name in
+        let ptr_fields = List.filter (fun ((t,_),_) -> match t with
+          | Named _ -> true
+          | _ -> false
+        ) ddclr.Cast.data_fields in
+        List.length ptr_fields = 1
+      with _ -> false
+      in
+      List.length vdcl.Cast.view_vars != 1 || not is_one_dir
+    else false
+  in
   let compute_seg_opz view=
     let is_seg, seg_emp_base = if view.Cast.view_cont_vars = [] ||
-      not view.Cast.view_is_segmented || view.Cast.view_is_touching
+      not view.Cast.view_is_segmented || view.Cast.view_is_touching ||
+      check_seg_view_smt_compete view
     then
       (false, None)
     else

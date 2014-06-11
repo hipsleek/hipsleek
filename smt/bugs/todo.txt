@@ -35,6 +35,12 @@ it seems that
 I feel that the strategy of sleek (context.ml) has been changed. something is changed with the order of actions
 
 ===================================================================
+to implement non-tail-rec <-> tail-rec: DONE (Loc)
+
+
+smallfoot-vc28.tptp.smt2.slk
+01.tst.smt2.slk
+
 ===================================================================
 ===================================================================
 
