@@ -954,6 +954,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let fv_idents = 
+    if !Globals.dis_impl_var then
+      let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
+      Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
+    else fv_idents
+  in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = meta_to_struc_formula iconseq0 false fv_idents  n_tl in

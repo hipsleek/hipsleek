@@ -157,6 +157,22 @@ let string_of_meta_formula (mf : meta_formula) =
   | MetaEFormCF sf -> "CFORMStruc:"^Cprinter.string_of_struc_formula sf
   | MetaCompose _ -> "" (* TODO Implement *)
 
+let rec fv_meta_formula (mf: meta_formula) =
+  let ident_of_sv v = match v with
+  | CP.SpecVar (_, id, primed) -> (id, primed)
+  in
+  match mf with
+  | MetaVar i -> [(i, Unprimed)]
+  | MetaForm iform -> IF.heap_fv iform
+  | MetaFormCF cform -> List.map ident_of_sv (CF.fv cform)
+  | MetaFormLCF lcform -> 
+    List.map ident_of_sv (List.concat (List.map CF.fv lcform))
+  | MetaEForm isf -> IF.struc_hp_fv isf
+  | MetaEFormCF csf -> List.map ident_of_sv (CF.struc_fv csf)
+  | MetaCompose (idl, m1, m2) -> 
+    (List.map (fun i -> (i, Unprimed)) idl) @ 
+    (fv_meta_formula m1) @ (fv_meta_formula m2)
+
 let clear_var_table () = H.clear var_tab
 
 (*
