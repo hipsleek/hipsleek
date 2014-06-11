@@ -22,6 +22,8 @@ my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
+my $unsound_count = 0;
+my $unsound_files = "";
 my $error_count = 0;
 my $error_files = "";
 my $not_found_count = 0;
@@ -336,6 +338,8 @@ foreach my $smt2_file (@smt2_files) {
     
     if ($output =~ "UNSAT") {
       print ": UNSOUND\n";
+      $unsound_count++;
+      $unsound_files = $unexpected_files . $rel_path . "\n";
     } else {
       print "\n";
     }
