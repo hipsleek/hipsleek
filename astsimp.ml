@@ -7295,10 +7295,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     | Some l-> 
                         let r1,r2 = helper h1prm new_strad_vs vars l in 
                         (Some r1,r2) in
-                let implvar =
-                  (* Disable putting implicit existentials on unbound heap variables *)
-                  if (!Globals.dis_impl_var) then []
-                  else diff (IF.unbound_heap_fv onb) all_vars in
+                let implvar = diff (IF.unbound_heap_fv onb) all_vars in
                 let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
                   Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
             let implvar = hack_filter_global_rel prog implvar in

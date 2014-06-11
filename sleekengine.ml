@@ -952,6 +952,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let ivars_fvs = List.map (fun n -> CP.SpecVar (UNK,n,Unprimed)) ivars in *)
   (* let _ = print_endline ("ivars"^(Cprinter.string_of_spec_var_list ivars_fvs)) in *)
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
+  (* Disable putting implicit existentials on unbound heap variables *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
