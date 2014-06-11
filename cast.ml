@@ -2513,7 +2513,10 @@ let is_complex_entailment_4graph_x prog ante conseq=
    ) [] prog.prog_view_decls in
    let lvnodes = (Cformula.get_views ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
-   if List.length lvnodes < graph_norm_instance_threshold && List.length rvnodes < graph_norm_instance_threshold then
+   let rdnodes = Cformula.get_dnodes_struc conseq in
+   let rvleng =  List.length rvnodes in
+   if (rvleng = 1 && rdnodes = [] ) ||
+     (List.length lvnodes < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold) then
      false else
      begin try
        (*explicit quantifiers in rhs*)

@@ -104,7 +104,6 @@ if ($test_all) {
   } elsif ($test_10s) {
     @test_files = (
     #"clones-02-e08.tptp.smt2",
-    "clones-03-e08.tptp.smt2",
     "dll-spaghetti.smt2",
     #"skl2-vc03.smt2",
     #"skl3-vc04.smt2",
@@ -191,6 +190,7 @@ if ($test_all) {
     "clones-02-e09.tptp.smt2",
     "clones-02-e10.tptp.smt2",
     "clones-03-e07.tptp.smt2",
+    "clones-03-e08.tptp.smt2",
     "clones-03-e09.tptp.smt2",
     "clones-03-e10.tptp.smt2",
     "smallfoot-vc29.tptp.smt2",
