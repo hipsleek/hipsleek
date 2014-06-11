@@ -240,6 +240,7 @@ let common_arguments = [
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
+  ("--oc-dis-simp", Arg.Clear Globals. oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
