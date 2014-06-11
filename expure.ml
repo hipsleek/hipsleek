@@ -1161,7 +1161,7 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (efpd_p : ef_pure_disj
             try Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
             with Not_found -> failwith "cannot find in init_map too"
           in
-          (* need to revised this *)
+          (* need substitue variable *)
           (* let view = List.find (fun vc -> vnf.Cformula.h_formula_view_name = vc.Cast.view_name) all_views in *)
           (* let self_var = Cpure.SpecVar (Named view.Cast.view_data_name, self, Unprimed) in *)
           (* let view_args = self_var::view.Cast.view_vars in *)
@@ -1185,7 +1185,7 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
   let p_aset = pure_ptr_equations pf in
   let p_aset = EMapSV.build_eset p_aset in
   (* [([], pf)] *)
-  [([], p_aset, [])] (* new expure *)
+  [([], p_aset, [])] (* new expure, need to add ineq *)
 
 let build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
