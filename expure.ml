@@ -814,6 +814,7 @@ struct
             else
               (b2,b1)::acc
           with _ -> acc) [] (Elt.conv_var_pairs neq)) in
+      let new_neq = List.sort pair_cmp new_neq in
       (* let subs_neq = List.map (subs_pair mk_subs) neq in *)
       (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
       (* let new_neq = List.filter (fun (e1, e2) -> *)
