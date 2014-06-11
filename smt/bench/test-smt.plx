@@ -378,6 +378,10 @@ if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
     print "\nTotal number of unexpected results: $unexpected_count in files:\n$unexpected_files\n";
   }
   
+  if ($unsound_count > 0) {
+    print "\nTotal number of unsound results: $unsound_count in files:\n$unsound_files\n";
+  }
+  
   if ($error_count > 0) {
     print "\nTotal number of errors: $error_count in files:\n$error_files\n";
   }
