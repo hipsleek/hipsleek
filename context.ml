@@ -373,7 +373,11 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
             (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
           else 
             (* TRUNG TODO: to insert acc_fold context here *)
-            let accfold_res = spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest in
+            let accfold_res = (
+              if !Globals.acc_fold then 
+                spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest
+              else [] 
+            ) in
             let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
             let mt_res = filter_match_res_list mt_res rhs_node in
             (accfold_res @ mt_res)
@@ -1218,6 +1222,11 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else [] in
                   let src = (-1,Search_action (l2@l3)) in
                   src
+            | _, ViewNode vr when !Globals.acc_fold ->
+                let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr.h_formula_view_name in
+                let fold_steps = Acc_fold.detect_fold_sequence lhs_node vr.h_formula_view_node vdecl prog in
+                let _ = (List.length fold_steps > 1) in
+                report_error no_pos "acc fold 1\n"
             | ViewNode vl, ViewNode vr -> 
                   pr_debug "VIEW vs VIEW\n";
                   (* let l1 = [(1,M_base_case_unfold m_res)] in *)

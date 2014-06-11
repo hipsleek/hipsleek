@@ -331,11 +331,10 @@ let print_fold_type ft =
   | Fold_base_case -> "Fold_base_case"
   | Fold_inductive_case -> "Fold_inductive_case"
 
-let detect_fold_sequence_x (hc: heap_chain) (root_sv: CP.spec_var)
+let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
     (root_view: C.view_decl) prog
     : fold_type list=
   let vname = root_view.C.view_name in
-  let (hf,_,_) = hc in
   Debug.ninfo_hprint (add_str "hf" !CF.print_h_formula) hf no_pos;
   let coded_hf = encode_h_formula hf in
   let coded_hf_len = List.length coded_hf in
@@ -403,13 +402,13 @@ let detect_fold_sequence_x (hc: heap_chain) (root_sv: CP.spec_var)
     let fold_seq = try_fold_view view_f base_f induct_f [] in
     fold_seq
 
-let detect_fold_sequence (hc: heap_chain) (root_sv: CP.spec_var)
+let detect_fold_sequence (hf: CF.h_formula) (root_sv: CP.spec_var)
     (root_view: C.view_decl) prog
     : fold_type list =
-  let pr_hc hc = let (hf,_,_) = hc in !CF.print_h_formula hf in
+  let pr_hf = !CF.print_h_formula in
   let pr_vd vd = vd.C.view_name in
   let pr_sv = !CP.print_sv in
   let pr_out = pr_list print_fold_type in
-  Debug.no_3 "detect_fold_sequence" pr_hc pr_sv pr_vd pr_out
-      (fun _ _ _ -> detect_fold_sequence_x hc root_sv root_view prog)
-      hc root_sv root_view
+  Debug.no_3 "detect_fold_sequence" pr_hf pr_sv pr_vd pr_out
+      (fun _ _ _ -> detect_fold_sequence_x hf root_sv root_view prog)
+      hf root_sv root_view
