@@ -1544,7 +1544,14 @@ let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
   ) seg_datas) dns in
   let nemps = List.fold_left (fun r dn ->
       r@(List.map (fun a -> (dn.h_formula_data_node,a))
-          (List.filter CP.is_node_typ dn.h_formula_data_arguments))
+          (List.filter (fun (CP.SpecVar (t,id,_)) ->
+              match t with
+                | Named _ -> begin try
+                    (String.compare (String.sub id 0 5) "Anon_" != 0)
+                  with _ -> true
+          end
+                | _ -> false
+          ) dn.h_formula_data_arguments))
   ) [] seg_dns in
   let is_inconst = check_inconsistent dns in
   (*********abstract x!=y ******)

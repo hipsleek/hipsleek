@@ -2511,12 +2511,14 @@ let is_complex_entailment_4graph_x prog ante conseq=
          | Some _ -> r@[vdecl.view_name]
          | None -> r
    ) [] prog.prog_view_decls in
+   let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
    let lvnodes = (Cformula.get_views ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
    let rdnodes = Cformula.get_dnodes_struc conseq in
+   let lvleng =  List.length lvnodes in
    let rvleng =  List.length rvnodes in
-   if (rvleng = 1 && rdnodes = [] ) ||
-     (List.length lvnodes < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold) then
+   if (rvleng = 1 && rdnodes = [] &&  lvleng = 0) ||
+     (lvleng < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold) then
      false else
      begin try
        (*explicit quantifiers in rhs*)
@@ -2526,17 +2528,19 @@ let is_complex_entailment_4graph_x prog ante conseq=
            let _ = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
            if quans = [] then false else
              let _, mf, _, _, _ = CF.split_components bare in
+             let eqnull_svl =  Mcpure.get_null_ptrs mf in
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
-             Cpure.diff_svl quans svl_eqs != []
+             Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
          | _ -> true
        in
+       let _ = Debug.ninfo_hprint (add_str "is_rhs_ex_quans" string_of_bool) is_rhs_ex_quans no_pos in
        if is_rhs_ex_quans then false else
          let vnodes = lvnodes@rvnodes in
          let n_seg_vnodes = List.fold_left (fun count vn ->
              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) vn.Cformula.h_formula_view_name seg_opz_views then count+1 else count
          ) 0 vnodes in
-         n_seg_vnodes >=  graph_norm_instance_threshold
+         n_seg_vnodes >=  ((* graph_norm_instance_threshold + *) graph_norm_instance_threshold)
      with _ -> false
      end
 

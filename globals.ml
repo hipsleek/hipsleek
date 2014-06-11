@@ -891,7 +891,9 @@ let allow_frame = ref false
 
 let graph_norm = ref false
 
-let graph_norm_instance_threshold = 0
+let oc_simplify = ref true
+
+let graph_norm_instance_threshold = 4
 
 let graph_norm_decl_threshold = ref 1
 

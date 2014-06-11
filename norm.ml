@@ -590,7 +590,7 @@ let norm_ann_seg_opz_x iprog cprog cviews=
           | Named _ -> true
           | _ -> false
         ) ddclr.Cast.data_fields in
-        List.length ptr_fields = 1
+        List.length ptr_fields <= 2
       with _ -> false
       in
       List.length vdcl.Cast.view_vars != 1 || not is_one_dir

@@ -915,7 +915,7 @@ let simplify (pe : formula) : formula =
 (*   let pf = !print_pure in *)
 (*   Debug.no_1 "Omega.simplify_memo" pf pf simplify_memo pe *)
 
-let simplify (pe : formula) : formula =
+let simplify (pe : formula) : formula = if not !Globals.oc_simplify then pe else
   match (do_with_check "" simplify pe)
   with 
     | None -> pe

@@ -452,6 +452,81 @@ let syntax_nodes_match lhs rhs =
   Debug.no_2 "syntax_nodes_match" pr1 pr1 (pr_quad pr1 pr1 string_of_bool string_of_bool)
       (fun _ _ -> syntax_nodes_match_x lhs rhs) lhs rhs
 
+let hn_drop_matched matched_svl hf=
+  match hf with
+    | CF.ViewNode vn -> if CP.mem_svl vn.CF.h_formula_view_node matched_svl then CF.HEmp else hf
+    | _ -> hf
+
+
+let syntax_vnodes_match_x lhs0 rhs0 =
+  (******************************************************)
+  let check_exact_eq_view_node vn1 vn2=
+    CP.eq_spec_var vn1.CF.h_formula_view_node vn2.CF.h_formula_view_node &&
+        List.length vn1.CF.h_formula_view_arguments = List.length vn2.CF.h_formula_view_arguments &&
+        CP.diff_svl vn1.CF.h_formula_view_arguments vn2.CF.h_formula_view_arguments = []
+  in
+  let check_eq_view_node vn1 vn2=
+    CP.eq_spec_var vn1.CF.h_formula_view_node vn2.CF.h_formula_view_node
+  in
+  (******************************************************)
+  let l_hvs = CF.get_views lhs0 in
+  let r_hvs = CF.get_views rhs0 in
+  let matched_view_nodes = Gen.BList.intersect_eq check_exact_eq_view_node l_hvs r_hvs in
+  let l_hvs = Gen.BList.intersect_eq check_eq_view_node l_hvs matched_view_nodes in
+  let r_hvs = Gen.BList.intersect_eq check_eq_view_node r_hvs matched_view_nodes in
+  let matched_svl = (List.map (fun hv -> hv.CF.h_formula_view_node) matched_view_nodes) in
+  if matched_svl = [] then (false, lhs0, rhs0)
+  else
+    (*drop matched, add pure constraints (footprints) to the lhs*)
+    let droped_lhs = CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs0 in
+     (true, droped_lhs, CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs0)
+
+let syntax_vnodes_match lhs rhs =
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "syntax_vnodes_match" pr1 pr1 (pr_triple string_of_bool pr1 pr1)
+      (fun _ _ -> syntax_vnodes_match_x lhs rhs) lhs rhs
+
+let syntax_contrb_lemma_end_null_x prog lhs rhs=
+  (*****************************************)
+  let all_args_null l_hvs leqnulls ptr=
+    try
+      let vn = List.find (fun hv -> CP.eq_spec_var ptr hv.CF.h_formula_view_node) l_hvs in
+      CP.diff_svl (List.filter CP.is_node_typ vn.h_formula_view_arguments) leqnulls = []
+    with _ -> false
+  in
+  let fold_lemma_end_null l_hvs leqnulls (cur_l_vns, cur_r_vns) r_vn=
+    let reach_ptrs = CF.look_up_reachable_ptr_args prog [] l_hvs [r_vn.CF.h_formula_view_node] in
+    if List.exists (all_args_null l_hvs leqnulls) reach_ptrs then
+      (cur_l_vns@reach_ptrs, cur_r_vns@[r_vn.CF.h_formula_view_node])
+    else (cur_l_vns, cur_r_vns)
+  in
+   (*****************************************)
+  let ( _,rmf,_,_,_) = CF.split_components rhs in
+  let r_eqnull_svl =  MCP.get_null_ptrs rmf in
+  if r_eqnull_svl = [] then
+    (lhs, rhs)
+  else
+    let ( _,lmf,_,_,_) = CF.split_components lhs in
+    let l_eqnull_svl =  MCP.get_null_ptrs lmf in
+    if l_eqnull_svl = [] then
+      (lhs, rhs)
+    else
+      let _, l_hvs,_ = CF.get_hp_rel_formula lhs in
+      let r_hvs = CF.get_views rhs in
+      let r_hvs_end_null = List.filter (fun vn -> CP.diff_svl (List.filter CP.is_node_typ vn.CF.h_formula_view_arguments) r_eqnull_svl = []) r_hvs in
+      let drop_l_hvs, drop_r_hvs = List.fold_left (fold_lemma_end_null l_hvs l_eqnull_svl) ([],[]) r_hvs_end_null in
+      let droped_lhs = if drop_l_hvs = [] then lhs else
+        CF.formula_trans_heap_node (hn_drop_matched drop_l_hvs) lhs in
+      let droped_rhs = if drop_r_hvs = [] then rhs else
+        CF.formula_trans_heap_node (hn_drop_matched drop_r_hvs) rhs in
+      (droped_lhs, droped_rhs)
+
+(* x::ls<p> * p::ls<null> <-> x::ls<null> *)
+let syntax_contrb_lemma_end_null prog lhs rhs=
+  let pr1 = Cprinter.string_of_formula in
+   Debug.no_2 "syntax_contrb_lemma_end_null" pr1 pr1 (pr_pair pr1 pr1)
+      (fun _ _ -> syntax_contrb_lemma_end_null_x prog lhs rhs) lhs rhs
+
 (*******************************************************************************)
       (**********************END HEAP GRAPH**********************************)
 (*******************************************************************************)

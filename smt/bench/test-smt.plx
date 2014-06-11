@@ -62,12 +62,11 @@ if ($test_all) {
     @test_files = (
     # Unexpected
     "bolognesa-15-e02.tptp.smt2",
+    "spaguetti-13-e03.tptp.smt2",
     "smallfoot-vc41.tptp.smt2",
     "smallfoot-vc42.tptp.smt2",
-    "spaguetti-13-e03.tptp.smt2",
     "08.tst.smt2",
     "11.tst.smt2",
-    "20.tst.smt2",
     "22.tst.smt2",
     "dll-entails-dll-rev.smt2",
     "dll-mid-entails-dll-rev.smt2",
@@ -253,6 +252,7 @@ if ($test_all) {
     "17.tst.smt2",
     "18.tst.smt2",
     "21.tst.smt2"
+    "20.tst.smt2",
     );
   }
   foreach my $test_file (@test_files) {
