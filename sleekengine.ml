@@ -584,15 +584,20 @@ let convert_data_and_pred_to_cast_x () =
       let _ = Globals.lemma_syn := false in
       ()
     in
-    let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_threshold then
+    let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
       let _ = Globals.graph_norm := false in
       ()
     else ()
     in
+    let _ = if ls_mut_rec_views != [] then
+      (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
+      let _ = Globals.lemma_syn := false in
+      ()
+    else () in
     ()
   else ()
   in
-   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in

@@ -71,7 +71,6 @@ if ($test_all) {
     "clones-03-e07.tptp.smt2",
     "clones-03-e09.tptp.smt2",
     "clones-03-e10.tptp.smt2",
-    "smallfoot-vc28.tptp.smt2",
     "smallfoot-vc29.tptp.smt2",
     "smallfoot-vc30.tptp.smt2",
     "smallfoot-vc32.tptp.smt2",
@@ -175,9 +174,9 @@ if ($test_all) {
     );
   } else {
     @test_files = (
-    "dll-vc01.smt2", "dll-vc02.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
-    "dll-vc06.smt2", "dll-vc07.smt2", "dll-vc08.smt2", "dll-vc09.smt2", "dll-vc10.smt2", 
-    "dll-vc11.smt2", "dll-vc12.smt2", "dll-vc13.smt2",
+    "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
+      "dll-vc09.smt2", "dll-vc10.smt2", 
+     "dll-vc12.smt2", "dll-vc13.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
@@ -240,6 +239,7 @@ if ($test_all) {
     "smallfoot-vc10.tptp.smt2",
     "smallfoot-vc11.tptp.smt2",
     "smallfoot-vc24.tptp.smt2",
+    "smallfoot-vc28.tptp.smt2",
     "smallfoot-vc31.tptp.smt2",
     "01.tst.smt2",
     "07.tst.smt2",

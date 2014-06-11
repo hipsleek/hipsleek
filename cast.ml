@@ -2513,7 +2513,8 @@ let is_complex_entailment_4graph_x prog ante conseq=
    ) [] prog.prog_view_decls in
    let lvnodes = (Cformula.get_views ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
-   if List.length lvnodes < 4 && List.length rvnodes < 4 then false else
+   if List.length lvnodes < graph_norm_instance_threshold && List.length rvnodes < graph_norm_instance_threshold then
+     false else
      begin try
        (*explicit quantifiers in rhs*)
        let is_rhs_ex_quans = match conseq with
@@ -2532,7 +2533,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
          let n_seg_vnodes = List.fold_left (fun count vn ->
              if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) vn.Cformula.h_formula_view_name seg_opz_views then count+1 else count
          ) 0 vnodes in
-         n_seg_vnodes >= 4
+         n_seg_vnodes >=  graph_norm_instance_threshold
      with _ -> false
      end
 

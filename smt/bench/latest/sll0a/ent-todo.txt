@@ -47,6 +47,7 @@ expect Fail.
 #bolognesa-16-e04.tptp.smt2.slk:
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 
 Expected FAIL
@@ -55,6 +56,7 @@ Expected FAIL
 # bolognesa-17-e02.tptp.smt2.slk:
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 Expected FAIL
 
@@ -62,6 +64,7 @@ Expected FAIL
 #bolognesa-18-e02.tptp.smt2.slk:
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 Expected FAIL
 
@@ -70,6 +73,7 @@ Expected FAIL
 #bolognesa-18-e03.tptp.smt2.slk:
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 Expected FAIL
 
@@ -78,6 +82,7 @@ Expected FAIL
 
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 Expected FAIL
 
@@ -86,6 +91,7 @@ Expected FAIL
 #bolognesa-20-e03.tptp.smt2.slk:
 
 test-date: Jun10: open, fixed
+test-date: Jun11: open,
 
 Expected FAIL
 

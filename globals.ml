@@ -768,6 +768,7 @@ let print_relassume  = ref true
 let lemma_syn = ref false
 
 let lemma_syn_count = ref 0
+let lemma_tail_rec_count = ref 0
 
 let lemma_syn_bound = 5
 
@@ -890,7 +891,9 @@ let allow_frame = ref false
 
 let graph_norm = ref false
 
-let graph_norm_threshold = ref 1
+let graph_norm_instance_threshold = 0
+
+let graph_norm_decl_threshold = ref 1
 
 let slice_one = ref (0:int)
 
