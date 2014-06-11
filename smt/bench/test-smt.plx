@@ -339,7 +339,7 @@ foreach my $smt2_file (@smt2_files) {
     if ($output =~ "UNSAT") {
       print ": UNSOUND\n";
       $unsound_count++;
-      $unsound_files = $unexpected_files . $rel_path . "\n";
+      $unsound_files = $unsound_files . $rel_path . "\n";
     } else {
       print "\n";
     }
