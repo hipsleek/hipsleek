@@ -1168,6 +1168,18 @@ let get_ineq (ineq : formula) =
                         (sv2, sv1)::(helper tl)
                       else
                         failwith "fail in ineq"
+                | (Var (sv, _), Null _)
+                | (Null _, Var (sv, _)) ->
+                      let null_var = mk_spec_var "null" in
+                      let c = compare_spec_var null_var sv in
+                      if c < 0 then
+                        (null_var, sv)::(helper tl)
+                      else if c > 0 then
+                        (sv, null_var)::(helper tl)
+                      else
+                        failwith "fail in ineq"
+                | (Null _, Null _) ->
+                      failwith "fail in ineq"
                 | _ -> helper tl
               )
         | _ -> helper tl
@@ -1267,6 +1279,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           let efpd_e = List.map (fun efp ->
               (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in
           let efpd_n = EPureI.norm_disj efpd_e in
+          (* let _ = print_endline (string_of_int (List.length efpd_n)) in *)
           efpd_n
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
