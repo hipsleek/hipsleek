@@ -78,8 +78,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
     let fw_field = snd (List.hd root_view.C.view_forward_fields) in
     let root_dname = root_view.C.view_data_name in
     let root_vname = root_view.C.view_name in
-    let heap_chains = ref [] in
-    let f_hf hf = (match hf with
+    let rec extract_atomic_chain hf = (match hf with
       | CF.DataNode dn ->
           if (String.compare dn.CF.h_formula_data_name root_dname = 0) then (
             try 
@@ -95,11 +94,10 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
                   report_error no_pos "collect_atomic_heap_chain: expect 1 exit sv"
                 else List.hd svs
               ) in
-              let _ = heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)] in
-              Some (CF.HEmp)
-            with _ -> Some hf
+              ([(hf, entry_sv, exit_sv)], CF.HEmp)
+            with _ -> ([], hf)
           )
-          else Some hf
+          else ([], hf)
       | CF.ViewNode vn ->
           if (String.compare vn.CF.h_formula_view_name root_vname = 0) then (
             try 
@@ -113,16 +111,26 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
                   report_error no_pos "collect_atomic_heap_chain: expect 1 exit sv"
                 else List.hd svs
               ) in
-              let _ = heap_chains := !heap_chains @ [(hf, entry_sv, exit_sv)] in
-              Some (CF.HEmp)
-            with _ -> Some hf
+              ([(hf, entry_sv, exit_sv)], CF.HEmp)
+            with _ -> ([], hf)
           )
-          else (Some hf)
-      | CF.Star _ -> None
-      | _ -> Some hf
+          else ([], hf)
+      | CF.Star s ->
+          let h1 = s.CF.h_formula_star_h1 in
+          let h2 = s.CF.h_formula_star_h2 in
+          let pos = s.CF.h_formula_star_pos in
+          let (chains1, h1_rest) = extract_atomic_chain h1 in
+          let (chains2, h2_rest) = extract_atomic_chain h2 in
+          let heap_chains = chains1 @ chains2 in
+          if (h1_rest = CF.HEmp) then (heap_chains, h2_rest)
+          else if (h2_rest = CF.HEmp) then (heap_chains, h1_rest)
+          else
+            let hf_rest = CF.mkStarH h1_rest h2_rest pos in
+            (heap_chains, hf_rest)
+      | _ -> ([], hf)
     ) in
-    let hf_rest = CF.transform_h_formula f_hf hf in
-    (!heap_chains, hf_rest)
+    let (heap_chains, hf_rest) = extract_atomic_chain hf in
+    (heap_chains, hf_rest)
   )
 
 let collect_atomic_heap_chain (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
@@ -221,10 +229,8 @@ let collect_heap_chains (hf: CF.h_formula) (pf: MCP.mix_formula)
   let pr_pf = !MCP.print_mix_formula in
   let pr_sv = !CP.print_sv in
   let pr_vname vd = vd.C.view_name in
-  let pr_chain (heap_chain,_) = (
-    let (hf,entry_sv,exit_sv) = heap_chain in
-    "(" ^ (!CF.print_h_formula hf) ^ ", " ^ (!CP.print_sv entry_sv)
-    ^ ", " ^ (!CP.print_sv exit_sv) ^ ")"
+  let pr_chain ((hc,_,_),hf) = (
+    "(hc = " ^ (!CF.print_h_formula hc) ^ " , rest = " ^ (!CF.print_h_formula hf) ^ ")"
   ) in
   let pr_out = pr_list pr_chain in
   Debug.no_4 "collect_heap_chains" pr_hf pr_pf pr_sv pr_vname pr_out

@@ -9,7 +9,7 @@ module CF = Cformula
 module CFU = Cfutil
 
 type match_res = {
-    match_res_lhs_node : h_formula; (* node from the extracted formula *)    
+    match_res_lhs_node : h_formula; (* node from the extracted formula *)
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
     match_res_holes : (h_formula * int) list; (* imm node/view that have been replaced in lhs together with their corresponding hole id *)
     match_res_type : match_type; (* indicator of what type of matching *)
@@ -936,11 +936,12 @@ and spatial_ctx_accfold_extract_x prog lhs_h lhs_p rhs_node rhs_rest : match_res
         let vname = vn.CF.h_formula_view_name in
         let vdecl = look_up_view_def_raw 0 prog.prog_view_decls vname in
         let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in
-        (* find the longest heap chain that can be obtain by accfold *)
-        let heap_chains = List.filter (fun (hc,hf_rest) ->
-          let fold_steps = Acc_fold.detect_fold_sequence hc vnode vdecl prog in
-          (List.length fold_steps > 0)
-        ) heap_chains in
+        (* (* find the longest heap chain that can be obtain by accfold *)         *)
+        (* let heap_chains = List.filter (fun (hc,hf_rest) ->                      *)
+        (*   let fold_steps = Acc_fold.detect_fold_sequence hc vnode vdecl prog in *)
+        (*   (* accelerated folding is applicable when folding steps > 1 *)        *)
+        (*   (List.length fold_steps > 1)                                          *)
+        (* ) heap_chains in                                                        *)
         List.map (fun ((hf_chain,_,_),hf_rest) ->
           { match_res_lhs_node = hf_chain;
             match_res_lhs_rest = hf_rest;
@@ -1131,7 +1132,8 @@ and check_lemma_not_exist vl vr=
     b_left && b_right &&(left_ls@right_ls)=[]
 
 
-and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest): action_wt =
+and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest)
+    : action_wt =
   let pr_debug s = DD.tinfo_pprint s no_pos in
   let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
