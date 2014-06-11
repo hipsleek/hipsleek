@@ -555,9 +555,9 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
       | Or ({formula_or_f1 = f1;
 	    formula_or_f2 = f2;
 	    formula_or_pos = pos}) ->
-	        let m1 = helper f1  in
-	        let m2 = helper f2  in 
-	        {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
+	    let m1 = helper f1  in
+	    let m2 = helper f2  in 
+	    {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
   in helper f
 
 let formula_2_mem (f : formula) prog : CF.mem_formula = 

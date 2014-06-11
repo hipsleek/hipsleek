@@ -1168,8 +1168,12 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
           let sst = List.combine view_args svl in
           let efpd_h = List.map (fun (baga, eq, ineq) ->
               let new_baga = subst_var_list sst baga in
+              let eqf = EPureI.conv_eq eq in
+              let new_eqf = subst sst eqf in
+              let p_aset = pure_ptr_equations new_eqf in
+              let new_eq = EMapSV.build_eset p_aset in
               (* let new_pf = subst (List.combine view_args svl) pf in *)
-              (new_baga, eq, ineq)
+              (new_baga, new_eq, ineq)
           ) efpd in
           (* let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in *)
           let efpd_n = EPureI.norm_disj efpd_h in
