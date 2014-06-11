@@ -2375,6 +2375,7 @@ and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
   Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro (fun _ _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
       estate fold_rs0 (p2::vs2) base2
+
 and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in

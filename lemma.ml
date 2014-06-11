@@ -1326,23 +1326,24 @@ let refine_tail_coerc_body_heap (hf: IF.h_formula) (vd: C.view_decl) : IF.h_form
   Debug.no_1 "refine_tail_coerc_body_heap" pr pr
       (fun _ -> refine_tail_coerc_body_heap_x hf vd) hf
 
-(* let generate_distributive_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl) = *)
-  
-
 let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =
   (* find base branch and inductive branch *)
-try
   let vpos = vd.C.view_pos in
   let vname = vd.C.view_name in
   let dname = vd.C.view_data_name in
-  if String.compare dname "" = 0 then [] else
+  if (String.compare dname "" = 0) then [] else
   let _ = Debug.ninfo_hprint (add_str "dname" pr_id) dname no_pos in
   let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in
   let processed_branches = List.map (fun (f, lbl) ->
-    (* TRUNG: TODO remove it later *)
-    let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in
-    let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in
+    (* (* TRUNG: TODO remove it later *)                                                             *)
+    (* let _ = try                                                                                   *)
+    (*   let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in                     *)
+    (*   let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in                        *)
+    (*   let hc = List.hd heap_chains in                                                             *)
+    (*   let fold_seq = Acc_fold.detect_fold_sequence hc vd self_sv cprog in                         *)
+    (*   Debug.binfo_hprint (add_str "fold_seq" (pr_list Acc_fold.print_fold_type)) fold_seq no_pos; *)
+    (* with _ -> () in                                                                               *)
 
     let new_f = CF.elim_exists f in
     (new_f, lbl)
@@ -1530,7 +1531,6 @@ try
         )
     )
   )
-with _ -> []
 
 let generate_view_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
     : (I.coercion_decl list) =

@@ -2311,9 +2311,23 @@ and base_formula_of_struc_formula sf=
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
     | Or ({formula_or_f1 = f1;
-	  formula_or_f2 = f2;
-	  formula_or_pos = pos}) -> pos_of_formula f1
+           formula_or_f2 = f2;
+           formula_or_pos = pos}) -> pos_of_formula f1
   | Exists ({formula_exists_pos = pos}) -> pos
+
+and pos_of_h_formula (hf: h_formula) : loc = match hf with
+  | Star {h_formula_star_pos = pos}
+  | StarMinus {h_formula_starminus_pos = pos}
+  | Conj {h_formula_conj_pos = pos}
+  | ConjStar {h_formula_conjstar_pos = pos}
+  | ConjConj {h_formula_conjconj_pos = pos}
+  | Phase {h_formula_phase_pos = pos}
+  | DataNode {h_formula_data_pos = pos}
+  | ViewNode {h_formula_view_pos = pos}
+  | ThreadNode {h_formula_thread_pos = pos}
+  | HRel (_,_,pos) -> pos
+  | Hole _ | FrmHole _ -> no_pos
+  | HTrue | HFalse | HEmp -> no_pos
 
 and list_pos_of_formula (f : formula) : (loc list)= match f with
     | Base ({formula_base_heap = h;
@@ -3913,10 +3927,12 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 (*   Debug.no_1 "rename_struc_bound_vars" pr1 pr1 *)
 (*       (fun _ -> rename_struc_bound_vars_x f) f *)
 
-and rename_bound_vars (f : formula) = fst (rename_bound_vars_x f)
-  (* let pr= !print_formula in *)
-  (* Debug.no_1 "rename_bound_vars" pr pr *)
-  (*     (fun _ -> rename_bound_vars_x f) f *)
+and rename_bound_vars (f : formula) =
+  let pr = !print_formula in
+  let pr_out (f,_) = pr f in
+  let res = Debug.no_1 "rename_bound_vars" pr pr_out
+      (fun _ -> rename_bound_vars_x f) f in
+  fst res
 
 and rename_bound_vars_with_subst (f : formula) = (rename_bound_vars_x f)
 
@@ -11376,35 +11392,48 @@ let keep_hrel e=
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
   let r =  f e in 
   match r with
-    | Some e1 -> e1
-    | None  -> match e with	 
-	      | Star s -> Star {s with 
-			  h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
-			  h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
-	      | StarMinus s -> StarMinus {s with 
-			  h_formula_starminus_h1 = transform_h_formula f s.h_formula_starminus_h1;
-			  h_formula_starminus_h2 = transform_h_formula f s.h_formula_starminus_h2;}			  
-	      | Conj s -> Conj {s with 
-			  h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
-			  h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
-	      | ConjStar s -> ConjStar {s with 
-			  h_formula_conjstar_h1 = transform_h_formula f s.h_formula_conjstar_h1;
-			  h_formula_conjstar_h2 = transform_h_formula f s.h_formula_conjstar_h2;}
-	      | ConjConj s -> ConjConj {s with 
-			  h_formula_conjconj_h1 = transform_h_formula f s.h_formula_conjconj_h1;
-			  h_formula_conjconj_h2 = transform_h_formula f s.h_formula_conjconj_h2;}			  			  
-	      | Phase s -> Phase {s with 
-			  h_formula_phase_rd = transform_h_formula f s.h_formula_phase_rd;
-			  h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}
-	      | DataNode _
-	      | ViewNode _
-	      | ThreadNode _
-              | HRel _
-	      | Hole _ | FrmHole _
-	      | HTrue
-	      | HFalse 
-        | HEmp -> e
-
+  | Some e1 -> e1
+  | None  -> (
+      match e with
+      | Star s ->
+          let new_h1 = transform_h_formula f s.h_formula_star_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_star_h2 in
+          Star {s with h_formula_star_h1 = new_h1;
+                       h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+          let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
+          StarMinus {s with h_formula_starminus_h1 = new_h1;
+                            h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conj_h2 in
+          Conj {s with h_formula_conj_h1 = new_h1;
+                       h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
+          ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                           h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+          let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
+          let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
+          ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                           h_formula_conjconj_h2 = new_h2;}
+      | Phase s -> 
+          let new_rd = transform_h_formula f s.h_formula_phase_rd in
+          let new_rw = transform_h_formula f s.h_formula_phase_rw in
+          Phase {s with h_formula_phase_rd = new_rd;
+                        h_formula_phase_rw = new_rw;}
+      | DataNode _
+      | ViewNode _
+      | ThreadNode _
+      | HRel _
+      | Hole _ | FrmHole _
+      | HTrue
+      | HFalse 
+      | HEmp -> e
+  )
 
 let transform_formula_x f (e:formula):formula =
   let rec helper f e = 

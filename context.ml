@@ -372,8 +372,11 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
             (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
           else 
-            let res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
-            filter_match_res_list res rhs_node
+            (* TRUNG TODO: to insert acc_fold context here *)
+            let accfold_res = spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest in
+            let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
+            let mt_res = filter_match_res_list mt_res rhs_node in
+            (accfold_res @ mt_res)
     | HTrue -> (
           if (rhs_rest = HEmp) then (
               (* if entire RHS is HTrue then it matches with the entire LHS*)
@@ -920,6 +923,52 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list)
         match_res_rhs_node = rhs_node;
         match_res_rhs_rest = rhs_rest;}
   ) l
+
+
+(* spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in *)
+
+and spatial_ctx_accfold_extract_x prog lhs_h lhs_p rhs_node rhs_rest : match_res list =
+  match rhs_node with
+  | ViewNode vn -> (
+      (* only do accfold when rhs_node is a view *)
+      try 
+        let vnode = vn.CF.h_formula_view_node in
+        let vname = vn.CF.h_formula_view_name in
+        let vdecl = look_up_view_def_raw 0 prog.prog_view_decls vname in
+        let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in
+        (* find the longest heap chain that can be obtain by accfold *)
+        let heap_chains = List.filter (fun (hc,hf_rest) ->
+          let fold_steps = Acc_fold.detect_fold_sequence hc vnode vdecl prog in
+          (List.length fold_steps > 0)
+        ) heap_chains in
+        List.map (fun ((hf_chain,_,_),hf_rest) ->
+          { match_res_lhs_node = hf_chain;
+            match_res_lhs_rest = hf_rest;
+            match_res_holes = [];
+            match_res_type = Root;
+            match_res_rhs_node = rhs_node;
+            match_res_rhs_rest = rhs_rest;}
+        ) heap_chains
+      with _ -> []
+        (* collect_heap_chains (f: CF.formula) (root_sv: CP.spec_var) (root_view: C.view_decl) prog *)
+        (* collect_atomic_heap_chain (f: CF.formula) (root_view: C.view_decl) (prog: C.prog_decl) *)
+    )
+  | _ -> []
+
+and spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest =
+  let pr_hf = !CF.print_h_formula in
+  let pr_out = pr_list string_of_match_res in
+  Debug.no_2 "spatial_ctx_accfold_extract" pr_hf pr_hf pr_out
+      (fun _ _ -> spatial_ctx_accfold_extract_x prog lhs_h lhs_p rhs_node rhs_rest)
+      lhs_h rhs_node
+
+
+(* and accelerated_fold_ctx_extract p f a i pi rn rr lhs_p =                                                             *)
+(*   let pr = pr_list string_of_match_res in                                                                             *)
+(*   let pr_svl = Cprinter.string_of_spec_var_list in                                                                    *)
+(*   Debug.no_4 "accelerated_fold_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr  *)
+(*       (fun _ _ _ _-> accelerated_fold_ctx_extract_x p f a i pi rn rr lhs_p) f i a rn                                  *)
+
 
 (*
   In the presence of permissions,
