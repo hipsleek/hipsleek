@@ -575,6 +575,7 @@ let convert_data_and_pred_to_cast_x () =
 (* ) ([]) tmp_views in *)
 (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
   let _ = if !Globals.smt_compete_mode then
+    let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         let _ = Globals.gen_baga_inv := false in
@@ -589,7 +590,7 @@ let convert_data_and_pred_to_cast_x () =
       ()
     else ()
     in
-    let _ = if ls_mut_rec_views != [] then
+    let _ = if ls_mut_rec_views != [] || num_vdecls > 2 then
       (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
       let _ = Globals.lemma_syn := false in
       ()
@@ -597,6 +598,9 @@ let convert_data_and_pred_to_cast_x () =
     ()
   else ()
   in
+  let cur_lem_syn = !Globals.lemma_syn in
+  (*turn off generate lemma during trans views*)
+  let _ = Globals.lemma_syn := false in
   let cviews0 = Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
   (* Debug.tinfo_pprint "after trans_view" no_pos; *)
   (*derv and spec views*)
@@ -660,6 +664,7 @@ let convert_data_and_pred_to_cast_x () =
     Lemutil.norm_checkeq_views iprog cprog6a cprog6a.Cast.prog_view_decls
   else cprog6a
   in
+  let _ = Globals.lemma_syn := cur_lem_syn in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6

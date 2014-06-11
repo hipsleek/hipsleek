@@ -11,7 +11,7 @@ open Mcpure_D
 open Mcpure
 open Label_only
 open Typeinfer
-  
+
 module C = Cast
 module E = Env
 module Err = Error
@@ -35,7 +35,7 @@ module LP = CP.Label_Pure
 type trans_exp_type =
   (C.exp * typ)
 
-let view_args_map = CP.view_args_map
+(* let view_args_map = CP.view_args_map *)
 
 let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
 
@@ -2145,11 +2145,14 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   else () in
   let cviews0 =
     if !Globals.gen_baga_inv then
-      let args_map = view_args_map in
-      let _ = List.iter (fun vd ->
-          let self_var = Cpure.SpecVar(UNK, self, Unprimed) in
-          let args = self_var::vd.Cast.view_vars in
-          Hashtbl.add args_map vd.Cast.view_name args;
+      (* let args_map = view_args_map in *)
+      (* let _ = List.iter (fun vd -> *)
+      (*     let self_var = Cpure.SpecVar(UNK, self, Unprimed) in *)
+      (*     let args = self_var::vd.Cast.view_vars in *)
+      (*     Hashtbl.add args_map vd.Cast.view_name args; *)
+      (* ) cviews0 in *)
+      let _ = List.iter (fun cv ->
+          Hashtbl.add CP.map_baga_invs cv.C.view_name Expure.EPureI.mk_false_disj
       ) cviews0 in
       let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
       (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
@@ -2172,31 +2175,35 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (* moved to cpure.ml *)
       let _ = List.iter (fun idl ->
           if !Globals.gen_baga_inv then
-            let views_list = List.filter (fun vd ->
+            let view_list = List.filter (fun vd ->
                 List.mem vd.Cast.view_name idl
             ) cviews0 in
-            let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in
+            (* let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in *)
+            let new_invs_list = Expure.fix_ef view_list cviews0 in
             let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v ->
-                Cprinter.string_of_mix_formula v.Cast.view_user_inv))) views_list no_pos in
+                Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
             (* if user inv stronger than baga inv, invoke dis_inv_baga() *)
-            let lst = List.combine views_list new_invs_list  in
+            let lst = List.combine view_list new_invs_list in
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
-                  let uv = [([],pure_of_mix (vd.Cast.view_user_inv))] in
+                  let p_aset = CP.pure_ptr_equations (pure_of_mix vd.Cast.view_user_inv) in
+                  let p_aset = CP.EMapSV.build_eset p_aset in
+                  let uv = [([], p_aset, [])] in
+                  (* let uv = [([], pure_of_mix (vd.Cast.view_user_inv))] in *)
                   Expure.EPureI.imply_disj bi uv
               ) lst  in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()
             else
-              let new_map = List.combine views_list new_invs_list in
-              List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map
+              ()
+              (* let new_map = List.combine views_list new_invs_list in *)
+              (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)
       ) ls_mut_rec_views1 in
       let cviews1 = if !Globals.gen_baga_inv then
         List.map (fun cv ->
             let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
             let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
-            let _ = Debug.binfo_hprint (add_str ("baga inv length("^cv.C.view_name^")") (string_of_int)) (List.length inv) no_pos in
             let _ = print_string "\n" in
             {cv with C.view_baga_inv = Some inv}
         ) cviews0
