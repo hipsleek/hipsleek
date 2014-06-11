@@ -1822,3 +1822,129 @@ let get_oa_node_view prog seg_vnames=
   let pr1 = pr_list pr_id in
   Debug.no_1 "get_oa_node_view" pr1 (pr_list (pr_pair pr_id pr_id))
       (fun _ -> get_oa_node_view_x prog seg_vnames) seg_vnames
+
+(* =========== remove the node specified by sv and return the removed node, if found  ==========*)
+let crop_h_formula_x (f: h_formula) (svl: CP.spec_var list): 
+      (* removed node & new_h_formula *)
+      ((h_formula list) * h_formula) = 
+
+  let helper_remove h1 h2 f = 
+    let rh1, nh1 = f h1 in
+    let rh2, nh2 = f h2 in
+    let rh = rh1@rh2 in
+    (rh, nh1, nh2) in
+  let rec helper f =
+    match f with
+      | CF.Star h      ->
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 helper in
+            let nh = CF.Star{h with h_formula_star_h1 = nh1; h_formula_star_h2 = nh2;} in
+            (rh, nh)
+      | CF.Conj h      -> 
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 helper in
+            let nh = CF.Conj {h with h_formula_conj_h1 = nh1; h_formula_conj_h2 = nh2;} in
+            (rh, nh)
+      | CF.ConjStar h  ->
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 helper in
+            let nh = CF.ConjStar{h with h_formula_conjstar_h1 = nh1; h_formula_conjstar_h2 = nh2;} in
+            (rh, nh)
+      | CF.ConjConj h  ->
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 helper in
+            let nh = CF.ConjConj{h with h_formula_conjconj_h1 = nh1; h_formula_conjconj_h2 = nh2;} in
+            (rh, nh)
+      | CF.Phase h     ->
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw helper in
+            let nh = CF.Phase{h with h_formula_phase_rd = nh1; h_formula_phase_rw = nh2;} in
+            (rh, nh)
+      | CF.StarMinus h ->
+            let rh, nh1,nh2 = helper_remove h.CF.h_formula_starminus_h1 h.CF.h_formula_starminus_h2 helper in
+            let nh = CF.StarMinus{h with h_formula_starminus_h1 = nh1; h_formula_starminus_h2 = nh2;} in
+            (rh, nh)
+      | CF.DataNode   ({h_formula_data_node = n})
+      | CF.ViewNode   ({h_formula_view_node = n})
+      | CF.ThreadNode ({h_formula_thread_node = n}) ->
+            let rh, nh = if Gen.BList.mem_eq CP.eq_spec_var n svl then ([f],CF.HEmp) else ([], f) in
+            (rh, nh)
+      | _ ->  ([], f)
+  in
+  helper f
+
+let crop_h_formula (f: h_formula) (svl: CP.spec_var list): 
+      (* removed node & new_h_formula *)
+      ((h_formula list) * h_formula) = 
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 = pr_list Cprinter.string_of_spec_var in
+  let pr_out = pr_pair (add_str "removede nodes:" (pr_list pr1)) (add_str "remaining formula" pr1) in
+  Debug.no_2 "crop_h_formula" pr1 pr2 pr_out  crop_h_formula_x f svl
+
+(* =========== end- remove the node specified by sv and return the removed node  ==========*)
+
+let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let view_type = Named vd.C.view_data_name in
+  let self_var = CP.SpecVar (view_type, self, Unprimed) in
+  let subs = [(self_var, vn.CF.h_formula_view_node)] in
+  let subs = List.fold_left2 (fun subs sv1 sv2 ->
+    subs @ [(sv1, sv2)]
+  ) subs vd.C.view_vars vn.CF.h_formula_view_arguments in
+  subs
+
+let collect_subs_from_view_node (vn: CF.h_formula_view) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_subs = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  let pr_vn vn = !CF.print_h_formula (CF.ViewNode vn) in
+  Debug.no_1 "collect_subs_from_view_node" pr_vn pr_subs
+    (fun _ -> collect_subs_from_view_node_x vn vd) vn
+
+let collect_subs_from_view_formula_x (f: CF.formula) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let is_view_var v = (
+    List.exists (fun sv -> CP.eq_spec_var v sv) vd.C.view_vars
+  ) in
+  let is_self v = String.compare (CP.name_of_spec_var v) self = 0 in
+  let subs_list = ref [] in
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_h_f _ = None in
+  let f_m mp = Some mp in
+  let f_a _ = None in
+  let f_pf pf = None in
+  let f_b bf= (
+    let pf, a = bf in
+    match pf with
+    | CP.Eq (CP.Var (sv1, _), CP.Var(sv2, _), _) ->
+        let new_subs = (
+          (* in tail-recursive predicates, self must be substituted *)
+          if (is_self sv1) then (
+            if (vd.C.view_is_tail_recursive) then [(sv1,sv2)]
+            else [(sv2,sv1)]
+          )
+          else if (is_self sv2) then (
+            if (vd.C.view_is_tail_recursive) then [(sv2,sv1)]
+            else [(sv1,sv2)]
+          )
+          (* otherwise only subs a view var by a non-view var *)
+          else if (is_view_var sv1) && (not (is_view_var sv2)) then
+            [(sv1,sv2)]
+          else if (is_view_var sv2) && (not (is_view_var sv1)) then
+            [(sv2,sv1)]
+          (* othersise do randomly *)
+          else [(sv1, sv2)]
+        ) in
+        let _ = subs_list := !subs_list @ new_subs in
+        (Some (pf,a))
+    | _ -> None
+  ) in
+  let f_e _ = None in
+  let _ = CF.transform_formula (f_e_f, f_f, f_h_f, (f_m, f_a, f_pf, f_b, f_e)) f in
+  !subs_list
+
+let collect_subs_from_view_formula (f: CF.formula) (vd: C.view_decl)
+    : (CP.spec_var * CP.spec_var) list =
+  let pr_f = !CF.print_formula in
+  let pr_out = pr_list (fun (x,y) -> 
+    "(" ^ (CP.name_of_spec_var x) ^ "," ^ (CP.name_of_spec_var y) ^ ")"
+  ) in
+  Debug.no_1 "collect_subs_from_view_formula" pr_f pr_out
+      (fun _ -> collect_subs_from_view_formula_x f vd) f

@@ -851,6 +851,8 @@ let norm_cont_analysis = ref true
 
 let en_norm_ctx = ref true
 
+let en_trec_lin = ref false
+
 (*context: (1, M_cyclic c) *)
 let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)

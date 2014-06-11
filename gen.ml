@@ -125,6 +125,7 @@ struct
 	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
+ let map_l_fst f x = List.map (fun (l,c)-> (f l,c)) x
  let map_snd_only f x = List.map (fun (l,c)-> f c) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
  let fold_l_snd_f fj f st x = List.fold_left (fun a (_,c)-> fj a (f c)) st  x

@@ -12259,3 +12259,11 @@ let overapp_ptrs p=
    let pr1 = !print_formula in
   Debug.no_1 "overapp_ptrs" pr1 pr1
       (fun _ -> overapp_ptrs_x p) p
+
+let mk_self t = 
+  let t =
+    match t with
+      | None   -> Named ""
+      | Some t -> t 
+  in
+  SpecVar (t, self, Unprimed)
