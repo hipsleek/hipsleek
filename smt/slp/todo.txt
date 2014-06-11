@@ -18,6 +18,21 @@ dynamic lemma synthesis vs. static lemma:
 detect loop of lseg in rhs => emps
 
 ===============================================================
+
+classic:
+smallfoot-vc72.tptp.smt2:
+
+smallfoot-vc73.tptp.smt2
+
+
+ls-vc04.smt2: bug
+
+null
+smallfoot-vc41.tptp.smt2:
+smallfoot-vc42.tptp.smt2:
+20.tst.smt2.slk
+22.tst.smt2.slk
+
 ===============================================================
 ===============================================================
 ===============================================================
