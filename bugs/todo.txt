@@ -1278,6 +1278,16 @@ Total number of errors: 1 in files:
 Leads to unsoundness of sh-rev3a.slk
 
 ===================================================================
+checkentail
+ self=nx & bk=pr |- self::dll<bk,b,a>.
+print residue.
+/*
+# fold-dll-1.slk
+
+why fail?
+                          es_must_error: Some(Cannot infer heap and pure 2)
+                          es_trace:  COND ==>  UnmatchedRHSData ==> 
+                          es_infer_vars_rel: []] <1>emp&self=nx & bk=pr&{FLOW,(21,22)=__norm}[]
 ===================================================================
 ===================================================================
 ===================================================================

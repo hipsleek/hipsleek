@@ -598,7 +598,38 @@ struct
             else x1::(aux t1 t2) in
     aux b1 b2
 
-  (* TODO : norm ineq1@ineq2 *)
+  (* pre : v1 < v2 *)
+  (* baga ==> v1!=v2 *)
+  let baga_imp baga v1 v2 =
+    let rec find lst v =
+      match lst with
+        | [] -> None
+        | x::xs -> if Elt.eq v x then Some xs
+          else find xs v in
+    match find baga v1 with
+      | None -> false
+      | Some rst -> not((find rst v2) == None)
+
+  let pair_cmp (x1,x2) (y1,y2) = 
+    let c = Elt.compare x1 y1 in
+    if c==0 then Elt.compare x2 y2
+    else c
+
+  let merge_ineq baga eq i1 i2 =
+    let norm ((x,y) as p) =
+      if baga_imp baga x y then []
+      else if EM.is_equiv eq x y then failwith "contra with eqset"
+      else [p] in
+    let rec aux i1 i2 = match i1,i2 with
+      | [],ineq | ineq,[] -> ineq
+      | x::xs,y::ys -> 
+            let c = pair_cmp x y in
+            if c==0 then (norm x) @ (aux xs ys)
+            else if c<0 then (norm x) @ (aux xs i2)
+            else (norm y) @ (aux i1 ys)
+    in aux i1 i2
+
+  (* DONE : norm ineq1@ineq2 *)
   let mk_star efp1 efp2 =
     if (is_false efp1) || (is_false efp2) then mk_false
     else
@@ -607,8 +638,9 @@ struct
       try
         let new_baga = merge_baga baga1 baga2 in
         let new_eq = EM.merge_eset eq1 eq2 in
-        let new_neq = List.filter (fun (e1, e2) ->
-            not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) (neq1@neq2) in
+        let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
+        (* let new_neq = List.filter (fun (e1, e2) -> *)
+        (*     not (List.exists (Elt.eq e1) new_baga && List.exists (Elt.eq e2) new_baga)) (neq1@neq2) in *)
         (new_baga, new_eq, new_neq)
         (* (merge_baga baga1 baga2, EM.merge_eset eq1 eq2, neq1@neq2) *)
       with _ -> mk_false
@@ -841,38 +873,39 @@ struct
     (*         if Elt.eq x y then baga_eq xs ys *)
     (*         else false *)
 
-  let emap_eq em1 em2 =
-    let ps1 = EM.get_equiv em1 in
-    let ps2 = EM.get_equiv em2 in
-    let imp em ps =
-      List.for_all (fun (v1,v2) -> EM.is_equiv em v1 v2) ps in
-      imp em1 ps2 && imp em2 ps1
+  let emap_compare e1 e2 =
+    (* DONE : is get_equiv in sorted order? *)
+    let lst1 = EM.get_equiv e1 in 
+    let lst2 = EM.get_equiv e2 in
+    (* let lst1 = List.sort pair_cmp lst1 in *)
+    (* let lst2 = List.sort pair_cmp lst2 in *)
+    compare_list pair_cmp lst1 lst2
 
-  (* pre : v1 < v2 *)
-  (* baga ==> v1!=v2 *)
-  let baga_imp baga v1 v2 =
-    let rec find lst v =
-      match lst with
-        | [] -> None
-        | x::xs -> if Elt.eq v x then Some xs
-          else find xs v in
-    match find baga v1 with
-      | None -> false
-      | Some rst -> not((find rst v2) == None)
+  let emap_eq em1 em2 =
+    (emap_compare em1 em2) == 0
+    (* let ps1 = EM.get_equiv em1 in *)
+    (* let ps2 = EM.get_equiv em2 in *)
+    (* let imp em ps = *)
+    (*   List.for_all (fun (v1,v2) -> EM.is_equiv em v1 v2) ps in *)
+    (*   imp em1 ps2 && imp em2 ps1 *)
 
   (* assumes ine2 is non-redundant *)
-  let ineq_imp (* b1 *) ine1 ine2 =
-    List.for_all (fun (v1,v2) ->
-    (* (baga_imp b1 v1 v2) || *) 
-        List.exists (fun (a1,a2) -> (Elt.eq a1 v1) && (Elt.eq a2 v2) ) ine1) ine2
+  (* let ineq_imp (\* b1 *\) ine1 ine2 = *)
+  (*   List.for_all (fun (v1,v2) -> *)
+  (*   (\* (baga_imp b1 v1 v2) || *\)  *)
+  (*       List.exists (fun (a1,a2) -> (Elt.eq a1 v1) && (Elt.eq a2 v2) ) ine1) ine2 *)
 
-  let ineq_eq (* b1 b2 *) ine1 ine2 =
-    ineq_imp (* b1 *) ine1 ine2 && ineq_imp (* b2 *) ine2 ine1
+  (* let ineq_eq (\* b1 b2 *\) ine1 ine2 = *)
+  (*   ineq_imp (\* b1 *\) ine1 ine2 && ineq_imp (\* b2 *\) ine2 ine1 *)
 
   let eq_diff (x1,x2) (y1,y2) = Elt.eq x1 y1 && Elt.eq x2 y2
 
+  let ineq_compare (* b1 b2 *) ine1 ine2 = 
+    compare_list pair_cmp ine1 ine2
+
   (* more efficient in_eq assuming diff list is sorted *)
-  let rec ineq_eq (* b1 b2 *) ine1 ine2 = eq_list eq_diff ine1 ine2
+  let ineq_eq (* b1 b2 *) ine1 ine2 = (ineq_compare ine1 ine2) == 0
+    (* eq_list eq_diff ine1 ine2 *)
     (* match ine1,ine2 with *)
     (*   | [], [] -> true *)
     (*   | [], _ -> false *)
@@ -881,13 +914,7 @@ struct
     (*         if eq_diff x y then ineq_eq xs ys *)
     (*         else false *)
 
-  let pair_cmp (x1,x2) (y1,y2) = 
-    let c = Elt.compare x1 y1 in
-    if c==0 then Elt.compare x2 y2
-    else c
 
-  let rec ineq_compare (* b1 b2 *) ine1 ine2 = 
-    compare_list pair_cmp ine1 ine2
 
   let eq_epure_syn ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : bool =
     (* assume non-false *)
@@ -896,10 +923,6 @@ struct
         else ineq_eq in1 in2
       else false
 
-  let emap_compare e1 e2 =
-    let lst1 = EM.get_equiv e1 in
-    let lst2 = EM.get_equiv e2 in
-    compare_list pair_cmp lst1 lst2
 
   (* get norm_eq from eqmap *)
   (* get domain; choose smallest *)
@@ -937,17 +960,22 @@ struct
               else false
     in aux xs ys
 
-  let pair_compare cmp (a1,a2) (b1,b2) =
-    let c = cmp a1 b1 in
-    if c==0 then cmp a2 b2
-    else c
+  (* let pair_compare cmp (a1,a2) (b1,b2) = *)
+  (*   let c = cmp a1 b1 in *)
+  (*   if c==0 then cmp a2 b2 *)
+  (*   else c *)
+
+  let emap_imply e1 e2 =
+    let lst1 = EM.get_equiv e1 in
+    let lst2 = EM.get_equiv e2 in
+    lst_imply pair_cmp lst1 lst2
 
   (* epure syntactic imply *)
   let epure_syn_imply (b1,e1,i1) (b2,e2,i2) =
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
-      let f2 = lst_imply (pair_compare Elt.compare) i1 i2 in
-      if f2 then true(* TODO : e1 --> e2? *)
+      let f2 = lst_imply pair_cmp i1 i2 in
+      if f2 then emap_imply e1 e2 (* DONE: e1 --> e2? *)
       else false
     else false
 
