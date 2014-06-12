@@ -195,9 +195,10 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
       let next_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
         (CP.eq_spec_var sv1 latest_sv2) || (CP.EMapSV.mem sv1 aliases)
       ) atomic_chains in
-      let next_chain = (
-        if (List.length next_chains = 1) then List.hd next_chains
-        else raise Not_found
+      let next_chain, atomic_chains = (
+        match next_chains with
+        | [] -> raise Not_found
+        | hd::tl -> (hd, tl @ rest_chains)
       ) in
       let (next_hf, next_sv1, next_sv2) = next_chain in
       let new_hf = CF.mkStarH latest_hf next_hf pos in
@@ -217,9 +218,10 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
     let root_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
       (CP.eq_spec_var sv1 root_sv) || (CP.EMapSV.mem sv1 aliases)
     ) atomic_chains in
-    let root_chain = (
-      if (List.length root_chains = 1) then List.hd root_chains
-      else raise Not_found
+    let root_chain, atomic_chains = (
+      match root_chains with
+      | [] -> raise Not_found
+      | hd::tl -> (hd, tl @ rest_chains)
     ) in
     let hf_rest = List.fold_left (fun hf1 (hf2,_,_) ->
       CF.mkStarH hf1 hf2 pos 
