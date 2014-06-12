@@ -19,20 +19,22 @@ http://www.liafa.univ-paris-diderot.fr/spen
 (define-fun skl1 ((?hd SL2_t) (?ex SL2_t)) Space
   (tospace (or (= ?hd ?ex)
   (exists ((?tl SL2_t))
+  (and (distinct ?hd ?ex)
   (tobool (ssep
     (pto ?hd (sref (ref n2 nil) (ref n1 ?tl)))
     (skl1 ?tl ?ex))
-)))))
+))))))
 
 ; two-level skip list
 (define-fun skl2 ((?hd SL2_t) (?ex SL2_t)) Space
   (tospace (or (= ?hd ?ex)
   (exists ((?tl SL2_t) (?Z1 SL2_t))
+  (and (distinct ?hd ?ex)
   (tobool (ssep
     (pto ?hd (sref (ref n2 ?tl) (ref n1 ?Z1)))
     (skl1 ?Z1 ?tl)
     (skl2 ?tl ?ex))
-)))))
+))))))
 
 ; variables
 (declare-fun x1 () SL2_t)

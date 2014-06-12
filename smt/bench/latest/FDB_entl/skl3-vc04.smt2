@@ -20,31 +20,34 @@ http://www.liafa.univ-paris-diderot.fr/spen
 (define-fun skl1 ((?hd SL3_t) (?ex SL3_t)) Space
   (tospace (or (= ?hd ?ex)
   (exists ((?tl SL3_t))
+  (and (distinct ?hd ?ex)
   (tobool (ssep
-    (pto ?hd (sref (ref n3 nil) (ref n2 nil) (ref n1 ?tl)))
+    (pto ?hd (sref (ref n2 nil) (ref n1 ?tl)))
     (skl1 ?tl ?ex))
-)))))
+))))))
 
 ; two-level skip list
 (define-fun skl2 ((?hd SL3_t) (?ex SL3_t)) Space
   (tospace (or (= ?hd ?ex)
   (exists ((?tl SL3_t) (?Z1 SL3_t))
+  (and (distinct ?hd ?ex)
   (tobool (ssep
-    (pto ?hd (sref (ref n3 nil) (ref n2 ?tl) (ref n1 ?Z1)))
+    (pto ?hd (sref (ref n2 ?tl) (ref n1 ?Z1)))
     (skl1 ?Z1 ?tl)
     (skl2 ?tl ?ex))
-)))))
+))))))
 
-; three-level skip list
+; three-level skip list 
 (define-fun skl3 ((?hd SL3_t) (?ex SL3_t)) Space
   (tospace (or (= ?hd ?ex)
   (exists ((?tl SL3_t) (?Z1 SL3_t) (?Z2 SL3_t))
+  (and (distinct ?hd ?ex)
   (tobool (ssep
     (pto ?hd (sref (ref n3 ?tl) (ref n2 ?Z2) (ref n1 ?Z1)))
     (skl1 ?Z1 ?Z2)
     (skl2 ?Z2 ?tl)
     (skl3 ?tl ?ex))
-)))))
+))))))
 
 ; variables
 (declare-fun x1 () SL3_t)

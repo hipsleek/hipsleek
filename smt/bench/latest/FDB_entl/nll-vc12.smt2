@@ -22,21 +22,23 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; singly-linked list
 (define-fun lso ((?in NLL_lvl1_t) (?out NLL_lvl1_t))
   Space (tospace (or (= ?in ?out) 
-    (exists ((?u NLL_lvl1_t)) (tobool (ssep
-      (pto ?in (ref next1 ?u))
-      (lso ?u ?out))
-)))))
+    (exists ((?u NLL_lvl1_t)) 
+      (and (distinct ?in ?out) 
+           (tobool (ssep
+           (pto ?in (ref next1 ?u))
+           (lso ?u ?out))
+))))))
 
 ; singly-linked list of singly-linked lists
 (define-fun nll ((?in NLL_lvl2_t) (?out NLL_lvl2_t) (?boundary NLL_lvl1_t))
   Space (tospace (or (= ?in ?out)
-    (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) (tobool (ssep
-      (pto ?in (sref
-        (ref next2 ?u)
-        (ref down ?Z1)))
-      (lso ?Z1 ?boundary)
-      (nll ?u ?out ?boundary))
-)))))
+    (exists ((?u NLL_lvl2_t) (?Z1 NLL_lvl1_t)) 
+      (and (distinct ?in ?out) (distinct ?in ?boundary)
+           (tobool (ssep
+           (pto ?in (sref (ref next2 ?u) (ref down ?Z1)))
+           (lso ?Z1 ?boundary)
+           (nll ?u ?out ?boundary))
+))))))
 
 (declare-fun x1 () NLL_lvl2_t)
 (declare-fun x1_1 () NLL_lvl1_t)

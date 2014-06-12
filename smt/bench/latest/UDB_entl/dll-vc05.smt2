@@ -6,7 +6,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 |)
 (set-info :smt-lib-version 2.0)
 (set-info :category "crafted")
-(set-info :status sat)
+(set-info :status unsat)
 (set-info :version "2014-06-09")
 
 
@@ -30,7 +30,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 (declare-fun z_emp () Dll_t)
 
 ;
-; (bad) unfolding of dll(x,y,nil,z)
+; unsat antecedent 
 ;
 (assert
     (tobool (ssep (pto x_emp (sref (ref next w_emp) (ref prev nil))) 

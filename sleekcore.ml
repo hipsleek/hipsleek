@@ -170,6 +170,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
     else () 
   in
+  let conseq = Cfutil.elim_null_vnodes cprog conseq in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
   let _ = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
   let _ = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
@@ -195,7 +196,6 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* else ctx *)
   (* in *)
   (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
-    let conseq = Cfutil.elim_null_vnodes cprog conseq in
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv cprog false false 
@@ -297,7 +297,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   in
   let is_simple_rhs f=
     let _, hvs,hns = CF.get_hp_rel_formula f in
-    List.length hvs = 1 && hns = []
+    hns != [] || (List.length hvs = 1 && hns = [])
   in
   (******************************************************)
   let ante_1b, conseq_1a, ante_unsat0, conseq_unsat0 = Syn_checkeq.syntax_nodes_match

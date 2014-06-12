@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-@files = <smallfoot*.slk>;
+@files = <*.tst.*.slk>;
 
 foreach $file (@files) {
     print $file . "\n";

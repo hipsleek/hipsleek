@@ -1611,28 +1611,30 @@ let norm_rename_clash_args_node_x init_args0 f0=
       | ViewNode vn ->
              let _ = Debug.ninfo_hprint (add_str "args" !CP.print_svl) args no_pos in
              let _ = Debug.ninfo_hprint (add_str "vn.h_formula_view_arguments args" !CP.print_svl) vn.h_formula_view_arguments no_pos in
-            let inter = CP.intersect_svl vn.h_formula_view_arguments args in
-            if inter = [] then
-              (hf, args@vn.h_formula_view_arguments,quans,[])
-            else
-              let fr_inter = CP.fresh_spec_vars inter in
-              let sst = List.combine inter fr_inter in
-              let vn1 = {vn with h_formula_view_arguments = CP.subst_var_list sst
-              vn.h_formula_view_arguments} in
-              (ViewNode vn1, args@(CP.diff_svl vn.h_formula_view_arguments args), quans@fr_inter,sst)
+             let inter = CP.intersect_svl vn.h_formula_view_arguments args in
+             let ident_ptrs = vn.h_formula_view_node::vn.h_formula_view_arguments in
+             if inter = [] then
+               (hf, args@ident_ptrs (* vn.h_formula_view_arguments *),quans,[])
+             else
+               let fr_inter = CP.fresh_spec_vars inter in
+               let sst = List.combine inter fr_inter in
+               let vn1 = {vn with h_formula_view_arguments = CP.subst_var_list sst
+                       vn.h_formula_view_arguments} in
+               (ViewNode vn1, args@(CP.diff_svl ident_ptrs (* vn.h_formula_view_arguments *) args), quans@fr_inter,sst)
       | DataNode dn ->
             let _ = Debug.ninfo_hprint (add_str "args" !CP.print_svl) args no_pos in
             let _ = Debug.ninfo_hprint (add_str "dn.h_formula_data_arguments args" !CP.print_svl) dn.h_formula_data_arguments no_pos in
             let inter = CP.intersect_svl dn.h_formula_data_arguments args in
+            let ident_ptrs = dn.h_formula_data_node::dn.h_formula_data_arguments in
             if inter = [] then
-              (hf, args@ dn.h_formula_data_arguments,quans,[])
+              (hf, args@ident_ptrs (* dn.h_formula_data_arguments *),quans,[])
             else
               let fr_inter = CP.fresh_spec_vars inter in
               let _ = Debug.ninfo_hprint (add_str "fr_inter" !CP.print_svl) fr_inter no_pos in
               let sst = List.combine inter fr_inter in
               let dn1 = {dn with h_formula_data_arguments = CP.subst_var_list sst
               dn.h_formula_data_arguments} in
-              (DataNode dn1, args@(CP.diff_svl dn.h_formula_data_arguments args), quans@fr_inter,sst)
+              (DataNode dn1, args@(CP.diff_svl ident_ptrs (* dn.h_formula_data_arguments *) args), quans@fr_inter,sst)
       | _ -> (hf,args,quans,[])
   in
   let rec rename_helper init_args f=
