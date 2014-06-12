@@ -346,6 +346,8 @@ struct
   (* let mk_spec_var e = SpecVar (UNK,Elt.string_of e,Unprimed) *)
   (* type baga_ty = .. *)
   let mk_false = ([], mkFalse no_pos)
+  let mk_true = [([], mkTrue no_pos)]
+
   let is_false (e:epure) = (e == mk_false)
   let string_of (x:epure) = pr_pair (pr_list Elt.string_of) Cprinter.string_of_pure_formula x
   let string_of_disj lst = pr_list string_of lst
@@ -582,6 +584,9 @@ struct
           ) efpd in
 *)
 
+  let mk_epure (pf:formula) = 
+    [([], pf)]
+
 end
 
 (* this is meant as more efficient baga module *)
@@ -597,6 +602,8 @@ struct
   type epure_disj = epure list
 
   let mk_false = ([Elt.zero], EM.mkEmpty, [])
+  let mk_true = [([], EMapSV.mkEmpty, [])]
+
   let is_false (e:epure) = (e == mk_false)
   let pr1 = pr_list Elt.string_of
   let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
@@ -1102,6 +1109,13 @@ struct
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
 
+  let mk_epure (pf:formula) =
+    let p_aset = pure_ptr_equations pf in
+    let p_aset = EMapSV.build_eset p_aset in
+    let ineq = get_ineq pf in
+    (* [([], pf)] *)
+    [([], p_aset, ineq)] (* new expure, need to add ineq *)
+
 (* TODO
 
   1. complete conv_eq & conv_neq
@@ -1311,19 +1325,17 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
           (* let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in *)
           let efpd_n = EPureI.norm_disj efpd_h in
           efpd_n
-    | _ -> [([], EMapSV.mkEmpty, [])] (* efpd_p *) (* [([], mkTrue no_pos)] *)
+    | _ -> EPureI.mk_true
+(* [([], EMapSV.mkEmpty, [])] *) (* efpd_p *) (* [([], mkTrue no_pos)] *)
 
 and build_ef_heap_formula (cf : Cformula.h_formula) (* (efpd_p : ef_pure_disj) *) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
       Cprinter.string_of_ef_pure_disj (fun _ ->
           build_ef_heap_formula_x cf (* efpd_p *) all_views) cf
 
+(* this need to be moved to EPURE  module *)
 let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
-  let p_aset = pure_ptr_equations pf in
-  let p_aset = EMapSV.build_eset p_aset in
-  let ineq = get_ineq pf in
-  (* [([], pf)] *)
-  [([], p_aset, ineq)] (* new expure, need to add ineq *)
+  mk_epure pf
 
 let build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
