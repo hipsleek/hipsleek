@@ -4344,7 +4344,7 @@ module PtrSV = Ptr(SV);;
 module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
- 
+
 type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap
@@ -4354,30 +4354,29 @@ type var_aset = EMapSV.emap
    type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list) 
 *)
 (* old extended pure formula *)
-type ef_pure = (spec_var list * formula )
-
+type ef_pure = (spec_var list * formula)
 
 (* disjunctive extended pure formula *)
 (* [] denotes false *)
 type ef_pure_disj = ef_pure list
 
-let map_baga_invs : ((string,ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
+let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 
 
 (* need to remove constants and null *)
 let fv_var_aset (e:var_aset) = EMapSV.get_elems e
 
 let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> EMapSV.is_equiv aset sv1 sv2 
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> EMapSV.is_equiv aset sv1 sv2
 
 let eq_spec_var_aset (aset: EMapSV.emap ) (sv1 : spec_var) (sv2 : spec_var) =
   let pr = !print_sv in
   let pr1 = string_of_bool in
-  Debug.no_2 "eq_spec_var_aset" pr pr pr1 
+  Debug.no_2 "eq_spec_var_aset" pr pr pr1
   (fun _ _ -> eq_spec_var_aset aset sv1 sv2) sv1 sv2
 
 let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
-  
+
 and equalBFormula_aset aset  (f1:b_formula)(f2:b_formula) :bool = equalBFormula_f (eq_spec_var_aset aset)  f1 f2
 
 and eqExp_aset aset  (f1:exp)(f2:exp):bool = eqExp_f (eq_spec_var_aset aset)  f1 f2

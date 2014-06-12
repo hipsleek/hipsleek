@@ -2187,10 +2187,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let lst = List.combine view_list new_invs_list in
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
-                  let p_aset = CP.pure_ptr_equations (pure_of_mix vd.Cast.view_user_inv) in
-                  let p_aset = CP.EMapSV.build_eset p_aset in
-                  let uv = [([], p_aset, [])] in
-                  (* let uv = [([], pure_of_mix (vd.Cast.view_user_inv))] in *)
+                  let uv = Expure.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
                   Expure.EPureI.imply_disj bi uv
               ) lst  in
             if (not baga_stronger) then
@@ -2231,8 +2228,8 @@ and fill_one_base_case_x prog vd =
       }
     end
 
-and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }    
-  
+and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }
+
 (* An Hoa : trans_rel *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let pos = IP.pos_of_formula rdef.I.rel_formula in

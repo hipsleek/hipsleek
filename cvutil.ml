@@ -404,7 +404,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
-            
+
     in
 (* 	(\*a much simpler version of the above helper*\) *)
     let rec helper_simpl f =
@@ -630,7 +630,7 @@ and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formu
 
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-    | _ -> let f = Expure.EPureI.conv_enum_disj disj in
+    | _ -> let f = Expure.EPureI.ef_conv_enum_disj disj in
     (* | _ -> let f = Expure.ef_conv_enum_disj disj in *)
       (MCP.mix_of_pure f,CF.mk_mem_formula [])
 
