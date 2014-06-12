@@ -94,7 +94,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let iprog = I.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ =
-      if (* not !Globals.smt_compete_mode *) true then
+      if not !Globals.smt_compete_mode then
       print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
     ^ (Cprinter.string_of_formula rf1))
       else ()

@@ -66,8 +66,11 @@ if ($test_all) {
     "smallfoot-vc41.tptp.smt2",
     "smallfoot-vc42.tptp.smt2",
     "08.tst.smt2",
-    "11.tst.smt2",
+    "10.tst.smt2",
+    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2"
     "22.tst.smt2",
+    "dll-entails-dll0+.smt2",
+     "dll-rev-entails-dll.smt2",
     "dll-entails-dll-rev.smt2",
     "dll-mid-entails-dll-rev.smt2",
     "dll-rev-entails-dll-mid.smt2",
@@ -157,8 +160,7 @@ if ($test_all) {
     @test_files = (
     "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
       "dll-vc09.smt2", "dll-vc10.smt2", 
-     "dll-vc12.smt2", "dll-vc13.smt2","dll-entails-dll0+.smt2",
-     "dll-rev-entails-dll.smt2",
+     "dll-vc12.smt2", "dll-vc13.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
@@ -243,15 +245,15 @@ if ($test_all) {
     "smallfoot-vc31.tptp.smt2",
     "01.tst.smt2",
     "07.tst.smt2",
-    "10.tst.smt2",
-    "12.tst.smt2",
+    #"10.tst.smt2",
+    #"12.tst.smt2",
     "13.tst.smt2",
     "14.tst.smt2",
     "15.tst.smt2",
-    "16.tst.smt2",
+    #"16.tst.smt2",
     "17.tst.smt2",
     "18.tst.smt2",
-    "21.tst.smt2",
+    #"21.tst.smt2",
     "20.tst.smt2",
     );
   }
