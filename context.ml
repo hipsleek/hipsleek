@@ -1412,37 +1412,40 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if !Globals.acc_fold then (
                     let sv_l = vl.h_formula_view_node in
                     let sv_r = vr.h_formula_view_node in
-                    if not (CP.eq_spec_var sv_l sv_r) then []
-                    else (
-                      let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
-                      let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
-                      let aliases = CP.EMapSV.find_equiv_all sv_l emap in
-                      if (CP.EMapSV.mem sv_r aliases) then (
-                        let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
-                        let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p sv_l vdecl prog in
-                        let fold_seqs = List.map (fun ((hf,_,_),hf_rest) ->
-                          let fold_steps = Acc_fold.detect_fold_sequence hf sv_l vdecl prog in
-                          (hf,hf_rest,fold_steps)
-                        ) heap_chains in
-                        let fold_seqs = List.filter (fun (_,_,fold_steps) ->
-                          (* do acc-fold only there is more than 1 fold steps *)
-                          List.length fold_steps > 1
-                        ) fold_seqs in
-                        let actions = List.map (fun (hf,hf_rest,fold_steps) ->
-                          let m_res = {m_res with match_res_lhs_node = hf;
-                                                  match_res_lhs_rest = hf_rest;} in
-                          (1, M_acc_fold (m_res, fold_steps))
-                        ) fold_seqs in
-                        actions
-                      )
-                      else []
+                    let try_accfold = (
+                      if (CP.eq_spec_var sv_l sv_r) then true
+                      else 
+                        let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
+                        let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
+                        let aliases = CP.EMapSV.find_equiv_all sv_l emap in
+                        if (CP.EMapSV.mem sv_r aliases) then true
+                        else false
+                    ) in
+                    if (try_accfold) then (
+                      let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
+                      let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p sv_l vdecl prog in
+                      let fold_seqs = List.map (fun ((hf,_,_),hf_rest) ->
+                        let fold_steps = Acc_fold.detect_fold_sequence hf sv_l vdecl prog in
+                        (hf,hf_rest,fold_steps)
+                      ) heap_chains in
+                      let fold_seqs = List.filter (fun (_,_,fold_steps) ->
+                        (* do acc-fold only there is more than 1 fold steps *)
+                        List.length fold_steps > 1
+                      ) fold_seqs in
+                      let actions = List.map (fun (hf,hf_rest,fold_steps) ->
+                        let m_res = {m_res with match_res_lhs_node = hf;
+                                                match_res_lhs_rest = hf_rest;} in
+                        (1, M_acc_fold (m_res, fold_steps))
+                      ) fold_seqs in
+                      actions
                     )
+                    else []
                   )
                   else []
                 ) in
-                (* (1, Cond_action ([(-1,norm_search_action (l2@l3))] @ a_accfold)) *)
+                (1, Cond_action ([(-1,norm_search_action (l2@l3))] @ a_accfold))
                 (* try to do acc-fold first *)
-                (1, Cond_action (a_accfold @ [(-1,norm_search_action (l2@l3))]))
+                (* (1, Cond_action (a_accfold @ [(-1,norm_search_action (l2@l3))])) *)
                 (* (-1,norm_search_action (l2@l3@a_accfold)) *)
             | DataNode dl, ViewNode vr -> 
                 pr_debug "DATA vs VIEW\n";
@@ -1538,31 +1541,34 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if !Globals.acc_fold then (
                     let sv_l = dl.h_formula_data_node in
                     let sv_r = vr.h_formula_view_node in
-                    if not (CP.eq_spec_var sv_l sv_r) then []
-                    else (
-                      let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
-                      let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
-                      let aliases = CP.EMapSV.find_equiv_all sv_l emap in
-                      if (CP.EMapSV.mem sv_r aliases) then (
-                        let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
-                        let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p sv_l vdecl prog in
-                        let fold_seqs = List.map (fun ((hf,_,_),hf_rest) ->
-                          let fold_steps = Acc_fold.detect_fold_sequence hf sv_l vdecl prog in
-                          (hf,hf_rest,fold_steps)
-                        ) heap_chains in
-                        let fold_seqs = List.filter (fun (_,_,fold_steps) ->
-                          (* do acc-fold only there is more than 1 fold steps *)
-                          List.length fold_steps > 1
-                        ) fold_seqs in
-                        let actions = List.map (fun (hf,hf_rest,fold_steps) ->
-                          let m_res = {m_res with match_res_lhs_node = hf;
-                                                  match_res_lhs_rest = hf_rest;} in
-                          (1, M_acc_fold (m_res, fold_steps))
-                        ) fold_seqs in
-                        actions
-                      )
-                      else []
+                    let try_accfold = (
+                      if (CP.eq_spec_var sv_l sv_r) then true
+                      else 
+                        let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
+                        let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
+                        let aliases = CP.EMapSV.find_equiv_all sv_l emap in
+                        if (CP.EMapSV.mem sv_r aliases) then true
+                        else false
+                    ) in
+                    if (try_accfold) then (
+                      let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
+                      let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p sv_l vdecl prog in
+                      let fold_seqs = List.map (fun ((hf,_,_),hf_rest) ->
+                        let fold_steps = Acc_fold.detect_fold_sequence hf sv_l vdecl prog in
+                        (hf,hf_rest,fold_steps)
+                      ) heap_chains in
+                      let fold_seqs = List.filter (fun (_,_,fold_steps) ->
+                        (* do acc-fold only there is more than 1 fold steps *)
+                        List.length fold_steps > 1
+                      ) fold_seqs in
+                      let actions = List.map (fun (hf,hf_rest,fold_steps) ->
+                        let m_res = {m_res with match_res_lhs_node = hf;
+                                                match_res_lhs_rest = hf_rest;} in
+                        (1, M_acc_fold (m_res, fold_steps))
+                      ) fold_seqs in
+                      actions
                     )
+                    else []
                   )
                   else []
                 ) in
@@ -1570,9 +1576,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (* (-1, norm_search_action (a@a_accfold)) *)
                 if (a = []) then (1, norm_search_action a_accfold)
                 else if (a_accfold = []) then (-1, norm_search_action a)
-                (* else (1, Cond_action ([(-1, norm_search_action a)] @ a_accfold)) *)
+                else (1, Cond_action ([(-1, norm_search_action a)] @ a_accfold))
                 (* try to do acc-fold first *)
-                else (1, Cond_action (a_accfold @ [(-1, norm_search_action a)]))
+                (* else (1, Cond_action (a_accfold @ [(-1, norm_search_action a)])) *)
             | ViewNode vl, DataNode dr -> 
                   pr_debug "VIEW vs DATA\n";
                   let vl_name = vl.h_formula_view_name in
