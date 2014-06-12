@@ -2180,6 +2180,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ) cviews0 in
             (* let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in *)
             let new_invs_list = Expure.fix_ef view_list cviews0 in
+            let new_invs_list = List.map (fun epd -> Expure.EPureI.to_cpure_disj epd) new_invs_list in
             let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v ->
                 Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
@@ -2188,7 +2189,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
                   let uv = Expure.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
-                  Expure.EPureI.imply_disj bi uv
+                  Expure.EPureI.imply_disj (Expure.EPureI.from_cpure_disj bi) uv
               ) lst  in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()

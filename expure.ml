@@ -587,6 +587,14 @@ struct
   let mk_epure (pf:formula) = 
     [([], pf)]
 
+  let to_cpure (ep : epure) = ep
+
+  let to_cpure_disj (epd : epure_disj) = epd
+
+  let from_cpure (ep : ef_pure) = ep
+
+  let from_cpure_disj (epd : ef_pure_disj) = epd
+
 end
 
 (* this is meant as more efficient baga module *)
@@ -745,9 +753,9 @@ struct
   (* assume normalized *)
   let unsat ((baga,eq,ieq) : epure) : bool =
     let zf = is_zero baga in
-    zf
-    (* if zf then true *)
-    (* else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq *)
+    (* zf *)
+    if zf then true
+    else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq (* need it to remove (null,null) in ineq *)
 
 (*
     given (baga,eq,inq)
@@ -1149,6 +1157,23 @@ struct
     (* [([], pf)] *)
     [([], p_aset, ineq)] (* new expure, need to add ineq : DONE *)
 
+  let to_cpure ((baga,eq,ineq) : epure) =
+    let f1 = conv_eq eq in
+    let f2 = conv_ineq ineq in
+    (baga, mkAnd f1 f2 no_pos)
+
+  let to_cpure_disj (epd : epure_disj) =
+    List.map (fun ep -> to_cpure ep) epd
+
+  let from_cpure ((baga,pf) : ef_pure) =
+    let p_aset = pure_ptr_equations pf in
+    let p_aset = EMapSV.build_eset p_aset in
+    let ineq = get_ineq pf in
+    (baga, p_aset, ineq)
+
+  let from_cpure_disj (epd : ef_pure_disj) =
+    List.map (fun ep -> from_cpure ep) epd
+
 (* TODO
 
   1. complete conv_eq & conv_neq
@@ -1187,6 +1212,7 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
             try Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
             with Not_found -> failwith "cannot find in init_map too"
           in
+          let efpd = EPureI.from_cpure_disj efpd in
           (* need substitue variable *)
           let view = List.find (fun vc -> vnf.Cformula.h_formula_view_name = vc.Cast.view_name) all_views in
           let self_var = Cpure.SpecVar (Named view.Cast.view_data_name, self, Unprimed) in
@@ -1201,7 +1227,7 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
 
 and build_ef_heap_formula (cf : Cformula.h_formula) (* (efpd_p : ef_pure_disj) *) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
-      Cprinter.string_of_ef_pure_disj (fun _ ->
+      EPureI.string_of_disj (fun _ ->
           build_ef_heap_formula_x cf (* efpd_p *) all_views) cf
 
 (* this need to be moved to EPURE module : DONE *)
@@ -1210,7 +1236,7 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
 
 let build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
-      Cprinter.string_of_ef_pure_disj (fun _ ->
+      EPureI.string_of_disj (fun _ ->
           build_ef_pure_formula_x pf) pf
 
 (* build_ef_formula : map -> cformula --> ef_pure_disj *)
@@ -1246,7 +1272,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
-      Cprinter.string_of_ef_pure_disj (fun _ ->
+      EPureI.string_of_disj (fun _ ->
           build_ef_formula_x cf all_views) cf
 
 (* using Cast *)
@@ -1265,7 +1291,7 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
 
 let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list) : ef_pure_disj =
   let pr_view_name vd = vd.Cast.view_name in
-  Debug.no_1 "build_ef_view" pr_view_name string_of_ef_pure_disj (fun _ ->
+  Debug.no_1 "build_ef_view" pr_view_name EPureI.string_of_disj (fun _ ->
       build_ef_view_x view_decl all_views) view_decl
 
 (* fix_test :  map -> view_list:[view_decl] -> inv_list:[ef_pure_disj] -> bool *)
@@ -1280,6 +1306,7 @@ let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : 
   let lhs_list = inv_list in
   let rhs_list = List.map (fun vd ->
       Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
+  let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
   let pair_list = List.combine lhs_list rhs_list in
   let r_list = List.map (fun (a, c) ->
       EPureI.imply_disj a c) pair_list in
@@ -1287,7 +1314,7 @@ let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : 
 
 let fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : bool =
   let pr1 x = string_of_int (List.length x) in
-  let pr2 = pr_list Cprinter.string_of_ef_pure_disj in
+  let pr2 = pr_list EPureI.string_of_disj in
   Debug.no_2 "fix_test" pr1 pr2 string_of_bool (fun _ _ -> (fix_test (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list))) view_list inv_list
 
 (* compute fixpoint iteration *)
@@ -1302,7 +1329,7 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       inv_list
     else
       let _ = List.iter (fun (vc,inv) ->
-          Hashtbl.replace map_baga_invs vc.Cast.view_name inv
+          Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
       ) (List.combine view_list inv_list) in
       let inv_list = List.fold_left (fun inv_list vc ->
           inv_list@[(build_ef_view vc all_views)]
@@ -1311,13 +1338,13 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   in
   let inv_list = helper view_list inv_list in
   let _ = List.iter (fun (vc,inv) ->
-      Hashtbl.replace map_baga_invs vc.Cast.view_name inv
+      Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
   ) (List.combine view_list inv_list) in
   inv_list
 
 let fix_ef (view_list : Cast.view_decl list) (all_views : Cast.view_decl list) : ef_pure_disj list =
   let pr_1 = pr_list (fun v -> v.Cast.view_name)  in
-  Debug.no_1 "fix_ef_x" pr_1 (pr_list Cprinter.string_of_ef_pure_disj)
+  Debug.no_1 "fix_ef_x" pr_1 (pr_list EPureI.string_of_disj)
       (fun _ -> fix_ef_x view_list all_views) view_list
 
 (* check whether the view has arithmetic or not *)
