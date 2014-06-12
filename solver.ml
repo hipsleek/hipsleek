@@ -5060,24 +5060,27 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     (** [Internal] Generate the action based on the list of node and its tail **)
     let rec generate_action_x nodes eset =
       match nodes with
-        | [] 
-        | [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
-        | x::t -> try
-	    let y = List.find (fun e -> 
+      | [] 
+      | [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
+      | x::t -> 
+          try
+            let y = List.find (fun e -> 
                 (CP.eq_spec_var_aset eset (get_node_var x) (get_node_var e))
                 && (is_view_user x || is_view_user e)) t in
             Debug.tinfo_hprint (add_str "y" Cprinter.string_of_h_formula) y no_pos;
             let xy = if (is_view_user x) then x else y in
-	    let mr = { 
-                Context.match_res_lhs_node = xy;
-                Context.match_res_lhs_rest = x; (* ??? why*)
-                Context.match_res_holes = [] ;
-	        Context.match_res_type = Context.Root;
-	        Context.match_res_rhs_node = x;
-	        Context.match_res_rhs_rest = x; } in
-	    Context.M_unfold (mr,1)
-	  with
-              (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
+            let mr = { Context.match_res_lhs_node = xy;
+                       Context.match_res_lhs_rest = x; (* ??? why*)
+                       Context.match_res_lhs_p = MCP.mkMTrue no_pos; (* temporary *)
+                       Context.match_res_holes = [] ;
+                       Context.match_res_type = Context.Root;
+                       Context.match_res_rhs_node = x;
+                       Context.match_res_rhs_rest = x;
+                       Context.match_res_rhs_p = MCP.mkMTrue no_pos; (* temporary *)
+                     } in
+            Context.M_unfold (mr,1)
+          with
+            (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
             | Not_found -> generate_action t eset
 
     and generate_action nodes eset = 
@@ -9452,6 +9455,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     let lhs_h,lhs_p,_,_,_ = CF.extr_formula_base lhs_b in
     let rhs_h,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+    let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
     let _ = DD.ninfo_hprint (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
     let rhs_eqset = (* if !Globals.allow_imm then *)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) ->
         CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22
@@ -9991,6 +9995,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let lhs_h,lhs_p,_,_,_ = extr_formula_base lhs_b in
   let rhs_h,rhs_p,_,_,_ = extr_formula_base rhs_b in
   let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+  let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
@@ -10015,13 +10020,13 @@ and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   TO CHECK: what is this supposed to do?
   What if there is permission?
 *)
-and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
+and do_infer_heap rhs rhs_rest rhs_p caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = (fun (c,_) -> Cprinter.string_of_list_context c) in
-  Debug.no_5 "do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
+  Debug.no_5 "do_infer_heap" pr1 pr1 pr2 pr2 pr2 pr3 (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest rhs_p caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
 
-and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
+and do_infer_heap_x rhs rhs_rest rhs_p caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = 
   if Infer.no_infer_pure estate then
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap_node" estate (Base rhs_b) None pos,
     CF.mk_failure_must ("Disabled Infer heap and pure 2") sl_error, estate.es_trace)), NoAlias) 
@@ -10037,7 +10042,7 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_
     let _ = DD.tinfo_hprint (add_str "check_sat" string_of_bool) check_sat no_pos in
     (* check if there is a contraction with the RHS heap *)
     let r = 
-      if check_sat then Infer.infer_heap_nodes estate rhs rhs_rest conseq pos
+      if check_sat then Infer.infer_heap_nodes estate rhs rhs_rest rhs_p conseq pos
       else None in 
     begin
       match r with
@@ -10919,7 +10924,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (* to Thai : please move inference code from M_unmatched_rhs here
                  and then restore M_unmatched_rhs to previous code without
                  any inference *)
-      | Context.M_infer_heap (rhs,rhs_rest) ->
+      | Context.M_infer_heap (rhs,rhs_rest,rhs_p) ->
             (* let _ =  Debug.info_zprint  (lazy  ("conseq 1: " ^ (Cprinter.string_of_formula conseq))) pos in *)
             (* let _ =  Debug.info_zprint  (lazy  ("rhs: " ^ (Cprinter.string_of_h_formula rhs))) pos in *)
             (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
@@ -11010,7 +11015,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let (contra, _, lc, prf ) = early_pure_contra_detection 13 prog estate conseq pos msg is_folding in
 
               let do_match () =
-                let (cl,_) as first_heap_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                let (cl,_) as first_heap_r = do_infer_heap rhs rhs_rest rhs_p caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 let res = (CF.isFailCtx) cl in
                 if not(res) then first_heap_r
                 else
@@ -11037,7 +11042,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 | _, _ ->  do_match ()
               else do_match ()
 	    end
-      | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
+      | Context.M_unmatched_rhs_data_node (rhs,rhs_rest,rhs_p) ->
             (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
             (*****************************************************************************)
             begin
@@ -11098,7 +11103,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     begin
                     match relass with
                       | [] -> 
-                            let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                            let (lc,_) as first_r = do_infer_heap rhs rhs_rest rhs_p caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
                             if not(CF.isFailCtx lc) then first_r
                             else
