@@ -1120,6 +1120,11 @@ and norm_search_action ls = match ls with
   | [(_,a)] -> a
   | lst -> Search_action lst
 
+and norm_cond_action ls = match ls with
+  | [] -> M_Nothing_to_do ("cond action is empty")
+  | [(_,a)] -> a
+  | lst -> Cond_action lst
+
 and check_lemma_not_exist vl vr=
   if not !Globals.lemma_syn then false else
     let vl_name = vl.h_formula_view_name in
@@ -1441,11 +1446,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   else [] in*)
                 (* [] in *)
                 (* try accelerated folding *)
+                let a = l2@l3 in
+                let a_fold, a_rest = List.partition (fun (_,act) ->
+                  match act with
+                  | M_fold _ -> true
+                  | _ -> false
+                ) a in
+                (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-                (1, Cond_action ([(1,norm_search_action (l2@l3))] @ a_accfold))
-                (* try to do acc-fold first *)
-                (* (1, Cond_action (a_accfold @ [(-1,norm_search_action (l2@l3))])) *)
-                (* (-1,norm_search_action (l2@l3@a_accfold)) *)
+                (* return *)
+                (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+                (1, norm_cond_action (a_accfold@ [(1,norm_search_action (a_fold@a_rest))]))
             | DataNode dl, ViewNode vr -> 
                 pr_debug "DATA vs VIEW\n";
                 let vr_name = vr.h_formula_view_name in
@@ -1535,15 +1546,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   else [] in
                 let a2 = if (new_orig_r) then r_lem else [] in
                 (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
+                let a = a1@a2@a3 in
+                let a_fold, a_rest = List.partition (fun (_,act) ->
+                  match act with
+                  | M_fold _ -> true
+                  | _ -> false
+                ) a in
                 (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-                let a = a1@a2@a3 in
-                (* (-1, norm_search_action (a@a_accfold)) *)
-                if (a = []) then (1, Cond_action a_accfold)
-                else if (a_accfold = []) then (1, norm_search_action a)
-                else (1, Cond_action ([(1, norm_search_action a)] @ a_accfold))
-                (* try to do acc-fold first *)
-                (* else (1, Cond_action (a_accfold @ [(-1, norm_search_action a)])) *)
+                (* return *)
+                (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+                (1, norm_cond_action (a_accfold@ [(1,norm_search_action (a_fold@a_rest))]))
             | ViewNode vl, DataNode dr -> 
                   pr_debug "VIEW vs DATA\n";
                   let vl_name = vl.h_formula_view_name in
