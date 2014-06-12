@@ -36,13 +36,14 @@ pred lseg<p> == self = p
 //print residue.
 
 // Not OK
-checkentail r::node<_,p> * p::lseg<q> & q!=p & q!=r   |-  r::lseg<s>.
+//checkentail r::node<_,p> * p::lseg<q> & q!=p & q!=r   |-  r::lseg<s>.
 
 //OK
 //checkentail r::node<_,p> * p::lseg<q> & p!=r &q!=p & q!=r   |-  r::lseg<s>.
 
 
-//checkentail_exact r::node<_,p> * p::node<_,q> * q::tlseg<u> * u::node<_,v> & v!=r |-  r::tlseg<s>.
+checkentail_exact r::node<_,p> * p::node<_,q> * q::lseg<u> * u::node<_,v>@L  |-  r::lseg<s>.
+print residue.
 
 
 //checkentail_exact r::node<_,p> * p::node<_,q> & q!=r |-  r::tlseg<s>.

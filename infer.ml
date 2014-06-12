@@ -430,7 +430,7 @@ let is_elem_of conj conjs =
 (* let aux_test2 () = *)
 (*       Debug.no_1_num 13 "aux_test2" pr_no pr_no aux_test2 () *)
 
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest rhs_p conseq pos = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   if no_infer_pure es then None
   else 
     let iv = es.es_infer_vars in
@@ -474,7 +474,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest rhs_p conseq pos
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
-                let lhs_h,lhs_p,_,_,_ = CF.split_components es.es_formula in
+                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_hprint (add_str "unmatch RHS : " !print_h_formula) rhs pos;
                 DD.devel_hprint (add_str "orig inf vars : " !print_svl) iv pos;
@@ -485,13 +485,10 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest rhs_p conseq pos
                 let r = {
                     match_res_lhs_node = new_h;
                     match_res_lhs_rest = lhs_h;
-                    match_res_lhs_p = lhs_p;
                     match_res_holes = [];
                     match_res_type = Root;
                     match_res_rhs_node = rhs;
-                    match_res_rhs_rest = rhs_rest;
-                    match_res_rhs_p = rhs_p;
-                } in
+                    match_res_rhs_rest = rhs_rest; } in
                 let act = M_match r in
                 (
                     (* WARNING : any dropping of match action must be followed by pop *)
@@ -506,12 +503,12 @@ type: Cformula.entail_state ->
   Cformula.h_formula ->
   'a -> (Cformula.CP.spec_var list * Cformula.h_formula) option
 *)
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest rhs_p conseq pos = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
   let pr1 = !print_entail_state_short in
   let pr2 = !print_h_formula in
   let pr3 = pr_option (pr_triple !print_svl pr2 !print_svl) in
   Debug.no_2 "infer_heap_nodes" pr1 pr2 pr3
-      (fun _ _ -> infer_heap_nodes es rhs rhs_rest rhs_p conseq pos) es rhs
+      (fun _ _ -> infer_heap_nodes es rhs rhs_rest conseq pos) es rhs
 
 (* TODO : this procedure needs to be improved *)
 (* picks ctr from f that are related to vars *)

@@ -11,12 +11,10 @@ module CFU = Cfutil
 type match_res = {
     match_res_lhs_node : h_formula; (* node from the extracted formula *)
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
-    match_res_lhs_p : MCP.mix_formula; (* lhs pure *)
     match_res_holes : (h_formula * int) list; (* imm node/view that have been replaced in lhs together with their corresponding hole id *)
     match_res_type : match_type; (* indicator of what type of matching *)
     match_res_rhs_node : h_formula;
     match_res_rhs_rest : h_formula;
-    match_res_rhs_p : MCP.mix_formula; (* lhs pure *)
 }
 
 (*
@@ -58,8 +56,8 @@ and action =
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
-  | M_infer_heap of (h_formula * h_formula * MCP.mix_formula) (* rhs * rhs_rest *)
-  | M_unmatched_rhs_data_node of (h_formula * h_formula * MCP.mix_formula)
+  | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
+  | M_unmatched_rhs_data_node of (h_formula * h_formula)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
   (*not handle yet*) 
@@ -136,7 +134,6 @@ let pr_match_res (c:match_res):unit =
   pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
   fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest;
   fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
-  fmt_string "\n lhs_p: "; !MCP.print_mix_formula c.match_res_lhs_p;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -165,7 +162,7 @@ let rec pr_action_name a = match a with
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
   | M_infer_heap p -> fmt_string ("InferHeap")
-  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData")
+  | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData")
   | Cond_action l -> fmt_string "COND"
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
@@ -185,11 +182,10 @@ let rec pr_action_res pr_mr a = match a with
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
   | M_Nothing_to_do s -> fmt_string ("NothingToDo => "^s)
-  | M_infer_heap (p1,p2,_) ->
+  | M_infer_heap p ->
       let pr = string_of_h_formula in
-      let p = (p1,p2) in
       fmt_string ("InferHeap => "^(pr_pair pr pr p))
-  | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData => "^(string_of_h_formula h))
+  | M_unmatched_rhs_data_node (h,_) -> fmt_string ("UnmatchedRHSData => "^(string_of_h_formula h))
   | Cond_action l -> pr_seq_nocut "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
   | Search_action l -> 
@@ -389,7 +385,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
             (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
             (*   else []                                                          *)
             (* ) in                                                               *)
-            let mt_res = spatial_ctx_extract prog lhs_h lhs_p paset imm pimm rhs_node rhs_rest rhs_p emap in
+            let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
             let mt_res = filter_match_res_list mt_res rhs_node in
             (* (accfold_res @ mt_res) *)
             mt_res
@@ -398,12 +394,10 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
               (* if entire RHS is HTrue then it matches with the entire LHS*)
               let mres = { match_res_lhs_node = lhs_h;
                            match_res_lhs_rest = HEmp;
-                           match_res_lhs_p = lhs_p;
                            match_res_holes = [];
                            match_res_type = Root;
                            match_res_rhs_node = HTrue;
-                           match_res_rhs_rest = HEmp;
-                           match_res_rhs_p = rhs_p; } in
+                           match_res_rhs_rest = HEmp; } in
               [mres]
           )
           else []
@@ -551,13 +545,13 @@ and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_aset (lhs_f:Cfo
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract p f (lhs_p: MCP.mix_formula) a i pi rn rr rhs_p emap = 
+and spatial_ctx_extract p f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Debug.no_4 "spatial_ctx_extract" string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
-      (fun _ _ _ _-> spatial_ctx_extract_x p f lhs_p a i pi rn rr rhs_p emap) f i a rn 
+      (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -758,9 +752,9 @@ and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) (* r_vname (r_vargs:
   cmml(* @cmmr *)
 
 
-and spatial_ctx_extract_x prog (f0 : h_formula) (lhs_p: MCP.mix_formula)
+and spatial_ctx_extract_x prog (f0 : h_formula)
     (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
-    rhs_node rhs_rest rhs_p emap
+    rhs_node rhs_rest emap
     : match_res list  =
   let rec helper f = match f with    (* f is formula in LHS *)
     | HTrue -> []
@@ -937,12 +931,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (lhs_p: MCP.mix_formula)
       (* let _ = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
       { match_res_lhs_node = lhs_node;
         match_res_lhs_rest = lhs_rest;
-        match_res_lhs_p = lhs_p;
         match_res_holes = holes;
         match_res_type = mt;
         match_res_rhs_node = rhs_node;
-        match_res_rhs_rest = rhs_rest;
-        match_res_rhs_p = rhs_p; }
+        match_res_rhs_rest = rhs_rest; }
   ) l
 
 
@@ -1682,12 +1674,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
                   let vl_name = vl.h_formula_view_name in
-                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest,rhs_p) in
+                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view h_name vl_name m_res ms alternative 
             | ViewNode vl, HRel (h_name, _, _) ->
                   let h_name = Cpure.name_of_spec_var h_name in
                   let vl_name = vl.h_formula_view_name in
-                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest,rhs_p) in
+                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view vl_name h_name m_res ms alternative 
             | ViewNode vl, DataNode dr ->
                   let _ = pr_hdebug (add_str "cyclic " pr_id) " 5" in
@@ -1779,8 +1771,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   else r
 
 
-and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest,rhs_p) =
-          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest,rhs_p)) in
+and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) =
+          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let ptr_vs = estate.es_infer_vars in
           let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
           (* let _ = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
@@ -1788,16 +1780,14 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rh
             if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
               (*to support lemma with unknown preds*)
               []
-            else [(2,M_infer_heap (rhs_node,rhs_rest,rhs_p))] in
+            else [(2,M_infer_heap (rhs_node,rhs_rest))] in
           if (is_view rhs_node) && (get_view_original rhs_node) then
             let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
                                            match_res_lhs_rest = lhs_h;
-                                           match_res_lhs_p = lhs_p;
                                            match_res_holes = [];
                                            match_res_type = Root;
                                            match_res_rhs_node = rhs_node;
-                                           match_res_rhs_rest = rhs_rest;
-                                           match_res_rhs_p = rhs_p; }) in 
+                                           match_res_rhs_rest = rhs_rest; }) in 
             (* WN : why do we need to have a fold following a base-case fold?*)
             (* changing to no_match found *)
             (*(-1, Search_action [r])*)
@@ -1832,7 +1822,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing ((l:match_re
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
-    | [] ->  process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest,rhs_p)
+    | [] ->  process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest)
           (* let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
           (* let ptr_vs = estate.es_infer_vars in *)
           (* let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in *)
