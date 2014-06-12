@@ -3014,11 +3014,19 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         let path, weight = Dijkstra.shortest_path vg self v in
         Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
                             ^ ", weight: " ^ (string_of_int weight)) no_pos;
-        List.concat (List.map (fun (_, lbl, _) ->
-          match lbl with
-          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
-          | _ -> []
-        ) path)
+        let is_backward_path = List.for_all (fun (_,lbl,_) ->
+            match lbl with
+            | ViewGraph.Label.ViewField (v,f) -> String.compare self_view v != 0
+            | _ -> true
+          ) path in
+        if (is_backward_path) then (
+          List.concat (List.map (fun (_, lbl, _) ->
+            match lbl with
+            | ViewGraph.Label.DataField (d,f) -> [(d,f)]
+            | _ -> []
+          ) path)
+        )
+        else []
       with _ -> []
     ) !backward_ptrs) in
     backward_fields := Gen.BList.remove_dups_eq equal_pair_str
