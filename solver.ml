@@ -9875,8 +9875,11 @@ and vdef_of_acc_fold_x (vd: view_decl) (base_f: CF.formula)
                 else induct_f in 
         (f, tl)
   ) in
-  let view_form = apply_fold_seq root_f vd base_f induct_f fold_seq in
-  { vd with view_formula = (CF.formula_to_struc_formula view_form) }
+  let fold_f = apply_fold_seq root_f vd base_f induct_f fold_seq in
+  let view_form = CF.formula_to_struc_formula fold_f in
+  { vd with view_formula = view_form;
+            view_un_struc_formula = [];
+            view_kind = View_DERV }
 
 and vdef_of_acc_fold (vd: view_decl) (base_f: CF.formula)
     (induct_f: CF.formula) (fold_seq : Acc_fold.fold_type list)
@@ -9927,10 +9930,11 @@ and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding p
     : (CF.list_context * Prooftracer.proof) =
   let pr_es = Cprinter.string_of_entail_state in
   let pr_hf = Cprinter.string_of_h_formula in
+  let pr_fold_seq = pr_list Acc_fold.print_fold_type in
   let pr_out x = Cprinter.string_of_list_context (fst x) in
-  Debug.no_2 "do_acc_fold" pr_es pr_hf pr_out 
-      (fun _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
-      estate rhs_node
+  Debug.no_3 "do_acc_fold" pr_es pr_hf pr_fold_seq pr_out 
+      (fun _ _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
+      estate rhs_node fold_seq
 
 
 and push_hole_action_x a1 r1=

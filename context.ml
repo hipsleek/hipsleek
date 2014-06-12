@@ -945,12 +945,12 @@ and spatial_ctx_accfold_extract_x prog lhs_h lhs_p rhs_node rhs_rest : match_res
         let vname = vn.CF.h_formula_view_name in
         let vdecl = look_up_view_def_raw 0 prog.prog_view_decls vname in
         let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in
-        (* (* find the longest heap chain that can be obtain by accfold *)         *)
-        (* let heap_chains = List.filter (fun (hc,hf_rest) ->                      *)
-        (*   let fold_steps = Acc_fold.detect_fold_sequence hc vnode vdecl prog in *)
-        (*   (* accelerated folding is applicable when folding steps > 1 *)        *)
-        (*   (List.length fold_steps > 1)                                          *)
-        (* ) heap_chains in                                                        *)
+        (* find the longest heap chain that can be obtain by accfold *)
+        let heap_chains = List.filter (fun ((hf,_,_),hf_rest) ->
+          let fold_steps = Acc_fold.detect_fold_sequence hf vnode vdecl prog in
+          (* accelerated folding is applicable when folding steps > 1 *)
+          (List.length fold_steps > 1)
+        ) heap_chains in
         List.map (fun ((hf_chain,_,_),hf_rest) ->
           { match_res_lhs_node = hf_chain;
             match_res_lhs_rest = hf_rest;
@@ -1692,6 +1692,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else  (1,M_Nothing_to_do (string_of_match_res m_res))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res m_res))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res m_res))
+            | _, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res m_res))
             | ViewNode _, HRel _ 
             | DataNode _, HRel _ 
             | HRel _, _            ->(1,M_Nothing_to_do (string_of_match_res m_res))
