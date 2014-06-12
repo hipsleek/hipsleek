@@ -93,6 +93,42 @@ need to build and use syntactic imply below
             (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
 
 ====================================
+# cpure.ml & expure.ml
+
+We need to make baga modular so it is easy to switch between the
+two versions. We need to add similar methods to EPURE and EPUREN
+to make this happen. The three places are:
+
+cprinter.ml
+---------
+(* new EPURE *)
+let string_of_ef_pure = pr_triple (add_str "BAGA" P.string_of_spec_var_list) (add_str "EQ" P.EMapSV.string_of) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
+
+(* old EPURE *)
+let string_of_ef_pure = pr_pair (add_str "BAGA" P.string_of_spec_var_list) (add_str "pure" string_of_pure_formula)
+
+cpure.ml
+--------
+(* TODO : this is an abstract type that should not be exposed *)
+(* 
+   type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list) 
+*)
+(* old extended pure formula *)
+type ef_pure = (spec_var list * formula )
+
+expure.ml
+---------
+(* module EPureI = EPUREN(SV) *)
+module EPureI = EPURE(SV)
+
+Since it is already working for EPUREN,
+let us make the thing compile and run using EPURE.
+For a start, I have added the following methods to
+both EPURE and EPUREN but they have not been tested.
+
+  (* TODO *)
+  let subst_epure sst ((baga,f) as ep) = ep
+
 ====================================
 ====================================
 ====================================

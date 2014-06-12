@@ -249,11 +249,6 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
-(* extended pure formula *)
-(* type ef_pure = ( *)
-(*     spec_var list (\* baga *\) *)
-(*     * formula (\* pure formula *\) *)
-(*     ) *)
 
 let is_False cp = match cp with
   | BForm (p,_) -> 
@@ -4355,11 +4350,12 @@ type baga_sv = BagaSV.baga
 type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
-type ef_pure = (
-    spec_var list
-    * var_aset
-    * (spec_var * spec_var) list
-)
+(* 
+   type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list) 
+*)
+(* old extended pure formula *)
+type ef_pure = (spec_var list * formula )
+
 
 (* disjunctive extended pure formula *)
 (* [] denotes false *)

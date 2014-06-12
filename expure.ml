@@ -551,8 +551,18 @@ struct
     if c==0 then Elt.compare x2 y2
     else c
 
-  (* TODO *)
-  let subst_epure sst ((baga,f) as ep) = ep
+  let subst_elem sst v =
+    if Elt.is_zero v then v
+    else try
+      let (_,t) = List.find (fun (w,_) -> Elt.eq w v) sst in
+      t
+    with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
+
+  let subst_epure sst ((baga,f) as ep) = 
+    let subs_fn = subst_elem sst in
+    let new_baga = List.map (subs_fn) baga in
+    let new_f = subst (Elt.conv_var_pairs sst) f in
+    (new_baga,new_f)
 
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
@@ -1104,8 +1114,8 @@ struct
         
 end
 
-(* module EPureI = EPURE(SV) *)
-module EPureI = EPUREN(SV)
+(* module EPureI = EPUREN(SV) *)
+module EPureI = EPURE(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 
