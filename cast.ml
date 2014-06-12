@@ -2506,19 +2506,22 @@ let get_emp_map cprog=
   is complex: both lhs and rhs <=4 pred instance for segmentation optimization
 *)
 let is_complex_entailment_4graph_x prog ante conseq=
+  let is_null_node (Cpure.SpecVar (_,id,_)) = String.compare id null_name = 0
+  in
    let seg_opz_views = List.fold_left (fun r vdecl ->
        match vdecl.view_seg_opz with
          | Some _ -> r@[vdecl.view_name]
          | None -> r
    ) [] prog.prog_view_decls in
    let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
-   let lvnodes = (Cformula.get_views ante) in
+   let ldnodes, lvnodes,_ = (Cformula.get_hp_rel_formula ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
    let rdnodes = Cformula.get_dnodes_struc conseq in
    let lvleng =  List.length lvnodes in
    let rvleng =  List.length rvnodes in
    if (rvleng = 1 && rdnodes = [] &&  lvleng = 0) ||
      (lvleng < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold)
+     || List.exists (fun vn -> is_null_node vn.Cformula.h_formula_view_node) (rvnodes@lvnodes)
    then
      false else
      begin try
@@ -2533,8 +2536,11 @@ let is_complex_entailment_4graph_x prog ante conseq=
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
              (*temporal dis null*)
-             eqnull_svl != [] ||
-             Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
+             if (eqnull_svl != []) then
+               if not (rdnodes = [] && ldnodes = []) then true else
+                 Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
+             else
+               Cpure.diff_svl quans (svl_eqs) != []
          | _ -> true
        in
        let _ = Debug.ninfo_hprint (add_str "is_rhs_ex_quans" string_of_bool) is_rhs_ex_quans no_pos in
