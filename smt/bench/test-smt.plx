@@ -251,7 +251,7 @@ if ($test_all) {
     "16.tst.smt2",
     "17.tst.smt2",
     "18.tst.smt2",
-    "21.tst.smt2"
+    "21.tst.smt2",
     "20.tst.smt2",
     );
   }
