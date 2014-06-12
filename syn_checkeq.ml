@@ -423,14 +423,23 @@ let syntax_nodes_match_x lhs0 rhs0 =
   (******************************************************)
   (* let l_hds,_,_ = CF.get_hp_rel_formula lhs in *)
   let l_hds = CF.get_dnodes lhs0 in
-  let r_hds = CF.get_dnodes rhs0 in
+  let r_hds0, r_hvs,_ = CF.get_hp_rel_formula rhs0 in
   let lhs_unsat = check_inconsistent l_hds || check_pure_inconsistent lhs0 in
-  let rhs_unsat = check_inconsistent r_hds || check_pure_inconsistent rhs0 in
+  let rhs_unsat = check_inconsistent r_hds0 || check_pure_inconsistent rhs0 in
   let lhs = if lhs_unsat then CF.mkFalse_nf no_pos else lhs0 in
   let rhs = if rhs_unsat then CF.mkFalse_nf no_pos else rhs0 in
   if lhs_unsat || rhs_unsat then
     (lhs, rhs, lhs_unsat, rhs_unsat)
   else
+    let root_ptrs1 = List.map (fun hd -> hd.Cformula.h_formula_data_node) r_hds0 in
+    let root_ptrs = (List.map (fun hv -> hv.Cformula.h_formula_view_node) r_hvs)@root_ptrs1 in
+    (*data nodes that not in a cicle*)
+    let r_hds = List.filter (fun hd ->
+        try
+          let _ = List.find (fun sv -> CP.mem_svl sv root_ptrs) hd.Cformula.h_formula_data_arguments in
+          false
+        with _ -> true
+    ) r_hds0 in
     let matched_data_nodes = Gen.BList.intersect_eq check_exact_eq_data_node l_hds r_hds in
     let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
     let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in

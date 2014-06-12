@@ -2518,7 +2518,8 @@ let is_complex_entailment_4graph_x prog ante conseq=
    let lvleng =  List.length lvnodes in
    let rvleng =  List.length rvnodes in
    if (rvleng = 1 && rdnodes = [] &&  lvleng = 0) ||
-     (lvleng < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold) then
+     (lvleng < graph_norm_instance_threshold && rvleng < graph_norm_instance_threshold)
+   then
      false else
      begin try
        (*explicit quantifiers in rhs*)
@@ -2531,6 +2532,8 @@ let is_complex_entailment_4graph_x prog ante conseq=
              let eqnull_svl =  Mcpure.get_null_ptrs mf in
              let eqs = (Mcpure.ptr_equations_without_null mf) in
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
+             (*temporal dis null*)
+             eqnull_svl != [] ||
              Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
          | _ -> true
        in

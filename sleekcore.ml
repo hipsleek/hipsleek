@@ -297,7 +297,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   in
   let is_simple_rhs f=
     let _, hvs,hns = CF.get_hp_rel_formula f in
-    List.length hvs = 1 && hns = []
+    hns != [] || (List.length hvs = 1 && hns = [])
   in
   (******************************************************)
   let ante_1b, conseq_1a, ante_unsat0, conseq_unsat0 = Syn_checkeq.syntax_nodes_match
