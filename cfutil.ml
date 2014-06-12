@@ -867,7 +867,7 @@ let check_separation_unsat f0=
       (fun _ -> check_separation_unsat f0)
       f0
 
-let check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns =
+let check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   (* rhs is is_tail_recursive, lhs is non tail rec form*)
    (****************************)
   let rec is_horm_h_formula_x hfs1 hfs2 =
@@ -897,7 +897,14 @@ let check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns =
     List.fold_left (fun r f1 -> r@(split_star_conjunctions f1)) [] (heap_of f0)
   in
   (****************************)
-  if r_reach_dns != [] then -1 else
+  if r_reach_dns != [] then
+    match l_reach_dns, l_reach_vns, r_reach_dns, r_reach_vns with
+      | [ldn],[lvn],[rdn],[rvn] ->
+            (*unfold case*)
+            if CP.eq_spec_var rdn.Cformula.h_formula_data_node lvn.Cformula.h_formula_view_node &&  String.compare ldn.Cformula.h_formula_data_name rdn.Cformula.h_formula_data_name = 0 && String.compare lvn.Cformula.h_formula_view_name rvn.Cformula.h_formula_view_name =0 then 3
+            else -1
+      | _ -> -1
+  else
     match r_reach_vns with
       | [rvn] ->
             let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
@@ -915,6 +922,13 @@ let check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns =
                    todo: should be <- *)
             else -1
       | _ -> -1
+
+let check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
+  let pr1 vn = !print_h_formula (ViewNode vn) in
+  let pr2 dn = !print_h_formula (DataNode dn) in
+  Debug.no_4 "check_tail_rec_rec_lemma" (pr_list pr2) (pr_list pr1)
+      (pr_list pr2) (pr_list pr1) string_of_int
+      (fun _ _ _ _ -> check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns) l_reach_dns l_reach_vns r_reach_dns r_reach_vns
 
 (*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
 let poss_prune_pred_x prog vnode f=
@@ -952,7 +966,7 @@ let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
       if lvlength = rvlength then
         if (lnlength != rnlength) then
           if lvlength = rvlength then
-            let lem_type =  check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns in
+            let lem_type =  check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
             if lem_type = -1 then 0 else lem_type
           else 0
         else
@@ -1012,7 +1026,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
       1 (* gen <- lemma *)
     else
       (* rhs is is_tail_recursive, lhs is non tail rec form*)
-      check_tail_rec_rec_lemma prog lhs r_reach_dns r_reach_vns
+      check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns
       (* if r_reach_dns != [] then -1 else *)
       (* match r_reach_vns with *)
       (*   | [rvn] -> *)
@@ -1063,7 +1077,9 @@ let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
     let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
     if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
       0
-    else -1
+    else
+       let lem_type =  check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+       lem_type
 
 let need_cycle_checkpoint_unfold prog lvnode lhs rdnode rhs=
   let pr1 = Cprinter.prtt_string_of_formula in

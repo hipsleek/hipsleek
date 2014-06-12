@@ -1594,7 +1594,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     | Some _ -> true
                     | None -> false
                   in
-                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
+                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 4" no_pos in
                   let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
                   let uf_i = if new_orig_l then 0 else 1 in
@@ -1614,7 +1614,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                         else
                           (*cyclic checkpoint here*)
                           let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs in
-                          if (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
+                          if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
                             (*find the first viewnode readable from right datanode*)
                                let lvs = CF.look_up_reachable_first_reachable_view prog
                                  rhs [dr.CF.h_formula_data_node] in

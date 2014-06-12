@@ -10701,14 +10701,20 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 | None -> m_res
                 | Some lv -> {m_res with Context.match_res_lhs_node = lv}
               in
-              let n_act =  if lem_type = 2 then
+              let n_act =  if lem_type = 2  then
                 let left_ls = Cast.look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (Cfutil.get_data_view_name lhs_node)
-                  (match new_view_opt with
+                   (match new_view_opt with
                     | Some v -> CP.name_of_spec_var v
                     | _ -> "")
                 in
                 let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l))) left_ls in
                 (Context.Search_action left_acts)
+              else if lem_type = 3 then
+                let right_ls = Context.filter_norm_lemmas (Cast.look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
+                        (Cfutil.get_data_view_name lhs_node) (Cfutil.get_data_view_name rhs_node))  in
+                if (right_ls) = [] then Context.M_unfold (new_m_res, unfold_num) else
+                let acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l))) (right_ls) in
+                (Context.Search_action acts)
               else Context.M_unfold (new_m_res, unfold_num)
               in
               let str = "(M_cyclic)" in (*convert means ignore previous MATCH and replaced by lemma*)

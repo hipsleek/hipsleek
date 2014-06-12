@@ -76,8 +76,6 @@ if ($test_all) {
     "dll2-rev-entails-dll2.smt2",
     "dll2-spaghetti-existential.smt2",
     "dll2-spaghetti.smt2",
-    "elseg4_slk-6.smt2",
-    "elseg4_slk-7.smt2",
     "lsegex4_slk-1.smt2",
     "nlcl-vc05.smt2",
     "node-dll-rev-dll-entails-dll.smt2",
@@ -163,7 +161,7 @@ if ($test_all) {
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
     "nll-vc11.smt2", "nll-vc12.smt2", "nll-vc13.smt2", "nll-vc14.smt2", "nll-vc15.smt2",
     "nll-vc16.smt2",
-    
+    "elseg4_slk-6.smt2", "elseg4_slk-7.smt2",
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
     "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"
