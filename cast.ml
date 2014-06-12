@@ -2537,7 +2537,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
              (*temporal dis null*)
              if (eqnull_svl != []) then
-               if not (rdnodes = [] && ldnodes = []) then true else
+               if not (rdnodes = [] (* && ldnodes = [] *)) then true else
                  Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
              else
                Cpure.diff_svl quans (svl_eqs) != []

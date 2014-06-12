@@ -1198,7 +1198,7 @@ let do_infer_inv = ref false
 (** for classic frame rule of separation logic *)
 let opt_classic = ref false                (* option --classic is turned on or not? *)
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
-let dis_impl_var = ref true (* Disable implicit vars *)
+let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 

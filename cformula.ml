@@ -4802,6 +4802,15 @@ let rec look_up_data_node ls node_name=
             (* in *)
             look_up_data_node ds node_name
 
+let rec look_up_rev_data_node ls node_name=
+  match ls with
+    | [] -> []
+    | dn::ds ->
+          if CP.mem_svl node_name dn.h_formula_data_arguments then
+            [dn.h_formula_data_node]
+          else
+            look_up_data_node ds node_name
+
 let rec look_up_view_node ls node_name=
   match ls with
     | [] -> []
@@ -4809,9 +4818,21 @@ let rec look_up_view_node ls node_name=
         (* List.filter CP.is_node_typ *) vn.h_formula_view_arguments
       else look_up_view_node vs node_name
 
+let rec look_up_rev_view_node ls node_name=
+  match ls with
+    | [] -> []
+    | vn::vs -> if CP.mem_svl node_name vn.h_formula_view_arguments then
+        (* List.filter CP.is_node_typ *) [vn.h_formula_view_node]
+      else look_up_rev_view_node vs node_name
+
 let look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
   let ptrs = look_up_data_node hd_nodes node_name in
   if ptrs = [] then look_up_view_node hv_nodes node_name
+  else ptrs
+
+let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
+  let ptrs = look_up_rev_data_node hd_nodes node_name in
+  if ptrs = [] then look_up_rev_view_node hv_nodes node_name
   else ptrs
 
 (*should improve: should take care hrel also*)
@@ -4826,6 +4847,25 @@ let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
     else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   helper node_names node_names
+
+let look_up_rev_reachable_ptr_args_x prog hd_nodes hv_nodes node_names=
+  let rec helper old_ptrs inc_ptrs=
+    let new_ptrs = List.concat
+      (List.map (look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes)
+           inc_ptrs) in
+    let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
+    let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
+    if diff_ptrs = [] then old_ptrs
+    else (helper (old_ptrs@diff_ptrs) diff_ptrs)
+  in
+  helper node_names node_names
+
+let look_up_rev_reachable_ptr_args prog hd_nodes hv_nodes node_names=
+  let pr1 hv = !print_h_formula (ViewNode hv) in
+  let pr2 hn = !print_h_formula (DataNode hn) in
+  Debug.no_3 "look_up_rev_reachable_ptr_args" (pr_list pr2) (pr_list pr1) !CP.print_svl !CP.print_svl
+      (fun _ _ _ -> look_up_rev_reachable_ptr_args_x prog hd_nodes hv_nodes node_names)
+      hd_nodes hv_nodes node_names
 
 let look_up_reachable_ptrs_w_alias_helper prog hd_nodes hv_nodes eqset roots=
   let rec helper old_ptrs inc_ptrs=

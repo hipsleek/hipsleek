@@ -24,3 +24,5 @@ syntax_contrb_lemma_end_null
 #is_complex_entailment_4graph
 #get_non_emp
 sleek_entail_check
+elim_eqnull
+look_up_rev_reachable_ptr_args
