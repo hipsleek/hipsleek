@@ -491,7 +491,7 @@ let syntax_contrb_lemma_end_null_x prog lhs rhs=
   let all_args_null l_hvs leqnulls ptr=
     try
       let vn = List.find (fun hv -> CP.eq_spec_var ptr hv.CF.h_formula_view_node) l_hvs in
-      CP.diff_svl (List.filter CP.is_node_typ vn.h_formula_view_arguments) leqnulls = []
+      CP.diff_svl (List.filter CP.is_node_typ vn.CF.h_formula_view_arguments) leqnulls = []
     with _ -> false
   in
   let fold_lemma_end_null l_hvs leqnulls (cur_l_vns, cur_r_vns) r_vn=

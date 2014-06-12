@@ -10767,6 +10767,24 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
               in (cl,prf)
                      (* (Infer.restore_infer_vars iv cl,prf) *)
+      | Context.M_acc_fold ({
+            Context.match_res_rhs_node = rhs_node;
+            Context.match_res_rhs_rest = rhs_rest;}, fold_seq) ->
+            (* let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_entail_state)) estate pos in *)
+            let estate =
+              if Infer.no_infer_rel estate then estate
+              else
+                let lhs_h,lhs_p,_, _, lhs_a  = CF.split_components estate.es_formula in
+                let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+                let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+                (* Assumed lhs_h to be star or view_node or data_node *)
+                let lhs_h_list = split_star_conjunctions lhs_h in
+                let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+                let init_pure = CP.conj_of_list init_pures pos in
+                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
+            in
+          do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
+
       | Context.M_lhs_case {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_rhs_node = rhs_node;}->

@@ -810,10 +810,10 @@ let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
     let f0 = vd.C.view_un_struc_formula in
     let f1 = map_l_fst (fun f -> convert_formula_to_linear vdef f) f0 in
     {vd with
-        view_is_tail_recursive = false;
+        C.view_is_tail_recursive = false;
         (* view_aux_formula : (Cformula.formula * formula_label) list;  *)
         (* view_formula : F.struc_formula *)
-        view_un_struc_formula = f1; 
+        C.view_un_struc_formula = f1; 
         (* view_materialized_vars : mater_property list; *)
     }
 
@@ -824,6 +824,6 @@ let convert_vdef_to_linear prog (vdef: C.view_decl): C.view_decl =
 let convert_tail_vdefs_to_linear prog =
   let vdecls = prog.C.prog_view_decls in
   let vdecls = List.map (convert_vdef_to_linear prog) vdecls in
-  { prog with prog_view_decls = vdecls }
+  { prog with C.prog_view_decls = vdecls }
 
   (************* end CONVERT TAIL-REC to LINEAR vdef ***************)

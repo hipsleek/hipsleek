@@ -47,6 +47,7 @@ and action =
   | M_match of match_res
   | M_split_match of match_res
   | M_fold of match_res
+  | M_acc_fold of (match_res * (Acc_fold.fold_type list))
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
@@ -81,6 +82,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_unfold  (m,_)
     | M_base_case_unfold m
     | M_base_case_fold m
+    | M_acc_fold (m,_)
     | M_rd_lemma m
     | M_lemma  (m, _)
     | Undefined_action m
@@ -153,6 +155,7 @@ let rec pr_action_name a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
+  | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
   | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ ")"))
@@ -173,6 +176,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
+  | M_acc_fold (e,_) -> fmt_string "AccFold =>"; pr_mr e
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
@@ -219,6 +223,7 @@ let action_get_holes a = match a with
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
+  | M_acc_fold (e,_)
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
@@ -1158,6 +1163,16 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
   let r = match m_res.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in
+          let (can_acc_fold, acc_fold_steps) = (
+            if not !Globals.acc_fold then (false, [])
+            else match rhs_node with
+              | ViewNode vr ->
+                  let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr.h_formula_view_name in
+                  let fold_steps = Acc_fold.detect_fold_sequence lhs_node vr.h_formula_view_node vdecl prog in
+                  if (List.length fold_steps > 1) then (true, fold_steps)
+                  else (false, []) 
+              | _ -> (false, [])
+          ) in
           (match lhs_node,rhs_node with
             | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                          CF.h_formula_thread_origins = dl_origins;
@@ -1222,11 +1237,8 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                   else [] in
                   let src = (-1,Search_action (l2@l3)) in
                   src
-            | _, ViewNode vr when !Globals.acc_fold ->
-                let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr.h_formula_view_name in
-                let fold_steps = Acc_fold.detect_fold_sequence lhs_node vr.h_formula_view_node vdecl prog in
-                let _ = (List.length fold_steps > 1) in
-                report_error no_pos "acc fold 1\n"
+            | _, ViewNode vr when (can_acc_fold) ->
+                (1, M_acc_fold (m_res, acc_fold_steps))
             | ViewNode vl, ViewNode vr -> 
                   pr_debug "VIEW vs VIEW\n";
                   (* let l1 = [(1,M_base_case_unfold m_res)] in *)
@@ -1834,6 +1846,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_base_case_unfold _ 
     | M_unfold _
     | M_fold _
+    | M_acc_fold _
     | M_split_match _ 
     | M_match _ 
     | M_cyclic _
