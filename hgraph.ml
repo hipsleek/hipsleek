@@ -1992,7 +1992,8 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         try
           let tar_edge = look_up_edge hg_tar.hg_edges tar_b tar_e in
           let rev_tar_edge = look_up_edge hg_tar.hg_edges tar_e tar_b in
-          let non_empty_direct_loop = tar_edge.he_kind && rev_tar_edge.he_kind in
+          let non_empty_direct_loop = (tar_edge.he_kind && rev_tar_edge.he_kind)
+            || (not tar_edge.he_kind && not rev_tar_edge.he_kind) in
           let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop 1" string_of_bool) non_empty_direct_loop no_pos in
           non_empty_direct_loop
         with _ -> true
@@ -2002,14 +2003,6 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         (* let (_,last_tar_e_edge) = Gen.BList.list_last path in *)
         let done_vs,last_tar_e_edge = List.fold_left (fun (r,last) (b,e) -> (r@[b],e)) ([], snd (List.hd path)) (List.tl path) in
         find_first_non_emp [last_tar_e_edge] (done_vs)
-        (* try *)
-        (*   let (_,last_tar_e_edge) = Gen.BList.list_last path in *)
-        (*   let tar_next_edges = look_up_next_edges hg_tar.hg_edges last_tar_e_edge in *)
-        (*   let able_rhs_unfold = List.exists (fun e -> e.he_kind) tar_next_edges in *)
-        (*   if able_rhs_unfold then true else *)
-        (*     let next_edges = look_up_next_edges hg_src.hg_edges sedge.he_e_id in *)
-        (*     List.exists (fun e -> has_non_emp_src_path e) next_edges *)
-        (* with _ -> false *)
       end
   in
   let check_two_way_may_emp_tar_paths sedge tar_path=
@@ -2023,19 +2016,6 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
       let rev_non_emp = (has_non_emp_path rev_path) in
       ((non_emp && rev_non_emp) || (not non_emp && not rev_non_emp))
   in
-  (* let check_direct_two_way_may_emp_tar_paths sedge tar_path= *)
-  (*   match tar_path with *)
-  (*     | [(t_b, t_e)] -> begin *)
-  (*         try *)
-  (*           let t_edge = look_up_edge hg_tar.hg_edges t_b t_e in *)
-  (*           let t_rev_edge = look_up_edge hg_tar.hg_edges t_e t_b in *)
-  (*           let non_emp = t_edge.he_kind in *)
-  (*           let rev_non_emp = t_rev_edge.he_kind in *)
-  (*           ((non_emp && rev_non_emp) || (not non_emp && not rev_non_emp)) *)
-  (*         with _ -> true *)
-  (*       end *)
-  (*     | _ -> true *)
-  (* in *)
   (*rule 2:
     if has direct loop, both mapping of src_paths must be non empty
   *)
@@ -2049,7 +2029,10 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         ) tar_path then
           let rev_valid = has_non_emp_src_path rev_edge in
           rev_valid
-        else false
+        else
+          (* 15-02: two are non pto (maybe) *)
+          let rev_valid = has_non_emp_src_path rev_edge in
+          not rev_valid
       with _ ->  (*dont have direct path 16-02*)
           begin
             match tar_path with
