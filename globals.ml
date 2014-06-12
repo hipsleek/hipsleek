@@ -262,7 +262,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref Frac
+let perm = ref NoPerm
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -889,13 +889,13 @@ such as x<1 --> x+1<=1 is allowed
    Currently, conservativly do not allow such simplification
 *)
 
-let allow_lsmu_infer = ref true
+let allow_lsmu_infer = ref false
 
-let allow_norm = ref false
+let allow_norm = ref true
 
-let allow_ls = ref true (*enable lockset during verification*)
+let allow_ls = ref false (*enable lockset during verification*)
 
-let allow_locklevel = ref true (*enable locklevel during verification*)
+let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (*
   true -> threads as resource
@@ -1004,7 +1004,7 @@ let profiling = ref false
 
 let enable_syn_base_case = ref false
 
-let enable_case_inference = ref true
+let enable_case_inference = ref false
 
 let print_core = ref false
 let print_core_all = ref false
@@ -1034,7 +1034,7 @@ let print_cil_input = ref false
 (* let allow_pred_spec = ref false *)
 
 (* need to set to "true" when publishing on website*)
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
