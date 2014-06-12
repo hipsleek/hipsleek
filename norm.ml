@@ -690,6 +690,38 @@ let merge_contexts (ctx: CF.list_context): CF.list_context =
   (********** end MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)
 
   (************* CONVERT TAIL-REC to LINEAR vdef ***************)
+let convert_substitution_helper from_sv to_sv h p = 
+  let f = CF.subst_avoid_capture_h from_sv to_sv h in
+  let p = CP.subst_avoid_capture from_sv to_sv p in
+  (f,p)
+  
+let convert_substitution fwd_ptr_v fwd_ptr_n tail head pp emap qvars =
+  (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
+  let aliases = fwd_ptr_n::(CP.EMapSV.find_equiv_all fwd_ptr_n emap) in
+  let to_sv   = List.map (fun a -> (CP.mk_self None)) aliases in
+  (* let from_sv, to_sv = [fwd_ptr_n], [(CP.mk_self None)] in  *)
+  let from_sv, to_sv = aliases, to_sv in 
+  let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
+  (* let pp = CP.subst_avoid_capture from_sv to_sv pp in *)
+  (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
+  let aliases = fwd_ptr_v::(CP.EMapSV.find_equiv_all fwd_ptr_v emap) in
+  let to_sv   = List.map (fun a -> fwd_ptr_n) aliases in
+  let tail = CF.subst_avoid_capture_h aliases to_sv tail in
+  (* let pp = CP.subst_avoid_capture from_sv to_sv pp in *)
+  (* substitute self fwd pointer with fwd ptr of view in the head *)
+  let aliases = fwd_ptr_n::(CP.EMapSV.find_equiv_all fwd_ptr_n emap) in
+  let to_sv   = List.map (fun a -> fwd_ptr_v) aliases in
+  let from_sv, to_sv = aliases, to_sv  in 
+  let head = CF.subst_avoid_capture_h from_sv to_sv head in
+  (* let pp = CP.subst_avoid_capture from_sv to_sv pp in *)
+  (* substitute self var with fwd pointer of self in the head *)
+  let aliases = (CP.mk_self None)::(CP.EMapSV.find_equiv_all (CP.mk_self None) emap) in
+  let to_sv   = List.map (fun a -> fwd_ptr_n) aliases in
+  let from_sv, to_sv =  aliases, to_sv  in  
+  let head = CF.subst_avoid_capture_h from_sv to_sv head in
+  (* let pp = CP.subst_avoid_capture from_sv to_sv pp in   *)
+  (tail, head, pp)
+
 (* to update below after fix on fwd & bck ptr *)
 let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula) (p: MCP.mix_formula) 
       (vdef: C.view_decl) (qvars: CP.spec_var list) emap (orig_f: h_formula): 
@@ -707,22 +739,7 @@ let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula)
               let args_lst = List.combine vdef.C.view_vars hd.CF.h_formula_view_arguments in
               let fwd_ptrs = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v fwd_ptrs_vdef) args_lst in
               let (fwd_ptr_v, fwd_ptr_n) = List.hd fwd_ptrs in
-              (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
-              let from_sv, to_sv = [fwd_ptr_n], [(CP.mk_self None)] in 
-              let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
-              let from_sv, to_sv = [fwd_ptr_v], [fwd_ptr_n] in 
-              let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitute self fwd pointer with fwd ptr of view in the head *)
-              let from_sv, to_sv =   [fwd_ptr_n], [fwd_ptr_v]  in 
-              let head = CF.subst_avoid_capture_h from_sv to_sv head in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitute self var with fwd pointer of self in the head *)
-              let from_sv, to_sv =  [(CP.mk_self None)],[fwd_ptr_n]  in 
-              let head = CF.subst_avoid_capture_h from_sv to_sv head in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in   
+              let (tail, head, pp) = convert_substitution fwd_ptr_v fwd_ptr_n tail head pp emap qvars in
               let new_f = CF.mkStarH tail head (CF.pos_of_h_formula orig_f) in 
               let p = MCP.mix_of_pure pp in
               (new_f, p, qvars)
