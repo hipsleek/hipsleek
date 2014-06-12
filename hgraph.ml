@@ -118,6 +118,9 @@ let print_hgraph g=
  let rec look_up_next_edges edges b_id=
    List.filter (fun e-> e.he_b_id = b_id) edges
 
+let rec look_up_coming_edges edges e_id=
+   List.filter (fun e-> e.he_e_id = e_id) edges
+
 let rec look_up_adj root_id ls_adj=
   match ls_adj with
     | [] -> []
@@ -1970,14 +1973,18 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
     let _ = Debug.ninfo_hprint (add_str "done_vertexs" (pr_list string_of_int)) done_vertexs no_pos in
     match waiting with
       | [] -> false
-      | e::rest ->
+      | e::rest -> begin
             let _ = Debug.ninfo_hprint (add_str "last" string_of_int) e no_pos in
             let next_edges = look_up_next_edges hg_tar.hg_edges e in
-            if List.exists (fun e -> e.he_kind) next_edges then true else
-              (*remove vertexes which travesed*)
-              let next_edges_wo = List.filter (fun e ->
-                  not (Gen.BList.mem_eq (=) e.he_e_id done_vertexs)) next_edges in
-              find_first_non_emp (rest@(List.map (fun e -> e.he_e_id) next_edges_wo)) (done_vertexs@[e])
+            try
+              let e = List.find (fun e -> e.he_kind) next_edges in
+              true
+            with _ ->
+                (*remove vertexes which travesed*)
+                let next_edges_wo = List.filter (fun e ->
+                    not (Gen.BList.mem_eq (=) e.he_e_id done_vertexs)) next_edges in
+                find_first_non_emp (rest@(List.map (fun e -> e.he_e_id) next_edges_wo)) (done_vertexs@[e])
+        end
   in
   (*
     rule 1: break the rhs (a,b) if the lhs is (a,c) * (c,b) * (b,d) and
@@ -1992,17 +1999,19 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         try
           let tar_edge = look_up_edge hg_tar.hg_edges tar_b tar_e in
           let rev_tar_edge = look_up_edge hg_tar.hg_edges tar_e tar_b in
-          let non_empty_direct_loop = (tar_edge.he_kind && rev_tar_edge.he_kind)
-            || (not tar_edge.he_kind && not rev_tar_edge.he_kind) in
-          let _ = Debug.ninfo_hprint (add_str "non_empty_direct_loop 1" string_of_bool) non_empty_direct_loop no_pos in
-          non_empty_direct_loop
+          let non_empty_direct_loop = (tar_edge.he_kind && rev_tar_edge.he_kind) in
+          let empty_direct_loop = (not tar_edge.he_kind && not rev_tar_edge.he_kind) in
+          let consis_direct = non_empty_direct_loop || empty_direct_loop in
+          let _ = Debug.ninfo_hprint (add_str "consis_direct 1" string_of_bool) consis_direct no_pos in
+          consis_direct
         with _ -> true
       else true
     else if not non_touch_check then (true) else
       begin
         (* let (_,last_tar_e_edge) = Gen.BList.list_last path in *)
         let done_vs,last_tar_e_edge = List.fold_left (fun (r,last) (b,e) -> (r@[b],e)) ([], snd (List.hd path)) (List.tl path) in
-        find_first_non_emp [last_tar_e_edge] (done_vs)
+        let is_valid(* , nexte_opt *) = find_first_non_emp [last_tar_e_edge] (done_vs) in
+        is_valid
       end
   in
   let check_two_way_may_emp_tar_paths sedge tar_path=
@@ -2032,7 +2041,27 @@ let check_homo_edges_x map non_touch_check hg_src hg_tar src_cycle_edges tar_tou
         else
           (* 15-02: two are non pto (maybe) *)
           let rev_valid = has_non_emp_src_path rev_edge in
-          not rev_valid
+          let r = not rev_valid in
+           (* rule 4: 10-01*)
+          (**if they are direct loop, they should be isolated. 10-01 *)
+          if not r then r else
+            begin
+              match tar_path with
+                | [(b,e)] -> begin
+                    try
+                      let rev_tar = look_up_edge hg_tar.hg_edges e b in
+                      let tar = look_up_edge hg_tar.hg_edges b e in
+                      if not tar.he_kind && not rev_tar.he_kind then
+                        let com_edges1 = look_up_coming_edges hg_tar.hg_edges b in
+                        if List.length com_edges1 = 1 then
+                          let com_edges2 = look_up_coming_edges hg_tar.hg_edges e in
+                          List.length com_edges2 = 1
+                        else false
+                      else r
+                    with _ -> r
+                    end
+                | _ -> r
+            end
       with _ ->  (*dont have direct path 16-02*)
           begin
             match tar_path with
