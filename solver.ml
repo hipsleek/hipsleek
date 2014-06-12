@@ -2165,8 +2165,9 @@ and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
 (**************************************************************)
 
 (*LDK: add rhs_p*)
-and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula) (use_case:CP.formula option) (pos : loc): (list_context * proof) =
-  (* and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:CP.formula option) (pos : loc): (list_context * proof) = *)
+and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula)
+    (use_case:CP.formula option) (pos : loc)
+    : (list_context * proof) =
   let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
   let ans = ((* ("use-case : "^string_of_bool use_case) *)
@@ -2183,200 +2184,208 @@ and fold_op_x prog (ctx : context) (view : h_formula) vd (rhs_p: MCP.mix_formula
 
 
 and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formula)
-      (use_case:CP.formula option) (pos : loc): (list_context * proof) = match view with
-        | ViewNode ({ h_formula_view_node = p;
-          h_formula_view_name = c;
-          h_formula_view_imm = imm;
-          h_formula_view_label = pid;
-          h_formula_view_remaining_branches = r_brs;
-          h_formula_view_perm = perm; 
-          h_formula_view_arguments = vs;
-          h_formula_view_annot_arg = anns
-          }) -> begin
-            (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) prog.Cast.prog_view_decls)  in *)
-            try
-              let vdef = match vd with 
-                | None -> 
-                      begin
-                        try 
-                          look_up_view_def_raw 6 prog.Cast.prog_view_decls c
- 	                with Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
-                      end
-                | Some vd -> vd in
-              (* is there a benefit for using case-construct during folding? *)
-              let brs = filter_branches r_brs vdef.Cast.view_formula in
-              (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
-              let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
-              (*let form = Cformula.case_to_disjunct brs in *)
-              let _ = Debug.ninfo_hprint (add_str "do_fold: form" Cprinter.string_of_struc_formula) form no_pos in
-              let renamed_view_formula = rename_struc_bound_vars form in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
-	      (****)  
+    (use_case:CP.formula option) (pos : loc)
+    : (list_context * proof) =
+  match view with
+  | ViewNode ({ h_formula_view_node = p;
+                h_formula_view_name = c;
+                h_formula_view_imm = imm;
+                h_formula_view_label = pid;
+                h_formula_view_remaining_branches = r_brs;
+                h_formula_view_perm = perm; 
+                h_formula_view_arguments = vs;
+                h_formula_view_annot_arg = anns
+                }) -> (
+      try (
+        let vdef = match vd with 
+          | None -> (
+              (* in full_fold, vd = None *)
+              try look_up_view_def_raw 6 prog.Cast.prog_view_decls c
+              with Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
+            )
+          | Some vd -> vd in
+        (* is there a benefit for using case-construct during folding? *)
+        let brs = filter_branches r_brs vdef.Cast.view_formula in
+        (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
+        let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
+        (*let form = Cformula.case_to_disjunct brs in *)
+        let _ = Debug.ninfo_hprint (add_str "do_fold: form" Cprinter.string_of_struc_formula) form no_pos in
+        let renamed_view_formula = rename_struc_bound_vars form in
+        let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
+        (****)  
               (* let renamed_view_formula =  propagate_imm_struc_formula renamed_view_formula imm anns in *)
-	      (*   if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (\*&& not(!Globals.allow_field_ann)*\) then  *)
-	      (*     propagate_imm_struc_formula renamed_view_formula imm anns *)
-	      (*   else *)
-	      (*     renamed_view_formula *)
+        (*   if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (\*&& not(!Globals.allow_field_ann)*\) then  *)
+        (*     propagate_imm_struc_formula renamed_view_formula imm anns *)
+        (*   else *)
+        (*     renamed_view_formula *)
               (* in  *)
-	      (***)
+        (***)
 
-	      (*LDK: IMPORTANT
-                if any, propagate the fractional permission inside the definition *)
-              let renamed_view_formula =
-                if (Perm.allow_perm ()) then
-                  (match perm with
-                    | None -> renamed_view_formula
-                    | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f))
-                else renamed_view_formula
-              in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula 2" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
-              let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
-              let to_vars = p :: vs in
-              let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
-              let anns = List.map fst anns in
-              let fr_ann = List.map fst vdef.view_ann_params in
-              let to_ann = anns in
-              (*ENHANCE universal lemmas:
-                propagate constraint on univ_vars into view_form*)
-              let uni_vars = vdef.view_uni_vars in
-              let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
-              let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
-              let view_form = add_mix_formula_to_struc_formula to_fold_view view_form  
-              in
-              (*propagate*)
-              let view_form = 
-                if (Perm.allow_perm ()) then
-                  (match perm with
-                    | None -> view_form
-                    | Some permvar ->
-                          let to_fold_view = MCP.find_rel_constraints rhs_p [(Cpure.get_var permvar)] in
-                          add_mix_formula_to_struc_formula to_fold_view view_form)
-                else view_form
-              in
-              let view_form = add_struc_origins (get_view_origins view) view_form  in
-              let view_form = CF.replace_struc_formula_label pid view_form in
-              (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
-              let view_form = match use_case with 
-                | None -> view_form 
-                | Some f -> push_case_f f view_form in
-              let view_form =
-                try
-                  let mpa = List.combine fr_ann to_ann in
-                  Immutable.propagate_imm_struc_formula view_form c imm mpa
-                with _ ->
-                    view_form
-              in
-              Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
-              Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
-              Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
-              Debug.devel_zprint (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
-              let estate = estate_of_context ctx pos in
-              (*LDK: propagate es_vars from the estate to FOLD context
-                to avoid proving es_vars as universal vars when finishing FOLDING*)
-              (*Because we propagate some pure constrains into view formula 
-                when FOLDING. we also have to propagate es_vars from the 
-                estate into FOLDING context to avoid. Is it SOUND? Indeed, 
-                we need to propagate es_vars whose constraints are propagated 
+        (*LDK: IMPORTANT
+          if any, propagate the fractional permission inside the definition *)
+        let renamed_view_formula =
+          if (Perm.allow_perm ()) then (
+            match perm with
+            | None -> renamed_view_formula
+            | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f)
+          )
+          else renamed_view_formula
+        in
+        let _ = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula 2" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
+        let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
+        let to_vars = p :: vs in
+        let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
+        let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
+        let anns = List.map fst anns in
+        let fr_ann = List.map fst vdef.view_ann_params in
+        let to_ann = anns in
+        (*ENHANCE universal lemmas:
+          propagate constraint on univ_vars into view_form*)
+        let uni_vars = vdef.view_uni_vars in
+        let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
+        let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
+        let view_form = add_mix_formula_to_struc_formula to_fold_view view_form in
+        (*propagate*)
+        let view_form = 
+          if (Perm.allow_perm ()) then (
+            match perm with
+            | None -> view_form
+            | Some permvar ->
+                let to_fold_view = MCP.find_rel_constraints rhs_p [(Cpure.get_var permvar)] in
+                add_mix_formula_to_struc_formula to_fold_view view_form
+          )
+          else view_form
+        in
+        let view_form = add_struc_origins (get_view_origins view) view_form  in
+        let view_form = CF.replace_struc_formula_label pid view_form in
+        (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
+        let view_form = match use_case with 
+          | None -> view_form 
+          | Some f -> push_case_f f view_form in
+        let view_form =
+          try
+            let mpa = List.combine fr_ann to_ann in
+            Immutable.propagate_imm_struc_formula view_form c imm mpa
+          with _ -> view_form
+        in
+        Debug.devel_zprint (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
+        Debug.devel_zprint (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
+        Debug.devel_zprint (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
+        Debug.devel_zprint (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        let estate = estate_of_context ctx pos in
+        (*LDK: propagate es_vars from the estate to FOLD context
+          to avoid proving es_vars as universal vars when finishing FOLDING*)
+        (*Because we propagate some pure constrains into view formula 
+          when FOLDING. we also have to propagate es_vars from the 
+          estate into FOLDING context to avoid. Is it SOUND? Indeed, 
+          we need to propagate es_vars whose constraints are propagated 
                 into view formula when FOLDING.*)
-  	      (*TO CHECK: does the below give new information instead of the above*)
-              (*LDK: IMPORTANT
-                if frac var is an existential variable, transfer it into folded view*)
-              (*add fracvar into list of parameters*)
-              let vs = 
-                if (Perm.allow_perm ()) then
-                  match perm with
-                    | None -> vs
-                    | Some f -> (Cpure.get_var f)::vs
-                else vs
-              in
-              (* vs may contain non-existential free vars! *)
-              (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
-              (* let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in *)
-              (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
-              (* let new_es_evars = Gen.BList.difference_eq CP.eq_spec_var vs estate.es_gen_impl_vars in *) (*andreeac*)
-              (* andreeac: should the impl_vars be excluded below? *)
-              let new_es_evars = vs in
-              let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (new_es_evars @ estate.es_evars)} in
-              (* let new_es = estate in *)
-              let _ = Debug.ninfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
-              let _ = Debug.ninfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
-              let new_ctx = Ctx new_es in
-              let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
-              (*let new_ctx = set_es_evars ctx vs in*)
-              let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
-              let rels = Infer.collect_rel_list_context rs0 in
-              let _ = Infer.infer_rel_stk # push_list rels in
-              let _ = Log.current_infer_rel_stk # push_list rels in
+        (*TO CHECK: does the below give new information instead of the above*)
+        (*LDK: IMPORTANT
+          if frac var is an existential variable, transfer it into folded view*)
+        (*add fracvar into list of parameters*)
+        let vs = 
+          if (Perm.allow_perm ()) then
+            match perm with
+            | None -> vs
+            | Some f -> (Cpure.get_var f)::vs
+          else vs
+        in
+        (* vs may contain non-existential free vars! *)
+        (* let new_es = {estate with es_evars = vs (\*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*\)} in *)
+        (* let impl_vars = Gen.BList.intersect_eq  CP.eq_spec_var vs estate.es_gen_impl_vars in *)
+        (* TODO : why must es_gen_impl_vars to be added to es_vars ??? *)
+        (* let new_es_evars = Gen.BList.difference_eq CP.eq_spec_var vs estate.es_gen_impl_vars in *) (*andreeac*)
+        (* andreeac: should the impl_vars be excluded below? *)
+        let new_es_evars = vs in
+        let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (new_es_evars @ estate.es_evars)} in
+        (* let new_es = estate in *)
+        let _ = Debug.ninfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
+        let _ = Debug.ninfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
+        let new_ctx = Ctx new_es in
+        let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
+        (*let new_ctx = set_es_evars ctx vs in*)
+        let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
+        let rels = Infer.collect_rel_list_context rs0 in
+        let _ = Infer.infer_rel_stk # push_list rels in
+        let _ = Log.current_infer_rel_stk # push_list rels in
 
-              (* let rs0 = remove_impl_evars rs0 impl_vars in *)
-              (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
-              (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
-              (* let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in *)
-              let tmp_vars = p :: (estate.es_evars @ vs) in
-	      (**************************************)
-	      (*        process_one 								*)
-	      (**************************************)
-              let rec process_one_x (ss:CF.steps) rs1  =
-	        Debug.devel_zprint (lazy ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1))) pos;
-	        match rs1 with
-	          | OCtx (c1, c2) ->
-		        (*
-		          It is no longer safe to assume that rs will be conjunctive.
-		          The recursive folding entailment call (via case splitting
-		          for example) can turn ctx to a disjunctive one, hence making
-		          rs disjunctive.
-		        *)
-		        let tmp1 = process_one_x (CF.add_to_steps ss "left OR 3 on ante") c1 in
-		        let tmp2 = process_one_x (CF.add_to_steps ss "right OR 3 on ante") c2 in
-		        let tmp3 = (mkOCtx tmp1 tmp2 pos) in
-		        tmp3
-	          | Ctx es ->
-		        (* let es = estate_of_context rs pos in *)
-                        let es = CF.overwrite_estate_with_steps es ss in
-		        let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
-		        let mix_f = elim_exists_pure w es.es_pure true pos in
-                        (*LDK: remove duplicated conjuncts in the estate, 
-                          which are generated because one perm var can be folded 
-                          into many perm vars in many heap nodes. These generated
-                          permvars might create many duplicated constraints*)
-                        let old_mix_f = mix_f in
-                        let mix_f = CF.remove_dupl_conj_eq_mix_formula mix_f in
-                        (* Debug.info_hprint (add_str "old_mix_f" !print_mix_formula) old_mix_f no_pos; *)
-                        (* Debug.info_hprint (add_str "mix_f" !print_mix_formula) mix_f no_pos; *)
-		        let res_rs = Ctx {es with es_evars = estate.es_evars;
-			    es_pure = mix_f; es_prior_steps = (ss @ es.es_prior_steps);} in
-		        Debug.devel_zprint (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
-		        Debug.devel_zprint (lazy ("fold: context at end of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context res_rs))) pos;
-		        Debug.devel_zprint (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
-		        res_rs in
-              let process_one (ss:CF.steps) fold_rs1 = 
-                let pr = Cprinter.string_of_context  in
-                Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+        (* let rs0 = remove_impl_evars rs0 impl_vars in *)
+        (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
+        (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)
+        (* let _ = print_string ("\nafter fold: " ^ (Cprinter.string_of_list_context rs0)) in *)
+        let tmp_vars = p :: (estate.es_evars @ vs) in
+        (**************************************)
+        (*        process_one                 *)
+        (**************************************)
+        let rec process_one_x (ss:CF.steps) rs1  = (
+          Debug.devel_zprint (lazy ("fold: process_one: rs1:\n"^ (Cprinter.string_of_context rs1))) pos;
+          match rs1 with
+          | OCtx (c1, c2) ->
+              (*
+                It is no longer safe to assume that rs will be conjunctive.
+                The recursive folding entailment call (via case splitting
+                for example) can turn ctx to a disjunctive one, hence making
+                rs disjunctive.
+              *)
+              let tmp1 = process_one_x (CF.add_to_steps ss "left OR 3 on ante") c1 in
+              let tmp2 = process_one_x (CF.add_to_steps ss "right OR 3 on ante") c2 in
+              let tmp3 = (mkOCtx tmp1 tmp2 pos) in
+              tmp3
+          | Ctx es ->
+              (* let es = estate_of_context rs pos in *)
+              let es = CF.overwrite_estate_with_steps es ss in
+              let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
+              let mix_f = elim_exists_pure w es.es_pure true pos in
+              (*LDK: remove duplicated conjuncts in the estate, 
+                which are generated because one perm var can be folded 
+                into many perm vars in many heap nodes. These generated
+                permvars might create many duplicated constraints*)
+              let old_mix_f = mix_f in
+              let mix_f = CF.remove_dupl_conj_eq_mix_formula mix_f in
+              (* Debug.info_hprint (add_str "old_mix_f" !print_mix_formula) old_mix_f no_pos; *)
+              (* Debug.info_hprint (add_str "mix_f" !print_mix_formula) mix_f no_pos; *)
+              let res_rs = Ctx {es with 
+                  es_evars = estate.es_evars;
+                  es_pure = mix_f;
+                  es_prior_steps = (ss @ es.es_prior_steps);
+              } in
+              Debug.devel_zprint (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
+              Debug.devel_zprint (lazy ("fold: context at end of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context res_rs))) pos;
+              Debug.devel_zprint (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
+              res_rs 
+        ) in
+        let process_one (ss:CF.steps) fold_rs1 = (
+          let pr = Cprinter.string_of_context  in
+          Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 
+        ) in
+        let res = match rs0 with
+          | FailCtx _ -> rs0
+          | SuccCtx l -> SuccCtx (List.map (process_one []) l) in
+        (res, fold_prf)
+      ) with e -> raise e
+    )
+  | _ ->
+      Debug.devel_zprint (lazy ("fold: second parameter is not a view: "^ (Cprinter.string_of_h_formula view))) pos;
+      report_error no_pos ("fold: second parameter is not a view\n") 
 
-	      let res = match rs0 with
-                | FailCtx _ -> rs0
-                | SuccCtx l -> SuccCtx (List.map (process_one []) l) in
-	      (res, fold_prf)
-            with
-	      | e -> raise e
-                    (* report_error no_pos ("fold: view def not found:"^c^"\n")  *)
-          end
-        | _ ->
-              Debug.devel_zprint (lazy ("fold: second parameter is not a view: "^ (Cprinter.string_of_h_formula view))) pos;
-              report_error no_pos ("fold: second parameter is not a view\n") 
-	          (*([], Failure)*)
-
-and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
+and process_fold_result ivars_p prog is_folding estate (fold_rs0:list_context) 
+    p2 vs2 base2 pos
+    : (list_context * proof list) =
   let pr_es = Cprinter.string_of_entail_state in
   let pr1 = Cprinter.string_of_list_context in
   let pro x = pr1 (fst x) in
   let pr2 = pr_list Cprinter.string_of_spec_var in
   let pr3 x = Cprinter.string_of_formula (CF.Base x) in
-  Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro (fun _ _ _ _-> process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  
-      estate fold_rs0 (p2::vs2) base2
+  Debug.no_4 "process_fold_result" pr_es pr1 pr2 pr3 pro 
+      (fun _ _ _ _-> 
+        process_fold_result_x ivars_p prog is_folding estate (fold_rs0:list_context)
+            p2 vs2 base2 pos 
+      ) estate fold_rs0 (p2::vs2) base2
 
-and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
+and process_fold_result_x (ivars,ivars_rel) prog is_folding estate 
+    (fold_rs0:list_context) p2 vs2 base2 pos 
+    : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
   let resth2 = base2.formula_base_heap in
   let type2 = base2.formula_base_type in
@@ -9830,7 +9839,6 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
             do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
-
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
   Debug.no_2 "do_base_fold" 
@@ -9845,7 +9853,85 @@ and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let pr2 x = Cprinter.string_of_list_context (fst x) in
   Debug.no_2 "do_full_fold" Cprinter.string_of_entail_state pr1 pr2 
       (fun _ _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate rhs_node
-      
+
+and vdef_of_acc_fold_x (vd: view_decl) (base_f: CF.formula)
+    (induct_f: CF.formula) (fold_seq : Acc_fold.fold_type list)
+    : view_decl =
+  let rec apply_fold_seq f vd base_f induct_f fold_seq : CF.formula = (
+    match fold_seq with
+    | [] -> f
+    | hd::tl ->
+        let new_f = (
+          if (hd = Acc_fold.Fold_base_case) then
+            Acc_fold.try_fold_once f vd base_f
+          else Acc_fold.try_fold_once f vd induct_f
+        ) in
+        apply_fold_seq new_f vd base_f induct_f tl
+  ) in
+  let root_f, fold_seq = (match fold_seq with
+    | [] -> report_error no_pos "vdef_of_acc_fold: fold_seq is empty"
+    | hd::tl ->
+        let f = if (hd = Acc_fold.Fold_base_case) then base_f
+                else induct_f in 
+        (f, tl)
+  ) in
+  let view_form = apply_fold_seq root_f vd base_f induct_f fold_seq in
+  { vd with view_formula = (CF.formula_to_struc_formula view_form) }
+
+and vdef_of_acc_fold (vd: view_decl) (base_f: CF.formula)
+    (induct_f: CF.formula) (fold_seq : Acc_fold.fold_type list)
+    : view_decl =
+  let pr_vd = !print_view_decl in
+  let pr_fold_seq = pr_list Acc_fold.print_fold_type in
+  let pr_out = pr_vd in
+  Debug.no_2 "vdef_of_acc_fold" pr_vd pr_fold_seq pr_out
+      (fun _ _ -> vdef_of_acc_fold_x vd base_f induct_f fold_seq)
+      vd fold_seq
+
+and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
+    : (CF.list_context * Prooftracer.proof) =
+  let vname = (match rhs_node with
+    | CF.ViewNode vn -> vn.CF.h_formula_view_name
+    | _ ->
+        let msg = "do_acc_fold: expect rhs_node is a view node but found: "
+                  ^ (!CF.print_h_formula rhs_node) ^ "\n" in
+        report_error no_pos msg
+  ) in
+  let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
+  let vd = (
+    try look_up_view_def_raw 6 prog.Cast.prog_view_decls vname
+    with Not_found ->
+      let msg = "do_acc_fold: view def not found: " ^ vname ^"\n" in
+      report_error no_pos msg
+  ) in
+  (* create a new view to do fold *)
+  let induct_cases, base_cases = List.partition(fun (f, _) ->
+    let hviews = CF.get_views f in
+    List.exists (fun hv ->
+      String.compare hv.CF.h_formula_view_name vname = 0
+    ) hviews
+  ) vd.C.view_un_struc_formula in
+  if (List.length base_cases != 1) || (List.length induct_cases != 1) then
+    let msg = "do_acc_fold: expect view has 1 base case and 1 inductive case"
+              ^ " but found: " ^ (!C.print_view_decl vd) ^ "\n" in
+    report_error no_pos msg
+  else (
+    let base_f = fst (List.hd base_cases) in
+    let induct_f = fst (List.hd induct_cases) in
+    let new_vd = vdef_of_acc_fold vd base_f induct_f fold_seq in
+    let (cl,prf) = do_fold prog (Some (iv,ivr,new_vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in 
+    (cl,prf)
+  )
+
+and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
+    : (CF.list_context * Prooftracer.proof) =
+  let pr_es = Cprinter.string_of_entail_state in
+  let pr_hf = Cprinter.string_of_h_formula in
+  let pr_out x = Cprinter.string_of_list_context (fst x) in
+  Debug.no_2 "do_acc_fold" pr_es pr_hf pr_out 
+      (fun _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
+      estate rhs_node
+
 
 and push_hole_action_x a1 r1=
   match Context.action_get_holes a1 with
@@ -10767,23 +10853,23 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
               in (cl,prf)
                      (* (Infer.restore_infer_vars iv cl,prf) *)
-      | Context.M_acc_fold ({
-            Context.match_res_rhs_node = rhs_node;
-            Context.match_res_rhs_rest = rhs_rest;}, fold_seq) ->
-            (* let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_entail_state)) estate pos in *)
-            let estate =
-              if Infer.no_infer_rel estate then estate
-              else
-                let lhs_h,lhs_p,_, _, lhs_a  = CF.split_components estate.es_formula in
-                let lhs_alias = MCP.ptr_equations_without_null lhs_p in
-                let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-                (* Assumed lhs_h to be star or view_node or data_node *)
-                let lhs_h_list = split_star_conjunctions lhs_h in
-                let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
-                let init_pure = CP.conj_of_list init_pures pos in
-                {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
-            in
-          do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
+
+      | Context.M_acc_fold (m_res, fold_seq) ->
+          let rhs_node = m_res.Context.match_res_rhs_node in
+          let rhs_rest = m_res.Context.match_res_rhs_rest in
+          let estate =
+            if Infer.no_infer_rel estate then estate
+            else
+              let lhs_h,lhs_p,_, _, lhs_a  = CF.split_components estate.es_formula in
+              let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+              let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+              (* Assumed lhs_h to be star or view_node or data_node *)
+              let lhs_h_list = split_star_conjunctions lhs_h in
+              let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+              let init_pure = CP.conj_of_list init_pures pos in
+              {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
+          in
+          do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
 
       | Context.M_lhs_case {
             Context.match_res_lhs_node = lhs_node;
