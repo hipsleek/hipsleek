@@ -700,6 +700,7 @@ let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula)
     match head with
       | CF.ViewNode hd ->
             let fwd_ptrs_vdef = vdef.C.view_forward_ptrs in
+            let pp = (Mcpure.pure_of_mix p) in
             if (String.compare vdef.C.view_name hd.CF.h_formula_view_name == 0 && (List.length fwd_ptrs_vdef == 1)) then
               let _ = Gen.report_warning no_pos "[norml.ml] linearizing a tail-rec def into a linear one " in
               (* identify fwd ptr of head *)
@@ -709,16 +710,21 @@ let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula)
               (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
               let from_sv, to_sv = [fwd_ptr_n], [(CP.mk_self None)] in 
               let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
+              let pp = CP.subst_avoid_capture from_sv to_sv pp in
               (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
               let from_sv, to_sv = [fwd_ptr_v], [fwd_ptr_n] in 
               let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
-              (* substitute self var with fwd pointer of self in the head *)
-              let from_sv, to_sv =  [(CP.mk_self None)],[fwd_ptr_n]  in 
-              let head = CF.subst_avoid_capture_h from_sv to_sv head in
+              let pp = CP.subst_avoid_capture from_sv to_sv pp in
               (* substitute self fwd pointer with fwd ptr of view in the head *)
               let from_sv, to_sv =   [fwd_ptr_n], [fwd_ptr_v]  in 
               let head = CF.subst_avoid_capture_h from_sv to_sv head in
+              let pp = CP.subst_avoid_capture from_sv to_sv pp in
+              (* substitute self var with fwd pointer of self in the head *)
+              let from_sv, to_sv =  [(CP.mk_self None)],[fwd_ptr_n]  in 
+              let head = CF.subst_avoid_capture_h from_sv to_sv head in
+              let pp = CP.subst_avoid_capture from_sv to_sv pp in   
               let new_f = CF.mkStarH tail head (CF.pos_of_h_formula orig_f) in 
+              let p = MCP.mix_of_pure pp in
               (new_f, p, qvars)
             else
               let _ = Gen.report_warning no_pos "[norml.ml] trying to linearize a view which is not tail-rec? 1 " in
