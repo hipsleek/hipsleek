@@ -2506,6 +2506,7 @@ let get_emp_map cprog=
   is complex: both lhs and rhs <=4 pred instance for segmentation optimization
 *)
 let is_complex_entailment_4graph_x prog ante conseq=
+  (* let _ = Debug.info_hprint (add_str "is_complex_entailment_4graph" pr_id) "start" no_pos in *)
   let is_null_node (Cpure.SpecVar (_,id,_)) = String.compare id null_name = 0
   in
    let seg_opz_views = List.fold_left (fun r vdecl ->
