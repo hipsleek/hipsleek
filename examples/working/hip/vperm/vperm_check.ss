@@ -23,12 +23,13 @@ void incCell(ref cell x)
 }
 
 //fail
-int test1(ref int x,ref int y)
+thrd test1(ref int x,ref int y)
   requires true //@full[x,y]
-  ensures @full[y] & res = z
-          and thread=z & true--> @full[x]; //'
+  ensures res::thrd<# emp & @full[x] #> & @full[y];
+  /* ensures @full[y] & res = z */
+  /*         and thread=z & true--> @full[x]; //' */
 {
-  int id;
+  thrd id;
   id=fork(inc,x);
   x = 0; // --> No permission -> cannot assign to x
   inc(y);
@@ -36,12 +37,13 @@ int test1(ref int x,ref int y)
 }
 
 //fail
-int test2(ref cell x,ref cell y)
-  requires x::cell<i> * y::cell<j> // & @full[x,y] 
-  ensures y::cell<j+1> & @full[y] & res = z
-          and thread=z & true --> x::cell<i+1> & @full[x]; //'
+thrd test2(ref cell x,ref cell y)
+  requires x::cell<i> * y::cell<j> // & @full[x,y]
+  ensures res::thrd<# x::cell<i+1> & @full[x] #> * y::cell<j+1> & @full[y]; //'
+  /* ensures y::cell<j+1> & @full[y] & res = z */
+  /*         and thread=z & true --> x::cell<i+1> & @full[x]; //' */
 {
-  int id;
+  thrd id;
   id=fork(incCell,x);
   y.val ++;
   x.val++; // --> No permission -> cannot access its field
@@ -49,12 +51,13 @@ int test2(ref cell x,ref cell y)
 }
 
 //fail
-int test3(ref int x,ref int y)
+thrd test3(ref int x,ref int y)
   requires true //@full[x,y]
-  ensures @full[y] & res = z
-          and thread=z & true --> @full[x]; //'
+  ensures res::thrd<# emp & @full[x] #> & @full[y];
+  /* ensures @full[y] & res = z */
+  /*         and thread=z & true --> @full[x]; //' */
 {
-  int id;
+  thrd id;
   id=fork(inc,x);
   y = x; // --> No permission -> cannot read x
   inc(y);
@@ -64,10 +67,11 @@ int test3(ref int x,ref int y)
 //fail
 int test4(ref int x,ref int y)
   requires true //@full[x,y]
-  ensures @full[y] & res = z
-          and thread=z & true --> @full[x]; //'
+  ensures @full[y];
+  /* ensures @full[y] & res = z */
+  /*         and thread=z & true --> @full[x]; //' */
 {
-  int id;
+  thrd id;
   id=fork(inc,x);
   inc(y);
   return x; // --> No permission -> cannot return x

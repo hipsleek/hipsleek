@@ -90,7 +90,7 @@ void para_qsort2(ref node xs)
 			tmp = partition(xsnext, v);
 		}
 
-        int id1,id2;
+        thrd id1,id2;
         id1 = fork(para_qsort2,tmp);
 
         node tmp2;

@@ -48,9 +48,9 @@ print residue.
 //VALID, syntatic match
 
 //(7)
-checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# b=1 --> x::cell<v1> & true #> .
+checkentail t::thrd<# a=1 --> x::cell<v1> & true #> |- t::thrd<# b=1 --> x::cell<v1> & true #>.
 print residue.
-//FAIL: delayed formulas unmatched
+//VALID. with instantiation a=b
 
 //(8)
 checkentail t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<v1> & true #> .
@@ -82,8 +82,7 @@ print residue.
 //(13)
 checkentail t::thrd<# a=1 --> x1::cell<v1> * x2::cell<v2> & true #> & x1=y1 & x2=y2 |- t::thrd<# a=1 --> y1::cell<v1> * y2::cell<v2> & true #>.
 print residue.
-//FAIL. Currently FAIL because lhs's resource is unmatched with rhs' resource
-//Restrictive, re-consider later TODO
+//VALID
 
 //(14)
 checkentail t::thrd<# a=1 --> x::cell(0.5)<1> * x::cell(0.5)<1> & true #> |- t::thrd<# a=1 --> x::cell(0.5)<1> & true #>.
@@ -144,3 +143,10 @@ print residue.
 checkentail t::thrd<# a in B --> x::cell(0.5)<v1> & true #> |- t::thrd<# a in B --> x::cell(0.5)<v1> & true #> .
 print residue.
 //VALID: exact matching with fractional permissions, bag constraints
+
+
+//(25)
+checkentail t::thrd<# a!=b --> x::cell(0.5)<v1> & true #> 
+            |- t::thrd<# a=b --> x::cell(0.5)<v1> & true #>.
+print residue.
+//FAIL: delayed constraints unmatched

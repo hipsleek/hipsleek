@@ -2738,19 +2738,21 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let by_val = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_val_tmp in
       (*check and add VPERM when need*)
       let static_specs_list = 
-        if (!Globals.ann_vp) then
+        if (!Globals.ann_vp && !Globals.infer_vp) then
           (* (\*add primeness to distinguish*\) *)
 	  (* let by_names = List.map (fun sv ->  *)
           (*     match sv with *)
           (*       | CP.SpecVar (v,t,_) -> CP.SpecVar (v, t, Primed)) by_names  *)
           (* in *)
-          CF.norm_struc_vperm static_specs_list by_names by_val
+          let ls, _ = CF.norm_struc_vperm static_specs_list by_names by_val true in
+          ls
         else
           static_specs_list
       in
       let dynamic_specs_list = 
-        if (!Globals.ann_vp) then
-          CF.norm_struc_vperm dynamic_specs_list by_names by_val
+        if (!Globals.ann_vp && !Globals.infer_vp) then
+          let ls, _ =  CF.norm_struc_vperm dynamic_specs_list by_names by_val true in
+          ls
         else
           dynamic_specs_list
       in

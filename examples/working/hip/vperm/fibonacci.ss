@@ -36,7 +36,7 @@ void para_fib2(int n, ref int result)
     seq_fib(n,result);
   }else{
     int result1,result2;
-    int id1,id2;
+    thrd id1,id2;
     id1 = fork(para_fib2,n-1,result1);
     id2 = fork(para_fib2,n-2,result2);
     //any access to result1 and result2 here is not allowed

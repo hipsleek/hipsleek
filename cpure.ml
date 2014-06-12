@@ -4565,7 +4565,7 @@ let find_rel_constraints_x (f:formula) desired :formula =
    join_conjunctions (snd (List.split pairs))
  
 let find_rel_constraints (f:formula) desired :formula = 
-  Debug.no_2 "find_rel_constraints_x"
+  Debug.no_2 "find_rel_constraints"
       !print_formula !print_svl !print_formula
       find_rel_constraints_x f desired
  

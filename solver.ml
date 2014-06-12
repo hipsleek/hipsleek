@@ -10555,31 +10555,54 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
         (match (l_node,r_node) with
           | ThreadNode ({CF.h_formula_thread_resource = l_rsr;} as l_t),
             ThreadNode ({CF.h_formula_thread_resource = r_rsr;} as r_t) ->
+              let l_rsr = normalize_varperm_formula l_rsr in
+              let l_full_vars = CF.get_varperm_formula l_rsr VP_Full in
+              let r_rsr = normalize_varperm_formula r_rsr in
+              let r_full_vars = CF.get_varperm_formula r_rsr VP_Full in
+              (*=====VARIABLE PERMISSIONS >=====*)
+              if (Gen.BList.difference_eq CP.eq_spec_var r_full_vars l_full_vars) != [] then
+                (* RHS requires more variable permissions -> FAIL *)
+                let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "variable permissions unmatched between LHS ThreadNode and RHS ThreadNode" estate rhs None pos, CF.mk_failure_must "104 : variable permissions unmatched between LHS and RHS thread nodes" Globals.sl_error)), NoAlias) in
+                label_list, l_args, r_args, (is_thread,false,Some rs,None)
+              else
+              let l_rsr = CF.drop_varperm_formula l_rsr in
+              let r_rsr = CF.drop_varperm_formula r_rsr in
+              let full_vars = Gen.BList.difference_eq CP.eq_spec_var l_full_vars r_full_vars in
+              let full_vars_f = CP.mk_varperm_full full_vars pos in
+              (*=====< VARIABLE PERMISSIONS =====*)
               let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) l_rsr else l_rsr in
               let _,l_p,_,_, _ = split_components estate.es_formula in (*Used pure to assist proving*)
               let to_ante = MCP.find_rel_constraints l_p (CF.fv l_rsr) in (*only extract relevant constraints*)
+              (* Varperm is a kind of resource, not pure *)
+              let rhs = CF.drop_varperm_formula rhs in
               let _,r_p,_,_, _ = split_components rhs in
               let to_conseq = MCP.find_rel_constraints r_p (CF.fv r_rsr) in
               let es_f = CF.add_mix_formula_to_formula to_ante es_f in
-              let new_estate = {estate with es_formula = es_f;} in
+              let es_zero_vars = estate.es_var_zero_perm in
+              let new_estate = {estate with es_formula = es_f; es_var_zero_perm = []} in
               let new_ctx = Ctx (CF.add_to_estate new_estate "matching of resources") in
               let new_conseq =  CF.add_mix_formula_to_formula to_conseq r_rsr in
               let _ = if (not !Globals.web_compile_flag) then print_endline ("Attempt Semantic Matching of ThreadNodes") in
-              let res_ctx, res_prf = heap_entail_conjunct 11 prog is_folding new_ctx new_conseq rhs_matched_set pos in
+              let res_ctx, res_prf = heap_entail_conjunct 11 prog false new_ctx new_conseq rhs_matched_set pos in
       		  (match res_ctx with
 	            | SuccCtx(cl) ->
                     let formulas = List.map (fun c -> match c with
                       | Ctx es ->
                           let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in
-                          let f = CF. push_exists evars es.es_formula in
+                          let f = add_pure_formula_to_formula full_vars_f es.es_formula in
+                          let f = CF. push_exists evars f in
                           (*Simplify the remained resources*)
                           let f = CF.elim_exists f in
-                          (CF.simplify_pure_f f)
+                          let f = (CF.simplify_pure_f f) in
+                          f
                       | OCtx _ -> report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected Octx. Not yet handled"
                     ) cl
                     in
+                    let helper (f:formula) : bool = (not (isWeakConstHEmp f)) || (full_vars!=[]) in
+                    let formulas = List.filter helper formulas in
+                    let res = if formulas!=[] then Some formulas else None in
                     let is_matched = true in
-                    label_list, l_args, r_args, (is_thread,is_matched, None, Some formulas)
+                    label_list, l_args, r_args, (is_thread,is_matched, None, res)
                 | FailCtx _ ->
                     let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext "resources semantically unmatched between LHS node and RHS node" new_estate new_conseq None pos, CF.mk_failure_must "103 : resources semantically unmatched between LHS and RHS thread nodes" Globals.sl_error)), NoAlias) in
                     label_list, l_args, r_args, (is_thread,false,Some rs,None))

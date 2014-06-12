@@ -18,7 +18,7 @@ void func()
 {
   int x,y;
   x=0;y=0;
-  int id1 = fork(inc,x);
+  thrd id1 = fork(inc,x);
   inc(y); // not allow because the child thread is holding the full
   // permission of the global variable "g" --> FAIL
   join(id1);

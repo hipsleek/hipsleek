@@ -13764,6 +13764,10 @@ let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
 (* post is the post-state of the newly spawn thread *)
 (* Put post into either formula_*_and or a thread node of f instread*)
 let compose_formula_w_thrd_x (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+  (* do not rename variables in @full[..]: extract and put back *)
+  let post = normalize_varperm_formula post in
+  let full_vars = get_varperm_formula post VP_Full in
+  let post = drop_varperm_formula post in
   (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
   (*Rename ref_vars for later join*)
   let rs = CP.fresh_spec_vars ref_vars in
@@ -13805,6 +13809,10 @@ let compose_formula_w_thrd_x (f : formula) (post : formula) (delayed_f : MCP.mix
               begin
                 (* --en-thrd-resource *)
                 let dl = CP.remove_redundant (MCP.pure_of_mix delayed_f) in
+                (* do not rename variables in @full[..]: put back *)
+                let full_vars_f = CP.mk_varperm VP_Full full_vars pos in
+                let post = add_pure_formula_to_formula full_vars_f post in
+                let post = normalize_varperm_formula post in
                 let ht = mkThreadNode (CP.mkRes Globals.thrd_typ) Globals.thrd_name false None [] true post dl None pos in
                 let ht_f = formula_of_heap ht no_pos in
                 normalize_x f ht_f pos
@@ -13812,6 +13820,11 @@ let compose_formula_w_thrd_x (f : formula) (post : formula) (delayed_f : MCP.mix
             else
               begin
                 (* --en-thrd-and-conj *)
+                (* do not rename variables in @full[..]: put back *)
+                let full_vars_f = CP.mk_varperm VP_Full full_vars pos in
+                let post = add_pure_formula_to_formula full_vars_f post in
+                let post = normalize_varperm_formula post in
+
                 let qvars,base = split_quantifiers post in
                 let one_f = one_formula_of_formula base id delayed_f in
                 let one_f = {one_f with formula_ref_vars = ref_vars;} in
@@ -13826,12 +13839,14 @@ let compose_formula_w_thrd_x (f : formula) (post : formula) (delayed_f : MCP.mix
   helper new_f3 new_post2
 
 let compose_formula_w_thrd (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
-  Debug.no_3 "compose_formula_w_thrd"
+  Debug.no_5 "compose_formula_w_thrd"
       !print_formula 
       !print_formula
       !print_mix_formula
+      !print_svl
+      !print_svl
       !print_formula
-      (fun _ _ _ -> compose_formula_w_thrd_x f post delayed_f id ref_vars val_vars pos) f post delayed_f
+      (fun _ _ _ _ _ -> compose_formula_w_thrd_x f post delayed_f id ref_vars val_vars pos) f post delayed_f ref_vars val_vars
 
 (* post is the post-state of the newly spawn thread *)
 (* add the post condition (phi) into either formul_*_and or a thread node *)
@@ -13850,7 +13865,7 @@ let compose_context_formula_w_thrd (ctx : context) (phi : formula) (delayed_f: M
 		    | _ -> 
                 (*collect @var for later use *)
                 (*NOTE THAT es.pure might not INCLUDE VARPERM INFO*)
-                let val_vars = MCP.get_varperm_mix_formula es.es_pure  VP_Value in
+                let val_vars = MCP.get_varperm_mix_formula es.es_pure VP_Value in
                 (*then clear entail_*)
                 let es = clear_entailment_history_es_es es in
                 let f = es.es_formula in
@@ -13871,8 +13886,21 @@ let compose_context_formula_w_thrd (ctx : context) (phi : formula) (delayed_f: M
   in
   helper ctx phi
 
+let rec has_formula_threads (f : formula) : bool = 
+  let rec helper f = match f with
+    | Base {formula_base_heap = h}
+    | Exists {formula_exists_heap = h} ->
+          let heaps = split_star_conjunctions h in
+          let thread_nodes = List.filter (fun h ->
+              match h with
+                | ThreadNode _ -> true
+                | _ -> false ) heaps
+          in (thread_nodes!=[])
+    | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          (helper f1) || (helper f2) (*approximation*)
+  in helper f
 
-let has_formula_and (f : formula) : bool = 
+let rec has_formula_and (f : formula) : bool = 
   let rec helper f = match f with
     | Base {formula_base_and = a}
     | Exists {formula_exists_and = a} ->
@@ -13909,7 +13937,7 @@ and norm_one_formula_vperm_x one_f ref_vars :(one_formula * CP.spec_var list) =
     let new_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident ref_vars child_r_vars in
     ({one_f with formula_pure = new_p},new_ref_vars)
 
-let norm_formula_and_vperm (a:one_formula list) (ref_vars : CP.spec_var list) =
+and norm_formula_and_vperm (a:one_formula list) (ref_vars : CP.spec_var list) =
   let rec helper a ref_vars= 
   match a with
     | [] -> ([],ref_vars)
@@ -13919,17 +13947,47 @@ let norm_formula_and_vperm (a:one_formula list) (ref_vars : CP.spec_var list) =
         (new_one::new_fs,new_r_vars2)
   in helper a ref_vars
 
+and norm_formula_threads_x (h : h_formula) (ref_vars : CP.spec_var list) (is_pre:bool) =
+  let heaps = split_star_conjunctions h in
+  let thread_nodes, other_nodes = List.partition (fun h ->
+      match h with
+        | ThreadNode _ -> true
+        | _ -> false ) heaps
+  in
+  let rec helper nodes vars= 
+    match nodes with
+      | [] -> ([],vars)
+      | h::hs ->
+            let new_h, new_r_vars =
+              match h with
+                | ThreadNode t ->
+                      let n_rsr , n_vars = norm_formula_vperm t.h_formula_thread_resource vars [] is_pre in
+                      (ThreadNode {t with h_formula_thread_resource = n_rsr;} , n_vars)
+                | _ ->  Error.report_error { Error.error_loc = no_pos;Error.error_text = "norm_formula_threads: Expecting ThreadNode \n" ^ (!print_h_formula h)}
+            in
+            let new_hs, new_r_vars2 = helper hs new_r_vars in
+            (new_h::new_hs,new_r_vars2)
+  in
+  let new_thread_nodes, new_ref_vars = helper thread_nodes ref_vars in
+  let new_h = join_star_conjunctions (new_thread_nodes@other_nodes) in
+  (new_h,new_ref_vars)
+
+and norm_formula_threads (h : h_formula) (ref_vars : CP.spec_var list) (is_pre:bool) =
+  Debug.no_3 "norm_formula_threads"
+      (!print_h_formula) !print_svl string_of_bool (pr_pair !print_h_formula !print_svl)
+      norm_formula_threads_x h ref_vars is_pre
+
 (*Automatically infer VPERM spec for sequential spec*)
-let rec norm_formula_vperm f ref_vars val_vars =
-  Debug.no_3 "norm_formula_vperm" 
-      !print_formula !print_svl !print_svl !print_formula
-      norm_formula_vperm_x f ref_vars val_vars
+and norm_formula_vperm f ref_vars val_vars is_pre =
+  Debug.no_4 "norm_formula_vperm" 
+      !print_formula !print_svl !print_svl string_of_bool (pr_pair !print_formula !print_svl)
+      norm_formula_vperm_x f ref_vars val_vars is_pre
 
 (*
   Note: main thread -> @value[val_vars] & @full[...]
   But child thread -> @full[] only (don't have @value)
 *)
-and norm_formula_vperm_x f ref_vars val_vars =
+and norm_formula_vperm_x f ref_vars val_vars (is_pre : bool) =
   let rec helper f = match f with
     | Base ({formula_base_heap =h;
             formula_base_pure = p;
@@ -13944,24 +14002,46 @@ and norm_formula_vperm_x f ref_vars val_vars =
           let msg = "@val permissions not matched. Variables " ^ (!print_svl diff_v_vars) ^ " are not passed by value" in
           Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
         else
-          let new_p = MCP.drop_varperm_mix_formula p in
-          let val_f = CP.mk_varperm VP_Value val_vars pos in
-          let new_p = MCP.memoise_add_pure_N new_p val_f in
-          (*Second, @full[...]*)
-          (*INFER @full for child threads first*)
-          (* child threads first, remaining ref vars in ref_vars1*)
-          let new_a, new_ref_vars = norm_formula_and_vperm a ref_vars in
-          (*Then, main thread*)
-          let r_vars = MCP.get_varperm_mix_formula p VP_Full in
-          let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars new_ref_vars in
-          if (diff_r_vars!=[]) then
-            let msg = "@full[...] permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
+          let primed_vars = List.filter (fun v -> CP.is_primed v) (MCP.mfv p) in
+          let remained_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident primed_vars ref_vars in
+          if (remained_ref_vars !=[]) then
+            (*ERROR*)
+            let msg = "Primed vars and ref vars not matched.\n primed vars = " ^ (!print_svl primed_vars) ^ "\n ref_vars = " ^ (!print_svl ref_vars) in
             Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
           else
-            (*The remaining ref vars belong to the main thread*)
-            let ref_f = CP.mk_varperm VP_Full new_ref_vars pos in
-            let new_p = MCP.memoise_add_pure_N new_p ref_f in
-            Base {b with formula_base_pure = new_p; formula_base_and = new_a}
+            let new_p = MCP.drop_varperm_mix_formula p in
+            let val_f = CP.mk_varperm VP_Value val_vars pos in
+            let new_p = MCP.memoise_add_pure_N new_p val_f in
+            (*Second, @full[...]*)
+            (*INFER @full for child threads first*)
+            (* child threads first, remaining ref vars in ref_vars1*)
+            let new_h, new_a, new_ref_vars =
+              if (!Globals.allow_threads_as_resource) then
+                (* --en-thrd-resource *)
+                let new_h, new_ref_vars = norm_formula_threads h ref_vars is_pre in
+                new_h, a, new_ref_vars
+              else
+                (* --en-and-conj *)
+                let new_a, new_ref_vars = norm_formula_and_vperm a ref_vars in
+                h, new_a, new_ref_vars 
+            in
+            (* Then, main thread *)
+            let r_vars = MCP.get_varperm_mix_formula p VP_Full in
+            let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars new_ref_vars in
+            if (diff_r_vars!=[]) then
+              let msg = "@full[...] permissions not matched. Variables " ^ (!print_svl diff_r_vars) ^ " are not passed by ref" in
+              Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ msg ^ "\n" ^ (!print_formula f)}
+            else
+              let ref_f,new_ref_vars = if (is_pre) then
+                (* in pre-condition *)
+                (CP.mk_varperm VP_Full (new_ref_vars) pos , [])
+              else
+                (* in post-condition *)
+                (CP.mk_varperm VP_Full primed_vars pos, new_ref_vars)
+              in
+              let new_p = MCP.memoise_add_pure_N new_p ref_f in
+              let new_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident new_ref_vars primed_vars in
+              (Base {b with formula_base_heap = new_h; formula_base_pure = new_p; formula_base_and = new_a}, new_ref_vars)
     | Exists e ->
         let b = Base  {  
             formula_base_heap = e.formula_exists_heap;
@@ -13972,19 +14052,21 @@ and norm_formula_vperm_x f ref_vars val_vars =
             formula_base_label = e.formula_exists_label;
             formula_base_pos = e.formula_exists_pos}
         in
-        let new_b = helper b in
-        (add_quantifiers e.formula_exists_qvars new_b)
+        let new_b,r_vars = helper b in
+        let new_f = (add_quantifiers e.formula_exists_qvars new_b) in
+        (new_f,r_vars)
     | Or ({formula_or_f1 = f1; formula_or_f2 =f2} as o) ->
-        let new_f1 = helper f1 in
-        let new_f2 = helper f2 in
-        Or {o with formula_or_f1 = new_f1; formula_or_f2 = new_f2}
+        let new_f1, vars1 = helper f1 in
+        let new_f2, vars2 = helper f2 in
+        let new_f = Or {o with formula_or_f1 = new_f1; formula_or_f2 = new_f2} in
+        (new_f, vars1@vars2)
   in helper f
 
 (*Automatically infer VPERM spec for sequential spec*)
-let rec norm_struc_vperm struc_f ref_vars val_vars =
-  Debug.no_3 "norm_struc_vperm" 
-      !print_struc_formula !print_svl !print_svl !print_struc_formula
-      norm_struc_vperm_x struc_f ref_vars val_vars
+and norm_struc_vperm struc_f ref_vars val_vars  (is_pre:bool) =
+  Debug.no_4 "norm_struc_vperm" 
+      !print_struc_formula !print_svl !print_svl string_of_bool (pr_pair !print_struc_formula !print_svl)
+      norm_struc_vperm_x struc_f ref_vars val_vars is_pre
 
 (*
   Infer varperm
@@ -13992,70 +14074,64 @@ let rec norm_struc_vperm struc_f ref_vars val_vars =
   Partial -> consistency check and infer the rest
   No -> infer all
 *)
-and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
+and norm_struc_vperm_x struc_f ref_vars val_vars is_pre = match struc_f with
   | ECase ({ formula_case_branches = cl } as ef) ->
-      let n_cl = List.map (fun (c, sf) -> 
-        (c, norm_struc_vperm sf ref_vars val_vars)) cl in
-      ECase { ef with formula_case_branches = n_cl }
+        let n_cl = List.map (fun (c, sf) ->
+            (c, let n_sf, vars = norm_struc_vperm sf ref_vars val_vars is_pre in n_sf)) cl in
+        (ECase { ef with formula_case_branches = n_cl }, []) (*TOCHECK*)
   | EBase ef ->
       let b = ef.formula_struc_base in
-	  let cont = ef.formula_struc_continuation in
+      let cont = ef.formula_struc_continuation in
       let pos = ef.formula_struc_pos in
-      if not (has_formula_and b) then
-        (*sequential pre-condition*)
-        (*INDEED, we can also use "norm_formula_vperm" in this case*)
-        let r_vars = get_varperm_formula b VP_Full in
-        let v_vars = get_varperm_formula b VP_Value in
-        let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars ref_vars in
-        let diff_v_vars = Gen.BList.difference_eq CP.eq_spec_var_ident v_vars val_vars in
-        (*The specification of VPERM is not correct*)
-        if (diff_r_vars!=[] || diff_v_vars!=[]) then
-          let m1 = if diff_r_vars!=[] then "@full permissions not matched." else "" in
-          let m2 = if diff_v_vars!=[] then "@val permissions not matched." else "" in
-          Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. " ^ m1 ^ m2 ^ "\n" ^ (!print_struc_formula struc_f)}
-        else
-          let new_b = drop_varperm_formula b in
-          let ref_f = CP.mk_varperm VP_Full ref_vars pos in
-          let val_f = CP.mk_varperm VP_Value val_vars pos in
-          let new_b = add_pure_formula_to_formula ref_f new_b in
-          let new_b = add_pure_formula_to_formula val_f new_b in
-          let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
-          EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont}
+      let n_cont = map_opt (fun c-> norm_struc_vperm c ref_vars [] is_pre) cont in
+      let n_cont, n_ref_vars =
+        match n_cont with
+          | None -> None, []
+          | Some (f,vs) -> (Some f, vs)
+      in
+      (*concurrency spec. USERS specify this precondition.
+        Proceed to check for post-condition*)
+      let new_b, n_ref_vars = if (has_lexvar_formula b) then
+        (*assume that cont will be the post-condition*)
+        (b , n_ref_vars) (*do not touch EBase for termnition*)
       else
-        (*concurrency spec. USERS specify this precondition.
-          Proceed to check for post-condition*)
-        let new_b = norm_formula_vperm ef.formula_struc_base ref_vars val_vars in
-        let n_cont = map_opt (fun c-> norm_struc_vperm c [] []) cont in
-          EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont}
+        let n_ref_vars = Gen.BList.difference_eq CP.eq_spec_var_ident ref_vars n_ref_vars in
+        (norm_formula_vperm ef.formula_struc_base n_ref_vars val_vars is_pre)
+      in
+      (EBase{ef with formula_struc_base = new_b; formula_struc_continuation = n_cont} , n_ref_vars)
   | EAssume b ->
-	   let vars = b.formula_assume_vars in
-	   let post_si = b.formula_assume_simpl in
-	   let post_st = b.formula_assume_struc in
-      (*We have (ref) vars in the post-condition*)
-      let pos = pos_of_formula post_si in
-      let pvars = List.map CP.to_primed vars in
-      if not (has_formula_and post_si) then
-        (*sequential post-condition*)
-        let r_vars = get_varperm_formula post_si VP_Full in
-        let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars vars in
-        if (diff_r_vars!=[]) then
-          Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. @full permissions not matched.\n" ^ (!print_struc_formula struc_f)}
+	let vars = b.formula_assume_vars in
+	let post_si = b.formula_assume_simpl in
+	let post_st = b.formula_assume_struc in
+        (*We have (ref) vars in the post-condition*)
+        let pos = pos_of_formula post_si in
+        let pvars = List.map CP.to_primed vars in
+        if not (has_formula_and post_si || has_formula_threads post_si) then
+          (*sequential post-condition*)
+          let r_vars = get_varperm_formula post_si VP_Full in
+          let diff_r_vars = Gen.BList.difference_eq CP.eq_spec_var_ident r_vars vars in
+          if (diff_r_vars!=[]) then
+            Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. @full permissions not matched.\n" ^ (!print_struc_formula struc_f)}
+          else
+            let new_post_si = drop_varperm_formula post_si in
+	    let new_post_st = drop_varperm_struc_formula post_st in
+            let ref_f = CP.mk_varperm VP_Full pvars pos in
+            let new_post_si = add_pure_formula_to_formula ref_f new_post_si in
+	    let new_post_st = add_pure_formula_to_struc_formula ref_f new_post_st in
+            (EAssume {b with 
+		formula_assume_simpl = new_post_si;
+		formula_assume_struc = new_post_st;},[])
         else
-          let new_post_si = drop_varperm_formula post_si in
-		  let new_post_st = drop_varperm_struc_formula post_st in
-          let ref_f = CP.mk_varperm VP_Full pvars pos in
-          let new_post_si = add_pure_formula_to_formula ref_f new_post_si in
-		  let new_post_st = add_pure_formula_to_struc_formula ref_f new_post_st in
-          EAssume {b with 
-			formula_assume_simpl = new_post_si;
-			formula_assume_struc = new_post_st;}
-      else
-        let new_post_si = norm_formula_vperm post_si pvars [] in
-		let new_post_st = norm_struc_vperm_x post_st pvars [] in
-        mkEAssume_simp vars new_post_si new_post_st b.formula_assume_lbl
-        (*concurrency spec. USERS specify this*)
-  | EInfer ({ formula_inf_continuation = cont }) ->struc_f (*Not handle this at the moment*)
-  | EList b-> EList (map_l_snd (fun c-> norm_struc_vperm_x c ref_vars val_vars) b)
+          (*concurrency spec. USERS specify this*)
+          let new_post_si, new_ref_vars1 = norm_formula_vperm post_si pvars [] false in
+	  let new_post_st, new_ref_vars2 = norm_struc_vperm_x post_st pvars [] false in
+          if ((Gen.BList.difference_eq CP.eq_spec_var new_ref_vars1 new_ref_vars2)!=[] ||  (Gen.BList.difference_eq CP.eq_spec_var new_ref_vars2 new_ref_vars1)!=[]) then
+            (*they should be equal*)
+            Error.report_error { Error.error_loc = pos;Error.error_text = "VPERM specification is not correct. ref_vars should be the same for both post_si and post_st.\n" ^ (!print_struc_formula struc_f) ^ "\n post_si = " ^ (!print_formula post_si) ^ "\n  new_ref_vars1 = " ^ (!print_svl new_ref_vars1) ^ "\n post_st = " ^ (!print_struc_formula post_st) ^ "\n new_ref_vars2 = " ^ (!print_svl new_ref_vars1)}
+          else
+            (mkEAssume_simp vars new_post_si new_post_st b.formula_assume_lbl, new_ref_vars1)
+  | EInfer ({ formula_inf_continuation = cont }) -> (struc_f,ref_vars) (*Not handle this at the moment*)
+  | EList b-> (EList (map_l_snd (fun c-> let n_b, r_vars = norm_struc_vperm_x c ref_vars val_vars is_pre in n_b) b),ref_vars) (*Not handle this at the moment*)
  
 (*partion a formula into delayed formula and the rest
   Indeed, donot partition: extract + rename instead

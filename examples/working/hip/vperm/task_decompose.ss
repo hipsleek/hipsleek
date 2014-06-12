@@ -5,41 +5,35 @@
 
  */
 
-void inc(ref int i)
- requires true //@full[i]
- ensures  i'=i+1; //'@full[i] &
+void inc(ref int i, int j)
+ requires emp
+ ensures  emp & i'=i+j; //'
+ /* requires @full[i] & @value[j] */
+ /* ensures  i'=i+j & @full[i']; //' */
 {
-  i++;
+  i=i+j;
 }
 
-int creator(ref int x,ref int y)
-  requires true // @full[x] & @full[y]
-  ensures y'=y+1 & res=z //& @full[y]
-          and thread=z & true --> x'=x+1; // & @full[x] ; //'
+thrd creator(ref int x,ref int y)
+  requires emp
+  ensures res::thrd<# emp & x'=x+1 #> & y'=y+2; //'
+  /* requires @full[x] & @full[y] */
+  /* ensures res::thrd<# emp & x'=x+1 & @full[x'] #> & y'=y+2 & @full[y']; //' */
 {
-  int id;
-  id=fork(inc,x);
-  inc(y);
+  thrd id;
+  id=fork(inc,x,1);
+  inc(y,2);
   return id;
 }
 
-void joiner(int id, ref int x)
-  requires [i] true //@value[id]
-           and thread=id & true --> x'=i+1 // & @full[x] //'
-  ensures  x'=i+1; //' @full[x] &
+void main()
+  requires emp
+  ensures emp;
 {
-  join(id);
-}
-
-
-int main()
-requires true
-  ensures res=2;
-{
-  int id;
+  thrd id;
   int x,y;
   x=0;y=0;
   id = creator(x,y);
-  joiner(id,x); 
-  return x+y;
+  join(id);
+  assert(x'+y'=3);
 }

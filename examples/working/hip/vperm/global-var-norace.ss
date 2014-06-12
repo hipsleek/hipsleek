@@ -18,7 +18,7 @@ requires true
 {
   int x,y;
   x=0;y=0;
-  int id1 = fork(inc,x,g);
+  thrd id1 = fork(inc,x,g);
   inc(y,g); // each thread accesses a copy of "g" --> SAFE
   join(id1);
   assert x'=g & y'=g;

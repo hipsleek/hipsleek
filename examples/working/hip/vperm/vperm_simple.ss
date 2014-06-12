@@ -14,7 +14,7 @@ void f()
 requires true
   ensures true;
 {
-  int id;
+  thrd id;
   int i,j,k;
   i=0;j=0;k=0;
   id = fork(foo,i,j);
@@ -35,7 +35,7 @@ void f2()
 requires true
   ensures true;
 {
-  int id;
+  thrd id;
   int i,j,k;
   i=0;j=0;k=0;
   id = fork(foo2,i,j);

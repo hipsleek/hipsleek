@@ -26,7 +26,7 @@ int main()
   int n;
   n = read_int();
   x=n;
-  int id;
+  thrd id;
   id = fork(increment,x); //only child thread has full permission of x
   join(id);
   int n1 = x;

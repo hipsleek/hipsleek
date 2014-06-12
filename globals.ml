@@ -873,7 +873,7 @@ to end-users*)
 (* let is_deployed = ref true *)
 
 let print_assume_struc = ref false
-let web_compile_flag = ref true (*enable compilation flag "true" for website*)
+let web_compile_flag = ref false (*enable compilation flag "true" for website*)
 
 
 (* Decide whether normalization/simplification
@@ -906,6 +906,7 @@ let allow_threads_as_resource = ref true
 (* let has_locklevel = ref false *)
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+let infer_vp = ref true (* infer vperm automatically*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 

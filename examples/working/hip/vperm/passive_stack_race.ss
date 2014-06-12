@@ -16,7 +16,7 @@ requires true
   ensures true;
 {
   int x,y;
-  int id1,id2;
+  thrd id1,id2;
   id1 = fork(assign,x,42);
   id2 = fork(assign,y,x); //this failed because
   //main thread thread does not have permission of x

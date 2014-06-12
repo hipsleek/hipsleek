@@ -1,0 +1,30 @@
+/*
+  Entailment for variable permissions
+  with threads as resource
+*/
+
+//(1)
+checkentail id::thrd<# emp & @full[x] & x'=x+1 #> & @zero[x] |- @full[y].
+print residue.
+// valid --> id::thrd<# emp & @full[x] & x'=x+1 #> & @zero[x,y]
+
+//(2)
+checkentail id::thrd<# emp & @full[x'] & x'=x+1 #> & @zero[x'] & y'=y+1
+            |- id::thrd<# emp & @full[x'] & x'=x+1 #>.
+print residue.
+// valid -> @zero[x'] & i=x & y'=1+y
+
+//(3)
+checkentail id::thrd<# emp & @full[x',z'] & x'=x+1 & z'=z+3 #> & @zero[x'] & y'=y+1
+            |- id::thrd<# emp & @full[x'] & x'=x+1 #>.
+print residue.
+// valid -> id::thrd<# emp & @full[z'] & z'=z+3 #> & @zero[x'] & i=x & y'=1+y
+
+//(4)
+checkentail id::thrd<# emp & @full[x'] & x'=x+1 #> & @zero[x] |- @full[x].
+print residue.
+// fail --> @zero[x] |/- @full[x]
+
+
+
+

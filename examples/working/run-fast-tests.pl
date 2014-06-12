@@ -693,10 +693,9 @@ $output_file = "log";
                                 "append_bll","SUCCESS",
                                 "para_qsort2","SUCCESS",
 								],
-				["vperm/task_decompose.ss",4,  "--ann-vp", 
+				["vperm/task_decompose.ss",3,  "--ann-vp", 
                                 "inc","SUCCESS",
                                 "creator","SUCCESS",
-                                "joiner","SUCCESS",
                                 "main","SUCCESS"
 								],
 				["vperm/threads.ss",6,  "--ann-vp", 
@@ -1621,11 +1620,12 @@ $output_file = "log";
 				  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
                  ],
     "sleek_threads" => [
-                      ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"]
+                      ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail"]
                  ],
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
-                      ["vperm/vperm2.slk"," --ann-vp", "", "Valid.Valid.Fail."]],
+                      ["vperm/vperm2.slk"," --ann-vp", "", "Valid.Valid.Fail."],
+                      ["vperm/vperm3.slk"," --ann-vp", "", "Valid.Valid.Valid.Fail."]],
 		"sleek_fracperm"=>[["fracperm/sleek.slk","--en-para -perm fperm -tp redlog", "","Valid.Valid.Valid.Fail."],
 					["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", "", "Fail."],
 					["fracperm/sleek10.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail."],

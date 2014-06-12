@@ -122,7 +122,7 @@ void parallel_merge_sort2(node xs,ref node ys)
 		s1 = split_func(xs, middle);
         // xs contains up to middle elements
         // s1 is the rest
-        int id1,id2;
+        thrd id1,id2;
         id1 = fork(parallel_merge_sort2,s1,s2);
         id2 = fork(parallel_merge_sort2,xs,s3);
         join(id1);

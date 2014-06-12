@@ -26,7 +26,7 @@ void parallelCount2(node2 t, ref int count)
     count = 0;
   }
   else{
-    int id1,id2;
+    thrd id1,id2;
     id1 = fork(parallelCount2,t.left,cleft);
     id2 = fork(parallelCount2,t.right,cright);
     //

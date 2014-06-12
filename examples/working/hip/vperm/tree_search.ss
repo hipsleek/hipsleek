@@ -35,7 +35,7 @@ void para_search2(node t,int v,ref bool result)
       result = false;
     }else{
       bool result1,result2;
-      int id1,id2;
+      thrd id1,id2;
       id1 = fork(para_search2,t.left,v,result1);
       id2 = fork(para_search2,t.right,v,result2);
       join(id1);
