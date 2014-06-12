@@ -610,8 +610,8 @@ and imm_split_lhs_node_x estate l_node r_node = match l_node, r_node with
         if (!Globals.allow_field_ann) then
           let l_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args l_node) in
           let r_ann = CP.annot_arg_to_imm_ann_list (get_node_annot_args r_node) in
-          (* let _ = Debug.info_hprint (add_str "l_node" (Cprinter.string_of_h_formula)) l_node no_pos in *)
-          (* let _ = Debug.info_hprint (add_str "r_node" (Cprinter.string_of_h_formula)) r_node no_pos in *)
+          (* let _ = Debug.ninfo_hprint (add_str "l_node" (Cprinter.string_of_h_formula)) l_node no_pos in *)
+          (* let _ = Debug.ninfo_hprint (add_str "r_node" (Cprinter.string_of_h_formula)) r_node no_pos in *)
           let (res_ann, cons_ann), niv, constr = Immutable.replace_list_ann 3 l_ann r_ann estate in
           let n_f = update_field_imm l_node res_ann in
           let n_ch = update_field_imm l_node cons_ann in
@@ -1270,25 +1270,25 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
                 let l2,syn_lem_typ = (
-                  if flag  then 
-                    [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
-                  else
-                    let a1 = (2,M_base_case_unfold m_res) in
-                    let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
-                    (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
-                    (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
-                    let a2 = (
-                      if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
-                          (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
-                        let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                        let uf_i = if new_orig then 0 else 1 in
-                        let a21 = (1,M_match m_res) in
-                        let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
-                        let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
-                          (* (1,Cond_action [a21;a22]) *) a22
-                      else (1,M_match m_res)
-                    ) in
-                    let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
+                     let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                     let uf_i = if new_orig then 0 else 1 in
+                     let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
+                     if flag  then
+                       [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
+                     else
+                       let a1 = (2,M_base_case_unfold m_res) in
+                       (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
+                       (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
+                       let a2 = (
+                           if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
+                             (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
+                               let a21 = (1,M_match m_res) in
+                               let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
+                               let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
+                               (* (1,Cond_action [a21;a22]) *) a22
+                           else (1,M_match m_res)
+                       ) in
+                       let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                     let a3 = (
                       (*Do not fold/unfold LOCKs, only match*)
                       if (is_l_lock || is_r_lock) then Some a2 else 
@@ -1336,12 +1336,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     match a6 with
                       | Some a -> [a],syn_lem_typ
                       | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
-                            (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
-                            (* let _ = Debug.info_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
-                            (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                            (*cyclic: add lemma_unsafe then unfold lhs*)
-                            (*L2: change here for cyclic*)
-                            let lst=
+                        (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
+                        (* let _ = Debug.ninfo_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
+                        (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
+                        (*cyclic: add lemma_unsafe then unfold lhs*)
+                        (*L2: change here for cyclic*)
+                        let lst=
                               let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
                               if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                                 let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
@@ -1476,16 +1476,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                        if (syn_lem_typ != -1) then
                          let acts =
                            if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
-                           vr_name) >0 then
+                               vr_name) >0 then
                              (*find the first viewnode readable from left datanode*)
                              let lvs = CF.look_up_reachable_first_reachable_view prog
                                (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
-                             if lvs = [] then [(1,M_fold m_res)]
+                             let uf_i = if new_orig_r then 0 else 1 in
+                             if lvs = [] then
+                               [(1,M_fold m_res)]
                              else
                                let vl = List.hd lvs in
                                if syn_lem_typ=3 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
                                  let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                                 let uf_i = if new_orig_r then 0 else 1 in
                                  (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
                                  let unfold_view_opt = if syn_lem_typ = 3 then
                                    None
@@ -1493,7 +1494,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                  in
                                  [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
                                else [(1,M_fold m_res)]
-                           else [(1,M_fold m_res)]
+                           else
+                              let _ = Debug.ninfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
+                             let cyc_tail_rec_lemmas=
+                               if syn_lem_typ=3 then
+                                 let uf_i = if new_orig_r then 0 else 1 in
+                                 [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
+                               else []
+                             in
+                             cyc_tail_rec_lemmas@[(1,M_fold m_res)]
                          in
                          acts
                        else
@@ -1586,7 +1595,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     | Some _ -> true
                     | None -> false
                   in
-                  let _ = Debug.info_hprint (add_str "cyclic " pr_id) " 4" no_pos in
+                  let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
                   let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
                   let uf_i = if new_orig_l then 0 else 1 in

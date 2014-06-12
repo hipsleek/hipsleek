@@ -901,7 +901,11 @@ let check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_re
     match l_reach_dns, l_reach_vns, r_reach_dns, r_reach_vns with
       | [ldn],[lvn],[rdn],[rvn] ->
             (*unfold case*)
-            if CP.eq_spec_var rdn.Cformula.h_formula_data_node lvn.Cformula.h_formula_view_node &&  String.compare ldn.Cformula.h_formula_data_name rdn.Cformula.h_formula_data_name = 0 && String.compare lvn.Cformula.h_formula_view_name rvn.Cformula.h_formula_view_name =0 then 3
+            if ( CP.eq_spec_var rdn.Cformula.h_formula_data_node lvn.Cformula.h_formula_view_node || (*fold case*)
+                CP.eq_spec_var ldn.Cformula.h_formula_data_node rvn.Cformula.h_formula_view_node) &&
+              String.compare ldn.Cformula.h_formula_data_name rdn.Cformula.h_formula_data_name = 0 &&
+              String.compare lvn.Cformula.h_formula_view_name rvn.Cformula.h_formula_view_name =0 then
+                3
             else -1
       | _ -> -1
   else

@@ -85,11 +85,8 @@ if ($test_all) {
     "tll-ravioli-existential.smt2",
     "tree-pp-entails-tree-pp-rev.smt2",
     "tree-pp-rev-entails-tree-pp.smt2",
-    "dll-vc02.smt2",
-    "dll-vc06.smt2",
     "dll-vc07.smt2",
     "dll-vc08.smt2",
-    "dll-vc11.smt2",
     "nlcl-vc05.smt2",
     "inconsistent-ls-of-ls.defs.smt2",
     
@@ -153,9 +150,10 @@ if ($test_all) {
     );
   } else {
     @test_files = (
-    "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
+    "dll-vc01.smt2", "dll-vc02.smt2","dll-vc03.smt2",
+     "dll-vc04.smt2", "dll-vc05.smt2","dll-vc06.smt2",
       "dll-vc09.smt2", "dll-vc10.smt2", 
-     "dll-vc12.smt2", "dll-vc13.smt2",
+     "dll-vc11.smt2","dll-vc12.smt2", "dll-vc13.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
