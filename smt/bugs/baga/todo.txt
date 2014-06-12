@@ -68,6 +68,30 @@ bug in /smt/bugs/baga/succ-circuit06.defs.smt2.slk:
 still run too slow.
 
 ====================================
+# solver.ml
+
+1. check baga fixpoint first which is using syntactic imply
+2. if new baga correct, change below for performance
+
+for using syntactic unsat, need to invoke EPureN ..
+
+(* TODO:EXPURE : need to invoke syn UNSAT ofr --inv-baga *)
+and unsat_base_x prog (sat_subno:  int ref) f  : bool=
+  let tp_call_wrapper npf = 
+
+need to build and use syntactic imply below
+      (* TODO-EXPURE : need to build new expure stuff *)
+      let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
+      let split_ante0, new_conseq0 = 
+        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
+        else xx
+
+          (* TODO-EXPURE - need to use syntactic imply & move upwards *)
+          if !Globals.gen_baga_inv then
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+          else 
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+
 ====================================
 ====================================
 ====================================

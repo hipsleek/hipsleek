@@ -4354,7 +4354,7 @@ type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap
 
-
+(* TODO : this is an abstract type that should not be exposed *)
 type ef_pure = (
     spec_var list
     * var_aset

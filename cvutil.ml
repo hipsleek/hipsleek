@@ -620,9 +620,14 @@ conv_from_ef_disj@2 EXIT: u_14=y_15 & u_14=z & y_15=y & z_16=z #  [[self]]
 (([a,b],pure1) \/ [c],pure2) ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
 *)
 
+(* TODO : we r converting epure --> formula here
+   and therefore not using the syntactic imply!
+*)
+
 (* using the enum technique with epure *)
 and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
   (* WN : this conversion is incomplete *)
+
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
     | _ -> let f = Expure.EPureI.conv_enum_disj disj in
