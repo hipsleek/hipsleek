@@ -371,8 +371,11 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
         let fold_seq = fold_seq @ [Fold_inductive_case] in
         if (code2_len < coded_hf_len) then
           try_fold_view new_f2 base_f induct_f fold_seq
+        else if (code2_len = coded_hf_len) then (
+          if (equal_heap_chain_code coded_hf code2) then fold_seq
+          else try_fold_view new_f2 base_f induct_f fold_seq
+        )
         else if (code2_len > coded_hf_len + 1) then []
-        else if (equal_heap_chain_code coded_hf code2) then fold_seq
         else try_fold_view new_f2 base_f induct_f fold_seq
       )
     )
