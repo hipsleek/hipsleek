@@ -8914,6 +8914,19 @@ let is_eq_null_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_eq_null_exp_in_list svl (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (sv1,sv2,_),_) ->
+        begin
+            match sv1,sv2 with
+              | Var (sv,_), Null _
+              | Null _, Var (sv,_) -> mem_svl sv svl
+              | _ -> false
+        end
+    | _ -> false)
+  | _ -> false
+
 let get_null_formula p=
   let ps = list_of_conjs p in
   let ps1 = List.filter is_eq_null_exp ps in

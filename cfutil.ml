@@ -45,6 +45,30 @@ let elim_null_vnodes prog sf=
   Debug.no_1 "elim_null_vnodes" pr1 pr1
       (fun _ -> elim_null_vnodes_x prog sf) sf
 
+let elim_eqnull_x hn_elim_heap to_elim_null_svl f0=
+  let elim_eq_null p=
+    let ps = CP.list_of_conjs p in
+    let ps1 = List.filter (fun p -> not (CP.is_eq_null_exp_in_list to_elim_null_svl p)) ps in
+    CP.conj_of_list ps1 (CP.pos_of_formula p)
+  in
+  let rec helper f= match f with
+    | Base b -> let nh = hn_elim_heap b.formula_base_heap in
+      let np =  elim_eq_null (MCP.pure_of_mix b.formula_base_pure) in
+      Base {b with formula_base_heap = nh;
+          formula_base_pure = MCP.mix_of_pure np;}
+    | Exists _ -> let quans, bare =  split_quantifiers f in
+      let new_bare = helper bare in
+      add_quantifiers quans new_bare
+    | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+              formula_or_f2 = helper orf.formula_or_f2;}
+  in
+  helper f0
+
+let elim_eqnull hn_elim_heap to_elim_null_svl f0=
+  let pr1 = !print_formula in
+  Debug.no_2 "elim_eqnull" pr1!CP.print_svl  pr1
+      (fun _ _ -> elim_eqnull_x hn_elim_heap to_elim_null_svl f0) f0 to_elim_null_svl
+
 (* formula_trans_heap_node fct f *)
 let simplify_htrue_x hf0=
   (*********INTERNAL***************)

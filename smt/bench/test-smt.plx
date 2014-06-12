@@ -63,8 +63,6 @@ if ($test_all) {
     # Unexpected
     "bolognesa-15-e02.tptp.smt2",
     "spaguetti-13-e03.tptp.smt2",
-    "smallfoot-vc41.tptp.smt2",
-    "smallfoot-vc42.tptp.smt2",
     "08.tst.smt2",
     "10.tst.smt2",
     "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
@@ -243,6 +241,8 @@ if ($test_all) {
     "smallfoot-vc24.tptp.smt2",
     "smallfoot-vc28.tptp.smt2",
     "smallfoot-vc31.tptp.smt2",
+    "smallfoot-vc41.tptp.smt2",
+    "smallfoot-vc42.tptp.smt2",
     "01.tst.smt2",
     "07.tst.smt2",
     #"10.tst.smt2",
