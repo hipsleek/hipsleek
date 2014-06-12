@@ -11,10 +11,21 @@ pred tlseg<p> == self = p
 //checkentail_exact r::node<_,p> * t::node<_,q> & p=t & q!=r |-  r::tlseg<s>.
 //print residue.
 
-checkentail_exact r::node<_,p> * p::node<_,q> * q::tlseg<u> & u!=r |-  r::tlseg<s>.
-print residue.
+//checkentail_exact r::node<_,p> * p::node<_,q> * q::tlseg<u> * u::node<_,_>@L |-  r::tlseg<s>.
+//print residue.
 
 //checkentail_exact r::node<_,p> * p::node<_,q> * q::tlseg<u> * u::node<_,v> & v!=r |-  r::tlseg<s>.
 
 
-//checkentail_exact r::node<_,p> * p::node<_,q> & q!=r |-  r::tlseg<s>.
+//checkentail_exact r::node<_,p> & p!=r |-  r::tlseg<s>.
+//print residue.
+
+//===========
+checkentail_exact r::node<_,p> * p::node<_,_>@L |-  r::tlseg<s>.
+print residue.
+
+//checkentail_exact r::node<_,p> * p::node<_,q> * q::node<_,_>@L |-  r::tlseg<s>.
+//print residue.
+
+//checkentail_exact r::node<_,p> * p::tlseg<q> * q::node<_,_>@L |-  r::tlseg<s>.
+//print residue.
