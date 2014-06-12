@@ -67,7 +67,7 @@ if ($test_all) {
     "smallfoot-vc42.tptp.smt2",
     "08.tst.smt2",
     "10.tst.smt2",
-    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2"
+    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
     "22.tst.smt2",
     "dll-entails-dll0+.smt2",
      "dll-rev-entails-dll.smt2",
