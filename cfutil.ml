@@ -870,6 +870,7 @@ let check_separation_unsat f0=
 let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   (* rhs is is_tail_recursive, lhs is non tail rec form*)
    (****************************)
+  let tp_imply ante conseq  = Tpdispatcher.imply_raw ante conseq in
   let rec is_horm_h_formula_x hfs1 hfs2 =
     match hfs1,hfs2 with
       | [],[] -> true
@@ -913,15 +914,18 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
       | [rvn] ->
             let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
             let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
+            let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
             let rec_def_heaps = List.fold_left (fun r (f,_) ->
                 let views = Cformula.get_views f in
                 if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
                   let hfs = heaps_of_formula [self_sv] f in
-                  r@[hfs]
+                  let pure = get_pure (subst sst f) in
+                  r@[(pure, hfs)]
                 else r
             ) [] rvdcl.Cast.view_un_struc_formula in
+            let rhs_pure = get_pure rhs in
             let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in
-            if List.exists (fun hfs -> (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
+            if List.exists (fun (br_pure,hfs) -> (tp_imply rhs_pure br_pure) && (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
               3 (* gen -> lemma: right lemma application is not working properly.
                    todo: should be <- *)
             else -1

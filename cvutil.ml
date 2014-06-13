@@ -404,7 +404,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | HTrue  -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HFalse -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
-            
+
     in
 (* 	(\*a much simpler version of the above helper*\) *)
     let rec helper_simpl f =
@@ -604,9 +604,9 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   let p_aset = CP.pure_ptr_equations bp in
   let p_aset = CP.EMapSV.build_eset p_aset in
   let efpd1 = Expure.build_ef_heap_formula h0 (* [([], p_aset, [])] *) (prog.Cast.prog_view_decls) in
-  let efpd2 = Expure.build_ef_pure_formula bp in
-  let efpd = Expure.EPureI.norm_disj (Expure.EPureI.mk_star_disj efpd1 efpd2) in
-  efpd1
+  (* let efpd2 = Expure.build_ef_pure_formula bp in *)
+  (* let efpd = Expure.EPureI.norm_disj (Expure.EPureI.mk_star_disj efpd1 efpd2) in *)
+  Expure.EPureI.to_cpure_disj efpd1
 
 and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
   Debug.no_2 "xpure_heap_enum_baga" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_ef_pure_disj
@@ -620,12 +620,17 @@ conv_from_ef_disj@2 EXIT: u_14=y_15 & u_14=z & y_15=y & z_16=z #  [[self]]
 (([a,b],pure1) \/ [c],pure2) ==> (pure1 & a!=null & b!=null \/ pre2 & c!=null, [[a,b],[c]]) 
 *)
 
+(* TODO : we r converting epure --> formula here
+   and therefore not using the syntactic imply!
+*)
+
 (* using the enum technique with epure *)
 and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
   (* WN : this conversion is incomplete *)
+
   match disj with
     | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-    | _ -> let f = Expure.EPureI.conv_enum_disj disj in
+    | _ -> let f = Expure.EPureI.ef_conv_enum_disj (Expure.EPureI.from_cpure_disj disj) in
     (* | _ -> let f = Expure.ef_conv_enum_disj disj in *)
       (MCP.mix_of_pure f,CF.mk_mem_formula [])
 

@@ -2650,6 +2650,7 @@ and find_unsat prog f =
   let pr_l = pr_list pr_f in
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
 
+(* TODO-EXPURE : need to invoke syn UNSAT ofr --inv-baga *)
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf = 
     if !Globals.simpl_unfold2 then 
@@ -7597,6 +7598,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         else tmp3
       in
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+      (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
         if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
@@ -7622,10 +7624,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (* what exactly is split_a_opt??? *)
       let (i_res1,i_res2,i_res3),_ = 
         if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
-	    else 
-		let _ = Debug.devel_pprint ("astaq?") no_pos in
-		let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-        (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+	else 
+	  let _ = Debug.devel_pprint ("astaq?") no_pos in
+	  let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
+          (* TODO-EXPURE - need to use syntactic imply & move upwards *)
+          if !Globals.gen_baga_inv then
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+          else 
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       let i_res1,i_res2,i_res3 =
         if not(stk_estate # is_empty) 
