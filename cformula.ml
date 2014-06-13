@@ -5873,6 +5873,22 @@ let get_vnodes (f: formula) =
   Debug.no_1 "get_vnodes" pr1 pr2
       (fun _ -> get_vnodes_x f) f
 
+let get_vptrs_x (f: formula) =
+  let get_view_node hf=
+    match hf with
+      | ViewNode vn -> [vn.h_formula_view_node]
+      | _ -> []
+  in
+  let views = get_one_kind_heap get_view_node f in
+  views
+
+let get_vptrs (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list_ln !print_sv in
+  Debug.no_1 "get_vptrs" pr1 pr2
+      (fun _ -> get_vptrs_x f) f
+
+
 let get_views (f: formula) =
   let get_vn hf=
     match hf with
@@ -5882,10 +5898,19 @@ let get_views (f: formula) =
   let views = get_one_kind_heap get_vn f in
   views
 
-let get_dnodes (f: formula) =
+let get_datas (f: formula) =
   let get_dn hf=
     match hf with
       | DataNode dn -> [dn]
+      | _ -> []
+  in
+  let dns = get_one_kind_heap get_dn f in
+  dns
+
+let get_dnodes (f: formula) =
+  let get_dn hf=
+    match hf with
+      | DataNode dn -> [hf]
       | _ -> []
   in
   let dns = get_one_kind_heap get_dn f in
@@ -5916,21 +5941,21 @@ let get_views_struc sf0=
   in
   helper sf0
 
-let get_dnodes_struc sf0=
+let get_datas_struc sf0=
   let rec helper sf=
     let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
     match sf with
       | EList sfs -> helper_list sfs
       | ECase { formula_case_branches = sfs } -> helper_list sfs
       | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
-      let vns1 = get_dnodes f in
+      let vns1 = get_datas f in
       let vns2 = (match sf_opt with
         | None -> []
         | Some sf -> helper sf
       ) in
       (vns1 @ vns2)
       | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
-            let vns1 = get_dnodes f in
+            let vns1 = get_datas f in
             let vns2 = helper sf in
             (vns1 @ vns2)
       | EInfer { formula_inf_continuation = sf } -> helper sf
