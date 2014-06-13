@@ -2189,6 +2189,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
                   let uv = Expure.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
+                  let _ = print_endline (Expure.EPureI.string_of_disj uv) in
+                  let _ = print_endline (Expure.EPureI.string_of_disj bi) in
                   Expure.EPureI.imply_disj (Expure.EPureI.from_cpure_disj bi) uv
               ) lst  in
             if (not baga_stronger) then
@@ -2201,8 +2203,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let cviews1 = if !Globals.gen_baga_inv then
         List.map (fun cv ->
             let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
-            let _ = print_string "\n" in
+            (* let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in *)
+            (* let _ = print_string "\n" in *)
             {cv with C.view_baga_inv = Some inv}
         ) cviews0
       else

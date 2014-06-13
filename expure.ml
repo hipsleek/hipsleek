@@ -1043,8 +1043,17 @@ struct
   let syn_imply ep lst =
     List.exists (fun ep2 -> epure_syn_imply ep ep2) lst
 
+  let syn_imply ep lst =
+    let pr1 = string_of in
+    let pr2 = string_of_disj in
+    Debug.no_2 "syn_imply" pr1 pr2 string_of_bool syn_imply ep lst
+
   let epure_disj_syn_imply lst1 lst2 =
     List.for_all (fun ep -> syn_imply ep lst2) lst1
+
+  let epure_disj_syn_imply lst1 lst2 =
+    let pr1 = string_of_disj in
+    Debug.no_2 "epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     epure_disj_syn_imply ante conseq
@@ -1117,7 +1126,7 @@ struct
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
 
-  let get_ineq (ineq : formula) =
+  let get_ineq (pf : formula) =
     let rec helper lconj = match lconj with
       | [] -> []
       | hd::tl -> ( match hd with
@@ -1131,31 +1140,50 @@ struct
                         (sv2, sv1)::(helper tl)
                       else
                         failwith "fail in ineq"
-                | (Var (sv, _), Null _)
-                | (Null _, Var (sv, _)) ->
-                      let null_var = mk_spec_var "null" in
-                      let c = compare_spec_var null_var sv in
-                      if c < 0 then
-                        (null_var, sv)::(helper tl)
-                      else if c > 0 then
-                        (sv, null_var)::(helper tl)
-                      else
-                        failwith "fail in ineq"
+                (* | (Var (sv, _), Null _) *)
+                (* | (Null _, Var (sv, _)) -> *)
+                (*       let null_var = mk_spec_var "null" in *)
+                (*       let c = compare_spec_var null_var sv in *)
+                (*       if c < 0 then *)
+                (*         (null_var, sv)::(helper tl) *)
+                (*       else if c > 0 then *)
+                (*         (sv, null_var)::(helper tl) *)
+                (*       else *)
+                (*         failwith "fail in ineq" *)
                 | (Null _, Null _) ->
-                      failwith "fail in ineq"
+                      failwith "fail in get_ineq"
                 | _ -> helper tl
               )
           | _ -> helper tl
         )
     in
-    List.sort pair_cmp (Elt.from_var_pairs (helper (split_conjunctions ineq)))
+    List.sort pair_cmp (Elt.from_var_pairs (helper (split_conjunctions pf)))
+
+  let get_baga (pf : formula) =
+    let rec helper lconj = match lconj with
+      | [] -> []
+      | hd::tl -> ( match hd with
+          | BForm ((Neq (e1, e2, _), _), _) ->
+              ( match (e1,e2) with
+                | (Var (sv, _), Null _)
+                | (Null _, Var (sv, _)) ->
+                      sv::(helper tl)
+                | (Null _, Null _) ->
+                      failwith "fail in get_baga"
+                | _ -> helper tl
+              )
+          | _ -> helper tl
+        )
+    in
+    List.sort Elt.compare (Elt.from_var (helper (split_conjunctions pf)))
 
   let mk_epure (pf:formula) =
     let p_aset = pure_ptr_equations pf in
     let p_aset = EMapSV.build_eset p_aset in
+    let baga = get_baga pf in
     let ineq = get_ineq pf in
     (* [([], pf)] *)
-    [([], p_aset, ineq)] (* new expure, need to add ineq : DONE *)
+    [(baga, p_aset, ineq)] (* new expure, need to add ineq : DONE *)
 
   (* let to_cpure ((baga,eq,ineq) : epure) = *)
   (*   let f1 = conv_eq eq in *)
