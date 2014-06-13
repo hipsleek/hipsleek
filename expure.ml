@@ -556,7 +556,8 @@ struct
   let subst_elem sst v =
     if Elt.is_zero v then v
     else try
-      let (_,t) = List.find (fun (w,_) -> Elt.eq w v) sst in
+      let (_,t) = List.find (fun (w,_) ->
+          Elt.eq w v) sst in
       t
     with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
 
@@ -1105,7 +1106,7 @@ struct
     else try
       let (_,t) = List.find (fun (w,_) -> Elt.eq w v) sst in
       t
-    with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
+    with _ -> v (* should return v, not all elt have subst *) (* failwith ("subst_elem : cannot find elem "^Elt.string_of v) *)
 
   let subst_epure sst ((baga,eq,ineq) as ep) = 
     let new_eq = EM.subs_eset_par sst eq in
@@ -1187,7 +1188,7 @@ struct
 end
 
 (* module EPureI = EPUREN(SV) *)
-module EPureI = EPURE(SV)
+module EPureI = EPUREN(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 
@@ -1338,6 +1339,8 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   in
   let inv_list = helper view_list inv_list in
   let _ = List.iter (fun (vc,inv) ->
+      let _ = Debug.binfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in
+      let _ = print_string "\n" in
       Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
   ) (List.combine view_list inv_list) in
   inv_list
