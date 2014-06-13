@@ -7,4 +7,5 @@
 #check_tail_rec_rec_lemma
 #LEMSYN.gen_lemma
 #look_up_coercion_with_target
-generate_view_rev_rec_lemmas
+#generate_view_rev_rec_lemmas
+is_complex_entailment_4graph

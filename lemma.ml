@@ -1531,7 +1531,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   let self_sv = CP.SpecVar (Named vd.Cast.view_data_name ,self, Unprimed) in
   let view_f =  gen_view_formula vd in
   let rev_order pr_fwd_ptrs_pos (f,p)=
-    let _ = Debug.info_hprint (add_str "f" Cprinter.prtt_string_of_formula) f no_pos in
+    let _ = Debug.ninfo_hprint (add_str "f" Cprinter.prtt_string_of_formula) f no_pos in
     let hds, hvs,_ = CF.get_hp_rel_formula f in
     (****support one view one data node. to extend****)
     match hds, hvs with
@@ -1549,7 +1549,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
               let rev_f0 = CF.formula_trans_heap_node (subst_h_root sst_root) f in
               let _ = Debug.ninfo_hprint (add_str "rev_f0" Cprinter.prtt_string_of_formula) rev_f0 no_pos in
               let rev_f1 = CF.formula_trans_heap_node (subst_h_args sst_args) rev_f0 in
-              let _ = Debug.info_hprint (add_str "rev_f1" Cprinter.prtt_string_of_formula) rev_f1 no_pos in
+              let _ = Debug.ninfo_hprint (add_str "rev_f1" Cprinter.prtt_string_of_formula) rev_f1 no_pos in
               [(rev_f1,p)]
             with _ -> []
           else []
@@ -1561,8 +1561,9 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   let processed_brs = List.map (fun (f, lbl) ->
       let f1 = CF.elim_exists f in
       let _,new_f = CF.split_quantifiers f1 in
-      let p,_,_ = Cvutil.xpure cprog new_f in
-      let p1 = CP.filter_var (Mcpure.pure_of_mix p) view_args in
+      (* let p,_,_ = Cvutil.xpure_symbolic 20 cprog new_f in *)
+      let p = CF.get_pure new_f in
+      let p1 = CP.filter_var  p view_args in
     (new_f, p1)
   ) vd.C.view_un_struc_formula in
   let base_brs, indc_brs = List.partition(fun (f,p) ->
