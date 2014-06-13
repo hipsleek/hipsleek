@@ -803,12 +803,16 @@ struct
         if r2==[] then (y,r1)::s
         else
           if r1==r2 then s
-          else 
+          else
             let r3=r1@r2 in
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
+    (* let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in *)
+    (* let _ = print_endline (Basic.pr_lst "" pr1 xs) in *)
+    let p_aset = List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs in
+    (* let _ = print_endline ("p_aset: " ^ (string_of p_aset)) in *)
+    p_aset
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls

@@ -334,6 +334,7 @@ sig
   val from_var_pairs : (spec_var * spec_var) list -> (t*t) list
   val merge_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
+  val mk_elem : spec_var -> t
 end;;
 
 module EPURE =
@@ -1035,7 +1036,18 @@ struct
   let epure_syn_imply (b1,e1,i1) (b2,e2,i2) =
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
-      let f2 = lst_imply pair_cmp i1 i2 in
+      let null_el = Elt.mk_elem (mk_spec_var "null") in
+      let i1_new = List.fold_left (fun i1 el ->
+          let c = Elt.compare el null_el in
+          if c < 0 then
+            i1@[(el, null_el)]
+          else if c > 0 then
+            i1@[(null_el, el)]
+          else
+            failwith "fail in epure_syn_imply"
+      ) i1 b1 in
+      let i1_new = List.sort pair_cmp i1_new in
+      let f2 = lst_imply pair_cmp i1_new i2 in
       if f2 then emap_imply e1 e2 (* DONE: e1 --> e2? *)
       else false
     else false
@@ -1140,16 +1152,16 @@ struct
                         (sv2, sv1)::(helper tl)
                       else
                         failwith "fail in ineq"
-                (* | (Var (sv, _), Null _) *)
-                (* | (Null _, Var (sv, _)) -> *)
-                (*       let null_var = mk_spec_var "null" in *)
-                (*       let c = compare_spec_var null_var sv in *)
-                (*       if c < 0 then *)
-                (*         (null_var, sv)::(helper tl) *)
-                (*       else if c > 0 then *)
-                (*         (sv, null_var)::(helper tl) *)
-                (*       else *)
-                (*         failwith "fail in ineq" *)
+                | (Var (sv, _), Null _)
+                | (Null _, Var (sv, _)) ->
+                      let null_var = mk_spec_var "null" in
+                      let c = compare_spec_var null_var sv in
+                      if c < 0 then
+                        (null_var, sv)::(helper tl)
+                      else if c > 0 then
+                        (sv, null_var)::(helper tl)
+                      else
+                        failwith "fail in ineq"
                 | (Null _, Null _) ->
                       failwith "fail in get_ineq"
                 | _ -> helper tl
@@ -1159,30 +1171,28 @@ struct
     in
     List.sort pair_cmp (Elt.from_var_pairs (helper (split_conjunctions pf)))
 
-  let get_baga (pf : formula) =
-    let rec helper lconj = match lconj with
-      | [] -> []
-      | hd::tl -> ( match hd with
-          | BForm ((Neq (e1, e2, _), _), _) ->
-              ( match (e1,e2) with
-                | (Var (sv, _), Null _)
-                | (Null _, Var (sv, _)) ->
-                      sv::(helper tl)
-                | (Null _, Null _) ->
-                      failwith "fail in get_baga"
-                | _ -> helper tl
-              )
-          | _ -> helper tl
-        )
-    in
-    List.sort Elt.compare (Elt.from_var (helper (split_conjunctions pf)))
+  (* let get_baga (pf : formula) = *)
+  (*   let rec helper lconj = match lconj with *)
+  (*     | [] -> [] *)
+  (*     | hd::tl -> ( match hd with *)
+  (*         | BForm ((Neq (e1, e2, _), _), _) -> *)
+  (*             ( match (e1,e2) with *)
+  (*               | (Var (sv, _), Null _) *)
+  (*               | (Null _, Var (sv, _)) -> *)
+  (*                     sv::(helper tl) *)
+  (*               | (Null _, Null _) -> *)
+  (*                     failwith "fail in get_baga" *)
+  (*               | _ -> helper tl *)
+  (*             ) *)
+  (*         | _ -> helper tl *)
+  (*       ) *)
+  (*   in *)
+  (*   List.sort Elt.compare (Elt.from_var (helper (split_conjunctions pf))) *)
 
   let mk_epure (pf:formula) =
     let p_aset = pure_ptr_equations pf in
-    let pr1 = pr_pair string_of_spec_var string_of_spec_var in
-    let _ = print_endline (pr_list pr1 p_aset) in
-    let p_aset = EMapSV.build_eset p_aset in
-    let baga = get_baga pf in
+    let p_aset = EM.build_eset (Elt.from_var_pairs p_aset) in
+    let baga = (* get_baga pf in *) [] in
     let ineq = get_ineq pf in
     (* [([], pf)] *)
     [(baga, p_aset, ineq)] (* new expure, need to add ineq : DONE *)
