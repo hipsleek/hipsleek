@@ -690,34 +690,38 @@ let merge_contexts (ctx: CF.list_context): CF.list_context =
   (********** end MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)
 
   (************* CONVERT TAIL-REC to LINEAR vdef ***************)
-let convert_substitution_helper from_sv to_sv h p emap = 
+let convert_substitution_helper from_sv to_sv h p emap subs_pure = 
   let aliases     = from_sv::(CP.EMapSV.find_equiv_all from_sv emap) in
   let from_sv_lst = aliases in
   let to_sv_lst   = List.map (fun a -> to_sv) aliases in
   let h = CF.subst_avoid_capture_h from_sv_lst to_sv_lst h in
-  (* let p = CP.subst_avoid_capture from_sv to_sv p in *)
+  let p = if subs_pure then  CP.subst_avoid_capture from_sv_lst to_sv_lst p else p in 
   (h,p)
 
 let elim_useless_exists (h: CF.h_formula) (p: CP.formula)  (qvars: CP.spec_var list) = 
   let unused_qvars, qvars = Gen.BList.diff_split_eq CP.eq_spec_var qvars (CF.h_fv h) in
   let new_pure = CP.mkExists unused_qvars p (CP.get_pure_label p) (CP.pos_of_formula p) in
+  let _ = Debug.info_hprint (add_str "unused qvars" (pr_list Cprinter.string_of_spec_var) ) unused_qvars no_pos in
+  let _ = Debug.info_hprint (add_str "qvars" (pr_list Cprinter.string_of_spec_var) ) qvars no_pos in
+    let _ = Debug.info_hprint (add_str "p: " ( Cprinter.string_of_pure_formula) ) p no_pos in
+ let _ = Debug.info_hprint (add_str "p: " ( Cprinter.string_of_pure_formula) ) new_pure no_pos in
   let new_pure = CP.elim_exists new_pure in
   (new_pure, qvars)
 
 let convert_substitution fwd_ptr_v fwd_ptr_n tail head pp emap qvars =
   (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
-  let (tail, p) = convert_substitution_helper fwd_ptr_n (CP.mk_self None) tail pp emap in
+  let (tail, p) = convert_substitution_helper fwd_ptr_n (CP.mk_self None) tail pp emap false in
   (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
   let fresh_sv_n = CP.fresh_spec_var fwd_ptr_n in
-  let (tail, p) = convert_substitution_helper fwd_ptr_v fresh_sv_n tail pp emap in
+  let (tail, p) = convert_substitution_helper fwd_ptr_v fresh_sv_n tail p emap true in
   (* substitute self fwd pointer with fwd ptr of view in the head *)
   let fresh_sv_v= CP.fresh_spec_var fwd_ptr_v in
-  let (head, p) = convert_substitution_helper fwd_ptr_n fresh_sv_v head pp emap in (* need a new var, as a normalization step -- instead of fwd_ptr_v *)
+  let (head, p) = convert_substitution_helper fwd_ptr_n fresh_sv_v head p emap true in (* need a new var, as a normalization step -- instead of fwd_ptr_v *)
   let aux_p = CP.mkEqVar fresh_sv_v fwd_ptr_v no_pos in (*  to update on pos *)
   (* substitute self var with fwd pointer of self in the head *)
-  let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head pp emap in
+  let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head p emap true in
   let qvars = fresh_sv_v::fresh_sv_n::qvars in
-  let pp = CP.mkAnd pp aux_p no_pos in
+  let pp = CP.mkAnd p aux_p no_pos in
   (tail, head, pp,qvars)
 
 (* to update below after fix on fwd & bck ptr *)
@@ -781,7 +785,7 @@ let convert_h_formula_to_linear_base_helper (head: CF.h_formula) (p: MCP.mix_for
     (* currently, we can only handle tail-rec with one fwd ptr *)
     let fwd_ptr_v = List.hd fwd_ptrs_vdef in
     (* connect base case heap with a node pointing to the new view *)
-    let (head, _) = convert_substitution_helper fwd_ptr_v fresh_sv head p emap in
+    let (head, _) = convert_substitution_helper fwd_ptr_v fresh_sv head p emap false in
     let new_base_case_heap =  CF.mkStarH head new_node pos in
     (* eliminate leftover eq of form q=x, where q is equantif and x is free. Moreover, q is not used in the heap *)
     let (new_pure, qvars) = elim_useless_exists new_base_case_heap p qvars in
@@ -899,6 +903,7 @@ let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
         (* view_aux_formula : (Cformula.formula * formula_label) list;  *)
         (* view_formula : F.struc_formula *)
         C.view_linear_formula = f1; 
+        C.view_un_struc_formula = f1;
         (* view_materialized_vars : mater_property list; *)
     }
 
