@@ -33,13 +33,12 @@ inv self!=null.
 pred l5<k> == 
   self::node<q>*q::node<_> & k=q & self!=q
 inv self!=null.
-*/
 
 pred l6<q:node> == 
   q::node<_> & self=null
   or self::node<r>*r::node<_> & r=q
 inv q!=null.
-
+*/
 // baga {q}
 /*
 # baga-test-1.slk
@@ -53,12 +52,12 @@ Disabling baga inv gen ..
 
 */
 
-/*
+
 pred l7<q:node> == 
   self=null & q=null
   or self::node<r>*r::node<_> & r=q
 inv true.
-*/
+
 /*
 !!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),
   (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]

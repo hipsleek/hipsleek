@@ -750,8 +750,8 @@ struct
 
   let string_of (e: emap) : string =
     let f = string_of_elem in
-    let ll=partition e in 
-    let ll=List.filter (fun v -> List.length v<=1) ll in
+    let ll = partition e in 
+    let ll = List.filter (fun v -> List.length v > 1) ll in
     "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
@@ -808,10 +808,10 @@ struct
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    (* let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in *)
-    (* let _ = print_endline (Basic.pr_lst "" pr1 xs) in *)
-    let p_aset = List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs in
-    (* let _ = print_endline ("p_aset: " ^ (string_of p_aset)) in *)
+    let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
+    let p_aset = List.fold_left (fun eqs (x,y) ->
+        add_equiv eqs x y
+    ) mkEmpty xs in
     p_aset
 
   let mem x ls =
