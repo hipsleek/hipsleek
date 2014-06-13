@@ -240,7 +240,7 @@ let common_arguments = [
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
-  ("--oc-dis-simp", Arg.Clear Globals. oc_simplify,"disable oc simplification");
+  ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
@@ -553,7 +553,7 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
+  ("--inv-baga",(* Arg.Set Globals.gen_baga_inv *) Arg.Unit Globals.en_inv_baga ,"generate baga inv from view");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
@@ -702,7 +702,8 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.gen_baga_inv := true;
+          (* Globals.gen_baga_inv := true; *)
+          Globals.en_inv_baga ();
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
@@ -722,7 +723,8 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.gen_baga_inv := true;
+          Globals.en_inv_baga ();
+          (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
           Globals.smt_compete_mode :=true;
