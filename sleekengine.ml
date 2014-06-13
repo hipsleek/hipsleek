@@ -578,7 +578,8 @@ let convert_data_and_pred_to_cast_x () =
     let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
-        let _ = Globals.gen_baga_inv := false in
+        (* let _ = Globals.gen_baga_inv := false in *)
+      let _ = Globals.dis_inv_baga () in
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in

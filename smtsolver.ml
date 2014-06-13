@@ -601,7 +601,8 @@ let check_formula f timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-    restart ("[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+    restart (to_msg);
     { original_output_text = []; sat_result = Unknown; } 
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
