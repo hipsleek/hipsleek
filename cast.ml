@@ -2506,6 +2506,7 @@ let get_emp_map cprog=
   is complex: both lhs and rhs <=4 pred instance for segmentation optimization
 *)
 let is_complex_entailment_4graph_x prog ante conseq=
+  (* let _ = Debug.info_hprint (add_str "is_complex_entailment_4graph" pr_id) "start" no_pos in *)
   let is_null_node (Cpure.SpecVar (_,id,_)) = String.compare id null_name = 0
   in
    let seg_opz_views = List.fold_left (fun r vdecl ->
@@ -2537,7 +2538,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
              let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
              (*temporal dis null*)
              if (eqnull_svl != []) then
-               if not (rdnodes = [] && ldnodes = []) then true else
+               if not (rdnodes = [] (* && ldnodes = [] *)) then true else
                  Cpure.diff_svl quans (svl_eqs@eqnull_svl) != []
              else
                Cpure.diff_svl quans (svl_eqs) != []
@@ -3014,11 +3015,19 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
         let path, weight = Dijkstra.shortest_path vg self v in
         Debug.ninfo_pprint ("found path: length " ^ (string_of_int (List.length path))
                             ^ ", weight: " ^ (string_of_int weight)) no_pos;
-        List.concat (List.map (fun (_, lbl, _) ->
-          match lbl with
-          | ViewGraph.Label.DataField (d,f) -> [(d,f)]
-          | _ -> []
-        ) path)
+        let is_backward_path = List.for_all (fun (_,lbl,_) ->
+            match lbl with
+            | ViewGraph.Label.ViewField (v,f) -> String.compare self_view v != 0
+            | _ -> true
+          ) path in
+        if (is_backward_path) then (
+          List.concat (List.map (fun (_, lbl, _) ->
+            match lbl with
+            | ViewGraph.Label.DataField (d,f) -> [(d,f)]
+            | _ -> []
+          ) path)
+        )
+        else []
       with _ -> []
     ) !backward_ptrs) in
     backward_fields := Gen.BList.remove_dups_eq equal_pair_str

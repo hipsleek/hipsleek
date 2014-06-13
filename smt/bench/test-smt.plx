@@ -61,13 +61,10 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "bolognesa-15-e02.tptp.smt2",
     "spaguetti-13-e03.tptp.smt2",
-    "smallfoot-vc41.tptp.smt2",
-    "smallfoot-vc42.tptp.smt2",
     "08.tst.smt2",
     "10.tst.smt2",
-    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2"
+    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
     "22.tst.smt2",
     "dll-entails-dll0+.smt2",
      "dll-rev-entails-dll.smt2",
@@ -79,8 +76,6 @@ if ($test_all) {
     "dll2-rev-entails-dll2.smt2",
     "dll2-spaghetti-existential.smt2",
     "dll2-spaghetti.smt2",
-    "elseg4_slk-6.smt2",
-    "elseg4_slk-7.smt2",
     "lsegex4_slk-1.smt2",
     "nlcl-vc05.smt2",
     "node-dll-rev-dll-entails-dll.smt2",
@@ -90,11 +85,8 @@ if ($test_all) {
     "tll-ravioli-existential.smt2",
     "tree-pp-entails-tree-pp-rev.smt2",
     "tree-pp-rev-entails-tree-pp.smt2",
-    "dll-vc02.smt2",
-    "dll-vc06.smt2",
     "dll-vc07.smt2",
     "dll-vc08.smt2",
-    "dll-vc11.smt2",
     "nlcl-vc05.smt2",
     "inconsistent-ls-of-ls.defs.smt2",
     
@@ -158,15 +150,16 @@ if ($test_all) {
     );
   } else {
     @test_files = (
-    "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
+    "dll-vc01.smt2", "dll-vc02.smt2","dll-vc03.smt2",
+     "dll-vc04.smt2", "dll-vc05.smt2","dll-vc06.smt2",
       "dll-vc09.smt2", "dll-vc10.smt2", 
-     "dll-vc12.smt2", "dll-vc13.smt2",
+     "dll-vc11.smt2","dll-vc12.smt2", "dll-vc13.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
     "nll-vc11.smt2", "nll-vc12.smt2", "nll-vc13.smt2", "nll-vc14.smt2", "nll-vc15.smt2",
     "nll-vc16.smt2",
-    
+    "elseg4_slk-6.smt2", "elseg4_slk-7.smt2",
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
     "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"
@@ -174,7 +167,7 @@ if ($test_all) {
     "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
     "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", 
-    "bolognesa-20-e01.tptp.smt2",
+    "bolognesa-20-e01.tptp.smt2","bolognesa-15-e02.tptp.smt2",
     "bolognesa-16-e04.tptp.smt2",
     "bolognesa-17-e02.tptp.smt2",
     "bolognesa-18-e02.tptp.smt2",
@@ -243,6 +236,8 @@ if ($test_all) {
     "smallfoot-vc24.tptp.smt2",
     "smallfoot-vc28.tptp.smt2",
     "smallfoot-vc31.tptp.smt2",
+    "smallfoot-vc41.tptp.smt2",
+    "smallfoot-vc42.tptp.smt2",
     "01.tst.smt2",
     "07.tst.smt2",
     #"10.tst.smt2",

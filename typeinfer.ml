@@ -715,12 +715,18 @@ and gather_type_info_b_formula_x prog b0 tlist =
       let (n_tl,t2) = gather_type_info_exp e2 n_tl (BagT new_et) in
       let (n_tl,_) = must_unify t1 t2 n_tl pos in
       n_tl
-  | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*)
-      let (new_et,n_tl) = fresh_tvar tlist in
-      let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (* tvar, Int, Float *)
-      let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et in
-      let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
-      n_tl
+  | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
+      (* allow comparision btw 2 pointers having different types *)
+      let (new_et1,n_tl) = fresh_tvar tlist in
+      let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et1 in (* tvar, Int, Float *)
+      let (new_et2,n_tl) = fresh_tvar n_tl in
+      let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et2 in
+      match t1, t2 with
+      | Named _, Named _ -> n_tl
+      | _ ->
+          let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
+          n_tl
+    )
   | IP.BagMax ((v1, p1), (v2, p2), pos) 
   | IP.BagMin ((v1, p1), (v2, p2), pos) -> (* V1=BagMin(V2) *)
       let (et,n_tl) = fresh_tvar tlist in

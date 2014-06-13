@@ -7,7 +7,6 @@ module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
 module Err = Error
-module TP = Tpdispatcher
 
 module LO = Label_only.LOne
 
@@ -184,17 +183,22 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
     : (heap_chain * CF.h_formula) list =
   let pos = CF.pos_of_h_formula hf in
   let pf = MCP.pure_of_mix pf in
+  Debug.ninfo_hprint (add_str "pf" !CP.print_formula) pf no_pos;
+  let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
   let rec build_heap_chains built_chains atomic_chains hf_unused = (
     let latest_chain = fst (List.hd built_chains) in
     let (latest_hf,latest_sv1,latest_sv2) = latest_chain in
+    Debug.ninfo_hprint (add_str "latest_sv2" !CP.print_sv) latest_sv2 no_pos;
+    let aliases = CP.EMapSV.find_equiv_all latest_sv2 emap in
+    Debug.ninfo_hprint (add_str "latest_sv2 aliases" (pr_list !CP.print_sv)) aliases no_pos;
     try
       let next_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
-        (* TODO: using other approach instead of imply_raw improve performance *)
-        (TP.imply_raw pf (CP.mkEqVar sv1 latest_sv2 no_pos))
+        (CP.eq_spec_var sv1 latest_sv2) || (CP.EMapSV.mem sv1 aliases)
       ) atomic_chains in
-      let next_chain = (
-        if (List.length next_chains = 1) then List.hd next_chains
-        else raise Not_found
+      let next_chain, atomic_chains = (
+        match next_chains with
+        | [] -> raise Not_found
+        | hd::tl -> (hd, tl @ rest_chains)
       ) in
       let (next_hf, next_sv1, next_sv2) = next_chain in
       let new_hf = CF.mkStarH latest_hf next_hf pos in
@@ -208,13 +212,16 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
   ) in
   let atomic_chains, hf_unused = collect_atomic_heap_chain hf root_view prog in
   try
+    let aliases = CP.EMapSV.find_equiv_all root_sv emap in
+    Debug.ninfo_hprint (add_str "root_sv" !CP.print_sv) root_sv no_pos;
+    Debug.ninfo_hprint (add_str "root_sv aliases" (pr_list !CP.print_sv)) aliases no_pos;
     let root_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
-      (* TODO: using other approach instead of imply_raw improve performance *)
-      (TP.imply_raw pf (CP.mkEqVar sv1 root_sv no_pos))
+      (CP.eq_spec_var sv1 root_sv) || (CP.EMapSV.mem sv1 aliases)
     ) atomic_chains in
-    let root_chain = (
-      if (List.length root_chains = 1) then List.hd root_chains
-      else raise Not_found
+    let root_chain, atomic_chains = (
+      match root_chains with
+      | [] -> raise Not_found
+      | hd::tl -> (hd, tl @ rest_chains)
     ) in
     let hf_rest = List.fold_left (fun hf1 (hf2,_,_) ->
       CF.mkStarH hf1 hf2 pos 
@@ -371,8 +378,11 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
         let fold_seq = fold_seq @ [Fold_inductive_case] in
         if (code2_len < coded_hf_len) then
           try_fold_view new_f2 base_f induct_f fold_seq
+        else if (code2_len = coded_hf_len) then (
+          if (equal_heap_chain_code coded_hf code2) then fold_seq
+          else try_fold_view new_f2 base_f induct_f fold_seq
+        )
         else if (code2_len > coded_hf_len + 1) then []
-        else if (equal_heap_chain_code coded_hf code2) then fold_seq
         else try_fold_view new_f2 base_f induct_f fold_seq
       )
     )

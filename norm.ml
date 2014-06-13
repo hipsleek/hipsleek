@@ -690,6 +690,30 @@ let merge_contexts (ctx: CF.list_context): CF.list_context =
   (********** end MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)
 
   (************* CONVERT TAIL-REC to LINEAR vdef ***************)
+let convert_substitution_helper from_sv to_sv h p emap = 
+  let aliases     = from_sv::(CP.EMapSV.find_equiv_all from_sv emap) in
+  let from_sv_lst = aliases in
+  let to_sv_lst   = List.map (fun a -> to_sv) aliases in
+  let h = CF.subst_avoid_capture_h from_sv_lst to_sv_lst h in
+  (* let p = CP.subst_avoid_capture from_sv to_sv p in *)
+  (h,p)
+  
+let convert_substitution fwd_ptr_v fwd_ptr_n tail head pp emap qvars =
+  (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
+  let (tail, p) = convert_substitution_helper fwd_ptr_n (CP.mk_self None) tail pp emap in
+  (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
+  let fresh_sv_n = CP.fresh_spec_var fwd_ptr_n in
+  let (tail, p) = convert_substitution_helper fwd_ptr_v fresh_sv_n tail pp emap in
+  (* substitute self fwd pointer with fwd ptr of view in the head *)
+  let fresh_sv_v= CP.fresh_spec_var fwd_ptr_v in
+  let (head, p) = convert_substitution_helper fwd_ptr_n fresh_sv_v head pp emap in (* need a new var, as a normalization step -- instead of fwd_ptr_v *)
+  let aux_p = CP.mkEqVar fresh_sv_v fwd_ptr_v no_pos in (*  to update on pos *)
+  (* substitute self var with fwd pointer of self in the head *)
+  let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head pp emap in
+  let qvars = fresh_sv_n::qvars in
+  let pp = CP.mkAnd pp aux_p no_pos in
+  (tail, head, pp,qvars)
+
 (* to update below after fix on fwd & bck ptr *)
 let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula) (p: MCP.mix_formula) 
       (vdef: C.view_decl) (qvars: CP.spec_var list) emap (orig_f: h_formula): 
@@ -707,22 +731,7 @@ let convert_h_formula_to_linear_helper (head: CF.h_formula) (tail: CF.h_formula)
               let args_lst = List.combine vdef.C.view_vars hd.CF.h_formula_view_arguments in
               let fwd_ptrs = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v fwd_ptrs_vdef) args_lst in
               let (fwd_ptr_v, fwd_ptr_n) = List.hd fwd_ptrs in
-              (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
-              let from_sv, to_sv = [fwd_ptr_n], [(CP.mk_self None)] in 
-              let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
-              let from_sv, to_sv = [fwd_ptr_v], [fwd_ptr_n] in 
-              let tail = CF.subst_avoid_capture_h from_sv to_sv tail in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitute self fwd pointer with fwd ptr of view in the head *)
-              let from_sv, to_sv =   [fwd_ptr_n], [fwd_ptr_v]  in 
-              let head = CF.subst_avoid_capture_h from_sv to_sv head in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in
-              (* substitute self var with fwd pointer of self in the head *)
-              let from_sv, to_sv =  [(CP.mk_self None)],[fwd_ptr_n]  in 
-              let head = CF.subst_avoid_capture_h from_sv to_sv head in
-              let pp = CP.subst_avoid_capture from_sv to_sv pp in   
+              let (tail, head, pp, qvars) = convert_substitution fwd_ptr_v fwd_ptr_n tail head pp emap qvars in
               let new_f = CF.mkStarH tail head (CF.pos_of_h_formula orig_f) in 
               let p = MCP.mix_of_pure pp in
               (new_f, p, qvars)
@@ -746,6 +755,7 @@ let convert_h_formula_to_linear (vdef: C.view_decl) (f: CF.h_formula) (p: MCP.mi
             let aliases = CP.EMapSV.find_equiv_all self emap in
             (* remove self node from f, and save it in orig_self *)
             let aliases = self::aliases in
+            (* TODO: modify below, so that self can accomodate all inductive self connected nodes, not just the self *)
             let orig_self_ls, tail =  Cvutil.crop_h_formula f aliases in
             let new_h, new_p, qvar = 
               match orig_self_ls with
@@ -806,6 +816,7 @@ let convert_struc_formula_to_linear (vdef: C.view_decl) (f: CF.struc_formula): C
    Initial assumptions - to be improved:
    * predicate captures no pure info
    * base case contains empty heap
+TODO0: remove unused qvars, true relations, and emp
 TODO1: transform the above assumptions into conditions
 TODO2: consider the non-empty heap for base case by introducing an extra pred
  *)
