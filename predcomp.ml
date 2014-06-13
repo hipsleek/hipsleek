@@ -1723,6 +1723,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_data_decl = None; (* the class containing the method *)
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
+    proc_args_wi =  List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
     proc_return = Bool;
     (* proc_static_specs = Iformula.mkEFalseF (); *)
     proc_static_specs = Iformula.mkETrueF ();
@@ -1846,6 +1847,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_data_decl = None;
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
+    proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
     proc_return = Bool;
     proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();

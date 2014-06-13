@@ -304,6 +304,11 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_annot_arg = ref (fun (c:annot_arg) -> "cpure printer has not been initialized")
+let print_view_arg v= match v with
+  | SVArg sv -> "SVArg " ^ (!print_sv sv)
+  | AnnotArg asv -> "AnnotArg " ^ (!print_annot_arg asv)
+
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
@@ -3315,9 +3320,9 @@ and apply_par_term (sst : (spec_var * exp) list) f = match f with
           Exists  (v, apply_par_term sst qf, lbl, pos)
   | AndList b-> AndList (map_l_snd (apply_par_term sst) b)
         
-and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (is_member v t)) false sst
+and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr || (is_member v t)) false sst
 
-and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr or (eq_spec_var v nv)) false vl
+and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr || (eq_spec_var v nv)) false vl
 
 and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let (pf,il) = bf in
@@ -12130,3 +12135,64 @@ let prune_relative_unsat_disj p0 base_p=
   Debug.no_2 " prune_relative_unsat_disj" pr1 pr1 pr1
       (fun _ _ -> prune_relative_unsat_disj p0 base_p)
       p0 base_p
+
+
+let overapp_ptrs_x f0=
+  let detect_ptr_xpure_form f sv1 sv2 a b c=
+     match sv1 with
+       | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in
+         (* let t = type_of_spec_var sv in *)
+         (* let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+         if is_node_typ sv && is_num sv2 then
+           let zero = IConst (0, pos) in
+           (true, BForm ((Neq (sv1, zero, b), c), a))
+         else (false, f)
+       | _ -> (false, f)
+  in
+  let rec helper f= match f with
+    | BForm (bf,a) ->
+          let _ = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
+          (match bf with
+            | (Eq (sv1,sv2,b),c) ->
+                let detected, new_f = detect_ptr_xpure_form f sv1 sv2 a b c in
+                if detected then new_f else
+                  snd (detect_ptr_xpure_form f sv2 sv1 a b c)
+                      (* begin *)
+                (* match sv1 with *)
+              (*     | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "2" no_pos in *)
+              (*           let t = type_of_spec_var sv in *)
+              (*           let _ = Debug.info_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*             if is_node_typ sv && is_num sv2 then *)
+              (*               let zero = IConst (0, pos) in *)
+              (*               BForm ((Neq (sv1, zero, b), c), a) *)
+              (*             else f *)
+              (*     | _ -> begin *)
+              (*         match sv2 with *)
+              (*           | Var (sv ,pos) -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "3" no_pos in *)
+              (*             let t = type_of_spec_var sv in *)
+              (*             let _ = Debug.ninfo_hprint (add_str "t" string_of_typ) t no_pos in *)
+              (*             if is_node_typ sv && is_num sv1 then *)
+              (*               let zero = IConst (0, pos) in *)
+              (*               BForm ((Neq (sv2, zero, b), c), a) *)
+              (*             else f *)
+              (*           | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "4" no_pos in f *)
+              (*       end *)
+              (* end *)
+            | _ -> let _ = Debug.ninfo_hprint (add_str "xx" pr_id) "1" no_pos in
+                  f
+          )
+    | Not _ -> f
+    | Or (f1,f2,a,b) ->  Or (helper f1, helper f2,a,b)
+    |  And (f1,f2, a) ->  And (helper f1, helper f2, a)
+    | Exists (a, p, c,l) ->
+          Exists (a, helper p, c,l)
+    | Forall (a, p, c,l) ->
+          Forall (a, helper p, c,l)
+    | AndList l -> AndList( List.map (fun (a, p) -> (a, helper p) ) l)
+  in
+  helper f0
+
+let overapp_ptrs p=
+   let pr1 = !print_formula in
+  Debug.no_1 "overapp_ptrs" pr1 pr1
+      (fun _ -> overapp_ptrs_x p) p

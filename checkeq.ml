@@ -709,6 +709,10 @@ and check_equiv_exp_x hvars (e1:CP.exp) (e2:CP.exp) mt =
         let res2,mt2 = check_spec_var_equiv hvars v12 v22 mt1 in
         let res3,mt3 = check_spec_var_equiv hvars v13 v23 mt2 in
         (res1&res2&res3,mt3)
+    | Add (e11,e12,_),Add (e21,e22,_) ->
+          let res1,mt1 = check_equiv_exp hvars e11 e21 mt in
+          let res2,mt2 = check_equiv_exp hvars e12 e22 mt1 in
+          (res1&&res2, mt2)
     (*TODO: implement for your need*)
     | _ -> (false, mt)
 
@@ -800,36 +804,39 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
     | (Lt (e11,e12,_), _) , (Lt (e21,e22,_) , _) 
     | (Lte (e11,e12,_), _) , (Lte (e21,e22,_) , _) 
     | (Gt (e11,e12,_), _) , (Gt (e21,e22,_) , _) 
-    | (Gte (e11,e12,_), _) , (Gte (e21,e22,_) , _) -> 
-      (match e11,e12,e21,e22 with
-        | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
-	  let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in 
-	  let res12, mt12 = check_spec_var_equiv hvars v12 v22 mt11 in
-	  let res1,mt1 = if(res11&&res12) then (res11,mt12) else (false,mt) in 
-	  if(res1) then (true, [mt1])   (*merge tables*)
-	  else (false, [mt])
-        | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
-          let res2 = (v12= v22) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [mt])
-        | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
-          let res2 = (v11= v21) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [mt])
-        | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
-          let res2 = (v12= v22) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [mt])
-        | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
-          let res2 = (v11= v21) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [mt])
-        | _ -> (false, [mt])
-      )
+    | (Gte (e11,e12,_), _) , (Gte (e21,e22,_) , _) ->
+          let res1,mt1 = check_equiv_exp hvars e11 e21 mt in
+          let res2,mt2 = check_equiv_exp hvars e12 e22 mt1 in
+          (res1&&res2, [mt2])
+      (* (match e11,e12,e21,e22 with *)
+      (*   | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)->  *)
+      (*     let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in  *)
+      (*     let res12, mt12 = check_spec_var_equiv hvars v12 v22 mt11 in *)
+      (*     let res1,mt1 = if(res11&&res12) then (res11,mt12) else (false,mt) in  *)
+      (*     if(res1) then (true, [mt1])   (\*merge tables*\) *)
+      (*     else (false, [mt]) *)
+      (*   | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)->  *)
+      (*     let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in  *)
+      (*     let res2 = (v12= v22) in *)
+      (*     if(res1 && res2) then (true, [mt1])   (\*merge tables*\) *)
+      (*     else (false, [mt]) *)
+      (*   | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)->  *)
+      (*     let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in  *)
+      (*     let res2 = (v11= v21) in *)
+      (*     if(res1 && res2) then (true, [mt1])   (\*merge tables*\) *)
+      (*     else (false, [mt]) *)
+      (*   | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)->  *)
+      (*     let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in  *)
+      (*     let res2 = (v12= v22) in *)
+      (*     if(res1 && res2) then (true, [mt1])   (\*merge tables*\) *)
+      (*     else (false, [mt]) *)
+      (*   | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)->  *)
+      (*     let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in  *)
+      (*     let res2 = (v11= v21) in *)
+      (*     if(res1 && res2) then (true, [mt1])   (\*merge tables*\) *)
+      (*     else (false, [mt]) *)
+      (*   | _ -> (false, [mt]) *)
+      (* ) *)
     | (BVar (v1,_),_),(BVar (v2,_),_) -> let res, mt = check_spec_var_equiv hvars v1 v2 mt in if(res) then (res,[mt]) else (false,[mt])
     | (RelForm r1,_), (RelForm r2,_) ->  let res, new_mt = check_rel_equiv hvars r1 r2 mt in (res,[new_mt])
     | _ -> (false, [mt])
@@ -2399,3 +2406,27 @@ let validate proc hp_lst_assume inferred_hp_defs sel_hp_rels =
   in
   let _ = Gen.Profiling.pop_time "Compare res with cp file" in
   ()
+
+
+let update_lib_x hpdefs hp_defs sel_hps=
+  let update_lib_one hp_def=
+    match hp_def.Cformula.def_cat with
+      | CP.HPRelDefn (hp,_,_) -> begin if CP.mem_svl hp sel_hps then
+          try
+            let def = Cformula.look_up_hpdef hpdefs hp in
+            match def.Cformula.hprel_def_body_lib with
+              | None -> hp_def
+              | Some f -> {hp_def with Cformula.def_rhs = [(f,None)]}
+          with _ -> hp_def
+        else hp_def
+        end
+      | _ -> hp_def
+  in
+  List.map update_lib_one hp_defs
+
+let update_lib hpdefs hp_defs sel_hps=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel_def_short in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_3 "update_lib" pr1 pr2 !CP.print_svl pr2
+      (fun _ _ _ -> update_lib_x hpdefs hp_defs sel_hps)
+      hpdefs hp_defs sel_hps

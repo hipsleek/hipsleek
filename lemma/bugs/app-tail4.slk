@@ -1,0 +1,52 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_safe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_safe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+/*
+	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
+	ensures x::ll_tail2<ty, q> & q=m+n;
+*/
+
+//(1)
+checkentail x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q,tt: x::ll_tail2<tt,q>@M & q=m+n & tt=ty
+       ).
+print residue.
+
+//(2)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q,tt: x::ll_tail2<tt,q>@M & q=m+n & tt=ty
+       ).
+
+//(3)
+checkentail x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+print residue.
+
+//(4)
+checkentail_exact x::lseg2<tx,n-1>
+  * tx::node<_,y> * y::ll_tail2<ty,m>
+ |-  (exists q: x::ll_tail2<tt,q>@M & q=m+n 
+       ).
+
+// Why (4) fail when (3) did not have any residue??
+print residue.

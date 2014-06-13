@@ -432,7 +432,7 @@ let peek_try =
          | [GT,_;ACCS,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
-		 | [GT,_;MAT,_] -> raise Stream.Failure 
+	 | [GT,_;MAT,_] -> raise Stream.Failure 
          | [GT,_;DERV,_] -> raise Stream.Failure 
          | [GT,_;LEND,_] -> raise Stream.Failure 
          | [GT,_;CASE,_] -> raise Stream.Failure 
@@ -857,7 +857,7 @@ non_empty_command:
       | t=hull_cmd        -> Slk_Hull t
       | t=pairwise_cmd        -> Slk_PairWise t
       | t= infer_cmd           -> InferCmd t  
-      | t=captureresidue_cmd  -> CaptureResidue t
+      | t= captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
@@ -905,7 +905,8 @@ data_body:
 (* ]]; *)
 
 field_ann: [[
-     `HASH;`IDENTIFIER id -> id
+    `HASH;`IDENTIFIER id -> id
+  (* | `AT;`IDENTIFIER id -> id *)
 ]];
 
 field_anns: [[
@@ -984,7 +985,13 @@ view_decl:
           view_is_prim = false; 
           view_kind = Iast.View_NORM; 
           view_inv_lock = li;
-          try_case_inference = (snd vb) } ]];
+          try_case_inference = (snd vb) }
+    |  vh= view_header;`EQEQ; `EXTENDS;orig_v = derv_view; `WITH ; extn = prop_extn->
+           { vh with view_derv = true;
+               view_derv_info = [(orig_v,extn)];
+               view_kind = Iast.View_DERV;
+           }
+ ]];
 
 prim_view_decl: 
   [[ vh= view_header; oi= opt_inv; li= opt_inv_lock
@@ -1002,6 +1009,36 @@ view_decl_ext:
           view_kind = Iast.View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
+
+view_decl_spec:
+  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; li= opt_inv_lock
+      ->
+      let compare_list_string cmp ls1 ls2=
+        let rec helper ls01 ls02=
+          match ls01,ls02 with
+            | [],[] -> true
+            | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false
+            | _ -> false
+        in
+        helper ls1 ls2
+      in
+      let cmp_id id1 id2=
+        if String.compare id1 id2 =0 then true else false
+      in
+      let cmp_typed_id (t1,id1) (t2,id2)=
+        if t1=t2 && String.compare id1 id2 =0 then true else false
+      in
+      if not (compare_list_string cmp_id vh.view_vars va.view_vars &&
+                  compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then
+        report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)
+      else
+        { vh with view_formula = (fst vb);
+            view_invariant = oi;
+            view_kind = Iast.View_SPEC;
+            view_parent_name = Some va.view_name;
+            view_inv_lock = li;
+            try_case_inference = (snd vb) } ]];
+
 
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
@@ -1139,6 +1176,8 @@ view_header:
           view_data_name = "";
           view_imm_map = [];
           view_vars = (* List.map fst *) cids;
+          view_derv = false;
+          view_parent_name = None;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
           view_modes = modes;
@@ -1156,8 +1195,10 @@ view_header:
           try_case_inference = false;
 			}]];
 
+id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
+
 view_header_ext:
-  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+    [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
 	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
@@ -1175,6 +1216,8 @@ view_header_ext:
           view_vars = (* List.map fst *) cids;
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
+          view_parent_name = None;
+          view_derv = false;
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
@@ -1186,7 +1229,7 @@ view_header_ext:
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
-		  view_materialized_vars = get_mater_vars l;
+	  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 

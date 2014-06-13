@@ -44,16 +44,16 @@ let init_files () =
 	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
   end
 
-
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
 				  | []->
+            (* omega doesn't allow variable name starting with underscore *)
+            let v = if ((String.get v 0) == '_') then "v" ^ v 
+                    else v in
             let ln = (String.length v) in  
             let r_c = if (ln<20) then v
-              else 
-                let v_s = "v"^(String.sub v (ln-20)  20) in
-                if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
+                      else "v" ^ (String.sub v (ln-20)  20) in
             begin
               omega_subst_lst := (r_c,v,t)::!omega_subst_lst; 
 							r_c end

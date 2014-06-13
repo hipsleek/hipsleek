@@ -251,7 +251,12 @@ let common_arguments = [
     ("--pa",Arg.Set Globals.pa,"Program analysis with memory specifications");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
-  ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--dis-imm", Arg.Unit (fun _ ->
+      Globals.allow_imm:=false; 
+      (* Globals.early_contra_flag:=false *)
+      (* WN : quick fix *)
+      (* WN : xpure_enum is not working properly with early_contra for --eps *)
+      ),"disable the use of immutability annotations");
   ("--imm-en-subs-rhs", Arg.Set Globals.allow_imm_subs_rhs,"enable the substitution of rhs eq for immutability");
   ("--imm-dis-subs-rhs", Arg.Clear Globals.allow_imm_subs_rhs,"disable the substitution of rhs eq for immutability");
   ("--en-imm-inv", Arg.Set Globals.allow_imm_inv,"enable the additionof of immutability invariant for implication");
@@ -573,6 +578,7 @@ let common_arguments = [
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
   ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
+  ("--en-rd-lemma", Arg.Set Globals.allow_rd_lemma, "Enable rd-lemma");
   ("--lem-dis-fold", Arg.Clear Globals.allow_lemma_fold, "Disable do_fold with right lemma");
   ("--lem-en-switch", Arg.Set Globals.allow_lemma_switch, "Allow lhs/lhs switching for Lemma Proving");
   ("--lem-dis-switch", Arg.Clear Globals.allow_lemma_switch, "Disallow lhs/lhs switching for Lemma Proving");
@@ -637,6 +643,7 @@ let common_arguments = [
   ("--sa-dis-split", Arg.Clear Globals.sa_infer_split_base, "disable base case splitting of relational assumption at shape infer");
   ("--sa-fb", Arg.Set_int Globals.sa_fix_bound, "number of loops for fixpoint");
   ("--pred-en-split", Arg.Set Globals.pred_split, "splitting hp args into multiple hp if possible");
+  ("--pred-dis-seg", Arg.Clear Globals.pred_seg_split, "disable segmentation");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--pred-disj-unify", Arg.Set Globals.pred_disj_unify, "attempt to unify two similar predicates among inferred pred defs");
   ("--pred-seg-unify", Arg.Set Globals.pred_seg_unify, "attempt to segmentation pred defs");

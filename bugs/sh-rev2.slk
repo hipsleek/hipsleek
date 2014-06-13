@@ -1,0 +1,25 @@
+data node { int value; node next; }.
+
+pred lseg<n, p> ==
+  self = p & n = 0 or
+  self::node<v, q> * q::lseg<n-1, p> //& self!=p
+  inv n >= 0.
+
+
+lemma_unsafe self::lseg<n,r>  <- self::lseg<m,q>*q::node<_,r> & n=m+2.
+
+checkentail_exact  self::node<_,r> & n=m+2 & m=0 & self=q
+  |- self::lseg<n,r>.
+// valid : base case
+print residue.
+
+/*
+Why is a RD_lemma triggered?? when the RHS did not contain a node?
+This lemma should only be triggered by a folding when both
+LHS and RHS are x::lseg<..>
+
+ <1>emp&n=2+m & m=0 & q=self & exists(m_295:m_295=0) & exists(q_293:q_293=self)&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  RD_Lemma ==> (right: lem_13) ==>  SEARCH ==>  Fold ==>  Match ==> ]]
+*/
+
+

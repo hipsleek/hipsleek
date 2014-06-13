@@ -407,7 +407,9 @@ let process_lemma ldef =
 
 let print_residue residue =
           match residue with
-            | None -> print_string ": no residue \n"
+            | None -> 
+                  let _ = Debug.ninfo_pprint "inside p res" no_pos in
+                  print_string ": no residue \n"
                   (* | Some s -> print_string ((Cprinter.string_of_list_formula  *)
                   (*       (CF.list_formula_of_list_context s))^"\n") *)
                   (*print all posible outcomes and their traces with numbering*)
@@ -416,6 +418,9 @@ let print_residue residue =
                     (* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *)
                     print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                         (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
+                  else 
+                    print_string ("Fail Trace?:"^(pr_list pr_none (CF.list_formula_trace_of_list_context ls_ctx))^
+                        (Cprinter.string_of_list_context ls_ctx)^"\n")
 
 let process_list_lemma ldef_lst  =
   let lem_infer_fnct r1 r2 = 
@@ -520,6 +525,7 @@ let process_data_def ddef =
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef 
 
+(*should merge with astsimp.convert_pred_to_cast*)
 let convert_data_and_pred_to_cast_x () =
   (*annotate field*)
   let idatas = List.map (fun ddef ->
@@ -556,14 +562,22 @@ let convert_data_and_pred_to_cast_x () =
   ) iprog.I.prog_view_decls in
   let tmp_views = (Astsimp.order_views tmp_views) in
   Debug.tinfo_pprint "after order_views" no_pos;
-  let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
   let _ = Debug.tinfo_hprint (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
-  let cviews = List.map (Astsimp.trans_view iprog []) tmp_views in
+  let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
+  let cviews0 = List.map (Astsimp.trans_view iprog []) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
+  (*derv and spec views*)
+  let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
+  let cviews_derv = List.fold_left (fun norm_views v ->
+              let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view norm_views v in
+              (cviews0@[der_view])
+          ) cviews0 tmp_views_derv1 in
+  let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
       Norm.norm_elim_useless cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -1094,7 +1108,7 @@ let process_shape_infer pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps =
+  let ls_hprel, ls_inferred_hps,_ =
     if List.length sel_hps> 0 && List.length hp_lst_assume > 0 then
       let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
         Sa2.infer_shapes
@@ -1102,7 +1116,7 @@ let process_shape_infer pre_hps post_hps=
       in
       infer_shape_fnc iprog !cprog "" constrs2
           sel_hps sel_post_hps unk_map unk_hpargs link_hpargs true false
-    else [],[]
+    else [],[],[]
   in
   let _ =
     begin
@@ -1532,7 +1546,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps=
+  let ls_hprel, ls_inferred_hps,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)
@@ -1619,7 +1633,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout = 
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
-      (CF.mk_failure_may "timeout" Globals.timeout_error)) in
+      (CF.mk_failure_may "timeout" Globals.timeout_error, [])) in
     (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
@@ -1857,18 +1871,20 @@ let process_capture_residue (lvar : ident) =
 		put_var lvar (Sleekcommons.MetaFormLCF flist)
 
 
-let process_print_command pcmd0 = match pcmd0 with
+let process_print_command pcmd0 = 
+  match pcmd0 with
   | PVar pvar ->	  
 	  let mf = try get_var pvar with Not_found->  Error.report_error {
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
 	  let (n_tl,pf) = meta_to_struc_formula mf false [] [] in
-		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
+		print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
   | PCmd pcmd -> 
 	if pcmd = "lemmas" then
           Lem_store.all_lemma # dump
 	else if pcmd = "residue" then
+          let _ = Debug.ninfo_pprint "inside residue" no_pos in
           print_residue !CF.residues 
           (* match !CF.residues with *)
           (*   | None -> print_string ": no residue \n" *)

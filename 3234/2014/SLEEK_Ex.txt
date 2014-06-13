@@ -1,0 +1,70 @@
+// (1) add the weakest constraint over [x,a] on LHS to allow 
+//     entailment below to succeed
+
+checkentail x>a  |- false. 
+
+// (2) add the weakest constraint over [b] on LHS to allow 
+//     entailment below to succeed
+
+checkentail x>3 |- x>b. 
+
+// (3) add the weakest constraint over [b,d] on LHS to allow 
+//     entailment below to succeed
+
+checkentail x>b |- x>d. 
+
+// The exercises below make use of the following data structure
+// for a singly linked list 
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+inv n >= 0.
+
+// (4) Is the following entailment valid ? 
+//     Why ?
+
+checkentail x::ll<n> |- n>=0.
+print residue.
+
+//(5) Add the weakest constraint over [n] on LHS that makes
+//    the following entailment valid
+
+checkentail x::ll<n>  |- x::node<_,_>.
+print residue.
+
+//(6) Check the residue from the entailment.
+//    What is instantiation of the parameter [m] ? 
+
+checkentail x::node<_,p> * p::ll<n> |- x::ll<m>.
+print residue.
+
+//(7) Why is the residue from the following entailment empty?
+//    Hint: Notice the heap on LHS that can be matched by RHS
+//    And the instantiation for the parameter [n]
+
+checkentail x::ll<n> & n > 0 |- x::node<_,p> * p::ll<m>.
+print residue.
+
+//(8) Check the residue from the entailment why is it non empty? 
+//    Hint: Notice the heap on LHS that can be matched by RHS
+
+checkentail x::ll<n> * y::ll<m> & n > 0 & m > 0 & y = z |- z::ll<b>.
+print residue.
+
+//(9) Why does the following entailment fail ?
+//
+
+checkentail x::node<_,q> * q::ll<n> & n < m  |- x::ll<m>.
+print residue.
+
+//(10) What is the instantiation for the parameter [m] 
+//     in the residue ?
+
+checkentail x::node<_,p> * p::node<_,q> * q::node<_,r> * r::ll<4>  |- x::ll<m>.
+print residue.
+

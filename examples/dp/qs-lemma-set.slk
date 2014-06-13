@@ -1,0 +1,62 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred bslseg<y,lb,ub,S> ==           // ~~ in GRASShopper: blseg<x,y,lb,ub>
+  self = y & lb<=ub & S={} //& lb=\inf & ub=-\inf
+or self::node<val,next> * next::bslseg<y,val,ub,S1>
+       & self != y 
+  & lb <= val & val <= ub & S=union({self},S1)
+  inv lb<=ub & (y notin S). //self=y | self!=y & lb<=ub.
+
+pred bseg<y,S> ==           // ~~ in GRASShopper: blseg<x,y,lb,ub>
+  self = y & S={} //& lb=\inf & ub=-\inf
+or self::node<_,next> * next::bseg<y,S1>
+       & self != y & S=union({self},S1)
+  inv (y notin S). //self=y | self!=y & lb<=ub.
+
+
+lemma_safe self::bseg<y,S> 
+  <- self::bseg<p,S1> * p::bseg<y,S2> & S=union(S1,S2).
+
+lemma_unsafe self::bslseg<y,lx,ux,S> 
+  <- self::bslseg<y,ly,uy,S> & lx<=ly & uy<=ux.
+
+checkentail self::bslseg<y,ly,uy,S> & lx<=ly & uy<=ux
+  |- self::bslseg<y,lx,ux,S>.
+
+
+checkentail lx<=ly & uy<=ux & S={} & self=y & ly<=uy 
+  |- self::bslseg<y,lx,ux,S>.
+
+
+checkentail self::node<v,n> * n::bslseg<y,v,uy,S1>
+       & self != y 
+  & ly <= v & v <= uy & S=union({self},S1)
+  //self::bslseg<y,ly,uy,S> 
+  & lx<=ly & uy<=ux
+  |- self::bslseg<y,lx,ux,S>.
+
+  /*
+lemma_unsafe self::bslseg<y,lx,up> 
+  <- self::bslseg<p,lx,ux> * p::bslseg<y,lp,up> & ux<=lp 
+       //
+     .
+  */
+
+/* 
+
+mona problem?
+
+Entail 3: Fail.(may) cause:UnionR[ self!=null & exists(S_445:S_445=union({self},S1)) & ly<=v & self!=y & 
+exists(y_442:self!=y_442 & y=y_442) & (((v<=uy & 0<=uy & n!=null & n!=y & 
+y <notin> S1_69  & S1=union({n},S1_69)) | (n=y & v<=uy & S1={}))) & 
+exists(lx_443:lx_443<=v) & exists(ux_444:v<=ux_444 & ux_444=uy) & uy<=ux & 
+lx<=ly & v<=uy |-  ux=uy. LOCS:[34;35;11;10;0;1;7;39;38;36;8] (may-bug), exists(lx_443:lx_443<=v) & lx<=ly & exists(val_458:val_458<=v) & ly<=v & 
+v<=uy & uy<=ux & exists(ub_459:uy<=ub_459) & exists(ux_444:v<=ux_444 & 
+uy<=ux_444) & self!=null & (((v<=uy & 0<=uy & n!=null & n!=y & 
+y <notin> S1_69  & S1=union({n},S1_69)) | (n=y & v<=uy & S1={}))) & 
+exists(S_445:S_445=union({self},S1_448)) & exists(y_442:self!=y_442) & 
+S=union({self},S1) & self!=y |-  S=union({self},S1_448). LOCS:[38;8;34;11;0;1;7;39;36;35;10] (may-bug)]
+*/

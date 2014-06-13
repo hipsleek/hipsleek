@@ -1,0 +1,33 @@
+
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
+pred tree<> == self=null
+  or self::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+pred_spec AVL[R]<h> == spec height[R]<h> with
+      R::height<h1> * R::height<h2> & -1<=h1-h2<=1
+.
+
+pred_extn height[R]<n> ==
+      n=0 // base case
+   or R::height<m> & n=1+max(m)
+   //inv n>=0
+   .
+
+
+
+pred treeH<n> == extends tree<> with height[REC]<n> .
+
+pred treeAVL<h> == extends treeH<h> with AVL[REC]<h> .
+
+
+/*
+todo:
+pred_spec:
+Check compatiability AVL vs. height
+*/

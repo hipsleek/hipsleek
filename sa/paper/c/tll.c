@@ -40,6 +40,11 @@ struct node* set_right (struct node* x, struct node* t)
   	}
 }
 
+struct node* testhar (struct node* x, struct node* t)
+{
+  return set_right(x,t);
+}
+
 /*
 # tll.ss --sa-dnc --pred-en-dangling --pred-en-eup
 

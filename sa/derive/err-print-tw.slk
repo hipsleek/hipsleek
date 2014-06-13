@@ -1,0 +1,19 @@
+data node2 {
+        int val;
+        node2 prev;
+        node2 next;
+}.
+/*
+--pcp why twice?
+data node2 {
+  int val
+  node2 prev
+  node2 next
+}
+
+data node2 {
+  int val
+  node2 prev
+  node2 next
+}
+*/

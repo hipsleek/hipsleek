@@ -1,0 +1,24 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred foo<n> == emp & n=1 
+    or self::node<_,_> & n=2
+inv true.
+
+/*
+# remove spurious printing
+
+### xxx ELIST
+
+!!!  f:  :EBase {1}->emp&a=1&{FLOW,(1,24)=__flow}[]
+|| :EBase exists (Expl)[](Impl)[_; _](ex)[]{2}->x::node<_,_>@M&a=2&
+          {FLOW,(1,24)=__flow}[]
+*/
+checkentail x::node<_,_> |- x::foo<a>.
+print residue.
+
+
+checkentail_exact x::node<_,_> |- x::foo<a>.
+print residue.

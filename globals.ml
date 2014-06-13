@@ -27,6 +27,9 @@ type constant_flow = string
 
 exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
+exception SA_HP_NOT_PRED
+
+exception NOT_HANDLE_YET
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false
@@ -701,7 +704,13 @@ let enable_lemma_lhs_unfold = ref false
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
-let allow_lemma_fold = ref false
+
+let allow_rd_lemma = ref false
+(* unsound *)
+
+let allow_lemma_fold = ref true
+(* unsound if false for lemma/bugs/app-t2c1.slk *)
+
 let allow_lemma_norm = ref false
 
 let dis_show_diff = ref false
@@ -768,7 +777,7 @@ let pred_elim_dangling = ref true
 let sa_sp_split_base = ref false
 let sa_pure_field = ref false
 
-let sa_pure = ref false
+let sa_pure = ref true
 
 (* let iSIZE_PROP = 0 *)
 (* let iBAG_VAL_PROP = 1 *)
@@ -813,6 +822,8 @@ let norm_cont_analysis = ref true
 
 (*context: (1, M_cyclic c) *)
 let lemma_infer = ref false
+
+let lemma_ep = ref true
 
 let dis_sem = ref false
 
@@ -1292,7 +1303,10 @@ let fresh_name () =
 
 let fresh_label pos = 
  (* let str = string_of_int (fresh_int ()) in*)
-    "f_l_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
+    let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+                 string_of_int pos.start_pos.Lexing.pos_lnum
+               else "0" in
+    "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
 	
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
