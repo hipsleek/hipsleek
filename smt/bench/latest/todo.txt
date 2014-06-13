@@ -7,6 +7,12 @@ dll-vc08.smt2
 dll-vc10.smt2
 dll-vc11.smt2
 
+=====================================
+UDB_sat
+--------------
+ succ-circuit*.defs.smt2
+ succ-rec*.defs.smt2
+
 ======================================
 FDB_entl
 --------------
