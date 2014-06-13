@@ -37,11 +37,15 @@ my $print_short;
 my $test_all;
 my $test_10s;
 my $test_fail;
+my $test_bench = "";
+my $test_name = "";
   
 GetOptions (
   "all" => \$test_all,
   "fail" => \$test_fail,
   "over10" => \$test_10s,
+  "bench=s" => \$test_bench,
+  "test=s" => \$test_name,
   "tidy" => \$print_short,
   "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
@@ -56,6 +60,16 @@ if ($test_all) {
     my @bench_files = <$bench/*.smt2>;
     push (@smt2_files, @bench_files);
   }
+} elsif ($test_bench ne "") {
+  if (-d "$test_path/$test_bench") {
+    my @bench_files = <$test_path/$test_bench/*.smt2>;
+    push (@smt2_files, @bench_files);
+  } else {
+    print "Benchmark $test_bench is not found.\n";
+  }
+} elsif ($test_name ne "") {
+  my @bench_files = <$test_path/*/*$test_name*.smt2>;
+  push (@smt2_files, @bench_files);
 } else {  
   my @test_files;
   if ($test_fail) {
