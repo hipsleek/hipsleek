@@ -779,83 +779,83 @@ let do_unfold_view cprog (f0: CF.formula) =
       (fun _ -> do_unfold_view_x cprog f0) f0
 
 
-(* Trung: need rename *)
-type lemma_param_property =
-  | LemmaParamEqual
-  | LemmaParamDistributive
-  | LemmaParamUnknown
+(* (* Trung: need rename *)    *)
+(* type lemma_param_property = *)
+(*   | LemmaParamEqual         *)
+(*   | LemmaParamDistributive  *)
+(*   | LemmaParamUnknown       *)
 
-let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)
-    : (CP.spec_var * lemma_param_property) list =
-  let pos = vd.C.view_pos in
-  (* find recursive view in each branch *)
-  let rec collect_recursive_view hf = (match hf with
-    | CF.ViewNode vn ->
-        if (String.compare vn.CF.h_formula_view_name vd.C.view_name = 0) then
-          [vn]
-        else []
-    | CF.Star sf ->
-        let h1 = sf.CF.h_formula_star_h1 in
-        let h2 = sf.CF.h_formula_star_h2 in
-        (collect_recursive_view h1) @ (collect_recursive_view h2)
+(* let compute_lemma_params_property (vd: C.view_decl) (prog: C.prog_decl)                         *)
+(*     : (CP.spec_var * lemma_param_property) list =                                               *)
+(*   let pos = vd.C.view_pos in                                                                    *)
+(*   (* find recursive view in each branch *)                                                      *)
+(*   let rec collect_recursive_view hf = (match hf with                                            *)
+(*     | CF.ViewNode vn ->                                                                         *)
+(*         if (String.compare vn.CF.h_formula_view_name vd.C.view_name = 0) then                   *)
+(*           [vn]                                                                                  *)
+(*         else []                                                                                 *)
+(*     | CF.Star sf ->                                                                             *)
+(*         let h1 = sf.CF.h_formula_star_h1 in                                                     *)
+(*         let h2 = sf.CF.h_formula_star_h2 in                                                     *)
+(*         (collect_recursive_view h1) @ (collect_recursive_view h2)                               *)
     
-    | CF.HTrue | CF.HFalse | CF.HEmp -> []
-    | CF.DataNode _ -> []
-    | _ -> report_error pos "compute_lemma_params_property: unexpected formula"
-  ) in
-  (* find base branch and inductive branch *)
-  let base_branches, inductive_branches = List.partition(fun (branch, _) ->
-    let (hf,_,_,_,_) = CF.split_components branch in
-    let views = collect_recursive_view hf in
-    (List.length views = 0)
-  ) vd.C.view_un_struc_formula in
-  let param_branches = List.map2 (fun (branch,_) (aux_f,_) ->
-    let (hf,_,_,_,_) = CF.split_components branch in
-    let views = collect_recursive_view hf in
-    match views with
-    | [] -> []
-    | [vn] ->
-        let (_,aux_mf,_,_,_) = CF.split_components aux_f in
-        let aux_pf = MCP.pure_of_mix aux_mf in
-        List.map2 (fun sv1 sv2 ->
-          let e1 = CP.mkVar sv1 pos in
-          let e2 = CP.mkVar sv2 pos in
-          let equal_cond = CP.mkEqExp e1 e2 pos in
-          if (TP.imply_raw aux_pf equal_cond) then
-            LemmaParamEqual
-          else match (CP.type_of_spec_var sv1) with
-          | BagT _ ->
-              let subset_cond = CP.mkBagSubExp e2 e1 pos in
-              if (TP.imply_raw aux_pf subset_cond) then
-                LemmaParamDistributive
-              else LemmaParamUnknown
-          | Int ->
-              (* exists k: forall sv1, sv2: aux_pf implies (sv1 - sv2 = k) *)
-              let distributive_cond = (
-                let diff_var = CP.SpecVar(Int, fresh_name (), Unprimed) in
-                let diff_exp = CP.mkVar diff_var pos in
-                let imply_cond = 
-                  CP.mkOr (CP.mkNot aux_pf None pos)
-                          (CP.mkEqExp (CP.mkSubtract e1 e2 pos) diff_exp pos)
-                          None pos
-                in
-                CP.mkExists [diff_var] (CP.mkForall [sv1;sv2] imply_cond None pos) None pos 
-              ) in
-              if not(TP.imply_raw distributive_cond (CP.mkFalse pos)) then
-                LemmaParamDistributive
-              else LemmaParamUnknown
-          | _ -> LemmaParamUnknown
-        ) vd.C.view_vars vn.CF.h_formula_view_arguments
-    | _ -> report_error pos "compute_lemma_params_property: expect at most 1 view node"
-  ) vd.C.view_un_struc_formula vd.C.view_aux_formula in
-  let param_properties = List.fold_left (fun res param_branch ->
-    match res with
-    | [] -> param_branch
-    | _ -> 
-        try List.map2 (fun x y -> if (x=y) then x else LemmaParamUnknown) res param_branch
-        with _ -> report_error pos "compute_lemma_params_property: expect 2 list has same size"
-  ) [] param_branches in
-  List.map2 (fun sv p -> (sv,p)) vd.C.view_vars param_properties 
+(*     | CF.HTrue | CF.HFalse | CF.HEmp -> []                                                      *)
+(*     | CF.DataNode _ -> []                                                                       *)
+(*     | _ -> report_error pos "compute_lemma_params_property: unexpected formula"                 *)
+(*   ) in                                                                                          *)
+(*   (* find base branch and inductive branch *)                                                   *)
+(*   let base_branches, inductive_branches = List.partition(fun (branch, _) ->                     *)
+(*     let (hf,_,_,_,_) = CF.split_components branch in                                            *)
+(*     let views = collect_recursive_view hf in                                                    *)
+(*     (List.length views = 0)                                                                     *)
+(*   ) vd.C.view_un_struc_formula in                                                               *)
+(*   let param_branches = List.map2 (fun (branch,_) (aux_f,_) ->                                   *)
+(*     let (hf,_,_,_,_) = CF.split_components branch in                                            *)
+(*     let views = collect_recursive_view hf in                                                    *)
+(*     match views with                                                                            *)
+(*     | [] -> []                                                                                  *)
+(*     | [vn] ->                                                                                   *)
+(*         let (_,aux_mf,_,_,_) = CF.split_components aux_f in                                     *)
+(*         let aux_pf = MCP.pure_of_mix aux_mf in                                                  *)
+(*         List.map2 (fun sv1 sv2 ->                                                               *)
+(*           let e1 = CP.mkVar sv1 pos in                                                          *)
+(*           let e2 = CP.mkVar sv2 pos in                                                          *)
+(*           let equal_cond = CP.mkEqExp e1 e2 pos in                                              *)
+(*           if (TP.imply_raw aux_pf equal_cond) then                                              *)
+(*             LemmaParamEqual                                                                     *)
+(*           else match (CP.type_of_spec_var sv1) with                                             *)
+(*           | BagT _ ->                                                                           *)
+(*               let subset_cond = CP.mkBagSubExp e2 e1 pos in                                     *)
+(*               if (TP.imply_raw aux_pf subset_cond) then                                         *)
+(*                 LemmaParamDistributive                                                          *)
+(*               else LemmaParamUnknown                                                            *)
+(*           | Int ->                                                                              *)
+(*               (* exists k: forall sv1, sv2: aux_pf implies (sv1 - sv2 = k) *)                   *)
+(*               let distributive_cond = (                                                         *)
+(*                 let diff_var = CP.SpecVar(Int, fresh_name (), Unprimed) in                      *)
+(*                 let diff_exp = CP.mkVar diff_var pos in                                         *)
+(*                 let imply_cond =                                                                *)
+(*                   CP.mkOr (CP.mkNot aux_pf None pos)                                            *)
+(*                           (CP.mkEqExp (CP.mkSubtract e1 e2 pos) diff_exp pos)                   *)
+(*                           None pos                                                              *)
+(*                 in                                                                              *)
+(*                 CP.mkExists [diff_var] (CP.mkForall [sv1;sv2] imply_cond None pos) None pos     *)
+(*               ) in                                                                              *)
+(*               if not(TP.imply_raw distributive_cond (CP.mkFalse pos)) then                      *)
+(*                 LemmaParamDistributive                                                          *)
+(*               else LemmaParamUnknown                                                            *)
+(*           | _ -> LemmaParamUnknown                                                              *)
+(*         ) vd.C.view_vars vn.CF.h_formula_view_arguments                                         *)
+(*     | _ -> report_error pos "compute_lemma_params_property: expect at most 1 view node"         *)
+(*   ) vd.C.view_un_struc_formula vd.C.view_aux_formula in                                         *)
+(*   let param_properties = List.fold_left (fun res param_branch ->                                *)
+(*     match res with                                                                              *)
+(*     | [] -> param_branch                                                                        *)
+(*     | _ ->                                                                                      *)
+(*         try List.map2 (fun x y -> if (x=y) then x else LemmaParamUnknown) res param_branch      *)
+(*         with _ -> report_error pos "compute_lemma_params_property: expect 2 list has same size" *)
+(*   ) [] param_branches in                                                                        *)
+(*   List.map2 (fun sv p -> (sv,p)) vd.C.view_vars param_properties                                *)
 
 (* let generate_lemma_sll (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)                    *)
 (*     : (I.coercion_decl list) =                                                                        *)
