@@ -1,0 +1,19 @@
+data node {
+  node next;
+}.
+
+
+pred l4<q:node> == 
+  (exists z,r: self::node<r>*r::node<_> & r=z & z=q)
+inv self!=null.
+
+// baga {self,q}
+//!!! baga inv(l4):[(BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
+
+/*
+# baga-test-3.slk (FIXED)
+
+why a redundant {q} in emap?
+// disable printing of singletons in gen.ml
+
+*/
