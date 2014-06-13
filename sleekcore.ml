@@ -226,6 +226,11 @@ and sleek_entail_check i isvl (cprog: C.prog_decl) proof_traces ante conseq=
       i isvl ante conseq proof_traces
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
+  let _ =
+    let _ = Lem_store.all_lemma # clear_right_coercion in
+    let _ = Lem_store.all_lemma # clear_left_coercion in
+    ()
+  in
   (***************************************)
   let call_sleek ante_f conseq_f=
     let _ = Globals.graph_norm := false in
