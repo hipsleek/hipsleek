@@ -1157,22 +1157,30 @@ struct
     (* [([], pf)] *)
     [([], p_aset, ineq)] (* new expure, need to add ineq : DONE *)
 
-  let to_cpure ((baga,eq,ineq) : epure) =
-    let f1 = conv_eq eq in
-    let f2 = conv_ineq ineq in
-    (baga, mkAnd f1 f2 no_pos)
+  (* let to_cpure ((baga,eq,ineq) : epure) = *)
+  (*   let f1 = conv_eq eq in *)
+  (*   let f2 = conv_ineq ineq in *)
+  (*   (baga, mkAnd f1 f2 no_pos) *)
 
-  let to_cpure_disj (epd : epure_disj) =
-    List.map (fun ep -> to_cpure ep) epd
+  (* let to_cpure_disj (epd : epure_disj) = *)
+  (*   List.map (fun ep -> to_cpure ep) epd *)
 
-  let from_cpure ((baga,pf) : ef_pure) =
-    let p_aset = pure_ptr_equations pf in
-    let p_aset = EMapSV.build_eset p_aset in
-    let ineq = get_ineq pf in
-    (baga, p_aset, ineq)
+  let to_cpure (ep : epure) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) =
-    List.map (fun ep -> from_cpure ep) epd
+  let to_cpure_disj (epd : epure_disj) = epd
+
+  (* let from_cpure ((baga,pf) : ef_pure) = *)
+  (*   let p_aset = pure_ptr_equations pf in *)
+  (*   let p_aset = EMapSV.build_eset p_aset in *)
+  (*   let ineq = get_ineq pf in *)
+  (*   (baga, p_aset, ineq) *)
+
+  (* let from_cpure_disj (epd : ef_pure_disj) = *)
+  (*   List.map (fun ep -> from_cpure ep) epd *)
+
+  let from_cpure (ep : ef_pure) = ep
+
+  let from_cpure_disj (epd : ef_pure_disj) = epd
 
 (* TODO
 
@@ -1188,7 +1196,7 @@ end
 
 (* module EPureI = EPUREN(SV) *)
 
-module EPureI = EPURE(SV)
+module EPureI = EPUREN(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 

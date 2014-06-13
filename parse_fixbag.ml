@@ -96,9 +96,9 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
-          if is_node x & is_zero y then 
+          if is_node x && is_zero y then 
             BForm((Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc),None),None)
-          else if is_node y & is_one x then 
+          else if is_node y && is_one x then 
             BForm((Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc),None),None)
           else if is_self_var x then 
             BForm((Eq (Var(get_var "self" tlist, loc), Null loc, loc) ,None),None)
@@ -121,7 +121,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
           if is_node y & is_zero x then 
             BForm((Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc),None),None)
           else
-          if is_node x & is_one y then 
+          if is_node x && is_one y then 
             BForm((Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc),None),None)
           else
           if is_self_var y then 

@@ -4351,9 +4351,9 @@ type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
 
-   (* type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list)  *)
+type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list)
 (* old extended pure formula *)
-type ef_pure = (spec_var list * formula)
+(* type ef_pure = (spec_var list * formula) *)
 
 (* disjunctive extended pure formula *)
 (* [] denotes false *)
