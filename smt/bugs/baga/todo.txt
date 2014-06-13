@@ -93,7 +93,7 @@ need to build and use syntactic imply below
             (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
 
 ====================================
-# cpure.ml & expure.ml
+# cpure.ml & expure.ml & cprinter.ml (DONE)
 
 We need to make baga modular so it is easy to switch between the
 two versions. We need to add similar methods to EPURE and EPUREN
@@ -130,6 +130,23 @@ both EPURE and EPUREN but they have not been tested.
   let subst_epure sst ((baga,f) as ep) = ep
 
 ====================================
+# baga-test-1.slk
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+// baga {q}
+
+
+!!! baga inv(l6):
+[(BAGA:[q],EQ:emap[{null,self}],INEQ:[]),
+ (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
+Disabling baga inv gen ..
+
+# why disabling baga_inv with l6 pred?
+
 ====================================
 ====================================
 ====================================
