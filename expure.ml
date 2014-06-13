@@ -1179,6 +1179,8 @@ struct
 
   let mk_epure (pf:formula) =
     let p_aset = pure_ptr_equations pf in
+    let pr1 = pr_pair string_of_spec_var string_of_spec_var in
+    let _ = print_endline (pr_list pr1 p_aset) in
     let p_aset = EMapSV.build_eset p_aset in
     let baga = get_baga pf in
     let ineq = get_ineq pf in
