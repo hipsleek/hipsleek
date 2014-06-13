@@ -1485,7 +1485,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   in
   let find_pos (view_fwd_para, (ddcl, data_fwd_fname) )=
     try
-      let view_fwd_para_pos = Cfutil.get_pos vd.view_vars 0 view_fwd_para in
+      let view_fwd_para_pos = Cfutil.get_pos vd.Cast.view_vars 0 view_fwd_para in
       let data_fwd_fname_pos =  get_dfield_pos ddcl.Cast.data_fields 0 data_fwd_fname in
       [(view_fwd_para, view_fwd_para_pos, (ddcl, data_fwd_fname),data_fwd_fname_pos )]
     with _ -> []
@@ -1512,14 +1512,14 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
   let subst_h_root sst hf=
     match hf with
       | CF.DataNode hn ->
-            CF.DataNode {hn with h_formula_data_node = subst_sv_one_seq sst hn.CF.h_formula_data_node }
-      | CF.ViewNode hv -> CF.ViewNode {hv with h_formula_view_node = subst_sv_one_seq sst hv.CF.h_formula_view_node}
+            CF.DataNode {hn with CF.h_formula_data_node = subst_sv_one_seq sst hn.CF.h_formula_data_node }
+      | CF.ViewNode hv -> CF.ViewNode {hv with CF.h_formula_view_node = subst_sv_one_seq sst hv.CF.h_formula_view_node}
       | _ -> hf
   in
   let subst_h_args sst hf=
     match hf with
-      | CF.DataNode hn -> CF.DataNode {hn with h_formula_data_arguments = subst_list_var_seq sst hn.CF.h_formula_data_arguments}
-      | CF.ViewNode hv -> CF.ViewNode {hv with h_formula_view_arguments = subst_list_var_seq sst hv.CF.h_formula_view_arguments}
+      | CF.DataNode hn -> CF.DataNode {hn with CF.h_formula_data_arguments = subst_list_var_seq sst hn.CF.h_formula_data_arguments}
+      | CF.ViewNode hv -> CF.ViewNode {hv with CF.h_formula_view_arguments = subst_list_var_seq sst hv.CF.h_formula_view_arguments}
       | _ -> hf
   in
   let gen_view_formula vdcl=
