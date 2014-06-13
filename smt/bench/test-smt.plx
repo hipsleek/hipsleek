@@ -87,7 +87,6 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "spaguetti-13-e03.tptp.smt2",
     "08.tst.smt2",
     "10.tst.smt2",
     "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
@@ -190,7 +189,7 @@ if ($test_all) {
     "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
     "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", 
-    "bolognesa-20-e01.tptp.smt2","bolognesa-15-e02.tptp.smt2",
+    "bolognesa-20-e01.tptp.smt2","bolognesa-15-e02.tptp.smt2","spaguetti-13-e03.tptp.smt2",
     "bolognesa-16-e04.tptp.smt2",
     "bolognesa-17-e02.tptp.smt2",
     "bolognesa-18-e02.tptp.smt2",

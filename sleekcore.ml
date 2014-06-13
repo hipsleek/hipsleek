@@ -35,7 +35,6 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
 
 let sleek_unsat_check isvl cprog ante=
   let _ = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
-  let _ =  print_endline "check unsat with graph \n" in
   let _ = Hgraph.reset_fress_addr () in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in
@@ -280,7 +279,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
       | [] -> true, ctx
       | conj_conseq::rest ->
             let _ = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) conj_conseq no_pos in
-            let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps0 conj_conseq false true in
+            let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps0 conj_conseq false true false in
             if is_unsat then (false, ctx) else
               let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 (norm_conj_conseq,conj_conseq_hg) [] ctx in
               if not r then (false ,lc) else
@@ -292,7 +291,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> false, res_fs
       | f::rest ->
-            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true true in
+            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true true false in
             if unsat then
               (unsat, res_fs@(List.map (fun f -> (f, Hgraph.mk_empty_hgraph ())) rest))
             else check_unsat_conj_ante rest (res_fs@[(f,hg1)])

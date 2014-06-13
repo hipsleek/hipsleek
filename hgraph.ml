@@ -109,6 +109,12 @@ let print_hgraph g=
 (*****************end*printer********************************)
  let cmp_edge e1 e2 = e1.he_b_id - e2.he_b_id
 
+let rec look_up_vertex sv ls_vertexes=
+  match ls_vertexes with
+    | v::rest -> if CP.mem_svl sv v.hv_lbl then v.hv_id else
+        look_up_vertex sv rest
+    | [] -> raise Not_found
+
  let rec look_up_edge edges b_id e_id=
    match edges with
      | e::rest -> if e.he_b_id = b_id && e.he_e_id = e_id then e
@@ -126,7 +132,6 @@ let rec look_up_adj root_id ls_adj=
     | [] -> []
     | a::rest -> if a.a_root = root_id then a.a_nexts else
         look_up_adj root_id rest
-
 
 let look_up_children v hg_adjg2 hg_adj1 adj0=
   if List.exists (fun a -> a.a_root = v) adj0 then [] else
@@ -1637,9 +1642,9 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
           (ls1@eqs)
       ) [] comps
     in
-    (* let pr0 = pr_list string_of_int in *)
-    (* let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in *)
-    (* let _ = Debug.info_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in *)
+    let pr0 = pr_list string_of_int in
+    let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in
+    let _ = Debug.info_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in
     if new_emps_and_prunes = [] then (false,  comps, vertexs0,ls_adjg11,ls_adj11) else
       let new_emps, prune_brs = List.fold_left (fun (ls1,ls2) (r,svl, brs) ->
           (ls1@[(r,svl)], ls2@[(r,brs)])
@@ -1656,10 +1661,107 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
       force_inter_predicate_rules new_vertexs new_adjsg1 new_adjs1 ls_non_emp
 
 (*
+  more complete with case split
+  find a vertex v1 point to two diff vertexs v2, v3. case split
+  v1 = v2 or v1 = v3
+*)
+let find_case_split_x vertexs ls_adjg1 ls_adj1 ls_must_diff=
+  let rec find ls_adj_pto_2 ls_must_diff0=
+    match ls_must_diff0 with
+      | [] -> raise Not_found
+      | (v_id1, v_id2)::rest -> begin
+            let ls = [v_id1;v_id2] in
+            try let a = List.find (fun a ->
+                Gen.BList.difference_eq (=) ls a.a_nexts = []
+            ) ls_adj_pto_2 in
+            a
+            with _ -> find ls_adj_pto_2 rest
+        end
+  in
+  let look_up_split_cand ls_adj_pto_2=
+    let ls_must_diff_ids = List.map (fun (sv1, sv2) ->
+        (look_up_vertex sv1 vertexs, look_up_vertex sv2 vertexs)
+    ) ls_must_diff in
+    find ls_adj_pto_2 ls_must_diff_ids
+  in
+  if ls_must_diff = [] then [] else
+    let ls_adj_pto_2 = List.filter (fun a -> List.length a.a_nexts = 2) ls_adjg1 in
+    if ls_adj_pto_2 = [] then [] else begin
+      try
+        let cand_a = look_up_split_cand ls_adj_pto_2 in
+        List.map (fun id -> (cand_a.a_root, id)) cand_a.a_nexts
+      with _ -> []
+    end
+
+let find_case_split vertexs ls_adjg1 ls_adj1 ls_must_diff=
+  let pr1 = pr_list print_hv in
+  let pr2 = pr_list print_adj in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr4 = pr_list (pr_pair string_of_int string_of_int) in
+  Debug.no_3 "find_case_split" pr1 pr2 pr3 pr4
+      (fun _ _ _ -> find_case_split_x vertexs ls_adjg1 ls_adj1 ls_must_diff)
+      vertexs ls_adjg1  ls_must_diff
+
+(*
   (new_comps, vertexs1, ls_adjg12, lsadj12,ls_adj0)
 *)
-
-let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos=
+let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split=
+  (******************************************)
+  (* edges and ls_adj0: never be updated
+  *)
+  let rec loop_helper case_split_count vertexs edges ls_adjg1 ls_adj1 ls_adj0=
+    let ((is_conflict, new_comps, vertexs1, ls_adjg12, ls_adj12) as res) = force_inter_predicate_rules
+      vertexs ls_adjg1 ls_adj1 ls_must_diff in
+    if is_conflict then
+      let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 ls_adj12 ls_adj0 [] in
+      (true, [],final_graph)
+    else
+      (*************************************)
+      (********build return value for entailment*********)
+      let build_graph_for_sat (is_conflict0,new_comps0, vertexs0, ls_adjg10, ls_adj10) =
+        let n_edges, non_tough_edges = if set_ptos then
+          let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs0) &&
+              List.exists (fun v -> v.hv_id = e.he_e_id) vertexs0) edges in
+          set_pto_edges vertexs0 edges1 ls_must_diff
+        else edges,[]
+        in
+        (*build emp from vertexs*)
+        let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in
+        let final_graph =  mk_hgraph new_comps vertexs0 n_edges ls_adjg10 ls_adj10 ls_adj0 non_tough_edges in
+        (is_conflict0, final_emps,final_graph)
+      in
+      (************************************************)
+      (* for each case, combine present eq with current context and try to move fwd*)
+      let rec perform_case_split eqs ((is_conflict0,new_comps0, vertexs0, ls_adjg10, ls_adj10) as global_res)=
+        match eqs with
+          | [] ->  build_graph_for_sat (true,new_comps0, vertexs0, ls_adjg10, ls_adj10)
+          | eq::rest ->
+                let new_vertexs, new_adjg1, new_adj1 = merge_alias_hv vertexs0 ls_adjg10 ls_adj10 [eq] in
+                let is_conflict1,_,_ = loop_helper (case_split_count+1) new_vertexs edges new_adjg1 new_adj1 ls_adj0 in
+                if not is_conflict1 then
+                  build_graph_for_sat global_res
+                else perform_case_split rest global_res
+      in
+      (*************************************)
+      if do_case_split && case_split_count<1 then
+        let eqs = find_case_split vertexs1 ls_adjg12 ls_adj12 ls_must_diff in
+        if eqs = [] then
+           build_graph_for_sat res
+        else perform_case_split eqs res
+      else
+         build_graph_for_sat res
+        (* let n_edges, non_tough_edges = if set_ptos then *)
+        (*   let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) && *)
+        (*       List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in *)
+        (*   set_pto_edges vertexs1 edges1 ls_must_diff *)
+        (* else edges,[] *)
+        (* in *)
+        (* (\*build emp from vertexs*\) *)
+        (* let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in *)
+        (* let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0 non_tough_edges in *)
+        (* (is_conflict, final_emps,final_graph) *)
+  in
+  (******************************************)
   let vertexs, ini_maps = build_init_ls_vertex ls_may_eq ls_must_eq in
   let edges = build_init_edges ls_may_eq ini_maps in
   let ls_adjg1,ls_adj1,ls_adj0 = build_ls_adj edges in
@@ -1671,28 +1773,32 @@ let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos=
   (*   (\* else *\) *)
   (*   (\*   (false, vertexs0, ls_adjg11, ls_adj11) *\) *)
   (* in *)
-  let is_conflict, new_comps, vertexs1, ls_adjg12, lsadj12 = force_inter_predicate_rules
-     vertexs ls_adjg1 ls_adj1 ls_must_diff in
-  if is_conflict then
-    let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 lsadj12 ls_adj0 [] in
-    (true, [],final_graph)
-  else
-    let n_edges, non_tough_edges = if set_ptos then
-      let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) &&
-          List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in
-      set_pto_edges vertexs1 edges1 ls_must_diff
-    else edges,[]
-    in
-    (*build emp from vertexs*)
-    let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in
-    let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0 non_tough_edges in
-    (is_conflict, final_emps,final_graph)
+  (****************************************************)
+  (* Loc: the following is put into  loop_helper *)
+  loop_helper 0 vertexs edges ls_adjg1 ls_adj1 ls_adj0
+  (* let is_conflict, new_comps, vertexs1, ls_adjg12, lsadj12 = force_inter_predicate_rules *)
+  (*    vertexs ls_adjg1 ls_adj1 ls_must_diff in *)
+  (* if is_conflict then *)
+  (*   let final_graph =  mk_hgraph new_comps vertexs1 edges ls_adjg12 lsadj12 ls_adj0 [] in *)
+  (*   (true, [],final_graph) *)
+  (* else *)
+  (*   let n_edges, non_tough_edges = if set_ptos then *)
+  (*     let edges1 = List.filter (fun e -> (List.exists (fun v -> v.hv_id = e.he_b_id) vertexs1) && *)
+  (*         List.exists (fun v -> v.hv_id = e.he_e_id) vertexs1) edges in *)
+  (*     set_pto_edges vertexs1 edges1 ls_must_diff *)
+  (*   else edges,[] *)
+  (*   in *)
+  (*   (\*build emp from vertexs*\) *)
+  (*   let is_conflict, final_emps = build_emp vertexs1 ls_must_diff in *)
+  (*   let final_graph =  mk_hgraph new_comps vertexs1 n_edges ls_adjg12 lsadj12 ls_adj0 non_tough_edges in *)
+  (*   (is_conflict, final_emps,final_graph) *)
+  (****************************************************)
 
-let norm_graph ls_may_eq ls_must_eq ls_must_diff set_ptos=
+let norm_graph ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 =  print_hgraph in
   Debug.no_3 "norm_graph" pr1 pr1 pr1 (pr_triple string_of_bool pr1 pr2)
-      (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos)
+      (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split)
       ls_may_eq ls_must_eq ls_must_diff
 
 (****************************************************************)
