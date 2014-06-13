@@ -1188,7 +1188,7 @@ end
 
 (* module EPureI = EPUREN(SV) *)
 
-module EPureI = EPUREN(SV)
+module EPureI = EPURE(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 
