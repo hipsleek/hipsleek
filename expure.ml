@@ -879,6 +879,17 @@ struct
                   else (b2,b1)::acc
           ) [] (Elt.conv_var_pairs neq)) in
       let new_neq = List.sort pair_cmp new_neq in
+      let rec remove_duplicate ineq =
+        match ineq with
+          | [] -> []
+          | [hd] -> [hd]
+          | hd1::hd2::tl ->
+                if pair_cmp hd1 hd2 = 0 then
+                  remove_duplicate (hd2::tl)
+                else
+                  hd1::(remove_duplicate(hd2::tl))
+      in
+      let new_neq = remove_duplicate new_neq in
       (* let subs_neq = List.map (subs_pair mk_subs) neq in *)
       (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
       (* let new_neq = List.filter (fun (e1, e2) -> *)

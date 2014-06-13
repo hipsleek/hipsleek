@@ -16,7 +16,7 @@ data node {
 !!! baga inv(l3a):[]
 !!! baga inv(l3):[([self], true)]
 */
-/*
+
 pred l3<> == 
   self::node<q>*q::node<_> 
 inv self!=null.
@@ -38,7 +38,7 @@ pred l6<q:node> ==
   q::node<_> & self=null
   or self::node<r>*r::node<_> & r=q
 inv q!=null.
-*/
+
 // baga {q}
 /*
 # baga-test-1.slk
