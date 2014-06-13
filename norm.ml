@@ -498,19 +498,19 @@ let cont_para_analysis_view cprog vdef other_vds=
       let root_dn_svl, para_dn_svl = List.fold_left (fun (r1,r2) dn ->
         (r1@[dn.CF.h_formula_data_node], r2@dn.CF.h_formula_data_arguments) 
       ) ([],[]) reach_dns in
-      Debug.ninfo_hprint (add_str "root_dn_svl" (pr_list !CP.print_sv)) root_dn_svl no_pos;
       let root_vn_svl, para_vn_svl = List.fold_left (fun (r1,r2) vn ->
         (r1@[vn.CF.h_formula_view_node], r2@vn.CF.h_formula_view_arguments)
       ) ([],[]) reach_vns in
-      Debug.ninfo_hprint (add_str "root_vn_svl" (pr_list !CP.print_sv)) root_vn_svl no_pos;
       let null_svls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_f) ) in
-      Debug.ninfo_hprint (add_str "null_svls" (pr_list !CP.print_sv)) null_svls no_pos;
       (* let defined_svl = CF.find_close (root_dn_svl@root_vn_svl@null_svls) eqs in *)
       let defined_svl = CF.find_close (null_svls) eqs in
-      Debug.ninfo_hprint (add_str "defined_svl" (pr_list !CP.print_sv)) defined_svl no_pos;
       let cont_svl = CP.diff_svl ( CF.find_close (para_dn_svl@para_vn_svl) eqs) defined_svl in
-      Debug.ninfo_hprint (add_str "cont_svl" (pr_list !CP.print_sv)) cont_svl no_pos;
       let cont_vars = CP.intersect_svl args  cont_svl in
+      Debug.ninfo_hprint (add_str "root_dn_svl" (pr_list !CP.print_sv)) root_dn_svl no_pos;
+      Debug.ninfo_hprint (add_str "root_vn_svl" (pr_list !CP.print_sv)) root_vn_svl no_pos;
+      Debug.ninfo_hprint (add_str "null_svls" (pr_list !CP.print_sv)) null_svls no_pos;
+      Debug.ninfo_hprint (add_str "defined_svl" (pr_list !CP.print_sv)) defined_svl no_pos;
+      Debug.ninfo_hprint (add_str "cont_svl" (pr_list !CP.print_sv)) cont_svl no_pos;
       Debug.ninfo_hprint (add_str "cont_vars" (pr_list !CP.print_sv)) cont_vars no_pos;
       cont_vars
       (* process other_vns*)

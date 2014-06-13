@@ -3409,6 +3409,7 @@ let pr_view_decl v =
   pr_vwrap  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
   pr_vwrap  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
   pr_vwrap  "is_tail_recursive?: " fmt_string (string_of_bool v.view_is_tail_recursive);
+  pr_vwrap  "residents: " pr_list_of_spec_var v.view_residents;
   pr_vwrap  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
   pr_vwrap  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;
   pr_vwrap  "forward_fields: " 
