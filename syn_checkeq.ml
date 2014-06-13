@@ -423,7 +423,7 @@ let syntax_nodes_match_x lhs0 rhs0 =
   in
   (******************************************************)
   (* let l_hds,_,_ = Cformula.get_hp_rel_formula lhs in *)
-  let l_hds = Cformula.get_dnodes lhs0 in
+  let l_hds = Cformula.get_datas lhs0 in
   let r_hds0, r_hvs,_ = Cformula.get_hp_rel_formula rhs0 in
   let lhs_unsat = check_inconsistent l_hds || check_pure_inconsistent lhs0 in
   let rhs_unsat = check_inconsistent r_hds0 || check_pure_inconsistent rhs0 in

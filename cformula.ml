@@ -5864,8 +5864,7 @@ let get_vnodes_x (f: formula) =
       | ViewNode _ -> [hf]
       | _ -> []
   in
-  let views = get_one_kind_heap get_view_node f in
-  views
+  get_one_kind_heap get_view_node f
 
 let get_vnodes (f: formula) =
   let pr1 = !print_formula in
@@ -5874,13 +5873,12 @@ let get_vnodes (f: formula) =
       (fun _ -> get_vnodes_x f) f
 
 let get_vptrs_x (f: formula) =
-  let get_view_node hf=
+  let get_view_ptr hf=
     match hf with
       | ViewNode vn -> [vn.h_formula_view_node]
       | _ -> []
   in
-  let views = get_one_kind_heap get_view_node f in
-  views
+  get_one_kind_heap get_view_ptr f
 
 let get_vptrs (f: formula) =
   let pr1 = !print_formula in
@@ -5895,17 +5893,15 @@ let get_views (f: formula) =
       | ViewNode vn -> [vn]
       | _ -> []
   in
-  let views = get_one_kind_heap get_vn f in
-  views
+  get_one_kind_heap get_vn f
 
 let get_datas (f: formula) =
-  let get_dn hf=
+  let get_data hf=
     match hf with
       | DataNode dn -> [dn]
       | _ -> []
   in
-  let dns = get_one_kind_heap get_dn f in
-  dns
+  get_one_kind_heap get_data f
 
 let get_dnodes (f: formula) =
   let get_dn hf=
@@ -5915,6 +5911,20 @@ let get_dnodes (f: formula) =
   in
   let dns = get_one_kind_heap get_dn f in
   dns
+
+let get_dptrs_x (f: formula) =
+  let get_data_ptr hf=
+    match hf with
+      | DataNode dn -> [dn.h_formula_data_node]
+      | _ -> []
+  in
+  get_one_kind_heap get_data_ptr f
+
+let get_dptrs (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list_ln !print_sv in
+  Debug.no_1 "get_dptrs" pr1 pr2
+      (fun _ -> get_dptrs_x f) f
 
 let is_rec_br vn f=
   let vns = get_views f in
