@@ -13,6 +13,7 @@ use Cwd qw();
 use Try::Tiny;
 use Getopt::Long;
 use POSIX qw(:sys_wait_h);
+use Time::HiRes qw(gettimeofday);
 
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
@@ -32,13 +33,23 @@ my $timeout_count = 0;
 my $timeout_files = "";
 
 my $timeout = 0;
+my $total_time = 0;
 my $print_short;
+my $print_time;
 
 my $test_all;
 my $test_10s;
 my $test_fail;
 my $test_bench = "";
 my $test_name = "";
+
+sub println {
+  print $_[0];
+  if ($print_time) {
+    print " ($_[1] seconds)";
+  }
+  print "\n";
+}
   
 GetOptions (
   "all" => \$test_all,
@@ -47,6 +58,7 @@ GetOptions (
   "bench=s" => \$test_bench,
   "test=s" => \$test_name,
   "tidy" => \$print_short,
+  "time" => \$print_time,
   "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
 
@@ -304,6 +316,8 @@ foreach my $smt2_file (@smt2_files) {
   my $smt2_name = basename($slk_file, ".slk");
   my $output = "";
   print " $rel_path: ";
+  my $start_time;
+  my $end_time;
   if ($timeout > 0) {
     #try {
     #  local $SIG{ALRM} = sub { die "alarm\n" };
@@ -319,7 +333,9 @@ foreach my $smt2_file (@smt2_files) {
       try {
         local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
         alarm($timeout);
+        $start_time = gettimeofday();
         waitpid($pid, 0);
+        $end_time = gettimeofday();
         alarm(0);
         close(WRITEME);
         while (<README>) {
@@ -328,6 +344,7 @@ foreach my $smt2_file (@smt2_files) {
         close(README);
       } catch {
         die $_ unless $_ eq "TIMEOUT!\n";
+        $end_time = gettimeofday();
         $output = "timeout";
       }
     } else { # Child
@@ -340,24 +357,26 @@ foreach my $smt2_file (@smt2_files) {
       exit(0);
     }
   } else { # No timeout setting
+    $start_time = gettimeofday();
     $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
+    $end_time = gettimeofday();
   }
   
+  my $diff = $end_time - $start_time;
+  $total_time += $diff;
   if ($output =~ "Unexpected") {
-    print "Unexpected";
-    
     if ($output =~ "UNSAT") {
-      print ": UNSOUND\n";
+      println("Unexpected: UNSOUND", $diff);
       $unsound_count++;
       $unsound_files = $unsound_files . $rel_path . "\n";
     } else {
-      print "\n";
+      println("Unexpected", $diff);
     }
     
     $unexpected_count++;
     $unexpected_files = $unexpected_files . $rel_path . "\n";
   } elsif ($output eq "timeout") {
-    print "Timeout\n";
+    println("Timeout", $diff);
       
     $timeout_count++;
     $timeout_files = $timeout_files . $rel_path . "\n";
@@ -375,7 +394,7 @@ foreach my $smt2_file (@smt2_files) {
     $error_count++;
     $error_files = $error_files . "$rel_path: $error\n";
   } else {
-    print "OK\n";
+    println("OK", $diff);
   }
 }
 
@@ -400,5 +419,9 @@ if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
     print "\nTotal number of timeout files: $timeout_count in:\n$timeout_files\n";
   }
 } else {
-  print "\n All test results were as expected.\n";
+  print "\nAll test results were as expected.\n";
+}
+
+if ($print_time) {
+  print "Total: $total_time (s).\n";
 }
