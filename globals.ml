@@ -1212,26 +1212,12 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
+let gen_baga_inv_bk = ref false
 let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 
-let _ = if !smt_compete_mode then
-  begin
-    (* Debug.trace_on := false; *)
-    (* Debug.devel_debug_on:= false; *)
-    silence_output:=true;
-    enable_count_stats:=false;
-    enable_time_stats:=false;
-    print_core:=false;
-    print_core_all:=false;
-    gen_baga_inv := true;
-    (* do_infer_inv := true; *)
-    lemma_gen_unsafe := true;
-    graph_norm := true;
-    smt_compete_mode:=true
-  end
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
@@ -1270,17 +1256,19 @@ let imply_timeout_limit = ref 3.
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
 
+
 let dis_bk ()=
   let _ = oc_simplify := true in
-  (* let _ = sat_timeout_limit:= 2. in *)
-  (* let _ = user_sat_timeout := false in *)
-  (* let _ = imply_timeout_limit := 3. in *)
+  let _ = sat_timeout_limit:= 2. in
+  let _ = user_sat_timeout := false in
+  let _ = imply_timeout_limit := 3. in
   let _ = en_slc_ps := false in
   ()
 
 let dis_inv_baga () = 
   print_endline_q "Disabling baga inv gen .."; 
-  let _ = gen_baga_inv := false in
+  (* let _ = gen_baga_inv := false in *)
+  let _ = gen_baga_inv_bk := false in
   (*baga bk*)
   let _ = dis_bk () in
   ()
@@ -1295,10 +1283,29 @@ let en_bk () =
 
 let en_inv_baga () =
   (* print_endline_q "Enabling baga inv gen .."; *)
-  let _ = gen_baga_inv := true in
+  (* let _ = gen_baga_inv := true in *)
+  let _ = gen_baga_inv_bk := true in
   (*baga bk*)
-  (* let _ = en_bk ()  in *)
+  let _ = en_bk ()  in
   ()
+
+let _ = if !smt_compete_mode then
+  begin
+    (* Debug.trace_on := false; *)
+    (* Debug.devel_debug_on:= false; *)
+    silence_output:=true;
+    enable_count_stats:=false;
+    enable_time_stats:=false;
+    print_core:=false;
+    print_core_all:=false;
+    (* gen_baga_inv := true; *)
+    en_inv_baga ();
+    (* do_infer_inv := true; *)
+    lemma_gen_unsafe := true;
+    graph_norm := true;
+    smt_compete_mode:=true
+  end
+
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
 (* let report_error2 (pos : loc) (msg : string) = *)
