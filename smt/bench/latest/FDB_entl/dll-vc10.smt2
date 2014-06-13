@@ -34,7 +34,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; unfolding at start of a circular dll(x,y,y,x)
 ;
 (assert
-    (and (distinct w_emp x_emp) (distinct w_emp t_emp)
+    (and (distinct w_emp x_emp) (distinct w_emp t_emp) (distinct y_emp w_emp)
     (tobool (ssep (pto w_emp (sref (ref next t_emp) (ref prev u_emp))) 
                   (dll x_emp u_emp y_emp w_emp)
                   (dll t_emp y_emp w_emp x_emp)

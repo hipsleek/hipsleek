@@ -76,8 +76,6 @@ if ($test_all) {
     "dll2-rev-entails-dll2.smt2",
     "dll2-spaghetti-existential.smt2",
     "dll2-spaghetti.smt2",
-    "elseg4_slk-6.smt2",
-    "elseg4_slk-7.smt2",
     "lsegex4_slk-1.smt2",
     "nlcl-vc05.smt2",
     "node-dll-rev-dll-entails-dll.smt2",
@@ -87,11 +85,8 @@ if ($test_all) {
     "tll-ravioli-existential.smt2",
     "tree-pp-entails-tree-pp-rev.smt2",
     "tree-pp-rev-entails-tree-pp.smt2",
-    "dll-vc02.smt2",
-    "dll-vc06.smt2",
     "dll-vc07.smt2",
     "dll-vc08.smt2",
-    "dll-vc11.smt2",
     "nlcl-vc05.smt2",
     "inconsistent-ls-of-ls.defs.smt2",
     
@@ -155,15 +150,16 @@ if ($test_all) {
     );
   } else {
     @test_files = (
-    "dll-vc01.smt2", "dll-vc03.smt2", "dll-vc04.smt2", "dll-vc05.smt2", 
+    "dll-vc01.smt2", "dll-vc02.smt2","dll-vc03.smt2",
+     "dll-vc04.smt2", "dll-vc05.smt2","dll-vc06.smt2",
       "dll-vc09.smt2", "dll-vc10.smt2", 
-     "dll-vc12.smt2", "dll-vc13.smt2",
+     "dll-vc11.smt2","dll-vc12.smt2", "dll-vc13.smt2",
     
     "nll-vc01.smt2", "nll-vc02.smt2", "nll-vc03.smt2", "nll-vc04.smt2", "nll-vc05.smt2", 
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
     "nll-vc11.smt2", "nll-vc12.smt2", "nll-vc13.smt2", "nll-vc14.smt2", "nll-vc15.smt2",
     "nll-vc16.smt2",
-    
+    "elseg4_slk-6.smt2", "elseg4_slk-7.smt2",
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
     "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"

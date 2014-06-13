@@ -95,7 +95,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
     let _ =
       if not !Globals.smt_compete_mode then
-      print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 then " -> " else " <- ")
+      print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 ||  lem_type = 3 then " -> " else " <- ")
     ^ (Cprinter.string_of_formula rf1))
       else ()
     in
@@ -109,10 +109,10 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       lhs_node lhsb rhs_node rhsb =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_h_formula in
-  Debug.no_4 "LEMSYN.gen_lemma" pr2 pr1 pr2 pr1 pr_none
-      (fun _ _ _ _ -> gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
+  Debug.no_5 "LEMSYN.gen_lemma" pr2 pr1 pr2 pr1 string_of_int pr_none
+      (fun _ _ _ _ _ -> gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
           lhs_node lhsb rhs_node rhsb)
-      lhs_node lhsb rhs_node rhsb
+      lhs_node lhsb rhs_node rhsb lem_type
 
 let add_ihprel iprog chp_dclrs=
   let rec process_one chps res=
