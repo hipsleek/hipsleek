@@ -2958,6 +2958,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   let pos = vdecl.view_pos in
   let vname = vdecl.view_name in
   let dname = vdecl.view_data_name in
+  let self_sv = CP.SpecVar (Named dname, self, Unprimed) in
   let _ = if (eq_str dname "") then (
     report_warning pos "compute_view_fw_bw: data name in view is empty";
   ) in
@@ -3115,73 +3116,59 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
             Debug.binfo_hprint (add_str "unfold_f" (!CF.print_formula)) f no_pos;
             let (hf,pf,_,_,_) = CF.split_components f in
             let eqs = MP.ptr_equations_without_null pf in
-            (* let core_ptrs = (                                                               *)
-            (*   let is_core_ptr hf = (match hf with                                           *)
-            (*     | CF.DataNode dn when (eq_str CF.h_formula_data_name dname) ->              *)
-            (*         [dn.CF.h_formula_data_node]                                             *)
-            (*     | _ -> []                                                                   *)
-            (*   ) in                                                                          *)
-            (*   CF.get_one_kind_heap is_core_ptr f                                            *)
-            (* ) in                                                                            *)
-            (* let core_nodes = (                                                              *)
-            (*   let is_core_ptr hf = (match hf with                                           *)
-            (*     | CF.DataNode dn when (eq_str CF.h_formula_data_name dname) -> true         *)
-            (*     | _ -> false                                                                *)
-            (*   ) in                                                                          *)
-            (*   CF.get_one_kind_heap is_core_ptr f                                            *)
-            (* ) in                                                                            *)
-            (* let first_node = (                                                              *)
-            (*   let is_self_node hf = (match hf with                                          *)
-            (*     | CF.DataNode {CF.h_formula_data_node = sv}                                 *)
-            (*     | CF.ViewNode {CF.h_formula_view_node = sv} ->                              *)
-            (*         let closure = CF.find_close [sv] eqs in                                 *)
-            (*         (CP.mem_svl self closure)                                               *)
-            (*     | _ -> false                                                                *)
-            (*   ) in                                                                          *)
-            (*   List.hd (CF.get_one_kind_heap is_self_node f)                                 *)
-            (* ) in                                                                            *)
-            (* let last_nodes = (                                                              *)
-            (*   (* find last node using forward fields, detecting from first node *)          *)
-            (*   let rec search_forward (fw_fields: ident list) (nodes: CP.spec_var list) = (  *)
-            (*     match nodes with                                                            *)
-            (*     | [] -> []                                                                  *)
-            (*     | node::rest ->                                                             *)
-            (*         match node with                                                         *)
-            (*         | DataNode dn when (eq_str dn.CF.h_formula_data_name dname) ->          *)
-            (*             let fw_ptrs = List.concat (List.map (fun fld ->                     *)
-            (*               List.concat (List.map2 (fun ((_,fld2),_) arg ->                   *)
-            (*                 if (eq_str fld fld2) then [arg]                                 *)
-            (*                 else []                                                         *)
-            (*               ) ddecl.data_fields dn.CF.h_formula_data_arguments)               *)
-            (*             ) fw_fields) in                                                     *)
-            (*             let fw_ptrs = CF.find_close fw_ptrs eqs in                          *)
-            (*             let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in                 *)
-            (*             if (fw_ptrs = []) then [dn.CF.h_formula_data_node]                  *)
-            (*             else                                                                *)
-            (*               let nodes = CP.remove_dups_svl (rest@fw_ptrs) in                  *)
-            (*               search_forward fw_fields nodes                                    *)
-            (*         | _ -> search_forward fw_fields rest                                    *)
-            (*   ) in                                                                          *)
-            (*   (* find last node using backward fields, detecting from last node *)          *)
-            (*   let rec search_backward (bw_fields: ident list) (nodes: CP.spec_var list) = ( *)
-            (*     match nodes with                                                            *)
-            (*     | [] -> []                                                                  *)
-            (*     | node::rest ->                                                             *)
-            (*         match node with                                                         *)
-            (*         | DataNode dn when (eq_str dn.CF.h_formula_data_name dname) ->          *)
-            (*             let bw_ptrs = List.concat (List.map (fun fld ->                     *)
-            (*               List.map (fun sv ->                                               *)
-            (*                 List.map2 (fun ((_,fld2),_) arg                                 *)
-            (*                 ) ddecl.data_fields dn.CF.h_formula_data_arguments              *)
-            (*               ) core_ptrs                                                       *)
-            (*             ) bw_fields) in                                                     *)
-            (*             let fw_ptrs = CF.find_close fw_ptrs eqs in                          *)
-            (*             let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in                 *)
-            (*             if (fw_ptrs = []) then [dn.CF.h_formula_data_node]                  *)
-            (*             else search_forward fw_fields (rest@fw_ptrs)                        *)
-            (*         | _ -> search_forward fw_fields rest                                    *)
-            (*   )                                                                             *)
-            (* )                                                                               *)
+            let self_closure = CF.find_close [self_sv] eqs in
+            let all_dnodes = CF.get_datas f in
+            let is_core_dnode dn = (eq_str dn.CF.h_formula_data_name dname) in
+            let core_dnodes = List.filter is_core_dnode all_dnodes in
+            let get_dptr dn = dn.CF.h_formula_data_node in
+            let core_ptrs = List.map get_dptr core_dnodes in
+            let is_first_node dnode = CP.mem_svl dnode.CF.h_formula_data_node self_closure in
+            let first_node = List.hd (List.filter is_first_node core_dnodes) in
+            let last_nodes = (
+              let get_dnode_field_value dnode field ddecl = (
+                List.hd (List.concat (List.map2 (fun ((_,fld),_) arg ->
+                  if (eq_str fld field) then [arg] else []
+                ) ddecl.data_fields dnode.CF.h_formula_data_arguments))
+              ) in
+              (* find last node using forward fields, detecting from first ptr *)
+              let rec search_forward (fw_fields: ident list) (nodes: CF.h_formula_data list) = (
+                match nodes with
+                | [] -> []
+                | node::rest ->
+                    if (is_core_dnode node) then
+                      let fw_ptrs = List.map (fun fld ->
+                        get_dnode_field_value node fld ddecl
+                      )fw_fields in
+                      let fw_ptrs = CF.find_close fw_ptrs eqs in
+                      let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
+                      (* if it points to outsides, then it's last node *)
+                      if (fw_ptrs = []) then [node.CF.h_formula_data_node]
+                      else
+                        let is_fw_node node = CP.mem_svl node.CF.h_formula_data_node fw_ptrs in
+                        let fw_nodes = List.filter is_fw_node core_dnodes in
+                        search_forward fw_fields (rest@fw_nodes)
+                    else search_forward fw_fields rest
+              ) in
+              (* find last node using backward fields, detecting from last node *)
+              let rec search_backward (bw_fields: ident list) (nodes: CF.h_formula_data list) = (
+                match nodes with
+                | [] -> []
+                | node::rest ->
+                    if (is_core_dnode node) then
+                      let node_closure = CF.find_close [node.CF.h_formula_data_node] eqs in
+                      let bw_nodes = List.concat (List.map (fun fld ->
+                        List.concat (List.map (fun dn ->
+                          let ptr = get_dnode_field_value dn fld ddecl in
+                          if (CP.mem_svl ptr node_closure) then [dn]
+                          else []
+                        ) core_dnodes)
+                      ) bw_fields) in
+                      if (bw_nodes = []) then [node.CF.h_formula_data_node]
+                      else search_backward bw_fields (bw_nodes@rest)
+                    else search_backward bw_fields rest
+              ) in
+              (search_forward !fwf [first_node]) @ (search_backward !bwf [first_node])
+            ) in
             (* find forward, backward field from branch formula *)
             let collect_field f sv dname = (
               let (hf,pf,_,_,_) = CF.split_components f in

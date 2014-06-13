@@ -5909,8 +5909,7 @@ let get_dnodes (f: formula) =
       | DataNode dn -> [hf]
       | _ -> []
   in
-  let dns = get_one_kind_heap get_dn f in
-  dns
+  get_one_kind_heap get_dn f
 
 let get_dptrs_x (f: formula) =
   let get_data_ptr hf=
