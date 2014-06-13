@@ -3044,16 +3044,15 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
             (* find forward, backward info from head and body node *)
             let head_ptrs = get_residents head_node vdecl in
             let body_ptrs = get_residents body_node vdecl in
-            Debug.binfo_hprint (add_str "head_node" !CF.print_h_formula) head_node no_pos;
-            Debug.binfo_hprint (add_str "body_node" !CF.print_h_formula) body_node no_pos;
-            Debug.binfo_hprint (add_str "head_ptrs" (pr_list !CP.print_sv)) head_ptrs no_pos;
-            Debug.binfo_hprint (add_str "body_ptrs" (pr_list !CP.print_sv)) body_ptrs no_pos;
+            Debug.ninfo_hprint (add_str "head_node" !CF.print_h_formula) head_node no_pos;
+            Debug.ninfo_hprint (add_str "body_node" !CF.print_h_formula) body_node no_pos;
+            Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !CP.print_sv)) head_ptrs no_pos;
+            Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !CP.print_sv)) body_ptrs no_pos;
             let fw_vars = List.filter (fun sv ->
               let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv] 1 in
               let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
               (List.length rch_ptrs > 0)
             ) head_ptrs in
-            Debug.binfo_hprint (add_str "fw_vars" (pr_list !CP.print_sv)) fw_vars no_pos;
             List.iter (fun sv ->
               match head_node with
               | CF.ViewNode vn -> 
@@ -3079,7 +3078,6 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
               let rch_ptrs = CP.intersect_svl rch_ptrs head_ptrs in
               (List.length rch_ptrs > 0)
             ) body_ptrs in
-            Debug.binfo_hprint (add_str "bw_vars" (pr_list !CP.print_sv)) bw_vars no_pos;
             List.iter (fun sv ->
               match body_node with
               | CF.ViewNode vn ->
