@@ -2044,11 +2044,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_touching = false;           (* temporarily assigned *)
           C.view_is_segmented = false;          (* temporarily assigned *)
           C.view_is_tail_recursive = false;     (* temporarily assigned *)
+          C.view_residents = [];
           C.view_forward_ptrs = [];
           C.view_forward_fields = [];
           C.view_backward_ptrs = [];
           C.view_backward_fields = [];
-          C.view_aux_formula = [];
           C.view_kind = view_kind;
           C.view_type_of_self = vdef.I.view_type_of_self;
           C.view_prop_extns = view_prop_extns;

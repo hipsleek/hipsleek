@@ -672,7 +672,7 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   List.fold_left (fun x y -> x@(helper y)) [] m
 
 
-let find_close svl0 eqs0=
+let find_close svl0 eqs0 =
   let rec find_match svl ls_eqs rem_eqs=
     match ls_eqs with
       | [] -> svl,rem_eqs

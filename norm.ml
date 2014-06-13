@@ -472,7 +472,10 @@ let norm_extract_common iprog cprog cviews sel_vns=
 let cont_para_analysis_view cprog vdef other_vds=
   (* cont paras are the paras that are
      - reachable from self
-     - not defined in inductive branch
+     - not defined in inductive branch 
+      (from Trung:
+        + the "not defined" condition is incorrect for tail predicate, eg. tail-dll
+        + relax to not_null condition? )
   *)
   let self_sv = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) in
   let process_branch_x vname args f=
@@ -481,7 +484,9 @@ let cont_para_analysis_view cprog vdef other_vds=
       let _, reach_dns, reach_vns = look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
       let ( _,mix_f,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
-      let rec_vns, other_vns = List.partition (fun vn -> String.compare vn.CF.h_formula_view_name vname = 0) vns in
+      let rec_vns, other_vns = List.partition (fun vn ->
+        String.compare vn.CF.h_formula_view_name vname = 0
+      ) vns in
       (*cont paras are para not changed, just forwarded*)
       (* let cont_paras = List.fold_left (fun cur_cont_paras vn -> *)
       (*     let closed_rec_args = if eqs = [] then vn.CF.h_formula_view_arguments else *)
@@ -490,12 +495,24 @@ let cont_para_analysis_view cprog vdef other_vds=
       (*     CP.intersect_svl cur_cont_paras closed_rec_args *)
       (* ) args rec_vns *)
       (* in *)
-      let root_dn_svl, para_dn_svl = List.fold_left (fun (r1,r2) dn -> (r1@[dn.CF.h_formula_data_node], r2@dn.CF.h_formula_data_arguments) ) ([],[]) reach_dns in
-      let root_vn_svl, para_vn_svl = List.fold_left (fun (r1,r2) vn -> (r1@[vn.CF.h_formula_view_node], r2@vn.CF.h_formula_view_arguments) ) ([],[]) reach_vns in
+      let root_dn_svl, para_dn_svl = List.fold_left (fun (r1,r2) dn ->
+        (r1@[dn.CF.h_formula_data_node], r2@dn.CF.h_formula_data_arguments) 
+      ) ([],[]) reach_dns in
+      let root_vn_svl, para_vn_svl = List.fold_left (fun (r1,r2) vn ->
+        (r1@[vn.CF.h_formula_view_node], r2@vn.CF.h_formula_view_arguments)
+      ) ([],[]) reach_vns in
       let null_svls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_f) ) in
-      let defined_svl = CF.find_close (root_dn_svl@root_vn_svl@null_svls) eqs in
+      (* let defined_svl = CF.find_close (root_dn_svl@root_vn_svl@null_svls) eqs in *)
+      let defined_svl = CF.find_close (null_svls) eqs in
       let cont_svl = CP.diff_svl ( CF.find_close (para_dn_svl@para_vn_svl) eqs) defined_svl in
-      CP.intersect_svl args  cont_svl
+      let cont_vars = CP.intersect_svl args  cont_svl in
+      Debug.ninfo_hprint (add_str "root_dn_svl" (pr_list !CP.print_sv)) root_dn_svl no_pos;
+      Debug.ninfo_hprint (add_str "root_vn_svl" (pr_list !CP.print_sv)) root_vn_svl no_pos;
+      Debug.ninfo_hprint (add_str "null_svls" (pr_list !CP.print_sv)) null_svls no_pos;
+      Debug.ninfo_hprint (add_str "defined_svl" (pr_list !CP.print_sv)) defined_svl no_pos;
+      Debug.ninfo_hprint (add_str "cont_svl" (pr_list !CP.print_sv)) cont_svl no_pos;
+      Debug.ninfo_hprint (add_str "cont_vars" (pr_list !CP.print_sv)) cont_vars no_pos;
+      cont_vars
       (* process other_vns*)
       (* try *)
       (*   let cont_paras1 = List.fold_left (fun cur_cont_paras vn -> *)
@@ -900,7 +917,6 @@ let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
     let f1 = map_l_fst (fun f -> convert_formula_to_linear vdef f) f0 in
     {vd with
         (* C.view_is_tail_recursive = false; *)
-        (* view_aux_formula : (Cformula.formula * formula_label) list;  *)
         (* view_formula : F.struc_formula *)
         C.view_linear_formula = f1; 
         C.view_un_struc_formula = f1;

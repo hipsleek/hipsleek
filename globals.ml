@@ -63,6 +63,8 @@ and control_path_id = control_path_id_strict  option
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
+let eq_str s1 s2 = String.compare s1 s2 = 0
+
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
 let combine_lbl (i1,s1)(i2,s2) = match s1 with 
