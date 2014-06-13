@@ -13,6 +13,7 @@ use Cwd qw();
 use Try::Tiny;
 use Getopt::Long;
 use POSIX qw(:sys_wait_h);
+use Time::HiRes qw(gettimeofday);
 
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
@@ -32,17 +33,32 @@ my $timeout_count = 0;
 my $timeout_files = "";
 
 my $timeout = 0;
+my $total_time = 0;
 my $print_short;
+my $print_time;
 
 my $test_all;
 my $test_10s;
 my $test_fail;
+my $test_bench = "";
+my $test_name = "";
+
+sub println {
+  print $_[0];
+  if ($print_time) {
+    print " ($_[1] seconds)";
+  }
+  print "\n";
+}
   
 GetOptions (
   "all" => \$test_all,
   "fail" => \$test_fail,
   "over10" => \$test_10s,
+  "bench=s" => \$test_bench,
+  "test=s" => \$test_name,
   "tidy" => \$print_short,
+  "time" => \$print_time,
   "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
 
@@ -56,6 +72,16 @@ if ($test_all) {
     my @bench_files = <$bench/*.smt2>;
     push (@smt2_files, @bench_files);
   }
+} elsif ($test_bench ne "") {
+  if (-d "$test_path/$test_bench") {
+    my @bench_files = <$test_path/$test_bench/*.smt2>;
+    push (@smt2_files, @bench_files);
+  } else {
+    print "Benchmark $test_bench is not found.\n";
+  }
+} elsif ($test_name ne "") {
+  my @bench_files = <$test_path/*/*$test_name*.smt2>;
+  push (@smt2_files, @bench_files);
 } else {  
   my @test_files;
   if ($test_fail) {
@@ -65,7 +91,6 @@ if ($test_all) {
     "08.tst.smt2",
     "10.tst.smt2",
     "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
-    "22.tst.smt2",
     "dll-entails-dll0+.smt2",
      "dll-rev-entails-dll.smt2",
     "dll-entails-dll-rev.smt2",
@@ -76,10 +101,8 @@ if ($test_all) {
     "dll2-rev-entails-dll2.smt2",
     "dll2-spaghetti-existential.smt2",
     "dll2-spaghetti.smt2",
-    "lsegex4_slk-1.smt2",
     "nlcl-vc05.smt2",
     "node-dll-rev-dll-entails-dll.smt2",
-    "odd-lseg3_slk-5.smt2",
     "tll-pp-entails-tll-pp-rev.smt2",
     "tll-pp-rev-entails-tll-pp.smt2",
     "tll-ravioli-existential.smt2",
@@ -159,7 +182,7 @@ if ($test_all) {
     "nll-vc06.smt2", "nll-vc07.smt2", "nll-vc08.smt2", "nll-vc09.smt2", "nll-vc10.smt2",
     "nll-vc11.smt2", "nll-vc12.smt2", "nll-vc13.smt2", "nll-vc14.smt2", "nll-vc15.smt2",
     "nll-vc16.smt2",
-    "elseg4_slk-6.smt2", "elseg4_slk-7.smt2",
+    "elseg4_slk-6.smt2", "elseg4_slk-7.smt2","lsegex4_slk-1.smt2","odd-lseg3_slk-5.smt2",
     "skl2-vc01.smt2", "skl2-vc02.smt2", "skl2-vc03.smt2", "skl2-vc04.smt2",
     "skl3-vc01.smt2", "skl3-vc02.smt2", "skl3-vc03.smt2", #"skl3-vc04.smt2", "skl3-vc05.smt2",
     #"skl3-vc06.smt2", "skl3-vc07.smt2", "skl3-vc08.smt2", "skl3-vc09.smt2", "skl3-vc10.smt2"
@@ -250,6 +273,7 @@ if ($test_all) {
     "18.tst.smt2",
     #"21.tst.smt2",
     "20.tst.smt2",
+     "22.tst.smt2",
     );
   }
   foreach my $test_file (@test_files) {
@@ -290,6 +314,8 @@ foreach my $smt2_file (@smt2_files) {
   my $smt2_name = basename($slk_file, ".slk");
   my $output = "";
   print " $rel_path: ";
+  my $start_time;
+  my $end_time;
   if ($timeout > 0) {
     #try {
     #  local $SIG{ALRM} = sub { die "alarm\n" };
@@ -305,7 +331,9 @@ foreach my $smt2_file (@smt2_files) {
       try {
         local $SIG{ALRM} = sub {kill 9, -$pid; die "TIMEOUT!\n"};
         alarm($timeout);
+        $start_time = gettimeofday();
         waitpid($pid, 0);
+        $end_time = gettimeofday();
         alarm(0);
         close(WRITEME);
         while (<README>) {
@@ -314,6 +342,7 @@ foreach my $smt2_file (@smt2_files) {
         close(README);
       } catch {
         die $_ unless $_ eq "TIMEOUT!\n";
+        $end_time = gettimeofday();
         $output = "timeout";
       }
     } else { # Child
@@ -326,24 +355,26 @@ foreach my $smt2_file (@smt2_files) {
       exit(0);
     }
   } else { # No timeout setting
+    $start_time = gettimeofday();
     $output = `$sleek $tmp_dir/$smt2_name.slk --smt-compete-test 2>&1`;
+    $end_time = gettimeofday();
   }
   
+  my $diff = $end_time - $start_time;
+  $total_time += $diff;
   if ($output =~ "Unexpected") {
-    print "Unexpected";
-    
     if ($output =~ "UNSAT") {
-      print ": UNSOUND\n";
+      println("Unexpected: UNSOUND", $diff);
       $unsound_count++;
       $unsound_files = $unsound_files . $rel_path . "\n";
     } else {
-      print "\n";
+      println("Unexpected", $diff);
     }
     
     $unexpected_count++;
     $unexpected_files = $unexpected_files . $rel_path . "\n";
   } elsif ($output eq "timeout") {
-    print "Timeout\n";
+    println("Timeout", $diff);
       
     $timeout_count++;
     $timeout_files = $timeout_files . $rel_path . "\n";
@@ -361,7 +392,7 @@ foreach my $smt2_file (@smt2_files) {
     $error_count++;
     $error_files = $error_files . "$rel_path: $error\n";
   } else {
-    print "OK\n";
+    println("OK", $diff);
   }
 }
 
@@ -386,5 +417,9 @@ if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
     print "\nTotal number of timeout files: $timeout_count in:\n$timeout_files\n";
   }
 } else {
-  print "\n All test results were as expected.\n";
+  print "\nAll test results were as expected.\n";
+}
+
+if ($print_time) {
+  print "Total: $total_time (s).\n";
 }

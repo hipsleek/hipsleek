@@ -10,6 +10,30 @@ module C = Cast
 module I = Iast
 module TP = Tpdispatcher
 
+
+let rec get_pos_x ls n sv=
+  match ls with
+    | [] -> report_error no_pos "sau.get_pos: impossible 1"
+    | sv1::rest -> if CP.eq_spec_var sv sv1 then n
+      else get_pos_x rest (n+1) sv
+
+let get_pos ls n sv=
+  let pr1 = !CP.print_svl in
+  Debug.no_3 "sau.get_pos" pr1 string_of_int !CP.print_sv string_of_int
+      (fun _ _ _ -> get_pos_x ls n sv)
+      ls n sv
+
+let rec retrieve_args_from_locs_helper args locs index res=
+  match args with
+    | [] -> res
+    | a::ss -> if List.mem index locs then
+          retrieve_args_from_locs_helper ss locs (index+1) (res@[a])
+        else retrieve_args_from_locs_helper ss locs (index+1) res
+
+let retrieve_args_from_locs args locs=
+  retrieve_args_from_locs_helper args locs 0 []
+
+
 let rec is_empty_heap_f f0=
   let rec helper f=
     match f with
@@ -867,9 +891,10 @@ let check_separation_unsat f0=
       (fun _ -> check_separation_unsat f0)
       f0
 
-let check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
+let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   (* rhs is is_tail_recursive, lhs is non tail rec form*)
    (****************************)
+  let tp_imply ante conseq  = Tpdispatcher.imply_raw ante conseq in
   let rec is_horm_h_formula_x hfs1 hfs2 =
     match hfs1,hfs2 with
       | [],[] -> true
@@ -913,26 +938,29 @@ let check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_re
       | [rvn] ->
             let rvdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
             let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
+            let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
             let rec_def_heaps = List.fold_left (fun r (f,_) ->
                 let views = Cformula.get_views f in
                 if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
                   let hfs = heaps_of_formula [self_sv] f in
-                  r@[hfs]
+                  let pure = get_pure (subst sst f) in
+                  r@[(pure, hfs)]
                 else r
             ) [] rvdcl.Cast.view_un_struc_formula in
+            let rhs_pure = get_pure rhs in
             let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in
-            if List.exists (fun hfs -> (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
+            if List.exists (fun (br_pure,hfs) -> (tp_imply rhs_pure br_pure) && (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
               3 (* gen -> lemma: right lemma application is not working properly.
                    todo: should be <- *)
             else -1
       | _ -> -1
 
-let check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
+let check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   let pr1 vn = !print_h_formula (ViewNode vn) in
   let pr2 dn = !print_h_formula (DataNode dn) in
   Debug.no_4 "check_tail_rec_rec_lemma" (pr_list pr2) (pr_list pr1)
       (pr_list pr2) (pr_list pr1) string_of_int
-      (fun _ _ _ _ -> check_tail_rec_rec_lemma_x prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns) l_reach_dns l_reach_vns r_reach_dns r_reach_vns
+      (fun _ _ _ _ -> check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns) l_reach_dns l_reach_vns r_reach_dns r_reach_vns
 
 (*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
 let poss_prune_pred_x prog vnode f=
@@ -970,7 +998,7 @@ let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
       if lvlength = rvlength then
         if (lnlength != rnlength) then
           if lvlength = rvlength then
-            let lem_type =  check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+            let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
             if lem_type = -1 then 0 else lem_type
           else 0
         else
@@ -1030,7 +1058,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
       1 (* gen <- lemma *)
     else
       (* rhs is is_tail_recursive, lhs is non tail rec form*)
-      check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns
+      check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns
       (* if r_reach_dns != [] then -1 else *)
       (* match r_reach_vns with *)
       (*   | [rvn] -> *)
@@ -1082,7 +1110,7 @@ let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
     if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
       0
     else
-       let lem_type =  check_tail_rec_rec_lemma prog lhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+       let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
        lem_type
 
 let need_cycle_checkpoint_unfold prog lvnode lhs rdnode rhs=

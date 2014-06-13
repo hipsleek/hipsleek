@@ -1467,16 +1467,151 @@ let generate_view_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_d
   Debug.no_1 "generate_view_lemmas" pr_v pr_out
       (fun _ -> generate_view_lemmas_x vd iprog cprog) vd
 
+let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  let vpos = vd.C.view_pos in
+  let vname = vd.C.view_name in
+  let dname = vd.C.view_data_name in
+  if (String.compare dname "" = 0) then [] else
+  let _ = Debug.ninfo_hprint (add_str "dname" pr_id) dname no_pos in
+  (* let ddecl = I.look_up_data_def_raw iprog.I.prog_data_decls dname in *)
+  (*********************************************)
+  let str_cmp s1 s2 = String.compare s1 s2 = 0 in
+  let rec get_dfield_pos ls n sv=
+  match ls with
+    | [] -> raise Not_found
+    | ((_,sv1),_)::rest -> if str_cmp sv sv1 then n
+      else get_dfield_pos rest (n+1) sv
+  in
+  let find_pos (view_fwd_para, (ddcl, data_fwd_fname) )=
+    try
+      let view_fwd_para_pos = Cfutil.get_pos vd.view_vars 0 view_fwd_para in
+      let data_fwd_fname_pos =  get_dfield_pos ddcl.Cast.data_fields 0 data_fwd_fname in
+      [(view_fwd_para, view_fwd_para_pos, (ddcl, data_fwd_fname),data_fwd_fname_pos )]
+    with _ -> []
+  in
+  let rec look_up_fwd_ptr_pos pr_fwd_ptrs_pos fwd_dname=
+    match pr_fwd_ptrs_pos with
+      | (_, para_pos, (ddcl, _),fname_pos )::rest ->
+            if str_cmp ddcl.Cast.data_name fwd_dname then (para_pos, fname_pos) else
+              look_up_fwd_ptr_pos rest fwd_dname
+      | [] -> raise Not_found
+  in
+  let gen_sst_4_exchange_sv (sv1,sv2)=
+    let fr_sv = CP.fresh_spec_var sv1 in
+    [(sv1,fr_sv);(sv2,sv1);(fr_sv,sv2)]
+  in
+  let subst_sv_one_seq sst sv0=
+    List.fold_left (fun sv ss -> CP.subs_one [ss] sv) sv0 sst
+  in
+  let cp_subst_seq sst p0=
+    List.fold_left (fun p ss -> CP.subst [ss] p) p0 sst
+  in
+  let subst_list_var_seq sst svl= List.map (subst_sv_one_seq sst) svl
+  in
+  let subst_h_root sst hf=
+    match hf with
+      | CF.DataNode hn ->
+            CF.DataNode {hn with h_formula_data_node = subst_sv_one_seq sst hn.CF.h_formula_data_node }
+      | CF.ViewNode hv -> CF.ViewNode {hv with h_formula_view_node = subst_sv_one_seq sst hv.CF.h_formula_view_node}
+      | _ -> hf
+  in
+  let subst_h_args sst hf=
+    match hf with
+      | CF.DataNode hn -> CF.DataNode {hn with h_formula_data_arguments = subst_list_var_seq sst hn.CF.h_formula_data_arguments}
+      | CF.ViewNode hv -> CF.ViewNode {hv with h_formula_view_arguments = subst_list_var_seq sst hv.CF.h_formula_view_arguments}
+      | _ -> hf
+  in
+  let gen_view_formula vdcl=
+    let self_sv = CP.SpecVar (Named vdcl.Cast.view_data_name ,self, Unprimed) in
+    let vnode = CF.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
+     CF.formula_of_heap vnode no_pos
+  in
+  let self_sv = CP.SpecVar (Named vd.Cast.view_data_name ,self, Unprimed) in
+  let view_f =  gen_view_formula vd in
+  let rev_order pr_fwd_ptrs_pos (f,p)=
+    let _ = Debug.ninfo_hprint (add_str "f" Cprinter.prtt_string_of_formula) f no_pos in
+    let hds, hvs,_ = CF.get_hp_rel_formula f in
+    (****support one view one data node. to extend****)
+    match hds, hvs with
+      | [hd],[hv] -> begin
+          if str_cmp hd.CF.h_formula_data_name dname && str_cmp hv.CF.h_formula_view_name vname then
+            try
+              let view_fwd_para_pos, data_fwd_f_pos = look_up_fwd_ptr_pos pr_fwd_ptrs_pos hd.CF.h_formula_data_name in
+              (* get para sv from view_fwd_para_pos *)
+              let view_fwd_ptrs = Cfutil.retrieve_args_from_locs hv.CF.h_formula_view_arguments [view_fwd_para_pos] in
+              (* get field sv from data_fwd_f_pos *)
+              let dfield_fwd_ptrs = Cfutil.retrieve_args_from_locs hd.CF.h_formula_data_arguments [data_fwd_f_pos] in
+              (* exchange root and fwd ptrs of hd, hv *)
+              let sst_root = gen_sst_4_exchange_sv (hv.CF.h_formula_view_node, hd.CF.h_formula_data_node) in
+              let sst_args = List.fold_left (fun r pr_sv -> r@(gen_sst_4_exchange_sv pr_sv)) [] ((List.combine view_fwd_ptrs dfield_fwd_ptrs)) in
+              let rev_f0 = CF.formula_trans_heap_node (subst_h_root sst_root) f in
+              let _ = Debug.ninfo_hprint (add_str "rev_f0" Cprinter.prtt_string_of_formula) rev_f0 no_pos in
+              let rev_f1 = CF.formula_trans_heap_node (subst_h_args sst_args) rev_f0 in
+              let _ = Debug.ninfo_hprint (add_str "rev_f1" Cprinter.prtt_string_of_formula) rev_f1 no_pos in
+              [(rev_f1,p)]
+            with _ -> []
+          else []
+        end
+      | _ -> []
+  in
+  (********************************************)
+  let view_args = self_sv::vd.Cast.view_vars in
+  let processed_brs = List.map (fun (f, lbl) ->
+      let f1 = CF.elim_exists f in
+      let _,new_f = CF.split_quantifiers f1 in
+      (* let p,_,_ = Cvutil.xpure_symbolic 20 cprog new_f in *)
+      let p = CF.get_pure new_f in
+      let p1 = CP.filter_var  p view_args in
+    (new_f, p1)
+  ) vd.C.view_un_struc_formula in
+  let base_brs, indc_brs = List.partition(fun (f,p) ->
+      let views = CF.get_views f in
+      List.for_all (fun vn -> String.compare vname vn.CF.h_formula_view_name != 0) views
+  ) processed_brs in
+  if  base_brs = [] || indc_brs = [] || not vd.Cast.view_is_segmented
+     (* retrict for one fwd ptr. to extend *)
+    || List.length vd.Cast.view_forward_fields != 1
+    (* not support backward yet. to extend *)
+    || vd.Cast.view_backward_fields != []
+  then [] else begin
+    let lemma_name = "rev" in
+    let pr_fwd_ptrs = List.combine vd.Cast.view_forward_ptrs vd.Cast.view_forward_fields in
+    let pr_fwd_ptrs_pos = List.fold_left (fun r pr -> r@(find_pos pr)) [] pr_fwd_ptrs in
+    let rev_indc_brs = List.fold_left (fun r (f,p) ->
+        let rev_fs = rev_order pr_fwd_ptrs_pos (f,p) in
+        r@rev_fs
+    ) [] indc_brs in
+    let i_coers = List.fold_left (fun r (f,p) ->
+        let ihd = Rev_ast.rev_trans_formula (CF.mkAnd_pure view_f (Mcpure.mix_of_pure p) vpos) in
+        let ibody = Rev_ast.rev_trans_formula f in
+        let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_SAFE LEM_GEN I.Left [] ihd ibody in
+        r@[l_coer]
+    ) [] rev_indc_brs in
+    i_coers
+  end
+
+let generate_view_rev_rec_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
+    : (I.coercion_decl list) =
+  let pr_v = !C.print_view_decl in
+  let pr_out = pr_list Iprinter.string_of_coerc_decl in
+  Debug.no_1 "generate_view_rev_rec_lemmas" pr_v pr_out
+      (fun _ -> generate_view_rev_rec_lemmas_x vd iprog cprog) vd
+
 let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     : unit =
   let lemmas = List.concat (List.map (fun vd ->
     (* generate_lemma vd iprog cprog *)
     generate_view_lemmas vd iprog cprog
   ) cprog.C.prog_view_decls) in
+  let rev_rec_lemmas = List.concat (List.map (fun vd ->
+      generate_view_rev_rec_lemmas vd iprog cprog
+  ) cprog.C.prog_view_decls) in
+  let gen_lemmas = lemmas@rev_rec_lemmas in
   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then
-    let _ = manage_unsafe_lemmas lemmas iprog cprog in ()
+    let _ = manage_unsafe_lemmas (gen_lemmas) iprog cprog in ()
   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then
-    let _ = manage_safe_lemmas lemmas iprog cprog in ()
+    let _ = manage_safe_lemmas gen_lemmas iprog cprog in ()
   else ();
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
      "    " ^ (Cprinter.string_of_coerc_med lem)

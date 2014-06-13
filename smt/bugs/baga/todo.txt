@@ -68,7 +68,67 @@ bug in /smt/bugs/baga/succ-circuit06.defs.smt2.slk:
 still run too slow.
 
 ====================================
+# solver.ml
+
+1. check baga fixpoint first which is using syntactic imply
+2. if new baga correct, change below for performance
+
+for using syntactic unsat, need to invoke EPureN ..
+
+(* TODO:EXPURE : need to invoke syn UNSAT ofr --inv-baga *)
+and unsat_base_x prog (sat_subno:  int ref) f  : bool=
+  let tp_call_wrapper npf = 
+
+need to build and use syntactic imply below
+      (* TODO-EXPURE : need to build new expure stuff *)
+      let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
+      let split_ante0, new_conseq0 = 
+        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
+        else xx
+
+          (* TODO-EXPURE - need to use syntactic imply & move upwards *)
+          if !Globals.gen_baga_inv then
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+          else 
+            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+
 ====================================
+# cpure.ml & expure.ml
+
+We need to make baga modular so it is easy to switch between the
+two versions. We need to add similar methods to EPURE and EPUREN
+to make this happen. The three places are:
+
+cprinter.ml
+---------
+(* new EPURE *)
+let string_of_ef_pure = pr_triple (add_str "BAGA" P.string_of_spec_var_list) (add_str "EQ" P.EMapSV.string_of) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
+
+(* old EPURE *)
+let string_of_ef_pure = pr_pair (add_str "BAGA" P.string_of_spec_var_list) (add_str "pure" string_of_pure_formula)
+
+cpure.ml
+--------
+(* TODO : this is an abstract type that should not be exposed *)
+(* 
+   type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list) 
+*)
+(* old extended pure formula *)
+type ef_pure = (spec_var list * formula )
+
+expure.ml
+---------
+(* module EPureI = EPUREN(SV) *)
+module EPureI = EPURE(SV)
+
+Since it is already working for EPUREN,
+let us make the thing compile and run using EPURE.
+For a start, I have added the following methods to
+both EPURE and EPUREN but they have not been tested.
+
+  (* TODO *)
+  let subst_epure sst ((baga,f) as ep) = ep
+
 ====================================
 ====================================
 ====================================
