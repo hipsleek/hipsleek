@@ -7,6 +7,12 @@ pred lseg<p:node> ==
  self = p
 or (exists a: self::node<nxt = a> * a::lseg<p>).
 
+/*
+pred rlseg<p:node> ==
+ self = p
+or (exists a: a::node<nxt = p> * self::rlseg<p>).
+*/
+
 pred right1<p:node> ==
 (exists u: self::lseg<u> * u::node<nxt = p>).
 

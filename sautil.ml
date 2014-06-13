@@ -185,17 +185,19 @@ let rec is_only_xpure_f f=
                      CF.is_unknown_f base1
     | _ -> report_error no_pos "SAU.is_only_xpure_f: not handle yet"
 
-let rec get_pos_x ls n sv=
-  match ls with
-    | [] -> report_error no_pos "sau.get_pos: impossible 1"
-    | sv1::rest -> if CP.eq_spec_var sv sv1 then n
-      else get_pos_x rest (n+1) sv
+(* let rec get_pos_x ls n sv= *)
+(*   match ls with *)
+(*     | [] -> report_error no_pos "sau.get_pos: impossible 1" *)
+(*     | sv1::rest -> if CP.eq_spec_var sv sv1 then n *)
+(*       else get_pos_x rest (n+1) sv *)
 
-let get_pos ls n sv=
-  let pr1 = !CP.print_svl in
-  Debug.no_3 "sau.get_pos" pr1 string_of_int !CP.print_sv string_of_int
-      (fun _ _ _ -> get_pos_x ls n sv)
-      ls n sv
+(* let get_pos ls n sv= *)
+(*   let pr1 = !CP.print_svl in *)
+(*   Debug.no_3 "sau.get_pos" pr1 string_of_int !CP.print_sv string_of_int *)
+(*       (fun _ _ _ -> get_pos_x ls n sv) *)
+(*       ls n sv *)
+
+let get_pos ls n sv= Cfutil.get_pos ls n sv
 
 let rec get_all_locs_helper ls n svl res=
   match ls with
@@ -207,15 +209,15 @@ let rec get_all_locs_helper ls n svl res=
 let get_all_locs ls need_svl = get_all_locs_helper ls 0 need_svl []
 
 (*for drop hp args*)
-let rec retrieve_args_from_locs_helper args locs index res=
-  match args with
-    | [] -> res
-    | a::ss -> if List.mem index locs then
-          retrieve_args_from_locs_helper ss locs (index+1) (res@[a])
-        else retrieve_args_from_locs_helper ss locs (index+1) res
+(* let rec retrieve_args_from_locs_helper args locs index res= *)
+(*   match args with *)
+(*     | [] -> res *)
+(*     | a::ss -> if List.mem index locs then *)
+(*           retrieve_args_from_locs_helper ss locs (index+1) (res@[a]) *)
+(*         else retrieve_args_from_locs_helper ss locs (index+1) res *)
 
-let retrieve_args_from_locs args locs=
-  retrieve_args_from_locs_helper args locs 0 []
+let retrieve_args_from_locs args locs= Cfutil.retrieve_args_from_locs args locs
+  (* retrieve_args_from_locs_helper args locs 0 [] *)
 
 let eq_spec_var_order_list = CP.eq_spec_var_order_list
   (* match l1,l2 with *)
