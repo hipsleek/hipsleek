@@ -32,7 +32,7 @@ http://www.liafa.univ-paris-diderot.fr/spen
 ; unfolding at start of dll(x,y,nil,z)
 ;
 (assert
-    (and (distinct x_emp w_emp)
+    (and (distinct x_emp w_emp) (distinct x_emp z_emp)
     (tobool (ssep (pto x_emp (sref (ref next w_emp) (ref prev nil))) 
                   (dll w_emp y_emp x_emp z_emp)
             )
