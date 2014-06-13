@@ -1837,41 +1837,33 @@ let crop_h_formula_x (f: h_formula) (svl: CP.spec_var list):
     let rh1, nh1 = f h1 in
     let rh2, nh2 = f h2 in
     let rh = rh1@rh2 in
-    (rh, nh1, nh2) in
+    let merge =
+      match nh1, nh2 with
+        | Some h0, None
+        | None, Some h0      -> (true, (h0, HEmp))
+        | Some nh1, Some nh2 -> (false, (nh1,nh2))
+        | _                  -> (true, (HEmp, HEmp))
+    in
+    (rh, merge) in
   let rec helper f =
     match f with
       | CF.Star h      ->
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 helper in
-            let nh = CF.Star{h with h_formula_star_h1 = nh1; h_formula_star_h2 = nh2;} in
-            (rh, nh)
-      | CF.Conj h      -> 
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 helper in
-            let nh = CF.Conj {h with h_formula_conj_h1 = nh1; h_formula_conj_h2 = nh2;} in
-            (rh, nh)
-      | CF.ConjStar h  ->
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 helper in
-            let nh = CF.ConjStar{h with h_formula_conjstar_h1 = nh1; h_formula_conjstar_h2 = nh2;} in
-            (rh, nh)
-      | CF.ConjConj h  ->
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 helper in
-            let nh = CF.ConjConj{h with h_formula_conjconj_h1 = nh1; h_formula_conjconj_h2 = nh2;} in
-            (rh, nh)
-      | CF.Phase h     ->
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw helper in
-            let nh = CF.Phase{h with h_formula_phase_rd = nh1; h_formula_phase_rw = nh2;} in
-            (rh, nh)
-      | CF.StarMinus h ->
-            let rh, nh1,nh2 = helper_remove h.CF.h_formula_starminus_h1 h.CF.h_formula_starminus_h2 helper in
-            let nh = CF.StarMinus{h with h_formula_starminus_h1 = nh1; h_formula_starminus_h2 = nh2;} in
-            (rh, nh)
+            let rh, (merge,(nh1,nh2)) = helper_remove h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 helper in
+            let nh = if not(merge) then CF.Star{h with h_formula_star_h1 = nh1; h_formula_star_h2 = nh2;} else nh1 in
+            (rh, Some nh)
       | CF.DataNode   ({h_formula_data_node = n})
       | CF.ViewNode   ({h_formula_view_node = n})
       | CF.ThreadNode ({h_formula_thread_node = n}) ->
-            let rh, nh = if Gen.BList.mem_eq CP.eq_spec_var n svl then ([f],CF.HEmp) else ([], f) in
+            let rh, nh = if Gen.BList.mem_eq CP.eq_spec_var n svl then ([f], None) else ([], Some f) in
             (rh, nh)
-      | _ ->  ([], f)
+      | _ ->  ([], Some f)
   in
-  helper f
+  let res = helper f in
+  let new_h = 
+    match snd res with
+      | Some h -> (fst res, h)
+      | None   -> (fst res, HEmp)
+  in new_h
 
 let crop_h_formula (f: h_formula) (svl: CP.spec_var list): 
       (* removed node & new_h_formula *)

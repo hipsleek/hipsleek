@@ -126,6 +126,7 @@ and view_decl = {
     (* if view has only a single eqn, then place complex subpart into complex_inv *)
     view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+    view_linear_formula : (Cformula.formula * formula_label) list ;
     view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
     view_prune_branches: formula_label list; (* all the branches of a view *)
     view_is_rec : bool;
