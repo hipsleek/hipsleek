@@ -1212,7 +1212,7 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
-let gen_baga_inv_bk = ref false
+let pred_sat = ref false
 let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
@@ -1256,6 +1256,10 @@ let imply_timeout_limit = ref 3.
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
 
+let dis_inv_baga () = 
+  print_endline_q "Disabling baga inv gen .."; 
+  let _ = gen_baga_inv := false in
+  ()
 
 let dis_bk ()=
   let _ = oc_simplify := true in
@@ -1268,7 +1272,7 @@ let dis_bk ()=
 let dis_pred_sat () = 
   print_endline_q "Disabling baga inv gen .."; 
   (* let _ = gen_baga_inv := false in *)
-  let _ = gen_baga_inv_bk := false in
+  let _ = pred_sat := false in
   (*baga bk*)
   let _ = dis_bk () in
   ()
@@ -1284,7 +1288,7 @@ let en_bk () =
 let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
   (* let _ = gen_baga_inv := true in *)
-  let _ = gen_baga_inv_bk := true in
+  let _ = pred_sat := true in
   (*baga bk*)
   let _ = en_bk ()  in
   ()

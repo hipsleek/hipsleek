@@ -579,7 +579,7 @@ let convert_data_and_pred_to_cast_x () =
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         (* let _ = Globals.gen_baga_inv := false in *)
-      let _ = Globals.dis_inv_baga () in
+      let _ = Globals.dis_pred_sat () in
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
@@ -642,7 +642,7 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = if !Globals.smt_compete_mode && (!Globals.gen_baga_inv_bk || !Globals.graph_norm ) &&
+  let cprog6 = if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) &&
     (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then
     cprog5
