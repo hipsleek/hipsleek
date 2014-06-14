@@ -5448,7 +5448,7 @@ and trans_case_coverage_x  prepost_flag (instant:Cpure.spec_var list)(f:CF.struc
           (** An Hoa Temporary Printing **)
           (* let _ = print_endline ("An Hoa : all = " ^ (Cprinter.string_of_pure_formula all)) in*)
           (* WN : syntactic check for case now a WARNING *)
-          let _ = if prepost_flag & not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then
+          let _ = if prepost_flag && not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then
             let var_case = pr_list Cprinter.string_of_spec_var (Cpure.fv all) in
             let lhs_vars = pr_list Cprinter.string_of_spec_var (instant) in
             (* let _ = print_string ( *)
@@ -8153,7 +8153,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               fun  (c1,(b1,c2)) -> 
                   let h = (List.hd c1) in
                   let rem = List.filter (fun (d1,_)-> 
-                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&
+                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&&
                           ((fst h)>(fst d1))) pure_list in
                   List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
           ) last_lst 
@@ -8451,7 +8451,7 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     
     let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
     let proc_spec f = 
-      let simp_b = not ((String.compare f.C.proc_file "primitives")==0 or (f.C.proc_file="")) in
+      let simp_b = not ((String.compare f.C.proc_file "primitives")==0 || (f.C.proc_file="")) in
       {f with 
           C.proc_static_specs= Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs;
           C.proc_dynamic_specs= Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
@@ -9490,7 +9490,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
      cprog2a
      else cprog2
   in
-  let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))
+  let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *))
     then pred_prune_inference cprog2 else cprog2 in
   let cprog4 = if is_add_pre then (add_pre_to_cprog cprog3) else cprog3 in
   let _ = cprog.C.prog_view_decls <- cprog4.C.prog_view_decls in

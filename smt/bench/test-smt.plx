@@ -109,7 +109,7 @@ if ($test_all) {
     "tree-pp-entails-tree-pp-rev.smt2",
     "tree-pp-rev-entails-tree-pp.smt2",
     "dll-vc07.smt2",
-    "dll-vc08.smt2",
+    "dll-vc08.smt2","dll-vc10.smt2",
     "nlcl-vc05.smt2",
     "inconsistent-ls-of-ls.defs.smt2",
     

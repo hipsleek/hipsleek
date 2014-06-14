@@ -25,8 +25,8 @@ module LO = Label_only.LOne
 (*     : (CP.spec_var * CP.spec_var) =                                                 *)
       
 
-(* formula of heap chain, entry point, exit point *) 
-type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var
+(* formula of heap chain, entry point, last point, exit point *) 
+type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 
 (* (*                                                                            *)
 (*  * each heap chain is a tuple of (h_formula, begin point, end point of chain) *)
@@ -83,6 +83,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
             try 
               let ddecl = C.look_up_data_def_raw prog.C.prog_data_decls root_dname in
               let entry_sv = dn.CF.h_formula_data_node in
+              let last_sv = entry_sv in
               let exit_sv = (
                 let svs = List.fold_left2 (fun res arg field ->
                   let ((_,fname),_) = field in
@@ -93,7 +94,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
                   report_error no_pos "collect_atomic_heap_chain: expect 1 exit sv"
                 else List.hd svs
               ) in
-              ([(hf, entry_sv, exit_sv)], CF.HEmp)
+              ([(hf, entry_sv, last_sv, exit_sv)], CF.HEmp)
             with _ -> ([], hf)
           )
           else ([], hf)
@@ -101,6 +102,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
           if (String.compare vn.CF.h_formula_view_name root_vname = 0) then (
             try 
               let entry_sv = vn.CF.h_formula_view_node in
+              let last_sv = entry_sv in
               let exit_sv = (
                 let svs = List.fold_left2 (fun res arg var ->
                   if (CP.eq_spec_var var fw_ptr) then res @ [arg]
@@ -110,7 +112,7 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
                   report_error no_pos "collect_atomic_heap_chain: expect 1 exit sv"
                 else List.hd svs
               ) in
-              ([(hf, entry_sv, exit_sv)], CF.HEmp)
+              ([(hf, entry_sv, last_sv, exit_sv)], CF.HEmp)
             with _ -> ([], hf)
           )
           else ([], hf)
@@ -137,9 +139,9 @@ let collect_atomic_heap_chain (hf: CF.h_formula) (root_view: C.view_decl) (prog:
   let pr_hf = !CF.print_h_formula in
   let pr_vname vd = vd.C.view_name in
   let pr_chain heap_chain = (
-    let (hf,entry_sv,exit_sv) = heap_chain in
+    let (hf,entry_sv,last_sv,exit_sv) = heap_chain in
     "(" ^ (!CF.print_h_formula hf) ^ ", " ^ (!CP.print_sv entry_sv)
-    ^ ", " ^ (!CP.print_sv exit_sv) ^ ")"
+    ^ ", " ^ (!CP.print_sv last_sv) ^ ", " ^ (!CP.print_sv exit_sv)^ ")"
   ) in
   let pr_out (hc, _) = pr_list pr_chain hc in
   Debug.no_2 "collect_atomic_heap_chain" pr_hf pr_vname pr_out
@@ -187,23 +189,23 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
   let emap = CP.EMapSV.build_eset (CP.pure_ptr_equations pf) in
   let rec build_heap_chains built_chains atomic_chains hf_unused = (
     let latest_chain = fst (List.hd built_chains) in
-    let (latest_hf,latest_sv1,latest_sv2) = latest_chain in
-    Debug.ninfo_hprint (add_str "latest_sv2" !CP.print_sv) latest_sv2 no_pos;
-    let aliases = CP.EMapSV.find_equiv_all latest_sv2 emap in
-    Debug.ninfo_hprint (add_str "latest_sv2 aliases" (pr_list !CP.print_sv)) aliases no_pos;
+    let (latest_hf,latest_entry,latest_last,latest_exit) = latest_chain in
+    Debug.ninfo_hprint (add_str "latest_exit" !CP.print_sv) latest_exit no_pos;
+    let aliases = CP.EMapSV.find_equiv_all latest_exit emap in
+    Debug.ninfo_hprint (add_str "latest_exit aliases" (pr_list !CP.print_sv)) aliases no_pos;
     try
-      let next_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
-        (CP.eq_spec_var sv1 latest_sv2) || (CP.EMapSV.mem sv1 aliases)
+      let next_chains, rest_chains = List.partition (fun (hf,entry_sv,last_sv,exit_sv) ->
+        (CP.eq_spec_var entry_sv latest_exit) || (CP.EMapSV.mem entry_sv aliases)
       ) atomic_chains in
       let next_chain, atomic_chains = (
         match next_chains with
         | [] -> raise Not_found
         | hd::tl -> (hd, tl @ rest_chains)
       ) in
-      let (next_hf, next_sv1, next_sv2) = next_chain in
+      let (next_hf, next_entry, next_last, next_exit) = next_chain in
       let new_hf = CF.mkStarH latest_hf next_hf pos in
-      let new_chain = (new_hf, latest_sv1, next_sv2) in
-      let hf_rest = List.fold_left (fun hf1 (hf2,_,_) ->
+      let new_chain = (new_hf, latest_entry, next_last, next_exit) in
+      let hf_rest = List.fold_left (fun hf1 (hf2,_,_,_) ->
         CF.mkStarH hf1 hf2 pos 
       ) hf_unused rest_chains in
       let built_chains = (new_chain, hf_rest) :: built_chains in
@@ -215,15 +217,15 @@ let collect_heap_chains_x (hf: CF.h_formula) (pf: MCP.mix_formula)
     let aliases = CP.EMapSV.find_equiv_all root_sv emap in
     Debug.ninfo_hprint (add_str "root_sv" !CP.print_sv) root_sv no_pos;
     Debug.ninfo_hprint (add_str "root_sv aliases" (pr_list !CP.print_sv)) aliases no_pos;
-    let root_chains, rest_chains = List.partition (fun (hf,sv1,sv2) ->
-      (CP.eq_spec_var sv1 root_sv) || (CP.EMapSV.mem sv1 aliases)
+    let root_chains, rest_chains = List.partition (fun (hf,entry_sv,last_sv,exit_sv) ->
+      (CP.eq_spec_var entry_sv root_sv) || (CP.EMapSV.mem entry_sv aliases)
     ) atomic_chains in
     let root_chain, atomic_chains = (
       match root_chains with
       | [] -> raise Not_found
       | hd::tl -> (hd, tl @ rest_chains)
     ) in
-    let hf_rest = List.fold_left (fun hf1 (hf2,_,_) ->
+    let hf_rest = List.fold_left (fun hf1 (hf2,_,_,_) ->
       CF.mkStarH hf1 hf2 pos 
     ) hf_unused rest_chains in
     build_heap_chains [(root_chain,hf_rest)] rest_chains hf_unused
@@ -236,7 +238,7 @@ let collect_heap_chains (hf: CF.h_formula) (pf: MCP.mix_formula)
   let pr_pf = !MCP.print_mix_formula in
   let pr_sv = !CP.print_sv in
   let pr_vname vd = vd.C.view_name in
-  let pr_chain ((hc,_,_),hf) = (
+  let pr_chain ((hc,_,_,_),hf) = (
     "(hc = " ^ (!CF.print_h_formula hc) ^ " , rest = " ^ (!CF.print_h_formula hf) ^ ")"
   ) in
   let pr_out = pr_list pr_chain in
@@ -355,7 +357,7 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
     let is_base_case_ok = (
       if (List.length heap_chains1 = 0) then false
       else (
-        let (hf1,_,_) = fst (List.hd heap_chains1) in
+        let (hf1,_,_,_) = fst (List.hd heap_chains1) in
         let code1 = encode_h_formula hf1 in
         let code1_len = List.length code1 in
         if (code1_len > coded_hf_len) then false
@@ -372,7 +374,7 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
       let heap_chains2 = collect_heap_chains hf2 pf2 root_sv root_view prog in
       if (List.length heap_chains2 = 0) then []
       else (
-        let (hf2,_,_) = fst (List.hd heap_chains2) in
+        let (hf2,_,_,_) = fst (List.hd heap_chains2) in
         let code2 = encode_h_formula hf2 in
         let code2_len = List.length code2 in
         let fold_seq = fold_seq @ [Fold_inductive_case] in
