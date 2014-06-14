@@ -132,6 +132,18 @@ both EPURE and EPUREN but they have not been tested.
 ====================================
 # dll-vc05.smt2.slk --inv-baga
 
+smt2014 branch
+
+One of them seems redundant
+Why are we computing baga inv at two places?
+
+!!! baga inv(dll):[([], self=nx & bk=pr),([self], self=bk & self!=nx),([bk,self], bk!=nx & self!=nx)]Hello
+
+!!! baga inv(dll):[(BAGA:[],pure: self=nx & bk=pr),(BAGA:[self],pure: self=bk & self!=nx),(BAGA:[bk,self],pure: bk!=nx & self!=nx)]
+Starting Omega...oc
+
+
+
 Why isn't baga_inv for dll printed in smt2014
 branch. There
 are 2 print statements here
