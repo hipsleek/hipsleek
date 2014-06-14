@@ -2980,47 +2980,30 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
       if (List.length induct_views != 1) then None
       (* consider only view has 1 inductive view in its formula definition *)
       else (
-        let iview = List.hd induct_views in
-        let inode = iview.CF.h_formula_view_node in
-        (* tail predicate *)
-        if (eq_str (P.name_of_spec_var inode) self) then (
-          let head_node = CF.ViewNode iview in
-          let body_node = (
-            let is_core_dnode hf = (match hf with
-              | CF.DataNode dn -> 
-                  if (eq_str dn.CF.h_formula_data_name dname) then [hf]
-                  else []
-              | _ -> []
-            ) in
-            let core_dnodes = CF.get_one_kind_heap is_core_dnode f in
-            if (core_dnodes = []) then
-              let msg = "compute_view_fw_bw: view is empty heap" in
-              let _ = report_warning pos msg in
-              CF.HEmp
-            else (List.hd core_dnodes)
+        let head_node = (
+          let is_self_node hf = (match hf with
+            | CF.DataNode dn when (eq_str (CP.name_of_sv dn.CF.h_formula_data_node) self) -> [hf]
+            | CF.ViewNode vn when (eq_str (CP.name_of_sv vn.CF.h_formula_view_node) self) -> [hf]
+            | _ -> []
           ) in
-          Some (head_node, body_node)
-        )
-        (* non-tail predicate *)
-        else (
-          let body_node = CF.ViewNode iview in
-          let head_node = (
-            let is_self_node hf = (match hf with
-              | CF.DataNode {CF.h_formula_data_node = sv}
-              | CF.ViewNode {CF.h_formula_view_node = sv} ->
-                  if (eq_str (CP.name_of_spec_var sv) self) then [hf]
-                  else []
-              | _ -> []
-            ) in
-            let self_nodes = CF.get_one_kind_heap is_self_node f in
-            if (self_nodes = []) then
-              let msg = "compute_view_fw_bw: self of view point to no where" in
-              let _ = report_warning pos msg in
-              CF.HEmp
-            else (List.hd self_nodes)
+          let self_nodes = CF.get_one_kind_heap is_self_node f in
+          if (self_nodes = []) then
+            let _ = report_warning pos "compute_fw_bw: self points to nowhere" in CF.HEmp
+          else (List.hd self_nodes)
+        ) in
+        let body_nodes = (
+          let is_body_node hf = (match hf with
+            | CF.DataNode {CF.h_formula_data_name = dn; CF.h_formula_data_node = sv} ->
+                if (eq_str dn dname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
+                else []
+            | CF.ViewNode {CF.h_formula_view_name = vn; CF.h_formula_view_node = sv} ->
+                if (eq_str vn vname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
+                else []
+            | _ -> []
           ) in
-          Some (head_node, body_node)
-        )
+          CF.get_one_kind_heap is_body_node f
+        ) in
+        Some (head_node, body_nodes)
       )
     ) in
     let get_residents hf vd = (match hf with
@@ -3042,71 +3025,76 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
       List.iter2 (fun f head_body ->
         match head_body with
         | None -> ()
-        | Some (head_node, body_node) -> (
+        | Some (head_node, body_nodes) -> (
             (* find forward, backward info from head and body node *)
             let head_ptrs = get_residents head_node vdecl in
-            let body_ptrs = get_residents body_node vdecl in
-            Debug.binfo_hprint (add_str "head_node" !CF.print_h_formula) head_node no_pos;
-            Debug.binfo_hprint (add_str "body_node" !CF.print_h_formula) body_node no_pos;
-            Debug.binfo_hprint (add_str "head_ptrs" (pr_list !CP.print_sv)) head_ptrs no_pos;
-            Debug.binfo_hprint (add_str "body_ptrs" (pr_list !CP.print_sv)) body_ptrs no_pos;
-            let fw_vars = List.filter (fun sv ->
-              let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv] 1 in
-              let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
-              (List.length rch_ptrs > 0)
-            ) head_ptrs in
-            Debug.binfo_hprint (add_str "fw_vars" (pr_list !CP.print_sv)) fw_vars no_pos;
-            List.iter (fun sv ->
-              match head_node with
+            let body_ptrs = List.concat (List.map (fun n -> get_residents n vdecl) body_nodes) in
+            Debug.ninfo_hprint (add_str "head_node" !CF.print_h_formula) head_node no_pos;
+            Debug.ninfo_hprint (add_str "body_nodes" (pr_list !CF.print_h_formula)) body_nodes no_pos;
+            Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !CP.print_sv)) head_ptrs no_pos;
+            Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !CP.print_sv)) body_ptrs no_pos;
+            let (hf,pf,_,_,_) = CF.split_components f in
+            let eqs = MP.ptr_equations_without_null pf in
+            let _ = match head_node with
               | CF.ViewNode vn -> 
                   List.iter2 (fun sv1 sv2 ->
-                    let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv1] 1 in
-                    let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
                     if (List.length rch_ptrs > 0) && (not (CP.mem_svl sv2 !fwp)) then (
                       fwp := sv2::!fwp; fwp_m := true;
                     )
                   ) vn.CF.h_formula_view_arguments vdecl.view_vars;
               | CF.DataNode dn ->
                   List.iter2 (fun sv1 ((_,fld),_) ->
-                    let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv1] 1 in
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure body_ptrs in
                     let rch_ptrs = CP.intersect_svl rch_ptrs body_ptrs in
                     if (List.length rch_ptrs > 0) && (not (List.exists (fun s -> eq_str s fld) !fwf)) then (
                       fwf := fld::!fwf; fwf_m := true;
                     )
                   ) dn.CF.h_formula_data_arguments ddecl.data_fields;
               | _ -> ()
-            ) fw_vars;
-            let bw_vars = List.filter (fun sv ->
-              let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv] 1 in
-              let rch_ptrs = CP.intersect_svl rch_ptrs head_ptrs in
-              (List.length rch_ptrs > 0)
-            ) body_ptrs in
-            Debug.binfo_hprint (add_str "bw_vars" (pr_list !CP.print_sv)) bw_vars no_pos;
-            List.iter (fun sv ->
+            in
+            let new_bwps, new_bwfs = ref [], ref [] in 
+            let _ = List.iter (fun body_node ->
               match body_node with
               | CF.ViewNode vn ->
-                  List.iter2 (fun sv1 sv2 ->
-                    let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv1] 1 in
-                    let rch_ptrs = CP.intersect_svl rch_ptrs head_ptrs in
-                    if (List.length rch_ptrs > 0) && (not (CP.mem_svl sv2 !bwp)) then (
-                      bwp := sv2::!bwp; bwp_m := true;
-                    )
-                ) vn.CF.h_formula_view_arguments vdecl.view_vars;
+                  let p_bwps = List.concat (List.map2 (fun sv1 sv2 ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
+                    if (List.length rch_ptrs > 0) then [sv2] else []
+                  ) vn.CF.h_formula_view_arguments vdecl.view_vars) in
+                  Debug.ninfo_hprint (add_str "p_bwps" (pr_list !CP.print_sv)) p_bwps no_pos;
+                  if (!new_bwps = []) then new_bwps := p_bwps
+                  else if (p_bwps != []) then
+                    new_bwps := Cpure.intersect_svl !new_bwps p_bwps;
+                  Debug.ninfo_hprint (add_str "new_bwps" (pr_list !CP.print_sv)) !new_bwps no_pos;
               | CF.DataNode dn ->
-                  List.iter2 (fun sv1 ((_,fld),_) ->
-                    let rch_ptrs,_,_ = CF.look_up_reachable_ptrs_w_alias prog f [sv1] 1 in
-                    let rch_ptrs = CP.intersect_svl rch_ptrs head_ptrs in
-                    if (List.length rch_ptrs > 0) && (not (List.exists (fun s -> eq_str s fld) !bwf)) then (
-                      let _ = print_endline ("== sv1 = " ^ (!print_sv sv1)) in
-                      let _ = print_endline ("== add fld = " ^ fld) in
-                      Debug.binfo_hprint (add_str "rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
-                      bwf := fld::!bwf; bwf_m := true;
-                    )
-                  ) dn.CF.h_formula_data_arguments ddecl.data_fields;
+                  let p_bwfs = List.concat (List.map2 (fun sv1 ((_,fld),_) ->
+                    let sv1_closure = CF.find_close [sv1] eqs in
+                    let rch_ptrs = CP.intersect_svl sv1_closure head_ptrs in
+                    Debug.ninfo_hprint (add_str "sv1" (!print_sv)) sv1 no_pos;
+                    Debug.ninfo_hprint (add_str "fld" idf) fld no_pos;
+                    Debug.ninfo_hprint (add_str "rch_ptrs" (pr_list !print_sv)) rch_ptrs no_pos;
+                    if (List.length rch_ptrs > 0) then [fld] else []
+                  ) dn.CF.h_formula_data_arguments ddecl.data_fields) in
+                  Debug.ninfo_hprint (add_str "p_bwfs" (pr_list idf)) p_bwfs no_pos;
+                  if (!new_bwfs = []) then new_bwfs := p_bwfs
+                  else if (p_bwfs != []) then
+                    new_bwfs := Gen.BList.intersect_eq eq_str !new_bwfs p_bwfs;
+                  Debug.ninfo_hprint (add_str "new_bwfs" (pr_list idf)) !new_bwfs no_pos;
               | _ -> ()
-            ) bw_vars;
-            
-            Debug.binfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
+            ) body_nodes in
+            let new_bwps = CP.remove_dups_svl (!new_bwps @ !bwp) in
+            if (List.length new_bwps != List.length !bwp) then (
+              bwp := new_bwps; bwp_m := true;
+            );
+            let new_bwfs = Gen.BList.remove_dups_eq eq_str (!new_bwfs @ !bwf) in
+            if (List.length new_bwfs != List.length !bwf) then (
+              bwf := new_bwfs; bwf_m := true;
+            );
+
+            Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
                   "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
                 ^ "fwf: " ^ (pr_list idf y) ^ "; " 
                 ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
@@ -3115,9 +3103,9 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
 
             (* unfold the inductive formulathen collect residents *)
             let base_f = List.hd base_fs in
-            Debug.binfo_hprint (add_str "f" (!CF.print_formula)) f no_pos;
+            Debug.ninfo_hprint (add_str "f" (!CF.print_formula)) f no_pos;
             let f = unfold_base_case_formula f vdecl base_f in
-            Debug.binfo_hprint (add_str "unfold_f" (!CF.print_formula)) f no_pos;
+            Debug.ninfo_hprint (add_str "unfold_f" (!CF.print_formula)) f no_pos;
             let (hf,pf,_,_,_) = CF.split_components f in
             let eqs = MP.ptr_equations_without_null pf in
             let self_closure = CF.find_close [self_sv] eqs in
@@ -3181,8 +3169,8 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 CP.eq_spec_var node1.CF.h_formula_data_node node2.CF.h_formula_data_node in
               Gen.BList.remove_dups_eq eq_node (nodes1 @ nodes2)
             ) in
-            Debug.binfo_hprint (add_str "first node" (fun x -> !print_h_formula (CF.DataNode x))) first_node no_pos;
-            Debug.binfo_hprint (add_str "last nodes" (pr_list (fun x -> !print_h_formula (CF.DataNode x)))) last_nodes no_pos;
+            Debug.ninfo_hprint (add_str "first node" (fun x -> !print_h_formula (CF.DataNode x))) first_node no_pos;
+            Debug.ninfo_hprint (add_str "last nodes" (pr_list (fun x -> !print_h_formula (CF.DataNode x)))) last_nodes no_pos;
             (* find forward, backward field using first and last nodes *)
             let collect_field node ptrs = (
               let ptrs_closure = CF.find_close ptrs eqs in
@@ -3224,7 +3212,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
               )
             ) last_nodes;
 
-            Debug.binfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
+            Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
                   "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
                 ^ "fwf: " ^ (pr_list idf y) ^ "; " 
                 ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "

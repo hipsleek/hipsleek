@@ -1683,3 +1683,7 @@ let gen_field_ann t=
   match t with
     | Named _ -> fresh_any_name field_rec_ann
     | _ -> fresh_any_name field_val_ann
+
+let un_option opt default_val = match opt with
+  | Some v -> v
+  | None -> default_val
