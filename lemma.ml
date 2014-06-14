@@ -1362,29 +1362,30 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         (* check if new_induct_f can imply a view node *)
         (* we can have the distributive lemma only when the new_induct_f can form a view node *)
         let is_pred1_ok = (
+          true
           (* TRUNG TODO: below should be included, uncomment later *)
-          let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in
-          let new_induct_f = CF.subst base_subs reduced_induct_f in
-          (* let (hf,mf,fl,t,a) = CF.split_components new_induct_f in *)
-          (* let pos = CF.pos_of_formula new_induct_f in              *)
-          (* let new_induct_f = CF.mkBase hf mf t fl a pos in         *)
-          let tmp_nname, tmp_nprim = pred1_node in
-          let tmp_vnode = CP.SpecVar (Named dname, tmp_nname, tmp_nprim) in
-          let tmp_vars = List.map (fun sv ->
-            match sv with
-            | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)
-          ) vd.C.view_vars in
-          let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vars no_pos in
-          let tmp_f = CF.mkExists tmp_vars tmp_vnode (MCP.mkMTrue vpos)
-              CF.TypeTrue (CF.mkTrueFlow ()) [] vpos in
-          let tmp_sf = CF.struc_formula_of_formula tmp_f vpos in
-          (* let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in *)
-          Debug.ninfo_hprint (add_str "new_induct_f" (!CF.print_formula)) new_induct_f vpos;
-          Debug.ninfo_hprint (add_str "tmp_sf" (!CF.print_struc_formula)) tmp_sf vpos;
-          let (r,_,_) = wrap_classic (Some true)
-              (Sleekcore.sleek_entail_check 9 [] cprog [] new_induct_f) tmp_sf in
-          Debug.ninfo_pprint ("new_induct_f |- tmp_sf: " ^ (string_of_bool r)) vpos;
-          r
+          (* let reduced_induct_f = remove_view_node_from_formula induct_f induct_vnode in             *)
+          (* let new_induct_f = CF.subst base_subs reduced_induct_f in                                 *)
+          (* (* let (hf,mf,fl,t,a) = CF.split_components new_induct_f in *)                            *)
+          (* (* let pos = CF.pos_of_formula new_induct_f in              *)                            *)
+          (* (* let new_induct_f = CF.mkBase hf mf t fl a pos in         *)                            *)
+          (* let tmp_nname, tmp_nprim = pred1_node in                                                  *)
+          (* let tmp_vnode = CP.SpecVar (Named dname, tmp_nname, tmp_nprim) in                         *)
+          (* let tmp_vars = List.map (fun sv ->                                                        *)
+          (*   match sv with                                                                           *)
+          (*   | CP.SpecVar (t,_,_) -> CP.SpecVar (t, fresh_name (), Unprimed)                         *)
+          (* ) vd.C.view_vars in                                                                       *)
+          (* let tmp_vnode = CF.mkViewNode tmp_vnode vname tmp_vars no_pos in                          *)
+          (* let tmp_f = CF.mkExists tmp_vars tmp_vnode (MCP.mkMTrue vpos)                             *)
+          (*     CF.TypeTrue (CF.mkTrueFlow ()) [] vpos in                                             *)
+          (* let tmp_sf = CF.struc_formula_of_formula tmp_f vpos in                                    *)
+          (* (* let tmp_f = CF.struc_formula_of_formula (CF.formula_of_heap tmp_vnode vpos) vpos in *) *)
+          (* Debug.ninfo_hprint (add_str "new_induct_f" (!CF.print_formula)) new_induct_f vpos;        *)
+          (* Debug.ninfo_hprint (add_str "tmp_sf" (!CF.print_struc_formula)) tmp_sf vpos;              *)
+          (* let (r,_,_) = wrap_classic (Some true)                                                    *)
+          (*     (Sleekcore.sleek_entail_check 9 [] cprog [] new_induct_f) tmp_sf in                   *)
+          (* Debug.ninfo_pprint ("new_induct_f |- tmp_sf: " ^ (string_of_bool r)) vpos;                *)
+          (* r                                                                                         *)
         ) in
         if not (is_pred1_ok) then None
         else (
