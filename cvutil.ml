@@ -121,8 +121,92 @@ let build_subs_4_evars evars eset =
   let pr_eset = CP.EMapSV.string_of in
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
 
-let view_unsat_check vdecl act_root act_args ctx_pure_constr frm_inv=
-  true
+(* let extract_view_info prog vname p_root p_args p_h p_p= *)
+(*   (\*********************************\) *)
+(*   let rec find_self_sv fs= *)
+(*     match fs with *)
+(*       | (f,_)::rest ->begin let svl = Cformula.fv f in *)
+(*         try *)
+(*           let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var) self_name = 0) svl in *)
+(*           self_sv *)
+(*         with _ -> find_self_sv rest *)
+(*         end *)
+(*       | [] -> raise Not_found *)
+(*   in *)
+(*   let rec compute_eq pr_slv res= *)
+(*     match svl with *)
+(*       | (p_sv1,sv1)::rest -> let eqs = List.fold_left (fun r (p_sv2,sv2) -> *)
+(*             if CP.eq_spec_var p_sv1 p_sv2 then r@[(sv1,sv2)] else r *)
+(*         ) [] rest in *)
+(*         compute_eq rest (res@eqs) *)
+(*       | [] -> res *)
+(*   in *)
+(*   (\*********************************\) *)
+(*   let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in *)
+(*   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then *)
+(*     view_data_name *)
+(*   else find_self_sv vdcl.Cast.view_un_struc_formula *)
+(*   in *)
+(*   let fr_root = CP.fresh_spec_var self_sv in *)
+(*   let fr_args = CP.fresh_spec_vars vdecl.Cast.view_vars in *)
+(*   let sst = List.combine (self_sv::vdecl.Cast.view_vars) (fr_root::fr_args) in *)
+(*   (\*from parents parameters eqs to current parameter eqs*\) *)
+(*   let eqs = compute_eq (List.combine (p_root::p_args) (fr_root::fr_args)) [] in *)
+(*   let sst1 = List.combine (p_root::p_args) (fr_root::fr_args) in *)
+(*   let p_eqs, p_null_svl = pure_extract (CP.subst sst1 p_p) in *)
+(*   let baga, lower_views = heap_extract (Cformula.subst sst1 p_h) in *)
+(*   [] *)
+
+(* let get_subst_sv_brs prog (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) = *)
+(*   (\*********************************\) *)
+(*   let rec find_self_sv fs= *)
+(*     match fs with *)
+(*       | (f,_)::rest ->begin let svl = Cformula.fv f in *)
+(*         try *)
+(*           let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var) self_name = 0) svl in *)
+(*           self_sv *)
+(*         with _ -> find_self_sv rest *)
+(*         end *)
+(*       | [] -> raise Not_found *)
+(*   in *)
+(*   let process_one_f fr_args sst (p_eqs,p_neqs,p_eqNulls,p_neqNulls) (f,_)= *)
+(*     let _,f0 = Cformula.split_quantifiers f in *)
+(*     let f1 = Cformula.subst sst f0 in *)
+(*     let h,mf_, _, _ = split_components f1 in *)
+(*     let p = (MCP.pure_of_mis mf) in *)
+(*     let eqs = (MCP.ptr_equations_without_null mix_f) in *)
+(*     let neqs = CP.get_neqs p in *)
+(*     let eqNulls = (MCP.get_null_ptrs mf) in *)
+(*     let neqNull_svl = CP.get_neq_null_svl p in *)
+(*     let hns,hvs,_=Cformula.get_hp_rel_h_formula h in *)
+(*     let neqNull_svl2 = List.map () hns in *)
+(*   in *)
+(*   (\*********************************\) *)
+(*   let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in *)
+(*   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then *)
+(*     view_data_name *)
+(*   else find_self_sv vdcl.Cast.view_un_struc_formula *)
+(*   in *)
+(*   let fr_args = p_root::p_args in *)
+(*   let sst = List.combine (self_sv::vdecl.Cast.view_vars) fr_args in *)
+(*   let fs = List.map (process_one_f fr_args sst) vdcl.Cast.view_un_struc_formula *)
+
+(*sst will convert parameters of vdecl into fresh ones *)
+(* let view_unsat_check_topdown prog waiting unsat_vis unknown_vis = *)
+(*   match waiting with *)
+(*     | (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) ::rest -> begin *)
+(*           (\* get all brs *\) *)
+(*           (\* each brs, compute: eset (from act_para + pure) null_svl baga_svl *\) *)
+(*           (\* combine eset null_svl baga_svl with parent *\) *)
+          
+(*           (\* check insistency: eset vs. baga, null vs. baga *\) *)
+(*           (\*if sat, go down *\) *)
+(*         let fs = get_subst_sv_brs prog (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) in *)
+(*         let new_vis = extract_act_args p_root in *)
+(*           true *)
+(*       end *)
+(*     | [] -> unknown_vis = [] *)
+
 
 (*inv is general. this time, we have more information:
   - caller context: constraints of caller. we strengthen inv
@@ -136,6 +220,14 @@ let xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv=
   (*for each view node -> compute specilized infor *)
   (*check eqs on act_args, prune incosistent branch *)
   frm_inv
+
+let xpure_spec_view_inv vdecl act_root act_args ctx_pure_constr frm_inv=
+  let pr1 vdcl = vdcl.Cast.view_name in
+  let pr2 = Cprinter.string_of_mix_formula in
+  let pr3 = !CP.print_svl in
+  Debug.no_5 "xpure_spec_view_inv" pr1 !CP.print_sv pr3 pr2 pr2 pr2
+      (fun _ _ _ _ _ -> xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv)
+      vdecl act_root act_args ctx_pure_constr frm_inv
 
 let compute_subs_mem puref evars = 
   let (subs,_) = CP.get_all_vv_eqs puref in
@@ -673,14 +765,6 @@ and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_f
   Debug.no_3 "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_mem_enum_new prog h0 p0 which_xpure) h0 p0 which_xpure 
 
-and xpure_spec_view_inv vdecl act_root act_args ctx_pure_constr frm_inv=
-  let pr1 vdcl = vdcl.Cast.view_name in
-  let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 = !CP.print_svl in
-  Debug.no_5 "xpure_spec_view_inv" pr1 !CP.print_sv pr3 pr2 pr2 pr2
-      (fun _ _ _ _ _ -> xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv)
-      vdecl act_root act_args ctx_pure_constr frm_inv
-
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula = 
     match h0 with
@@ -751,7 +835,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                       in
                       let _ = Debug.info_hprint (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
                       let _ = Debug.info_hprint (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
-                      let _ = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in
+                      (* let _ = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
                       (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
                        (*LDK: ??? be careful to handle frac var properly. 
                         Currently, no fracvar in view definition*)
