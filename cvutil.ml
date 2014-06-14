@@ -658,6 +658,27 @@ and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_f
   Debug.no_3 "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_mem_enum_new prog h0 p0 which_xpure) h0 p0 which_xpure 
 
+(*inv is general. this time, we have more information:
+  - caller context: constraints of caller. we strengthen inv
+*)
+and xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv=
+  (*apply for
+     - vdecl not in a mut-rec
+  *)
+  (*get branch infor: pure constr, heap node, view node*)
+  (*prune 1: inconsistency on pure constrs *)
+  (*for each view node -> compute specilized infor *)
+  (*check eqs on act_args, prune incosistent branch *)
+  frm_inv
+
+and xpure_spec_view_inv vdecl act_root act_args ctx_pure_constr frm_inv=
+  let pr1 vdcl = vdcl.Cast.view_name in
+  let pr2 = Cprinter.string_of_mix_formula in
+  let pr3 = !CP.print_svl in
+  Debug.no_5 "xpure_spec_view_inv" pr1 !CP.print_sv pr3 pr2 pr2 pr2
+      (fun _ _ _ _ _ -> xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv)
+      vdecl act_root act_args ctx_pure_constr frm_inv
+
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula = 
     match h0 with
@@ -713,18 +734,22 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
             let res =
               (match inv_opt with
                 | None ->
-                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in
+                      let _ = Debug.info_hprint (add_str "inv_opt" pr_id) "None" no_pos in
                       let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in
                       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                       subst_m_fun (MCP.memoise_add_pure_N inv frac_inv)
                       (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
                 | Some xp1 ->
-                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
+                      let _ = Debug.info_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
+                       let _ = Debug.info_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
                       let vinv = match which_xpure with
                         | -1 -> MCP.mkMTrue no_pos
                         | 0 -> vdef.view_user_inv
                         | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
                       in
+                      let _ = Debug.info_hprint (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
+                      let _ = Debug.info_hprint (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+                      let _ = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in
                       (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
                        (*LDK: ??? be careful to handle frac var properly. 
                         Currently, no fracvar in view definition*)

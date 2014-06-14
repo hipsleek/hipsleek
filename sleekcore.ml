@@ -182,12 +182,14 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
+    let _ = print_endline ("ctx: 1*******************") in
     let ctx = 
       if !Globals.delay_proving_sat then ctx
       else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
     let _ = if (CF.isAnyFalseCtx ctx) then
       print_endline_quiet ("[Warning] False ctx")
     in
+    let _ = print_endline ("ctx: 2********************") in
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
     (*****************)
     (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)

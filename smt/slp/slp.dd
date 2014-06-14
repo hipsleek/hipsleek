@@ -2,7 +2,7 @@
 #norm_graph
 #find_case_split
 #syntax_contrb_lemma_end_null
-check_tail_rec_rec_lemma
-#cfutil_tp_imply
-is_horm_h_formula
-need_cycle_checkpoint
+xpure_mem_enum
+xpure_heap_mem_enum
+unsat_base_nth
+xpure_spec_view_inv
