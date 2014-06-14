@@ -682,7 +682,7 @@ struct
       | None -> false
       | Some rst -> not((find rst v2) == None)
 
-  let pair_cmp (x1,x2) (y1,y2) = 
+  let pair_cmp (x1,x2) (y1,y2) =
     let c = Elt.compare x1 y1 in
     if c==0 then Elt.compare x2 y2
     else c
@@ -694,7 +694,7 @@ struct
       else [p] in
     let rec aux i1 i2 = match i1,i2 with
       | [],ineq | ineq,[] -> ineq
-      | x::xs,y::ys -> 
+      | x::xs,y::ys ->
             let c = pair_cmp x y in
             if c==0 then (norm x) @ (aux xs ys)
             else if c<0 then (norm x) @ (aux xs i2)
@@ -721,7 +721,7 @@ struct
   let conv_eq (eq : emap) : formula =
     let pairs = Elt.conv_var_pairs (EM.get_equiv eq)  in
     let fl = List.map (fun (v1,v2) ->
-        if Globals.is_null v1 then CP.mkEqNull v2 v1 no_pos
+        if Globals.is_null (name_of_spec_var v1) then CP.mkEqNull v2 v1 no_pos
         else mkEqVar v1 v2 no_pos
     ) pairs in
     List.fold_left (fun f1 f2 ->
