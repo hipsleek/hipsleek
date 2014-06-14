@@ -189,6 +189,10 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       print_endline_quiet ("[Warning] False ctx")
     in
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
+    (*****************)
+    (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
+    (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
+    (************************)
   (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
   (*   let _ = print_endline ("[Warning] False ctx") in *)
   (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)

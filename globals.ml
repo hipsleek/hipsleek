@@ -1265,7 +1265,7 @@ let dis_bk ()=
   let _ = en_slc_ps := false in
   ()
 
-let dis_inv_baga () = 
+let dis_pred_sat () = 
   print_endline_q "Disabling baga inv gen .."; 
   (* let _ = gen_baga_inv := false in *)
   let _ = gen_baga_inv_bk := false in
@@ -1281,7 +1281,7 @@ let en_bk () =
   let _ = en_slc_ps := true in
   ()
 
-let en_inv_baga () =
+let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
   (* let _ = gen_baga_inv := true in *)
   let _ = gen_baga_inv_bk := true in
@@ -1299,7 +1299,7 @@ let _ = if !smt_compete_mode then
     print_core:=false;
     print_core_all:=false;
     (* gen_baga_inv := true; *)
-    en_inv_baga ();
+    en_pred_sat ();
     (* do_infer_inv := true; *)
     lemma_gen_unsafe := true;
     graph_norm := true;
