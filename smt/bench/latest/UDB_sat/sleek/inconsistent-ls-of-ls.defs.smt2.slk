@@ -5,8 +5,7 @@ data GTyp {
 }.
 
 pred P<> ==
- null = self
-or self::Q<self> & null != self.
+self::Q<self> & null != self.
 
 pred Q<y:GTyp> ==
  (exists d,c: self::GTyp<f0 = d,f1 = c> * d::P<> & null = y & null != self)

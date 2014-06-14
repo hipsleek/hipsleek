@@ -19,6 +19,7 @@ my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
+my $smt2slk = "smt2slk"; #"../smt2slk/bin/smt2slk";
 my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
@@ -87,7 +88,6 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "spaguetti-13-e03.tptp.smt2",
     "08.tst.smt2",
     "10.tst.smt2",
     "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
@@ -136,40 +136,6 @@ if ($test_all) {
     "skl3-vc07.smt2",
     "skl3-vc08.smt2",
     "skl3-vc09.smt2",
-    "succ-circuit03.defs.smt2",
-    "succ-circuit04.defs.smt2",
-    "succ-circuit05.defs.smt2",
-    "succ-circuit06.defs.smt2",
-    "succ-circuit07.defs.smt2",
-    "succ-circuit08.defs.smt2",
-    "succ-circuit09.defs.smt2",
-    "succ-circuit10.defs.smt2",
-    "succ-circuit11.defs.smt2",
-    "succ-circuit12.defs.smt2",
-    "succ-circuit13.defs.smt2",
-    "succ-circuit14.defs.smt2",
-    "succ-circuit15.defs.smt2",
-    "succ-circuit16.defs.smt2",
-    "succ-circuit17.defs.smt2",
-    "succ-circuit18.defs.smt2",
-    "succ-circuit19.defs.smt2",
-    "succ-circuit20.defs.smt2",
-    "succ-rec05.defs.smt2",
-    "succ-rec06.defs.smt2",
-    "succ-rec07.defs.smt2",
-    "succ-rec08.defs.smt2",
-    "succ-rec09.defs.smt2",
-    "succ-rec10.defs.smt2",
-    "succ-rec11.defs.smt2",
-    "succ-rec12.defs.smt2",
-    "succ-rec13.defs.smt2",
-    "succ-rec14.defs.smt2",
-    "succ-rec15.defs.smt2",
-    "succ-rec16.defs.smt2",
-    "succ-rec17.defs.smt2",
-    "succ-rec18.defs.smt2",
-    "succ-rec19.defs.smt2",
-    "succ-rec20.defs.smt2"
     );
   } else {
     @test_files = (
@@ -190,7 +156,7 @@ if ($test_all) {
     "spaguetti-11-e01.tptp.smt2", "spaguetti-11-e02.tptp.smt2", "spaguetti-20-e01.tptp.smt2",
     "bolognesa-10-e01.tptp.smt2", "bolognesa-10-e02.tptp.smt2", "bolognesa-10-e03.tptp.smt2",
     "bolognesa-11-e01.tptp.smt2", "bolognesa-12-e01.tptp.smt2", "bolognesa-15-e01.tptp.smt2", 
-    "bolognesa-20-e01.tptp.smt2","bolognesa-15-e02.tptp.smt2",
+    "bolognesa-20-e01.tptp.smt2","bolognesa-15-e02.tptp.smt2","spaguetti-13-e03.tptp.smt2",
     "bolognesa-16-e04.tptp.smt2",
     "bolognesa-17-e02.tptp.smt2",
     "bolognesa-18-e02.tptp.smt2",
@@ -226,6 +192,40 @@ if ($test_all) {
     "abduced16.defs.smt2",
     "abduced17.defs.smt2",
     "abduced18.defs.smt2",
+     "succ-circuit03.defs.smt2",
+    "succ-circuit04.defs.smt2",
+    "succ-circuit05.defs.smt2",
+    "succ-circuit06.defs.smt2",
+    "succ-circuit07.defs.smt2",
+    "succ-circuit08.defs.smt2",
+    "succ-circuit09.defs.smt2",
+    "succ-circuit10.defs.smt2",
+    "succ-circuit11.defs.smt2",
+    "succ-circuit12.defs.smt2",
+    "succ-circuit13.defs.smt2",
+    "succ-circuit14.defs.smt2",
+    "succ-circuit15.defs.smt2",
+    "succ-circuit16.defs.smt2",
+    "succ-circuit17.defs.smt2",
+    "succ-circuit18.defs.smt2",
+    "succ-circuit19.defs.smt2",
+    "succ-circuit20.defs.smt2",
+    "succ-rec05.defs.smt2",
+    "succ-rec06.defs.smt2",
+    "succ-rec07.defs.smt2",
+    "succ-rec08.defs.smt2",
+    "succ-rec09.defs.smt2",
+    "succ-rec10.defs.smt2",
+    "succ-rec11.defs.smt2",
+    "succ-rec12.defs.smt2",
+    "succ-rec13.defs.smt2",
+    "succ-rec14.defs.smt2",
+    "succ-rec15.defs.smt2",
+    "succ-rec16.defs.smt2",
+    "succ-rec17.defs.smt2",
+    "succ-rec18.defs.smt2",
+    "succ-rec19.defs.smt2",
+    "succ-rec20.defs.smt2",
     "succ-circuit01.defs.smt2",
     "succ-circuit02.defs.smt2",
     "succ-rec01.defs.smt2",
@@ -308,7 +308,7 @@ foreach my $smt2_file (@smt2_files) {
     $rel_path = " latest/" . File::Spec->abs2rel($smt2_file, $test_path);
   }
   my $slk_file = $smt2_file . ".slk";
-  system("smt2slk " . $smt2_file);
+  system($smt2slk . " " . $smt2_file);
   move ($slk_file, $tmp_dir) or die "The move operation failed: $!";
   
   my $smt2_name = basename($slk_file, ".slk");

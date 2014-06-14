@@ -15869,3 +15869,51 @@ let force_elim_exists f quans=
   let pr2 = !CP.print_svl in
   Debug.no_2 "force_elim_exists" pr1 pr2 pr1
       (fun _ _ -> force_elim_exists_x f quans) f quans
+
+let h_formula_contains_node_name h ident =
+  let rec helper h =
+    match h with
+      | ViewNode   ({ h_formula_view_name = name; })
+      | DataNode   ({ h_formula_data_name = name; })
+      | ThreadNode ({ h_formula_thread_name = name; }) ->
+            if (String.compare ident name == 0) then true else false
+      | Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) || (helper h2))
+      | _ -> false
+  in helper h
+
+let star_elim_useless_emp h = 
+  let rec helper h =
+    match h with
+      | HEmp -> None
+      | Star ({h_formula_star_h1 = h1;
+        h_formula_star_h2 = h2;}) ->
+            let h1 = helper h1 in
+            let h2 = helper h2 in
+            let new_h = 
+              match h1,h2 with
+                | Some h0, None
+                | None, Some h0 -> Some h0
+                | None, None    -> None
+                | _             -> Some h
+            in new_h
+      | _ -> Some h                          (*incomplete *)
+  in
+  let new_h_opt = helper h in
+  let new_h =
+    match new_h_opt with
+      | None -> HEmp
+      | _    -> h
+  in new_h
+

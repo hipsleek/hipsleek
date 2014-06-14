@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-@files = <bolognesa*.slk>;
+@files = <spaguetti*.slk>;
 
 foreach $file (@files) {
     print $file . "\n";

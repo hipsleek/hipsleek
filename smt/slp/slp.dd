@@ -1,11 +1,4 @@
-#compute_actions
-#do_fold_w_ctx
-#process_fold_result
-#need_cycle_checkpoint
-#need_cycle_checkpoint_fold
-#need_cycle_checkpoint_unfold
-#check_tail_rec_rec_lemma
-#LEMSYN.gen_lemma
-#look_up_coercion_with_target
-#generate_view_rev_rec_lemmas
 is_complex_entailment_4graph
+#norm_graph
+#find_case_split
+syntax_contrb_lemma_end_null

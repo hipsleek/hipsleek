@@ -130,6 +130,41 @@ both EPURE and EPUREN but they have not been tested.
   let subst_epure sst ((baga,f) as ep) = ep
 
 ====================================
+# dll-vc05.smt2.slk --inv-baga
+
+smt2014 branch
+
+One of them seems redundant
+Why are we computing baga inv at two places?
+
+!!! baga inv(dll):[([], self=nx & bk=pr),([self], self=bk & self!=nx),([bk,self], bk!=nx & self!=nx)]Hello
+
+!!! baga inv(dll):[(BAGA:[],pure: self=nx & bk=pr),(BAGA:[self],pure: self=bk & self!=nx),(BAGA:[bk,self],pure: bk!=nx & self!=nx)]
+Starting Omega...oc
+
+
+
+Why isn't baga_inv for dll printed in smt2014
+branch. There
+are 2 print statements here
+
+has baga_inv been disabled permanently?
+o
+In astsimpl.ml
+      let cviews1 = if !Globals.gen_baga_inv then
+        List.map (fun cv ->
+            let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
+            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            let _ = print_string_quiet "\n" in
+            {cv with C.view_baga_inv = Some inv}
+
+In expure.ml
+
+  let _ = List.iter (fun (vc,inv) ->
+      let _ = Debug.dinfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in
+      let _ = print_string "\n" in
+      Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
+
 ====================================
 ====================================
 ====================================
