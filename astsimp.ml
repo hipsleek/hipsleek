@@ -2203,7 +2203,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         List.map (fun cv ->
             let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
             let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
-            let _ = print_string "\n" in
+            let _ = print_string_quiet "\n" in
             {cv with C.view_baga_inv = Some inv}
         ) cviews0
       else
