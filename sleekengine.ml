@@ -583,7 +583,7 @@ let convert_data_and_pred_to_cast_x () =
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
-      let _ = Globals.lemma_syn := false in
+      (* let _ = Globals.lemma_syn := false in *)
       ()
     in
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
@@ -647,7 +647,10 @@ let convert_data_and_pred_to_cast_x () =
     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then
     cprog5
   else
-    Cast.categorize_view cprog5 in
+    try
+      Cast.categorize_view cprog5
+    with _ -> cprog5
+  in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
   let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then

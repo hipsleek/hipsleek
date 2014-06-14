@@ -1577,9 +1577,12 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     || vd.Cast.view_backward_fields != []
   then [] else begin
     let lemma_name = "rev" in
+    let base_p = CP.conj_of_list (List.map snd base_brs) no_pos in
+    let neg_base_p = CP.mkNot_s base_p in
     let pr_fwd_ptrs = List.combine vd.Cast.view_forward_ptrs vd.Cast.view_forward_fields in
     let pr_fwd_ptrs_pos = List.fold_left (fun r pr -> r@(find_pos pr)) [] pr_fwd_ptrs in
     let rev_indc_brs = List.fold_left (fun r (f,p) ->
+        let p = if CP.isConstTrue p then neg_base_p else p in
         let rev_fs = rev_order pr_fwd_ptrs_pos (f,p) in
         r@rev_fs
     ) [] indc_brs in

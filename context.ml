@@ -1103,11 +1103,11 @@ and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f =
   else
     f 
 
-and process_one_match prog estate lhs_h lhs_p conseq is_normalizing (c:match_res) (rhs_node,rhs_rest,rhs_p):action_wt =
+and process_one_match prog estate lhs_h lhs_p conseq is_normalizing (c:match_res) (rhs_node,rhs_rest,rhs_p) reqset:action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
   Debug.no_1 "process_one_match" pr1 pr2 (fun _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing c
-      (rhs_node,rhs_rest,rhs_p)) c 
+      (rhs_node,rhs_rest,rhs_p) reqset) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -1183,7 +1183,7 @@ and process_one_match_accfold prog mt_res lhs_h lhs_p rhs_p =
   )
   else []
 
-and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p)
+and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =
   let pr_debug s = DD.tinfo_pprint s no_pos in
   let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
@@ -1318,7 +1318,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let l2,syn_lem_typ = (
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                      let uf_i = if new_orig then 0 else 1 in
-                     let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
+                     let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
                      if flag  then
                        [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
                      else
@@ -1388,7 +1388,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                         (*cyclic: add lemma_unsafe then unfold lhs*)
                         (*L2: change here for cyclic*)
                         let lst=
-                              let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs in
+                              let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
                               if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                                 let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                 let uf_i = if new_orig then 0 else 1 in
@@ -1490,7 +1490,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
                       let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
                       let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
-                      let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs in
+                      let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
                        if (syn_lem_typ != -1) then
                          let acts =
                            if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
@@ -1600,7 +1600,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                         if vl_vdef.view_is_prim then []
                         else
                           (*cyclic checkpoint here*)
-                          let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs in
+                          let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
                           if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
                             (*find the first viewnode readable from right datanode*)
                                let lvs = CF.look_up_reachable_first_reachable_view prog
@@ -1799,7 +1799,7 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rh
           else (-1, Cond_action (rs@[r0]))
             (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
 
-and process_matches prog estate lhs_h lhs_p conseq is_normalizing (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
+and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
@@ -1808,10 +1808,10 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing (((l:match_res
       (add_str "matches" pr1)
       (add_str "rhs_node" pr) 
       (add_str "rhs_rest" pr) pr3 
-      (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing ks) 
+      (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
       lhs_h l  rhs_node rhs_rest
 
-and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
+and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
   let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
   let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
@@ -1846,9 +1846,9 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing ((l:match_re
           (*   (-1, (Cond_action (rs@[r;r0]))) *)
           (* else (-1, Cond_action (rs@[r0])) *)
             (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-    | x::[] -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p)
+    | x::[] -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
     | _ ->  
-          let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p)) l in
+          let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
           let _ = DD.tinfo_pprint "process many matches" no_pos in
           (* WN : TODO use cond_action if of different priorities *)
           let rs = sort_wt rs in
@@ -2101,7 +2101,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (* let _ = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   let _ = DD.tinfo_hprint (add_str "r" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
-  let r = List.map (process_matches prog estate lhs_h lhs_p conseq is_normalizing) r in
+  let r = List.map (process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 

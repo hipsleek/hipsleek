@@ -2965,7 +2965,9 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   ) in
   let ddecl = (
     try look_up_data_def_raw prog.prog_data_decls dname 
-    with _ -> report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
+    with _ ->
+        if !Globals.smt_compete_mode then raise Not_found else
+          report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
   ) in
   let base_fs, induct_fs = split_view_branches vdecl in
   if (List.length base_fs != 1) then ([],[],[],[])

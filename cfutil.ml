@@ -894,7 +894,14 @@ let check_separation_unsat f0=
 let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   (* rhs is is_tail_recursive, lhs is non tail rec form*)
    (****************************)
-  let tp_imply ante conseq  = Tpdispatcher.imply_raw ante conseq in
+  (*Loc: this check does not work properly. reverse a chain, how to transform pure? *)
+  let cfutil_tp_imply_x ante conseq  = (* Tpdispatcher.imply_raw ante conseq *) true in
+  let cfutil_tp_imply ante conseq=
+    let pr1 = !CP.print_formula in
+    Debug.no_2 "cfutil_tp_imply" pr1 pr1 string_of_bool
+        (fun _ _ -> cfutil_tp_imply_x ante conseq) ante conseq
+  in
+  (* let tp_sat p1 p2 = (\* Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure (CP.mkAnd p1 p2 no_pos)) *\) true in *)
   let rec is_horm_h_formula_x hfs1 hfs2 =
     match hfs1,hfs2 with
       | [],[] -> true
@@ -916,6 +923,26 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
     let pr1 = pr_list !print_h_formula in
     Debug.no_2 "is_horm_h_formula" pr1 pr1 string_of_bool
         (fun _ _ -> is_horm_h_formula_x hfs1 hfs2) hfs1 hfs2
+  in
+  (*should have better machenism to static defined the meaning- relation of predicate arguments*)
+  let is_horm_dllseg root hfs=
+    try
+      let hds,hvs = List.fold_left (fun (r1,r2) hf -> match hf with
+        | ViewNode hv -> (r1,r2@[hv])
+        | DataNode hn -> (r1@[hn],r2)
+        | _ -> (r1,r2)
+      ) ([],[]) hfs in
+      let hv = List.find (fun hv -> CP.eq_spec_var root hv.h_formula_view_node) hvs in
+      let arg_length = List.length hv.h_formula_view_arguments in
+      if arg_length > 1 then
+        let last_arg = List.nth hv.h_formula_view_arguments (arg_length-1) in
+        let reach_hd = List.find (fun hd -> CP.eq_spec_var hd.h_formula_data_node last_arg) hds in
+        let hn_arg_length = List.length reach_hd.h_formula_data_arguments in
+        if hn_arg_length > 1 then
+        CP.eq_spec_var ( List.nth hv.h_formula_view_arguments 0) (List.nth reach_hd.h_formula_data_arguments 1)
+        else true
+      else true
+    with _ -> true
   in
   let heaps_of_formula args f =
     let f0 = Cfout.rearrange_formula args f in
@@ -942,25 +969,33 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
             let rec_def_heaps = List.fold_left (fun r (f,_) ->
                 let views = Cformula.get_views f in
                 if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
-                  let hfs = heaps_of_formula [self_sv] f in
-                  let pure = get_pure (subst sst f) in
+                  let f1 = (subst sst (elim_exists f)) in
+                  let _ = DD.ninfo_hprint (add_str "f1" !print_formula) f1 no_pos in
+                  let hfs = heaps_of_formula [rvn.h_formula_view_node] f1 in
+                  let pure = get_pure f1 in
                   r@[(pure, hfs)]
                 else r
             ) [] rvdcl.Cast.view_un_struc_formula in
-            let rhs_pure = get_pure rhs in
+            let rhs_pure = CP.mkAnd (get_pure rhs) (get_pure lhs) no_pos in
             let rev_l_hfs = List.rev (heaps_of_formula [rvn.h_formula_view_node] lhs) in
-            if List.exists (fun (br_pure,hfs) -> (tp_imply rhs_pure br_pure) && (List.length hfs = List.length rev_l_hfs) && is_horm_h_formula hfs rev_l_hfs) rec_def_heaps then
-              3 (* gen -> lemma: right lemma application is not working properly.
-                   todo: should be <- *)
-            else -1
+            if not ((is_horm_dllseg rvn.h_formula_view_node rev_l_hfs)) then -1 else
+              if List.exists (fun (br_pure,hfs) -> (cfutil_tp_imply rhs_pure br_pure) &&
+                  (List.length hfs = List.length rev_l_hfs) &&
+                  is_horm_h_formula hfs rev_l_hfs
+              ) rec_def_heaps then
+                3 (* gen -> lemma: right lemma application is not working properly.
+                     todo: should be <- *)
+              else -1
       | _ -> -1
 
 let check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns =
   let pr1 vn = !print_h_formula (ViewNode vn) in
   let pr2 dn = !print_h_formula (DataNode dn) in
-  Debug.no_4 "check_tail_rec_rec_lemma" (pr_list pr2) (pr_list pr1)
+  let pr3 = !print_formula in
+  Debug.no_6 "check_tail_rec_rec_lemma" pr3 pr3 (pr_list pr2) (pr_list pr1)
       (pr_list pr2) (pr_list pr1) string_of_int
-      (fun _ _ _ _ -> check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns) l_reach_dns l_reach_vns r_reach_dns r_reach_vns
+      (fun _ _ _ _ _ _ -> check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns)
+      lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns
 
 (*check whether can use pure properties to unfold. IF YES, postpone the lemma synthesis after unfold*)
 let poss_prune_pred_x prog vnode f=
@@ -984,39 +1019,48 @@ let poss_prune_pred prog vnode f=
   res = 2 : syn lemma_infer
   res = 3: syn Left lemma for tail-rec and non tail rec
 *)
-let need_cycle_checkpoint_x prog lvnode lhs rvnode rhs=
-  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
     (*check root has unfold information??*)
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
-      let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
-      let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
-      let lnlength = List.length l_reach_dns in
-      let lvlength = List.length l_reach_vns in
-      let rnlength = List.length r_reach_dns in
-      let rvlength = List.length r_reach_vns in
-      if lvlength = rvlength then
-        if (lnlength != rnlength) then
-          if lvlength = rvlength then
-            let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
-            if lem_type = -1 then 0 else lem_type
-          else 0
-        else
-          let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-          let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
-          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
-            1
-          else
-            1
+    let _ = DD.ninfo_hprint (add_str "rhs0"  !print_formula) rhs0 no_pos in
+    let rhs1 = subst (reqset) rhs0 in
+    let ( _,mix_f,_,_,_) = split_components rhs1 in
+    let eqs = (MCP.ptr_equations_without_null mix_f) in
+    let _ = DD.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+    let rhs = subst (eqs) rhs1 in
+    let ( _,lmf,_,_,_) = split_components lhs0 in
+    let leqs = (MCP.ptr_equations_without_null lmf) in
+    let lhs = subst (leqs) lhs0 in
+    let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
+    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+    let lnlength = List.length l_reach_dns in
+    let lvlength = List.length l_reach_vns in
+    let rnlength = List.length r_reach_dns in
+    let rvlength = List.length r_reach_vns in
+    if lvlength = rvlength then
+      if (lnlength != rnlength) then
+        if lvlength = rvlength then
+          let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+          if lem_type = -1 then 0 else lem_type
+        else 0
       else
-        if (lvlength > rvlength) then
-          0
-        else -1
+        let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+        let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
+        if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+          1
+        else
+          1
+    else
+      if (lvlength > rvlength) then
+        0
+      else -1
 
-let need_cycle_checkpoint prog lvnode lhs rvnode rhs=
+let need_cycle_checkpoint prog lvnode lhs rvnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "need_cycle_checkpoint" pr1 pr1 string_of_int
-      (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs)
+      (fun _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs reqset)
       lhs rhs
 
 let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
@@ -1078,9 +1122,9 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
       (*         else -1 *)
       (*   | _ -> -1 *)
 
-let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
+let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-    || (check_separation_unsat rhs) || (check_separation_unsat lhs) then -1 else
+    || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) then -1 else
     (* let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [ldnode.h_formula_data_node] 3 in *)
     (* let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in *)
     (* (\* let lnlength = List.length l_reach_dns in *\) *)
@@ -1090,33 +1134,47 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs=
     (* if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then *)
     (*   1 *)
     (* else -1 *)
-    need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
+      let rhs1 = subst (reqset) rhs0 in
+      let ( _,mix_f,_,_,_) = split_components rhs1 in
+      let eqs = (MCP.ptr_equations_without_null mix_f) in
+      let rhs = subst (eqs) rhs1 in
+      let ( _,lmf,_,_,_) = split_components lhs0 in
+      let leqs = (MCP.ptr_equations_without_null lmf) in
+      let lhs = subst (leqs) lhs0 in
+      need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
 
-let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs=
+let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "need_cycle_checkpoint_fold" pr1 pr1 string_of_int
-      (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs)
+      (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs reqset)
       lhs rhs
 
-let need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs=
+let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )
-    || (check_separation_unsat rhs) || (check_separation_unsat lhs)  then -1 else
-    let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
-    let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rdnode.h_formula_data_node] 3 in
-    (* let lnlength = List.length l_reach_dns in *)
-    let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-    (* let rnlength = List.length r_reach_dns in *)
-    let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
-    if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
-      0
-    else
-       let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
-       lem_type
+    || (check_separation_unsat rhs0) || (check_separation_unsat lhs0)  then -1 else
+      let rhs1 = subst (reqset) rhs0 in
+      let ( _,mix_f,_,_,_) = split_components rhs1 in
+      let eqs = (MCP.ptr_equations_without_null mix_f) in
+      let rhs = subst (eqs) rhs1 in
+      let ( _,lmf,_,_,_) = split_components lhs0 in
+      let leqs = (MCP.ptr_equations_without_null lmf) in
+      let lhs = subst (leqs) lhs0 in
+      let _, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
+      let _, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rdnode.h_formula_data_node] 3 in
+      (* let lnlength = List.length l_reach_dns in *)
+      let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+      (* let rnlength = List.length r_reach_dns in *)
+      let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
+      if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+        0
+      else
+        let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+        lem_type
 
-let need_cycle_checkpoint_unfold prog lvnode lhs rdnode rhs=
+let need_cycle_checkpoint_unfold prog lvnode lhs rdnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "need_cycle_checkpoint_unfold" pr1 pr1 string_of_int
-      (fun _ _ -> need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs)
+      (fun _ _ -> need_cycle_checkpoint_unfold_x prog lvnode lhs rdnode rhs reqset)
       lhs rhs
 
 let get_shortest_length_base_x fs vname=
@@ -1627,9 +1685,9 @@ let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
   ) [] seg_dns in
   let is_inconst = check_inconsistent dns in
   (*********abstract x!=y ******)
-  let view_ptrs = List.fold_left (fun r vn ->
-      r@(vn.h_formula_view_node::vn.h_formula_view_arguments)
-  ) [] hvs in
+  (* let view_ptrs = List.fold_left (fun r vn -> *)
+  (*     r@(vn.h_formula_view_node::vn.h_formula_view_arguments) *)
+  (* ) [] hvs in *)
   (* let nemps1 = List.filter (fun (sv1,sv2) -> CP.mem_svl sv1 view_ptrs && *)
   (*     CP.mem_svl sv2 view_ptrs *)
   (* ) nemps in *)

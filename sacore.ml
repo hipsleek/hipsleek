@@ -3504,7 +3504,7 @@ let normalize_hp_defs_x rhs hp_defs=
               let nparas = CP.subst_var_list ss0 paras in
               let n_lhs = CF.h_subst ss0 hp_def.CF.def_lhs in
               let n_rhs = List.map (fun (f,og) -> (CF.subst ss0 f,og)) hp_def.CF.def_rhs in
-              {hp_def with CF.def_cat = CP.HPRelDefn (hp, nr, nparas);
+              {(* hp_def with *) CF.def_cat = CP.HPRelDefn (hp, nr, nparas);
                   CF.def_lhs = n_lhs;
                   CF.def_rhs = n_rhs;
               }
