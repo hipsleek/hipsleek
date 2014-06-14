@@ -23,16 +23,12 @@
 ;predicates 
 
 (define-fun P ((?x GTyp)) Space 
-(tospace (or 
-
-	(= nil ?x)
-
-
+(tospace 
 	(and (distinct nil ?x)
 		 (tobool (Q ?x ?x)
 		)
 	)
-))
+)
 )
 
 
