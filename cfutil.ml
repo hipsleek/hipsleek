@@ -46,6 +46,12 @@ let rec is_empty_heap_f f0=
   in
   helper f0
 
+let is_view_f f=
+  match f with
+    | Base {formula_base_heap = h}
+    | Exists {formula_exists_heap = h} -> is_view h
+    | _ -> false
+
 let elim_null_vnodes_x prog sf=
   let null_detect_trans eq_nulls hf=
     match hf with

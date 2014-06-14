@@ -121,6 +121,21 @@ let build_subs_4_evars evars eset =
   let pr_eset = CP.EMapSV.string_of in
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
 
+let view_unsat_check vdecl act_root act_args ctx_pure_constr frm_inv=
+  true
+
+(*inv is general. this time, we have more information:
+  - caller context: constraints of caller. we strengthen inv
+*)
+let xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv=
+  (*apply for
+     - vdecl not in a mut-rec
+  *)
+  (*get branch infor: pure constr, heap node, view node*)
+  (*prune 1: inconsistency on pure constrs *)
+  (*for each view node -> compute specilized infor *)
+  (*check eqs on act_args, prune incosistent branch *)
+  frm_inv
 
 let compute_subs_mem puref evars = 
   let (subs,_) = CP.get_all_vv_eqs puref in
@@ -657,19 +672,6 @@ and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (p0: mix_f
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in
   Debug.no_3 "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
       (fun _ _ _ -> xpure_heap_mem_enum_new prog h0 p0 which_xpure) h0 p0 which_xpure 
-
-(*inv is general. this time, we have more information:
-  - caller context: constraints of caller. we strengthen inv
-*)
-and xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv=
-  (*apply for
-     - vdecl not in a mut-rec
-  *)
-  (*get branch infor: pure constr, heap node, view node*)
-  (*prune 1: inconsistency on pure constrs *)
-  (*for each view node -> compute specilized infor *)
-  (*check eqs on act_args, prune incosistent branch *)
-  frm_inv
 
 and xpure_spec_view_inv vdecl act_root act_args ctx_pure_constr frm_inv=
   let pr1 vdcl = vdcl.Cast.view_name in

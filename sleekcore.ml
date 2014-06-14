@@ -182,15 +182,22 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-    let _ = print_endline ("ctx: 1*******************") in
-    let ctx = 
-      if !Globals.delay_proving_sat then ctx
-      else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-    let _ = if (CF.isAnyFalseCtx ctx) then
-      print_endline_quiet ("[Warning] False ctx")
-    in
-    let _ = print_endline ("ctx: 2********************") in
-    let conseq = Cfutil.elim_null_vnodes cprog conseq in
+    if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      let sno = ref (0:int) in
+      if Solver.unsat_base_nth 22 cprog (sno) ante then
+        (true, (CF.SuccCtx[ctx]), isvl)
+      else
+        let fctx = CF.FailCtx (CF.Trivial_Reason
+            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+        (false, fctx, isvl)
+    else
+      let ctx = 
+        if !Globals.delay_proving_sat then ctx
+        else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
+      let _ = if (CF.isAnyFalseCtx ctx) then
+        print_endline_quiet ("[Warning] False ctx")
+      in
+      let conseq = Cfutil.elim_null_vnodes cprog conseq in
     (*****************)
     (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
     (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
