@@ -638,7 +638,7 @@ let convert_data_and_pred_to_cast_x () =
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
-  let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
+  let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in

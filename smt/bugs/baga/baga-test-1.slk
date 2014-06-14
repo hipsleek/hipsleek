@@ -26,7 +26,7 @@ pred l3a<> ==
 inv self!=null.
 
 pred l4<q:node> == 
-  (exists z: self::node<r>*r::node<_> & r=z & z=q)
+  (exists z,r: self::node<r>*r::node<_> & r=z & z=q)
 inv self!=null.
 // baga {self,q}
 
@@ -55,7 +55,7 @@ Disabling baga inv gen ..
 
 pred l7<q:node> == 
   self=null & q=null
-  or self::node<r>*r::node<_> & r=q
+  or (exists r:  self::node<r>*r::node<_> & r=q)
 inv true.
 
 /*

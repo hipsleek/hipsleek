@@ -500,7 +500,8 @@ let is_int_str (s:string) : bool =
     is_int_str_aux n s
 
 (* check if a string is a null const *)
-let is_null_str (s:string) : bool = (s="null")
+let is_null_str (s:string) : bool = 
+  (s==Globals.null_name)
 
 
 (* is string a constant?  *)
@@ -2159,6 +2160,12 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
     mkTrue pos
   else
     BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+
+and mkEqNull (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkTrue pos
+  else
+    BForm ((Eq (Var (sv1, pos), Null no_pos, pos), None),None)
 
 and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
@@ -4282,11 +4289,12 @@ let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 module SV =
 struct 
   type t = spec_var
-  let zero = mk_spec_var "_" (* to denote null value *)
+  let zero = mk_spec_var Globals.null_name 
+    (* "_" to denote null value *)
   let is_zero x = x==zero
   let eq = eq_spec_var
   let compare = compare_spec_var
-  let string_of = string_of_spec_var
+  let string_of x = (* "X"^ *)(string_of_spec_var x)
   let conv_var x = x
   let conv_var_pairs x = x
   let from_var x = x

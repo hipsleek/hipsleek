@@ -2370,7 +2370,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           let b_no_float_rel = mona_imply ante_no_float_rel conseq_no_float_rel in
           let b_no_bag_rel = redlog_imply ante_no_bag_rel conseq_no_bag_rel in
           let b_no_bag_float = z3_imply ante_no_bag_float conseq_no_bag_float in
-          (b_no_float_rel && b_no_bag_rel & b_no_bag_float)
+          (b_no_float_rel && b_no_bag_rel && b_no_bag_float)
         else
           if (is_bag_ante || is_bag_conseq) && (is_float_ante || is_float_conseq) then
             let ante_no_float = CP.drop_float_formula ante in

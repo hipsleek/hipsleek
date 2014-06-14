@@ -118,7 +118,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         BForm ((BVar (get_var "res" tlist, loc), None), None) 
       else
         let tmp = 
-          if is_node y & is_zero x then 
+          if is_node y && is_zero x then 
             BForm((Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc),None),None)
           else
           if is_node x && is_one y then 

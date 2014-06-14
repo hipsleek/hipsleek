@@ -149,6 +149,14 @@ Disabling baga inv gen ..
 
 ====================================
 ====================================
+# baga-test-4.slk --inv-baga
+
+null is supposed to be captured a "_".
+Why was it captured as "null" in emap? Has it
+not been captured properly?
+
+!!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),(BAGA:[q,self],EQ:emap[],INEQ:[])]
+
 ====================================
 ====================================
 ====================================
