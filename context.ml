@@ -1162,7 +1162,7 @@ and process_one_match_accfold prog mt_res lhs_h lhs_p rhs_p =
         if (try_accfold) then (
           let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
           let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
-          let fold_seqs = List.map (fun ((hf,_,_),hf_rest) ->
+          let fold_seqs = List.map (fun ((hf,_,_,_),hf_rest) ->
             let fold_steps = Acc_fold.detect_fold_sequence hf lv vdecl prog in
             (hf,hf_rest,fold_steps)
           ) heap_chains in
