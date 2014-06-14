@@ -19,6 +19,7 @@ my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
+my $smt2slk = "smt2slk"; #"../smt2slk/bin/smt2slk";
 my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
@@ -224,7 +225,7 @@ if ($test_all) {
     "succ-rec17.defs.smt2",
     "succ-rec18.defs.smt2",
     "succ-rec19.defs.smt2",
-    "succ-rec20.defs.smt2"
+    "succ-rec20.defs.smt2",
     "succ-circuit01.defs.smt2",
     "succ-circuit02.defs.smt2",
     "succ-rec01.defs.smt2",
@@ -307,7 +308,7 @@ foreach my $smt2_file (@smt2_files) {
     $rel_path = " latest/" . File::Spec->abs2rel($smt2_file, $test_path);
   }
   my $slk_file = $smt2_file . ".slk";
-  system("smt2slk " . $smt2_file);
+  system($smt2slk . " " . $smt2_file);
   move ($slk_file, $tmp_dir) or die "The move operation failed: $!";
   
   my $smt2_name = basename($slk_file, ".slk");
