@@ -763,7 +763,7 @@ struct
   let string_of (e: emap) : string =
     let f = string_of_elem in
     let ll = partition e in 
-    let ll = List.filter (fun v -> List.length v > 1) ll in
+    (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
     "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
