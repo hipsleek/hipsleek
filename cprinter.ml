@@ -2105,7 +2105,9 @@ and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 
 (* new EPURE *)
-let string_of_ef_pure = pr_triple (add_str "BAGA" P.string_of_spec_var_list) (add_str "EQ" P.EMapSV.string_of) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
+let string_of_ef_pure = 
+  let pr = pr_list P.string_of_spec_var_list in
+  pr_triple (add_str "BAGA" P.string_of_spec_var_list) (fun (_,p) -> (add_str "EQ" pr) p) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
 
 (* old EPURE *)
 (* let string_of_ef_pure = pr_pair (add_str "BAGA" P.string_of_spec_var_list) (add_str "pure" string_of_pure_formula) *)

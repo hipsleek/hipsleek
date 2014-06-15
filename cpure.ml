@@ -4360,7 +4360,8 @@ type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
 
-type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list)
+type ef_part = (spec_var list) list
+type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list)
 (* old extended pure formula *)
 (* type ef_pure = (spec_var list * formula) *)
 
