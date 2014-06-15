@@ -1644,7 +1644,7 @@ let rec force_inter_predicate_rules vertexs ls_adjg1 ls_adj1 ls_non_emp=
     in
     let pr0 = pr_list string_of_int in
     let pr1 = pr_list (pr_triple string_of_int pr0 pr0) in
-    let _ = Debug.info_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in
+    let _ = Debug.ninfo_pprint (" new_emps_and_prunes " ^ (pr1 new_emps_and_prunes ) ) no_pos in
     if new_emps_and_prunes = [] then (false,  comps, vertexs0,ls_adjg11,ls_adj11) else
       let new_emps, prune_brs = List.fold_left (fun (ls1,ls2) (r,svl, brs) ->
           (ls1@[(r,svl)], ls2@[(r,brs)])

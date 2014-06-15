@@ -183,12 +183,17 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
     if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
-      let sno = ref (0:int) in
-      if Solver.unsat_base_nth 22 cprog (sno) ante then
+      (* let sno = ref (0:int) in *)
+      (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
+      let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
+      let is_unsat = if is_unsat0 then true else
+        if is_sat then false else
+          let is_unsat2 = Cvutil.view_unsat_check_topdown cprog waiting_vis [] [] [] true [] in
+          is_unsat2
+      in
+      if is_unsat then
         (true, (CF.SuccCtx[ctx]), isvl)
       else
-        let waiting_vis = (* Cvutil.extract_callee_view_info f *) [] in
-        (* let _ = Cvutil.view_unsat_check_topdown cprog waiting_vis [] [] true in *)
         let fctx = CF.FailCtx (CF.Trivial_Reason
             ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
         (false, fctx, isvl)

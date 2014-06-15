@@ -8952,9 +8952,15 @@ let rec is_neq_exp (f:formula) = match f with
   | _ -> false
 
 let get_neqs_new p=
+  let get_neq acc p = match p with
+    | BForm (bf,_) -> (match bf with
+        | (Neq (Var (sv1,_), Var (sv2,_), _),_) -> acc@[(sv1,sv2)]
+        | _ -> acc
+      )
+    | _ -> acc
+  in
   let ps = list_of_conjs p in
-  (* List.fold_left () [] ps *)
-  []
+  List.fold_left get_neq [] ps
 
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->

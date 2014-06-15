@@ -1,7 +1,3 @@
-real	0m8.078s
-user	0m5.163s
-sys	0m3.227s
-
 spaguetti-10-e01.tptp.smt2.slk
 Validate 1: Expected.
 
@@ -163,10 +159,12 @@ Validate 1: Expected.
 
 SAT
 spaguetti-13-e03.tptp.smt2.slk
-Validate 1: Expected.
+Validate 1: Not Expected.
 
 
-UNSAT
+Unexpected: 1 
+
+SAT
 spaguetti-13-e04.tptp.smt2.slk
 Validate 1: Expected.
 

@@ -122,49 +122,80 @@ let build_subs_4_evars evars eset =
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
 
 
-(* let extract_view_info prog vname p_root p_args p_h p_p= *)
-(*   (\*********************************\) *)
-(*   let rec find_self_sv fs= *)
-(*     match fs with *)
-(*       | (f,_)::rest ->begin let svl = Cformula.fv f in *)
-(*         try *)
-(*           let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var) self_name = 0) svl in *)
-(*           self_sv *)
-(*         with _ -> find_self_sv rest *)
-(*         end *)
-(*       | [] -> raise Not_found *)
-(*   in *)
-(*   let rec compute_eq pr_slv res= *)
-(*     match svl with *)
-(*       | (p_sv1,sv1)::rest -> let eqs = List.fold_left (fun r (p_sv2,sv2) -> *)
-(*             if CP.eq_spec_var p_sv1 p_sv2 then r@[(sv1,sv2)] else r *)
-(*         ) [] rest in *)
-(*         compute_eq rest (res@eqs) *)
-(*       | [] -> res *)
-(*   in *)
-(*   (\*********************************\) *)
-(*   let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in *)
-(*   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then *)
-(*     view_data_name *)
-(*   else find_self_sv vdcl.Cast.view_un_struc_formula *)
-(*   in *)
-(*   let fr_root = CP.fresh_spec_var self_sv in *)
-(*   let fr_args = CP.fresh_spec_vars vdecl.Cast.view_vars in *)
-(*   let sst = List.combine (self_sv::vdecl.Cast.view_vars) (fr_root::fr_args) in *)
-(*   (\*from parents parameters eqs to current parameter eqs*\) *)
-(*   let eqs = compute_eq (List.combine (p_root::p_args) (fr_root::fr_args)) [] in *)
-(*   let sst1 = List.combine (p_root::p_args) (fr_root::fr_args) in *)
-(*   let p_eqs, p_null_svl = pure_extract (CP.subst sst1 p_p) in *)
-(*   let baga, lower_views = heap_extract (Cformula.subst sst1 p_h) in *)
-(*   [] *)
+let compute_subs_mem puref evars = 
+  let (subs,_) = CP.get_all_vv_eqs puref in
+  let eqset = CP.EMapSV.build_eset subs in
+  let nsubs = build_subs_4_evars evars eqset in
+  (* let subs1 = List.map (fun (v1,v2) -> *)
+  (*     if Gen.BList.mem_eq CP.eq_spec_var v2 evars then (v2,v1) *)
+  (*     else (v1,v2) *)
+  (* ) subs in *)
+  (* Debug.info_hprint (add_str "orig subs" pr_subs) subs no_pos; *)
+  (* Debug.info_hprint (add_str "old_subs" pr_subs) subs1 no_pos; *)
+  (* Debug.info_hprint (add_str "new_subs" pr_subs) nsubs no_pos; *)
+  nsubs
 
-let extract_callee_view_info f=
+let compute_subs_mem puref evars = 
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "compute_subs_mem" pr (add_str "evars" !CP.print_svl) (pr_list (pr_pair !CP.print_sv !CP.print_sv)) compute_subs_mem  puref evars  
+
+
+(* andreeac: to add equality info *)
+let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
+  if not(!Globals.allow_field_ann) then false else 
+  let rec helper ann1 ann2 = 
+  match ann1, ann2 with
+    | [], [] -> true
+    | (CP.ConstAnn(Accs))::t1, a::t2 
+    | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
+				                        true && compatible
+    | (CP.TempRes(a1,a2))::t1, a::t2 
+    | a::t1, (CP.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
+				                        (CP.eq_ann a a2) && compatible
+    | _ -> false
+  in helper ann1 ann2
+
+(****************************************************************************)
+(****************************************************************************)
+(****************************************************************************)
+let pr_list_pair_sv = pr_list ( pr_pair !CP.print_sv !CP.print_sv)
+let print_vis = pr_hepta pr_id !CP.print_sv !CP.print_svl pr_list_pair_sv pr_list_pair_sv !CP.print_svl !CP.print_svl
+
+let find_close_eq a eq2=
+  let aset2 = CP.EMapSV.build_eset eq2 in
+  let aset11 = CP.EMapSV.merge_eset a aset2 in
+  CP.EMapSV.get_equiv aset11
+
+let rec find_close_neq (a:CP.EMapSV.emap) neqs res=
+  match neqs with
+    | [] -> res
+    | (sv1,sv2)::rest ->
+          let cl_svl1 = CP.EMapSV.find_equiv_all sv1 a in
+          let cl_svl2 = CP.EMapSV.find_equiv_all sv2 a in
+          let n_res =res@(List.fold_left (fun r sv1 -> r@(List.map (fun sv2 -> (sv1,sv2) ) cl_svl2)) [] cl_svl1) in
+          find_close_neq a rest n_res
+
+let find_closure_svl a svl=
+  CP.find_eq_closure a svl
+
+let extract_callee_view_info_x prog f=
+  (*******************)
   let rec poss_pair_of_list svl res=
     match svl with
       | sv1::rest -> let prs = List.map (fun sv2 -> (sv1,sv2)) rest in
         poss_pair_of_list rest (res@prs)
       | [] -> res
   in
+  let extract_pto vn= [vn.h_formula_view_node]
+    (* let vdcl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
+    (* let neqNulls = CP.get_neq_null_svl (Mcpure.pure_of_mix vdcl.Cast.view_x_formula) in *)
+    (* let formal_args = CP.SpecVar (Named vdcl.Cast.view_data_name, self, Unprimed):: vdcl.Cast.view_vars in *)
+    (* let neqNulls1 = CP.intersect_svl neqNulls formal_args in *)
+    (* if neqNulls1 = [] then [] else *)
+    (*   let sst = List.combine formal_args (vn.h_formula_view_node::vn. h_formula_view_arguments) in *)
+    (*   CP.subst_var_list sst neqNulls1 *)
+  in
+  (*******************)
   (* local info *)
   let h,mf, _, _, _ = split_components f in
   let p = (MCP.pure_of_mix mf) in
@@ -173,13 +204,24 @@ let extract_callee_view_info f=
   let eqNulls = (MCP.get_null_ptrs mf) in
   let neqNull_svl = CP.get_neq_null_svl p in
   let hns,hvs,_=Cformula.get_hp_rel_h_formula h in
-  let ptos = List.map (fun hn -> hn.h_formula_data_node) hns in
+  let ptos0 = List.map (fun hn -> hn.h_formula_data_node) hns in
+  let ptos1 = List.fold_left (fun r vn -> r@(extract_pto vn)) [] hvs in
+  let ptos = ptos0@ptos1 in
   let neqs2 = poss_pair_of_list ptos [] in
-  let cl_eqNulls = find_close eqNulls eqs in
-  let cl_neqNulls = find_close (neqNull_svl@ptos) eqs in
-  (eqs, neqs@neqs2, cl_eqNulls, cl_neqNulls, hvs)
+  let a = CP.EMapSV.build_eset eqs in
+  let cl_eqNulls = find_closure_svl a eqNulls in
+  let cl_neqNulls = find_closure_svl a(neqNull_svl@ptos) in
+  let neqs3 = find_close_neq a (neqs@neqs2) [] in
+  (eqs, neqs3, cl_eqNulls, CP.remove_dups_svl cl_neqNulls, hvs)
 
-let is_inconsistent (eqs, neqs, cl_eqNulls, cl_neqNulls)=
+let extract_callee_view_info prog f=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr3 hv = (!print_h_formula (ViewNode hv)) in
+  Debug.no_1 "extract_callee_view_info" !print_formula (pr_penta pr2 pr2 pr1 pr1 (pr_list pr3))
+      (fun _ -> extract_callee_view_info_x prog f) f
+
+let is_inconsistent_x eqs neqs cl_eqNulls cl_neqNulls=
   let rec is_intersect ls1 ls2 cmp_fn=
     match ls1 with
       | [] -> false
@@ -192,11 +234,18 @@ let is_inconsistent (eqs, neqs, cl_eqNulls, cl_neqNulls)=
   is_intersect cl_eqNulls cl_neqNulls CP.eq_spec_var ||
       is_intersect eqs neqs pr_sv_cmp
 
+let is_inconsistent eqs neqs cl_eqNulls cl_neqNulls=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_4 "is_inconsistent" pr2 pr2 pr1 pr1 string_of_bool
+      (fun _ _ _ _ -> is_inconsistent_x eqs neqs cl_eqNulls cl_neqNulls)
+      eqs neqs cl_eqNulls cl_neqNulls
+
 (*
  - fresh name of formal paras
  - check eq of actual parameters. return a list of eqs in form of new fresh paras
 *)
-let extract_actual_args_view_info formal_paras act_paras=
+let extract_actual_args_view_info_x act_paras=
   let rec compute_eq svl res=
     match svl with
       | (p_sv1,sv1)::rest -> let eqs = List.fold_left (fun r (p_sv2,sv2) ->
@@ -205,11 +254,90 @@ let extract_actual_args_view_info formal_paras act_paras=
         compute_eq rest (res@eqs)
       | [] -> res
   in
-  let fr_args = CP.fresh_spec_vars formal_paras in
+  let fr_args = CP.fresh_spec_vars act_paras in
   let pr_paras = List.combine act_paras fr_args in
-  []
+  let eqs = compute_eq pr_paras [] in
+  (eqs, fr_args)
 
-let process_vis prog terminate_first_sat (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) =
+let extract_actual_args_view_info act_paras=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_1 "extract_actual_args_view_info" !CP.print_svl (pr_pair pr1 !CP.print_svl)
+      (fun _ -> extract_actual_args_view_info_x act_paras) act_paras
+(*
+  specialize info for one view instance
+*)
+let specialize_view_info_x prog eqs neqs null_svl neqNull_svl (vnode:h_formula_view)=
+  (*****************************************)
+  let rec filter_pair sel_svl ls res=
+    match ls with
+      | [] -> res
+      | (sv1, sv2)::rest ->
+            let nres = if CP.mem_svl sv1 sel_svl && CP.mem_svl sv1 sel_svl then
+              res@[(sv1, sv2)]
+            else res
+            in
+            filter_pair sel_svl rest res
+  in
+  let subst_pair_sv sst (sv1,sv2)=
+    (CP.subst_var_par sst sv1, CP.subst_var_par sst sv2)
+  in
+  (*****************************************)
+  let v_root = vnode.h_formula_view_node in
+  let v_args = vnode.h_formula_view_arguments in
+  let v_root_args =  v_root::v_args in
+  let spec_eqs = filter_pair v_root_args eqs [] in
+  let spec_neqs = filter_pair v_root_args neqs [] in
+  let spec_null_svl = CP.intersect_svl v_root_args null_svl in
+  let spec_neqNull_svl = CP.intersect_svl v_root_args neqNull_svl in
+  let caller_eq, fr_args = extract_actual_args_view_info v_root_args in
+  (*subst into new fresh args*)
+  let sst = List.combine v_root_args fr_args in
+  let spec_eqs1 = List.map (subst_pair_sv sst) spec_eqs in
+  let spec_neqs1 = List.map (subst_pair_sv sst) spec_neqs in
+  let spec_null_svl1 = CP.subst_var_list sst spec_null_svl in
+  let spec_neqNull_svl1 = CP.subst_var_list sst spec_neqNull_svl in
+  (*find closure on caller_eqs*)
+  let caller_aset = CP.EMapSV.build_eset caller_eq in
+  let spec_eqs2 = find_close_eq caller_aset spec_eqs1 in
+  let spec_neqs2 = find_close_neq caller_aset spec_neqs1 [] in
+  let spec_null_svl2 = find_closure_svl caller_aset spec_null_svl1 in
+  let spec_neqNull_svl2 = find_closure_svl caller_aset spec_neqNull_svl1 in
+  (* check consistent *)
+  if is_inconsistent spec_eqs2 spec_neqs2 spec_null_svl2 spec_neqNull_svl2 then
+    []
+  else [(vnode.h_formula_view_name, List.hd fr_args, List.tl fr_args, spec_eqs2, spec_neqs2, spec_null_svl2, spec_neqNull_svl2)]
+
+let specialize_view_info prog eqs neqs null_svl neqNull_svl (vnode:h_formula_view)=
+   let pr1 = !CP.print_svl in
+   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+   let pr3 vn = !print_h_formula (ViewNode vn) in
+   Debug.no_5 "specialize_view_info" pr2 pr2 pr1 pr1 pr3 (pr_list_ln print_vis)
+       (fun _ _ _ _ _ -> specialize_view_info_x prog eqs neqs null_svl neqNull_svl vnode)
+       eqs neqs null_svl neqNull_svl vnode
+
+let build_vis_x prog f=
+  let (eqs, neqs, null_svl, neqNull_svl, hvs) = extract_callee_view_info prog f in
+  let br_info = (eqs, neqs, null_svl, neqNull_svl) in
+  if not (is_inconsistent eqs neqs null_svl neqNull_svl) then
+    if hvs = [] then
+      (false,true,[],br_info)
+    else
+      let n_vis = List.fold_left (fun r vnode ->
+          let n_vis = specialize_view_info prog eqs neqs null_svl neqNull_svl vnode in
+          r@n_vis
+      ) [] hvs in
+      (false,false, n_vis,br_info)
+  else (true,false,[],br_info)
+
+let build_vis prog f=
+  let pr1 = pr_list_ln print_vis in
+  let pr2a = !CP.print_svl in
+  let pr2b = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 = pr_quad pr2b pr2b pr2a pr2a in
+  Debug.no_1 "build_vis" !print_formula (pr_quad string_of_bool string_of_bool pr1 pr2)
+      (fun _ -> build_vis_x prog f) f
+
+let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) =
   (*********************************)
   let rec find_self_sv fs=
     match fs with
@@ -223,21 +351,32 @@ let process_vis prog terminate_first_sat (vname, p_root,p_args,p_eqs,p_neqs,p_nu
   in
   let process_one_f fr_args arg_sst f=
     (* local info *)
-    let _,f0 = Cformula.split_quantifiers f in
-    let f1 = Cformula.subst  arg_sst f0 in
-    let h,mf, _, _, _ = split_components f1 in
-    let p = (MCP.pure_of_mix mf) in
-    let eqs = (MCP.ptr_equations_without_null mf) in
-    let neqs = CP.get_neqs p in
-    let eqNulls = (MCP.get_null_ptrs mf) in
-    let neqNull_svl = CP.get_neq_null_svl p in
-    let hns,hvs,_=Cformula.get_hp_rel_h_formula h in
-    let neqNull_svl2 = List.map (fun hn -> hn.h_formula_data_node) hns in
-    (*combine with caller *)
-    (*check consistent*)
-    (*if hvs = [], it is a leaf. return sat*)
-    (* if yes, each view node, build one checking to go down*)
-    [],[],[]
+    let f0a = CF.elim_exists f in
+    let _,f0 = CF.split_quantifiers f0a in
+    let f1 = Cformula.subst arg_sst f0 in
+    let is_unsat, is_sat, new_vis, (br_eqs, br_neqs, br_null_svl, br_neqNull_svl) = build_vis prog f1 in
+    if is_unsat then
+      ([(vname,p_root,p_args,br_eqs, br_neqs, br_null_svl, br_neqNull_svl)],[],[])
+    else
+      (*check whether present branch is consistent with caller info *)
+      (*combine with caller *)
+        let br_eqs1 = p_eqs@br_eqs in
+        let pr_neqs1 = p_neqs@br_neqs in
+        let pr_null_svl1 = p_null_svl@br_null_svl in
+        let br_neqNull_svl1 = p_neqNull_svl@br_neqNull_svl in
+        (*check consistent*)
+        let is_unsat = is_inconsistent br_eqs1 pr_neqs1  pr_null_svl1 br_neqNull_svl1 in
+        if is_unsat then
+          (new_vis, [], [])
+        else
+          (*is a leaf??*)
+          if is_sat && term_first_sat then
+            ([], [(vname,p_root,p_args,br_eqs, br_neqs, br_null_svl, br_neqNull_svl)],[])
+          else
+            (* if sat, each view node, build one checking to go down*)
+            (*remove rec, should add inv?*)
+            (* let new_vis1 = List.filter (fun (vn,_,_,_,_,_,_) -> String.compare vn vname != 0) new_vis in *)
+            ([],[],new_vis)
   in
   (*********************************)
   let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
@@ -257,19 +396,36 @@ let process_vis prog terminate_first_sat (vname, p_root,p_args,p_eqs,p_neqs,p_nu
   in
   let fr_args = p_root::p_args in
   let sst = List.combine (self_sv::vdecl.Cast.view_vars) fr_args in
-  let unsat_vis, sat_vis,new_brs = List.fold_left (fun (r_unsat_vis,r_sat_vis, r_new_vis) (f,_) ->
-      let n_unsat_vis, n_sat_vis, n_new_vis = (process_one_f fr_args sst f) in
-        (r_unsat_vis@n_unsat_vis,r_sat_vis@n_sat_vis, r_new_vis@n_new_vis)
-  ) ([],[],[]) vdecl.Cast.view_un_struc_formula in
+  (*********************************)
+  let rec fold_left_eager (r_unsat_vis,r_sat_vis, r_new_vis) brs=
+    match brs with
+      | (f,_)::rest ->
+            let n_unsat_vis, n_sat_vis, n_new_vis = (process_one_f fr_args sst f) in
+            if term_first_sat &&  n_sat_vis !=[] then
+              (r_unsat_vis@n_unsat_vis,r_sat_vis@n_sat_vis, r_new_vis@n_new_vis)
+            else
+              fold_left_eager (r_unsat_vis@n_unsat_vis,r_sat_vis@n_sat_vis, r_new_vis@n_new_vis) rest
+      | [] ->  (r_unsat_vis,r_sat_vis, r_new_vis)
+  in
+  (*********************************)
+  let unsat_vis, sat_vis,new_brs = fold_left_eager ([],[],[]) vdecl.Cast.view_un_struc_formula in
   unsat_vis,sat_vis,new_brs
 
+let process_vis prog term_first_sat ((vname,p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) as vis)=
+  let pr2 = pr_list_ln print_vis in
+  Debug.no_2 "process_vis" string_of_bool print_vis (pr_triple pr2 pr2 pr2)
+      (fun _ _ -> process_vis_x prog term_first_sat vis) term_first_sat vis
+
 (* sst will convert parameters of vdecl into fresh ones *)
-let rec view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat=
+let rec view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat done_vnames=
   match waiting_vis with
     | ((vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) as vis)::rest -> begin
         try
-          let _ = List.find (fun (vname1,_,_,_,_,_,_) -> String.compare vname vname1 = 0) (unsat_vis@sat_vis@unknown_vis) in
-          false
+          (* let _ = List.find (fun (vname1,_,_,_,_,_,_) -> String.compare vname vname1 = 0) (unsat_vis@sat_vis@unknown_vis) in *)
+          let _ = List.find (fun (vname1) -> String.compare vname vname1 = 0) done_vnames in
+          view_unsat_check_topdown_x prog rest (sat_vis) (unsat_vis)
+                  unknown_vis term_first_sat (done_vnames)
+          (* false *)
           (* get all brs *)
           (* each brs, compute: eset (from act_para + pure) null_svl baga_svl *)
           (* combine eset null_svl baga_svl with parent *)
@@ -278,18 +434,19 @@ let rec view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vi
         with _ ->
             let new_unsat_vis, new_sat_vis, new_vis =  process_vis prog term_first_sat vis in
             if term_first_sat && new_sat_vis != [] then false else
-              view_unsat_check_topdown_x prog (new_vis@rest) (sat_vis@new_sat_vis) (new_unsat_vis@unsat_vis)
-                  unknown_vis term_first_sat
+              let new_vis1 = (* List.filter (fun (vn,_,_,_,_,_,_) -> String.compare vn vname != 0) *) new_vis in
+              let _ = Debug.ninfo_hprint (add_str "new_vis1" (pr_list print_vis)) new_vis1 no_pos in
+              view_unsat_check_topdown_x prog (new_vis1@rest) (sat_vis@new_sat_vis) (new_unsat_vis@unsat_vis)
+                  unknown_vis term_first_sat (done_vnames@[vname])
       end
-    | [] -> unknown_vis = [] && sat_vis = []
+    | [] -> unknown_vis = [] && sat_vis = [] && unsat_vis != []
 
-let view_unsat_check_topdown prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat=
-  let pr_list_pair_sv = pr_list ( pr_pair !CP.print_sv !CP.print_sv) in
-  let pr1 = pr_hepta pr_id !CP.print_sv !CP.print_svl pr_list_pair_sv pr_list_pair_sv !CP.print_svl !CP.print_svl in
-  let pr2 = pr_list_ln pr1 in
-  Debug.no_5 "view_unsat_check_topdown" pr2 pr2 pr2 pr2 string_of_bool string_of_bool
-      (fun _ _ _ _ _ -> view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat)
-       waiting_vis unsat_vis sat_vis unknown_vis term_first_sat
+let view_unsat_check_topdown prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat done_vnames=
+  let pr2 = pr_list_ln print_vis in
+  Debug.no_6 "view_unsat_check_topdown" pr2 pr2 pr2 pr2 string_of_bool (pr_list pr_id) string_of_bool
+      (fun _ _ _ _ _ _ -> view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis
+          term_first_sat done_vnames)
+       waiting_vis unsat_vis sat_vis unknown_vis term_first_sat done_vnames
 
 (*inv is general. this time, we have more information:
   - caller context: constraints of caller. we strengthen inv
@@ -312,38 +469,12 @@ let xpure_spec_view_inv vdecl act_root act_args ctx_pure_constr frm_inv=
       (fun _ _ _ _ _ -> xpure_spec_view_inv_x vdecl act_root act_args ctx_pure_constr frm_inv)
       vdecl act_root act_args ctx_pure_constr frm_inv
 
-let compute_subs_mem puref evars = 
-  let (subs,_) = CP.get_all_vv_eqs puref in
-  let eqset = CP.EMapSV.build_eset subs in
-  let nsubs = build_subs_4_evars evars eqset in
-  (* let subs1 = List.map (fun (v1,v2) -> *)
-  (*     if Gen.BList.mem_eq CP.eq_spec_var v2 evars then (v2,v1) *)
-  (*     else (v1,v2) *)
-  (* ) subs in *)
+(****************************************************************************)
+(****************************************************************************)
+(****************************************************************************)
   (* Debug.ninfo_hprint (add_str "orig subs" pr_subs) subs no_pos; *)
   (* Debug.ninfo_hprint (add_str "old_subs" pr_subs) subs1 no_pos; *)
   (* Debug.ninfo_hprint (add_str "new_subs" pr_subs) nsubs no_pos; *)
-  nsubs
-
-let compute_subs_mem puref evars = 
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "compute_subs_mem" pr (add_str "evars" !CP.print_svl) (pr_list (pr_pair !CP.print_sv !CP.print_sv)) compute_subs_mem  puref evars  
-
-
-(* andreeac: to add equality info *)
-let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) : bool =
-  if not(!Globals.allow_field_ann) then false else 
-  let rec helper ann1 ann2 = 
-  match ann1, ann2 with
-    | [], [] -> true
-    | (CP.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CP.ConstAnn(Accs))::t2 -> let compatible = helper t1 t2 in
-				                        true && compatible
-    | (CP.TempRes(a1,a2))::t1, a::t2 
-    | a::t1, (CP.TempRes(a1,a2))::t2 -> let compatible = helper t1 t2 in
-				                        (CP.eq_ann a a2) && compatible
-    | _ -> false
-  in helper ann1 ann2
 
 (**************************************************************************)
 (******************************* XPURE *****************************)
