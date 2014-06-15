@@ -1081,25 +1081,48 @@ struct
   (*   else c *)
 
   let emap_imply e1 e2 =
-    let lst1 = EM.get_equiv e1 in
+    (* let lst1 = EM.get_equiv e1 in *)
     let lst2 = EM.get_equiv e2 in
-    lst_imply pair_cmp lst1 lst2
+    List.for_all (fun (x,y) -> EM.is_equiv e1 x y) lst2
+
+  let exists_baga b y =
+    let rec aux b =
+      match b with 
+        | [] -> false
+        | x::xs -> let c1 = Elt.compare y x in
+          if c1>0 then false
+          else if c1==0 then true
+          else aux xs
+    in aux b
+
+  let exists_baga_pair b y z =
+    let rec aux b =
+      match b with 
+        | [] -> false
+        | x::xs -> let c1 = Elt.compare y x in
+          if c1>0 then false
+          else if c1==0 then exists_baga b z
+          else aux xs
+    in aux b
 
   (* epure syntactic imply *)
   let epure_syn_imply (b1,(e1,p1),i1) (b2,(e2,p2),i2) =
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
       let null_el = Elt.zero (* mk_elem (mk_spec_var "null") *) in
-      let i1_new = List.fold_left (fun i1 el ->
-          let c = Elt.compare el null_el in
-          if c < 0 then
-            i1@[(el, null_el)]
-          else if c > 0 then
-            i1@[(null_el, el)]
-          else
-            failwith "fail in epure_syn_imply"
-      ) i1 b1 in
-      let i1_new = List.sort pair_cmp i1_new in
+      let i1_new = List.filter 
+        (fun (x,y) -> not(Elt.is_zero x && exists_baga b1 y)
+        && not(exists_baga_pair b1 x y)) i2 in
+      (* let i1_new = List.fold_left (fun i1 el -> *)
+      (*     let c = Elt.compare el null_el in *)
+      (*     if c < 0 then *)
+      (*       [(el, null_el)]@i1 *)
+      (*     else if c > 0 then *)
+      (*       [(null_el, el)]@i1 *)
+      (*     else *)
+      (*       failwith "fail in epure_syn_imply" *)
+      (* ) i1 b1 in *)
+      (* let i1_new = List.sort pair_cmp i1_new in *)
       let f2 = lst_imply pair_cmp i1_new i2 in
       if f2 then emap_imply e1 e2 (* DONE: e1 --> e2? *)
       else false
