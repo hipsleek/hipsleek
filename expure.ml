@@ -1390,8 +1390,9 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           (* let efpd_h = build_ef_heap_formula eh all_views in *)
           (* let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in *)
           let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in
-          let efpd_e = List.map (fun efp ->
-              (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in
+          (* let efpd_e = List.map (fun efp -> *)
+          (*     (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in *)
+          let efpd_e = EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd in
           let efpd_n = EPureI.norm_disj efpd_e in
           efpd_n
 
