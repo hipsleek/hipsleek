@@ -3248,14 +3248,6 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 ^ "bwf: " ^ (pr_list idf t)
               ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
 
-            (* collect residents directly on the formula *)
-            (* let new_fwp, new_fwf, new_bwp, new_bwf =                                           *)
-            (*   collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in       *)
-            (* if (List.length new_fwp != List.length !fwp) then (fwp := new_fwp; fwp_m := true); *)
-            (* if (List.length new_fwf != List.length !fwf) then (fwf := new_fwf; fwf_m := true); *)
-            (* if (List.length new_bwp != List.length !bwp) then (bwp := new_bwp; bwp_m := true); *)
-            (* if (List.length new_bwf != List.length !bwf) then (bwf := new_bwf; bwf_m := true); *)
-
             (* unfold the inductive formulathen collect residents *)
             let base_f = List.hd base_fs in
             Debug.ninfo_hprint (add_str "f" (!CF.print_formula)) f no_pos;
@@ -3263,10 +3255,10 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
             Debug.ninfo_hprint (add_str "unfold_f" (!CF.print_formula)) f no_pos;
             let new_fwp, new_fwf, new_bwp, new_bwf = 
               collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in
-            if (List.length new_fwp != List.length !fwp) then (fwp := new_fwp; fwp_m := true);
-            if (List.length new_fwf != List.length !fwf) then (fwf := new_fwf; fwf_m := true);
-            if (List.length new_bwp != List.length !bwp) then (bwp := new_bwp; bwp_m := true);
-            if (List.length new_bwf != List.length !bwf) then (bwf := new_bwf; bwf_m := true);
+            if (List.length new_fwp > List.length !fwp) then (fwp := new_fwp; fwp_m := true);
+            if (List.length new_fwf > List.length !fwf) then (fwf := new_fwf; fwf_m := true);
+            if (List.length new_bwp > List.length !bwp) then (bwp := new_bwp; bwp_m := true);
+            if (List.length new_bwf > List.length !bwf) then (bwf := new_bwf; bwf_m := true);
 
             Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
                   "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
@@ -3276,6 +3268,12 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
               ) ) (!fwp,!fwf,!bwp,!bwf) no_pos;
           )
       ) induct_fs head_body_info;
+      Debug.ninfo_hprint (add_str "loop flag: " (fun (x,y,z,t) ->
+            "fwp_m: " ^ (string_of_bool x) ^ "; "
+          ^ "fwf_m: " ^ (string_of_bool y) ^ "; " 
+          ^ "bwp_m: " ^ (string_of_bool z) ^ "; "
+          ^ "bwf_m: " ^ (string_of_bool t)
+        )) (!fwp_m,!fwf_m,!bwp_m,!bwf_m) no_pos;
     done;
     let fwf = List.map (fun fld -> (ddecl,fld)) !fwf in
     let bwf = List.map (fun fld -> (ddecl,fld)) !bwf in
