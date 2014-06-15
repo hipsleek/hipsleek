@@ -498,6 +498,9 @@ struct
     let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
 
+  let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
+    List.map (fun e -> elim_exists svl e) lst
+
   (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
   (* does ante --> conseq *)
   (* convert ante with ef_conv_enum *)
@@ -900,8 +903,9 @@ struct
 
   let elim_exists (svl : elem list) (f : epure) : epure =
     let pr1 = pr_list Elt.string_of in
-    Debug.no_2 "elim_exists_new" pr1 (string_of) (string_of)
+    Debug.no_2 "elim_exists_baga" pr1 (string_of) (string_of)
         (fun _ _ -> elim_exists svl f) svl f
+
 
   (* let imply (ante : epure) (conseq : epure) : bool = *)
   (*   let a_f = conv_enum ante in *)
@@ -974,7 +978,7 @@ struct
     let lst2 = EM.partition e2 in
     (* let lst1 = List.sort pair_cmp lst1 in *)
     (* let lst2 = List.sort pair_cmp lst2 in *)
-    compare_partition Elt.compare lst1 lst2
+    compare_list (fun l1 l2 -> compare_list Elt.compare l1 l2) lst1 lst2
 
   let emap_eq em1 em2 = (emap_compare em1 em2) == 0
     (* let ps1 = EM.get_equiv em1 in *)
@@ -1026,8 +1030,16 @@ struct
       else c2
     else c1
 
+  let elim_exists_disj (svl : elem list) (lst : epure_disj) : epure_disj =
+    let r = List.map (fun e -> elim_exists svl e) lst in
+    List.sort epure_compare r 
+
   let merge_disj lst1 lst2 =
     merge epure_compare lst1 lst2
+
+  let merge_disj lst1 lst2 =
+    let pr = string_of_disj in
+    Debug.no_2 "merge_disj" pr pr pr merge_disj lst1 lst2
 
   let add_star ep lst =
     let xs = List.map (fun v -> mk_star ep v) lst in
