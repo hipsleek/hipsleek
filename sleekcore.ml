@@ -187,6 +187,8 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       if Solver.unsat_base_nth 22 cprog (sno) ante then
         (true, (CF.SuccCtx[ctx]), isvl)
       else
+        let waiting_vis = (* Cvutil.extract_callee_view_info f *) [] in
+        (* let _ = Cvutil.view_unsat_check_topdown cprog waiting_vis [] [] true in *)
         let fctx = CF.FailCtx (CF.Trivial_Reason
             ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
         (false, fctx, isvl)

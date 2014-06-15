@@ -121,6 +121,7 @@ let build_subs_4_evars evars eset =
   let pr_eset = CP.EMapSV.string_of in
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
 
+
 (* let extract_view_info prog vname p_root p_args p_h p_p= *)
 (*   (\*********************************\) *)
 (*   let rec find_self_sv fs= *)
@@ -157,56 +158,138 @@ let build_subs_4_evars evars eset =
 (*   let baga, lower_views = heap_extract (Cformula.subst sst1 p_h) in *)
 (*   [] *)
 
-(* let get_subst_sv_brs prog (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) = *)
-(*   (\*********************************\) *)
-(*   let rec find_self_sv fs= *)
-(*     match fs with *)
-(*       | (f,_)::rest ->begin let svl = Cformula.fv f in *)
-(*         try *)
-(*           let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var) self_name = 0) svl in *)
-(*           self_sv *)
-(*         with _ -> find_self_sv rest *)
-(*         end *)
-(*       | [] -> raise Not_found *)
-(*   in *)
-(*   let process_one_f fr_args sst (p_eqs,p_neqs,p_eqNulls,p_neqNulls) (f,_)= *)
-(*     let _,f0 = Cformula.split_quantifiers f in *)
-(*     let f1 = Cformula.subst sst f0 in *)
-(*     let h,mf_, _, _ = split_components f1 in *)
-(*     let p = (MCP.pure_of_mis mf) in *)
-(*     let eqs = (MCP.ptr_equations_without_null mix_f) in *)
-(*     let neqs = CP.get_neqs p in *)
-(*     let eqNulls = (MCP.get_null_ptrs mf) in *)
-(*     let neqNull_svl = CP.get_neq_null_svl p in *)
-(*     let hns,hvs,_=Cformula.get_hp_rel_h_formula h in *)
-(*     let neqNull_svl2 = List.map () hns in *)
-(*   in *)
-(*   (\*********************************\) *)
-(*   let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in *)
-(*   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then *)
-(*     view_data_name *)
-(*   else find_self_sv vdcl.Cast.view_un_struc_formula *)
-(*   in *)
-(*   let fr_args = p_root::p_args in *)
-(*   let sst = List.combine (self_sv::vdecl.Cast.view_vars) fr_args in *)
-(*   let fs = List.map (process_one_f fr_args sst) vdcl.Cast.view_un_struc_formula *)
+let extract_callee_view_info f=
+  let rec poss_pair_of_list svl res=
+    match svl with
+      | sv1::rest -> let prs = List.map (fun sv2 -> (sv1,sv2)) rest in
+        poss_pair_of_list rest (res@prs)
+      | [] -> res
+  in
+  (* local info *)
+  let h,mf, _, _, _ = split_components f in
+  let p = (MCP.pure_of_mix mf) in
+  let eqs = (MCP.ptr_equations_without_null mf) in
+  let neqs = CP.get_neqs_new p in
+  let eqNulls = (MCP.get_null_ptrs mf) in
+  let neqNull_svl = CP.get_neq_null_svl p in
+  let hns,hvs,_=Cformula.get_hp_rel_h_formula h in
+  let ptos = List.map (fun hn -> hn.h_formula_data_node) hns in
+  let neqs2 = poss_pair_of_list ptos [] in
+  let cl_eqNulls = find_close eqNulls eqs in
+  let cl_neqNulls = find_close (neqNull_svl@ptos) eqs in
+  (eqs, neqs@neqs2, cl_eqNulls, cl_neqNulls, hvs)
 
-(*sst will convert parameters of vdecl into fresh ones *)
-(* let view_unsat_check_topdown prog waiting unsat_vis unknown_vis = *)
-(*   match waiting with *)
-(*     | (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) ::rest -> begin *)
-(*           (\* get all brs *\) *)
-(*           (\* each brs, compute: eset (from act_para + pure) null_svl baga_svl *\) *)
-(*           (\* combine eset null_svl baga_svl with parent *\) *)
-          
-(*           (\* check insistency: eset vs. baga, null vs. baga *\) *)
-(*           (\*if sat, go down *\) *)
-(*         let fs = get_subst_sv_brs prog (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) in *)
-(*         let new_vis = extract_act_args p_root in *)
-(*           true *)
-(*       end *)
-(*     | [] -> unknown_vis = [] *)
+let is_inconsistent (eqs, neqs, cl_eqNulls, cl_neqNulls)=
+  let rec is_intersect ls1 ls2 cmp_fn=
+    match ls1 with
+      | [] -> false
+      | sv1::rest -> if Gen.BList.mem_eq cmp_fn sv1 ls2 then true else
+          is_intersect rest ls2 cmp_fn
+  in
+  let pr_sv_cmp (sv11,sv12) (sv21,sv22) = ((CP.eq_spec_var sv11 sv21) && (CP.eq_spec_var sv12 sv22)) ||
+    ((CP.eq_spec_var sv11 sv22) && (CP.eq_spec_var sv12 sv21))
+  in
+  is_intersect cl_eqNulls cl_neqNulls CP.eq_spec_var ||
+      is_intersect eqs neqs pr_sv_cmp
 
+(*
+ - fresh name of formal paras
+ - check eq of actual parameters. return a list of eqs in form of new fresh paras
+*)
+let extract_actual_args_view_info formal_paras act_paras=
+  let rec compute_eq svl res=
+    match svl with
+      | (p_sv1,sv1)::rest -> let eqs = List.fold_left (fun r (p_sv2,sv2) ->
+            if CP.eq_spec_var p_sv1 p_sv2 then r@[(sv1,sv2)] else r
+        ) [] rest in
+        compute_eq rest (res@eqs)
+      | [] -> res
+  in
+  let fr_args = CP.fresh_spec_vars formal_paras in
+  let pr_paras = List.combine act_paras fr_args in
+  []
+
+let process_vis prog terminate_first_sat (vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) =
+  (*********************************)
+  let rec find_self_sv fs=
+    match fs with
+      | (f,_)::rest ->begin let svl = Cformula.fv f in
+        try
+          let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) self = 0) svl in
+          self_sv
+        with _ -> find_self_sv rest
+        end
+      | [] -> raise Not_found
+  in
+  let process_one_f fr_args arg_sst f=
+    (* local info *)
+    let _,f0 = Cformula.split_quantifiers f in
+    let f1 = Cformula.subst  arg_sst f0 in
+    let h,mf, _, _, _ = split_components f1 in
+    let p = (MCP.pure_of_mix mf) in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let neqs = CP.get_neqs p in
+    let eqNulls = (MCP.get_null_ptrs mf) in
+    let neqNull_svl = CP.get_neq_null_svl p in
+    let hns,hvs,_=Cformula.get_hp_rel_h_formula h in
+    let neqNull_svl2 = List.map (fun hn -> hn.h_formula_data_node) hns in
+    (*combine with caller *)
+    (*check consistent*)
+    (*if hvs = [], it is a leaf. return sat*)
+    (* if yes, each view node, build one checking to go down*)
+    [],[],[]
+  in
+  (*********************************)
+  let vdecl = Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
+  let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
+     CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
+  else
+    let st = CP.type_of_spec_var p_root in
+    try
+      match st with
+        | Named tname ->
+              if String.compare tname "" != 0 then
+                CP.SpecVar (st,self,Unprimed)
+              else raise Not_found
+        | _ -> raise Not_found
+    with _ ->
+        find_self_sv vdecl.Cast.view_un_struc_formula
+  in
+  let fr_args = p_root::p_args in
+  let sst = List.combine (self_sv::vdecl.Cast.view_vars) fr_args in
+  let unsat_vis, sat_vis,new_brs = List.fold_left (fun (r_unsat_vis,r_sat_vis, r_new_vis) (f,_) ->
+      let n_unsat_vis, n_sat_vis, n_new_vis = (process_one_f fr_args sst f) in
+        (r_unsat_vis@n_unsat_vis,r_sat_vis@n_sat_vis, r_new_vis@n_new_vis)
+  ) ([],[],[]) vdecl.Cast.view_un_struc_formula in
+  unsat_vis,sat_vis,new_brs
+
+(* sst will convert parameters of vdecl into fresh ones *)
+let rec view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat=
+  match waiting_vis with
+    | ((vname, p_root,p_args,p_eqs,p_neqs,p_null_svl, p_neqNull_svl) as vis)::rest -> begin
+        try
+          let _ = List.find (fun (vname1,_,_,_,_,_,_) -> String.compare vname vname1 = 0) (unsat_vis@sat_vis@unknown_vis) in
+          false
+          (* get all brs *)
+          (* each brs, compute: eset (from act_para + pure) null_svl baga_svl *)
+          (* combine eset null_svl baga_svl with parent *)
+          (* check insistency: eset vs. baga, null vs. baga *)
+          (*if sat, go down *)
+        with _ ->
+            let new_unsat_vis, new_sat_vis, new_vis =  process_vis prog term_first_sat vis in
+            if term_first_sat && new_sat_vis != [] then false else
+              view_unsat_check_topdown_x prog (new_vis@rest) (sat_vis@new_sat_vis) (new_unsat_vis@unsat_vis)
+                  unknown_vis term_first_sat
+      end
+    | [] -> unknown_vis = [] && sat_vis = []
+
+let view_unsat_check_topdown prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat=
+  let pr_list_pair_sv = pr_list ( pr_pair !CP.print_sv !CP.print_sv) in
+  let pr1 = pr_hepta pr_id !CP.print_sv !CP.print_svl pr_list_pair_sv pr_list_pair_sv !CP.print_svl !CP.print_svl in
+  let pr2 = pr_list_ln pr1 in
+  Debug.no_5 "view_unsat_check_topdown" pr2 pr2 pr2 pr2 string_of_bool string_of_bool
+      (fun _ _ _ _ _ -> view_unsat_check_topdown_x prog waiting_vis unsat_vis sat_vis unknown_vis term_first_sat)
+       waiting_vis unsat_vis sat_vis unknown_vis term_first_sat
 
 (*inv is general. this time, we have more information:
   - caller context: constraints of caller. we strengthen inv

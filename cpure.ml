@@ -8951,6 +8951,11 @@ let rec is_neq_exp (f:formula) = match f with
   | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
 
+let get_neqs_new p=
+  let ps = list_of_conjs p in
+  (* List.fold_left () [] ps *)
+  []
+
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8959,6 +8964,7 @@ let rec is_eq_neq_exp (f:formula) = match f with
     | _ -> false)
   | Exists (_,p1,_,_) -> is_eq_neq_exp p1
   | _ -> false
+ 
 
 let is_neq_null_exp_x (f:formula) = match f with
   | BForm (bf,_) ->
