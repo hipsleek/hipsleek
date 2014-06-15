@@ -22,12 +22,23 @@
 
 ;predicates 
 
+(define-fun R ((?x GTyp)) Space 
+(tospace 
+		(and (distinct nil ?x)
+			 (tobool (P ?x)
+			))
+)
+)
+
 (define-fun P ((?x GTyp)) Space 
 (tospace 
-	(and (distinct nil ?x)
-		 (tobool (Q ?x ?x)
-		)
-	)
+	(or 
+		(= nil ?x)
+		
+		(and (distinct nil ?x)
+			 (tobool (Q ?x ?x)
+			)
+		))
 )
 )
 
@@ -67,7 +78,7 @@
 ;problem 
 (declare-fun x0 () GTyp)
 
-(assert (tobool (P  x0)))
+(assert (tobool (R  x0)))
 
 (check-sat)
 
