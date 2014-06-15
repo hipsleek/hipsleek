@@ -754,7 +754,7 @@ struct
     let r = List.map ( fun (_,b) -> List.rev b) r in
     (* print_endline ((add_str "emap" string_of_emap) s); *)
     (* print_endline ((add_str "epart" string_of_epart) r); *)
-    r
+    List.filter (fun x -> List.length x > 1) r
 
   (* let partition (s: emap) : epart = *)
   (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)

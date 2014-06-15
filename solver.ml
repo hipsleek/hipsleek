@@ -2670,12 +2670,18 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       let _ = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
       not (TP.is_sat_mix_sub_no npf sat_subno true true) 
   in
-  (* TODO-EXPURE : need to invoke EPureI.UNSAT ofor --inv-baga *)
+  (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
+  let views = prog.Cast.prog_view_decls in
   let tp_syn h p =
-    let p = MCP.translate_level_mix_formula p in
-    let ph,_,_ = xpure_heap 1 prog h p 1 in
-    let npf = MCP.merge_mems p ph true in
-    tp_call_wrapper npf 
+    let t1 = Expure.build_ef_heap_formula h views in
+    let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
+    let d = Expure.EPureI.mk_or_disj t1 t2 in
+    let d = Expure.EPureI.elim_unsat_disj d in
+    (Expure.EPureI.is_false_disj d)
+    (* let p = MCP.translate_level_mix_formula p in *)
+    (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
+    (* let npf = MCP.merge_mems p ph true in *)
+    (* tp_call_wrapper npf  *)
   in
   let tp_sem h p =
     let p = MCP.translate_level_mix_formula p in

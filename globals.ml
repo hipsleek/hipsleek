@@ -6,6 +6,7 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 

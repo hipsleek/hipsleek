@@ -13,7 +13,6 @@ open Label
 open Cpure
 open Cprinter
 
-let disj_num = ref 100
 
 (* let is_null_const_exp_for_expure (e : exp) : bool = *)
 (*   match e with *)
@@ -1041,6 +1040,10 @@ struct
   (* TODO-WN why did we not sort this *)
   let mk_or_disj t1 t2 = 
     let res=t1@t2 in
+    res
+
+  let mk_or_norm t1 t2 = 
+    let res=t1@t2 in
     List.sort epure_compare res
 
   let elim_exists_disj (svl : elem list) (lst : epure_disj) : epure_disj =
@@ -1334,7 +1337,8 @@ let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pur
     | Cformula.Star _ ->
           let hfl = Cformula.split_star_conjunctions cf in
           let efpd_n = List.fold_left (fun f hf ->
-              let _ = if (List.length f > !disj_num) then
+              let lim = !Globals.epure_disj_limit in
+              let _ = if (lim!=0 && List.length f > lim) then
                 Globals.dis_inv_baga ()
               in
               if (!Globals.gen_baga_inv) then

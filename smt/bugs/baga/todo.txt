@@ -158,6 +158,17 @@ not been captured properly?
 !!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),(BAGA:[q,self],EQ:emap[],INEQ:[])]
 
 ====================================
+# succ-circuit20.defs.smt2.slk --inv-baga
+
+why disable baga called many times.
+after first call, we should avoid baga computation totally
+
+Why was simplify called? What caused the time-out.
+Is it large formula or wrong format?
+
+Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 12 invocations Stop Omega... 12 invocations Starting Omega...oc
+T
 ====================================
 ====================================
 ====================================

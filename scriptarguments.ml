@@ -554,6 +554,7 @@ let common_arguments = [
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--inv-baga",(* Arg.Set Globals.gen_baga_inv *) Arg.Unit Globals.en_inv_baga ,"generate baga inv from view");
+  ("--baga-limit",(* Arg.Set Globals.gen_baga_inv *) Arg.Set_int Globals.epure_disj_limit ,"Set disj limit for baga invariant ");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
