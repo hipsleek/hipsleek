@@ -177,7 +177,9 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
-  | M_acc_fold (e,_) -> fmt_string "AccFold =>"; pr_mr e
+  | M_acc_fold (e,steps) ->
+      let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
+      fmt_string "AccFold =>"; pr_mr e; pr_steps steps
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
         ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>"); pr_mr e
@@ -1141,7 +1143,9 @@ and check_lemma_not_exist vl vr=
     else false in
     b_left && b_right &&(left_ls@right_ls)=[]
 
-and process_one_match_accfold prog mt_res lhs_h lhs_p rhs_p =
+and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    : action_wt list =
   if !Globals.acc_fold then (
     let lhs_node = mt_res.match_res_lhs_node in
     let rhs_node = mt_res.match_res_rhs_node in
@@ -1182,6 +1186,14 @@ and process_one_match_accfold prog mt_res lhs_h lhs_p rhs_p =
     | _ -> [] 
   )
   else []
+
+and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    : action_wt list =
+  let pr_mr = string_of_match_res in
+  let pr_out = pr_list string_of_action_wt_res in
+  Debug.no_1 "process_one_match_accfold" pr_mr pr_out
+      (fun _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p) mt_res 
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =
@@ -1447,16 +1459,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (* [] in *)
                 (* try accelerated folding *)
                 let a = l2@l3 in
-                let a_fold, a_rest = List.partition (fun (_,act) ->
-                  match act with
-                  | M_fold _ -> true
-                  | _ -> false
-                ) a in
+                (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
+                (*   match act with                                    *)
+                (*   | M_fold _ -> true                                *)
+                (*   | _ -> false                                      *)
+                (* ) a in                                              *)
                 (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                Debug.binfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+                Debug.binfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
                 (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-                (1, norm_cond_action (a_accfold@ [(1,norm_search_action (a_fold@a_rest))]))
+                (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
             | DataNode dl, ViewNode vr -> 
                 pr_debug "DATA vs VIEW\n";
                 let vr_name = vr.h_formula_view_name in
@@ -1556,16 +1570,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let a2 = if (new_orig_r) then r_lem else [] in
                 (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
                 let a = a1@a2@a3 in
-                let a_fold, a_rest = List.partition (fun (_,act) ->
-                  match act with
-                  | M_fold _ -> true
-                  | _ -> false
-                ) a in
+                (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
+                (*   match act with                                    *)
+                (*   | M_fold _ -> true                                *)
+                (*   | _ -> false                                      *)
+                (* ) a in                                              *)
                 (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                Debug.binfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+                Debug.binfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
                 (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-                (1, norm_cond_action (a_accfold@ [(1,norm_search_action (a_fold@a_rest))]))
+                (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
             | ViewNode vl, DataNode dr -> 
                   pr_debug "VIEW vs DATA\n";
                   let vl_name = vl.h_formula_view_name in

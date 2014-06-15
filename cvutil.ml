@@ -237,9 +237,9 @@ let compute_subs_mem puref evars =
   (*     if Gen.BList.mem_eq CP.eq_spec_var v2 evars then (v2,v1) *)
   (*     else (v1,v2) *)
   (* ) subs in *)
-  (* Debug.info_hprint (add_str "orig subs" pr_subs) subs no_pos; *)
-  (* Debug.info_hprint (add_str "old_subs" pr_subs) subs1 no_pos; *)
-  (* Debug.info_hprint (add_str "new_subs" pr_subs) nsubs no_pos; *)
+  (* Debug.ninfo_hprint (add_str "orig subs" pr_subs) subs no_pos; *)
+  (* Debug.ninfo_hprint (add_str "old_subs" pr_subs) subs1 no_pos; *)
+  (* Debug.ninfo_hprint (add_str "new_subs" pr_subs) nsubs no_pos; *)
   nsubs
 
 let compute_subs_mem puref evars = 
@@ -820,21 +820,21 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
             let res =
               (match inv_opt with
                 | None ->
-                      let _ = Debug.info_hprint (add_str "inv_opt" pr_id) "None" no_pos in
+                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in
                       let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in
                       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                       subst_m_fun (MCP.memoise_add_pure_N inv frac_inv)
                       (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
                 | Some xp1 ->
-                      let _ = Debug.info_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
-                       let _ = Debug.info_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
+                      let _ = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
+                       let _ = Debug.ninfo_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
                       let vinv = match which_xpure with
                         | -1 -> MCP.mkMTrue no_pos
                         | 0 -> vdef.view_user_inv
                         | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
                       in
-                      let _ = Debug.info_hprint (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
-                      let _ = Debug.info_hprint (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+                      let _ = Debug.ninfo_hprint (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
+                      let _ = Debug.ninfo_hprint (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
                       (* let _ = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
                       (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
                        (*LDK: ??? be careful to handle frac var properly. 
@@ -1219,9 +1219,9 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * C
           let res_form = MCP.memo_pure_push_exists qvars tmp1 in
           (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in
-  (* let _ = Debug.info_hprint (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
-  (* let _ = Debug.info_hprint (add_str "pa" Cprinter.string_of_spec_var_list) pa no_pos in *)
-  (* let _ = Debug.info_hprint (add_str "mset" Cprinter.string_of_mem_formula) mset no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pa" Cprinter.string_of_spec_var_list) pa no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "mset" Cprinter.string_of_mem_formula) mset no_pos in *)
   (pf, pa, mset)
 
 and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 

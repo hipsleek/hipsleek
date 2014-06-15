@@ -1,0 +1,16 @@
+
+data node {
+  node next;
+}.
+
+pred lseg<p:node> ==
+ self = p
+or (exists p_19,q_18: self::node<next = q_18> * q_18::lseg<p_19> & p_19 = p).
+
+pred lseg_e1<p:node> ==
+(exists q: self::lseg<q> & p = q).
+
+checkentail x::node<q> * q::lseg<y> & q != null
+         |- x::lseg_e1<y>.
+print residue.
+expect Valid.

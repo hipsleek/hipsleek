@@ -6899,6 +6899,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                     let es_string = Cprinter.string_of_formula estate.es_formula in
                                     let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (es_string^ ": residue is forbidden.(2)") "", new_es.es_trace)) in
+                                    Debug.ninfo_hprint (add_str " ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos;
                                     let proof = mkClassicSepLogic ctx0 conseq in
                                     (ls_ctx, proof)
                                   else
@@ -6906,16 +6907,6 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in
                                     (ctx, proof)
                               )
-                              (* if (!Globals.do_classic_frame_rule && (prep_h1 != HEmp) && (prep_h1 != HFalse) && (h2 = HEmp)) then ( *)
-                              (*   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in *)
-                              (*   let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in *)
-                              (*   let proof = mkClassicSepLogic ctx0 conseq in *)
-                              (*   (ls_ctx, proof) *)
-                              (*                         (\* else *\) *)
-                              (*                         (\*   (\\*let n_ctx = SuccCtx [(Ctx new_es)] in*\\) *\) *)
-                              (*                         (\*   let ctx, proof =  heap_entail_conjunct_helper 4 prog is_folding  (Ctx new_es) conseq rhs_h_matched_set pos in *\) *)
-                              (*                         (\*   (ctx, proof) *\) *)
-                              (* ) *)
                               else (
                                   (*infer hprel*)
                                   let estate, hprel_ass=
@@ -9907,7 +9898,7 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
                   ^ (!CF.print_h_formula rhs_node) ^ "\n" in
         report_error no_pos msg
   ) in
-  let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
+  (* let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in *)
   let vd = (
     try look_up_view_def_raw 6 prog.Cast.prog_view_decls vname
     with Not_found ->
@@ -9929,7 +9920,9 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
     let base_f = fst (List.hd base_cases) in
     let induct_f = fst (List.hd induct_cases) in
     let new_vd = vdef_of_acc_fold vd base_f induct_f fold_seq in
-    let (cl,prf) = do_fold prog (Some (iv,ivr,new_vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in 
+    (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos                *)
+    (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos = *)
+    let (cl,prf) = do_fold prog (Some ([],[],new_vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in 
     (cl,prf)
   )
 
@@ -11160,18 +11153,29 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Sequential action - not handled" estate (Base rhs_b) None pos
                 , CF.mk_failure_must "sequential action - not handled" Globals.sl_error, estate.es_trace)), NoAlias)
       | Context.Cond_action l ->
-            let rec helper l = match l with
+          Debug.binfo_hprint (add_str "Total cond action length: " (fun x -> string_of_int (List.length x))) l no_pos;
+            let rec helper l =
+              Debug.binfo_hprint (add_str "  processing-cond-actions length: " (fun x -> string_of_int (List.length x))) l no_pos;
+              match l with
               | [] ->           
                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
                         , CF.mk_failure_must "Cond action - none succeeded" Globals.sl_error, estate.es_trace)), NoAlias)
               | [(_,act)] -> process_action 2 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
               | (_,act)::xs ->
                     (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
+                    Debug.binfo_pprint "    process cond-action" no_pos;
                     let (r,prf) = process_action 3 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
-                    if isFailCtx r then
+                    Debug.binfo_hprint (add_str " estate" Cprinter.string_of_entail_state) estate no_pos;
+                    Debug.binfo_hprint (add_str " context r" Cprinter.string_of_list_context) r no_pos;
+                    if isFailCtx r then (
+                      Debug.binfo_pprint "   -- cond-action failed, proceed next" no_pos;
                       (* let _ = rhs_rest_emp := cur_rhs_rest_emp in *)
                       helper xs
-                    else (r,prf)
+                    )
+                    else (
+                      Debug.binfo_pprint "   ++ cond-action succeeded, return" no_pos;
+                      (r,prf)
+                    )
             in helper l
       | Context.Search_action l ->
             (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
