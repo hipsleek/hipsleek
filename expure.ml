@@ -1412,6 +1412,7 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
       let disj = build_ef_formula cf all_views in
       disj
   ) view_decl.Cast.view_un_struc_formula) in
+  let disj = List.sort EPureI.epure_compare disj in
   let disj_n = EPureI.norm_disj disj in
   disj_n
 
