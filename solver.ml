@@ -2651,8 +2651,11 @@ and find_unsat prog f =
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
-  let tp_call_wrapper npf = 
-    if !Globals.simpl_unfold2 then 
+  let tp_call_wrapper npf =
+    (* let _ = print_endline (Cprinter.string_of_mix_formula npf) in *)
+    (* if !Globals.gen_baga_inv then *)
+    (*   Expure.EPureI.unsat (Expure.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
+    (* else  *)if !Globals.simpl_unfold2 then
       let r = 
 	let sat,npf = MCP.check_pointer_dis_sat npf in
 	if  sat then
@@ -2726,7 +2729,7 @@ and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
   Debug.no_1_num i "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
-      
+
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
   else elim_unsat_es_now 4 prog sat_subno es

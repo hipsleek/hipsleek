@@ -12,7 +12,7 @@
 
 
 
-;generic sort 
+;generic sort
 
 (declare-sort GTyp 0)
 
@@ -20,10 +20,10 @@
 (declare-fun f0 () (Field GTyp GTyp))
 (declare-fun f1 () (Field GTyp GTyp))
 
-;predicates 
+;predicates
 
-(define-fun P ((?x GTyp)) Space 
-(tospace (or 
+(define-fun P ((?x GTyp)) Space
+(tospace (or
 
 	(= nil ?x)
 
@@ -37,10 +37,10 @@
 
 
 (define-fun Q ((?x GTyp) (?y GTyp)) Space 
-(tospace (or 
+(tospace (or
 
 	(exists ((?d GTyp) (?c GTyp))
-		
+
 		 (and (= nil ?y)
 		(distinct nil ?x)
 			(tobool 
