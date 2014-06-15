@@ -1378,7 +1378,7 @@ let heap_normal_form_ctx prog min_grp_size c=
 
 let check_unsat_w_norm prog f0 set_ptos=
   let helper f=
-    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) set_ptos false false in
+    let is_heap_conflict,_,_ = norm_dups_pred prog [] (CF.elim_exists f) set_ptos false true in
     is_heap_conflict
   in
   if not !seg_opz then false,None else

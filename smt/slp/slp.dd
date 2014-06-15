@@ -1,6 +1,2 @@
-extract_actual_args_view_info
-is_inconsistent
-extract_callee_view_info
-process_vis
-build_vis
-view_unsat_check_topdown
+find_case_split
+norm_graph

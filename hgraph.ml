@@ -1797,9 +1797,9 @@ let norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split=
 let norm_graph ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr2 =  print_hgraph in
-  Debug.no_3 "norm_graph" pr1 pr1 pr1 (pr_triple string_of_bool pr1 pr2)
-      (fun _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split)
-      ls_may_eq ls_must_eq ls_must_diff
+  Debug.no_4 "norm_graph" pr1 pr1 pr1 string_of_bool (pr_triple string_of_bool pr1 pr2)
+      (fun _ _ _ _ -> norm_graph_x ls_may_eq ls_must_eq ls_must_diff set_ptos do_case_split)
+      ls_may_eq ls_must_eq ls_must_diff do_case_split
 
 (****************************************************************)
     (*********************homomorphism**********************)

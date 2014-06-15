@@ -159,12 +159,10 @@ Validate 1: Expected.
 
 SAT
 spaguetti-13-e03.tptp.smt2.slk
-Validate 1: Not Expected.
+Validate 1: Expected.
 
 
-Unexpected: 1 
-
-SAT
+UNSAT
 spaguetti-13-e04.tptp.smt2.slk
 Validate 1: Expected.
 
