@@ -1466,8 +1466,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (* ) a in                                              *)
                 (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-                Debug.binfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-                Debug.binfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+                Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+                Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
                 (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
                 (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
@@ -1577,8 +1577,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (* ) a in                                              *)
                 (* try accelerated folding *)
                 let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-                Debug.binfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-                Debug.binfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+                Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+                Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
                 (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
                 (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
