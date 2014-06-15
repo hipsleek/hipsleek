@@ -13,7 +13,7 @@ open Label
 open Cpure
 open Cprinter
 
-let disj_num = ref 0
+let disj_num = ref 100
 
 (* let is_null_const_exp_for_expure (e : exp) : bool = *)
 (*   match e with *)
@@ -1334,10 +1334,16 @@ let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pur
     | Cformula.Star _ ->
           let hfl = Cformula.split_star_conjunctions cf in
           let efpd_n = List.fold_left (fun f hf ->
-              let efpd_h = build_ef_heap_formula hf all_views in
-              let efpd_s = EPureI.mk_star_disj f efpd_h in
-              let efpd_n = EPureI.norm_disj efpd_s in
-              efpd_n
+              let _ = if (List.length f > !disj_num) then
+                Globals.dis_inv_baga ()
+              in
+              if (!Globals.gen_baga_inv) then
+                let efpd_h = build_ef_heap_formula hf all_views in
+                let efpd_s = EPureI.mk_star_disj f efpd_h in
+                let efpd_n = EPureI.norm_disj efpd_s in
+                efpd_n
+              else
+                f
           ) efpd_p hfl in
           efpd_n
     | Cformula.DataNode _
