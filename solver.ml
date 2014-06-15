@@ -7492,6 +7492,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   Debug.tinfo_hprint (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   (* TODO-EXPURE lhs heap here *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
+  let lhs_baga = 
+    if !Globals.gen_baga_inv then 
+      let views = prog.Cast.prog_view_decls in
+      let t1 = Expure.build_ef_heap_formula curr_lhs_h views in
+      let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
+      let d = Expure.EPureI.mk_or_disj t1 t2 in
+      let d = Expure.EPureI.elim_unsat_disj d in
+      Some d 
+    else None in
   (* let curr_lhs_h, new_lhs_p = Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   Debug.tinfo_hprint (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
@@ -7653,11 +7662,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	else 
 	  let _ = Debug.devel_pprint ("astaq?") no_pos in
 	  let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-          (* TODO-EXPURE - need to use syntactic imply & move upwards *)
-          if !Globals.gen_baga_inv then
-            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
-          else 
-            (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
+          (* TODO-EXPURE - need to use syntactic imply & move upwards? *)
+          match lhs_baga with 
+            | Some lhs ->
+                  let rhs = Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in
+                  let flag = Expure.EPureI.epure_disj_syn_imply lhs rhs in
+                  ((flag,[],None),None)
+            | None ->
+                  (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       let i_res1,i_res2,i_res3 =
         if not(stk_estate # is_empty) 

@@ -1266,13 +1266,16 @@ struct
   (*   in *)
   (*   List.sort Elt.compare (Elt.from_var (helper (split_conjunctions pf))) *)
 
+  (* TODO-EXPURE : has this been normalized? *)
   let mk_epure (pf:formula) =
     let p_aset = pure_ptr_equations pf in
     let p_aset = EM.build_eset (Elt.from_var_pairs p_aset) in
     let baga = (* get_baga pf in *) [] in
     let ineq = get_ineq pf in
     (* [([], pf)] *)
-    [(baga, (p_aset,EM.partition p_aset), ineq)] (* new expure, need to add ineq : DONE *)
+    if List.exists (fun (x,y) -> EM.is_equiv p_aset x y) ineq then [] 
+    else 
+      [(baga, (p_aset,EM.partition p_aset), ineq)] (* new expure, need to add ineq : DONE *)
 
   (* let to_cpure ((baga,eq,ineq) : epure) = *)
   (*   let f1 = conv_eq eq in *)
