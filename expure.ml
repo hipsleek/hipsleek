@@ -619,7 +619,7 @@ struct
   let string_of (x:epure) =
     pr_triple (add_str "BAGA" pr1) (add_str "EQ" EM.string_of) (add_str "INEQ" pr2) x
 
-  let string_of_disj (x:epure_disj) = pr_list string_of x
+  let string_of_disj (x:epure_disj) = pr_list_ln string_of x
   let mk_data sv = [([sv], EM.mkEmpty, [])] 
 
   (* let baga_conv baga : formula = *)
@@ -956,13 +956,25 @@ struct
     (*         if Elt.eq x y then baga_eq xs ys *)
     (*         else false *)
 
+  let compare_partition cmp p1 p2 =
+    let rec aux p1 p2 =
+      match p1,p2 with
+        | [],[] -> 0
+        | [],_ -> -1
+        | _,[] -> 1
+        | x1::p1,x2::p2 ->
+              let c1=compare_list cmp x1 x2 in
+              if c1==0 then aux p1 p2
+              else c1
+    in aux p1 p2
+
   let emap_compare e1 e2 =
     (* DONE : is get_equiv in sorted order? *)
-    let lst1 = EM.get_equiv e1 in
-    let lst2 = EM.get_equiv e2 in
+    let lst1 = EM.partition e1 in
+    let lst2 = EM.partition e2 in
     (* let lst1 = List.sort pair_cmp lst1 in *)
     (* let lst2 = List.sort pair_cmp lst2 in *)
-    compare_list pair_cmp lst1 lst2
+    compare_partition Elt.compare lst1 lst2
 
   let emap_eq em1 em2 = (emap_compare em1 em2) == 0
     (* let ps1 = EM.get_equiv em1 in *)
@@ -1008,9 +1020,9 @@ struct
     (* assume non-false *)
     let c1 = baga_cmp b1 b2 in
     if c1==0 then
-      let c2 = ineq_compare in1 in2 in
+      let c2 = emap_compare e1 e2  in
       if c2==0 then
-        emap_compare e1 e2
+        ineq_compare in1 in2
       else c2
     else c1
 

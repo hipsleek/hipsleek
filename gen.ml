@@ -721,6 +721,8 @@ struct
 
 end;;
 
+let add_str s f xs = s^":"^(f xs)
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
@@ -733,20 +735,30 @@ struct
 
   let eq = Elt.eq 
   let string_of_elem = Elt.string_of 
+  let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e)
+  let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of)
 
   let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
 
   (* TODO : can we get in sorted order? *)
   let partition (s: emap) : epart =
     let s = emap_sort s in
-    let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-            if k==k2 then (k,a::ls)::xs
-            else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun lst x ->  insert x lst) [] s in
-    let r = List.rev r in
-    List.map ( fun (_,b) -> List.rev b) r
+    let rec insert (a,k) acc = 
+      match acc with
+        | [] -> [(k,[a])]
+        | (k2,ls)::xs -> 
+              if k==k2 then (k,a::ls)::xs
+              else (k2,ls)::(insert (a,k) xs) in
+    let r = List.fold_left (fun acc x ->  insert x acc) [] s in
+    (* let r = List.rev r in *)
+    let r = List.map ( fun (_,b) -> List.rev b) r in
+    print_endline ((add_str "emap" string_of_emap) s);
+    print_endline ((add_str "epart" string_of_epart) r);
+    r
+
+  (* let partition (s: emap) : epart = *)
+  (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
+
 
   let string_of (e: emap) : string =
     let f = string_of_elem in
