@@ -2650,7 +2650,6 @@ and find_unsat prog f =
   let pr_l = pr_list pr_f in
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
 
-(* TODO-EXPURE : need to invoke syn UNSAT ofr --inv-baga *)
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf = 
     if !Globals.simpl_unfold2 then 
@@ -2666,25 +2665,42 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       r
     else
       let _ = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
-      not (TP.is_sat_mix_sub_no npf sat_subno true true)
+      not (TP.is_sat_mix_sub_no npf sat_subno true true) 
+  in
+  (* TODO-EXPURE : need to invoke EPureI.UNSAT ofor --inv-baga *)
+  let tp_syn h p =
+    let p = MCP.translate_level_mix_formula p in
+    let ph,_,_ = xpure_heap 1 prog h p 1 in
+    let npf = MCP.merge_mems p ph true in
+    tp_call_wrapper npf 
+  in
+  let tp_sem h p =
+    let p = MCP.translate_level_mix_formula p in
+    let ph,_,_ = xpure_heap 1 prog h p 1 in
+    let npf = MCP.merge_mems p ph true in
+    tp_call_wrapper npf 
   in
   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-          let p = MCP.translate_level_mix_formula p in
-	  let ph,_,_ = xpure_heap 1 prog h p 1 in
-	  let npf = MCP.merge_mems p ph true in
-          tp_call_wrapper npf
+          if !Globals.gen_baga_inv then tp_syn h p
+          else tp_sem h p
+          (* let p = MCP.translate_level_mix_formula p in *)
+	  (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
+	  (* let npf = MCP.merge_mems p ph true in *)
+          (* tp_call_wrapper npf *)
     | Exists ({ formula_exists_qvars = qvars;
       formula_exists_heap = qh;
       formula_exists_pure = qp;
       formula_exists_pos = pos}) ->
-          let qp = MCP.translate_level_mix_formula qp in
-	  let ph,_,_ = xpure_heap 1 prog qh qp 1 in
-	  let npf = MCP.merge_mems qp ph true in
-          tp_call_wrapper npf
+          if !Globals.gen_baga_inv then tp_syn qh qp
+          else tp_sem qh qp
+          (* let qp = MCP.translate_level_mix_formula qp in *)
+	  (* let ph,_,_ = xpure_heap 1 prog qh qp 1 in *)
+	  (* let npf = MCP.merge_mems qp ph true in *)
+          (* tp_call_wrapper npf *)
 
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
   (*need normal lize heap_normal_form*)
@@ -7465,6 +7481,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = reset_int2 () in
   Debug.tinfo_hprint (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   Debug.tinfo_hprint (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
+  (* TODO-EXPURE lhs heap here *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
   (* let curr_lhs_h, new_lhs_p = Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
@@ -7955,24 +7972,28 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	          (* es_unsat_flag = estate.es_unsat_flag && (Infer.no_infer_rel estate); *)
                        } in
 	      let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
-          let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+              (* TODO-WN why are there two elim_unsat_ctx? *)
+              let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	      (SuccCtx[res_ctx], prf)
 	    end
-	    else begin
-	      let res_ctx = Ctx {estate with es_formula = res_delta;
-              es_unsat_flag = false; (*the new context could be unsat*)
-              (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above 
-		        Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
-              (*TO CHECK: important to instantiate ivars*)
-	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
-		        | Some s1,Some s2 -> (s1,s2)::a
-		        | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
-          let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
-	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
-	      (SuccCtx[res_ctx], prf)
+	    else 
+              begin
+	        let res_ctx = Ctx {estate with es_formula = res_delta;
+                    es_unsat_flag = false; (*the new context could be unsat*)
+                    (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above 
+		      Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
+                    (*TO CHECK: important to instantiate ivars*)
+	            es_success_pts = (List.fold_left (fun a (c1,c2)-> 
+                        match (c1,c2) with
+		          | Some s1,Some s2 -> (s1,s2)::a
+		          | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
+                (* TODO-WN why is there another elim_unsat_ctx? *)
+                let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+	        Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+	        (SuccCtx[res_ctx], prf)
 	    end
   end
   else
