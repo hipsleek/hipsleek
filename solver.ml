@@ -39,7 +39,7 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 (*used for classic*)
 let rhs_rest_emp = ref true
 
-
+let rhs_pure = new Gen.stack            (* used for detecting pure contra inside folding *)
 
 (*cyclic: should improve the design. why AS call solver??*)
 let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
@@ -2144,6 +2144,16 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
+let contra_wrapper f rhs_p =
+  let rs0, fold_prf =
+    if (!Globals.smart_lem_search) then
+      let _ = rhs_pure # push rhs_p in
+      let rs0, fold_prf = f None in 
+      let _ = rhs_pure # pop in
+      (rs0, fold_prf)
+    else f None in 
+  (rs0, fold_prf)
+
 (*LDK: add rhs_p*)
 and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
   Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v rhs_p) u loc
@@ -2308,7 +2318,8 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let _ = Debug.info_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
-        let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
+        let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
+        let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
         let _ = Log.current_infer_rel_stk # push_list rels in
