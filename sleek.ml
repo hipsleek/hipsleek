@@ -450,7 +450,7 @@ let _ =
         let msg =
           (*conver may error into unknown*)
           match !is_must_failure with
-            | None ->  in "UNKNOWN"
+            | None ->  "UNKNOWN"
             | Some b -> if b then in "SAT" else "UNKNOWN"
         in msg
       in
