@@ -711,6 +711,7 @@ let common_arguments = [
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode:=true;
+          Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
   ("--smt-compete-test", 
@@ -732,6 +733,7 @@ let common_arguments = [
           Globals.is_solver_local := true;
           Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode :=true;
+          Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")

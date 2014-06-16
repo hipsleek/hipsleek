@@ -105,8 +105,9 @@ let check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
         (*compute lub of must bug and current fc_flow*)
         (CF.mk_failure_must_raw "", (r1, r2, r3))
       end
-  else
+  else (
     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
+  )
 
 (*maximising must bug with RAND (error information)*)
 let check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
