@@ -17,6 +17,7 @@ data node {
 !!! baga inv(l3):[([self], true)]
 */
 
+/*
 pred l3<> == 
   self::node<q>*q::node<_> 
 inv self!=null.
@@ -24,7 +25,9 @@ inv self!=null.
 pred l3a<> == 
   self::node<q>*q::node<_>  & self=q
 inv self!=null.
+*/
 
+/*
 pred l4<q:node> == 
   (exists z,r: self::node<r>*r::node<_> & r=z & z=q)
 inv self!=null.
@@ -33,6 +36,7 @@ inv self!=null.
 pred l5<k> == 
   self::node<q>*q::node<_> & k=q & self!=q
 inv self!=null.
+*/
 
 pred l6<q:node> == 
   q::node<_> & self=null
@@ -52,12 +56,12 @@ Disabling baga inv gen ..
 
 */
 
-
+/*
 pred l7<q:node> == 
   self=null & q=null
   or (exists r:  self::node<r>*r::node<_> & r=q)
 inv true.
-
+*/
 /*
 !!! baga inv(l7):[(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),
   (BAGA:[q,self],EQ:emap[{q}],INEQ:[])]
