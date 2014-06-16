@@ -728,6 +728,7 @@ let common_arguments = [
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
+          Globals.is_solver_local := true;
           Globals.smt_compete_mode :=true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");
