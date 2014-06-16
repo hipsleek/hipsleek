@@ -7602,16 +7602,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
-      let contra = if (!Globals.smart_lem_search && is_folding) then
+      let contra, temp_rhs = if (!Globals.smart_lem_search && is_folding) then
         let pp_rhs =  rhs_pure_stk # top in
         let _ = Debug.info_hprint (add_str " folding: " string_of_bool ) is_folding pos in
-        let contr, _ = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) pos in
+        let tmp_rhs = (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in 
+        let contr, _ = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
         (* let _ =  rhs_pure_stk # push  pp_rhs in *)
-        contr 
-      else false in
-      (* if not (contra) then  *)
-      (*   (fasle,[],None, (Failure_Valid, ([],[],[]))) rhs_p in *)
-      let _ = Debug.info_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
+        (contr, tmp_rhs)
+      else (false, (MCP.pure_of_mix rhs_p)) in
+      if not (contra) then
+        let _ = Debug.info_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
+        (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
+      else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
