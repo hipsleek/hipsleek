@@ -1749,10 +1749,12 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
           match CF.get_must_failure residue with
             | Some s ->
                   let reg1 = Str.regexp "base case unfold failed" in
-                  let _ = if Str.search_forward reg1 s 0 >=0 then
-                    let _ = smt_is_must_failure := (Some false) in ()
-                  else let _ = smt_is_must_failure := (Some true) in
-                  ()
+                  let _ = try
+                    if Str.search_forward reg1 s 0 >=0 then
+                      let _ = smt_is_must_failure := (Some false) in ()
+                    else let _ = smt_is_must_failure := (Some true) in
+                    ()
+                  with _ -> (* let _ = smt_is_must_failure := (Some false) in *) ()
                   in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
