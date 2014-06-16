@@ -287,6 +287,8 @@ let pick_front n ss =
 (*       val convert : string -> lst_pair -> t *)
 (*     end;; *)
 
+
+
 module DebugCore  =
 struct
   let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
@@ -1231,6 +1233,10 @@ end
 
 module DebugEmpty  =
 struct
+  let z_debug_file = ref ""
+    (* let z_debug_regexp = ref None *)
+  let z_debug_flag = ref false
+
   let read_main() = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
@@ -1282,7 +1288,29 @@ struct
   let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f = f
   let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f = f
 
-  let no_1_all (i:int) s l (p,g) p1 p0 f =  f
+  let no_1_all (i:int) s l p g p1 p0 f =  f
+  let no_2_all (i:int) s l p g p1 p2 p0 f =  f
+  let no_3_all (i:int) s l p g p1 p2 p3 p0 f =  f
+  let no_4_all (i:int) s l p g p1 p2 p3 p4 p0 f =  f
+  let no_5_all (i:int) s l p g p1 p2 p3 p4 p5 p0 f =  f
+  let no_6_all (i:int) s l p g p1 p2 p3 p4 p5 p6 p0 f =  f
+
+(*
+type: int ->
+  string ->
+  ('w23 -> bool) option ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) option ->
+  bool list ->
+  ('x23 -> string) ->
+  ('y23 -> string) ->
+  ('z23 -> string) ->
+  ('a24 -> string) ->
+  ('b24 -> string) ->
+  ('w23 -> string) ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) ->
+  'x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23
+*)
+
 
 end
 
