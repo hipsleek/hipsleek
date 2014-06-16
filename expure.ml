@@ -1040,7 +1040,7 @@ struct
   (* TODO-WN why did we not sort this *)
   let mk_or_disj t1 t2 = 
     let res=t1@t2 in
-    res
+    List.sort epure_compare res
 
   let mk_or_norm t1 t2 = 
     let res=t1@t2 in
@@ -1402,9 +1402,15 @@ let build_ef_heap_formula_with_pure (cf : Cformula.h_formula) (efpd_p : ef_pure_
 
 (* this need to be moved to EPURE module : DONE *)
 let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
-  EPureI.mk_epure pf
+  match pf with
+    | Or _ ->
+          let pf_list = split_disjunctions pf in
+          List.fold_left (fun efpd pf ->
+              EPureI.mk_or_disj efpd (build_ef_pure_formula pf)
+          ) [] pf_list
+    | _ -> EPureI.mk_epure pf
 
-let build_ef_pure_formula (pf : formula) : ef_pure_disj =
+and build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_pure_formula_x pf) pf

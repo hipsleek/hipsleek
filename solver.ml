@@ -7475,22 +7475,26 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in*) (*Clean warning*)
 
   (* An Hoa : END OF INSTANTIATION *)
-  (* if smart_xpure then try 0, then 1 
-     else try 1 
+  (* if smart_xpure then try 0, then 1
+     else try 1
   *)
   let _ = reset_int2 () in
   Debug.tinfo_hprint (add_str "lhs_h" (Cprinter.string_of_h_formula)) lhs_h pos;
   Debug.tinfo_hprint (add_str "estate_orig.es_heap" (Cprinter.string_of_h_formula)) estate_orig.es_heap pos;
   (* TODO-EXPURE lhs heap here *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
-  let lhs_baga = 
-    if !Globals.gen_baga_inv then 
+  let lhs_baga =
+    if !Globals.gen_baga_inv then
       let views = prog.Cast.prog_view_decls in
       let t1 = Expure.build_ef_heap_formula curr_lhs_h views in
+      let _ = Debug.binfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
+      let _ = Debug.binfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
+      let _ = Debug.binfo_hprint (add_str "pf" (Cprinter.string_of_pure_formula)) (Mcpure.pure_of_mix lhs_p) no_pos in
+      let _ = Debug.binfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
       let d = Expure.EPureI.mk_star_disj t1 t2 in
       let d = Expure.EPureI.elim_unsat_disj d in
-      Some d 
+      Some d
     else None in
   (* let curr_lhs_h, new_lhs_p = Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
