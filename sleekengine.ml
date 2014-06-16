@@ -1858,8 +1858,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
   (*     let _ =  Error.process_exct(e)in *)
 
 let print_exception_result s (num_id: string) =
-          Log.last_cmd # dumping "sleek_dump(exception)";
-          silenced_print print_string (num_id^": EXCast. "^s^"\n")
+  let _ = Log.last_cmd # dumping "sleek_dump(exception)" in
+  let _ = smt_is_must_failure := (Some false) in
+  let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
+  ()
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in
