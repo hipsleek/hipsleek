@@ -1757,7 +1757,11 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                         let reg1 = Str.regexp "Nothing_to_do" in
                         let _ = if Str.search_forward reg1 s 0 >=0 then
                           let _ = smt_is_must_failure := (Some false) in ()
-                        else ()
+                        else
+                          if is_lem_syn_reach_bound () then
+                            let _ = smt_is_must_failure := (Some false) in ()
+                          else
+                            ()
                         in
                         "(may) cause:"^s
                       with _ ->
