@@ -1203,7 +1203,7 @@ let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
 let return_must_on_pure_failure = ref false
-let is_must_failure = ref (None: bool option)
+let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
@@ -1689,3 +1689,9 @@ let gen_field_ann t=
 let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
+
+let smt_return_must_on_error ()=
+  let _ = if !return_must_on_pure_failure then
+    let _ = smt_is_must_failure := (Some true) in ()
+  else ()
+  in ()
