@@ -178,11 +178,15 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
     let _ = Debug.tinfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let _ = Globals.disable_failure_explaining := false in
+    let _ = Globals.is_must_failure := None in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
     if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      let _ = Globals.is_must_failure := None in
+      let _ = Globals.disable_failure_explaining := false in
       (* let sno = ref (0:int) in *)
       (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
       let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
