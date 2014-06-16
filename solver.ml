@@ -7663,12 +7663,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	  let _ = Debug.devel_pprint ("astaq?") no_pos in
 	  let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
           (* TODO-EXPURE - need to use syntactic imply & move upwards? *)
-          match lhs_baga with 
-            | Some lhs ->
-                  let rhs = Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in
-                  let flag = Expure.EPureI.epure_disj_syn_imply lhs rhs in
-                  ((flag,[],None),None)
-            | None ->
+          (* match lhs_baga with  *)
+          (*   | Some lhs -> *)
+          (*         let rhs = Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in *)
+          (*         let flag = Expure.EPureI.epure_disj_syn_imply lhs rhs in *)
+          (*         ((flag,[],None),None) *)
+          (*   | None -> *)
                   (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       let i_res1,i_res2,i_res3 =
