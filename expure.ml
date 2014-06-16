@@ -1111,6 +1111,7 @@ struct
     in aux b
 
   (* epure syntactic imply *)
+  (* we need b1 --> i2 or i1 -> i2, but the latter is now missing*)
   let epure_syn_imply (b1,(e1,p1),i1) (b2,(e2,p2),i2) =
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
