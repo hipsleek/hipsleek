@@ -1754,7 +1754,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                       let _ = smt_is_must_failure := (Some false) in ()
                     else let _ = smt_is_must_failure := (Some true) in
                     ()
-                  with _ -> (* let _ = smt_is_must_failure := (Some false) in *) ()
+                  with _ -> let _ = smt_is_must_failure := (Some true) in ()
                   in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
