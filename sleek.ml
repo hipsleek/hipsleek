@@ -451,7 +451,7 @@ let _ =
           (*conver may error into unknown*)
           match !is_must_failure with
             | None ->  "UNKNOWN"
-            | Some b -> if b then in "SAT" else "UNKNOWN"
+            | Some b -> if b then "SAT" else "UNKNOWN"
         in msg
       in
       print_endline (str_res)
