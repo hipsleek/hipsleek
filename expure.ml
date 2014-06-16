@@ -1408,6 +1408,11 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
           List.fold_left (fun efpd pf ->
               EPureI.mk_or_disj efpd (build_ef_pure_formula pf)
           ) [] pf_list
+    | Forall (sv, pf, _, _)
+    | Exists (sv, pf, _, _) ->
+          let efpd = build_ef_pure_formula pf in
+          EPureI.elim_exists_disj [sv] efpd
+    (* | Not -> ??? *) 
     | _ -> EPureI.mk_epure pf
 
 and build_ef_pure_formula (pf : formula) : ef_pure_disj =
