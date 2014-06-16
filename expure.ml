@@ -1110,11 +1110,14 @@ struct
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
       let null_el = Elt.zero (* mk_elem (mk_spec_var "null") *) in
-      let i1_new = List.filter
-        (* (fun (x,y) -> not(Elt.is_zero x && exists_baga b1 y) *)
-        (* && not(exists_baga_pair b1 x y)) i2 in *)
+      let f2 = List.for_all
         (fun (x,y) -> (Elt.is_zero x && exists_baga b1 y)
             || (exists_baga_pair b1 x y)) i2 in
+      (* let i1_new = List.filter *)
+        (* (fun (x,y) -> not(Elt.is_zero x && exists_baga b1 y) *)
+        (* && not(exists_baga_pair b1 x y)) i2 in *)
+        (* (fun (x,y) -> (Elt.is_zero x && exists_baga b1 y) *)
+        (*     || (exists_baga_pair b1 x y)) i2 in *)
       (* let i1_new = List.fold_left (fun i1 el -> *)
       (*     let c = Elt.compare el null_el in *)
       (*     if c < 0 then *)
@@ -1125,7 +1128,7 @@ struct
       (*       failwith "fail in epure_syn_imply" *)
       (* ) i1 b1 in *)
       (* let i1_new = List.sort pair_cmp i1_new in *)
-      let f2 = lst_imply pair_cmp i1_new i2 in
+      (* let f2 = lst_imply pair_cmp i1_new i2 in *)
       if f2 then emap_imply e1 e2 (* DONE: e1 --> e2? *)
       else false
     else false
