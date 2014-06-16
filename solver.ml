@@ -6900,7 +6900,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                   if not r then
                                     let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                     let es_string = Cprinter.string_of_formula estate.es_formula in
-                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (es_string^ ": residue is forbidden.(2)") "", new_es.es_trace)) in
+                                    let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_may (es_string^ ": residue is forbidden.(2)") "", new_es.es_trace)) in
                                     Debug.ninfo_hprint (add_str " ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos;
                                     let proof = mkClassicSepLogic ctx0 conseq in
                                     (ls_ctx, proof)
@@ -10933,7 +10933,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error, estate.es_trace)), NoAlias)
-      | Context.M_Nothing_to_do s -> 
+      | Context.M_Nothing_to_do s ->
+            
 	    let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
             CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error, estate.es_trace)), NoAlias) in
 	    if (!Globals.delay_proving_sat) then 

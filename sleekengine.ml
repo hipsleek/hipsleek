@@ -1751,7 +1751,18 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                   let _ = smt_is_must_failure := (Some true) in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> "(may) cause:"^s
+                | Some s -> begin
+                      try
+                        let _ = print_endline s in
+                        let reg1 = Str.regexp "Nothing_to_do" in
+                        let _ = if Str.search_forward reg1 s 0 >=0 then
+                          let _ = smt_is_must_failure := (Some false) in ()
+                        else ()
+                        in
+                        "(may) cause:"^s
+                      with _ ->
+                          "(may) cause:"^s
+                  end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
                   (*should check bot with is_bot_status*)
