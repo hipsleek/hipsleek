@@ -733,6 +733,7 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 
+
 let dis_show_diff = ref false
 
 let sap = ref false
@@ -782,6 +783,8 @@ let lemma_syn_bound = 5
 
 let is_lem_syn_in_bound () = !lemma_syn_count < lemma_syn_bound
 
+let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
+
 let lemma_gen_safe = ref false       (* generating (and proving) both fold and unfold lemmas for special predicates *)
 
 let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for special predicates *)
@@ -791,6 +794,8 @@ let lemma_gen_unsafe = ref false     (* generating (without proving) both fold a
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 
 let acc_fold = ref false
+
+let smart_lem_search = ref false
 
 let sa_en_split = ref false
 
@@ -1208,6 +1213,8 @@ let opt_classic = ref false                (* option --classic is turned on or n
 let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 let dis_impl_var = ref false (* Disable implicit vars *)
 let smt_compete_mode = ref false
+let return_must_on_pure_failure = ref false
+let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
 let show_unexpected_ents = ref true
@@ -1693,3 +1700,9 @@ let gen_field_ann t=
 let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
+
+let smt_return_must_on_error ()=
+  let _ = if !return_must_on_pure_failure then
+    let _ = smt_is_must_failure := (Some true) in ()
+  else ()
+  in ()

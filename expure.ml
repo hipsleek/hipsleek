@@ -173,16 +173,16 @@ let elim_baga (svl : spec_var list) (args : spec_var list) : spec_var list =
 (* remove unsat terms *)
 let ef_elim_exists_1 (svl : spec_var list) epf  =
   let (baga,pure) = epf in
-  (* let _ = Debug.binfo_pprint "ef_elim_exists" no_pos in *)
-  (* let _ = Debug.binfo_pprint "==============" no_pos in *)
-  (* let _ = Debug.binfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in *)
-  (* let _ = Debug.binfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
-  (* let _ = Debug.binfo_hprint (add_str "pure" Cprinter.string_of_pure_formula) pure no_pos in *)
+  (* let _ = Debug.ninfo_pprint "ef_elim_exists" no_pos in *)
+  (* let _ = Debug.ninfo_pprint "==============" no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "svl" string_of_spec_var_list) svl no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pure" Cprinter.string_of_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
-  (* let _ = Debug.binfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in *)
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
-  (* let _ = Debug.binfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in *)
   (* let new_pure = EMapSV.domain eset2 in *)
   let mk_subs =
       List.map
@@ -205,15 +205,15 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
         if a==b then acc
         else b::acc
       with _ -> v::acc) [] baga in
-  (* let _ = Debug.binfo_hprint (add_str "new baga" string_of_spec_var_list) new_baga no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "new baga" string_of_spec_var_list) new_baga no_pos in *)
   (* let equiv_pairs = EMapSV.get_equiv new_paset in *)
   (* let ps = string_of_spec_var in *)
-  (* Debug.binfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos; *)
+  (* Debug.ninfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos; *)
   let pure1 = apply_subs mk_subs pure in
   let new_pure = remove_redundant_for_expure (elim_clause pure1 svl) in
-  (* let _ = Debug.binfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
-  (* let _ = Debug.binfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
-  (* let _ = Debug.binfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
+  (* let _ = Debug.ninfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) epf =

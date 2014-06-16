@@ -528,6 +528,8 @@ class ['a] stack  =
      method push_list (ls:'a list) =  stk <- ls@stk
      method pop_list (ls:'a list) = 
        stk <- BList.drop (List.length ls) stk
+     method pop_list_n (n: int) = 
+       stk <- BList.drop n stk
      method reset = stk <- []
      method clone =
        Oo.copy self

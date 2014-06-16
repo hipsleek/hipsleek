@@ -18,14 +18,16 @@ use Time::HiRes qw(gettimeofday);
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
-my $sleek = "../../sleek";
-my $smt2slk = "smt2slk"; #"../smt2slk/bin/smt2slk";
+my $sleek = "$cwd/bin/sleek"; #"../../sleek";
+my $smt2slk = "$cwd/bin/smt2slk"; #"smt2slk"; #"../smt2slk/bin/smt2slk";
 my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
 my $unsound_count = 0;
 my $unsound_files = "";
+my $unknown_count = 0;
+my $unknown_files = "";
 my $error_count = 0;
 my $error_files = "";
 my $not_found_count = 0;
@@ -361,13 +363,21 @@ foreach my $smt2_file (@smt2_files) {
   
   my $diff = $end_time - $start_time;
   $total_time += $diff;
-  if ($output =~ "Unexpected") {
+  if ($output =~ "UNKNOWN") {
+    println("UNK", $diff);
+    $unknown_count++;
+    $unknown_files = $unknown_files . $rel_path . "\n";
+  } elsif ($output =~ "Unexpected") {
     if ($output =~ "UNSAT") {
       println("Unexpected: UNSOUND", $diff);
       $unsound_count++;
       $unsound_files = $unsound_files . $rel_path . "\n";
     } else {
-      println("Unexpected", $diff);
+      if ($output =~ "may") {
+        println("Unexpected (may)", $diff);
+      } else {
+        println("Unexpected", $diff);
+      }
     }
     
     $unexpected_count++;
@@ -391,11 +401,15 @@ foreach my $smt2_file (@smt2_files) {
     $error_count++;
     $error_files = $error_files . "$rel_path: $error\n";
   } else {
-    println("OK", $diff);
+    if ($output =~ "may") {
+      println("OK (may)", $diff);
+    } else {
+      println("OK", $diff);
+    }
   }
 }
 
-if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
+if ($unexpected_count + $not_found_count + $timeout_count + $error_count + $unknown_count) {
   if ($not_found_count > 0) {
     print "\nTotal number of not found files: $not_found_count in:\n$not_found_files\n";
   }
@@ -414,6 +428,10 @@ if ($unexpected_count + $not_found_count + $timeout_count + $error_count) {
 
   if ($timeout_count > 0) {
     print "\nTotal number of timeout files: $timeout_count in:\n$timeout_files\n";
+  }
+  
+  if ($unknown_count > 0) {
+    print "\nTotal number of unknown results: $unknown_count in files:\n$unknown_files\n";
   }
 } else {
   print "\nAll test results were as expected.\n";

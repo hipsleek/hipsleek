@@ -90,6 +90,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       | 3 -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf2
       | _ (*1*) -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Right [] rf2 lf2
     in
+    Debug.ninfo_hprint (add_str "gen_lemma, l_coer" Iprinter.string_of_coerc_decl) l_coer no_pos;
     (*add lemma*)
     let iprog = Iast.get_iprog () in
     let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in

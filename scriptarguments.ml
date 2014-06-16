@@ -240,6 +240,7 @@ let common_arguments = [
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
+  ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
@@ -554,11 +555,11 @@ let common_arguments = [
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--inv-baga",Arg.Set Globals.gen_baga_inv (* Arg.Unit Globals.en_inv_baga *) ,"generate baga inv from view");
+  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
-  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 
@@ -584,6 +585,8 @@ let common_arguments = [
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--lem-dis-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--en-smart-lem-search", Arg.Set Globals.smart_lem_search, "Activate a smart heuristic for lemma search");
+  ("--dis-smart-lem-search", Arg.Clear Globals.smart_lem_search, "Use naive heuristic for lemma search");
   ("--en-ctx-norm", Arg.Set Globals.en_norm_ctx,    "Enable  - merge identical residual states based on syntactic checking");
   ("--dis-ctx-norm", Arg.Clear Globals.en_norm_ctx, "Disable - merge identical residual states based on syntactic checking");
   ("--en-trec2lin", Arg.Set Globals.en_trec_lin,    "Enable  - conversion of tail-recursive defs to linear form");
@@ -623,7 +626,9 @@ let common_arguments = [
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
-  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  ("--dlg",
+  ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  
+  ("--dlg",
      Arg.Unit
       (fun _ -> 
           Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
@@ -703,33 +708,41 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           Globals.en_pred_sat ();
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
+          Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode:=true;
+          Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
-          Debug.trace_on := false;
+          Globals.show_unexpected_ents := false; (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
           Globals.en_pred_sat ();
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
+          Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode :=true;
+          Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")

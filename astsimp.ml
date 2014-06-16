@@ -2140,7 +2140,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
   let _ = if has_arith then
     begin
-      Debug.binfo_pprint "Disabling --inv-baga due to arith" no_pos;
+      Debug.ninfo_pprint "Disabling --inv-baga due to arith" no_pos;
       Globals.dis_inv_baga ()
     end
   else () in
@@ -2202,7 +2202,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let cviews1 = if !Globals.gen_baga_inv then
         List.map (fun cv ->
             let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
-            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            let _ = Debug.ninfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
             let _ = print_string_quiet "\n" in
             {cv with C.view_baga_inv = Some inv}
         ) cviews0
@@ -3297,12 +3297,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
       with | _ -> "" in
   let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
-  if lhs_name = "" then
-    Error.report_error
-        {
-            Err.error_loc = IF.pos_of_formula i_lhs (* coer.I.coercion_head *);
-            Err.error_text = "root pointer of node on LHS must be self";
-        }
+  if lhs_name = "" then raise (Failure "root pointer of node on LHS must be self")
   else
     (  
         let args = CF.fv_simple_formula c_lhs in 
@@ -3431,30 +3426,18 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                           CF.h_formula_conjconj_h2 = h2;
                           CF.h_formula_conjconj_pos = _
                       }                                           
-              | CF.Phase
-                      {
-                          CF.h_formula_phase_rd = h1;
+              | CF.Phase {CF.h_formula_phase_rd = h1;
                           CF.h_formula_phase_rw = h2;
-                          CF.h_formula_phase_pos = _
-                      } ->
-                    let name1 = find_view_heap h1 in
-                    let name2 = find_view_heap h2
-                    in
-                    if name1 = ""
-                    then name2
-                    else
-                      if name2 = ""
-                      then name1
-                      else
-                        (*LDK: allow 2 views of a same name*)
-                        if (name1=name2)
-                        then name1
-                        else
-                          Err.report_error
-                              {
-                                  Err.error_loc = pos;
-                                  Err.error_text = v ^ " must point to only one view";
-                              }
+                          CF.h_formula_phase_pos = _} ->
+                  let name1 = find_view_heap h1 in
+                  let name2 = find_view_heap h2 in
+                  if name1 = "" then name2
+                  else if name2 = "" then name1
+                  else if (name1=name2) then name1
+                  else (
+                    Debug.ninfo_hprint (add_str "phase h0" !CF.print_h_formula) h0 pos;
+                    raise (Failure ("phase: " ^ v ^ " must point to only one view 11"))
+                  )
               | CF.ThreadNode
                       {
                           CF.h_formula_thread_node = p;
