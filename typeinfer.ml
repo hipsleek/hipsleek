@@ -1241,7 +1241,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         let n_tl = 
         (try
           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
-          (* let _ = if vdef.I.view_is_prim then Debug.binfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
+          (* let _ = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
           (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
             let _ = if not (IF.is_param_ann_list_empty ann_param) then
           (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)

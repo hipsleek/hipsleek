@@ -584,6 +584,8 @@ let common_arguments = [
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--lem-dis-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--en-smart-lem-search", Arg.Set Globals.smart_lem_search, "Activate a smart heuristic for lemma search");
+  ("--dis-smart-lem-search", Arg.Clear Globals.smart_lem_search, "Use naive heuristic for lemma search");
   ("--en-ctx-norm", Arg.Set Globals.en_norm_ctx,    "Enable  - merge identical residual states based on syntactic checking");
   ("--dis-ctx-norm", Arg.Clear Globals.en_norm_ctx, "Disable - merge identical residual states based on syntactic checking");
   ("--en-trec2lin", Arg.Set Globals.en_trec_lin,    "Enable  - conversion of tail-recursive defs to linear form");
@@ -703,6 +705,8 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           Globals.en_pred_sat ();
           (* Globals.do_infer_inv := true; *)
@@ -717,16 +721,18 @@ let common_arguments = [
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.show_unexpected_ents := false; (*this flag is one that is  diff with compared to --smt-compete *)
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
           Globals.silence_output:=false;
-          Globals.enable_count_stats:=true;
-          Globals.enable_time_stats:=true;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
           Globals.en_pred_sat ();
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
