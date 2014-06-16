@@ -1508,8 +1508,8 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   let inv_list = helper view_list inv_list in
   let _ = List.iter (fun (vc,inv) ->
       (* this version is being printed *)
-      let _ = Debug.binfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in
-      let _ = print_string_quiet "\n" in
+      (* let _ = Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in *)
+      (* let _ = print_string_quiet "\n" in *)
       Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
   ) (List.combine view_list inv_list) in
   inv_list

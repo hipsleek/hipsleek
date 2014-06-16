@@ -553,7 +553,7 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-  ("--inv-baga",(* Arg.Set Globals.gen_baga_inv *) Arg.Unit Globals.en_inv_baga ,"generate baga inv from view");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv (* Arg.Unit Globals.en_inv_baga *) ,"generate baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
