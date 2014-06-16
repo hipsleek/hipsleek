@@ -9891,6 +9891,9 @@ and vdef_of_acc_fold (vd: view_decl) (base_f: CF.formula)
 
 and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
     : (CF.list_context * Prooftracer.proof) =
+  Debug.binfo_hprint (add_str "rhs_node" !CF.print_h_formula) rhs_node pos;
+  Debug.binfo_hprint (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos;
+  Debug.binfo_hprint (add_str "rhs_b" !CF.print_formula_base) rhs_b pos;
   let vname = (match rhs_node with
     | CF.ViewNode vn -> vn.CF.h_formula_view_name
     | _ ->
@@ -9922,8 +9925,27 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
     let new_vd = vdef_of_acc_fold vd base_f induct_f fold_seq in
     (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos                *)
     (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos = *)
-    let (cl,prf) = do_fold prog (Some ([],[],new_vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in 
-    (cl,prf)
+    let vd = Some ([],[],new_vd) in
+    let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in
+    Debug.binfo_hprint (add_str "rhs_p" !CF.print_pure_f) rhs_p no_pos;
+    let fold_ctx = Ctx { estate with
+      (* without unsat_flag reset:
+         error at: imm/kara-tight.ss karatsuba_mult
+      *)
+      es_unsat_flag  = false;
+      es_ivars  = [];
+      es_pp_subst = [];
+      es_arith_subst = [];
+      es_cont = [];
+      es_crt_holes = [];
+      es_hole_stk = [];
+      es_aux_xpure_1 = MCP.mkMTrue pos;
+      es_subst = ([], []);
+      es_aux_conseq = rhs_p;
+      es_must_error = None;
+    } in
+    do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
+    (* do_fold prog (Some ([],[],new_vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos *)
   )
 
 and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
@@ -10488,6 +10510,8 @@ and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_
 
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
     : (Cformula.list_context * Prooftracer.proof) =
+  Debug.binfo_hprint (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b pos;
+  Debug.binfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if not(Context.is_complex_action a) then
     begin
       Debug.devel_zprint (lazy ("process_action :"
