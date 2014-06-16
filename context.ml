@@ -1435,7 +1435,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                             | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
                         else a6 
                     in
-                    match a7 with
+                    match a6 with
                       | Some a -> [a],syn_lem_typ
                       | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
                         (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
@@ -1475,8 +1475,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*     left_act@right_act *)
                 (*   else  [] *)
                 (* ) in *)
-                let l3 = if not (!Globals.smart_lem_search) then 
-                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res else [] in
+                let l3 = (* if not (!Globals.smart_lem_search) then  *)
+                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res (* else [] *) in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
