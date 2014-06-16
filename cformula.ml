@@ -9073,7 +9073,8 @@ let get_bot_status_ft f =
 
 let get_may_failure_fe (f:fail_explaining) =
   match f.fe_kind with
-    | Failure_May m | Failure_Must m -> Some m 
+    | Failure_May m
+    | Failure_Must m -> Some m 
     | Failure_Valid -> Some "proven valid here"
     | Failure_Bot _ -> None
 

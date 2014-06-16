@@ -14,5 +14,7 @@ or (exists x: self::DLL_t<next = x,prev = p> * x::DLL_plus<self,tl,n>).
 checkentail_exact (exists y,a: x::points_to<y,null> * y::points_to<a,x> * a::DLL_plus<y,c,null>)
          |- x::DLL_plus<null,c,null>.
 
+//print residue.
+
 expect Valid.
 

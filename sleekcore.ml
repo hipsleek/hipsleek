@@ -178,11 +178,15 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
     let _ = Debug.tinfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let _ = Globals.disable_failure_explaining := true in
+    let _ = Globals.smt_is_must_failure := None in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
     if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      let _ = Globals.smt_is_must_failure := None in
+      let _ = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
       (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
       let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
@@ -198,6 +202,8 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
             ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
         (false, fctx, isvl)
     else
+      let _ = Globals.disable_failure_explaining := false in
+      let _ = Globals.smt_is_must_failure := (Some false) in
       let ctx = 
         if !Globals.delay_proving_sat then ctx
         else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
@@ -254,10 +260,15 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   (***************************************)
   let call_sleek ante_f conseq_f=
     let _ = Globals.graph_norm := false in
+    let _ = Globals.disable_failure_explaining := false in
     let conj_ante1, ante_args = Cfutil.norm_rename_clash_args_node [] ante_f in
     let norm_conj_conseq2, _ = Cfutil.norm_rename_clash_args_node ante_args conseq_f in
     let r, lc, isvl = sleek_entail_check 1 [] (prog: C.prog_decl) proof_traces conj_ante1 (CF.struc_formula_of_formula norm_conj_conseq2 no_pos) in
     let _ = Debug.ninfo_hprint (add_str "r" string_of_bool) r no_pos in
+    let _ = if not r then
+      let _ = Globals.smt_is_must_failure := Some true in ()
+    else ()
+    in
     let _ = Globals.graph_norm := true in
     (r, lc, isvl)
   in
