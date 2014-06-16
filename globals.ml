@@ -64,6 +64,8 @@ and control_path_id = control_path_id_strict  option
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
+let eq_str s1 s2 = String.compare s1 s2 = 0
+
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
 let combine_lbl (i1,s1)(i2,s2) = match s1 with 
@@ -1216,26 +1218,12 @@ let show_unexpected_ents = ref true
 
 (* generate baga inv from view *)
 let gen_baga_inv = ref false
-let gen_baga_inv_threshold = 4 (* number of preds <=4, set gen_baga_inv = false*)
+let pred_sat = ref false
+let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
 
-let _ = if !smt_compete_mode then
-  begin
-    (* Debug.trace_on := false; *)
-    (* Debug.devel_debug_on:= false; *)
-    silence_output:=true;
-    enable_count_stats:=false;
-    enable_time_stats:=false;
-    print_core:=false;
-    print_core_all:=false;
-    gen_baga_inv := true;
-    (* do_infer_inv := true; *)
-    lemma_gen_unsafe := true;
-    graph_norm := true;
-    smt_compete_mode:=true
-  end
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
@@ -1274,17 +1262,23 @@ let imply_timeout_limit = ref 3.
 let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 0.
 
-let dis_bk ()=
-  let _ = oc_simplify := true in
-  (* let _ = sat_timeout_limit:= 2. in *)
-  (* let _ = user_sat_timeout := false in *)
-  (* let _ = imply_timeout_limit := 3. in *)
-  let _ = en_slc_ps := false in
-  ()
-
 let dis_inv_baga () = 
   print_endline_q "Disabling baga inv gen .."; 
   let _ = gen_baga_inv := false in
+  ()
+
+let dis_bk ()=
+  let _ = oc_simplify := true in
+  let _ = sat_timeout_limit:= 2. in
+  let _ = user_sat_timeout := false in
+  let _ = imply_timeout_limit := 3. in
+  let _ = en_slc_ps := false in
+  ()
+
+let dis_pred_sat () = 
+  print_endline_q "Disabling baga inv gen .."; 
+  (* let _ = gen_baga_inv := false in *)
+  let _ = pred_sat := false in
   (*baga bk*)
   let _ = dis_bk () in
   ()
@@ -1297,12 +1291,31 @@ let en_bk () =
   let _ = en_slc_ps := true in
   ()
 
-let en_inv_baga () =
+let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
-  let _ = gen_baga_inv := true in
+  (* let _ = gen_baga_inv := true in *)
+  let _ = pred_sat := true in
   (*baga bk*)
-  (* let _ = en_bk ()  in *)
+  let _ = en_bk ()  in
   ()
+
+let _ = if !smt_compete_mode then
+  begin
+    (* Debug.trace_on := false; *)
+    (* Debug.devel_debug_on:= false; *)
+    silence_output:=true;
+    enable_count_stats:=false;
+    enable_time_stats:=false;
+    print_core:=false;
+    print_core_all:=false;
+    (* gen_baga_inv := true; *)
+    en_pred_sat ();
+    (* do_infer_inv := true; *)
+    lemma_gen_unsafe := true;
+    graph_norm := true;
+    smt_compete_mode:=true
+  end
+
 (* let reporter = ref (fun _ -> raise Not_found) *)
 
 (* let report_error2 (pos : loc) (msg : string) = *)
@@ -1676,3 +1689,7 @@ let gen_field_ann t=
   match t with
     | Named _ -> fresh_any_name field_rec_ann
     | _ -> fresh_any_name field_val_ann
+
+let un_option opt default_val = match opt with
+  | Some v -> v
+  | None -> default_val

@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 
-@files = <bolognesa*.slk>;
+@files = <spaguetti*.slk>;
 
 foreach $file (@files) {
     print $file . "\n";
 
-    system("sleek " . $file ." --smt-compete-test");
+    system("../../../../../sleek " . $file ." --smt-compete-test");
 }
 

@@ -91,8 +91,9 @@ struct
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      | Timeout ->  
-            Printf.eprintf " Timeout after %s secs" (string_of_float tsec);
+      | Timeout ->
+            if !smt_compete_mode then Printf.eprintf "" else
+            Printf.eprintf " Timeout after %s secs" (string_of_float tsec) ;
           (with_timeout ())
       | exc -> begin
           Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);

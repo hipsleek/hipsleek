@@ -672,7 +672,7 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   List.fold_left (fun x y -> x@(helper y)) [] m
 
 
-let find_close svl0 eqs0=
+let find_close svl0 eqs0 =
   let rec find_match svl ls_eqs rem_eqs=
     match ls_eqs with
       | [] -> svl,rem_eqs
@@ -5864,8 +5864,7 @@ let get_vnodes_x (f: formula) =
       | ViewNode _ -> [hf]
       | _ -> []
   in
-  let views = get_one_kind_heap get_view_node f in
-  views
+  get_one_kind_heap get_view_node f
 
 let get_vnodes (f: formula) =
   let pr1 = !print_formula in
@@ -5873,23 +5872,58 @@ let get_vnodes (f: formula) =
   Debug.no_1 "get_vnodes" pr1 pr2
       (fun _ -> get_vnodes_x f) f
 
+let get_vptrs_x (f: formula) =
+  let get_view_ptr hf=
+    match hf with
+      | ViewNode vn -> [vn.h_formula_view_node]
+      | _ -> []
+  in
+  get_one_kind_heap get_view_ptr f
+
+let get_vptrs (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list_ln !print_sv in
+  Debug.no_1 "get_vptrs" pr1 pr2
+      (fun _ -> get_vptrs_x f) f
+
+
 let get_views (f: formula) =
   let get_vn hf=
     match hf with
       | ViewNode vn -> [vn]
       | _ -> []
   in
-  let views = get_one_kind_heap get_vn f in
-  views
+  get_one_kind_heap get_vn f
 
-let get_dnodes (f: formula) =
-  let get_dn hf=
+let get_datas (f: formula) =
+  let get_data hf=
     match hf with
       | DataNode dn -> [dn]
       | _ -> []
   in
-  let dns = get_one_kind_heap get_dn f in
-  dns
+  get_one_kind_heap get_data f
+
+let get_dnodes (f: formula) =
+  let get_dn hf=
+    match hf with
+      | DataNode dn -> [hf]
+      | _ -> []
+  in
+  get_one_kind_heap get_dn f
+
+let get_dptrs_x (f: formula) =
+  let get_data_ptr hf=
+    match hf with
+      | DataNode dn -> [dn.h_formula_data_node]
+      | _ -> []
+  in
+  get_one_kind_heap get_data_ptr f
+
+let get_dptrs (f: formula) =
+  let pr1 = !print_formula in
+  let pr2 = pr_list_ln !print_sv in
+  Debug.no_1 "get_dptrs" pr1 pr2
+      (fun _ -> get_dptrs_x f) f
 
 let is_rec_br vn f=
   let vns = get_views f in
@@ -5916,21 +5950,21 @@ let get_views_struc sf0=
   in
   helper sf0
 
-let get_dnodes_struc sf0=
+let get_datas_struc sf0=
   let rec helper sf=
     let helper_list sfs =  List.fold_left (fun r (_,sf1) -> r@(helper sf1)) [] sfs in
     match sf with
       | EList sfs -> helper_list sfs
       | ECase { formula_case_branches = sfs } -> helper_list sfs
       | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
-      let vns1 = get_dnodes f in
+      let vns1 = get_datas f in
       let vns2 = (match sf_opt with
         | None -> []
         | Some sf -> helper sf
       ) in
       (vns1 @ vns2)
       | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
-            let vns1 = get_dnodes f in
+            let vns1 = get_datas f in
             let vns2 = helper sf in
             (vns1 @ vns2)
       | EInfer { formula_inf_continuation = sf } -> helper sf
@@ -10011,17 +10045,11 @@ let list_context_union_x c1 c2 =
   let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
   | FailCtx t1, FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
-      if ((is_cont t1) && not(is_cont t2))
-      then FailCtx t1
-      else
-	if ((is_cont t2) && not(is_cont t1))
-	then FailCtx t2
-	else
-	  if (is_cont t1) && (is_cont t2) then
-	    FailCtx (Or_Continuation (t1,t2))  
-	  else
-	    FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
-	     (*FailCtx (And_Reason (t1,t2))   *)
+      if ((is_cont t1) && not(is_cont t2)) then FailCtx t1
+      else if ((is_cont t2) && not(is_cont t1)) then FailCtx t2
+      else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2))  
+      else FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
+        (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
@@ -15835,3 +15863,51 @@ let force_elim_exists f quans=
   let pr2 = !CP.print_svl in
   Debug.no_2 "force_elim_exists" pr1 pr2 pr1
       (fun _ _ -> force_elim_exists_x f quans) f quans
+
+let h_formula_contains_node_name h ident =
+  let rec helper h =
+    match h with
+      | ViewNode   ({ h_formula_view_name = name; })
+      | DataNode   ({ h_formula_data_name = name; })
+      | ThreadNode ({ h_formula_thread_name = name; }) ->
+            if (String.compare ident name == 0) then true else false
+      | Star ({h_formula_star_h1 = h1;
+          h_formula_star_h2 = h2;})
+      | StarMinus ({ h_formula_starminus_h1 = h1;
+          h_formula_starminus_h2 = h2;})
+      | Conj ({ h_formula_conj_h1 = h1;
+          h_formula_conj_h2 = h2;})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+          h_formula_conjstar_h2 = h2;} )
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+          h_formula_conjconj_h2 = h2;} )
+      | Phase ({ h_formula_phase_rd = h1;
+          h_formula_phase_rw = h2;}) ->
+            ((helper h1) || (helper h2))
+      | _ -> false
+  in helper h
+
+let star_elim_useless_emp h = 
+  let rec helper h =
+    match h with
+      | HEmp -> None
+      | Star ({h_formula_star_h1 = h1;
+        h_formula_star_h2 = h2;}) ->
+            let h1 = helper h1 in
+            let h2 = helper h2 in
+            let new_h = 
+              match h1,h2 with
+                | Some h0, None
+                | None, Some h0 -> Some h0
+                | None, None    -> None
+                | _             -> Some h
+            in new_h
+      | _ -> Some h                          (*incomplete *)
+  in
+  let new_h_opt = helper h in
+  let new_h =
+    match new_h_opt with
+      | None -> HEmp
+      | _    -> h
+  in new_h
+

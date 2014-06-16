@@ -35,7 +35,6 @@ let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante 
 
 let sleek_unsat_check isvl cprog ante=
   let _ = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
-  let _ =  print_endline "check unsat with graph \n" in
   let _ = Hgraph.reset_fress_addr () in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let lem = Lem_store.all_lemma # get_left_coercion in
@@ -183,13 +182,33 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-    let ctx = 
-      if !Globals.delay_proving_sat then ctx
-      else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-    let _ = if (CF.isAnyFalseCtx ctx) then
-      print_endline_quiet ("[Warning] False ctx")
-    in
-    let conseq = Cfutil.elim_null_vnodes cprog conseq in
+    if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      (* let sno = ref (0:int) in *)
+      (* let is_unsat = Solver.unsat_base_nth 22 cprog (sno) ante in *)
+      let is_unsat0, is_sat, waiting_vis,_ = Cvutil.build_vis cprog ante in
+      let is_unsat = if is_unsat0 then true else
+        if is_sat then false else
+          let is_unsat2 = Cvutil.view_unsat_check_topdown cprog waiting_vis [] [] [] true [] in
+          is_unsat2
+      in
+      if is_unsat then
+        (true, (CF.SuccCtx[ctx]), isvl)
+      else
+        let fctx = CF.FailCtx (CF.Trivial_Reason
+            ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+        (false, fctx, isvl)
+    else
+      let ctx = 
+        if !Globals.delay_proving_sat then ctx
+        else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
+      let _ = if (CF.isAnyFalseCtx ctx) then
+        print_endline_quiet ("[Warning] False ctx")
+      in
+      let conseq = Cfutil.elim_null_vnodes cprog conseq in
+    (*****************)
+    (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
+    (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
+    (************************)
   (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
   (*   let _ = print_endline ("[Warning] False ctx") in *)
   (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
@@ -227,6 +246,11 @@ and sleek_entail_check i isvl (cprog: C.prog_decl) proof_traces ante conseq=
       i isvl ante conseq proof_traces
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
+  let _ =
+    let _ = Lem_store.all_lemma # clear_right_coercion in
+    let _ = Lem_store.all_lemma # clear_left_coercion in
+    ()
+  in
   (***************************************)
   let call_sleek ante_f conseq_f=
     let _ = Globals.graph_norm := false in
@@ -280,7 +304,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
       | [] -> true, ctx
       | conj_conseq::rest ->
             let _ = Debug.ninfo_hprint (add_str "sub conseq" Cprinter.prtt_string_of_formula) conj_conseq no_pos in
-            let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps0 conj_conseq false true in
+            let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps0 conj_conseq false true false in
             if is_unsat then (false, ctx) else
               let r,rest_ante_fs, lc = prove_conj_conseq ante_fs2 ante_nemps0 (norm_conj_conseq,conj_conseq_hg) [] ctx in
               if not r then (false ,lc) else
@@ -292,7 +316,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
     match fs with
       | [] -> false, res_fs
       | f::rest ->
-            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true true in
+            let unsat,f1, hg1 = Frame.norm_dups_pred prog [](*ante_nemps*) f true true false in
             if unsat then
               (unsat, res_fs@(List.map (fun f -> (f, Hgraph.mk_empty_hgraph ())) rest))
             else check_unsat_conj_ante rest (res_fs@[(f,hg1)])

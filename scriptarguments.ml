@@ -554,7 +554,7 @@ let common_arguments = [
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
   ("--inv-baga",(* Arg.Set Globals.gen_baga_inv *) Arg.Unit Globals.en_inv_baga ,"generate baga inv from view");
-  ("--baga-limit",(* Arg.Set Globals.gen_baga_inv *) Arg.Set_int Globals.epure_disj_limit ,"Set disj limit for baga invariant ");
+  ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
@@ -704,7 +704,7 @@ let common_arguments = [
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
           (* Globals.gen_baga_inv := true; *)
-          Globals.en_inv_baga ();
+          Globals.en_pred_sat ();
           (* Globals.do_infer_inv := true; *)
           (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
@@ -724,10 +724,11 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.en_inv_baga ();
+          Globals.en_pred_sat ();
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
+          Globals.is_solver_local := true;
           Globals.smt_compete_mode :=true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");

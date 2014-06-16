@@ -347,6 +347,16 @@ let rec check_prover_existence prover_cmd_str =
               exit 0
           else check_prover_existence rest
 
+let is_smtsolver_z3 tp_str=
+   (* try *)
+   (*    if (String.sub tp_str 0 4) = "./z3" || (String.sub tp_str 0 2) = "z3" then *)
+   (*      true *)
+   (*    else false *)
+   (*  with _ ->  if (String.sub tp_str 0 2) = "z3" then *)
+   (*    true else false *)
+  String.compare tp_str "./z3" = 0 || String.compare tp_str "z3" = 0
+ 
+
 let set_tp tp_str =
   prover_arg := tp_str;
   (******we allow normalization/simplification that may not hold
@@ -356,7 +366,7 @@ let set_tp tp_str =
   let prover_str = ref [] in
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
-  if (String.sub tp_str 0 2) = "oc" then
+  if (* (String.sub tp_str 0 2) = "oc" *) String.compare tp_str "./oc" = 0 || String.compare tp_str "oc" = 0 then
     (Omega.omegacalc := tp_str; pure_tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "dp" then pure_tp := DP
   else if tp_str = "cvcl" then 
@@ -387,8 +397,11 @@ let set_tp tp_str =
 	(pure_tp := Coq; prover_str := "coqtop"::!prover_str;)
   (*else if tp_str = "z3" then 
 	(pure_tp := Z3; prover_str := "z3"::!prover_str;)*)
-   else if (String.sub tp_str 0 2) = "z3" then
-	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+  else
+    (* if (String.sub tp_str 0 4) = "./z3" || (String.sub tp_str 0 2) = "z3" then *)
+    (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
+    if is_smtsolver_z3 tp_str then
+       (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "OCRed" then
@@ -434,7 +447,7 @@ let _ =
   ()
   else ())
   in
-  set_tp "z3"
+  set_tp !Smtsolver.smtsolver_name (* "z3" *)
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"

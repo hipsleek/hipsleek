@@ -369,6 +369,9 @@ let primed_of_spec_var (sv : spec_var) : primed = match sv with
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let name_of_sv (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, _) -> v
+
 let full_name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
@@ -8958,6 +8961,17 @@ let rec is_neq_exp (f:formula) = match f with
   | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
 
+let get_neqs_new p=
+  let get_neq acc p = match p with
+    | BForm (bf,_) -> (match bf with
+        | (Neq (Var (sv1,_), Var (sv2,_), _),_) -> acc@[(sv1,sv2)]
+        | _ -> acc
+      )
+    | _ -> acc
+  in
+  let ps = list_of_conjs p in
+  List.fold_left get_neq [] ps
+
 let rec is_eq_neq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8966,6 +8980,7 @@ let rec is_eq_neq_exp (f:formula) = match f with
     | _ -> false)
   | Exists (_,p1,_,_) -> is_eq_neq_exp p1
   | _ -> false
+ 
 
 let is_neq_null_exp_x (f:formula) = match f with
   | BForm (bf,_) ->
