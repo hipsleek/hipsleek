@@ -584,6 +584,8 @@ let common_arguments = [
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
   ("--lem-dis-rhs-unfold", Arg.Clear Globals.enable_lemma_rhs_unfold, "Disable RHS unfold for Lemma Proving");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--en-smart-lem-search", Arg.Set Globals.smart_lem_search, "Activate a smart heuristic for lemma search");
+  ("--dis-smart-lem-search", Arg.Clear Globals.smart_lem_search, "Use naive heuristic for lemma search");
   ("--en-ctx-norm", Arg.Set Globals.en_norm_ctx,    "Enable  - merge identical residual states based on syntactic checking");
   ("--dis-ctx-norm", Arg.Clear Globals.en_norm_ctx, "Disable - merge identical residual states based on syntactic checking");
   ("--en-trec2lin", Arg.Set Globals.en_trec_lin,    "Enable  - conversion of tail-recursive defs to linear form");

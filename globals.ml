@@ -727,6 +727,8 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 
+let smart_lem_search = ref false
+
 let dis_show_diff = ref false
 
 let sap = ref false

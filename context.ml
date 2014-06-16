@@ -1092,6 +1092,25 @@ and filter_norm_lemmas l =
 and filter_lemmas_by_kind l k = 
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
+
+and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
+  if flag_lem then 
+    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
+    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
+        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
+        else (1,M_lemma (m_res,Some l))) left_ls else [] in
+    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
+    let right_act =  
+      List.fold_left (fun acc l -> 
+          if  (vr_new_orig || (non_loop_candidate l)) then
+            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
+            acc@[(prio,M_lemma (m_res,Some l))]
+          else acc) [] right_ls
+    in
+    left_act@right_act
+  else  []
+
 and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f = 
   let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name lhs_name) in
   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name rhs_name) in
@@ -1340,6 +1359,23 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let _ = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+                let flag_lem = (
+                  if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
+                    (* else (vl_view_orig || vr_view_orig) *)
+                  else
+                    (*only apply a SPLIT lemma to a lock
+                      if both sides are original*)
+                    (* if (is_l_lock) then *)
+                    (*   (vl_view_orig && vr_view_orig) *)
+                    (*if RHS is original --> SPLIT*)
+                    if (is_l_lock && is_r_lock && vr_view_orig) then true
+                    else if (is_l_lock && is_r_lock && not vr_view_orig) then false
+                    else (vl_view_orig || vr_view_orig)
+                ) in
+                let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+                let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+                let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
+                let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
                 let l2,syn_lem_typ = (
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                      let uf_i = if new_orig then 0 else 1 in
@@ -1404,7 +1440,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   | None -> a3
                                   | Some a2 -> Some (1,Cond_action [a2; a1]) 
                     ) in
-                    match a6 with
+                    let a7 = 
+                        if (!Globals.smart_lem_search) then
+                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
+                          match a6 with
+                            | Some a ->  Some (1, Cond_action ([a]@lem_act))
+                            | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
+                        else a6 
+                    in
+                    match a7 with
                       | Some a -> [a],syn_lem_typ
                       | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
                         (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
@@ -1426,41 +1470,26 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                             [(1,Cond_action lst)],syn_lem_typ
                 ) in
                 (* using || results in some repeated answers but still terminates *)
-                let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-                let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-                let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
-                let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
-                let flag = (
-                  if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
-                    (* else (vl_view_orig || vr_view_orig) *)
-                  else
-                    (*only apply a SPLIT lemma to a lock
-                      if both sides are original*)
-                    (* if (is_l_lock) then *)
-                    (*   (vl_view_orig && vr_view_orig) *)
-                    (*if RHS is original --> SPLIT*)
-                    if (is_l_lock && is_r_lock && vr_view_orig) then true
-                    else if (is_l_lock && is_r_lock && not vr_view_orig) then false
-                    else (vl_view_orig || vr_view_orig)
-                ) in
-                let l3 = (
-                  if flag then 
-                    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
-                    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
-                    let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
-                        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
-                        else (1,M_lemma (m_res,Some l))) left_ls else [] in
-                    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
-                    let right_act =  
-                      List.fold_left (fun acc l -> 
-                          if  (vr_new_orig || (non_loop_candidate l)) then
-                            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
-                            acc@[(prio,M_lemma (m_res,Some l))]
-                          else acc) [] right_ls
-                    in
-                    left_act@right_act
-                  else  []
-                ) in
+                (* let l3 = ( *)
+                (*   if flag then  *)
+                (*     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (\*prog.prog_left_coercions*\) vl_name vr_name) in *)
+                (*     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (\*prog.prog_right_coercions*\) vr_name vl_name) in *)
+                (*     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->  *)
+                (*         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l)) *)
+                (*         else (1,M_lemma (m_res,Some l))) left_ls else [] in *)
+                (*     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in *)
+                (*     let right_act =   *)
+                (*       List.fold_left (fun acc l ->  *)
+                (*           if  (vr_new_orig || (non_loop_candidate l)) then *)
+                (*             let prio = (\* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*\) 1 in  *)
+                (*             acc@[(prio,M_lemma (m_res,Some l))] *)
+                (*           else acc) [] right_ls *)
+                (*     in *)
+                (*     left_act@right_act *)
+                (*   else  [] *)
+                (* ) in *)
+                let l3 = if not (!Globals.smart_lem_search) then 
+                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
