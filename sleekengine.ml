@@ -579,7 +579,7 @@ let convert_data_and_pred_to_cast_x () =
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         (* let _ = Globals.gen_baga_inv := false in *)
-      (* let _ = Globals.dis_pred_sat () in *)
+      let _ = Globals.dis_pred_sat () in
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
