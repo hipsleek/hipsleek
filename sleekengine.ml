@@ -1747,7 +1747,9 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s
+            | Some s ->
+                  let _ = smt_is_must_failure := (Some true) in
+                  "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
