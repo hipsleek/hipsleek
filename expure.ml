@@ -1089,7 +1089,7 @@ struct
     let rec aux b =
       match b with 
         | [] -> false
-        | x::xs -> let c1 = Elt.compare y x in
+        | x::xs -> let c1 = Elt.compare (* y x *) x y in
           if c1>0 then false
           else if c1==0 then true
           else aux xs
@@ -1099,7 +1099,7 @@ struct
     let rec aux b =
       match b with 
         | [] -> false
-        | x::xs -> let c1 = Elt.compare y x in
+        | x::xs -> let c1 = Elt.compare (* y x *) x y in
           if c1>0 then false
           else if c1==0 then exists_baga b z
           else aux xs
@@ -1110,9 +1110,11 @@ struct
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
       let null_el = Elt.zero (* mk_elem (mk_spec_var "null") *) in
-      let i1_new = List.filter 
-        (fun (x,y) -> not(Elt.is_zero x && exists_baga b1 y)
-        && not(exists_baga_pair b1 x y)) i2 in
+      let i1_new = List.filter
+        (* (fun (x,y) -> not(Elt.is_zero x && exists_baga b1 y) *)
+        (* && not(exists_baga_pair b1 x y)) i2 in *)
+        (fun (x,y) -> (Elt.is_zero x && exists_baga b1 y)
+            || (exists_baga_pair b1 x y)) i2 in
       (* let i1_new = List.fold_left (fun i1 el -> *)
       (*     let c = Elt.compare el null_el in *)
       (*     if c < 0 then *)
@@ -1363,17 +1365,17 @@ let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pur
     | Cformula.Star _ ->
           let hfl = Cformula.split_star_conjunctions cf in
           let efpd_n = List.fold_left (fun f hf ->
-              let lim = !Globals.epure_disj_limit in
-              let _ = if (lim!=0 && List.length f > lim) then
-                Globals.dis_inv_baga ()
-              in
-              if (!Globals.gen_baga_inv) then
+              (* let lim = !Globals.epure_disj_limit in *)
+              (* let _ = if (lim!=0 && List.length f > lim) then *)
+              (*   Globals.dis_inv_baga () *)
+              (* in *)
+              (* if (!Globals.gen_baga_inv) then *)
                 let efpd_h = build_ef_heap_formula hf all_views in
                 let efpd_s = EPureI.mk_star_disj f efpd_h in
                 let efpd_n = EPureI.norm_disj efpd_s in
                 efpd_n
-              else
-                f
+              (* else *)
+              (*   f *)
           ) efpd_p hfl in
           efpd_n
     | Cformula.DataNode _
