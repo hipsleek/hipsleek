@@ -2319,7 +2319,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
         let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
+        Debug.binfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
+        
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
         let _ = Log.current_infer_rel_stk # push_list rels in
@@ -7604,16 +7606,23 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
-      let contra = if (!Globals.smart_lem_search && is_folding) then
-        let pp_rhs =  rhs_pure_stk # top in
+      let contra, temp_rhs = if (!Globals.smart_lem_search && is_folding) then
+        (* let pp_rhs_len = rhs_pure_stk # len in *)
+        let pp_rhs_stk = rhs_pure_stk # get_stk in
+        let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
         let _ = Debug.info_hprint (add_str " folding: " string_of_bool ) is_folding pos in
-        let contr, _ = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) pos in
+        let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
+        Debug.ninfo_hprint (add_str "contra detect, tmp2" !MCP.print_mix_formula) tmp2 pos;
+        Debug.ninfo_hprint (add_str "contra detect, tmp_rhs" !CP.print_formula) tmp_rhs pos;
+        let contr, _ = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
+        Debug.ninfo_hprint (add_str "contra detect, res" string_of_bool) contr pos;
         (* let _ =  rhs_pure_stk # push  pp_rhs in *)
-        contr 
-      else false in
-      (* if not (contra) then  *)
-      (*   (fasle,[],None, (Failure_Valid, ([],[],[]))) rhs_p in *)
-      let _ = Debug.info_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
+        (contr, tmp_rhs)
+      else (true, (MCP.pure_of_mix rhs_p)) in
+      if not (contra) then
+        let _ = Debug.info_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
+        (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
+      else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
@@ -9979,11 +9988,12 @@ and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding p
     : (CF.list_context * Prooftracer.proof) =
   let pr_es = Cprinter.string_of_entail_state in
   let pr_hf = Cprinter.string_of_h_formula in
+  let pr_base = Cprinter.string_of_formula_base in
   let pr_fold_seq = pr_list Acc_fold.print_fold_type in
   let pr_out x = Cprinter.string_of_list_context (fst x) in
-  Debug.no_3 "do_acc_fold" pr_es pr_hf pr_fold_seq pr_out 
-      (fun _ _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
-      estate rhs_node fold_seq
+  Debug.no_4 "do_acc_fold" pr_es pr_hf pr_base pr_fold_seq pr_out 
+      (fun _ _ _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
+      estate rhs_node rhs_b fold_seq
 
 
 and push_hole_action_x a1 r1=
@@ -10943,6 +10953,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           in
           (* TRUNG TODO IMPORTANT: when ACC_fold success, but the rest can not besure,
           how can check the successful context againt the rest of pure? *)
+          let pp_rhs_stk = rhs_pure_stk # get_stk in
+          let rhs_p = rhs_b.CF.formula_base_pure in
+          let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
+          let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
+          Debug.binfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
+          let rhs_p = MCP.mix_of_pure tmp_rhs in
+          let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in
+
           do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
           
           (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos *)
