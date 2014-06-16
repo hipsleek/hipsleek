@@ -3925,16 +3925,16 @@ and prune_perm_bounds f =
     | Forall (v,f,l,pos) -> mkForall [v] (helper_f f) l pos
     | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos
   in
-  helper_f f 
-      
-(* 
+  helper_f f
+
+(*
    Get a list of conjuncts, namely
-   F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
+   F1 & F2 & .. & Fn ==> [F1,F2,..,FN]
    TODO : push exists inside where possible..
 *)
 and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
 
-and list_of_conjs (f0 : formula) : formula list = 
+and list_of_conjs (f0 : formula) : formula list =
   Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
   (*let rec helper f conjs = match f with
     | And (f1, f2, pos) ->
@@ -3945,24 +3945,24 @@ and list_of_conjs (f0 : formula) : formula list =
     in
     helper f0 []*)
 
-  
-and split_disjunctions = 
+
+and split_disjunctions =
   (* split_disjuncts *)
   function
     | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
     | z -> [z]
 
 and join_disjunctions xs = disj_of_list xs no_pos
-  
+
 (******************)
 (*collect all bformula of f0*)
 and list_of_bformula (f0:formula): formula list = match f0 with
-  | BForm _ 
-  | Forall _ 
+  | BForm _
+  | Forall _
   | Exists _ -> [f0]
-  | And (f1,f2,_) 
+  | And (f1,f2,_)
   | Or (f1,f2,_,_) ->(list_of_bformula f1)@(list_of_bformula f2)
-  | Not (f1,_,_) ->list_of_bformula f1    
+  | Not (f1,_,_) ->list_of_bformula f1
   | AndList b -> fold_l_snd list_of_bformula b
 
 and  check_dependent f ls_working: bool=
