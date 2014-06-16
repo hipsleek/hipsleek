@@ -418,11 +418,11 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
     if (List.length new_cs > 1) then
       begin
         step_change # inc;
-        (* Debug.binfo_start "split_base"; *)
-        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
-        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
-        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
-        (* Debug.binfo_end "split_base"; *)
+        (* Debug.ninfo_start "split_base"; *)
+        (* Debug.ninfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
+        (* Debug.ninfo_pprint "=============>>>>" no_pos; *)
+        (* Debug.ninfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* Debug.ninfo_end "split_base"; *)
         res
       end
     else res

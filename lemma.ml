@@ -38,17 +38,26 @@ let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
     let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
     l2r, r2l
 
-let generate_lemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody=
+let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody
+    : (C.coercion_decl list * C.coercion_decl list) =
   (*check entailment*)
-  let (res,_,_) =  if coer_type = I.Left then
-    Sleekcore.sleek_entail_check 4 [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
-  else Sleekcore.sleek_entail_check 5 [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
-  in
+  let (res,_,_) = (
+    if coer_type = I.Left then
+      Sleekcore.sleek_entail_check 4 [] cprog [(chead,cbody)] lhs (CF.struc_formula_of_formula rhs no_pos)
+    else Sleekcore.sleek_entail_check 5 [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
+  ) in
   if res then
     let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
     l2r, r2l
-  else
-    [],[]
+  else [],[]
+
+let generate_lemma iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody
+    : (C.coercion_decl list * C.coercion_decl list) =
+  let pr_out = pr_pair !C.print_coerc_decl_list !C.print_coerc_decl_list in
+  let pr_str = idf in
+  Debug.no_1 "generate_lemma" pr_str pr_out
+      (fun _ -> generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody)
+      lemma_n
 
 let final_inst_analysis_view_x cprog vdef=
   let process_branch (r1,r2)vname args f=
@@ -278,13 +287,15 @@ let manage_safe_lemmas repo iprog cprog =
 
 (* update store with given repo without verifying the lemmas *)
 let manage_unsafe_lemmas repo iprog cprog: (CF.list_context list option) =
-  let (left,right, lnames) = List.fold_left (fun (left,right,names) ldef -> 
+  let (left,right, lnames) = List.fold_left (fun (left,right,names) ldef ->
+    try
       let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
       (l2r@left,r2l@right,((ldef.I.coercion_name)::names))
+    with _ -> (left,right,names)
   ) ([],[], []) repo in
   let _ = Lem_store.all_lemma # add_coercion left right in
   let _ = (* if  (!Globals.dump_lem_proc) then   *)
-    Debug.binfo_hprint (add_str "\nUpdated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
+    Debug.ninfo_hprint (add_str "\nUpdated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
   let _ = Debug.info_ihprint (add_str "\nUpdated store with unsafe repo." pr_id) "" no_pos in
   None
 
@@ -620,7 +631,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
   let lst = ldef_lst.Iast.coercion_list_elems in
   (* why do we check residue for ctx? do we really need a previous context? *)
   let enable_printing = (!Globals.dump_lem_proc) && ( List.length lst > 0 ) in
-  (* let _ = if enable_printing then Debug.binfo_pprint "=============== Processing lemmas ===============" no_pos else () in *)
+  (* let _ = if enable_printing then Debug.ninfo_pprint "=============== Processing lemmas ===============" no_pos else () in *)
   let ctx = match !CF.residues with
     | None            ->  CF.SuccCtx [CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]
     | Some (CF.SuccCtx ctx, _) -> CF.SuccCtx ctx 
@@ -638,7 +649,7 @@ let process_list_lemma_helper_x ldef_lst iprog cprog lem_infer_fnct =
         let _ = lem_infer_fnct r1 r2 in
         r2
   in
-  (* let _ = if enable_printing then Debug.binfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
+  (* let _ = if enable_printing then Debug.ninfo_pprint "============ end - Processing lemmas ============\n" no_pos else () in *)
   match res with
     | None | Some [] -> CF.clear_residue ()
     | Some(c::_) -> CF.set_residue true c
@@ -1271,7 +1282,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (*   let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in                        *)
     (*   let hc = List.hd heap_chains in                                                             *)
     (*   let fold_seq = Acc_fold.detect_fold_sequence hc vd self_sv cprog in                         *)
-    (*   Debug.binfo_hprint (add_str "fold_seq" (pr_list Acc_fold.print_fold_type)) fold_seq no_pos; *)
+    (*   Debug.ninfo_hprint (add_str "fold_seq" (pr_list Acc_fold.print_fold_type)) fold_seq no_pos; *)
     (* with _ -> () in                                                                               *)
 
     let new_f = CF.elim_exists f in
@@ -1284,12 +1295,12 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
   ) processed_branches in
   (* consider only the view has 1 base case and 1 inductive case *)
   if ((List.length base_branches != 1) || (List.length inductive_branches != 1)) then (
-    Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 1") no_pos;
+    Debug.ninfo_pprint ("generate_view_lemmas: no lemma is generated! 1") no_pos;
     []
   )
   (* consider only the view has 1 forward pointer *)
   else if (List.length vd.C.view_forward_ptrs != 1) then (
-    Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 2") no_pos;
+    Debug.ninfo_pprint ("generate_view_lemmas: no lemma is generated! 2") no_pos;
     []
   )
   (* statisfying view *)
@@ -1303,7 +1314,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       String.compare vn.CF.h_formula_view_name vname = 0
     ) view_nodes in
     if (List.length induct_vnodes != 1) then (
-      Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 3") no_pos;
+      Debug.ninfo_pprint ("generate_view_lemmas: no lemma is generated! 3") no_pos;
       []
     )
     else (
@@ -1427,7 +1438,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       ) in
       match lem_body_heap with
       | None -> 
-          Debug.binfo_pprint ("generate_view_lemmas: no lemma is generated! 4") no_pos;
+          Debug.ninfo_pprint ("generate_view_lemmas: no lemma is generated! 4") no_pos;
           []
       | Some lem_body_hf -> (
           let llem_body_hf = lem_body_hf in
