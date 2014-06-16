@@ -778,6 +778,8 @@ let lemma_syn_bound = 5
 
 let is_lem_syn_in_bound () = !lemma_syn_count < lemma_syn_bound
 
+let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
+
 let lemma_gen_safe = ref false       (* generating (and proving) both fold and unfold lemmas for special predicates *)
 
 let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for special predicates *)

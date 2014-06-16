@@ -1748,10 +1748,32 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
             | Some s ->
-                  let _ = smt_is_must_failure := (Some true) in
+                  let reg1 = Str.regexp "base case unfold failed" in
+                  let _ = try
+                    if Str.search_forward reg1 s 0 >=0 then
+                      let _ = smt_is_must_failure := (Some false) in ()
+                    else let _ = smt_is_must_failure := (Some true) in
+                    ()
+                  with _ -> (* let _ = smt_is_must_failure := (Some false) in *) ()
+                  in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> "(may) cause:"^s
+                | Some s -> begin
+                      try
+                        let _ = print_endline s in
+                        let reg1 = Str.regexp "Nothing_to_do" in
+                        let _ = if Str.search_forward reg1 s 0 >=0 then
+                          let _ = smt_is_must_failure := (Some false) in ()
+                        else
+                          if is_lem_syn_reach_bound () then
+                            let _ = smt_is_must_failure := (Some false) in ()
+                          else
+                            ()
+                        in
+                        "(may) cause:"^s
+                      with _ ->
+                          "(may) cause:"^s
+                  end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
                   (*should check bot with is_bot_status*)
@@ -1838,8 +1860,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
   (*     let _ =  Error.process_exct(e)in *)
 
 let print_exception_result s (num_id: string) =
-          Log.last_cmd # dumping "sleek_dump(exception)";
-          silenced_print print_string (num_id^": EXCast. "^s^"\n")
+  let _ = Log.last_cmd # dumping "sleek_dump(exception)" in
+  let _ = smt_is_must_failure := (Some false) in
+  let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
+  ()
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in

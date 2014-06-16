@@ -10999,7 +10999,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error, estate.es_trace)), NoAlias)
-      | Context.M_Nothing_to_do s -> 
+      | Context.M_Nothing_to_do s ->
+            
 	    let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
             CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error, estate.es_trace)), NoAlias) in
 	    if (!Globals.delay_proving_sat) then 
