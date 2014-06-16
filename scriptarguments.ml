@@ -711,6 +711,7 @@ let common_arguments = [
           (* Globals.lemma_gen_unsafe := true; *)
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
+          Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode:=true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only");
@@ -721,7 +722,7 @@ let common_arguments = [
           Debug.trace_on := false;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
-          Globals.silence_output:=true;
+          Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
@@ -730,6 +731,8 @@ let common_arguments = [
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
+          Globals.is_solver_local := true;
+          Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode :=true;
           Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents");

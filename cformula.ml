@@ -10045,17 +10045,11 @@ let list_context_union_x c1 c2 =
   let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
   | FailCtx t1, FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
-      if ((is_cont t1) && not(is_cont t2))
-      then FailCtx t1
-      else
-	if ((is_cont t2) && not(is_cont t1))
-	then FailCtx t2
-	else
-	  if (is_cont t1) && (is_cont t2) then
-	    FailCtx (Or_Continuation (t1,t2))  
-	  else
-	    FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
-	     (*FailCtx (And_Reason (t1,t2))   *)
+      if ((is_cont t1) && not(is_cont t2)) then FailCtx t1
+      else if ((is_cont t2) && not(is_cont t1)) then FailCtx t2
+      else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2))  
+      else FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
+        (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)

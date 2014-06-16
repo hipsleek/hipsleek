@@ -1,8 +1,2 @@
-#is_complex_entailment_4graph
-#norm_graph
-#find_case_split
-#syntax_contrb_lemma_end_null
-xpure_mem_enum
-xpure_heap_mem_enum
-unsat_base_nth
-xpure_spec_view_inv
+find_case_split
+norm_graph

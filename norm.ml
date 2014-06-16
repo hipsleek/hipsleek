@@ -707,13 +707,20 @@ let merge_contexts (ctx: CF.list_context): CF.list_context =
   (********** end MERGE STATES with IDENTICAL FORMULAS (syntactic check) ***************)
 
   (************* CONVERT TAIL-REC to LINEAR vdef ***************)
-let convert_substitution_helper from_sv to_sv h p emap subs_pure = 
+let convert_substitution_helper_x from_sv to_sv h p emap subs_pure = 
   let aliases     = from_sv::(CP.EMapSV.find_equiv_all from_sv emap) in
   let from_sv_lst = aliases in
   let to_sv_lst   = List.map (fun a -> to_sv) aliases in
   let h = CF.subst_avoid_capture_h from_sv_lst to_sv_lst h in
   let p = if subs_pure then  CP.subst_avoid_capture from_sv_lst to_sv_lst p else p in 
   (h,p)
+
+let convert_substitution_helper from_sv to_sv h p emap subs_pure = 
+  let pr1 = Cprinter.string_of_spec_var in
+  let pr3 = Cprinter.string_of_h_formula in 
+  let pr4 = Cprinter.string_of_pure_formula in 
+  let pr_out = pr_pair pr3 pr4 in
+  Debug.no_4 "convert_substitution_helper" pr1 pr1 pr3 pr4 pr_out (fun _ _ _ _ -> convert_substitution_helper_x from_sv to_sv h p emap subs_pure) from_sv to_sv h p 
 
 let convert_substitution_helper_opt from_sv to_sv h p emap subs_pure = 
   let (h,p) = 
@@ -808,15 +815,17 @@ let subs_head_with_free vdef hd p emap =
 *)
 let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
   let (fwd_ptr_v, fwd_ptr_n) = List.hd fwd_ptrs in (* check that fwd_ptrs has exactly size 1, was done earlier *)
+  let _ = Debug.info_hprint (add_str "fwd_ptrs:" (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )  (fwd_ptr_v, fwd_ptr_n)  no_pos in
   let (bk_ptrs_v, bk_ptr_n) = 
     if (List.length bk_ptrs == 1) then  
       let (bk_ptr_v, bk_ptr_n) = List.hd bk_ptrs in 
       (Some bk_ptr_v, Some bk_ptr_n) 
     else (None, None) in
   (* substitute the pointer corresponding to the fwd ptr of the self view, with "self" inside the tail *)
+  let self_temp = CP.fresh_spec_var (CP.mk_self None) in
   let bk_tn = back_ptr_of_heap tail fwd_ptr_n emap vdef (CF.pos_of_h_formula tail) in 
   let (tail, p) = convert_substitution_helper_opt bk_tn bk_ptr_n tail pp emap false in
-  let (tail, p) = convert_substitution_helper fwd_ptr_n (CP.mk_self None) tail p emap false in
+  let (tail, p) = convert_substitution_helper fwd_ptr_n self_temp tail p emap true in
   (* let (tail, p) = convert_substitution_helper new_self.field.bk fwd_ptr_n tail pp emap false in *)
   (* substitue the fwd pointer of view def the fwd pointer of initial self view *)
   let fresh_sv_n = CP.fresh_spec_var fwd_ptr_n in
@@ -828,10 +837,12 @@ let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
   (* substitute self var with fwd pointer of self in the head *)
   let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head p emap false in
   (* get last node of tail and set it to be the bck ptr of head view *)
-  let heap_chain = List.hd (Acc_fold.collect_heap_chains tail (MCP.mix_of_pure p) (CP.mk_self None) vdef prog) in
+  let heap_chain = List.hd (Acc_fold.collect_heap_chains tail (MCP.mix_of_pure p) self_temp vdef prog) in
   let (_, _, new_bk_of_nv, _) = fst heap_chain in 
-  let (head, p) = convert_substitution_helper_opt bk_ptr_n (Some new_bk_of_nv) head pp emap false in
+  let (head, p) = convert_substitution_helper_opt bk_ptr_n (Some new_bk_of_nv) head p emap false in
   let head   = subs_head_with_free vdef head p emap in 
+  (* remove temp vars *)
+  let (tail, p) = convert_substitution_helper self_temp (CP.mk_self None) tail p emap true in
   let qvars = fresh_sv_v::fresh_sv_n::qvars in
   let pp = CP.mkAnd p aux_p no_pos in
   (tail, head, pp,qvars)
@@ -855,7 +866,7 @@ let convert_h_formula_to_linear_recursive_helper  prog (head: CF.h_formula) (tai
               let args_lst = List.combine vdef.C.view_vars hd.CF.h_formula_view_arguments in
               let fwd_ptrs = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v fwd_ptrs_vdef) args_lst in
               let bk_ptrs  = List.filter (fun (v,n) -> Gen.BList.mem_eq CP.eq_spec_var v bk_ptrs_vdef) args_lst in
-              let (fwd_ptr_v, fwd_ptr_n) = List.hd fwd_ptrs in
+              let _ = Debug.info_hprint (add_str "fwd_ptrs:" (pr_list (pr_pair Cprinter.string_of_spec_var  Cprinter.string_of_spec_var) )) fwd_ptrs no_pos in
               let (tail, head, pp, qvars) = convert_substitution prog fwd_ptrs bk_ptrs (* fwd_ptr_v fwd_ptr_n *) tail head pp emap qvars vdef in
               let new_f = CF.mkStarH tail head pos in 
               let new_pure, new_qvars = elim_useless_exists new_f pp qvars in

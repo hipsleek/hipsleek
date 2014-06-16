@@ -111,8 +111,6 @@ if ($test_all) {
     "dll-vc07.smt2",
     "dll-vc08.smt2","dll-vc10.smt2",
     "nlcl-vc05.smt2",
-    "inconsistent-ls-of-ls.defs.smt2",
-    
     # Exception
 
     );
@@ -192,6 +190,7 @@ if ($test_all) {
     "abduced16.defs.smt2",
     "abduced17.defs.smt2",
     "abduced18.defs.smt2",
+    "inconsistent-ls-of-ls.defs.smt2",
      "succ-circuit03.defs.smt2",
     "succ-circuit04.defs.smt2",
     "succ-circuit05.defs.smt2",
