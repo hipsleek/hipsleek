@@ -2144,11 +2144,11 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-and contra_wrapper f rhs_p =
+and contra_wrapper f opt rhs_p =
   let rs0, fold_prf =
     if (!Globals.smart_lem_search) then
       let _ = rhs_pure_stk # push rhs_p in
-      let rs0, fold_prf = f None in 
+      let rs0, fold_prf = f opt in 
       let _ = rhs_pure_stk # pop in
       (rs0, fold_prf)
     else f None in 
@@ -2318,10 +2318,20 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
-        let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
+        let heap_entail = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
         Debug.binfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
-        let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
-        
+        (* let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in *)
+        (* let rs0, fold_prf = Wrapper.wrap_lem_search heap_entail_4_wrapper rhs_p in *)
+        let rs0, fold_prf = 
+          let is_inf = not(Gen.is_empty new_es.es_infer_vars ) || not(Gen.is_empty new_es.es_infer_vars_rel) || 
+            not(Gen.is_empty new_es.es_infer_vars_sel_hp_rel) || not(Gen.is_empty new_es.es_infer_vars_sel_post_hp_rel) in
+          if (is_inf) then
+              let heap_entail_4_wrapper = contra_wrapper heap_entail None (* rhs_p *) in
+              (* below disables smart-lem-search *)
+              Wrapper.wrap_lem_search heap_entail_4_wrapper rhs_p 
+          else
+            (* below forces a check for contra during folding if --smart-lem-search is enabled*)
+            contra_wrapper heap_entail None rhs_p in
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
         let _ = Log.current_infer_rel_stk # push_list rels in
