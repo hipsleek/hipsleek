@@ -449,8 +449,8 @@ let _ =
       let str_res = if r then "UNSAT" else
         let msg =
           (*conver may error into unknown*)
-          match !is_must_failure with
-            | None ->  "UNKNOWN"
+          match !Globals.smt_is_must_failure with
+            | None ->  "SAT"
             | Some b -> if b then "SAT" else "UNKNOWN"
         in msg
       in

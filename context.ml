@@ -1124,11 +1124,19 @@ and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f =
   else
     f 
 
-and process_one_match prog estate lhs_h lhs_p conseq is_normalizing (c:match_res) (rhs_node,rhs_rest,rhs_p) reqset:action_wt =
-  let pr1 = string_of_match_res in
-  let pr2 = string_of_action_wt_res0  in
-  Debug.no_1 "process_one_match" pr1 pr2 (fun _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing c
-      (rhs_node,rhs_rest,rhs_p) reqset) c 
+and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
+    (mt_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
+    :action_wt =
+  let pr_mr = string_of_match_res in
+  let pr_h = !CF.print_h_formula in
+  let pr_p = !MCP.print_mix_formula in
+  let pr_out = string_of_action_wt_res0 in
+  Debug.no_6 "process_one_match" 
+      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
+      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p) pr_out
+      (fun _ _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing
+                          mt_res (rhs_node,rhs_rest,rhs_p) reqset)
+      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -1210,9 +1218,14 @@ and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
     (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
   let pr_mr = string_of_match_res in
+  let pr_h = !CF.print_h_formula in
+  let pr_p = !MCP.print_mix_formula in
   let pr_out = pr_list string_of_action_wt_res in
-  Debug.no_1 "process_one_match_accfold" pr_mr pr_out
-      (fun _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p) mt_res 
+  Debug.no_4 "process_one_match_accfold" 
+      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) 
+      (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
+      (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
+      mt_res lhs_h lhs_p rhs_p
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =

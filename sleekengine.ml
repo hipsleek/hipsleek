@@ -1337,7 +1337,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline "*************************************" in
   ()
 
-let process_validate exp_res ils_es=
+let process_validate exp_res ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1347,8 +1347,7 @@ let process_validate exp_res ils_es=
     let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
     (lhs,rhs)
   in
-  let preprocess_iestate act_vars (iguide_vars
-, ief, iconstrs)=
+  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs) =
     let act_idents = (List.map CP.name_of_spec_var act_vars) in
     let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = Typeinfer.fresh_proc_var_kind ls t in
@@ -1385,11 +1384,13 @@ let process_validate exp_res ils_es=
         match lc with
           | CF.FailCtx _ ->
                 let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
+                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail") ||
+                      (CF.is_must_failure lc && exp_res = "Fail_Must") ||
+                      (not (CF.is_bot_failure lc) && exp_res = "Fail_May")) 
                   (* if (exp_res = "Fail") *)
                   then
                     res_str := "Expected.\n"
-                  else
+                  else 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := "Not Expected.\n"
                 in
@@ -1415,10 +1416,10 @@ let process_validate exp_res ils_es=
   (*     report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL" *)
   (* in *)
   let ex_r = true in
-  let _ = match a_r,ex_r with
-    | false,true
-    | true,false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
-    | false,false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
+  let _ = match a_r, ex_r with
+    | false, true
+    | true, false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
+    | false, false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
     | true, true ->
           (*syn new unknown preds generated between cprog and iprog*)
           let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in
@@ -1747,9 +1748,32 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s -> "(must) cause:"^s
+            | Some s ->
+                  let reg1 = Str.regexp "base case unfold failed" in
+                  let _ = try
+                    if Str.search_forward reg1 s 0 >=0 then
+                      let _ = smt_is_must_failure := (Some false) in ()
+                    else let _ = smt_is_must_failure := (Some true) in
+                    ()
+                  with _ -> let _ = smt_is_must_failure := (Some true) in ()
+                  in
+                  "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> "(may) cause:"^s
+                | Some s -> begin
+                      try
+                        let reg1 = Str.regexp "Nothing_to_do" in
+                        let _ = if Str.search_forward reg1 s 0 >=0 then
+                          let _ = smt_is_must_failure := (Some false) in ()
+                        else
+                          if is_lem_syn_reach_bound () then
+                            let _ = smt_is_must_failure := (Some false) in ()
+                          else
+                            ()
+                        in
+                        "(may) cause:"^s
+                      with _ ->
+                          "(may) cause:"^s
+                  end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
                   (*should check bot with is_bot_status*)
@@ -1836,8 +1860,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
   (*     let _ =  Error.process_exct(e)in *)
 
 let print_exception_result s (num_id: string) =
-          Log.last_cmd # dumping "sleek_dump(exception)";
-          silenced_print print_string (num_id^": EXCast. "^s^"\n")
+  let _ = Log.last_cmd # dumping "sleek_dump(exception)" in
+  let _ = smt_is_must_failure := (Some false) in
+  let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
+  ()
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string):bool =
   let pr0 = string_of_bool in

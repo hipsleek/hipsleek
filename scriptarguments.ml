@@ -705,6 +705,8 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           Globals.en_pred_sat ();
           (* Globals.do_infer_inv := true; *)
@@ -719,8 +721,8 @@ let common_arguments = [
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
-          Debug.trace_on := false;
+          Globals.show_unexpected_ents := false; (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
           Globals.silence_output:=false;
@@ -729,6 +731,8 @@ let common_arguments = [
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
           Globals.en_pred_sat ();
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
           (* Globals.gen_baga_inv := true; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
