@@ -14,6 +14,7 @@ module Err = Error
 module I = Iast
 module IF = Iformula
 module IP = Ipure
+module IPr = Iprinter
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
@@ -1238,29 +1239,26 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           let (n_tl,_)= gather_type_info_exp (List.hd ies) n_tl ptr_type in n_tl
         else n_tl
       else (* End dealing with generic ptr, continue what the original system did *)
-        let n_tl = 
-        (try
-          let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
-          (* let _ = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
-          (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
-            let _ = if not (IF.is_param_ann_list_empty ann_param) then
-          (* let _ = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
-            report_error pos (" predicate parameters are not allowed to have imm annotations") in
-            try_unify_view_type_args prog v_name vdef v deref ies n_tl pos 
-        with
-        | Not_found ->
-          (try
-            let n_tl = try_unify_data_type_args prog v_name v deref ies n_tl pos in 
-            n_tl
-          with
-          | Not_found ->
-            (*let _ = print_string (Iprinter.string_of_program prog) in*)
-            Err.report_error
-            {
-              Err.error_loc = pos;
-              Err.error_text = v_name ^ " is neither 2 a data nor view name";
-            }))
-        in n_tl
+        let n_tl = (
+          try (
+            Debug.ninfo_hprint (add_str "prog_view_decls" (IPr.string_of_view_decl_list)) prog.I.prog_view_decls no_pos;
+            Debug.ninfo_hprint (add_str "v_name" idf) v_name no_pos;
+            let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+            let _ = (
+              if not (IF.is_param_ann_list_empty ann_param) then
+                let msg = "predicate parameters are not allowed to have imm annotations" in
+                report_error pos msg
+            ) in
+            try_unify_view_type_args prog v_name vdef v deref ies n_tl pos
+          )
+          with Not_found -> (
+            try try_unify_data_type_args prog v_name v deref ies n_tl pos
+            with Not_found ->
+              let msg = v_name ^ " is neither 2 a data nor view name" in
+              report_error pos msg;
+            )
+        ) in
+        n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
                   IF.h_formula_thread_perm = perm;
                   IF.h_formula_thread_name = c; (* data/pred name *)
