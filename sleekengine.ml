@@ -1760,7 +1760,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> begin
                       try
-                        let _ = print_endline s in
+                        (* let _ = print_endline s in *)
                         let reg1 = Str.regexp "Nothing_to_do" in
                         let _ = if Str.search_forward reg1 s 0 >=0 then
                           let _ = smt_is_must_failure := (Some false) in ()

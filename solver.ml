@@ -2319,7 +2319,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
         let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
-        Debug.binfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
+        Debug.ninfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
         
         let rels = Infer.collect_rel_list_context rs0 in
@@ -10957,7 +10957,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let rhs_p = rhs_b.CF.formula_base_pure in
           let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
           let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
-          Debug.binfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
+          Debug.ninfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
           let rhs_p = MCP.mix_of_pure tmp_rhs in
           let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in
 
