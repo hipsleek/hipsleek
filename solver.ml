@@ -7417,7 +7417,10 @@ and subst_rel_by_def_mix rel_w_defs mf =
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = (add_str "lhs" (fun c-> Cprinter.string_of_formula(Base c))) in
+  let pr3 = (add_str "rhs_p" Cprinter.string_of_mix_formula) in
+  Debug.no_3_num i "heap_entail_empty_rhs_heap" pr1 pr2 pr3 pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -7604,17 +7607,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       in
       let contra, temp_rhs = if (!Globals.smart_lem_search && is_folding) then
         (* let pp_rhs_len = rhs_pure_stk # len in *)
+        (* below does ignores the benefits  of eps? *)
         let pp_rhs_stk = rhs_pure_stk # get_stk in
         let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
         let _ = Debug.ninfo_hprint (add_str " folding: " string_of_bool ) is_folding pos in
+        let _ = Debug.info_hprint (add_str " folding [heap_entail_empty_heap] pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in
         let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
-        let contr, _ = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
+        let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
+        let _ = Debug.info_hprint (add_str " folding [heap_entail_empty_heap] tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in
         (* let _ =  rhs_pure_stk # push  pp_rhs in *)
         (contr, tmp_rhs)
       else (true, (MCP.pure_of_mix rhs_p)) in
+      let _ = Debug.ninfo_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
       if not (contra) then
-        let _ = Debug.ninfo_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
-        (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
+        (false,[],None, (Failure_May "Contra detected", ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
       (* TODO-EXPURE : need to build new expure stuff *)
@@ -7804,9 +7810,30 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (res1, res2@succs,i_res3, (fn_fc_kind, (fn_contra_list, fn_must_list, fn_may_list))))
     end (* end of fold_fun_impt *)
   in
+(*
+type: 'a2 * (Globals.formula_label option * Globals.formula_label option) list *
+  'b2 *
+  (Musterr.CF.failure_kind *
+   ((Musterr.CP.formula * CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list)) ->
+  MCP.mix_formula ->
+  bool * (Globals.formula_label option * Globals.formula_label option) list *
+  Globals.formula_label option *
+  (Musterr.CF.failzure_kind *
+   ((Musterr.CP.formula * CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list *
+    (Musterr.CP.formula * Musterr.CP.formula) list))
+*)
   let fold_fun_impt x (rhs_p:MCP.mix_formula) =
     let pr = Cprinter.string_of_mix_formula in
-    let pr1 (r, _, _, _) = string_of_bool r in
+    let pr_p = Cprinter.string_of_pure_formula in
+    let pr_fl f = (Cprinter.string_of_formula_label_opt f "") in
+    let pr2 l = (add_str "\nout2:" (pr_list (pr_pair pr_fl pr_fl))) l in 
+    let pr3 = pr_list (pr_pair pr_p pr_p) in 
+    let pr4 = pr_triple pr3 pr3 pr3 in
+    let pr5 p = (add_str "\nout3:" (pr_pair (Cprinter.string_of_failure_kind) pr4)) p in
+    let pr1 (r, l, f, t) = ((string_of_bool r) ^ "  " ^ (pr2 l) ^" " ^ (Cprinter.string_of_formula_label_opt f "") ^ " " ^ (pr5 t)) in
     Debug.no_1 "fold_fun_impt" pr pr1 (fun _ -> fold_fun_impt x rhs_p) rhs_p
   in
   let _ = DD.tinfo_hprint (add_str "estate" Cprinter.string_of_entail_state) estate no_pos in
@@ -7994,7 +8021,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	      (SuccCtx[res_ctx], prf)
 	    end
   end
-  else
+  else (* not(r_rez) branch --> Entailment is not valid *)
     (*** CODE TO INFER PRECOND ***)
     begin
       Debug.devel_zprint (lazy ("heap_entail_empty_rhs_heap: formula is not valid\n")) pos;
