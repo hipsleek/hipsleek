@@ -2319,7 +2319,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
         let heap_enatil = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
-        Debug.binfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
+        Debug.ninfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
         
         let rels = Infer.collect_rel_list_context rs0 in
