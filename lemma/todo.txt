@@ -98,7 +98,23 @@ need --en-lem-rhs-unfold to pass lemma proving phase.
 ====================================================================
 --en-smart-lem-search makes system more slow. The advantages would
 be obvious only if using COND instead of SEARCH for lemma app. 
-To add lemma app as COND to fold/accfold 
+To add lemma app as COND to fold/accfold --make it work
+other things to consider:
+
+(1) for nested fold: if we chk for contra in empty_rhs_heap, this 
+will lead for all the actions preceding fold to fail, and try all their 
+COND branches which kills the time checks. Possible modifications :
+   * chk for contra only bef exiting the fold - that is, let the actions
+inside the fold return a good context if this is the case (preferred?)
+   * chk for contra using only the pure on top of the stack (the pure added bef
+the innermost fold)
+
+(2) detecting contra for fold makes the process of inferring 
+contradiction condition fail. Possible modifications :
+  * disable contra for fold if es_infer_vars set is non-empty
+  * if contra is detected infer the condition and return good ctx 
+instead of fail (preferred?)
+
 
 ====================================================================
 ====================================================================
