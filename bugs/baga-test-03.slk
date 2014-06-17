@@ -1,0 +1,11 @@
+data node {
+  node next;
+}.
+
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+//(3) valid
+checkentail x::l3a<> |- false.

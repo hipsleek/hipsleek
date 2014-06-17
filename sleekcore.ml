@@ -184,7 +184,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
     else
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
-    if CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+    if (!Globals.pred_sat) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
       let _ = Globals.smt_is_must_failure := None in
       let _ = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
