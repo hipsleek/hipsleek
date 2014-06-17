@@ -10957,7 +10957,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let rhs_p = rhs_b.CF.formula_base_pure in
           let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
           let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
-          Debug.binfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
+          Debug.ninfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
           let rhs_p = MCP.mix_of_pure tmp_rhs in
           let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in
 
