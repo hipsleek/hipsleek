@@ -96,6 +96,10 @@ to check why examples/working/sleek/lemma/sll_tailL.slk and lseg_case
 need --en-lem-rhs-unfold to pass lemma proving phase. 
 
 ====================================================================
+--en-smart-lem-search makes system more slow. The advantages would
+be obvious only if using COND instead of SEARCH for lemma app. 
+To add lemma app as COND to fold/accfold 
+
 ====================================================================
 ====================================================================
 ====================================================================
