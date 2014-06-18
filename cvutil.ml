@@ -40,7 +40,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.Eq (e1, e2, pos)
   | CP.Neq (e1, e2, pos)
   | CP.BagSub (e1, e2, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
+      if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
   	    begin
@@ -53,7 +53,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
       else f
   | CP.EqMax (e1, e2, e3, pos)
   | CP.EqMin (e1, e2, e3, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
+      if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) || ((count_iconst e3) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 	    let simpl_f = Tpdispatcher.simplify_a 8 (CP.BForm(f,None)) in
   	    begin
@@ -81,7 +81,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.ListNotIn (e1, e2, pos)
   | CP.ListAllN (e1, e2, pos)
   | CP.ListPerm (e1, e2, pos) ->
-		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
+		if ((count_iconst e1) > 1) || ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 			let simpl_f = Tpdispatcher.simplify_a 6 (CP.BForm(f,None)) in
   		begin
@@ -1805,7 +1805,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           (Conj {  
               h_formula_conj_h1 = h1;
               h_formula_conj_h2 = h2;
-              h_formula_conj_pos = s.h_formula_conj_pos }, mem2, (changed1 or changed2) )
+              h_formula_conj_pos = s.h_formula_conj_pos }, mem2, (changed1 || changed2) )
     | ConjStar s ->  
           let ba1 =ba_crt@(heap_baga prog s.h_formula_conjstar_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_conjstar_h2) in

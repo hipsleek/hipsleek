@@ -2045,7 +2045,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_segmented = false;          (* temporarily assigned *)
           C.view_is_tail_recursive = false;     (* temporarily assigned *)
           C.view_residents = [];
-          C.view_forward_ptrs = [];
+	  C.view_forward_ptrs = [];
           C.view_forward_fields = [];
           C.view_backward_ptrs = [];
           C.view_backward_fields = [];
@@ -2138,7 +2138,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let has_arith = not(!Globals.smt_compete_mode) && List.exists (fun cv -> 
       Expure.is_ep_view_arith cv) cviews0 in
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
-  let _ = if has_arith then 
+  let _ = if has_arith then
     begin
       Debug.ninfo_pprint "Disabling --inv-baga due to arith" no_pos;
       Globals.dis_inv_baga ()

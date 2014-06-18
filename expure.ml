@@ -13,7 +13,6 @@ open Label
 open Cpure
 open Cprinter
 
-let disj_num = ref 0
 
 (* let is_null_const_exp_for_expure (e : exp) : bool = *)
 (*   match e with *)
@@ -334,6 +333,7 @@ sig
   val from_var_pairs : (spec_var * spec_var) list -> (t*t) list
   val merge_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
+  val mk_elem : spec_var -> t
 end;;
 
 module EPURE =
@@ -497,6 +497,11 @@ struct
     let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
 
+  (* TODO-WN : why ins't elem used instead of spec_var *)
+  let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
+    let r = List.map (fun e -> elim_exists svl e) lst in
+    r
+
   (* ef_imply : ante:ef_pure -> conseq:ef_pure -> bool *)
   (* does ante --> conseq *)
   (* convert ante with ef_conv_enum *)
@@ -603,46 +608,50 @@ module EPUREN =
 struct
   module EM = Gen.EqMap(Elt)
   type elem = Elt.t
-  type emap = EM.emap
-  (* baga, eq_map, ineq_list *)
+  type epart = (elem list) list
+  type emap = (EM.emap * epart)
+      (* baga, eq_map, ineq_list *)
   (* type epure = (elem list * (elem * elem) list * (elem * elem) list) *)
   type epure = (elem list * emap * (elem * elem) list)
   type epure_disj = epure list
-
-  let mk_false = ([Elt.zero], EM.mkEmpty, [])
-  let mk_true = [([], EMapSV.mkEmpty, [])]
+  let emap_empty = (EM.mkEmpty, [])
+  let emap_empty_sv = (EMapSV.mkEmpty, [])
+  let mk_false = ([Elt.zero], emap_empty, [])
+  let mk_true = [([], emap_empty_sv, [])]
 
   let is_false (e:epure) = (e == mk_false)
   let pr1 = pr_list Elt.string_of
   let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
+  let string_of_epart lst = pr_list (pr_list Elt.string_of) lst
   let string_of (x:epure) =
-    pr_triple (add_str "BAGA" pr1) (add_str "EQ" EM.string_of) (add_str "INEQ" pr2) x
+    pr_triple (add_str "BAGA" pr1) (fun (_,ep) ->
+        (add_str "EQ" string_of_epart) ep) (add_str "INEQ" pr2) x
 
-  let string_of_disj (x:epure_disj) = pr_list string_of x
-  let mk_data sv = [([sv], EM.mkEmpty, [])] 
+  let string_of_disj (x:epure_disj) = pr_list_ln string_of x
+  let mk_data sv = [([sv], emap_empty, [])] 
 
-  let baga_conv baga : formula =
-    let baga = Elt.conv_var baga in
-    if (List.length baga = 0) then
-      mkTrue no_pos
-    else if (List.length baga = 1) then
-      mkGtVarInt (List.hd baga) 0 no_pos
-    else
-      let rec helper i j baga len =
-        let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
-        if i = len - 2 && j = len - 1 then
-          f1
-        else if j = len - 1 then
-          let f2 = helper (i + 1) (i + 2) baga len in
-          mkAnd f1 f2 no_pos
-        else
-          let f2 = helper i (j + 1) baga len in
-          mkAnd f1 f2 no_pos
-      in
-      let f1 = helper 0 1 baga (List.length baga) in
-      let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos)
-        (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
-      mkAnd f1 f2 no_pos
+  (* let baga_conv baga : formula = *)
+  (*   let baga = Elt.conv_var baga in *)
+  (*   if (List.length baga = 0) then *)
+  (*     mkTrue no_pos *)
+  (*   else if (List.length baga = 1) then *)
+  (*     mkGtVarInt (List.hd baga) 0 no_pos *)
+  (*   else *)
+  (*     let rec helper i j baga len = *)
+  (*       let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in *)
+  (*       if i = len - 2 && j = len - 1 then *)
+  (*         f1 *)
+  (*       else if j = len - 1 then *)
+  (*         let f2 = helper (i + 1) (i + 2) baga len in *)
+  (*         mkAnd f1 f2 no_pos *)
+  (*       else *)
+  (*         let f2 = helper i (j + 1) baga len in *)
+  (*         mkAnd f1 f2 no_pos *)
+  (*     in *)
+  (*     let f1 = helper 0 1 baga (List.length baga) in *)
+  (*     let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos) *)
+  (*       (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in *)
+  (*     mkAnd f1 f2 no_pos *)
 
 
   let baga_enum baga : formula =
@@ -681,7 +690,7 @@ struct
       | None -> false
       | Some rst -> not((find rst v2) == None)
 
-  let pair_cmp (x1,x2) (y1,y2) = 
+  let pair_cmp (x1,x2) (y1,y2) =
     let c = Elt.compare x1 y1 in
     if c==0 then Elt.compare x2 y2
     else c
@@ -693,7 +702,7 @@ struct
       else [p] in
     let rec aux i1 i2 = match i1,i2 with
       | [],ineq | ineq,[] -> ineq
-      | x::xs,y::ys -> 
+      | x::xs,y::ys ->
             let c = pair_cmp x y in
             if c==0 then (norm x) @ (aux xs ys)
             else if c<0 then (norm x) @ (aux xs i2)
@@ -704,23 +713,24 @@ struct
   let mk_star efp1 efp2 =
     if (is_false efp1) || (is_false efp2) then mk_false
     else
-      let (baga1, eq1, neq1) = efp1 in
-      let (baga2, eq2, neq2) = efp2 in
+      let (baga1, (eq1,_), neq1) = efp1 in
+      let (baga2, (eq2,_), neq2) = efp2 in
       try
         let new_baga = merge_baga baga1 baga2 in
         let new_eq = EM.merge_eset eq1 eq2 in
+        let new_eq2 = (new_eq,EM.partition new_eq) in
         let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
-        (new_baga, new_eq, new_neq)
+        (new_baga, new_eq2, new_neq)
       with _ -> mk_false
 
-  let mk_or_disj t1 t2 = t1@t2
 
   (* [(a,[b,c])] --> a=b & a=c *)
   (* [(a,[b,c]),(d,[e])] --> a=b & a=c & d=e *)
-  let conv_eq (eq : emap) : formula =
+  let conv_eq ((eq,_) : emap) : formula =
     let pairs = Elt.conv_var_pairs (EM.get_equiv eq)  in
     let fl = List.map (fun (v1,v2) ->
-        mkEqVar v1 v2 no_pos
+        if Globals.is_null (name_of_spec_var v1) then CP.mkEqNull v2 v1 no_pos
+        else mkEqVar v1 v2 no_pos
     ) pairs in
     List.fold_left (fun f1 f2 ->
         mkAnd f1 f2 no_pos
@@ -740,18 +750,18 @@ struct
     let bf = baga_enum baga in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  let conv ((baga,eq,inq) : epure) : formula =
-    let f1 = conv_eq eq in
-    let f2 = conv_ineq inq in
-    let bf = baga_conv baga in
-    mkAnd bf (mkAnd f1 f2 no_pos) no_pos
+  (* let conv ((baga,eq,inq) : epure) : formula = *)
+  (*   let f1 = conv_eq eq in *)
+  (*   let f2 = conv_ineq inq in *)
+  (*   let bf = baga_conv baga in *)
+  (*   mkAnd bf (mkAnd f1 f2 no_pos) no_pos *)
 
   let is_zero b = match b with
     | [] -> false
     | x::_ -> Elt.is_zero x
 
   (* assume normalized *)
-  let unsat ((baga,eq,ieq) : epure) : bool =
+  let unsat ((baga,(eq,_),ieq) : epure) : bool =
     let zf = is_zero baga in
     (* zf *)
     if zf then true
@@ -818,7 +828,7 @@ struct
     (*   (new_eq, new_ieq) *)
     (* in *)
     try
-      let (baga, eq, neq) = f in
+      let (baga, (eq,_), neq) = f in
       let p_aset = eq in
       let mk_subs =
         List.map
@@ -859,6 +869,7 @@ struct
       let new_baga = List.sort Elt.compare new_baga0 in
       let _ = if duplicate new_baga then failwith "duplicate baga" else () in
       let new_eq = EM.elim_elems eq svl in
+      let new_eq = (new_eq,EM.partition new_eq) in
       (* let eq_pairs = EM.get_equiv eq in *)
       (* let subs_eq = List.map (subs_pair mk_subs) eq_pairs in *)
       let new_neq = Elt.from_var_pairs (List.fold_left (fun acc (v1,v2) ->
@@ -878,6 +889,17 @@ struct
                   else (b2,b1)::acc
           ) [] (Elt.conv_var_pairs neq)) in
       let new_neq = List.sort pair_cmp new_neq in
+      let rec remove_duplicate ineq =
+        match ineq with
+          | [] -> []
+          | [hd] -> [hd]
+          | hd1::hd2::tl ->
+                if pair_cmp hd1 hd2 = 0 then
+                  remove_duplicate (hd2::tl)
+                else
+                  hd1::(remove_duplicate(hd2::tl))
+      in
+      let new_neq = remove_duplicate new_neq in
       (* let subs_neq = List.map (subs_pair mk_subs) neq in *)
       (* let (new_eq, new_neq0) = filter_pairs svl subs_eq subs_neq in *)
       (* let new_neq = List.filter (fun (e1, e2) -> *)
@@ -887,26 +909,28 @@ struct
 
   let elim_exists (svl : elem list) (f : epure) : epure =
     let pr1 = pr_list Elt.string_of in
-    Debug.no_2 "elim_exists_new" pr1 (string_of) (string_of)
+    Debug.no_2 "elim_exists_baga" pr1 (string_of) (string_of)
         (fun _ _ -> elim_exists svl f) svl f
 
-  let imply (ante : epure) (conseq : epure) : bool =
-    let a_f = conv_enum ante in
-    let c_f = conv conseq in
-    (* a_f --> c_f *)
-    let f = mkAnd a_f (mkNot_s c_f) no_pos in
-    not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f))
+
+  (* let imply (ante : epure) (conseq : epure) : bool = *)
+  (*   let a_f = conv_enum ante in *)
+  (*   let c_f = conv conseq in *)
+  (*   (\* a_f --> c_f *\) *)
+  (*   let f = mkAnd a_f (mkNot_s c_f) no_pos in *)
+  (*   not (Tpdispatcher.is_sat_raw (Mcpure.mix_of_pure f)) *)
 
   let ef_conv_disj_ho conv disj : formula =
     List.fold_left (fun f ep ->
         mkOr f (conv ep) None no_pos
     ) (mkFalse no_pos) disj
 
+  (* needed in cvutil.ml *)
   let ef_conv_enum_disj = ef_conv_disj_ho conv_enum
-  let ef_conv_disj      = ef_conv_disj_ho conv
+  (* let ef_conv_disj      = ef_conv_disj_ho conv *)
 
-  let eq_epure (ante : epure) (conseq : epure) : bool =
-    imply ante conseq && imply conseq ante
+  (* let eq_epure (ante : epure) (conseq : epure) : bool = *)
+  (*   imply ante conseq && imply conseq ante *)
 
   let compare_list cmp b1 b2 =
     let rec aux b1 b2 =
@@ -942,13 +966,25 @@ struct
     (*         if Elt.eq x y then baga_eq xs ys *)
     (*         else false *)
 
-  let emap_compare e1 e2 =
+  let compare_partition cmp p1 p2 =
+    let rec aux p1 p2 =
+      match p1,p2 with
+        | [],[] -> 0
+        | [],_ -> -1
+        | _,[] -> 1
+        | x1::p1,x2::p2 ->
+              let c1=compare_list cmp x1 x2 in
+              if c1==0 then aux p1 p2
+              else c1
+    in aux p1 p2
+
+  let emap_compare (_,lst1) (_,lst2) =
     (* DONE : is get_equiv in sorted order? *)
-    let lst1 = EM.get_equiv e1 in
-    let lst2 = EM.get_equiv e2 in
+    (* let lst1 = EM.partition e1 in *)
+    (* let lst2 = EM.partition e2 in *)
     (* let lst1 = List.sort pair_cmp lst1 in *)
     (* let lst2 = List.sort pair_cmp lst2 in *)
-    compare_list pair_cmp lst1 lst2
+    compare_list (fun l1 l2 -> compare_list Elt.compare l1 l2) lst1 lst2
 
   let emap_eq em1 em2 = (emap_compare em1 em2) == 0
     (* let ps1 = EM.get_equiv em1 in *)
@@ -988,20 +1024,38 @@ struct
   (* get norm_eq from eqmap *)
   (* get domain; choose smallest *)
   (* filter as they are taken out *)
-  let emap_extract e1 e2 = []
+  (* let emap_extract e1 e2 = [] *)
 
   let epure_compare ((b1,e1,in1) as ep1 : epure) ((b2,e2,in2) as ep2 : epure) : int =
     (* assume non-false *)
     let c1 = baga_cmp b1 b2 in
     if c1==0 then
-      let c2 = ineq_compare in1 in2 in
+      let c2 = emap_compare e1 e2  in
       if c2==0 then
-        emap_compare e1 e2
+        ineq_compare in1 in2
       else c2
     else c1
 
+
+  (* TODO-WN why did we not sort this *)
+  let mk_or_disj t1 t2 = 
+    let res=t1@t2 in
+    List.sort epure_compare res
+
+  let mk_or_norm t1 t2 = 
+    let res=t1@t2 in
+    List.sort epure_compare res
+
+  let elim_exists_disj (svl : elem list) (lst : epure_disj) : epure_disj =
+    let r = List.map (fun e -> elim_exists svl e) lst in
+    List.sort epure_compare r 
+
   let merge_disj lst1 lst2 =
     merge epure_compare lst1 lst2
+
+  let merge_disj lst1 lst2 =
+    let pr = string_of_disj in
+    Debug.no_2 "merge_disj" pr pr pr merge_disj lst1 lst2
 
   let add_star ep lst =
     let xs = List.map (fun v -> mk_star ep v) lst in
@@ -1021,21 +1075,67 @@ struct
               else false
     in aux xs ys
 
+  let lst_imply_pair cmp xs ys =
+    let pr = pr_list (pr_pair Elt.string_of Elt.string_of) in
+    Debug.no_2 "lst_imply_pair" pr pr string_of_bool (lst_imply cmp) xs ys
+
+
   (* let pair_compare cmp (a1,a2) (b1,b2) = *)
   (*   let c = cmp a1 b1 in *)
   (*   if c==0 then cmp a2 b2 *)
   (*   else c *)
 
   let emap_imply e1 e2 =
-    let lst1 = EM.get_equiv e1 in
+    (* let lst1 = EM.get_equiv e1 in *)
     let lst2 = EM.get_equiv e2 in
-    lst_imply pair_cmp lst1 lst2
+    List.for_all (fun (x,y) -> EM.is_equiv e1 x y) lst2
+
+  let exists_baga b y =
+    let rec aux b =
+      match b with 
+        | [] -> false
+        | x::xs -> let c1 = Elt.compare x y  in
+          if c1>0 then false
+          else if c1==0 then true
+          else aux xs
+    in aux b
+
+  let exists_baga_pair b y z =
+    let rec aux b =
+      match b with 
+        | [] -> false
+        | x::xs -> let c1 = Elt.compare x y (* x y  *)in
+          if c1>0 then false
+          else if c1==0 then exists_baga b z
+          else aux xs
+    in aux b
 
   (* epure syntactic imply *)
-  let epure_syn_imply (b1,e1,i1) (b2,e2,i2) =
+  (* we need b1 --> i2 or i1 -> i2, but the latter is now missing*)
+  let epure_syn_imply (b1,(e1,p1),i1) (b2,(e2,p2),i2) =
     let f1 = lst_imply Elt.compare b1 b2 in
     if f1 then
-      let f2 = lst_imply pair_cmp i1 i2 in
+      let null_el = Elt.zero (* mk_elem (mk_spec_var "null") *) in
+      (* let f2 = List.for_all *)
+      (*   (fun (x,y) -> (Elt.is_zero x && exists_baga b1 y) *)
+      (*       || (exists_baga_pair b1 x y)) i2 in *)
+      let i2_new = List.filter
+        (fun (x,y) -> not((Elt.is_zero x && exists_baga b1 y) ||
+          (exists_baga_pair b1 x y))) i2 in
+        (* (fun (x,y) -> (Elt.is_zero x && exists_baga b1 y) *)
+        (*     || (exists_baga_pair b1 x y)) i2 in *)
+      (* let i1_new = i1_new@i1 in *)
+      (* let i1_new = List.fold_left (fun i1 el -> *)
+      (*     let c = Elt.compare el null_el in *)
+      (*     if c < 0 then *)
+      (*       [(el, null_el)]@i1 *)
+      (*     else if c > 0 then *)
+      (*       [(null_el, el)]@i1 *)
+      (*     else *)
+      (*       failwith "fail in epure_syn_imply" *)
+      (* ) i1 b1 in *)
+      (* let i1_new = List.sort pair_cmp i1_new in *)
+      let f2 = lst_imply_pair pair_cmp i1 i2_new in
       if f2 then emap_imply e1 e2 (* DONE: e1 --> e2? *)
       else false
     else false
@@ -1043,8 +1143,17 @@ struct
   let syn_imply ep lst =
     List.exists (fun ep2 -> epure_syn_imply ep ep2) lst
 
+  let syn_imply ep lst =
+    let pr1 = string_of in
+    let pr2 = string_of_disj in
+    Debug.no_2 "syn_imply" pr1 pr2 string_of_bool syn_imply ep lst
+
   let epure_disj_syn_imply lst1 lst2 =
     List.for_all (fun ep -> syn_imply ep lst2) lst1
+
+  let epure_disj_syn_imply lst1 lst2 =
+    let pr1 = string_of_disj in
+    Debug.no_2 "epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     epure_disj_syn_imply ante conseq
@@ -1107,17 +1216,18 @@ struct
       t
     with _ -> v (* should return v, not all elt have subst *) (* failwith ("subst_elem : cannot find elem "^Elt.string_of v) *)
 
-  let subst_epure sst ((baga,eq,ineq) as ep) = 
+  let subst_epure sst ((baga,(eq,p),ineq) as ep) = 
     let new_eq = EM.subs_eset_par sst eq in
     let subs_fn = subst_elem sst in
     let new_baga = List.map (subs_fn) baga in
+    let new_p = List.map (List.map subs_fn) p in
     let new_ineq = List.map (fun (a,b) -> (subs_fn a,subs_fn b)) ineq in
-    (new_baga,new_eq,new_ineq)
+    (new_baga,(new_eq,new_p),new_ineq)
 
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
 
-  let get_ineq (ineq : formula) =
+  let get_ineq (pf : formula) =
     let rec helper lconj = match lconj with
       | [] -> []
       | hd::tl -> ( match hd with
@@ -1133,7 +1243,7 @@ struct
                         failwith "fail in ineq"
                 | (Var (sv, _), Null _)
                 | (Null _, Var (sv, _)) ->
-                      let null_var = mk_spec_var "null" in
+                      let null_var = List.hd (Elt.conv_var [Elt.zero]) (* mk_spec_var "null" *) in
                       let c = compare_spec_var null_var sv in
                       if c < 0 then
                         (null_var, sv)::(helper tl)
@@ -1142,37 +1252,67 @@ struct
                       else
                         failwith "fail in ineq"
                 | (Null _, Null _) ->
-                      failwith "fail in ineq"
+                      failwith "fail in get_ineq"
                 | _ -> helper tl
               )
           | _ -> helper tl
         )
     in
-    List.sort pair_cmp (Elt.from_var_pairs (helper (split_conjunctions ineq)))
+    List.sort pair_cmp (Elt.from_var_pairs (helper (split_conjunctions pf)))
 
+  (* let get_baga (pf : formula) = *)
+  (*   let rec helper lconj = match lconj with *)
+  (*     | [] -> [] *)
+  (*     | hd::tl -> ( match hd with *)
+  (*         | BForm ((Neq (e1, e2, _), _), _) -> *)
+  (*             ( match (e1,e2) with *)
+  (*               | (Var (sv, _), Null _) *)
+  (*               | (Null _, Var (sv, _)) -> *)
+  (*                     sv::(helper tl) *)
+  (*               | (Null _, Null _) -> *)
+  (*                     failwith "fail in get_baga" *)
+  (*               | _ -> helper tl *)
+  (*             ) *)
+  (*         | _ -> helper tl *)
+  (*       ) *)
+  (*   in *)
+  (*   List.sort Elt.compare (Elt.from_var (helper (split_conjunctions pf))) *)
+
+  (* TODO-EXPURE : has this been normalized? *)
   let mk_epure (pf:formula) =
     let p_aset = pure_ptr_equations pf in
-    let p_aset = EMapSV.build_eset p_aset in
+    let p_aset = EM.build_eset (Elt.from_var_pairs p_aset) in
+    let baga = (* get_baga pf in *) [] in
     let ineq = get_ineq pf in
     (* [([], pf)] *)
-    [([], p_aset, ineq)] (* new expure, need to add ineq : DONE *)
+    if List.exists (fun (x,y) -> EM.is_equiv p_aset x y) ineq then [] 
+    else 
+      [(baga, (p_aset,EM.partition p_aset), ineq)] (* new expure, need to add ineq : DONE *)
 
-  let to_cpure ((baga,eq,ineq) : epure) =
-    let f1 = conv_eq eq in
-    let f2 = conv_ineq ineq in
-    (baga, mkAnd f1 f2 no_pos)
+  (* let to_cpure ((baga,eq,ineq) : epure) = *)
+  (*   let f1 = conv_eq eq in *)
+  (*   let f2 = conv_ineq ineq in *)
+  (*   (baga, mkAnd f1 f2 no_pos) *)
 
-  let to_cpure_disj (epd : epure_disj) =
-    List.map (fun ep -> to_cpure ep) epd
+  (* let to_cpure_disj (epd : epure_disj) = *)
+  (*   List.map (fun ep -> to_cpure ep) epd *)
 
-  let from_cpure ((baga,pf) : ef_pure) =
-    let p_aset = pure_ptr_equations pf in
-    let p_aset = EMapSV.build_eset p_aset in
-    let ineq = get_ineq pf in
-    (baga, p_aset, ineq)
+  let to_cpure (ep : epure) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) =
-    List.map (fun ep -> from_cpure ep) epd
+  let to_cpure_disj (epd : epure_disj) = epd
+
+  (* let from_cpure ((baga,pf) : ef_pure) = *)
+  (*   let p_aset = pure_ptr_equations pf in *)
+  (*   let p_aset = EMapSV.build_eset p_aset in *)
+  (*   let ineq = get_ineq pf in *)
+  (*   (baga, p_aset, ineq) *)
+
+  (* let from_cpure_disj (epd : ef_pure_disj) = *)
+  (*   List.map (fun ep -> from_cpure ep) epd *)
+
+  let from_cpure (ep : ef_pure) = ep
+
+  let from_cpure_disj (epd : ef_pure_disj) = epd
 
 (* TODO
 
@@ -1188,7 +1328,7 @@ end
 
 (* module EPureI = EPUREN(SV) *)
 
-module EPureI = EPURE(SV)
+module EPureI = EPUREN(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 
@@ -1221,21 +1361,62 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
           let sst = List.combine view_args svl in
           (* TODO : below should be done using EPureI : DONE *)
           let efpd_h = EPureI.subst_epure_disj sst efpd in
-          (* let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in *)
           let efpd_n = EPureI.norm_disj efpd_h in
           efpd_n
     | _ -> EPureI.mk_true
 
-and build_ef_heap_formula (cf : Cformula.h_formula) (* (efpd_p : ef_pure_disj) *) (all_views : Cast.view_decl list) : ef_pure_disj =
+and build_ef_heap_formula (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
       EPureI.string_of_disj (fun _ ->
-          build_ef_heap_formula_x cf (* efpd_p *) all_views) cf
+          build_ef_heap_formula_x cf all_views) cf
+
+let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
+  match cf with
+    | Cformula.Star _ ->
+          let hfl = Cformula.split_star_conjunctions cf in
+          let efpd_n = List.fold_left (fun f hf ->
+              (* let lim = !Globals.epure_disj_limit in *)
+              (* let _ = if (lim!=0 && List.length f > lim) then *)
+              (*   Globals.dis_inv_baga () *)
+              (* in *)
+              (* if (!Globals.gen_baga_inv) then *)
+                let efpd_h = build_ef_heap_formula hf all_views in
+                let efpd_s = EPureI.mk_star_disj f efpd_h in
+                let efpd_n = EPureI.norm_disj efpd_s in
+                efpd_n
+              (* else *)
+              (*   f *)
+          ) efpd_p hfl in
+          efpd_n
+    | Cformula.DataNode _
+    | Cformula.ViewNode _ ->
+          let efpd_h = build_ef_heap_formula cf all_views in
+          let efpd_s = EPureI.mk_star_disj efpd_p efpd_h in
+          let efpd_n = EPureI.norm_disj efpd_s in
+          efpd_n
+    | _ -> efpd_p
+
+let build_ef_heap_formula_with_pure (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
+  Debug.no_1 "build_ef_heap_formula_with_pure" Cprinter.string_of_h_formula
+      EPureI.string_of_disj (fun _ ->
+          build_ef_heap_formula_with_pure_x cf efpd_p all_views) cf
 
 (* this need to be moved to EPURE module : DONE *)
 let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
-  EPureI.mk_epure pf
+  match pf with
+    | Or _ ->
+          let pf_list = split_disjunctions pf in
+          List.fold_left (fun efpd pf ->
+              EPureI.mk_or_disj efpd (build_ef_pure_formula pf)
+          ) [] pf_list
+    | Forall (sv, pf, _, _)
+    | Exists (sv, pf, _, _) ->
+          let efpd = build_ef_pure_formula pf in
+          EPureI.elim_exists_disj [sv] efpd
+    (* | Not -> ??? *) 
+    | _ -> EPureI.mk_epure pf
 
-let build_ef_pure_formula (pf : formula) : ef_pure_disj =
+and build_ef_pure_formula (pf : formula) : ef_pure_disj =
   Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_pure_formula_x pf) pf
@@ -1251,8 +1432,9 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
           let bh = bf.Cformula.formula_base_heap in
           let efpd_p = build_ef_pure_formula bp in
-          let efpd_h = build_ef_heap_formula bh (* efpd_p *) all_views in
-          let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in
+          (* let efpd_h = build_ef_heap_formula bh all_views in *)
+          (* let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in *)
+          let efpd = build_ef_heap_formula_with_pure bh efpd_p all_views in
           efpd
     | Cformula.Or orf ->
           let efpd1 = build_ef_formula orf.Cformula.formula_or_f1 all_views in
@@ -1264,10 +1446,12 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           let ep = (Mcpure.pure_of_mix ef.Cformula.formula_exists_pure) in
           let eh = ef.Cformula.formula_exists_heap in
           let efpd_p = build_ef_pure_formula ep in
-          let efpd_h = build_ef_heap_formula eh (* efpd_p *) all_views in
-          let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in
-          let efpd_e = List.map (fun efp ->
-              (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in
+          (* let efpd_h = build_ef_heap_formula eh all_views in *)
+          (* let efpd = EPureI.norm_disj (EPureI.mk_star_disj efpd_p efpd_h) in *)
+          let efpd = build_ef_heap_formula_with_pure eh efpd_p all_views in
+          (* let efpd_e = List.map (fun efp -> *)
+          (*     (EPureI.elim_exists ef.Cformula.formula_exists_qvars efp)) efpd in *)
+          let efpd_e = EPureI.elim_exists_disj ef.Cformula.formula_exists_qvars efpd in
           let efpd_n = EPureI.norm_disj efpd_e in
           efpd_n
 
@@ -1287,6 +1471,7 @@ let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl lis
       let disj = build_ef_formula cf all_views in
       disj
   ) view_decl.Cast.view_un_struc_formula) in
+  let disj = List.sort EPureI.epure_compare disj in
   let disj_n = EPureI.norm_disj disj in
   disj_n
 
@@ -1339,8 +1524,9 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
   in
   let inv_list = helper view_list inv_list in
   let _ = List.iter (fun (vc,inv) ->
+      (* this version is being printed *)
       (* let _ = Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in *)
-      (* let _ = print_string_quiet "Hello\n" in *)
+      (* let _ = print_string_quiet "\n" in *)
       Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
   ) (List.combine view_list inv_list) in
   inv_list

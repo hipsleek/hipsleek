@@ -6,6 +6,7 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
@@ -611,7 +612,12 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
-let null_name = "null"
+(* let null_name = "null" *)
+let null_name = "_"
+
+let is_null name =
+  name = null_name
+
 let inline_field_expand = "_"
 
 let sl_error = "separation entailment"
@@ -1503,7 +1509,7 @@ let path_trace_lt p1 p2 =
     | [],[] -> false
     | [],xs -> true
     | xs,[] -> false
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 && b1=b2 && lt zt1 zt2)
   in lt (List.rev p1) (List.rev p2)
 
 let path_trace_gt p1 p2 =
@@ -1511,15 +1517,15 @@ let path_trace_gt p1 p2 =
     | [],[] -> false
     | [],xs -> false
     |  xs,[] -> true
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
- 
+
 let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option) 
+  (fn : 'a -> (string * ('a list)) option)
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with

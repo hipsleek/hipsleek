@@ -1,0 +1,30 @@
+data node {
+  node next;
+}.
+
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+inv q!=null.
+
+/*
+# baga-test-6.slk
+
+# redundant?
+
+epure_disj_syn_imply@3
+epure_disj_syn_imply inp1 :[(BAGA:[q],EQ:[[_,self]],INEQ:[]),
+(BAGA:[q,self],EQ:[],INEQ:[])]
+epure_disj_syn_imply inp2 :[(BAGA:[],EQ:[],INEQ:[(_,q)])]
+epure_disj_syn_imply@3 EXIT:true
+
+!!! baga inv(l6):[(BAGA:[q],EQ:[[_,self]],INEQ:[]),(BAGA:[q,self],EQ:[],INEQ:[])]
+
+# what happen to LHS?
+
+epure_disj_syn_imply@4
+epure_disj_syn_imply inp1 :[(BAGA:[],EQ:[],INEQ:[])]
+epure_disj_syn_imply inp2 :[(BAGA:[],EQ:[],INEQ:[(_,q)])]
+epure_disj_syn_imply@4 EXIT:false
+*/

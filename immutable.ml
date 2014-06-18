@@ -204,7 +204,7 @@ let rec consume_heap_h_formula (f : h_formula) : bool =  match f with
 	h_formula_phase_pos = pos})
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) or (consume_heap_h_formula h2)
+	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) || (consume_heap_h_formula h2)
   | _ -> false
 
 
@@ -214,7 +214,7 @@ let rec consume_heap (f : formula) : bool =  match f with
   | Or({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        (consume_heap f1) or (consume_heap f2)
+        (consume_heap f1) || (consume_heap f2)
 
 let rec split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
   let h = remove_true_rd_phase h in
@@ -371,7 +371,7 @@ let rec is_lend_h_formula (f : h_formula) : bool =  match f with
 	h_formula_phase_pos = pos}) -> true
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> (is_lend_h_formula h1) or (is_lend_h_formula h2)
+	h_formula_star_pos = pos}) -> (is_lend_h_formula h1) || (is_lend_h_formula h2)
   | Hole _ -> false
   | _ -> false
 
@@ -387,7 +387,7 @@ let rec is_lend (f : formula) : bool =  match f with
   | Or({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        (is_lend f1) or (is_lend f2)
+        (is_lend f1) || (is_lend f2)
 
 let is_lend_debug f = 
   Debug.no_1 "is_lend"
@@ -587,7 +587,7 @@ and contains_phase (h : IF.h_formula) : bool = match h with
   | IF.Star ({IF.h_formula_star_h1 = h1;
     IF.h_formula_star_h2 = h2;
     IF.h_formula_star_pos = pos}) ->
-        (contains_phase h1) or (contains_phase h2)
+        (contains_phase h1) || (contains_phase h2)
   | _ -> false
 
 (* conj in read phase -> split into two separate read phases *)

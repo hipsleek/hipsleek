@@ -723,6 +723,8 @@ struct
 
 end;;
 
+let add_str s f xs = s^":"^(f xs)
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
@@ -735,24 +737,36 @@ struct
 
   let eq = Elt.eq 
   let string_of_elem = Elt.string_of 
+  (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
+  (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
 
   let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
 
   (* TODO : can we get in sorted order? *)
   let partition (s: emap) : epart =
     let s = emap_sort s in
-    let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-            if k==k2 then (k,a::ls)::xs
-            else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun lst x ->  insert x lst) [] s in
-    let r = List.rev r in
-    List.map ( fun (_,b) -> List.rev b) r
+    let rec insert (a,k) acc = 
+      match acc with
+        | [] -> [(k,[a])]
+        | (k2,ls)::xs -> 
+              if k==k2 then (k,a::ls)::xs
+              else (k2,ls)::(insert (a,k) xs) in
+    let r = List.fold_left (fun acc x ->  insert x acc) [] s in
+    (* let r = List.rev r in *)
+    let r = List.map ( fun (_,b) -> List.rev b) r in
+    (* print_endline ((add_str "emap" string_of_emap) s); *)
+    (* print_endline ((add_str "epart" string_of_epart) r); *)
+    List.filter (fun x -> List.length x > 1) r
+
+  (* let partition (s: emap) : epart = *)
+  (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
+
 
   let string_of (e: emap) : string =
     let f = string_of_elem in
-    let ll=partition e in 
+    let ll = partition e in 
+    (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
+
     "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
@@ -804,12 +818,16 @@ struct
         if r2==[] then (y,r1)::s
         else
           if r1==r2 then s
-          else 
+          else
             let r3=r1@r2 in
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_left (fun eqs (x,y) -> add_equiv eqs x y) mkEmpty xs 
+    let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
+    let p_aset = List.fold_left (fun eqs (x,y) ->
+        add_equiv eqs x y
+    ) mkEmpty xs in
+    p_aset
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls

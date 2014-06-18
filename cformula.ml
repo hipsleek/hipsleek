@@ -14831,7 +14831,7 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
          let _ = List.iter (fun (args,id) ->
-             if(id<>"") & (((List.length head_args) != (List.length args)) || (id<>head_id)) then
+             if(id<>"") && (((List.length head_args) != (List.length args)) || (id<>head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
              else ()
@@ -15065,9 +15065,9 @@ let rec ctx_no_heap c = match c with
     let rec f_no_heap f = match f with
 	  | Base f ->  not (is_complex_heap f.formula_base_heap)
 	  | Exists f -> not (is_complex_heap f.formula_exists_heap)
-	  | Or f -> (f_no_heap f.formula_or_f1) & (f_no_heap f.formula_or_f2) in
+	  | Or f -> (f_no_heap f.formula_or_f1) && (f_no_heap f.formula_or_f2) in
     f_no_heap e.es_formula
-  | OCtx (c1,c2) -> (ctx_no_heap c1) & (ctx_no_heap c2)
+  | OCtx (c1,c2) -> (ctx_no_heap c1) && (ctx_no_heap c2)
   
   
   

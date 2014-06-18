@@ -2265,7 +2265,7 @@ and isImm(a : P.ann) : bool =
     | _ -> false
 
 let eq_var (sv1 : (ident * primed)) (sv2 : (ident * primed)) = match (sv1, sv2) with
-  | ((v1, p1), (v2, p2)) -> v1 = v2 & p1 = p2
+  | ((v1, p1), (v2, p2)) -> v1 = v2 && p1 = p2
 
 let diff_svl vl rl = Gen.BList.difference_eq eq_var vl rl
 
