@@ -44,4 +44,5 @@ expect Valid.
 //(5) --eps
 // (15) Valid
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+//expect Fail_Must.
 expect Fail.

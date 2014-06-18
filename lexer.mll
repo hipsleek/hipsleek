@@ -259,6 +259,10 @@ module Make (Token : SleekTokenS)
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
    ("expect", VALIDATE);
+   ("Valid", VALID);
+   ("Fail", FAIL);
+   ("Fail_Must", FAIL_MUST);
+   ("Fail_May", FAIL_MAY);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);

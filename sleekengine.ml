@@ -12,17 +12,6 @@ open Exc.GTable
 open Perm
 open Label_only
 
-type validate_result = VR_Valid 
-                       | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
-                       | VR_Unknown of string
-
-let proc_vres s = 
-  if s="Valid" then VR_Valid
-  else if s="Fail" then VR_Fail 0
-  else if s="Fail_Must" then VR_Fail 1
-  else if s="Fail_May" then VR_Fail (-1)
-  else VR_Unknown s
-
 let string_of_vres t =
   match t with
     | VR_Valid -> "Valid"
@@ -32,15 +21,17 @@ let string_of_vres t =
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
-          begin
-            if CF.is_must_failure lc then VR_Fail 1
-            else VR_Fail (-1)
-          end
-    | CF.SuccCtx _ -> 
-          ((* print_endline "Valid?"; *)VR_Valid)
+      if CF.is_must_failure lc then VR_Fail 1
+      else VR_Fail (-1)
+    | CF.SuccCtx c -> 
+      match CF.get_must_error_from_ctx c with
+      | None -> VR_Valid
+      | _ -> VR_Fail 1
 
 let proc_sleek_result_validate lc =
-  Debug.no_1 "proc_sleek_result_validate lc" Cprinter.string_of_list_context_short string_of_vres proc_sleek_result_validate lc
+  Debug.no_1 "proc_sleek_result_validate" 
+  Cprinter.string_of_list_context_short string_of_vres 
+  proc_sleek_result_validate lc
 
 module H = Hashtbl
 module I = Iast
@@ -1398,10 +1389,9 @@ let process_validate exp_res ils_es =
   (*get current residue -> FAIL? VALID*)
   let rs = !CF.residues in
   (* Long: todo: parser for expected result and compare here: exp_res*)
-  let er = proc_vres exp_res in
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
-          let _ = res_str := "Expecting "^(string_of_vres er)^"BUT got no residue" in
+          let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
           let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
           (*   if (exp_res = "Fail") *)
           (*   then *)
@@ -1416,13 +1406,13 @@ let process_validate exp_res ils_es =
           begin (*res*)
             let res = proc_sleek_result_validate lc in
             let unexp =
-              match res,er with
+              match res, exp_res with
                 | VR_Valid, VR_Valid -> None
                 | VR_Fail n1, VR_Fail n2 -> 
                       if n2==0 then None
                       else if n1==n2 then None
-                      else Some( "Expecting "^(string_of_vres er)^" BUT got : "^(string_of_vres res))
-                | _,_ -> Some ("Expecting "^(string_of_vres er)^" BUT got : "^(string_of_vres res))
+                      else Some( "Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                | _,_ -> Some ("Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
             in
             let _ = match unexp with
               | None -> res_str := "OK"

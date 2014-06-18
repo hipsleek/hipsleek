@@ -1932,10 +1932,19 @@ validate_list_context:
   [[
      `OSQUARE; t = LIST0 validate_entail_state SEP `SEMICOLON ;`CSQUARE-> t
   ]];
+  
+validate_result:
+  [[
+      `IDENTIFIER ex -> VR_Unknown ex
+    | `VALID -> VR_Valid
+    | `FAIL -> VR_Fail 0
+    | `FAIL_MUST -> VR_Fail 1
+    | `FAIL_MAY -> VR_Fail (-1)
+  ]];
 
 validate_cmd:
-  [[ `VALIDATE; `IDENTIFIER ex; lc = OPT validate_list_context  ->
-      (ex, (un_option lc []))
+  [[ `VALIDATE; vr = validate_result; lc = OPT validate_list_context  ->
+      (vr, (un_option lc []))
    ]];
 
 cond_path:
