@@ -115,6 +115,9 @@ contradiction condition fail. Possible modifications :
   * if contra is detected infer the condition and return good ctx 
 instead of fail (preferred?)
 
+(3) if we keep on adding rhs pures in the stk, can I still take advantage of
+the eps feature during contra detect?
+
 
 ====================================================================
 lemmas/odd-lseg.slk --timeout?

@@ -2146,7 +2146,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 
 and contra_wrapper f opt rhs_p =
   let rs0, fold_prf =
-    if (!Globals.smart_lem_search) then
+    if (!Globals.fold_contra_detect) then
       let _ = rhs_pure_stk # push rhs_p in
       let rs0, fold_prf = f opt in 
       let _ = rhs_pure_stk # pop in
@@ -2327,10 +2327,10 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
             not(Gen.is_empty new_es.es_infer_vars_sel_hp_rel) || not(Gen.is_empty new_es.es_infer_vars_sel_post_hp_rel) in
           if (is_inf) then
               let heap_entail_4_wrapper = contra_wrapper heap_entail None (* rhs_p *) in
-              (* below disables smart-lem-search *)
-              Wrapper.wrap_lem_search heap_entail_4_wrapper rhs_p 
+              (* below disables fold contra detection as inference conditions were met *)
+              Wrapper.wrap_dis_fold_contra_detect heap_entail_4_wrapper rhs_p 
           else
-            (* below forces a check for contra during folding if --smart-lem-search is enabled*)
+            (* below forces a check for contra during folding if fold_contra_detect is enabled*)
             contra_wrapper heap_entail None rhs_p in
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
@@ -7619,7 +7619,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
-      let contra, temp_rhs = if (!Globals.smart_lem_search && is_folding) then
+      let contra, temp_rhs = if (!Globals.fold_contra_detect && is_folding) then
         (* let pp_rhs_len = rhs_pure_stk # len in *)
         (* below does ignores the benefits  of eps? *)
         let pp_rhs_stk = rhs_pure_stk # get_stk in
