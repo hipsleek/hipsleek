@@ -2156,16 +2156,51 @@ let rec heaps_of_metaform (mf: meta_formula) : (string list) =
       let heap_names = (heaps_of_metaform mf1) @ (heaps_of_metaform mf2) in
       Gen.BList.remove_dups_eq eq_str heap_names
 
+  (* | DataDef of I.data_decl                            *)
+  (* | PredDef of I.view_decl                            *)
+  (* | FuncDef of I.func_decl                            *)
+  (* | RelDef of I.rel_decl (* An Hoa *)                 *)
+  (* | HpDef of I.hp_decl                                *)
+  (* | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *) *)
+  (* | LemmaDef of I.coercion_decl_list                  *)
+
+let heaps_of_command_def (cmd: command) (used_heap: string list) : string list=
+  match cmd with
+  | DataDef ddecl when (mem_str_list ddecl.I.data_name used_heap) ->
+      let heaps = List.concat (List.map (fun ((t,_),_,_,_) ->
+        match t with 
+        | Named tname -> [tname]
+        | _ -> []
+      ) ddecl.I.data_fields) in
+      Gen.BList.remove_dups_eq eq_str heaps
+  | PredDef vdecl when (mem_str_list vdecl.I.view_name used_heap)->
+      heaps_of_struc_iformula vdecl.I.view_formula
+  | FuncDef func -> 
+      let heaps = List.concat (List.map (fun (t,_) ->
+        match t with 
+        | Named tname -> [tname]
+        | _ -> []
+      ) func.I.func_typed_vars ) in
+      Gen.BList.remove_dups_eq eq_str heaps
+  | RelDef rel ->
+      let heaps = List.concat (List.map (fun (t,_) ->
+        match t with 
+        | Named tname -> [tname]
+        | _ -> []
+      ) rel.I.rel_typed_vars ) in
+      Gen.BList.remove_dups_eq eq_str heaps
+  | _ -> []
+
+
 let heaps_of_command (cmd: command) : (string list) =
   match cmd with
-  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _
+  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ -> []
   | ShapeInfer _ | ShapeDivide _
   | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _
   | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _
   | ShapeDeclDang _ | ShapeDeclUnknown _ | ShapeSConseq _
   | PredSplit _ | PredNormDisj _ | RelInfer _ | ShapeSAnte _
-  | CaptureResidue _ | PrintCmd _ | Time _ | EmptyCmd  ->
-      []
+  | CaptureResidue _ | PrintCmd _ | Time _ | EmptyCmd  -> []
   | LetDef (_, mf) | Simplify mf | Slk_Hull mf | Slk_PairWise mf ->
       heaps_of_metaform mf
   | EntailCheck (mf1, mf2,_) | EqCheck (_, mf1, mf2)
@@ -2174,6 +2209,7 @@ let heaps_of_command (cmd: command) : (string list) =
       let heap_names2 = heaps_of_metaform mf2 in
       let heap_names = heap_names1 @ heap_names2 in
       Gen.BList.remove_dups_eq eq_str heap_names
+  | HpDef hp -> heaps_of_iformula hp.I.hp_formula
   | RelAssume (_, mf1, mf2_opt, mf3) ->
       let heap_names1 = heaps_of_metaform mf1 in
       let heap_names2 = (match mf2_opt with
@@ -2221,6 +2257,13 @@ let eliminate_unused_components (cmds: command list) : unit =
   (* add built-in heap names *)
   let used_heaps = used_heaps @ ["Object";"thrd";"lock";"barrier"] in
   let used_heaps = Gen.BList.remove_dups_eq eq_str used_heaps in
+  (* add heaps used to defined the found-used-heaps *)
+  let used_heaps_def = List.fold_left (fun hs cmd ->
+    hs @ (heaps_of_command_def cmd used_heaps)
+  ) [] cmds in
+  let used_heaps = used_heaps @ used_heaps_def in
+  let used_heaps = Gen.BList.remove_dups_eq eq_str used_heaps in
+  Debug.binfo_hprint (add_str "used_heaps" (pr_list idf)) used_heaps no_pos;
   (* remove unused data_decl *)
   let new_data_decls = List.concat (List.map (fun ddecl ->
     if (List.exists (fun hn -> eq_str hn ddecl.I.data_name) used_heaps) then [ddecl]
@@ -2233,7 +2276,7 @@ let eliminate_unused_components (cmds: command list) : unit =
   ) iprog.I.prog_view_decls) in
   let _ = iprog.I.prog_data_decls <- new_data_decls in
   iprog.I.prog_view_decls <- new_view_decls
-  
+
 let get_residue () = !CF.residues
 
 let get_residue () =

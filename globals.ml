@@ -63,7 +63,12 @@ and control_path_id = control_path_id_strict  option
 
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
+(* check if 2 string are equal *)
 let eq_str s1 s2 = String.compare s1 s2 = 0
+
+(* check if s is member of string list s_list *)
+let mem_str_list (s: string) (s_list: string list) =
+  List.exists (fun x -> eq_str s x) s_list
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)

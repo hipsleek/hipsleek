@@ -1687,7 +1687,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
-      | InfConst _ -> Error.report_no_pattern ()
+      | InfConst _ -> e
     )
 
 and transform_exp f (e : exp) : exp =

@@ -10964,7 +10964,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           (* let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in *)
 
           do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
-          
+
           (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos *)
           (* process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos *)
 
