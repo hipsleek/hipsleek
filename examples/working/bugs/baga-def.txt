@@ -1,0 +1,36 @@
+default
+=======
+
+# how come 3,4 did not have false ctx
+  but still able to prove? it seems that
+  xpure for unsat checking (using xpure0?) and that 
+  for entailment (using xpure1?) are different
+
+[Warning] False ctx
+Entail 1: Valid. 
+
+[Warning] False ctx
+Entail 2: Valid. 
+
+Entail 3: Valid. 
+
+Entail 4: Valid. 
+
+Entail 5: Fail.(must) cause: true |-  false. LOCS:[0;46] (RHS: contradiction)
+
+default with --eps
+
+[Warning] False ctx
+Entail 1: Valid. 
+
+[Warning] False ctx
+Entail 2: Valid. 
+
+[Warning] False ctx
+Entail 3: Valid. 
+
+[Warning] False ctx
+Entail 4: Valid. 
+
+[Warning] False ctx
+Entail 5: Valid. 
