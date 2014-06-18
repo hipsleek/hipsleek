@@ -235,6 +235,11 @@ let parse_file (parse) (source_file : string) =
       Error.report_error { Error.error_loc  = udp;
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
+  (* pre-processing *)
+  if (!Globals.elim_unused_components) then (
+    eliminate_unused_components cmds;
+  );
+  (* end pre-processing *)
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)

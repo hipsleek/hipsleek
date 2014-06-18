@@ -2917,25 +2917,24 @@ and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
 
 let transform_formula_x f (e:formula):formula =
   let rec helper f e = (
-    let (_, f_f, f_h_f, f_p_t) = f in
+    let (f_f, f_hf, f_pf) = f in
     let r =  f_f e in 
     match r with
     | Some e1 -> e1
     | None  -> (
-        match e with     
+        match e with
         | Base b ->
-            let new_heap = transform_h_formula f_h_f b.formula_base_heap in
-            let new_pure = P.transform_formula f_p_t b.formula_base_pure in
-            Base { b with formula_base_heap = new_heap;
-                          formula_base_pure = new_pure; }
-        | Or o -> 
-            Or {o with formula_or_f1 = helper f o.formula_or_f1;
-                       formula_or_f2 = helper f o.formula_or_f2;}
+            let new_heap = transform_h_formula f_hf b.formula_base_heap in
+            let new_pure = P.transform_formula f_pf b.formula_base_pure in
+            Base {b with formula_base_heap = new_heap; formula_base_pure = new_pure;}
+        | Or o ->
+            let new_f1 = helper f o.formula_or_f1 in
+            let new_f2 = helper f o.formula_or_f2 in
+            Or {o with formula_or_f1 = new_f1; formula_or_f2 = new_f2;}
         | Exists e ->
-            let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
-            let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
-            Exists { e with formula_exists_heap = new_heap;
-                            formula_exists_pure = new_pure;}
+            let new_heap = transform_h_formula f_hf e.formula_exists_heap in
+            let new_pure = P.transform_formula f_pf e.formula_exists_pure in
+            Exists {e with formula_exists_heap = new_heap; formula_exists_pure = new_pure;}
       )
   ) in
   helper f e
@@ -2946,27 +2945,26 @@ let transform_formula f (e:formula):formula =
   Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
 
 let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
-  let (f_e_f, f_f, f_h_f, f_p_t) = f in
-  let r = f_e_f e in 
+  let (f_ef, f_f, f_hf, f_pf) = f in
+  let ff = (f_f, f_hf, f_pf) in
+  let r = f_ef e in 
   match r with
   | Some e1 -> e1
   | None -> (
       match e with
       | ECase c -> 
           let br' = List.map (fun (c1,c2)->
-            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
+            ((P.transform_formula f_pf c1),(transform_struc_formula f c2))
           ) c.formula_case_branches in
           ECase {c with formula_case_branches = br';}
       | EBase b ->
-          let new_base = transform_formula f b.formula_struc_base in
+          let new_base = transform_formula ff b.formula_struc_base in
           let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
-          EBase{b with formula_struc_base = new_base;
-                       formula_struc_continuation = new_cont;}
+          EBase{b with formula_struc_base = new_base; formula_struc_continuation = new_cont;}
       | EAssume b->
-          let new_simpl = transform_formula f b.formula_assume_simpl in
+          let new_simpl = transform_formula ff b.formula_assume_simpl in
           let new_struc = transform_struc_formula f b.formula_assume_struc in
-          EAssume {b with formula_assume_simpl = new_simpl;
-                          formula_assume_struc = new_struc;}
+          EAssume {b with formula_assume_simpl = new_simpl; formula_assume_struc = new_struc;}
       | EInfer b ->
           let new_cont = transform_struc_formula f b.formula_inf_continuation in
           EInfer {b with formula_inf_continuation = new_cont;}

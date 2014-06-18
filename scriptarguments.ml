@@ -387,6 +387,8 @@ let common_arguments = [
   ("--dbc", Arg.Set Globals.dis_base_case_unfold, "explicitly disable base case unfold");
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
 	"disable simplified view def normalization");
+  ("--en-elim-unused", Arg.Set Globals.elim_unused_components, "enable the elimination of unused components (optimization purpose)");
+  ("--dis-elim-unused", Arg.Set Globals.elim_unused_components, "disable the elimination of unused components");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
   ("--dci", Arg.Clear Globals.enable_case_inference,

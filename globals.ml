@@ -394,6 +394,9 @@ let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
 
+(* preprocessing for optimization purpose *)
+let elim_unused_components = ref false
+
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object (self)

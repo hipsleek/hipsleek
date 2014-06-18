@@ -1,0 +1,16 @@
+data node {
+	node next;
+}.
+
+data node2 {
+	node down;
+	node2 next;
+}.
+
+pred lseg<p> == self = null
+	or self::node<r> * r::lseg<p> & self != null.
+	
+pred lseg2<p> == self = null
+	or self::node2<_,r> * r::lseg2<p> & self != null.
+
+checkentail x::node<p> |- x::lseg<p>.

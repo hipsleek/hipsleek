@@ -2063,6 +2063,177 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
   else
     print_string ("unsupported compare command: " ^ var)
 
+(*
+ ********************************************************
+ ******* pre-processing for optimization purpose ********
+ ********************************************************
+ *)
+
+(* eliminate unused datas, views, lemmas *)
+let heaps_of_struc_iformula isform =
+  let heap_names = ref [] in
+  let f_ef, f_f = (fun _ ->None), (fun _ -> None) in
+  let f_pf = ((fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None)) in
+  let f_hf hf = (match hf with
+    | IF.HeapNode hn -> 
+        let _ = heap_names := !heap_names @ [hn.IF.h_formula_heap_name] in
+        Some hf
+    | IF.HeapNode2 hn2 ->
+        let _ = heap_names := !heap_names @ [hn2.IF.h_formula_heap2_name] in
+        Some hf
+    | _ -> None
+  ) in
+  let f = (f_ef, f_f, f_hf, f_pf) in
+  let _ = IF.transform_struc_formula f isform in
+  let _ = heap_names := Gen.BList.remove_dups_eq eq_str !heap_names in
+  !heap_names
+
+let heaps_of_iformula iform =
+  let heap_names = ref [] in
+  let f_ef, f_f = (fun _ ->None), (fun _ -> None) in
+  let f_pf = ((fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None)) in
+  let f_hf hf = (match hf with
+    | IF.HeapNode hn -> 
+        let _ = heap_names := !heap_names @ [hn.IF.h_formula_heap_name] in
+        Some hf
+    | IF.HeapNode2 hn2 ->
+        let _ = heap_names := !heap_names @ [hn2.IF.h_formula_heap2_name] in
+        Some hf
+    | _ -> None
+  ) in
+  let f = (f_f, f_hf, f_pf) in
+  let _ = IF.transform_formula f iform in
+  let _ = heap_names := Gen.BList.remove_dups_eq eq_str !heap_names in
+  !heap_names
+
+let heaps_of_struc_cformula csform =
+  let heap_names = ref [] in
+  let f_ef, f_f = (fun _ ->None), (fun _ -> None) in
+  let f_pf = ((fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None)) in
+  let f_hf hf = (match hf with
+    | CF.DataNode dn -> 
+        let _ = heap_names := !heap_names @ [dn.CF.h_formula_data_name] in
+        Some hf
+    | CF.ViewNode vn ->
+        let _ = heap_names := !heap_names @ [vn.CF.h_formula_view_name] in
+        Some hf
+    | _ -> None
+  ) in
+  let f = (f_ef, f_f, f_hf, f_pf) in
+  let _ = CF.transform_struc_formula f csform in
+  let _ = heap_names := Gen.BList.remove_dups_eq eq_str !heap_names in
+  !heap_names
+
+let heaps_of_cformula cform =
+  let heap_names = ref [] in
+  let f_ef, f_f = (fun _ ->None), (fun _ -> None) in
+  let f_pf = ((fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None), (fun _ -> None)) in
+  let f_hf hf = (match hf with
+    | CF.DataNode dn -> 
+        let _ = heap_names := !heap_names @ [dn.CF.h_formula_data_name] in
+        Some hf
+    | CF.ViewNode vn ->
+        let _ = heap_names := !heap_names @ [vn.CF.h_formula_view_name] in
+        Some hf
+    | _ -> None
+  ) in
+  let f = (f_ef,f_f, f_hf, f_pf) in
+  let _ = CF.transform_formula f cform in
+  let _ = heap_names := Gen.BList.remove_dups_eq eq_str !heap_names in
+  !heap_names
+
+let rec heaps_of_metaform (mf: meta_formula) : (string list) =
+  match mf with
+  | MetaVar _ -> []
+  | MetaForm f -> heaps_of_iformula f
+  | MetaFormCF cf -> heaps_of_cformula cf
+  | MetaFormLCF cf_list ->
+      let heap_names = List.concat (List.map heaps_of_cformula cf_list) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  | MetaEForm isform -> heaps_of_struc_iformula isform
+  | MetaEFormCF csform -> heaps_of_struc_cformula csform
+  | MetaCompose (_,mf1,mf2) ->
+      let heap_names = (heaps_of_metaform mf1) @ (heaps_of_metaform mf2) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+
+let heaps_of_command (cmd: command) : (string list) =
+  match cmd with
+  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _
+  | ShapeInfer _ | ShapeDivide _
+  | ShapeConquer _ | ShapeLFP _ | ShapeRec _ | ShapePostObl _
+  | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _
+  | ShapeDeclDang _ | ShapeDeclUnknown _ | ShapeSConseq _
+  | PredSplit _ | PredNormDisj _ | RelInfer _ | ShapeSAnte _
+  | CaptureResidue _ | PrintCmd _ | Time _ | EmptyCmd  ->
+      []
+  | LetDef (_, mf) | Simplify mf | Slk_Hull mf | Slk_PairWise mf ->
+      heaps_of_metaform mf
+  | EntailCheck (mf1, mf2,_) | EqCheck (_, mf1, mf2)
+  | InferCmd (_, mf1, mf2, _) | RelDefn (_, mf1, mf2, _) ->
+      let heap_names1 = heaps_of_metaform mf1 in
+      let heap_names2 = heaps_of_metaform mf2 in
+      let heap_names = heap_names1 @ heap_names2 in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  | RelAssume (_, mf1, mf2_opt, mf3) ->
+      let heap_names1 = heaps_of_metaform mf1 in
+      let heap_names2 = (match mf2_opt with
+        | None -> []
+        | Some mf2 -> heaps_of_metaform mf2 
+      ) in
+      let heap_names3 = heaps_of_metaform mf3 in
+      let heap_names = heap_names1 @ heap_names2 @ heap_names3 in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  | CmpCmd (_, _, mf_list) ->
+      let heap_names = List.concat (List.map heaps_of_metaform mf_list) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  (* | Validate (_,( (ident list * meta_formula * (meta_formula * meta_formula) list) list)) *)
+  | Validate (_, mf_info_list) ->
+      let heap_names = List.concat (List.map (fun (_,mf,mf_pair_list) ->
+        let heap_names1 = heaps_of_metaform mf in
+        let heap_names2 = List.concat (List.map (fun (mf1,mf2) ->
+          let hn1 = heaps_of_metaform mf1 in
+          let hn2 = heaps_of_metaform mf2 in
+          Gen.BList.remove_dups_eq eq_str (hn1 @ hn2)
+        ) mf_pair_list) in
+        Gen.BList.remove_dups_eq eq_str (heap_names1 @ heap_names2)
+      ) mf_info_list) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  | LemmaDef lem ->
+      let coerc_list = lem.I.coercion_list_elems in
+      let heap_names = List.concat (List.map (fun coerc ->
+        let hn1 = heaps_of_iformula coerc.I.coercion_head in
+        let hn2 = heaps_of_iformula coerc.I.coercion_body in
+        Gen.BList.remove_dups_eq eq_str (hn1 @ hn2)
+      ) coerc_list) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+  | BarrierCheck bar ->
+      let bar_list = bar.I.barrier_tr_list in
+      let heap_names = List.concat (List.map (fun (_,_,bars) ->
+        let hns = List.concat (List.map heaps_of_struc_iformula bars) in
+        Gen.BList.remove_dups_eq eq_str hns
+      ) bar_list) in
+      Gen.BList.remove_dups_eq eq_str heap_names
+
+let eliminate_unused_components (cmds: command list) : unit =
+  let used_heaps = List.fold_left (fun hs cmd ->
+    hs @ (heaps_of_command cmd)
+  ) [] cmds in
+  (* add built-in heap names *)
+  let used_heaps = used_heaps @ ["Object";"thrd";"lock";"barrier"] in
+  let used_heaps = Gen.BList.remove_dups_eq eq_str used_heaps in
+  (* remove unused data_decl *)
+  let new_data_decls = List.concat (List.map (fun ddecl ->
+    if (List.exists (fun hn -> eq_str hn ddecl.I.data_name) used_heaps) then [ddecl]
+    else []
+  ) iprog.I.prog_data_decls) in
+  (* remove unused view_decl *)
+  let new_view_decls = List.concat (List.map (fun vdecl ->
+    if (List.exists (fun hn -> eq_str hn vdecl.I.view_name) used_heaps) then [vdecl]
+    else []
+  ) iprog.I.prog_view_decls) in
+  let _ = iprog.I.prog_data_decls <- new_data_decls in
+  iprog.I.prog_view_decls <- new_view_decls
+  
 let get_residue () = !CF.residues
 
 let get_residue () =
