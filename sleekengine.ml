@@ -27,6 +27,8 @@ let proc_sleek_result_validate lc =
       match CF.get_must_error_from_ctx c with
       | None -> VR_Valid
       | _ -> VR_Fail 1
+(* TODO : why do we need two diff kinds of must-errors? *)
+(* Is there any difference between the two? *)
 
 let proc_sleek_result_validate lc =
   Debug.no_1 "proc_sleek_result_validate" 
