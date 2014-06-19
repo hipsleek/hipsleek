@@ -10,6 +10,7 @@ open Gen.Basic
 open Label
 open Cpure
 open Excore
+open Cprinter
 
 let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
   match cf with
@@ -45,7 +46,7 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
     | _ -> EPureI.mk_true
 
 and build_ef_heap_formula (cf : Cformula.h_formula) (all_views : Cast.view_decl list) : ef_pure_disj =
-  Debug.no_1 "build_ef_heap_formula" Cprinter.string_of_h_formula
+  Debug.no_1 "build_ef_heap_formula" string_of_h_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_heap_formula_x cf all_views) cf
 
@@ -76,7 +77,7 @@ let build_ef_heap_formula_with_pure_x (cf : Cformula.h_formula) (efpd_p : ef_pur
     | _ -> efpd_p
 
 let build_ef_heap_formula_with_pure (cf : Cformula.h_formula) (efpd_p : ef_pure_disj) (all_views : Cast.view_decl list) : ef_pure_disj =
-  Debug.no_1 "build_ef_heap_formula_with_pure" Cprinter.string_of_h_formula
+  Debug.no_1 "build_ef_heap_formula_with_pure" string_of_h_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_heap_formula_with_pure_x cf efpd_p all_views) cf
 
@@ -96,7 +97,7 @@ let rec build_ef_pure_formula_x (pf : formula) : ef_pure_disj =
     | _ -> EPureI.mk_epure pf
 
 and build_ef_pure_formula (pf : formula) : ef_pure_disj =
-  Debug.no_1 "build_ef_pure_formula" Cprinter.string_of_pure_formula
+  Debug.no_1 "build_ef_pure_formula" string_of_pure_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_pure_formula_x pf) pf
 
@@ -135,7 +136,7 @@ let rec build_ef_formula_x (cf : Cformula.formula) (all_views : Cast.view_decl l
           efpd_n
 
 and build_ef_formula (cf : Cformula.formula) (all_views : Cast.view_decl list) : ef_pure_disj =
-  Debug.no_1 "build_ef_formula" Cprinter.string_of_formula
+  Debug.no_1 "build_ef_formula" string_of_formula
       EPureI.string_of_disj (fun _ ->
           build_ef_formula_x cf all_views) cf
 
@@ -316,6 +317,15 @@ let rec is_ep_cformula_arith_x (f : Cformula.formula) : bool =
           is_ep_pformula_arith ep
 
 and is_ep_cformula_arith (f : Cformula.formula) : bool =
-  Debug.no_1 "is_ep_cformula_arith" Cprinter.string_of_formula string_of_bool
+  Debug.no_1 "is_ep_cformula_arith" string_of_formula string_of_bool
       is_ep_cformula_arith_x f
 
+let is_ep_view_arith_x (cv : view_decl) : bool =
+  List.exists (fun (cf,_) -> is_ep_cformula_arith cf)
+      cv.view_un_struc_formula
+
+let is_ep_view_arith (cv : view_decl) : bool =
+  let pr_1 = fun cv -> cv.view_name in
+  let pr_1 = !print_view_decl_short in
+  Debug.no_1 "is_ep_view_arith" pr_1 string_of_bool
+      is_ep_view_arith_x cv

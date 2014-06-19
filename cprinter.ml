@@ -2105,7 +2105,8 @@ and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 
 (* new EPURE *)
-let string_of_ef_pure = Excore.EPureI.string_of_ef_pure
+let string_of_ef_pure = Excore.EPureI.string_of
+
   (* let pr = pr_list P.string_of_spec_var_list in *)
   (* pr_triple (add_str "BAGA" P.string_of_spec_var_list) (fun (_,p) -> (add_str "EQ" pr) p) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var))) *)
 

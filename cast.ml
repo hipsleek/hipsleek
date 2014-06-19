@@ -3322,12 +3322,3 @@ let categorize_view (prog: prog_decl) : prog_decl =
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
  
-let is_ep_view_arith_x (cv : view_decl) : bool =
-  List.exists (fun (cf,_) -> is_ep_cformula_arith cf)
-      cv.view_un_struc_formula
-
-let is_ep_view_arith (cv : view_decl) : bool =
-  let pr_1 = fun cv -> cv.view_name in
-  let pr_1 = !print_view_decl_short in
-  Debug.no_1 "is_ep_view_arith" pr_1 string_of_bool
-      is_ep_view_arith_x cv
