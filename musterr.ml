@@ -118,7 +118,8 @@ let check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
 let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
+    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context)
+    (ft: formula_trace) : list_context=
   if not !disable_failure_explaining then
     let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
       (*build must/may msg*)
@@ -156,7 +157,7 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
                 | Failure_Must _ -> (mk_failure_must msg failure_name)
                 | _ -> {fe_kind = fk; fe_name = failure_name ;fe_locs=[]}
               in
-              Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
+              Some (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft))
     in
     let contra_fail_type = build_and_one_kind_failures "RHS: contradiction" (Failure_Must "") contra_list in
     let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in
@@ -177,20 +178,20 @@ let build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
       | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
             let msg =  "use different strategies in proof searching (slicing)" in
             let fe =  mk_failure_may msg failure_name in
-            FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe))
+            FailCtx (Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft))
   else
     let msg = "failed in entailing pure formula(s) in conseq" in
-    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name))
+    CF.mkFailCtx_in (Basic_Reason ({fail_ctx_template with fc_message = msg }, mk_failure_may msg failure_name, ft))
 
 
 let build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
-      (fail_ctx_template: fail_context): list_context=
+      (fail_ctx_template: fail_context) (ft: formula_trace) : list_context=
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
   Debug.no_1_num i "build_and_failures" pr4 pr2 
-      (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template)
+      (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template ft)
       (contra_list, must_list, may_list)
 

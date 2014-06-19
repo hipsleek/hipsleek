@@ -857,7 +857,7 @@ non_empty_command:
       | t=hull_cmd        -> Slk_Hull t
       | t=pairwise_cmd        -> Slk_PairWise t
       | t= infer_cmd           -> InferCmd t  
-      | t=captureresidue_cmd  -> CaptureResidue t
+      | t= captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 

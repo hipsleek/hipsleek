@@ -1595,11 +1595,13 @@ $output_file = "log";
                       ["imm-field/sleek05.slk", " --field-ann --etcsu1 ", "", "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid"],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic1a.slk", "", "", "Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["classic/classic1b.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", "", "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                       ["infinity.slk","--dsd --en-inf","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", "--en-inf --elp ", "Valid.", "Fail.Valid."],
+        ["inflem.slk", " --en-inf --elp ", "Valid.", "Fail.Valid."],
 #        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.", ""],
@@ -1607,15 +1609,19 @@ $output_file = "log";
         # ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp ", "Valid.", ""],
         ["lemmas/rlseg.slk", " --elp ", "Valid.Valid.Valid.", ""],
-        ["lemmas/lemma-fold.slk", "--elp", "Valid","Valid.Fail.Valid.Fail.Valid.Fail."],
+        ["lemmas/lemma-fold.slk", " --elp ", "Valid.","Valid.Fail.Valid.Fail.Valid.Fail."],
         ["lemmas/rd-lem-1.slk", " --elp ", "Fail.Valid.",""],
-        ["lemmas/rd-lem-2.slk", "", "","Fail."],
+        ["lemmas/rd-lem-2.slk", "  ", "", "Fail."],
         ["lemmas/app-tail.slk", " --elp ", "Valid.Valid.","Valid.Fail."],
-        ["lemmas/lseg_case.slk", " --elp  --en-lem-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        # ["lemmas/lseg_case.slk", " --elp  --lem-en-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
+        ["lemmas/lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
         ["lemmas/ll.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.", "Valid.Fail."],
         ["lemmas/ll_tail.slk", " --elp ", "Valid.Valid", "Valid.Valid"],
-        ["lemmas/sll_tailL.slk", " --elp --en-lem-rhs-unfold ", "Valid.Valid", ""],
-        ["lemmas/dseg-new.slk", " --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
+        # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
+        ["lemmas/sll_tailL.slk", " --elp ", "Valid.Valid", ""],
+        # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
+        ["lemmas/dseg-new.slk", " --elp ", "Valid.Fail.Valid.", ""],
+        # 2nd lemma requires another rlseg<..> <--> lseg to prove..
         ["lemmas/dseg1.slk", " --elp ", "Valid.Fail.", ""]
                       ],
 		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
@@ -1954,16 +1960,20 @@ sub sleek_process_file  {
               }
           }
           #print "\n!!!!!Ent Res: $entail_results \n";
-          #print "\n!!!!!Exp Res: $test->[3] $leme\n";
+          #print "\n!!!!!Exp Res: $test->[2] $leme\n";
+          #print "\n!!!!!Exp Res: $test->[2] $lemmas_results\n";
+
           my @failures = ();
-          if  (($leme >= 0 )  && ($lemmas_results ne /^$test->[2]$/)){
-              @failures = grep_failures($lemmas_results, $test->[2],"L");
+          if  (($leme >= 0 )  && ($lemmas_results ne $test->[2])){
+              if (!$lemmas_results) { @failures = ('no result (!!!check script options, provers, etc)');}
+                else                { @failures = grep_failures($lemmas_results, $test->[2],"L");}
           }
           if ((($barr==0) && ($entail_results ne $test->[3])) || 
               # (($lem == 1)  && ($lemma_results !~ /^$test->[2]$/)) || 
               ($barr==1 && ($barrier_results ne $test->[2]))){
               #print "\n !!!!!!!!!!! bef grep for failures: \n";
-              @failures = grep_failures($entail_results, $test->[3],"E"), @failures;
+              if (!$entail_results) { @failures = ('no result (!!!check script options, provers, etc)'), @failures;}
+              else  { @failures = grep_failures($entail_results, $test->[3],"E"), @failures;}
           }
           if ($#failures >= 0 ){
               local $" = ',';

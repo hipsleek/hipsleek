@@ -546,7 +546,7 @@ let rec string_of_imm_helper imm =
     | CP.ConstAnn(Accs) -> "@A"
     | CP.ConstAnn(Imm) -> "@I"
     | CP.ConstAnn(Lend) -> "@L"
-    | CP.ConstAnn(Mutable) -> "@M"
+    | CP.ConstAnn(Mutable) -> "" (* "@M" *)
     | CP.TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
     | CP.TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
     | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
@@ -1889,7 +1889,7 @@ and pr_formula_base e =
 	  formula_base_and = a;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; 
           (if not(MP.isConstMTrue p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
@@ -1908,7 +1908,7 @@ and prtt_pr_formula_base e =
 	  formula_base_and = a;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string (  (* "<NoLabel> "*)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           prtt_pr_h_formula h ; 
           (if not(MP.isConstMTrue p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
@@ -1928,7 +1928,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_and = a;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
-          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           prtt_pr_h_formula_inst prog h ; 
           (if not( MP.isTrivMTerm p) then 
             (pr_cut_after "&" ; pr_mix_formula p))
@@ -1951,7 +1951,7 @@ and pr_formula e =
 	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
-          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; 
           (if not(MP.isConstMTrue p) then 
@@ -1980,7 +1980,7 @@ and prtt_pr_formula e =
 	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
-          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           prtt_pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula p; pr_cut_after  ")";
@@ -2007,7 +2007,7 @@ and prtt_pr_formula_inst prog e =
 	  formula_exists_and = a;
       formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
-          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           prtt_pr_h_formula_inst prog h; pr_cut_after "&" ;
           pr_mix_formula p; pr_cut_after  "&";
@@ -2912,12 +2912,20 @@ let rec pr_fail_type_x (e:fail_type) =
 let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
-    | Trivial_Reason fe -> fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind))
-    | Basic_Reason (br,fe) -> 
+    | Trivial_Reason (fe,ft) ->
+          fmt_string (" Trivial fail : "^ (string_of_failure_kind_full fe.fe_kind));
+          (* print trace *)
+          fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
+    | Basic_Reason (br,fe,ft) -> 
           (string_of_fail_explaining fe);
           if fe.fe_kind=Failure_Valid then fmt_string ("Failure_Valid") 
-          else (pr_fail_estate br)
-    | ContinuationErr br ->  fmt_string ("ContinuationErr "); pr_fail_estate br
+          else (pr_fail_estate br);
+          (* print trace *)
+          fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
+    | ContinuationErr (br,ft) ->
+          fmt_string ("ContinuationErr "); pr_fail_estate br;
+          (* print trace *)
+          fmt_string "\n"; fmt_string "[["; pr_es_trace ft; fmt_string "]]"
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
@@ -3054,7 +3062,9 @@ let pr_list_context (ctx:list_context) =
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
-      fmt_cut (); fmt_string str; fmt_int (List.length sc); pr_context_list sc; fmt_cut ()
+      fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " "; pr_context_list sc;
+      fmt_string (string_of_numbered_list_formula_trace (CF.list_formula_trace_of_list_context ctx));
+      fmt_cut ()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 

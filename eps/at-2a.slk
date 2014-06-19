@@ -1,0 +1,79 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+lemma_safe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+/*
+eps/at-2a.slk --eps
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+Entailing lemma lseg2: Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
+
+// lemma for proving for entailment not in --eps form
+id: 5; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 5; evars: [p_119,n_120]; infer_vars: []; c_heap: emp
+checkentail self::node<_,r>@M@ rem br[{1}] 
+* r::lseg2<p1,flted>@M@ rem br[{1,2}] 
+* q::lseg2<p,n2>@M
+&(([0<=flted & n1=1+flted & n=n1+n2][p1=q][self!=null]))
+ &{FLOW,(21,22)=__norm}[]
+ |-  (exists p,n: self::lseg2<p,n>@M&{FLOW,(21,22)=__norm})[].
+
+res:  failctx
+         
+          fe_kind: MUST
+          fe_name: 
+          fe_locs: {
+                    fc_message: classical separation logic
+                    fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+        FAIL_UNION 
+         
+          fe_kind: MUST
+          fe_name: 
+          fe_locs: {
+                    fc_message: classical separation logic
+                    fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+        FAIL_UNION 
+         
+          fe_kind: MUST
+          fe_name: separation entailment
+          fe_locs: {
+                    fc_message: there is a mismatch in branches 
+                    fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+        FAIL_UNION 
+         
+          fe_kind: MUST
+          fe_name: separation entailment
+          fe_locs: {
+                    fc_message: there is a mismatch in branches 
+                    fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+
+
+checkentail self::node<_,r>@M@ rem br[{1}] 
+* r::lseg2<p1,flted>@M@ rem br[{1,2}] 
+* q::lseg2<p,n2>@M@ rem br[{1,2}]
+&(([n=n1+n2 & 0<=flted & flted=-1+n1 & 0<=n2][p1=q][self!=null]))
+&{FLOW,(21,22)=__norm}[]
+ |-  (exists p,n: self::lseg2<p,n>@M@ rem br[{1,2}]
+      &{FLOW,(21,22)=__norm})[]. 
+
+
+Lemma "lseg2":  self::lseg2<p,n>@M@ rem br[{1,2}]
+&(([0<=n]))&{FLOW,(21,22)=__norm}[]<== 
+(exists q_58,n1_59,n2_60: self::lseg2<q_58,n1_59>@M@ rem br[{1,2}] 
+* q_58::lseg2<p,n2_60>@M@ rem br[{1,2}]&(
+([n=n1_59+n2_60 & 0<=n2_60 & 0<=n1_59]))&{FLOW,(21,22)=__norm})[]
+
+*/
+

@@ -1,0 +1,33 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred bseg<y,l,SSS> ==
+  self = y & SSS={}
+or self::node<val,next> * next::bseg<y,l,SSS1>
+       & self != y & SSS=union({self},SSS1) & l<=val
+  inv (y notin SSS).
+
+lemma_unsafe self::bseg<p,l,TTT> 
+  <- self::bseg<p,l2,TTT> & l<=l2.
+
+/*
+lemma_unsafe self::bseg<p,l,TTT> 
+  <- self::bseg<p,l2,TTT1> & TTT=TTT1 & l<=l2.
+*/
+
+print residue.
+checkentail 
+   self::node<val,next> * next::bseg<p,l2,YYY>
+      & self != p & ZZZ=union({self},YYY) & l2<=val
+      & l<=l2
+|- self::bseg<p,l,ZZZ>.
+print residue.
+
+checkentail 
+   self::node<val,next> * next::bseg<p,l,YYY>
+      & self != p & ZZZ=union({self},YYY) & l<=val
+|- self::bseg<p,l,ZZZ>.
+print residue.

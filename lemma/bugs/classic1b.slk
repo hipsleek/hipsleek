@@ -1,0 +1,133 @@
+data node {
+	int val;
+	node next;
+}.
+
+// Valid.Valid.Valid.Valid.Valid.
+// Valid.Fail.Fail.Valid.Valid.
+// Valid.Valid.Valid.Valid.
+// Valid.Fail.
+// Fail.Valid.
+// Fail.Valid.
+// Valid.Fail.
+// Fail.Valid.Fail.
+
+// Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.
+
+//(1)
+checkentail_inexact htrue |- emp.
+print residue.
+// residue htrue
+capture_residue $r1. // should be htrue (inex)
+
+//(2)
+checkentail_inexact emp |- emp.
+print residue.
+// residue : emp
+
+//(3)
+checkentail_inexact x::node<_,_> |- emp.
+print residue.
+// residue x::node<..>
+capture_residue $r3. 
+
+//(4)
+checkentail_inexact htrue |- htrue.
+print residue.
+// should be htrue instead
+capture_residue $r4. 
+
+
+//(5)
+checkentail_inexact emp |- htrue.
+print residue.
+// residue : emp
+
+//(6)
+checkentail_inexact x::node<_,_> |- htrue.
+print residue.
+// should be x::node<_,_> 
+capture_residue $r6. 
+
+//(7)
+checkentail_inexact htrue |- x::node<_,_>.
+print residue.
+// fail
+
+//(8)
+checkentail_inexact emp |- x::node<_,_>.
+print residue.
+// fail
+
+//(9)
+checkentail_inexact x::node<3,_> * htrue |- htrue.
+print residue.
+// residue : x::node<3,_>*htrue
+capture_residue $r9.
+
+
+//(10)
+checkentail_inexact htrue * emp |- htrue.
+print residue.
+// residue : htrue
+capture_residue $r10.
+
+//(11)
+checkentail_inexact htrue * emp |- htrue.
+print residue.
+
+//(12)
+checkentail_inexact x::node<_,_> * emp |- htrue.
+print residue.
+
+//(13)
+checkentail_inexact htrue * x::node<3,null> * emp  * htrue * emp |- htrue.
+print residue.
+/*
+Got 
+ <1>(htrue) * x::node<_,_>@M * (htrue)&{FLOW,(21,22)=__norm}[]
+Expects:
+[// residue : x::node<_,_>*htrue
+*/
+// residue : x::node<_,_>*htrue
+capture_residue $r13.
+
+
+//(14)
+checkentail_inexact x::node<1,q> * q::node<2,null>  |- q::node<a,b> * htrue.
+print residue.
+// expects x::node<1,r> & a=2 & b=null
+
+capture_residue $r14.
+checkentail_exact $r14 |- x::node<1,r> & r=q & a=2 & b=null.
+checkentail_exact $r14 |- false.
+
+// residue htrue
+// capture_residue $r1. // should be htrue (inex)
+checkentail_exact $r1 |- emp. // fail
+
+// residue x::node<..>
+// capture_residue $r3. 
+checkentail_exact $r3 |- x::node<_,_>. // 
+
+// should be htrue instead
+// capture_residue $r4. 
+checkentail_exact $r4 |- emp. // fail
+
+// should be x::node<_,_> 
+// capture_residue $r6. 
+checkentail_exact $r6 |- x::node<_,_>. // 
+
+// residue : x::node<3,_>*htrue
+// capture_residue $r9.
+checkentail_inexact $r9 |- x::node<3,_>. // 
+checkentail_exact $r9 |- x::node<3,_>. // fail
+
+// residue : htrue
+// capture_residue $r10.
+checkentail_exact $r10 |- emp. // fail
+
+// residue : x::node<_,_>*htrue
+// capture_residue $r13
+checkentail_inexact $r13 |- x::node<3,_>. // 
+checkentail_exact $r13 |- x::node<3,_>. // fail

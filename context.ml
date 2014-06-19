@@ -1566,9 +1566,18 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
             | HRel _, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
           )
-    | WArg -> 
-          let _ = pr_debug "WArg  analysis here!\n" in  
-          (1,M_Nothing_to_do (string_of_match_res m_res)) 
+    | WArg -> begin
+        (***************************************************)
+        let _ = pr_debug "WArg  analysis here!\n" in
+        let _ = Debug.binfo_hprint (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
+        (* let view_decls = prog.prog_view_decls in *)
+        (* match lhs_node,rhs_node with *)
+        (*   | ViewNode vl, DataNode dr -> *)
+        (* (1,M_Nothing_to_do (string_of_match_res m_res)) *)
+        (*   | _ -> (1,M_Nothing_to_do (string_of_match_res m_res)) *)
+                (***************************************************)
+                (***************************************************)
+                (1,M_Nothing_to_do (string_of_match_res m_res))
     | Wand -> (*let _ = (print_endline"eliminate wand") in *)
                if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma m_res)
                else (1,M_Nothing_to_do (string_of_match_res m_res))
@@ -1996,15 +2005,16 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_5 "compute_actions"
+  Debug.no_6 "compute_actions"
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)
       (add_str "RHS cand" pr1)
+      (add_str "RHS pure" pr3)
       (add_str "right alias" pr4)
       pr2
-      (fun _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
-      es lhs_h lhs_p rhs_lst  posib_r_alias 
+      (fun _ _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
+      es lhs_h lhs_p rhs_lst rhs_p posib_r_alias 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

@@ -1341,8 +1341,10 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             let _ = create_failure_file mona_file_content in
             try
               let _ = Str.search_forward (Str.regexp "Error in file") answ 0 in
-              (print_string "MONA translation failure!";
-              Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^answ)})
+              Error.report_error {
+                Error.error_loc = no_pos;
+                Error.error_text =("Mona translation failure: " ^ answ)
+              }
             with
               | Not_found ->
                     begin

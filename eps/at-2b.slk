@@ -1,0 +1,55 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_safe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+/*
+# at-2b.slk --eps
+
+(1) why <== fail ?
+(2) which lemmas have been added?
+
+!!! conseq: EXISTS(t_132,_,flted_15_134,flted_15_135: t::node<_,flted_15_134>@M&(
+([t=t_132 & self_ll_tail2=t_132][flted_15_134=null]
+ [flted_15_135=0 & n=1+flted_15_135])))
+[]
+!!! lhs_xpure0: (
+([n=n_116 & n_116=1+flted_11_129 & 1<=flted_11_129][r_131!=null]
+ [t=t_115 & t=tx_128 & tx_128!=null][self_ll_tail2!=null]))
+!!! lhs_xpure: (
+([n=n_116 & n_116=1+flted_11_129 & 1<=flted_11_129][r_131!=null]
+ [t=t_115 & t=tx_128 & tx_128!=null][self_ll_tail2!=null]))
+Warning: ::0: 0: left hand side node is not specialized!
+
+Warning: ::0: 0: left hand side node is not specialized!
+
+!!! conseq: EXISTS(flted_10_284,t_267,
+n_268: self_ll_tail2::node<_,flted_10_284>@M@ rem br[{1}]&(
+([n_268=1 & n=1][t=t_267 & self_ll_tail2=t_267][flted_10_284=null])))[]
+!!! lhs_xpure0: (
+([flted_15_250=1+flted_7_264 & 0<=flted_7_264 & n=1+flted_15_250]
+ [p_263=t & t!=null][self_ll_tail2!=null][flted_15_249=null]))
+!!! lhs_xpure: (
+([flted_15_250=1+flted_7_264 & 0<=flted_7_264 & n=1+flted_15_250]
+ [p_263=t & t!=null][self_ll_tail2!=null][flted_15_249=null]))
+Warning: ::0: 0: left hand side node is not specialized!
+
+!!! 
+Entailing lemma ll_tail2: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (must) cause:  exists(flted_15_250:exists(flted_7_264:flted_15_250=1+flted_7_264 & 
+0<=flted_7_264) & n=1+flted_15_250) |-  n=1. LOCS:[0] (must-bug)
+
+Valid Lemmas : [ll_tail2:<==>] added to lemma store.
+*/

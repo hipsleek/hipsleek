@@ -29,6 +29,8 @@ exception Illegal_Prover_Format of string
 exception SA_HP_TUPLED
 exception SA_HP_NOT_PRED
 
+exception NOT_HANDLE_YET
+
 let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
@@ -1295,7 +1297,10 @@ let fresh_name () =
 
 let fresh_label pos = 
  (* let str = string_of_int (fresh_int ()) in*)
-    "f_l_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
+    let line = if pos.start_pos.Lexing.pos_lnum > 0 then
+                 string_of_int pos.start_pos.Lexing.pos_lnum
+               else "0" in
+    "f_l_" ^ line ^ "_"^(string_of_int (fresh_int ()))
 	
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in

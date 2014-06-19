@@ -1,0 +1,55 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg2<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg2<p, n-1>
+	inv n>=0.
+
+pred ll_tail2<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail2<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma_unsafe "lseg2" self::lseg2<p, n> 
+   <- self::lseg2<q, n1>@D * q::lseg2<p, n2>@D & n=n1+n2.
+
+lemma_unsafe "ll_tail2" self::ll_tail2<t, n> 
+   <-> self::lseg2<t, n-1> * t::node<_, null>.
+
+
+/*
+id: 7; caller: []; line: 39; classic: false; kind: POST; hec_num: 5; evars: [ty_1065,q_1066]; infer_vars: []; c_heap: emp
+ checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1&{FLOW,(24,25)=__norm}[]
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M&{FLOW,(24,25)=__norm})[]. 
+res:  1[
+   y::lseg2<ty_1045,flted_25_1092>@M * tx'::node<_,y'>@M&m=flted_25_1092+1 & flted_25_1091=null & n=flted_25_1062+1 & flted_25_1061=null & ty=ty_1045 & tx=tx_1044 & ty=ty' & y=y' & tx=tx' & x=x' & flted_25_1061=next_43_1064&{FLOW,(24,25)=__norm}[]
+   ]
+*/
+
+checkentail_exact x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M & ty=ty1). 
+print residue.
+
+/*
+# app-tail6.slk
+
+How come classic has residue?
+--dis-imm results in two emp residues.
+
+ <1>y::lseg2<ty1,flted_18_493>@M * tx'::node<_,y'>@M&m=flted_18_493+1 & flted_18_492=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+<2>emp&m=flted_18_493+1 & flted_18_492=null & flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & flted=null & n=1+flted1 & Anon_17=Anon_510 & r_511=y' & exists(ty_466:ty1=ty_466) & exists(n2_506:n2_506=flted_18_493+1) & exists(flted_18_475:flted_18_475=flted_18_493+1+flted1) & exists(ty_466:ty1=ty_466) & exists(q_467:q_467=flted_18_493+1+flted1+1) & exists(ty_466:ty1=ty_466)&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  (Lemma <== ll_tail2) ==>  COND ==>  COND ==>  (Lemma ==> ll_tail2) ==> (left: ll_tail2) ==>  Match ==>  SEARCH ==>  (Lemma <== lseg2) ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  COND ==>  Match ==> ]]
+
+checkentail x::lseg2<tx1,flted1>@M * y::ll_tail2<ty1,m>@M * tx'::node<_,y'>@M&
+flted=next & x=x' & tx'=tx1 & y=y' & ty'=ty1 & tx=tx1 & ty=ty1 & 
+flted=null & n=flted1+1
+ |-  (exists ty,q: x::ll_tail2<ty,q>@M & ty=ty1). 
+print residue.
+*/
+
