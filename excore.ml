@@ -148,7 +148,7 @@ let elim_clause (pf : formula) (ex_vars : spec_var list) : formula =
  (*  (\* Omega.simplify f *\) *)
 
 let elim_clause (pf : formula) (args : spec_var list) : formula =
-  Debug.no_2 "elim_clause" !print_pure_formula (pr_list string_of_typed_spec_var) !print_pure_formula
+  Debug.no_2 "ex_elim_clause" !print_pure_formula (pr_list string_of_typed_spec_var) !print_pure_formula
       elim_clause pf args
 
 (* elim not relevant spec var from baga *)
@@ -159,7 +159,7 @@ let elim_baga_x (svl : spec_var list) (args : spec_var list) : spec_var list =
       (name = "self") || (List.mem sv args)) svl
 
 let elim_baga (svl : spec_var list) (args : spec_var list) : spec_var list =
-  Debug.no_2 "elim_baga" (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var)
+  Debug.no_2 "ex_elim_baga" (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var)
       elim_baga_x svl args
 
 (* ef_elim_exists :  (spec_var) list -> ef_pure -> ef_pure *)
@@ -713,19 +713,40 @@ struct
             else (norm y) @ (aux i1 ys)
     in aux i1 i2
 
+  (* return true if (x,y) in baga & (x,y) in eq *)
+  let detect_contra eq baga =
+    let rec aux b =
+      match b with 
+        | [] -> false
+        | x::xs -> (aux2 x xs) || aux xs 
+    and aux2 x xs = match xs with
+      | [] -> false
+      | y::ys -> 
+            if EM.is_equiv eq x y then true
+            else aux2 x ys
+    in aux baga
+
   (* DONE : norm ineq1@ineq2 *)
+  (* false not always detected yet *)
   let mk_star efp1 efp2 =
     if (is_false efp1) || (is_false efp2) then mk_false
     else
       let (baga1, (eq1,_), neq1) = efp1 in
       let (baga2, (eq2,_), neq2) = efp2 in
       try
-        let new_baga = merge_baga baga1 baga2 in
-        let new_eq = EM.merge_eset eq1 eq2 in
-        let new_eq2 = (new_eq,EM.partition new_eq) in
-        let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
-        (new_baga, new_eq2, new_neq)
+        if (detect_contra eq1 baga2) || (detect_contra eq2 baga1) 
+        then mk_false
+        else 
+          let new_baga = merge_baga baga1 baga2 in
+          let new_eq = EM.merge_eset eq1 eq2 in
+          let new_eq2 = (new_eq,EM.partition new_eq) in
+          let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
+          (new_baga, new_eq2, new_neq)
       with _ -> mk_false
+
+  let mk_star e1 e2 =
+    let pr = string_of in
+    Debug.no_2 "ex_mk_star" pr pr pr mk_star e1 e2
 
 
   (* [(a,[b,c])] --> a=b & a=c *)
@@ -771,6 +792,8 @@ struct
     if zf then true
     else List.exists (fun (v1,v2) -> EM.is_equiv eq v1 v2) ieq (* need it to remove (null,null) in ineq *)
 
+  let unsat e =
+    Debug.no_1 "ex_unsat" string_of string_of_bool unsat e
 (*
     given (baga,eq,inq)
     contra if
@@ -1059,7 +1082,7 @@ struct
 
   let merge_disj lst1 lst2 =
     let pr = string_of_disj in
-    Debug.no_2 "merge_disj" pr pr pr merge_disj lst1 lst2
+    Debug.no_2 "ex_merge_disj" pr pr pr merge_disj lst1 lst2
 
   let add_star ep lst =
     let xs = List.map (fun v -> mk_star ep v) lst in
@@ -1081,7 +1104,7 @@ struct
 
   let lst_imply_pair cmp xs ys =
     let pr = pr_list (pr_pair Elt.string_of Elt.string_of) in
-    Debug.no_2 "lst_imply_pair" pr pr string_of_bool (lst_imply cmp) xs ys
+    Debug.no_2 "ex_lst_imply_pair" pr pr string_of_bool (lst_imply cmp) xs ys
 
 
   (* let pair_compare cmp (a1,a2) (b1,b2) = *)
@@ -1150,21 +1173,21 @@ struct
   let syn_imply ep lst =
     let pr1 = string_of in
     let pr2 = string_of_disj in
-    Debug.no_2 "syn_imply" pr1 pr2 string_of_bool syn_imply ep lst
+    Debug.no_2 "ex_syn_imply" pr1 pr2 string_of_bool syn_imply ep lst
 
   let epure_disj_syn_imply lst1 lst2 =
     List.for_all (fun ep -> syn_imply ep lst2) lst1
 
   let epure_disj_syn_imply lst1 lst2 =
     let pr1 = string_of_disj in
-    Debug.no_2 "epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
+    Debug.no_2 "ex_epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     epure_disj_syn_imply ante conseq
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let pr1 = string_of_disj in
-    Debug.no_2 "imply_disj" pr1 pr1 string_of_bool imply_disj ante conseq
+    Debug.no_2 "ex_imply_disj" pr1 pr1 string_of_bool imply_disj ante conseq
 
 
   (* let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = *)
@@ -1289,9 +1312,13 @@ struct
     let baga = (* get_baga pf in *) [] in
     let ineq = get_ineq pf in
     (* [([], pf)] *)
-    if List.exists (fun (x,y) -> EM.is_equiv p_aset x y) ineq then [] 
+    if List.exists (fun (x,y) -> EM.is_equiv p_aset x y) ineq then []
     else 
       [(baga, (p_aset,EM.partition p_aset), ineq)] (* new expure, need to add ineq : DONE *)
+
+  let mk_epure (pf:formula) =
+    Debug.no_1  "ex_mk_epure" !print_pure_formula string_of_disj mk_epure (pf:formula)
+
 
   (* let to_cpure ((baga,eq,ineq) : epure) = *)
   (*   let f1 = conv_eq eq in *)

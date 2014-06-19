@@ -54,24 +54,7 @@ inv true.
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
 expect Valid.
 
---inv-baga
-Entail 2: Fail.(must) cause: true |-  false. LOCS:[0;26] (RHS: contradiction)
-Validate 2: Not Expected.
-
-
-
-Entail 3: Fail.(may) cause:OrR[ null=q & q=null |-  q!=null. LOCS:[31;36] (must-bug),valid]
-Validate 3: Not Expected.
-
-
-
-Entail 4: Valid. 
-Validate 4: Expected.
-
-
-
-Entail 5: Fail.(must) cause: true |-  false. LOCS:[0;46] (RHS: contradiction)
-Validate 5: Not Expected.
+--inv-baga (FIXED)
 
 Unexpected: 2 3 5 
 ==================================================
@@ -88,9 +71,25 @@ proc_sleek_result_validate lc inp1 : 1[
 proc_sleek_result_validate lc@5 EXIT:Valid
 Validate 5: Expecting Fail BUT got : Valid
 
+==================================================
+# run-fast-test 
 
+Why below when sleek generates output for below?
+
+Total number of errors: 2 in files:
+  baga-test-eps.slk(no result (!!!check script options, provers, etc))
+  imm/imm-hard.slk(no result (!!!check script options, provers, etc)).
 ==================================================
-==================================================
+# example/working/bugs/imm-hard-1.slk
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- y!=x. 
+print residue.
+// x * y
+// (3) Valid
+expect Valid.
+
+why fail with and without --imm?
+
 ==================================================
 ==================================================
 ==================================================

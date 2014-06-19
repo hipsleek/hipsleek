@@ -11,6 +11,10 @@ data node {
 pred l3a<> == 
   self::node<q>*q::node<_>  & self=q
 inv self!=null.
+//!!! baga inv(l3a):[]
+
+
+
 
 //(1) (3) valid
 checkentail x::l3a<> |- false.
@@ -22,6 +26,7 @@ pred l6<q:node> ==
   or self::node<r>*r::node<_> & r=q
 inv q!=null.
 // baga {q}
+//!!! baga inv(l6):[(BAGA:[q],EQ:[[_,self]],INEQ:[]),(BAGA:[q,self],EQ:[],INEQ:[])]
 
 //(2) (10) Valid
 checkentail x::l6<q> * y::l6<q> |- false.
@@ -31,8 +36,10 @@ print residue.
 
 pred l7<q:node> == 
   self=null & q=null
-  or self::node<r>*r::node<_> & r=q
+  or (exists r: self::node<r>*r::node<_> & r=q)
 inv true.
+//!!! baga inv(l7):[(BAGA:[],EQ:[[_,q,self]],INEQ:[]),(BAGA:[q,self],EQ:[],INEQ:[])]
+
 
 //(3) (13) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
