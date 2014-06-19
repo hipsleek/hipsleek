@@ -388,7 +388,7 @@ let common_arguments = [
   ("--dis-simpl-view-norm" , Arg.Clear Globals.simplified_case_normalize, 
 	"disable simplified view def normalization");
   ("--en-elim-unused", Arg.Set Globals.elim_unused_components, "enable the elimination of unused components (optimization purpose)");
-  ("--dis-elim-unused", Arg.Set Globals.elim_unused_components, "disable the elimination of unused components");
+  ("--dis-elim-unused", Arg.Clear Globals.elim_unused_components, "disable the elimination of unused components");
   ("--eci", Arg.Set Globals.enable_case_inference,
    "enable struct formula inference");
   ("--dci", Arg.Clear Globals.enable_case_inference,
@@ -627,6 +627,9 @@ let common_arguments = [
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
+  ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  ("--en-cts-acc-fold", Arg.Set Globals.cts_acc_fold, "enable context-sensitive accelerated folding");
+  ("--dis-cts-acc-fold", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
   ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  ("--dlg",
      Arg.Unit
       (fun _ -> 

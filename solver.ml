@@ -9496,7 +9496,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     in
     (* let _ = print_endline "CA:1" in *)
     (* let _ = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
-    let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+    let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_h rhs_p
         posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
     (* !!!!!!!!
        (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
@@ -10055,7 +10055,7 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
   (* let _ = print_endline "CA:2" in *)
-  let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+  let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_h rhs_p
       posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos in
   (0, actions)
 

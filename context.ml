@@ -1124,19 +1124,19 @@ and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f =
   else
     f 
 
-and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
-    (mt_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
+and process_one_match prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing
+    (mt_res:match_res) reqset
     :action_wt =
   let pr_mr = string_of_match_res in
   let pr_h = !CF.print_h_formula in
   let pr_p = !MCP.print_mix_formula in
   let pr_out = string_of_action_wt_res0 in
-  Debug.no_6 "process_one_match" 
+  Debug.no_5 "process_one_match" 
       (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
-      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p) pr_out
-      (fun _ _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing
-                          mt_res (rhs_node,rhs_rest,rhs_p) reqset)
-      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p
+      (add_str "rhs_h" pr_h) (add_str "rhs_p" pr_p) pr_out
+      (fun _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p rhs_h rhs_p
+          conseq is_normalizing mt_res reqset)
+      mt_res lhs_h lhs_p rhs_h rhs_p
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -1171,17 +1171,19 @@ and check_lemma_not_exist vl vr=
     b_left && b_right &&(left_ls@right_ls)=[]
 
 and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
-    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula)
+    (rhs_h: CF.h_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
   if !Globals.acc_fold then (
     let lhs_node = mt_res.match_res_lhs_node in
     let rhs_node = mt_res.match_res_rhs_node in
+    let rhs_rest = mt_res.match_res_rhs_rest in
     match lhs_node, rhs_node with
     | DataNode {h_formula_data_node = lv}, ViewNode vr
     | ViewNode {h_formula_view_node = lv}, ViewNode vr -> (
         let rv = vr.h_formula_view_node in
         let vr_name = vr.h_formula_view_name in
-        let try_accfold = (
+        let can_accfold = (
           if (CP.eq_spec_var lv rv) then true
           else 
             let pf = CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) no_pos in
@@ -1190,20 +1192,31 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
             if (CP.EMapSV.mem rv aliases) then true
             else false
         ) in
-        if (try_accfold) then (
+        if (can_accfold) then (
           let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
-          let heap_chains = Accfold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
-          let fold_seqs = List.map (fun ((hf,_,_,_),hf_rest) ->
-            let fold_steps = Accfold.detect_fold_sequence hf lv vdecl prog in
-            (hf,hf_rest,fold_steps)
-          ) heap_chains in
-          let fold_seqs = List.filter (fun (_,_,fold_steps) ->
+          let lhs_heapchains = Accfold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
+          let fold_seqs = List.concat (List.map (fun ((lhf,_,_,_),lhf_rest) ->
+            if (!Globals.cts_acc_fold) then (
+              let rhs_heapchains = Accfold.collect_rhs_heap_chains rhs_h rhs_p lv vdecl prog in
+              List.map (fun ((rhf,_,_,_),rhf_rest) ->
+                let fold_steps = Accfold.detect_cts_fold_sequence lhf rhf lv vdecl prog in
+                (lhf, lhf_rest, rhf, rhf_rest, fold_steps)
+              ) rhs_heapchains
+            )
+            else (
+              let fold_steps = Accfold.detect_fold_sequence lhf lv vdecl prog in
+              [(lhf, lhf_rest, rhs_node, rhs_rest, fold_steps)]
+            )
+          ) lhs_heapchains) in
+          let fold_seqs = List.filter (fun (_,_,_,_,fold_steps) ->
             (* do acc-fold only there is more than 1 fold steps *)
             List.length fold_steps > 1
           ) fold_seqs in
-          let actions = List.map (fun (hf,hf_rest,fold_steps) ->
-            let mt_res = {mt_res with match_res_lhs_node = hf;
-                                      match_res_lhs_rest = hf_rest;} in
+          let actions = List.map (fun (lhf,lhf_rest,rhf,rhf_rest,fold_steps) ->
+            let mt_res = {mt_res with match_res_lhs_node = lhf;
+                                      match_res_lhs_rest = lhf_rest;
+                                      match_res_rhs_node = rhf;
+                                      match_res_rhs_rest = rhf_rest;} in
             (1, M_acc_fold (mt_res, fold_steps))
           ) fold_seqs in
           actions
@@ -1215,23 +1228,25 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
   else []
 
 and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
-    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula) (rhs_p: MCP.mix_formula)
+    (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula)
+    (rhs_h: CF.h_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
   let pr_mr = string_of_match_res in
   let pr_h = !CF.print_h_formula in
   let pr_p = !MCP.print_mix_formula in
   let pr_out = pr_list string_of_action_wt_res in
-  Debug.no_4 "process_one_match_accfold" 
-      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) 
-      (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
-      (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
-      mt_res lhs_h lhs_p rhs_p
+  Debug.no_5 "process_one_match_accfold" 
+      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
+      (add_str "rhs_h" pr_h) (add_str "rhs_p" pr_p) pr_out
+      (fun _ _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_h rhs_p)
+      mt_res lhs_h lhs_p rhs_h rhs_p
 
-and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
+and process_one_match_x prog estate lhs_h lhs_p rhs_h rhs_p rhs is_normalizing (m_res:match_res) reqset
     : action_wt =
   let pr_debug s = DD.tinfo_pprint s no_pos in
   let pr_hdebug h a = DD.tinfo_hprint h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
+  let rhs_rest = m_res.match_res_rhs_rest in
   let lhs_node = m_res.match_res_lhs_node in
   (*Normalize false --> split
     Normalize true --> combine/normalize
@@ -1507,7 +1522,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   | _ -> false                                      *)
                 (* ) a in                                              *)
                 (* try accelerated folding *)
-                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_h rhs_p in
                 Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
                 Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
@@ -1618,7 +1633,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   | _ -> false                                      *)
                 (* ) a in                                              *)
                 (* try accelerated folding *)
-                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+                let a_accfold = process_one_match_accfold prog m_res lhs_h lhs_p rhs_h rhs_p in
                 Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
                 Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
                 (* return *)
@@ -1857,19 +1872,20 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rh
           else (-1, Cond_action (rs@[r0]))
             (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
 
-and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
-  let pr = Cprinter.string_of_h_formula   in
+and process_matches prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest)) as ks) =
+  let pr_hf = Cprinter.string_of_h_formula in
+  let pr_pf = Cprinter.string_of_mix_formula in
   let pr1 = pr_list string_of_match_res in
-  let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
-  let pr3 = string_of_action_wt_res0 in
-  Debug.no_4 "process_matches" (add_str "lhs_h" pr)
-      (add_str "matches" pr1)
-      (add_str "rhs_node" pr) 
-      (add_str "rhs_rest" pr) pr3 
-      (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
-      lhs_h l  rhs_node rhs_rest
+  let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr_hf c1) ^ "," ^ (pr_hf c2) ^ "))" ) x in
+  let pr_out = string_of_action_wt_res0 in
+  Debug.no_7 "process_matches" (add_str "lhs_h" pr_hf) (add_str "lhs_p" pr_pf)
+      (add_str "rhs_h" pr_hf) (add_str "rhs_p" pr_pf)
+      (add_str "matches" pr1) (add_str "rhs_node" pr_hf) (add_str "rhs_rest" pr_hf)
+      pr_out 
+      (fun _ _ _ _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing reqset ks) 
+      lhs_h lhs_p rhs_h rhs_p l rhs_node rhs_rest
 
-and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
+and process_matches_x prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest))= 
   let _ = Debug.tinfo_pprint "**** sel_hp_rel **********************" no_pos in
   let _ = Debug.tinfo_hprint (add_str "hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
@@ -1904,9 +1920,9 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
           (*   (-1, (Cond_action (rs@[r;r0]))) *)
           (* else (-1, Cond_action (rs@[r0])) *)
             (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-    | x::[] -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
+    | x::[] -> process_one_match prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing x reqset
     | _ ->  
-          let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
+          let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing l reqset) l in
           let _ = DD.tinfo_pprint "process many matches" no_pos in
           (* WN : TODO use cond_action if of different priorities *)
           let rs = sort_wt rs in
@@ -2138,7 +2154,7 @@ and pick_unfold_only ((w,a):action_wt) : action_wt list =
 
 (* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
 
-and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
+and compute_actions_x prog estate es lhs_h lhs_p rhs_h rhs_p posib_r_alias
     (rhs_lst : (CF.h_formula * CF.h_formula * MCP.mix_formula) list)
     is_normalizing conseq pos
     : action =
@@ -2150,7 +2166,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   in
   (* let _ = print_string ("\n(andreeac) context.ml l_h:"  ^ (Cprinter.string_of_h_formula lhs_h)) in *)
   let r = List.map (fun (c1,c2,c3)->
-    (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos , (c1,c2,c3))
+    (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos , (c1,c2))
   ) rhs_lst in
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
@@ -2159,7 +2175,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (* let _ = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   let _ = DD.tinfo_hprint (add_str "r" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
-  let r = List.map (process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
+  let r = List.map (process_matches prog estate lhs_h lhs_p rhs_h rhs_p conseq is_normalizing es) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> 
@@ -2204,6 +2220,7 @@ and drop_low ys =
 and compute_actions prog estate es (* list of right aliases *)
     lhs_h (*lhs heap *) 
     lhs_p (*lhs pure*) 
+    rhs_h (*rhs heap *)
     rhs_p (*rhs pure*)
     posib_r_alias (*possible rhs variables*)
     (rhs_lst : (CF.h_formula * CF.h_formula * MCP.mix_formula) list)
@@ -2218,16 +2235,17 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
   let pr2 = string_of_action_res_simpl in
-  Debug.no_6 "compute_actions"
+  Debug.no_7 "compute_actions"
       (add_str "EQ ptr" pr0) 
       (add_str "LHS heap" pr) 
       (add_str "LHS pure" pr3)
       (add_str "RHS cand" pr1)
+      (add_str "RHS heap" pr)
       (add_str "RHS pure" pr3)
       (add_str "right alias" pr4)
       pr2
-      (fun _ _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
-      es lhs_h lhs_p rhs_lst rhs_p posib_r_alias 
+      (fun _ _ _ _ _ _ _ -> compute_actions_x prog estate es lhs_h lhs_p rhs_h rhs_p posib_r_alias rhs_lst is_normalizing conseq pos)
+      es lhs_h lhs_p rhs_lst rhs_h rhs_p posib_r_alias 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with

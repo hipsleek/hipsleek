@@ -797,6 +797,8 @@ let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold l
 
 let acc_fold = ref false
 
+let cts_acc_fold = ref false
+
 let smart_lem_search = ref false
 
 let sa_en_split = ref false
