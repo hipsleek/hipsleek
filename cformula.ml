@@ -5134,7 +5134,7 @@ let check_imm_mis rhs_mis rhs0 =
   let pr = !print_h_formula in
   Debug.no_2 "check_imm_mis" pr pr pr check_imm_mis rhs_mis rhs0
 
-
+(* asankhs : what is this method supported to do ? *)
 let rec heap_trans_heap_node fct f0 =
   let recf = heap_trans_heap_node fct in
   let rec helper f=
@@ -5163,7 +5163,8 @@ let rec heap_trans_heap_node fct f0 =
           | _ ->
             Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
         end
-      | ConjStar _|ConjConj _|StarMinus _ -> report_error no_pos "CF.heap_trans_heap_node: not handle yet"
+      | ConjStar _|ConjConj _|StarMinus _ -> f
+  (*report_error no_pos "CF.heap_trans_heap_node: not handle yet"*)
   in
   helper f0
 
