@@ -2670,7 +2670,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
     (* let _ = print_endline (Cprinter.string_of_mix_formula npf) in *)
     (* if !Globals.gen_baga_inv then *)
-    (*   Expure.EPureI.unsat (Expure.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
+    (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
       let r = 
 	let sat,npf = MCP.check_pointer_dis_sat npf in
@@ -2691,9 +2691,9 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_syn h p =
     let t1 = Expure.build_ef_heap_formula h views in
     let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
-    let d = Expure.EPureI.mk_or_disj t1 t2 in
-    let d = Expure.EPureI.elim_unsat_disj d in
-    (Expure.EPureI.is_false_disj d)
+    let d = Excore.EPureI.mk_or_disj t1 t2 in
+    let d = Excore.EPureI.elim_unsat_disj d in
+    (Excore.EPureI.is_false_disj d)
     (* let p = MCP.translate_level_mix_formula p in *)
     (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
     (* let npf = MCP.merge_mems p ph true in *)
@@ -7510,8 +7510,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
       let _ = Debug.ninfo_hprint (add_str "pf" (Cprinter.string_of_pure_formula)) (Mcpure.pure_of_mix lhs_p) no_pos in
       let _ = Debug.ninfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
-      let d = Expure.EPureI.mk_star_disj t1 t2 in
-      let d = Expure.EPureI.elim_unsat_disj d in
+      let d = Excore.EPureI.mk_star_disj t1 t2 in
+      let d = Excore.EPureI.elim_unsat_disj d in
       Some d
     else None in
   (* let curr_lhs_h, new_lhs_p = Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
@@ -7696,7 +7696,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           match lhs_baga with
             | Some lhs ->
                   let rhs = Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in
-                  let flag = Expure.EPureI.epure_disj_syn_imply lhs rhs in
+                  let flag = Excore.EPureI.epure_disj_syn_imply lhs rhs in
                   let ((flag2,_,_),_) as r = imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset in
                   let _ = if flag2!=flag then
                     let pr = Cprinter.string_of_ef_pure_disj in

@@ -122,7 +122,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Debug.ninfo_hprint (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in 
   let conseq = Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) in
   let _ = Debug.ninfo_hprint (add_str "conseq(after rem @A)" pr) conseq no_pos in 
- (* Immutable.restore_tmp_ann_formula ante in *)
+  (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
   let _ = Debug.tinfo_hprint (add_str "conseq(after prune)" pr) conseq no_pos in 
@@ -132,19 +132,19 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let _ = Debug.tinfo_hprint (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 2:"
-                        ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
-                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
-                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
-                        ^"\n\n")) no_pos in
+  ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
+  ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+  ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+  ^"\n\n")) no_pos in
   let es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let es = {es with CF.es_proof_traces = proof_traces} in
   let lem = Lem_store.all_lemma # get_left_coercion in
   let ante = Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check 3: after normalization"
-                        ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
-                        ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
-                        ^"\n\n")) no_pos in
+  ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
+  ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
+  ^"\n\n")) no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let ctx0 = Solver.elim_exists_ctx ctx in
@@ -155,19 +155,19 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   (* let vars = List.map (fun v -> Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos) ivars in *)
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
-              (* CP.type_of_spec_var v == FuncT *)) isvl in
+      (* CP.type_of_spec_var v == FuncT *)) isvl in
   let (v_hp_rel,iv) = List.partition (fun v -> CP.is_hprel_typ v (*  ||  *)
-              (* CP.type_of_spec_var v == FuncT *)) iv in
-  (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
-  (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
-  (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
+      (* CP.type_of_spec_var v == FuncT *)) iv in
+      (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+      (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
+      (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Infer.init_vars ctx iv vrel v_hp_rel orig_vars in
   (* let _ = print_string ((pr_list_ln Cprinter.string_of_view_decl) !cprog.Cast.prog_view_decls)  in *)
   let _ = if !Globals.print_core || !Globals.print_core_all
-    then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
-        ^" "^(pr_list !CP.print_sv isvl)
-      ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
-    else () 
+  then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
+  ^" "^(pr_list !CP.print_sv isvl)
+  ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
+  else () 
   in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
   let _ = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
@@ -185,6 +185,8 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
       check_entail_w_norm cprog proof_traces ctx ante conseq_f
   else
     if (!Globals.pred_sat) && CF.isAnyConstFalse_struc conseq && Cfutil.is_view_f ante then
+      (* TODO : new unsat checking for LHS from Loc *)
+      (* need to document; and generalize? *)
       let _ = Globals.smt_is_must_failure := None in
       let _ = Globals.disable_failure_explaining := true in
       (* let sno = ref (0:int) in *)
@@ -202,8 +204,8 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
             ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
         (false, fctx, isvl)
     else
-      let _ = Globals.disable_failure_explaining := false in
-      let _ = Globals.smt_is_must_failure := (Some false) in
+      (* let _ = Globals.disable_failure_explaining := false in *)
+      (* let _ = Globals.smt_is_must_failure := (Some false) in *)
       let ctx = 
         if !Globals.delay_proving_sat then ctx
         else CF.transform_context (Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
@@ -211,36 +213,36 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
         print_endline_quiet ("[Warning] False ctx")
       in
       let conseq = Cfutil.elim_null_vnodes cprog conseq in
-    (*****************)
-    (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
-    (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
-    (************************)
-  (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
-  (*   let _ = print_endline ("[Warning] False ctx") in *)
-  (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
-  (* else ctx *)
-  (* in *)
-  (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
-  let rs1, _ = 
-    if not !Globals.disable_failure_explaining then
-      Solver.heap_entail_struc_init_bug_inv cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
-    else
-      Solver.heap_entail_struc_init cprog false false 
-        (CF.SuccCtx[ctx]) conseq no_pos None
-  in
-  (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
-  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
-  (* flush stdout; *)
-  let res =
-    if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
-    else ((not (CF.isFailCtx rs))) in
-  (* residues := Some (rs, res); *)
-  (res, rs,v_hp_rel)
+      (*****************)
+      (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
+      (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
+      (************************)
+      (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
+      (*   let _ = print_endline ("[Warning] False ctx") in *)
+      (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
+      (* else ctx *)
+      (* in *)
+      (* let _ = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
+      let rs1, _ = 
+        if not !Globals.disable_failure_explaining then
+          Solver.heap_entail_struc_init_bug_inv cprog false false 
+              (CF.SuccCtx[ctx]) conseq no_pos None
+        else
+          Solver.heap_entail_struc_init cprog false false 
+              (CF.SuccCtx[ctx]) conseq no_pos None
+      in
+      (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
+      let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+      (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+      (* flush stdout; *)
+      let res =
+        if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
+        else ((not (CF.isFailCtx rs))) in
+      (* residues := Some (rs, res); *)
+      (res, rs,v_hp_rel)
 
 (*
-proof_traces: (formula*formula) list===> for cyclic proofs
+  proof_traces: (formula*formula) list===> for cyclic proofs
 *)
 and sleek_entail_check i isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -276,7 +278,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ = Debug.ninfo_hprint (add_str "ante0" Cprinter.prtt_string_of_formula) ante0 no_pos in
   let _ = Debug.ninfo_hprint (add_str "conseq0" Cprinter.prtt_string_of_formula) conseq0 no_pos in
   let f_ctx = CF.FailCtx (CF.Trivial_Reason
-     ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
+      ( {CF.fe_kind = CF.Failure_Must "rhs is unsat, but not lhs"; CF.fe_name = "unsat check";CF.fe_locs=[]}, [])) in
   let s_ctx = (CF.SuccCtx [init_ctx]) in
   let ante_quans, ante0b = (CF.split_quantifiers ante0) in
   let ante0b = (CF.simplify_pure_f ante0b) in
@@ -301,14 +303,14 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
       | ante::rest ->
             (* let is_unsat, norm_conj_conseq,conj_conseq_hg = Frame.norm_dups_pred prog ante_nemps1 conj_conseq false true in *)
             (*  if is_unsat then (false,res_conj_ante_fs, f_ctx) else *)
-               let b,lc = prove_conj_conseq_conj_ante ante ante_nemps1 (norm_conj_conseq,conj_conseq_hg) in
-               if b then
-                 (*to remove matched node in ante and put the remain back
-                   testcase: 10e04
-                 *)
-                 let res_ante = Frame.prune_match ante in
-                 (true, res_conj_ante_fs@rest@[res_ante], lc)
-               else prove_conj_conseq rest ante_nemps1 (norm_conj_conseq,conj_conseq_hg) (res_conj_ante_fs@[ante]) lc
+            let b,lc = prove_conj_conseq_conj_ante ante ante_nemps1 (norm_conj_conseq,conj_conseq_hg) in
+            if b then
+              (*to remove matched node in ante and put the remain back
+                testcase: 10e04
+              *)
+              let res_ante = Frame.prune_match ante in
+              (true, res_conj_ante_fs@rest@[res_ante], lc)
+            else prove_conj_conseq rest ante_nemps1 (norm_conj_conseq,conj_conseq_hg) (res_conj_ante_fs@[ante]) lc
   in
   let rec prove_list_conseqs ante_fs2 ante_nemps0 fs ctx=
     match fs with
@@ -338,7 +340,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   in
   (******************************************************)
   let ante_1b, conseq_1a, ante_unsat0, conseq_unsat0 = Syn_checkeq.syntax_nodes_match
-     ante0a conseq0a
+    ante0a conseq0a
   in
   if ante_unsat0 then (true, (CF.SuccCtx [init_ctx]), []) else
     let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null prog ante_1b conseq_1a in
