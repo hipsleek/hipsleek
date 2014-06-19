@@ -3572,4 +3572,5 @@ let check_diff xp0 xp1 =
 
 let _ = 
   CP.simplify := simplify;
-  Cast.imply_raw := imply_raw
+  Cast.imply_raw := imply_raw;
+  Excore.is_sat_raw := is_sat_raw

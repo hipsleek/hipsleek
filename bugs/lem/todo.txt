@@ -34,6 +34,31 @@ reasoning. This is also closer to the mechanisms available in decision
 procedure.
 
 ===========================================================
+x::ll<n> <--> x::ls<null,n>.
+  <--> x::ntls<null,n>
+
+even/odd
+
+queue
+
+tail-recursive
+
+at-least-one
+
+higher-order predicates
+
+single vs double-linked?
+
+
+ (i) normalize them
+ (ii) relate them
+ (iii) synthesize lemma?
+
+
+sorted linked list?
+
+universal linked list?
+
 ===========================================================
 ===========================================================
 ===========================================================
