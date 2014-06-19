@@ -837,7 +837,7 @@ let convert_substitution prog fwd_ptrs bk_ptrs tail head pp emap qvars vdef =
   (* substitute self var with fwd pointer of self in the head *)
   let (head, p) = convert_substitution_helper (CP.mk_self None) fresh_sv_n head p emap false in
   (* get last node of tail and set it to be the bck ptr of head view *)
-  let heap_chain = List.hd (Acc_fold.collect_heap_chains tail (MCP.mix_of_pure p) self_temp vdef prog) in
+  let heap_chain = List.hd (Accfold.collect_heap_chains tail (MCP.mix_of_pure p) self_temp vdef prog) in
   let (_, _, new_bk_of_nv, _) = fst heap_chain in 
   let (head, p) = convert_substitution_helper_opt bk_ptr_n (Some new_bk_of_nv) head p emap false in
   let head   = subs_head_with_free vdef head p emap in 

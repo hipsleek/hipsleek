@@ -1279,10 +1279,10 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (* (* TRUNG: TODO remove it later *)                                                             *)
     (* let _ = try                                                                                   *)
     (*   let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in                     *)
-    (*   let heap_chains = Acc_fold.collect_heap_chains f self_sv vd cprog in                        *)
+    (*   let heap_chains = Accfold.collect_heap_chains f self_sv vd cprog in                        *)
     (*   let hc = List.hd heap_chains in                                                             *)
-    (*   let fold_seq = Acc_fold.detect_fold_sequence hc vd self_sv cprog in                         *)
-    (*   Debug.ninfo_hprint (add_str "fold_seq" (pr_list Acc_fold.print_fold_type)) fold_seq no_pos; *)
+    (*   let fold_seq = Accfold.detect_fold_sequence hc vd self_sv cprog in                         *)
+    (*   Debug.ninfo_hprint (add_str "fold_seq" (pr_list Accfold.print_fold_type)) fold_seq no_pos; *)
     (* with _ -> () in                                                                               *)
 
     let new_f = CF.elim_exists f in

@@ -9889,23 +9889,23 @@ and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       (fun _ _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate rhs_node
 
 and vdef_of_acc_fold_x (vd: view_decl) (base_f: CF.formula)
-    (induct_f: CF.formula) (fold_seq : Acc_fold.fold_type list)
+    (induct_f: CF.formula) (fold_seq : Accfold.fold_type list)
     : view_decl =
   let rec apply_fold_seq f vd base_f induct_f fold_seq : CF.formula = (
     match fold_seq with
     | [] -> f
     | hd::tl ->
         let new_f = (
-          if (hd = Acc_fold.Fold_base_case) then
-            Acc_fold.try_fold_once f vd base_f
-          else Acc_fold.try_fold_once f vd induct_f
+          if (hd = Accfold.Fold_base_case) then
+            Accfold.try_fold_once f vd base_f
+          else Accfold.try_fold_once f vd induct_f
         ) in
         apply_fold_seq new_f vd base_f induct_f tl
   ) in
   let root_f, fold_seq = (match fold_seq with
     | [] -> report_error no_pos "vdef_of_acc_fold: fold_seq is empty"
     | hd::tl ->
-        let f = if (hd = Acc_fold.Fold_base_case) then base_f
+        let f = if (hd = Accfold.Fold_base_case) then base_f
                 else induct_f in 
         (f, tl)
   ) in
@@ -9916,10 +9916,10 @@ and vdef_of_acc_fold_x (vd: view_decl) (base_f: CF.formula)
             view_kind = View_DERV }
 
 and vdef_of_acc_fold (vd: view_decl) (base_f: CF.formula)
-    (induct_f: CF.formula) (fold_seq : Acc_fold.fold_type list)
+    (induct_f: CF.formula) (fold_seq : Accfold.fold_type list)
     : view_decl =
   let pr_vd = !print_view_decl in
-  let pr_fold_seq = pr_list Acc_fold.print_fold_type in
+  let pr_fold_seq = pr_list Accfold.print_fold_type in
   let pr_out = pr_vd in
   Debug.no_2 "vdef_of_acc_fold" pr_vd pr_fold_seq pr_out
       (fun _ _ -> vdef_of_acc_fold_x vd base_f induct_f fold_seq)
@@ -9989,7 +9989,7 @@ and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding p
   let pr_es = Cprinter.string_of_entail_state in
   let pr_hf = Cprinter.string_of_h_formula in
   let pr_base = Cprinter.string_of_formula_base in
-  let pr_fold_seq = pr_list Acc_fold.print_fold_type in
+  let pr_fold_seq = pr_list Accfold.print_fold_type in
   let pr_out x = Cprinter.string_of_list_context (fst x) in
   Debug.no_4 "do_acc_fold" pr_es pr_hf pr_base pr_fold_seq pr_out 
       (fun _ _ _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)

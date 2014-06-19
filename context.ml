@@ -48,7 +48,7 @@ and action =
   | M_match of match_res
   | M_split_match of match_res
   | M_fold of match_res
-  | M_acc_fold of (match_res * (Acc_fold.fold_type list))
+  | M_acc_fold of (match_res * (Accfold.fold_type list))
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
@@ -178,7 +178,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
   | M_acc_fold (e,steps) ->
-      let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
+      let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Accfold.print_fold_type s)) in
       fmt_string "AccFold =>"; pr_mr e; pr_steps steps
   | M_rd_lemma e -> fmt_string "RD_Lemma =>"; pr_mr e
   | M_lemma (e,s) -> fmt_string ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
@@ -950,11 +950,11 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
 (*         let vnode = vn.CF.h_formula_view_node in                                              *)
 (*         let vname = vn.CF.h_formula_view_name in                                              *)
 (*         let vdecl = look_up_view_def_raw 0 prog.prog_view_decls vname in                      *)
-(*         let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in        *)
+(*         let heap_chains = Accfold.collect_heap_chains lhs_h lhs_p vnode vdecl prog in        *)
 (*         (* remove the last chain which has only 1 atomic hformula                             *)
 (*            which is already extracted in normal spatial_ctx_extract *)                        *)
 (*         let heap_chains = List.filter (fun ((hf,_,_),hf_rest) ->                              *)
-(*           let coded_hf = Acc_fold.encode_h_formula hf in                                      *)
+(*           let coded_hf = Accfold.encode_h_formula hf in                                      *)
 (*           (List.length coded_hf > 1)                                                          *)
 (*         ) heap_chains in                                                                      *)
 (*         List.map (fun ((hf_chain,_,_),hf_rest) ->                                             *)
@@ -1192,9 +1192,9 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
         ) in
         if (try_accfold) then (
           let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
-          let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
+          let heap_chains = Accfold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
           let fold_seqs = List.map (fun ((hf,_,_,_),hf_rest) ->
-            let fold_steps = Acc_fold.detect_fold_sequence hf lv vdecl prog in
+            let fold_steps = Accfold.detect_fold_sequence hf lv vdecl prog in
             (hf,hf_rest,fold_steps)
           ) heap_chains in
           let fold_seqs = List.filter (fun (_,_,fold_steps) ->
