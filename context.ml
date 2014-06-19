@@ -1578,6 +1578,7 @@ and process_one_match_x prog estate lhs_h rhs is_normalizing (m_res:match_res) (
                 (***************************************************)
                 (***************************************************)
                 (1,M_Nothing_to_do (string_of_match_res m_res))
+    end
     | Wand -> (*let _ = (print_endline"eliminate wand") in *)
                if (Lem_store.all_lemma # any_coercion) then (1,M_ramify_lemma m_res)
                else (1,M_Nothing_to_do (string_of_match_res m_res))

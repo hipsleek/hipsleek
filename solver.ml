@@ -10841,7 +10841,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "112" Globals.sl_error)),
+                               CF.mk_failure_must "112" Globals.sl_error ,estate.es_trace)),
                   [])
             else (CF.mkFailCtx_in( Basic_Reason ( { 
 	          fc_message ="failed ramify lemma application";
@@ -10850,7 +10850,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "113" Globals.sl_error)),
+                                                  CF.mk_failure_must "113" Globals.sl_error,estate.es_trace)),
                   [])
             in
             (r1,r2)
@@ -10861,7 +10861,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "115" Globals.sl_error)),
+                                             CF.mk_failure_must "115" Globals.sl_error,estate.es_trace)),
                   [])
             in
             let coer_l = Lem_store.all_lemma # get_left_coercion in 
@@ -10877,7 +10877,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	          fc_orig_conseq = estate.es_orig_conseq;
 	          fc_current_conseq = CF.formula_of_heap HFalse pos; 
 	          fc_failure_pts = match (get_node_label lhs_node) with | Some s-> [s] | _ -> [];}, 
-                                                  CF.mk_failure_must "114" Globals.sl_error)),
+                                            CF.mk_failure_must "114" Globals.sl_error,estate.es_trace)),
                               [])
             in (r1,Search r2)
       | Context.M_lemma  ({
