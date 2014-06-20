@@ -1,0 +1,21 @@
+data node {
+    int val;
+    node next
+}.
+
+pred lseg<p> == self = null
+    or self::node<_,r> * r::lseg<p>.
+
+
+checkentail_exact
+    x::node<_,p> * p::node<_,q>
+        |- x::lseg<q>.
+print residue.
+expect Valid.
+
+checkentail_exact
+    x::node<_,p> * p::node<_,q> * q::node<_,u> * u::node<_,v>
+        |- x::lseg<v>.
+print residue.
+expect Valid.
+// found Fail??
