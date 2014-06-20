@@ -1693,7 +1693,7 @@ and is_varperm_of_typ_b (b : b_formula) typ: bool =
           else false
     | _ -> false
 
-and trans_eq_bform (b : b_formula) : b_formula =
+and trans_eq_bform_x (b : b_formula) : b_formula =
   let (pf, il) = b in
   match pf with
     | Neq _ -> 
@@ -1704,7 +1704,11 @@ and trans_eq_bform (b : b_formula) : b_formula =
     | Eq _ -> (pf, None)
     | _ -> b
 
-and trans_const_bforms (bl: b_formula list) : b_formula list =
+and trans_eq_bform (b : b_formula) : b_formula =
+  let pr = !print_b_formula in
+  Debug.no_1 "trans_eq_bform" pr pr trans_eq_bform_x b
+
+and trans_const_bforms_x (bl: b_formula list) : b_formula list =
   let eq_constrs, others = List.partition (fun (pf, _) ->
       match pf with | Eq _ -> true | _ -> false) bl in
   let const_vars, eq_consts, eq_others = partition_by_const eq_constrs in
@@ -1718,7 +1722,12 @@ and trans_const_bforms (bl: b_formula list) : b_formula list =
 	| Some (is_lnk, _, e_lnk) -> Some (is_lnk, Globals.fresh_int (), e_lnk @ lnk_var_exps)
       in (pf, n_il)) (others @ eq_others)
   in eq_consts @ marked_others
-	 
+
+and trans_const_bforms (bl: b_formula list) : b_formula list =
+  let pr_bl = pr_list !print_b_formula in
+  let pr_out = pr_bl in
+  Debug.no_1 "trans_const_bforms" pr_bl pr_out trans_const_bforms_x bl
+
 and partition_by_const eql =
   let rec helper (lbl, eq_const_lst) eq_lst = 
     let n_lbl, eq_consts, eq_others = 
