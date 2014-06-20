@@ -381,12 +381,6 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
             (Debug.devel_zprint (lazy ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n")) pos; [] )
           else 
-            (* (* TRUNG TODO: to insert acc_fold context here *)                  *)
-            (* let accfold_res = (                                                *)
-            (*   if !Globals.acc_fold then                                        *)
-            (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
-            (*   else []                                                          *)
-            (* ) in                                                               *)
             let mt_res = spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
             let mt_res = filter_match_res_list mt_res rhs_node in
             (* (accfold_res @ mt_res) *)
@@ -1174,7 +1168,7 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
     (lhs_h: CF.h_formula) (lhs_p: MCP.mix_formula)
     (rhs_h: CF.h_formula) (rhs_p: MCP.mix_formula)
     : action_wt list =
-  if !Globals.acc_fold then (
+  if (!Globals.acc_fold || !Globals.cts_acc_fold) then (
     let lhs_node = mt_res.match_res_lhs_node in
     let rhs_node = mt_res.match_res_rhs_node in
     let rhs_rest = mt_res.match_res_rhs_rest in

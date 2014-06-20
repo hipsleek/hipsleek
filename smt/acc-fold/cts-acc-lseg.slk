@@ -4,11 +4,11 @@ data node {
 }.
 
 pred lseg<p> == self = null
-    or self::node<_,r> * r::lseg<p>.
+    or self::node<_,r> * r::lseg<p> & self != null.
 
 
 checkentail_exact
-    x::node<_,p> * p::node<_,q>
+    x::node<_,p> * p::node<_,q> & x != null
         |- x::lseg<q>.
 print residue.
 expect Valid.
@@ -19,3 +19,6 @@ checkentail_exact
 print residue.
 expect Valid.
 // found Fail??
+
+checkentail_exact
+    x::lseg<q> |- x::node<_,p> * p::node<_,q> & x != null.
