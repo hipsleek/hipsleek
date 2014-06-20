@@ -1186,6 +1186,7 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
             if (CP.EMapSV.mem rv aliases) then true
             else false
         ) in
+        Debug.ninfo_hprint (add_str "can_accfold" string_of_bool) can_accfold no_pos;
         if (can_accfold) then (
           let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
           let lhs_heapchains = Accfold.collect_heap_chains lhs_h lhs_p lv vdecl prog in

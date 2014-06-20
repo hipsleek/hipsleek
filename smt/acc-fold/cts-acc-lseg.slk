@@ -3,22 +3,26 @@ data node {
     node next
 }.
 
-pred lseg<p> == self = null
-    or self::node<_,r> * r::lseg<p> & self != null.
+pred lseg<p> == self = p
+    or self::node<_,r> * r::lseg<p> & self != p.
 
 
 checkentail_exact
-    x::node<_,p> * p::node<_,q> & x != null
-        |- x::lseg<q>.
+    x::node<_,p> * p::node<_,q> * q::node<_,_>@L
+        |- x::lseg<_>.
 print residue.
 expect Valid.
 
 checkentail_exact
-    x::node<_,p> * p::node<_,q> * q::node<_,u> * u::node<_,v>
-        |- x::lseg<v>.
+    x::node<_,p> * p::node<_,q> * q::node<_,u> * u::node<_,v> * v::node<_,_>@L
+        |- x::lseg<_>.
 print residue.
 expect Valid.
-// found Fail??
 
+
+// apply cts-acc-fold is useful here
 checkentail_exact
-    x::lseg<q> |- x::node<_,p> * p::node<_,q> & x != null.
+    x::node<_,p> * p::node<_,q> * q::node<_,u> * u::node<_,v> * v::node<_,_>@L
+        |- x::lseg<k> * k::node<_,v>.
+print residue.
+expect Valid.

@@ -68,19 +68,18 @@ type heap_chain = CF.h_formula * CP.spec_var * CP.spec_var * CP.spec_var
 
 let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (prog: C.prog_decl)
     : (heap_chain list * CF.h_formula) =
-  if ((List.length root_view.C.view_forward_ptrs != 1) 
-      || (List.length root_view.C.view_forward_fields != 1)) then
+  if ((List.length root_view.C.view_forward_ptrs > 1) 
+      || (List.length root_view.C.view_forward_fields > 1)) then
     ([], hf)
-  (* consider only the case the root view has 1 forward pointer and 1 forward field *)
+  (* consider only the case the root view has at most 1 forward pointer and at most 1 forward field *)
   else (
-    let fw_ptr = List.hd root_view.C.view_forward_ptrs in
-    let fw_field = snd (List.hd root_view.C.view_forward_fields) in
     let root_dname = root_view.C.view_data_name in
     let root_vname = root_view.C.view_name in
     let rec extract_atomic_chain hf = (match hf with
       | CF.DataNode dn ->
-          if (String.compare dn.CF.h_formula_data_name root_dname = 0) then (
+          if (eq_str dn.CF.h_formula_data_name root_dname) then (
             try 
+              let fw_field = snd (List.hd root_view.C.view_forward_fields) in
               let ddecl = C.look_up_data_def_raw prog.C.prog_data_decls root_dname in
               let entry_sv = dn.CF.h_formula_data_node in
               let last_sv = entry_sv in
@@ -99,8 +98,9 @@ let collect_atomic_heap_chain_x (hf: CF.h_formula) (root_view: C.view_decl) (pro
           )
           else ([], hf)
       | CF.ViewNode vn ->
-          if (String.compare vn.CF.h_formula_view_name root_vname = 0) then (
+          if (eq_str vn.CF.h_formula_view_name root_vname) then (
             try 
+              let fw_ptr = List.hd root_view.C.view_forward_ptrs in
               let entry_sv = vn.CF.h_formula_view_node in
               let last_sv = entry_sv in
               let exit_sv = (
