@@ -1279,7 +1279,7 @@ let dis_bk ()=
   let _ = sat_timeout_limit:= 2. in
   let _ = user_sat_timeout := false in
   let _ = imply_timeout_limit := 3. in
-  let _ = en_slc_ps := false in
+  (* let _ = en_slc_ps := false in *)
   ()
 
 let dis_pred_sat () = 
@@ -1295,7 +1295,7 @@ let en_bk () =
   let _ = sat_timeout_limit:= 1. in
   let _ = user_sat_timeout := true in
   let _ = imply_timeout_limit := 1. in
-  let _ = en_slc_ps := true in
+  (* let _ = en_slc_ps := true in *)
   ()
 
 let en_pred_sat () =

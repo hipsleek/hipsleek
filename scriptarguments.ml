@@ -724,7 +724,7 @@ let common_arguments = [
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := false; (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
