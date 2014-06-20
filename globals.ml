@@ -480,7 +480,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -516,7 +516,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -613,7 +613,7 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 (* let null_name = "null" *)
-let null_name = "_"
+let null_name = "_null"
 
 let is_null name =
   name = null_name

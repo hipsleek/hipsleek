@@ -528,7 +528,7 @@ let is_int_const (s:spec_var) : bool =
      (is_int_str n)
 
 let conv_var_to_exp (v:spec_var) :exp =
-  if (full_name_of_spec_var v="null") then (Null no_pos)
+  if (full_name_of_spec_var v=Globals.null_name) then (Null no_pos)
   else match get_int_const (name_of_spec_var v) with
     | Some i -> IConst(i,no_pos)
     | None -> Var(v,no_pos)

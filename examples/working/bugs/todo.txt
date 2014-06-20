@@ -91,7 +91,50 @@ expect Valid.
 why fail with and without --imm?
 
 ==================================================
-==================================================
+orrect behavior:
+gather_type_info_b_formula@9@8@7@5@4@3
+gather_type_info_b_formula inp1 :self = null
+gather_type_info_b_formula inp2 :[(self:14:node)(q:13:node)]
+gather_type_info_b_formula@9 EXIT:[(self:14:node)(TVar__15:15:null)(q:13:node)]
+
+leads to:
+compute_invariants@41@39
+compute_invariants inp1 :[self,q]
+compute_invariants inp2 : ,[{1} -> {[]} [ q=null; self=null]; 
+{2} -> {[self,q]} [ q!=null; self!=null]]
+compute_invariants@41 EXIT: ,
+  [{1,2} -> {[]} []; 
+   {1} -> {[]} [ q=null; self=null];
+   {2} -> {[self,q]} [ q!=null; self!=null]]
+
+-------------------------------------------------------------------------------------------------
+-
+incorrect behavior:
+gather_type_info_pure@9@8@6@5@4@3
+gather_type_info_pure inp1 :self = null
+gather_type_info_pure inp2 :[(self:18:node)(q:17:node)]
+gather_type_info_pure@9
+EXIT:[(TVar__20:20:node)(self:18:node)(TVar__19:19:node)(q:17:node)]
+
+leads to:
+compute_invariants@42@40
+compute_invariants inp1 :[self,q]
+compute_invariants inp2 : ,
+     [{1} -> {[]} []; 
+     {2} -> {[self,q]} [ self!=null]]
+compute_invariants@42 EXIT: ,[\
+  {1,2} -> {[]} []; 
+  {1} -> {[]} [];  // q=_ & self=_
+  {2} -> {[self,q]} [self!=null]]
+-------------------------------------------------------------------------------------------------
+-
+the problem is that due to the fact that there is no type for null, the prunning
+conditions for base case are incorrect:
+{1} -> {[]} [ q=null; self=null]; 
+vs
+ {1} -> {[]} [];
+
+===================================================
 ==================================================
 ==================================================
 ==================================================
