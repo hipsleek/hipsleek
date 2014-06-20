@@ -2144,10 +2144,56 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
+and detect_late_contra_helper ctx_lst =
+  let rec helper ctx_lst =
+    match ctx_lst with
+      | []      -> []
+      | ctx::t  -> 
+            let ctx = 
+              match ctx with 
+                | Ctx es         ->
+                      (* how to detect infr?  *)
+                      (* let pp_rhs_len = rhs_pure_stk # len in *)
+                      (* below does ignores the benefits  of eps? *)
+                      (* let pp_rhs_stk = rhs_pure_stk # get_stk in *)
+                      (* let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (CP.mkTrue no_pos) pp_rhs_stk in  *)
+                      (* let _ = Debug.ninfo_hprint (add_str "detect_late_contra_helper pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in *)
+                      (* let tmp_rhs =  pp_rhs in (\* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *\) *)
+                      (* let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in *)
+                      (* let _ = Debug.info_hprint (add_str "detect_late_contra_helper tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in *)
+                      (* Debug.ninfo_hprint (add_str "contra detect, res" string_of_bool) contr pos; *)
+                      (* (\* let _ =  rhs_pure_stk # push  pp_rhs in *\) *)
+                      (* if not (contr) then *)
+                      (* else *) ctx
+                | OCtx (es1,es2) -> ctx
+                      
+            in
+            let tail_ctx = helper t in
+            ctx::tail_ctx
+  in
+  helper ctx_lst
+
+and late_contra_wrapper f opt rhs_p =
+  let rs0, fold_prf =
+    if (!Globals.fold_contra_detect) then
+      let _ = rhs_pure_stk # push rhs_p in
+      (* call the entailment *)
+      let rs0, fold_prf = f opt in 
+      let rs0 = 
+        match rs0 with
+          | FailCtx _       -> rs0 
+          | SuccCtx ctx_lst -> SuccCtx (detect_late_contra_helper ctx_lst)
+      in
+      let _ = rhs_pure_stk # pop in
+      (rs0, fold_prf)
+    else f None in 
+  (rs0, fold_prf)
+
 and contra_wrapper f opt rhs_p =
   let rs0, fold_prf =
     if (!Globals.fold_contra_detect) then
       let _ = rhs_pure_stk # push rhs_p in
+      (* call the entailment *)
       let rs0, fold_prf = f opt in 
       let _ = rhs_pure_stk # pop in
       (rs0, fold_prf)
@@ -7625,7 +7671,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         let pp_rhs_stk = rhs_pure_stk # get_stk in
         let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
         let _ = Debug.ninfo_hprint (add_str " folding: " string_of_bool ) is_folding pos in
-        let _ = Debug.info_hprint (add_str " folding [heap_entail_empty_heap] pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in
+        let _ = Debug.ninfo_hprint (add_str " folding [heap_entail_empty_heap] pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in
         let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
         let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in
         let _ = Debug.info_hprint (add_str " folding [heap_entail_empty_heap] tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in

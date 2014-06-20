@@ -1093,22 +1093,26 @@ and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
 
-and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
+(**
+   Andreeac: differentiate between l2r and r2l lemmas, so that fold lemmas will be added as COND with fold, and left lemmas 
+will be added in cond with unfold. lemma bef fold/unfold
+*)
+and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res prio0 = 
   if flag_lem then 
     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
-        else (1,M_lemma (m_res,Some l))) left_ls else [] in
+        else (prio0,M_lemma (m_res,Some l))) left_ls else [] in
     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
     let right_act =  
       List.fold_left (fun acc l -> 
           if  (vr_new_orig || (non_loop_candidate l)) then
-            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
+            let prio =  if ((Immutable.is_lend l.Cast.coercion_body) && vr_new_orig ) then 1 else prio0 in 
             acc@[(prio,M_lemma (m_res,Some l))]
           else acc) [] right_ls
     in
-    left_act@right_act
+    right_act@left_act
   else  []
 
 and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f = 
@@ -1377,97 +1381,97 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
                 let l2,syn_lem_typ = (
-                     let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                     let uf_i = if new_orig then 0 else 1 in
-                     let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                     if flag  then
-                       [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
-                     else
-                       let a1 = (2,M_base_case_unfold m_res) in
-                       (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
-                       (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
-                       let a2 = (
-                           if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
-                             (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
-                               let a21 = (1,M_match m_res) in
-                               let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
-                               let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
-                               (* (1,Cond_action [a21;a22]) *) a22
-                           else (1,M_match m_res)
-                       ) in
-                       let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
-                    let a3 = (
-                      (*Do not fold/unfold LOCKs, only match*)
-                      if (is_l_lock || is_r_lock) then Some a2 else 
-                        if (String.compare vl_name vr_name)==0 then Some (if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]))
-                        else None
-                    ) in
-                    let a4 = (
-                      (*Do not fold/unfold LOCKs*)
-                      if (is_l_lock || is_r_lock) then None else 
-                        if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (m_res,0))
-                        else if not(vr_is_rec) then Some (2,M_fold m_res) 
-                        else None
-                    ) in
-                    let a5 = (
-                      if a4==None then
-                        begin
-                          let l1 =
-                            (*Do not fold/unfold LOCKs*)
-                            if (is_l_lock) then [] else 
-                              if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
-                              then  [(2,M_fold m_res)] 
-                              else [] in
-                          let l2 =
-                            (*Do not fold/unfold LOCKs*)
-                            if (is_r_lock) then [] else
-                              if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
-                              then [(2,M_unfold (m_res,0))]
-                              else [] in
-                          let l = l1@l2 in
-                          if l=[] then None
-                          else Some (2,Cond_action l) 
-                        end
-                      else a4 
-                    ) in
-                    let a6 = (
-                      match a3 with 
-                        | None -> a5
-                        | Some a1 -> 
-                              if not(a4==None) then a3
-                              else 
-                                match a5 with
-                                  | None -> a3
-                                  | Some a2 -> Some (1,Cond_action [a2; a1]) 
-                    ) in
-                    let a7 = 
+                    let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                    let uf_i = if new_orig then 0 else 1 in
+                    let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                    if flag  then
+                      [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
+                    else
+                      let a1 = (2,M_base_case_unfold m_res) in
+                      (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
+                      (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
+                      let a2 = (
+                          if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
+                            (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
+                              let a21 = (1,M_match m_res) in
+                              let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
+                              let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
+                              (* (1,Cond_action [a21;a22]) *) a22
+                          else (1,M_match m_res)
+                      ) in
+                      let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
+                      let a3 = (
+                          (*Do not fold/unfold LOCKs, only match*)
+                          if (is_l_lock || is_r_lock) then Some a2 else 
+                            if (String.compare vl_name vr_name)==0 then Some (if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]))
+                            else None
+                      ) in
+                      let a4 = (
+                          (*Do not fold/unfold LOCKs*)
+                          if (is_l_lock || is_r_lock) then None else 
+                            if not(vl_is_rec) && not(vl_is_prim) then Some (2,M_unfold (m_res,0))
+                            else if not(vr_is_rec) then Some (2,M_fold m_res) 
+                            else None
+                      ) in
+                      let a5 = (
+                          if a4==None then
+                            begin
+                              let l1 =
+                                (*Do not fold/unfold LOCKs*)
+                                if (is_l_lock) then [] else 
+                                  if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                                  then  [(2,M_fold m_res)] 
+                                  else [] in
+                              let l2 =
+                                (*Do not fold/unfold LOCKs*)
+                                if (is_r_lock) then [] else
+                                  if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
+                                  then [(2,M_unfold (m_res,0))]
+                                  else [] in
+                              let l = l1@l2 in
+                              if l=[] then None
+                              else Some (2,Cond_action l) 
+                            end
+                          else a4 
+                      ) in
+                      let a7 = 
                         if (!Globals.smart_lem_search) then
-                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
-                          match a6 with
-                            | Some a ->  Some (1, Cond_action ([a]@lem_act))
-                            | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
-                        else a6 
-                    in
-                    match a6 with
-                      | Some a -> [a],syn_lem_typ
-                      | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
-                        (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
-                        (* let _ = Debug.ninfo_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
-                        (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                        (*cyclic: add lemma_unsafe then unfold lhs*)
-                        (*L2: change here for cyclic*)
-                        let lst=
-                              let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                              if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
-                                let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                                let uf_i = if new_orig then 0 else 1 in
-                                [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
-                              else
-                                [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
-                            in
-                            (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
-                            (*L2: change here for cyclic*)
-                            [(1,Cond_action lst)],syn_lem_typ
+                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 in
+                          match a5 with
+                            | Some a ->  Some (2, Cond_action (a::[(2, Search_action(lem_act))]))
+                            | None   ->  if List.length lem_act > 0 then Some (2, Search_action (lem_act)) else None 
+                        else a5 
+                      in
+                      let a6 = (
+                          match a3 with 
+                            | None -> a7
+                            | Some a1 -> 
+                                  if not(a4==None) then a3
+                                  else 
+                                    match a7 with
+                                      | None -> a3
+                                      | Some a2 -> Some (1,Cond_action [a2; a1]) 
+                      ) in
+                      match a6 with
+                        | Some a -> [a],syn_lem_typ
+                        | None -> let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
+                          (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
+                          (* let _ = Debug.ninfo_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
+                          (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
+                          (*cyclic: add lemma_unsafe then unfold lhs*)
+                          (*L2: change here for cyclic*)
+                          let lst=
+                            let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                            if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
+                              let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                              let uf_i = if new_orig then 0 else 1 in
+                              [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
+                            else
+                              [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
+                          in
+                          (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
+                          (*L2: change here for cyclic*)
+                          [(1,Cond_action lst)],syn_lem_typ
                 ) in
                 (* using || results in some repeated answers but still terminates *)
                 (* let l3 = ( *)
@@ -1488,8 +1492,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*     left_act@right_act *)
                 (*   else  [] *)
                 (* ) in *)
-                let l3 = (* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res (* else [] *) in
+                let l3 = if not (!Globals.smart_lem_search) then
+                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 1 else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
@@ -1994,6 +1998,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
           (*drop ummatched actions if possible*)
           (* let l = drop_unmatched_action l in *)
           let l = List.map recalibrate_wt l in
+          (* let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in *)
           let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
           (rw,Cond_action l)
     | Seq_action l ->
