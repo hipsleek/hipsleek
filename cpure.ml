@@ -503,7 +503,8 @@ let is_int_str (s:string) : bool =
     is_int_str_aux n s
 
 (* check if a string is a null const *)
-let is_null_str (s:string) : bool = (s="null")
+let is_null_str (s:string) : bool = 
+  (s==Globals.null_name)
 
 
 (* is string a constant?  *)
@@ -527,7 +528,7 @@ let is_int_const (s:spec_var) : bool =
      (is_int_str n)
 
 let conv_var_to_exp (v:spec_var) :exp =
-  if (full_name_of_spec_var v="null") then (Null no_pos)
+  if (full_name_of_spec_var v=Globals.null_name) then (Null no_pos)
   else match get_int_const (name_of_spec_var v) with
     | Some i -> IConst(i,no_pos)
     | None -> Var(v,no_pos)
@@ -1692,7 +1693,7 @@ and is_varperm_of_typ_b (b : b_formula) typ: bool =
           else false
     | _ -> false
 
-and trans_eq_bform (b : b_formula) : b_formula =
+and trans_eq_bform_x (b : b_formula) : b_formula =
   let (pf, il) = b in
   match pf with
     | Neq _ -> 
@@ -1703,7 +1704,11 @@ and trans_eq_bform (b : b_formula) : b_formula =
     | Eq _ -> (pf, None)
     | _ -> b
 
-and trans_const_bforms (bl: b_formula list) : b_formula list =
+and trans_eq_bform (b : b_formula) : b_formula =
+  let pr = !print_b_formula in
+  Debug.no_1 "trans_eq_bform" pr pr trans_eq_bform_x b
+
+and trans_const_bforms_x (bl: b_formula list) : b_formula list =
   let eq_constrs, others = List.partition (fun (pf, _) ->
       match pf with | Eq _ -> true | _ -> false) bl in
   let const_vars, eq_consts, eq_others = partition_by_const eq_constrs in
@@ -1717,7 +1722,12 @@ and trans_const_bforms (bl: b_formula list) : b_formula list =
 	| Some (is_lnk, _, e_lnk) -> Some (is_lnk, Globals.fresh_int (), e_lnk @ lnk_var_exps)
       in (pf, n_il)) (others @ eq_others)
   in eq_consts @ marked_others
-	 
+
+and trans_const_bforms (bl: b_formula list) : b_formula list =
+  let pr_bl = pr_list !print_b_formula in
+  let pr_out = pr_bl in
+  Debug.no_1 "trans_const_bforms" pr_bl pr_out trans_const_bforms_x bl
+
 and partition_by_const eql =
   let rec helper (lbl, eq_const_lst) eq_lst = 
     let n_lbl, eq_consts, eq_others = 
@@ -2162,6 +2172,12 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
     mkTrue pos
   else
     BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+
+and mkEqNull (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkTrue pos
+  else
+    BForm ((Eq (Var (sv1, pos), Null no_pos, pos), None),None)
 
 and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
@@ -3918,16 +3934,16 @@ and prune_perm_bounds f =
     | Forall (v,f,l,pos) -> mkForall [v] (helper_f f) l pos
     | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos
   in
-  helper_f f 
-      
-(* 
+  helper_f f
+
+(*
    Get a list of conjuncts, namely
-   F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 
+   F1 & F2 & .. & Fn ==> [F1,F2,..,FN]
    TODO : push exists inside where possible..
 *)
 and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
 
-and list_of_conjs (f0 : formula) : formula list = 
+and list_of_conjs (f0 : formula) : formula list =
   Debug.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
   (*let rec helper f conjs = match f with
     | And (f1, f2, pos) ->
@@ -3938,24 +3954,24 @@ and list_of_conjs (f0 : formula) : formula list =
     in
     helper f0 []*)
 
-  
-and split_disjunctions = 
+
+and split_disjunctions =
   (* split_disjuncts *)
   function
     | Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
     | z -> [z]
 
 and join_disjunctions xs = disj_of_list xs no_pos
-  
+
 (******************)
 (*collect all bformula of f0*)
 and list_of_bformula (f0:formula): formula list = match f0 with
-  | BForm _ 
-  | Forall _ 
+  | BForm _
+  | Forall _
   | Exists _ -> [f0]
-  | And (f1,f2,_) 
+  | And (f1,f2,_)
   | Or (f1,f2,_,_) ->(list_of_bformula f1)@(list_of_bformula f2)
-  | Not (f1,_,_) ->list_of_bformula f1    
+  | Not (f1,_,_) ->list_of_bformula f1
   | AndList b -> fold_l_snd list_of_bformula b
 
 and  check_dependent f ls_working: bool=
@@ -4285,15 +4301,17 @@ let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 module SV =
 struct 
   type t = spec_var
-  let zero = mk_spec_var "_" (* to denote null value *)
+  let zero = mk_spec_var Globals.null_name 
+    (* "_" to denote null value *)
   let is_zero x = x==zero
   let eq = eq_spec_var
   let compare = compare_spec_var
-  let string_of = string_of_spec_var
+  let string_of x = (* "X"^ *)(string_of_spec_var x)
   let conv_var x = x
   let conv_var_pairs x = x
   let from_var x = x
   let from_var_pairs x = x
+  let mk_elem x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
     match b1,b2 with
@@ -4354,9 +4372,10 @@ type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
 
-   (* type ef_pure = (spec_var list * var_aset * (spec_var * spec_var) list)  *)
+type ef_part = (spec_var list) list
+type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list)
 (* old extended pure formula *)
-type ef_pure = (spec_var list * formula)
+(* type ef_pure = (spec_var list * formula) *)
 
 (* disjunctive extended pure formula *)
 (* [] denotes false *)

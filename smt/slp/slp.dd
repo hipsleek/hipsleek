@@ -1,2 +1,3 @@
-find_case_split
-norm_graph
+view_unsat_check_topdown
+process_vis
+build_vis

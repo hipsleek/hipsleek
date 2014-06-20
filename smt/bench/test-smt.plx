@@ -18,8 +18,8 @@ use Time::HiRes qw(gettimeofday);
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
-my $sleek = "$cwd/bin/sleek"; #"../../sleek";
-my $smt2slk = "$cwd/bin/smt2slk"; #"smt2slk"; #"../smt2slk/bin/smt2slk";
+my $sleek = "../../sleek";
+my $smt2slk = "smt2slk"; #"$cwd/bin/smt2slk"; #"../smt2slk/bin/smt2slk";
 my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
@@ -90,31 +90,34 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "08.tst.smt2",
-    "10.tst.smt2",
-    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
-    "dll-entails-dll0+.smt2",
-     "dll-rev-entails-dll.smt2",
-    "dll-entails-dll-rev.smt2",
-    "dll-mid-entails-dll-rev.smt2",
-    "dll-rev-entails-dll-mid.smt2",
-    "dll-spaghetti-existential.smt2",
-    "dll2-entails-dll2-rev.smt2",
-    "dll2-rev-entails-dll2.smt2",
-    "dll2-spaghetti-existential.smt2",
-    "dll2-spaghetti.smt2",
-    "nlcl-vc05.smt2",
-    "node-dll-rev-dll-entails-dll.smt2",
-    "tll-pp-entails-tll-pp-rev.smt2",
-    "tll-pp-rev-entails-tll-pp.smt2",
-    "tll-ravioli-existential.smt2",
-    "tree-pp-entails-tree-pp-rev.smt2",
-    "tree-pp-rev-entails-tree-pp.smt2",
-    "dll-vc07.smt2",
-    "dll-vc08.smt2","dll-vc10.smt2",
-    "nlcl-vc05.smt2",
+"11.tst.smt2",
+"dll-spaghetti-existential.smt2",
+"nlcl-vc05.smt2",
+"tll-ravioli-existential.smt2"
+    # "08.tst.smt2",
+    # "10.tst.smt2",
+    # "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
+    # "dll-entails-dll0+.smt2",
+    #  "dll-rev-entails-dll.smt2",
+    # "dll-entails-dll-rev.smt2",
+    # "dll-mid-entails-dll-rev.smt2",
+    # "dll-rev-entails-dll-mid.smt2",
+    # "dll-spaghetti-existential.smt2",
+    # "dll2-entails-dll2-rev.smt2",
+    # "dll2-rev-entails-dll2.smt2",
+    # "dll2-spaghetti-existential.smt2",
+    # "dll2-spaghetti.smt2",
+    # "nlcl-vc05.smt2",
+    # "node-dll-rev-dll-entails-dll.smt2",
+    # "tll-pp-entails-tll-pp-rev.smt2",
+    # "tll-pp-rev-entails-tll-pp.smt2",
+    # "tll-ravioli-existential.smt2",
+    # "tree-pp-entails-tree-pp-rev.smt2",
+    # "tree-pp-rev-entails-tree-pp.smt2",
+    # "dll-vc07.smt2",
+    # "dll-vc08.smt2","dll-vc10.smt2",
+    # "nlcl-vc05.smt2",
     # Exception
-
     );
   } elsif ($test_10s) {
     @test_files = (

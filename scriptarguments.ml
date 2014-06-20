@@ -240,6 +240,7 @@ let common_arguments = [
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
+  ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
@@ -555,12 +556,12 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv  ,"generate baga inv from view");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv (* Arg.Unit Globals.en_inv_baga *) ,"generate baga inv from view");
+  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
-  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 

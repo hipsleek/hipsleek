@@ -100,7 +100,7 @@ let proc_gen_cmd cmd =
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-    | Validate (id, lc) -> process_validate id lc
+    | Validate (vr, lc) -> process_validate vr lc
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapeLFP ids -> process_shape_lfp ids

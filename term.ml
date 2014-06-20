@@ -620,7 +620,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = MCP.mix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
-  if !Globals.dis_term_chk or estate.es_term_err != None then
+  if !Globals.dis_term_chk || estate.es_term_err != None then
     (* Remove LexVar in RHS *)
     (*TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in

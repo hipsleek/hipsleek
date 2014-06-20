@@ -7,7 +7,7 @@ pred b1<y,z> ==
      self=y
      or (exists u: self::node<y> * z::node<u>).
 
-//[([], self=y),([self], true),([z,self], true)]
+//[([], self=y),([z,self], true)]
 
 
 checkentail x::b1<y,z> * z::node<_> & x!=y |- false.
