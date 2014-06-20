@@ -1,0 +1,31 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+//Fail.Fail.Valid.Valid.Fail.Valid.
+//Valid.Fail.Fail.
+//Valid.Fail.Fail.Valid.Valid.Valid.
+
+checkentail true |- false.
+print residue.
+
+
+
+checkentail x=1 |- false.
+print residue.
+
+
+checkentail x=1 & x=2 |- false.
+print residue.
+
+/*
+
+ sat_f |- false  (must failure)
+
+ unknown_f |- false (may_failure)
+
+ unsaf_f |- false (valid)
+
+*/

@@ -137,7 +137,7 @@ and view_decl = {
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
     view_pos : loc;
     view_raw_base_case: Cformula.formula option;
-    view_ef_pure_disj : P.ef_pure_disj option
+    view_ef_pure_disj : Excore.ef_pure_disj option
 }
 
 (* An Hoa : relation *)

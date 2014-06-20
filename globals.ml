@@ -6,6 +6,7 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let debug_precise_trace = ref false
 
@@ -479,7 +480,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -515,7 +516,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -611,7 +612,12 @@ let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
-let null_name = "null"
+(* let null_name = "null" *)
+let null_name = "_null"
+
+let is_null name =
+  name = null_name
+
 let inline_field_expand = "_"
 
 let sl_error = "separation entailment"
@@ -1275,7 +1281,7 @@ let dis_bk ()=
   let _ = sat_timeout_limit:= 2. in
   let _ = user_sat_timeout := false in
   let _ = imply_timeout_limit := 3. in
-  let _ = en_slc_ps := false in
+  (* let _ = en_slc_ps := false in *)
   ()
 
 let dis_pred_sat () = 
@@ -1291,7 +1297,7 @@ let en_bk () =
   let _ = sat_timeout_limit:= 1. in
   let _ = user_sat_timeout := true in
   let _ = imply_timeout_limit := 1. in
-  let _ = en_slc_ps := true in
+  (* let _ = en_slc_ps := true in *)
   ()
 
 let en_pred_sat () =
@@ -1505,7 +1511,7 @@ let path_trace_lt p1 p2 =
     | [],[] -> false
     | [],xs -> true
     | xs,[] -> false
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 && b1=b2 && lt zt1 zt2)
   in lt (List.rev p1) (List.rev p2)
 
 let path_trace_gt p1 p2 =
@@ -1513,15 +1519,15 @@ let path_trace_gt p1 p2 =
     | [],[] -> false
     | [],xs -> false
     |  xs,[] -> true
-    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 && b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
- 
+
 let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option) 
+  (fn : 'a -> (string * ('a list)) option)
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with

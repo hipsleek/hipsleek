@@ -240,6 +240,7 @@ let common_arguments = [
   ("--en-thrd-resource", Arg.Set Globals.allow_threads_as_resource,"enable threads as resource");
   ("--en-thrd-and-conj", Arg.Clear Globals.allow_threads_as_resource,"enable threads as AND-conjunction (not threads as resource)");
   ("--seg-opt", Arg.Set Globals.graph_norm,"enable the graph-based optimization for segment data structures");
+  ("--dis-seg-opt", Arg.Clear Globals.graph_norm,"disable the graph-based optimization for segment data structures");
   ("--oc-dis-simp", Arg.Clear Globals.oc_simplify,"disable oc simplification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
@@ -553,12 +554,12 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv  ,"generate baga inv from view");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv (* Arg.Unit Globals.en_inv_baga *) ,"generate baga inv from view");
+  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
   ("--dis-baga-xpure",Arg.Clear Globals.baga_xpure,"do not use baga for xpure");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
-  ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--dis-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
   ("--en-imm-baga",Arg.Clear Globals.baga_imm,"disable baga inv from view");
 
@@ -629,7 +630,9 @@ let common_arguments = [
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
-  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  ("--dlg",
+  ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  
+  ("--dlg",
      Arg.Unit
       (fun _ -> 
           Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
@@ -725,7 +728,7 @@ let common_arguments = [
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := false; (*this flag is one that is  diff with compared to --smt-compete *)
+          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;

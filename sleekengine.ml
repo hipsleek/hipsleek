@@ -12,6 +12,29 @@ open Exc.GTable
 open Perm
 open Label_only
 
+let string_of_vres t =
+  match t with
+    | VR_Valid -> "Valid"
+    | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
+    | VR_Unknown s -> "UNKNOWN("^s^")"
+
+let proc_sleek_result_validate lc =
+  match lc with
+    | CF.FailCtx _ ->
+      if CF.is_must_failure lc then VR_Fail 1
+      else VR_Fail (-1)
+    | CF.SuccCtx c -> 
+      match CF.get_must_error_from_ctx c with
+      | None -> VR_Valid
+      | _ -> VR_Fail 1
+(* TODO : why do we need two diff kinds of must-errors? *)
+(* Is there any difference between the two? *)
+
+let proc_sleek_result_validate lc =
+  Debug.no_1 "proc_sleek_result_validate" 
+  Cprinter.string_of_list_context_short string_of_vres 
+  proc_sleek_result_validate lc
+
 module H = Hashtbl
 module I = Iast
 (* module Inf = Infer *)
@@ -579,7 +602,7 @@ let convert_data_and_pred_to_cast_x () =
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         (* let _ = Globals.gen_baga_inv := false in *)
-      let _ = Globals.dis_pred_sat () in
+      (* let _ = Globals.dis_pred_sat () in *)
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
@@ -638,7 +661,7 @@ let convert_data_and_pred_to_cast_x () =
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
-  let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
+  let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
@@ -1370,43 +1393,67 @@ let process_validate exp_res ils_es =
   (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
-          let _ =
-            if (exp_res = "Fail")
-            then
-              res_str := "Expected.\n"
-            else
-              let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-              res_str :=  "Not Expected.\n"
-          in
+          let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
+          let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+          (*   if (exp_res = "Fail") *)
+          (*   then *)
+          (*     res_str := "Expected.\n" *)
+          (*   else *)
+          (*     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+          (*     res_str :=  "Not Expected.\n" *)
+          (* in *)
           (**res = Fail*)
           false, [], []
-    | Some (lc, res) -> begin (*res*)
-        match lc with
-          | CF.FailCtx _ ->
-                let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail") ||
-                      (CF.is_must_failure lc && exp_res = "Fail_Must") ||
-                      (not (CF.is_bot_failure lc) && exp_res = "Fail_May")) 
-                  (* if (exp_res = "Fail") *)
-                  then
-                    res_str := "Expected.\n"
-                  else 
+    | Some (lc, res) -> 
+          begin (*res*)
+            let res = proc_sleek_result_validate lc in
+            let unexp =
+              match res, exp_res with
+                | VR_Valid, VR_Valid -> None
+                | VR_Fail n1, VR_Fail n2 -> 
+                      if n2==0 then None
+                      else if n1==n2 then None
+                      else Some( "Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                | _,_ -> Some ("Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+            in
+            let _ = match unexp with
+              | None -> res_str := "OK"
+              | Some s -> 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-                    res_str := "Not Expected.\n"
-                in
-                (false, [], [])
-          | CF.SuccCtx cl ->
-                let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
-                let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
-                let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
-                  then
-                    res_str := "Expected.\n"
-                  else
-                    let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-                    res_str := "Not Expected.\n"
-                in
-                (true, ls_a_es, CP.remove_dups_svl act_vars)
+                    res_str := s
+            in
+            match lc with 
+              | CF.SuccCtx cl ->
+                    let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
+                    let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
+                    (true, ls_a_es, CP.remove_dups_svl act_vars)
+              |  _ -> (false,[],[])
+            (* match lc with *)
+            (*   | CF.FailCtx _ -> *)
+            (*         let _ = *)
+            (*           if ((res && exp_res = "Valid") || (not res && exp_res = "Fail") || *)
+            (*               (CF.is_must_failure lc && exp_res = "Fail_Must") || *)
+            (*               (not (CF.is_bot_failure lc) && exp_res = "Fail_May"))  *)
+            (*             (\* if (exp_res = "Fail") *\) *)
+            (*           then *)
+            (*             res_str := "Expected.\n" *)
+            (*           else  *)
+            (*             let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+            (*             res_str := "Not Expected.\n" *)
+            (*         in *)
+            (*         (false, [], []) *)
+            (*   | CF.SuccCtx cl -> *)
+            (*         let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in *)
+            (*         let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in *)
+            (*         let _ = *)
+            (*           if ((res && exp_res = "Valid") || (not res && exp_res = "Fail")) *)
+            (*           then *)
+            (*             res_str := "Expected.\n" *)
+            (*           else *)
+            (*             let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+            (*             res_str := "Not Expected.\n" *)
+            (*         in *)
+            (*         (true, ls_a_es, CP.remove_dups_svl act_vars) *)
       end
   in
   let _ = print_string (validate_id ^ !res_str) in

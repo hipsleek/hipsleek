@@ -1,0 +1,25 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or (exists r: self::node<r>*r::node<_> & r=q)
+inv q!=null.
+// baga {q}
+//!!! baga inv(l6):
+//[(BAGA:[q],EQ:[[_,self]],INEQ:[]),(BAGA:[q,self],EQ:[],INEQ:[])]
+
+//(2) (10) Valid
+
+
+//checkentail x::l6<q> * y::l6<q> |- false.
+checkentail x::l6<q> * y::l6<q2> & q=q2 |- false.
+expect Valid.
+//print residue.
+
+
+/*
+checkentail x::node<_> * y::node<_> & x=y |- false.
+expect Valid.
+*/
