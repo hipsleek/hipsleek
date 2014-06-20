@@ -77,6 +77,9 @@ let wrap_lemma_safe f a =
 let wrap_lemma_unsafe f a =
   wrap_one_bool Globals.check_coercions false f a
 
+let wrap_dis_fold_contra_detect f a =
+  wrap_one_bool Globals.fold_contra_detect false f a
+
 (* let proof_no = ref 0 *)
 
 (* let next_proof_no_str () = *)

@@ -1337,7 +1337,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline "*************************************" in
   ()
 
-let process_validate exp_res ils_es=
+let process_validate exp_res ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1347,8 +1347,7 @@ let process_validate exp_res ils_es=
     let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
     (lhs,rhs)
   in
-  let preprocess_iestate act_vars (iguide_vars
-, ief, iconstrs)=
+  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs) =
     let act_idents = (List.map CP.name_of_spec_var act_vars) in
     let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = Typeinfer.fresh_proc_var_kind ls t in
@@ -1385,11 +1384,13 @@ let process_validate exp_res ils_es=
         match lc with
           | CF.FailCtx _ ->
                 let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
+                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail") ||
+                      (CF.is_must_failure lc && exp_res = "Fail_Must") ||
+                      (not (CF.is_bot_failure lc) && exp_res = "Fail_May")) 
                   (* if (exp_res = "Fail") *)
                   then
                     res_str := "Expected.\n"
-                  else
+                  else 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
                     res_str := "Not Expected.\n"
                 in
@@ -1415,10 +1416,10 @@ let process_validate exp_res ils_es=
   (*     report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL" *)
   (* in *)
   let ex_r = true in
-  let _ = match a_r,ex_r with
-    | false,true
-    | true,false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
-    | false,false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
+  let _ = match a_r, ex_r with
+    | false, true
+    | true, false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
+    | false, false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
     | true, true ->
           (*syn new unknown preds generated between cprog and iprog*)
           let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in

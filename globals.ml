@@ -801,6 +801,8 @@ let cts_acc_fold = ref false
 
 let smart_lem_search = ref false
 
+let fold_contra_detect = ref true
+
 let sa_en_split = ref false
 
 let pred_split = ref false

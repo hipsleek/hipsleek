@@ -3784,9 +3784,9 @@ let sleek_of_data_decl d =
   (string_of_data_decl d) ^ ".";;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
-  | Iast.Left -> "==>"
-  | Iast.Right -> "<=="
-  | Iast.Equiv -> "<==>" ;;
+  | Iast.Left -> "->"
+  | Iast.Right -> "<-"
+  | Iast.Equiv -> "<->" ;;
 
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
@@ -3801,7 +3801,7 @@ let string_of_coercion_origin orig =
 
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
-  let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
+  let s1="lemma \""^c.coercion_name^"\" "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
   if is_short op then s1
   else let s2 = s1^(string_of_formula c.coercion_body) in
   if is_medium op then s2
