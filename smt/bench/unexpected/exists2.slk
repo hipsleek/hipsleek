@@ -1,0 +1,6 @@
+data node {
+  int x;
+}.
+
+checkentail_exact x::node<_> |- y::node<_>.
+expect Fail_Must.
