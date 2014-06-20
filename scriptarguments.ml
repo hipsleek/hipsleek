@@ -733,10 +733,10 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.en_pred_sat ();
           Globals.acc_fold := true;
           Globals.smart_lem_search := true;
-          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          Globals.gen_baga_inv := false;
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
           Globals.is_solver_local := true;
