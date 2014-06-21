@@ -20,7 +20,6 @@ my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
 my $sleek = "../../sleek";
 my $smt2slk = "smt2slk"; #"$cwd/bin/smt2slk"; #"../smt2slk/bin/smt2slk";
-my $options = "--smt-compete-test";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
@@ -45,6 +44,7 @@ my $test_10s;
 my $test_fail;
 my $test_bench = "";
 my $test_name = "";
+my $test_opt = "";
 
 sub println {
   print $_[0];
@@ -56,6 +56,7 @@ sub println {
   
 GetOptions (
   "all" => \$test_all,
+  "flags=s" => \$test_opt,
   "fail" => \$test_fail,
   "over10" => \$test_10s,
   "bench=s" => \$test_bench,
@@ -64,6 +65,12 @@ GetOptions (
   "time" => \$print_time,
   "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
+
+my @options = ("--smt-compete-test");
+if ($test_opt ne "") {
+  my @test_opts =  split(/ /, $test_opt);
+  push (@options, @test_opts); 
+}
 
 my @smt2_files;
 
@@ -355,7 +362,7 @@ foreach my $smt2_file (@smt2_files) {
       open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
       open(STDERR, ">&=WRITEME") or die "Couldn't redirect STDERR: $!";
       close(README);
-      exec($sleek, $options, "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
+      exec($sleek, @options, "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
       exit(0);
     }
   } else { # No timeout setting
