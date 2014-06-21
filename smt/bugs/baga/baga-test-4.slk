@@ -1,0 +1,22 @@
+data node {
+  node next;
+}.
+
+
+pred l7<q:node> == 
+  self=null & q=null
+  or (exists r:  self::node<r>*r::node<_> & r=q)
+inv true.
+
+/*
+# baga-test-4.slk --inv-baga
+
+Why isn't null captured as "_"?
+
+!!! baga inv(l7):
+  [(BAGA:[],EQ:emap[{null,q,self}],INEQ:[]),
+  (BAGA:[q,self],EQ:emap[],INEQ:[])]Hello
+
+
+*/
+
