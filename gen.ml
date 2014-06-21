@@ -742,21 +742,22 @@ struct
 
   let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
 
-  (* TODO : can we get in sorted order? *)
+  (* TODO : can we get in sorted order by elem *)
   let partition (s: emap) : epart =
     let s = emap_sort s in
-    let rec insert (a,k) acc = 
+    let rec insert  a k  acc = 
       match acc with
         | [] -> [(k,[a])]
-        | (k2,ls)::xs -> 
-              if k==k2 then (k,a::ls)::xs
-              else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun acc x ->  insert x acc) [] s in
+        | ((k2,ls) as p)::xs -> 
+              if (k==k2) then (k,a::ls)::xs
+              else p::(insert a k xs) in
+    let r = List.fold_left (fun acc (a,k) ->  insert a k acc) [] s in
+    let r = List.filter (fun (_,x) -> List.length x > 1) r in
     (* let r = List.rev r in *)
     let r = List.map ( fun (_,b) -> List.rev b) r in
+    r
     (* print_endline ((add_str "emap" string_of_emap) s); *)
     (* print_endline ((add_str "epart" string_of_epart) r); *)
-    List.filter (fun x -> List.length x > 1) r
 
   (* let partition (s: emap) : epart = *)
   (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
@@ -820,7 +821,7 @@ struct
           if r1==r2 then s
           else
             let r3=r1@r2 in
-            List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+            List.map (fun (a,b) -> if (b==r1 || b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
     let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in

@@ -202,23 +202,46 @@ Total verification time: 0.189718 second(s)
         Time spent in main process: 0.12858 second(s)
         Time spent in child processes: 0.061138 second(s)
 ====================================
-# succ-rec02.slk --inv-baga (old)
+# rec02.slk --inv-baga (old)
 
 With the old-baga, why do I get null=_null?
 
 !!! baga inv(P):[([], null!=self & null=_null & null!=x2)]
 Starting Omega...oc
 
-# succ-rec03.slk --inv-baga (old vs new)
+# rec03.slk --inv-baga (old vs new)
 
 # first difference detected: 
 
+#!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+--([], x2=y2 & x3=y3 & null=self & null!=y1),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+--([], null=y1 & y1=y2 & y1=x3 & null!=self & null!=y3 & null!=x2 )]
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2) (# old succ3rec #)
+
+# rec03.slk --inv-baga -dre "ex_mk_star"
 !!! baga inv(succ3rec):[
 (BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
 (BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
 (BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
-//([], null=y1 & null!=self & null!=y2 & null=x2 & y3=x3) (# old succ3rec #)
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+#### should be below : why?
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 
+# rec03a.slk --inv-baga -dre "ex_mk_star"
+(BAGA:[],EQ:[[_null,self],[x2xxx,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2xxx),(_null,y3)])
+(BAGA:[],EQ:[[_null,x2xxx,y1],[x3,y3]],INEQ:[(_null,self),(_null,y2)]),
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2)
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 ====================================
 ====================================
 ====================================

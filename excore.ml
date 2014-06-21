@@ -354,7 +354,7 @@ struct
 
   let is_false (e:epure) = (e == mk_false)
   let string_of (x:epure) = pr_pair (pr_list Elt.string_of) !print_pure_formula x
-  let string_of_disj lst = pr_list string_of lst
+  let string_of_disj lst = pr_list_ln string_of lst
   let mk_data sv = [([sv], mkTrue no_pos)] 
 
   let merge_baga b1 b2 = Elt.merge_baga b1 b2

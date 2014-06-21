@@ -8,7 +8,10 @@ Starting z3...
 
 !!! baga inv(succ2rec):[(BAGA:[],EQ:[[_null,self],[x2,y2]],INEQ:[(_null,y1)]),(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])]
 
-!!! baga inv(succ3rec):[(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
 
 !!! baga inv(Q):[(BAGA:[],EQ:[[_null,self,y2,y3]],INEQ:[]),(BAGA:[],EQ:[[_null,self,y2]],INEQ:[(_null,y3)]),(BAGA:[],EQ:[[_null,self,y3]],INEQ:[(_null,y2)]),(BAGA:[],EQ:[[_null,y2]],INEQ:[(_null,self),(_null,y3)]),(BAGA:[],EQ:[[_null,y2,y3]],INEQ:[(_null,self)]),(BAGA:[],EQ:[[_null,y3]],INEQ:[(_null,self),(_null,y2)])]
 
