@@ -2624,7 +2624,7 @@ and find_materialized_prop_x params forced_vars (f0 : CF.formula) : C.mater_prop
   let eqns = MCP.ptr_equations_with_null pf in
   let asets = Context.alias eqns in
   let self_aset =
-  Context.get_aset asets (CP.SpecVar (Named "", self, Unprimed))
+  Context.get_aset asets (CP.SpecVar (Globals.null_type, self, Unprimed))
   in self_aset
 *)
 and all_paths_return (e0 : I.exp) : bool =
@@ -3502,7 +3502,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
       | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
             ((C.Unfold {
-                C.exp_unfold_var = CP.SpecVar (Named "", v, p);
+                C.exp_unfold_var = CP.SpecVar (Globals.null_type, v, p);
                 C.exp_unfold_pos = pos;
             }), C.void_type)
                 (* An Hoa MARKED *)
@@ -4376,7 +4376,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       C.exp_block_pos = pos; }),new_t))
                 end
                     (***********<< processing New ********)
-      | I.Null pos -> ((C.Null pos), (Named ""))
+      | I.Null pos -> ((C.Null pos), Globals.null_type)
       | I.Return {I.exp_return_val = oe;
         I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
         I.exp_return_pos = pos} ->  begin

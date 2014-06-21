@@ -243,6 +243,16 @@ ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
 ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
 ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 ====================================
+# rec03.slk --inv-baga (old-baga has 2 version of null!)
+
+!!! baga inv(Q):[([], null=self & null=y2 & null=y3),
+([], null=_null & null!=self & _null=y3 & _null=y2),
+([], null!=y2 & null=_null & null!=self & _null=y3),
+([], null!=y2 & null!=y3 & null=_null & null!=self),
+([], null!=y3 & null=_null & null!=self & _null=y2),
+([], null=_null & null!=y2 & _null=y3 & _null=self),
+([], null=_null & null!=y3 & null!=y2 & _null=self),
+([], null=_null & null!=y3 & _null=y2 & _null=self)]
 ====================================
 ====================================
 ====================================

@@ -870,9 +870,9 @@ struct
     else (l1,l2)
 
   (* merge two equivalence sets s1 /\ s2 *)
-  let merge_eset (s1: emap) (s2: emap): emap =
-    let (t1,t2) = order_two s1 s2 in
-    List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
+  let merge_eset (t1: emap) (t2: emap): emap =
+    (* let (t1,t2) = order_two t1 t2 in *)
+   List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
 
   (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 

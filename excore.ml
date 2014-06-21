@@ -1371,9 +1371,9 @@ struct
 
 end
 
-(* module EPureI = EPURE(SV) *)
+module EPureI = EPURE(SV)
 
-module EPureI = EPUREN(SV)
+(* module EPureI = EPUREN(SV) *)
 
 type ef_pure_disj = EPureI.epure_disj
 

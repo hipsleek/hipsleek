@@ -903,7 +903,7 @@ let rec type_of_exp (e : exp) = match e with
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
-  | Null _ -> Some (Named "")
+  | Null _ -> Some (Globals.null_type (* Named "" *))
 	| EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
