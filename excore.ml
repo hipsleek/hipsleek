@@ -634,28 +634,28 @@ struct
   let string_of_disj (x:epure_disj) = pr_list_ln string_of x
   let mk_data sv = [([sv], emap_empty, [])] 
 
-  (* let baga_conv baga : formula = *)
-  (*   let baga = Elt.conv_var baga in *)
-  (*   if (List.length baga = 0) then *)
-  (*     mkTrue no_pos *)
-  (*   else if (List.length baga = 1) then *)
-  (*     mkGtVarInt (List.hd baga) 0 no_pos *)
-  (*   else *)
-  (*     let rec helper i j baga len = *)
-  (*       let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in *)
-  (*       if i = len - 2 && j = len - 1 then *)
-  (*         f1 *)
-  (*       else if j = len - 1 then *)
-  (*         let f2 = helper (i + 1) (i + 2) baga len in *)
-  (*         mkAnd f1 f2 no_pos *)
-  (*       else *)
-  (*         let f2 = helper i (j + 1) baga len in *)
-  (*         mkAnd f1 f2 no_pos *)
-  (*     in *)
-  (*     let f1 = helper 0 1 baga (List.length baga) in *)
-  (*     let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos) *)
-  (*       (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in *)
-  (*     mkAnd f1 f2 no_pos *)
+  let baga_conv baga : formula =
+    let baga = Elt.conv_var baga in
+    if (List.length baga = 0) then
+      mkTrue no_pos
+    else if (List.length baga = 1) then
+      mkGtVarInt (List.hd baga) 0 no_pos
+    else
+      let rec helper i j baga len =
+        let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
+        if i = len - 2 && j = len - 1 then
+          f1
+        else if j = len - 1 then
+          let f2 = helper (i + 1) (i + 2) baga len in
+          mkAnd f1 f2 no_pos
+        else
+          let f2 = helper i (j + 1) baga len in
+          mkAnd f1 f2 no_pos
+      in
+      let f1 = helper 0 1 baga (List.length baga) in
+      let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos)
+        (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
+      mkAnd f1 f2 no_pos
 
 
   let baga_enum baga : formula =
@@ -775,11 +775,11 @@ struct
     let bf = baga_enum baga in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  (* let conv ((baga,eq,inq) : epure) : formula = *)
-  (*   let f1 = conv_eq eq in *)
-  (*   let f2 = conv_ineq inq in *)
-  (*   let bf = baga_conv baga in *)
-  (*   mkAnd bf (mkAnd f1 f2 no_pos) no_pos *)
+  let conv ((baga,eq,inq) : epure) : formula =
+    let f1 = conv_eq eq in
+    let f2 = conv_ineq inq in
+    let bf = baga_conv baga in
+    mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
   let is_zero b = match b with
     | [] -> false
@@ -954,7 +954,8 @@ struct
 
   (* needed in cvutil.ml *)
   let ef_conv_enum_disj = ef_conv_disj_ho conv_enum
-  (* let ef_conv_disj      = ef_conv_disj_ho conv *)
+
+  let ef_conv_disj = ef_conv_disj_ho conv
 
   (* let eq_epure (ante : epure) (conseq : epure) : bool = *)
   (*   imply ante conseq && imply conseq ante *)
@@ -1182,13 +1183,32 @@ struct
     let pr1 = string_of_disj in
     Debug.no_2 "ex_epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
 
+
+  let sem_imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
+    let a_f = ef_conv_enum_disj ante in
+    let c_f = ef_conv_disj conseq in
+    (* a_f --> c_f *)
+    let f = mkAnd a_f (mkNot_s c_f) no_pos in
+    not (!is_sat_raw (Mcpure.mix_of_pure f))
+
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
-    epure_disj_syn_imply ante conseq
+    let r = epure_disj_syn_imply ante conseq in
+    if !Globals.check_baga then
+      begin
+        let r2 = sem_imply_disj ante conseq in
+        if r!=r2 then
+          begin
+            let pr = string_of_disj in
+            Debug.binfo_hprint (add_str "ante" pr) ante no_pos;
+            Debug.binfo_hprint (add_str "conseq" pr) conseq no_pos;
+            Debug.binfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
+          end
+      end;
+    r
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let pr1 = string_of_disj in
     Debug.no_2 "ex_imply_disj" pr1 pr1 string_of_bool imply_disj ante conseq
-
 
   (* let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = *)
   (*   let res = *)
@@ -1201,12 +1221,6 @@ struct
     List.fold_left merge_disj [] res
     (* List.concat res *)
 
-  (* let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool = *)
-  (*   let a_f = conv_enum_disj ante in *)
-  (*   let c_f = conv_disj conseq in *)
-  (*   (\* a_f --> c_f *\) *)
-  (*   let f = mkAnd a_f (mkNot_s c_f) no_pos in *)
-  (*   not (!is_sat_raw (Mcpure.mix_of_pure f)) *)
 
   (* reducing duplicate? *)
   let norm_disj disj =

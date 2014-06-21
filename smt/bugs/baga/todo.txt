@@ -170,6 +170,40 @@ Starting Omega...oc
 Timeout when checking #simplify  Restarting Omega after ... 12 invocations Stop Omega... 12 invocations Starting Omega...oc
 T
 ====================================
+# succ-rec03.slk --inv-baga --dis-check-baga
+
+why a large imply that is not recorded?
+
+!!! log(small):(0.945892,84)
+!!! log(big)(>0.5s)(1):(2.998276,[(imply,2.998276)])
+Total verification time: 0.171307 second(s)
+	Time spent in main process: 0.119472 second(s)
+	Time spent in child processes: 0.051835 second(s)
+
+# succ-rec03.slk --inv-baga --check-baga
+
+semantic imply lead to timeout and wrong answers.
+check if _null properly translated?
+
+!!! ante:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! conseq:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 3 invocations. Stop z3... 3 invocations Starting z3... 
+[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 4 invocations. Stop z3... 4 invocations Starting z3... 
+
+!!! ante:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! conseq:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarti
+
+# many timeouts not recorded..
+
+!!! log(small):(0.245541,94)
+!!! log(big)(>0.5s)(8):(15.042298,[(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,0.622766);(imply,2.419532);(SAT,2.)])
+Total verification time: 0.189718 second(s)
+        Time spent in main process: 0.12858 second(s)
+        Time spent in child processes: 0.061138 second(s)
+
+
+
 ====================================
 ====================================
 ====================================
