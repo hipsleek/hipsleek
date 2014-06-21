@@ -221,7 +221,8 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) epf =
-  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list string_of_ef_pure string_of_ef_pure *)
+  (* let pr = string_of_ef_pure in *)
+  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *)
       ef_elim_exists_1 svl epf
 
 (* substitute baga *)
@@ -500,6 +501,10 @@ struct
   let elim_exists (svl:spec_var list) (b,f) : epure =
     let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
+
+  let elim_exists (svl:spec_var list) (b,f) : epure =
+    let pr = string_of_spec_var_list in
+    Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
 
   (* TODO-WN : why ins't elem used instead of spec_var *)
   let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =

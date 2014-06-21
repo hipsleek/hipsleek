@@ -243,7 +243,7 @@ ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
 ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
 ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 ====================================
-# rec03.slk --inv-baga (old-baga has 2 version of null!)
+# rec03.slk --inv-baga (old-baga has 2 versions of _null!)
 
 !!! baga inv(Q):[([], null=self & null=y2 & null=y3),
 ([], null=_null & null!=self & _null=y3 & _null=y2),
@@ -253,6 +253,15 @@ ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:
 ([], null=_null & null!=y2 & _null=y3 & _null=self),
 ([], null=_null & null!=y3 & null!=y2 & _null=self),
 ([], null=_null & null!=y3 & _null=y2 & _null=self)]
+
+This was caused by elim_exists procedure:
+
+ef_elim_exists@3
+ef_elim_exists inp1 :[self_16,y2_17,x2_18,x1_14,x2_15]
+ef_elim_exists inp2 :([], self_16=self & y2_17=y2 & x2_18=x2_15 & x2_15=y2_17 & Cnull=x1_14 & 
+Cnull!=self_16 & Cnull=x1_14 & Cnull=x2_18)
+ef_elim_exists@3 EXIT:([], Cnull=_null & Cnull!=self & _null=y2)
+
 ====================================
 ====================================
 ====================================
