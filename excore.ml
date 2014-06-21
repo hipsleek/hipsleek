@@ -600,9 +600,9 @@ struct
 
   let to_cpure_disj (epd : epure_disj) = epd
 
-  let from_cpure (ep : ef_pure) = ep
+  let from_cpure (ep) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) = epd
+  let from_cpure_disj (epd : epure_disj) = epd
 
 end
 
@@ -1355,9 +1355,9 @@ struct
   (* let from_cpure_disj (epd : ef_pure_disj) = *)
   (*   List.map (fun ep -> from_cpure ep) epd *)
 
-  let from_cpure (ep : ef_pure) = ep
+  let from_cpure (ep : epure) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) = epd
+  let from_cpure_disj (epd : epure_disj) = epd
 
 (* TODO
 
@@ -1371,8 +1371,10 @@ struct
 
 end
 
-(* module EPureI = EPUREN(SV) *)
+(* module EPureI = EPURE(SV) *)
 
 module EPureI = EPUREN(SV)
 
 type ef_pure_disj = EPureI.epure_disj
+
+let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10

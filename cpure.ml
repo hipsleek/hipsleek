@@ -4372,16 +4372,15 @@ type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
 
-type ef_part = (spec_var list) list
-type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list)
-(* old extended pure formula *)
-(* type ef_pure = (spec_var list * formula) *)
+(* type ef_part = (spec_var list) list *)
+(* type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list) *)
+(* (\* old extended pure formula *\) *)
+(* (\* type ef_pure = (spec_var list * formula) *\) *)
 
-(* disjunctive extended pure formula *)
-(* [] denotes false *)
-type ef_pure_disj = ef_pure list
+(* (\* disjunctive extended pure formula *\) *)
+(* (\* [] denotes false *\) *)
+(* type ef_pure_disj = ef_pure list *)
 
-let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 
 
 (* need to remove constants and null *)

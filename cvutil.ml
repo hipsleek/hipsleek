@@ -918,7 +918,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
   (xpure_helper prog f0, formula_2_mem f0 prog)
 
   (* using baga_inv, e.g. bseg4.slk *)
-and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
+and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : Excore.ef_pure_disj =
   (* let baga_map = CP.map_baga_invs in *)
   (* let arg_map = CP.view_args_map in *)
   let bp = (Mcpure.pure_of_mix p0) in
@@ -929,7 +929,7 @@ and xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula)
   (* let efpd = Excore.EPureI.norm_disj (Excore.EPureI.mk_star_disj efpd1 efpd2) in *)
   Excore.EPureI.to_cpure_disj efpd1
 
-and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : CP.ef_pure_disj =
+and xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : Excore.ef_pure_disj =
   Debug.no_2 "xpure_heap_enum_baga" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_ef_pure_disj
       (fun _ _ -> xpure_heap_enum_baga_a (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)) h0 p0
 
@@ -946,7 +946,7 @@ conv_from_ef_disj@2 EXIT: u_14=y_15 & u_14=z & y_15=y & z_16=z #  [[self]]
 *)
 
 (* using the enum technique with epure *)
-and conv_from_ef_disj_x (disj:CP.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
+and conv_from_ef_disj_x (disj:Excore.ef_pure_disj) : (MCP.mix_formula * CF.mem_formula)  =
   (* WN : this conversion is incomplete *)
 
   match disj with

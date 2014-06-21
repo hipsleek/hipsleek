@@ -7696,7 +7696,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           match lhs_baga with
             | Some lhs ->
                   let rhs = Expure.build_ef_pure_formula (Mcpure.pure_of_mix rhs_p) in
-                  let flag = Excore.EPureI.epure_disj_syn_imply lhs rhs in
+                  let flag = Excore.EPureI.imply_disj lhs rhs in
                   let ((flag2,_,_),_) as r = imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset in
                   let _ = if flag2!=flag then
                     let pr = Cprinter.string_of_ef_pure_disj in

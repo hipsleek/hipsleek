@@ -201,10 +201,24 @@ check if _null properly translated?
 Total verification time: 0.189718 second(s)
         Time spent in main process: 0.12858 second(s)
         Time spent in child processes: 0.061138 second(s)
-
-
-
 ====================================
+# succ-rec02.slk --inv-baga (old)
+
+With the old-baga, why do I get null=_null?
+
+!!! baga inv(P):[([], null!=self & null=_null & null!=x2)]
+Starting Omega...oc
+
+# succ-rec03.slk --inv-baga (old vs new)
+
+# first difference detected: 
+
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+//([], null=y1 & null!=self & null!=y2 & null=x2 & y3=x3) (# old succ3rec #)
+
 ====================================
 ====================================
 ====================================

@@ -2153,7 +2153,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (*     Hashtbl.add args_map vd.Cast.view_name args; *)
       (* ) cviews0 in *)
       let _ = List.iter (fun cv ->
-          Hashtbl.add CP.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
+          Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
       let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
       (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
@@ -2201,7 +2201,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       ) ls_mut_rec_views1 in
       let cviews1 = if !Globals.gen_baga_inv then
         List.map (fun cv ->
-            let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
+            let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
             let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
             let _ = print_string_quiet "\n" in
             {cv with C.view_baga_inv = Some inv}
