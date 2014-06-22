@@ -2970,106 +2970,11 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
   let core_nodes = core_dnodes @ core_vnodes in
   let core_ptrs = List.map CF.get_node_var core_nodes in
   let is_first_node node = CP.mem_svl (CF.get_node_var node) self_closure in
-  let first_node = List.hd (List.filter is_first_node core_nodes) in 
-  let last_nodes = (
-    let remove_dups_hfl hfl = (
-      let eq_hf hf1 hf2 = (
-        let sv1 = CF.get_node_var hf1 in
-        let sv2 = CF.get_node_var hf2 in
-        CP.eq_spec_var sv1 sv2
-      ) in
-      Gen.BList.remove_dups_eq eq_hf hfl 
-    ) in
-    let get_dnode_field_value dnode field ddecl = (
-      List.hd (List.concat (List.map2 (fun ((_,fld),_) arg ->
-        if (eq_str fld field) then [arg] else []
-      ) ddecl.data_fields dnode.CF.h_formula_data_arguments))
-    ) in
-    let get_vnode_ptr_value vnode ptr vdecl = (
-      List.hd (List.concat (List.map2 (fun sv arg ->
-        if (CP.eq_spec_var sv ptr) then [arg] else []
-      ) vdecl.view_vars vnode.CF.h_formula_view_arguments))
-    ) in
-    (* propagate forward pointers, fields to find last node *)
-    let rec propagate_forward (fw_ptrs: CP.spec_var list) (fw_fields: ident list) (nodes: CF.h_formula list) = (
-      if (fw_fields = []) then []
-      else match nodes with
-        | [] -> []
-        | ((CF.ViewNode vnode) as node)::rest when (is_core_vnode node) ->
-            let fw_ptrs = List.map (fun ptr ->
-              get_vnode_ptr_value vnode ptr vdecl
-            ) fw_ptrs in
-            Debug.binfo_hprint (add_str "fw_ptrs1" (pr_list !CP.print_sv)) fw_ptrs no_pos;
-            let fw_ptrs = CF.find_close fw_ptrs eqs in
-            let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
-            (* if it points to outsides, then it's last node *)
-            if (fw_ptrs = []) then [node]
-            else
-              let is_fw_node n = CP.mem_svl (CF.get_node_var n) fw_ptrs in
-              let fw_nodes = List.filter is_fw_node core_nodes in
-              propagate_forward fw_ptrs fw_fields (remove_dups_hfl (rest@fw_nodes))
-        | ((CF.DataNode dnode) as node)::rest when (is_core_dnode node) ->
-            let fw_ptrs = List.map (fun fld ->
-              get_dnode_field_value dnode fld ddecl
-            )fw_fields in
-            Debug.binfo_hprint (add_str "fw_ptrs2" (pr_list !CP.print_sv)) fw_ptrs no_pos;
-            let fw_ptrs = CF.find_close fw_ptrs eqs in
-            let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
-            Debug.binfo_hprint (add_str "core_ptrs" (pr_list !CP.print_sv)) core_ptrs no_pos;
-            Debug.binfo_hprint (add_str "fw_ptrs3" (pr_list !CP.print_sv)) fw_ptrs no_pos;
-            (* if it points to outsides, then it's last node *)
-            if (fw_ptrs = []) then [node]
-            else
-              let is_fw_node n = CP.mem_svl (CF.get_node_var n) fw_ptrs in
-              let fw_nodes = List.filter is_fw_node core_nodes in
-              let _ = Debug.binfo_hprint (add_str "fw_nodes" (pr_list (fun n -> !CP.print_sv (CF.get_node_var n)))) fw_nodes no_pos in
-              propagate_forward fw_ptrs fw_fields ( remove_dups_hfl (rest@fw_nodes))
-        | _ -> []
-    ) in
-    (* propagate backward pointers, fields to find last node *)
-    let rec propagate_backward (bw_ptrs: CP.spec_var list) (bw_fields: ident list) (nodes: CF.h_formula list) = (
-      match nodes with
-      | [] -> []
-      | ((CF.ViewNode vnode) as node)::rest when (is_core_vnode node) ->
-          let node_closure = CF.find_close [(CF.get_node_var node)] eqs in
-          let bw_nodes = List.concat (List.map (fun ptr ->
-            List.concat (List.map (fun n -> match n with
-              | CF.ViewNode vn ->
-                  let ptr = get_vnode_ptr_value vn ptr vdecl in
-                  if (CP.mem_svl ptr node_closure) then [n]
-                  else []
-              | _ -> []
-            ) core_dnodes)
-          ) bw_ptrs) in
-          if (bw_nodes = []) then [node]
-          else propagate_backward bw_ptrs bw_fields (remove_dups_hfl (bw_nodes@rest))
-      | ((CF.DataNode dnode) as node)::rest when (is_core_dnode node) ->
-          let node_closure = CF.find_close [(CF.get_node_var node)] eqs in
-          let bw_nodes = List.concat (List.map (fun fld ->
-            List.concat (List.map (fun n -> match n with
-              | CF.DataNode dn ->
-                  let ptr = get_dnode_field_value dn fld ddecl in
-                  if (CP.mem_svl ptr node_closure) then [n]
-                  else []
-              | _ -> []
-            ) core_dnodes)
-          ) bw_fields) in
-          if (bw_nodes = []) then [node]
-          else propagate_backward bw_ptrs bw_fields (remove_dups_hfl (bw_nodes@rest))
-      | _ -> []
-    ) in
-    Debug.binfo_hprint (add_str "propagate forward, fwp" (pr_list !CP.print_sv)) fwp no_pos;
-    Debug.binfo_hprint (add_str "propagate forward, fwf" (pr_list idf)) fwf no_pos;
-    let nodes1 = (propagate_forward fwp fwf [first_node]) in
-    Debug.binfo_hprint (add_str "propagate backward, bwp" (pr_list !CP.print_sv)) bwp no_pos;
-    Debug.binfo_hprint (add_str "propagate backward, bwf" (pr_list idf)) bwf no_pos;
-    let nodes2 = (propagate_backward bwp bwf [first_node]) in
-    let eq_node node1 node2 = CP.eq_spec_var (CF.get_node_var node1) (CF.get_node_var node2) in
-    Gen.BList.remove_dups_eq eq_node (nodes1 @ nodes2)
+  let first_nodes, last_nodes = (
+    let first_nodes, rest = List.partition is_first_node core_nodes in
+    if (rest != []) then (first_nodes, rest)
+    else (first_nodes, first_nodes)
   ) in
-  Debug.binfo_hprint (add_str "first node" !print_h_formula) first_node no_pos;
-  Debug.binfo_hprint (add_str "last nodes" (pr_list !print_h_formula )) last_nodes no_pos;
-  (* find forward, backward field using first and last nodes *)
   let collect_field node ptrs = (match node with
     | CF.DataNode dn -> 
         let ptrs_closure = CF.find_close ptrs eqs in
@@ -3078,8 +2983,9 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
         ) dn.CF.h_formula_data_arguments ddecl.data_fields)
     | _ -> []
   ) in
-  let new_bwf = Gen.BList.remove_dups_eq eq_str (collect_field first_node bwp) in
-  let new_fwf = List.concat (List.map (fun node -> collect_field node fwp) last_nodes) in
+  let new_bwf = List.concat (List.map (fun n -> collect_field n bwp) first_nodes) in
+  let new_bwf = Gen.BList.remove_dups_eq eq_str new_bwf in
+  let new_fwf = List.concat (List.map (fun n -> collect_field n fwp) last_nodes) in
   let new_fwf = Gen.BList.remove_dups_eq eq_str new_fwf in
   (* find forward, backward pointer using first and last nodes *)
   let collect_pointer node fields = (match node with
@@ -3092,7 +2998,8 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
         ) dn.CF.h_formula_data_arguments ddecl.data_fields)
     | _ -> []
   ) in
-  let new_bwp = CP.remove_dups_svl (collect_pointer first_node bwf) in
+  let new_bwp = List.concat (List.map (fun node -> collect_pointer node bwf) first_nodes) in
+  let new_bwp = CP.remove_dups_svl new_bwp in
   let new_fwp = List.concat (List.map (fun node -> collect_pointer node fwf) last_nodes) in
   let new_fwp = CP.remove_dups_svl new_fwp in
   (new_fwp, new_fwf, new_bwp, new_bwf)
@@ -3252,7 +3159,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
           bwf := new_bwfs; bwf_m := true;
         );
 
-        Debug.ninfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
+        Debug.binfo_hprint (add_str "forward, backward 1 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
             ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
@@ -3271,7 +3178,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
         if (List.length new_bwp > List.length !bwp) then (bwp := new_bwp; bwp_m := true);
         if (List.length new_bwf > List.length !bwf) then (bwf := new_bwf; bwf_m := true);
 
-        Debug.ninfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
+        Debug.binfo_hprint (add_str "forward, backward 2 " (fun (x,y,z,t) -> 
               "fwp: " ^ (pr_list !CP.print_sv x) ^ "; "
             ^ "fwf: " ^ (pr_list idf y) ^ "; " 
             ^ "bwp: " ^ (pr_list !CP.print_sv z) ^ "; "
