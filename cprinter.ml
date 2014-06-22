@@ -3417,8 +3417,7 @@ let pr_view_decl v =
   pr_vwrap  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
   pr_vwrap  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
   pr_vwrap  "is_tail_rec?: " fmt_string (string_of_bool v.view_is_tail_rec);
-  pr_vwrap  "is_self_rec?: " fmt_string (string_of_bool v.view_is_self_rec);
-  pr_vwrap  "is_mutual_rec?: " fmt_string (string_of_bool v.view_is_mutual_rec);
+  pr_vwrap  "mutual_rec_views?: " fmt_string (pr_list idf v.view_mutual_rec_views);
   pr_vwrap  "residents: " pr_list_of_spec_var v.view_residents;
   pr_vwrap  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
   pr_vwrap  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;

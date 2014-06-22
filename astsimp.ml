@@ -2018,8 +2018,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
-      let is_mut_rec = (ir) && (mem_str_list vdef.I.view_name mutrec_vnames) in
-      let is_self_rec = (ir) && (not is_mut_rec) in
       let sf = find_pred_by_self vdef data_name in
       let _ = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
       let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2048,8 +2046,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_is_touching = false;           (* temporarily assigned *)
           C.view_is_segmented = false;          (* temporarily assigned *)
           C.view_is_tail_rec = false;     (* temporarily assigned *)
-          C.view_is_mutual_rec = is_mut_rec;
-          C.view_is_self_rec = is_self_rec;
+          C.view_mutual_rec_views = mutrec_vnames;
           C.view_residents = [];
           C.view_forward_ptrs = [];
           C.view_forward_fields = [];
