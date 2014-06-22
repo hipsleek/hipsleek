@@ -2024,8 +2024,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let _ = Debug.ninfo_hprint (add_str "cf 2" Cprinter.string_of_struc_formula) cf no_pos in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
-        vdef.I.view_name  mutrec_vnames then inv_pf
+      let new_pf = if Gen.BList.mem_eq eq_str vdef.I.view_name mutrec_vnames then inv_pf
       else Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str data_name transed_views inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
@@ -2045,8 +2044,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           (* TRUNG TODO: insert the touching, segmented tail-recursive checking in here! *)
           C.view_is_touching = false;           (* temporarily assigned *)
           C.view_is_segmented = false;          (* temporarily assigned *)
-          C.view_is_tail_rec = false;     (* temporarily assigned *)
-          C.view_mutual_rec_views = mutrec_vnames;
+          C.view_is_tail_rec = false;           (* temporarily assigned *)
+          C.view_mutual_rec_views = [];         (* temporarily assigned *)
           C.view_residents = [];
           C.view_forward_ptrs = [];
           C.view_forward_fields = [];
@@ -2097,9 +2096,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   )
 
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
-  let pr = pr_list (fun v -> v.Cast.view_name) in
+  let pr = (add_str "mutual_rec_views" (pr_list (fun v -> v.Cast.view_name))) in
   let pr2 = pr_list (fun (v,_) -> v.Iast.view_name) in
-  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
+  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr 
+    (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) 
+    ls_mut_rec_views ls_pr_view_typ
 
 (* type: I.prog_decl ->
   String.t list list ->
@@ -2119,12 +2120,17 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   (*cur_mutrec_views: used to capture all views of a loop. when all views of a loop
   have been translated, we compute their invs together*)
   let trans_one_view (transed_views, cur_mutrec_views) (view,typ_infos)=
-    let mutrec_views = if Gen.BList.mem_eq cmp_id
-      view.Iast.view_name all_mutrec_vnames
-    then (cur_mutrec_views@[view.Iast.view_name])
-    else cur_mutrec_views
-    in
+    let mutrec_views = (
+      if Gen.BList.mem_eq cmp_id view.Iast.view_name all_mutrec_vnames then
+        (cur_mutrec_views@[view.Iast.view_name])
+      else cur_mutrec_views
+    ) in
     let nview = trans_view iprog mutrec_views transed_views typ_infos view in
+    let full_mutrec_views = (
+      try List.find (fun ids -> mem_str_list view.I.view_name ids) ls_mut_rec_views
+      with _ -> []
+    ) in
+    let nview = { nview with C.view_mutual_rec_views = full_mutrec_views } in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
       let transed_views2,mutrec_views = if mutrec_views!=[] &&
