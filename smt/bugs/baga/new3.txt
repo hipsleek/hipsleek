@@ -1,0 +1,46 @@
+Starting z3... 
+
+!!! baga inv(one):[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+
+!!! baga inv(zero):[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+
+!!! baga inv(succ1rec):[(BAGA:[],EQ:[[_null,self]],INEQ:[(_null,y1)])]
+
+!!! baga inv(succ2rec):[(BAGA:[],EQ:[[_null,self],[x2,y2]],INEQ:[(_null,y1)]),(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])]
+
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+
+!!! baga inv(Q):[(BAGA:[],EQ:[[_null,self,y2,y3]],INEQ:[]),(BAGA:[],EQ:[[_null,self,y2]],INEQ:[(_null,y3)]),(BAGA:[],EQ:[[_null,self,y3]],INEQ:[(_null,y2)]),(BAGA:[],EQ:[[_null,y2]],INEQ:[(_null,self),(_null,y3)]),(BAGA:[],EQ:[[_null,y2,y3]],INEQ:[(_null,self)]),(BAGA:[],EQ:[[_null,y3]],INEQ:[(_null,self),(_null,y2)])]
+
+!!! baga inv(P):[]
+Starting Omega...oc
+
+WARNING: succ-rec03.slk_28:5_28:10:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: 1 File "succ-rec03.slk",Line:8,Col:0
+
+ERROR: at succ-rec03.slk_28:5_28:10 
+Message: compute_view_fw_bw: data not found: 
+ [Warning] False ctx
+
+Entail 1: Valid. 
+
+Validate 1: Expecting Fail BUT got : Valid
+
+Unexpected: 1 
+
+Stop z3... 54 invocations Stop Omega... 26 invocations 
+SAT Count   : 38
+SAT % Hit   : 23.68%
+IMPLY Count : 31
+IMPLY % Hit : 19.35%
+Time(cache overhead) : 0.016059 (seconds)
+
+!!! log(small):(0.050717,102)
+Total verification time: 0.189625 second(s)
+	Time spent in main process: 0.136012 second(s)
+	Time spent in child processes: 0.053613 second(s)
+

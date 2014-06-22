@@ -1,0 +1,44 @@
+Starting z3... 
+
+!!! baga inv(one):[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+
+!!! baga inv(zero):[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+
+!!! baga inv(succ1rec):[(BAGA:[],EQ:[[_null,self]],INEQ:[(_null,y1)])]
+
+!!! baga inv(succ2rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])]
+
+!!! baga inv(Q):[
+(BAGA:[],EQ:[[_null,self,y2]],INEQ:[]),
+(BAGA:[],EQ:[],INEQ:[(_null,self),(_null,y2)]),
+(BAGA:[],EQ:[[_null,self]],INEQ:[(_null,y2)]),
+(BAGA:[],EQ:[[_null,y2]],INEQ:[(_null,self)])]
+
+!!! baga inv(P):[(BAGA:[],EQ:[],INEQ:[(_null,self),(_null,x2)])]
+Starting Omega...oc
+
+WARNING: succ-rec02.slk_24:5_24:10:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: 1 File "succ-rec02.slk",Line:8,Col:0
+
+ERROR: at succ-rec02.slk_24:5_24:10 
+Message: compute_view_fw_bw: data not found: 
+ 
+Entail 1: Fail.(must) cause: true |-  false. LOCS:[0;28] (RHS: contradiction)
+
+Validate 1: OK
+
+Stop z3... 42 invocations Stop Omega... 21 invocations 
+SAT Count   : 31
+SAT % Hit   : 22.58%
+IMPLY Count : 22
+IMPLY % Hit : 18.18%
+Time(cache overhead) : 0.009534 (seconds)
+
+!!! log(small):(0.038869,80)
+Total verification time: 0.14039 second(s)
+	Time spent in main process: 0.096973 second(s)
+	Time spent in child processes: 0.043417 second(s)
+

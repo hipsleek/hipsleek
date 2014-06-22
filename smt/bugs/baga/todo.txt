@@ -170,8 +170,98 @@ Starting Omega...oc
 Timeout when checking #simplify  Restarting Omega after ... 12 invocations Stop Omega... 12 invocations Starting Omega...oc
 T
 ====================================
+# succ-rec03.slk --inv-baga --dis-check-baga
+
+why a large imply that is not recorded?
+
+!!! log(small):(0.945892,84)
+!!! log(big)(>0.5s)(1):(2.998276,[(imply,2.998276)])
+Total verification time: 0.171307 second(s)
+	Time spent in main process: 0.119472 second(s)
+	Time spent in child processes: 0.051835 second(s)
+
+# succ-rec03.slk --inv-baga --check-baga
+
+semantic imply lead to timeout and wrong answers.
+check if _null properly translated?
+
+!!! ante:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! conseq:[(BAGA:[],EQ:[],INEQ:[(_null,self)])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 3 invocations. Stop z3... 3 invocations Starting z3... 
+[smtsolver.ml]Timeout when checking sat!2. Restarting z3 after ... 4 invocations. Stop z3... 4 invocations Starting z3... 
+
+!!! ante:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! conseq:[(BAGA:[],EQ:[[_null,self]],INEQ:[])]
+!!! Got true but expects false[smtsolver.ml]Timeout when checking sat!2. Restarti
+
+# many timeouts not recorded..
+
+!!! log(small):(0.245541,94)
+!!! log(big)(>0.5s)(8):(15.042298,[(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,2.);(SAT,0.622766);(imply,2.419532);(SAT,2.)])
+Total verification time: 0.189718 second(s)
+        Time spent in main process: 0.12858 second(s)
+        Time spent in child processes: 0.061138 second(s)
 ====================================
+# rec02.slk --inv-baga (old)
+
+With the old-baga, why do I get null=_null?
+
+!!! baga inv(P):[([], null!=self & null=_null & null!=x2)]
+Starting Omega...oc
+
+# rec03.slk --inv-baga (old vs new)
+
+# first difference detected: 
+
+#!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+--([], x2=y2 & x3=y3 & null=self & null!=y1),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+--([], null=y1 & y1=y2 & y1=x3 & null!=self & null!=y3 & null!=x2 )]
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2) (# old succ3rec #)
+
+# rec03.slk --inv-baga -dre "ex_mk_star"
+!!! baga inv(succ3rec):[
+(BAGA:[],EQ:[[_null,self],[x2,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2),(_null,y3)]),
+(BAGA:[],EQ:[[_null,x3,y1,y3]],INEQ:[(_null,self),(_null,y2)])]
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+#### should be below : why?
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+
+# rec03a.slk --inv-baga -dre "ex_mk_star"
+(BAGA:[],EQ:[[_null,self],[x2xxx,y2],[x3,y3]],INEQ:[(_null,y1)]),
+(BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2xxx),(_null,y3)])
+(BAGA:[],EQ:[[_null,x2xxx,y1],[x3,y3]],INEQ:[(_null,self),(_null,y2)]),
+--([], null=y1 & null=x2 & y3=x3 & null!=self & null!=y2)
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 ====================================
+# rec03.slk --inv-baga (old-baga has 2 versions of _null!)
+
+!!! baga inv(Q):[([], null=self & null=y2 & null=y3),
+([], null=_null & null!=self & _null=y3 & _null=y2),
+([], null!=y2 & null=_null & null!=self & _null=y3),
+([], null!=y2 & null!=y3 & null=_null & null!=self),
+([], null!=y3 & null=_null & null!=self & _null=y2),
+([], null=_null & null!=y2 & _null=y3 & _null=self),
+([], null=_null & null!=y3 & null!=y2 & _null=self),
+([], null=_null & null!=y3 & _null=y2 & _null=self)]
+
+This was caused by elim_exists procedure:
+
+ef_elim_exists@3
+ef_elim_exists inp1 :[self_16,y2_17,x2_18,x1_14,x2_15]
+ef_elim_exists inp2 :([], self_16=self & y2_17=y2 & x2_18=x2_15 & x2_15=y2_17 & Cnull=x1_14 & 
+Cnull!=self_16 & Cnull=x1_14 & Cnull=x2_18)
+ef_elim_exists@3 EXIT:([], Cnull=_null & Cnull!=self & _null=y2)
+
 ====================================
 ====================================
 ====================================

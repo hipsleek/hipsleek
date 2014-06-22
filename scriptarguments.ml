@@ -556,7 +556,11 @@ let common_arguments = [
   ("--inc", Arg.Set Globals.do_infer_inc, "Enable incremental spec inference");
   (* invariant *)
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
-  ("--inv-baga",Arg.Set Globals.gen_baga_inv (* Arg.Unit Globals.en_inv_baga *) ,"generate baga inv from view");
+  ("--en-unexpected",Arg.Set Globals.show_unexpected_ents,"displays unexpected results");
+  ("--dis-unexpected",Arg.Clear Globals.show_unexpected_ents,"do not show unexpected results");
+  ("--check-baga",Arg.Set Globals.check_baga,"check new syn baga");
+  ("--dis-check-baga",Arg.Clear Globals.check_baga,"disable checking new syn baga");
+  ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view");
   ("--dis-inv-baga",Arg.Clear Globals.gen_baga_inv,"disable baga inv from view");
   ("--pred-sat", Arg.Unit Globals.en_pred_sat ," turn off oc-simp for pred sat checking");
   ("--baga-xpure",Arg.Set Globals.baga_xpure,"use baga for xpure");
@@ -734,7 +738,8 @@ let common_arguments = [
   ("--smt-compete-test", 
      Arg.Unit
       (fun _ ->
-          Globals.show_unexpected_ents := true; (*this flag is one that is  diff with compared to --smt-compete *)
+          (* Globals.show_unexpected_ents := true;  *)
+          (*this flag is one that is  diff with compared to --smt-compete *)
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
           Globals.lemma_ep := false;
@@ -743,10 +748,10 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.en_pred_sat ();
           Globals.acc_fold := true;
           Globals.fold_contra_detect := true;
-          (* Globals.gen_baga_inv := true; *)
+          (* Globals.en_pred_sat (); *)
+          Globals.gen_baga_inv := false;
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
           Globals.is_solver_local := true;

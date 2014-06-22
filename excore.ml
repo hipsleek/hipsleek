@@ -221,7 +221,8 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) epf =
-  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list string_of_ef_pure string_of_ef_pure *)
+  (* let pr = string_of_ef_pure in *)
+  (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *)
       ef_elim_exists_1 svl epf
 
 (* substitute baga *)
@@ -354,7 +355,7 @@ struct
 
   let is_false (e:epure) = (e == mk_false)
   let string_of (x:epure) = pr_pair (pr_list Elt.string_of) !print_pure_formula x
-  let string_of_disj lst = pr_list string_of lst
+  let string_of_disj lst = pr_list_ln string_of lst
   let mk_data sv = [([sv], mkTrue no_pos)] 
 
   let merge_baga b1 b2 = Elt.merge_baga b1 b2
@@ -501,6 +502,10 @@ struct
     let (b,f) = ef_elim_exists_1 svl (Elt.conv_var b,f) in
     (Elt.from_var b, f)
 
+  let elim_exists (svl:spec_var list) (b,f) : epure =
+    let pr = string_of_spec_var_list in
+    Debug.no_2 "ef_elim_exists" pr string_of string_of elim_exists svl (b,f) 
+
   (* TODO-WN : why ins't elem used instead of spec_var *)
   let elim_exists_disj (svl : spec_var list) (lst : epure_disj) : epure_disj =
     let r = List.map (fun e -> elim_exists svl e) lst in
@@ -600,9 +605,9 @@ struct
 
   let to_cpure_disj (epd : epure_disj) = epd
 
-  let from_cpure (ep : ef_pure) = ep
+  let from_cpure (ep) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) = epd
+  let from_cpure_disj (epd : epure_disj) = epd
 
 end
 
@@ -634,28 +639,28 @@ struct
   let string_of_disj (x:epure_disj) = pr_list_ln string_of x
   let mk_data sv = [([sv], emap_empty, [])] 
 
-  (* let baga_conv baga : formula = *)
-  (*   let baga = Elt.conv_var baga in *)
-  (*   if (List.length baga = 0) then *)
-  (*     mkTrue no_pos *)
-  (*   else if (List.length baga = 1) then *)
-  (*     mkGtVarInt (List.hd baga) 0 no_pos *)
-  (*   else *)
-  (*     let rec helper i j baga len = *)
-  (*       let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in *)
-  (*       if i = len - 2 && j = len - 1 then *)
-  (*         f1 *)
-  (*       else if j = len - 1 then *)
-  (*         let f2 = helper (i + 1) (i + 2) baga len in *)
-  (*         mkAnd f1 f2 no_pos *)
-  (*       else *)
-  (*         let f2 = helper i (j + 1) baga len in *)
-  (*         mkAnd f1 f2 no_pos *)
-  (*     in *)
-  (*     let f1 = helper 0 1 baga (List.length baga) in *)
-  (*     let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos) *)
-  (*       (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in *)
-  (*     mkAnd f1 f2 no_pos *)
+  let baga_conv baga : formula =
+    let baga = Elt.conv_var baga in
+    if (List.length baga = 0) then
+      mkTrue no_pos
+    else if (List.length baga = 1) then
+      mkGtVarInt (List.hd baga) 0 no_pos
+    else
+      let rec helper i j baga len =
+        let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
+        if i = len - 2 && j = len - 1 then
+          f1
+        else if j = len - 1 then
+          let f2 = helper (i + 1) (i + 2) baga len in
+          mkAnd f1 f2 no_pos
+        else
+          let f2 = helper i (j + 1) baga len in
+          mkAnd f1 f2 no_pos
+      in
+      let f1 = helper 0 1 baga (List.length baga) in
+      let f2 = List.fold_left (fun f sv -> mkAnd f1 (mkGtVarInt sv 0 no_pos) no_pos)
+        (mkGtVarInt (List.hd baga) 0 no_pos) (List.tl baga) in
+      mkAnd f1 f2 no_pos
 
 
   let baga_enum baga : formula =
@@ -775,11 +780,11 @@ struct
     let bf = baga_enum baga in
     mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
-  (* let conv ((baga,eq,inq) : epure) : formula = *)
-  (*   let f1 = conv_eq eq in *)
-  (*   let f2 = conv_ineq inq in *)
-  (*   let bf = baga_conv baga in *)
-  (*   mkAnd bf (mkAnd f1 f2 no_pos) no_pos *)
+  let conv ((baga,eq,inq) : epure) : formula =
+    let f1 = conv_eq eq in
+    let f2 = conv_ineq inq in
+    let bf = baga_conv baga in
+    mkAnd bf (mkAnd f1 f2 no_pos) no_pos
 
   let is_zero b = match b with
     | [] -> false
@@ -954,7 +959,8 @@ struct
 
   (* needed in cvutil.ml *)
   let ef_conv_enum_disj = ef_conv_disj_ho conv_enum
-  (* let ef_conv_disj      = ef_conv_disj_ho conv *)
+
+  let ef_conv_disj = ef_conv_disj_ho conv
 
   (* let eq_epure (ante : epure) (conseq : epure) : bool = *)
   (*   imply ante conseq && imply conseq ante *)
@@ -1182,13 +1188,32 @@ struct
     let pr1 = string_of_disj in
     Debug.no_2 "ex_epure_disj_syn_imply" pr1 pr1 string_of_bool epure_disj_syn_imply lst1 lst2
 
+
+  let sem_imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
+    let a_f = ef_conv_enum_disj ante in
+    let c_f = ef_conv_disj conseq in
+    (* a_f --> c_f *)
+    let f = mkAnd a_f (mkNot_s c_f) no_pos in
+    not (!is_sat_raw (Mcpure.mix_of_pure f))
+
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
-    epure_disj_syn_imply ante conseq
+    let r = epure_disj_syn_imply ante conseq in
+    if !Globals.check_baga then
+      begin
+        let r2 = sem_imply_disj ante conseq in
+        if r!=r2 then
+          begin
+            let pr = string_of_disj in
+            Debug.binfo_hprint (add_str "ante" pr) ante no_pos;
+            Debug.binfo_hprint (add_str "conseq" pr) conseq no_pos;
+            Debug.binfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
+          end
+      end;
+    r
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let pr1 = string_of_disj in
     Debug.no_2 "ex_imply_disj" pr1 pr1 string_of_bool imply_disj ante conseq
-
 
   (* let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  = *)
   (*   let res = *)
@@ -1201,12 +1226,6 @@ struct
     List.fold_left merge_disj [] res
     (* List.concat res *)
 
-  (* let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool = *)
-  (*   let a_f = conv_enum_disj ante in *)
-  (*   let c_f = conv_disj conseq in *)
-  (*   (\* a_f --> c_f *\) *)
-  (*   let f = mkAnd a_f (mkNot_s c_f) no_pos in *)
-  (*   not (!is_sat_raw (Mcpure.mix_of_pure f)) *)
 
   (* reducing duplicate? *)
   let norm_disj disj =
@@ -1341,9 +1360,9 @@ struct
   (* let from_cpure_disj (epd : ef_pure_disj) = *)
   (*   List.map (fun ep -> from_cpure ep) epd *)
 
-  let from_cpure (ep : ef_pure) = ep
+  let from_cpure (ep : epure) = ep
 
-  let from_cpure_disj (epd : ef_pure_disj) = epd
+  let from_cpure_disj (epd : epure_disj) = epd
 
 (* TODO
 
@@ -1357,8 +1376,10 @@ struct
 
 end
 
+module EPureI = EPURE(SV)
+
 (* module EPureI = EPUREN(SV) *)
 
-module EPureI = EPUREN(SV)
-
 type ef_pure_disj = EPureI.epure_disj
+
+let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
