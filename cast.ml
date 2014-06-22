@@ -2861,16 +2861,17 @@ let collect_subs_from_view_formula (f: CF.formula) (vd: view_decl)
   Debug.no_1 "collect_subs_from_view_formula" pr_f pr_out
       (fun _ -> collect_subs_from_view_formula_x f vd) f
 
-(* split view formula to base cases and inductive cases *) 
-let split_view_branches (vd: view_decl) : (CF.formula list * CF.formula list) =
-  let vname = vd.view_name in
-  let branches,_ = List.split vd.view_un_struc_formula in
-  let base_fs, induct_fs = List.partition (fun f ->
+(* split view formula to base cases and inductive cases, considering the mutual recursive views *) 
+let split_view_branches (vdecl: view_decl) : (CF.formula list * CF.formula list) =
+  let branches,_ = List.split vdecl.view_un_struc_formula in
+  let induct_fs, base_fs = List.partition (fun f ->
     let views = CF.get_views f in
-    let induct_views = List.filter (fun vd ->
-      eq_str vd.CF.h_formula_view_name vname
+    let induct_views = List.filter (fun v ->
+      let vn = v.CF.h_formula_view_name in
+      if (eq_str vn vdecl.view_name) then true            (* self-recursive *)
+      else mem_str_list vn vdecl.view_mutual_rec_views     (* mutual-recursive *)
     ) views in
-    (List.length induct_views = 0)
+    (List.length induct_views > 0)
   ) branches in
   (base_fs, induct_fs)
 
@@ -2956,12 +2957,14 @@ let compute_view_residents (vd: view_decl) : P.spec_var list =
 let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bwp bwf =
   let (hf,pf,_,_,_) = CF.split_components f in
   let eqs = MP.ptr_equations_without_null pf in
-  let dname = ddecl.data_name in
-  let vname = vdecl.view_name in
-  let self_var = CP.SpecVar (Named dname, self, Unprimed) in
+  let self_var = CP.SpecVar (Named ddecl.data_name, self, Unprimed) in
   let self_closure = CF.find_close [self_var] eqs in
-  let is_core_dnode node = eq_str (CF.get_node_name node) dname in
-  let is_core_vnode node = eq_str (CF.get_node_name node) vname in
+  let is_core_dnode node = eq_str (CF.get_node_name node) ddecl.data_name in
+  let is_core_vnode node = (
+    let nname = CF.get_node_name node in
+    if eq_str nname vdecl.view_name then true
+    else mem_str_list nname vdecl.view_mutual_rec_views
+  ) in
   let core_dnodes = List.filter is_core_dnode (CF.get_dnodes f) in
   let core_vnodes = List.filter is_core_vnode (CF.get_vnodes f) in
   let core_nodes = core_dnodes @ core_vnodes in
@@ -2996,6 +2999,7 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
             let fw_ptrs = List.map (fun ptr ->
               get_vnode_ptr_value vnode ptr vdecl
             ) fw_ptrs in
+            Debug.binfo_hprint (add_str "fw_ptrs1" (pr_list !CP.print_sv)) fw_ptrs no_pos;
             let fw_ptrs = CF.find_close fw_ptrs eqs in
             let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
             (* if it points to outsides, then it's last node *)
@@ -3008,13 +3012,17 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
             let fw_ptrs = List.map (fun fld ->
               get_dnode_field_value dnode fld ddecl
             )fw_fields in
+            Debug.binfo_hprint (add_str "fw_ptrs2" (pr_list !CP.print_sv)) fw_ptrs no_pos;
             let fw_ptrs = CF.find_close fw_ptrs eqs in
             let fw_ptrs = CP.intersect_svl fw_ptrs core_ptrs in
+            Debug.binfo_hprint (add_str "core_ptrs" (pr_list !CP.print_sv)) core_ptrs no_pos;
+            Debug.binfo_hprint (add_str "fw_ptrs3" (pr_list !CP.print_sv)) fw_ptrs no_pos;
             (* if it points to outsides, then it's last node *)
             if (fw_ptrs = []) then [node]
             else
               let is_fw_node n = CP.mem_svl (CF.get_node_var n) fw_ptrs in
               let fw_nodes = List.filter is_fw_node core_nodes in
+              let _ = Debug.binfo_hprint (add_str "fw_nodes" (pr_list (fun n -> !CP.print_sv (CF.get_node_var n)))) fw_nodes no_pos in
               propagate_forward fw_ptrs fw_fields ( remove_dups_hfl (rest@fw_nodes))
         | _ -> []
     ) in
@@ -3050,13 +3058,17 @@ let collect_forward_backward_from_formula (f: CF.formula) vdecl ddecl fwp fwf bw
           else propagate_backward bw_ptrs bw_fields (remove_dups_hfl (bw_nodes@rest))
       | _ -> []
     ) in
+    Debug.binfo_hprint (add_str "propagate forward, fwp" (pr_list !CP.print_sv)) fwp no_pos;
+    Debug.binfo_hprint (add_str "propagate forward, fwf" (pr_list idf)) fwf no_pos;
     let nodes1 = (propagate_forward fwp fwf [first_node]) in
+    Debug.binfo_hprint (add_str "propagate backward, bwp" (pr_list !CP.print_sv)) bwp no_pos;
+    Debug.binfo_hprint (add_str "propagate backward, bwf" (pr_list idf)) bwf no_pos;
     let nodes2 = (propagate_backward bwp bwf [first_node]) in
     let eq_node node1 node2 = CP.eq_spec_var (CF.get_node_var node1) (CF.get_node_var node2) in
     Gen.BList.remove_dups_eq eq_node (nodes1 @ nodes2)
   ) in
-  Debug.ninfo_hprint (add_str "first node" !print_h_formula) first_node no_pos;
-  Debug.ninfo_hprint (add_str "last nodes" (pr_list !print_h_formula )) last_nodes no_pos;
+  Debug.binfo_hprint (add_str "first node" !print_h_formula) first_node no_pos;
+  Debug.binfo_hprint (add_str "last nodes" (pr_list !print_h_formula )) last_nodes no_pos;
   (* find forward, backward field using first and last nodes *)
   let collect_field node ptrs = (match node with
     | CF.DataNode dn -> 
