@@ -89,7 +89,7 @@ let process_cmd_list cmds :bool=
 
 
 let process_cmd (cmd_string:string) (flush_context:bool)=
-  Debug.binfo_hprint (add_str "cmd_string" idf) cmd_string no_pos;
+  Debug.ninfo_hprint (add_str "cmd_string" idf) cmd_string no_pos;
 	Globals.silence_output := true;
 	let _ = if flush_context then begin
 		let _ = clear_all () in

@@ -7715,9 +7715,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   let _ = if flag2!=flag then
                     let pr = Cprinter.string_of_ef_pure_disj in
                     begin
-                    Debug.binfo_hprint (add_str "expected" string_of_bool) flag2 no_pos;
-                    Debug.binfo_hprint (add_str "lhs" pr) lhs no_pos;
-                    Debug.binfo_hprint (add_str "rhs" pr) rhs no_pos
+                    Debug.ninfo_hprint (add_str "expected" string_of_bool) flag2 no_pos;
+                    Debug.ninfo_hprint (add_str "lhs" pr) lhs no_pos;
+                    Debug.ninfo_hprint (add_str "rhs" pr) rhs no_pos
                     end
                   in
                     r
