@@ -1353,7 +1353,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
 
         (* compute pred1 *)
         let pred1_node = (
-          if not (vd.C.view_is_tail_recursive) then (self, Unprimed)
+          if not (vd.C.view_is_tail_rec) then (self, Unprimed)
           else (
             let subs_sv = CP.subs_one v_subs forward_ptr in
             let subs_sv = CP.subs_one induct_subs subs_sv in
@@ -1392,7 +1392,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         if not (is_pred1_ok) then None
         else (
           let pred1_params = List.map (fun sv ->
-            if (not vd.C.view_is_tail_recursive) && (CP.eq_spec_var sv forward_ptr) then 
+            if (not vd.C.view_is_tail_rec) && (CP.eq_spec_var sv forward_ptr) then 
               let vname, vprim = pred2_node in
               IP.Var ((vname,vprim), vpos)
             else
@@ -1414,12 +1414,12 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
           Debug.ninfo_hprint (add_str "pred1" !IF.print_h_formula) pred1 vpos;
           Debug.ninfo_hprint (add_str "pred2" !IF.print_h_formula) pred2 vpos;
           let body_heap = (
-            if vd.C.view_is_tail_recursive then IF.mkStar pred2 pred1 vpos
+            if vd.C.view_is_tail_rec then IF.mkStar pred2 pred1 vpos
             else IF.mkStar pred1 pred2 vpos
           ) in
           (* now, refine the lemma body *)
           let refined_body_heap = (
-            if (vd.C.view_is_tail_recursive) then
+            if (vd.C.view_is_tail_rec) then
               refine_tail_coerc_body_heap body_heap vd
             else
               refine_nontail_coerc_body_heap body_heap vd

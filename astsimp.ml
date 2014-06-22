@@ -1901,10 +1901,11 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
-  let pr = Iprinter.string_of_view_decl in
-  let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
-      transed_views ann_typs vdef) vdef
+  let pr_v = (add_str "view: " Iprinter.string_of_view_decl) in
+  let pr_mv = (add_str "mutual-recursive views:" (pr_list idf)) in
+  let pr_out = Cprinter.string_of_view_decl in
+  Debug.no_2 "trans_view" pr_v pr_mv pr_out  (fun _ _ -> trans_view_x prog mutrec_vnames
+      transed_views ann_typs vdef) vdef mutrec_vnames
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -2017,6 +2018,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
+      let is_mut_rec = (ir) && (mem_str_list vdef.I.view_name mutrec_vnames) in
+      let is_self_rec = (ir) && (not is_mut_rec) in
       let sf = find_pred_by_self vdef data_name in
       let _ = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
       let cf = CF.struc_formula_set_lhs_case false cf in
@@ -2041,11 +2044,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_name = vn;
           C.view_pos = vdef.I.view_pos;
           C.view_is_prim = is_prim_v;
+          (* TRUNG TODO: insert the touching, segmented tail-recursive checking in here! *)
           C.view_is_touching = false;           (* temporarily assigned *)
           C.view_is_segmented = false;          (* temporarily assigned *)
-          C.view_is_tail_recursive = false;     (* temporarily assigned *)
+          C.view_is_tail_rec = false;     (* temporarily assigned *)
+          C.view_is_mutual_rec = is_mut_rec;
+          C.view_is_self_rec = is_self_rec;
           C.view_residents = [];
-	  C.view_forward_ptrs = [];
+          C.view_forward_ptrs = [];
           C.view_forward_fields = [];
           C.view_backward_ptrs = [];
           C.view_backward_fields = [];

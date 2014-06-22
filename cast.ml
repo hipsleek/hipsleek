@@ -96,7 +96,9 @@ and view_decl = {
     view_type_of_self : typ option;
     view_is_touching : bool;
     view_is_segmented : bool;
-    view_is_tail_recursive: bool;        (* true if view is tail-recursively defined *)
+    view_is_tail_rec: bool;        (* true if view is tail-recursively defined *)
+    view_is_self_rec: bool;
+    view_is_mutual_rec: bool;
     view_residents: P.spec_var list;     (* list of pointers reside in the memory allocated of view *) 
     view_forward_ptrs: P.spec_var list;                          (* forward, backward properties in *)
     view_forward_fields: (data_decl * ident) list;               (* definition of the view          *) 
@@ -2755,7 +2757,7 @@ end
  * a view is tail recursively defined if there is a case
  * that self points to the view itself
  *)
-let is_tail_recursive_view_x (vd: view_decl) : bool =
+let check_view_tail_recursive_x (vd: view_decl) : bool =
   let vname = vd.view_name in
   let collect_view_pointed_by_self f = (
     let views = ref [] in
@@ -2782,11 +2784,11 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
   let tail_recursive = (List.exists is_tail_recursive_branch branches) in
   tail_recursive
 
-let is_tail_recursive_view (vd: view_decl) : bool =
+let check_view_tail_recursive (vd: view_decl) : bool =
   let pr_view = !print_view_decl in
   let pr_out = string_of_bool in
-  Debug.no_1 "is_tail_recursive_view" pr_view pr_out
-      (fun _ -> is_tail_recursive_view_x vd) vd
+  Debug.no_1 "check_view_tail_recursive" pr_view pr_out
+      (fun _ -> check_view_tail_recursive_x vd) vd
 
 
 let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
@@ -2828,11 +2830,11 @@ let collect_subs_from_view_formula_x (f: CF.formula) (vd: view_decl)
         let new_subs = (
           (* in tail-recursive predicates, self must be substituted *)
           if (is_self sv1) then (
-            if (vd.view_is_tail_recursive) then [(sv1,sv2)]
+            if (vd.view_is_tail_rec) then [(sv1,sv2)]
             else [(sv2,sv1)]
           )
           else if (is_self sv2) then (
-            if (vd.view_is_tail_recursive) then [(sv2,sv1)]
+            if (vd.view_is_tail_rec) then [(sv2,sv1)]
             else [(sv1,sv2)]
           )
           (* otherwise only subs a view var by a non-view var *)
@@ -3138,8 +3140,17 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 if (eq_str dn dname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
                 else []
             | CF.ViewNode {CF.h_formula_view_name = vn; CF.h_formula_view_node = sv} ->
-                if (eq_str vn vname) && not (eq_str (CP.name_of_sv sv) self) then [hf]
-                else []
+                if not (eq_str (CP.name_of_sv sv) self) then (
+                  if (vdecl.view_is_self_rec) && (eq_str vn vname) then
+                    (* if vdef is self recursive, then check views with same view name *) 
+                    [hf]
+                  else if (vdecl.view_is_mutual_rec) then
+                    (* if view is mutual recursive, then check views with same data name *)
+                    let vd = look_up_view_def_raw 1 prog.prog_view_decls vn in
+                    if (eq_str vd.view_data_name dname) then [hf]
+                    else []
+                  else []
+                ) else []
             | _ -> []
           ) in
           CF.get_one_kind_heap is_body_node f
@@ -3316,8 +3327,8 @@ let categorize_view (prog: prog_decl) : prog_decl =
     let vd = { vd with view_is_touching = touching;
                        view_is_segmented = segmented; } in
     (* is tail-recursively defined view? *)
-    let tail_recursive = is_tail_recursive_view vd in
-    let vd = { vd with view_is_tail_recursive = tail_recursive } in
+    let tail_recursive = check_view_tail_recursive vd in
+    let vd = { vd with view_is_tail_rec = tail_recursive } in
     vd
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
