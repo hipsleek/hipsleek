@@ -175,7 +175,7 @@ and gen_edges prog n h0 p nodes buffer =
       | HTrue | HFalse | HEmp | HRel _ | Hole _ |  FrmHole _  -> ()
 
 and gen_edges_visib_names n visib_names p nodes buffer =
-  let visib_names = List.map (fun v -> SpecVar (Named "", v, Primed)) visib_names in
+  let visib_names = List.map (fun v -> SpecVar (Globals.null_type, v, Primed)) visib_names in
   let veqs = List.map (fun v -> (v, v)) visib_names in
   let asets = Context.alias_nth 5 ((MCP.ptr_equations_with_null p) @ veqs) in
   let make_edge var =

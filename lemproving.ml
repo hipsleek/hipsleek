@@ -153,9 +153,9 @@ let process_coercion_check iante0 iconseq0 (inf_vars: CP.spec_var list) iexact (
 *)(*
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let pos = CF.pos_of_formula coer.C.coercion_head in
-  let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (* unfolding RHS need to use unflattened body to preserve case-spec *)
-  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+  let rhs = Solver.unfold_struc_nth 9 (cprog,None) rhs (CP.SpecVar (Globals.null_type, self, Unprimed)) true 0 pos in
   (*let _ = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
     Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
@@ -166,8 +166,8 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
   let lhs = CF.reset_origins lhs in
   let rhs = CF.add_original rhs true in
   let rhs = CF.reset_origins rhs in
-  let self_sv_lst = (CP.SpecVar (Named "", self, Unprimed)) :: [] in
-  let self_sv_renamed_lst = (CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
+  let self_sv_lst = (CP.SpecVar (Globals.null_type, self, Unprimed)) :: [] in
+  let self_sv_renamed_lst = (CP.SpecVar (Globals.null_type, (self ^ "_" ^ coer.C.coercion_name), Unprimed)) :: [] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   process_coercion_check (CFormula lhs) (CFormula rhs) coer.C.coercion_exact coer.C.coercion_name cprog 
@@ -237,7 +237,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let fv_rhs = CF.struc_fv rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
   let (new_rhs,fv_rhs2) = add_exist_heap_of_struc fv_lhs rhs in
-  let sv_self = (CP.SpecVar (Named "", self, Unprimed)) in
+  let sv_self = (CP.SpecVar (Globals.null_type, self, Unprimed)) in
   (* let _ = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
     !Globals.enable_lemma_rhs_unfold then ([],[]) else (* must re-check this -if- {**} *)
@@ -320,7 +320,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let rhs = CF.add_struc_original true rhs in
   let rhs = CF.reset_struc_origins rhs in
   let self_sv_lst = [sv_self] in
-  let self_sv_renamed_lst = [CP.SpecVar (Named "", (self ^ "_" ^ coer.C.coercion_name), Unprimed)] in
+  let self_sv_renamed_lst = [CP.SpecVar (Globals.null_type, (self ^ "_" ^ coer.C.coercion_name), Unprimed)] in
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   (* let rhs = CF.case_to_disjunct rhs in *)

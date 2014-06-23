@@ -626,9 +626,13 @@ let no_pos1 = { Lexing.pos_fname = "";
 let res_name = "res"
 (* let null_name = "null" *)
 let null_name = "_null"
+let null_type = Named ""
 
 let is_null name =
-  name = null_name
+  name == null_name
+
+let is_null_type t  =
+  t == null_type
 
 let inline_field_expand = "_"
 
@@ -812,6 +816,8 @@ let cts_acc_fold = ref true
 let smart_lem_search = ref false
 
 let fold_contra_detect = ref false
+
+let fold_contra_detect = ref true
 
 let sa_en_split = ref false
 
@@ -1240,6 +1246,7 @@ let show_unexpected_ents = ref true
     else print_endline s 
 
 (* generate baga inv from view *)
+let check_baga = ref false
 let gen_baga_inv = ref false
 let pred_sat = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)

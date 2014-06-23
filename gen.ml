@@ -725,11 +725,20 @@ end;;
 
 let add_str s f xs = s^":"^(f xs)
 
+type 'a keyt = int option
+
+let key_cnt = new counter 0
+
+let new_key () =
+  let x = key_cnt # inc_and_get in
+  Some x
+
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
   type elem = Elt.t
-  type key = elem list
+  type key = elem keyt
   type emap = (elem * key) list
   type epart = (elem list) list
   type elist = (elem list) 
@@ -742,21 +751,22 @@ struct
 
   let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
 
-  (* TODO : can we get in sorted order? *)
+  (* TODO : can we get in sorted order by elem *)
   let partition (s: emap) : epart =
     let s = emap_sort s in
-    let rec insert (a,k) acc = 
+    let rec insert  a k  acc = 
       match acc with
         | [] -> [(k,[a])]
-        | (k2,ls)::xs -> 
-              if k==k2 then (k,a::ls)::xs
-              else (k2,ls)::(insert (a,k) xs) in
-    let r = List.fold_left (fun acc x ->  insert x acc) [] s in
+        | ((k2,ls) as p)::xs -> 
+              if (k==k2) then (k,a::ls)::xs
+              else p::(insert a k xs) in
+    let r = List.fold_left (fun acc (a,k) ->  insert a k acc) [] s in
+    let r = List.filter (fun (_,x) -> List.length x > 1) r in
     (* let r = List.rev r in *)
     let r = List.map ( fun (_,b) -> List.rev b) r in
+    r
     (* print_endline ((add_str "emap" string_of_emap) s); *)
     (* print_endline ((add_str "epart" string_of_epart) r); *)
-    List.filter (fun x -> List.length x > 1) r
 
   (* let partition (s: emap) : epart = *)
   (*   Debug.no_1 "partition" string_of_emap string_of_epart partition s *)
@@ -770,10 +780,12 @@ struct
     "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
-    let flat xs y = 
-      if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
+    let flat xs = 
+      if (List.length xs>1) then 
+        let newk = new_key () in
+        List.map (fun x -> (x,newk)) xs 
       else [] in
-    List.concat (List.map (fun x -> flat x x) ll)
+    List.concat (List.map (fun x -> flat x) ll)
 
   let mkEmpty : emap = []
 
@@ -786,13 +798,13 @@ struct
         _ -> d
 
   (* find key of e in s *)
-  let find (s : emap) (e:elem) : key  = find_aux s e []
+  let find (s : emap) (e:elem) : key  = find_aux s e None
 
   (* find key of e in s and return remainder after
      all elements equivalent to e is removed *)
   let find_remove (s : emap) (e:elem) : key * emap  = 
-    let r1 = find_aux s e [] in
-    (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
+    let r1 = find_aux s e None in
+    (r1, if r1==None then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
 
   (* returns s |- x=y *)
   let is_equiv (s: emap)  (x:elem) (y:elem) : bool =
@@ -800,7 +812,7 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      (r1==r2 && not(r1==[]))
+      (r1==r2 && not(r1==None))
 
   (* add x=y to e-set s and returning a new e-set with
      extra elements added *)
@@ -809,18 +821,29 @@ struct
     else
       let r1 = find s x in
       let r2 = find s y in
-      if r1==[] then
-        if r2==[] then
-          let r3 = [x;y] in
-          (x,r3)::((y,r3)::s)
-        else (x,r2)::s
-      else
-        if r2==[] then (y,r1)::s
-        else
-          if r1==r2 then s
-          else
-            let r3=r1@r2 in
-            List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+      begin
+      match r1 with
+        | None -> 
+              begin
+                match r2 with
+                  | None ->
+                        let r3 = new_key () in
+                        (x,r3)::((y,r3)::s)
+                  | _ -> (x,r2)::s
+              end
+        | _ -> 
+              begin
+                match r2 with
+                  | None ->  (y,r1)::s
+                  | _ -> 
+                        begin
+                          if r1==r2 then s
+                          else
+                            let r3=new_key() in
+                            List.map (fun (a,b) -> if (b==r1 || b==r2) then (a,r3) else (a,b)) s
+                        end
+              end
+      end
 
   let build_eset (xs:(elem * elem) list) :  emap =
     let pr1 = Basic.pr_pair Elt.string_of Elt.string_of in
@@ -869,9 +892,9 @@ struct
     else (l1,l2)
 
   (* merge two equivalence sets s1 /\ s2 *)
-  let merge_eset (s1: emap) (s2: emap): emap =
-    let (t1,t2) = order_two s1 s2 in
-    List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
+  let merge_eset (t1: emap) (t2: emap): emap =
+    (* let (t1,t2) = order_two t1 t2 in *)
+   List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
 
   (* remove key e from e_set  *)
   let elim_elems_one  (s:emap) (e:elem) : emap = 
@@ -883,7 +906,7 @@ struct
   (* return all elements equivalent to e, including itself *)
   let find_equiv_all  (e:elem) (s:emap) : elist  =
     let r1 = find s e in
-    if (r1==[]) then []
+    if (r1==None) then []
     else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
   
   (* return a distinct element equal to e *)
@@ -897,7 +920,7 @@ struct
   (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
   let find_equiv_elim_sure (e:elem) (s:emap) : elem option * emap  =
     let r1,s1 = find_remove s e in
-    if (r1==[]) then (None,s)
+    if (r1==None) then (None,s)
     else let (ls,ls2) = List.partition (fun (a,k) -> k==r1 ) s1 in
     match ls with
       | [] -> (None,s1)
@@ -917,7 +940,7 @@ struct
     if (eq fv tv) then s
     else
       let r1 = find s fv in
-      if (r1==[]) then s
+      if (r1==None) then s
       else 
         let ns = add_equiv s fv tv in
         elim_elems_one ns fv
@@ -954,7 +977,7 @@ struct
 
   let rename_eset_with_key (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
-    if b then  List.map (fun (e,k) -> (f e, List.map f k)) s
+    if b then  List.map (fun (e,k) -> (f e, k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 

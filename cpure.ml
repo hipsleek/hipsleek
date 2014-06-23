@@ -17,6 +17,14 @@ type spec_var =
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
+let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
+
+let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
+
+let is_zero s = s==mk_zero
+
+let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
+
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
@@ -510,12 +518,13 @@ let is_null_str (s:string) : bool =
 (* is string a constant?  *)
 let is_const (s:spec_var) : bool = 
   let n = name_of_spec_var s in
-  (is_null_str n) || (is_int_str n)
+  (is_zero s (* is_null_str n *)) || (is_int_str n)
 
 (* is string a constant?  *)
 let is_null_const (s:spec_var) : bool = 
-  let n = name_of_spec_var s in
-  (is_null_str n) 
+  is_zero s
+  (* let n = name_of_spec_var s in *)
+  (* (is_null_str n)  *)
 
 (* is string a constant?  *)
 let is_null_const_exp (e:exp) : bool = match e with
@@ -528,7 +537,8 @@ let is_int_const (s:spec_var) : bool =
      (is_int_str n)
 
 let conv_var_to_exp (v:spec_var) :exp =
-  if (full_name_of_spec_var v=Globals.null_name) then (Null no_pos)
+  if (is_zero_sem v)
+    (* full_name_of_spec_var v=Globals.null_name) *) then (Null no_pos)
   else match get_int_const (name_of_spec_var v) with
     | Some i -> IConst(i,no_pos)
     | None -> Var(v,no_pos)
@@ -1009,7 +1019,8 @@ let bag_type = BagT Int
 
 (* free variables *)
 
-let null_var = SpecVar (Named "", null_name, Unprimed)
+let null_var = mk_zero
+(* SpecVar (Named "", null_name, Unprimed) *)
 
 let flow_var = SpecVar ((Int), flow , Unprimed)
 
@@ -1464,11 +1475,11 @@ and get_alias_bag (e : exp) : spec_var =
   match e with
     | Var (sv, _)
     | Subtract (_,Subtract (_,Var (sv,_),_),_) -> sv
-    | Bag ([],_) -> SpecVar (Named "", "emptybag", Unprimed)
+    | Bag ([],_) -> SpecVar (Globals.null_type (* Named "" *), "emptybag", Unprimed)
     | Bag (es,_) -> 
-          SpecVar (Named "", "bag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+          SpecVar (Globals.null_type, "bag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
     | BagUnion (es, _) -> 
-          SpecVar (Named "", "unionbag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
+          SpecVar (Globals.null_type, "unionbag" ^ (List.fold_left (fun x y -> x ^ name_of_exp y) "" es), Unprimed)
     | _ -> report_error no_pos "Not a bag or a variable or a bag_union or null"
 
 and name_of_exp (e: exp): string =
@@ -4301,7 +4312,7 @@ let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 module SV =
 struct 
   type t = spec_var
-  let zero = mk_spec_var Globals.null_name 
+  let zero = mk_zero
     (* "_" to denote null value *)
   let is_zero x = x==zero
   let eq = eq_spec_var
@@ -4372,16 +4383,15 @@ type var_aset = EMapSV.emap
 
 (* TODO : this is an abstract type that should not be exposed *)
 
-type ef_part = (spec_var list) list
-type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list)
-(* old extended pure formula *)
-(* type ef_pure = (spec_var list * formula) *)
+(* type ef_part = (spec_var list) list *)
+(* type ef_pure = (spec_var list * (var_aset * ef_part) * (spec_var * spec_var) list) *)
+(* (\* old extended pure formula *\) *)
+(* (\* type ef_pure = (spec_var list * formula) *\) *)
 
-(* disjunctive extended pure formula *)
-(* [] denotes false *)
-type ef_pure_disj = ef_pure list
+(* (\* disjunctive extended pure formula *\) *)
+(* (\* [] denotes false *\) *)
+(* type ef_pure_disj = ef_pure list *)
 
-let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 
 
 (* need to remove constants and null *)
@@ -12304,7 +12314,7 @@ let overapp_ptrs p=
 let mk_self t = 
   let t =
     match t with
-      | None   -> Named ""
+      | None   -> Globals.null_type
       | Some t -> t 
   in
   SpecVar (t, self, Unprimed)
