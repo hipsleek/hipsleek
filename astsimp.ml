@@ -2102,6 +2102,55 @@ and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
     (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) 
     ls_mut_rec_views ls_pr_view_typ
 
+(*
+ * a view is tail recursively defined if there is a case
+ * that self points to the view itself or other mutual recursive views
+ *)
+and check_view_tail_rec_x (vdecl: C.view_decl) : bool =
+  let collect_view_pointed_by_self f = (
+    let view_names = ref [] in
+    let (hf,_,_,_,_) = CF.split_components f in
+    let f_hf hf = (match hf with
+      | CF.ViewNode vn ->
+          let vnode = CP.name_of_spec_var vn.CF.h_formula_view_node in
+          let _ = (
+            if (eq_str vnode self) then
+              view_names := vn.CF.h_formula_view_name :: !view_names
+            else ()
+          ) in
+          Some hf
+      | _ -> None
+    ) in
+    let _ = CF.transform_h_formula f_hf hf in
+    !view_names
+  ) in
+  let is_tail_rec_branch (f: CF.formula) = (
+    let view_names = collect_view_pointed_by_self f in
+    List.exists (fun vn ->
+      (eq_str vn vdecl.C.view_name)
+      || (mem_str_list vn vdecl.C.view_mutual_rec_views)
+    ) view_names
+  ) in
+  let branches, _ = List.split vdecl.C.view_un_struc_formula in
+  let tail_recursive = (List.exists is_tail_rec_branch branches) in
+  tail_recursive
+
+and check_view_tail_rec (vdecl: C.view_decl) : bool =
+  let pr_view = !C.print_view_decl in
+  let pr_out = string_of_bool in
+  Debug.no_1 "check_view_tail_rec" pr_view pr_out
+      (fun _ -> check_view_tail_rec_x vdecl) vdecl
+
+and update_view_info_x (vdecl: C.view_decl) : C.view_decl =
+  let is_tail_rec = check_view_tail_rec vdecl in
+  let new_vdecl = { vdecl with C.view_is_tail_rec = is_tail_rec } in
+  new_vdecl
+
+and update_view_info (vdecl: C.view_decl) : C.view_decl =
+  let pr_v = !C.print_view_decl in
+  Debug.no_1 "update_view_info" pr_v pr_v
+      (fun _ -> update_view_info_x vdecl) vdecl
+
 (* type: I.prog_decl ->
   String.t list list ->
   (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list ->
@@ -2131,6 +2180,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       with _ -> []
     ) in
     let nview = { nview with C.view_mutual_rec_views = full_mutrec_views } in
+    let nview = update_view_info nview in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
       let transed_views2,mutrec_views = if mutrec_views!=[] &&

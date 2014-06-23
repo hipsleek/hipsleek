@@ -2752,42 +2752,43 @@ module ViewGraph = struct
     !str
 end
 
-(*
- * a view is tail recursively defined if there is a case
- * that self points to the view itself
- *)
-let check_view_tail_recursive_x (vd: view_decl) : bool =
-  let vname = vd.view_name in
-  let collect_view_pointed_by_self f = (
-    let views = ref [] in
-    let (hf,_,_,_,_) = CF.split_components f in
-    let f_hf hf = (match hf with
-      | CF.ViewNode vn ->
-          let nname = P.name_of_spec_var vn.CF.h_formula_view_node in
-          let _ = (
-            if (String.compare nname self = 0) then
-              views := vn.CF.h_formula_view_name :: !views
-            else ()
-          ) in
-          Some hf
-      | _ -> None
-    ) in
-    let _ = CF.transform_h_formula f_hf hf in
-    !views
-  ) in
-  let is_tail_recursive_branch (f: CF.formula) = (
-    let views = collect_view_pointed_by_self f in
-    List.exists (fun vn -> String.compare vn vname = 0) views
-  ) in
-  let branches, _ = List.split vd.view_un_struc_formula in
-  let tail_recursive = (List.exists is_tail_recursive_branch branches) in
-  tail_recursive
+(* (*                                                                                 *)
+(*  * a view is tail recursively defined if there is a case                           *)
+(*  * that self points to the view itself or other mutual recursive views             *)
+(*  *)                                                                                *)
+(* let check_view_tail_recursive_x (vdecl: view_decl) : bool =                        *)
+(*   let collect_view_pointed_by_self f = (                                           *)
+(*     let view_names = ref [] in                                                     *)
+(*     let (hf,_,_,_,_) = CF.split_components f in                                    *)
+(*     let f_hf hf = (match hf with                                                   *)
+(*       | CF.ViewNode vn ->                                                          *)
+(*           let vnode = P.name_of_spec_var vn.CF.h_formula_view_node in              *)
+(*           let _ = (                                                                *)
+(*             if (eq_str vnode self) then                                            *)
+(*               view_names := vn.CF.h_formula_view_name :: !view_names               *)
+(*             else ()                                                                *)
+(*           ) in                                                                     *)
+(*           Some hf                                                                  *)
+(*       | _ -> None                                                                  *)
+(*     ) in                                                                           *)
+(*     let _ = CF.transform_h_formula f_hf hf in                                      *)
+(*     !view_names                                                                    *)
+(*   ) in                                                                             *)
+(*   let is_tail_recursive_branch (f: CF.formula) = (                                 *)
+(*     let view_names = collect_view_pointed_by_self f in                             *)
+(*     List.exists (fun vn ->                                                         *)
+(*       (eq_str vn vdecl.view_name) || (mem_str_list vn vdecl.view_mutual_rec_views) *)
+(*     ) view_names                                                                   *)
+(*   ) in                                                                             *)
+(*   let branches, _ = List.split vdecl.view_un_struc_formula in                      *)
+(*   let tail_recursive = (List.exists is_tail_recursive_branch branches) in          *)
+(*   tail_recursive                                                                   *)
 
-let check_view_tail_recursive (vd: view_decl) : bool =
-  let pr_view = !print_view_decl in
-  let pr_out = string_of_bool in
-  Debug.no_1 "check_view_tail_recursive" pr_view pr_out
-      (fun _ -> check_view_tail_recursive_x vd) vd
+(* let check_view_tail_recursive (vd: view_decl) : bool =                             *)
+(*   let pr_view = !print_view_decl in                                                *)
+(*   let pr_out = string_of_bool in                                                   *)
+(*   Debug.no_1 "check_view_tail_recursive" pr_view pr_out                            *)
+(*       (fun _ -> check_view_tail_recursive_x vd) vd                                 *)
 
 
 let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
@@ -3286,9 +3287,9 @@ let categorize_view (prog: prog_decl) : prog_decl =
     let segmented = is_segmented_view vd in
     let vd = { vd with view_is_touching = touching;
                        view_is_segmented = segmented; } in
-    (* is tail-recursively defined view? *)
-    let tail_recursive = check_view_tail_recursive vd in
-    let vd = { vd with view_is_tail_rec = tail_recursive } in
+    (* (* is tail-recursively defined view? *)                   *)
+    (* let tail_recursive = check_view_tail_recursive vd in      *)
+    (* let vd = { vd with view_is_tail_rec = tail_recursive } in *)
     vd
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }
