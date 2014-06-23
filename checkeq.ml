@@ -276,11 +276,11 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
           | _ -> (false,[]))
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
-	    |_ -> report_error no_pos "not handle Or f1 yet"
+	    |_ -> (false,[]) (* report_error no_pos "not handle Or f1 yet" *)
 	)
         | CF.FrmHole h1 -> (match hf2 with
 	    |CF.FrmHole h2 ->  (h1 == h2, mtl)
-	    |_ -> report_error no_pos "not handle Or f1 yet"
+	    |_ -> (false,[]) (* report_error no_pos "not handle Or f1 yet" *)
 	)
 	| CF.HRel r  -> 
 (*DONT DELETE: for repuiring exacly the same hprel name!!!

@@ -624,10 +624,10 @@ let is_null_type t  =
 
 let inline_field_expand = "_"
 
-let sl_error = "separation entailment"
-let logical_error = "logical bug"
+let sl_error = "separation entailment" (* sl_error is a may error *)
+let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
-let lemma_error = "lemma"
+let lemma_error = "lemma" (* may error *)
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
