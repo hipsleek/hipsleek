@@ -1395,12 +1395,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                (* (1,Cond_action [a21;a22]) *) a22
                            else
                              let m_act = (1,M_match m_res) in
-                             let acts=
+                             let unk_act=
                                if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
                                  (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))])
                                else
                                  m_act
-                             in acts
+                             in  unk_act
                        ) in
                        let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                     let a3 = (
@@ -1470,8 +1470,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                 let uf_i = if new_orig then 0 else 1 in
                                 [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                               else
-                                [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)]
-                            in
+                                let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
+                                let acts1=
+                                  if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
+                                    acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]
+                                  else
+                                    acts
+                                in
+                                acts1
+                        in
                             (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                             (*L2: change here for cyclic*)
                             [(1,Cond_action lst)],syn_lem_typ
