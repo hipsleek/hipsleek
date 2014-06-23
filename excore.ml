@@ -644,6 +644,10 @@ struct
   let string_of_disj (x:epure_disj) = pr_list_ln string_of x
   let mk_data sv = [([sv], emap_empty, [])] 
 
+  (* let mk_partition_x e= *)
+  (*   let n_e = EM.partition e in *)
+  (*   List.map EM.emap_sort n_e *)
+
   let mk_partition e = Debug.no_1 "partition" EM.string_of_debug string_of_epart EM.partition e
 
   let compare_list cmp b1 b2 =
@@ -1319,10 +1323,13 @@ struct
     with _ -> v (* should return v, not all elt have subst *) (* failwith ("subst_elem : cannot find elem "^Elt.string_of v) *)
 
   let subst_epure sst ((baga,(eq,p),ineq) as ep) = 
-    let new_eq = EM.subs_eset_par sst eq in
+    let new_eq = (EM.subs_eset_par sst eq) in
     let subs_fn = subst_elem sst in
     let new_baga = List.map (subs_fn) baga in
+    (* let new_p0= List.map (List.map subs_fn) p in *)
     (* let new_p = List.map (List.map subs_fn) p in *)
+    (* sort equalities *)
+    (* let new_p = List.map (List.sort Elt.compare) new_p0 in *)
     let new_ineq = List.map (fun (a,b) -> (subs_fn a,subs_fn b)) ineq in
     let eqm = (new_eq,mk_partition new_eq) in
     (new_baga,eqm,new_ineq)

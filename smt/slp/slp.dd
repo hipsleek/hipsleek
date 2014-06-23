@@ -1,3 +1,4 @@
-view_unsat_check_topdown
-process_vis
-build_vis
+#heap_entail_non_empty_rhs_heap
+#compute_actions
+meta_to_struc_formula
+Sleekengine.meta_to_formula

@@ -30,9 +30,12 @@ let rec build_ef_heap_formula_x (cf : Cformula.h_formula) (all_views : Cast.view
     | Cformula.ViewNode vnf ->
           let svl = vnf.Cformula.h_formula_view_node::vnf.Cformula.h_formula_view_arguments in
           let efpd =
-            try Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
+            try
+              Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name
             with Not_found -> failwith "cannot find in init_map too"
           in
+          let _ = Debug.ninfo_hprint (add_str "vnf.Cformula.h_formula_view_name" pr_id) vnf.Cformula.h_formula_view_name no_pos in
+          let _ = Debug.ninfo_hprint (add_str "efpd" (EPureI.string_of_disj)) efpd no_pos in
           let efpd = EPureI.from_cpure_disj efpd in
           (* need substitue variable *)
           let view = List.find (fun vc -> vnf.Cformula.h_formula_view_name = vc.Cast.view_name) all_views in

@@ -1014,7 +1014,8 @@ struct
     with _ -> a
 
   let subs_eset_par   (f_t_ls:(elem * elem) list) (s:emap) : emap = 
-    List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s 
+    let new_s = List.map (fun (a,k) -> (subs_elem f_t_ls a,k)) s in
+    emap_sort new_s
 
 
   (* returns true if s contains no duplicates *)

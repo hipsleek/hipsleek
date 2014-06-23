@@ -274,6 +274,8 @@ Cnull!=self_16 & Cnull=x1_14 & Cnull=x2_18)
 ef_elim_exists@3 EXIT:([], Cnull=_null & Cnull!=self & _null=y2)
 
 ====================================
+# rec03.slk: FIXED (change EM.subs_eset_par, sort eqs)
+
 
 !!! Inconsistent eqmap @ mk_star:2
 !!! eqmap:[(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))]

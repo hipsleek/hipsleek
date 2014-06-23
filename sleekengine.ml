@@ -1014,6 +1014,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       with _ ->
           Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
+  (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   ((res, rs,v_hp_rel), (ante,conseq))
@@ -1819,6 +1820,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                         in
                         "(may) cause:"^s
                       with _ ->
+                          let _ = smt_is_must_failure := (Some false) in
                           "(may) cause:"^s
                   end
                 | None -> "INCONSISTENCY : expected failure but success instead"

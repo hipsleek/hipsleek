@@ -332,6 +332,25 @@ let get_data_view_name hf=
     | _ -> ( "")
 
 
+(**************** SLEEKENTAIL*************)
+(* let normalize_ex_quans_conseq_x prog ante conseq= *)
+(*   let normalize_formula ante_nodes f= *)
+(*     match f with *)
+(*       | Base _ -> f *)
+(*       | Exists _ -> *)
+(*             let quans,base = split_quantifiers f in *)
+(*             let is_match, map = Checkeq.checkeq_formulas ante_nodes ante f in *)
+(*       | Or _ -> f *)
+(*   in *)
+(*   conseq *)
+
+(* let normalize_ex_quans_conseq prog ante conseq= *)
+(*   let pr1 = !print_formula in *)
+(*   let pr2 = !print_struc_formula in *)
+(*   Debug.no_2 "normalize_ex_quans_conseq" pr1 pr2 pr2 *)
+(*       (fun _ _ -> normalize_ex_quans_conseq_x prog ante conseq) *)
+(*       ante conseq *)
+
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
   let keep_ptrs = look_up_reachable_ptr_args prog hd_nodes hv_nodes keep_rootvars in
   drop_data_view_hpargs_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
