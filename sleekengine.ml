@@ -665,19 +665,21 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) &&
-    (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-    || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then
-    cprog5
-  else
+  let cprog6 = (* if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
+  (*   (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
+  (*   || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then *)
+  (*   cprog5 *)
+  (* else *)
     try
       Cast.categorize_view cprog5
     with _ -> cprog5
   in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
-  let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-               || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-    Lemma.generate_all_lemmas iprog cprog6
+  let _ =  (* if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
+           (*     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then *)
+    try
+      Lemma.generate_all_lemmas iprog cprog6
+    with _ -> ()
   in
   let cprog6a =
      if !Globals.norm_cont_analysis then
@@ -1797,31 +1799,33 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
             | Some s ->
-                  let reg1 = Str.regexp "base case unfold failed" in
-                  let _ = try
-                    if Str.search_forward reg1 s 0 >=0 then
-                      let _ = smt_is_must_failure := (Some false) in ()
-                    else let _ = smt_is_must_failure := (Some true) in
-                    ()
-                  with _ -> let _ = smt_is_must_failure := (Some true) in ()
-                  in
+                  (* let reg1 = Str.regexp "base case unfold failed" in *)
+                  (* let _ = try *)
+                  (*   if Str.search_forward reg1 s 0 >=0 then *)
+                  (*     let _ = smt_is_must_failure := (Some false) in () *)
+                  (*   else let _ = smt_is_must_failure := (Some true) in *)
+                  (*   () *)
+                  (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
+                  (* in *)
+                  let _ = smt_is_must_failure := (Some true) in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> begin
-                      try
-                        let reg1 = Str.regexp "Nothing_to_do" in
-                        let _ = if Str.search_forward reg1 s 0 >=0 then
-                          let _ = smt_is_must_failure := (Some false) in ()
-                        else
-                          if is_lem_syn_reach_bound () then
-                            let _ = smt_is_must_failure := (Some false) in ()
-                          else
-                            ()
-                        in
-                        "(may) cause:"^s
-                      with _ ->
-                          let _ = smt_is_must_failure := (Some false) in
-                          "(may) cause:"^s
+                      (* try *)
+                      (*   let reg1 = Str.regexp "Nothing_to_do" in *)
+                      (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
+                      (*     let _ = smt_is_must_failure := (Some false) in () *)
+                      (*   else *)
+                      (*     if is_lem_syn_reach_bound () then *)
+                      (*       let _ = smt_is_must_failure := (Some false) in () *)
+                      (*     else *)
+                      (*       () *)
+                      (*   in *)
+                    let _ = smt_is_must_failure := (Some false) in
+                    "(may) cause:"^s
+                      (* with _ -> *)
+                      (*     let _ = smt_is_must_failure := (Some false) in *)
+                      (*     "(may) cause:"^s *)
                   end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )

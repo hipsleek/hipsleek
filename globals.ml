@@ -1708,6 +1708,6 @@ let un_option opt default_val = match opt with
 
 let smt_return_must_on_error ()=
   let _ = if !return_must_on_pure_failure then
-    let _ = smt_is_must_failure := (Some true) in ()
+    (* let _ = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()
