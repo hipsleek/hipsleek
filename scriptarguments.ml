@@ -627,31 +627,45 @@ let common_arguments = [
   ("--inf-dis-split-ante", Arg.Clear Globals.infer_deep_ante_flag, "disable deep split of ante for pure inference");
   ("--pred-dis-infer", Arg.Clear Globals.sa_syn, "disable the shape inference stage");
   ("--lem-en-syn", Arg.Set Globals.lemma_syn, "enable the lemma synthesis");
+  (* enable, diable lemma generation *)
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
+  ("--dis-lem-gen", 
+      Arg.Unit (fun _ -> 
+        Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
+        Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
+      ),
+      "disable lemma generation");
+  (* short-form options to enable, diable lemma generation *)
+  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");
+  ("--dlg",
+      Arg.Unit (fun _ -> 
+        Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
+        Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
+      ),
+      "disable lemma generation (--dis-lem-gen)");
+  (* enable, disable accelerated folding *)
   ("--en-acc-fold", 
       Arg.Unit (fun _ -> Globals.acc_fold := true; Globals.fold_contra_detect := true;),
       "enable accelerated folding");
   ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
-  ("--en-cts-acc-fold", Arg.Set Globals.cts_acc_fold, "enable context-sensitive accelerated folding");
+  (* short-form options to enable, disable accelerated folding *)
+  ("--eaf", 
+      Arg.Unit (fun _ -> Globals.acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable accelerated folding");
+  ("--daf", Arg.Clear Globals.acc_fold, "disable accelerated folding");
+  (* enable, disable context-sensitive accelerated folding *)
+  ("--en-cts-acc-fold",
+      Arg.Unit (fun _ -> Globals.cts_acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable context-sensitive accelerated folding");
   ("--dis-cts-acc-fold", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
-  ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");
-  ("--dlg",
-     Arg.Unit
-      (fun _ -> 
-          Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
-          Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
-       ),
-   "disable lemma generation (--dis-lem-gen)");
-  ("--dis-lem-gen", 
-     Arg.Unit
-      (fun _ -> 
-          Globals.lemma_gen_unsafe := false; Globals.lemma_gen_unsafe_fold := false;
-          Globals.lemma_gen_safe := false; Globals.lemma_gen_safe_fold := false
-       ),
-   "disable lemma generation");
+  (* short-form options to enable, disable context-sensitive accelerated folding *)
+  ("--ecaf",
+      Arg.Unit (fun _ -> Globals.cts_acc_fold := true; Globals.fold_contra_detect := true;),
+      "enable context-sensitive accelerated folding");
+  ("--dcaf", Arg.Clear Globals.cts_acc_fold, "disable context-sensitive accelerated folding");
   ("--en-cyc-check", Arg.Set Globals.cyc_proof_syn, "enable the detection of cyclic proof syntatically");
   ("--dis-cyc-check", Arg.Clear Globals.cyc_proof_syn, "disable the detection of cyclic proof syntatically");
   ("--pred-en-useless-para", Arg.Set Globals.pred_elim_useless, "enable the elimination of useless parameter from HP predicate and user-defined predicates (view)");

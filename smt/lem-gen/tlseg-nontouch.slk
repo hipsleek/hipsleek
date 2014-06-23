@@ -8,12 +8,20 @@ pred tlseg<p> == self = p
     or self::tlseg<r> * r::node<v,p> & p != self.
 
 checkentail x::tlseg<y> * y::tlseg<z> * z::node<_,_>@L |- x::tlseg<z>.
-            
+
 checkentail x::tlseg<z> |- x::tlseg<y> * y::tlseg<z>.
+
+checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<f_r_29>.
 
 /*
 // This entailment should succeed but fail.
 // --> cannot generate distributive lemma
 
+!!! new_induct_f: (exists v,r: (emp) * r::node<v,p>&p!=r&{FLOW,(1,24)=__flow})[]
+!!! tmp_sf: EBase (exists f_r_32: r::tlseg<f_r_32>&{FLOW,(1,24)=__flow})[]
+!!! new_induct_f |- tmp_sf: false
+Entail 1: Fail.(may) cause: ((x!=y | y=x)) & z=1 & ((y!=z | z=y)) |-  y=z. LOCS:[0;10] (ma
+
 checkentail_exact r::node<v,p> & p!=r |-  r::tlseg<f_r_29>.
+//succeed with AccFold
 */

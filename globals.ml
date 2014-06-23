@@ -805,9 +805,9 @@ let lemma_gen_unsafe = ref false     (* generating (without proving) both fold a
 
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 
-let acc_fold = ref false
+let acc_fold = ref true
 
-let cts_acc_fold = ref false
+let cts_acc_fold = ref true
 
 let smart_lem_search = ref false
 
