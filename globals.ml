@@ -1228,7 +1228,7 @@ let show_unexpected_ents = ref true
     else print_endline s 
 
 (* generate baga inv from view *)
-let check_baga = ref false
+let double_check = ref false
 let gen_baga_inv = ref false
 let pred_sat = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)

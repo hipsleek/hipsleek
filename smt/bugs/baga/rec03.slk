@@ -4,12 +4,6 @@ data GTyp {
   GTyp f1;
 }.
 
-pred P<x2:GTyp,x3:GTyp> ==
-self::one<> * x2::one<> * x3::one<> * self::Q<x2,x3>.
-
-pred Q<y2:GTyp,y3:GTyp> ==
- self::zero<> * y2::zero<> * y3::zero<>
-or (exists x1,x2,x3: x1::succ3rec<x2,x3,self,y2,y3> * x1::Q<x2,x3>).
 
 pred succ3rec<x2:GTyp,x3:GTyp,y1:GTyp,y2:GTyp,y3:GTyp> ==
  self::zero<> * y1::one<> & x2 = y2 & x3 = y3
@@ -27,6 +21,13 @@ null = self.
 
 pred one<> ==
 null != self.
+
+pred P<x2:GTyp,x3:GTyp> ==
+self::one<> * x2::one<> * x3::one<> * self::Q<x2,x3>.
+
+pred Q<y2:GTyp,y3:GTyp> ==
+ self::zero<> * y2::zero<> * y3::zero<>
+or (exists x1,x2,x3: x1::succ3rec<x2,x3,self,y2,y3> * x1::Q<x2,x3>).
 
 checkentail_exact x0::P<x1,x2>
          |- false.

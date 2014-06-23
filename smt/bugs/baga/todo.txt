@@ -233,6 +233,11 @@ ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_nu
 #### should be below : why?
 ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
 
+ex_mk_star@17
+ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_24],[y2,y2_25],[y3,y3_26]],INEQ:[])
+ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_24,y3_26]],INEQ:[(_null,y2_25)])
+ex_mk_star@17 EXIT:(BAGA:[],EQ:[[y2,y2_25],[_null,x3,x3_24,y3,y3_26]],INEQ:[(_null,y2_25)])
+
 # rec03a.slk --inv-baga -dre "ex_mk_star"
 (BAGA:[],EQ:[[_null,self],[x2xxx,y2],[x3,y3]],INEQ:[(_null,y1)]),
 (BAGA:[],EQ:[[_null,x3,y1,y2]],INEQ:[(_null,self),(_null,x2xxx),(_null,y3)])
@@ -242,6 +247,12 @@ ex_mk_star@17
 ex_mk_star inp1 :(BAGA:[],EQ:[[x3,x3_14],[y2,y2_15],[y3,y3_16]],INEQ:[])
 ex_mk_star inp2 :(BAGA:[],EQ:[[_null,x2],[x3_14,y3_16]],INEQ:[(_null,y2_15)])
 ex_mk_star@17 EXIT:(BAGA:[],EQ:[[_null,x2],[x3,x3_14,y3,y3_16],[y2,y2_15]],INEQ:[(_null,y2_15)])
+
+inconsistent eq2 & part2!
+========================
+!!! eq2:emap[{_null,x3_14,y3_16}]
+!!! part2:[[_null,x2],[x3_14,y3_16]]eset1 :emap[{x3,x3_14};{y2,y2_15};{y3,y3_16}]
+
 ====================================
 # rec03.slk --inv-baga (old-baga has 2 versions of _null!)
 
@@ -263,6 +274,50 @@ Cnull!=self_16 & Cnull=x1_14 & Cnull=x2_18)
 ef_elim_exists@3 EXIT:([], Cnull=_null & Cnull!=self & _null=y2)
 
 ====================================
+
+!!! Inconsistent eqmap @ mk_star:2
+!!! eqmap:[(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))]
+!!! part:[[_null,x2],[x3_24,y3_26]]
+!!! part2:[[_null,x3_24,y3_26]]
+
+!!! Inconsistent eqmap @ mk_star:2
+!!! eqmap:[(y3_18,Some(23)),(y2_17,Some(22)),(self_16,Some(22)),(x3_15,Some(22)),(_null,Some(22))]
+!!! part:[[_null,x3_15,self_16,y2_17]]
+!!! part2:[[_null,self_16,x3_15,y2_17]]
+// why not sorted?
+
+
+./../../sleek rec03.slk --inv-baga --double-check -dre "ex_" > 2
+
+!!! Inconsistent eqmap @ subst_epure
+!!! eqmap:[(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))]
+!!! part:[[_null,x2],[x3_24,y3_26]]
+!!! part2:[[_null,x3_24,y3_26]]
+ex_subst_epure@148@146
+ex_subst_epure inp1 :[(self,x2),(x2,x3_24),(y1,y2_25),(y2,y3_26)]
+ex_subst_epure inp2 :(BAGA:[],EQ:[[_null,x2,y1]],INEQ:[(_null,self),(_null,y2)])
+ex_subst_epure@148 EXIT:(BAGA:[],EQ:[[_null,x3_24,y2_25]],INEQ:[(_null,x2),(_null,y3_26)])
+
+
+ex_subst_epure@147@146
+ex_subst_epure inp1 :[(self,x2),(x2,x3_24),(y1,y2_25),(y2,y3_26)]
+ex_subst_epure inp2 :(BAGA:[],
+
+Substitutiobn below must be parallel and not sequential
+
+
+    let new_eq = EM.subs_eset_par sst eq in
+
+EQ:([(x2,Some(9)),(y2,Some(9)),(_null,Some(3)),(self,Some(3))],
+[[_null,self],[x2,y2]]),
+INEQ:[(_null,y1)])
+ex_subst_epure@147 EXIT:(BAGA:[],
+
+EQ:([(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))],
+[[_null,x2],[x3_24,y3_26]])
+
+,INEQ:[(_null,y2_25)])
+
 ====================================
 ====================================
 ====================================

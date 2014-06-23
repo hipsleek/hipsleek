@@ -630,14 +630,53 @@ struct
 
   let is_false (e:epure) = (e == mk_false)
   let pr1 = pr_list Elt.string_of
-  let pr2 = pr_list (pr_pair Elt.string_of Elt.string_of)
+  let string_of_pair = pr_list (pr_pair Elt.string_of Elt.string_of)
+  let pr2 = string_of_pair
   let string_of_epart lst = pr_list (pr_list Elt.string_of) lst
   let string_of (x:epure) =
     pr_triple (add_str "BAGA" pr1) (fun (_,ep) ->
         (add_str "EQ" string_of_epart) ep) (add_str "INEQ" pr2) x
 
+  let string_of_all (x:epure) =
+    pr_triple (add_str "BAGA" pr1) (fun ep ->
+        (add_str "EQ" (pr_pair EM.string_of_debug string_of_epart)) ep) (add_str "INEQ" pr2) x
+
   let string_of_disj (x:epure_disj) = pr_list_ln string_of x
   let mk_data sv = [([sv], emap_empty, [])] 
+
+  let mk_partition e = Debug.no_1 "partition" EM.string_of_debug string_of_epart EM.partition e
+
+  let compare_list cmp b1 b2 =
+    let rec aux b1 b2 =
+    match b1,b2 with
+      | [],[] -> 0
+      | [],_ -> -1
+      | _,[] ->1
+      | (x::xs),(y::ys) ->
+            let c = cmp x y in
+            if c==0 then aux xs ys
+            else c
+    in aux b1 b2
+
+  let partition_compare lst1 lst2 =
+    compare_list (fun l1 l2 -> compare_list Elt.compare l1 l2) lst1 lst2
+
+  let check_eqmap s  (eq,p)  =
+    if !Globals.double_check then
+      let p2 = mk_partition eq in
+      if (partition_compare p p2) != 0 then
+        begin
+          Debug.binfo_pprint ("Inconsistent eqmap @ "^s) no_pos;
+          Debug.binfo_hprint (add_str "eqmap" EM.string_of_debug) eq no_pos;
+          Debug.binfo_hprint (add_str "part" string_of_epart) p no_pos;
+          Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos;
+        end
+
+  let check_epure s ((_,eqmap,_) as r) =
+    check_eqmap s eqmap 
+
+  let check_epure_disj s lst =
+    List.iter (check_epure s) lst 
 
   let baga_conv baga : formula =
     let baga = Elt.conv_var baga in
@@ -736,20 +775,29 @@ struct
   let mk_star efp1 efp2 =
     if (is_false efp1) || (is_false efp2) then mk_false
     else
-      let (baga1, (eq1,_), neq1) = efp1 in
-      let (baga2, (eq2,_), neq2) = efp2 in
-      try
-        if (detect_contra eq1 baga2) || (detect_contra eq2 baga1) 
-        then mk_false
-        else 
-          let new_baga = merge_baga baga1 baga2 in
-          let new_eq = EM.merge_eset eq1 eq2 in
-          let new_eq2 = (new_eq,EM.partition new_eq) in
-          let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
-          (new_baga, new_eq2, new_neq)
-      with _ -> mk_false
+      (* let (baga1, (eq1,_), neq1) = efp1 in *)
+      (* let (baga2, (eq2,_), neq2) = efp2 in *)
+      match efp1,efp2 with
+        | (baga1, (eq1,p1), neq1),(baga2, (eq2,p2), neq2) ->
+              try
+                if (detect_contra eq1 baga2) || (detect_contra eq2 baga1) 
+                then mk_false
+                else 
+                  let new_baga = merge_baga baga1 baga2 in
+                  (* Debug.binfo_hprint (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
+                  (* Debug.binfo_hprint (add_str "eq2" EM.string_of) eq2 no_pos; *)
+                  (* Debug.binfo_hprint (add_str "part2" string_of_epart) p2 no_pos; *)
+                  let new_eq = EM.merge_eset eq1 eq2 in
+                  let new_eq2 = (new_eq,mk_partition new_eq) in
+                  check_eqmap "mk_part:2" new_eq2;
+                  let new_neq = merge_ineq new_baga new_eq neq1 neq2 in
+                  (new_baga, new_eq2, new_neq)
+              with _ -> mk_false
+
 
   let mk_star e1 e2 =
+    check_epure "mk_star:1" e1;
+    check_epure "mk_star:2" e2;
     let pr = string_of in
     Debug.no_2 "ex_mk_star" pr pr pr mk_star e1 e2
 
@@ -901,7 +949,8 @@ struct
       let new_baga = List.sort Elt.compare new_baga0 in
       let _ = if duplicate new_baga then failwith "duplicate baga" else () in
       let new_eq = EM.elim_elems eq svl in
-      let new_eq = (new_eq,EM.partition new_eq) in
+      let new_eq = (new_eq,mk_partition new_eq) in
+      check_eqmap "mk_part:1" new_eq;
       (* let eq_pairs = EM.get_equiv eq in *)
       (* let subs_eq = List.map (subs_pair mk_subs) eq_pairs in *)
       let new_neq = Elt.from_var_pairs (List.fold_left (fun acc (v1,v2) ->
@@ -941,8 +990,10 @@ struct
 
   let elim_exists (svl : elem list) (f : epure) : epure =
     let pr1 = pr_list Elt.string_of in
-    Debug.no_2 "elim_exists_baga" pr1 (string_of) (string_of)
-        (fun _ _ -> elim_exists svl f) svl f
+    let r = Debug.no_2 "ef_elim_exists" pr1 (string_of) (string_of)
+        (fun _ _ -> elim_exists svl f) svl f in
+    let _ = check_epure "elim_exists : result" r in
+    r
 
 
   (* let imply (ante : epure) (conseq : epure) : bool = *)
@@ -965,17 +1016,6 @@ struct
   (* let eq_epure (ante : epure) (conseq : epure) : bool = *)
   (*   imply ante conseq && imply conseq ante *)
 
-  let compare_list cmp b1 b2 =
-    let rec aux b1 b2 =
-    match b1,b2 with
-      | [],[] -> 0
-      | [],_ -> -1
-      | _,[] ->1
-      | (x::xs),(y::ys) ->
-            let c = cmp x y in
-            if c==0 then aux xs ys
-            else c
-    in aux b1 b2
 
   let eq_list f b1 b2 =
     let rec aux b1 b2 =
@@ -999,22 +1039,22 @@ struct
     (*         if Elt.eq x y then baga_eq xs ys *)
     (*         else false *)
 
-  let compare_partition cmp p1 p2 =
-    let rec aux p1 p2 =
-      match p1,p2 with
-        | [],[] -> 0
-        | [],_ -> -1
-        | _,[] -> 1
-        | x1::p1,x2::p2 ->
-              let c1=compare_list cmp x1 x2 in
-              if c1==0 then aux p1 p2
-              else c1
-    in aux p1 p2
+  (* let compare_partition cmp p1 p2 = *)
+  (*   let rec aux p1 p2 = *)
+  (*     match p1,p2 with *)
+  (*       | [],[] -> 0 *)
+  (*       | [],_ -> -1 *)
+  (*       | _,[] -> 1 *)
+  (*       | x1::p1,x2::p2 -> *)
+  (*             let c1=compare_list cmp x1 x2 in *)
+  (*             if c1==0 then aux p1 p2 *)
+  (*             else c1 *)
+  (*   in aux p1 p2 *)
 
   let emap_compare (_,lst1) (_,lst2) =
     (* DONE : is get_equiv in sorted order? *)
-    (* let lst1 = EM.partition e1 in *)
-    (* let lst2 = EM.partition e2 in *)
+    (* let lst1 = mk_partition e1 in *)
+    (* let lst2 = mk_partition e2 in *)
     (* let lst1 = List.sort pair_cmp lst1 in *)
     (* let lst2 = List.sort pair_cmp lst2 in *)
     compare_list (fun l1 l2 -> compare_list Elt.compare l1 l2) lst1 lst2
@@ -1070,18 +1110,33 @@ struct
     else c1
 
 
+  let norm_disj lst =
+    let r = List.sort epure_compare lst in
+    let rec aux p xs =
+      match xs with
+        | [] -> [p]
+        | x::xs -> 
+              if epure_compare p x ==0 then aux p xs
+              else p::(aux x xs) in
+    match r with
+      | [] -> []
+      | x::xs -> aux x xs
+
   (* TODO-WN why did we not sort this *)
   let mk_or_disj t1 t2 = 
-    let res=t1@t2 in
-    List.sort epure_compare res
+    norm_disj (t1@t2)
+  (* let res=t1@t2 in *)
+  (*   List.sort epure_compare res *)
 
   let mk_or_norm t1 t2 = 
-    let res=t1@t2 in
-    List.sort epure_compare res
+    mk_or_disj t1 t2
+(* let res=t1@t2 in *)
+(*     List.sort epure_compare res *)
 
   let elim_exists_disj (svl : elem list) (lst : epure_disj) : epure_disj =
     let r = List.map (fun e -> elim_exists svl e) lst in
-    List.sort epure_compare r 
+    norm_disj r
+        (* List.sort epure_compare r  *)
 
   let merge_disj lst1 lst2 =
     merge epure_compare lst1 lst2
@@ -1093,7 +1148,8 @@ struct
   let add_star ep lst =
     let xs = List.map (fun v -> mk_star ep v) lst in
     let zs = List.filter (fun x -> not(unsat x)) xs in
-    List.sort epure_compare zs
+    norm_disj zs
+    (* List.sort epure_compare zs *)
 
   (* xs --> ys? *)
   let lst_imply cmp xs ys =
@@ -1198,7 +1254,7 @@ struct
 
   let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
     let r = epure_disj_syn_imply ante conseq in
-    if !Globals.check_baga then
+    if !Globals.double_check then
       begin
         let r2 = sem_imply_disj ante conseq in
         if r!=r2 then
@@ -1228,17 +1284,17 @@ struct
 
 
   (* reducing duplicate? *)
-  let norm_disj disj =
-    let rec remove_duplicate (disj : epure_disj) : epure_disj =
-      match disj with
-        | [] -> []
-        | hd::tl ->
-              let new_tl = remove_duplicate (List.filter (fun ep ->
-                  not (eq_epure_syn hd ep)) tl) in
-              hd::new_tl
-    in
-    let disj0 = List.filter (fun v -> not(is_false v)) (List.map norm disj) in
-    remove_duplicate disj0
+  (* let norm_disj disj = *)
+  (*   let rec remove_duplicate (disj : epure_disj) : epure_disj = *)
+  (*     match disj with *)
+  (*       | [] -> [] *)
+  (*       | hd::tl -> *)
+  (*             let new_tl = remove_duplicate (List.filter (fun ep -> *)
+  (*                 not (eq_epure_syn hd ep)) tl) in *)
+  (*             hd::new_tl *)
+  (*   in *)
+  (*   let disj0 = List.filter (fun v -> not(is_false v)) (List.map norm disj) in *)
+  (*   remove_duplicate disj0 *)
 
 (*
             List.map (fun (baga, eq, ineq) ->
@@ -1268,10 +1324,25 @@ struct
     let new_baga = List.map (subs_fn) baga in
     let new_p = List.map (List.map subs_fn) p in
     let new_ineq = List.map (fun (a,b) -> (subs_fn a,subs_fn b)) ineq in
-    (new_baga,(new_eq,new_p),new_ineq)
+    let eqm = (new_eq,new_p) in
+    (new_baga,eqm,new_ineq)
+
+  let subst_epure sst ep = 
+    let pr1 = string_of_pair in
+    let pr = string_of_all in
+    let ans = Debug.no_2 "ex_subst_epure" pr1 pr pr subst_epure sst ep in
+    let _ = check_epure "subst_epure" ans in
+    ans
 
   let subst_epure_disj sst (lst:epure_disj) =
     List.map (subst_epure sst) lst
+
+  let subst_epure_disj sst (lst:epure_disj) =
+    let pr1 = string_of_pair in
+    let pr = string_of_disj in
+    let ans = Debug.no_2 "ex_subst_epure_disj" pr1 pr pr subst_epure_disj sst (lst:epure_disj) in
+    let _ = check_epure_disj "subst_epure_disj" ans in
+    ans
 
   let get_ineq (pf : formula) =
     let rec helper lconj = match lconj with
@@ -1333,10 +1404,14 @@ struct
     (* [([], pf)] *)
     if List.exists (fun (x,y) -> EM.is_equiv p_aset x y) ineq then []
     else 
-      [(baga, (p_aset,EM.partition p_aset), ineq)] (* new expure, need to add ineq : DONE *)
+      let pa = (p_aset,mk_partition p_aset)in
+      check_eqmap "mk_part:3" pa;
+      [(baga, pa, ineq)] (* new expure, need to add ineq : DONE *)
 
   let mk_epure (pf:formula) =
-    Debug.no_1  "ex_mk_epure" !print_pure_formula string_of_disj mk_epure (pf:formula)
+    let r = Debug.no_1  "ex_mk_epure" !print_pure_formula string_of_disj mk_epure (pf:formula) in
+    check_epure_disj "mk_epure : result" r;
+    r
 
 
   (* let to_cpure ((baga,eq,ineq) : epure) = *)
