@@ -1352,7 +1352,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let flag = (s_eq && 
                       ((vl_view_orig==false && vl_b) 
                       || ((vr_view_orig==false && vr_b)))) in
-                let _ = Debug.ninfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
                 let _ = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
@@ -1393,7 +1393,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                let _ = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
                                let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
                                (* (1,Cond_action [a21;a22]) *) a22
-                           else (1,M_match m_res)
+                           else
+                             let m_act = (1,M_match m_res) in
+                             let acts=
+                               if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
+                                 (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))])
+                               else
+                                 m_act
+                             in acts
                        ) in
                        let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                     let a3 = (

@@ -1,4 +1,3 @@
-#heap_entail_non_empty_rhs_heap
-#compute_actions
-meta_to_struc_formula
-Sleekengine.meta_to_formula
+compute_actions
+process_one_match
+is_fold_form

@@ -1168,10 +1168,36 @@ let need_cycle_checkpoint_fold_x prog ldnode lhs0 rvnode rhs0 reqset=
       let lhs = subst (leqs) lhs0 in
       need_cycle_checkpoint_fold_helper prog [ldnode.h_formula_data_node] lhs [rvnode.h_formula_view_node] rhs
 
+
 let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
   Debug.no_2 "need_cycle_checkpoint_fold" pr1 pr1 string_of_int
       (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs reqset)
+      lhs rhs
+
+let is_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
+   let rhs1 = subst (remap) rhs0 in
+   let ( _,mix_f,_,_,_) = split_components rhs1 in
+   let eqs = (MCP.ptr_equations_without_null mix_f) in
+   let rhs = subst (eqs) rhs1 in
+   let reqNulls = find_close (MCP.get_null_ptrs mix_f) eqs in
+   let ( _,lmf,_,_,_) = split_components lhs0 in
+   let leqs = (MCP.ptr_equations_without_null lmf) in
+   let lhs = subst (leqs) lhs0 in
+   let leqNulls = find_close (MCP.get_null_ptrs lmf) leqs in
+   let lhds, lhvs,_ = get_hp_rel_formula lhs in
+   let l_reach_ptrs = look_up_reachable_ptr_args prog lhds lhvs [lvnode.h_formula_view_node] in
+   let rhds, rhvs,_ = get_hp_rel_formula rhs in
+   let r_reach_ptrs = look_up_reachable_ptr_args prog rhds rhvs [rvnode.h_formula_view_node] in
+   let r_reach_ptrs1 = if leqNulls = [] then r_reach_ptrs else
+     CP.diff_svl r_reach_ptrs reqNulls
+   in
+   CP.diff_svl r_reach_ptrs1 l_reach_ptrs = []
+
+let is_fold_form prog lvnode lhs rvnode rhs remap=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_2 "is_fold_form" pr1 pr1 string_of_bool
+      (fun _ _ -> is_fold_form_x prog lvnode lhs rvnode rhs remap)
       lhs rhs
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
