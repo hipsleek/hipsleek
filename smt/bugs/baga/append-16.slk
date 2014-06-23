@@ -31,3 +31,4 @@ checkentail_exact q::ll<> * xprm::node<next = q> & q = null & xprm = x & yprm = 
 
 expect Valid.
 
+print residue.

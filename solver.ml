@@ -2688,7 +2688,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   in
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
-  let tp_syn h p =
+  let tp_syn_x h p =
     let t1 = Expure.build_ef_heap_formula h views in
     let t2 = Expure.build_ef_pure_formula (Mcpure.pure_of_mix p) in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
@@ -2698,6 +2698,12 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     (* let ph,_,_ = xpure_heap 1 prog h p 1 in *)
     (* let npf = MCP.merge_mems p ph true in *)
     (* tp_call_wrapper npf  *)
+  in
+  let tp_syn h p =
+    let pr1 = !print_h_formula in
+    let pr2 = Cprinter.string_of_mix_formula in
+    Debug.no_2 "Solver.tp_syn" pr1 pr2 string_of_bool
+        (fun _ _ -> tp_syn_x h p) h p
   in
   let tp_sem h p =
     let p = MCP.translate_level_mix_formula p in

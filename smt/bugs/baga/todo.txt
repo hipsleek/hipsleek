@@ -321,7 +321,7 @@ EQ:([(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))],
 ,INEQ:[(_null,y2_25)])
 
 ====================================
-# rec03.slk --inv-baga
+# rec03.slk --inv-baga: FIXED -16 and -7
 
 (i) re-sort after substitute
 (ii) handled [x->a; y->a] substitutions
@@ -351,7 +351,7 @@ GOOD
 >   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: OK
 
 ====================================
-# append-7.slk --inv-baga
+# append-7.slk --inv-baga: 
 
 !!! baga inv(ll):[(BAGA:[],EQ:[[_null,self]],INEQ:[]),
 (BAGA:[self],EQ:[],INEQ:[])]

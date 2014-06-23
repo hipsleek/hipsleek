@@ -784,7 +784,7 @@ struct
       match efp1,efp2 with
         | (baga1, (eq1,p1), neq1),(baga2, (eq2,p2), neq2) ->
               try
-                if (detect_contra eq1 baga2) || (detect_contra eq2 baga1) 
+                if (detect_contra eq1 (Elt.zero::baga2)) || (detect_contra eq2 (Elt.zero::baga1)) 
                 then mk_false
                 else 
                   let new_baga = merge_baga baga1 baga2 in
@@ -1280,11 +1280,15 @@ struct
   (*     List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in *)
   (*   List.concat res *)
 
-  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
+  let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
     let res =
       List.map (fun efp1 -> add_star efp1 efpd2) efpd1 in
     List.fold_left merge_disj [] res
     (* List.concat res *)
+
+let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj) =
+    Debug.no_2 "I.mk_star_disj" string_of_disj string_of_disj string_of_disj
+        mk_star_disj_x efpd1 efpd2
 
 
   (* reducing duplicate? *)
