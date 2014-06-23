@@ -1,0 +1,53 @@
+Starting z3... 
+
+!!! baga inv(one):[([], null!=self)]
+
+!!! baga inv(zero):[([], null=self)]
+
+!!! baga inv(succ1rec):[([], null=self & null!=y1)]
+
+!!! baga inv(succ2rec):[
+([], x2=y2 & null=self & null!=y1),
+([], null=y1 & null!=self & null!=y2 & null=x2)]
+
+!!! baga inv(succ3rec):[
+([], x2=y2 & x3=y3 & null=self & null!=y1),
+([], null=y1 & null!=self & null!=y2 & null=x2 & y3=x3),
+([], null=y1 & null!=self & null!=y3 & null!=x2 & y1=y2 & y1=x3)]
+
+!!! baga inv(Q):[
+([], null=self & null=y2 & null=y3),
+([], null=_null & null!=self & _null=y3 & _null=y2),
+([], null!=y2 & null=_null & null!=self & _null=y3),
+([], null!=y2 & null!=y3 & null=_null & null!=self),
+([], null!=y3 & null=_null & null!=self & _null=y2),
+([], null=_null & null!=y2 & _null=y3 & _null=self),
+([], null=_null & null!=y3 & null!=y2 & _null=self),
+([], null=_null & null!=y3 & _null=y2 & _null=self)]
+
+!!! baga inv(P):[([], null!=self & null=_null & null!=x3 & null!=x2)]
+Starting Omega...oc
+
+WARNING: succ-rec03.slk_28:5_28:10:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: 1 File "succ-rec03.slk",Line:8,Col:0
+
+ERROR: at succ-rec03.slk_28:5_28:10 
+Message: compute_view_fw_bw: data not found: 
+ 
+Entail 1: Fail.(must) cause: true |-  false. LOCS:[0;32] (RHS: contradiction)
+
+Validate 1: OK
+
+Stop z3... 172 invocations Stop Omega... 26 invocations 
+SAT Count   : 979
+SAT % Hit   : 85.08%
+IMPLY Count : 32
+IMPLY % Hit : 18.75%
+Time(cache overhead) : 0.024705 (seconds)
+
+!!! log(small):(0.110985,1044)
+Total verification time: 0.184262 second(s)
+	Time spent in main process: 0.09177 second(s)
+	Time spent in child processes: 0.092492 second(s)
+

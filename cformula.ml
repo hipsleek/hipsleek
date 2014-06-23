@@ -12599,41 +12599,59 @@ let rec label_view (f0:struc_formula):struc_formula =
 	label_struc f0
   
   
-let get_view_branches (f0:struc_formula):(formula * formula_label) list= 
-  let rec formula_br (f:formula):(formula * formula_label) list = match f with
+let get_view_branches_x (f0:struc_formula):(formula * formula_label) list= 
+  let rec formula_br (f:formula):(formula * formula_label) list = (
+    match f with
     | Base {formula_base_label=lbl} 
     | Exists {formula_exists_label=lbl} -> (match lbl with | None -> [] | Some l -> [(f,l)])
-    | Or b -> (formula_br b.formula_or_f1)@(formula_br b.formula_or_f2 )  in
-	
-	let rec struc_formula_br (f:struc_formula):(formula * formula_label) list = match f with
-		| ECase b-> List.concat 
-			(List.map (fun (c1,c2) -> 
-				let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
-				let g_f = mkBase HEmp np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
-				List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (struc_formula_br c2)) b.formula_case_branches)
-		| EBase b-> 
-			let l_e_v =(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) in
-			(match b.formula_struc_continuation with 
-				| Some l ->List.map (fun (c1,c2)-> 
-					let r_f = normalize_combine b.formula_struc_base c1 b.formula_struc_pos in
-					((push_exists l_e_v r_f),c2)) (struc_formula_br l)
-				| None -> List.map (fun (c1,c2) -> ((push_exists l_e_v c1),c2) ) (formula_br b.formula_struc_base) )
-		| EAssume _ -> []
-		| EInfer b -> struc_formula_br b.formula_inf_continuation
-		| EList b -> fold_l_snd struc_formula_br b
-	in	
-  struc_formula_br f0
-  
+    | Or b -> (formula_br b.formula_or_f1)@(formula_br b.formula_or_f2 ) 
+  ) in
 
-let get_view_branches (f0:struc_formula):(formula * formula_label) list=
-  let rec add_label f l = match f with
+  let rec struc_formula_br (f:struc_formula):(formula * formula_label) list = (
+    match f with
+    | ECase b->
+        List.concat (List.map (fun (c1,c2) -> 
+          let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
+          let g_f = mkBase HEmp np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+          List.map (fun (d1,d2)->
+            normalize_combine g_f d1 no_pos,d2
+          ) (struc_formula_br c2)) b.formula_case_branches
+        )
+    | EBase b-> (
+        let l_e_v =(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) in
+        match b.formula_struc_continuation with 
+        | Some l ->
+            List.map (fun (c1,c2)-> 
+              let r_f = normalize_combine b.formula_struc_base c1 b.formula_struc_pos in
+              ((push_exists l_e_v r_f),c2)
+            ) (struc_formula_br l)
+        | None ->
+            List.map (fun (c1,c2) ->
+              ((push_exists l_e_v c1),c2) 
+            ) (formula_br b.formula_struc_base)
+      )
+    | EAssume _ -> []
+    | EInfer b -> struc_formula_br b.formula_inf_continuation
+    | EList b -> fold_l_snd struc_formula_br b
+  ) in
+
+  let rec add_label f l = (
+    match f with
     | Base b -> Base { b with formula_base_label = Some l}
     | Exists b -> Exists  {b with formula_exists_label = Some l}
-    | Or b -> f in
-  let res = get_view_branches f0 in
+    | Or b -> f
+  ) in
+  
+  let res = struc_formula_br f0 in
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
- 
-	
+
+let get_view_branches (f0:struc_formula):(formula * formula_label) list=
+  let pr_sf = !print_struc_formula in
+  let pr_out = pr_list (pr_pair !print_formula string_of_formula_label) in
+  Debug.no_1 "get_view_branches" pr_sf pr_out
+      (fun _ -> get_view_branches_x f0) f0
+
+
 let get_bar_branches (f0:struc_formula):(formula * formula_label) list= 
   let rec is_disj (f:formula) : bool = match f with
     | Base _
