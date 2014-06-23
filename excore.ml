@@ -766,7 +766,7 @@ struct
     let rec aux b =
       match b with 
         | [] -> false
-        | x::xs -> (aux2 x xs) || aux xs 
+        | x::xs -> (EM.is_equiv eq Elt.zero x) || (aux2 x xs) || aux xs 
     and aux2 x xs = match xs with
       | [] -> false
       | y::ys -> 
@@ -784,7 +784,7 @@ struct
       match efp1,efp2 with
         | (baga1, (eq1,p1), neq1),(baga2, (eq2,p2), neq2) ->
               try
-                if (detect_contra eq1 (Elt.zero::baga2)) || (detect_contra eq2 (Elt.zero::baga1)) 
+                if (detect_contra eq1 (baga2)) || (detect_contra eq2 (baga1)) 
                 then mk_false
                 else 
                   let new_baga = merge_baga baga1 baga2 in
