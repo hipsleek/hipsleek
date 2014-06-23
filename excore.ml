@@ -1322,9 +1322,9 @@ struct
     let new_eq = EM.subs_eset_par sst eq in
     let subs_fn = subst_elem sst in
     let new_baga = List.map (subs_fn) baga in
-    let new_p = List.map (List.map subs_fn) p in
+    (* let new_p = List.map (List.map subs_fn) p in *)
     let new_ineq = List.map (fun (a,b) -> (subs_fn a,subs_fn b)) ineq in
-    let eqm = (new_eq,new_p) in
+    let eqm = (new_eq,mk_partition new_eq) in
     (new_baga,eqm,new_ineq)
 
   let subst_epure sst ep = 

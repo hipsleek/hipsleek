@@ -319,6 +319,35 @@ EQ:([(y3_26,Some(9)),(x3_24,Some(9)),(_null,Some(9))],
 ,INEQ:[(_null,y2_25)])
 
 ====================================
+# rec03.slk --inv-baga
+
+(i) re-sort after substitute
+(ii) handled [x->a; y->a] substitutions
+
+!!! Inconsistent eqmap @ subst_epure
+!!! eqmap:[(self_16,Some(25)),(_null,Some(25)),(x2_14,Some(25)),(y3_18,Some(24)),(y2_17,Some(23)),(x3_1
+5,Some(24))]
+!!! part:[[_null,x2_14,self_16],[x3_15,y3_18]]
+!!! part2:[[_null,self_16,x2_14],[x3_15,y3_18]]
+
+BAD
+===
+<   latest/UDB_entl/append_sll_cll_slk-16.smt2: OK
+---
+>   latest/UDB_entl/append_sll_cll_slk-16.smt2: Unexpected
+221c221
+<   latest/UDB_entl/append_sll_cll_slk-7.smt2: OK
+---
+>   latest/UDB_entl/append_sll_cll_slk-7.smt2: Unexpected
+247c247
+
+GOOD
+====
+131c131
+<   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: Unexpected
+---
+>   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: OK
+
 ====================================
 ====================================
 ====================================
