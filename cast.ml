@@ -2752,45 +2752,6 @@ module ViewGraph = struct
     !str
 end
 
-(* (*                                                                                 *)
-(*  * a view is tail recursively defined if there is a case                           *)
-(*  * that self points to the view itself or other mutual recursive views             *)
-(*  *)                                                                                *)
-(* let check_view_tail_recursive_x (vdecl: view_decl) : bool =                        *)
-(*   let collect_view_pointed_by_self f = (                                           *)
-(*     let view_names = ref [] in                                                     *)
-(*     let (hf,_,_,_,_) = CF.split_components f in                                    *)
-(*     let f_hf hf = (match hf with                                                   *)
-(*       | CF.ViewNode vn ->                                                          *)
-(*           let vnode = P.name_of_spec_var vn.CF.h_formula_view_node in              *)
-(*           let _ = (                                                                *)
-(*             if (eq_str vnode self) then                                            *)
-(*               view_names := vn.CF.h_formula_view_name :: !view_names               *)
-(*             else ()                                                                *)
-(*           ) in                                                                     *)
-(*           Some hf                                                                  *)
-(*       | _ -> None                                                                  *)
-(*     ) in                                                                           *)
-(*     let _ = CF.transform_h_formula f_hf hf in                                      *)
-(*     !view_names                                                                    *)
-(*   ) in                                                                             *)
-(*   let is_tail_recursive_branch (f: CF.formula) = (                                 *)
-(*     let view_names = collect_view_pointed_by_self f in                             *)
-(*     List.exists (fun vn ->                                                         *)
-(*       (eq_str vn vdecl.view_name) || (mem_str_list vn vdecl.view_mutual_rec_views) *)
-(*     ) view_names                                                                   *)
-(*   ) in                                                                             *)
-(*   let branches, _ = List.split vdecl.view_un_struc_formula in                      *)
-(*   let tail_recursive = (List.exists is_tail_recursive_branch branches) in          *)
-(*   tail_recursive                                                                   *)
-
-(* let check_view_tail_recursive (vd: view_decl) : bool =                             *)
-(*   let pr_view = !print_view_decl in                                                *)
-(*   let pr_out = string_of_bool in                                                   *)
-(*   Debug.no_1 "check_view_tail_recursive" pr_view pr_out                            *)
-(*       (fun _ -> check_view_tail_recursive_x vd) vd                                 *)
-
-
 let collect_subs_from_view_node_x (vn: CF.h_formula_view) (vd: view_decl)
     : (CP.spec_var * CP.spec_var) list =
   let view_type = Named vd.view_data_name in
@@ -3045,12 +3006,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   let _ = if (eq_str dname "") then (
     report_warning pos "compute_view_fw_bw: data name in view is empty";
   ) in
-  let ddecl = (
-    try look_up_data_def_raw prog.prog_data_decls dname 
-    with _ ->
-        if !Globals.smt_compete_mode then raise Not_found else
-          report_error pos ("compute_view_fw_bw: data not found: " ^ dname)
-  ) in
+  let ddecl = look_up_data_def_raw prog.prog_data_decls dname in
   let base_fs, induct_fs = split_view_branches vdecl in
   (* find the main heap chain in view's definition, and extract head and body nodes of this chain *)
   let extract_head_body_node f = (
@@ -3257,7 +3213,6 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
        * CP.spec_var list * (data_decl * ident) list ) =
   let pr_vd = !print_view_decl in
   let pr_svl = pr_list !CP.print_sv in
-  let pr_idl = pr_list idf in
   let pr_out (fwp,fwf,bwp,bwf) = (
     let fwp_s = pr_svl fwp in
     let fwf_s = pr_list (fun(d,f) -> d.data_name^"."^f) fwf in
@@ -3269,7 +3224,7 @@ let compute_view_forward_backward_info (vdecl: view_decl) (prog: prog_decl)
   Debug.no_1 "compute_view_forward_backward_info" pr_vd pr_out
        (fun _ -> compute_view_forward_backward_info_x vdecl prog) vdecl
 
-let categorize_view (prog: prog_decl) : prog_decl =
+let update_views_info (prog: prog_decl) : prog_decl =
   (* requires: view_decl must be preprocessed to fill the view_cont_vars field *)
   let vdecls = prog.prog_view_decls in
   let new_vdecls = List.map (fun vd ->
@@ -3277,19 +3232,20 @@ let categorize_view (prog: prog_decl) : prog_decl =
     let residents = compute_view_residents vd prog in
     let vd = { vd with view_residents = residents } in
     (* forward & backward pointers, fields *)
-    let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd prog in
-    let vd = {vd with view_forward_ptrs = fwp;
-                      view_backward_ptrs = bwp;
-                      view_forward_fields = fwf;
-                      view_backward_fields = bwf;} in
+    let vd = (
+      try 
+        let (fwp, fwf, bwp, bwf) = compute_view_forward_backward_info vd prog in
+        {vd with view_forward_ptrs = fwp;
+                 view_backward_ptrs = bwp;
+                 view_forward_fields = fwf;
+                 view_backward_fields = bwf;}
+      with _ -> vd
+    ) in
     (* touching & segmented is computed only when the forward and backward pointers is available *)
     let touching = is_touching_view vd in
     let segmented = is_segmented_view vd in
     let vd = { vd with view_is_touching = touching;
                        view_is_segmented = segmented; } in
-    (* (* is tail-recursively defined view? *)                   *)
-    (* let tail_recursive = check_view_tail_recursive vd in      *)
-    (* let vd = { vd with view_is_tail_rec = tail_recursive } in *)
     vd
   ) vdecls in
   { prog with prog_view_decls = new_vdecls }

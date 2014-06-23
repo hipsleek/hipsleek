@@ -1910,18 +1910,36 @@ and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef :
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let _ = IF.has_top_flow_struc view_formula1 in
-  (*let recs = rec_grp prog in*)
-  let data_name = if (String.length vdef.I.view_data_name) = 0  then
-    I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
-  else vdef.I.view_data_name in
-  (vdef.I.view_data_name <- data_name;
+  (* first attempt to find data_name *)
+  let data_name = (
+    if (String.length vdef.I.view_data_name) = 0  then
+      I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
+    else vdef.I.view_data_name 
+  ) in
+  let _ = vdef.I.view_data_name <- data_name in
   let vtv = vdef.I.view_typed_vars in
   let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
-  let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false 
-    true (*check_pre*) in
+  let tlist = (
+    if not (eq_str data_name "") then
+      [(self,{sv_info_kind = (Named data_name); id = fresh_int ()})] @ tlist
+    else tlist
+  ) in
+  let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars)
+      vdef.I.view_formula (ann_typs@tlist) false true in
   let _ = Debug.ninfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
-  (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
+ (* second attempt to find data_name *)
+  let data_name = (
+    if (eq_str data_name "") then (
+      let self_type = Typeinfer.get_var_kind self n_tl in
+      let dname = (match self_type with | Named s -> s | _ -> "") in
+      let _ = if (eq_str dname "") then (
+        let msg = "trans_view: cannot determine data_name of view " ^ vdef.I.view_name in
+        report_warning vdef.I.view_pos msg
+      ) in
+      dname
+    )
+    else data_name
+  ) in
   let inv_lock = vdef.I.view_inv_lock in
   let (n_tl,inv_lock) = 
     (match inv_lock with
@@ -2093,7 +2111,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
-  )
 
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
   let pr = (add_str "mutual_rec_views" (pr_list (fun v -> v.Cast.view_name))) in
@@ -2141,15 +2158,22 @@ and check_view_tail_rec (vdecl: C.view_decl) : bool =
   Debug.no_1 "check_view_tail_rec" pr_view pr_out
       (fun _ -> check_view_tail_rec_x vdecl) vdecl
 
-and update_view_info_x (vdecl: C.view_decl) : C.view_decl =
-  let is_tail_rec = check_view_tail_rec vdecl in
-  let new_vdecl = { vdecl with C.view_is_tail_rec = is_tail_rec } in
-  new_vdecl
-
-and update_view_info (vdecl: C.view_decl) : C.view_decl =
-  let pr_v = !C.print_view_decl in
-  Debug.no_1 "update_view_info" pr_v pr_v
-      (fun _ -> update_view_info_x vdecl) vdecl
+and update_views_info (vdecls: C.view_decl list) (mutrec_views_lst : (ident list) list)
+    : C.view_decl list =
+  let new_vdecls = List.map (fun vdecl ->
+    (* update mutual recursive views *)
+    let mutrec_views = (
+      try List.find (fun ids -> mem_str_list vdecl.C.view_name ids) mutrec_views_lst
+      with _ -> []
+    ) in
+    let vdecl = { vdecl with C.view_mutual_rec_views = mutrec_views } in
+    (* update tail recursive property *)
+    let tailrec = check_view_tail_rec vdecl in
+    let new_vdecl = { vdecl with C.view_is_tail_rec = tailrec } in
+    (* return *)
+    new_vdecl
+  ) vdecls in
+  new_vdecls
 
 (* type: I.prog_decl ->
   String.t list list ->
@@ -2175,12 +2199,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       else cur_mutrec_views
     ) in
     let nview = trans_view iprog mutrec_views transed_views typ_infos view in
-    let full_mutrec_views = (
-      try List.find (fun ids -> mem_str_list view.I.view_name ids) ls_mut_rec_views
-      with _ -> []
-    ) in
-    let nview = { nview with C.view_mutual_rec_views = full_mutrec_views } in
-    let nview = update_view_info nview in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
       let transed_views2,mutrec_views = if mutrec_views!=[] &&
@@ -2194,6 +2212,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   in
   (*******************************)
   let cviews0,_ = List.fold_left trans_one_view ([],[]) ls_pr_view_typ in
+  let cviews0 = update_views_info cviews0 ls_mut_rec_views in
   let has_arith = not(!Globals.smt_compete_mode) && List.exists (fun cv -> 
       Expure.is_ep_view_arith cv) cviews0 in
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
