@@ -1,0 +1,18 @@
+data node {
+  node next;
+  node down;
+}.
+
+pred tlsegOdd<p> == self::node<p,_> & self != p
+    or  self::tlsegOdd<r> * r::node<t,_> * t::node<p,_> & self != p.
+
+checkentail_exact x::tlsegOdd<y> * y::tlsegOdd<z> * z::node<_,_>@L 
+        |- x::tlsegOdd<z>.
+expect Fail.
+
+checkentail_exact x::tlsegOdd<y> * y::tlsegOdd<z> & z = null
+        |- x::tlsegOdd<z>.
+expect Fail.
+
+checkentail_exact x::tlsegOdd<z> |- x::tlsegOdd<y> * y::tlsegOdd<z>.
+expect Fail.

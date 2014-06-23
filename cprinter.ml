@@ -3410,13 +3410,14 @@ let pr_view_decl v =
   pr_vwrap_opt  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
-  if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
+  if (v.view_is_tail_rec) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
   pr_vwrap  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
   pr_vwrap  "is_touching?: " fmt_string (string_of_bool v.view_is_touching);
   pr_vwrap  "is_segmented?: " fmt_string (string_of_bool v.view_is_segmented);
-  pr_vwrap  "is_tail_recursive?: " fmt_string (string_of_bool v.view_is_tail_recursive);
+  pr_vwrap  "is_tail_rec?: " fmt_string (string_of_bool v.view_is_tail_rec);
+  pr_vwrap  "mutual_rec_views?: " fmt_string (pr_list idf v.view_mutual_rec_views);
   pr_vwrap  "residents: " pr_list_of_spec_var v.view_residents;
   pr_vwrap  "forward_ptrs: " pr_list_of_spec_var v.view_forward_ptrs;
   pr_vwrap  "backward_ptrs: " pr_list_of_spec_var v.view_backward_ptrs;

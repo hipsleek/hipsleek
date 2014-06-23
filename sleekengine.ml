@@ -665,15 +665,7 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) &&
-    (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-    || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then
-    cprog5
-  else
-    try
-      Cast.categorize_view cprog5
-    with _ -> cprog5
-  in
+  let cprog6 = Cast.update_views_info cprog5 in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
   let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
                || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
@@ -2311,7 +2303,7 @@ let eliminate_unused_components (cmds: command list) : unit =
   ) [] cmds in
   let used_heaps = used_heaps @ used_heaps_def in
   let used_heaps = Gen.BList.remove_dups_eq eq_str used_heaps in
-  Debug.binfo_hprint (add_str "used_heaps" (pr_list idf)) used_heaps no_pos;
+  Debug.ninfo_hprint (add_str "used_heaps" (pr_list idf)) used_heaps no_pos;
   (* remove unused data_decl *)
   let new_data_decls = List.concat (List.map (fun ddecl ->
     if (List.exists (fun hn -> eq_str hn ddecl.I.data_name) used_heaps) then [ddecl]

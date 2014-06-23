@@ -1,0 +1,17 @@
+data node {
+  node next;
+  node down;
+}.
+
+pred lsegOdd<p> == self::node<p,_> & self != p
+    or  self::node<r,_> * r::node<t,_> * t::lsegOdd<p> & self != p.
+
+checkentail_exact x::lsegOdd<y> * y::lsegOdd<z> * z::node<_,_>@L |- x::lsegOdd<z>.
+expect Fail.
+
+checkentail_exact x::lsegOdd<y> * y::lsegOdd<z> & z=null |- x::lsegOdd<z>.
+expect Fail.
+
+checkentail_exact x::lsegOdd<z> |- x::lsegOdd<y> * y::lsegOdd<z>.
+print residue.
+expect Fail.

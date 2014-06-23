@@ -1,0 +1,15 @@
+data node {
+  node next;
+  node down;
+}.
+
+pred tlsegEven<p> == self = p
+    or  self::tlsegEven<r> * r::node<t,_> * t::node<p,_> & self != p.
+
+checkentail_exact x::tlsegEven<y> * y::tlsegEven<z> * z::node<_,_>@L 
+        |- x::tlsegEven<z>.
+
+checkentail_exact x::tlsegEven<y> * y::tlsegEven<z> & z = null
+        |- x::tlsegEven<z>.
+
+checkentail_exact x::tlsegEven<z> |- x::tlsegEven<y> * y::tlsegEven<z>.

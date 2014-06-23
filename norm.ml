@@ -1023,13 +1023,13 @@ TODO1: transform the above assumptions into conditions
 TODO2: consider the non-empty heap for base case by introducing an extra pred
  *)
 let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
-  if not(vdef.C.view_is_tail_recursive) then vdef
+  if not(vdef.C.view_is_tail_rec) then vdef
   else 
     let vd = vdef in
     let f0 = vd.C.view_un_struc_formula in
     let f1 = map_l_fst (fun f -> convert_formula_to_linear prog vdef f) f0 in
     {vd with
-        (* C.view_is_tail_recursive = false; *)
+        (* C.view_is_tail_rec = false; *)
         (* view_formula : F.struc_formula *)
         C.view_linear_formula = f1; 
         C.view_un_struc_formula = f1;

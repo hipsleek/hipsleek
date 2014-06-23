@@ -1,0 +1,19 @@
+data node {
+    int val;
+    node next;
+}.
+
+pred tlsegEven<p> == self = p
+    or  self::tlsegOdd<r> * r::node<_,p> & self != p.
+
+pred tlsegOdd<p> == self::node<_,p> & self != p
+    or  self::tlsegEven<r> * r::node<_,p> & self != p.
+
+pred lseg<p> == self = p
+    or  self::node<_,r> * r::lseg<p> & self != p.
+
+checkentail x::tlsegEven<r> * r::node<_,p> & x != p  |-  x::tlsegOdd<p>.
+
+checkentail x::tlsegEven<r> |-  x::lseg<p>.
+
+checkentail x::tlsegOdd<r> |-  x::lseg<p>.

@@ -1,0 +1,36 @@
+data node {
+  node next;
+  node down;
+}.
+
+pred lsegOdd<p> == self::node<y,_> & self != p
+    or  (exists r: self::lsegEven<r> * r::node<p,_> & self != p).
+
+pred lsegEven<p> == self = p
+    or  (exists r: self::lsegOdd<r> * r::node<p,_> & self != p).
+
+checkentail_exact x::lsegEven<y> * y::lsegEven<z> * z::node<_,_>@L
+        |- x::lsegEven<z>.
+expect Valid.
+
+checkentail_exact x::lsegEven<y> * y::lsegEven<z> & z = null
+        |- x::lsegEven<z>.
+expect Valid.
+
+checkentail_exact x::lsegOdd<y> * y::lsegOdd<z> * z::node<_,_>@L
+        |- x::lsegOdd<z>.
+expect Fail.
+
+checkentail_exact x::lsegOdd<y> * y::lsegOdd<z> & z = null
+        |- x::lsegOdd<z>.
+expect Fail.
+
+// more advanced entailments 
+
+checkentail_exact x::lsegEven<y> * y::lsegOdd<z> * z::node<_,_>@L
+        |- x::lsegOdd<z>.
+expect Valid.
+
+checkentail_exact x::lsegOdd<y> * y::lsegEven<z> * z::node<_,_>@L
+        |- x::lsegOdd<z>.
+expect Valid.
