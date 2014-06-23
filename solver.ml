@@ -11223,11 +11223,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               else if (!Globals.pa) then None,[]  
                 else 
                   let lhs_rhs_contra_flag = 
-					let rhs_xpure,_,_ = xpure prog conseq in      
-					let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
-					let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
-					let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
-					contr in (* Cristian : to detect_lhs_rhs_contra *) 
+		    let rhs_xpure,_,_ = xpure prog conseq in      
+		    let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
+		    let p_rhs_xpure = MCP.pure_of_mix rhs_xpure in
+		    let contr, _ = Infer.detect_lhs_rhs_contra  p_lhs_xpure p_rhs_xpure no_pos in 
+		    contr in (* Cristian : to detect_lhs_rhs_contra *) 
                   if lhs_rhs_contra_flag then (None,[])
                   else Infer.infer_lhs_contra_estate 5 estate lhs_xpure pos msg 
               in
@@ -11256,7 +11256,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | None ->
                     begin
                     match relass with
-                      | [] -> 
+                      | [] -> if Infer.no_infer_all_all estate then
+                          (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg estate (Base rhs_b) None pos,
+                          CF.mk_failure_must (msg) sl_error, estate.es_trace)), NoAlias)
+                        else
                             let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                             (* let _ =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
                             if not(CF.isFailCtx lc) then first_r
