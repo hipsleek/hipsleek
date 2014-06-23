@@ -351,6 +351,25 @@ GOOD
 >   latest/UDB_sat/inconsistent-ls-of-ls.defs.smt2: OK
 
 ====================================
+# append-7.slk --inv-baga
+
+!!! baga inv(ll):[(BAGA:[],EQ:[[_null,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(lseg):[(BAGA:[],EQ:[[p,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(ll_e1):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(ll_e2):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(clist):[(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(lseg_e1):[(BAGA:[],EQ:[[p,self]],INEQ:[]),
+(BAGA:[self],EQ:[],INEQ:[])]
+
+!!! baga inv(node_e1):[(BAGA:[self],EQ:[],INEQ:[])]
+
 ====================================
 ====================================
 ====================================
