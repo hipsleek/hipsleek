@@ -8504,6 +8504,9 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
+
+     (* below is used for FOLD CONTRA DETECT *)
+     es_fold_contra: bool;
 }
 
 and context = 
@@ -8718,6 +8721,7 @@ let empty_es flowt grp_lbl pos =
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
+  es_fold_contra = false;
 }
 
 let flatten_context ctx0=

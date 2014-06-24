@@ -2144,61 +2144,95 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-and detect_late_contra_helper ctx_lst =
-  let rec helper ctx_lst =
-    match ctx_lst with
-      | []      -> []
-      | ctx::t  -> 
-            let ctx = 
-              match ctx with 
-                | Ctx es         ->
-                      (* how to detect infr?  *)
-                      (* let pp_rhs_len = rhs_pure_stk # len in *)
-                      (* below does ignores the benefits  of eps? *)
-                      (* let pp_rhs_stk = rhs_pure_stk # get_stk in *)
-                      (* let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (CP.mkTrue no_pos) pp_rhs_stk in  *)
-                      (* let _ = Debug.ninfo_hprint (add_str "detect_late_contra_helper pp_rhs: " Cprinter.string_of_pure_formula ) pp_rhs pos in *)
-                      (* let tmp_rhs =  pp_rhs in (\* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *\) *)
-                      (* let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix tmp2) tmp_rhs pos in *)
-                      (* let _ = Debug.info_hprint (add_str "detect_late_contra_helper tmp_inf: " Cprinter.string_of_pure_formula ) tmp_inf pos in *)
-                      (* Debug.ninfo_hprint (add_str "contra detect, res" string_of_bool) contr pos; *)
-                      (* (\* let _ =  rhs_pure_stk # push  pp_rhs in *\) *)
-                      (* if not (contr) then *)
-                      (* else *) ctx
-                | OCtx (es1,es2) -> ctx
-                      
-            in
-            let tail_ctx = helper t in
-            ctx::tail_ctx
+and get_rhs_p_formula pos =
+  let pp_rhs_stk = rhs_pure_stk # get_stk in
+  let rhs_p = 
+    match  pp_rhs_stk with
+      | []   -> CP.mkTrue pos (* estate.CF.es_fold_contra *)
+      | h::t -> 
+            let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix h) t in 
+            pp_rhs
+  in (CF.formula_of_pure_formula rhs_p pos)
+
+and detect_late_contra_estate prog estate pos =
+  (* if (estate.CF.es_fold_contra) then *)
+  let pp_rhs_stk = rhs_pure_stk # get_stk in
+  match  pp_rhs_stk with
+    | []   -> true (* estate.CF.es_fold_contra *)
+    | h::t -> 
+          let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix h) t in 
+          let lhs_h = estate.es_heap in
+          let lhs_p = estate.es_pure in
+          let xpure_flag =  if (!Globals.super_smart_xpure) then  0 else 1 in
+          let (xpure_lhs, _, _) as xp0 = xpure_heap 13 prog lhs_h lhs_p xpure_flag in
+          let contr, tmp_inf = Infer.detect_lhs_rhs_contra (MCP.pure_of_mix xpure_lhs) pp_rhs pos in
+          (* contr == true  --> no contra *)
+          (* contr == false --> contra *)
+          contr
+  (* else false *)
+
+and detect_late_contra_list_context prog ctx_lst estate pos =
+  let rec helper_one_ctx_0 ctx = 
+    match ctx with
+      | Ctx es           -> es.CF.es_fold_contra
+      | OCtx (ctx1,ctx2) -> ((helper_one_ctx_0 ctx1) || (helper_one_ctx_0 ctx2))
+  in
+  let rec helper_one_ctx_1 ctx = 
+    match ctx with
+      | Ctx es           -> detect_late_contra_estate prog es pos
+      | OCtx (ctx1,ctx2) -> ((helper_one_ctx_1 ctx1) && (helper_one_ctx_1 ctx2))
+  in
+  let helper ctx_list =
+    match ctx_list with
+      | FailCtx _        -> ctx_list
+      | SuccCtx ctx_lst  -> 
+            let w_contra_ctx_0, no_contra_ctx_0 = List.partition helper_one_ctx_0 ctx_lst in
+            match w_contra_ctx_0, no_contra_ctx_0 with
+              | h::t, [] -> 
+                    let no_contra_ctx_1, w_contra_ctx_1 = List.partition helper_one_ctx_1 ctx_lst in
+                    let res = 
+                      match  w_contra_ctx_1, no_contra_ctx_1 with
+                        | h::t, []  ->  SuccCtx w_contra_ctx_1
+                        | [], h::t  ->
+                                        (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos, *)
+                                        (* CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error, estate.es_trace)) *)
+                              mkFailCtx_simple "Fold Contra Detection" estate (get_rhs_p_formula pos) pos
+                        | l,  _     ->  SuccCtx l
+                    in
+                    res
+                    (* let w_contra_ctx, no_contra_ctx = List.partition  detect_late_contra_estate ctx_lst in *)
+                    (* split according to  detect_late_contra_estate  *) (* ctx_list *)
+              | _, h::t  -> SuccCtx no_contra_ctx_0 
+              | _, _     -> ctx_list
   in
   helper ctx_lst
 
-and late_contra_wrapper f opt rhs_p =
+and late_contra_wrapper prog f param rhs_p estate pos =
   let rs0, fold_prf =
     if (!Globals.fold_contra_detect) then
       let _ = rhs_pure_stk # push rhs_p in
       (* call the entailment *)
-      let rs0, fold_prf = f opt in 
-      let rs0 = 
-        match rs0 with
-          | FailCtx _       -> rs0 
-          | SuccCtx ctx_lst -> SuccCtx (detect_late_contra_helper ctx_lst)
-      in
+      let rs0, fold_prf = f param in 
       let _ = rhs_pure_stk # pop in
+      let rs0 = detect_late_contra_list_context prog rs0 estate pos in
+       (*  match rs0 with *)
+      (*     | FailCtx _       -> rs0  *)
+      (*     | SuccCtx ctx_lst -> SuccCtx (detect_late_contra_list_context prog ctx_lst pos) *)
+      (* in *)
       (rs0, fold_prf)
-    else f None in 
+    else f param in 
   (rs0, fold_prf)
 
-and contra_wrapper f opt rhs_p =
-  let rs0, fold_prf =
-    if (!Globals.fold_contra_detect) then
-      let _ = rhs_pure_stk # push rhs_p in
-      (* call the entailment *)
-      let rs0, fold_prf = f opt in 
-      let _ = rhs_pure_stk # pop in
-      (rs0, fold_prf)
-    else f None in 
-  (rs0, fold_prf)
+(* and contra_wrapper f opt rhs_p = *)
+(*   let rs0, fold_prf = *)
+(*     if (!Globals.fold_contra_detect) then *)
+(*       let _ = rhs_pure_stk # push rhs_p in *)
+(*       (\* call the entailment *\) *)
+(*       let rs0, fold_prf = f opt in  *)
+(*       let _ = rhs_pure_stk # pop in *)
+(*       (rs0, fold_prf) *)
+(*     else f None in  *)
+(*   (rs0, fold_prf) *)
 
 (*LDK: add rhs_p*)
 and fold_op p c vd v (rhs_p: MCP.mix_formula) u loc =
@@ -2364,13 +2398,14 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let _ = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
-        let heap_entail = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *) in
+        (* let heap_entail = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos (* None *)  *)
+        let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None None None pos None in
         Debug.binfo_hprint (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         (* let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in *)
         (* let rs0, fold_prf = Wrapper.wrap_lem_search heap_entail_4_wrapper rhs_p in *)
-        let rs0, fold_prf = 
+        (* let rs0, fold_prf =  *)
             (* below forces a check for contra during folding if fold_contra_detect is enabled*)
-            contra_wrapper heap_entail None rhs_p in
+            (* contra_wrapper heap_entail None rhs_p in *)
         let rels = Infer.collect_rel_list_context rs0 in
         let _ = Infer.infer_rel_stk # push_list rels in
         let _ = Log.current_infer_rel_stk # push_list rels in
@@ -7715,10 +7750,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         (* let _ =  rhs_pure_stk # push  pp_rhs in *)
         (contr, tmp_rhs)
       else (true, (MCP.pure_of_mix rhs_p)) in
-      let _ = Debug.ninfo_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
-      if not (contra) then
-        (false,[],None, (Failure_May "Contra detected", ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
-      else
+      let _ = Debug.info_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
+      (* if not (contra) then *)
+      (*   estate = {estate with CF.es_fold_contra = not (contra)}; *)
+      (*   (false,[],None, (Failure_May "Contra detected", ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[]))) *)
+      (* else *)
+      let estate = {estate with CF.es_fold_contra = not (contra)} in
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
       (* TODO-EXPURE : need to build new expure stuff *)
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
@@ -10984,7 +11021,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let init_pure = CP.conj_of_list init_pures pos in
                 {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
             in
-          do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
+            let f = do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding (* pos *) in
+            let _,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
+            late_contra_wrapper prog f pos rhs_p estate pos
+
 
       | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
           Debug.tinfo_hprint (add_str "M_unfold" (fun _ -> "")) () pos;
@@ -11095,15 +11135,17 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           in
           (* TRUNG TODO IMPORTANT: when ACC_fold success, but the rest can not besure,
           how can check the successful context againt the rest of pure? *)
-          let pp_rhs_stk = rhs_pure_stk # get_stk in
-          let rhs_p = rhs_b.CF.formula_base_pure in
-          let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in 
-          let tmp_rhs =  pp_rhs in (* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *)
-          Debug.binfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos;
-          let rhs_p = MCP.mix_of_pure tmp_rhs in
-          let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in
+          (* let pp_rhs_stk = rhs_pure_stk # get_stk in *)
+          (* let rhs_p = rhs_b.CF.formula_base_pure in *)
+          (* let pp_rhs = List.fold_left (fun acc p ->  (CP.mkAnd  acc (MCP.pure_of_mix p) pos)) (MCP.pure_of_mix rhs_p) pp_rhs_stk in  *)
+          (* let tmp_rhs =  pp_rhs in (\* (CP.mkAnd  (MCP.pure_of_mix rhs_p) (MCP.pure_of_mix pp_rhs) pos) in  *\) *)
+          (* Debug.binfo_hprint (add_str "fold_op, tmp_rhs" !CP.print_formula) tmp_rhs pos; *)
+          (* let rhs_p = MCP.mix_of_pure tmp_rhs in *)
+          (* let rhs_b = { rhs_b with CF.formula_base_pure = rhs_p} in *)
 
-          do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos
+            let f = do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding  (* pos *) in
+            let _,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
+            late_contra_wrapper prog f pos rhs_p estate pos
           
           (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos *)
           (* process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos *)
@@ -11126,8 +11168,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_rest = rhs_rest;
         } -> 
             (* let _ = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
-            let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
-            (r1,Search r2)
+            (* let r1,r2 =  *)do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos (* in *)
+            (* (r1, r2) *)
       | Context.M_lemma  ({
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
@@ -11138,8 +11180,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* let _ = match ln with *)
             (*   | None -> () *)
             (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
-            let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
-            (r1,Search r2)
+            (* let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in *)
+            let f =  do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding (* pos *) in
+            let _,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
+            (* let r1, r2 = *) late_contra_wrapper prog f pos rhs_p estate pos (* in  *)
+            (* (r1, r2) *)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error, estate.es_trace)), NoAlias)
       | Context.M_Nothing_to_do s ->
             
@@ -11959,7 +12004,7 @@ and find_coercions c1 c2 prog anode ln2 =
   let p2 (v,_) = pr_pair p p v in
   Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
-and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof (* list *)) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
@@ -11970,7 +12015,7 @@ and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_
   - c_opt : coercion declaration
 *)
 
-and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof (* list *)) =
   let c1 = get_node_name anode in
   let c2 = get_node_name ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
@@ -11994,7 +12039,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
     || not(is_original_match anode ln2)
   then (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "no lemma found in both LHS and RHS nodes (do coercion)" 
-      Globals.sl_error, estate.es_trace)), [])
+      Globals.sl_error, estate.es_trace)), Search [])
   else begin 
     Debug.devel_zprint (lazy ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state_short estate) ^ "\n")) pos;
     Debug.devel_zprint (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
@@ -12002,21 +12047,21 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     let univ_r = if (List.length univ_coers)>0 then
       let univ_res_tmp = List.map (fun coer -> apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
       let univ_res, univ_prf = List.split univ_res_tmp in
-      Some (univ_res, univ_prf)
+      Some (univ_res,  univ_prf)
     else None in
     (* left coercions *)
     let left_r = if (List.length coers1)>0 then
       let tmp1 = List.map  (fun coer -> apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos) coers1 in
       let left_res, left_prf = List.split tmp1 in
       let left_prf = List.concat left_prf in
-      Some (left_res,left_prf)
+      Some (left_res, left_prf)
     else None in
     (* right coercions *)
     let right_r = if (List.length coers2)>0 then
       let tmp2 = List.map (fun coer -> apply_right_coercion estate coer prog conseq resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b c2 is_folding pos) coers2 in
       let right_res, right_prf = List.split tmp2 in
       let right_prf = List.concat right_prf in
-      Some (right_res,right_prf)
+      Some (right_res, right_prf)
     else None in
     let proc lst = 
       let r1 = List.map (fun (c,p) -> (fold_context_left 14 c,p)) lst in
@@ -12024,10 +12069,10 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       let res = fold_context_left 15 r2 in
       let final_res = (isFailCtx res) in
       let prf = List.concat (List.map (fun (c,p) -> if final_res==(isFailCtx c) then p else []) r1) in
-      (res,prf) in
+      (res, (Search prf)) in
     let m = List.fold_right (fun x r -> match x with None -> r | Some x -> x::r ) [univ_r;left_r;right_r] [] in
     if m==[] then  (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must 
-        "cannot find matching node in antecedent (do coercion)" Globals.sl_error, estate.es_trace)), [])
+        "cannot find matching node in antecedent (do coercion)" Globals.sl_error, estate.es_trace)), Search [])
     else proc m
   end
     (*******************************************************************************************************************************************************************************************)

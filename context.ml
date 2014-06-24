@@ -1097,6 +1097,40 @@ and filter_lemmas_by_kind l k =
    Andreeac: differentiate between l2r and r2l lemmas, so that fold lemmas will be added as COND with fold, and left lemmas 
 will be added in cond with unfold. lemma bef fold/unfold
 *)
+
+(**
+   Andreeac: differentiate between l2r and r2l lemmas, so that fold lemmas will be added as COND with fold, and left lemmas 
+will be added in cond with unfold. lemma bef fold/unfold
+*)
+and search_left_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res prio0 = 
+  if flag_lem then 
+    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
+    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vl_view_origs)in
+    (* let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->  *)
+    (*     if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l)) *)
+    (*     else (prio0,M_lemma (m_res,Some l))) left_ls else [] in *)
+    let left_act = List.fold_left (fun acc l -> 
+        if  (vl_new_orig || (non_loop_candidate l)) then
+          let prio =  if ((Immutable.is_lend l.Cast.coercion_body) && vl_new_orig ) then 1 else prio0 in 
+          acc@[(prio,M_lemma (m_res,Some l))]
+        else acc) [] left_ls in
+    left_act
+  else []
+
+and search_right_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res prio0 = 
+  if flag_lem then 
+    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
+    let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
+    let right_act =  
+      List.fold_left (fun acc l -> 
+          if  (vr_new_orig || (non_loop_candidate l)) then
+            let prio =  if ((Immutable.is_lend l.Cast.coercion_body) && vr_new_orig ) then 1 else prio0 in 
+            acc@[(prio,M_lemma (m_res,Some l))]
+          else acc) [] right_ls
+    in
+    right_act
+  else  []
+
 and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res prio0 = 
   if flag_lem then 
     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
@@ -1422,33 +1456,44 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                                   then  [(2,M_fold m_res)] 
                                   else [] in
+                              let left_lem =   
+                                if (!Globals.smart_lem_search) then 
+                                  search_left_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
+                                else [] in
+                              let l1 = l1@left_lem in
                               let l2 =
                                 (*Do not fold/unfold LOCKs*)
                                 if (is_r_lock) then [] else
                                   if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
                                   then [(2,M_unfold (m_res,0))]
                                   else [] in
+                              let right_lem =   
+                                if (!Globals.smart_lem_search) then 
+                                  search_right_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
+                                else [] in
+                              let l2 = l2@right_lem in
                               let l = l1@l2 in
                               if l=[] then None
                               else Some (2,Cond_action l) 
                             end
                           else a4 
                       ) in
-                      let a7 = 
-                        if (!Globals.smart_lem_search) then
-                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 in
-                          match a5 with
-                            | Some a ->  Some (2, Cond_action (a::[(2, Search_action(lem_act))]))
-                            | None   ->  if List.length lem_act > 0 then Some (2, Search_action (lem_act)) else None 
-                        else a5 
-                      in
+                      (* let a7 =  *)
+                      (*   if (!Globals.smart_lem_search) then *)
+                      (*     let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 in *)
+                      (*     match a5 with *)
+                      (*       | Some a ->  (\* Some (2, Cond_action (a::[(2, Cond_action(lem_act))])) *\) *)
+                      (*             Some (2, Cond_action (a::lem_act)) *)
+                      (*       | None   ->  if List.length lem_act > 0 then Some (2, Cond_action (lem_act)) else None  *)
+                      (*   else a5  *)
+                      (* in *)
                       let a6 = (
                           match a3 with 
-                            | None -> a7
+                            | None -> a5
                             | Some a1 -> 
                                   if not(a4==None) then a3
                                   else 
-                                    match a7 with
+                                    match a5 with
                                       | None -> a3
                                       | Some a2 -> Some (1,Cond_action [a2; a1]) 
                       ) in
