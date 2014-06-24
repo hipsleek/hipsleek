@@ -4848,6 +4848,18 @@ let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
   in
   helper node_names node_names
 
+(* let look_up_last_reachable_ptr_args prog hd_nodes hv_nodes node_names= *)
+(*   let rec helper old_ptrs inc_ptrs= *)
+(*     let new_ptrs = List.concat *)
+(*       (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes) *)
+(*            inc_ptrs) in *)
+(*     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in *)
+(*     let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in *)
+(*     if diff_ptrs = [] then inc_ptrs *)
+(*     else (helper (old_ptrs@diff_ptrs) diff_ptrs) *)
+(*   in *)
+(*   helper node_names node_names *)
+
 let look_up_rev_reachable_ptr_args_x prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat

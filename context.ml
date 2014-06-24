@@ -1352,7 +1352,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let flag = (s_eq && 
                       ((vl_view_orig==false && vl_b) 
                       || ((vr_view_orig==false && vr_b)))) in
-                let _ = Debug.info_hprint (add_str "force_match" string_of_bool) flag no_pos in
+                let _ = Debug.ninfo_hprint (add_str "force_match" string_of_bool) flag no_pos in
                 let _ = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
