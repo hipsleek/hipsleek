@@ -2146,6 +2146,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 
 and contra_wrapper f rhs_p =
   let rs0, fold_prf =
+    (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
     if (!Globals.smart_lem_search) then
       let _ = rhs_pure_stk # push rhs_p in
       let rs0, fold_prf = f None in 
@@ -7655,6 +7656,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
+      (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
       let contra, temp_rhs = if (!Globals.smart_lem_search && is_folding) then
         (* let pp_rhs_len = rhs_pure_stk # len in *)
         let pp_rhs_stk = rhs_pure_stk # get_stk in

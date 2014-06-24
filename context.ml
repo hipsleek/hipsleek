@@ -1447,13 +1447,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   | None -> a3
                                   | Some a2 -> Some (1,Cond_action [a2; a1]) 
                     ) in
-                    let a7 = 
+                    let a7 =
                         if (!Globals.smart_lem_search) then
                           let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
-                          match a6 with
-                            | Some a ->  Some (1, Cond_action ([a]@lem_act))
-                            | None   ->  if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None 
-                        else a6 
+                          if lem_act = [] then a6 else
+                            match a6 with
+                              | Some a ->  Some (1, Cond_action ([a]@lem_act))
+                              | None   -> if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None
+                        else a6
                     in
                     match a6 with
                       | Some a -> [a],syn_lem_typ
@@ -1471,13 +1472,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                 [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
                               else
                                 let acts = [(3,M_base_case_unfold m_res) (* ;(1,M_cyclic m_res) *)] in
-                                let acts1=
-                                  if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
-                                    acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]
-                                  else
-                                    acts
-                                in
-                                acts1
+                                (* let acts1= *)
+                                (*   if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
+                                (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                                (*   else *)
+                                (*     acts *)
+                                (* in *)
+                                acts
                         in
                             (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
                             (*L2: change here for cyclic*)

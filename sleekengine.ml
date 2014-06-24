@@ -614,11 +614,11 @@ let convert_data_and_pred_to_cast_x () =
       ()
     else ()
     in
-    let _ = if ls_mut_rec_views != [] || num_vdecls > 2 then
-      (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
-      let _ = Globals.lemma_syn := false in
-      ()
-    else () in
+    (* let _ = if ls_mut_rec_views != [] (\* || num_vdecls > 2 *\) then *)
+    (*   (\* lemma_syn does not work well with mut_rec views. Loc: to improve*\) *)
+    (*   let _ = Globals.lemma_syn := false in *)
+    (*   () *)
+    (* else () in *)
     ()
   else ()
   in

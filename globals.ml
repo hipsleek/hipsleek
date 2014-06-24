@@ -785,7 +785,7 @@ let lemma_tail_rec_count = ref 0
 
 let lemma_syn_bound = 5
 
-let is_lem_syn_in_bound () = !lemma_syn_count < lemma_syn_bound
+let is_lem_syn_in_bound () = true (* !lemma_syn_count < lemma_syn_bound *)
 
 let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
 
