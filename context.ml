@@ -1456,22 +1456,22 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                                   then  [(2,M_fold m_res)] 
                                   else [] in
-                              let left_lem =   
+                              let right_lem =   
                                 if (!Globals.smart_lem_search) then 
-                                  search_left_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
+                                  search_right_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
                                 else [] in
-                              let l1 = l1@left_lem in
+                              let l1 = l1@right_lem in
                               let l2 =
                                 (*Do not fold/unfold LOCKs*)
                                 if (is_r_lock) then [] else
                                   if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
                                   then [(2,M_unfold (m_res,0))]
                                   else [] in
-                              let right_lem =   
+                              let left_lem =   
                                 if (!Globals.smart_lem_search) then 
-                                  search_right_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
+                                  search_left_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res 2 
                                 else [] in
-                              let l2 = l2@right_lem in
+                              let l2 = l2@left_lem in
                               let l = l1@l2 in
                               if l=[] then None
                               else Some (2,Cond_action l) 

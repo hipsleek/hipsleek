@@ -11025,7 +11025,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let _,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
             late_contra_wrapper prog f pos rhs_p estate pos
 
-
       | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
           Debug.tinfo_hprint (add_str "M_unfold" (fun _ -> "")) () pos;
             let lhs_var = get_node_var lhs_node in
