@@ -162,6 +162,42 @@ let elim_baga (svl : spec_var list) (args : spec_var list) : spec_var list =
   Debug.no_2 "ex_elim_baga" (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var) (pr_list string_of_typed_spec_var)
       elim_baga_x svl args
 
+let subs_null f0 =
+  let rec helper f = match f with
+    | BForm (bf,a) ->
+          (match bf with
+            | (Eq (sv1, sv2, b), c) ->
+                  (match (sv1, sv2) with
+                    | (_, Null l) ->
+                          BForm ((Eq (sv1, Var(mk_zero,l), b), c), a)
+                    | (Null l, _) ->
+                          BForm ((Eq (Var(mk_zero,l), sv2, b), c), a)
+                    | _ -> f
+                  )
+            | (Neq (sv1, sv2, b), c) ->
+                  (match (sv1, sv2) with
+                    | (_, Null l) ->
+                          BForm ((Neq (sv1, Var(mk_zero, l), b), c), a)
+                    | (Null l, _) ->
+                          BForm ((Neq (Var(mk_zero,l), sv2, b), c), a)
+                    | _ -> f
+                  )
+            | _ -> f)
+    | And (f1, f2, l) ->
+          And (helper f1, helper f2, l)
+    | AndList fl ->
+          AndList (List.map (fun (t, f) -> (t, helper f)) fl)
+    | Or (f1, f2, c, l) ->
+          Or (helper f1, helper f2, c, l)
+    | Not (f, c, l) ->
+          Not (helper f, c, l)
+    | Exists (a, f, c, l) ->
+          Exists (a, helper f, c, l)
+    | Forall (a, f, c, l) ->
+          Forall (a, helper f, c, l)
+  in
+  helper f0
+
 (* ef_elim_exists :  (spec_var) list -> ef_pure -> ef_pure *)
 (* exists [u1,u2]. (baga,pf) *)
 (*
@@ -183,10 +219,10 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   (* let _ = Debug.ninfo_hprint (add_str "old baga" string_of_spec_var_list) baga no_pos in *)
   (* let _ = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in *)
   let p_aset = pure_ptr_equations pure in
-  (* let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "pure_ptr_eq" (pr_list (pr_pair string_of_typed_spec_var string_of_typed_spec_var))) p_aset no_pos in
   let p_aset = EMapSV.build_eset p_aset in
   (* let new_paset = EMapSV.elim_elems p_aset svl in *)
-  (* let _ = Debug.ninfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "eqmap" EMapSV.string_of) p_aset no_pos in
   (* let new_pure = EMapSV.domain eset2 in *)
   let mk_subs =
       List.map
@@ -214,10 +250,11 @@ let ef_elim_exists_1 (svl : spec_var list) epf  =
   (* let ps = string_of_spec_var in *)
   (* Debug.ninfo_hprint (add_str "equiv_pairs" (pr_list (pr_pair ps ps))) equiv_pairs no_pos; *)
   let pure1 = apply_subs mk_subs pure in
+  (* let pure1 = subs_null pure1 in *)
   let new_pure = remove_redundant_for_expure (elim_clause pure1 svl) in
-  (* let _ = Debug.ninfo_hprint (add_str "pure" string_of_pure_formula) pure no_pos in *)
-  (* let _ = Debug.ninfo_hprint (add_str "pure1" string_of_pure_formula) pure1 no_pos in *)
-  (* let _ = Debug.ninfo_hprint (add_str "new pure" string_of_pure_formula) new_pure no_pos in *)
+  let _ = Debug.ninfo_hprint (add_str "pure" !print_pure_formula) pure no_pos in
+  let _ = Debug.ninfo_hprint (add_str "pure1" !print_pure_formula) pure1 no_pos in
+  let _ = Debug.ninfo_hprint (add_str "new pure" !print_pure_formula) new_pure no_pos in
   (List.sort compare_sv new_baga, new_pure)
 
 let ef_elim_exists_1 (svl : spec_var list) epf =
@@ -599,7 +636,7 @@ struct
 *)
 
   let mk_epure (pf:formula) = 
-    [([], pf)]
+    [([], subs_null pf)]
 
   let to_cpure (ep : epure) = ep
 
@@ -1462,9 +1499,9 @@ struct
 
 end
 
-(* module EPureI = EPURE(SV) *)
+module EPureI = EPURE(SV)
 
-module EPureI = EPUREN(SV)
+(* module EPureI = EPUREN(SV) *)
 
 type ef_pure_disj = EPureI.epure_disj
 
