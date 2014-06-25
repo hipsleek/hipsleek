@@ -1286,7 +1286,7 @@ struct
     List.fold_left merge_disj [] res
     (* List.concat res *)
 
-let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj) =
+  let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj) =
     Debug.no_2 "I.mk_star_disj" string_of_disj string_of_disj string_of_disj
         mk_star_disj_x efpd1 efpd2
 
