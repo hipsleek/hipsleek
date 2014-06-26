@@ -1,0 +1,68 @@
+
+data node {
+  node f0;
+}.
+
+pred ls<y:node> ==
+ self = y
+or (exists xp: self::node<f0 = xp> * xp::ls<y> & null != self & self != y).
+
+pred rls<y:node> ==
+ self = y
+or (exists u: u::node<y> * self::rls<u> & null != self & self != y).
+
+//(1)
+checkentail x::node<y> & x!=y 
+         |- x::ls<y>.
+expect Valid.
+
+//(2) fail
+checkentail x::node<y> & x!=y 
+         |- x::rls<y>.
+expect Valid.
+
+//(3)
+checkentail x::node<y> * y::ls<null> 
+         |- x::ls<y> * y::ls<null>.
+expect Valid.
+
+//(4) fail
+checkentail x::node<y> * y::ls<null> 
+         |- x::rls<y> * y::ls<null>.
+expect Valid.
+
+//(5)
+checkentail x::node<y> * y::ls<null> 
+         |- x!=y.
+expect Valid.
+
+
+//(6)
+checkentail x::node<y> * y::rls<null> 
+         |- x!=y.
+expect Valid.
+
+
+/*
+# 22-tst.slk
+
+the 2nd and 3rd requires --inv-baga
+
+lemma_unsafe self::ls<p> * p::node<f0 = z,f1 = _> -> self::ls<z>.
+//above lemma is unsound for non-touching
+
+*/
+
+//lemma self::ls<z> <- (exists u: self::ls<u>*u::ls<z> * z::node<_>@L).
+ 
+/*
+ checkentail_exact x::ls<y> * y::node<f0 = z,f1 = _> * z::node<f0=null>
+         |- x::ls<z> * z::ls<null>.
+*/
+
+// (7) fail
+checkentail x::ls<y> * y::node<z> * z::ls<null>
+         |- x::ls<z> * z::ls<null>.
+
+expect Valid.
+

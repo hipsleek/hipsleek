@@ -5,6 +5,10 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 let trace_on = ref true
 
+let _ = if !smt_compete_mode then
+  begin
+    trace_on := false;
+  end
 let log_devel_debug = ref false
 let debug_log = Buffer.create 5096
 
@@ -192,30 +196,34 @@ let vv_result (s:string) (d:int) ls =
   vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>")
 
 let trace_pprint (msg:string) (pos:loc) : unit = 
-	ho_print false (fun a -> " "^a) msg
+	ho_print !devel_debug_on (fun a -> " "^a) msg
 
 let trace_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print false (fun x -> " "^(pr x)) m
+	ho_print !devel_debug_on (fun x -> " "^(pr x)) m
 
 let trace_zprint m (pos:loc) = 
-	ho_print false (fun x -> Lazy.force x) m
+	ho_print !devel_debug_on (fun x -> Lazy.force x) m
 
 let tinfo_zprint m p = trace_zprint m p
 let tinfo_hprint pr m p  = trace_hprint pr m p
 let tinfo_pprint m p = trace_pprint m p
 
-let info_pprint (msg:string) (pos:loc) : unit = 
-	ho_print true (fun a -> " "^a) msg
+let info_pprint (msg:string) (pos:loc) : unit =
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun a -> " "^a) msg
 
 let info_hprint (pr:'a->string) (m:'a) (pos:loc) = 
-	ho_print true (fun x -> " "^(pr x)) m
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun x -> " "^(pr x)) m
 
 let info_ihprint (pr:'a->string) (m:'a) (pos:loc) =
-	if !Globals.sap then ho_print true (fun x -> " "^(pr x)) m
-        else ()
+  let flag = not(!Globals.smt_compete_mode) in
+  if !Globals.sap then ho_print flag (fun x -> " "^(pr x)) m
+  else ()
 
 let info_zprint m (pos:loc) = 
-	ho_print true (fun x -> Lazy.force x) m
+  let flag = not(!Globals.smt_compete_mode) in
+  ho_print flag (fun x -> Lazy.force x) m
 
 (* let devel_zprint msg (pos:loc) = *)
 (* 	lazy_print (prior_msg pos) msg *)
@@ -278,6 +286,8 @@ let pick_front n ss =
 (*       val singleton : a -> t *)
 (*       val convert : string -> lst_pair -> t *)
 (*     end;; *)
+
+
 
 module DebugCore  =
 struct
@@ -1223,6 +1233,10 @@ end
 
 module DebugEmpty  =
 struct
+  let z_debug_file = ref ""
+    (* let z_debug_regexp = ref None *)
+  let z_debug_flag = ref false
+
   let read_main() = ()
   let no_1 s p1 p0 f = f
   let no_2 s p1 p2 p0 f = f
@@ -1274,7 +1288,29 @@ struct
   let no_5_num_opt (i:int) p s p1 p2 p3 p4 p5 p0 f = f
   let no_6_num_opt (i:int) p s p1 p2 p3 p4 p5 p6 p0 f = f
 
-  let no_1_all (i:int) s l (p,g) p1 p0 f =  f
+  let no_1_all (i:int) s l p g p1 p0 f =  f
+  let no_2_all (i:int) s l p g p1 p2 p0 f =  f
+  let no_3_all (i:int) s l p g p1 p2 p3 p0 f =  f
+  let no_4_all (i:int) s l p g p1 p2 p3 p4 p0 f =  f
+  let no_5_all (i:int) s l p g p1 p2 p3 p4 p5 p0 f =  f
+  let no_6_all (i:int) s l p g p1 p2 p3 p4 p5 p6 p0 f =  f
+
+(*
+type: int ->
+  string ->
+  ('w23 -> bool) option ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) option ->
+  bool list ->
+  ('x23 -> string) ->
+  ('y23 -> string) ->
+  ('z23 -> string) ->
+  ('a24 -> string) ->
+  ('b24 -> string) ->
+  ('w23 -> string) ->
+  ('x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23) ->
+  'x23 -> 'y23 -> 'z23 -> 'a24 -> 'b24 -> 'w23
+*)
+
 
 end
 

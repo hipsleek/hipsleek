@@ -75,12 +75,12 @@ let rec smt_of_typ t =
   | Tree_sh -> "Int"
   | Int -> "Int"
   | AnnT -> "Int"
-  | UNK ->  illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
+  | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
   | BagT _ -> "Int"
   | TVar _ -> "Int"
   | Void -> "Int"
-  | List _ -> illegal_format ("z3.smt_of_typ: List not supported for SMT")
+  | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   (* TODO *)
@@ -141,15 +141,16 @@ let rec smt_of_exp a =
 let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
-  | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.XPure _ -> "true"
-  | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-  | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> 
+    | CP.Frm (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | CP.BConst (c, _) -> if c then "true" else "false"
+    | CP.XPure _ -> "true"
+    | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Eq (a1, a2, _) -> 
       if CP.is_null a2 then
         "(< " ^(smt_of_exp a1)^ " 1)"
       else if CP.is_null a1 then
@@ -478,17 +479,20 @@ let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let z3_sat_timeout_limit = 2.0
 let prover_pid = ref 0
+
+let z3_call_count: int ref = ref 0
+let is_z3_running = ref false
+let is_local_solver = ref (false: bool)
+
+let smtsolver_name = ref ("z3": string)
+
 let prover_process = ref {
-  name = "z3";
+  name = !smtsolver_name;
   pid = 0;
   inchannel = stdin;
   outchannel = stdout;
   errchannel = stdin 
 }
-
-let z3_call_count: int ref = ref 0
-let is_z3_running = ref false
-let smtsolver_name = ref ("z3": string)
 
 (***********)
 let test_number = ref 0
@@ -505,6 +509,7 @@ let set_process (proc: prover_process_t) =
 let command_for prover = (
   match !smtsolver_name with
   | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
@@ -528,7 +533,7 @@ let run st prover input timeout =
     with
       | _ -> (* exception : return the safe result to ensure soundness *)
           Printexc.print_backtrace stdout;
-          print_endline ("WARNING for "^st^" : Restarting prover due to timeout");
+          print_endline_if (not !Globals.smt_compete_mode) ("WARNING for "^st^" : Restarting prover due to timeout");
           Unix.kill !prover_process.pid 9;
           ignore (Unix.waitpid [] !prover_process.pid);
           { original_output_text = []; sat_result = Aborted; }
@@ -545,7 +550,7 @@ let rec prelude () = ()
 (* start z3 system in a separated process and load redlog package *)
 and start() =
   if not !is_z3_running then (
-    print_string "Starting z3... \n"; flush stdout;
+    print_string_if (not !Globals.smt_compete_mode) "Starting z3... \n"; flush stdout;
     last_test_number := !test_number;
     let _ = (
       if !smtsolver_name = "z3-2.19" then
@@ -596,7 +601,8 @@ let check_formula f timeout =
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
-    restart ("[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+      let to_msg = if !smt_compete_mode then "" else "[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout) in
+    restart (to_msg);
     { original_output_text = []; sat_result = Unknown; } 
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in

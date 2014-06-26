@@ -1,0 +1,21 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_safe "L1" self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe "L2" self::lseg<p> -> (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe "L3" self::lseg<p> * p::node<c> <-> self::node<v> * v::lseg<c>.
+
+lemma_safe "L4" self::lseg<p> & self!=p 
+       <-> (exists u: self::lseg<u>*u::node<p>).
+
+checkentail_exact (exists p_73,a_74,p_68: self_lem_13::node<a_74> * a_74::lseg<p_73>&
+                  p_73=p_68 & self_lem_13!=p & p_68=p) |- 
+          (exists p_60,u_59: self_lem_13::lseg<u_59> * u_59::node<p_60>&p_60=p).
+expect Valid.

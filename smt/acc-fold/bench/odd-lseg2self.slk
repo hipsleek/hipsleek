@@ -1,0 +1,71 @@
+data node {
+   node nxt;
+}.
+
+pred olseg<p> == self::node<p>
+  or (exists a,b: self::node<a> * a::node<b> * b::olseg<p>)
+ inv self!=null.
+
+lemma_safe self::olseg<p> <- (exists u,uu: self::node<uu>*uu::olseg<u>*u::node<p>).
+// above lemma should be provable
+// lack of deep unfold ..
+
+/*
+checkentail_exact
+  (exists p_64,u_48,uu_49: self_lem_11::node<uu_49> * 
+ uu_49::node<p_64> * u_48::node<p>&p_64=u_48 & p=p)
+ or (exists p_65,a_66,b_67,u_48,uu_49: self_lem_11::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<p_65> * 
+    u_48::node<p>&p_65=u_48 & p=p)
+ |- (exists p_39: self_lem_11::olseg<p_39>&p_39=p) .
+
+
+checkentail_exact
+  (exists p_64,u_48,uu_49: self_lem_11::node<uu_49> * 
+ uu_49::node<p_64> * u_48::node<p>&p_64=u_48 & p=p)
+ or (exists p_65,a_66,b_67,u_48,uu_49: self_lem_11::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<p_65> * 
+    u_48::node<p>&p_65=u_48 & p=p)
+ |- self_lem_11::olseg<p> .
+
+checkentail_exact
+  (exists p_64,u_48,uu_49: self_lem_11::node<uu_49> * 
+ uu_49::node<p_64> * u_48::node<p>&p_64=u_48 & p=p)
+ |- self_lem_11::olseg<p>.
+*/
+/*
+checkentail_exact
+ self_11::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<u_48> * 
+    u_48::node<p>
+ |- self_11::olseg<p>.
+print residue.
+*/
+/*
+[[ SEARCH ==>  Fold ==>  Match ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Unfold 0 ==>  Match ==> ]]
+*/
+/*
+checkentail_exact
+ self::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<u_48> * 
+    u_48::node<p>
+ |- self::olseg<p>.
+print residue.
+
+
+checkentail_exact
+ self::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<u_48> * 
+    u_48::node<p>
+ |-  (exists a,b: self::node<a> * a::node<b> * b::olseg<p>).
+print residue.
+*/
+
+checkentail_exact
+  (exists p_64,u_48,uu_49: self_lem_11::node<uu_49> * 
+ uu_49::node<p_64> * u_48::node<p>&p_64=u_48 & p=p)
+ or (exists p_65,a_66,b_67,u_48,uu_49: self_lem_11::node<uu_49> * 
+    uu_49::node<a_66> * a_66::node<b_67> * b_67::olseg<p_65> * 
+    u_48::node<p>&p_65=u_48 & p=p)
+ |- (exists p_39: self_lem_11::olseg<p_39>&p_39=p).
+print residue.

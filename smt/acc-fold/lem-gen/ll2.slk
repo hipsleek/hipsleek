@@ -1,0 +1,74 @@
+data node {
+    int val;
+    node next
+}.
+
+//== linked list segment 
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p> & self!= p.
+
+checkentail x::lseg<y> * y::lseg<z> * z::node<_,_>@L
+            |- x::lseg<z>.
+            
+checkentail x::lseg<z> |- x::lseg<y> * y::lseg<z>.
+print residue.
+
+checkentail_exact x::lseg<z> * z::node<_,_>@L|- x::lseg<u>.
+print residue.
+
+//== linked list segment with constant
+pred lseg_const<p,c> == self = p
+    or self::node<v,r> * r::lseg_const<p,c>.
+
+checkentail x::lseg_const<y,c> * y::lseg_const<z,c> * z::node<_,_>@L
+            |- x::lseg_const<z,c>.
+            
+checkentail x::lseg_const<z,c> |- x::lseg_const<y,c> * y::lseg_const<z,c>.
+
+//== linked list segment with length
+pred lseg_length<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_length<p,m> & self!= p & n = m+1
+    inv n >= 0.
+
+checkentail x::lseg_length<y,n> * y::lseg_length<z,m> * z::node<_,_>@L
+            |- x::lseg_length<z,n+m>.
+
+checkentail x::lseg_length<z,m> |- x::lseg_length<y,n> * y::lseg_length<z,l>.
+
+//== linked list segment with length and constant
+pred lseg_length2<p,n,c> == self = p & n = 0
+    or self::node<v,r> * r::lseg_length2<p,m,c> & self!= p & n = m+1
+    inv n >= 0.
+
+checkentail x::lseg_length2<y,n,c> * y::lseg_length2<z,m,c> * z::node<_,_>@L
+            |- x::lseg_length2<z,n+m,c>.
+
+checkentail x::lseg_length2<z,m,c> |- x::lseg_length2<y,n,c> * y::lseg_length2<z,l,c>.
+
+//== linked list segment with sum
+pred lseg_sum<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_sum<p,m> & self!= p & n = m+v.
+
+checkentail x::lseg_sum<y,n> * y::lseg_sum<z,m> * z::node<_,_>@L
+            |- x::lseg_sum<z,n+m>.
+
+checkentail x::lseg_sum<z,m> |- x::lseg_sum<y,n> * y::lseg_sum<z,l>.
+
+//== linked list segment with a variant of of sum 
+pred lseg_sum2<p,n> == self = p & n = 0
+    or self::node<v,r> * r::lseg_sum2<p,m> & self!= p & n = m + 3*v + 1.
+
+checkentail x::lseg_sum2<y,n> * y::lseg_sum2<z,m> * z::node<_,_>@L
+            |- x::lseg_sum2<z,n+m>.
+
+checkentail x::lseg_sum2<z,m> |- x::lseg_sum2<y,n> * y::lseg_sum2<z,l>.
+
+//== linked list segment with bag
+pred lseg_bag<p,S> == self = p & S = {}
+    or self::node<v,r> * r::lseg_bag<p,R> & self!= p & S = union(R,{v}).
+
+checkentail x::lseg_bag<y,R> * y::lseg_bag<z,S> * z::node<_,_>@L
+            |- x::lseg_bag<z,T> & T = union(R,S).
+
+checkentail x::lseg_bag<z,R> |- x::lseg_bag<y,S> * y::lseg_bag<z,T>.
+

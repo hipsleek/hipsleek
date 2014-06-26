@@ -1,0 +1,49 @@
+data pto {
+     pto n3;
+     pto n2;
+     pto n1;
+}.
+
+/*
+; two-level skip list
+(define-fun skl2 ((?hd SL3_t) (?ex SL3_t)) Space
+  (tospace (or (= ?hd ?ex)
+  (exists ((?tl SL3_t) (?Z1 SL3_t))
+  (tobool (ssep
+    (pto ?hd (sref (ref n3 nil) (ref n2 ?tl) (ref n1 ?Z1)))
+    (skl1 ?Z1 ?tl)
+    (skl2 ?tl ?ex))
+)))))
+
+; three-level skip list 
+(define-fun skl3 ((?hd SL3_t) (?ex SL3_t)) Space
+  (tospace (or (= ?hd ?ex)
+  (exists ((?tl SL3_t) (?Z1 SL3_t) (?Z2 SL3_t))
+  (tobool (ssep
+    (pto ?hd (sref (ref n3 ?tl) (ref n2 ?Z2) (ref n1 ?Z1)))
+    (skl1 ?Z1 ?Z2)
+    (skl2 ?Z2 ?tl)
+    (skl3 ?tl ?ex))
+)))))
+*/
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::pto<null,null,tl> * tl::skl1<ex>).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::pto<null,tl,z1> * z1::skl1<tl> * tl::skl2<ex>).
+
+pred skl3<ex> == self=ex
+     or (exists tl,z1,z2: self::pto<tl,z2,z1> * z1::skl1<z2> * z2::skl2<tl> * tl::skl3<ex>).
+
+// Fail --> expected Valid
+
+checkentail x1::skl3<x2> * x2::pto<x3,x2_1,x2_0_1> *
+            x2_0_1::skl1<x2_1> * x2_1::skl2<x2_2> *
+            x2_2::pto<null,x2_3,x2_2_1> *
+            x2_2_1::skl1<x2_2_2> * x2_2_2::pto<null,null,x2_3> *
+            x2_3::pto<null,x2_4,x2_3_1> * x2_3_1::skl1<x2_4> *
+            x2_4::skl2<x3> * x3::skl3<null> |-
+            x1::skl3<null>.
+
+expect Valid.

@@ -1,0 +1,266 @@
+
+data node { int val ; node next }.
+
+// possibly touching predicate
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p>.
+
+self::lseg<p> <-> self::lseg<q> * q::lseg<p>
+
+ -> possibly touching
+ -> node.next
+ -> seg.p
+ -> aux(node.?,..
+
+self::node<v,u> * u::seg<r> * r::seg<p> |- self::seg<p>
+
+====================================
+// non-touching predicate
+// precise predicate
+// x::nlseg<p> : list segment
+====================================
+pred nlseg<p> == self = p
+    or self::node<v,r> * r::nlseg<p> & self!=p.
+
+self::nlseg<p> -> self::nlseg<q> * q::nlseg<p>
+
+self::nlseg<p> 
+   <- self::nlseg<q> * q::nlseg<p> * p::node<_,_>@L
+
+====================================
+// x::ll<> unsegmented acyclic linked-list
+====================================
+pred ll<> == self = null
+    or self::node<v,r> * r::ll<>.
+
+=============================
+
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+//  self --> node2<pr,_> * ... * last::node2<_,out>
+
+pred dll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::dll<self,last,out>).
+
+// possibly-touching dll segment
+lemma self::dll<pr,last,out> 
+      <-> (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
+
+// non-touching ndll segment for out only
+pred ndll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::node2<pr,u> * u::ndll<self,last,out> 
+             & out!=self ).
+
+lemma self::dll<pr,last,out> 
+       -> (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>)
+
+lemma self::dll<pr,last,out> 
+       <- (exists last1,out1 :
+               self::dll<pr,last1,out1> * out1::dll<last1,last,out>
+               * out::node2<_,_>@L)
+
+=============================================================
+  lss
+=============================================================
+data node2 {
+     node2 next1;
+     node2 next2;
+}.
+
+pred lsso<out> == self = out
+     or (exists u: self::node2<v,u> * u::lsso<out> 
+           & aux@(v=u)).
+
+lemma self::lsso<out> 
+      <-> (exists u : self::lsso<u>*u::lsso<out>).
+
+=============================================================
+  nested list segment
+=============================================================
+
+data node1 {
+     node1 next1;
+}.
+
+data node2 {
+     node2 next2;
+     node1 down;
+}.
+
+pred lso<out> == self = out
+     or (exists u: self::node1<u> * u::lso<out>).
+
+pred nlcl<out> == self = out
+     or (exists u, z1: self::node2<u,z1> * u::nlcl<out> 
+                * aux@(z1::lso<z1>)).
+
+lemma self::nlcl<out> 
+      <-> (exists u : self::nlcl<u>*u::nlcl<out>).
+
+
+=============================================================
+  generic skip segment
+=============================================================
+
+data node {
+     node n2;
+     node n1;
+}.
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::node<v,tl> * tl::skl1<ex> & @aux(v=null)).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::node<tl,z1> * tl::skl2<ex>
+                * aux(z1::skl1<tl>) ).
+
+lemma self::skl1<ex> 
+      <-> (exists u : self::skl1<u>*u::skl1<ex>).
+
+lemma self::skl2<ex> 
+      <-> (exists u : self::skl2<u>*u::skl2<ex>).
+
+=============================================================
+  generic 3-level skip segment
+=============================================================
+
+data node {
+     node n3;
+     node n2;
+     node n1;
+}.
+
+pred skl1<ex> == self=ex
+     or (exists tl: self::node<a,b,tl> 
+             * tl::skl1<ex> * aux@(a=null & b=null)).
+
+pred skl2<ex> == self=ex
+     or (exists tl,z1: self::node<a,tl,z1> * tl::skl2<ex>
+                * aux@(z1::skl1<tl> & a=null) ).
+
+pred skl3<ex> == self=ex
+     or (exists tl,z1,z2: self::node<tl,z2,z1> * tl::skl3<ex>
+           * aux@(z1::skl1<z2> * z2::skl2<tl>) ).
+
+lemma self::skl1<ex> 
+      <-> (exists u : self::skl1<u>*u::skl1<ex>).
+
+lemma self::skl2<ex> 
+      <-> (exists u : self::skl2<u>*u::skl2<ex>).
+
+lemma self::skl3<ex> 
+      <-> (exists u : self::skl3<u>*u::skl3<ex>).
+
+=============================================================
+  tll example
+=============================================================
+
+pred tll<ll,lr> == self::node<null,null,lr> & self = ll
+    or self::node<l,r,null> * l::tll<ll,z> * r::tll<z,lr>
+inv self!=null.
+
+I guess about is not really a segment, as it does not have
+an empty base-case. Also, there isn't a split/join lemma present
+
+data node {
+    node left;
+    node right;
+    node next;
+}.
+
+pred tll<ll,lr> == self::node<a,b,lr> & self = ll 
+                    & aux@(a=null & b=null)
+
+    or self::node<l,r,a> * l::tll<ll,u> * r::tll<v,lr>
+       & self != ll                 // non-touching
+       & aux@(a = null & u = v)
+inv self!=null.
+
+
+// below is incorrect..
+
+lemma x::tll<ll,lr> 
+      <-> (exists u : x::tll<u,lr> * u::tll<ll,v> & u::node<_,_,v>).
+
+=============================================================
+  tree segment example
+=============================================================
+data node{
+    node left;
+    node right;
+}.
+
+pred tree<rm> == self = rm              // rm is right-most leave
+    or self::node<l,r> * l::tree<u> * r::tree<rm>
+       & rm !=self & u != self.         // non-touching
+
+lemma x::tree<rm> 
+      <-> (exists u : x::tree<u> * u::tree<rm>).
+
+A tree segment that is segmented can be described as follows:
+
+pred tree<p> == self=null
+  or self::node<l,r> * r::tree<> * l::tree<>
+
+pred tseg<p> == self=p
+  or self::node<l,r> * r::tseg<p> * aux@(l::tree<>)
+  or self::node<l,r> * l::tseg<p> * aux@(r::tree<>)
+
+It segmented lemma is as follows:
+
+lemma self::tseg<p> <-> 
+            (exists u : self::tseg<u> * u::tseg<p>)
+
+=============================================================
+  list with last node?
+=============================================================
+
+// problem below is that it is not inductive..
+pred ltail<p> == self=p
+  or (exists u : self::ltail<u> * u::node<p>)
+
+
+The solution is to convert it to:
+
+ self::ltail<p> <--> self::lseg<p>
+
+so that it can traverse from left-to-right
+
+
+=============================================================
+  non-empty list segment
+=============================================================
+
+// problem below is that it must have at least one node
+which may be difficult to ensure
+
+pred klseg<p> == self::node<p>
+  or (exists u : self::node<u> * u::klseg<p>)
+  inv self!=null
+
+simplest to unfold to lseg predicate below..
+
+lemma self::klseg<p> <-> x::node<u>*u::lseg<p>
+
+=============================================================
+  tree with parent segment
+=============================================================
+
+pred tree<a> == self=null
+  or self::node<a,l,r> * r::tree<self> * l::tree<self>
+
+pred tseg<a,p,last> == self=p & a=last
+  or self::node<a,l,r> * r::tseg<self,p,last> * aux@(l::tree<self>)
+  or self::node<a,l,r> * l::tseg<self,p,last> * aux@(r::tree<self>)
+
+lemma self::tseg<a,p,last> <-> 
+            (exists u,l : self::tseg<a,u,l> * u::tseg<l,p,last>)
+
+self::tree<a> <-> (exists last: x::tseg<a,null,last>) -

@@ -1,16 +1,16 @@
 // x::R<..>  "_prim_pred_R"
 // x::R<..> * y::G<..> & x=y
-pred_prim threadR[F,G]<>
+pred_prim threadR{F,G}<>
  inv true.
 
 data cell {
   int x;
 }.
 
-lemma t::threadR[P * Q,G]<> ==> t::thrd[P,G]<> * t::thrd[Q,G]<> .
+//lemma t::threadR{P * Q,G}<> ==> t::thrd{P,G}<> * t::thrd[Q,G]<> .
 
-checkentail t::threadR[y::cell<5>*x::cell<4>,G]<> 
-    |- t::threadR[x::cell<a>,_]<>.
+checkentail t::threadR {y::cell<1>*x::cell<b> & a=4 & b=5,G} <> 
+    |- t::threadR{x::cell<a> & true,_}<>.
 print residue.
 
 /*

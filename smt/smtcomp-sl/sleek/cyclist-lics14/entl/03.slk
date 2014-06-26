@@ -1,0 +1,16 @@
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred List<y> ==
+ self::GTyp<f0 = y> & null != self
+or (exists xp: self::GTyp<f0 = xp> * xp::List<y> & null != self).
+
+lemma_safe self::List<y> <- self::List<u>*u::List<y>.
+
+checkentail x::List<y> * y::GTyp<f0 = z>
+         |- x::List<z>.
+
+expect unknown.
+// proven Valid by sleek

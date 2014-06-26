@@ -1,0 +1,21 @@
+data SLL_t {
+     SLL_t next;
+}.
+
+pred SLL_plus<tl:SLL_t,n:SLL_t> ==
+ self::SLL_t<n> & self = tl
+or (exists x: self::SLL_t<x> * x::SLL_plus<tl,n>).
+
+pred SLL_plus_rev<tl:SLL_t,n:SLL_t> ==
+ self::SLL_t<n> & self = tl
+or (exists x: tl::SLL_t<n> * self::SLL_plus_rev<x,tl>).
+
+/*
+lemma_unsafe self::SLL_plus<tl,n> <-> self::SLL_plus_rev<tl,n>.
+*/
+
+checkentail x::SLL_plus<y,null>
+         |- x::SLL_plus_rev<y,null>.
+
+expect Valid.
+

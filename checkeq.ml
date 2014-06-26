@@ -41,7 +41,7 @@ let string_of_map_table_list (mtl: map_table list): string =
 (*Remove duplicatated pairs in mtl*)
 let remove_dupl_mt (mtl: map_table) : map_table =
   let is_dupl (x1,x2) (y1,y2) =
-    (eq_spec_var x1 y1) & (eq_spec_var x2 y2)
+    (eq_spec_var x1 y1) && (eq_spec_var x2 y2)
   in Gen.BList.remove_dups_eq is_dupl mtl
 
 (*Remove trivial pairs, e.g. (x,x)*)
@@ -50,7 +50,8 @@ let remove_trivial_mt (mtl: map_table) : map_table =
 
 let rec simplify_f f hvars rvars1 = 
   let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in
-  let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
+  let evars fs rvars= if(List.length hvars == 0) then fs else
+    List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in 
 
   match f with
     | CF.Or ({ CF.formula_or_f1 = f1;
@@ -90,7 +91,7 @@ and checkeq_formulas ivars f1 f2 =
   Debug.no_2 "checkeq_formulas" pr1 pr1 (pr_pair pr2 pr3)
     (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
     
-and checkeq_formulas_a ivars rvars f1 f2 mtl = 
+and checkeq_formulas_a ivars rvars f1 f2 mtl =
   let (res1, mtl1) = (checkeq_formulas_one ivars rvars f1 f2 mtl) in
   let (res2, mtl2) =  (checkeq_formulas_one ivars rvars f2 f1 mtl) in
   (res1&&res2, mtl1)
@@ -275,7 +276,11 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
           | _ -> (false,[]))
 	| CF.Hole h1 -> (match hf2 with
 	    |CF.Hole h2 ->  (h1 == h2, mtl)
-	    |_ -> report_error no_pos "not handle Or f1 yet"
+	    |_ -> (false,[]) (* report_error no_pos "not handle Or f1 yet" *)
+	)
+        | CF.FrmHole h1 -> (match hf2 with
+	    |CF.FrmHole h2 ->  (h1 == h2, mtl)
+	    |_ -> (false,[]) (* report_error no_pos "not handle Or f1 yet" *)
 	)
 	| CF.HRel r  -> 
 (*DONT DELETE: for repuiring exacly the same hprel name!!!
@@ -294,7 +299,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	  ) else (res,new_mtl)*)
 	  match_equiv_rel hvars r hf2 mtl
 	| CF.HTrue  ->  (true, mtl)
-	| CF.HFalse ->  report_error no_pos "not a case"
+	| CF.HFalse | CF.HVar _ ->  report_error no_pos "not a case hfalse/hvar"
 	| CF.HEmp   ->  (true, mtl) (*TODO: plz check*)
 	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
     )
@@ -320,10 +325,10 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.DataNode _ 
     | CF.ViewNode _ 
     | CF.ThreadNode _ 
-    | CF.Hole _ 
+    | CF.Hole _ | CF.FrmHole _ 
     | CF.HRel _ 
     | CF.HTrue  
-    | CF.HEmp   ->  false
+    | CF.HEmp   | CF.HVar _ ->  false
 	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
       
 and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
@@ -347,12 +352,12 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
     )
     | CF.ThreadNode _ (*TOCHECK*)
     | CF.ViewNode _
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
-    | CF.HEmp   -> (false,[mt])
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HEmp | CF.HVar _  -> (false,[mt])
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -444,12 +449,12 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
     | CF.ThreadNode n2 -> (false,[mt]) 
     | CF.DataNode n2 -> (false,[mt]) 
     | CF.ViewNode n2 -> let (res, mt2) = check_view_node_equiv hvars n n2 mt in (res, [mt2])
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
-    | CF.HEmp   -> (false,[mt])
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HEmp | CF.HVar _  -> (false,[mt])
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_view_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -506,14 +511,14 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * ((CP.exp ) list) * lo
     | CF.DataNode _ 
     | CF.ViewNode _  
     | CF.ThreadNode _ 
-    | CF.Hole _ -> (false,[mt]) 
+    | CF.Hole _ -> (false,[mt]) | CF.FrmHole _ -> (false,[mt]) 
     | CF.HRel r2  ->  (
       let _ = Debug.ninfo_zprint (lazy  ("Find 2nd relation  " )) no_pos in
       let (res, mt2) = check_rel_equiv hvars r r2 mt in (res, [mt2])
     )
     | CF.HTrue  -> (false,[mt]) 
     | CF.HFalse ->  report_error no_pos "not a case"
-    | CF.HEmp   ->  (false,[mt]) 
+    | CF.HEmp  | CF.HVar _  ->  (false,[mt]) 
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
@@ -593,12 +598,12 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.DataNode _ 
     | CF.ViewNode _
     | CF.ThreadNode _
-    | CF.Hole _
+    | CF.Hole _ | CF.FrmHole _
     | CF.HRel _ 
     | CF.HTrue 
-    | CF.HFalse -> false
+    | CF.HFalse | CF.HVar _ -> false
     | CF.HEmp   -> true
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
 
 and add_map_rel_x (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
   let vn1 = CP.full_name_of_spec_var v1 in
@@ -639,11 +644,13 @@ and checkeq_p_formula_x (hvars: ident list)(p1: CP.formula) (p2: CP.formula)(mtl
       if(res) then checkeq_p_formula hvars f2 pf2 mtl1 
       else (res, []) 
     )
-    | AndList _ -> report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet"
+    | AndList _ ->
+          false,mtl
+          (* report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet" *)
     | Or f -> match_equiv_orform hvars f pf2 mtl
     | Not(f,_,_) -> match_equiv_notform hvars f pf2 mtl
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> false,mtl (* report_error no_pos "not handle checkeq 2 formula that have forall and exists yet" *)
 
 and checkeq_p_formula  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in
@@ -708,11 +715,11 @@ and check_equiv_exp_x hvars (e1:CP.exp) (e2:CP.exp) mt =
         let res1,mt1 = check_spec_var_equiv hvars v11 v21 mt in
         let res2,mt2 = check_spec_var_equiv hvars v12 v22 mt1 in
         let res3,mt3 = check_spec_var_equiv hvars v13 v23 mt2 in
-        (res1&res2&res3,mt3)
+        (res1 && res2 && res3,mt3)
     | Add (e11,e12,_),Add (e21,e22,_) ->
           let res1,mt1 = check_equiv_exp hvars e11 e21 mt in
           let res2,mt2 = check_equiv_exp hvars e12 e22 mt1 in
-          (res1&&res2, mt2)
+          (res1 && res2, mt2)
     (*TODO: implement for your need*)
     | _ -> (false, mt)
 
@@ -742,7 +749,7 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
     | (BagIn (v1,e1,_),_),  (BagIn (v2,e2,_),_) -> (*MUSTDO*)
         let res1,mt1 = check_spec_var_equiv hvars v1 v2 mt in
         let res2,mt2 = check_equiv_exp hvars e1 e2 mt1 in
-        (res1&res2,[mt2])
+        (res1 && res2,[mt2])
     | (XPure xp1,_),  (XPure xp2,_) ->
      
         if xp1.xpure_view_name = xp1.xpure_view_name then
@@ -905,9 +912,12 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
       )
       | AndList _ -> report_error no_pos "not handle ANDLIST yet"
       | Or f -> (false,[mt])
-      | Not(f2,_,_) -> report_error no_pos "temp: not handle not yet" (* checkeq_p_formula hvars f1 f2 mtl *)
+      | Not(f2,_,_) -> 	let res, mtl = match_equiv_notform_helper hvars f1 f2 mt in
+        if res then (true, mtl) else (false, [mt])
+            (* report_error no_pos "temp: not handle not yet" (\* checkeq_p_formula hvars f1 f2 mtl *\) *)
       | Forall _ 
-      | Exists _ -> report_error no_pos "not handle forall and exists yet"
+      | Exists _ -> (false,[mt])
+            (* report_error no_pos "not handle forall and exists yet" *)
   in
   let res_list = List.map (fun mt ->  match_equiv_notform_helper hvars f1 pf2 mt) mtl in
   let (bs, mtls) = List.split res_list in
@@ -1262,6 +1272,10 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	    |CF.Hole h2 -> let (a,b) = (h1 == h2, mtl)  in if(a) then (a,modify_mtl b CF.HEmp) else (a,modify_mtl b hf1)
 	    |_ -> report_error no_pos "not handle Or f1 yet"
 	)
+        | CF.FrmHole h1 -> (match hf2 with
+	    |CF.FrmHole h2 -> let (a,b) = (h1 == h2, mtl)  in if(a) then (a,modify_mtl b CF.HEmp) else (a,modify_mtl b hf1)
+	    |_ -> report_error no_pos "not handle Or f1 yet"
+	)
 	| CF.HRel r  -> (
 	  let res,new_mtl = match_equiv_rel hvars r hf2 mtl in
 	  if(res) then (res,modify_mtl new_mtl CF.HEmp) else (res,modify_mtl new_mtl hf1)
@@ -1282,7 +1296,7 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	| CF.HTrue  -> (match hf2 with
 	    | CF.HTrue -> (true, modify_mtl mtl CF.HEmp)
 	    | _ ->   (false, modify_mtl mtl CF.HTrue))
-	| CF.HFalse ->  report_error no_pos "not a case"
+	| CF.HFalse | CF.HVar _ ->  report_error no_pos "not a case hfalse/hvar "
 	| CF.HEmp   ->  (true, modify_mtl mtl CF.HEmp) (*TODO: plz check*)
 	| CF.ThreadNode _ (*TOCHECK*)
 	| CF.ConjConj _ | CF.StarMinus _ | CF.ConjStar _ -> Error.report_no_pattern()
@@ -1395,7 +1409,7 @@ and checkeq_p_formula_with_diff_x (hvars: ident list)(p1: CP.formula) (p2: CP.fo
     | Not(f,_,_) ->  let (a,b) = match_equiv_notform hvars f pf2 mtl in 
 		     if (a) then (a, modify b (CP.mkTrue no_pos)) else (a,modify b pf1)
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
+    | Exists _ -> (false,[]) (* report_error no_pos "not handle checkeq 2 formula that have forall and exists yet" *)
 
 and checkeq_p_formula_with_diff  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in

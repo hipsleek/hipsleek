@@ -1,0 +1,95 @@
+data pto {
+     pto next;
+     pto prev;
+}.
+
+/*
+You gave:
+
+; doubly-linked list
+(define-fun dll ((?in Dll_t) (?ex Dll_t) (?pr Dll_t) (?hd Dll_t))
+  Space (tospace (or (and (= ?in ?pr) (= ?hd ?ex)) 
+    (exists ((?u Dll_t)) (tobool (ssep
+      (pto ?in (sref (ref next ?u) (ref prev ?pr)))
+      (dll ?u ?ex ?in ?hd))
+)))))
+
+which translates to below entailment below.:
+
+pred dll<ex,pr,hd> ==
+ self=pr & hd=ex
+ or (exists u: self::pto<u,pr> * u::dll<ex,self,hd>).
+
+However, this isn't the defn of doubly linked
+list segment in:
+
+http://www0.cs.ucl.ac.uk/staff/p.ohearn/papers/cav07.pdf
+pg 6:
+ ls(I_f,O_b,O_f,I_b) ==
+      I_f=O_f & I_b=O_b 
+   or I_f::node<O_b,x'> * ls(x',I_f,O_f,I_b)
+
+Instead, the correct spec should be below
+when we test it against SLEEK:
+
+pred dll<ex,pr,hd> ==
+ //self=pr & hd=ex
+  self=hd & ex=pr
+ or (exists u: self::pto<u,pr> * u::dll<ex,self,hd>).
+
+Unfold once:
+  u: self::pto<u,pr> * u::dll<ex,self,hd>
+  u: self::pto<u,pr> & u=hd & ex=self
+  self::pto<hd,pr> & ex=self
+
+Unfold twice:
+  uu: self::pto<u,pr> * u::pto<uu,self> * uu::dll<ex,u,hd> 
+  uu: self::pto<u,pr> * u::pto<uu,self> & uu=hd & ex=u
+  self::pto<ex,pr> * u::pto<hd,self> & ex=u
+
+Please fix your benchmark if you agree.
+
+*/
+
+pred dll<ex,pr,hd> ==
+ //self=pr & hd=ex
+  self=hd & ex=pr
+ or (exists u: self::pto<u,pr> * u::dll<ex,self,hd>).
+
+/*
+
+Unfold once:
+  u: self::pto<u,pr> * u::dll<ex,self,hd>
+  u: self::pto<u,pr> & u=hd & ex=self
+  self::pto<hd,pr> & ex=self
+
+Unfold twice:
+  uu: self::pto<u,pr> * u::pto<uu,self> * uu::dll<ex,u,hd> 
+  uu: self::pto<u,pr> * u::pto<uu,self> & uu=hd & ex=u
+  self::pto<ex,pr> * u::pto<hd,self> & ex=u
+
+*/
+// Fail -> expected Valid.
+
+checkentail_exact x_emp::pto<w_emp,null> * w_emp::pto<y_emp,x_emp> 
+            |- x_emp::dll<a,b,c>.
+print residue.
+/*
+ <1>emp&b=null & exists(self_70:exists(ex1_69:ex1_69=self_70)) & exists(hd_71:hd_71=y_emp) & exists(ex1_53:ex1_53=w_emp) & exists(hd_55:hd_55=y_emp) & exists(self_54:self_54=x_emp) & c=y_emp & a=w_emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  BaseCaseFold ==> ]]
+*/
+
+checkentail_exact x_emp::pto<w_emp,null> * w_emp::pto<y_emp,x_emp> 
+          * y_emp::pto<z_emp,w_emp> |-
+            x_emp::dll<a,b,c>.
+print residue.
+/*
+a = last node
+c = out ptr
+b = pre ptr
+
+Entail 2: Valid. 
+
+ <1>emp&b=null & exists(self_138:exists(ex1_137:ex1_137=self_138)) & exists(hd_139:hd_139=z_emp) & exists(ex1_121:ex1_121=y_emp) & exists(hd_123:hd_123=z_emp) & exists(self_122:self_122=w_emp) & exists(ex1_105:ex1_105=y_emp) & exists(hd_107:hd_107=z_emp) & exists(self_106:self_106=x_emp) & c=z_emp & a=y_emp&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  SEARCH ==>  Fold ==>  Match ==>  COND ==>  BaseCaseFold ==> ]]
+*/

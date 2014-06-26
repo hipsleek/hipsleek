@@ -190,7 +190,7 @@ let string_of_loc p =
   ^ (string_of_int (p.end_pos.Lexing.pos_cnum - p.end_pos.Lexing.pos_bol))
 
 (* pretty printing for an expression for a formula *)
-let rec string_of_formula_exp = function 
+let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
   | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":"^(string_of_typ t) ^ ")"
   | P.Var (x, l)        -> string_of_id x
@@ -201,24 +201,24 @@ let rec string_of_formula_exp = function
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
-  | P.Add (e1, e2, l)	      -> (match e1 with 
-	  | P.Null _ 
-	  | P.Var _ 
-	  | P.IConst _ 
-	  | P.Max _ 
-	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
-	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
-		^ (match e2 with 
+  | P.Add (e1, e2, l)	      -> (match e1 with
+	  | P.Null _
+	  | P.Var _
+	  | P.IConst _
+	  | P.Max _
+	  | P.Min _   -> (string_of_formula_exp e1) ^ "+"
+	  | _  -> "(" ^ (string_of_formula_exp e1) ^ ")+")
+		^ (match e2 with
 		  | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
 		  | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
   | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
-    then 
+    then
       if need_parenthesis e2
-      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"
 	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
-    else 
-	  (string_of_formula_exp e1) 
-	  ^ "-" ^ (string_of_formula_exp e2)										    
+    else
+	  (string_of_formula_exp e1)
+	  ^ "-" ^ (string_of_formula_exp e2)
   | P.Mult (e1, e2, _) ->
         "(" ^ (string_of_formula_exp e1) ^ ") * (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Div (e1, e2, _) ->
@@ -264,7 +264,8 @@ and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_
 and string_of_data_param_list params anns = match (params, anns) with 
   | ([], [])                   -> ""
   | (h::[], a::[])             -> string_of_data_param h a
-  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ ", " ^ (string_of_data_param_list t1 t2)
+  | (h::t1, [])                -> (string_of_formula_exp h) ^ "," ^ (string_of_data_param_list t1 [])
+  | (h::t1, a::t2)             -> (string_of_data_param h a) ^ "," ^ (string_of_data_param_list t1 t2)
   | (_, _)                     -> ""
 ;;
 
@@ -277,7 +278,8 @@ let string_of_slicing_label sl =
 
 let string_of_b_formula (pf,il) =
   (string_of_slicing_label il) ^ match pf with 
-  | P.BConst (b,l)              -> string_of_bool b 
+  | P.BConst (b,l)              -> string_of_bool b
+  | P.Frm (x,l) -> (string_of_id x) ^ "@F"
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
         (string_of_formula_exp e1)^"<:"^(string_of_formula_exp e2)
@@ -432,16 +434,18 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
+                 F.h_formula_heap_ho_arguments = ho_pl;
                  F.h_formula_heap_imm = imm;
                  F.h_formula_heap_imm_param = ann_param;
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
+      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_pl))^"}" in
       let deref_str = ref "" in
       for i = 1 to deref do
         deref_str := !deref_str ^ "^";
       done;
-      ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str 
+      ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str 
       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
@@ -450,7 +454,10 @@ let rec string_of_h_formula = function
                   F.h_formula_heap2_imm = imm;
                   F.h_formula_heap2_imm_param = ann_param;
                   F.h_formula_heap2_perm = perm; (*LDK*)
-                  F.h_formula_heap2_arguments = args}) ->
+                  F.h_formula_heap2_arguments = args;
+                  F.h_formula_heap2_ho_arguments = ho_args
+    }) ->
+      let ho_str = "{"^(String.concat "," (List.map string_of_formula ho_args))^"}" in
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
       let perm_str = string_of_iperm perm in
@@ -459,7 +466,7 @@ let rec string_of_h_formula = function
         deref_str := !deref_str ^ "^";
       done;
       string_of_formula_label_opt pi
-        ((string_of_id xid) ^ "::" ^ id ^ !deref_str ^ perm_str
+        ((string_of_id xid) ^ "::" ^ id ^ho_str^ !deref_str ^ perm_str
         ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
   | F.ThreadNode ({F.h_formula_thread_node = x;
                  F.h_formula_thread_name = id;
@@ -476,6 +483,7 @@ let rec string_of_h_formula = function
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
+  | F.HVar v -> "HVar "^v
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
@@ -832,7 +840,9 @@ let string_of_barrier_decl b =
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = 
+  let ho_str = "{"^(String.concat "," v.view_ho_vars)^"}" in
+  v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
 ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
 ;;
@@ -844,8 +854,15 @@ let string_of_coerc_type c = match c with
   | Equiv -> "<=>"
   | Right -> "<="
 
-let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
-							 (string_of_formula c.coercion_body)^"\n" 
+let string_of_coerc_origin orig = match orig with
+  | LEM_USER -> "user-given"
+  | LEM_GEN -> "generated"
+
+let string_of_coerc_decl c = 
+  (string_of_coerc_type c.coercion_type) ^ "coerc " ^c.coercion_name ^ "\n"
+  ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
+  ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
+  ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
 
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
@@ -1048,6 +1065,7 @@ Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id;
 

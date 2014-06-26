@@ -168,7 +168,7 @@ module Make (Token : SleekTokenS)
    ("ensures_exact", ENSURES_EXACT);
    ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
-	 ("ex", EXISTS);
+	 (* ("ex", EXISTS); *)
 	 ("exists", EXISTS);
 	 ("extends", EXTENDS);
 	 ("false", FALSE);
@@ -258,7 +258,11 @@ module Make (Token : SleekTokenS)
    ("try", TRY);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
-         ("validate", VALIDATE);
+   ("expect", VALIDATE);
+   ("Valid", VALID);
+   ("Fail", FAIL);
+   ("Fail_Must", FAIL_MUST);
+   ("Fail_May", FAIL_MAY);
 	 ("void", VOID);
    (*("variance", VARIANCE);*)
 	 ("while", WHILE);

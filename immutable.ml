@@ -41,6 +41,95 @@ let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
 let isExistsLendList (al : CP.ann list) : bool = List.exists isLend al
 let isExistsMutList (al : CP.ann list) : bool = List.exists isMutable al
 
+              
+(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
+let rec subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+  match imm1 with
+    | CP.PolyAnn v1 ->
+          (match imm2 with
+            | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
+            | CP.ConstAnn k2 -> 
+                  (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
+          )
+    | CP.ConstAnn k1 ->
+          (match imm2 with
+            | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
+            | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
+	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
+            | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
+          ) 
+    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
+    | CP.TempRes (l,ar) -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
+          
+let subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+  let pr_imm = Cprinter.string_of_imm in
+  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
+  let pr_exp = CP.ArithNormalizer.string_of_exp in
+  let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l" pr_exp) (add_str "r" pr_exp)) ) in
+  Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
+
+(* bool denotes possible subyping *)
+(* return true if imm1 <: imm2 *)	
+(* M <: I <: L <: A*)
+let subtype_ann_x (imm1 : CP.ann) (imm2 : CP.ann) : bool =
+  let (r,op) = subtype_ann_pair imm1 imm2 in r
+
+(* return true if imm1 <: imm2 *)	
+(* M <: I <: L <: A*)
+let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
+  let pr_imm = Cprinter.string_of_imm in
+  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
+  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
+
+let subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+  let (f,op) = subtype_ann_pair imm1 imm2 in
+  match op with
+    | None -> (f,[],[],[])
+    | Some (l,r) -> 
+          let to_rhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+          (* implicit instantiation of @v made stronger into an equality *)
+          (* two examples in ann1.slk fail otherwise; unsound when we have *)
+          (* multiple implicit being instantiated ; use explicit if needed *)
+          let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
+          (* let lhs = c in *)
+          begin
+            match r with
+              | CP.Var(v,_) -> 
+                    (* implicit var annotation on rhs *)
+                    if CP.mem v impl_vars then (f,[to_lhs],[],[])
+                    else if CP.mem v evars then
+                            (f,[], [to_rhs], [to_rhs])
+                    else (f,[],[to_rhs], [])
+              | _ -> (f,[],[to_rhs], [])
+          end
+
+let subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
+  let pr1 = !CP.print_svl in
+  let pr2 = (Cprinter.string_of_imm)  in
+  let pr2a = pr_list !CP.print_formula in
+  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
+  let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
+
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
+  let rec helper ann ann_lst = 
+    match ann_lst with
+      | []   -> ann
+      | (CP.ConstAnn(Mutable)) :: t -> (CP.ConstAnn(Mutable))
+      | x::t -> if subtype_ann 3 x ann then helper x t else helper ann t
+  in helper (CP.ConstAnn(Accs)) ann_lst
+
+let get_weakest_imm  (ann_lst: CP.ann list): CP.ann = 
+  let rec helper ann ann_lst = 
+    match ann_lst with
+      | []   -> ann
+      | (CP.ConstAnn(Accs)) :: t -> (CP.ConstAnn(Accs))
+      | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
+  in helper (CP.ConstAnn(Mutable)) ann_lst
+
 let rec remove_true_rd_phase (h : CF.h_formula) : CF.h_formula = 
   match h with
     | CF.Phase ({CF.h_formula_phase_rd = h1;
@@ -115,7 +204,7 @@ let rec consume_heap_h_formula (f : h_formula) : bool =  match f with
 	h_formula_phase_pos = pos})
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) or (consume_heap_h_formula h2)
+	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) || (consume_heap_h_formula h2)
   | _ -> false
 
 
@@ -125,7 +214,7 @@ let rec consume_heap (f : formula) : bool =  match f with
   | Or({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        (consume_heap f1) or (consume_heap f2)
+        (consume_heap f1) || (consume_heap f2)
 
 let rec split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
   let h = remove_true_rd_phase h in
@@ -167,19 +256,22 @@ let produces_hole (a: CP.ann): bool =
   if isLend a || isAccs  a (* || isPoly a *) then true
   else false
 
-let maybe_replace_w_empty h = 
+let maybe_replace_w_empty h =
   match h with
     | CF.DataNode dn -> 
           let node_imm = dn.CF.h_formula_data_imm in
           let param_imm = dn.CF.h_formula_data_param_imm in
-          let new_h = 
-            match !Globals.allow_field_ann, !Globals.allow_imm with
-              | true, _     -> if (isAccsList param_imm) then HEmp else h
-              | false, true -> if (isAccs node_imm) then HEmp else h
-              | _,_         -> HEmp
+          let new_h =  
+            if (isAccs node_imm) then HEmp 
+            else if !Globals.allow_field_ann &&  (isAccsList param_imm) then HEmp else h
+            (* match !Globals.allow_field_ann, !Globals.allow_imm with *)
+            (*   | true, _     -> if (isAccsList param_imm) then HEmp else h *)
+            (*   | false, true -> if (isAccs node_imm) then HEmp else h *)
+            (*   | _,_         -> if (isAccs node_imm) then HEmp else h *)
           in new_h
-    | CF.ViewNode vn -> h
-          (* let node_imm = vn.CF.h_formula_view_imm in *)
+    | CF.ViewNode vn ->  
+          let node_imm = vn.CF.h_formula_view_imm in
+          if (isAccs node_imm) then HEmp else h 
           (* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *)
           (* let new_h =  *)
           (*   match !Globals.allow_field_ann, !Globals.allow_imm with *)
@@ -188,6 +280,29 @@ let maybe_replace_w_empty h =
           (*     | _,_         -> HEmp *)
           (* in new_h *)
     | _ -> h
+
+(* let maybe_replace_w_empty h = *)
+(*   match h with *)
+(*     | CF.DataNode dn ->  *)
+(*           let node_imm = dn.CF.h_formula_data_imm in *)
+(*           let param_imm = dn.CF.h_formula_data_param_imm in *)
+(*           let new_h, xpure =  *)
+(*             match !Globals.allow_field_ann, !Globals.allow_imm with *)
+(*               | true, _     -> if (isAccsList param_imm) then (HEmp, Some (xpure) ) else (h,None) *)
+(*               | false, true -> if (isAccs node_imm) then (HEmp, Some (xpure)) else (h,None) *)
+(*               | _,_         -> (h, None) *)
+(*           in new_h *)
+(*     | CF.ViewNode vn -> h  *)
+(*           (\* let node_imm = vn.CF.h_formula_view_imm in *\) *)
+(*           (\* let param_imm = CP.annot_arg_to_imm_ann_list vn.CF.h_formula_view_annot_arg in *\) *)
+(*           (\* let new_h =  *\) *)
+(*           (\*   match !Globals.allow_field_ann, !Globals.allow_imm with *\) *)
+(*           (\*     | true, _     -> if (isAccsList param_imm) then HEmp else h *\) *)
+(*           (\*     | false, true -> if (isAccs node_imm) then HEmp else h *\) *)
+(*           (\*     | _,_         -> HEmp *\) *)
+(*           (\* in new_h *\) *)
+(*     | _ -> h *)
+
 
 let ann_opt_to_ann (ann_opt: Ipure.ann option) (default_ann: Ipure.ann): Ipure.ann = 
   match ann_opt with
@@ -211,6 +326,24 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
   List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (Ipure.ConstAnn(Mutable)))
 
+(* check lending property (@L) in classic reasoning. Hole is treated like @L *)
+let rec is_classic_lending_hformula (f: h_formula) : bool =
+  match f with
+  | DataNode dn -> isLend dn.h_formula_data_imm
+  | ViewNode vn -> isLend vn.h_formula_view_imm
+  | Hole _ | FrmHole _ -> true      (* a Hole behaves like @L *)
+  | Conj ({h_formula_conj_h1 = h1;
+           h_formula_conj_h2 = h2})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+               h_formula_conjstar_h2 = h2})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+               h_formula_conjconj_h2 = h2})
+  | Phase ({h_formula_phase_rd = h1;
+            h_formula_phase_rw = h2})
+  | Star ({h_formula_star_h1 = h1;
+           h_formula_star_h2 = h2}) ->
+      ((is_classic_lending_hformula h1) && (is_classic_lending_hformula h2))
+  | _ -> false
 
 let rec is_lend_h_formula (f : h_formula) : bool =  match f with
   | DataNode (h1) -> 
@@ -238,7 +371,7 @@ let rec is_lend_h_formula (f : h_formula) : bool =  match f with
 	h_formula_phase_pos = pos}) -> true
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> (is_lend_h_formula h1) or (is_lend_h_formula h2)
+	h_formula_star_pos = pos}) -> (is_lend_h_formula h1) || (is_lend_h_formula h2)
   | Hole _ -> false
   | _ -> false
 
@@ -254,7 +387,7 @@ let rec is_lend (f : formula) : bool =  match f with
   | Or({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        (is_lend f1) or (is_lend f2)
+        (is_lend f1) || (is_lend f2)
 
 let is_lend_debug f = 
   Debug.no_1 "is_lend"
@@ -454,7 +587,7 @@ and contains_phase (h : IF.h_formula) : bool = match h with
   | IF.Star ({IF.h_formula_star_h1 = h1;
     IF.h_formula_star_h2 = h2;
     IF.h_formula_star_pos = pos}) ->
-        (contains_phase h1) or (contains_phase h2)
+        (contains_phase h1) || (contains_phase h2)
   | _ -> false
 
 (* conj in read phase -> split into two separate read phases *)
@@ -646,7 +779,7 @@ and propagate_imm_formula (f : formula) (view_name: ident) (imm : CP.ann) (imm_p
    Debug.no_4 "propagate_imm_formula" 
       (add_str "formula" (Cprinter.string_of_formula)) 
       (add_str "view_name" pr_id) 
-      (add_str "imm" (Cprinter.string_of_imm)) 
+      (add_str "imm" (Cprinter.string_of_imm_ann)) 
       (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
       (Cprinter.string_of_formula) 
        propagate_imm_formula_x f view_name imm imm_p
@@ -659,7 +792,7 @@ and replace_imm imm map emap=
           begin
             let new_imm = List.fold_left (fun acc (fr,t) ->
                 if ( Gen.BList.mem_eq CP.eq_ann imm [CP.annot_arg_to_imm_ann fr]) 
-                then [CP.annot_arg_to_imm_ann t] 
+                then [get_weakest_imm ((CP.annot_arg_to_imm_ann fr)::[(CP.annot_arg_to_imm_ann t)]) ] 
                 else acc) [] map in
             match new_imm with
               | []   -> imm
@@ -667,7 +800,10 @@ and replace_imm imm map emap=
           end
     | _ -> imm                          (* replace temp as well *)
 
-
+(* andreeac TODOIMM: propagate for fields in view defs must be modified to behave as below:
+   pred p(a) = ... self<_@a>@b;
+   unfold(pred(@c)@d) = ... self<_@weakest(a,b,c,d)>
+*)
 and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: (CP.annot_arg * CP.annot_arg) list) emap : h_formula = 
   match f with
     | ViewNode f1 -> 
@@ -681,10 +817,10 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
 			It should behave similar to the datanode...
 			*)
 			(*f*)
-			ViewNode({f1 with h_formula_view_imm = imm;})
+			ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);})
           else
             let new_node_imm = imm in
-            let new_args_imm = List.fold_left (fun acc (fr,t) -> 
+            let new_args_imm = List.fold_left (fun acc (fr,t) ->
                 if (Gen.BList.mem_eq CP.eq_annot_arg fr (CF.get_node_annot_args f)) then acc@[t] else acc) []  imm_p in
             (* andreeac: why was below needed? *)
           (* match f1.Cformula.h_formula_view_imm with *)
@@ -695,14 +831,14 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
 	  (*             | CP.ConstAnn _ -> imm *)
 	  (*             | _ -> f1.Cformula.h_formula_view_imm  *)
 	  (*         end *)
-          ViewNode({f1 with h_formula_view_imm = new_node_imm;
+          ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
               h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
           })
     | DataNode f1 -> 
           (* if not(CP.is_self_spec_var f1.CF.h_formula_data_node) then f *)
           (* else *)
             let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
-            DataNode({f1 with h_formula_data_imm = imm;
+            DataNode({f1 with h_formula_data_imm =  get_weakest_imm (imm::[f1.CF.h_formula_data_imm]);
                 h_formula_data_param_imm = new_param_imm;})
 
           (* andreeac: why was below needed? *)
@@ -746,78 +882,6 @@ and propagate_imm_h_formula (f : h_formula) view_name (imm : CP.ann)  (map: (CP.
       (add_str "map" (pr_list (pr_pair Cprinter.string_of_annot_arg Cprinter.string_of_annot_arg ))) 
       (Cprinter.string_of_h_formula) 
       (fun _ _ _ _ -> propagate_imm_h_formula_x f view_name imm map emap) f view_name imm map
-
-(* return true if imm1 <: imm2 *)	
-(* M <: I <: L <: A*)
-and subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
-  let pr_imm = Cprinter.string_of_imm in
-  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
-  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
-
-(* bool denotes possible subyping *)
-(* return true if imm1 <: imm2 *)	
-(* M <: I <: L <: A*)
-and subtype_ann_x (imm1 : CP.ann) (imm2 : CP.ann) : bool =
-  let (r,op) = subtype_ann_pair imm1 imm2 in r
-               
-(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
-and subtype_ann_pair_x (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
-  match imm1 with
-    | CP.PolyAnn v1 ->
-          (match imm2 with
-            | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
-            | CP.ConstAnn k2 -> 
-                  (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
-            | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
-          )
-    | CP.ConstAnn k1 ->
-          (match imm2 with
-            | CP.PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
-            | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
-	    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x imm1 (CP.ConstAnn(Accs)))
-            | CP.TempRes (al,ar) -> (subtype_ann_pair_x imm1 ar)  (* andreeac should it be Accs? *)
-          ) 
-    | CP.TempAnn _ | CP.NoAnn -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2) 
-    | CP.TempRes (l,ar) -> (subtype_ann_pair_x (CP.ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
-          
-and subtype_ann_pair (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
-  let pr_imm = Cprinter.string_of_imm in
-  let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
-  let pr_exp = CP.ArithNormalizer.string_of_exp in
-  let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l" pr_exp) (add_str "r" pr_exp)) ) in
-  Debug.no_1 "subtype_ann_pair" pr1 pr_out (fun _ -> subtype_ann_pair_x imm1 imm2) (imm1,imm2)
-
-and subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
-  let (f,op) = subtype_ann_pair imm1 imm2 in
-  match op with
-    | None -> (f,[],[],[])
-    | Some (l,r) -> 
-          let to_rhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
-          (* implicit instantiation of @v made stronger into an equality *)
-          (* two examples in ann1.slk fail otherwise; unsound when we have *)
-          (* multiple implicit being instantiated ; use explicit if needed *)
-          let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
-          (* let to_lhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in *)
-          (* let lhs = c in *)
-          begin
-            match r with
-              | CP.Var(v,_) -> 
-                    (* implicit var annotation on rhs *)
-                    if CP.mem v impl_vars then (f,[to_lhs],[],[])
-                    else if CP.mem v evars then
-                            (f,[], [to_rhs], [to_rhs])
-                    else (f,[],[to_rhs], [])
-              | _ -> (f,[],[to_rhs], [])
-          end
-
-and subtype_ann_gen impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) : bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
-  let pr1 = !CP.print_svl in
-  let pr2 = (Cprinter.string_of_imm)  in
-  let pr2a = pr_list !CP.print_formula in
-  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
-  let pr3 = pr_quad string_of_bool pr2a pr2a pr2a  in
-  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann) 
 
 and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
   match (old_f, to_add) with
@@ -1218,7 +1282,7 @@ and restore_tmp_ann_list_ctx (ctx : list_context) : list_context =
 	  SuccCtx(List.map restore_tmp_ann_ctx cl)
 
 and restore_tmp_ann_ctx (ctx : context) : context = 
-  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
+  (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then *)
     let rec helper ctx = 
       match ctx with
         | Ctx(es) -> Ctx(restore_tmp_ann_es es)
@@ -1227,7 +1291,7 @@ and restore_tmp_ann_ctx (ctx : context) : context =
 	      let nc2 = helper c2 in
 	      OCtx(nc1, nc2)
     in helper ctx
-  else ctx
+  (* else ctx *)
 
 and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
   match f with
@@ -1251,8 +1315,10 @@ and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
     | CF.ViewNode h -> 
           let f args = restore_tmp_ann args pure0 in
           let new_pimm = apply_f_to_annot_arg f (List.map fst h.CF.h_formula_view_annot_arg) in 
-          CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
-              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg}
+          let new_f = CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0);
+              h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_pimm h.CF.h_formula_view_annot_arg} in
+          let new_f = maybe_replace_w_empty new_f in
+          new_f
     | _          -> f
 
 and restore_tmp_ann_formula (f: formula): formula =
@@ -1267,6 +1333,18 @@ and restore_tmp_ann_es (es : Cformula.entail_state) : Cformula.entail_state =
   {  es with
       es_formula = restore_tmp_ann_formula es.es_formula;
   }
+
+and restore_tmp_ann_struc_formula sf = 
+  let rec helper sf  = 
+    match sf with
+      | EBase f   -> EBase {f with formula_struc_base = restore_tmp_ann_formula f.formula_struc_base }
+      | EList l   -> EList (map_l_snd helper l)
+      | ECase c   -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
+      | EAssume b -> EAssume {b with
+	    formula_assume_simpl = restore_tmp_ann_formula b.formula_assume_simpl;
+	    formula_assume_struc = helper b.formula_assume_struc;}
+      | EInfer b  -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
+  in helper sf
 
 (* substitute *)
 and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 
@@ -1518,22 +1596,6 @@ let normalize_field_ann_formula (h:CF.formula): CF.formula =
   let pr = Cprinter.string_of_formula in
   Debug.no_1 "normalize_field_ann_formula" pr pr normalize_field_ann_formula_x h
 
-
-let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
-  let rec helper ann ann_lst = 
-    match ann_lst with
-      | []   -> ann
-      | (CP.ConstAnn(Mutable)) :: t -> (CP.ConstAnn(Mutable))
-      | x::t -> if subtype_ann 3 x ann then helper x t else helper ann t
-  in helper (CP.ConstAnn(Accs)) ann_lst
-
-let get_weakest_imm  (ann_lst: CP.ann list): CP.ann = 
-  let rec helper ann ann_lst = 
-    match ann_lst with
-      | []   -> ann
-      | (CP.ConstAnn(Accs)) :: t -> (CP.ConstAnn(Accs))
-      | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
-  in helper (CP.ConstAnn(Mutable)) ann_lst
 
 let update_read_write_ann (ann_from: CP.ann) (ann_to: CP.ann): CP.ann  =
   match ann_from with
@@ -1895,3 +1957,4 @@ let split_sv sv vdef:  CP.spec_var list * 'a list * (CP.annot_arg * int) list * 
 
 let initialize_imm_args args =
   List.map (fun _ -> Some (Ipure.ConstAnn(Mutable))) args
+

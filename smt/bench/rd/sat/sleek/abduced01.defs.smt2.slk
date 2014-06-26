@@ -1,0 +1,113 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred ls<> ==
+ null = self
+or self::I001<> & null != self.
+
+pred I27148<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp,h:GTyp> ==
+self::I4675<b,c,d,e,f,h>.
+
+pred I27149<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp,h:GTyp> ==
+self::I4676<b,c,d,e,f,h>.
+
+pred I27119<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp,h:GTyp> ==
+ self::I27149<b,c,d,e,f,g,h> & null = h
+or self::I27148<b,c,d,e,f,g,h> & null != h.
+
+pred I4675<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp> ==
+(exists a00: g::GTyp<f0 = a00,f1 = _> * self::I27119<b,c,d,e,f,g,a00> & null != g).
+
+pred I10543<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp,h:GTyp> ==
+h::I4676<b,c,d,e,f,g>.
+
+pred I4703<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp> ==
+(exists a00: self::GTyp<f0 = a00,f1 = _> * self::I10543<b,c,d,e,f,g,a00> & null != self).
+
+pred I4676<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp> ==
+ null = self
+or self::I4703<b,c,d,e,f,g> & null != self.
+
+pred I4621<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp> ==
+ self::I4676<b,c,d,e,f,g> & null = g
+or self::I4675<b,c,d,e,f,g> & null != g.
+
+pred I4523<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp> ==
+(exists a00: f::GTyp<f0 = a00,f1 = _> * self::I4621<b,c,d,e,f,a00> & null != f).
+
+pred I4584<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp,g:GTyp> ==
+g::I4524<b,c,d,e,f>.
+
+pred I4574<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp> ==
+(exists a00: self::GTyp<f0 = a00,f1 = _> * self::I4584<b,c,d,e,f,a00> & null != self).
+
+pred I4524<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp> ==
+ self = f
+or self::I4574<b,c,d,e,f> & self != f.
+
+pred I4503<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp> ==
+ self::I4524<b,c,d,e,f> & null = f
+or self::I4523<b,c,d,e,f> & null != f.
+
+pred I798<b:GTyp,c:GTyp,d:GTyp,e:GTyp> ==
+(exists a00: e::GTyp<f0 = a00,f1 = _> * self::I4503<b,c,d,e,a00> & null != e).
+
+pred I2074<b:GTyp,c:GTyp,d:GTyp,e:GTyp,f:GTyp> ==
+self::I799<f,c,d,e>.
+
+pred I833<b:GTyp,c:GTyp,d:GTyp,e:GTyp> ==
+(exists a00: b::GTyp<f0 = a00,f1 = _> * self::I2074<b,c,d,e,a00> & null != b).
+
+pred I799<b:GTyp,c:GTyp,d:GTyp,e:GTyp> ==
+ b = e
+or self::I833<b,c,d,e> & b != e.
+
+pred I782<b:GTyp,c:GTyp,d:GTyp,e:GTyp> ==
+ self::I799<b,c,d,e> & null = e
+or self::I798<b,c,d,e> & null != e.
+
+pred I046<b:GTyp,c:GTyp,d:GTyp> ==
+(exists a00: d::GTyp<f0 = a00,f1 = _> * self::I782<b,c,d,a00> & null != d).
+
+pred I341<b:GTyp,c:GTyp,d:GTyp,e:GTyp> ==
+self::I047<e,c,d>.
+
+pred I088<b:GTyp,c:GTyp,d:GTyp> ==
+(exists a00: b::GTyp<f0 = a00,f1 = _> * self::I341<b,c,d,a00> & null != b).
+
+pred I047<b:GTyp,c:GTyp,d:GTyp> ==
+ null = b
+or self::I088<b,c,d> & null != b.
+
+pred I034<b:GTyp,c:GTyp,d:GTyp> ==
+ self::I047<b,c,d> & null = d
+or self::I046<b,c,d> & null != d.
+
+pred I021<b:GTyp,c:GTyp> ==
+(exists a00: c::GTyp<f0 = a00,f1 = _> * self::I034<b,c,a00> & null != c).
+
+pred I022<b:GTyp,c:GTyp> ==
+b::I008<c>.
+
+pred I013<b:GTyp,c:GTyp> ==
+ self::I022<b,c> & null = c
+or self::I021<b,c> & null != c.
+
+pred I007<b:GTyp> ==
+(exists a00: b::GTyp<f0 = a00,f1 = _> * self::I013<b,a00> & null != b).
+
+pred I008<b:GTyp> ==
+emp.
+
+pred I003<b:GTyp> ==
+ self::I008<b> & null = b
+or self::I007<b> & null != b.
+
+pred I001<> ==
+(exists a00: self::GTyp<f0 = a00,f1 = _> * self::I003<a00> & null != self).
+
+checkentail x0::ls<>
+         |- false.

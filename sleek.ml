@@ -100,7 +100,7 @@ let proc_gen_cmd cmd =
     | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-    | Validate ( lc) -> process_validate lc
+    | Validate (vr, lc) -> process_validate vr lc
     | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
     | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
     | ShapeLFP ids -> process_shape_lfp ids
@@ -188,7 +188,7 @@ let parse_file (parse) (source_file : string) =
       | Slk_Hull f -> process_hull f
       | Slk_PairWise f -> process_pairwise f
       | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-      | Validate ( lc) -> process_validate lc
+      | Validate (id, lc) -> process_validate id lc
       | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
       | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
       | ShapeLFP ids -> process_shape_lfp ids
@@ -223,18 +223,18 @@ let parse_file (parse) (source_file : string) =
       | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
       | EmptyCmd -> () in
   let cmds = parse_first [] in
+  let _ = Slk2smt.smt_cmds := cmds in
   List.iter proc_one_def cmds;
   (* An Hoa : Parsing is completed. If there is undefined type, report error.
    * Otherwise, we perform second round checking!
    *)
   let udefs = !Astsimp.undef_data_types in
   let _ = match udefs with
-    | [] ->	perform_second_parsing_stage ()
+    | [] -> ()
     | _ -> let udn,udp = List.hd (List.rev udefs) in
       Error.report_error { Error.error_loc  = udp;
       Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_data_and_pred_to_cast ();
   Debug.tinfo_pprint "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* Debug.tinfo_pprint "sleek : after proc one lemma" no_pos; *)
@@ -248,14 +248,12 @@ let parse_file (parse) (source_file : string) =
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
+  (*Long: reset unexpected_cmd = [] *)
+  Sleekengine.unexpected_cmd := [];
   List.iter proc_one_cmd cmds
 
 
-
-
-
-
-let main () = 
+let main () =
   let _ = Globals.is_sleek_running := true in
   let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_include_decls =[];
@@ -302,7 +300,7 @@ let main () =
                 let input = read_line () in
                 match input with
                   | "" -> ()
-                  | _ -> 
+                  | _ ->
                       try
                           let term_indx = String.index input terminator in
                           let s = String.sub input 0 (term_indx+1) in
@@ -311,6 +309,7 @@ let main () =
                           if cts = "quit" || cts = "quit\n" then quit := true
                           else try
                                    let cmd = parse cts in
+                                   (* let _ = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
                                    proc_gen_cmd cmd;
                                    Buffer.clear buffer;
                                    if !inter then
@@ -325,7 +324,7 @@ let main () =
                                     (* Log.last_proof_command # dump; *)
                                     Buffer.clear buffer;
                                     if !inter then prompt := "SLEEK> "
-                      with 
+                      with
                         | SLEEK_Exception
                         | Not_found -> dummy_exception();
                             Buffer.add_string buffer input;
@@ -340,7 +339,7 @@ let main () =
             let _ = List.map (parse_file NF.list_parse) !Globals.source_files in ()
         end
   with
-    | End_of_file -> 
+    | End_of_file ->
         begin
             print_string ("\n")
         end
@@ -351,25 +350,25 @@ let main () =
 
 let sleek_epilogue () =
   (* ------------------ lemma dumping ------------------ *)
-  if (!Globals.dump_lemmas) then 
+  if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump
   else ()
 
 let sleek_proof_log_Z3 src_files =
   (* let _ = Log.process_proof_logging src_files in   *)
-  if !Globals.proof_logging || !Globals.proof_logging_txt   then 
+  if !Globals.proof_logging || !Globals.proof_logging_txt then
     begin
       (* let _=sleek_src_files := src_files in *)
       Debug.info_hprint (add_str "src_files" (pr_list pr_id)) src_files no_pos;
-      let tstartlog = Gen.Profiling.get_time ()in	
+      let tstartlog = Gen.Profiling.get_time ()in
       (* let _= Log.proof_log_to_file () in *)
       let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
       let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
       let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
       (* let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in *)
       (* let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in *)
-      let _= if (!Globals.proof_logging_txt) 
-      then 
+      let _= if (!Globals.proof_logging_txt)
+      then
         begin
           (* Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
 	  (* Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
@@ -381,11 +380,11 @@ let sleek_proof_log_Z3 src_files =
         end
       in
       let tstoplog = Gen.Profiling.get_time () in
-      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) 
+      let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog)
         (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
       in ()
     end
-		
+
 let _ =
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
@@ -399,6 +398,19 @@ let _ =
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
+    let _ =
+      if !Globals.show_unexpected_ents && ((List.length !unexpected_cmd) > 0)
+      then (
+          let _ = print_string "Unexpected: " in
+          let _ = List.iter (fun id_cmd ->
+              print_string ((string_of_int id_cmd) ^ " ")) !unexpected_cmd in
+          print_string "\n\n"
+      ) else
+        ()
+    in
+    (*Long: gen smt *)
+    let _ = if !Globals.gen_smt then
+      Slk2smt.trans_smt (List.hd !Globals.source_files) Sleekengine.iprog !Sleekengine.cprog !Slk2smt.smt_cmds else false in
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
@@ -414,16 +426,16 @@ let _ =
         let i_m = !Tpdispatcher.cache_imply_miss in
         if s_c>0 then
           begin
-            print_endline_if !Globals.enable_count_stats ("\nSAT Count   : "^(string_of_int s_c)); 
+            print_endline_if !Globals.enable_count_stats ("\nSAT Count   : "^(string_of_int s_c));
             print_endline_if !Globals.enable_time_stats ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
           end;
         if i_c>0 then
           begin
-            print_endline_if !Globals.enable_count_stats ("IMPLY Count : "^(string_of_int i_c)); 
+            print_endline_if !Globals.enable_count_stats ("IMPLY Count : "^(string_of_int i_c));
             print_endline_if !Globals.enable_time_stats ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
            end;
-        if i_c+s_c>0 then 
-          if !Globals.enable_time_stats 
+        if i_c+s_c>0 then
+          if !Globals.enable_time_stats
           then (Gen.Profiling.print_info_task "cache overhead")
           else ()
         else ()
@@ -431,23 +443,38 @@ let _ =
           else ()
     in
     let _ = sleek_epilogue () in
+    let _ = if !Globals.smt_compete_mode then
+      (* let _ = print_endline "SMT Compete OUTCOME" in *)
+      let r = Cformula.get_res_residue () in
+      let str_res = if r then "UNSAT" else
+        let msg =
+          (*conver may error into unknown*)
+          match !Globals.smt_is_must_failure with
+            | None ->  "SAT"
+            | Some b -> if b then "SAT" else "UNKNOWN"
+        in msg
+      in
+      print_endline (str_res)
+    else ()
+    in
+    (* based on last residue - Valid -> UNSAT, Fail -> SAT *)
     let _ = if !Globals.enable_time_stats then
       begin
         let ptime4 = Unix.times () in
         let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
         Timelog.logtime # dump;
-        silenced_print print_string ("\nTotal verification time: " 
+        silenced_print print_string ("\nTotal verification time: "
         ^ (string_of_float t4) ^ " second(s)\n"
-        ^ "\tTime spent in main process: " 
+        ^ "\tTime spent in main process: "
         ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-        ^ "\tTime spent in child processes: " 
+        ^ "\tTime spent in child processes: "
         ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
       end
     else ()
     in
     let _= sleek_proof_log_Z3 !Globals.source_files in
-    let _ = 
-      if (!Globals.profiling && not !inter) then 
+    let _ =
+      if (!Globals.profiling && not !inter) then
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string "\n"
+    print_string_if (not !Globals.smt_compete_mode)  "\n"
   )

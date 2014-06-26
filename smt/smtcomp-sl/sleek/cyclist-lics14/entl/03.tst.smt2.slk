@@ -1,0 +1,14 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred List<y> ==
+ self::GTyp<f0 = y> & null != self
+or (exists xp: self::GTyp<f0 = xp> * xp::List<y> & null != self).
+
+checkentail x::List<y> * y::GenTyp<f0 = z>
+         |- x::List<z>.
+
+expect unknown.

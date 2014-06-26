@@ -123,7 +123,7 @@ and gen_nodes prog n h0 buffer = match h0 with
       let tmp = List.map (fun v -> (dot_of_spec_var v, pname)) mvars in
 	Buffer.add_string buffer (pname ^ " [shape=box,style=dashed,label=\"" ^ c ^ "\"];\n");
 	(dot_of_spec_var p, pname) :: tmp
-  | HTrue | HFalse | HEmp |HRel _ |  Hole _ -> []
+  | HTrue | HFalse | HEmp | HVar _ |HRel _ |  Hole _ |  FrmHole _ -> []
 
 
 and gen_edges prog n h0 p nodes buffer = 
@@ -172,10 +172,10 @@ and gen_edges prog n h0 p nodes buffer =
 	  let param_names = List.map dot_of_spec_var vdef.Cast.view_vars in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) args param_names)
 	end
-      | HTrue | HFalse | HEmp | HRel _ | Hole _ -> ()
+      | HTrue | HFalse | HEmp | HVar _ | HRel _ | Hole _ |  FrmHole _  -> ()
 
 and gen_edges_visib_names n visib_names p nodes buffer =
-  let visib_names = List.map (fun v -> SpecVar (Named "", v, Primed)) visib_names in
+  let visib_names = List.map (fun v -> SpecVar (Globals.null_type, v, Primed)) visib_names in
   let veqs = List.map (fun v -> (v, v)) visib_names in
   let asets = Context.alias_nth 5 ((MCP.ptr_equations_with_null p) @ veqs) in
   let make_edge var =

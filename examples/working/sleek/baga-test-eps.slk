@@ -18,15 +18,19 @@ inv self!=null.
 
 //(1) fail
 checkentail x::l3<> |- false.
+expect Fail.
 
 //(2) fail
 checkentail x::l3<> * c::node<_> |- false.
+expect Fail.
 
 //(3) valid
 checkentail x::l3a<> |- false.
+expect Valid.
 
 //(4) valid
 checkentail x::l3<> * x::l3<> |- false.
+expect Valid.
 
 
 pred l4<q:node> == 
@@ -36,9 +40,11 @@ inv self!=null.
 
 // (5) fail
 checkentail x::l4<c> * d::node<_> |- false.
+expect Fail.
 
 // (6) valid
 checkentail x::l4<c> * c::node<_> |- false.
+expect Valid.
 
 
 pred l5<k> == 
@@ -47,9 +53,11 @@ inv self!=null.
 
 // (7) valid
 checkentail x::l5<c> * c::node<_> |- false.
+expect Valid.
 
 // (8) fail
 checkentail x::l5<c> * q::node<_> |- false.
+expect Fail.
 
 pred l6<q:node> == 
   q::node<_> & self=null
@@ -59,12 +67,15 @@ inv q!=null.
 
 // (9) Fail
 checkentail x::l6<_> * x::l6<_> |- false.
+expect Fail.
 
 // (10) Valid
 checkentail x::l6<q> * y::l6<q> |- false.
+expect Valid.
 
 // (11) Fail
 checkentail x::l6<q> * y::l6<_> |- false.
+expect Fail.
 
 pred l7<q:node> == 
   self=null & q=null
@@ -73,14 +84,18 @@ inv true.
 
 // (12) Fail
 checkentail x::l7<q> * x::l7<q> |- false.
+expect Fail.
 
 // (13) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- q!=null.
+expect Valid.
 
 // --eps
 // (14) Valid
 checkentail x::l7<q> * x::l7<q> & x!=null |- false.
+expect Valid.
 
 // --eps
 // (15) Valid
 checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
+expect Valid.

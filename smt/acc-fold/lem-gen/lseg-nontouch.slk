@@ -1,0 +1,12 @@
+data node {
+    int val;
+    node next
+}.
+
+//== non-touching linked list segment 
+pred lseg<p> == self = p
+    or self::node<v,r> * r::lseg<p> & p != self.
+
+checkentail x::lseg<y> * y::lseg<z> * z::node<_,_>@L |- x::lseg<z>.
+            
+checkentail x::lseg<z> |- x::lseg<y> * y::lseg<z>.

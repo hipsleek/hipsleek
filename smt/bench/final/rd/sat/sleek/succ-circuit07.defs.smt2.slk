@@ -1,0 +1,41 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred P<x2:GTyp,x3:GTyp,x4:GTyp,x5:GTyp,x6:GTyp,x7:GTyp> ==
+self::one<> * x2::one<> * x3::one<> * x4::one<> * x5::one<> * x6::one<> * x7::one<> * self::Q<x2,x3,x4,x5,x6,x7>.
+
+pred Q<y2:GTyp,y3:GTyp,y4:GTyp,y5:GTyp,y6:GTyp,y7:GTyp> ==
+ self::zero<> * y2::zero<> * y3::zero<> * y4::zero<> * y5::zero<> * y6::zero<> * y7::zero<>
+or (exists x1,x2,x3,x4,x5,x6,x7: x1::succ7circuit<x2,x3,x4,x5,x6,x7,self,y2,y3,y4,y5,y6,y7> * x1::Q<x2,x3,x4,x5,x6,x7>).
+
+pred succ7circuit<x2:GTyp,x3:GTyp,x4:GTyp,x5:GTyp,x6:GTyp,x7:GTyp,y1:GTyp,y2:GTyp,y3:GTyp,y4:GTyp,y5:GTyp,y6:GTyp,y7:GTyp> ==
+(exists z3,z4,z5,z6,z7: self::notg<y1> * self::xorg<x2,y2> * self::andg<x2,z3> * z3::xorg<x3,y3> * z3::andg<x3,z4> * x4::xorg<y4,z4> * z4::andg<x4,z5> * x5::xorg<y5,z5> * z5::andg<x5,z6> * x6::xorg<y6,z6> * z6::andg<x6,z7> * x7::xorg<y7,z7>).
+
+pred notg<y:GTyp> ==
+ self::zero<> * y::one<>
+or self::one<> * y::zero<>.
+
+pred xorg<y:GTyp,z:GTyp> ==
+ self::zero<> * y::zero<> * z::zero<>
+or self::zero<> * y::one<> * z::one<>
+or self::one<> * y::zero<> * z::one<>
+or self::one<> * y::one<> * z::zero<>.
+
+pred andg<y:GTyp,z:GTyp> ==
+ self::zero<> * z::zero<>
+or y::zero<> * z::zero<>
+or self::one<> * y::one<> * z::one<>.
+
+pred one<> ==
+null != self.
+
+pred zero<> ==
+null = self.
+
+checkentail_exact x0::P<x1,x2,x3,x4,x5,x6>
+         |- false.
+
+expect Fail.

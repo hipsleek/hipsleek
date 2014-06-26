@@ -397,9 +397,9 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
       | [(_,args)] ->
             (* let _ = Debug.info_zprint (lazy (("   lhs_f_rem: " ^ (!CF.print_formula lhs_f_rem)))) no_pos in *)
             (* let _ = Debug.info_zprint (lazy (("   rhs: " ^ (!CF.print_formula rhs)))) no_pos in *)
-            if Sautil.is_empty_heap_f lhs_f_rem then
+            if Cfutil.is_empty_heap_f lhs_f_rem then
               let svl = helper args lhs_f_rem in
-              if svl == [] && Sautil.is_empty_heap_f rhs then
+              if svl == [] && Cfutil.is_empty_heap_f rhs then
                 helper args rhs
               else svl
             else
@@ -2492,7 +2492,7 @@ let do_entail_check_x vars iprog cprog cs=
         CF.do_unfold_view cprog pr_views cs.CF.hprel_rhs
   in
   let conseq = CF.struc_formula_of_formula unfolded_rhs (CF.pos_of_formula cs.CF.hprel_rhs) in
-  let (valid, rs,v_hp_rel) = Sleekcore.sleek_entail_check vars cprog [] ante conseq in
+  let (valid, rs,v_hp_rel) = Sleekcore.sleek_entail_check 6 vars cprog [] ante conseq in
   (* let valid = ((not (CF.isFailCtx rs))) in *)
   let _ = if not valid then
     report_warning no_pos ("FAIL: Can not prove:\n" ^ (Cprinter.string_of_hprel_short cs))
@@ -3449,7 +3449,7 @@ let prove_right_implication_x iprog cprog proc_name infer_rel_svl lhs rhs gen_hp
     let _ = Debug.ninfo_hprint (add_str  "ilhs " Iprinter.string_of_formula) ilhs no_pos in
     let _ = Debug.ninfo_hprint (add_str  "irhs " Iprinter.string_of_formula) irhs no_pos in
     (*construct lemma_safe*)
-    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE IA.Right
+    let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_safe") LEM_UNSAFE LEM_GEN IA.Right
       (List.map CP.name_of_spec_var infer_rel_svl) (IF.add_quantifiers [] ilhs) (IF.add_quantifiers [] irhs) in
     let _ = Debug.info_hprint (add_str "\nRight. ilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
     let rel_fixs,_, lc_opt = Lemma.manage_infer_pred_lemmas [ilemma_inf] iprog cprog Cvutil.xpure_heap in
@@ -3504,7 +3504,7 @@ let normalize_hp_defs_x rhs hp_defs=
               let nparas = CP.subst_var_list ss0 paras in
               let n_lhs = CF.h_subst ss0 hp_def.CF.def_lhs in
               let n_rhs = List.map (fun (f,og) -> (CF.subst ss0 f,og)) hp_def.CF.def_rhs in
-              {hp_def with CF.def_cat = CP.HPRelDefn (hp, nr, nparas);
+              {(* hp_def with *) CF.def_cat = CP.HPRelDefn (hp, nr, nparas);
                   CF.def_lhs = n_lhs;
                   CF.def_rhs = n_rhs;
               }
@@ -3566,7 +3566,7 @@ let prove_sem iprog cprog proc_name ass_stk hpdef_stk hp args
   in
   let _ = Debug.ninfo_hprint (add_str  "infer_vars " (pr_list pr_id)) infer_vars no_pos in
   let _ = Debug.ninfo_hprint (add_str  "need_find_new_split " (string_of_bool)) need_find_new_split no_pos in
-  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE
+  let ilemma_inf = IA.mk_lemma (fresh_any_name "tmp_infer") LEM_UNSAFE LEM_GEN
     IA.Left
     infer_vars (IF.add_quantifiers [] if12) (IF.add_quantifiers [] if22) in
   let _ = Debug.info_hprint (add_str "\nilemma_infs:\n " (Iprinter.string_of_coerc_decl)) ilemma_inf no_pos in
@@ -3949,7 +3949,7 @@ let pred_split_hp_x iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_def
   let split_map_hprel_subst = check_split_global iprog prog split_cands in
   let ss_preds = List.map (fun (_,_,_,_,a,b,c) -> (a,b)) split_map_hprel_subst in
   (*prove and do split*)
-  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check svl prog [] f1) in
+  let proving_fnc svl f1 = wrap_proving_kind PK_Pred_Split (Sleekcore.sleek_entail_check 7 svl prog [] f1) in
   let sing_hp_defs2, split_map_hprel_subst1 = List.fold_left (fun (hp_defs0, r_split) split ->
       let is_succ, hp_defs1, n_split = prove_split_cand iprog prog proving_fnc ass_stk hpdef_stk unk_hps ss_preds hp_defs0 split in
       if is_succ then

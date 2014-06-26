@@ -1,0 +1,194 @@
+# lseg-touch.slk
+
+ gen lemma: self::lseg<y> * y::lseg<z>&{FLOW,(21,22)=__norm}[] ->  self::lseg<z>
+&{FLOW,(21,22)=__norm}[]
+
+Qn : 
+ 1. why --pcp did not print lemma?
+ 2. why we did not gen unfolding lemma? (FIXED)
+ 3. can you print also forward/backward ptr  & aux info etc
+================================================================
+# sleek.slk
+
+ Not_found exception?
+================================================================
+# bseg.slk
+
+  type error
+================================================================
+# lseg_nt0.slk
+
+lemma_safe self::lseg<p> & self!=p 
+        -> (exists u: self::lseg<u>*u::node<p>).
+// cannot be proven?
+
+lemma_safe self::lseg<p> 
+        <- (exists u: self::lseg<u>*u::node<p> & self!=p).
+// cannot be proven?
+===========================================================
+pred dllseg<p,pr,last> == self=p & pr=last
+  or (exists a: self::node<pr,a> * a::dllseg<p,self,last>)
+ inv true.
+
+# dllseg.slk
+
+Why isn't lem-gen-unsafe working here?
+
+!!! Updated lemma store with unsafe repo::[]
+===========================================================
+# dllseg0e1.slk
+
+lemma_safe self::dllseg<p,pr,last> & self!=p 
+        -> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+
+Entailing lemma lem_14: Fail. (must) cause: base case unfold failed
+
+Failed to prove lem_14:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+Why is lemma not provable?
+===========================================================
+lemma_unsafe self::node<pr,u1>* u1::dllseg<p,self,last> 
+       <-> (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>).
+
+checkentail_exact self::node<pr,u1>* u1::dllseg<p,self,last> 
+        |- (exists u,l2: self::dllseg<last,pr,l2>*last::node<l2,p>)
+           .
+expect Valid.
+// complex lemma not working..
+
+/*
+# dllseg0e2.slk
+
+Entail 1: Fail.(may) cause:Nothing_to_do? 
+  Type: WArg
+  LHS: u1::dllseg<p,self,last>
+  RHS: last::node<l2_138,p_139>
+ lhs_rest: self::node<pr,u1>
+ rhs_rest: 
+  self::dllseg<last_136,pr_137,l2_140>
+
+Validate 1: Not Expected.
+===========================================================
+# lseg0e1.slk
+
+lemma_safe self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+// complex lemma proving not working..
+
+!!! WARNING : split equiv lemma into two -> lemmas 
+!!! 
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Fail. (may) cause: OrR[UnionR[ u1_79::node<a_77> * a_77::lseg<p_76>&p_76=p_78 & p_78=p&
+{FLOW,(21,22)=__norm}[]: residue is forbidden.(2), a_77::lseg<p_76>&p_76=p_78 & p_78=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2)],valid]
+	 "==>" implication: : Fail. (may) cause: OrR[ last_161::node<p_160>&p_158=last_161 & p_160=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),val
+id]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+================================================================
+# rel-lseg0.slk
+
+lemma_safe  self::SLL<p:node> <-> self::SLL_rev<p> .
+
+cannot be proven, why?
+
+
+================================================================
+# rel-lseg1.slk
+
+lemma_safe  self::node<x1> * x1::SLL<p:node> 
+          <-> (exists x: self::SLL<x>*x::node<p>).
+
+
+1. Why reverse direction cannot be proven?
+2. Can we print <==
+
+Entailing lemma lem_11: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "==>" implication: : Fail. (may) cause: OrR[ x_230::node<p_229>&p_227=x_230 & p_229=p&{FLOW,(21,22)=__norm}[]: residue is forbidden.(2),valid]
+
+Failed to prove lem_11:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+================================================================
+#rel*.slk
+
+implement lemma synthesis relate two views
+
+================================================================
+# dll-vc06.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,nx> * nx::Dll_t<n,bk1> -> self::dll<nx,pr,n>.
+
+================================================================
+=========================================
+# dll-vc08.smt2.slk
+
+todo: gen lemma
+
+lemma_unsafe self::dll<bk1,pr,n1> * n1::dll<bk,bk1,n> -> self::dll<bk,pr,n>.
+
+================================================================
+#nlcl-vc03.smt2.slk: DONE (wo --inv-baga)
+
+todo: gen lemma
+lemma_unsafe self::nlcl<p> * p::nlcl<q> -> self::nlcl<q>.
+
+================================================================
+01.tst.smt2: (rd/entl)
+
+/*
+lemma_unsafe  self::GTyp<f0 = y,f1 = _> * y::RList<z>
+         -> self::RList<z>.
+*/
+
+================================================================
+02.tst.smt2: (rd/entl)
+
+lemma_unsafe  self::RList<y> * y::RList<z>
+         -> self::RList<z>.
+
+================================================================
+03.tst.smt2: (rd/entl)
+
+lemma_unsafe  self::List<y> * y::GTyp<f0 = z,f1 = _> -> self::List<z>.
+
+
+================================================================
+04.tst.smt2: (rd/entl)
+
+lemma_unsafe  self::List<y> * y::List<z>
+         -> self::List<z>.
+
+
+================================================================
+07.tst.smt2: (rd/entl)
+
+lemma_unsafe  self::DLL<y,z,w> |- self::SLL<y>.
+
+================================================================
+22.tst.smt2: (rd/entl)
+
+lemma_unsafe self::ls<p> * p::GTyp<f0 = z,f1 = _> -> self::ls<z>.
+
+
+================================================================
+#nlcl-01.slk --lem-gen-unsafe
+
+ERROR: at _0:0_0:0 
+Message: UNIFICATION ERROR : at location {(0,0),(0,0)} types node1 and node2 are inconsistent
+ 
+Last Proving Location: 1 File "nlcl-01.slk",Line:16,Col:4
+
+ERROR: at _0:0_0:0 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(0,0),(0,0)} types node1 and node2 are inconsistent")
+
+
+================================================================
+================================================================
+================================================================
+================================================================
+================================================================

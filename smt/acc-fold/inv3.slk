@@ -1,0 +1,14 @@
+data node2 {
+     node2 fst;
+     node2 snd;
+}.
+
+
+pred ll<n> == self = null & n=0
+    or self::node2<_,r> * r::ll<n-1>
+ inv true.
+
+pred ll3<n> == self::node2<_,null> & n=1
+    or self::node2<_,r> * r::ll<n-1>
+ inv true.
+

@@ -1,0 +1,29 @@
+data node2 {
+     node2 prev;
+     node2 next;
+}.
+
+
+pred tdll<pr,last,out> ==
+    self=out & last=pr
+ or (exists u: self::tdll<pr,u,last> * last::node2<u,out>).
+
+/*
+lemma_safe self::dll<pr,last,out> <->
+    self::dll<pr,last1,out1> * out1::dll<last1,last,out>.
+*/
+
+checkentail x::tdll<pr,last,out> |- x::tdll<pr,last1,out1> * out1::tdll<last1,last,out>.
+
+checkentail x::tdll<pr,last1,out1> * out1::tdll<last1,last,out> |-
+				x::tdll<pr,last,out>.
+
+/*
+// This entailment should succeed but fail
+// -> cannot generate distributive lemma
+
+checkentail_exact (exists u_13: last::node2<u_13,out>) |- 
+(exists f_r_41,f_r_42,f_r_43: last::tdll<f_r_41,f_r_42,f_r_43>).
+// Expect Valid.
+
+*/

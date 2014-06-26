@@ -1,0 +1,19 @@
+
+data GTyp {
+  GTyp f0;
+  GTyp f1;
+}.
+
+pred BinListFirst<> ==
+ emp
+or (exists yp,xp: self::GTyp<f0 = yp,f1 = xp> * yp::BinListFirst<> & null != self).
+
+pred BinTree<> ==
+ emp
+or (exists yp,xp: self::GTyp<f0 = yp,f1 = xp> * yp::BinTree<> * xp::BinTree<> & null != self).
+
+checkentail_exact x::BinListFirst<>
+         |- x::BinTree<>.
+
+expect Valid.
+

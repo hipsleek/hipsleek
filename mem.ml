@@ -404,7 +404,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 	        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)
 			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact [] [] gforms), []
 			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[] )
-  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[]
+  	| CF.Hole _ | CF.FrmHole _ | CF.HEmp | CF.HVar _ | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[]
 
 let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MCP.mix_formula =
 	match f with
@@ -1351,7 +1351,7 @@ let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
 	CF.h_formula_phase_pos = pos})
   | CF.Star({CF.h_formula_star_h1 = h1;
 	CF.h_formula_star_h2 = h2;
-	CF.h_formula_star_pos = pos}) -> (is_lend_h_formula h1) or (is_lend_h_formula h2)
+	CF.h_formula_star_pos = pos}) -> (is_lend_h_formula h1) || (is_lend_h_formula h2)
   | CF.Hole _ -> false
   | _ -> false
   
@@ -1363,7 +1363,7 @@ let rec is_lend (f : CF.formula) : bool =
   | CF.Or({CF.formula_or_f1 = f1;
     CF.formula_or_f2 = f2;
     CF.formula_or_pos = pos}) ->
-        (is_lend f1) or (is_lend f2))
+        (is_lend f1) || (is_lend f2))
         
 let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spec_var) 
 : bool * (CP.formula option) * (CP.formula option)  * (CP.formula option)=

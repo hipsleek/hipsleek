@@ -333,7 +333,7 @@ let rec subst_cs_w_other_cs prog sel_hps post_hps dang_hps link_hps frozen_hps f
 
 let subst_cs_x prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs complex_hps constrs =
   (*subst by constrs*)
-  DD.ninfo_pprint "\n subst with other assumptions" no_pos;
+  (* DD.ninfo_pprint "\n subst with other assumptions" no_pos; *)
   let is_changed, new_cs1,unfrozen_hps = subst_cs_w_other_cs prog sel_hps post_hps dang_hps link_hps frozen_hps frozen_constrs
     complex_hps constrs in
   (is_changed, new_cs1, unfrozen_hps)
@@ -557,11 +557,11 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
     if (List.length new_cs > 1) then
       begin
         step_change # inc;
-        (* Debug.binfo_start "split_base"; *)
-        (* Debug.binfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
-        (* Debug.binfo_pprint "=============>>>>" no_pos; *)
-        (* Debug.binfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
-        (* Debug.binfo_end "split_base"; *)
+        (* Debug.ninfo_start "split_base"; *)
+        (* Debug.ninfo_hprint (add_str "BEFORE" pr1) cs no_pos; *)
+        (* Debug.ninfo_pprint "=============>>>>" no_pos; *)
+        (* Debug.ninfo_hprint (add_str "AFTER" (pr_list_ln pr1)) new_cs no_pos; *)
+        (* Debug.ninfo_end "split_base"; *)
         res
       end
     else res
@@ -1804,7 +1804,7 @@ let match_one_hp_views_x iprog prog cur_m (vdcls: CA.view_decl list) def:(CP.spe
         let vnode = CF.mkViewNode (self_sv ) vdcl.CA.view_name
           (vdcl.CA.view_vars) no_pos in
         let f2 = CF.formula_of_heap vnode no_pos in
-        if Lemma.checkeq_sem iprog prog f1 f2 [def] then
+        if Lemutil.checkeq_sem iprog prog f1 f2 [def] [] [] then
           (* let self_ss = [(self_sv,r)] in *)
           (* [CF.h_subst self_ss vnode] *)
           let matched_vnode = CF.mkViewNode r vdcl.CA.view_name paras no_pos in
@@ -2303,7 +2303,7 @@ let infer_post_synthesize prog proc_name callee_hps is need_preprocess detect_da
 let rec infer_shapes_from_fresh_obligation_x iprog cprog proc_name callee_hps is_pre is sel_lhps sel_rhps need_preprocess detect_dang def_hps=
   let unk_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (*if rhs is emp heap, should retain the constraint*)
-  let pre_constrs, pre_oblg = List.partition (fun cs -> Sautil.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
+  let pre_constrs, pre_oblg = List.partition (fun cs -> Cfutil.is_empty_heap_f cs.CF.hprel_rhs) is.CF.is_constrs in
   let ho_constrs0, nondef_post_hps  = List.fold_left (collect_ho_ass iprog cprog is_pre def_hps unk_hps) ([],[]) pre_oblg in
   let ho_constrs = ho_constrs0@pre_constrs in
   if ho_constrs = [] then is else
@@ -2768,7 +2768,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: CF.hprel list) callee_
             | Named id -> if String.compare id "" = 0  then
                 let svl = (CF.h_fv hp_def.CF.def_lhs)@(List.fold_left (fun l (f,_) -> l@(CF.fv f)) [] hp_def.CF.def_rhs) in
                 let r_svl = List.filter (fun ((CP.SpecVar (rt1, r_id1, rp1))) ->
-                    String.compare r_id r_id1 = 0 && not (is_null_type rt1)
+                    String.compare r_id r_id1 = 0
                 ) svl in
                 if r_svl = [] then hp_def else
                   let nr = (CP.SpecVar (CP.type_of_spec_var (List.hd r_svl), r_id, rp)) in

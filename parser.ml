@@ -831,7 +831,7 @@ non_empty_command:
       | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
-      | t=checkeq_cmd         -> EqCheck t
+      | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
       | t= validate_cmd     -> Validate t
       | t=relassume_cmd     -> RelAssume t
@@ -983,7 +983,7 @@ view_decl:
           view_invariant = oi; 
           view_mem = mpb;
           view_is_prim = false; 
-          view_kind = Iast.View_NORM; 
+          view_kind = Iast.View_NORM; (* TODO : *)
           view_inv_lock = li;
           try_case_inference = (snd vb) }
     |  vh= view_header;`EQEQ; `EXTENDS;orig_v = derv_view; `WITH ; extn = prop_extn->
@@ -1160,7 +1160,7 @@ branch: [[ `STRING (_,id);`COLON ->
     else LO.singleton id ]];
 
 view_header:
-  [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
+  [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
 	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
@@ -1174,8 +1174,10 @@ view_header:
         { view_name = vn;
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
+          view_type_of_self = None;
           view_imm_map = [];
           view_vars = (* List.map fst *) cids;
+          view_ho_vars = un_option opt1 []; 
           view_derv = false;
           view_parent_name = None;
           (* view_frac_var = empty_iperm; *)
@@ -1197,6 +1199,14 @@ view_header:
 
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
+form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]];
+
+opt_brace_vars : [[ `OBRACE;sl= id_list_opt (*id_list*) ;`CBRACE -> sl   ]];
+
+brace_form_args : [[ `OBRACE;sl= form_list_opt (*id_list*) ;`CBRACE -> 
+    List.map (F.subst_stub_flow n_flow) sl   ]];
+
+
 view_header_ext:
     [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
@@ -1213,7 +1223,9 @@ view_header_ext:
           view_pos = get_pos_camlp4 _loc 1;
           view_data_name = "";
           view_imm_map = [];
+          view_type_of_self = None;
           view_vars = (* List.map fst *) cids;
+          view_ho_vars = [];
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
           view_parent_name = None;
@@ -1242,7 +1254,8 @@ cid:
 	   else (t,Unprimed)
     | `RES _                 	->  (res_name, Unprimed)
     | `SELFT _               	->  (self, Unprimed)
-    | `THIS _               		->  (this, Unprimed)]];
+    | `NULL                     ->  (null_name, Unprimed)
+    | `THIS _         		->  (this, Unprimed)]];
 
 
 
@@ -1489,63 +1502,68 @@ heap_id:
   ]];
 
 (*LDK: frac for fractional permission*)   
+(* TODO:HO *)
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; ofl= opt_formula_label ->
        let imm_opt = get_heap_ann annl in
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let (c, hid, deref) = get_heap_id_info c hid in
+       let ho_args = un_option opt1 [] in
        match hl with
-       | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> 
            let t11, t12 = List.split t in
            let t21, t22 = List.split t12 in
            let t3 = List.combine t11 t21 in
-           F.mkHeapNode2 c hid deref dr imm_opt false false false frac t3 t22 ofl  (get_pos_camlp4 _loc 2)
+           F.mkHeapNode2 c hid ho_args deref dr imm_opt false false false frac t3 t22 ofl  (get_pos_camlp4 _loc 2)
        | (t,_)  -> 
            let t1, t2 = List.split t in 
-           F.mkHeapNode c hid deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
+           F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
   ]];
 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
-  [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; simple2; frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
+    [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT brace_form_args ; (* simple2 ; *) frac= opt_perm; `TOPAREN; dl = opt_delayed_constr; rsr = disjunctive_constr; `TCPAREN ; ofl = opt_formula_label ->
      (*For threads as resource*)
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let (c, hid, deref) = get_heap_id_info c hid in
+       let ho_args = un_option opt1 [] in
        match hl with
        (* WN : HeapNode2 is for d<field=v*> *)
        (*  p<> can be either node or predicate *)
-       | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm; `LT; hl= opt_data_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
         let (c, hid, deref) = get_heap_id_info c hid in
+        let ho_args = un_option opt1 [] in
         match hl with
-        | ([],[]) -> F.mkHeapNode c hid deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+        | ([],[]) -> F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
         | ([], t) -> 
             let t11, t12 = List.split t in  
             let t21, t22 = List.split t12 in 
             let t3 = List.combine t11 t21 in  
-            F.mkHeapNode2 c hid deref dr imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
+            F.mkHeapNode2 c hid ho_args deref dr imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
         | (t, _)  ->
             let t1, t2 = List.split t in  
-            F.mkHeapNode c hid deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
+            F.mkHeapNode c hid ho_args deref dr imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT brace_form_args (* simple2 *); frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
        let (c, hid, deref) = get_heap_id_info c hid in
+       let ho_args = un_option opt1 [] in
        match hal with
-       | ([],[]) -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | t = ho_fct_header -> (
        let frac = (
@@ -1554,21 +1572,23 @@ simple_heap_constr:
          else 
            empty_iperm ()
        ) in
-       F.mkHeapNode ("",Primed) "" 0 false (*dr*) (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
+       F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT brace_form_args (* simple2*) ; frac= opt_perm; `LT; hl= opt_general_h_args; `GT;  annl = ann_heap_list; dr=opt_derv; ofl= opt_formula_label -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
+       let ho_args = un_option opt1 [] in
        match hl with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
+   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT brace_form_args  (*simple2*); frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (
+       let ho_args = un_option opt1 [] in
        match hal with
-       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name 0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args  0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
          (* if hp_names # mem id then *)
@@ -1929,10 +1949,19 @@ validate_list_context:
   [[
      `OSQUARE; t = LIST0 validate_entail_state SEP `SEMICOLON ;`CSQUARE-> t
   ]];
+  
+validate_result:
+  [[
+      `IDENTIFIER ex -> VR_Unknown ex
+    | `VALID -> VR_Valid
+    | `FAIL -> VR_Fail 0
+    | `FAIL_MUST -> VR_Fail 1
+    | `FAIL_MAY -> VR_Fail (-1)
+  ]];
 
 validate_cmd:
-  [[ `VALIDATE; lc = OPT validate_list_context  ->
-      (un_option lc [])
+  [[ `VALIDATE; vr = validate_result; lc = OPT validate_list_context  ->
+      (vr, (un_option lc []))
    ]];
 
 cond_path:
@@ -2120,7 +2149,7 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
-	coercion_exact = false;
+        coercion_exact = false;
         coercion_infer_vars = [];
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
@@ -2135,7 +2164,10 @@ coercion_decl:
                      exp_return_path_id = None ;
                      exp_return_pos = get_pos_camlp4 _loc 1 });
         coercion_type_orig = None;
-      coercion_kind = LEM_SAFE;};]];
+        coercion_kind = LEM_SAFE;
+        coercion_origin = LEM_USER;
+      };
+  ]];
 
 coercion_decl_list:
     [[

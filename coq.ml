@@ -31,6 +31,7 @@ let rec coq_of_typ = function
   | List _		  -> "list"
   | Pointer _
   | Tree_sh 	  -> "int"
+  | FORM -> illegal_format ("z3.smt_of_typ: FORMULA type not supported for SMT")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
   | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
         Error.report_error {Err.error_loc = no_pos; 
@@ -144,6 +145,7 @@ and coq_of_formula_exp_list l = match l with
 and coq_of_b_formula b =
   let (pf,_) = b in
   match pf with
+    | CP.Frm (fv, _) -> " (" ^ (coq_of_spec_var fv) ^ " = 1)"
   | CP.BConst (c, _) -> if c then "True" else "False"
   | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"

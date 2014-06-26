@@ -1,0 +1,55 @@
+data node2 {
+  node2 prev;
+  node2 next;
+}.
+ pred dll<p:node2> == 
+  emp&self=null or
+(exists p_20,self_21,q_19: self::node2<p_20,q_19> * 
+  q_19::dll<self_21>&p_20=p & self_21=self)
+  inv true.
+
+pred dll_e1<q> == 
+  (exists p1,s,q1: q1::dll<s> * self::node2<p1,q1> & self=s & p1=q).
+
+pred dll_e2<q> ==
+  (exists s,p1,p2,n,q1: self::node2<p1,n> * q1::dll<s> & n=q1 & p1=p2 & s=self & p2=q).
+ 
+
+ 
+pred dll_e3<p> ==
+  (exists q: self::dll<q> & q=p).
+
+
+
+// (11) id: 28; line: 16; kind: POST
+/*
+ checkentail_exact x'::node2<p,y'>&!(v') & y'=null & next0=q & v1' & q=null & x'=x & y'=y & 
+x!=null & self=x' & p=q1
+ |-  (exists q2: x::dll<q2>&!(v') & y'=null & next0=q & v1' & q=null & x'=x & 
+y'=y & x!=null & self=x' & p=q1 & q2=q1).
+expect Valid.
+*/
+ 
+ checkentail_exact x'::node2<p,y'>&!(v') & y'=null & next0=q & v1' & q=null & x'=x & y'=y & 
+x!=null & self=x' & p=q1
+ |-  x::dll_e3<q1>&!(v') & y'=null & next0=q & v1' & q=null & x'=x & 
+y'=y & x!=null & self=x' & p=q1.
+expect Valid.
+
+// (12) id: 34; line: 16; kind: POST
+/*
+ checkentail_exact x'::node2<p2,q1> * q1::dll<q>&p=p1 & q=self & !(v') & q1!=null & x'=x & 
+y'=y & x!=null & self=x' & p2=q2
+ |-  (exists q3: x::dll<q3>&p=p1 & q=self & !(v') & q1!=null & x'=x & y'=y & 
+x!=null & self=x' & p2=q2 & q3=q2).
+expect Valid.
+*/
+
+
+ checkentail_exact x'::node2<p2,q1> * q1::dll<q>&p=p1 & q=self & !(v') & q1!=null & x'=x & 
+y'=y & x!=null & self=x' & p2=q2
+ |-  x::dll_e3<q2>&p=p1 & q=self & !(v') & q1!=null & x'=x & y'=y & 
+x!=null & self=x' & p2=q2.
+
+expect Valid.
+

@@ -42,7 +42,8 @@ type result_type = Timeout | Result of string | Failure of string
 let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" printing not initialized"*))
 
 (* let prover_arg = ref "oc" *)
-let prover_arg = ref "om"
+let prover_arg = ref "z3"
+(* let prover_arg = ref "om" *)
 let external_prover = ref false
 let tp_batch_mode = ref true
 let external_host_ports = ref []
@@ -326,11 +327,35 @@ let rec check_prover_existence prover_cmd_str =
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
-        let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
-        if exit_code > 0 then
-          let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
-          exit 0
-        else check_prover_existence rest
+          let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
+          if exit_code > 0 then
+            if  (Sys.file_exists prover) then
+              let _ =
+                if String.compare prover "oc" = 0 then
+                  let _ = Omega.is_local_solver := true in
+                  let _ = Omega.omegacalc := "./oc" in
+                  ()
+                else if String.compare prover "z3" = 0 then
+                  let _ = Smtsolver.is_local_solver := true in
+                  let _ = Smtsolver.smtsolver_name := "./z3" in
+                  ()
+                else ()
+              in
+              check_prover_existence rest
+            else
+              let _ = print_string ("WARNING : Command for starting the prover (" ^ prover ^ ") not found\n") in
+              exit 0
+          else check_prover_existence rest
+
+let is_smtsolver_z3 tp_str=
+   (* try *)
+   (*    if (String.sub tp_str 0 4) = "./z3" || (String.sub tp_str 0 2) = "z3" then *)
+   (*      true *)
+   (*    else false *)
+   (*  with _ ->  if (String.sub tp_str 0 2) = "z3" then *)
+   (*    true else false *)
+  String.compare tp_str "./z3" = 0 || String.compare tp_str "z3" = 0
+ 
 
 let set_tp tp_str =
   prover_arg := tp_str;
@@ -341,7 +366,7 @@ let set_tp tp_str =
   let prover_str = ref [] in
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
-  if (String.sub tp_str 0 2) = "oc" then
+  if (* (String.sub tp_str 0 2) = "oc" *) String.compare tp_str "./oc" = 0 || String.compare tp_str "oc" = 0 then
     (Omega.omegacalc := tp_str; pure_tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "dp" then pure_tp := DP
   else if tp_str = "cvcl" then 
@@ -372,8 +397,11 @@ let set_tp tp_str =
 	(pure_tp := Coq; prover_str := "coqtop"::!prover_str;)
   (*else if tp_str = "z3" then 
 	(pure_tp := Z3; prover_str := "z3"::!prover_str;)*)
-   else if (String.sub tp_str 0 2) = "z3" then
-	(Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+  else
+    (* if (String.sub tp_str 0 4) = "./z3" || (String.sub tp_str 0 2) = "z3" then *)
+    (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
+    if is_smtsolver_z3 tp_str then
+       (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "OCRed" then
@@ -408,7 +436,18 @@ let set_tp tp_str =
     (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
 	();
-  check_prover_existence !prover_str
+  if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
+
+let _ =
+  let _ = (if !Globals.is_solver_local then
+  let _ = Smtsolver.is_local_solver := true in
+  let _ = Smtsolver.smtsolver_name := "./z3" in
+  let _ = Omega.is_local_solver := true in
+  let _ = Omega.omegacalc := "./oc" in
+  ()
+  else ())
+  in
+  set_tp !Smtsolver.smtsolver_name (* "z3" *)
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -686,13 +725,13 @@ let rec is_list_exp e = match e with
 
 (* TODO : where are the array components *)
 let is_array_b_formula (pf,_) = match pf with
-    | CP.BConst _ | CP.XPure _ 
+    | CP.BConst _ | CP.XPure _ | CP.Frm _
     | CP.BVar _
 	| CP.BagMin _ 
     | CP.BagMax _
     | CP.SubAnn _
     | CP.LexVar _
-		-> Some false    
+	-> Some false
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 
     | CP.Gt (e1,e2,_)
@@ -2344,7 +2383,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           let b_no_float_rel = mona_imply ante_no_float_rel conseq_no_float_rel in
           let b_no_bag_rel = redlog_imply ante_no_bag_rel conseq_no_bag_rel in
           let b_no_bag_float = z3_imply ante_no_bag_float conseq_no_bag_float in
-          (b_no_float_rel && b_no_bag_rel & b_no_bag_float)
+          (b_no_float_rel && b_no_bag_rel && b_no_bag_float)
         else
           if (is_bag_ante || is_bag_conseq) && (is_float_ante || is_float_conseq) then
             let ante_no_float = CP.drop_float_formula ante in
@@ -3531,4 +3570,7 @@ let check_diff xp0 xp1 =
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
 
 
-let _ = CP.simplify := simplify
+let _ = 
+  CP.simplify := simplify;
+  Cast.imply_raw := imply_raw;
+  Excore.is_sat_raw := is_sat_raw
