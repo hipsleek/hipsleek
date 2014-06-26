@@ -513,6 +513,12 @@ Entailing lemma three: Fail. Details below:
 	 "==>" implication: : Fail. (may) cause: OrR[UnionR[residue is forbidden.(2),residue is forbidden.(2)],valid]
 	 "==>" implication: : Valid.
 ====================================================================
+sleek
+  lemmas/rlseg.slk({L3#Valid}).
+
+--eps
+  baga-test.slk({E15#Fail}) infinity.slk({E77#Valid},{E78#Valid}) inflem.slk({E2#Valid}) lemmas/rlseg.slk({L3#Valid}).
+
 ====================================================================
 ====================================================================
 ====================================================================
