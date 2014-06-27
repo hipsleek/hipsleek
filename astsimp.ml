@@ -383,7 +383,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
     | IF.ThreadNode _
     | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ | IF.HVar _ -> h0
 
-and convert_heap2 prog (f0 : IF.formula) : IF.formula =
+and convert_heap2_x prog (f0 : IF.formula) : IF.formula =
   match f0 with
     | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
           let tmp1 = convert_heap2 prog f1 in
@@ -395,6 +395,10 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula =
     | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
           let h = convert_heap2_heap prog h0
           in IF.Exists { (f) with IF.formula_exists_heap = h; }
+
+and convert_heap2 prog (f0:IF.formula):IF.formula =
+  let pr = Iprinter.string_of_formula in
+  Debug.no_1 "convert_heap2" pr pr (convert_heap2_x prog) f0
 
 and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
   let pr = pr_none in
@@ -7169,9 +7173,9 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) (I.annot_args_getter prog) f in (*andreeac - check rel*)
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = Debug.dinfo_hprint (fun f -> ("case_normalize_formula :: CHECK POINT 1a ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
+  let f = IF.float_out_exps_from_heap 1 (I.lbl_getter prog) (I.annot_args_getter prog) f in (*andreeac - check rel*)
+  let _ = Debug.dinfo_hprint (fun f -> ("case_normalize_formula :: CHECK POINT 1b ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
   let f = IF.float_out_min_max f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.rename_bound_vars f in
@@ -7187,7 +7191,7 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
   let f = IF.float_out_thread f in
-  let f = IF.float_out_exps_from_heap (I.lbl_getter prog) (I.annot_args_getter prog) f in
+  let f = IF.float_out_exps_from_heap 2 (I.lbl_getter prog) (I.annot_args_getter prog) f in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
