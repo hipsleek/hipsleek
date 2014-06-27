@@ -1,7 +1,5 @@
 compute_actions
 process_one_match
-is_fold_form
-need_cycle_checkpoint
-check_tail_rec_rec_lemma
-need_cycle_checkpoint_unfold
-need_cycle_checkpoint_fold
+is_seg_fold_form
+seg_fold_view_view
+do_seg_fold

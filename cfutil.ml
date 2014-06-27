@@ -23,6 +23,13 @@ let get_pos ls n sv=
       (fun _ _ _ -> get_pos_x ls n sv)
       ls n sv
 
+let rec set_pos ls pos n sv res=
+  match ls with
+    | [] -> res
+    | sv1::rest -> if pos=n then (res@(sv::rest))
+      else set_pos rest (n+1) n sv (res@[sv1])
+
+
 let rec retrieve_args_from_locs_helper args locs index res=
   match args with
     | [] -> res
@@ -51,6 +58,11 @@ let is_view_f f=
     | Base {formula_base_heap = h}
     | Exists {formula_exists_heap = h} -> is_view h
     | _ -> false
+
+let checkeq_view_node vn1 vn2=
+  String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0 &&
+      CP.eq_spec_var vn1.h_formula_view_node vn2.h_formula_view_node &&
+      CP.eq_spec_var_order_list vn1.h_formula_view_arguments vn2.h_formula_view_arguments
 
 let elim_null_vnodes_x prog sf=
   let null_detect_trans eq_nulls hf=
@@ -1181,13 +1193,26 @@ let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs reqset=
       (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs reqset)
       lhs rhs
 
-let is_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
+(*
+ -1; not seg form
+ 0: x::view<p> * ...<y> |- x::view<y>
+ 1: x::one_barch_of_view * ...<y> |- x::view<y>
+*)
+let is_seg_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
   let is_full_match remap0 lvnode lnulls rvnode rnulls=
     if CP.eq_spec_var lvnode.h_formula_view_node rvnode.h_formula_view_node then
       let l_neqNull = CP.diff_svl lvnode.h_formula_view_arguments lnulls in
       let r_neqNull = CP.diff_svl (CP.subst_var_list remap0 rvnode.h_formula_view_arguments) rnulls in
       (List.length r_neqNull = List.length l_neqNull) && (CP.diff_svl r_neqNull l_neqNull = [])
     else false
+  in
+  let seg_fold_view lvnode rvnode=
+    if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
+      let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
+        0
+      else 1
+    else 1
   in
    let rhs1 = subst (remap) rhs0 in
    let ( _,mix_f,_,_,_) = split_components rhs1 in
@@ -1198,7 +1223,8 @@ let is_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
    let leqs = (MCP.ptr_equations_without_null lmf) in
    let lhs = subst (leqs) lhs0 in
    let leqNulls = find_close (MCP.get_null_ptrs lmf) leqs in
-   if is_full_match remap lvnode leqNulls rvnode reqNulls then false else
+   if is_full_match remap lvnode leqNulls rvnode reqNulls then -1
+   else
      let lhds, lhvs,_ = get_hp_rel_formula lhs in
      let l_reach_ptrs0 = look_up_reachable_ptr_args prog lhds lhvs [lvnode.h_formula_view_node] in
      let l_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) lhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) lhvs)) l_reach_ptrs0 in
@@ -1207,13 +1233,62 @@ let is_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
      let r_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) rhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) rhvs)) r_reach_ptrs0 in
      let r_reach_ptrs1 = CP.diff_svl r_reach_ptrs reqNulls in
      let l_reach_ptrs1 = CP.diff_svl l_reach_ptrs leqNulls in
-      (List.length r_reach_ptrs1 = List.length l_reach_ptrs1 ) && (CP.diff_svl r_reach_ptrs1 l_reach_ptrs1 = [])
+     if (List.length r_reach_ptrs1 = List.length l_reach_ptrs1 ) && (CP.diff_svl r_reach_ptrs1 l_reach_ptrs1 = []) then
+       seg_fold_view lvnode rvnode
+     else -1
 
-let is_fold_form prog lvnode lhs rvnode rhs remap=
+(*
+-1: not the form
+0: x::view<p> * p...<y> |- x::view<y>
+1: x::.....<y>  |- x::view<y>
+*)
+let is_seg_fold_form prog lvnode lhs rvnode rhs remap=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "is_fold_form" pr1 pr1 string_of_bool
-      (fun _ _ -> is_fold_form_x prog lvnode lhs rvnode rhs remap)
+  Debug.no_2 "is_seg_fold_form" pr1 pr1 string_of_int
+      (fun _ _ -> is_seg_fold_form_x prog lvnode lhs rvnode rhs remap)
       lhs rhs
+
+let seg_fold_view_view_x prog lvnode rvnode conseq rhs_b=
+  let subst_hf new_hf hf=
+    match hf with
+      | ViewNode vn ->
+            if checkeq_view_node vn rvnode then
+              new_hf
+            else hf
+      | _ -> hf
+  in
+  let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+  (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
+  let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0  sv)
+    (CP.intersect_svl vdecl.Cast. view_forward_ptrs vdecl.Cast.view_cont_vars) in
+  (* get cont args of lvnode *)
+  let cont_act_args = retrieve_args_from_locs lvnode.h_formula_view_arguments cont_args_pos in
+  match cont_act_args with
+    | [p] ->
+          (*split rvnode into two view segments*)
+          let rvnode_seg1 = {rvnode with h_formula_view_arguments = set_pos rvnode.h_formula_view_arguments 0
+                  (List.hd cont_args_pos ) p [];
+              h_formula_view_original = true;
+              h_formula_view_unfold_num = 0;
+          } in
+          let rvnode_seg2 = {rvnode with h_formula_view_node = p;
+              h_formula_view_original = true;
+              h_formula_view_unfold_num = 0 ;
+          } in
+          let cmb = mkStarH (ViewNode rvnode_seg1) (ViewNode rvnode_seg2) no_pos in
+          (* update: rvnode = rvnode_seg1 * rvnode_seg2 *)
+          let n_conseq = formula_trans_heap_node (subst_hf cmb) conseq in
+          let n_rhs_b = {rhs_b with formula_base_heap = heap_trans_heap_node (subst_hf cmb) rhs_b.formula_base_heap} in
+          (true, n_conseq, n_rhs_b)
+    | _ ->  (false, conseq, rhs_b)
+
+let seg_fold_view_view prog lvnode rvnode conseq rhs_b=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+  let pr3 bf = pr1 (Base bf) in
+  Debug.no_4 "seg_fold_view_view" pr2 pr2 pr1 pr3 (pr_triple string_of_bool pr1 pr3)
+      (fun _ _ _ _ -> seg_fold_view_view_x prog lvnode rvnode conseq rhs_b)
+      lvnode rvnode conseq rhs_b
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )

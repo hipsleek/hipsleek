@@ -630,6 +630,7 @@ let common_arguments = [
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
+  ("--seg-fold", Arg.Set Globals.seg_fold, "enable seg folding");
   ("--dis-acc-fold", Arg.Clear Globals.acc_fold, "disable accelerated folding");
   ("--elg", Arg.Set Globals.lemma_gen_unsafe, "enable lemma generation (lem-gen-unsafe)");  
   ("--dlg",

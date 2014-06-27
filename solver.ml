@@ -10067,6 +10067,39 @@ and do_acc_fold prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding p
       (fun _ _ _ _ -> do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding pos)
       estate rhs_node rhs_b fold_seq
 
+and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
+      lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
+    : (CF.list_context * Prooftracer.proof) =
+  let construct_unknown_res () =
+    let s = "seg_fold: not handle yet" in
+    let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+    CF.mk_failure_may ("Nothing_to_do? "^s) Globals.sl_error, estate.es_trace)), Unknown) in
+    res
+  in
+  let _ = assert (fold_seg_type >= 0) in
+  if fold_seg_type = 0 then
+    match lhs_node,rhs_node with
+      | ViewNode lvn, ViewNode rvn ->
+            (* unfold rhs *)
+            let is_ok, n_conseq, n_rhs_b = Cfutil.seg_fold_view_view prog lvn rvn conseq rhs_b in
+            if not is_ok then construct_unknown_res () else
+              let ctx0 = Ctx estate in
+              heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
+      | _ -> construct_unknown_res ()
+  else
+    construct_unknown_res ()
+
+and do_seg_fold prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
+    : (CF.list_context * Prooftracer.proof) =
+  let pr_es = Cprinter.string_of_entail_state in
+  let pr_hf = Cprinter.string_of_h_formula in
+  let pr_base = Cprinter.string_of_formula_base in
+  let pr_fold_seq = string_of_int in
+  let pr_out (lc,_) = Cprinter.string_of_list_context lc in
+  Debug.no_5 "do_seg_fold" pr_es pr_hf pr_hf pr_base pr_fold_seq pr_out 
+      (fun _ _ _ _ _ -> do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type
+          is_folding rhs_h_matched_set pos)
+      estate lhs_node rhs_node rhs_b fold_seg_type
 
 and push_hole_action_x a1 r1=
   match Context.action_get_holes a1 with
@@ -11007,7 +11040,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
               in (cl,prf)
                      (* (Infer.restore_infer_vars iv cl,prf) *)
-
+      | Context.M_seg_fold (m_res, fold_seg_type) ->
+            let rhs_node = m_res.Context.match_res_rhs_node in
+            let rhs_rest = m_res.Context.match_res_rhs_rest in
+            do_seg_fold prog estate estate.es_formula conseq m_res.Context.match_res_lhs_node rhs_node
+                rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
       | Context.M_acc_fold (m_res, fold_seq) ->
           let rhs_node = m_res.Context.match_res_rhs_node in
           let rhs_rest = m_res.Context.match_res_rhs_rest in

@@ -52,6 +52,7 @@ and action =
   | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
+  | M_seg_fold of (match_res * int)
   | M_rd_lemma of match_res
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
@@ -83,6 +84,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
     | M_unfold  (m,_)
     | M_base_case_unfold m
     | M_base_case_fold m
+    | M_seg_fold (m,_)
     | M_acc_fold (m,_)
     | M_rd_lemma m
     | M_lemma  (m, _)
@@ -156,6 +158,7 @@ let rec pr_action_name a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
+  | M_seg_fold e -> fmt_string "SegFold"
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
   | M_lemma (e,s) -> fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
@@ -177,6 +180,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i)^" =>"); pr_mr e
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold =>"; pr_mr e
   | M_base_case_fold e -> fmt_string "BaseCaseFold =>"; pr_mr e
+  | M_seg_fold (e,_) -> fmt_string "SegFold =>"; pr_mr e
   | M_acc_fold (e,steps) ->
       let pr_steps s = fmt_string ("\n fold steps:" ^ (pr_list Acc_fold.print_fold_type s)) in
       fmt_string "AccFold =>"; pr_mr e; pr_steps steps
@@ -227,6 +231,7 @@ let action_get_holes a = match a with
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
+  | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
   | M_lemma (e,_)
@@ -1396,8 +1401,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                            else
                              let m_act = (1,M_match m_res) in
                              let unk_act=
-                               if !do_classic_frame_rule && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then
-                                 (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))])
+                               let seg_fold_type = (Cfutil.is_seg_fold_form  prog vl estate.CF.es_formula vr rhs reqset) in
+                               if seg_fold_type>= 0 then
+                                 (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
+                                 let seg_act = if !Globals.seg_fold then (1, M_seg_fold (m_res, seg_fold_type)) else
+                                   (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                                 in
+                                  (1,Search_action [m_act; seg_act])
                                else
                                  m_act
                              in  unk_act
@@ -1980,6 +1990,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | M_base_case_unfold _ 
     | M_unfold _
     | M_fold _
+    | M_seg_fold _
     | M_acc_fold _
     | M_split_match _ 
     | M_match _ 
