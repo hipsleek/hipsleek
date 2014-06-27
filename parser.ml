@@ -976,13 +976,15 @@ prop_extn:
 ]];
 
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
           -> { vh with view_formula = (fst vb);
-          view_invariant = oi; 
+          view_invariant = oi;
+          view_baga_inv = obi;
+          view_baga_under_inv = obui;
           view_mem = mpb;
-          view_is_prim = false; 
-          view_kind = Iast.View_NORM; 
+          view_is_prim = false;
+          view_kind = Iast.View_NORM;
           view_inv_lock = li;
           try_case_inference = (snd vb) }
     |  vh= view_header;`EQEQ; `EXTENDS;orig_v = derv_view; `WITH ; extn = prop_extn->
@@ -992,25 +994,29 @@ view_decl:
            }
  ]];
 
-prim_view_decl: 
-  [[ vh= view_header; oi= opt_inv; li= opt_inv_lock
-      -> { vh with 
+prim_view_decl:
+  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+      -> { vh with
           (* view_formula = None; *)
-          view_invariant = oi; 
-          view_kind = Iast.View_PRIM; 
-          view_is_prim = true; 
+          view_invariant = oi;
+          view_baga_inv = obi;
+          view_baga_under_inv = obui;
+          view_kind = Iast.View_PRIM;
+          view_is_prim = true;
           view_inv_lock = li} ]];
 
 view_decl_ext:
-  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
+  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
-          view_invariant = oi; 
+          view_invariant = oi;
+          view_baga_inv = obi;
+          view_baga_under_inv = obui;
           view_kind = Iast.View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
 view_decl_spec:
-  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; li= opt_inv_lock
+  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       ->
       let compare_list_string cmp ls1 ls2=
         let rec helper ls01 ls02=
@@ -1033,6 +1039,8 @@ view_decl_spec:
       else
         { vh with view_formula = (fst vb);
             view_invariant = oi;
+            view_baga_inv = obi;
+            view_baga_under_inv = obui;
             view_kind = Iast.View_SPEC;
             view_parent_name = Some va.view_name;
             view_inv_lock = li;
@@ -1042,7 +1050,17 @@ view_decl_spec:
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
-  [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]];
+    [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]];
+
+opt_baga_inv: [[t=OPT baga_invs -> t]];
+
+opt_baga_under_inv: [[t=OPT baga_under_invs -> t]];
+
+baga_invs:
+    [[`INV_EXACT; bil = LIST0 baga_inv SEP `OR -> bil]];
+
+baga_under_invs:
+    [[`INV_SAT; bil = LIST0 baga_inv SEP `OR -> bil]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
@@ -1050,12 +1068,12 @@ opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
 mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
 				-> let fal,g = List.split mpl in
-				   let fv,al = List.split fal in   
+				   let fv,al = List.split fal in
 					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
 					F.mem_formula_field_values = fv;
 					F.mem_formula_field_layout = al;
-					F.mem_formula_guards = g}				
+					F.mem_formula_guards = g}
 		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
 				-> let fal,g = List.split mpl in
 				   let fv,al = List.split fal in   
@@ -1064,7 +1082,7 @@ mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layo
 					F.mem_formula_field_values = fv;
 					F.mem_formula_field_layout = al;
 					F.mem_formula_guards = g} ]];
-					
+
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
 let fv,annl = List.split annl in 
@@ -1087,6 +1105,13 @@ derv : [[ `DERV -> true ]];
 inv: 
   [[`INV; pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
    |`INV; h=ho_fct_header -> (P.mkTrue no_pos)]];
+
+baga_formula:
+    [[pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
+      | h=ho_fct_header -> (P.mkTrue no_pos)]];
+
+baga_inv:
+    [[`BG; `OPAREN; `OSQUARE; il = LIST0 id SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN -> (il,p)]];
 
 opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
