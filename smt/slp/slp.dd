@@ -1,5 +1,7 @@
 compute_actions
 process_one_match
-is_seg_fold_form
-seg_fold_view_view
+is_seg_view2_fold_form
+is_seg_view_br_fold_form
+seg_fold_view2
+seg_fold_view_br
 do_seg_fold

@@ -1193,28 +1193,15 @@ let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs reqset=
       (fun _ _ -> need_cycle_checkpoint_fold_x prog ldnode lhs rvnode rhs reqset)
       lhs rhs
 
-(*
- -1; not seg form
- 0: x::view<p> * ...<y> |- x::view<y>
- 1: x::one_barch_of_view * ...<y> |- x::view<y>
-*)
-let is_seg_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
-  let is_full_match remap0 lvnode lnulls rvnode rnulls=
-    if CP.eq_spec_var lvnode.h_formula_view_node rvnode.h_formula_view_node then
-      let l_neqNull = CP.diff_svl lvnode.h_formula_view_arguments lnulls in
-      let r_neqNull = CP.diff_svl (CP.subst_var_list remap0 rvnode.h_formula_view_arguments) rnulls in
+let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap=
+  let is_full_match remap0 lnulls rnulls=
+    if CP.eq_spec_var lroot rroot then
+      let l_neqNull = CP.diff_svl largs lnulls in
+      let r_neqNull = CP.diff_svl (CP.subst_var_list remap0 rargs) rnulls in
       (List.length r_neqNull = List.length l_neqNull) && (CP.diff_svl r_neqNull l_neqNull = [])
     else false
   in
-  let seg_fold_view lvnode rvnode=
-    if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
-      let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
-      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
-        0
-      else 1
-    else 1
-  in
-   let rhs1 = subst (remap) rhs0 in
+  let rhs1 = subst (remap) rhs0 in
    let ( _,mix_f,_,_,_) = split_components rhs1 in
    let eqs = (MCP.ptr_equations_without_null mix_f) in
    let rhs = subst (eqs) rhs1 in
@@ -1223,32 +1210,76 @@ let is_seg_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
    let leqs = (MCP.ptr_equations_without_null lmf) in
    let lhs = subst (leqs) lhs0 in
    let leqNulls = find_close (MCP.get_null_ptrs lmf) leqs in
-   if is_full_match remap lvnode leqNulls rvnode reqNulls then -1
+   if is_full_match remap leqNulls reqNulls then false
    else
      let lhds, lhvs,_ = get_hp_rel_formula lhs in
-     let l_reach_ptrs0 = look_up_reachable_ptr_args prog lhds lhvs [lvnode.h_formula_view_node] in
+     let l_reach_ptrs0 = look_up_reachable_ptr_args prog lhds lhvs [lroot] in
      let l_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) lhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) lhvs)) l_reach_ptrs0 in
      let rhds, rhvs,_ = get_hp_rel_formula rhs in
-     let r_reach_ptrs0 = look_up_reachable_ptr_args prog rhds rhvs [rvnode.h_formula_view_node] in
+     let r_reach_ptrs0 = look_up_reachable_ptr_args prog rhds rhvs [rroot] in
      let r_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) rhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) rhvs)) r_reach_ptrs0 in
-     let r_reach_ptrs1 = CP.diff_svl r_reach_ptrs reqNulls in
-     let l_reach_ptrs1 = CP.diff_svl l_reach_ptrs leqNulls in
-     if (List.length r_reach_ptrs1 = List.length l_reach_ptrs1 ) && (CP.diff_svl r_reach_ptrs1 l_reach_ptrs1 = []) then
-       seg_fold_view lvnode rvnode
-     else -1
+     let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
+     let cl_rargs = find_close rargs (remap) in
+     if reqnull = [] && not (CP.mem_svl rroot cl_rargs) then false else
+       let r_reach_ptrs1 = CP.diff_svl r_reach_ptrs reqNulls in
+       let l_reach_ptrs1 = CP.diff_svl l_reach_ptrs leqNulls in
+       (List.length r_reach_ptrs1 = List.length l_reach_ptrs1 ) && (CP.diff_svl r_reach_ptrs1 l_reach_ptrs1 = [])
+
+(*
+ -1; not seg form
+ 0: x::view<p> * ...<y> |- x::view<y>
+ 1: x::one_barch_of_view * ...<y> |- x::view<y>
+2:?
+*)
+let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
+  let seg_fold_view lvnode rvnode=
+    if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
+      let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
+        0
+      else 2
+    else 2
+  in
+  if (is_seg_fold_form_helper prog lvnode.h_formula_view_node lvnode.h_formula_view_arguments lhs0 rvnode.h_formula_view_node rvnode.h_formula_view_arguments rhs0 remap) then
+    seg_fold_view lvnode rvnode
+  else -1
 
 (*
 -1: not the form
 0: x::view<p> * p...<y> |- x::view<y>
 1: x::.....<y>  |- x::view<y>
 *)
-let is_seg_fold_form prog lvnode lhs rvnode rhs remap=
+let is_seg_view2_fold_form prog lvnode lhs rvnode rhs remap=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "is_seg_fold_form" pr1 pr1 string_of_int
-      (fun _ _ -> is_seg_fold_form_x prog lvnode lhs rvnode rhs remap)
+  Debug.no_2 "is_seg_view2_fold_form" pr1 pr1 string_of_int
+      (fun _ _ -> is_seg_view2_fold_form_x prog lvnode lhs rvnode rhs remap)
       lhs rhs
 
-let seg_fold_view_view_x prog lvnode rvnode conseq rhs_b=
+let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap=
+  let seg_fold_view ldnode rvnode=
+    let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    if String.compare ldnode.h_formula_data_name vdcl.Cast.view_data_name = 0 then
+      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
+        1
+      else 2
+    else 2
+  in
+  if (is_seg_fold_form_helper prog ldnode.h_formula_data_node ldnode.h_formula_data_arguments lhs0 rvnode.h_formula_view_node rvnode.h_formula_view_arguments rhs0 remap) then
+    seg_fold_view ldnode rvnode
+  else -1
+
+(*
+-1: not the form
+0: x::view<p> * p...<y> |- x::view<y>
+1: x::.....<y>  |- x::view<y>
+*)
+let is_seg_view_br_fold_form prog ldnode lhs rvnode rhs remap=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  Debug.no_2 "is_seg_view_br_fold_form" pr1 pr1 string_of_int
+      (fun _ _ -> is_seg_view_br_fold_form_x prog ldnode lhs rvnode rhs remap)
+      lhs rhs
+
+let update_conseq conseq rhs_b rvnode new_rcmb=
   let subst_hf new_hf hf=
     match hf with
       | ViewNode vn ->
@@ -1257,38 +1288,137 @@ let seg_fold_view_view_x prog lvnode rvnode conseq rhs_b=
             else hf
       | _ -> hf
   in
+  let n_conseq = formula_trans_heap_node (subst_hf new_rcmb) conseq in
+  let n_rhs_b = {rhs_b with formula_base_heap = heap_trans_heap_node
+          (subst_hf new_rcmb) rhs_b.formula_base_heap} in
+  (n_conseq, n_rhs_b)
+
+let split_r_vnode cut_points cont_args_pos rvnode conseq rhs_b = match cut_points with
+  | [p] ->
+        (*split rvnode into two view segments*)
+        let rvnode_seg1 = {rvnode with h_formula_view_arguments = set_pos rvnode.h_formula_view_arguments 0
+                (List.hd cont_args_pos ) p [];
+            h_formula_view_original = true;
+            h_formula_view_unfold_num = 0;
+        } in
+        let rvnode_seg2 = {rvnode with h_formula_view_node = p;
+            h_formula_view_original = true;
+            h_formula_view_unfold_num = 0 ;
+        } in
+        let cmb = mkStarH (ViewNode rvnode_seg1) (ViewNode rvnode_seg2) no_pos in
+        (* update: rvnode = rvnode_seg1 * rvnode_seg2 *)
+        let n_conseq, n_rhs_b =  update_conseq conseq rhs_b rvnode cmb in
+        (true, n_conseq, n_rhs_b)
+  | _ -> (false, conseq, rhs_b)
+
+let seg_fold_view2_x prog lvnode rvnode conseq rhs_b=
   let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
   (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0  sv)
     (CP.intersect_svl vdecl.Cast. view_forward_ptrs vdecl.Cast.view_cont_vars) in
   (* get cont args of lvnode *)
   let cont_act_args = retrieve_args_from_locs lvnode.h_formula_view_arguments cont_args_pos in
-  match cont_act_args with
-    | [p] ->
-          (*split rvnode into two view segments*)
-          let rvnode_seg1 = {rvnode with h_formula_view_arguments = set_pos rvnode.h_formula_view_arguments 0
-                  (List.hd cont_args_pos ) p [];
-              h_formula_view_original = true;
-              h_formula_view_unfold_num = 0;
-          } in
-          let rvnode_seg2 = {rvnode with h_formula_view_node = p;
-              h_formula_view_original = true;
-              h_formula_view_unfold_num = 0 ;
-          } in
-          let cmb = mkStarH (ViewNode rvnode_seg1) (ViewNode rvnode_seg2) no_pos in
-          (* update: rvnode = rvnode_seg1 * rvnode_seg2 *)
-          let n_conseq = formula_trans_heap_node (subst_hf cmb) conseq in
-          let n_rhs_b = {rhs_b with formula_base_heap = heap_trans_heap_node (subst_hf cmb) rhs_b.formula_base_heap} in
-          (true, n_conseq, n_rhs_b)
-    | _ ->  (false, conseq, rhs_b)
+  split_r_vnode cont_act_args cont_args_pos rvnode conseq rhs_b
 
-let seg_fold_view_view prog lvnode rvnode conseq rhs_b=
+let seg_fold_view2 prog lvnode rvnode conseq rhs_b=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
   let pr3 bf = pr1 (Base bf) in
-  Debug.no_4 "seg_fold_view_view" pr2 pr2 pr1 pr3 (pr_triple string_of_bool pr1 pr3)
-      (fun _ _ _ _ -> seg_fold_view_view_x prog lvnode rvnode conseq rhs_b)
+  Debug.no_4 "seg_fold_view2" pr2 pr2 pr1 pr3 (pr_triple string_of_bool pr1 pr3)
+      (fun _ _ _ _ -> seg_fold_view2_x prog lvnode rvnode conseq rhs_b)
       lvnode rvnode conseq rhs_b
+
+let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
+  let subst_heap_node sst hf=
+    match hf with
+      | ViewNode vn ->
+            ViewNode {vn with h_formula_view_node = CP.subs_one sst vn.h_formula_view_node}
+      | DataNode vn ->
+            DataNode {vn with h_formula_data_node = CP.subs_one sst vn.h_formula_data_node}
+      | _ -> hf
+  in
+  let rec is_seg_match diffs=
+    match diffs with
+      | [] -> []
+      | (mt, f1 ,f2)::rest ->
+            let _ = Debug.info_hprint (add_str "mt" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) mt no_pos in
+            if is_empty_f f2 then mt
+            else is_seg_match rest
+  in
+  let rec find_first_seg_match ivars init_mtl fs res=
+    match fs with
+      | f::rest ->
+            let (r,diffs) = Checkeq.checkeq_formulas_with_diff_mt ivars ([],[]) ante f init_mtl in
+            if r then find_first_seg_match ivars init_mtl rest res
+            else
+              let sst = is_seg_match diffs in
+              if sst = [] then
+                find_first_seg_match ivars init_mtl rest (res@[(f, diffs)])
+              else
+                sst,res
+      | [] -> [],res
+  in
+  let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+  (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
+  let fwd_seg_args = (CP.intersect_svl vdecl.Cast. view_forward_ptrs vdecl.Cast.view_cont_vars) in
+  let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0 sv)
+    fwd_seg_args in
+  (* fwd *)
+  let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
+  let sst = [(self_sv,rvnode.h_formula_view_node)] in
+  let rhs_fs = List.fold_left (fun r (f,_) ->
+      let dns = get_datas f in
+      if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
+         let f1 = elim_exists f in
+         let _,new_f = split_quantifiers f1 in
+        let f2 = formula_of_heap (join_star_conjunctions (heap_of new_f)) (pos_of_formula f) in
+        r@[(subst sst f2)]
+      else r
+  ) [] vdecl.Cast.view_un_struc_formula in
+  let ivars = [(CP.name_of_spec_var rvnode.h_formula_view_node)] in
+  let sst1, fs_diffs = find_first_seg_match ivars
+    [[]] rhs_fs [] in
+  let _ = Debug.info_hprint (add_str "sst1" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst1 no_pos in
+  let cut_points = List.fold_left (fun r (sv1,sv2) ->
+      if CP.mem_svl sv2 fwd_seg_args then r@[sv1] else r
+  ) [] sst1 in
+  if cut_points != [] then
+    let is_ok, nc_cons, n_rhs_b = split_r_vnode cut_points cont_args_pos rvnode conseq rhs_b in
+    (is_ok, nc_cons, n_rhs_b,[])
+  else
+    match fs_diffs with
+      | [br, diffs] -> begin
+          let _ = Debug.info_hprint (add_str "br" (!print_formula)) br no_pos in
+          let sst2 = List.combine vdecl.Cast.view_vars rvnode.h_formula_view_arguments in
+            match diffs with
+              | [(mt,_,_)] ->
+                    let eqs = List.fold_left (fun r (sv2,sv) ->
+                        if not (CP.mem_svl sv vdecl.Cast.view_vars) then
+                          r@[(sv,sv2)]
+                        else r
+                        ) [] mt in
+                    let ps = List.map (fun (sv1, sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) eqs in
+                    let eq_p = MCP.mix_of_pure (CP.conj_of_list ps no_pos) in
+                    let br1 = subst sst2 ( br) in
+                    let br2 = formula_trans_heap_node (subst_heap_node eqs) br1 in
+                    let _ = Debug.info_hprint (add_str "br2" (!print_formula)) br2 no_pos in
+                    let cmb = (join_star_conjunctions (heap_of br2)) in
+                    let n_conseq, n_rhs_b = update_conseq conseq rhs_b rvnode cmb in
+                    (true, mkAnd_pure n_conseq eq_p no_pos, mkAnd_base_pure n_rhs_b eq_p no_pos,eqs)
+              | _ -> (false, conseq, rhs_b, [])
+        end
+      | _ -> (false, conseq, rhs_b, [])
+
+let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+  let pr2b dn = Cprinter.prtt_string_of_h_formula (DataNode dn) in
+  let pr3 bf = pr1 (Base bf) in
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_5 "seg_fold_view_br" pr2b pr2a pr1 pr1 pr3
+      (pr_quad string_of_bool pr1 pr3 pr4)
+      (fun _ _ _ _ _ -> seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b)
+      ldnode rvnode ante conseq rhs_b
 
 let need_cycle_checkpoint_unfold_x prog lvnode lhs0 rdnode rhs0 reqset=
   if not (!Globals.lemma_syn && is_lem_syn_in_bound() )

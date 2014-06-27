@@ -152,17 +152,17 @@ let rec combine_multiple_length ls1 orig_args=
   in
   helper ls1 orig_args []
 
-let rec is_empty_f f0=
-  let rec helper f=
-    match f with
-      | CF.Base fb ->
-            (CF.is_empty_heap fb.CF.formula_base_heap) &&
-                (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
-      | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in
-        is_empty_f base_f
-      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
-  in
-  helper f0
+let rec is_empty_f f0= CF.is_empty_f f0
+  (* let rec helper f= *)
+  (*   match f with *)
+  (*     | CF.Base fb -> *)
+  (*           (CF.is_empty_heap fb.CF.formula_base_heap) && *)
+  (*               (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure)) *)
+  (*     | CF.Exists _ -> let _, base_f = CF.split_quantifiers f in *)
+  (*       is_empty_f base_f *)
+  (*     | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2) *)
+  (* in *)
+  (* helper f0 *)
 
 let is_empty_base fb=
   (CF.is_empty_heap fb.CF.formula_base_heap) &&

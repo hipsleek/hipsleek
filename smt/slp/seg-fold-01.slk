@@ -16,3 +16,13 @@ expect Valid.
 checkentail x::ls<a> * a::ls<y> * y::ls<null> |- x::ls<null>.
 
 expect Valid.
+
+
+//3
+checkentail x::Sll_t<a> * a::ls<b> * b::ls<null> |- x::ls<null>.
+
+expect Valid.
+
+checkentail x::Sll_t<a> * a::ls<b> * b::ls<c> |- x::ls<c>.
+
+expect Fail.

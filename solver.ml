@@ -9554,6 +9554,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     let _ = DD.ninfo_hprint (add_str " ante" Cprinter.prtt_string_of_formula) ante no_pos in
     let _ = DD.ninfo_hprint (add_str " conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
     let _ = DD.ninfo_hprint (add_str " estate.es_rhs_eqset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) estate.es_rhs_eqset  no_pos in
+    let _ = DD.ninfo_hprint (add_str " estate.es_evars" !CP.print_svl) estate.es_evars  no_pos in
     let lhs_h,lhs_p,_,_,_ = CF.extr_formula_base lhs_b in
     let rhs_h,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
@@ -10077,17 +10078,30 @@ and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
     res
   in
   let _ = assert (fold_seg_type >= 0) in
-  if fold_seg_type = 0 then
-    match lhs_node,rhs_node with
-      | ViewNode lvn, ViewNode rvn ->
-            (* unfold rhs *)
-            let is_ok, n_conseq, n_rhs_b = Cfutil.seg_fold_view_view prog lvn rvn conseq rhs_b in
-            if not is_ok then construct_unknown_res () else
-              let ctx0 = Ctx estate in
-              heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
-      | _ -> construct_unknown_res ()
-  else
-    construct_unknown_res ()
+  let is_ok, n_conseq, n_rhs_b, n_rhs_eqset = match fold_seg_type with
+    | 0 -> begin
+        match lhs_node,rhs_node with
+          | ViewNode lvn, ViewNode rvn ->
+                (* unfold rhs *)
+                let is_ok,n_conseq, n_lhs_b = Cfutil.seg_fold_view2 prog lvn rvn conseq rhs_b in
+                (is_ok,n_conseq, n_lhs_b,[])
+          | _ -> (false, conseq, rhs_b,[])
+      end
+    | 1 -> begin
+        match lhs_node,rhs_node with
+          | DataNode ldn, ViewNode rvn ->
+                (* unfold rhs *)
+                Cfutil.seg_fold_view_br prog ldn rvn ante conseq rhs_b
+          | _ -> (false, conseq, rhs_b,[])
+      end
+    | _ -> (false, conseq, rhs_b,[])
+  in
+  if not is_ok then construct_unknown_res () else
+    let es0 = {estate with es_rhs_eqset = estate.es_rhs_eqset@n_rhs_eqset;
+        es_evars = estate.es_evars@(List.map fst n_rhs_eqset)
+    } in
+    let ctx0 = Ctx es0 in
+    heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
 
 and do_seg_fold prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
     : (CF.list_context * Prooftracer.proof) =

@@ -1711,6 +1711,19 @@ and is_unknown_heap (h : h_formula) = match h with
   | HTrue -> true
   | _ -> false
 
+and is_empty_f f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            (is_empty_heap fb.formula_base_heap) &&
+                (CP.isConstTrue (MCP.pure_of_mix fb.formula_base_pure))
+      | Exists _ -> let _, base_f = split_quantifiers f in
+        is_empty_f base_f
+      | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
+
+
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p t fl a pos None
 
