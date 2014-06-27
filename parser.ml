@@ -41,8 +41,7 @@ type type_decl =
   | Hopred of hopred_decl
   | Barrier of barrier_decl
 
-		
-type decl = 
+type decl =
   | Type of type_decl
   | Func of func_decl
   | Rel of rel_decl (* An Hoa *)
@@ -1191,8 +1190,10 @@ view_header:
           view_prop_extns = [];
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
+          view_baga_inv = None;
+          view_baga_under_inv = None;
           view_mem = None;
-		  view_materialized_vars = get_mater_vars l;
+	  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;
 			}]];
 
@@ -1230,6 +1231,8 @@ view_header_ext:
           view_prop_extns = sl;
           view_derv_info = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
+          view_baga_inv = None;
+          view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = get_mater_vars l;
           try_case_inference = false;

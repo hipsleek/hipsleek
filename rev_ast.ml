@@ -202,7 +202,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		let i_body = IF.subst [((slf,Unprimed),(self,Unprimed))] i_body in
 		let struc_body = IF.mkEBase [] [] [] i_body None (* false *) no_pos in
                 let n_iview = {  I.view_name = vname;
-                                         I.view_pos = no_pos;
+                I.view_pos = no_pos;
 		I.view_data_name = "";
                 I.view_type_of_self = None;
 		I.view_vars = vars;
@@ -220,6 +220,8 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
 		I.view_inv_lock = None;
 		I.view_is_prim = false;
 		I.view_invariant = IP.mkTrue no_pos;
+                I.view_baga_inv = None;
+                I.view_baga_under_inv = None;
                 I.view_mem = None;
 		I.view_materialized_vars = [];
 		I.try_case_inference = false; }
