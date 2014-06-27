@@ -45,6 +45,10 @@ type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)
 
+type ho_kind =
+  | HO_SPLIT
+  | HO_NONE
+
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
 	  Flag_str of string
@@ -327,6 +331,11 @@ let string_of_term_ann a =
     | Fail f -> match f with
         | TermErr_May -> "TermErr_May"
         | TermErr_Must -> "TermErr_Must"
+
+let string_of_ho_kind k =
+  match k with
+    | HO_SPLIT -> "@Split"
+    | HO_NONE -> ""
 
 let string_of_loc (p : loc) = 
     Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"

@@ -85,7 +85,7 @@ and view_kind =
 
 and view_decl = {
     view_name : ident;
-    view_ho_vars : P.spec_var list;
+    view_ho_vars : (P.spec_var * ho_kind)list;
     view_vars : P.spec_var list;
     view_cont_vars : P.spec_var list;
     view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)

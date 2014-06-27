@@ -71,7 +71,7 @@ and view_decl =
     { view_name : ident; 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-    mutable view_ho_vars : ident list;
+    mutable view_ho_vars : (ident * ho_kind) list;
     mutable view_vars : ident list;
     mutable view_imm_map: (P.ann * int) list;
     view_pos : loc;

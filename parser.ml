@@ -1201,7 +1201,14 @@ id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]];
 
-opt_brace_vars : [[ `OBRACE;sl= id_list_opt (*id_list*) ;`CBRACE -> sl   ]];
+formula_ann: [[ `SPLITANN -> HO_SPLIT]];
+
+id_ann:
+  [[ `IDENTIFIER id ; t= OPT formula_ann -> (id,un_option t HO_NONE) ]];
+
+id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
+
+opt_brace_vars : [[ `OBRACE;sl= id_ann_list_opt ;`CBRACE -> sl   ]];
 
 brace_form_args : [[ `OBRACE;sl= form_list_opt (*id_list*) ;`CBRACE -> 
     List.map (F.subst_stub_flow n_flow) sl   ]];

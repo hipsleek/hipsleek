@@ -358,6 +358,7 @@ rule tokenizer file_name = parse
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
+  | "@Split" { SPLITANN } (*Split annotation*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }
   | '}' { CBRACE }

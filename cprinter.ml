@@ -537,10 +537,13 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-
 let string_of_typed_spec_var x = 
   match x with
     | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
+
+let string_of_ho_var (x,k) = 
+  match x with
+    | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) ^ (string_of_ho_kind k)
 
 let string_of_spec_var x = 
   (* string_of_typed_spec_var x *)
@@ -3411,7 +3414,7 @@ let pr_view_decl v =
   in
   let ho_str = match v.view_ho_vars with
     (* | [] -> "" *)
-    | s -> "{"^String.concat "," (List.map string_of_typed_spec_var  s)^"}" in
+    | s -> "{"^String.concat "," (List.map string_of_ho_var  s)^"}" in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
       "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
