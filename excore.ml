@@ -378,8 +378,18 @@ sig
   val mk_elem : spec_var -> t
 end;;
 
+module type FORM_TYPE =
+sig
+  type t
+  val mk_false : t 
+  val mk_true : t 
+  val unsat : t -> bool 
+  val imply : t -> t -> bool 
+end;;
+
+
 module EPURE =
-    functor (Elt : SV_TYPE) ->
+    functor (Elt : SV_TYPE)  ->
 struct
   type elem = Elt.t
   (* type epure = (elem list * (elem * elem) list * (elem * elem) list) *)
@@ -1499,9 +1509,9 @@ struct
 
 end
 
-(* module EPureI = EPURE(SV) *)
+module EPureI = EPURE(SV)
 
-module EPureI = EPUREN(SV)
+(* module EPureI = EPUREN(SV) *)
 
 type ef_pure_disj = EPureI.epure_disj
 
