@@ -767,7 +767,7 @@ let ft_wo_paren (e:fail_type) = true
 let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
-    | P.Null l -> fmt_string "null"
+    | P.Null l -> fmt_string "Cnull"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x) (* fmt_string (string_of_typed_spec_var x) *)
     | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
@@ -2105,14 +2105,15 @@ and string_of_formula (e:formula) : string =  poly_string_of_pr pr_formula e
 and sleek_of_formula (e:formula) : string =  poly_string_of_pr slk_formula e
 
 (* new EPURE *)
-let string_of_ef_pure = 
-  let pr = pr_list P.string_of_spec_var_list in
-  pr_triple (add_str "BAGA" P.string_of_spec_var_list) (fun (_,p) -> (add_str "EQ" pr) p) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var)))
+let string_of_ef_pure = Excore.EPureI.string_of
+
+  (* let pr = pr_list P.string_of_spec_var_list in *)
+  (* pr_triple (add_str "BAGA" P.string_of_spec_var_list) (fun (_,p) -> (add_str "EQ" pr) p) (add_str "INEQ" (pr_list (pr_pair string_of_spec_var string_of_spec_var))) *)
 
 (* old EPURE *)
 (* let string_of_ef_pure = pr_pair (add_str "BAGA" P.string_of_spec_var_list) (add_str "pure" string_of_pure_formula) *)
 
-let string_of_ef_pure_disj = pr_list string_of_ef_pure
+let string_of_ef_pure_disj = Excore.EPureI.string_of_disj
 
 let pr_ef_pure e = fmt_string (string_of_ef_pure e)
 
@@ -4504,6 +4505,9 @@ Cformula.print_failesc_context := string_of_failesc_context;;
 Cformula.print_path_trace := string_of_path_trace;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_list_int := string_of_list_int;;
+Excore.print_formula := string_of_formula;;
+Excore.print_pure_formula := string_of_pure_formula;;
+Excore.print_h_formula := string_of_h_formula;;
 Cast.print_mix_formula := string_of_mix_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;

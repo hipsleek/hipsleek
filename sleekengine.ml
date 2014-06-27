@@ -12,6 +12,29 @@ open Exc.GTable
 open Perm
 open Label_only
 
+let string_of_vres t =
+  match t with
+    | VR_Valid -> "Valid"
+    | VR_Fail s -> "Fail"^(if s<0 then "_May" else if s>0 then "_Must" else "")
+    | VR_Unknown s -> "UNKNOWN("^s^")"
+
+let proc_sleek_result_validate lc =
+  match lc with
+    | CF.FailCtx _ ->
+      if CF.is_must_failure lc then VR_Fail 1
+      else VR_Fail (-1)
+    | CF.SuccCtx c -> 
+      match CF.get_must_error_from_ctx c with
+      | None -> VR_Valid
+      | _ -> VR_Fail 1
+(* TODO : why do we need two diff kinds of must-errors? *)
+(* Is there any difference between the two? *)
+
+let proc_sleek_result_validate lc =
+  Debug.no_1 "proc_sleek_result_validate" 
+  Cprinter.string_of_list_context_short string_of_vres 
+  proc_sleek_result_validate lc
+
 module H = Hashtbl
 module I = Iast
 (* module Inf = Infer *)
@@ -579,7 +602,7 @@ let convert_data_and_pred_to_cast_x () =
     let num_vdecls = List.length tmp_views  in
     let _ = if num_vdecls <= gen_baga_inv_threshold then
         (* let _ = Globals.gen_baga_inv := false in *)
-      let _ = Globals.dis_pred_sat () in
+      (* let _ = Globals.dis_pred_sat () in *)
         ()
     else
       let _ = Globals.lemma_gen_unsafe := false in
@@ -591,11 +614,11 @@ let convert_data_and_pred_to_cast_x () =
       ()
     else ()
     in
-    let _ = if ls_mut_rec_views != [] || num_vdecls > 2 then
-      (* lemma_syn does not work well with mut_rec views. Loc: to improve*)
-      let _ = Globals.lemma_syn := false in
-      ()
-    else () in
+    (* let _ = if ls_mut_rec_views != [] (\* || num_vdecls > 2 *\) then *)
+    (*   (\* lemma_syn does not work well with mut_rec views. Loc: to improve*\) *)
+    (*   let _ = Globals.lemma_syn := false in *)
+    (*   () *)
+    (* else () in *)
     ()
   else ()
   in
@@ -642,19 +665,21 @@ let convert_data_and_pred_to_cast_x () =
     then Astsimp.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (Astsimp.add_pre_to_cprog cprog3) in
   let cprog5 = if !Globals.enable_case_inference then Astsimp.case_inference iprog cprog4 else cprog4 in
-  let cprog6 = if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) &&
-    (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-    || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then
-    cprog5
-  else
+  let cprog6 = (* if !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
+  (*   (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
+  (*   || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold))then *)
+  (*   cprog5 *)
+  (* else *)
     try
       Cast.categorize_view cprog5
     with _ -> cprog5
   in
   let cprog6 = if (!Globals.en_trec_lin ) then Norm.convert_tail_vdefs_to_linear cprog6 else cprog6 in
-  let _ =  if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-               || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then
-    Lemma.generate_all_lemmas iprog cprog6
+  let _ =  (* if (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe *)
+           (*     || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold) then *)
+    try
+      Lemma.generate_all_lemmas iprog cprog6
+    with _ -> ()
   in
   let cprog6a =
      if !Globals.norm_cont_analysis then
@@ -991,6 +1016,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       with _ ->
           Typeinfer.get_spec_var_type_list_infer (v, Unprimed) orig_vars no_pos
   ) ivars in
+  (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   let (res, rs,v_hp_rel) = Sleekcore.sleek_entail_check 8 vars !cprog [] ante conseq in
   CF.residues := Some (rs, res);
   ((res, rs,v_hp_rel), (ante,conseq))
@@ -1337,7 +1363,7 @@ let process_shape_rec sel_hps=
   let _ = print_endline "*************************************" in
   ()
 
-let process_validate exp_res ils_es=
+let process_validate exp_res ils_es =
   if not !Globals.show_unexpected_ents then () else
   (**********INTERNAL**********)
   let preprocess_constr act_idents act_ti (ilhs, irhs)=
@@ -1347,8 +1373,7 @@ let process_validate exp_res ils_es=
     let (_, rhs) = meta_to_formula irhs false (fv_idents@act_idents) n_tl in
     (lhs,rhs)
   in
-  let preprocess_iestate act_vars (iguide_vars
-, ief, iconstrs)=
+  let preprocess_iestate act_vars (iguide_vars, ief, iconstrs) =
     let act_idents = (List.map CP.name_of_spec_var act_vars) in
     let act_ti = List.fold_left (fun ls (CP.SpecVar(t,sv,_)) ->
               let vk = Typeinfer.fresh_proc_var_kind ls t in
@@ -1371,41 +1396,67 @@ let process_validate exp_res ils_es=
   (* Long: todo: parser for expected result and compare here: exp_res*)
   let a_r, ls_a_es, act_vars = match !CF.residues with
     | None ->
-          let _ =
-            if (exp_res = "Fail")
-            then
-              res_str := "Expected.\n"
-            else
-              let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-              res_str :=  "Not Expected.\n"
-          in
+          let _ = res_str := "Expecting "^(string_of_vres exp_res)^"BUT got no residue" in
+          let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
+          (*   if (exp_res = "Fail") *)
+          (*   then *)
+          (*     res_str := "Expected.\n" *)
+          (*   else *)
+          (*     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+          (*     res_str :=  "Not Expected.\n" *)
+          (* in *)
           (**res = Fail*)
           false, [], []
-    | Some (lc, res) -> begin (*res*)
-        match lc with
-          | CF.FailCtx _ ->
-                let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
-                  (* if (exp_res = "Fail") *)
-                  then
-                    res_str := "Expected.\n"
-                  else
+    | Some (lc, res) -> 
+          begin (*res*)
+            let res = proc_sleek_result_validate lc in
+            let unexp =
+              match res, exp_res with
+                | VR_Valid, VR_Valid -> None
+                | VR_Fail n1, VR_Fail n2 -> 
+                      if n2==0 then None
+                      else if n1==n2 then None
+                      else Some( "Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+                | _,_ -> Some ("Expecting "^(string_of_vres exp_res)^" BUT got : "^(string_of_vres res))
+            in
+            let _ = match unexp with
+              | None -> res_str := "OK"
+              | Some s -> 
                     let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-                    res_str := "Not Expected.\n"
-                in
-                (false, [], [])
-          | CF.SuccCtx cl ->
-                let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
-                let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
-                let _ =
-                  if ((res && exp_res = "Valid") || (not res && exp_res = "Fail"))
-                  then
-                    res_str := "Expected.\n"
-                  else
-                    let _ = unexpected_cmd := !unexpected_cmd @ [nn] in
-                    res_str := "Not Expected.\n"
-                in
-                (true, ls_a_es, CP.remove_dups_svl act_vars)
+                    res_str := s
+            in
+            match lc with 
+              | CF.SuccCtx cl ->
+                    let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in
+                    let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in
+                    (true, ls_a_es, CP.remove_dups_svl act_vars)
+              |  _ -> (false,[],[])
+            (* match lc with *)
+            (*   | CF.FailCtx _ -> *)
+            (*         let _ = *)
+            (*           if ((res && exp_res = "Valid") || (not res && exp_res = "Fail") || *)
+            (*               (CF.is_must_failure lc && exp_res = "Fail_Must") || *)
+            (*               (not (CF.is_bot_failure lc) && exp_res = "Fail_May"))  *)
+            (*             (\* if (exp_res = "Fail") *\) *)
+            (*           then *)
+            (*             res_str := "Expected.\n" *)
+            (*           else  *)
+            (*             let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+            (*             res_str := "Not Expected.\n" *)
+            (*         in *)
+            (*         (false, [], []) *)
+            (*   | CF.SuccCtx cl -> *)
+            (*         let ls_a_es = List.fold_left (fun ls_es ctx -> ls_es@(CF.flatten_context ctx)) [] cl in *)
+            (*         let act_vars = List.fold_left (fun ls es -> ls@(CF.es_fv es)) [] ls_a_es in *)
+            (*         let _ = *)
+            (*           if ((res && exp_res = "Valid") || (not res && exp_res = "Fail")) *)
+            (*           then *)
+            (*             res_str := "Expected.\n" *)
+            (*           else *)
+            (*             let _ = unexpected_cmd := !unexpected_cmd @ [nn] in *)
+            (*             res_str := "Not Expected.\n" *)
+            (*         in *)
+            (*         (true, ls_a_es, CP.remove_dups_svl act_vars) *)
       end
   in
   let _ = print_string (validate_id ^ !res_str) in
@@ -1415,10 +1466,10 @@ let process_validate exp_res ils_es=
   (*     report_error no_pos "SLEEKENGINE.process_validate: expected result should be Valid or FAIL" *)
   (* in *)
   let ex_r = true in
-  let _ = match a_r,ex_r with
-    | false,true
-    | true,false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
-    | false,false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
+  let _ = match a_r, ex_r with
+    | false, true
+    | true, false -> (* let _ = print_endline (validate_id ^ "FAIL.") in *) ()
+    | false, false -> (* let _ = print_endline (validate_id ^ "SUCCast.") in *) ()
     | true, true ->
           (*syn new unknown preds generated between cprog and iprog*)
           let inew_hprels = Saout.syn_hprel !cprog.Cast.prog_hp_decls iprog.I.prog_hp_decls in
@@ -1748,31 +1799,33 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
             | Some s ->
-                  let reg1 = Str.regexp "base case unfold failed" in
-                  let _ = try
-                    if Str.search_forward reg1 s 0 >=0 then
-                      let _ = smt_is_must_failure := (Some false) in ()
-                    else let _ = smt_is_must_failure := (Some true) in
-                    ()
-                  with _ -> let _ = smt_is_must_failure := (Some true) in ()
-                  in
+                  (* let reg1 = Str.regexp "base case unfold failed" in *)
+                  (* let _ = try *)
+                  (*   if Str.search_forward reg1 s 0 >=0 then *)
+                  (*     let _ = smt_is_must_failure := (Some false) in () *)
+                  (*   else let _ = smt_is_must_failure := (Some true) in *)
+                  (*   () *)
+                  (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
+                  (* in *)
+                  let _ = smt_is_must_failure := (Some true) in
                   "(must) cause:"^s
             | _ -> (match CF.get_may_failure residue with
                 | Some s -> begin
-                      try
-                        let _ = print_endline s in
-                        let reg1 = Str.regexp "Nothing_to_do" in
-                        let _ = if Str.search_forward reg1 s 0 >=0 then
-                          let _ = smt_is_must_failure := (Some false) in ()
-                        else
-                          if is_lem_syn_reach_bound () then
-                            let _ = smt_is_must_failure := (Some false) in ()
-                          else
-                            ()
-                        in
-                        "(may) cause:"^s
-                      with _ ->
-                          "(may) cause:"^s
+                      (* try *)
+                      (*   let reg1 = Str.regexp "Nothing_to_do" in *)
+                      (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
+                      (*     let _ = smt_is_must_failure := (Some false) in () *)
+                      (*   else *)
+                      (*     if is_lem_syn_reach_bound () then *)
+                      (*       let _ = smt_is_must_failure := (Some false) in () *)
+                      (*     else *)
+                      (*       () *)
+                      (*   in *)
+                    let _ = smt_is_must_failure := (Some false) in
+                    "(may) cause:"^s
+                      (* with _ -> *)
+                      (*     let _ = smt_is_must_failure := (Some false) in *)
+                      (*     "(may) cause:"^s *)
                   end
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )

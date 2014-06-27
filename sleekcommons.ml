@@ -49,7 +49,7 @@ type command =
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
-  | Validate of (ident * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
+  | Validate of (validate_result * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapeLFP of (ident list)
@@ -87,6 +87,11 @@ and meta_formula =
   | MetaEForm of Iformula.struc_formula
   | MetaEFormCF of CF.struc_formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
+
+and validate_result = 
+  | VR_Valid
+  | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
+  | VR_Unknown of string
 
 (*
   The second component is IF.formula and not CF.formula since

@@ -1,0 +1,26 @@
+
+data TPP_t {
+  TPP_t left;
+  TPP_t right;
+  TPP_t parent;
+}.
+
+pred TPP_plus<back:TPP_t> ==
+ self::TPP_t<left = null,right = null,parent = back>
+or (exists y,z: self::TPP_t<left = y,right = z,parent = back> * y::TPP_plus<self> * z::TPP_plus<self>).
+
+pred TPP_aux<down:TPP_t,top:TPP_t,b:TPP_t> ==
+ (exists up,right: self::TPP_t<left = down,right = right,parent = up> * right::TPP_plus<self> * up::TPP_aux<self,top,b>)
+or (exists up,left: self::TPP_t<left = left,right = down,parent = up> * left::TPP_plus<self> * up::TPP_aux<self,top,b>)
+or (exists right: self::TPP_t<left = down,right = right,parent = b> * right::TPP_plus<self> & self = top)
+or (exists left: self::TPP_t<left = left,right = down,parent = b> * left::TPP_plus<self> & self = top).
+
+pred TPP_plus_rev<b:TPP_t> ==
+ self::TPP_t<left = null,right = null,parent = b>
+or (exists x,up: x::TPP_t<left = null,right = null,parent = up> * up::TPP_aux<x,self,b>).
+
+checkentail_exact x::TPP_plus_rev<y>
+         |- x::TPP_plus<y>.
+
+expect Valid.
+

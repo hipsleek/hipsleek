@@ -480,7 +480,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -516,7 +516,7 @@ let rec string_of_typ_alpha = function
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -613,17 +613,21 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 (* let null_name = "null" *)
-let null_name = "_"
+let null_name = "_null"
+let null_type = Named ""
 
 let is_null name =
-  name = null_name
+  name == null_name
+
+let is_null_type t  =
+  t == null_type
 
 let inline_field_expand = "_"
 
-let sl_error = "separation entailment"
-let logical_error = "logical bug"
+let sl_error = "separation entailment" (* sl_error is a may error *)
+let logical_error = "logical bug" (* this kind of error: depend of sat of lhs*)
 let fnc_error = "function call"
-let lemma_error = "lemma"
+let lemma_error = "lemma" (* may error *)
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
@@ -781,7 +785,7 @@ let lemma_tail_rec_count = ref 0
 
 let lemma_syn_bound = 5
 
-let is_lem_syn_in_bound () = !lemma_syn_count < lemma_syn_bound
+let is_lem_syn_in_bound () = true (* !lemma_syn_count < lemma_syn_bound *)
 
 let is_lem_syn_reach_bound () = !lemma_syn_count = lemma_syn_bound
 
@@ -1224,6 +1228,7 @@ let show_unexpected_ents = ref true
     else print_endline s 
 
 (* generate baga inv from view *)
+let double_check = ref false
 let gen_baga_inv = ref false
 let pred_sat = ref false
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
@@ -1279,7 +1284,7 @@ let dis_bk ()=
   let _ = sat_timeout_limit:= 2. in
   let _ = user_sat_timeout := false in
   let _ = imply_timeout_limit := 3. in
-  let _ = en_slc_ps := false in
+  (* let _ = en_slc_ps := false in *)
   ()
 
 let dis_pred_sat () = 
@@ -1295,7 +1300,7 @@ let en_bk () =
   let _ = sat_timeout_limit:= 1. in
   let _ = user_sat_timeout := true in
   let _ = imply_timeout_limit := 1. in
-  let _ = en_slc_ps := true in
+  (* let _ = en_slc_ps := true in *)
   ()
 
 let en_pred_sat () =
@@ -1703,6 +1708,6 @@ let un_option opt default_val = match opt with
 
 let smt_return_must_on_error ()=
   let _ = if !return_must_on_pure_failure then
-    let _ = smt_is_must_failure := (Some true) in ()
+    (* let _ = smt_is_must_failure := (Some true) in *) ()
   else ()
   in ()

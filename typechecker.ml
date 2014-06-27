@@ -1964,7 +1964,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    res
 	  end;
         | Null pos ->
-	      let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Named "", res_name, Unprimed)) pos) (CP.Null pos) pos in
+	      let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Globals.null_type, res_name, Unprimed)) pos) (CP.Null pos) pos in
 	      let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	      let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	      res

@@ -1001,12 +1001,20 @@ and create_memo_group_wrapper_a (l1:b_formula list) status : memo_pure =
   let l = List.map (fun c -> (c, None)) l1 in
   create_memo_group l [] status 
 
-and anon_partition (l1:(b_formula *(formula_label option)) list) = 
+and anon_partition_x (l1:(b_formula *(formula_label option)) list) = 
   List.fold_left (fun (a1,a2) (c1,c2)-> 
       if (List.exists is_anon_var (bfv c1)) then (a1,(BForm (c1,c2))::a2) else ((c1,c2)::a1,a2)
   ) ([],[]) l1
 
-and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+and anon_partition (l1:(b_formula *(formula_label option)) list) =
+  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
+  let pr_out = pr_pair (pr_list (pr_pair !CP.print_b_formula pr_none)) (pr_list !CP.print_formula) in
+  Debug.no_1 "anon_partition" pr1 pr_out anon_partition_x l1
+
+
+and create_memo_group (l1:(b_formula * (formula_label option)) list) 
+    (l2:formula list) (status:prune_status)
+    : memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
   Debug.no_3 "[mcpure.ml] create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status

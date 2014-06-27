@@ -2153,7 +2153,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       (*     Hashtbl.add args_map vd.Cast.view_name args; *)
       (* ) cviews0 in *)
       let _ = List.iter (fun cv ->
-          Hashtbl.add CP.map_baga_invs cv.C.view_name Expure.EPureI.mk_false_disj
+          Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
       let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
       (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
@@ -2181,7 +2181,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             ) cviews0 in
             (* let new_invs_list = Expure.fix_ef views_list 10 args_map CP.map_baga_invs in *)
             let new_invs_list = Expure.fix_ef view_list cviews0 in
-            let new_invs_list = List.map (fun epd -> Expure.EPureI.to_cpure_disj epd) new_invs_list in
+            let new_invs_list = List.map (fun epd -> Excore.EPureI.to_cpure_disj epd) new_invs_list in
             let _ = Debug.tinfo_hprint (add_str "view invs" (pr_list (fun v ->
                 Cprinter.string_of_mix_formula v.Cast.view_user_inv))) view_list no_pos in
             let _ = Debug.tinfo_hprint (add_str "baga_invs" (pr_list Cprinter.string_of_ef_pure_disj)) new_invs_list no_pos in
@@ -2189,8 +2189,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let lst = List.combine view_list new_invs_list in
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
-                  let uv = Expure.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
-                  Expure.EPureI.imply_disj (Expure.EPureI.from_cpure_disj bi) uv
+                  let uv = Excore.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
+                  Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
               ) lst  in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()
@@ -2201,8 +2201,8 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       ) ls_mut_rec_views1 in
       let cviews1 = if !Globals.gen_baga_inv then
         List.map (fun cv ->
-            let inv = Hashtbl.find CP.map_baga_invs cv.C.view_name in
-            let _ = Debug.ninfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
+            let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
+            let _ = Debug.binfo_hprint (add_str ("baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv no_pos in
             let _ = print_string_quiet "\n" in
             {cv with C.view_baga_inv = Some inv}
         ) cviews0
@@ -2624,7 +2624,7 @@ and find_materialized_prop_x params forced_vars (f0 : CF.formula) : C.mater_prop
   let eqns = MCP.ptr_equations_with_null pf in
   let asets = Context.alias eqns in
   let self_aset =
-  Context.get_aset asets (CP.SpecVar (Named "", self, Unprimed))
+  Context.get_aset asets (CP.SpecVar (Globals.null_type, self, Unprimed))
   in self_aset
 *)
 and all_paths_return (e0 : I.exp) : bool =
@@ -3502,7 +3502,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
       | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
             ((C.Unfold {
-                C.exp_unfold_var = CP.SpecVar (Named "", v, p);
+                C.exp_unfold_var = CP.SpecVar (Globals.null_type, v, p);
                 C.exp_unfold_pos = pos;
             }), C.void_type)
                 (* An Hoa MARKED *)
@@ -4376,7 +4376,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       C.exp_block_pos = pos; }),new_t))
                 end
                     (***********<< processing New ********)
-      | I.Null pos -> ((C.Null pos), (Named ""))
+      | I.Null pos -> ((C.Null pos), Globals.null_type)
       | I.Return {I.exp_return_val = oe;
         I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
         I.exp_return_pos = pos} ->  begin
@@ -6412,7 +6412,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     ) in 
     res
   ) in
-  let linearize_one_formula f pos (tl:spec_var_type_list) = (
+  let linearize_one_formula_x f pos (tl:spec_var_type_list) = (
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
     let dl = f.IF.formula_delayed in
@@ -6455,12 +6455,15 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (* let new_f = Immutable.normalize_field_ann_formula new_f in *)
     (new_f,type_f, newvars, n_tl)
   ) in
-  (* let linearize_one_formula f pos = ( *)
-  (*   let pr (a,b) = Cprinter.string_of_one_formula a in *)
-  (*   Debug.no_1 "linearize_one_formula"  *)
-  (*       Iprinter.string_of_one_formula pr *)
-  (*       (fun _ -> linearize_one_formula f pos) f *)
-  (* ) in *)
+  
+  let linearize_one_formula f pos tlist = (
+    let pr (a,b) = Cprinter.string_of_one_formula a in
+    let pr_out (f,_,_,_) = !CF.print_one_formula f in 
+    Debug.no_1 "linearize_one_formula"
+        Iprinter.string_of_one_formula pr_out
+        (fun _ -> linearize_one_formula_x f pos tlist) f
+  ) in
+  
   let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
@@ -6475,7 +6478,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_p = CP.join_disjunctions (new_p::new_constr) in
     (* let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = Cpure.arith_simplify 5 new_p in
-    (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
+    (* let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_fl = trans_flow_formula fl pos in
     let new_a = ref [] in
     let newvars2 = ref [] in
@@ -6486,6 +6489,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       new_a := !new_a @ [a1];
       newvars2 := !newvars2 @ nvs;
     ) a;
+    (* let _ = print_string("\new_p: "^(Cprinter.string_of_pure_formula new_p)) in *)
     (new_h, new_p, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl)
   ) in
   match f0 with
@@ -6538,7 +6542,7 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
     | _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
 else ()
   
-and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   match f0 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf tlist , lbl) 
@@ -6558,7 +6562,13 @@ and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula
           let pf = trans_pure_formula f tlist in
           let sv = trans_var (v,p) tlist pos in
           CP.mkExists [ sv ] pf lbl pos
-              
+
+and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+  let pr_f = !IP.print_formula in
+  let pr_tlist = string_of_tlist in
+  let pr_out = !CP.print_formula in
+  Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out trans_pure_formula_x f0 tlist
+
 and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0           
       
@@ -8190,8 +8200,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
     let h,p,_,_,_ = CF.split_components b0 in
     let cm,ba = Cvutil.xpure_heap_symbolic_i cp h 0 in
-	let ms = Cvutil.formula_2_mem b0 cp in
-	let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
+    let ms = Cvutil.formula_2_mem b0 cp in
+    let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
     let xp = fold_mem_lst (CP.mkTrue no_pos) true true cm in
     let all_p = fold_mem_lst xp true true p in
     let split_p = filter_pure_conj_list (snd (get_pure_conj_list all_p)) in
@@ -8319,6 +8329,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let pr = pr_list (pr_pair Cprinter.string_of_b_formula (pr_list Cprinter.string_of_formula_label_only)) in
     Debug.no_1 "get_safe_prune_conds" pr pr (fun _ -> get_safe_prune_conds pc orig_pf) pc
   in
+
   let (guard_list,u_inv_ls,pure_form_ls) = pick_pures init_form_lst v_l u_inv in
   let new_guard_list = List.map (fun (l,(svl,f)) -> let r = List.assoc l u_inv_ls in (l,(svl,f@r))) guard_list in
   let invariant_list = compute_invariants v_l new_guard_list in  
@@ -8342,31 +8353,32 @@ and view_prune_inv_inference_x cp vd =
   let sf  = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   if ((List.length f_branches) == 1) && (CF.isAnyConstFalse (fst (List.hd f_branches))) then
-	let def_lbl = snd (List.hd f_branches) in
+    let def_lbl = snd (List.hd f_branches) in
     { vd with  
       C.view_complex_inv =  Some ( MCP.mkMFalse no_pos) ; 
       C.view_prune_branches = [def_lbl]; 
       C.view_prune_conditions = [] ; 
       C.view_prune_conditions_baga = [];
       C.view_prune_invariants = [([def_lbl],([],[(CP.mkFalse_b no_pos)]))];}
-  else 
-  let branches = snd (List.split f_branches) in
-  let u_inv = vd.C.view_user_inv in
-  let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (drop_pf u_inv) no_pos in    
-  let c_inv = 
-    if (List.length branches)=1 then 
-      (* TODO : to compute complex_inv from formula *)
-      let mf  = vd.C.view_x_formula in
-      let r = filter_complex_inv mf in
-      if (isConstMTrue r) then None else Some r
-    else None in
-  let v' = { vd with  
-      C.view_complex_inv =  c_inv ; 
-      C.view_prune_branches = branches; 
-      C.view_prune_conditions = conds ; 
-      C.view_prune_conditions_baga = baga_cond;
-      C.view_prune_invariants = invs;} in 
-  v'    
+  else (
+    let branches = snd (List.split f_branches) in
+    let u_inv = vd.C.view_user_inv in
+    let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (drop_pf u_inv) no_pos in    
+    let c_inv = 
+      if (List.length branches)=1 then 
+        (* TODO : to compute complex_inv from formula *)
+        let mf  = vd.C.view_x_formula in
+        let r = filter_complex_inv mf in
+        if (isConstMTrue r) then None else Some r
+      else None in
+    let v' = { vd with  
+        C.view_complex_inv =  c_inv ; 
+        C.view_prune_branches = branches; 
+        C.view_prune_conditions = conds ; 
+        C.view_prune_conditions_baga = baga_cond;
+        C.view_prune_invariants = invs;} in 
+    v'
+  )
 
 and barrier_prune_inv_inference_x cp bd = 
   (*let sf  = CP.SpecVar (Named bd.C.barrier_name, self, Unprimed) in*)

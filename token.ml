@@ -67,6 +67,10 @@ type sleek_token =
   | LOGICAL
   | INFINITY
   | VALIDATE
+  | VALID
+  | FAIL
+  | FAIL_MUST
+  | FAIL_MAY
   | XPURE
 
 
@@ -138,6 +142,10 @@ module Token = struct
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
     | VALIDATE -> "expect"
+    | VALID -> "Valid"
+    | FAIL -> "Fail"
+    | FAIL_MUST -> "Fail_Must"
+    | FAIL_MAY -> "Fail_May"
     | XPURE -> "XPURE"
     | TOPAREN -> "<#" 
     | TCPAREN -> "#>" (*Open and close paren for thread heap*)

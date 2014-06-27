@@ -18,9 +18,8 @@ use Time::HiRes qw(gettimeofday);
 my $cwd = Cwd::cwd();
 my $test_path = $cwd . "/latest";
 my $final_path = $cwd . "/final";
-my $sleek = "$cwd/bin/sleek"; #"../../sleek";
-my $smt2slk = "$cwd/bin/smt2slk"; #"smt2slk"; #"../smt2slk/bin/smt2slk";
-my $options = "--smt-compete-test";
+my $sleek = "../../sleek";
+my $smt2slk = "smt2slk"; #"$cwd/bin/smt2slk"; #"../smt2slk/bin/smt2slk";
 
 my $unexpected_count = 0;
 my $unexpected_files = "";
@@ -45,6 +44,7 @@ my $test_10s;
 my $test_fail;
 my $test_bench = "";
 my $test_name = "";
+my $test_opt = "";
 
 sub println {
   print $_[0];
@@ -56,6 +56,7 @@ sub println {
   
 GetOptions (
   "all" => \$test_all,
+  "flags=s" => \$test_opt,
   "fail" => \$test_fail,
   "over10" => \$test_10s,
   "bench=s" => \$test_bench,
@@ -64,6 +65,12 @@ GetOptions (
   "time" => \$print_time,
   "timeout=i"  => \$timeout)
 or die("Error in command line arguments\n");
+
+my @options = ("--smt-compete-test");
+if ($test_opt ne "") {
+  my @test_opts =  split(/ /, $test_opt);
+  push (@options, @test_opts); 
+}
 
 my @smt2_files;
 
@@ -90,31 +97,34 @@ if ($test_all) {
   if ($test_fail) {
     @test_files = (
     # Unexpected
-    "08.tst.smt2",
-    "10.tst.smt2",
-    "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
-    "dll-entails-dll0+.smt2",
-     "dll-rev-entails-dll.smt2",
-    "dll-entails-dll-rev.smt2",
-    "dll-mid-entails-dll-rev.smt2",
-    "dll-rev-entails-dll-mid.smt2",
-    "dll-spaghetti-existential.smt2",
-    "dll2-entails-dll2-rev.smt2",
-    "dll2-rev-entails-dll2.smt2",
-    "dll2-spaghetti-existential.smt2",
-    "dll2-spaghetti.smt2",
-    "nlcl-vc05.smt2",
-    "node-dll-rev-dll-entails-dll.smt2",
-    "tll-pp-entails-tll-pp-rev.smt2",
-    "tll-pp-rev-entails-tll-pp.smt2",
-    "tll-ravioli-existential.smt2",
-    "tree-pp-entails-tree-pp-rev.smt2",
-    "tree-pp-rev-entails-tree-pp.smt2",
-    "dll-vc07.smt2",
-    "dll-vc08.smt2","dll-vc10.smt2",
-    "nlcl-vc05.smt2",
+"11.tst.smt2",
+"dll-spaghetti-existential.smt2",
+"nlcl-vc05.smt2",
+"tll-ravioli-existential.smt2"
+    # "08.tst.smt2",
+    # "10.tst.smt2",
+    # "11.tst.smt2","12.tst.smt2","16.tst.smt2","21.tst.smt2",
+    # "dll-entails-dll0+.smt2",
+    #  "dll-rev-entails-dll.smt2",
+    # "dll-entails-dll-rev.smt2",
+    # "dll-mid-entails-dll-rev.smt2",
+    # "dll-rev-entails-dll-mid.smt2",
+    # "dll-spaghetti-existential.smt2",
+    # "dll2-entails-dll2-rev.smt2",
+    # "dll2-rev-entails-dll2.smt2",
+    # "dll2-spaghetti-existential.smt2",
+    # "dll2-spaghetti.smt2",
+    # "nlcl-vc05.smt2",
+    # "node-dll-rev-dll-entails-dll.smt2",
+    # "tll-pp-entails-tll-pp-rev.smt2",
+    # "tll-pp-rev-entails-tll-pp.smt2",
+    # "tll-ravioli-existential.smt2",
+    # "tree-pp-entails-tree-pp-rev.smt2",
+    # "tree-pp-rev-entails-tree-pp.smt2",
+    # "dll-vc07.smt2",
+    # "dll-vc08.smt2","dll-vc10.smt2",
+    # "nlcl-vc05.smt2",
     # Exception
-
     );
   } elsif ($test_10s) {
     @test_files = (
@@ -352,7 +362,7 @@ foreach my $smt2_file (@smt2_files) {
       open(STDOUT, ">&=WRITEME") or die "Couldn't redirect STDOUT: $!";
       open(STDERR, ">&=WRITEME") or die "Couldn't redirect STDERR: $!";
       close(README);
-      exec($sleek, $options, "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
+      exec($sleek, @options, "$tmp_dir/$smt2_name.slk") or die "Couldn't run $sleek: $!\n";
       exit(0);
     }
   } else { # No timeout setting
