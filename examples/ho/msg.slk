@@ -1,0 +1,22 @@
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
+
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<>
+ inv true.
+
+
+//checkentail P |- emp.
+
+
+checkentail %P |- emp.
+
+/*
+checkentail c::MSG{x::cell<v> & x>0}<> * x::cell<3>
+    |- c::MSG{%P}<> .
+*/
+print residue.
+

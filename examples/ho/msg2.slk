@@ -1,0 +1,15 @@
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
+
+data cell {
+  int x;
+}.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+
+checkentail c::MSG{z::cell<v> & v>0}<z> * x::cell<3>
+    |- (exists f: c::MSG{P}<f>@L * P & f=z).
+print residue.
+

@@ -14,6 +14,10 @@ checkentail t::threadR {y::cell<1111>*x::cell<2222> & true,G} <>
     |- t::threadR{x::cell<2222> & true,_}<>.
 print residue.
 
+checkentail t::threadR {y::cell<1111>*x::cell<2222> & true,G} <> 
+    |- t::threadR{A,B}<>.
+print residue.
+
 /*
 # thread2.slk
 
