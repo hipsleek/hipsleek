@@ -7008,8 +7008,13 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                           (Some (List.hd hvars), List.tl hvars))
               | None -> (None,hvars)
             in
+            let ho_hvars = List.map (fun f ->
+                let n_f, _ , _  = case_normalize_renamed_formula prog new_used_names posib_expl f ann_vars (*TOCHECH: how about two other return values*)
+                in n_f) b.IF.h_formula_heap_ho_arguments
+            in
             let new_h = IF.HeapNode{ b with 
                 IF.h_formula_heap_arguments = hvars;
+                IF.h_formula_heap_ho_arguments = ho_hvars;
                 IF.h_formula_heap_perm = perm_var;}
             in (new_used_names, evars, new_h, link_f)
       | IF.Star

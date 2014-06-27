@@ -1,4 +1,3 @@
- 
 (*
 26.11.2008
 todo: disable the default logging for omega
@@ -9090,39 +9089,41 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     Debug.devel_zprint (lazy ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs))) pos; 
               (* Debug.tinfo_hprint (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
               (* Debug.tinfo_hprint (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
-    let l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = match l_node with
+    let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = match l_node with
       | ThreadNode {h_formula_thread_name = l_node_name;
-        h_formula_thread_perm = perm;} -> ([], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
+        h_formula_thread_perm = perm;} -> ([], [], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = l_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
         h_formula_data_param_imm = param_ann;
-        h_formula_data_arguments = l_args} -> (l_args, l_node_name, "data", perm, ann, param_ann)
+        h_formula_data_arguments = l_args} -> ([], l_args, l_node_name, "data", perm, ann, param_ann)
       | ViewNode {h_formula_view_name = l_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args;
+        h_formula_view_ho_arguments = l_ho_args;
         h_formula_view_annot_arg = l_annot
-        } -> (l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
-      | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
+        } -> (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
+      | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",  None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" in
-    let r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
+    let r_ho_args, r_args, r_node_name,  r_var, r_perm, r_ann, r_param_ann = match r_node with
       | ThreadNode {h_formula_thread_name = r_node_name;
                     h_formula_thread_node = r_var;
-        h_formula_thread_perm = perm;} -> ([], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
+        h_formula_thread_perm = perm;} -> ([], [], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
       | DataNode {h_formula_data_name = r_node_name;
         h_formula_data_perm = perm;
         h_formula_data_imm = ann;
         h_formula_data_param_imm = param_ann;
         h_formula_data_arguments = r_args;
-        h_formula_data_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, param_ann)
+        h_formula_data_node = r_var} -> ([], r_args, r_node_name, r_var, perm, ann, param_ann)
       | ViewNode {h_formula_view_name = r_node_name;
         h_formula_view_perm = perm;
         h_formula_view_imm = ann;
         h_formula_view_arguments = r_args;
+        h_formula_view_ho_arguments = r_ho_args;
         h_formula_view_annot_arg = r_annot;
-        h_formula_view_node = r_var} -> (r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
-      | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable,[])
+        h_formula_view_node = r_var} -> (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
+      | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable,[])
       | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" in     
 
     (* An Hoa : found out that the current design of do_match 
@@ -9499,6 +9500,35 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ = DD.info_zprint  (lazy  ("  rhs: " ^ (Cprinter.string_of_formula rhs))) pos in *)
               (* let _ = DD.info_zprint  (lazy  ("  estate.es_formula: " ^ (Cprinter.string_of_formula estate.es_formula))) pos in *)
               (*  let _ = DD.info_zprint  (lazy  ("  new_ante: " ^ (Cprinter.string_of_formula new_ante))) pos in *)
+              (*=====================================================*)
+              (***********Handle high-order argument: BEGIN**********)
+              if (List.length l_ho_args != List.length r_ho_args) then
+                let err_msg = "ho_args mismatched between LHS node and RHS node" in
+                (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_msg estate (CF.formula_of_heap HFalse pos) None pos, 
+                CF.mk_failure_must "199" Globals.sl_error, estate.es_trace)), NoAlias)
+              else
+                let args = List.combine l_ho_args r_ho_args in
+                let match_one_ho_arg ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+                  (* lhs <==> rhs: instantiate any high-order variables in rhs
+                     Currently assume that only HVar is in the rhs
+                  *)
+                  let hvars = CF.extract_hvar_f rhs in
+                  [List.hd hvars, lhs]
+                in
+                let maps = List.map match_one_ho_arg args in
+                let maps = List.concat maps in
+                let new_conseq = CF.subst_hvar new_conseq maps in
+                let qvars,new_conseq = CF.split_quantifiers new_conseq in
+                let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in
+                (* let kept_hvars = CF.get_hvar r_h in *)
+                (* let wo_hvars = CF.drop_hvar r_h in *)
+                (* let kept_hvars = CF.keep_hvar l_h in *)
+                (* let wo_hvars = CF.drop_hvar l_h in *)
+
+              (***********Handle high-order argument: END**********)
+              (*=====================================================*)
+
+
               Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
               Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
               Debug.tinfo_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
@@ -9517,6 +9547,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_residue_pts = n_es_res;
                   es_success_pts = n_es_succ; 
                   es_rhs_eqset = subs_rhs_eqset;
+                  es_ho_vars_map = estate.es_ho_vars_map@maps;
 	          } in
               Debug.tinfo_hprint (add_str "new_es" (Cprinter.string_of_entail_state)) new_es pos;
 	          (* An Hoa : trace detected: need to change the left hand side before this point which forces to change the new_ante at an earlier check point *)

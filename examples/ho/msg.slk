@@ -14,8 +14,11 @@ pred_prim MSG{F}<>
 
 //checkentail %P |- emp.
 
-checkentail c::MSG{x::cell<v> & v>0}<> * x::cell<3>
-    |- emp. //c::MSG{%P}<> .
+//checkentail emp * emp * emp |- emp.
+
+
+checkentail c::MSG{x::cell<1> & true}<> * x::cell<1> 
+    |- c::MSG{%P}<> * %P .
 
 print residue.
 

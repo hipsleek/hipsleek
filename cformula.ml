@@ -8397,6 +8397,7 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
+  es_ho_vars_map :  ( CP.spec_var * formula) list; (* map: HVar -> its formula *)
   es_heap_lemma : h_formula list;
   es_conseq_pure_lemma : CP.formula; (*conseq of entailment before rhs_plit. for lemmasyn*)
     (* heaps that have been replaced by lemma rewriting *)
@@ -8678,6 +8679,7 @@ let empty_es flowt grp_lbl pos =
 {
   es_formula = x;
   es_heap = HEmp;
+  es_ho_vars_map = [];
   es_heap_lemma = [];
   es_conseq_pure_lemma = CP.mkTrue pos;
   es_history = [];
@@ -11472,13 +11474,104 @@ let keep_hrel_x e =
   let f hf = match hf with
     | HRel _ -> Some [hf]
     | _ -> None
-  in 
+  in
   fold_h_formula e f List.concat
 
 let keep_hrel e=
   let pr1 = !print_h_formula in
   Debug.no_1 "keep_hrel" pr1 (pr_list pr1)
       (fun _ -> keep_hrel_x e) e
+
+let extract_hvar (hf:h_formula) : CP.spec_var list =
+  let f hf = match hf with
+    | HVar v -> Some [v]
+    | _ -> None
+  in 
+  fold_h_formula hf f List.concat
+
+let extract_hvar_f_x (f0:formula) : CP.spec_var list =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        (
+            extract_hvar h1
+        )
+    | _ -> report_error no_pos "extract_hvar: OR unexpected, expect HVar only"
+  in
+  helper f0
+
+let extract_hvar_f (f0:formula) : CP.spec_var list =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_hvar_f" pr1 pr2
+      (fun _ ->  extract_hvar_f_x f0) f0
+
+(*get hvars whose spec_var belong to vars*)
+let get_hvar_x e vars =
+  let f hf = match hf with
+    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some [hf] else None
+    | _ -> None
+  in 
+  fold_h_formula e f List.concat
+
+(*get hvars whose spec_var belong to vars*)
+let get_hvar e vars =
+  let pr1 = !print_h_formula in
+  Debug.no_2 "get_hvar" pr1 !print_svl (pr_list pr1)
+      get_hvar_x e vars
+
+(*drop hvars whose spec_var belong to vars*)
+let drop_hvar_x e vars =
+  let f hf = match hf with
+    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then None else Some [hf]
+    | _ -> Some [hf]
+  in
+  fold_h_formula e f List.concat
+
+let drop_hvar e vars =
+  let pr1 = !print_h_formula in
+  Debug.no_2 "drop_hvar" pr1 !print_svl (pr_list pr1)
+      drop_hvar_x e vars
+
+let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
+  let rec helper f0=
+    match f0 with
+      | Base fb ->
+            let hvars = get_hvar fb.formula_base_heap [f] in
+            let fs = List.map (fun h -> match h with 
+              | HVar _ -> t
+              | _ -> report_error no_pos "subst_hvar: expect HVar only"
+            ) hvars in
+            let n_h = drop_hvar fb.formula_base_heap [f] in
+            let n_h = if (n_h=[]) then HEmp else List.hd n_h in (*TOCHECK*)
+            (*Potential issues to consider: (1) duplicated HVars, (2) renaming of existential vars*)
+            let n_f = Base {fb with formula_base_heap = n_h} in
+            let n_f2 = List.fold_left (fun f1 f2 -> normalize_combine f1 f2 no_pos) n_f fs in
+            n_f2
+      | Exists _ ->
+            let qvars, base = split_quantifiers f0 in
+            let base = helper base in
+            add_quantifiers qvars base
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1 ;
+            formula_or_f2 = helper orf.formula_or_f2;}
+  in
+  helper f0
+
+let rec subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
+  let pr1 = !print_formula in
+  let pr2 = pr_pair !print_sv !print_formula in
+    Debug.no_2 "subst_one_hvar" pr1 pr2 pr1
+        subst_one_hvar_x f0 (f,t)
+
+let subst_hvar_x f0 subst=
+  List.fold_left (fun f (fr,t) -> subst_one_hvar f (fr,t)) f0 subst
+
+let subst_hvar f subst=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !print_sv !print_formula) in
+  Debug.no_2 "subst_hvar" pr1 pr2 pr1
+      subst_hvar_x f subst
 
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 

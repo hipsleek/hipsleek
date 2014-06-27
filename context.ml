@@ -391,6 +391,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
             let mt_res = filter_match_res_list mt_res rhs_node in
             (* (accfold_res @ mt_res) *)
             mt_res
+    | HVar _ -> [] (*TODO:HO*)
     | HTrue -> (
           if (rhs_rest = HEmp) then (
               (* if entire RHS is HTrue then it matches with the entire LHS*)
