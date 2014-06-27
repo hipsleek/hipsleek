@@ -12,11 +12,10 @@ pred_prim MSG{F}<>
 //checkentail P |- emp.
 
 
-checkentail %P |- emp.
+//checkentail %P |- emp.
 
-/*
 checkentail c::MSG{x::cell<v> & x>0}<> * x::cell<3>
     |- c::MSG{%P}<> .
-*/
+
 print residue.
 
