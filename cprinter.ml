@@ -72,6 +72,11 @@ let pr_pair_aux pr_1 pr_2 (a,b) =
   pr_2 b
   (* ;fmt_string ")" *)
 
+let pr_map_aux pr_1 pr_2 (a,b) =
+  (* fmt_string "("; *)
+  pr_1 a; fmt_string " --> ";
+  pr_2 b
+
 let pr_opt f x = match x with
     | None -> fmt_string "None"
     | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
@@ -2533,6 +2538,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           begin
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
+          let lho = collect_pre_ho_vars ctx in
           let lrel = collect_rel ctx in
           let hprel = collect_hp_rel ctx in
           let term_err = collect_term_err ctx in
@@ -2540,9 +2546,10 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
           pr_wrap_test "" Gen.is_empty (pr_seq "" fmt_string) term_err;
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
-          pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
+          pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp);
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
           pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog)) (hprel); 
+          pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (lho);
           f b;
           fmt_print_newline ();
           fmt_close_box ();
