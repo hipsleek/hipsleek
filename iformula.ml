@@ -505,9 +505,9 @@ and mkHeapNode_x c id ho deref dr i f inv pd perm hl hl_i ofl l=
              h_formula_heap_full = f;
              h_formula_heap_with_inv = inv;
              h_formula_heap_pseudo_data = pd;
-             h_formula_heap_perm = perm; (*LDK: perm from parser*)
+             h_formula_heap_perm = perm; 
              h_formula_heap_arguments = hl;
-             h_formula_heap_ho_arguments = ho; (* TODO:HO *)
+             h_formula_heap_ho_arguments = ho;
              h_formula_heap_label = ofl;
              h_formula_heap_pos = l }
 
@@ -525,7 +525,7 @@ and mkHeapNode2 c id ho deref dr i f inv pd perm ohl hl_i ofl l =
               h_formula_heap2_full = f;
               h_formula_heap2_with_inv = inv;
               h_formula_heap2_pseudo_data = pd;
-              h_formula_heap2_perm = perm; (*LDK: perm from parser*)
+              h_formula_heap2_perm = perm;
               h_formula_heap2_arguments = ohl;
               h_formula_heap2_ho_arguments = ho;
               h_formula_heap2_label = ofl;
@@ -1208,6 +1208,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_with_inv = winv;
                h_formula_heap_perm = perm; (*LDK*)
                h_formula_heap_arguments = args;
+               h_formula_heap_ho_arguments = ho_args;
                h_formula_heap_pseudo_data = ps_data;
                h_formula_heap_label = l;
                h_formula_heap_pos = pos}) ->
@@ -1227,7 +1228,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm1 ; (*LDK*)
                  h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-                 h_formula_heap_ho_arguments = [];
+                 h_formula_heap_ho_arguments = List.map (apply_one s) ho_args;
                  h_formula_heap_pseudo_data = ps_data;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos})
@@ -1240,6 +1241,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                 h_formula_heap2_full = full;
                 h_formula_heap2_with_inv = winv;
                 h_formula_heap2_arguments = args;
+                h_formula_heap2_ho_arguments = ho_args;
                 h_formula_heap2_perm = perm; (*LDK*)
                 h_formula_heap2_pseudo_data = ps_data;
                 h_formula_heap2_label = l;
@@ -1261,7 +1263,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                   h_formula_heap2_with_inv = winv;
                   h_formula_heap2_perm = perm1; (*LDK*)
                   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-                  h_formula_heap2_ho_arguments = []; (* TODO:HO *)
+                  h_formula_heap2_ho_arguments = List.map (apply_one s) ho_args;
                   h_formula_heap2_pseudo_data = ps_data;
                   h_formula_heap2_label = l;
                   h_formula_heap2_pos = pos})
