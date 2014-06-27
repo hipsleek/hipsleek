@@ -6848,6 +6848,14 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             (rest_used_names, hvars, evars, link_f)
       | [] -> (used_names, [], [], IP.mkTrue pos) in
 
+  let match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
+        ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
+    let pr1 = pr_list (fun (i,_) -> i) in
+    let pre = Iprinter.string_of_formula_exp in
+    let pr2 = pr_list (fun (p,_) -> (pr_pair pre string_of_bool) p) in
+    let pr3 (l1,l2,l3,f) = pr_triple pr1 (pr_list pre) pr1 (l1,l2,l3) in
+    Debug.no_2 "match_exp" pr1 pr2 pr3 (fun _ _ -> match_exp used_names hargs pos) used_names hargs
+  in
   let rec flatten f = match f with
     | IF.HTrue -> [IF.HTrue]
     | IF.HFalse -> []
@@ -6982,12 +6990,15 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                       | _ ->  [LO.unlabelled], [f])
             in
             let args = b.IF.h_formula_heap_arguments in
+            let ho_args = b.IF.h_formula_heap_ho_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
             Debug.tinfo_hprint (add_str "heap args" (pr_list (Iprinter.string_of_formula_exp))) args pos;
-            (* add a flag to indicate if it is a relational parameter *)
+            Debug.dinfo_hprint (add_str "ho_args" (pr_list (Iprinter.string_of_formula))) ho_args pos;
+            (* add a flag to indicate if it is a relational parameter or higher-order predicate
+               to disable renaming under these two scenarios *)
             let new_args = 
               if tp_vars==[] then List.map (fun e -> (e,false)) args
-              else List.combine args (List.map (fun (a,_) -> is_RelT a) tp_vars)
+              else List.combine args (List.map (fun (a,_) -> is_RelT a || ho_args!=[]) tp_vars)
             in
             let perm_var = List.map (fun e -> (e,false)) perm_var in
             let heap_args = (List.combine (perm_var@new_args) (perm_labels@labels)) in
