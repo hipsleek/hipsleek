@@ -2036,6 +2036,20 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
       let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars vdef in 
+      let conv_baga_inv baga_inv =
+        match baga_inv with
+          | None -> None
+          | Some lst ->
+                Some (List.map (fun (idl,pf) ->
+                    let svl = List.map (fun c -> trans_var (c,Unprimed) n_tl pos) idl in
+                    let svl, _, _, _ = Immutable.split_sv svl vdef in
+                    let cpf = trans_pure_formula pf n_tl in
+                    let cpf = Cpure.arith_simplify 1 cpf in
+                    (svl,cpf)
+                ) lst)
+      in
+      let vbi = conv_baga_inv vdef.I.view_baga_inv in
+      let vbui = conv_baga_inv vdef.I.view_baga_under_inv in
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -2068,8 +2082,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_data_name = data_name;
           C.view_formula = cf;
           C.view_x_formula = memo_pf_P;
-          C.view_baga_inv = None;
-          C.view_baga_under_inv = None;
+          C.view_baga_inv = vbi;
+          C.view_baga_under_inv = vbui;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
           C.view_baga = [];
