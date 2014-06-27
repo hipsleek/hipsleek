@@ -193,6 +193,9 @@ module Make (Token : SleekTokenS)
 	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+         ("inv-exact", INV_EXACT);
+         ("inv-sat", INV_SAT);
+         ("BG", BG);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA TLEM);

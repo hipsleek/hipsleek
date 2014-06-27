@@ -2069,6 +2069,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           C.view_formula = cf;
           C.view_x_formula = memo_pf_P;
           C.view_baga_inv = None;
+          C.view_baga_under_inv = None;
           C.view_xpure_flag = xpure_flag;
           C.view_addr_vars = [];
           C.view_baga = [];
