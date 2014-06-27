@@ -7,19 +7,8 @@ pred_prim MSG{F}<>
  inv true.
 
 
-//checkentail P |- emp.
-
-
-//checkentail %P |- emp.
-
 checkentail c::MSG{x::cell<v> & v>0}<> * x::cell<3>
-    |- emp. //c::MSG{%P}<> .
-
-print residue.
-
-
-checkentail c::MSG{x::cell<v> & v>0}<> * x::cell<3>
-    |- c::MSG{%P}<> .
+    |- c::MSG{%P}<> * %P .
 print residue.
 
 /* 

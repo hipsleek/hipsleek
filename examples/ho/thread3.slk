@@ -16,7 +16,7 @@ data cell {
   lemma t::threadR{P * Q,G}<> ==> t::thrd{P,G}<> * t::thrd[Q,G]<>.
 */
 
-lemma_unsafe t::threadR{P,G}<> * t::dead<>@L -> P.
+lemma_unsafe t::threadR{%P,%G}<> * t::dead<>@L -> %P.
 
 checkentail t::threadR {y::cell<1111>*x::cell<2222> & true,G} <> 
     |- t::threadR{x::cell<2222> & true,_}<>.
