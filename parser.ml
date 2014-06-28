@@ -584,6 +584,14 @@ let peek_dc =
              | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
 
+ let peek_view_decl = 
+   SHGram.Entry.of_parser "peek_heap_args"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [IDENTIFIER n,_;LT,_] ->  ()
+             (* | [IDENTIFIER n,_;OBRACE,_] ->  () (\*This is for prim_view_decl*\) *)
+             | _ -> raise Stream.Failure)
+
  let peek_heap_args = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
@@ -2574,7 +2582,7 @@ type_decl:
    | t= template_data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
-   | v=view_decl; `SEMICOLON -> View v
+   | peek_view_decl; v=view_decl; `SEMICOLON -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b

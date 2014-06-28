@@ -1,5 +1,5 @@
 
-data chann {
+data chan {
   int y;
 }
 
@@ -10,15 +10,15 @@ data cell {
 pred_prim MSG{F}<c:cell>
 inv c!=null;
 
-int create_msg (int x)
+chan create_msg (int x)
   requires true
   ensures (exists v: res::MSG{v::cell<1> & true}<v>);
 
-void send(int ch, cell c)
+void send(chan ch, cell c)
     requires ch::MSG{%P}<c>@L * %P
     ensures  emp;
 
- void receive(int ch, ref cell c)
+ void receive(chan ch, ref cell c)
     requires ch::MSG{%P}<a>@L // use an implicit var a
     ensures  %P & c'=a;
 

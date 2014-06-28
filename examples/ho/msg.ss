@@ -2,7 +2,7 @@ data cell {
   int x;
 }
 
-data chann {
+data chan {
   int y;
 }
 
@@ -12,15 +12,17 @@ inv c!=null;
 pred_prim MSG2<c:cell>
 inv c!=null;
 
-int create_msg (int x)
+// "chan" type lost?
+// what is the type for res in res::MSG{v::cell<1> & true}<v>?
+chan create_msg (int x)
   requires true
   ensures (exists v: res::MSG{v::cell<1> & true}<v>);
 
-void send(int ch, cell c)
+void send(chan ch, cell c)
     requires ch::MSG{%P}<c>@L * %P
     ensures  emp;
 
- void receive(int ch, ref cell c)
+void receive(chan ch, ref cell c)
     requires ch::MSG{%P}<c>@L // do we use c or c'??
     ensures  %P & c'=c;
 
