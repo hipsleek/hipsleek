@@ -9513,8 +9513,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                      Currently assume that only HVar is in the rhs
                   *)
                   let hvars = CF.extract_hvar_f rhs in
-                  [List.hd hvars, lhs]
+                  match hvars with
+                    | [] -> []
+                    | h::_ ->  [(h, lhs)]
                 in
+                let p1 = Cprinter.string_of_formula in
+                let match_one_ho_arg (p : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
+                  Debug.no_1 "match_one_ho_arg" (pr_pair p1 p1) (pr_list (pr_pair Cprinter.string_of_spec_var p1)) match_one_ho_arg p in
                 let maps = List.map match_one_ho_arg args in
                 let maps = List.concat maps in
                 let new_conseq = CF.subst_hvar new_conseq maps in
@@ -9547,7 +9552,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_residue_pts = n_es_res;
                   es_success_pts = n_es_succ; 
                   es_rhs_eqset = subs_rhs_eqset;
-                  es_ho_vars_map = estate.es_ho_vars_map@maps;
+                  es_ho_vars_map = maps@estate.es_ho_vars_map;
 	          } in
               Debug.tinfo_hprint (add_str "new_es" (Cprinter.string_of_entail_state)) new_es pos;
 	          (* An Hoa : trace detected: need to change the left hand side before this point which forces to change the new_ante at an earlier check point *)
