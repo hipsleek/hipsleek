@@ -12,7 +12,7 @@ checkentail xxx::cell<1>
 print residue.
 */
 
-checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * xxx::cell<2> 
+checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * xxx::cell<3> 
     |- c::MSG{%P}<xxx> * %P.
 print residue.
 /*
