@@ -764,8 +764,8 @@ let common_arguments = [
           Globals.enable_time_stats:=false;
           Globals.lemma_gen_unsafe:=true;
           Globals.lemma_syn := true;
-          Globals.acc_fold := true;
-          Globals.smart_lem_search := true;
+          (* Globals.acc_fold := true; *)
+          (* Globals.smart_lem_search := true; *)
           Globals.seg_fold := true;
           (* Globals.en_pred_sat (); *)
           Globals.gen_baga_inv := false;

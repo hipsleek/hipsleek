@@ -30,8 +30,8 @@
   latest/FDB_entl/nll-vc04.smt2: Timeout
   latest/UDB_entl/nll-vc05.smt2: OK
   latest/FDB_entl/nll-vc05.smt2: OK
-  latest/UDB_entl/nll-vc06.smt2: Timeout
-  latest/FDB_entl/nll-vc06.smt2: Timeout
+  latest/UDB_entl/nll-vc06.smt2: OK
+  latest/FDB_entl/nll-vc06.smt2: OK
   latest/UDB_entl/nll-vc07.smt2: Timeout
   latest/FDB_entl/nll-vc07.smt2: Timeout
   latest/UDB_entl/nll-vc08.smt2: Timeout
@@ -210,11 +210,9 @@ Total number of unsound results: 2 in files:
  latest/FDB_entl/dll-vc04.smt2
 
 
-Total number of timeout files: 56 in:
+Total number of timeout files: 54 in:
  latest/UDB_entl/nll-vc04.smt2
  latest/FDB_entl/nll-vc04.smt2
- latest/UDB_entl/nll-vc06.smt2
- latest/FDB_entl/nll-vc06.smt2
  latest/UDB_entl/nll-vc07.smt2
  latest/FDB_entl/nll-vc07.smt2
  latest/UDB_entl/nll-vc08.smt2
