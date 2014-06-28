@@ -1236,7 +1236,8 @@ let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
 
-
+(* get counter example *)
+let get_model = ref false
 
 (** for type of frame inference rule that will be used in specs commands *)
 (* type = None       --> option --classic will be used to decides whether using classic rule or not? *)

@@ -594,7 +594,8 @@ let check_formula f timeout =
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-    let _= if(!proof_logging_txt) then  add_to_z3_proof_log_list new_f in
+    (* let _ = print_endline new_f in *)
+    let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
     iget_answer (!prover_process.inchannel) f
@@ -609,7 +610,6 @@ let check_formula f timeout =
   let tstoplog = Gen.Profiling.get_time () in
   let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
   res
-
 
 let check_formula f timeout =
   Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
@@ -671,7 +671,7 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
     ";Antecedent\n" ^ 
       ante_str ^
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
-    "(check-sat)"
+    "(check-sat)" ^ (if !Globals.get_model then "\n(get-model)" else "")
   )
 
 (* output for smt-lib v1.2 format *)

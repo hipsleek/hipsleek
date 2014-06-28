@@ -701,6 +701,8 @@ let common_arguments = [
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");
+  ("--en-get-model", Arg.Set Globals.get_model, "enable get model in z3");
+  ("--dis-get-model", Arg.Clear Globals.get_model, "disable get model in z3 (default)");
   ("--smt-compete", 
      Arg.Unit
       (fun _ ->
