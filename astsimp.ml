@@ -2194,8 +2194,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                   Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
               ) lst  in
             if (not baga_stronger) then
-              let _ = print_endline "not stronger" in
-              Globals.dis_inv_baga ()
+               Globals.dis_inv_baga ()
             else
               ()
               (* let new_map = List.combine views_list new_invs_list in *)
