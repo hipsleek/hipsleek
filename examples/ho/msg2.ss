@@ -1,15 +1,13 @@
-data cell {
-  int x;
-}
 
 data chann {
   int y;
 }
 
-pred_prim MSG{F}<c:cell>
-inv c!=null;
+data cell {
+  int x;
+}
 
-pred_prim MSG2<c:cell>
+pred_prim MSG{F}<c:cell>
 inv c!=null;
 
 int create_msg (int x)
@@ -26,7 +24,7 @@ void send(int ch, cell c)
 
 
 /*
-# msg.ss
+# msg2.ss
 
 static  :EBase exists (Expl)[](Impl)[a](ex)[]ch::MSG{ HVar P&{FLOW,(24,25)=__norm}[]}<a>@L&
         {FLOW,(24,25)=__norm}[]
