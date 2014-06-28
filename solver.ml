@@ -9510,47 +9510,137 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let _ = DD.info_zprint  (lazy  ("  rhs: " ^ (Cprinter.string_of_formula rhs))) pos in *)
               (* let _ = DD.info_zprint  (lazy  ("  estate.es_formula: " ^ (Cprinter.string_of_formula estate.es_formula))) pos in *)
               (*  let _ = DD.info_zprint  (lazy  ("  new_ante: " ^ (Cprinter.string_of_formula new_ante))) pos in *)
-              (*=====================================================*)
-              (***********Handle high-order argument: BEGIN**********)
-              if (List.length l_ho_args != List.length r_ho_args) then
-                let err_msg = "ho_args mismatched between LHS node and RHS node" in
-                (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_msg estate (CF.formula_of_heap HFalse pos) None pos, 
-                CF.mk_failure_must "199" Globals.sl_error, estate.es_trace)), NoAlias)
-              else
-                let args = List.combine l_ho_args r_ho_args in
-                let match_one_ho_arg ((lhs,rhs) : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
-                  (* lhs <==> rhs: instantiate any high-order variables in rhs
-                     Currently assume that only HVar is in the rhs
-                  *)
-                  let hvars = CF.extract_hvar_f rhs in
-                  (* let vs1 = CF.fv lhs in *)
-                  (* let vs2 = CP.fv to_ho_lhs in *)
-                  (* assumes lhs does not have global var *)
-                  let pr = Cprinter.string_of_spec_var_list in
-                  (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)
-                  (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)
-                  Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;
-                  let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in
-                  match hvars with
-                    | [] -> []
-                    | h::_ ->  [(h, lhs)]
+                (*=====================================================*)
+                (***********Handle high-order argument: BEGIN**********)
+                let fail_res, new_ante, new_conseq,new_exist_vars, new_maps =
+                  if not (node_kind="view" && l_ho_args!=[]) then
+                    (*if not high-order, nothing*)
+                    (None, new_ante, new_conseq,new_exist_vars, [])
+                  else
+                    (* TODO: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
+                    let l_vdef = Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
+                    let _, l_vdef_hvar_kinds = List.split (l_vdef.view_ho_vars) in
+                    let args = List.combine l_ho_args r_ho_args in
+                    let args = List.combine args l_vdef_hvar_kinds in
+                    (* for each lhs, rhs, and a kind k, possible situations:
+                       - A new mapping: rhs -> lhs
+                       - ho_arg split if k = HO_SPLIT
+                       - ho_arg match, otherwise
+                      Expected return value: A list of (fail_ctx option, residue option, mapping option)
+                    *)
+                    let match_one_ho_arg_x (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
+                      (* lhs <==> rhs: instantiate any high-order variables in rhs
+                         Currently assume that only HVar is in the rhs
+                      *)
+                      let hvars = CF.extract_hvar_f rhs in
+                      if ((List.length hvars) == 0) then
+                        let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) lhs else lhs in
+                        let new_estate = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
+                        let new_estate = {new_estate with es_formula = es_f;} in
+                        let new_ctx = Ctx (CF.add_to_estate new_estate "matching of ho_args") in
+                        let _ = print_endline ("Attempt semantic entailment of ho_args") in
+                        let res_ctx, res_prf = heap_entail_conjunct 11 prog false new_ctx rhs [] pos in
+      		        (match res_ctx with
+	                  | SuccCtx(cl) ->
+                                let formulas = List.map (fun c -> match c with
+                                  | Ctx es ->
+                                        let evars = CP.remove_dups_svl (es.es_ivars @ es.es_evars @ es.es_ante_evars) in
+                                        let f = CF. push_exists evars es.es_formula in
+                                        (*Simplify the remained resources*)
+                                        let f = CF.elim_exists f in
+                                        (CF.simplify_pure_f f)
+                                  | OCtx _ -> report_error no_pos "[solver.ml] do_match: unexpected Octx!"
+                                ) cl
+                                in
+                                (match k with
+                                  | HO_NONE ->
+                                        (*expect exact match*)
+                                        if (List.exists (fun f -> (isConstEmpFormula f) || (isConstTrueFormula2 f)) formulas) then
+                                          (*Exact match*)
+                                          [None,None, None]
+                                        else
+                                          (*error case*)
+                                          let err_str = "expecting matched ho_args but getting @split" in
+                                          let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos, CF.mk_failure_must ("104" ^ err_str) Globals.sl_error, new_estate.es_trace)), NoAlias) in
+                                          [Some rs,None, None]
+                                  | HO_SPLIT ->
+                                        (*temporarily pickup first formula*)
+                                        [None,Some (List.hd formulas), None])
+                          | FailCtx _ ->
+                                let err_str = "matching of ho_args failed" in
+                                let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_estate new_conseq None pos, CF.mk_failure_must ("105" ^ err_str) Globals.sl_error, new_estate.es_trace)), NoAlias) in
+                                [Some rs,None,None])
+                      else if ((List.length hvars) == 1) then
+                        (*One hvar in rhs => bind hvar with lhs*)
+                        (* let vs1 = CF.fv lhs in *)
+                        (* let vs2 = CP.fv to_ho_lhs in *)
+                        (* assumes lhs does not have global var *)
+                        let pr = Cprinter.string_of_spec_var_list in
+                        (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)
+                        (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)
+                        Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;
+                        let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in
+                        [None, None, Some (List.hd hvars, lhs)]
+                      else report_error no_pos ("do_match: unexpected multiple hvars in rhs")
+                    in
+                    let match_one_ho_arg (((lhs,rhs),k) : (CF.formula * CF.formula) * ho_kind) : (((CF.list_context * Prooftracer.proof) option) * (CF.formula option)* ((CP.spec_var * CF.formula) option)) list =
+                      let pr1 = pr_pair (pr_pair Cprinter.string_of_formula Cprinter.string_of_formula) string_of_ho_kind in
+                      let pr3 = pr_option (fun _ -> "Something") in
+                      let pr4 = pr_option Cprinter.string_of_formula in
+                      let pr5 = pr_option (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+                      let pr2 = pr_triple pr3 pr4 pr5 in
+                      let pr_out = pr_list pr2 in
+                      Debug.no_1 "match_one_ho_arg"
+                          pr1
+                          pr_out
+                          match_one_ho_arg_x ((lhs,rhs),k)
+                    in
+                    let res = List.map match_one_ho_arg args in
+                    let res = List.concat res in
+                    let failures = List.filter (fun (r,_,_) -> r!=None) res in
+                    if (failures !=[]) then
+                      (*Failure case*)
+                      let failure, _, _ = (List.hd failures) in
+                      (failure , new_ante, new_conseq,new_exist_vars, [])
+                    else
+                      (*Update new mappings*)
+                      let maps = List.map (fun (_,_,m) -> m) res in
+                      let residues = List.map (fun (_,m,_) -> m) res in
+                      let new_maps = List.fold_left (fun res v -> match v with
+                        | None -> res
+                        | Some f -> f::res) [] maps
+                      in
+                      (*update conseq and evars*)
+                      let new_conseq = CF.subst_hvar new_conseq new_maps in
+                      let qvars,new_conseq = CF.split_quantifiers new_conseq in
+                      let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in
+                      (*Check any @split and add to ante*)
+                      (* return: is_split, new_l_ho_args *)
+                      let rec check_split ls =
+                        (match ls with
+                          | [] -> false,[]
+                          | (residue,arg)::xs ->
+                                let flag,result = check_split xs in
+                                (match residue with
+                                  | None -> (flag,arg::result)
+                                  | Some r -> (true, r::result)))
+                      in
+                      let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
+                      let new_ante =
+                        if (not is_split) then new_ante else
+                          (match l_node with
+                            | ViewNode t ->
+                                  let remained_node = ViewNode {t with CF.h_formula_view_ho_arguments = new_l_ho_args;} in
+                                  normalize_combine_heap new_ante remained_node
+                            | _ -> report_error no_pos "[solver.ml] do_match: expecting a ViewNode")
+                      in
+                      (None, new_ante, new_conseq,new_exist_vars, new_maps)
                 in
-                let p1 = Cprinter.string_of_formula in
-                let match_one_ho_arg (p : CF.formula * CF.formula ) : (CP.spec_var * CF.formula) list =
-                  Debug.no_1 "match_one_ho_arg" (pr_pair p1 p1) (pr_list (pr_pair Cprinter.string_of_spec_var p1)) match_one_ho_arg p in
-                let maps = List.map match_one_ho_arg args in
-                let maps = List.concat maps in
-                let new_conseq = CF.subst_hvar new_conseq maps in
-                let qvars,new_conseq = CF.split_quantifiers new_conseq in
-                let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in
-                (* let kept_hvars = CF.get_hvar r_h in *)
-                (* let wo_hvars = CF.drop_hvar r_h in *)
-                (* let kept_hvars = CF.keep_hvar l_h in *)
-                (* let wo_hvars = CF.drop_hvar l_h in *)
-
-              (***********Handle high-order argument: END**********)
-              (*=====================================================*)
-
+                match fail_res with
+                  | Some fail -> fail (*finish do_match with a failure*)
+                  | None ->
+                (***********Handle high-order argument: END**********)
+                (*=====================================================*)
 
               Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
               Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
@@ -9570,7 +9660,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   es_residue_pts = n_es_res;
                   es_success_pts = n_es_succ; 
                   es_rhs_eqset = subs_rhs_eqset;
-                  es_ho_vars_map = maps@estate.es_ho_vars_map;
+                  es_ho_vars_map = new_maps@estate.es_ho_vars_map;
 	          } in
               Debug.tinfo_hprint (add_str "new_es" (Cprinter.string_of_entail_state)) new_es pos;
 	          (* An Hoa : trace detected: need to change the left hand side before this point which forces to change the new_ante at an earlier check point *)
