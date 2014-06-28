@@ -1403,12 +1403,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                              (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
                              if !Globals.seg_fold then (
                                  let seg_fold_type = (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset) in
-                                 let seg_act = if seg_fold_type>= 0 then
-                                   (1, M_seg_fold (m_res, seg_fold_type))
+                                 let seg_acts = if seg_fold_type>= 0 then
+                                   [(1, M_seg_fold (m_res, seg_fold_type))]
                                  else
-                                   (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                                   (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                                   []
                                  in
-                                 (1,Search_action [m_act; seg_act])
+                                 (1,Search_action ([m_act]@seg_acts))
                                )
                                else
                                  m_act

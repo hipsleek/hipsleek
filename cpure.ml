@@ -683,6 +683,10 @@ let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 	    (* We need only to compare names  of permission variables*)
 	    v1 = v2
 
+let eq_pair_spec_var ((sv11 : spec_var), sv12) ((sv21 : spec_var),sv22) =
+  (eq_spec_var_x sv11 sv21 && eq_spec_var_x sv12 sv22) ||
+      (eq_spec_var_x sv11 sv22 && eq_spec_var_x sv12 sv21)
+
 let eq_xpure_view_x xp1 xp2=
   let rec check_eq_order_spec_var_list svl1 svl2=
     match svl1,svl2 with

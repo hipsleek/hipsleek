@@ -1201,6 +1201,13 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap=
       (List.length r_neqNull = List.length l_neqNull) && (CP.diff_svl r_neqNull l_neqNull = [])
     else false
   in
+  let is_cycle hds hvs eqs sv=
+    let cl_sv = find_close [sv] eqs in
+      ((List.exists (fun hd -> CP.mem_svl hd.h_formula_data_node cl_sv) hds)
+      || List.exists (fun hv -> CP.mem_svl hv.h_formula_view_node cl_sv) hvs) &&
+          ((List.exists (fun hd -> CP.intersect_svl cl_sv hd.h_formula_data_arguments != []) hds)
+          || List.exists (fun hv -> CP.intersect_svl cl_sv hv.h_formula_view_arguments != []) hvs)
+  in
   let rhs1 = subst (remap) rhs0 in
    let ( _,mix_f,_,_,_) = split_components rhs1 in
    let eqs = (MCP.ptr_equations_without_null mix_f) in
@@ -1213,32 +1220,51 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap=
    if is_full_match remap leqNulls reqNulls then false
    else
      let lhds, lhvs,_ = get_hp_rel_formula lhs in
-     let l_reach_ptrs0 = look_up_reachable_ptr_args prog lhds lhvs [lroot] in
+     let l_reach_ptrs0, l_reach_hds,l_reach_hvs = look_up_reachable_ptrs_w_alias prog lhs [lroot] 3 in
+     let _ = DD.ninfo_hprint (add_str " l_reach_ptrs0" !CP.print_svl) l_reach_ptrs0  no_pos in
      let l_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) lhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) lhvs)) l_reach_ptrs0 in
+     let _ = DD.ninfo_hprint (add_str " l_reach_ptrs" !CP.print_svl) l_reach_ptrs no_pos in
      let rhds, rhvs,_ = get_hp_rel_formula rhs in
-     let r_reach_ptrs0 = look_up_reachable_ptr_args prog rhds rhvs [rroot] in
+     let r_reach_ptrs0,r_reach_hds,r_reach_hvs = (* look_up_reachable_ptr_args *) look_up_reachable_ptrs_w_alias prog rhs [rroot] 3 in
      let r_reach_ptrs = List.filter (fun sv -> not (List.exists (fun hd -> CP.eq_spec_var hd.h_formula_data_node sv) rhds) && not (List.exists (fun hv -> CP.eq_spec_var hv.h_formula_view_node sv) rhvs)) r_reach_ptrs0 in
      let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
-     let cl_rargs = find_close rargs (remap) in
-     if reqnull = [] && not (CP.mem_svl rroot cl_rargs) then false else
+     let leqnull = CP.intersect_svl l_reach_ptrs leqNulls in
+     (* let l_cyc_svl = List.filter (is_cycle l_reach_hds l_reach_hvs) l_reach_ptrs0 in *)
+     (* let r_cyc_svl = List.filter (is_cycle r_reach_hds r_reach_hvs) r_reach_ptrs0 in *)
+     let cl_rargs = find_close rargs (Gen.BList.remove_dups_eq CP.eq_pair_spec_var (eqs@remap)) in
+     (* let cl_largs = find_close largs (leqs) in *)
+     (* let _ = DD.info_hprint (add_str " l_cyc_svl" !CP.print_svl) l_cyc_svl  no_pos in *)
+     let _ = DD.ninfo_hprint (add_str " cl_rargs" !CP.print_svl) cl_rargs  no_pos in
+     (* teminate by null *)
+     if (reqnull != [] && leqnull != []) ||
+       (* todo: next pt is pto *)
+       (* or loop*)
+       ((CP.mem_svl rroot cl_rargs) && (is_cycle l_reach_hds l_reach_hvs leqs lroot)) then
        let r_reach_ptrs1 = CP.diff_svl r_reach_ptrs reqNulls in
        let l_reach_ptrs1 = CP.diff_svl l_reach_ptrs leqNulls in
        (List.length r_reach_ptrs1 = List.length l_reach_ptrs1 ) && (CP.diff_svl r_reach_ptrs1 l_reach_ptrs1 = [])
+     else false
 
 (*
  -1; not seg form
  0: x::view<p> * ...<y> |- x::view<y>
  1: x::one_barch_of_view * ...<y> |- x::view<y>
-2:?
+2: not handle from 0: backward?
+3: not handle from 1: backward?
 *)
 let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
   let seg_fold_view lvnode rvnode=
     if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
       let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
-      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
-        0
-      else 2
-    else 2
+      if vdcl.Cast.view_is_segmented then
+        let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
+        if List.length fwd_seg_ptrs  = 1 then
+          0
+        else
+          let back_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_backward_ptrs in
+          if List.length back_seg_ptrs  = 1 then 2 else -1
+      else -1
+    else -1
   in
   if (is_seg_fold_form_helper prog lvnode.h_formula_view_node lvnode.h_formula_view_arguments lhs0 rvnode.h_formula_view_node rvnode.h_formula_view_arguments rhs0 remap) then
     seg_fold_view lvnode rvnode
@@ -1246,23 +1272,29 @@ let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap=
 
 (*
 -1: not the form
-0: x::view<p> * p...<y> |- x::view<y>
-1: x::.....<y>  |- x::view<y>
+0: x::view<p> * p...<y> |- x::view<y> (y = null or y|-> )
+1: x::.....<y>  |- x::view<y> (y = null or y|-> )
 *)
 let is_seg_view2_fold_form prog lvnode lhs rvnode rhs remap=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "is_seg_view2_fold_form" pr1 pr1 string_of_int
-      (fun _ _ -> is_seg_view2_fold_form_x prog lvnode lhs rvnode rhs remap)
-      lhs rhs
+  let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+  Debug.no_4 "is_seg_view2_fold_form" pr2 pr2 pr1 pr1 string_of_int
+      (fun _ _ _ _ -> is_seg_view2_fold_form_x prog lvnode lhs rvnode rhs remap)
+      lvnode rvnode lhs rhs
 
 let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap=
   let seg_fold_view ldnode rvnode=
     let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     if String.compare ldnode.h_formula_data_name vdcl.Cast.view_data_name = 0 then
-      if vdcl.Cast.view_is_segmented && List.length vdcl.Cast.view_cont_vars  = 1 then
-        1
-      else 2
-    else 2
+      if vdcl.Cast.view_is_segmented then
+        let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
+        if List.length fwd_seg_ptrs  = 1 then
+          1
+        else
+          let back_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_backward_ptrs in
+          if List.length back_seg_ptrs  = 1 then 3 else -1
+      else -1
+    else -1
   in
   if (is_seg_fold_form_helper prog ldnode.h_formula_data_node ldnode.h_formula_data_arguments lhs0 rvnode.h_formula_view_node rvnode.h_formula_view_arguments rhs0 remap) then
     seg_fold_view ldnode rvnode
@@ -1275,9 +1307,11 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap=
 *)
 let is_seg_view_br_fold_form prog ldnode lhs rvnode rhs remap=
   let pr1 = Cprinter.prtt_string_of_formula in
-  Debug.no_2 "is_seg_view_br_fold_form" pr1 pr1 string_of_int
-      (fun _ _ -> is_seg_view_br_fold_form_x prog ldnode lhs rvnode rhs remap)
-      lhs rhs
+  let pr2 dn = Cprinter.prtt_string_of_h_formula (DataNode dn) in
+  let pr3 vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+  Debug.no_4 "is_seg_view_br_fold_form" pr2 pr3 pr1 pr1 string_of_int
+      (fun _ _ _ _ -> is_seg_view_br_fold_form_x prog ldnode lhs rvnode rhs remap)
+      ldnode rvnode lhs rhs
 
 let update_conseq conseq rhs_b rvnode new_rcmb=
   let subst_hf new_hf hf=

@@ -750,7 +750,33 @@ let common_arguments = [
           Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;
           Globals.dis_impl_var := true),
-   "SMT competition mode - essential printing only + show unexpected ents");
+  "SMT competition mode - essential printing only + show unexpected ents");
+  ("--smt-test", 
+     Arg.Unit
+      (fun _ ->
+          (* Globals.show_unexpected_ents := true;  *)
+          (*this flag is one that is  diff with compared to --smt-compete *)
+          Debug.trace_on := true;
+          Debug.devel_debug_on:= false;
+          Globals.lemma_ep := false;
+          Globals.silence_output:=false;
+          Globals.enable_count_stats:=false;
+          Globals.enable_time_stats:=false;
+          Globals.lemma_gen_unsafe:=true;
+          Globals.lemma_syn := true;
+          Globals.acc_fold := true;
+          Globals.smart_lem_search := true;
+          Globals.seg_fold := true;
+          (* Globals.en_pred_sat (); *)
+          Globals.gen_baga_inv := false;
+          (* Globals.do_infer_inv := true; *)
+          Globals.graph_norm := true;
+          Globals.is_solver_local := true;
+          Globals.disable_failure_explaining := false;
+          Globals.smt_compete_mode :=true;
+          Globals.return_must_on_pure_failure := true;
+          Globals.dis_impl_var := true),
+  "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk")
   ]
 

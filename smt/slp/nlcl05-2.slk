@@ -25,7 +25,11 @@ checkentail_exact x1::NLL_lvl2_t<next2 = x3,down = x2_1> *
 
 expect Valid.
 
+
 /*
 checkentail x::NLL_lvl1_t<a> * a::lso<null> |- x::NLL_lvl1_t<a> * a::lso<null>.
 */
 
+/*
+checkentail x1::NLL_lvl2_t<next2 = x3,down = x2_1> * x2_1::NLL_lvl1_t<next1 = x2_2> * x2_2::lso<x2_3> * x2_3::NLL_lvl1_t<next1 = x2_1> * x3::nlcl<null> |- x1::NLL_lvl2_t<next2 = x3,down = x2_1> * x2_1::lso<x2_1> * x3::nlcl<null>.
+*/

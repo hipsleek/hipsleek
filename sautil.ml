@@ -5259,7 +5259,7 @@ let generate_extra_defs prog is_pre cdefs unk_hps unk_svl hp r non_r_args args f
               match ls_n_hpargs with
                 | [(new_hp, (n_args, n_r,paras))] ->
                       (* let (a,b,g,orig_fs) = orig_hpdef in *)
-                      let fs, gs = List.split orig_hpdef.CF.def_rhs in
+                      (* let fs, gs = List.split orig_hpdef.CF.def_rhs in *)
                       (* let orig_fs = CF.disj_of_list fs no_pos in *)
                       let _,n_orig_fs_wg,(n_args,r,n_paras), n_fs_wg,ss, link_defs, n_hp1=
                         elim_not_in_used_args prog unk_hps orig_hpdef.CF.def_rhs n_fs2_wg new_hp (n_args, n_r,paras)  in

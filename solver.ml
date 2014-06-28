@@ -9555,6 +9555,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     let _ = DD.ninfo_hprint (add_str " conseq" Cprinter.prtt_string_of_formula) conseq no_pos in
     let _ = DD.ninfo_hprint (add_str " estate.es_rhs_eqset" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) estate.es_rhs_eqset  no_pos in
     let _ = DD.ninfo_hprint (add_str " estate.es_evars" !CP.print_svl) estate.es_evars  no_pos in
+    let _ = DD.ninfo_hprint (add_str " state.es_gen_impl_vars" !CP.print_svl) estate.es_gen_impl_vars no_pos in
+    let _ = DD.ninfo_hprint (add_str " state.es_gen_expl_vars" !CP.print_svl) estate.es_gen_expl_vars no_pos in
     let lhs_h,lhs_p,_,_,_ = CF.extr_formula_base lhs_b in
     let rhs_h,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
@@ -10101,7 +10103,7 @@ and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
         es_evars = estate.es_evars@(List.map fst n_rhs_eqset)
     } in
     let ctx0 = Ctx es0 in
-    heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
+    heap_entail_non_empty_rhs_heap prog is_folding ctx0 es0 ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
 
 and do_seg_fold prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
     : (CF.list_context * Prooftracer.proof) =
