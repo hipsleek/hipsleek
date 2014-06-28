@@ -9406,6 +9406,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
               let _ = Debug.tinfo_hprint (add_str "to_lhs" (Cprinter.string_of_pure_formula)) to_lhs pos in
+              (*In the presence of ho_arg, r_args is bound with l_args
+                and is moved inside the binding of high-order argument.
+                Therefore, if this is a match of 2 high-order view node,
+                the instantiation to_lhs is moved to high-order binding.
+                TODO: consider a general case where we have permissions.
+              *)
+              let to_lhs, to_ho_lhs =
+                if (l_ho_args=[]) then (to_lhs, CP.mkTrue no_pos)
+                else (CP.mkTrue no_pos, to_lhs)
+              in
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
               (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -9513,6 +9523,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                      Currently assume that only HVar is in the rhs
                   *)
                   let hvars = CF.extract_hvar_f rhs in
+                  let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
                   [List.hd hvars, lhs]
                 in
                 let maps = List.map match_one_ho_arg args in
