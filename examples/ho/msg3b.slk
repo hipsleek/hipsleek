@@ -12,8 +12,8 @@ checkentail xxx::cell<1>
 print residue.
 */
 
-checkentail c::MSG{v::cell<1> & true}<v> * xxx::cell<1> 
-    |- c::MSG{%P}<xxx> .
+checkentail c::MSG{(exists n: v::cell<n> & n>0)}<v> * xxx::cell<2> 
+    |- c::MSG{%P}<xxx> * %P.
 print residue.
 /*
 # msg3a.slk
@@ -25,7 +25,7 @@ GOT
            flted_10_15=1&{FLOW,(21,22)=__norm})[]]
 
 but need to wrap "v" as an existential, as follows:
-Otherwise, v is a free var.
+Otherwise, v is a free var.  # DONE
 
  ho_vars: [P --> (exists flted_10_15,v: v::cell<flted_10_15>&xxx=v & 
            flted_10_15=1&{FLOW,(21,22)=__norm})[]]

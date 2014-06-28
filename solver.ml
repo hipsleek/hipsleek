@@ -9412,9 +9412,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 the instantiation to_lhs is moved to high-order binding.
                 TODO: consider a general case where we have permissions.
               *)
-              let to_lhs, to_ho_lhs =
-                if (l_ho_args=[]) then (to_lhs, CP.mkTrue no_pos)
-                else (CP.mkTrue no_pos, to_lhs)
+              let to_lhs, to_ho_lhs, to_bound =
+                if (l_ho_args=[]) then (to_lhs, CP.mkTrue no_pos, [])
+                else (CP.mkTrue no_pos, to_lhs, List.map (fun ((_,v),_) -> v) other_subs)
               in
               (*********************************************************************)
               (* handle both explicit and implicit instantiation *)
@@ -9523,7 +9523,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                      Currently assume that only HVar is in the rhs
                   *)
                   let hvars = CF.extract_hvar_f rhs in
-                  let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
+                  (* let vs1 = CF.fv lhs in *)
+                  (* let vs2 = CP.fv to_ho_lhs in *)
+                  (* assumes lhs does not have global var *)
+                  let pr = Cprinter.string_of_spec_var_list in
+                  (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)
+                  (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)
+                  Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;
+                  let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in
                   match hvars with
                     | [] -> []
                     | h::_ ->  [(h, lhs)]
