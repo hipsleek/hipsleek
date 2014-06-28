@@ -827,21 +827,6 @@ and data_of_h_formula h = match h with
   | DataNode d -> d
   | _ -> failwith ("data_of_h_formula: input is not a data node")
 
-(*not strict, no need for empty pure*)
-and isConstTrueFormula2 f =
-  match f with
-  | Base ({formula_base_heap = h})
-  | Exists ({formula_exists_heap = h}) -> (h==HTrue)
-  | Or ({formula_or_f1 = f1; formula_or_f2 = f2}) ->
-      (isConstTrueFormula2 f1) && (isConstTrueFormula2 f2)
-
-(*not strict, no need for empty pure*)
-and isConstEmpFormula f =
-  match f with
-  | Base ({formula_base_heap = h})
-  | Exists ({formula_exists_heap = h}) -> (h==HEmp)
-  | Or ({formula_or_f1 = f1; formula_or_f2 = f2}) ->
-      (isConstEmpFormula f1) && (isConstEmpFormula f2)
 
 (* TRUNG TODO: should change name to isConstEmpFormula ? *)
 and isConstTrueFormula f =
