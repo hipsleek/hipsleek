@@ -1454,7 +1454,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		let res = List.map (fun (lbl,c2)-> 
 		    let list_context_res,prf =process_ctx c2 in					
 		    match list_context_res with
-		      | CF.FailCtx t -> [([(lbl,t)],esc_skeletal,[])],prf
+		      | CF.FailCtx (t,_) -> [([(lbl,t)],esc_skeletal,[])],prf
 		      | CF.SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls,prf) n in
 		let res_l,prf_l =List.split res in
 		let res = List.fold_left (CF.list_failesc_context_or Cprinter.string_of_esc_stack) [(f,e,[])] res_l in

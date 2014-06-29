@@ -428,7 +428,7 @@ let isStrictConstTrue_wo_flow f = match f with
   | Base ({formula_base_heap = h;
     formula_base_pure = p;
     formula_base_flow = fl;}) -> 
-        (h==HEmp or h==HTrue) && MCP.isConstMTrue p
+        (h==HEmp || h==HTrue) && MCP.isConstMTrue p
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
@@ -450,7 +450,7 @@ let isStrictConstTrue_x f = match f with
     formula_base_pure = p;
     formula_base_flow = fl;}) ->
         (*Loc: why h = HEmp is considered as ConstrTrue*)
-        (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+        (h==HEmp || h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
@@ -984,17 +984,17 @@ and contains_spec_var (f : h_formula) p : bool = match f with
   | ViewNode (h1) -> Cpure.eq_spec_var p h1.h_formula_view_node
   | Phase ({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;}) ->
-        (contains_spec_var h1 p) or (contains_spec_var h2 p)
+        (contains_spec_var h1 p) || (contains_spec_var h2 p)
   | Conj ({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;}) 
   | ConjStar ({h_formula_conjstar_h1 = h1;
 	h_formula_conjstar_h2 = h2;}) 	
   | ConjConj ({h_formula_conjconj_h1 = h1;
 	h_formula_conjconj_h2 = h2;}) ->	
-        (contains_spec_var h1 p) or (contains_spec_var h2 p)
+        (contains_spec_var h1 p) || (contains_spec_var h2 p)
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;}) ->
-        (contains_spec_var h1 p) or (contains_spec_var h2 p)
+        (contains_spec_var h1 p) || (contains_spec_var h2 p)
   | HRel (_, expl, _) -> let svl = CP.afv_list expl in (*List.exists (fun e -> CP.eq_spec_var e p) svl*) 
     (* let _ = print_endline (!print_sv (List.hd svl)) in *)
         CP.eq_spec_var (List.hd svl) p
@@ -1593,7 +1593,7 @@ and contains_phase (f : h_formula) : bool =  match f with
 	h_formula_conjconj_pos = pos})		
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> (contains_phase h1) or (contains_phase h2)
+	h_formula_star_pos = pos}) -> (contains_phase h1) || (contains_phase h2)
   | Phase({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos}) -> true
@@ -8550,6 +8550,10 @@ and steps = string list
        | Failure_Bot of string
        | Failure_Valid
 
+ and failure_cex = {
+     cex_sat: bool;
+ }
+
  and fail_explaining = {
      fe_kind: failure_kind; (*may/must*)
      fe_name: string;
@@ -8579,7 +8583,7 @@ and steps = string list
 
 (* Fail | List of Successes *)
 and list_context =
-  | FailCtx of fail_type
+  | FailCtx of (fail_type * failure_cex)
   | SuccCtx of context list
 
 and branch_fail = path_trace * fail_type
@@ -8619,6 +8623,29 @@ let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
+
+(****************************************************)
+  (********************CEX**********************)
+(****************************************************)
+let mk_cex is_sat=
+  {cex_sat = is_sat;
+  }
+
+let cex_union cex1 cex2=
+  match cex1.cex_sat, cex2.cex_sat with
+    | false,false -> (* to combine cex*) cex1
+    | true,false -> cex1
+    | false, true -> cex2
+    | true,true -> cex1 
+
+(* to implement *)
+let cex_lor cex1 cex2= cex1
+
+let cex_land cex1 cex2= cex1
+
+(****************************************************)
+  (********************END CEX**********************)
+(****************************************************)
 
 let get_estate_from_context ctx =
   match ctx with
@@ -8861,9 +8888,9 @@ let add_error_message_fail_type (msg:string) (f:fail_type) =
 
 let add_error_message_list_context (msg:string) (l:list_context) =
   match l with
-    | FailCtx ft ->
+    | FailCtx (ft,cex) ->
         let nft = add_error_message_fail_type msg ft in
-        FailCtx nft
+        FailCtx (nft, cex)
     | _ -> l
 
 let is_must_failure_fe (f:fail_explaining) =
@@ -8894,15 +8921,15 @@ and is_bot_failure_ft (f:fail_type) =
     | Union_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
     | _ -> false
 
-
+(* Loc: to check cex here*)
 let is_must_failure (f:list_context) =
   match f with
-    | FailCtx f -> is_must_failure_ft f
+    | FailCtx (f,_) -> is_must_failure_ft f
     | _ -> false
 
 let is_bot_failure (f:list_context) =
   match f with
-    | FailCtx f -> is_bot_failure_ft f
+    | FailCtx (f,_) -> is_bot_failure_ft f
     | _ -> false
 
 let get_must_failure_fe (f:fail_explaining) =
@@ -9129,7 +9156,7 @@ let get_may_failure_ft f =
 
 let get_may_failure (f:list_context) =
   match f with
-    | FailCtx ft -> 
+    | FailCtx (ft,_) -> (* Loc: to check cex here *)
           let m = (get_may_failure_ft ft) in
           (match m with
             | Some s -> m
@@ -9171,7 +9198,8 @@ let get_must_es_msg_ft ft =
  
 let get_must_failure (ft:list_context) =
   match ft with
-    | FailCtx f -> get_must_failure_ft f
+    | FailCtx (f, cex) -> (* Loc: to check cex here*)
+          get_must_failure_ft f
           (* (try get_must_failure_ft f *)
           (* with a ->   *)
           (*     let _ = print_flush (!print_list_context_short ft) in *)
@@ -9264,8 +9292,8 @@ and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*f
 
 let get_bot_status (ft:list_context) =
   match ft with
-    | FailCtx f -> get_bot_status_ft f
-	| SuccCtx cs -> get_bot_status_from_ctx cs
+    | FailCtx (f, _ ) -> get_bot_status_ft f
+    | SuccCtx cs -> get_bot_status_from_ctx cs
 
 let extract_failure_msg rs=
  if not !Globals.disable_failure_explaining then
@@ -9291,9 +9319,10 @@ let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option
           | _ ->  None
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
+(* Loc: this conversion for must failure proving *)
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-    | FailCtx ft ->
+    | FailCtx (ft,_) -> (* Loc: to check cex here*)
           (* (match (get_must_es_msg_ft ft) with *)
           (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
           (*   | _ ->  l) *)
@@ -9897,12 +9926,12 @@ let mkFailContext msg estate conseq pid pos = {
   fc_orig_conseq = estate.es_orig_conseq;
   fc_failure_pts = (match pid with | Some s-> [s] | _ -> []);
   fc_current_conseq = conseq;
-}   
+}
 
-let mkFailCtx_in (ft:fail_type) = FailCtx ft
+let mkFailCtx_in (ft:fail_type) cex = FailCtx (ft, cex)
 
 (*simple concurrency*)
-let mkFailCtx_simple msg estate conseq pos = 
+let mkFailCtx_simple msg estate conseq cex pos = 
   let fail_ctx = {
 	  fc_message = msg;
 	  fc_current_lhs  = estate;
@@ -9913,13 +9942,13 @@ let mkFailCtx_simple msg estate conseq pos =
   in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
-  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace))
+  mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex, estate.es_trace)) cex
 
-let mkFailCtx_vperm msg rhs_b estate conseq pos = 
+let mkFailCtx_vperm msg rhs_b estate conseq cex pos = 
   let s = "variable permission mismatch "^msg in
   let new_estate = {estate  with es_formula = substitute_flow_into_f
           !top_flow_int estate.es_formula} in
-  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace))
+  mkFailCtx_in (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,mk_failure_may s logical_error, estate.es_trace)) cex
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
@@ -9988,7 +10017,7 @@ let pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context =
 
 let mk_list_partial_context_label (c:list_context) (lab:path_trace): (list_partial_context) =
   match c with
-    | FailCtx fr ->  [( [(lab,fr)] ,[])]
+    | FailCtx (fr,_) ->  [( [(lab,fr)] ,[])]
     | SuccCtx cl -> List.map (fun c -> mk_partial_context c lab) cl
 
 let mk_list_partial_context (c:list_context) : (list_partial_context) =
@@ -10071,15 +10100,14 @@ let simplify_ctx_elim_false_dupl t1 t2 =
   Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
-
 let list_context_union_x c1 c2 = 
   let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
-  | FailCtx t1, FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
-      if ((is_cont t1) && not(is_cont t2)) then FailCtx t1
-      else if ((is_cont t2) && not(is_cont t1)) then FailCtx t2
-      else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2))  
-      else FailCtx (Union_Reason (t1,t2))  (* for UNION, we need to priorities MAY bug *)
+  | FailCtx (t1, cex1), FailCtx (t2, cex2) -> (*FailCtx (Or_Reason (t1,t2))*)
+      if ((is_cont t1) && not(is_cont t2)) then FailCtx (t1 ,cex1)
+      else if ((is_cont t2) && not(is_cont t1)) then FailCtx (t2,cex2)
+      else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2), cex_union cex1 cex2 )  
+      else FailCtx (Union_Reason (t1,t2), cex_union cex1 cex2)  (* for UNION, we need to priorities MAY bug *)
         (*FailCtx (And_Reason (t1,t2))   *)
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
@@ -10117,11 +10145,11 @@ and isMustFail fc = is_must_failure_ft fc
 and isMayFail fc = is_may_failure_ft fc
    
 and isMustFailCtx cl = match cl with
-  | FailCtx fc -> isMustFail fc
+  | FailCtx (fc, cex) -> (* Loc: to check cex here*) isMustFail fc
   | SuccCtx _ -> false
 
 and isMayFailCtx cl = match cl with
-  | FailCtx fc -> isMayFail fc
+  | FailCtx (fc, cex) -> (* Loc: to check cex here*) isMayFail fc
   | SuccCtx _ -> false
 
 and fold_context_left i c_l = 
@@ -10138,38 +10166,39 @@ and fold_context_left i c_l =
 (*LOR*)
 and or_list_context_x_new c1 c2 =
   match c1,c2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
-     | FailCtx t1 ,SuccCtx t2 ->
+     | FailCtx (t1, cex1) ,FailCtx (t2, cex2) -> FailCtx (Or_Reason (t1,t2) ,
+       cex_lor cex1 cex2)
+     | FailCtx (t1, cex1) ,SuccCtx t2 ->
          if is_bot_failure_ft t1 then
-           c2
+           (c2 )
          else
            let t = mk_not_a_failure in
-           FailCtx (Or_Reason (t1,t))
-     | SuccCtx t1 ,FailCtx t2 ->
+           FailCtx (Or_Reason (t1,t) ,cex1)
+     | SuccCtx t1 ,FailCtx (t2,cex2) ->
          if is_bot_failure_ft t2 then
            c1
          else
            let t = mk_not_a_failure in
-           FailCtx (Or_Reason (t,t2))
+           FailCtx (Or_Reason (t,t2), cex2)
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
 and or_list_context_x c1 c2 = match c1,c2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
-     | FailCtx t1 ,SuccCtx t2 ->
+     | FailCtx (t1,cex1) ,FailCtx (t2,cex2) -> FailCtx (Or_Reason (t1,t2),cex_lor cex1 cex2)
+     | FailCtx (t1,cex1) ,SuccCtx t2 ->
         let t = mk_not_a_failure 
         in
-        FailCtx (Or_Reason (t1,t))
-     | SuccCtx t1 ,FailCtx t2 ->
+        FailCtx (Or_Reason (t1,t), cex1)
+     | SuccCtx t1 ,FailCtx (t2,cex2) ->
         let t = mk_not_a_failure 
         in
-        FailCtx (Or_Reason (t,t2))
+        FailCtx (Or_Reason (t,t2), cex2)
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
 and and_list_context c1 c2= match c1,c2 with
-  | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
-  | FailCtx t1 ,SuccCtx t2 ->
+  | FailCtx (t1,cex1) ,FailCtx (t2,cex2) -> FailCtx (And_Reason (t1,t2),cex_land cex1 cex2)
+  | FailCtx (t1,_) ,SuccCtx t2 ->
          c1
-  | SuccCtx t1 ,FailCtx t2 ->
+  | SuccCtx t1 ,FailCtx _ ->
       c2
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
@@ -10580,7 +10609,7 @@ and change_flow_into_ctx_list to_fl ctx_list =
 
 and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verified:bool): list_context =
   match l with
-  | FailCtx ft ->
+  | FailCtx (ft,_) -> (* Loc: to check cex here *)
         (match (get_must_es_msg_ft ft) with
           | Some (es,msg) ->
               begin
@@ -11841,7 +11870,7 @@ let rec transform_fail_ctx f (c:fail_type) : fail_type =
 let transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
   match c with
-    | FailCtx fc -> FailCtx (transform_fail_ctx f_f fc)
+    | FailCtx (fc, cex) -> FailCtx ((transform_fail_ctx f_f fc), cex) (* Loc: to check cex here *)
     | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
     
 let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
@@ -12570,7 +12599,7 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
 	      | Exists {formula_exists_label = lbl; formula_exists_flow = flowt} -> (match lbl with
 		  | None -> 
                         (* HACK : this assumed that unlabelled disj is false *)
-                        let cf = !print_formula f in
+                        (* let cf = !print_formula f in *)
                         if is_false_flow flowt.formula_flow_interval then []
                         else (* Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled "^cf^"\n"} *)
                           (* WN -> CG : is this error related to --eps or labelling? *)

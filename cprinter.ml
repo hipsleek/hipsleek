@@ -3046,15 +3046,20 @@ let string_of_fail_type (e:fail_type) : string =  poly_string_of_pr  pr_fail_typ
 let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
   poly_printer_of_pr fmt pr_fail_type e
 
+let pr_failure_cex cex=
+  fmt_string (string_of_bool cex.cex_sat)
+
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft ,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
         (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
         (*     | _ -> fmt_string ""); *)
-        pr_fail_type ft; fmt_cut ()
+        pr_fail_type ft;
+        pr_failure_cex cex;
+        fmt_cut ()
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in
@@ -3126,7 +3131,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> (fmt_string "failctx"; pr_fail_type ft)
+    | FailCtx (ft,cex) -> (fmt_string "failctx"; pr_fail_type ft; pr_failure_cex cex)
     | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
     
 let pr_entail_state_short e =
@@ -3150,13 +3155,13 @@ let pr_entail_state_short e =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut ();fmt_string "MaybeErr Context: "; 
+    | FailCtx (ft,cex) -> fmt_cut ();fmt_string "MaybeErr Context: "; 
         (* (match ft with *)
         (*     | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (\*useful: MUST - OK*\) *)
         (*     (\* TODO : to output must errors first *\) *)
         (*     (\* | And_Reason (_, _, fe) -> (string_of_fail_explaining fe) *\) *)
         (*     | _ -> fmt_string ""); *)
-        pr_fail_type ft; fmt_cut ()
+        pr_fail_type ft; pr_failure_cex cex; fmt_cut ()
     | SuccCtx sc -> let str = 
         if (get_must_error_from_ctx sc)==None then "Good Context: "
         else "Error Context: " in

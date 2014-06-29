@@ -7,7 +7,7 @@ module Err = Error
 module CA = Cast
 module CP = Cpure
 module CF = Cformula
-module CFU = Cfutil
+(* module CFU = Cfutil *)
 module MCP = Mcpure
 module CEQ = Checkeq
 (* module TP = Tpdispatcher *)
@@ -1847,7 +1847,7 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: CF.hp_rel_def list) (vdcls: C
     | _ -> false
   ) hp_defs in
   (*sort topo: to fix bug this function*)
-  (* let sorted_scc, mutrec_defs = CFU.hp_defs_topo_sort hp_defs1 in *)
+  (* let sorted_scc, mutrec_defs = Cfutil.hp_defs_topo_sort hp_defs1 in *)
   let equiv_hp_defs, non_equiv_hp_defs, hp_sst = Cfutil.classify_equiv_hp_defs hp_defs1 in
   (*process bottom-up*)
   let m = List.fold_left (fun cur_m def ->
