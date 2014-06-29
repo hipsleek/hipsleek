@@ -1,26 +1,17 @@
 
-data chan {
-  int y;
-}
 
 data cell {
   int x;
 }
 
-pred_prim MSG{F}<c:cell>
-inv c!=null;
 
-chan create_msg (int n)
-  requires true
-  ensures (exists v: res::MSG{v::cell<n> & true}<v>);
+int foo(cell c)
+  requires c::cell<n>
+  ensures  res=n+1;
 
-void send(chan ch, cell c)
-    requires ch::MSG{%P}<c>@L * %P
-    ensures  emp;
-
- void receive(chan ch, ref cell c)
-    requires ch::MSG{%P}<a>@L // use an implicit var a
-    ensures  %P & c'=a;
+int foo2(cell c)
+  requires c::cell<n> & n>m
+  ensures  res=n+1+m;
 
 
 /*

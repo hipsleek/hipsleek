@@ -10,17 +10,9 @@ data cell {
 pred_prim MSG{F}<c:cell>
 inv c!=null;
 
-chan create_msg (int n)
-  requires true
-  ensures (exists v: res::MSG{v::cell<n> & true}<v>);
-
-void send(chan ch, cell c)
-    requires ch::MSG{%P}<c>@L * %P
-    ensures  emp;
-
  void receive(chan ch, ref cell c)
-    requires ch::MSG{%P}<a>@L // use an implicit var a
-    ensures  %P & c'=a;
+    requires ch::MSG{%PPP}<a>@L // use an implicit var a
+    ensures  %PPP & c'=a;
 
 
 /*

@@ -7276,14 +7276,24 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 let nb = ilinearize_formula nb hp in
                 (*let nb_struc = ilinearize_struc_formula nb_struc np in*)
                 let vars_list = IF.all_fv nb in
+                let nb_old = nb in
                 let nb = IF.prune_exists nb vars in (* Remove exists_vars included in infer_vars *) 
                 (*let nb_struc = IF.prune_exists_struc nb_struc vars in*)
                 let nb_struc,_ = helper2 hv p_vars b.IF.formula_assume_struc true true  false strad_vs in
-                let nb_struc = IF.wrap_post_struc_ex (hv@p_vars@strad_vs@vars) nb_struc in
+                let non_ex_vars = hv@p_vars@strad_vs@vars in
+                (* no automatic wrapping of exists for post-condition *)
+                let nb_struc = IF.wrap_post_struc_ex (non_ex_vars) nb_struc in
+                Debug.binfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos;
+                Debug.binfo_hprint (add_str "simp_form" Iprinter.string_of_formula) nb no_pos;
+                Debug.binfo_hprint (add_str "after wrap_post" Iprinter.string_of_struc_formula) nb_struc no_pos;
                     (* and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)
                         (p_vars:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars (lax_implicit:bool)
                          strad_vs :IF.struc_formula* ((ident*primed)list) *)
-                (IF.EAssume {b with IF.formula_assume_simpl = nb;IF.formula_assume_struc = nb_struc;},(diff vars_list p_vars)) 
+                let rem_vs = diff vars_list p_vars (* non_ex_vars *) in
+                Debug.tinfo_hprint (add_str "vars_list" pr_l_v) vars_list no_pos;
+                Debug.tinfo_hprint (add_str "p_list" pr_l_v) p_vars no_pos;
+                Debug.tinfo_hprint (add_str "rem_vs" pr_l_v) rem_vs no_pos;
+                (IF.EAssume {b with IF.formula_assume_simpl = nb;IF.formula_assume_struc = nb_struc;},rem_vs) 
           | IF.ECase b->
                 let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
                     let r12 = inters (Ipure.fv c1) hv in
@@ -7327,10 +7337,11 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     | Some l-> 
                         let r1,r2 = helper h1prm new_strad_vs vars l in 
                         (Some r1,r2) in
+                Debug.binfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos;
                 let implvar = diff (IF.unbound_heap_fv onb) all_vars in
                 let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
                   Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
-            let implvar = hack_filter_global_rel prog implvar in
+                let implvar = hack_filter_global_rel prog implvar in
                 (IF.EBase {
                     IF.formula_struc_base = nb;
                     IF.formula_struc_implicit_inst =implvar;                    
@@ -7353,8 +7364,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
             "\n allow_post_vars: "^(string_of_bool allow_post_vars)^
             "\n lax_implicit: "^(string_of_bool lax_implicit)
             ^"\n strad_vs: "^(prl strad_vs)^"\n" in
-    Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf in
-  helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
+    Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf 
+  in helper2 h_vars p_vars nf allow_primes allow_post_vars lax_implicit strad_vs
  
 
 
