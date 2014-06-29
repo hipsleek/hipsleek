@@ -7273,8 +7273,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 let ann_vars = IF.collect_annot_vars onb in 
                 let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb ann_vars in
                 (*let nb_struc = case_normalize_renamed_struc_formula prog hp stread_vs onb_struc in*)
-                let nb = ilinearize_formula nb hp in
+                let nb = ilinearize_formula nb (hp@strad_vs) in
                 (*let nb_struc = ilinearize_struc_formula nb_struc np in*)
+                Debug.tinfo_hprint (add_str "nb(after ilinearize)" Iprinter.string_of_formula) nb no_pos;
                 let vars_list = IF.all_fv nb in
                 let nb_old = nb in
                 let nb = IF.prune_exists nb vars in (* Remove exists_vars included in infer_vars *) 
