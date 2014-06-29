@@ -1111,7 +1111,9 @@ baga_formula:
       | h=ho_fct_header -> (P.mkTrue no_pos)]];
 
 baga_inv:
-    [[`BG; `OPAREN; `OSQUARE; il = LIST0 id SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN -> (il,p)]];
+    [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
+        let il = List.map (fun (name,_) -> name) il in
+        (il,p)]];
 
 opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  

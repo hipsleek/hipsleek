@@ -2042,7 +2042,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           | Some lst ->
                 Some (List.map (fun (idl,pf) ->
                     let svl = List.map (fun c -> trans_var (c,Unprimed) n_tl pos) idl in
-                    let svl, _, _, _ = Immutable.split_sv svl vdef in
+                    (* let svl, _, _, _ = Immutable.split_sv svl vdef in *)
                     let cpf = trans_pure_formula pf n_tl in
                     let cpf = Cpure.arith_simplify 1 cpf in
                     (svl,cpf)
@@ -2050,6 +2050,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let vbi = conv_baga_inv vdef.I.view_baga_inv in
       let vbui = conv_baga_inv vdef.I.view_baga_under_inv in
+      let _ = match vbi with
+        | None -> Debug.ninfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos
+        | Some vbi -> Debug.ninfo_hprint (add_str ("baga inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos in
+      let _ = match vbui with
+        | None -> Debug.ninfo_hprint (add_str ("baga under inv("^vn^")") (fun x -> x)) "None" no_pos
+        | Some vbui -> Debug.ninfo_hprint (add_str ("baga under inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbui no_pos in
       (* let _ = Debug.info_pprint ("!!! Trans_view HERE") no_pos in *)
       let cvdef ={
           C.view_name = vn;
@@ -2155,7 +2161,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   (* this was incorrect (due to simplifier) since spaguetti benchmark disables it inv_baga; please check to ensure all SMT benchmarks passes..*)
   let _ = if has_arith then
     begin
-      Debug.ninfo_pprint "Disabling --inv-baga due to arith" no_pos;
+      Debug.binfo_pprint "Disabling --inv-baga due to arith\n" no_pos;
       Globals.dis_inv_baga ()
     end
   else () in
@@ -2204,9 +2210,13 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
             let lst = List.combine view_list new_invs_list in
             let baga_stronger = List.for_all
               (fun (vd,bi) ->
-                  let uv = Excore.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in
-                  Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
-              ) lst  in
+                  (* let uv = Excore.EPureI.mk_epure (pure_of_mix vd.Cast.view_user_inv) in *)
+                  match vd.Cast.view_baga_inv with
+                    | None -> true
+                    | Some uv ->
+                          let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in
+                          Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
+              ) lst in
             if (not baga_stronger) then
               Globals.dis_inv_baga ()
             else
