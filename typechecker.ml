@@ -2101,11 +2101,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*     (Cprinter.string_of_struc_formula pre2)) in *)
                     (*we use new rules to judge the spec*)
                     let rs, prf = heap_entail_struc_list_failesc_context_init 6 prog false true sctx pre2 None None None pos pid in
+                    let _ = Debug.binfo_pprint "Khanh : need to perform ho_var subs here" no_pos in
+                    let _ = Debug.binfo_hprint (add_str "residue(subs_ho)" Cprinter.string_of_list_failesc_context) rs no_pos in
 		    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                     let _ = PTracer.log_proof prf in
 
-                    (* let _ = print_string (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
                     (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                        Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
                     rs
@@ -2120,7 +2121,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = Log.update_sleek_proving_kind Log.PRE in *)
                     let pk = if ir then PK_PRE_REC else PK_PRE in
                     let f = wrap_proving_kind pk (check_pre_post_orig org_spec sctx) in
-                    Debug.no_2(* _loop *) "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
+                    Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  
 		  let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
 		    Gen.Profiling.do_1 "check_pre_post" (check_pre_post ir org_spec sctx) should_output_html

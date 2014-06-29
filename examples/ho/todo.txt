@@ -38,6 +38,24 @@ Successful States:
        es_cond_path: [0]
 
 ===================================================================
+# msg-d2.ss
+
+!!! Khanh : need to perform ho_var subs here
+!!! residue(subs_ho): List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists d_1244: ch_38'::MSG{ (exists flted_19_42: v_1241::cell<flted_19_4
+2>&flted_19_42=1&
+{FLOW,(24,25)=__norm})[]}<v_1241> * c_39'::cell<v_int_39_1242> * (HVar PPP)&v_in
+t_39_1242=1 & d_40'=d_1244 & d_1244!=Cnull&{FLOW,(24,25)=__norm})[]
+       es_heap: emp
+       es_ho_vars_map: [PPP(exists flted_19_42: v_1241::cell<flted_19_42>&
+                        d_40'=v_1241 & flted_19_42=1&
+                        {FLOW,(24,25)=__norm})[]]
+       es_var_measures 2: MayLoop[]
+       es_cond_path: [0]
 ===================================================================
 ===================================================================
 ===================================================================

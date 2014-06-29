@@ -40,8 +40,8 @@ void main()
   cell c = new cell(6);
   cell d;
   dprint;
-  receive(ch,d);
   send(ch,c);
+  receive(ch,d);
   dprint;
 }
 

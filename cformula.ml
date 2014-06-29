@@ -9858,6 +9858,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_hp_rel = es.es_infer_hp_rel;
         es_infer_pure_thus = es.es_infer_pure_thus;
         es_var_measures = es.es_var_measures;
+        es_ho_vars_map = es.es_ho_vars_map;
         es_group_lbl = es.es_group_lbl;
         es_term_err = es.es_term_err;
     }
@@ -12347,9 +12348,10 @@ let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
           es_path_label = es.es_path_label;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-      (* WN : what is the purpose of es_var_stack?*)
+          es_ho_vars_map  = es.es_ho_vars_map  ;
+          (* WN : what is the purpose of es_var_stack?*)
           es_var_stack = es.es_var_stack;
-      es_pure = es.es_pure;
+          es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
@@ -12381,6 +12383,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   in 
   Ctx {
       (* es with es_heap=HTrue;} *)
+      (* WN : why is this duplicated? *)
       (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
           es_formula = es_f;
           (* es_heap = hf; *)
@@ -12389,9 +12392,10 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_cond_path = es.es_cond_path ;
           es_prior_steps = es.es_prior_steps;
           es_var_measures = es.es_var_measures;
-      (* WN : what is the purpose of es_var_stack?*)
+          es_ho_vars_map = es.es_ho_vars_map;
+          (* WN : what is the purpose of es_var_stack?*)
           es_var_stack = es.es_var_stack;
-      es_pure = es.es_pure;
+          es_pure = es.es_pure;
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;

@@ -12,29 +12,30 @@ inv c!=null;
 pred_prim CNT<i:int>
 inv true;
 
-// "chan" type lost?
-// what is the type for res in res::MSG{v::cell<1> & true}<v>?
-chan createR{%P}(int x)
-  requires true
-  ensures (exists v,n: res::MSG{v::cell<n> & n>x}<v> * res::CNT<0>);
-
 chan create_msg (int x)
   requires true
   ensures (exists v,n: res::MSG{v::cell<n> & n>x}<v> * res::CNT<0>);
+
+// "chan" type lost?
+// what is the type for res in res::MSG{v::cell<1> & true}<v>?
+chan createR{%P:chan -> formula}()
+  requires true
+  ensures (exists a: %P[a] & res=a);
+
+
+chan create_msg (int x)
+  requires x>=0
+  infer_ensures;
+{
+   chan ch = create{pred r -> (exists v,n: 
+            r::MSG{v::cell<n> & n>x}<v> 
+                           * res::CNT<0>)}()
+}
 
 /*
    chan ch = create{(exists v,n: 
        res::MSG{v::cell<n> & n>2}<v> 
                 * res::CNT<0>)}()
-
-chan create_msg (int x)
-  requires x>=0
-  ensures_infer; 
-{
-   chan ch = create{(exists v,n: 
-          res::MSG{v::cell<n> & n>x}<v> 
-                           * res::CNT<0>)}()
-}
 
 */
 
