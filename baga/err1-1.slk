@@ -11,6 +11,8 @@ checkentail n>1 |- n> 5.
 
 expect Fail_Must.
 
+
+
 //3. valid
 checkentail n > 1 or n > 3 |- n > 1.
 
