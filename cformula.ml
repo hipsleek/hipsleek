@@ -2588,12 +2588,12 @@ and remove_absent ann vs =
     List.split res_ls
   else (ann,vs)
 
-and h_fv_node v perm ann param_ann vs =
+and h_fv_node v perm ann param_ann vs ho_vs=
   let (param_ann,vs) = remove_absent param_ann vs in
   Debug.no_2 "h_fv_node" string_of_ann_list !print_svl !print_svl 
-      (fun _ _ -> h_fv_node_x v perm ann param_ann vs) param_ann vs
+      (fun _ _ -> h_fv_node_x v perm ann param_ann vs ho_vs) param_ann vs
 
-and h_fv_node_x v perm ann param_ann vs =
+and h_fv_node_x v perm ann param_ann vs ho_vs =
   let pvars = fv_cperm perm in
   let avars = (CP.fv_ann ann) in
   let avars = if (!Globals.allow_field_ann) then avars @ (CP.fv_ann_lst param_ann)  else avars in
@@ -2604,7 +2604,8 @@ and h_fv_node_x v perm ann param_ann vs =
       let var = List.hd pvars in
       if (List.mem var vs) then [] else pvars
   in
-  let vs=avars@pvars@vs in
+  let hvars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map fv ho_vs)) in
+  let vs=avars@pvars@vs@hvars in
   if List.mem v vs then vs else v :: vs
 
 and f_h_fv (f : formula) : CP.spec_var list = 
@@ -2647,11 +2648,12 @@ and h_fv_x (h : h_formula) : CP.spec_var list = match h with
                h_formula_data_perm = perm;
                h_formula_data_imm = ann;
                h_formula_data_param_imm = param_ann;
-               h_formula_data_arguments = vs}) -> h_fv_node v perm ann param_ann vs
+               h_formula_data_arguments = vs}) -> h_fv_node v perm ann param_ann vs []
   | ViewNode ({h_formula_view_node = v; 
                h_formula_view_perm = perm; 
                h_formula_view_imm = ann;
-	           h_formula_view_arguments = vs}) ->  h_fv_node v perm ann [] vs
+	       h_formula_view_ho_arguments = ho_vs;
+	       h_formula_view_arguments = vs}) ->  h_fv_node v perm ann [] vs ho_vs
   | ThreadNode ({h_formula_thread_node = v;
                h_formula_thread_perm = perm;
                h_formula_thread_delayed = dl;
@@ -3024,6 +3026,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_imm = imm; 
 							h_formula_view_perm = perm; (*LDK*)
 							h_formula_view_arguments = svs; 
+							h_formula_view_ho_arguments = ho_svs; 
                                                         h_formula_view_annot_arg = anns; 
 							h_formula_view_modes = modes;
 							h_formula_view_coercible = coble;
@@ -3039,6 +3042,8 @@ and h_subst sst (f : h_formula) =
 							h_formula_view_node = CP.subst_var_par sst x; 
 							h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
+							h_formula_view_ho_arguments = List.map (subst sst) ho_svs;
+
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
   | DataNode ({h_formula_data_node = x; 
@@ -3286,6 +3291,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         h_formula_view_imm = imm; 
 	h_formula_view_perm = perm; (*LDK*)
 	h_formula_view_arguments = svs; 
+	h_formula_view_ho_arguments = ho_svs; 
 	h_formula_view_modes = modes;
 	h_formula_view_coercible = coble;
 	h_formula_view_origins = orgs;
@@ -3298,7 +3304,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         ViewNode {g with h_formula_view_node = subst_var s x; 
         h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
         h_formula_view_imm = apply_one_imm s imm;  
-		h_formula_view_arguments = List.map (subst_var s) svs;
+	h_formula_view_ho_arguments = List.map (apply_one s) ho_svs;
+	h_formula_view_arguments = List.map (subst_var s) svs;
         h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
         }
   | DataNode ({h_formula_data_node = x; 
@@ -5054,9 +5061,12 @@ and get_ptrs_w_args_f (f: formula)=
 
 and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
-             h_formula_data_arguments = args}
+             h_formula_data_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
   | ViewNode {h_formula_view_node = c;
-             h_formula_view_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+             h_formula_view_ho_arguments = ho_args;
+             h_formula_view_arguments = args} ->
+        let hovars = List.concat (List.map get_ptrs_w_args_f ho_args) in
+        [c]@(List.filter CP.is_node_typ args)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
@@ -5375,7 +5385,7 @@ let struc_formula_trans_heap_node fct f =
   Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
 
 (*node + args is one group*)
-let get_ptrs_group_hf hf0=
+let rec get_ptrs_group_hf hf0=
   let rec helper hf=
     match hf with
       | Star {h_formula_star_h1 = hf1;
@@ -5392,7 +5402,9 @@ let get_ptrs_group_hf hf0=
         h_formula_phase_rw = hf2;} ->
          (helper hf1)@(helper hf2)
       | DataNode hd -> [hd.h_formula_data_node::hd.h_formula_data_arguments]
-      | ViewNode hv -> [hv.h_formula_view_node::hv.h_formula_view_arguments]
+      | ViewNode hv ->
+            let ho = List.concat (List.map get_ptrs_group hv.h_formula_view_ho_arguments) in
+            [hv.h_formula_view_node::hv.h_formula_view_arguments]@ho
       | ThreadNode ht -> [[ht.h_formula_thread_node]] (*TOCHECK*)
       | HRel _
       | Hole _ | FrmHole _
@@ -5401,7 +5413,7 @@ let get_ptrs_group_hf hf0=
       | HEmp | HVar _ ->[]
   in helper hf0
 
-let get_node_args hf0=
+and get_node_args hf0=
   let rec helper hf=
     match hf with
       | Star {h_formula_star_h1 = hf1;
@@ -5427,7 +5439,7 @@ let get_node_args hf0=
       | HEmp | HVar _ -> []
   in helper hf0
 
-let get_ptrs_group f0=
+and get_ptrs_group f0=
   let rec helper f=
    match f with
      | Base fb -> get_ptrs_group_hf fb.formula_base_heap
@@ -5435,7 +5447,7 @@ let get_ptrs_group f0=
      | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
   in helper f0
 
-let get_data_node_ptrs_group_hf hf0=
+and get_data_node_ptrs_group_hf hf0=
   let rec helper hf=
     match hf with
       | Star {h_formula_star_h1 = hf1;
@@ -15433,7 +15445,7 @@ let elim_prm e =
 		| Conj s -> None
 		| Phase s -> None	
   	        | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})
-	        | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node})
+	        | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node}) (*TOCHECK: ho_arguments*)
 	        | ThreadNode v -> Some (ThreadNode {v with h_formula_thread_node = nv v.h_formula_thread_node}) (*TOCHECK*)
                 | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e ) b2),b3))
                 | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.f_h_f: not handle yet"
