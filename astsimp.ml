@@ -7283,9 +7283,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                 let non_ex_vars = hv@p_vars@strad_vs@vars in
                 (* no automatic wrapping of exists for post-condition *)
                 let nb_struc = IF.wrap_post_struc_ex (non_ex_vars) nb_struc in
-                Debug.binfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos;
-                Debug.binfo_hprint (add_str "simp_form" Iprinter.string_of_formula) nb no_pos;
-                Debug.binfo_hprint (add_str "after wrap_post" Iprinter.string_of_struc_formula) nb_struc no_pos;
+                (* Debug.binfo_hprint (add_str "simp_form(before)" Iprinter.string_of_formula) nb_old no_pos; *)
+                (* Debug.binfo_hprint (add_str "simp_form" Iprinter.string_of_formula) nb no_pos; *)
+                (* Debug.binfo_hprint (add_str "after wrap_post" Iprinter.string_of_struc_formula) nb_struc no_pos; *)
                     (* and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)
                         (p_vars:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars (lax_implicit:bool)
                          strad_vs :IF.struc_formula* ((ident*primed)list) *)
@@ -7337,7 +7337,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                     | Some l-> 
                         let r1,r2 = helper h1prm new_strad_vs vars l in 
                         (Some r1,r2) in
-                Debug.binfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos;
+                (* Debug.binfo_hprint (add_str "struc_cont" (pr_option Iprinter.string_of_struc_formula)) nc no_pos; *)
                 let implvar = diff (IF.unbound_heap_fv onb) all_vars in
                 let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
                   Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in

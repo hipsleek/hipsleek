@@ -674,20 +674,24 @@ and h_fv (f:h_formula):(ident*primed) list = match f with
              real information inside *)
               h_formula_heap_perm = perm; (*LDK*)
               h_formula_heap_imm = imm; 
-              h_formula_heap_imm_param = ann_param; 
+              h_formula_heap_imm_param = ann_param;
+              h_formula_heap_ho_arguments = ho_b;
               h_formula_heap_arguments = b} ->
      let perm_vars = (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
      let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
      let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
-     Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
+     let hvars = List.concat (List.map heap_fv ho_b) in
+     Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
-              h_formula_heap2_imm = imm; 
+              h_formula_heap2_imm = imm;
+                h_formula_heap2_ho_arguments = ho_b;
 		h_formula_heap2_arguments = b}-> 
      let perm_vars =  (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
-      Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+     let hvars = List.concat (List.map heap_fv ho_b) in
+      Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
  | ThreadNode {h_formula_thread_node = name ;
               h_formula_thread_perm = perm;
               h_formula_thread_delayed = dl;
@@ -1508,6 +1512,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm; (*LDK*)
                  h_formula_heap_arguments = args;
+                 h_formula_heap_ho_arguments = ho_args;
                  h_formula_heap_pseudo_data = ps_data;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos}) ->
@@ -1526,7 +1531,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                    h_formula_heap_with_inv = winv;
                    h_formula_heap_perm = perm1 ; (*LDK*)
                    h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-                   h_formula_heap_ho_arguments = [];
+                   h_formula_heap_ho_arguments = List.map (apply_one_w_data_name s) ho_args;
                    h_formula_heap_pseudo_data = ps_data;
                    h_formula_heap_label = l;
                    h_formula_heap_pos = pos})
@@ -1539,6 +1544,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                   h_formula_heap2_full = full;
                   h_formula_heap2_with_inv = winv;
                   h_formula_heap2_arguments = args;
+                  h_formula_heap2_ho_arguments = ho_args;
                   h_formula_heap2_perm = perm; (*LDK*)
                   h_formula_heap2_pseudo_data = ps_data;
                   h_formula_heap2_label = l;
@@ -1558,7 +1564,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                     h_formula_heap2_with_inv = winv;
                     h_formula_heap2_perm = perm1; (*LDK*)
                     h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-                    h_formula_heap2_ho_arguments = []; 
+                    h_formula_heap2_ho_arguments = List.map (apply_one_w_data_name s) ho_args; 
                     h_formula_heap2_pseudo_data =ps_data;
                     h_formula_heap2_label = l;
                     h_formula_heap2_pos = pos})
@@ -2845,6 +2851,34 @@ let normal_formula view_nodes data_nodes f0=
       (fun _ _ _ -> normal_formula view_nodes data_nodes f0)
       view_nodes data_nodes f0
 
+let h_formula_collect_hvar hf0 =
+  let rec helper hf = match hf with
+    |  Star{ h_formula_star_h1 = hf1;
+          h_formula_star_h2 = hf2;}
+    |  StarMinus{ h_formula_starminus_h1 = hf1;
+          h_formula_starminus_h2 = hf2;}
+    |  Conj { h_formula_conj_h1 = hf1;
+          h_formula_conj_h2 = hf2;}
+    |  ConjStar { h_formula_conjstar_h1 = hf1;
+          h_formula_conjstar_h2 = hf2;}
+    |  ConjConj { h_formula_conjconj_h1 = hf1;
+          h_formula_conjconj_h2 = hf2;}
+    |  Phase { h_formula_phase_rd = hf1;
+          h_formula_phase_rw = hf2;} -> (helper hf1)@(helper hf2)
+    | HVar v -> [v]
+    | _ -> []
+  in
+  helper hf0
+
+let formula_collect_hvar f0 =
+  let rec helper f=
+    match f with
+      | Base {formula_base_heap = hf}
+      | Exists {formula_exists_heap = hf} ->
+            h_formula_collect_hvar hf
+      | Or orf -> (helper orf.formula_or_f1)@(helper orf.formula_or_f2)
+  in
+  helper f0
 
 let h_formula_collect_hprel hf0 =
   let rec helper hf = match hf with
