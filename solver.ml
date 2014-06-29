@@ -9579,7 +9579,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         (* Debug.tinfo_hprint (add_str "fv(lhs)" pr) vs1 no_pos; *)
                         (* Debug.tinfo_hprint (add_str "fv(ho_inst)" pr) vs2 no_pos; *)
                         Debug.tinfo_hprint (add_str "to_bound" pr) to_bound no_pos;
-                        let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in
+                        (* let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in *)
+                        let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
                         [None, None, Some (List.hd hvars, lhs)]
                       else report_error no_pos ("do_match: unexpected multiple hvars in rhs")
                     in
@@ -9626,6 +9627,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                   | Some r -> (true, r::result)))
                       in
                       let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
+                      let new_exist_vars = new_exist_vars @ to_bound in
+                      (* let new_ante = push_exists to_bound new_ante in *)
                       let new_ante =
                         if (not is_split) then new_ante else
                           (match l_node with

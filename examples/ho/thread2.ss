@@ -51,7 +51,11 @@ void main()
 
   fork_thrd(tid,x);
 
-  //join_thrd(tid,x);
+  dprint;
 
-  //assert x'::cell<2>;
+  join_thrd(tid,x);
+
+  dprint;
+
+  assert x'::cell<2>;
 }
