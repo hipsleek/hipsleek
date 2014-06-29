@@ -8631,6 +8631,17 @@ let mk_cex is_sat=
   {cex_sat = is_sat;
   }
 
+let is_sat_fail cex=
+  cex.cex_sat
+
+let cmb_fail_msg s cex=
+  let is_sat, s =
+    if cex.cex_sat then
+      (true,("(cex)"^s))
+    else
+      (false,"(no cex)" ^s)
+  in is_sat,s
+
 let cex_union cex1 cex2=
   match cex1.cex_sat, cex2.cex_sat with
     | false,false -> (* to combine cex*) cex1
@@ -8921,10 +8932,14 @@ and is_bot_failure_ft (f:fail_type) =
     | Union_Reason (f1,f2) -> (is_bot_failure_ft f1) || (is_bot_failure_ft f2)
     | _ -> false
 
-(* Loc: to check cex here*)
 let is_must_failure (f:list_context) =
   match f with
-    | FailCtx (f,_) -> is_must_failure_ft f
+    | FailCtx (f,_) -> (is_must_failure_ft f)
+    | _ -> false
+
+let is_sat_failure f=
+  match f with
+    | FailCtx (_,cex) -> (is_sat_fail cex)
     | _ -> false
 
 let is_bot_failure (f:list_context) =
@@ -9156,10 +9171,10 @@ let get_may_failure_ft f =
 
 let get_may_failure (f:list_context) =
   match f with
-    | FailCtx (ft,_) -> (* Loc: to check cex here *)
+    | FailCtx (ft,cex) ->
           let m = (get_may_failure_ft ft) in
           (match m with
-            | Some s -> m
+            | Some s -> (Some (s, cex))
             | None -> 
                   let _ = print_flush (!print_list_context_short f) 
                   in report_error no_pos "Should be a may failure here")
@@ -9198,13 +9213,22 @@ let get_must_es_msg_ft ft =
  
 let get_must_failure (ft:list_context) =
   match ft with
-    | FailCtx (f, cex) -> (* Loc: to check cex here*)
-          get_must_failure_ft f
+    | FailCtx (f, cex) -> begin
+          let m = (get_must_failure_ft f) in
+          match m with
+            | Some s -> Some (s, cex)
+            | _ -> None
           (* (try get_must_failure_ft f *)
           (* with a ->   *)
           (*     let _ = print_flush (!print_list_context_short ft) in *)
           (*     raise a) *)
-	| SuccCtx cs -> get_must_error_from_ctx cs
+      end
+	| SuccCtx cs -> begin
+            let s_opt = get_must_error_from_ctx cs in
+            match s_opt with
+              | Some s -> Some (s, mk_cex false)
+              | None -> None
+          end
     (* | _ -> None *)
 
 (*todo: revise, pretty printer*)
@@ -9298,9 +9322,9 @@ let get_bot_status (ft:list_context) =
 let extract_failure_msg rs=
  if not !Globals.disable_failure_explaining then
    match get_must_failure rs with
-     | Some s -> "(must) cause:"^s 
+     | Some (s,cex) -> let _,ns = cmb_fail_msg ("(must) cause:"^s) cex in ns
      | _ -> (match get_may_failure rs with
-           | Some s -> "(may) cause:"^s
+           | Some (s,cex) -> let _,ns = cmb_fail_msg ("(may) cause:"^s) cex in ns
            | None -> "INCONSISTENCY : expected failure but success instead"
      )
  else ""
@@ -9309,7 +9333,11 @@ let is_may_failure_fe (f:fail_explaining) = (get_may_failure_fe f) != None
 
 let rec is_may_failure_ft (f:fail_type) = (get_may_failure_ft f) != None
 
-let is_may_failure (f:list_context) = (get_may_failure f) != None
+let is_may_failure (f:list_context) =
+  let m = (get_may_failure f) in
+  match m with
+    | Some (_, cex) -> is_sat_fail cex
+    | _ -> false
 
 let is_bot_status (f:list_context) = (get_bot_status f) != None
 

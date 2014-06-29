@@ -276,7 +276,7 @@ let specialize_view_info_x prog eqs neqs null_svl neqNull_svl (vnode:h_formula_v
               res@[(sv1, sv2)]
             else res
             in
-            filter_pair sel_svl rest res
+            filter_pair sel_svl rest nres
   in
   let subst_pair_sv sst (sv1,sv2)=
     (CP.subst_var_par sst sv1, CP.subst_var_par sst sv2)

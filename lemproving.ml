@@ -387,9 +387,9 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
       if !Globals.disable_failure_explaining then ""
       else
         match CF.get_must_failure ctx with
-          | Some s -> "(must) cause: " ^ s 
+          | Some (s,cex) -> let _, ns = Cformula.cmb_fail_msg ("(must) cause: " ^ s) cex in ns
           | _ -> (match CF.get_may_failure ctx with
-              | Some s -> "(may) cause: " ^ s
+              | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
               | None -> "INCONSISTENCY : expected failure but success instead"
             )
       in if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")

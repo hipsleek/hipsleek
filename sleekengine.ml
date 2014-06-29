@@ -21,8 +21,16 @@ let string_of_vres t =
 let proc_sleek_result_validate lc =
   match lc with
     | CF.FailCtx _ ->
-      if CF.is_must_failure lc then VR_Fail 1
-      else VR_Fail (-1)
+      if CF.is_must_failure lc then
+        if CF.is_sat_failure lc then
+          (* must fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
+      else
+        if CF.is_may_failure lc then
+          (* may fail + have cex*)
+          VR_Fail 1
+        else VR_Fail (-1)
     | CF.SuccCtx c -> 
       match CF.get_must_error_from_ctx c with
       | None -> VR_Valid
@@ -1798,7 +1806,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.get_must_failure residue with
-            | Some s ->
+            | Some (s, cex) ->
                   (* let reg1 = Str.regexp "base case unfold failed" in *)
                   (* let _ = try *)
                   (*   if Str.search_forward reg1 s 0 >=0 then *)
@@ -1807,10 +1815,11 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                   (*   () *)
                   (* with _ -> let _ = smt_is_must_failure := (Some true) in () *)
                   (* in *)
-                  let _ = smt_is_must_failure := (Some true) in
-                  "(must) cause:"^s
+                  let is_sat,ns = Cformula.cmb_fail_msg ( "(must) cause:"^s) cex in
+                  let _ = smt_is_must_failure := (Some is_sat) in
+                  ns
             | _ -> (match CF.get_may_failure residue with
-                | Some s -> begin
+                | Some (s, cex) -> begin
                       (* try *)
                       (*   let reg1 = Str.regexp "Nothing_to_do" in *)
                       (*   let _ = if Str.search_forward reg1 s 0 >=0 then *)
@@ -1821,9 +1830,10 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
                       (*     else *)
                       (*       () *)
                       (*   in *)
-                    let _ = smt_is_must_failure := (Some false) in
-                    "(may) cause:"^s
-                      (* with _ -> *)
+                    let is_sat,ns = Cformula.cmb_fail_msg ( "(may) cause:"^s) cex in
+                    let _ = smt_is_must_failure := (Some is_sat) in
+                    ns
+                        (* with _ -> *)
                       (*     let _ = smt_is_must_failure := (Some false) in *)
                       (*     "(may) cause:"^s *)
                   end
@@ -1836,7 +1846,7 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       let timeout = 
         if !Globals.sleek_timeout_limit > 0. then
           match CF.get_may_failure residue with
-            | Some "timeout" -> " (timeout) "
+            | Some ("timeout",_) -> " (timeout) "
             | _ -> ""
         else ""
       in
