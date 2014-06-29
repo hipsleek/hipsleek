@@ -39,11 +39,11 @@ void main()
   //dprint;
   cell c = new cell(1);
   cell d;
-  //dprint;
+  dprint;
   send(ch,c);
   dprint;
   receive(ch,c);
-  dprint;
+  //dprint;
 }
 
 /*
