@@ -37,17 +37,17 @@ void main()
 {
   chan ch = create_msg(5);
   //dprint;
-  cell ccc = new cell(1);
+  cell c = new cell(1);
   cell d;
   //dprint;
-  send(ch,ccc);
-  //dprint;
-  receive(ch,ccc);
+  send(ch,c);
+  dprint;
+  receive(ch,c);
   dprint;
 }
 
 /*
-# msg3.ss 
+# msg3-d1.ss --dis-imm
 
 --dis-imm not working properly as hole still present..
 

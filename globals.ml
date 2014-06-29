@@ -933,7 +933,7 @@ let graph_norm_decl_threshold = ref 1
 
 let slice_one = ref (0:int)
 
-let allow_imm = ref false (*imm will delay checking guard conditions*)
+let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_imm_inv = ref true (*imm inv to add of form @M<:v<:@A*)
 let allow_imm_subs_rhs = ref true (*imm rhs subs from do_match*)

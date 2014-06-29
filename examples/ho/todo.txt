@@ -10,7 +10,33 @@ print residue.
  <1>x::cell<flted_21_22>&flted_21_22=3&{FLOW,(21,22)=__norm}[]
 [[ COND ==>  Match ==> ]
 ===================================================================
+# msg3-d1.ss --dis-imm
+
+--dis-imm not working properly as hole still present..
+
+Successful States:
+[
+ Label: []
+ State:Hole[1242]&v_int_40_1241=1 & c_39'!=Cnull & c_39'!=Cnull&{FLOW,(24,25)=__norm}[]
 ===================================================================
+# msg3.ss 
+
+  receive(ch,ccc);
+  dprint;
+}
+
+substitution of HVar(P) have not
+beeb applied in post-condition.
+
+Successful States:
+[
+ Label: []
+ State:ch_38'::MSG{ (exists flted_19_42: v_1242::cell<flted_19_42>&flted_19_42=1&
+{FLOW,(24,25)=__norm})[]}<v_1242> * (HVar P)&v_int_40_1243=1 & v_int_40_1243=1 & v_1246!=Cnull & v_1246!=Cnull & ccc_39'=v_1246 & a!=Cnull&{FLOW,(24,25)=__norm}[]
+       es_heap: emp
+       es_var_measures 2: MayLoop[]
+       es_cond_path: [0]
+
 ===================================================================
 ===================================================================
 ===================================================================
