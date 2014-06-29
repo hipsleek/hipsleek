@@ -9,14 +9,14 @@ data chan {
 pred_prim MSG{F}<c:cell>
 inv c!=null;
 
-pred_prim MSG2<c:cell>
-inv c!=null;
+pred_prim CNT<i:int>
+inv true;
 
 // "chan" type lost?
 // what is the type for res in res::MSG{v::cell<1> & true}<v>?
 chan create_msg (int x)
   requires true
-  ensures (exists v: res::MSG{v::cell<1> & true}<v>);
+  ensures (exists v: res::MSG{v::cell<1> & true}<v> * res::CNT<0>);
 
 /*
 chan create_msg{%G}(int x)
@@ -24,12 +24,12 @@ chan create_msg{%G}(int x)
 */
 
 void send(chan ch, cell c)
-    requires ch::MSG{%P}<c>@L * %P
-    ensures  emp;
+  requires ch::MSG{%P}<c>@L * %P * ch::CNT<n>
+  ensures ch::CNT<n+1>;
 
 void receive(chan ch, ref cell c)
-    requires ch::MSG{%P}<c>@L // do we use c or c'??
-    ensures  %P & c'=c;
+  requires ch::MSG{%P}<c>@L * ch::CNT<n> & n>0 // do we use c or c'??
+    ensures  %P * ch::CNT<n-1> & c'=c;
 
 void main() 
  requires true
@@ -40,8 +40,8 @@ void main()
   cell c = new cell(1);
   cell d;
   dprint;
-  send(ch,c);
   receive(ch,d);
+  send(ch,c);
   dprint;
 }
 
