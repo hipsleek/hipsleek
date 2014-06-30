@@ -9539,10 +9539,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       *)
                       let hvars = CF.extract_hvar_f rhs in
                       if ((List.length hvars) == 0) then
-                        (*TOCHECK: may need to enhance lhs&rhs with more pure info*)
+                        (*renaming before entailment*)
+                        let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
+                        let rhs = subst_avoid_capture r_subs l_subs rhs in
+                        (*TOCHECK: current ivars&evars are considered evars*)
+                        let evars = subtract (new_exist_vars@new_expl_vars@new_impl_vars) (CP.fv to_ho_lhs)in
+                        let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv rhs) in
                         let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) lhs else lhs in
                         let new_estate = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-                        let new_estate = {new_estate with es_formula = es_f;} in
+                        let new_estate = {new_estate with es_formula = es_f; es_evars = evars} in
                         let new_ctx = Ctx (CF.add_to_estate new_estate "matching of ho_args") in
                         let _ = print_endline ("Attempt semantic entailment of ho_args") in
                         let res_ctx, res_prf = heap_entail_conjunct 11 prog false new_ctx rhs [] pos in

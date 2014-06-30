@@ -16,52 +16,67 @@ pred_prim MSG{F}<c:cell>
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{%P}<x>.
 print residue.
-
+expect Valid.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{x::cell<n> & n>0}<x>@L.
 print residue.
+expect Valid.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{x::cell<n> & n>0}<x>.
 print residue.
-
+expect Valid.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>0}<v>.
 print residue.
+expect Valid.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>2}<v>.
 print residue.
-
+expect Fail.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>0}<v>@L.
 print residue.
+expect Valid.
 
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>2}<v>@L.
 print residue.
+expect Fail.
 
 /*
-# msg3.slk
 
-GOT
-===
-<1>x::cell<flted_14_33>&flted_14_33=1 & y=v&{FLOW,(21,22)=__norm}[]
- ho_vars: [P --> (exists flted_14_31: v::cell<flted_14_31>&flted_14_31=1&
-           {FLOW,(21,22)=__norm})[]]
+- if RHS is a %P, add the instantiation into P definition
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{%P}<x>@L.
+print residue.
+expect Valid.
+
+ <1>t::MSG{ (exists flted_52_19: v::cell<flted_52_19>&flted_52_19=1&
+{FLOW,(21,22)=__norm})[]}<v>&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists flted_52_19,v: v::cell<flted_52_19>&x=v & 
+           flted_52_19=1&{FLOW,(21,22)=__norm})[]]
 [[ COND ==>  Match ==> ]]
 
-# Can we obtain instead:
+- if RHS is a formula, add the instantiation x=v to lhs of ho_args
+before matching ho_args
 
- ho_vars: [P --> (exists flted_14_31,v : v::cell<flted_14_31>&flted_14_31=1
-      & y=v {FLOW,(21,22)=__norm})[]]
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>@L.
+print residue.
+expect Valid.
 
-Since is bound, we try to bind y=v and place it into P%
+Entail 1: Valid. 
+
+ <1>t::MSG{ (exists flted_52_19: v::cell<flted_52_19>&flted_52_19=1&
+{FLOW,(21,22)=__norm})[]}<v>&{FLOW,(21,22)=__norm}[]
+[[ COND ==>  Match ==> ]]
+
+Shall we expect "x=v" in residue?
 
 */
-
-
-
