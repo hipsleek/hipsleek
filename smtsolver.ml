@@ -511,6 +511,7 @@ let command_for prover = (
   | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3-4.3.1" -> ("./z3-4.3.1", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
 
@@ -518,7 +519,7 @@ let command_for prover = (
 let run st prover input timeout =
   (*let _ = print_endline "z3-2.19" in*)
   let out_stream = open_out infile in
-  (*let _ = print_endline ("input: " ^ input) in*)
+  (* let _ = print_endline ("input: " ^ input) in *)
   output_string out_stream input;
   close_out out_stream;
   let (cmd, cmd_arg) = command_for prover in
@@ -555,6 +556,8 @@ and start() =
     let _ = (
       if !smtsolver_name = "z3-2.19" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+      else if !smtsolver_name = "z3-4.3.1" then
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else
            Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-in"|]) set_process prelude
     ) in
@@ -594,7 +597,6 @@ let check_formula f timeout =
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-    (* let _ = print_endline new_f in *)
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);

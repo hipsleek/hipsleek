@@ -402,6 +402,8 @@ let set_tp tp_str =
     (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
     if is_smtsolver_z3 tp_str then
        (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+    else if tp_str = "z3-4.3.1" then
+      (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.3.1"::!prover_str;)
   else if tp_str = "redlog" then
     (pure_tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "OCRed" then
@@ -431,7 +433,7 @@ let set_tp tp_str =
   else if tp_str = "spass" then
     (pure_tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
   else if tp_str = "minisat" then
-    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)	
+    (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)
   else if tp_str = "log" then
     (pure_tp := LOG; prover_str := "log"::!prover_str)
   else
