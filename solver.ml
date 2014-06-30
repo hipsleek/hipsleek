@@ -9539,6 +9539,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       *)
                       let hvars = CF.extract_hvar_f rhs in
                       if ((List.length hvars) == 0) then
+                        (*TOCHECK: may need to enhance lhs&rhs with more pure info*)
                         let es_f = if (Perm.allow_perm ()) then CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) lhs else lhs in
                         let new_estate = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
                         let new_estate = {new_estate with es_formula = es_f;} in
