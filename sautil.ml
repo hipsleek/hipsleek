@@ -838,7 +838,7 @@ let rec lookup_undef_args args undef_args def_ptrs=
 (*defined pointers list *
   for recursive constraint(HP name *
  parameter name list)*)
-(*todo: how about null? is it defined?*)
+(* todo: how about null? is it defined? *)
 let rec find_defined_pointers_raw prog f=
   let hds, hvs, hrs = CF.get_hp_rel_formula f in
   let ( _,mix_f,_,_,_) = CF.split_components f in

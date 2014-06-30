@@ -48,6 +48,10 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     |  Cformula.DataNode dr -> dr.Cformula.h_formula_data_node
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
+  let check_iden vn1 vn2=
+     String.compare vn1.Cformula.h_formula_view_name vn2.Cformula.h_formula_view_name = 0 &&
+    CP.eq_spec_var vn1.Cformula.h_formula_view_node vn2.Cformula.h_formula_view_node
+  in
   try
     (*TEMP*)
     (* let lf1 = Cformula.subst lss (Cformula.formula_of_heap lhs_node no_pos) in *)
@@ -78,6 +82,14 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let rf1a = Cformula.subst_b lss rhs_b1 in
     let lf1 = Cfutil.obtain_reachable_formula prog (Cformula.Base lf1a) [lselfr] in
     let rf1 = Cfutil.obtain_reachable_formula prog (Cformula.Base rf1a) [rselfr] in
+    let _, l_hvs,l_hds = Cformula.get_hp_rel_formula lf1 in
+    let _, r_hvs,r_hds = Cformula.get_hp_rel_formula rf1 in
+    if l_hds = [] && r_hds = [] && List.length l_hvs = 1 && List.length r_hvs = 1 &&
+      check_iden (List.hd l_hvs) (List.hd r_hvs) then
+      ()
+    else
+    let is_same,_ = Checkeq.checkeq_formulas [self] lf1 rf1 in
+    if is_same then () else
     (* let lf1 = Cformula.subst lss  *)
     (*RHS: find reachable heap + pure*)
     let lf2 = formula_rev_fnc lf1 in

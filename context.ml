@@ -1098,18 +1098,19 @@ and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
 
-and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res = 
-  if flag_lem then 
-    let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in
-    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in
+and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs)
+      (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res =
+  if flag_lem then
+    let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name vr_name) in
+    let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
         else (1,M_lemma (m_res,Some l))) left_ls else [] in
     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
-    let right_act =  
-      List.fold_left (fun acc l -> 
+    let right_act =
+      List.fold_left (fun acc l ->
           if  (vr_new_orig || (non_loop_candidate l)) then
-            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in 
+            let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in
             acc@[(prio,M_lemma (m_res,Some l))]
           else acc) [] right_ls
     in
@@ -1381,10 +1382,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                 let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
+                let seg_fold_type = if !Globals.seg_fold then (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset) else -1
+                in
                 let l2,syn_lem_typ = (
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                      let uf_i = if new_orig then 0 else 1 in
-                     let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                     let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
                      if flag  then
                        [(0,M_match m_res)],-1 (*force a MATCH after each lemma*)
                      else
@@ -1402,17 +1405,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                              let m_act = (1,M_match m_res) in
                              (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
                              if !Globals.seg_fold then (
-                                 let seg_fold_type = (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset) in
-                                 let seg_acts = if seg_fold_type>= 0 then
-                                   [(1, M_seg_fold (m_res, seg_fold_type))]
-                                 else
-                                   (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
-                                   []
-                                 in
-                                 (1,Search_action ([m_act]@seg_acts))
-                               )
-                               else
-                                 m_act
+                                  let seg_acts = if seg_fold_type>= 0 then
+                                    [(1, M_seg_fold (m_res, seg_fold_type))]
+                                  else
+                                    (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                                    []
+                                  in
+                                  (1,Search_action ([m_act]@seg_acts))
+                             )
+                             else
+                               m_act
                        ) in
                        let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
                     let a3 = (
@@ -1460,7 +1462,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   | Some a2 -> Some (1,Cond_action [a2; a1]) 
                     ) in
                     let a7 =
-                        if (!Globals.smart_lem_search) then
+                        if (!Globals.smart_lem_search ) then
                           let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
                           if lem_act = [] then a6 else
                             match a6 with
@@ -1477,7 +1479,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                         (*cyclic: add lemma_unsafe then unfold lhs*)
                         (*L2: change here for cyclic*)
                         let lst=
-                              let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                              let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
                               if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                                 let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                                 let uf_i = if new_orig then 0 else 1 in
@@ -1515,8 +1517,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*     left_act@right_act *)
                 (*   else  [] *)
                 (* ) in *)
-                let l3 = (* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res (* else [] *) in
+                let l3 = if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
+                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while

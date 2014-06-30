@@ -1,7 +1,12 @@
-compute_actions
+#compute_actions
 process_one_match
 is_seg_view2_fold_form
 is_seg_view_br_fold_form
 seg_fold_view2
 seg_fold_view_br
 do_seg_fold
+need_cycle_checkpoint
+need_cycle_checkpoint_fold
+need_cycle_checkpoint_unfold
+#LEMSYN.gen_lemma
+checkeq_view_node_with_null

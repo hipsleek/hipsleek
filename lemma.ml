@@ -1318,6 +1318,11 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
       []
     )
     else (
+        let vns = Cformula.get_views induct_f in
+        let other_vnodes = List.filter (fun vn ->
+            String.compare vn.CF.h_formula_view_name vname != 0
+        ) vns in
+        if (!Globals.seg_fold) && other_vnodes !=[] then [] else
       (* create distributive lemma like: 
               pred -> pred1 * pred2
               pred <- pred1 * pred2          *)
