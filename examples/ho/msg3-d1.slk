@@ -1,0 +1,16 @@
+data cell {
+  int x;
+}.
+
+data chan {
+  int y;
+}.
+
+pred_prim MSG{F}<c:cell>
+inv c!=null.
+
+checkentail (exists v,
+v': ch'::MSG{(exists flted_19_42: v::cell<flted_19_42>&flted_19_42=1)}<v> 
+* c'::cell<v'>&v'=1)
+ |-  ch'::MSG{%P}<c'>@L * %P.
+print residue.
