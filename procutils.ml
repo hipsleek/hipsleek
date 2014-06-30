@@ -20,7 +20,6 @@ let open_proc_full cmd args input output error toclose =
 ;;
 
 let open_process_full cmd args =
-  (* let _ = List.map (fun arg -> print_endline ("arg: " ^ arg)) args in *)
   let (in_read, in_write) = Unix.pipe() in
   let (out_read, out_write) = Unix.pipe() in
   let (err_read, err_write) = Unix.pipe() in
