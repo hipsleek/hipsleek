@@ -1231,7 +1231,7 @@ let show_unexpected_ents = ref true
 (* generate baga inv from view *)
 let double_check = ref false
 let gen_baga_inv = ref false
-let pred_sat = ref false
+let prove_invalid = ref true
 let gen_baga_inv_threshold = 7 (* number of preds <=6, set gen_baga_inv = false*)
 let baga_xpure = ref false (* change to true later *)
 let baga_imm = ref false                 (* when on true, ignore @L nodes while building baga --  this is forced into true when computing baga for vdef*)
@@ -1292,7 +1292,7 @@ let dis_bk ()=
 let dis_pred_sat () = 
   print_endline_q "Disabling baga inv gen .."; 
   (* let _ = gen_baga_inv := false in *)
-  let _ = pred_sat := false in
+  let _ = prove_invalid := false in
   (*baga bk*)
   let _ = dis_bk () in
   ()
@@ -1308,27 +1308,27 @@ let en_bk () =
 let en_pred_sat () =
   (* print_endline_q "Enabling baga inv gen .."; *)
   (* let _ = gen_baga_inv := true in *)
-  let _ = pred_sat := true in
+  let _ = prove_invalid := true in
   (*baga bk*)
   let _ = en_bk ()  in
   ()
 
-let _ = if !smt_compete_mode then
-  begin
-    (* Debug.trace_on := false; *)
-    (* Debug.devel_debug_on:= false; *)
-    silence_output:=true;
-    enable_count_stats:=false;
-    enable_time_stats:=false;
-    print_core:=false;
-    print_core_all:=false;
-    (* gen_baga_inv := true; *)
-    en_pred_sat ();
-    (* do_infer_inv := true; *)
-    lemma_gen_unsafe := true;
-    graph_norm := true;
-    smt_compete_mode:=true
-  end
+(* let _ = if !smt_compete_mode then *)
+(*   begin *)
+(*     (\* Debug.trace_on := false; *\) *)
+(*     (\* Debug.devel_debug_on:= false; *\) *)
+(*     silence_output:=true; *)
+(*     enable_count_stats:=false; *)
+(*     enable_time_stats:=false; *)
+(*     print_core:=false; *)
+(*     print_core_all:=false; *)
+(*     (\* gen_baga_inv := true; *\) *)
+(*     en_pred_sat (); *)
+(*     (\* do_infer_inv := true; *\) *)
+(*     lemma_gen_unsafe := true; *)
+(*     graph_norm := true; *)
+(*     smt_compete_mode:=true *)
+(*   end *)
 
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

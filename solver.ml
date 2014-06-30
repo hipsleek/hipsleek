@@ -1992,7 +1992,7 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
   let fvars = CP.fv f in
 
   (* 27.05.2008 *)
-  if !Globals.move_exist_to_LHS & (not(Gen.is_empty (Gen.BList.difference_eq CP.eq_spec_var fvars evars)) & not(Gen.is_empty evars))	then
+  if !Globals.move_exist_to_LHS && (not(Gen.is_empty (Gen.BList.difference_eq CP.eq_spec_var fvars evars)) && not(Gen.is_empty evars))	then
     (* there still are free vars whose bondings were not moved to the LHS --> existentially quantify the whole formula and move it to the LHS *)
     (* Ex.:  ex e. f1<e & e<=g or ex e. (f=1 & e=2 \/ f=2 & e=3) *)
     (*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
@@ -6990,7 +6990,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                 let _ = DD.tinfo_hprint (add_str "is_rhs_emp" string_of_bool) (is_rhs_emp) no_pos in
                                 let _ = DD.tinfo_pprint "\n" no_pos in
                                 (* let _ = DD.binfo_hprint (add_str "" pr_id) ("\n") no_pos in *)
-                                let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
+                                let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 rhs_h_matched_set pos in
                                 (* let _ = DD.binfo_hprint (add_str "!Globals.do_classic_frame_rule 2" string_of_bool) (!Globals.do_classic_frame_rule) no_pos in *)
                                 let p2 = MCP.drop_varperm_mix_formula p2 in
                                 let new_ctx =
@@ -7400,7 +7400,7 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
 (* lctx = Fail --> well-founded termination failure *)
 (* lctx = Succ --> termination succeeded with inference *)
 and heap_infer_decreasing_wf_x prog estate rank is_folding lhs pos =
-  let lctx, _ = heap_entail_empty_rhs_heap 2 prog is_folding estate lhs (MCP.mix_of_pure rank) pos 
+  let lctx, _ = heap_entail_empty_rhs_heap 2 prog is_folding estate lhs (MCP.mix_of_pure rank) [] pos 
   in CF.estate_opt_of_list_context lctx
 
 and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
@@ -7456,12 +7456,12 @@ and subst_rel_by_def_mix rel_w_defs mf =
    let p =  subst_rel_by_def rel_w_defs (MCP.pure_of_mix mf) in
    (MCP.mix_of_pure p)
 
-and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
+and heap_entail_empty_rhs_heap i p i_f es lhs rhs rhs_matched_set pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
-      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
+      (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhs_matched_set pos) es lhs rhs
 
-and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
   (* Changed for merge.ss on 9/3/2013 *)
@@ -7717,9 +7717,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     let pr = Cprinter.string_of_ef_pure_disj in
                     begin
                     Debug.ninfo_hprint (add_str "rhs pf" Cprinter.string_of_pure_formula) (Mcpure.pure_of_mix rhs_p) no_pos;
-                    Debug.binfo_hprint (add_str "expected" string_of_bool) flag2 no_pos;
-                    Debug.binfo_hprint (add_str "lhs" pr) lhs no_pos;
-                    Debug.binfo_hprint (add_str "rhs" pr) rhs no_pos
+                    Debug.tinfo_hprint (add_str "expected" string_of_bool) flag2 no_pos;
+                    Debug.tinfo_hprint (add_str "lhs" pr) lhs no_pos;
+                    Debug.tinfo_hprint (add_str "rhs" pr) rhs no_pos
                     end
                   in
                     r
@@ -8084,7 +8084,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         must bug -> sleek_mustbug_flow
         may bug -> sleek_maybug_flow
       *)
-      let cex = Slsat.check_sat_empty_rhs_with_uo lhs (MCP.pure_of_mix rhs_p) in
+      let cex = Slsat.check_sat_empty_rhs_with_uo estate_orig lhs (MCP.pure_of_mix rhs_p) rhs_matched_set in
       if not !disable_failure_explaining then
         let new_estate = {
             estate with es_formula =

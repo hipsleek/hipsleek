@@ -1311,9 +1311,9 @@ struct
         if r!=r2 then
           begin
             let pr = string_of_disj in
-            Debug.binfo_hprint (add_str "ante" pr) ante no_pos;
-            Debug.binfo_hprint (add_str "conseq" pr) conseq no_pos;
-            Debug.binfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
+            Debug.tinfo_hprint (add_str "ante" pr) ante no_pos;
+            Debug.tinfo_hprint (add_str "conseq" pr) conseq no_pos;
+            Debug.tinfo_pprint ("Got "^(string_of_bool r)^" but expects "^(string_of_bool r2)) no_pos
           end
       end;
     r

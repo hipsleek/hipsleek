@@ -756,7 +756,7 @@ let common_arguments = [
   ("--smt-test", 
      Arg.Unit
       (fun _ ->
-          (* Globals.show_unexpected_ents := true;  *)
+          Globals.show_unexpected_ents := true;
           (*this flag is one that is  diff with compared to --smt-compete *)
           Debug.trace_on := true;
           Debug.devel_debug_on:= false;
@@ -769,11 +769,11 @@ let common_arguments = [
           (* Globals.acc_fold := true; *)
           (* Globals.smart_lem_search := true; *)
           Globals.seg_fold := true;
-          (* Globals.en_pred_sat (); *)
-          Globals.gen_baga_inv := false;
+          Globals.en_pred_sat ();
+          (* Globals.gen_baga_inv := false; *)
           (* Globals.do_infer_inv := true; *)
           Globals.graph_norm := true;
-          Globals.is_solver_local := true;
+          (* Globals.is_solver_local := false; *)
           Globals.disable_failure_explaining := false;
           Globals.smt_compete_mode :=true;
           Globals.return_must_on_pure_failure := true;

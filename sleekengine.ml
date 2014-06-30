@@ -34,7 +34,7 @@ let proc_sleek_result_validate lc =
     | CF.SuccCtx c -> 
       match CF.get_must_error_from_ctx c with
       | None -> VR_Valid
-      | _ -> VR_Fail 1
+      | (Some (_,cex)) -> if Cformula.is_sat_fail cex then VR_Fail 1 else (VR_Fail (-1))
 (* TODO : why do we need two diff kinds of must-errors? *)
 (* Is there any difference between the two? *)
 
@@ -608,15 +608,15 @@ let convert_data_and_pred_to_cast_x () =
   let _ = if !Globals.smt_compete_mode then
     let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
     let num_vdecls = List.length tmp_views  in
-    let _ = if num_vdecls <= gen_baga_inv_threshold then
-        (* let _ = Globals.gen_baga_inv := false in *)
-      (* let _ = Globals.dis_pred_sat () in *)
-        ()
-    else
-      let _ = Globals.lemma_gen_unsafe := false in
-      (* let _ = Globals.lemma_syn := false in *)
-      ()
-    in
+    (* let _ = if num_vdecls <= gen_baga_inv_threshold then *)
+    (*     (\* let _ = Globals.gen_baga_inv := false in *\) *)
+    (*   (\* let _ = Globals.dis_pred_sat () in *\) *)
+    (*     () *)
+    (* else *)
+    (*   let _ = Globals.lemma_gen_unsafe := false in *)
+    (*   (\* let _ = Globals.lemma_syn := false in *\) *)
+    (*   () *)
+    (* in *)
     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
       let _ = Globals.graph_norm := false in
       ()
@@ -1666,8 +1666,8 @@ let process_pred_split ids=
 
 let process_pred_norm_disj ids=
   let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+  (* let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in *)
+  (* let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in *)
   (*find all sel pred def*)
   let sel_hp_defs = List.fold_left (fun r (_,def) ->
       match def.CF.def_cat with
@@ -1684,7 +1684,7 @@ let process_shape_infer_prop pre_hps post_hps=
   let constrs2, sel_hps, sel_post_hps, unk_map, unk_hpargs, link_hpargs=
     shape_infer_pre_process hp_lst_assume pre_hps post_hps
   in
-  let ls_hprel, ls_inferred_hps,_=
+  let ls_hprel, (* ls_inferred_hps *) _ ,_=
     let infer_shape_fnc =  if not (!Globals.pred_syn_modular) then
       Sa2.infer_shapes
     else Sa3.infer_shapes (* Sa.infer_hps *)

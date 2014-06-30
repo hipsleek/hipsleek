@@ -191,7 +191,7 @@ let build_and_failures i (failure_code:string) (failure_name:string) ((contra_li
   let pr1 = Cprinter.string_of_pure_formula in
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
-  let pr2 = (fun _ -> "OUT") in
+  let pr2 = Cprinter.string_of_list_context_short in
   Debug.no_1_num i "build_and_failures" pr4 pr2 
       (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template cex ft)
       (contra_list, must_list, may_list)

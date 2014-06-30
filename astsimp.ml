@@ -466,7 +466,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
         edges) in
     let scclist = NGComponents.scc_list g in
     let mr = List.filter (fun l -> (List.length l)>1) scclist in
-    let str = pr_list (pr_list pr_id) mr in
+    (* let str = pr_list (pr_list pr_id) mr in *)
     let mutrec = List.concat mr in
     let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
@@ -2156,7 +2156,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       let _ = List.iter (fun cv ->
           Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj
       ) cviews0 in
-      let ls_mut_rec_views1 = List.rev ls_mut_rec_views in
+      (* let ls_mut_rec_views1 = List.rev ls_mut_rec_views in *)
       (* let ls_mut_rec_views1 = List.fold_left (fun ls cv -> *)
       (*     if List.mem cv.C.view_name (List.flatten ls) then *)
       (*       ls *)
@@ -2225,8 +2225,8 @@ and fill_one_base_case_x prog vd =
   else
     begin
       {vd with C.view_base_case = (* WN : smt-compete problem : can be large! *)
-              if !Globals.smt_compete_mode then None
-              else
+              (* if !Globals.smt_compete_mode then None *)
+              (* else *)
                 compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
       }
     end
@@ -3291,12 +3291,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula i_lhs (* coer.I.coercion_head *)) in
   let sv = CP.SpecVar (UNK,self,Unprimed) in
   let xx = find_trans_view_name c_rhs sv no_pos in
-  let rhs_name =
-    if (List.exists (fun s -> String.compare s lhs_name = 0) xx) then lhs_name
-    else 
-      try (List.hd xx)
-        (* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *)
-      with | _ -> "" in
+  (* let rhs_name = *)
+  (*   if (List.exists (fun s -> String.compare s lhs_name = 0) xx) then lhs_name *)
+  (*   else  *)
+  (*     try (List.hd xx) *)
+  (*       (\* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *\) *)
+  (*     with | _ -> "" in *)
   let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
   if lhs_name = "" then raise (Failure "root pointer of node on LHS must be self")
   else
@@ -3331,7 +3331,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm" Cprinter.string_of_formula) new_body no_pos in
                 let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
                 let _ = Debug.ninfo_hprint (add_str "new_body_norm (after push exists)" Cprinter.string_of_formula) new_body no_pos in
-                let new_body_norm =  c.C.coercion_body_norm in
+                (* let new_body_norm =  c.C.coercion_body_norm in *)
                 (* let new_body_norm = CF.struc_formula_of_formula new_body no_pos in *)
                 let new_body_norm = CF.normalize_struc c.C.coercion_body_norm (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
                 let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in

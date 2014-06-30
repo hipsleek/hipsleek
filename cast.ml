@@ -2520,6 +2520,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
          | None -> r
    ) [] prog.prog_view_decls in
    let _ = Debug.ninfo_hprint (add_str "seg_opz_views" (pr_list pr_id)) seg_opz_views no_pos in
+   if List.length seg_opz_views  > 1 then false else
    let ldnodes, lvnodes,_ = (Cformula.get_hp_rel_formula ante) in
    let rvnodes = (Cformula.get_views_struc conseq) in
    let rdnodes = Cformula.get_datas_struc conseq in

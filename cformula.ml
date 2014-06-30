@@ -8473,7 +8473,7 @@ think it is used to instantiate when folding.
 
   es_aux_conseq : CP.formula;
   (* es_imm_pure_stk : MCP.mix_formula list; *)
-  es_must_error : (string * fail_type) option;
+  es_must_error : (string * fail_type * failure_cex) option;
   (* es_must_error : string option *)
   es_trace : formula_trace; (*LDK: to keep track of past operations: match,fold...*)
   (*for cyclic proof*)
@@ -8609,6 +8609,7 @@ and list_failesc_context = failesc_context list
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+let print_cex = ref( fun (c: failure_cex) -> "printer not initialized")
 let print_list_context = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_context_short = ref(fun (c:context) -> "printer not initialized")
@@ -8819,7 +8820,7 @@ let get_must_error_from_ctx cs =
   match cs with 
     | [Ctx es] -> (match es.es_must_error with
         | None -> None
-        | Some (msg,_) -> Some msg)
+        | Some (msg,_,cex) -> Some (msg,cex))
     | _ -> None
 
 let get_bot_status_from_ctx cs=
@@ -8831,7 +8832,7 @@ let get_bot_status_from_ctx cs=
         )
     | _ -> None
 
-let rec set_must_error_from_one_ctx ctx msg ft=
+let rec set_must_error_from_one_ctx ctx msg ft cex=
   match ctx with
     | Ctx es ->
         begin
@@ -8848,14 +8849,14 @@ let rec set_must_error_from_one_ctx ctx msg ft=
               )
             in
             Ctx {es with  es_formula = substitute_flow_into_f  !error_flow_int es.es_formula;
-                es_must_error = Some (msg,instance_ft)}
+                es_must_error = Some (msg,instance_ft, cex)}
         end
-    | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft, set_must_error_from_one_ctx ctx2 msg ft)
+    | OCtx (ctx1, ctx2) -> OCtx (set_must_error_from_one_ctx ctx1 msg ft cex, set_must_error_from_one_ctx ctx2 msg ft cex)
 
-let rec set_must_error_from_ctx cs msg ft=
+let rec set_must_error_from_ctx cs msg ft cex=
   match cs with
     | [] -> []
-    | es::ls -> (set_must_error_from_one_ctx es msg ft):: (set_must_error_from_ctx ls msg ft)
+    | es::ls -> (set_must_error_from_one_ctx es msg ft cex):: (set_must_error_from_ctx ls msg ft cex)
 
 let isFailCtx_gen cl = match cl with
 	| FailCtx _ -> true
@@ -9211,7 +9212,7 @@ let get_must_es_msg_ft ft =
     (*report_error no_pos "INCONSISTENCY with get_must_es_msg_ft"*)
     | _, _ -> None
  
-let get_must_failure (ft:list_context) =
+let get_must_failure_x (ft:list_context) =
   match ft with
     | FailCtx (f, cex) -> begin
           let m = (get_must_failure_ft f) in
@@ -9226,10 +9227,16 @@ let get_must_failure (ft:list_context) =
 	| SuccCtx cs -> begin
             let s_opt = get_must_error_from_ctx cs in
             match s_opt with
-              | Some s -> Some (s, mk_cex false)
+              | Some (s,cex) -> Some (s, cex)
               | None -> None
           end
     (* | _ -> None *)
+
+let get_must_failure (ft:list_context)=
+  let pr1 = !print_list_context in
+  let pr2 = !print_cex in
+  Debug.no_1 "get_must_failure" pr1 (pr_option (pr_pair pr_id pr2))
+      (fun _ -> get_must_failure_x ft) ft
 
 (*todo: revise, pretty printer*)
 let rec get_must_failure_list_partial_context (ls:list_partial_context): (string option)=
@@ -9341,20 +9348,19 @@ let is_may_failure (f:list_context) =
 
 let is_bot_status (f:list_context) = (get_bot_status f) != None
 
-let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) : context option =
+let convert_must_failure_4_fail_type  (s:string) (ft:fail_type) cex : context option =
      match (get_must_es_msg_ft ft) with
-          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft) } ) 
+          | Some (es,msg) -> Some (Ctx {es with es_must_error = Some (s^msg,ft,cex) } ) 
           | _ ->  None
 
 (* TRUNG WHY: purpose when converting a list_context from FailCtx type to SuccCtx type? *)
-(* Loc: this conversion for must failure proving *)
 let convert_must_failure_to_value_orig (l:list_context) : list_context =
   match l with 
-    | FailCtx (ft,_) -> (* Loc: to check cex here*)
+    | FailCtx (ft,cex) -> (* Loc: to check cex here*)
           (* (match (get_must_es_msg_ft ft) with *)
           (*   | Some (es,msg) -> SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]  *)
           (*   | _ ->  l) *)
-          (match (convert_must_failure_4_fail_type "" ft) with
+          (match (convert_must_failure_4_fail_type "" ft cex) with
             | Some ctx -> SuccCtx [ctx]
             | None -> l)
     | SuccCtx _ -> l
@@ -9371,7 +9377,9 @@ let add_must_err_to_pc (s:string) (fme:branch_ctx list) (e:branch_ctx list) : br
   fme @ e
 
 let convert_must_failure_4_branch_type  (s:string) ((pt,ft):branch_fail) : branch_ctx option =
-  match (convert_must_failure_4_fail_type s ft) with
+  (* Loc: to implement cex for hip. cex should be got from branch_fail *)
+  let cex = mk_cex true in
+  match (convert_must_failure_4_fail_type s ft cex) with
     | Some b -> Some (pt,b)
     | None -> None
 
@@ -9816,9 +9824,9 @@ let invert ls =
   match ls with
   | [] -> []
   | [Ctx es] -> (match es.es_must_error with
-      | None -> [Ctx {es with es_must_error = Some ("1 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+      | None -> [Ctx {es with es_must_error = Some ("1 "^errmsg,foo es, (mk_cex true)); es_formula = goo es (mkErrorFlow())}]
       | Some _ -> [Ctx {es with es_must_error = None; es_formula = goo es (mkNormalFlow())}])
-  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2 "^errmsg,foo es); es_formula = goo es (mkErrorFlow())}]
+  | (Ctx es)::_ -> [Ctx {es with es_must_error = Some ("2 "^errmsg,foo es, (mk_cex true)); es_formula = goo es (mkErrorFlow())}]
   | _ -> report_error no_pos "not sure how to invert_outcome"
 
 
@@ -10637,7 +10645,7 @@ and change_flow_into_ctx_list to_fl ctx_list =
 
 and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verified:bool): list_context =
   match l with
-  | FailCtx (ft,_) -> (* Loc: to check cex here *)
+  | FailCtx (ft,cex) ->
         (match (get_must_es_msg_ft ft) with
           | Some (es,msg) ->
               begin
@@ -10648,7 +10656,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
                         SuccCtx new_ctx_lst
                     | false ->
                         (*update es_must_error*)
-                        SuccCtx [Ctx {es with es_must_error = Some (msg,ft) } ]
+                        SuccCtx [Ctx {es with es_must_error = Some (msg,ft,cex) } ]
               end
           | _ ->  l)
   | SuccCtx ctx_lst -> if not bug_verified then l else
@@ -10663,7 +10671,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
             let ft_template = (Basic_Reason (fc_template,
                                              mk_failure_must "INCONSISTENCY : expected failure but success instead" "", [])) in
             let new_ctx_lst = set_must_error_from_ctx ctx_lst "INCONSISTENCY : expected failure but success instead"
-              ft_template in
+              ft_template (mk_cex true) in
             SuccCtx new_ctx_lst
         end
 (*23.10.2008*)

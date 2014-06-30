@@ -2746,8 +2746,8 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
 
   
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
-        let ante0 = CP.infer_level_pure ante in (*add l.mu>0*) (*MERGE CHECK*)
-        let conseq0 = CP.infer_level_pure conseq in (*add l.mu>0*) (*MERGE CHECK*)
+        (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
+        (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
 	  let acpairs = imply_label_filter ante conseq in
 	  let pairs = List.map (fun (ante,conseq) -> 
               let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in

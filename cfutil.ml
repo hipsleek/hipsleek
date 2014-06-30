@@ -1375,7 +1375,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
     match diffs with
       | [] -> []
       | (mt, f1 ,f2)::rest ->
-            let _ = Debug.info_hprint (add_str "mt" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) mt no_pos in
+            let _ = Debug.ninfo_hprint (add_str "mt" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) mt no_pos in
             if is_empty_f f2 then mt
             else is_seg_match rest
   in
@@ -1412,7 +1412,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   let ivars = [(CP.name_of_spec_var rvnode.h_formula_view_node)] in
   let sst1, fs_diffs = find_first_seg_match ivars
     [[]] rhs_fs [] in
-  let _ = Debug.info_hprint (add_str "sst1" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst1 no_pos in
+  let _ = Debug.ninfo_hprint (add_str "sst1" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst1 no_pos in
   let cut_points = List.fold_left (fun r (sv1,sv2) ->
       if CP.mem_svl sv2 fwd_seg_args then r@[sv1] else r
   ) [] sst1 in
@@ -1422,7 +1422,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   else
     match fs_diffs with
       | [br, diffs] -> begin
-          let _ = Debug.info_hprint (add_str "br" (!print_formula)) br no_pos in
+          let _ = Debug.ninfo_hprint (add_str "br" (!print_formula)) br no_pos in
           let sst2 = List.combine vdecl.Cast.view_vars rvnode.h_formula_view_arguments in
             match diffs with
               | [(mt,_,_)] ->
@@ -1435,7 +1435,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
                     let eq_p = MCP.mix_of_pure (CP.conj_of_list ps no_pos) in
                     let br1 = subst sst2 ( br) in
                     let br2 = formula_trans_heap_node (subst_heap_node eqs) br1 in
-                    let _ = Debug.info_hprint (add_str "br2" (!print_formula)) br2 no_pos in
+                    let _ = Debug.ninfo_hprint (add_str "br2" (!print_formula)) br2 no_pos in
                     let cmb = (join_star_conjunctions (heap_of br2)) in
                     let n_conseq, n_rhs_b = update_conseq conseq rhs_b rvnode cmb in
                     (true, mkAnd_pure n_conseq eq_p no_pos, mkAnd_base_pure n_rhs_b eq_p no_pos,eqs)
