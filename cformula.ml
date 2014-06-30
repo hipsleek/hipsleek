@@ -9360,6 +9360,12 @@ let fold_context (f:'t -> entail_state -> 't) (a:'t) (c:context) : 't =
   helper a c
 
 
+let map_context (f:entail_state -> entail_state) (c:context) : context =
+  let rec aux c = match c with
+    | Ctx es -> Ctx (f es)
+    | OCtx (c1,c2) -> OCtx (aux c1, aux c2) in
+  aux c
+
 let consistent_entail_state (es:entail_state) : bool = consistent_formula es.es_formula
 
 let consistent_context (c:context) : bool = 
