@@ -11450,11 +11450,16 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
     | Some (e1,v) -> (e1,v)
     | None  -> let new_arg = f_args arg e in
         match e with
-        | Star s -> 
+        | Star s ->
             let (e1,r1)=helper s.h_formula_star_h1 new_arg in
             let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-            (Star {s with h_formula_star_h1 = e1;
-                          h_formula_star_h2 = e2;},f_comb [r1;r2])
+            let newhf = (match e1,e2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> e2
+              | (_,HEmp) -> e1
+              | _ -> Star {s with h_formula_star_h1 = e1;
+                    h_formula_star_h2 = e2;})
+            in (newhf, f_comb [r1;r2])
         | StarMinus s -> 
             let (e1,r1)=helper s.h_formula_starminus_h1 new_arg in
             let (e2,r2)=helper s.h_formula_starminus_h2 new_arg in
