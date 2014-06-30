@@ -24,7 +24,7 @@ lemma t::THRD2{%P}<x> & t::DEAD<> -> %P;
 // what is %P?
 thrd create_thrd() // with %P
   requires true
-  ensures (exists x: res::THRD{x::cell<1> & true,x::cell<2>}<x>);
+  ensures (exists x: res::THRD{x::cell<vx> & true,x::cell<vx+1>}<x>);
 
 void fork_thrd(thrd t,cell x)
   requires t::THRD{%P,%Q}<x> * %P
@@ -35,8 +35,8 @@ void join_thrd(thrd t, cell x)
   ensures  t::DEAD<> * %Q;
 
 void thread1(cell x)
-  requires x::cell<1>
-  ensures x::cell<2>;
+  requires x::cell<vx>
+  ensures x::cell<vx+1>;
 {
   x.v = x.v + 1;
 }

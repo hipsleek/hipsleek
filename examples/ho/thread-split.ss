@@ -32,7 +32,7 @@ lemma t::THRD2{%P}<x> & t::DEAD<> -> %P;
 //this new thread multiplies x and y by 10
 thrd create_thrd() // with %P
   requires true
-  ensures (exists x,y: res::THRD{x::cell<1> * y::cell<2> & true,x::cell<10> * y::cell<20>}<x,y>);
+  ensures (exists x,y: res::THRD{x::cell<vx> * y::cell<vy> & true,x::cell<vy> * y::cell<vx>}<x,y>);
 
 void fork_thrd(thrd t,cell x, cell y)
   requires t::THRD{%P,%Q}<x,y> * %P
@@ -45,7 +45,7 @@ void join_thrd(thrd t, cell x, cell y)
 // this new thread adds 3 to x
 thrd create_thrd2() // with %P
   requires true
-  ensures (exists x,t,y: res::THRD3{ t::THRD2{x::cell<10>}<x,y> & true,x::cell<13>}<t,x>);
+  ensures (exists x,t,y: res::THRD3{ t::THRD2{x::cell<vx>}<x,y> & true,x::cell<vx+1>}<t,x>);
 
 void fork_thrd2(thrd t2,thrd t, cell x)
   requires t2::THRD3{%P,%Q}<t,x> * %P
@@ -63,17 +63,17 @@ void main()
   thrd tid1 =  create_thrd();
   thrd tid2 =  create_thrd2();
 
-  fork_thrd(tid1,x,y);
-
-  dprint;
-
+  fork_thrd(tid1,x,y); //(x=1,y=2) -> (x=2,y=1)
   fork_thrd2(tid2,tid1,x);
-
-  dprint;
 
   join_thrd(tid1,x,y);
 
-  assert x'::cell<10> * y'::cell<20>;
+  y.v = y.v +2; //y=3
+
+  join_thrd2(tid2,tid1,x); //x=3
+
+
+  assert x'::cell<3> * y'::cell<3>;
 }
 
 
