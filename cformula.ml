@@ -11561,16 +11561,17 @@ let get_hvar e vars =
       get_hvar_x e vars
 
 (*drop hvars whose spec_var belong to vars*)
-let drop_hvar_x e vars =
-  let f hf = match hf with
-    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then None else Some [hf]
-    | _ -> Some [hf]
+let drop_hvar_x hf vars =
+  let func hf = match hf with
+    | HVar v -> if (Gen.BList.mem_eq CP.eq_spec_var v vars) then Some HEmp else None
+    | _ -> None
   in
-  fold_h_formula e f List.concat
+  map_h_formula hf func
+  (* fold_h_formula e f List.concat *)
 
 let drop_hvar e vars =
   let pr1 = !print_h_formula in
-  Debug.no_2 "drop_hvar" pr1 !print_svl (pr_list pr1)
+  Debug.no_2 "drop_hvar" pr1 !print_svl pr1
       drop_hvar_x e vars
 
 let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
@@ -11583,7 +11584,7 @@ let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
               | _ -> report_error no_pos "subst_hvar: expect HVar only"
             ) hvars in
             let n_h = drop_hvar fb.formula_base_heap [f] in
-            let n_h = if (n_h=[]) then HEmp else List.hd n_h in (*TOCHECK*)
+            (* let n_h = if (n_h=[]) then HEmp else List.hd n_h in (\*TOCHECK*\) *)
             (*Potential issues to consider: (1) duplicated HVars, (2) renaming of existential vars*)
             let n_f = Base {fb with formula_base_heap = n_h} in
             let n_f2 = List.fold_left (fun f1 f2 -> normalize_combine f1 f2 no_pos) n_f fs in
