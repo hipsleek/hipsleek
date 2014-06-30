@@ -2104,8 +2104,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let fet es = {es with CF.es_formula = CF.subst_hvar es.CF.es_formula es.CF.es_ho_vars_map ; CF.es_ho_vars_map = [];} in
                     let ff = ((fun x -> x), (fun x -> x), (fun es -> CF.Ctx (fet es))) in
                     let rs = CF.transform_list_failesc_context ff rs in
-                    let _ = Debug.binfo_pprint "Khanh : need to perform ho_var subs here" no_pos in
-                    let _ = Debug.binfo_hprint (add_str "residue(subs_ho)" Cprinter.string_of_list_failesc_context) rs no_pos in
+                    (* let _ = Debug.binfo_pprint "Khanh : need to perform ho_var subs here" no_pos in *)
+                    (* let _ = Debug.binfo_hprint (add_str "residue(subs_ho)" Cprinter.string_of_list_failesc_context) rs no_pos in *)
 		    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                     let _ = PTracer.log_proof prf in

@@ -11579,7 +11579,23 @@ let drop_hvar e vars =
   Debug.no_2 "drop_hvar" pr1 !print_svl pr1
       drop_hvar_x e vars
 
-let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
+let rec subst_one_hvar_hf_x (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
+  let func hf = match hf with
+    | ViewNode vn ->
+          let ho_args = List.map (fun arg -> subst_one_hvar arg (f,t)) vn.h_formula_view_ho_arguments in
+          Some (ViewNode {vn with h_formula_view_ho_arguments = ho_args;})
+    | _ -> None
+  in
+  map_h_formula hf func
+
+(*subst ho_vars in ViewNode*)
+and subst_one_hvar_hf (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
+  let pr1 = !print_h_formula in
+  let pr2 = pr_pair !print_sv !print_formula in
+  Debug.no_2 "subst_one_hvar_hf" pr1 pr2 pr1
+      subst_one_hvar_hf_x hf  (f,t)
+
+and subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
   let rec helper f0=
     match f0 with
       | Base fb ->
@@ -11589,6 +11605,8 @@ let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
               | _ -> report_error no_pos "subst_hvar: expect HVar only"
             ) hvars in
             let n_h = drop_hvar fb.formula_base_heap [f] in
+            (*subst ho_vars in n_h*)
+            let n_h = subst_one_hvar_hf n_h (f,t) in
             (* let n_h = if (n_h=[]) then HEmp else List.hd n_h in (\*TOCHECK*\) *)
             (*Potential issues to consider: (1) duplicated HVars, (2) renaming of existential vars*)
             let n_f = Base {fb with formula_base_heap = n_h} in
@@ -11603,16 +11621,16 @@ let rec subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
   in
   helper f0
 
-let rec subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
+and subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
   let pr1 = !print_formula in
   let pr2 = pr_pair !print_sv !print_formula in
     Debug.no_2 "subst_one_hvar" pr1 pr2 pr1
         subst_one_hvar_x f0 (f,t)
 
-let subst_hvar_x f0 subst=
+and subst_hvar_x f0 subst=
   List.fold_left (fun f (fr,t) -> subst_one_hvar f (fr,t)) f0 subst
 
-let subst_hvar f subst=
+and subst_hvar f subst=
   let pr1 = !print_formula in
   let pr2 = pr_list (pr_pair !print_sv !print_formula) in
   Debug.no_2 "subst_hvar" pr1 pr2 pr1
