@@ -13,40 +13,62 @@ pred_prim MSG_HO{F}<c:chan>
 pred_prim MSG{F}<c:cell>
  inv true.
 
+//(1)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{%P}<x>.
 print residue.
 expect Valid.
 
+//(2)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{x::cell<n> & n>0}<x>@L.
 print residue.
 expect Valid.
 
+//(3)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{x::cell<n> & n>0}<x>.
 print residue.
 expect Valid.
 
+//(4)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>0}<v>.
 print residue.
 expect Valid.
 
+//(5)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>2}<v>.
 print residue.
 expect Fail.
 
+//(6)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>0}<v>@L.
 print residue.
 expect Valid.
 
+//(7)
 checkentail t::MSG{v::cell<1> & true}<v> 
     |- t::MSG{v::cell<n> & n>2}<v>@L.
 print residue.
 expect Fail.
+
+//(8)
+checkentail t::MSG{(exists vv: v::cell<1> * v::cell<1> & true)}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Valid.
+//Entail 8: Fail.(must) cause:104expecting matched ho_args but getting @split
+
+//(9)
+checkentail t::MSG{false}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+expect Valid.
+//Entail 9: Fail.(must) cause:104expecting matched ho_args but getting @split
+
 
 /*
 
