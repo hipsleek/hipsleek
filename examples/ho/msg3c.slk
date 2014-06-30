@@ -20,6 +20,9 @@ print residue.
 
 
 /*
+
+  (exists n,v1. v1::cell<n> & n>0 & v1=v)
+
    Note: the two entailments are similar
 
 Entail 1: Valid. 

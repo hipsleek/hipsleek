@@ -7,7 +7,7 @@ pred_prim MSG{F}<c:cell>
  inv true.
 
 checkentail c::MSG{v::cell<1> & true}<v> * x::cell<1> 
-    |- c::MSG{%P}<y> .
+    |- c::MSG{%P}<x> * %P.
 print residue.
 /*
 # msg3.slk

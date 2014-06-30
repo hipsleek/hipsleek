@@ -1,0 +1,67 @@
+
+data cell {
+  int x;
+}.
+
+data chan {
+  int x;
+}.
+
+pred_prim MSG_HO{F}<c:chan>
+ inv true.
+
+pred_prim MSG{F}<c:cell>
+ inv true.
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{%P}<x>.
+print residue.
+
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>@L.
+print residue.
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{x::cell<n> & n>0}<x>.
+print residue.
+
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>.
+print residue.
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>2}<v>.
+print residue.
+
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>0}<v>@L.
+print residue.
+
+checkentail t::MSG{v::cell<1> & true}<v> 
+    |- t::MSG{v::cell<n> & n>2}<v>@L.
+print residue.
+
+/*
+# msg3.slk
+
+GOT
+===
+<1>x::cell<flted_14_33>&flted_14_33=1 & y=v&{FLOW,(21,22)=__norm}[]
+ ho_vars: [P --> (exists flted_14_31: v::cell<flted_14_31>&flted_14_31=1&
+           {FLOW,(21,22)=__norm})[]]
+[[ COND ==>  Match ==> ]]
+
+# Can we obtain instead:
+
+ ho_vars: [P --> (exists flted_14_31,v : v::cell<flted_14_31>&flted_14_31=1
+      & y=v {FLOW,(21,22)=__norm})[]]
+
+Since is bound, we try to bind y=v and place it into P%
+
+*/
+
+
+
