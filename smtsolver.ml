@@ -511,6 +511,7 @@ let command_for prover = (
   | "z3" -> ("z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "./z3" -> ("./z3", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-2.19" -> ("z3-2.19", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3-4.2" -> ("./z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-4.3.1" -> ("./z3-4.3.1", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
@@ -556,6 +557,8 @@ and start() =
     let _ = (
       if !smtsolver_name = "z3-2.19" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"|]) set_process (fun () -> ())
+      else if !smtsolver_name = "z3-4.2" then
+        Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else if !smtsolver_name = "z3-4.3.1" then
         Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
       else

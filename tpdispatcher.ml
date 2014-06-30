@@ -402,6 +402,8 @@ let set_tp tp_str =
     (*     (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;) *)
     if is_smtsolver_z3 tp_str then
        (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3"::!prover_str;)
+    else if tp_str = "z3-4.2" then
+      (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.2"::!prover_str;)
     else if tp_str = "z3-4.3.1" then
       (Smtsolver.smtsolver_name := tp_str; pure_tp := Z3; prover_str := "z3-4.3.1"::!prover_str;)
   else if tp_str = "redlog" then
