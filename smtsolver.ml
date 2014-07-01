@@ -472,11 +472,10 @@ let sat_type_from_string r input=
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let _ = print_endline ("solver_sat_result: " ^ solver_sat_result) in
+  let _ = Debug.binfo_pprint ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let _ = print_endline "model:" in
-  let _ = List.map (fun s -> print_endline s) model in
-  let _ = print_endline "" in
+  let _ = Debug.binfo_pprint "model:" no_pos in
+  let _ = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
@@ -628,7 +627,7 @@ let check_formula f timeout =
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
-    if (!Globals.get_model) then
+    if (!Globals.get_model && !smtsolver_name="z3-4.2") then
       iget_answer2 (!prover_process.inchannel) f
     else
       iget_answer (!prover_process.inchannel) f
@@ -704,7 +703,8 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars info =
     ";Antecedent\n" ^ 
       ante_str ^
     ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
-    "(check-sat)" ^ (if !Globals.get_model then "\n(get-model)" else "")
+    "(check-sat)" ^
+    (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")
   )
 
 (* output for smt-lib v1.2 format *)
