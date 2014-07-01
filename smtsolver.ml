@@ -417,15 +417,29 @@ type smt_output = {
   (* expand with other information : proof, time, error, warning, ... *)
 }
 
-let string_of_smt_output output = 
+let string_of_smt_output output =
   (String.concat "\n" output.original_output_text)
+
+let rec icollect_output2 chn accumulated_output : string list =
+  let output =
+    try
+      let line = input_line chn in
+      if (line = "unsat") then
+        accumulated_output @ [line]
+      else if (line = ")") then
+        accumulated_output @ [line]
+      else
+        icollect_output2 chn (accumulated_output @ [line])
+    with
+      | End_of_file -> accumulated_output in
+  output
 
 (* Collect all Z3's output into a list of strings *)
 let rec icollect_output chn accumulated_output : string list =
-  let output = 
+  let output =
     try
       let line = input_line chn in
-      (* let _ = print_endline ("locle2" ^ line) in*)
+      (* let _ = print_endline ("locle2" ^ line) in *)
       if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
         icollect_output chn (accumulated_output @ [line])
       else accumulated_output @ [line]
@@ -437,7 +451,7 @@ let rec collect_output chn accumulated_output : string list =
   let output =
     try
       let line = input_line chn in
-      (*let _ = print_endline ("locle: " ^ line) in*)
+      (* let _ = print_endline ("locle: " ^ line) in *)
       collect_output chn (accumulated_output @ [line])
     with
       | End_of_file -> accumulated_output in
@@ -453,6 +467,16 @@ let sat_type_from_string r input=
       Error.report_error { Error.error_loc = no_pos; Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
     with
       | Not_found -> Unknown
+
+let iget_answer2 chn input =
+  let output = icollect_output2 chn [] in
+  let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
+  let _ = print_endline ("solver_sat_result: " ^ solver_sat_result) in
+  let model = List.tl output in
+  let _ = print_endline "model:" in
+  let _ = List.map (fun s -> print_endline s) model in
+  { original_output_text = output;
+    sat_result = sat_type_from_string solver_sat_result input; }
 
 let iget_answer chn input=
   let output = icollect_output chn [] in
@@ -586,7 +610,6 @@ let restart reason =
     ()
   )
 
-
 (* send formula to z3 and receive result -true/false/unknown*)
 let check_formula f timeout =
   let tstartlog = Gen.Profiling.get_time () in 
@@ -603,7 +626,10 @@ let check_formula f timeout =
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
-    iget_answer (!prover_process.inchannel) f
+    if (!Globals.get_model) then
+      iget_answer2 (!prover_process.inchannel) f
+    else
+      iget_answer (!prover_process.inchannel) f
   ) in
   let fail_with_timeout () = (
     (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
