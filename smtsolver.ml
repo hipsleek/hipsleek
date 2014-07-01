@@ -425,6 +425,7 @@ let rec icollect_output2 chn accumulated_output : string list =
     try
       let line = input_line chn in
       if (line = "unsat") then
+        let _ = input_line chn in
         accumulated_output @ [line]
       else if (line = ")") then
         accumulated_output @ [line]
@@ -475,6 +476,7 @@ let iget_answer2 chn input =
   let model = List.tl output in
   let _ = print_endline "model:" in
   let _ = List.map (fun s -> print_endline s) model in
+  let _ = print_endline "" in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
