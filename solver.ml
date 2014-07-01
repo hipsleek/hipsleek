@@ -9631,7 +9631,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                                 let flag,result = check_split xs in
                                 (match residue with
                                   | None -> (flag,arg::result)
-                                  | Some r ->(true, r::result)))
+                                  | Some r ->
+                                        if ((isConstEmpFormula r) || (isConstTrueFormula2 r))
+                                        then (flag,arg::result) (*splitable but empty residue*)
+                                        else (true, r::result)))
                       in
                       let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
                       let new_ante =
