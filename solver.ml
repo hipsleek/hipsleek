@@ -1543,8 +1543,8 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
 
   let struc_unfold_baref prog (h : h_formula) (p : MCP.mix_formula) a (fl:flow_formula) (v : CP.spec_var) pos 
 	qvars ee ei ii already_unsat (uf:int) : struc_formula option=
-    let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
-    let aset' = Context.get_aset asets v in
+    let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
+    let aset' = Csvutil.get_aset asets v in
     let aset = if CP.mem v aset' then aset' else v :: aset' in
     let h_rest, unfolded_f = struc_unfold_heap prog h aset v uf (qvars@ee@ei) pos in
     match unfolded_f with
@@ -1744,8 +1744,8 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
 
 
 and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
-  let asets = Context.alias_nth 6 (MCP.ptr_equations_with_null p) in
-  let aset' = Context.get_aset asets v in
+  let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
+  let aset' = Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf pos in
   (* let _ = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
@@ -5611,8 +5611,8 @@ and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_form
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
   let rhs_eqns = (MCP.ptr_equations_with_null target_rhs_p)@rhs_eqset in
-  let lhs_asets = Context.alias_nth 7 (lhs_eqns@rhs_eqns) in
-  let lhs_targetasets1 = Context.get_aset lhs_asets target in
+  let lhs_asets = Csvutil.alias_nth 7 (lhs_eqns@rhs_eqns) in
+  let lhs_targetasets1 = Csvutil.get_aset lhs_asets target in
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
@@ -5624,8 +5624,8 @@ and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_fo
       : bool =
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
-  let lhs_asets = Context.alias_nth 8 lhs_eqns in
-  let lhs_targetasets1 = Context.get_aset lhs_asets target in
+  let lhs_asets = Csvutil.alias_nth 8 lhs_eqns in
+  let lhs_targetasets1 = Csvutil.get_aset lhs_asets target in
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
@@ -9646,7 +9646,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   (* let _ = print_line "Adding es_rhs_eqset into RHS ptrs" in *)
   let ptr_eq = (* Cprinter.app_sv_print *) ptr_eq@(estate.es_rhs_eqset) in 
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
-  let asets = Context.alias_nth 9 ptr_eq in
+  let asets = Csvutil.alias_nth 9 ptr_eq in
   try
     let vdef = look_up_view_def_raw 10 prog.Cast.prog_view_decls c2 in
     let subs_vars = List.combine vdef.view_vars v2 in
@@ -9660,7 +9660,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
           let ex_vars = estate.es_evars@estate.es_gen_impl_vars@estate.es_gen_expl_vars in
 	      if (List.exists (comparator c2) ex_vars) then
 	        try
-              let c21 = List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) (Context.get_aset asets c2) in
+              let c21 = List.find (fun c -> not (List.exists (comparator c) (ex_vars) )) (Csvutil.get_aset asets c2) in
               (c21::a,p)
             with
               | Not_found ->
@@ -12604,7 +12604,7 @@ and normalize_base_perm_x prog (f:formula) =
     | [] -> []
     | h::t -> 
 	  let v = get_node_var h in
-	  let a = v::(Context.get_aset aset v) in
+	  let a = v::(Csvutil.get_aset aset v) in
 	  let t = h_a_grp_f aset t in
 	  let lha, lhna = m_find (fun c-> Gen.BList.mem_eq CP.eq_spec_var (get_node_var (List.hd c)) a) t in
 	  (h::lha):: lhna in	
@@ -12643,7 +12643,7 @@ and normalize_base_perm_x prog (f:formula) =
   
   let f = 
     let (qv, h, p, t, fl, a, lbl, pos) = all_components f in	 
-    let aset = Context.comp_aliases p in
+    let aset = Csvutil.comp_aliases p in
     let l1 = split_star_conjunctions h in
     let simpl_h, n_simpl_h = List.partition (fun c-> match c with | DataNode _ -> true | _ -> false) l1 in
     let n_simpl_h = join_star_conjunctions n_simpl_h in

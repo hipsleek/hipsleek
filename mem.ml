@@ -1004,7 +1004,7 @@ let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
          CF.h_formula_data_param_imm = param_ann1;
          CF.h_formula_data_arguments = h1args;
          } ->
-	 let aset_sv = Context.get_aset aset v1 in
+	 let aset_sv = Csvutil.get_aset aset v1 in
          (match h2 with
  	 | CF.DataNode { CF.h_formula_data_name = name2;
  	                 CF.h_formula_data_node = v2;
@@ -1060,7 +1060,7 @@ let compact_view_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var l
             CF.h_formula_view_annot_arg = annot_arg1;
             } ->
           let param_ann1 = CP.annot_arg_to_imm_ann_list (List.map fst annot_arg1) in
-          let aset_sv = Context.get_aset aset v1 in
+          let aset_sv = Csvutil.get_aset aset v1 in
           (match h2 with
  	    | CF.ViewNode { CF.h_formula_view_name = name2;
  	      CF.h_formula_view_node = v2;
@@ -1276,7 +1276,7 @@ let compact_nodes_with_same_name_in_h_formula_top (f: CF.h_formula) (aset: CP.sp
 let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
     | CF.Base f   -> let new_h,new_p = 
-    	compact_nodes_with_same_name_in_h_formula_top f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure)
+    	compact_nodes_with_same_name_in_h_formula_top f.CF.formula_base_heap (Csvutil.comp_aliases f.CF.formula_base_pure)
     	in 
     	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     	CF.Base { f with
@@ -1293,7 +1293,7 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     	let h = f.CF.formula_exists_heap in
     	let mp = f.CF.formula_exists_pure in
     	let new_h,new_p = 
-    	compact_nodes_with_same_name_in_h_formula_top h (Context.comp_aliases mp)
+    	compact_nodes_with_same_name_in_h_formula_top h (Csvutil.comp_aliases mp)
     	in
     	(*let p_list = List.filter (fun c -> match c with
     	| CP.BForm((CP.Eq (e1,e2,_),None),None) -> (match e1,e2 with
@@ -1862,7 +1862,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula * aliasing_scenario =
     CF.h_formula_starminus_aliasing = al;
 	CF.h_formula_starminus_pos = pos}) -> 
 	if (CF.is_data h2) || (CF.is_view h2) then 
-	let aset_sv  = Context.get_aset aset (CF.get_node_var h2) in
+	let aset_sv  = Csvutil.get_aset aset (CF.get_node_var h2) in
 	let ramify_list = List.filter (fun c -> let sp_c = (CF.get_node_var c) in
 	(*let _ = print_string("Svar :"^(string_of_spec_var sp_c)^"\n") in*)
 	((CP.mem sp_c aset_sv) || (CP.eq_spec_var (CF.get_node_var h2) sp_c))) fl in
@@ -1885,7 +1885,7 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
         let old_p = f.CF.formula_base_pure in
         let fl = split_into_list f.CF.formula_base_heap in
         let new_h,new_p,_ = 
-    	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Context.comp_aliases old_p) fl ramify_star old_p
+    	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Csvutil.comp_aliases old_p) fl ramify_star old_p
     	in 
     	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     	CF.Base { f with
@@ -1900,7 +1900,7 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
     	let mp = f.CF.formula_exists_pure in
         let fl = split_into_list h in
     	let new_h,new_p,_ = 
-    	ramify_starminus_in_h_formula h vl (Context.comp_aliases mp) fl ramify_star mp
+    	ramify_starminus_in_h_formula h vl (Csvutil.comp_aliases mp) fl ramify_star mp
     	in
  	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
     	CF.Exists { f with

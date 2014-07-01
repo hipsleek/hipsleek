@@ -199,7 +199,7 @@ let norm_free_vars f0 args=
         ) args) in
         if fr_svl = [] then (f,[])
         else
-          let _ = Debug.ninfo_hprint (add_str "fr_svl" Cprinter.string_of_spec_var_list) fr_svl no_pos in
+          let _ = Debug.ninfo_hprint (add_str "fr_svl" !CP.print_svl) fr_svl no_pos in
           (*rename primed quantifiers*)
           let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
               if p = Unprimed then
@@ -213,9 +213,9 @@ let norm_free_vars f0 args=
           let nf0 = if ss = [] then (Base fb) else
             subst ss (Base fb)
           in
-          let _ = Debug.ninfo_hprint (add_str "       nf0:" Cprinter.prtt_string_of_formula) nf0 no_pos in
+          let _ = Debug.ninfo_hprint (add_str "       nf0:" !print_formula) nf0 no_pos in
           let nf = add_quantifiers fr_svl1 nf0 in
-          let _ = Debug.ninfo_hprint (add_str "       nf:" Cprinter.prtt_string_of_formula) nf no_pos in
+          let _ = Debug.ninfo_hprint (add_str "       nf:" !print_formula) nf no_pos in
           let tis = List.fold_left (fun ls (CP.SpecVar(t,sv,p)) ->
               let vk = Typeinfer.fresh_proc_var_kind ls t in
               let svp = sv ^(match p with Primed -> "PRM"| _ -> "") in
@@ -224,7 +224,7 @@ let norm_free_vars f0 args=
           (nf, tis)
       | Exists _ ->
             let qvars1, base1 = split_quantifiers f in
-            let _ = Debug.ninfo_hprint (add_str "qvars1" Cprinter.string_of_spec_var_list) qvars1 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "qvars1" !CP.print_svl) qvars1 no_pos in
             let base2,tis = helper base1 in
              (add_quantifiers qvars1 base2, tis)
       | Or orf ->
@@ -384,7 +384,7 @@ let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpar
     check_neq_hpargs keep_ptrs keep_ptrs keep_hpargs
 
 let keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs=
-  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr1 = !print_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_3 "keep_data_view_hpargs_nodes" pr1 !CP.print_svl pr2 pr1
       (fun _ _ _ -> keep_data_view_hpargs_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hpargs)
@@ -2143,3 +2143,6 @@ let norm_rename_clash_args_node_x init_args0 f0=
 (*******************************************************************)
 (************************END GRAPH*****************************************)
 (*******************************************************************)
+
+
+

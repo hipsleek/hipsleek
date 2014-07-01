@@ -161,7 +161,7 @@ object (self)
 
   method set_ilemma il_lst  =
     let _ = lst # reset in
-    let len = List.iter (self # add_ilemma ) il_lst in
+    let _ = List.iter (self # add_ilemma ) il_lst in
     ()
 
   method get_all_ilemma =
@@ -176,3 +176,29 @@ end;;
 let ilemma_st = new lemma_list_store;;
 
 
+(**********************************************************)
+(***********LEMMA APPLICATION PRE-PROCESS*****************)
+(**********************************************************)
+(*
+  pre process: check whether coercion has the same form with lhs and rhs
+*)
+(* let is_lemma_syntax_matching_x prog (lnode, largs) (rnode, rargs) lhs rhs remap coer= *)
+(*   let shape_match lhs rhs l_coer r_coer= *)
+(*     let l_reach = Cfutil.obtain_reachable_formula prog lhs [lnode] in *)
+(*     let l_reach = Cfutil.obtain_reachable_formula prog rhs [rnode] in *)
+(*     true *)
+(*   in *)
+(*   true *)
+
+(* let is_lemma_shape_matching prog (lnode,largs) (rnode,rargs) lhs rhs remap coer= *)
+(*   let pr1 = !lem_pr in *)
+(*   let pr2 = !Cpure.print_sv in *)
+(*   let pr3 = !Cpure.print_svl in *)
+(*   let pr4 = !Cformula.print_formula in *)
+(*   Debug.no_7 "is_lemma_shape_matching" pr1 pr2 pr3 pr2 pr3 pr4 pr4 string_of_bool *)
+(*       (fun _ _ _ _ _  _ _ -> is_lemma_shape_matching_x prog (lnode,largs) (rnode, rargs) lhs rhs remap coer) *)
+(*       coer lnode largs rnode rargs lhs rhs *)
+
+(**********************************************************)
+(***********END LEMMA APPLICATION PRE-PROCESS ************)
+(**********************************************************)

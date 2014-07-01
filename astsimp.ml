@@ -1072,7 +1072,8 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
           (*    Solver.CP.b_formula list) *)
           (* list *)
 	  let f_list = List.map (fun (c1,c2)-> 
-	      let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
+	      (* let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in *)
+              let aset = Csvutil.get_aset (Csvutil.alias_nth 11 ((crt_v, crt_v) :: (CP.pure_ptr_equations c1))) crt_v in
 	      let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
 	      let eqs = (CFS.get_equations_sets c1 aset)in
 	      let eqs = (CFS.transform_null eqs) in
@@ -2507,8 +2508,10 @@ and find_node_vars eq_f h =
 
 and param_alias_sets p params = 
   let eqns = ptr_equations_with_null p in
-  let asets = Context.alias_nth 10 eqns in
-  let aset_get x = x:: (Context.get_aset asets x) in
+  (* let asets = Context.alias_nth 10 eqns in *)
+  let asets = Csvutil.alias_nth 10 eqns in
+  (* let aset_get x = x:: (Context.get_aset asets x) in *)
+  let aset_get x = x:: (Csvutil.get_aset asets x) in
   List.map (fun c-> ( aset_get c,c)) params
 
 and find_materialized_prop params forced_vars (f0 : CF.formula) : C.mater_property list =
@@ -5827,7 +5830,10 @@ and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_v
 and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
     | CF.Base f   -> CF.Base { f with
-        CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure); }
+        CF.formula_base_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap
+  (* (Context.comp_aliases f.CF.formula_base_pure); *)
+  (Csvutil.comp_aliases f.CF.formula_base_pure);
+  }
     | CF.Or f     -> CF.Or { f with 
         CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }

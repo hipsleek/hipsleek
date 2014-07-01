@@ -6,7 +6,6 @@ open Exc.GTable
 open Printf
 open Gen.Basic
 open Gen.BList
-open Perm
 open Mcpure_D
 open Mcpure
 open Label_only
@@ -18,7 +17,6 @@ module IF = Iformula
 module IP = Ipure
 module CF = Cformula
 module CP = Cpure
-module MCP = Mcpure
 module LO = Label_only.LOne
 
 let rev_trans_spec_var v = match v with CP.SpecVar (t,v,p)-> (v,p) 
@@ -102,7 +100,7 @@ let rec rev_trans_pure f = match f with
   | CP.Forall (v,f,lbl,pos)->  IP.Forall (rev_trans_spec_var v,rev_trans_pure f, lbl, pos)
   | CP.Exists (v,f,lbl,pos)->  IP.Exists (rev_trans_spec_var v,rev_trans_pure f, lbl, pos)
   
-let rec rev_trans_mix f = rev_trans_pure(MCP.pure_of_mix f)
+let rec rev_trans_mix f = rev_trans_pure(Mcpure.pure_of_mix f)
   
 let rec rev_trans_heap f = match f with 
   | CF.HTrue  -> IF.HTrue

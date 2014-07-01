@@ -267,59 +267,59 @@ and ctx_type =
 
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
-let rec alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
-  match ptr_eqs with
-  | (v1, v2) :: rest -> begin
-	  let rest_sets = alias_x rest in
-	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
-	  let av1, rest1 = search v1 rest_sets in
-	  let av2, rest2 = search v2 rest1 in
-	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
-	  v1v2_set :: rest2
-	end
-  | [] -> []
+(* let rec alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =  *)
+(*   match ptr_eqs with *)
+(*   | (v1, v2) :: rest -> begin *)
+(* 	  let rest_sets = alias_x rest in *)
+(* 	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in *)
+(* 	  let av1, rest1 = search v1 rest_sets in *)
+(* 	  let av2, rest2 = search v2 rest1 in *)
+(* 	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in *)
+(* 	  v1v2_set :: rest2 *)
+(* 	end *)
+(*   | [] -> [] *)
 
 
 (* let alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =  *)
 (*   let aset = alias_x ptr_eqs in *)
 (* List.filter (fun l -> List.length l > 1) aset *)
 
-let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
-  let psv = Cprinter.string_of_spec_var in
-  let pr1 l = pr_list (pr_pair psv psv) l in
-  let pr2 l = pr_list (pr_list psv) l in
-  Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+(* let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =  *)
+(*   let psv = Cprinter.string_of_spec_var in *)
+(*   let pr1 l = pr_list (pr_pair psv psv) l in *)
+(*   let pr2 l = pr_list (pr_list psv) l in *)
+(*   Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs *)
 
-let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
-  let tmp = List.filter (fun a -> CP.mem v a) aset in
-  match tmp with
-	| [] -> []
-	| [s] -> s
-	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
+(* let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list = *)
+(*   let tmp = List.filter (fun a -> CP.mem v a) aset in *)
+(*   match tmp with *)
+(* 	| [] -> [] *)
+(* 	| [s] -> s *)
+(* 	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets") *)
 
-let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
-let psv = Cprinter.string_of_spec_var in
- let pr1 = (pr_list psv) in
- let pr2 = pr_list pr1 in
- Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v
+(* let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list = *)
+(* let psv = Cprinter.string_of_spec_var in *)
+(*  let pr1 = (pr_list psv) in *)
+(*  let pr2 = pr_list pr1 in *)
+(*  Debug.no_2 "get_aset" pr2  psv pr1 get_aset aset v *)
 
-let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
-    let eqns = MCP.ptr_equations_without_null rhs_p in
-    alias_nth 1 eqns 
+(* let comp_aliases_x (rhs_p:MCP.mix_formula) : (CP.spec_var) list list = *)
+(*     let eqns = MCP.ptr_equations_without_null rhs_p in *)
+(*     alias_nth 1 eqns  *)
 
-let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
- let psv = Cprinter.string_of_spec_var in
- let pr2 = (pr_list (pr_list psv)) in
- let pr1 = Cprinter.string_of_mix_formula in
- Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p
+(* let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list = *)
+(*  let psv = Cprinter.string_of_spec_var in *)
+(*  let pr2 = (pr_list (pr_list psv)) in *)
+(*  let pr1 = Cprinter.string_of_mix_formula in *)
+(*  Debug.no_1 "comp_aliase" pr1 pr2 comp_aliases_x rhs_p *)
 
-let comp_alias_part r_asets a_vars = 
-    (* let a_vars = lhs_fv @ posib_r_aliases in *)
-    let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
-    let colaps l = List.fold_left (fun a c -> match a with 
-      | [] -> [(c,c)]
-      | h::_-> (c,(fst h))::a) [] l in
-    List.concat (List.map colaps fltr) 
+(* let comp_alias_part r_asets a_vars =  *)
+(*     (\* let a_vars = lhs_fv @ posib_r_aliases in *\) *)
+(*     let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in *)
+(*     let colaps l = List.fold_left (fun a c -> match a with  *)
+(*       | [] -> [(c,c)] *)
+(*       | h::_-> (c,(fst h))::a) [] l in *)
+(*     List.concat (List.map colaps fltr)  *)
 
 let is_match_res_from_coerc_or_root m =
   match m.match_res_type with
@@ -367,7 +367,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           (* let emap = CP.EMapSV.build_eset eqns' in *)
           let r_eqns =
             let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
-            let r_asets = alias_nth 2 eqns in
+            let r_asets = Csvutil.alias_nth 2 eqns in
             let a_vars = lhs_fv @ posib_r_aliases in
             let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
             let colaps l = List.fold_left (fun a c -> match a with
@@ -379,8 +379,8 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
           (* let emap = CP.EMapSV.build_eset eqns in *)
           (* let paset = CP.EMapSV.find_equiv_all p emap in *)
           (* let paset = p::paset in *)
-          let asets = alias_nth 3 (eqns@r_eqns) in
-          let paset = get_aset asets p in (* find the alias set containing p *)
+          let asets = Csvutil.alias_nth 3 (eqns@r_eqns) in
+          let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
           if Gen.is_empty paset then
             failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
           else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
@@ -1098,10 +1098,18 @@ and filter_lemmas_by_kind l k =
   List.filter (fun c-> if c.coercion_case == k then true else false) l 
 
 
-and search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs)
-      (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res =
+and search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs)
+      (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res lhs rhs remap=
+  let extract_node_info hnode=
+    match hnode with
+      | ViewNode vn -> (vn.h_formula_view_node, vn.h_formula_view_arguments)
+      | DataNode dn -> (dn.h_formula_data_node, dn.h_formula_data_arguments)
+      | _ -> raise Not_found
+  in
   if flag_lem then
     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name vr_name) in
+    (* let left_ls = List.filter (Lem_store.is_lemma_matching prog (extract_node_info m_res.match_res_lhs_node) *)
+    (*     (extract_node_info m_res.match_res_rhs_node) lhs rhs remap) left_ls0 in *)
     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
@@ -1463,7 +1471,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     ) in
                     let a7 =
                         if (!Globals.smart_lem_search ) then
-                          let lem_act = search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res in
+                          let lem_act = search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
                           if lem_act = [] then a6 else
                             match a6 with
                               | Some a ->  Some (1, Cond_action ([a]@lem_act))
@@ -1518,7 +1526,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (*   else  [] *)
                 (* ) in *)
                 let l3 = if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res else [] in
+                  search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset else [] in
                 (*let l4 = 
                 (* TODO WN : what is original?? *)
                 (* Without it, run-fast-test of big imm runs faster while
