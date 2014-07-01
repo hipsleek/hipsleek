@@ -38,11 +38,11 @@ void main()
   chan ch = create_msg(5);
   //dprint;
   cell c = new cell(1);
-  cell d;
-  dprint;
+  //cell d;
+  //dprint;
   send(ch,c);
-  dprint;
-  receive(ch,c);
+  //dprint;
+  //receive(ch,c);
   //dprint;
 }
 
