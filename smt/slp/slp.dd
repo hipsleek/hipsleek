@@ -1,4 +1,4 @@
-heap_entail_non_empty_rhs_heap
+#heap_entail_non_empty_rhs_heap
 compute_actions
 process_one_match
 is_seg_view2_fold_form
@@ -11,5 +11,6 @@ do_seg_fold
 #need_cycle_checkpoint_unfold
 #LEMSYN.gen_lemma
 checkeq_view_node_with_null
-do_fold_w_ctx
-fold_op: process_one
+#do_fold_w_ctx
+#heap_entail_conjunct_helper
+#heap_entail_conjunct

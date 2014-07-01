@@ -8420,7 +8420,7 @@ will be split into to_ante and to_conseq when ~Sprocess_fold_result~T. I
 think it is used to instantiate when folding.
     *)
   es_pure : MCP.mix_formula;
-
+  es_folding_conseq_pure : MCP.mix_formula option; (* while folding, pure of current conseq has not been fwded. pass this pure to guide strategy *)
   (*used by universal LEMMAS for instantiation? *)
   es_ivars : CP.spec_var list; 
     (* ivars are the variables to be instantiated (for the universal lemma application)  *)
@@ -8744,6 +8744,7 @@ let empty_es flowt grp_lbl pos =
   es_id = 0 ;
   es_orig_ante = None;
   es_orig_conseq = mkETrue flowt pos;
+  es_folding_conseq_pure = None;
   es_rhs_eqset = [];
   es_path_label  =[];
   es_cond_path  = [] ;

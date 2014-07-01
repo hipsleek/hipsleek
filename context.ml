@@ -1236,12 +1236,14 @@ and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
   let pr_p = !MCP.print_mix_formula in
   let pr_out = string_of_action_wt_res0 in
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr2 es = (pr_option Cprinter.string_of_mix_formula) es.es_folding_conseq_pure in
   Debug.no_7 "process_one_match" 
       (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
-      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p) pr1 pr_out
+      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p)
+      (pr_pair pr1 pr2) pr_out
       (fun _ _ _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing
                           mt_res (rhs_node,rhs_rest,rhs_p) reqset)
-      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p reqset
+      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p (reqset, estate)
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =
@@ -1392,7 +1394,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                 let _ = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
-                let seg_fold_type = if !Globals.seg_fold then (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset) else -1
+                let seg_fold_type = if !Globals.seg_fold then (Cfutil.is_seg_view2_fold_form  prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) else -1
                 in
                 let l2,syn_lem_typ = (
                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
@@ -1421,7 +1423,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                     (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
                                     []
                                   in
-                                  (1,Search_action ([m_act]@seg_acts))
+                                  (1,Cond_action ([m_act]@seg_acts))
                              )
                              else
                                m_act
@@ -1581,7 +1583,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
                 let seg_fold_type = if !Globals.seg_fold then
-                  (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset)
+                  (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset estate.CF.es_folding_conseq_pure)
                 else gen_lemma_action_invalid
                 in
                 let a1 = (
