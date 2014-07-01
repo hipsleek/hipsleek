@@ -1065,7 +1065,7 @@ let poss_prune_pred prog vnode f=
       vnode f
 
 (*
-  res = -1: NO cyclic - not syn lemma
+  res = -1: NO cyclic - not syn lemma (gen_lemma_action_invalid)
   res = 0: syn Left lemma
   res = 1: syn Right lemma
   res = 2 : syn lemma_infer
@@ -1111,27 +1111,30 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
       let lvlength = List.length l_reach_vns in
       let rnlength = List.length r_reach_dns in
       let rvlength = List.length r_reach_vns in
-      if lnlength = 0 && lvlength =1  && rnlength = 0 && rvlength =1  then -1 else
-      if lvlength = rvlength then
-        if (lnlength != rnlength) then
-          if lvlength = rvlength then
-            let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
-            if lem_type = -1 then 0 else lem_type
-          else 0
-        else
-          let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-          let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
-          let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
-          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
-            1
-          else
-            let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
-            let leqnull = CP.intersect_svl l_reach_ptrs leqNulls in
-            if (leqnull !=[] && reqnull = []) || (leqnull =[] && reqnull != []) then -1 else 1
+      if lnlength = 0 && lvlength =1  && rnlength = 0 && rvlength =1  then
+        gen_lemma_action_invalid
       else
-        if (lvlength > rvlength) then
-          0
-        else -1
+        if lvlength = rvlength then
+          if (lnlength != rnlength) then
+            if lvlength = rvlength then
+              let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+              if lem_type = gen_lemma_action_invalid then 0 else lem_type
+            else 0
+          else
+            let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+            let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
+            let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
+            if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+              1
+            else
+              let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
+              let leqnull = CP.intersect_svl l_reach_ptrs leqNulls in
+              if (leqnull !=[] && reqnull = []) || (leqnull =[] && reqnull != []) then gen_lemma_action_invalid
+              else 1
+        else
+          if (lvlength > rvlength) then
+            0
+          else gen_lemma_action_invalid
 
 let need_cycle_checkpoint prog lvnode lhs rvnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -1402,6 +1405,12 @@ let seg_fold_view2 prog lvnode rvnode conseq rhs_b=
       (fun _ _ _ _ -> seg_fold_view2_x prog lvnode rvnode conseq rhs_b)
       lvnode rvnode conseq rhs_b
 
+
+(*
+-1: nothing_todo
+0: need fold
+1: OK
+*)
 let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   let subst_heap_node sst hf=
     match hf with
@@ -1452,17 +1461,20 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   let ivars = [(CP.name_of_spec_var rvnode.h_formula_view_node)] in
   let sst1, fs_diffs = find_first_seg_match ivars
     [[]] rhs_fs [] in
-  let _ = Debug.ninfo_hprint (add_str "sst1" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst1 no_pos in
+  let _ = Debug.info_hprint (add_str "sst1" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst1 no_pos in
+  let _ = Debug.info_hprint (add_str "fs_diffs" (pr_list_ln (pr_pair !print_formula (pr_list_ln (pr_triple (pr_list (pr_pair !CP.print_sv !CP.print_sv)) !print_formula !print_formula))))) fs_diffs no_pos in
   let cut_points = List.fold_left (fun r (sv1,sv2) ->
       if CP.mem_svl sv2 fwd_seg_args then r@[sv1] else r
   ) [] sst1 in
   if cut_points != [] then
     let is_ok, nc_cons, n_rhs_b = split_r_vnode cut_points cont_args_pos rvnode conseq rhs_b in
-    (is_ok, nc_cons, n_rhs_b,[])
+    let res_ok = if is_ok then 1 else -1 in
+    (res_ok, nc_cons, n_rhs_b,[])
   else
+    (* aux info: nested linked list*)
     match fs_diffs with
       | [br, diffs] -> begin
-          let _ = Debug.ninfo_hprint (add_str "br" (!print_formula)) br no_pos in
+          let _ = Debug.info_hprint (add_str "br" (!print_formula)) br no_pos in
           let sst2 = List.combine vdecl.Cast.view_vars rvnode.h_formula_view_arguments in
             match diffs with
               | [(mt,_,_)] ->
@@ -1475,13 +1487,13 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
                     let eq_p = MCP.mix_of_pure (CP.conj_of_list ps no_pos) in
                     let br1 = subst sst2 ( br) in
                     let br2 = formula_trans_heap_node (subst_heap_node eqs) br1 in
-                    let _ = Debug.ninfo_hprint (add_str "br2" (!print_formula)) br2 no_pos in
+                    let _ = Debug.info_hprint (add_str "br2" (!print_formula)) br2 no_pos in
                     let cmb = (join_star_conjunctions (heap_of br2)) in
                     let n_conseq, n_rhs_b = update_conseq conseq rhs_b rvnode cmb in
-                    (true, mkAnd_pure n_conseq eq_p no_pos, mkAnd_base_pure n_rhs_b eq_p no_pos,eqs)
-              | _ -> (false, conseq, rhs_b, [])
+                    (1, mkAnd_pure n_conseq eq_p no_pos, mkAnd_base_pure n_rhs_b eq_p no_pos,eqs)
+              | _ -> (0, conseq, rhs_b, [])
         end
-      | _ -> (false, conseq, rhs_b, [])
+      | _ -> (-1, conseq, rhs_b, [])
 
 let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -1490,7 +1502,7 @@ let seg_fold_view_br prog ldnode rvnode ante conseq rhs_b=
   let pr3 bf = pr1 (Base bf) in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   Debug.no_5 "seg_fold_view_br" pr2b pr2a pr1 pr1 pr3
-      (pr_quad string_of_bool pr1 pr3 pr4)
+      (pr_quad string_of_int pr1 pr3 pr4)
       (fun _ _ _ _ _ -> seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b)
       ldnode rvnode ante conseq rhs_b
 

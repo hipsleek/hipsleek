@@ -628,6 +628,7 @@ let common_arguments = [
   ("--lem-gen-safe", Arg.Set Globals.lemma_gen_safe, "enable generating (and proving) both fold and unfold lemmas for special predicates");
   ("--lem-gen-safe-fold", Arg.Set Globals.lemma_gen_safe_fold, "enable generating (and proving) fold lemmas for special predicates");
   ("--lem-gen-unsafe", Arg.Set Globals.lemma_gen_unsafe, "enable generating (without proving) both fold and unfold lemmas for special predicates");
+  ("--lem-rev-unsafe", Arg.Set Globals.lemma_rev_unsafe, "enable generating (without proving) both rev lemmas for special predicates");
   ("--lem-gen-unsafe-fold", Arg.Set Globals.lemma_gen_unsafe_fold, "enable generating (without proving) fold lemmas for special predicates");
   ("--en-acc-fold", Arg.Set Globals.acc_fold, "enable accelerated folding");
   ("--seg-fold", Arg.Set Globals.seg_fold, "enable seg folding");
@@ -764,7 +765,8 @@ let common_arguments = [
           Globals.silence_output:=false;
           Globals.enable_count_stats:=false;
           Globals.enable_time_stats:=false;
-          Globals.lemma_gen_unsafe:=true;
+          (* Globals.lemma_gen_unsafe:=true; *)
+           Globals.lemma_rev_unsafe:=true;
           Globals.lemma_syn := true;
           (* Globals.acc_fold := true; *)
           (* Globals.smart_lem_search := true; *)

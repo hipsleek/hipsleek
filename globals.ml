@@ -62,6 +62,9 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
 
+let gen_lemma_action_invalid = -1
+
+
 let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
 let eq_str s1 s2 = String.compare s1 s2 = 0
@@ -794,6 +797,9 @@ let lemma_gen_safe = ref false       (* generating (and proving) both fold and u
 let lemma_gen_safe_fold = ref false  (* generating (and proving) fold lemmas for special predicates *)
 
 let lemma_gen_unsafe = ref false     (* generating (without proving) both fold and unfold lemmas for special predicates *)
+
+let lemma_rev_unsafe = ref false     (* generating (without proving) both rev lemmas for special predicates *)
+
 
 let lemma_gen_unsafe_fold = ref false     (* generating (without proving) fold lemmas for special predicates *)
 

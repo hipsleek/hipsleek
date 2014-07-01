@@ -787,7 +787,7 @@ let is_dupl_conj_diseq (f1:formula) (f2:formula) : bool =
                 | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
                     let b1 = (v11=v21) in
                     let b2 = eq_spec_var v12 v22 in
-                    b1&b2
+                    b1&&b2
                 | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
                     let b1 = eq_spec_var v11 v21 in
                     let b2 = (v12= v22) in
@@ -795,7 +795,7 @@ let is_dupl_conj_diseq (f1:formula) (f2:formula) : bool =
                 | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
                     let b1 = (v11=v21) in
                     let b2 = eq_spec_var v12 v22 in
-                    b1&b2
+                    b1&&b2
                 | _ -> false)
           | _ -> false
         )
@@ -2402,14 +2402,14 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):
     | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
     | ((Not (b1,_,_)),(Not (b2,_,_))) -> helper b1 b2
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-    | (And(f1, f2, _), And(f3, f4, _)) -> ((helper f1 f3) & (helper f2 f4))
-        || ((helper f1 f4) & (helper f2 f3))
+    | (And(f1, f2, _), And(f3, f4, _)) -> ((helper f1 f3) && (helper f2 f4))
+        || ((helper f1 f4) && (helper f2 f3))
     | AndList b1, AndList b2 -> 
 	  if (List.length b1)= List.length b2 
 	  then List.for_all2 (fun (l1,c1)(l2,c2)-> LO.compare l1 l2 = 0 && helper c1 c2) b1 b2 
 	  else false
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
-    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (helper f1 f2)
+    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) && (helper f1 f2)
     | _ -> false
   in
   let ps1 = list_of_conjs f01 in
@@ -2462,20 +2462,20 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | (Lte(e1, e2, _), Lte(e3, e4, _))
     | (Gt(e1, e2, _), Gt(e3, e4, _))
     | (Gte(e1, e2, _), Gte(e3, e4, _))
-    | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+    | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)
     | (Neq(e1, e2, _), Neq(e3, e4, _))
-    | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)) or ((eqExp_f eq e1 e4) & (eqExp_f eq e2 e3))
+    | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)) || ((eqExp_f eq e1 e4) && (eqExp_f eq e2 e3))
     | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
-    | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eqExp_f eq e1 e4) & ((eqExp_f eq e2 e5) & (eqExp_f eq e3 e6)) or ((eqExp_f eq e2 e6) & (eqExp_f eq e3 e5))
+    | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eqExp_f eq e1 e4) && ((eqExp_f eq e2 e5) && (eqExp_f eq e3 e6)) || ((eqExp_f eq e2 e6) && (eqExp_f eq e3 e5))
     | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
-    | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq sv1 sv2) & (eqExp_f eq e1 e2)
+    | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq sv1 sv2) && (eqExp_f eq e1 e2)
     | (ListIn(e1, e2, _), ListIn(d1, d2, _))
-    | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
-    | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
-    | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
+    | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
+    | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
+    | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
     | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
-    | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) & (eq sv2 sv4)
-    | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+    | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) && (eq sv2 sv4)
+    | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)
     | (RelForm (r1,args1,_), RelForm (r2,args2,_)) -> (eq_spec_var r1 r2) && (eqExp_list_f eq args1 args2)
     | _ -> false
           (*
@@ -2513,13 +2513,13 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
       | (Subtract(e11, e12, _), Subtract(e21, e22, _))
       | (Max(e11, e12, _), Max(e21, e22, _))
       | (Min(e11, e12, _), Min(e21, e22, _))
-      | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
-      | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
-      | (Div(e11, e12, _), Div(e21, e22, _)) -> (helper e11 e21) & (helper e12 e22)
+      | (Add(e11, e12, _), Add(e21, e22, _)) -> (helper e11 e21) && (helper e12 e22)
+      | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (helper e11 e21) && (helper e12 e22)
+      | (Div(e11, e12, _), Div(e21, e22, _)) -> (helper e11 e21) && (helper e12 e22)
       | (Bag(e1, _), Bag(e2, _))
       | (BagUnion(e1, _), BagUnion(e2, _))
       | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_list_f eq e1 e2)
-      | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (helper e1 e3) & (helper e2 e4)
+      | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (helper e1 e3) && (helper e2 e4)
       | (List (l1, _), List (l2, _))
       | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (helper a b)) l1 l2 
         else false
@@ -2535,9 +2535,9 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
 and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
     | [] -> true
-    | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) & (eq_exp_list_helper t e2)
+    | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) && (eq_exp_list_helper t e2)
   in
-  (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
+  (eq_exp_list_helper e1 e2) && (eq_exp_list_helper e2 e1)
       
       
 and dperm_subst_simpl f = 
@@ -2968,9 +2968,9 @@ and normalize_add e  =
 and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   let rec eq_spec_var_list_helper (sv1 : spec_var list) (sv2 : spec_var list) = match sv1 with
     | [] -> true
-    | h :: t -> (List.exists (fun c -> eq_spec_var h c) sv2) & (eq_spec_var_list_helper t sv2)
+    | h :: t -> (List.exists (fun c -> eq_spec_var h c) sv2) && (eq_spec_var_list_helper t sv2)
   in
-  (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
+  (eq_spec_var_list_helper sv1 sv2) && (eq_spec_var_list_helper sv2 sv1)
 
 and remove_dups_spec_var_list vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
@@ -3102,7 +3102,7 @@ and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula = 
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
       = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
 
-and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_spec_var t v)) false sst
+and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr || (eq_spec_var t v)) false sst
 
 (*subst everything excluding VarPerm*)
 and b_apply_subs sst bf =
@@ -5041,11 +5041,11 @@ and check_not (f:formula):formula =
 	| And (b1,b2,l) -> 
 		  let l1,r1 = inner b1 in
 		  let l2,r2 = inner b2 in
-		  ((mkAnd l1 l2 l),r1&r2)
+		  ((mkAnd l1 l2 l),r1&&r2)
 	| Or (b1,b2,lbl,l) -> 
 		  let l1,r1 = inner b1 in
 		  let l2,r2 = inner b2 in
-		  ((mkOr l1 l2 lbl l),r1&r2)
+		  ((mkOr l1 l2 lbl l),r1&&r2)
 	| Not (b,lbl,l) -> begin
 		match b with
 		  | BForm _ -> (f,false)

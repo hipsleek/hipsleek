@@ -1643,6 +1643,8 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
     let _ = manage_unsafe_lemmas (gen_lemmas) iprog cprog in ()
   else if (!Globals.lemma_gen_safe) || (!Globals.lemma_gen_safe_fold) then
     let _ = manage_safe_lemmas gen_lemmas iprog cprog in ()
+  else if (!Globals.lemma_rev_unsafe) then
+    let _ = manage_unsafe_lemmas rev_rec_lemmas iprog cprog in ()
   else ();
   let pr_lemmas lemmas = String.concat "\n" (List.map (fun lem ->
      "    " ^ (Cprinter.string_of_coerc_med lem)

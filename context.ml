@@ -1138,20 +1138,6 @@ and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f =
   else
     f 
 
-and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
-    (mt_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
-    :action_wt =
-  let pr_mr = string_of_match_res in
-  let pr_h = !CF.print_h_formula in
-  let pr_p = !MCP.print_mix_formula in
-  let pr_out = string_of_action_wt_res0 in
-  Debug.no_6 "process_one_match" 
-      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
-      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p) pr_out
-      (fun _ _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing
-                          mt_res (rhs_node,rhs_rest,rhs_p) reqset)
-      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p
-
 (*
 (* return a list of nodes from heap f that appears in *)
 (* alias set aset. The flag associated with each node *)
@@ -1240,6 +1226,22 @@ and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
       (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
       (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
       mt_res lhs_h lhs_p rhs_p
+
+
+and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
+    (mt_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
+    :action_wt =
+  let pr_mr = string_of_match_res in
+  let pr_h = !CF.print_h_formula in
+  let pr_p = !MCP.print_mix_formula in
+  let pr_out = string_of_action_wt_res0 in
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_7 "process_one_match" 
+      (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) (add_str "lhs_p" pr_p)
+      (add_str "rhs_node" pr_h) (add_str "rhs_rest" pr_h) (add_str "rhs_p" pr_p) pr1 pr_out
+      (fun _ _ _ _ _ _ _ -> process_one_match_x prog estate lhs_h lhs_p conseq is_normalizing
+                          mt_res (rhs_node,rhs_rest,rhs_p) reqset)
+      mt_res lhs_h lhs_p rhs_node rhs_rest rhs_p reqset
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
     : action_wt =
@@ -1578,13 +1580,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let _ = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
                 let _ = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
                 let _ = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+                let seg_fold_type = if !Globals.seg_fold then
+                  (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset)
+                else gen_lemma_action_invalid
+                in
                 let a1 = (
                   if is_r_lock then [] else
                     if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
                       let _ = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
                       let _ = Debug.tinfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
-                      let syn_lem_typ = CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
-                       if (syn_lem_typ != -1) then
+                      let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
+                        CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
+                       if (syn_lem_typ != gen_lemma_action_invalid) then
                          let acts =
                            if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
                                vr_name) >0 then
@@ -1650,7 +1657,6 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
                 let seg_acts = 
                    if !Globals.seg_fold then
-                     let seg_fold_type = (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset) in
                      if seg_fold_type>= 0 then
                        [(1, M_seg_fold (m_res, seg_fold_type))]
                      else []

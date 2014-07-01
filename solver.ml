@@ -2420,7 +2420,9 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
           let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true fold_es.es_pure in
 	  let to_ante, to_conseq, new_evars = split_universal e_pure fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
 	  let tmp_conseq = mkBase resth2 pure2 type2 flow2 a2 pos in
+          let _ = Debug.info_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
 	  let new_conseq = normalize 6 tmp_conseq (formula_of_pure_N to_conseq pos) pos in
+          let _ = Debug.info_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
 	  let new_ante = normalize 7 fold_es.es_formula (formula_of_pure_N to_ante pos) pos in
           let new_ante = filter_formula_memo new_ante false in
 	  let new_consumed = fold_es.es_heap in
@@ -9572,9 +9574,14 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       (* eqns *)
     in
     (* let _ = print_endline "CA:1" in *)
+    let _ = DD.info_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "START"  no_pos in
     (* let _ = print_string("\n estate.es_aux_conseq: "^(Cprinter.string_of_pure_formula estate.es_aux_conseq)^"\n") in *)
+    let _ = DD.info_hprint (add_str "estate.es_pure" Cprinter.string_of_mix_formula) estate.es_pure  no_pos in
+    let _ = DD.info_hprint (add_str "conseq" Cprinter.string_of_formula) conseq  no_pos in
+    let _ = DD.info_hprint (add_str "ctx0" Cprinter.string_of_context) ctx0  no_pos in
     let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
         posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in
+    let _ = DD.info_hprint (add_str " xxxxxxxxxxxxxx1" pr_id) "END"  no_pos in
     (* !!!!!!!!
        (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos)
        caller a estate conseq (Base lhs_b) (Base rhs_b)
@@ -9772,6 +9779,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       | _ ->  get_node_var ln2 in
   let ctx0 = Ctx estate in
   let rhs_h,rhs_p,rhs_t,rhs_fl,rhs_a = CF.extr_formula_base rhs_b in
+  let _ = Debug.info_hprint (add_str "do_fold_w: rhs_b " (Cprinter.string_of_formula_base)) rhs_b pos in
+  let _ = Debug.info_hprint (add_str "do_fold_w: rhs_p " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let (p2,c2,perm,v2,pid,r_rem_brs,r_p_cond,pos2) = 
     match ln2 with
       | DataNode ({ h_formula_data_node = p2;
@@ -9839,6 +9848,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   (*let view_to_fold = CF.h_subst rho view_to_fold in*)
   (*add rhs_p in case we need to propagate some pure constraints into folded view*)
   let _ = rhs_rest_emp := resth2=HEmp in
+  let _ = Debug.info_hprint (add_str "do_fold_w: rhs_p 2 " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let fold_rs, fold_prf = fold_op prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
   let _ = rhs_rest_emp := true in
   if not (CF.isFailCtx fold_rs) then
@@ -9916,6 +9926,7 @@ and do_fold_x prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
       es_aux_conseq = CP.mkTrue pos;
       es_must_error = None;
   } in
+  let _ = Debug.info_hprint (add_str "do_fold: rhs_b " (Cprinter.string_of_formula_base)) rhs_b pos in
   do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos
 
 (* assumes coer is a right lemma *)
@@ -10088,24 +10099,28 @@ and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
           | ViewNode lvn, ViewNode rvn ->
                 (* unfold rhs *)
                 let is_ok,n_conseq, n_lhs_b = Cfutil.seg_fold_view2 prog lvn rvn conseq rhs_b in
-                (is_ok,n_conseq, n_lhs_b,[])
-          | _ -> (false, conseq, rhs_b,[])
+                let res_ok = if is_ok then 1 else -1 in
+                (res_ok,n_conseq, n_lhs_b,[])
+          | _ -> (-1, conseq, rhs_b,[])
       end
     | 1 -> begin
         match lhs_node,rhs_node with
           | DataNode ldn, ViewNode rvn ->
                 (* unfold rhs *)
                 Cfutil.seg_fold_view_br prog ldn rvn ante conseq rhs_b
-          | _ -> (false, conseq, rhs_b,[])
+          | _ -> (-1, conseq, rhs_b,[])
       end
-    | _ -> (false, conseq, rhs_b,[])
+    | _ -> (-1, conseq, rhs_b,[])
   in
-  if not is_ok then construct_unknown_res () else
-    let es0 = {estate with es_rhs_eqset = estate.es_rhs_eqset@n_rhs_eqset;
-        es_evars = estate.es_evars@(List.map fst n_rhs_eqset)
-    } in
-    let ctx0 = Ctx es0 in
-    heap_entail_non_empty_rhs_heap prog is_folding ctx0 es0 ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
+  match is_ok with
+    (* | 0  -> do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos *)
+    | 1 ->
+          let es0 = {estate with es_rhs_eqset = estate.es_rhs_eqset@n_rhs_eqset;
+              es_evars = estate.es_evars@(List.map fst n_rhs_eqset)
+          } in
+          let ctx0 = Ctx es0 in
+          heap_entail_non_empty_rhs_heap prog is_folding ctx0 es0 ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
+    | _ ->  construct_unknown_res ()
 
 and do_seg_fold prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos
     : (CF.list_context * Prooftracer.proof) =
@@ -10178,8 +10193,10 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
   (* let _ = print_endline "CA:2" in *)
+  let _ = DD.info_hprint (add_str " xxxxxxxxxxxxxx2" pr_id) "START"  no_pos in
   let actions = Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
       posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos in
+  let _ = DD.info_hprint (add_str " xxxxxxxxxxxxxx2" pr_id) "END"  no_pos in
   (0, actions)
 
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
@@ -10953,7 +10970,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} ->
-            (* let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_entail_state)) estate pos in *)
+            let _ = Debug.info_hprint (add_str "xxx M_fold" (Cprinter.string_of_formula_base)) rhs_b pos in
             let estate =
               if Infer.no_infer_rel estate then estate
               else
