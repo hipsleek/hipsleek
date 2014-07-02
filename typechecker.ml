@@ -1548,6 +1548,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	            (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
 	            let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+	            let unfolded =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) unfolded in
 	            (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
 	            (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
