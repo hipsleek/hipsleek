@@ -2218,4 +2218,10 @@ let norm_rename_clash_args_node_x init_args0 f0=
 (*******************************************************************)
 
 
-
+ let find_view_match hf rhs_node=
+   match rhs_node with
+     | ViewNode vn ->
+           let vns = get_views (formula_of_heap hf no_pos) in
+           let sel_vns = List.filter (fun vn1 -> CP.eq_spec_var vn.h_formula_view_node vn1.h_formula_view_node) vns in
+           if sel_vns = [] then raise Not_found else (List.hd sel_vns, vn)
+     | _ -> raise Not_found

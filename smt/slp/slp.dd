@@ -2,9 +2,9 @@
 compute_actions
 process_one_match
 #process_matches
-#choose_context
-#spatial_ctx_extract
-#do_base_fold
+choose_context
+spatial_ctx_extract
+do_base_fold
 is_seg_view2_fold_form
 is_seg_view_br_fold_form
 seg_fold_view2

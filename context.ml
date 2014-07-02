@@ -1787,12 +1787,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             | HRel (h_name, _, _), ViewNode vl ->
                   let h_name = Cpure.name_of_spec_var h_name in
                   let vl_name = vl.h_formula_view_name in
-                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) in
+                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view h_name vl_name m_res ms alternative 
             | ViewNode vl, HRel (h_name, _, _) ->
                   let h_name = Cpure.name_of_spec_var h_name in
                   let vl_name = vl.h_formula_view_name in
-                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) in
+                  let alternative = process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
                   process_one_match_mater_unk_w_view vl_name h_name m_res ms alternative 
             | ViewNode vl, DataNode dr ->
                   let _ = pr_hdebug (add_str "cyclic " pr_id) " 5" in
@@ -1884,7 +1884,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   else r
 
 
-and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest) =
+and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
           let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
           let ptr_vs = estate.es_infer_vars in
           let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
@@ -1912,6 +1912,13 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rh
             (*     match_res_rhs_node = rhs_node; *)
             (*     match_res_rhs_rest = rhs_rest; *)
             (* }) in *)
+            let cyc_acts = 
+              try
+                let vl, vr = Cfutil.find_view_match hf rhs_node in
+                let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                []
+              with _ -> []
+            in
             (* temp removal of infer-heap and base-case fold *)
             (-1, (Cond_action (rs@[r;r0])))
           else (-1, Cond_action (rs@[r0]))
@@ -1935,7 +1942,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   let _ = Debug.tinfo_hprint (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let _ = Debug.tinfo_hprint (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
-    | [] ->  process_infer_heap_match prog estate lhs_h lhs_p is_normalizing (rhs_node,rhs_rest)
+    | [] ->  process_infer_heap_match prog estate lhs_h lhs_p is_normalizing conseq reqset (rhs_node,rhs_rest)
           (* let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
           (* let ptr_vs = estate.es_infer_vars in *)
           (* let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in *)

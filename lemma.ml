@@ -1651,7 +1651,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
         r@rev_fs
     ) [] indc_brs in
     let i_coers = List.fold_left (fun r (f,p) ->
-        let _ = Debug.info_hprint (add_str "p" Cprinter.string_of_pure_formula) p no_pos in
+        let _ = Debug.ninfo_hprint (add_str "p" Cprinter.string_of_pure_formula) p no_pos in
         let ihd = Rev_ast.rev_trans_formula (CF.mkAnd_pure view_f (Mcpure.mix_of_pure p) vpos) in
         let ibody = Rev_ast.rev_trans_formula f in
         let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_SAFE LEM_GEN I.Left [] ihd ibody in
