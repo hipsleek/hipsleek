@@ -1237,8 +1237,9 @@ let need_cycle_checkpoint_fold prog ldnode lhs rvnode rhs reqset=
       lhs rhs
 
 let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_pure_opt=
-  let is_full_match remap0 lnulls rnulls leqs reqs=
-    if CP.eq_spec_var lroot rroot then
+  let is_full_match lnulls rnulls leqs reqs=
+    let rroots = find_close [rroot] (leqs@reqs) in
+    if CP.mem_svl lroot rroots then
       let largs1 = CP.subst_var_list leqs largs in
       let rargs1 = CP.subst_var_list reqs rargs in
       let l_neqNull = CP.diff_svl largs1 lnulls in
@@ -1267,7 +1268,7 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
   let leqs = (MCP.ptr_equations_without_null lmf) in
   let lhs = subst (leqs) lhs0 in
   let leqNulls = find_close (MCP.get_null_ptrs lmf) leqs in
-  if is_full_match remap leqNulls reqNulls leqs (remap@eqs) then false
+  if is_full_match leqNulls reqNulls leqs (remap@eqs) then false
   else
     let lhds, lhvs,_ = get_hp_rel_formula lhs in
     let l_reach_ptrs0, l_reach_hds,l_reach_hvs = look_up_reachable_ptrs_w_alias prog lhs [lroot] 3 in
@@ -1328,21 +1329,51 @@ let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap conseq_pure_opt=
 let is_seg_view2_fold_form prog lvnode lhs rvnode rhs remap conseq_pure_opt=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
-  Debug.no_4 "is_seg_view2_fold_form" pr2 pr2 pr1 pr1 string_of_int
-      (fun _ _ _ _ -> is_seg_view2_fold_form_x prog lvnode lhs rvnode rhs remap conseq_pure_opt)
-      lvnode rvnode lhs rhs
+  let pr3 = pr_option Cprinter.string_of_mix_formula in
+  Debug.no_5 "is_seg_view2_fold_form" pr2 pr2 pr1 pr1 pr3 string_of_int
+      (fun _ _ _ _ _ -> is_seg_view2_fold_form_x prog lvnode lhs rvnode rhs remap conseq_pure_opt)
+      lvnode rvnode lhs rhs conseq_pure_opt
 
 let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_opt=
+  let rec is_seg_match diffs =
+    match diffs with
+      | [] -> false
+      | (mt, f1 ,f2)::rest ->
+            let _ = Debug.ninfo_hprint (add_str "mt" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) mt no_pos in
+            let _ = Debug.ninfo_hprint (add_str "f1" (!print_formula)) f1 no_pos in
+            let _ = Debug.ninfo_hprint (add_str "f2" (!print_formula)) f2 no_pos in
+            if is_empty_f f2 then true
+            else is_seg_match rest
+  in
+  let exist_full_fold lhs rvnode=
+    let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
+    let sst = [(self_sv,rvnode.h_formula_view_node)] in
+    let ivars = [CP.name_of_spec_var rvnode.h_formula_view_node] in
+    let init_mtl = [[]] in
+    List.exists (fun (f,_) ->
+        let dns = get_datas f in
+        if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
+          let f1 = elim_exists f in
+          let _,new_f = split_quantifiers f1 in
+          let f2 = subst sst new_f in
+          let f3 = formula_of_heap (join_star_conjunctions (heap_of f2)) (pos_of_formula f) in
+          let (r,diffs) = Checkeq.checkeq_formulas_with_diff_mt ivars ([],[]) lhs f3 init_mtl in
+          if r then true else
+            is_seg_match diffs
+        else false
+    ) vdecl.Cast.view_un_struc_formula
+  in
   let seg_fold_view ldnode rvnode=
     let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     if String.compare ldnode.h_formula_data_name vdcl.Cast.view_data_name = 0 then
       if vdcl.Cast.view_is_segmented then
         let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
         if List.length fwd_seg_ptrs  = 1 then
-          1
+          if exist_full_fold lhs0 rvnode then 1 else -1
         else
           let back_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_backward_ptrs in
-          if List.length back_seg_ptrs  = 1 then 3 else -1
+          if List.length back_seg_ptrs  = 1 then -1 (* 3 *) else -1
       else -1
     else -1
   in
@@ -1482,7 +1513,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
       let dns = get_datas f in
       if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
          let f1 = elim_exists f in
-         let quans,new_f = split_quantifiers f1 in
+         let _,new_f = split_quantifiers f1 in
          let _ = Debug.ninfo_hprint (add_str "new_f" (!print_formula)) new_f no_pos in
          (* let f12 = Cformula.force_elim_exists new_f quans in *)
          (* let _ = Debug.ninfo_hprint (add_str "f12" (!print_formula)) f12 no_pos in *)

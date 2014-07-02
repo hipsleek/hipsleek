@@ -1966,7 +1966,8 @@ and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (
           let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
           let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
           let lem_act = search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
-          [(1,norm_search_action lem_act)]
+          if lem_act = [] then [] else
+            [(1,norm_search_action lem_act)]
       with _ -> []
     in
     (* temp removal of infer-heap and base-case fold *)

@@ -19,5 +19,5 @@ or (exists u,Z1: self::NLL_lvl2_t<next2 = u,down = Z1> * Z1::lso<boundary> * u::
 checkentail_exact x1::NLL_lvl2_t<next2 = x2,down = x1_1> * x1_1::NLL_lvl1_t<next1 = x2_1> * x2::NLL_lvl2_t<next2 = null,down = x2_1> * x2_1::lso<null>
          |- x1::nll<null,null>.
 
-expect Fail.
+expect Valid.
 

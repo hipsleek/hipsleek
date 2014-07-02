@@ -68,6 +68,9 @@ Total number of timeout files: 8 in:
  latest/sll0a_entl/clones-01-e08.tptp.smt2
  latest/sll0a_entl/smallfoot-vc37.tptp.smt2
 
+ latest/UDB_entl/nll-vc04.smt2
+ latest/FDB_entl/nll-vc04.smt2
+
 
 Total number of unknown results: 6 in files:
  latest/UDB_entl/dll-vc10.smt2

@@ -11155,7 +11155,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;
         },ln) ->
-            let _ = print_string ("xxx do_coercion: M_lemma \n") in
+            (* let _ = print_string ("xxx do_coercion: M_lemma \n") in *)
             (* let _ = match ln with *)
             (*   | None -> () *)
             (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
