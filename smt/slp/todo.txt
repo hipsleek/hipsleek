@@ -34,6 +34,48 @@ smallfoot-vc42.tptp.smt2:
 22.tst.smt2.slk
 
 ===============================================================
+Total number of unexpected results: 16 in files:
+ latest/UDB_entl/dll-vc04.smt2 : OK
+ latest/FDB_entl/dll-vc04.smt2: OK
+ latest/UDB_entl/nll-vc03.smt2: OK
+ latest/FDB_entl/nll-vc03.smt2: OK
+ latest/UDB_entl/nll-vc08.smt2: OK
+ latest/FDB_entl/nll-vc08.smt2: OK
+ latest/UDB_entl/nll-vc10.smt2: OK
+ latest/FDB_entl/nll-vc10.smt2: OK
+ latest/UDB_entl/odd-lseg3_slk-5.smt2 : OK
+ latest/UDB_entl/skl3-vc02.smt2: OK
+ latest/FDB_entl/skl3-vc02.smt2: OK
+ latest/UDB_entl/07.tst.smt2
+ latest/UDB_entl/13.tst.smt2: OK
+ latest/UDB_entl/14.tst.smt2: OK
+ latest/UDB_entl/17.tst.smt2
+ latest/UDB_entl/18.tst.smt2
+
+
+Total number of unsound results: 4 in files:
+ latest/UDB_entl/dll-vc04.smt2: OK
+ latest/FDB_entl/dll-vc04.smt2: OK
+ 
+
+Total number of timeout files: 8 in:
+ latest/UDB_entl/dll-vc05.smt2
+ latest/FDB_entl/dll-vc05.smt2
+ latest/UDB_entl/dll-vc06.smt2
+ latest/FDB_entl/dll-vc06.smt2
+ latest/UDB_entl/dll-vc12.smt2
+ latest/FDB_entl/dll-vc12.smt2
+ latest/sll0a_entl/clones-01-e08.tptp.smt2
+ latest/sll0a_entl/smallfoot-vc37.tptp.smt2
+
+
+Total number of unknown results: 6 in files:
+ latest/UDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc11.smt2
+ latest/FDB_entl/dll-vc11.smt2
+ latest/UDB_entl/dll-vc13.smt2
+ latest/FDB_entl/dll-vc13.smt2
 ===============================================================
 ===============================================================
 ===============================================================

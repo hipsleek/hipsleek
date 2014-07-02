@@ -9969,7 +9969,11 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
             (CF.mkFailCtx_in (Basic_Reason (mkFailContext "No base-case for folding" estate (CF.formula_of_heap HFalse pos) None pos, 
             CF.mk_failure_must "99" Globals.sl_error, estate.es_trace)) (mk_cex true), NoAlias)
       | Some vd ->
-            do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+            let old_classic_flag = !do_classic_frame_rule in
+            let _ = do_classic_frame_rule := (is_empty_heap rhs_rest) in
+            let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+            let _ = do_classic_frame_rule := old_classic_flag in
+            r
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
 and do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
@@ -10100,7 +10104,7 @@ and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
   let construct_unknown_res () =
     let s = "seg_fold: not handle yet" in
     let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-    CF.mk_failure_may ("Nothing_to_do? "^s) Globals.sl_error, estate.es_trace)) (mk_cex false), Unknown) in
+    CF.mk_failure_may ("Nothing_to_do? "^s) Globals.sl_error, estate.es_trace)) (mk_cex true), Unknown) in
     res
   in
   let _ = assert (fold_seg_type >= 0) in
@@ -10131,7 +10135,9 @@ and do_seg_fold_x prog estate ante conseq lhs_node rhs_node rhs_rest
               es_evars = estate.es_evars@(List.map fst n_rhs_eqset)
           } in
           let ctx0 = Ctx es0 in
-          heap_entail_non_empty_rhs_heap prog is_folding ctx0 es0 ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos
+          let rest_rs, prf = heap_entail_one_context 1 prog is_folding ctx0 n_conseq None None None pos in
+          rest_rs, prf
+          (* heap_entail_non_empty_rhs_heap prog is_folding ctx0 es0 ante n_conseq lhs_b n_rhs_b (rhs_h_matched_set:CP.spec_var list) pos *)
     | _ ->  construct_unknown_res ()
 
 and do_seg_fold prog estate ante conseq lhs_node rhs_node rhs_rest lhs_b rhs_b fold_seg_type is_folding rhs_h_matched_set pos

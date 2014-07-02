@@ -809,7 +809,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                  h_formula_view_name = c}) as v -> (
         let anns = get_node_annot_args f in
         match rhs_node with
-        | HRel (hp,_,_) ->  
+        | HRel (hp,_,_) ->
             let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
             let p1_eq = p1::p1_eq in
             let cmm = coerc_mater_match_with_unk_hp prog c 
@@ -825,7 +825,14 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
                 [(Hole hole_no, f, [(f, hole_no)], Root)]
               else
-                [(HEmp, f, [], Root)]
+                begin
+                  match rhs_node with
+                    | ViewNode {h_formula_view_name = r_vn} ->
+                          let _ = DD.ninfo_hprint (add_str " l_view_name" pr_id) c no_pos in
+                          let _ = DD.ninfo_hprint (add_str " r_vn" pr_id) r_vn no_pos in
+                          if String.compare r_vn c = 0 then [(HEmp, f, [], Root)] else []
+                    | _ ->  [(HEmp, f, [], Root)]
+                end
             else
               let vmm = view_mater_match prog c (p1::vs1) aset imm f anns in
               let cmm = coerc_mater_match_gen c vs1 aset f in 

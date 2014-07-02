@@ -7,13 +7,14 @@ pred ls<out> ==
 or (exists u: self::Sll_t<f = u> * u::ls<out> & self !=out).
 
 
-//1
+//1 end is a node, not null
 checkentail x::ls<y> * y::ls<c> * c::Sll_t<_> |- x::ls<c>.
 
 expect Valid.
 
-//2 to revise
-checkentail x::ls<a> * a::ls<y> * y::ls<null> |- x::ls<null>.
+/*
+//2
+checkentail x::Sll_t<a> * a::Sll_t<y> * y::ls<null> |- x::ls<null>.
 
 expect Valid.
 
@@ -22,3 +23,4 @@ expect Valid.
 checkentail x::Sll_t<a> * a::ls<b> * b::ls<null> |- x::ls<null>.
 
 expect Valid.
+*/
