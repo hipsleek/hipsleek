@@ -2,7 +2,10 @@
 
 par { p1 } { p2 }
 
-proc requires K1 // calculate ensures
+par {f1()} {f2()}
+
+proc requires K1
+     ensures_infer;
 {
    .. code ..
 }

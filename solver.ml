@@ -3529,11 +3529,13 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) 
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc p i1 hp cl) cs tid delayed_f join_id pos pid
 
 and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid =
-  Debug.no_2 "heap_entail_one_context_struc" 
+  Debug.no_4 "heap_entail_one_context_struc" 
       Cprinter.string_of_struc_formula
       Cprinter.string_of_context 
+      (add_str "is_folding" string_of_bool)
+      (add_str "has_post" string_of_bool)
       (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-      (fun cs cl -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cs cl
+      (fun cs cl _ _ -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cs cl i1 hp
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
@@ -3641,10 +3643,10 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
               else
                 (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
                 let _ = flush(stdout) in
-                let _ = Debug.tinfo_hprint (add_str "es(2)" Cprinter.string_of_entail_state_short) es no_pos in
+                let _ = Debug.tinfo_hprint (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
                 let _ = flush(stdout) in
                 let es = (CF.add_to_estate_with_steps es ss) in
-                let _ = Debug.tinfo_hprint (add_str "es(3)" Cprinter.string_of_entail_state_short) es no_pos in
+                let _ = Debug.tinfo_hprint (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
                 let _ = flush(stdout) in
                 let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid in
 	        (filter_set tmp, prf)
@@ -3893,7 +3895,7 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
   let slk_entail ctx conseq = heap_entail_conjunct_lhs_struc_x p is_folding has_post ctx conseq tid delayed_f join_id pos pid in
   (* WN : to log sleek commands here *)
   let pr x = (match x with Ctx _ -> "Ctx " | OCtx _ -> "OCtx ") 
-    ^ (Cprinter.string_of_context_short x) in
+    ^ (Cprinter.string_of_context(* _short *) x) in
   (* let pr2 = pr_opt Cprinter.string_of_spec_var in *)
   Debug.no_2 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula) 
@@ -4153,10 +4155,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  formula_assume_simpl = post;
 				  formula_assume_vars = ref_vars;
 				  formula_assume_lbl = (i,y);} ->
+                                  DD.ninfo_pprint ("EAssune: " ^ (Cprinter.string_of_context ctx11)) pos; 
 		                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                          else
                                     (match tid with
-			                          | Some id ->
+			              | Some id ->
                                             (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                                             (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
                                             (* let _ = print_endline ("### ctx11 (before) = " ^ (Cprinter.string_of_context ctx11)) in *)
@@ -4209,7 +4212,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               (*check reachable or not*)
                                               (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
                                               (* DD.info_zprint  (lazy  ("  before consume post ctx11: " ^ (Cprinter.string_of_context ctx11))) pos; *)
-	                                      let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic 6 prog x (MCP.mkMTrue no_pos) 0)) ctx11 in
+	                                      let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic 6 prog x (MCP.mkMTrue no_pos) 0)) ctx11 in (* andreeac: why also clear hole info? *)
                                               DD.tinfo_pprint ("rs: " ^ (Cprinter.string_of_context rs)) pos; 
                                               (* print_endline ("CTX11: " ^ (!print_context ctx11)); *)
                                               (* print_endline ("RS CTX: " ^ (!print_context rs));   *)
@@ -4588,7 +4591,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       match final_ctx with
 	| SuccCtx(cl) ->
 	      (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-	      let cl1 = List.map subs_crt_holes_ctx cl in
+	      let cl1 = List.map (subs_crt_holes_ctx 1) cl in
 	      let cl1 = List.map restore_tmp_ann_ctx cl1 in
 	      (SuccCtx(cl1), final_prf)
 	| FailCtx _ -> (final_ctx, final_prf)
@@ -4599,7 +4602,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	match final_ctx with
 	  | SuccCtx(cl) ->
 	        (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-	        let cl1 = List.map subs_crt_holes_ctx cl in
+	        let cl1 = List.map (subs_crt_holes_ctx 2) cl in
 		let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		(SuccCtx(cl1), final_prf)
 	  | FailCtx _ -> (final_ctx, final_prf)
@@ -4613,7 +4616,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	    match final_ctx with
 	      | SuccCtx(cl) ->
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-	            let cl1 = List.map subs_crt_holes_ctx cl in
+	            let cl1 = List.map (subs_crt_holes_ctx 3) cl in
 		    let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		    (SuccCtx(cl1), final_prf)
 	      | FailCtx _ -> (final_ctx, final_prf)
@@ -4636,7 +4639,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 		      (* h1 was enough, no need to use h2 *)
 		      (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		      (* let _ = print_string("Substitute the holes \n") in *)
-		      let cl = List.map subs_crt_holes_ctx cl in
+		      let cl = List.map (subs_crt_holes_ctx 4) cl in
 		      let cl =  List.map restore_tmp_ann_ctx cl in
 		      (* put back the frame consisting of h2 *)
 		      let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkConjH h2 f pos)) cl  
@@ -4665,7 +4668,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	             	      | SuccCtx (cl) -> 
 	          		    (* substitute the holes due to the temporary removal of matched immutable nodes *)
 		               	    (* let _ = print_string("Substitute the holes \n") in *)
-			            let cl = List.map subs_crt_holes_ctx cl in   
+			            let cl = List.map (subs_crt_holes_ctx 5) cl in   
 				    let cl =  List.map restore_tmp_ann_ctx cl in
 			            (* in case of success, put back the frame consisting of h1/\h2*[] *)
 			            (* first add the frame h2*[] *)
@@ -6087,7 +6090,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	      | SuccCtx(cl) ->
               Debug.tinfo_hprint (add_str "cl" (pr_list (Cprinter.string_of_context))) cl no_pos;
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-	            let cl1 = List.map subs_crt_holes_ctx cl in
+	            let cl1 = List.map (subs_crt_holes_ctx 6) cl in
                 Debug.tinfo_hprint (add_str "cl after subs" (pr_list (Cprinter.string_of_context))) cl no_pos;
 		        let cl1 = List.map restore_tmp_ann_ctx cl1 in
                 Debug.tinfo_hprint (add_str "cl after restore" (pr_list (Cprinter.string_of_context))) cl no_pos;
@@ -6112,7 +6115,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	        | SuccCtx(cl) ->
 		          (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		          (* let _ = print_string("Substitute the holes\n") in *)
-		          let cl1 = List.map subs_crt_holes_ctx cl in
+		          let cl1 = List.map (subs_crt_holes_ctx 7) cl in
 		  let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		          (SuccCtx(cl1), final_prf)
 	        | FailCtx _ -> (final_ctx, final_prf)
@@ -6132,7 +6135,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	          | SuccCtx (cl) -> 
 		            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		            (* let _ = print_string("Substitute the holes \n") in *)
-		            let cl1 = List.map subs_crt_holes_ctx cl in
+		            let cl1 = List.map (subs_crt_holes_ctx 8) cl in
 		    let cl1 = List.map restore_tmp_ann_ctx cl1 in
 		            (* in case of success, put back the frame consisting of h2*h3 *)
 		            let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
@@ -6160,7 +6163,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		            (* h2 was enough, no need to use h3 *)
 		            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		            (* let _ = print_string("Substitute the holes \n") in *)
-		            let cl = List.map subs_crt_holes_ctx cl in
+		            let cl = List.map (subs_crt_holes_ctx 9) cl in
 		    let cl =  List.map restore_tmp_ann_ctx cl in
 		            (* put back the frame consisting of h1 and h3 *)
 		            (* first add the frame []*h3 *) 
@@ -6244,7 +6247,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		            | SuccCtx (cl) -> 
 		                  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                  (* let _ = print_string("Substitute the holes\n") in *)
-		                  let cl = List.map subs_crt_holes_ctx cl in
+		                  let cl = List.map (subs_crt_holes_ctx 10) cl in
 			  let cl =  List.map restore_tmp_ann_ctx cl in
 			              (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
 			              (* first add the frame h2_rest*[] *) 
@@ -6292,7 +6295,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		                (* substitute the holes due to the temporary removal of matched immutable nodes *) 
 		                (* let _ = print_string("Substitute the holes \n") in *)
 
-		                let cl = List.map subs_crt_holes_ctx cl in   
+		                let cl = List.map (subs_crt_holes_ctx 11) cl in   
 			let cl =  List.map restore_tmp_ann_ctx cl in
 		                (* in case of success, put back the frame consisting of h1;h2*[] *)
 		                (* first add the frame h2*[] *) 
@@ -9737,10 +9740,11 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       let lhs_b1, rhs_b1, _ =  Cfutil.smart_subst_new lhs_b rhs_b [] l_emap r_emap r_eqsetmap [] [] in
       let ante1 = CF.Base lhs_b1 in
       let conseq1 = CF.Base rhs_b1 in
-      let _ = DD.ninfo_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in
-      let _ = DD.ninfo_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in
+      let _ = DD.info_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in
+      let _ = DD.info_hprint (add_str " conseq1" Cprinter.prtt_string_of_formula) conseq1 no_pos in
       let r = Syn_checkeq.check_exists_cyclic_proofs estate (ante1, conseq1) in
       let estate = {estate with CF.es_proof_traces = estate.CF.es_proof_traces@[(ante1, conseq1)]} in
+      let _ = Debug.tinfo_hprint (add_str "estate1" (Cprinter.string_of_entail_state)) estate pos in
       (r,estate)
       else
         (false, estate)
@@ -9748,13 +9752,13 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     if is_cycle then
       (SuccCtx [(Ctx estate)], CyclicProof (ante, conseq))
     else
-      let _ = Debug.tinfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate pos in
+      let _ = Debug.tinfo_hprint (add_str "estate2" (Cprinter.string_of_entail_state)) estate pos in
       process_action 1 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
   Debug.no_6  "heap_entail_non_empty_rhs_heap" 
-      Cprinter.string_of_entail_state_short
+      Cprinter.string_of_entail_state(* _short *)
       (add_str "LHS base" Cprinter.string_of_formula_base )
       (add_str "RHS base" Cprinter.string_of_formula_base )
       (add_str "ante    " Cprinter.string_of_formula)
@@ -11524,13 +11528,13 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
-  let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
+  let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context(* _short *) (fst x) in
   let pr3 = Cprinter.string_of_formula in
   let filter _ = match a with
     | Context.M_Nothing_to_do _ -> false
     | _ -> true in 
   Debug.no_5_all i "process_action" (Some filter) None [] pr1 
-      (add_str "estate" Cprinter.string_of_entail_state_short)
+      (add_str "estate" Cprinter.string_of_entail_state(* _short *))
       (add_str "conseq" Cprinter.string_of_formula) 
       (add_str "lhs_b" pr3) 
       (add_str "rhs_b" pr3) pr2
