@@ -19,14 +19,19 @@ pred ll_tail<n, t> ==
 
 
 
-lemma_safe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
+lemma_unsafe "lseg" self::lseg<n, p> & n = a + b & a,b >=0 <->  self::lseg<a, r> * r::lseg<b, p>.
 
-lemma_safe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
+lemma_unsafe "tail2lseg" self::ll_tail<n, t> <-> self::lseg<n-1, t> * t::node<_, null>.
 
 
 // "lseg <-" + "tail2lseg ->"
+/*
 checkentail x::lseg<n,tx> * tx::node<_,y> *y::ll_tail<m,ty> |- x::lseg<m+n, ty> * ty::node<_,null>.
-
+expect Valid.
+print residue.
+*/
 //"tail2lseg <-" + "lseg <-" + "tail2lseg ->"
 checkentail x::lseg<n,tx> * tx::node<_,y> *y::ll_tail<m,ty> |- x::ll_tail<m+n+1, ty>.
+expect Valid.
+print residue.
 
