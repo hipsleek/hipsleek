@@ -1885,44 +1885,94 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
 
 
 and process_infer_heap_match prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
-          let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
-          let ptr_vs = estate.es_infer_vars in
-          let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
-          (* let _ = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
-          let rs = 
-            if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
-              (*to support lemma with unknown preds*)
-              []
-            else [(2,M_infer_heap (rhs_node,rhs_rest))] in
-          if (is_view rhs_node) && (get_view_original rhs_node) then
-            let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
-                                           match_res_lhs_rest = lhs_h;
-                                           match_res_holes = [];
-                                           match_res_type = Root;
-                                           match_res_rhs_node = rhs_node;
-                                           match_res_rhs_rest = rhs_rest; }) in 
-            (* WN : why do we need to have a fold following a base-case fold?*)
-            (* changing to no_match found *)
-            (*(-1, Search_action [r])*)
-            (* let r1 = (2, M_fold { *)
-            (*     match_res_lhs_node = HTrue;  *)
-            (*     match_res_lhs_rest = lhs_h;  *)
-            (*     match_res_holes = []; *)
-            (*     match_res_type = Root; *)
-            (*     match_res_rhs_node = rhs_node; *)
-            (*     match_res_rhs_rest = rhs_rest; *)
-            (* }) in *)
-            let cyc_acts = 
-              try
-                let vl, vr = Cfutil.find_view_match hf rhs_node in
-                let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                []
-              with _ -> []
-            in
-            (* temp removal of infer-heap and base-case fold *)
-            (-1, (Cond_action (rs@[r;r0])))
-          else (-1, Cond_action (rs@[r0]))
-            (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
+  let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in
+  let ptr_vs = estate.es_infer_vars in
+  let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
+  (* let _ = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
+  let rs = 
+    if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
+      (*to support lemma with unknown preds*)
+      []
+    else [(2,M_infer_heap (rhs_node,rhs_rest))]
+  in
+  if (is_view rhs_node) && (get_view_original rhs_node) then
+    let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
+    match_res_lhs_rest = lhs_h;
+    match_res_holes = [];
+    match_res_type = Root;
+    match_res_rhs_node = rhs_node;
+    match_res_rhs_rest = rhs_rest; }) in 
+    (* WN : why do we need to have a fold following a base-case fold?*)
+    (* changing to no_match found *)
+    (*(-1, Search_action [r])*)
+    (* let r1 = (2, M_fold { *)
+    (*     match_res_lhs_node = HTrue;  *)
+    (*     match_res_lhs_rest = lhs_h;  *)
+    (*     match_res_holes = []; *)
+    (*     match_res_type = Root; *)
+    (*     match_res_rhs_node = rhs_node; *)
+    (*     match_res_rhs_rest = rhs_rest; *)
+    (* }) in *)
+    let cyc_acts = 
+      try
+        let vl, vr,lhs_rest = Cfutil.find_view_match lhs_h rhs_node in
+        let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+        let vl_name = vl.h_formula_view_name in
+        let vr_name = vr.h_formula_view_name in
+        let vl_vdef = look_up_view_def_raw 24 prog.Cast.prog_view_decls vl_name in
+        let vr_vdef = look_up_view_def_raw 24 prog.Cast.prog_view_decls vr_name in
+        let vl_is_rec = vl_vdef.view_is_rec in
+        let vl_is_prim = vl_vdef.view_is_prim in
+        let vr_is_rec = vr_vdef.view_is_rec in
+        let vl_self_pts = vl_vdef.view_pt_by_self in
+        let vr_self_pts = vr_vdef.view_pt_by_self in
+        let vl_view_orig = vl.h_formula_view_original in
+        let vr_view_orig = vr.h_formula_view_original in
+        let vl_view_origs = vl.h_formula_view_origins in
+        let vr_view_origs = vr.h_formula_view_origins in
+        let vl_view_derv =  vl.h_formula_view_derv in
+        let vr_view_derv = vr.h_formula_view_derv in
+        let m_res = { match_res_lhs_node = ViewNode vl;
+        match_res_lhs_rest = lhs_rest;
+        match_res_holes = [];
+        match_res_type = Root;
+        match_res_rhs_node = rhs_node;
+        match_res_rhs_rest = rhs_rest; } in
+        if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
+          let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+          let uf_i = if new_orig then 0 else 1 in
+          [(1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None))]
+        else
+          let flag_lem = (
+              if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
+              else
+                (*only apply a SPLIT lemma to a lock
+                  if both sides are original*)
+                (* if (is_l_lock) then *)
+                (*   (vl_view_orig && vr_view_orig) *)
+                (*if RHS is original --> SPLIT*)
+                let is_l_lock = match vl_vdef.view_inv_lock with
+                  | Some _ -> true
+                  | None -> false
+                in
+                let is_r_lock = match vr_vdef.view_inv_lock with
+                  | Some _ -> true
+                  | None -> false
+                in
+                if (is_l_lock && is_r_lock && vr_view_orig) then true
+                else if (is_l_lock && is_r_lock && not vr_view_orig) then false
+                else (vl_view_orig || vr_view_orig)
+          ) in
+          let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+          let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+          let lem_act = search_lemma_candidates prog flag_lem ann_derv (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+          [(1,norm_search_action lem_act)]
+      with _ -> []
+    in
+    (* temp removal of infer-heap and base-case fold *)
+    (-1, (Cond_action (rs@cyc_acts@[r;r0])))
+  else (-1, Cond_action (rs@[r0]))
+    (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
 
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in

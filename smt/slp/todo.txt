@@ -46,11 +46,11 @@ Total number of unexpected results: 16 in files:
  latest/UDB_entl/odd-lseg3_slk-5.smt2 : OK
  latest/UDB_entl/skl3-vc02.smt2: OK
  latest/FDB_entl/skl3-vc02.smt2: OK
- latest/UDB_entl/07.tst.smt2
+ latest/UDB_entl/07.tst.smt2: OK
  latest/UDB_entl/13.tst.smt2: OK
  latest/UDB_entl/14.tst.smt2: OK
- latest/UDB_entl/17.tst.smt2
- latest/UDB_entl/18.tst.smt2
+ latest/UDB_entl/17.tst.smt2 OK(need_cycle_checkpoint.is_out_of_scope)
+ latest/UDB_entl/18.tst.smt2: OK
 
 
 Total number of unsound results: 4 in files:

@@ -1082,10 +1082,10 @@ let is_out_of_scope prog lvnode rvnode=
         ) vns in
         (rec_vns != [] && other != [])
     ) vdcl.Cast.view_un_struc_formula
-  else true
+  else false
 
 let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
-  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) || (is_out_of_scope prog lvnode rvnode) then -1 else
+  if not (!Globals.lemma_syn && is_lem_syn_in_bound()) || (check_separation_unsat rhs0) || (check_separation_unsat lhs0) (* || (is_out_of_scope prog lvnode rvnode) *) then -1 else
     (*check root has unfold information??*)
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
@@ -1111,8 +1111,11 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
       let lvlength = List.length l_reach_vns in
       let rnlength = List.length r_reach_dns in
       let rvlength = List.length r_reach_vns in
+      let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+      let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
       if lnlength = 0 && lvlength =1  && rnlength = 0 && rvlength =1  then
-        gen_lemma_action_invalid
+        if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then 0
+         else gen_lemma_action_invalid
       else
         if lvlength = rvlength then
           if (lnlength != rnlength) then
@@ -1121,8 +1124,6 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
               if lem_type = gen_lemma_action_invalid then 0 else lem_type
             else 0
           else
-            let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-            let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
             let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
             if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
               1
@@ -2219,9 +2220,19 @@ let norm_rename_clash_args_node_x init_args0 f0=
 
 
  let find_view_match hf rhs_node=
+   let elim_vn vn hf=
+     match hf with
+       | ViewNode vn1 -> if CP.eq_spec_var vn.h_formula_view_node vn1.h_formula_view_node && CP.diff_svl  vn.h_formula_view_arguments vn1.h_formula_view_arguments = [] then
+           HEmp
+         else hf
+       | _ -> hf
+   in
    match rhs_node with
      | ViewNode vn ->
            let vns = get_views (formula_of_heap hf no_pos) in
            let sel_vns = List.filter (fun vn1 -> CP.eq_spec_var vn.h_formula_view_node vn1.h_formula_view_node) vns in
-           if sel_vns = [] then raise Not_found else (List.hd sel_vns, vn)
+           if sel_vns = [] then raise Not_found else
+             let vl = List.hd sel_vns in
+             let lhs_rest = heap_trans_heap_node (elim_vn vl) hf in
+             (vl, vn, lhs_rest)
      | _ -> raise Not_found
