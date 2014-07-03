@@ -46,8 +46,8 @@
   latest/FDB_entl/nll-vc12.smt2: OK
   latest/UDB_entl/nll-vc13.smt2: OK
   latest/FDB_entl/nll-vc13.smt2: OK
-  latest/UDB_entl/nll-vc14.smt2: Unexpected: UNSOUND
-  latest/FDB_entl/nll-vc14.smt2: Unexpected: UNSOUND
+  latest/UDB_entl/nll-vc14.smt2: OK
+  latest/FDB_entl/nll-vc14.smt2: OK
   latest/UDB_entl/nll-vc15.smt2: OK
   latest/FDB_entl/nll-vc15.smt2: OK
   latest/UDB_entl/nll-vc16.smt2: OK
@@ -92,7 +92,7 @@
   latest/sll0a_entl/bolognesa-18-e08.tptp.smt2: OK
   latest/sll0a_entl/bolognesa-20-e03.tptp.smt2: OK
   latest/sll0a_entl/clones-01-e07.tptp.smt2: OK
-  latest/sll0a_entl/clones-01-e08.tptp.smt2: Timeout
+  latest/sll0a_entl/clones-01-e08.tptp.smt2: OK
   latest/sll0a_entl/clones-01-e09.tptp.smt2: OK
   latest/sll0a_entl/clones-01-e10.tptp.smt2: OK
   latest/sll0a_entl/clones-02-e07.tptp.smt2: OK
@@ -108,7 +108,7 @@
   latest/sll0a_entl/smallfoot-vc32.tptp.smt2: OK
   latest/sll0a_entl/smallfoot-vc33.tptp.smt2: OK
   latest/sll0a_entl/smallfoot-vc35.tptp.smt2: OK
-  latest/sll0a_entl/smallfoot-vc37.tptp.smt2: Timeout
+  latest/sll0a_entl/smallfoot-vc37.tptp.smt2: OK
   latest/UDB_sat/abduced02.defs.smt2: OK
   latest/UDB_sat/abduced03.defs.smt2: OK
   latest/UDB_sat/abduced04.defs.smt2: OK
@@ -200,17 +200,7 @@
   latest/UDB_entl/20.tst.smt2: OK
   latest/UDB_entl/22.tst.smt2: OK
 
-Total number of unexpected results: 2 in files:
- latest/UDB_entl/nll-vc14.smt2
- latest/FDB_entl/nll-vc14.smt2
-
-
-Total number of unsound results: 2 in files:
- latest/UDB_entl/nll-vc14.smt2
- latest/FDB_entl/nll-vc14.smt2
-
-
-Total number of timeout files: 12 in:
+Total number of timeout files: 10 in:
  latest/UDB_entl/dll-vc05.smt2
  latest/FDB_entl/dll-vc05.smt2
  latest/UDB_entl/dll-vc06.smt2
@@ -221,8 +211,6 @@ Total number of timeout files: 12 in:
  latest/FDB_entl/nll-vc04.smt2
  latest/UDB_entl/skl2-vc03.smt2
  latest/FDB_entl/skl2-vc03.smt2
- latest/sll0a_entl/clones-01-e08.tptp.smt2
- latest/sll0a_entl/smallfoot-vc37.tptp.smt2
 
 
 Total number of unknown results: 6 in files:

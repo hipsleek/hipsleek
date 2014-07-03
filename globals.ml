@@ -1425,6 +1425,8 @@ let reset_int2 () =
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
 
+let string_compare s1 s2 =  String.compare s1 s2=0
+
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
 	("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))

@@ -177,7 +177,7 @@ let rec sleek_entail_check_x isvl (cprog: C.prog_decl) proof_traces ante conseq=
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
     Cast.is_complex_entailment_4graph cprog ante conseq
   then
-    let _ = Debug.tinfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let _ = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
     let _ = Globals.disable_failure_explaining := true in
     let _ = Globals.smt_is_must_failure := None in
     if CF.isAnyConstFalse_struc conseq then sleek_unsat_check isvl cprog ante

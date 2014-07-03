@@ -88,32 +88,34 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
       check_iden (List.hd l_hvs) (List.hd r_hvs) then
       ()
     else
-    let is_same,_ = Checkeq.checkeq_formulas [self] lf1 rf1 in
-    if is_same then () else
-    (* let lf1 = Cformula.subst lss  *)
-    (*RHS: find reachable heap + pure*)
-    let lf2 = formula_rev_fnc lf1 in
-    let rf2 = formula_rev_fnc rf1 in
-    (*gen lemma*)
-    let lemma_name = "cyc" in
-    let l_coer = match lem_type with
-      | 0
-         (*3 is for syn Left lemma for tail-rec and non tail rec*)
-      | 3 -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf2
-      | _ (*1*) -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Right [] rf2 lf2
-    in
-    Debug.ninfo_hprint (add_str "gen_lemma, l_coer" Iprinter.string_of_coerc_decl) l_coer no_pos;
-    (*add lemma*)
-    let iprog = Iast.get_iprog () in
-    let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
-    let _ =
-      if not !Globals.smt_compete_mode then
-      print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 ||  lem_type = 3 then " -> " else " <- ")
-    ^ (Cprinter.string_of_formula rf1))
-      else ()
-    in
-    let _ = Globals.lemma_syn_count := !Globals.lemma_syn_count + 1 in
-    ()
+      let _ = Debug.info_hprint (add_str "cyc lf1" !Cformula.print_formula) lf1 no_pos in
+      let _ = Debug.info_hprint (add_str "cyc rf1" !Cformula.print_formula) rf1 no_pos in
+      let is_same,_ = Checkeq.checkeq_formulas [self] lf1 rf1 in
+      if is_same then () else
+        (* let lf1 = Cformula.subst lss  *)
+        (*RHS: find reachable heap + pure*)
+        let lf2 = formula_rev_fnc lf1 in
+        let rf2 = formula_rev_fnc rf1 in
+        (*gen lemma*)
+        let lemma_name = "cyc" in
+        let l_coer = match lem_type with
+          | 0
+                  (*3 is for syn Left lemma for tail-rec and non tail rec*)
+          | 3 -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Left [] lf2 rf2
+          | _ (*1*) -> Iast.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN Iast.Right [] rf2 lf2
+        in
+        Debug.ninfo_hprint (add_str "gen_lemma, l_coer" Iprinter.string_of_coerc_decl) l_coer no_pos;
+        (*add lemma*)
+        let iprog = Iast.get_iprog () in
+        let res = manage_unsafe_lemmas_fnc [l_coer] iprog prog in
+        let _ =
+          if not !Globals.smt_compete_mode then
+            print_endline (" \n gen lemma (proof):" ^ (Cprinter.string_of_formula lf1) ^ (if lem_type = 0 ||  lem_type = 3 then " -> " else " <- ")
+            ^ (Cprinter.string_of_formula rf1))
+          else ()
+        in
+        let _ = Globals.lemma_syn_count := !Globals.lemma_syn_count + 1 in
+        ()
   with e ->
       let _ = if not !Globals.smt_compete_mode then print_endline (" \n gen lemma: Exception: " ^ (Printexc.to_string e) ) else ()
       in ()

@@ -11,12 +11,13 @@ is_seg_view_br_fold_form
 seg_fold_view_br
 do_seg_fold
 need_cycle_checkpoint
-#need_cycle_checkpoint_fold
-#need_cycle_checkpoint_unfold
+need_cycle_checkpoint_fold
+need_cycle_checkpoint_unfold
 #LEMSYN.gen_lemma
 #checkeq_view_node_with_null
 #do_fold_w_ctx
 #heap_entail_conjunct_helper
 #heap_entail_conjunct
 #generate_view_rev_rec_lemmas
-do_coercion
+is_complex_entailment_4graph
+checkeq_reach_heap

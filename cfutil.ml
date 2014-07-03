@@ -59,6 +59,7 @@ let is_view_f f=
     | Exists {formula_exists_heap = h} -> is_view h
     | _ -> false
 
+
 let checkeq_view_node vn1 vn2=
   String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0 &&
       CP.eq_spec_var vn1.h_formula_view_node vn2.h_formula_view_node &&
@@ -406,6 +407,20 @@ let obtain_reachable_formula prog f roots=
   Debug.no_2 "obtain_reachable_formula" pr1 pr2 pr1
       (fun _ _ -> obtain_reachable_formula prog f roots)
       f roots
+
+let checkeq_reach_heap_x prog f1 f2 roots=
+  let reach_f1 = obtain_reachable_formula prog f1 roots in
+  let reach_heap_f1 = formula_of_heap (join_star_conjunctions (heap_of reach_f1)) no_pos in
+  let reach_f2 = obtain_reachable_formula prog f2 roots in
+  let reach_heap_f2 = formula_of_heap (join_star_conjunctions (heap_of reach_f2)) no_pos in
+  let is_same,_ = Checkeq.checkeq_formulas (List.map (CP.name_of_spec_var) roots) reach_heap_f1 reach_heap_f2 in
+  if is_same then true else false
+
+let checkeq_reach_heap prog f1 f2 roots=
+  let pr1 = !Cformula.print_formula in
+  Debug.no_3 "checkeq_reach_heap" pr1 pr1 !CP.print_svl string_of_bool
+      (fun _ _ _ -> checkeq_reach_heap_x prog f1 f2 roots)
+      f1 f2 roots
 
 let find_dependent_hps_x hp_defs=
   let get_dep_hps eqs def=
@@ -1089,7 +1104,7 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
     (*check root has unfold information??*)
     (* let null_neq_svl = (get_neqNull lhs)@(get_null_svl lhs) in *)
     (* if CP.mem_svl lvnode.h_formula_view_node null_neq_svl then -1 else *)
-    let _ = DD.ninfo_hprint (add_str "rhs0"  !print_formula) rhs0 no_pos in
+    let _ = DD.ninfo_hprint (add_str "rhs0" !print_formula) rhs0 no_pos in
     let rhs1 = subst (reqset) rhs0 in
     let ( _,mix_f,_,_,_) = split_components rhs1 in
     let reqs = (MCP.ptr_equations_without_null mix_f) in
@@ -1102,47 +1117,49 @@ let need_cycle_checkpoint_x prog lvnode lhs0 rvnode rhs0 reqset=
     let reqNulls = ( MCP.get_null_ptrs mix_f) in
     let is_ident = checkeq_view_node_with_null lvnode.h_formula_view_node lvnode.h_formula_view_arguments rvnode.h_formula_view_node rvnode.h_formula_view_arguments (find_close leqNulls leqs) (find_close reqNulls (reqset@reqs))  in
     if is_ident then -1 else
-    let l_reach_ptrs, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
-    let l_hns, l_hvs,_ = Cformula.get_hp_rel_formula lhs in
-    let rev_reach_ptrs = Cformula.look_up_rev_reachable_ptr_args prog l_hns l_hvs [lvnode.h_formula_view_node] in
-    if CP.diff_svl rev_reach_ptrs [lvnode.h_formula_view_node] != [] then -1 else
-      let r_reach_ptrs, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
-      let lnlength = List.length l_reach_dns in
-      let lvlength = List.length l_reach_vns in
-      let rnlength = List.length r_reach_dns in
-      let rvlength = List.length r_reach_vns in
-      let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
-      let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
-      if lnlength = 0 && lvlength =1  && rnlength = 0 && rvlength =1  then
-        if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then 0
-         else gen_lemma_action_invalid
-      else
-        if lvlength = rvlength then
-          if (lnlength != rnlength) then
-            if lvlength = rvlength then
-              let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
-              if lem_type = gen_lemma_action_invalid then 0 else lem_type
-            else 0
-          else
-            let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
-            if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
-              1
-            else
-              let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
-              let leqnull = CP.intersect_svl l_reach_ptrs leqNulls in
-              if (leqnull !=[] && reqnull = []) || (leqnull =[] && reqnull != []) then gen_lemma_action_invalid
-              else 1
-        else
-          if (lvlength > rvlength) then
-            0
+      let l_reach_ptrs, l_reach_dns,l_reach_vns = look_up_reachable_ptrs_w_alias prog lhs [lvnode.h_formula_view_node] 3 in
+      let l_hns, l_hvs,_ = Cformula.get_hp_rel_formula lhs in
+      let rev_reach_ptrs = Cformula.look_up_rev_reachable_ptr_args prog l_hns l_hvs [lvnode.h_formula_view_node] in
+      if CP.diff_svl rev_reach_ptrs [lvnode.h_formula_view_node] != [] then -1 else
+        let r_reach_ptrs, r_reach_dns,r_reach_vns = look_up_reachable_ptrs_w_alias prog rhs [rvnode.h_formula_view_node] 3 in
+        let lnlength = List.length l_reach_dns in
+        let lvlength = List.length l_reach_vns in
+        let rnlength = List.length r_reach_dns in
+        let rvlength = List.length r_reach_vns in
+        let lview_names = List.map (fun v -> v.h_formula_view_name) l_reach_vns in
+        let rview_names = List.map (fun v -> v.h_formula_view_name) r_reach_vns in
+        if lnlength = 0 && lvlength =1  && rnlength = 0 && rvlength =1  then
+          if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then 0
           else gen_lemma_action_invalid
+        else
+          if lvlength = rvlength then
+            if (lnlength != rnlength) then
+              if lvlength = rvlength then
+                let lem_type =  check_tail_rec_rec_lemma prog lhs rhs l_reach_dns l_reach_vns r_reach_dns r_reach_vns in
+                if lem_type = gen_lemma_action_invalid then 0 else lem_type
+              else 0
+            else
+              let _ = DD.ninfo_hprint (add_str "lview_names" (pr_list pr_id)) lview_names no_pos in
+              if Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2=0) lview_names rview_names != [] then
+                1
+              else
+                let reqnull = CP.intersect_svl r_reach_ptrs reqNulls in
+                let leqnull = CP.intersect_svl l_reach_ptrs leqNulls in
+                if (leqnull !=[] && reqnull = []) || (leqnull =[] && reqnull != []) then gen_lemma_action_invalid
+                else
+                  if checkeq_reach_heap prog lhs rhs [(lvnode.h_formula_view_node)] then -1 else 1
+          else
+            if (lvlength > rvlength) then
+              0
+            else gen_lemma_action_invalid
 
 let need_cycle_checkpoint prog lvnode lhs rvnode rhs reqset=
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 vn= Cprinter.prtt_string_of_h_formula (ViewNode vn) in
-  Debug.no_4 "need_cycle_checkpoint" pr2 pr2 pr1 pr1 string_of_int
-      (fun _ _ _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs reqset)
-      lvnode rvnode lhs rhs
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_5 "need_cycle_checkpoint" pr2 pr2 pr1 pr1 pr3 string_of_int
+      (fun _ _ _ _ _ -> need_cycle_checkpoint_x prog lvnode lhs rvnode rhs reqset)
+      lvnode rvnode lhs rhs reqset
 
 let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
   (****************************)
