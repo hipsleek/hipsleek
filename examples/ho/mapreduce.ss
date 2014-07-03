@@ -57,11 +57,11 @@ void join_reducer(thrd t, thrd m, list l, count c)
 //*****************************
 void destroyCount(count c)
   requires c::count<_>
-  ensures emp & c=null;
+  ensures emp;
 
 void destroyL(list l)
   requires l::list<null>
-  ensures emp & l=null;
+  ensures emp;
 
 void destroyll(node l)
   requires l::ll<n> & n >= 0 
@@ -164,36 +164,28 @@ void main()
   //mapper to classify into two list ol and el
   fork_mapper(m,l,ol,el);
 
-  dprint;
-
   // the first reducer counts in ol
   fork_reducer(r1,m,ol,c1);
-
-  dprint;
 
   // the second reducer counts in ol
   fork_reducer(r2,m,el,c2);
 
-  dprint;
-
   join_mapper(m,l,ol,el);
-  dprint;
-
   join_reducer(r1,m,ol,c1);
-  dprint;
-
   join_reducer(r2,m,el,c2);
-  dprint;
 
   int n1 = countList(l);
   int n2 = countList(ol);
   int n3 = countList(el);
-  assert(n1' = n2' + n3' & n1'= n');
+  assert(n1' = n2' + n3' & n1'= n'); //'
 
   destroyList(l);
   destroyList(ol);
   destroyList(el);
   destroyCount(c1);
   destroyCount(c2);
+  dprint;
+  //may need to explicitly destroy t::DEAD<>
+  // t::DEAD<> * t::DEAD<> -> t::DEAD<>
 }
 
