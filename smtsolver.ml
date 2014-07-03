@@ -469,6 +469,30 @@ let sat_type_from_string r input=
     with
       | Not_found -> Unknown
 
+let parse_model_to_pure_formula model =
+  let rec helper acc model =
+    let line = List.hd model in
+    if line = ")" then acc
+    else
+      let line2 = List.hd (List.tl model) in
+      let var = String.sub line 14 ((String.rindex line '(') - 15) in
+      let var = Cpure.mkVar (Cpure.mk_typed_spec_var Globals.Int var) no_pos in
+      let value = String.sub line2 4 ((String.length line2) - 5) in
+      let value =
+        try
+          let i = String.index value '-' in
+          let l = String.length value in
+          Cpure.mkIConst (0 - (int_of_string (String.sub value (i + 2) (l - i - 3)))) no_pos
+        with Not_found -> Cpure.mkIConst (int_of_string value) no_pos
+      in
+      let pf = Cpure.mkEqExp var value no_pos in
+      let new_acc = Cpure.mkAnd acc pf no_pos in
+      helper new_acc (List.tl (List.tl model))
+  in
+  let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
+  let _ = Debug.binfo_pprint ("counter example: " ^ (!print_pure pf)) no_pos in
+  pf
+
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
@@ -476,6 +500,12 @@ let iget_answer2 chn input =
   let model = List.tl output in
   let _ = Debug.binfo_pprint "model:" no_pos in
   let _ = List.map (fun s -> Debug.binfo_pprint s no_pos) model in
+  let _ =
+    if solver_sat_result = "sat" then
+      parse_model_to_pure_formula model
+    else
+      Cpure.mkTrue no_pos
+  in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
 
