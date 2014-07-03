@@ -55,6 +55,10 @@ void join_reducer(thrd t, thrd m, list l, count c)
   ensures  t::DEAD<> * %Q;
 
 //*****************************
+void destroyCount(count c)
+  requires c::count<_>
+  ensures emp & c=null;
+
 void destroyL(list l)
   requires l::list<null>
   ensures emp & l=null;
@@ -189,5 +193,7 @@ void main()
   destroyList(l);
   destroyList(ol);
   destroyList(el);
+  destroyCount(c1);
+  destroyCount(c2);
 }
 
