@@ -5873,8 +5873,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                   let rs2 = compose_context_formula_w_thrd rs1 new_post df id new_ref_vars pos in
                                                   rs2
                                             in
-
-				                            let rs3 = add_path_id rs2 (pid,i) (-1) in
+	                                    let rs2 = CF.transform_context (fun es -> CF.Ctx (CF.clear_entailment_es_pure es)) rs2 in
+				            let rs3 = add_path_id rs2 (pid,i) (-1) in
                                             let rs4 = prune_ctx prog rs3 in
 	                                    ((SuccCtx [rs4]),TrueConseq)
                                       | None ->
