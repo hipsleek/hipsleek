@@ -220,6 +220,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_hp_unk_map = es.es_infer_hp_unk_map;
     es_infer_hp_rel = es.es_infer_hp_rel;
     es_var_zero_perm = es.es_var_zero_perm;
+    es_ho_vars_map = es.es_ho_vars_map; (*TOCHECK*)
   }
 
 (*;
@@ -9528,6 +9529,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     (* TODO: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
                     let l_vdef = Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
                     let _, l_vdef_hvar_kinds = List.split (l_vdef.view_ho_vars) in
+                    let r_ho_args = List.map (subst_avoid_capture r_subs l_subs) r_ho_args in
                     let args = List.combine l_ho_args r_ho_args in
                     let args = List.combine args l_vdef_hvar_kinds in
                     (* for each lhs, rhs, and a kind k, possible situations:
@@ -9544,7 +9546,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       if ((List.length hvars) == 0) then
                         (*renaming before entailment*)
                         let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
-                        let rhs = subst_avoid_capture r_subs l_subs rhs in
                         (*TOCHECK: current ivars&evars are considered evars*)
                         let evars = subtract (new_exist_vars@new_expl_vars@new_impl_vars) (CP.fv to_ho_lhs)in
                         let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv rhs) in
