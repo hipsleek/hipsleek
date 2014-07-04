@@ -38,14 +38,15 @@ void main()
 {
   chan ch = create_msg(5);
   dprint;
-  cell c = new cell(6);
+  cell c = new cell(10);
+  dprint;
   cell d,d2;
   dprint;
   send(ch,c);
   dprint;
   cell c2 = new cell(7); // false state induced when 6 change to 7.
   dprint;
-  //send(ch,c2);
+  send(ch,c2);
   dprint;
   receive(ch,d);
   dprint;
