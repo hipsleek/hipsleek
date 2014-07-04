@@ -33,7 +33,7 @@ void fork_mapper(thrd t,list l, list ol, list el)
   requires t::MTHRD{%P,%Q}<l,ol,el> * %P
   ensures  t::MTHRD2{%Q}<l,ol,el>;
 
-void join_mapper(thrd t,list l, list ol, list el)
+void join_mapper(thrd t,list l, list ol, list)
   requires t::MTHRD2{%Q}<l,ol,el>
   ensures  t::DEAD<> * %Q;
 
