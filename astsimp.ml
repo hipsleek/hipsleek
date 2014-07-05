@@ -2219,9 +2219,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
                           let _ = Debug.ninfo_hprint (add_str ("infered baga inv("^vd.Cast.view_name^")") (Cprinter.string_of_ef_pure_disj)) bi no_pos in
                           Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj bi) uv
               ) lst in
-            if (not baga_stronger) then
-               Globals.dis_inv_baga ()
-            else
+            if (not baga_stronger) then (
+              Debug.binfo_pprint "not baga_stronger";
+              Globals.dis_inv_baga ()
+            ) else
               ()
               (* let new_map = List.combine views_list new_invs_list in *)
               (* List.iter (fun (cv,inv) -> Hashtbl.add CP.map_baga_invs cv.C.view_name inv) new_map *)
@@ -2236,6 +2237,10 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       else
         cviews0
       in
+      let _ = if !Globals.gen_baga_inv then (
+        Debug.binfo_pprint "end gen baga";
+        Globals.dis_inv_baga ()
+      ) in
       cviews1
      else
       cviews0
