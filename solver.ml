@@ -9545,7 +9545,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                       let hvars = CF.extract_hvar_f rhs in
                       if ((List.length hvars) == 0) then
                         (*renaming before entailment*)
-                        let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in
+                        (* let lhs = CF.add_pure_formula_to_formula to_ho_lhs lhs in *)
                         (*TOCHECK: current ivars&evars are considered evars*)
                         let evars = subtract (new_exist_vars@new_expl_vars@new_impl_vars) (CP.fv to_ho_lhs)in
                         let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv rhs) in
