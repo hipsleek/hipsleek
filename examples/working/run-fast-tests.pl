@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -403,6 +403,55 @@ $output_file = "log";
         ["jsvarstore.ss",1,"--mem --ramify","ex1","SUCCESS"],
         ["graph_spanning.ss",1,"-tp om --mem --ramify --eps","spanning","SUCCESS"],
         ["graph_spanning_infer.ss",1,"-tp om --mem --ramify --eps --infer-mem","spanning","SUCCESS"],
+        ],
+        "hip_baga" => [
+            ["eps.ss",2, "--baga-xpure", "get_next","SUCCESS","get_next_next","SUCCESS"],
+            ["append.ss",1, "--baga-xpure", "append","SUCCESS"],
+            ["append-tail.ss",1, "--baga-xpure","append","SUCCESS"],
+            ["avl-bind.ss",9, "--baga-xpure", "height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
+             "rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
+             ],
+            ["avl.ss",10, "--baga-xpure", "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
+             "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
+             "build_avl1","SUCCESS","build_avl2","SUCCESS",
+             "insert","SUCCESS","insert_inline","SUCCESS",
+            ],
+            ["avl-orig-2.ss",7, "--baga-xpure","height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
+             "double_left_child","SUCCESS","double_right_child","SUCCESS",
+             "rotate_left_child","SUCCESS", "rotate_right_child","SUCCESS",
+            ],
+            ["avl-orig3.ss",7, "--baga-xpure", "height","SUCCESS","get_max","SUCCESS",
+             "insert","SUCCESS", "double_left_child","SUCCESS",
+             "double_right_child","SUCCESS", "rotate_left_child","SUCCESS",
+             "rotate_right_child","SUCCESS"],
+            ["bll.ss",2, "--baga-xpure", "insert","SUCCESS",
+             "delete","SUCCESS"],
+            ["bubble.ss",4, "--baga-xpure", "id2","SUCCESS",
+             "id3","SUCCESS",
+             "bubble","SUCCESS",
+             "bsort","SUCCESS",
+            ],
+            ["cll.ss",5, "--baga-xpure", "test","SUCCESS",
+             "insert","SUCCESS",
+             "count_rest","SUCCESS",
+             "count","SUCCESS",
+             "delete","SUCCESS"],
+            ["complete.ss",5, "--baga-xpure", "maxim","SUCCESS",
+             "minim","SUCCESS",
+             "height","SUCCESS",
+             "min_height","SUCCESS",
+             "insert","SUCCESS"],
+            ["dll.ss",10, "--baga-xpure", "insert","SUCCESS",
+             "delete","SUCCESS",
+             "delete1","SUCCESS",
+             "test_del","SUCCESS",
+             "test_del2","SUCCESS",
+             "test_fold","SUCCESS",
+             "append","SUCCESS",
+             "append1","SUCCESS",
+             "f1","SUCCESS",
+             "f2","SUCCESS",
+            ],
         ],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
@@ -1817,7 +1866,10 @@ sub hip_process_file {
     {
         my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
         if ("$param" =~ "lemmas") { $procedure = "Entailing lemma"; }
-        if ("$param" =~ "hip") {
+        if ("$param" =~ "hip_baga") {
+            $exempl_path_full = "$exempl_path/hip_baga";
+            print "Starting hip_baga tests:\n";
+        } elsif ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
         } else {
