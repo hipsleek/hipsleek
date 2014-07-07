@@ -1,10 +1,10 @@
 ===========================================================
 
 error at: merge.ss merge
-error at: modular_examples/dll-modular.ss append
-error at: modular_examples/dll-modular.ss append2
-error at: modular_examples/dll-modular.ss delete
-error at: modular_examples/dll-modular.ss insert
+error at: modular_examples/dll-modular.ss append:  FIXED
+error at: modular_examples/dll-modular.ss append2: FIXED
+error at: modular_examples/dll-modular.ss delete:  FIXED
+error at: modular_examples/dll-modular.ss insert:  FIXED
 
 ===========================================================
 
