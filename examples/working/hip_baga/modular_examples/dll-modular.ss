@@ -10,15 +10,15 @@ data node2 {
 /* view for a doubly linked list with size */
 /*
 dll<p,"n":n> ==
-	true&[self = null; "n":n = 0] or
-	self::node2<_ ,p , q> * q::dll<self, n1> & ["n":n1=n-1]
-	inv true & ["n":n >= 0];
+true&[self = null; "n":n = 0] or
+self::node2<_ ,p , q> * q::dll<self, n1> & ["n":n1=n-1]
+inv true & ["n":n >= 0];
 */
 dll<p,"n":n> ==
   self = null &["n":n = 0] or
   self::node2<_ ,p , q> * q::dll<self, n1> & ["n":n1=n-1]
   /* inv true & ["n":n >= 0] */
-  inv_exact BG([],self=null & n=0) | BG([self],n>0)
+  inv_exact BG([],self=null & ["n":n=0]) | BG([self],true & ["n":n>0])
   ;
 
 void insert(node2 x, int a)
@@ -214,41 +214,39 @@ void f2(node2 x)
 
 /*
 dlseg<sf, lf, sb, lb, n> == self=sf & n=0
-			or self::node2<_, sf, r> * r::dlseg<self, lf, self, 
+or self::node2<_, sf, r> * r::dlseg<self, lf, self,
 
 dlseg<p, q, n> == self=q & n=0
-			or	self::node2<_, p, r> * r::dlseg<self, q, n-1>
-			inv n>=0;
+or self::node2<_, p, r> * r::dlseg<self, q, n-1>
+inv n>=0;
 */
 
 /*
 node2 append3(node2 x, node2 y)
-
-	requires x::dll<q, m> * y::dll<p, n>
-	ensures res::dll<_, m+n>;
-
+requires x::dll<q, m> * y::dll<p, n>
+ensures res::dll<_, m+n>;
 {
-	if (x == null)
-		return y;
-	else { 	
-		node2 tmp = find_last(x);
-		tmp.next = y;
-		return x;
-	}
+if (x == null)
+return y;
+else {
+node2 tmp = find_last(x);
+tmp.next = y;
+return x;
+}
 }
 */
 
 /*
 node2 find_last(node2 x)
-	requires x::dll<q, m> & m>0
-	ensures res::node2<_,p,null> * x::dlseg<q, res, m-1>;
+requires x::dll<q, m> & m>0
+ensures res::node2<_,p,null> * x::dlseg<q, res, m-1>;
 {
-	if (x.next == null) return x;
-	else return find_last(x.next);
+if (x.next == null) return x;
+else return find_last(x.next);
 }
 */
 
 /*
 void id1(node2 x, node2 y)
-	requires x::dlseg<q, y, n> * y::node2<_,
+requires x::dlseg<q, y, n> * y::node2<_,
 */
