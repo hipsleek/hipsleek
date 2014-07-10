@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n1> & n=n1+1 & n1>=0.
+
+/*
+--inv-baga
+
+loop 1: ({}, self=null n=0)
+
+loop 2:
+({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1))
+ omega_simplify (n=1 \/ n>=1)), output n>=1
+
+loop 3:
+  ({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1)) \/ ({self}, self!=null,  ((n=n1+1 /\ n1>=1) \/ n>=1))
+
+ omega_simplify ((n=n1+1 /\ n1>=1) \/ n>=1) outpur n>=1 (elim ex. quantifier n1)
+
+({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1)) \/ ({self}, self!=null,  n>=1) == ({}, self=null n=0) \/ ({self}, self!=null,  (n=1 \/ n>=1))
+
+fixpoint
+
+*/

@@ -1568,7 +1568,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
           | _ -> henv
         ) henv h.F.h_formula_heap_arguments ddecl.data_fields in
         (dl, vl, henv)
-      with Not_found ->
+      with | Invalid_argument _ | Not_found ->
         (* let _ = print_endline ("== not found ddecl!") in *)
         let dl, vl = 
           if (String.compare v self = 0) then ([], [c])
