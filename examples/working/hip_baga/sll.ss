@@ -15,7 +15,7 @@ ll<n> == self = null & n = 0
 
 /* view for a sorted list */
 sll<n, sm, lg> == self = null & n = 0 & sm <= lg
-  or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin )
+  or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin)
   /* inv n >= 0 & sm <= lg */
   inv_exact BG([],self=null & n=0 & sm<=lg) | BG([self],n>0 & sm<=lg)
   ;

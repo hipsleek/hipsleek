@@ -1,6 +1,25 @@
 ===========================================================
 
 error at: merge.ss merge
+
+Successful States:
+[
+ Label: [(,0 ); (,1 ); (,1 ); (,2 ); (,1 ); (,2 )]
+ State:(exists flted_22_1676,s3_1677,b3_1678: x2'::node<sm_1624,q_1627> * tmp_73'::sll<flted_22_1676,s3_1677,b3_1678>&flted_15_1626+1=n2 & s2<=qs_1628 & sm_1624=s2 & lg_1625=b2 & x2'=x2 & x1_1641=x1 & x2'!=Cnull & !(v_bool_24_1326') & x2'!=Cnull & !(v_bool_24_1326') & x1_1641!=Cnull & !(v_bool_28_1325') & x1_1641!=Cnull & !(v_bool_28_1325') & n=n1 & xs=s1 & xl=b1 & flted_49_1654=1+n & sres_1655=min(sm_1624,xs) & lres_1656=max(sm_1624,xl) & q_1627!=Cnull & v_bool_33_1324' & q_1627!=Cnull & v_bool_33_1324' & n1_1666=flted_49_1654 & s1_1667=sres_1655 & b1_1668=lres_1656 & n2_1669=flted_15_1626 & s2_1670=qs_1628 & b2_1671=lg_1625 & flted_22_1676=n2_1669+n1_1666 & s3_1677=min(s1_1667,s2_1670) & b3_1678=max(b1_1668,b2_1671)&{FLOW,(24,25)=__norm})[]
+       es_heap: emp
+       es_var_measures 2: MayLoop[]
+       es_cond_path: [1; 2; 2; 0]
+
+ ]
+
+assert/assume:merge.ss:37: 14:  : failed
+
+
+Post condition cannot be derived:
+  (may) cause:  s2<=qs_1628 & sres_1655=min(s2,s1) & lres_1656=max(s2,b1) &
+s3_1690=min(sres_1655,qs_1628) & s3_1690<=b3_1691 & b3_1691=max(lres_1656,b2) |-  b3_1691=max(b1,b2). LOCS:[35;49;17;32;15;22] (may-bug)
+
+
 error at: modular_examples/dll-modular.ss append:  FIXED
 error at: modular_examples/dll-modular.ss append2: FIXED
 error at: modular_examples/dll-modular.ss delete:  FIXED
@@ -10,7 +29,7 @@ error at: modular_examples/dll-modular.ss insert:  FIXED
 
 error in infer invariant:
 
-ERROR: at _0:0_0:0 
+ERROR: at _0:0_0:0
 Message: Error in translating the input for fixcalc
  Stop z3... 1 invocations caught
 (Program not linked with -g, cannot print stack backtrace)

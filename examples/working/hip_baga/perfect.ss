@@ -26,7 +26,7 @@ nodes, each node contains a flag:
 /* view for a perfect tree */
 perfect<n> == self = null & n = 0
   or self::node2<_, _, l, r> * l::perfect<n-1> * r::perfect<n-1>
-  inv n >= 0
+  /* inv n >= 0 */
   inv_exact BG([],self=null & n=0) | BG([self],n>0)
   ;
 /*

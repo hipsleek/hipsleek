@@ -8,7 +8,7 @@ data node {
 sll<n, sm, lg> ==
   self::node<sm, null> & sm=lg & n=1
   or self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs
-  inv n>=1 & sm<=lg
+  /* inv n>=1 & sm<=lg */
   inv_exact BG([self],n=1 & sm=lg) | BG([self],n>1 & sm<=lg)
   inv_sat BG([self],n=1 & sm=lg) | BG([self],n>1 & sm<=lg)
   ;
@@ -16,14 +16,14 @@ sll<n, sm, lg> ==
 bnd<n,sm:int,bg> ==
   self=null & n=0
   or self::node<d,p> * p::bnd<n-1,sm,bg> & sm <= d< bg
-  inv n >= 0
+  /* inv n >= 0 */
   inv_exact BG([],self=null & n=0) | BG([self],n>0)
   inv_sat BG([],self=null & n=0) | BG([self],n>0)
   ;
 
 ll<n> == self=null & n=0
   or self::node<_, r> * r::ll<n-1>
-  inv n>=0
+  /* inv n>=0 */
   inv_exact BG([],self=null & n=0) | BG([self],n>0)
   inv_sat BG([],self=null & n=0) | BG([self],n>0)
   ;
