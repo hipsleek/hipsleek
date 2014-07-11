@@ -2238,7 +2238,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         cviews0
       in
       let _ = if !Globals.gen_baga_inv then (
-        Debug.binfo_pprint "end gen baga";
+        Debug.binfo_pprint "end gen baga\n" no_pos;
         Globals.dis_inv_baga ()
       ) in
       cviews1

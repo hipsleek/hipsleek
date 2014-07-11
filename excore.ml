@@ -262,18 +262,22 @@ let ef_elim_exists_1 (svl : spec_var list) epf =
   (* Debug.no_2 "ef_elim_exists" string_of_typed_spec_var_list pr pr *)
       ef_elim_exists_1 svl epf
 
+let calc_fix_pure (svl : spec_var list) pf =
+  let pf_base = Omega.simplify pf in
+  let conjs = split_conjunctions pf in
+  let conjs = List.filter (fun conj ->
+      not(List.exists (fun sv -> List.mem sv svl) (fv conj))
+  ) conjs in
+  let pf_indu = List.fold_left (fun pf1 pf -> mkAnd pf1 pf no_pos) (mkTrue no_pos) conjs in
+  let pf_fix = Omega.simplify (mkOr pf_base pf_indu None no_pos) in
+  pf_fix
+
 let ef_elim_exists_2 (svl : spec_var list) epf =
   let (baga, pf) = epf in
   let svl1 = List.filter (fun sv -> not(is_node_typ sv)) svl in
   let svl2 = List.filter (fun sv -> is_node_typ sv) svl in
-  let pf1 = filter_var pf svl1 in
-  let pf2 = filter_var pf svl2 in
-  let conjs = split_conjunctions pf1 in
-  let conjs = List.filter (fun conj ->
-      not(List.exists (fun sv -> List.mem sv svl) (fv conj))
-  ) conjs in
-  let pf1 = List.fold_left (fun pf1 pf -> mkAnd pf1 pf no_pos) (mkTrue no_pos) conjs in
-  let (baga, pf2) = ef_elim_exists_1 svl2 (baga, pf2) in
+  let pf1 = calc_fix_pure svl1 (filter_var pf svl1) in
+  let (baga, pf2) = ef_elim_exists_1 svl2 (baga, (filter_var pf svl2)) in
   (baga, mkAnd pf1 pf2 no_pos)
 
 (* substitute baga *)
