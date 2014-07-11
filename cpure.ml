@@ -25,6 +25,7 @@ let is_zero s = s==mk_zero
 
 let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
+
 let view_args_map:(string,spec_var list) Hashtbl.t 
       = Hashtbl.create 10
 (* immutability annotations *)
@@ -472,7 +473,6 @@ let string_of_annot_arg ann =
 let string_of_annot_arg_list ann_list = 
   pr_list string_of_annot_arg ann_list
 
-
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list_noparen l = match l with 
   | [] -> ""
@@ -481,6 +481,15 @@ let rec string_of_spec_var_list_noparen l = match l with
 ;;
 
 let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+
+(* pretty printing for a spec_var list *)
+let rec string_of_typed_spec_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_typed_spec_var h 
+  | h::t -> (string_of_typed_spec_var h) ^ "," ^ (string_of_typed_spec_var_list_noparen t)
+;;
+
+let string_of_typed_spec_var_list l = "["^(string_of_typed_spec_var_list_noparen l)^"]" ;;
 
 let string_of_spec_var_arg l = "<"^(string_of_spec_var_list_noparen l)^">" ;;
 

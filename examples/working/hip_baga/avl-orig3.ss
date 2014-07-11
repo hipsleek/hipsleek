@@ -12,7 +12,7 @@ avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
   or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
   & m = 1+m1+m2 & n = max(n1, n2) + 1
   & n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
-  inv m >= 0 & n >= 0 & 0<=bal<=2
+  /* inv m >= 0 & n >= 0 & 0<=bal<=2 */
   inv_exact BG([],self=null & m=0 & n=0 & bal=1) | BG([self],m>0 & n>0 & 0<=bal<=2)
   inv_sat BG([],self=null & m=0 & n=0 & bal=1) | BG([self],m>0 & n>0 & 0<=bal<=2)
   ;
